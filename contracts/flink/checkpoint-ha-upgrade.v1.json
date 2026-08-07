@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-flink-checkpoint-ha-upgrade-v1",
+  "remediation_id": "T-FLINK-003",
+  "flink_version": "1.18.1",
+  "scope": {
+    "canonical_jobs": 9,
+    "session_cluster_manifest": "deployments/kubernetes/infrastructure/07-flink.yaml",
+    "application_migration_contract": "contracts/flink/application-cluster-migration.v1.json",
+    "checkpoint_slo_manifest": "deployments/kubernetes/observability/flink-checkpoint-slo.yaml"
+  },
+  "ha": {
+    "type": "kubernetes",
+    "minimum_jobmanager_replicas": 2,
+    "checkpoint_root": "s3://flink-checkpoints/checkpoints",
+    "savepoint_root": "s3://flink-checkpoints/savepoints",
+    "metadata_root": "s3://flink-checkpoints/ha",
+    "job_result_root": "s3://flink-checkpoints/job-result-store",
+    "credential_environment": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
+    "forbidden_flink_properties_tokens": ["$(MINIO_ACCESS_KEY)", "$(MINIO_SECRET_KEY)", "file://"]
+  },
+  "slo": {
+    "checkpoint_success_ratio_min": 0.999,
+    "checkpoint_duration_to_interval_max": 0.5,
+    "critical_recovery_time_seconds_max": 300,
+    "required_checkpoint_evidence": [
+      "completed", "failed", "duration_ms", "alignment_ms", "state_size_bytes",
+      "external_path", "restore_time_ms", "source_offsets", "sink_reconciliation"
+    ]
+  },
+  "source_start_policy": {
+    "default": "committed-or-earliest",
+    "config_key": "kafka.starting.offsets",
+    "migration_only_compatibility": "latest",
+    "data_sources_requiring_committed_or_earliest": [
+      "flink-pcap-index-job", "flink-feature-job", "flink-rule-job",
+      "flink-cep-job", "flink-alert-generator-job"
+    ],
+    "already_safe_sources": [
+      "flink-session-job", "flink-behavior-job", "flink-user-behavior-job", "flink-log-job"
+    ]
+  },
+  "upgrade": {
+    "strategy": "savepoint-isolated-restore-output-diff-serial-canary",
+    "allow_non_restored_state": false,
+    "required_steps": [
+      "fresh checkpoint", "stop-with-savepoint", "sha256 manifest",
+      "isolated restore", "state compatibility", "output diff",
+      "single-job canary", "new checkpoint", "sink reconciliation", "rollback observation"
+    ]
+  },
+  "remaining_gates": {
+    "G2": "live HA topology and credential resolution",
+    "G3": "checkpoint/savepoint/source/sink reconciliation",
+    "G4": "SLO and RTO under approved state scale",
+    "G6": "serial canary and rollback",
+    "G7": "observation and independent approval",
+    "G8": "external project gates"
+  }
+}

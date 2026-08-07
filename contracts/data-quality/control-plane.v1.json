@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-data-quality-control-plane-v1",
+  "remediation_id": "T-DQ-001",
+  "related_feature_id": "F-DATAQUALITY-001",
+  "status": "partial",
+  "production_applied": false,
+  "authority": {
+    "metadata_and_state": "postgresql",
+    "large_samples_and_reports": "minio",
+    "facts": ["clickhouse", "kafka", "flink", "opensearch", "nebula", "minio"],
+    "migration": "deployments/postgres/migrations/202608041400_data_quality_control_plane_v1.sql",
+    "governance_migration": "deployments/postgres/migrations/202608041500_data_quality_governance_v1.sql",
+    "evaluation_migration": "deployments/postgres/migrations/202608041600_data_quality_rule_evaluation_v1.sql",
+    "repair_migration": "deployments/postgres/migrations/202608041700_data_quality_repair_lifecycle_v1.sql",
+    "replay_projection_migration": "deployments/postgres/migrations/202608041800_data_quality_replay_projection_v1.sql",
+    "expand_renderer": "scripts/alignment/render_data_quality_postgres_expand.py",
+    "generated_compatibility_entrypoints": [
+      "common/sql/pg/04-tasks-audit.sql",
+      "go/control-plane/deployments/docker/init/postgres_merged.sql",
+      "deployments/kubernetes/init-jobs/02-postgres-schema.yaml"
+    ],
+    "entrypoint_sync": "scripts/alignment/sync_data_quality_postgres_entrypoints.py --check"
+  },
+  "persistent_objects": [
+    "data_quality_datasets",
+    "data_quality_rules",
+    "data_quality_baselines",
+    "data_quality_watermarks",
+    "data_quality_events",
+    "data_quality_repairs",
+	"data_quality_outbox",
+	"data_quality_dataset_history",
+	"data_quality_rule_history",
+	"data_quality_command_requests",
+    "data_quality_rule_evaluations",
+    "data_quality_repair_history",
+    "data_quality_repair_requests",
+    "data_quality_flow_replay_projection",
+    "data_quality_replay_projection_receipts"
+  ],
+  "quality_dimensions": [
+    "completeness",
+    "uniqueness",
+    "timeliness",
+    "validity",
+    "referential_integrity",
+    "ordering",
+    "duplicate",
+    "lateness",
+    "tenant_ownership",
+    "object_availability"
+  ],
+  "real_handoff_signals": [
+    "kafka_offset",
+    "flink_watermark",
+    "sink_commit",
+    "business_version",
+    "object_manifest"
+  ],
+  "measurement_states": [
+    "measured",
+    "unknown",
+    "not_applicable",
+    "error"
+  ],
+  "dataset_signal_contract": "contracts/data-quality/dataset-signals.v1.json",
+  "forbidden_formal_signals": [
+    "clickhouse_insert_rate_as_kafka_lag",
+    "missing_measurement_as_pass",
+    "in_memory_baseline_as_authority"
+  ],
+  "rule_states": ["draft", "shadow", "approval_pending", "active", "superseded", "rejected", "retired"],
+  "issue_states": [
+    "detected",
+    "triaged",
+    "repair_planned",
+    "dry_run_passed",
+    "approved",
+    "replaying",
+    "reconciled",
+    "closed",
+    "failed"
+  ],
+  "repair_states": [
+    "planned",
+    "dry_run_running",
+    "dry_run_passed",
+    "approval_pending",
+    "approved",
+    "executing",
+    "executed",
+    "partial",
+    "failed",
+    "reconciled",
+    "cancelled",
+    "compensating",
+    "compensated"
+  ],
+  "implemented_slice": {
+    "dataset": "flows_raw",
+    "baseline_window_hours": 24,
+    "schema_signature_fields": ["name", "type", "default_kind"],
+    "transaction": ["dataset", "baseline", "outbox", "audit", "commit"],
+    "handoff_signal_collection": [
+      "kafka_end_and_committed_offsets",
+      "flink_event_time_watermark",
+      "clickhouse_sink_commit",
+      "explicit_not_applicable_business_version",
+      "explicit_not_applicable_object_manifest"
+    ],
+    "collection_persistence": "postgresql.data_quality_watermarks",
+    "read_path_has_no_write_side_effect": true,
+    "api": "POST /v1/data-quality/baseline",
+    "governance": {
+      "datasets": "tenant-scoped list and optimistic upsert/pause/retire",
+      "rules": "tenant-scoped list, deterministic draft creation and bounded transitions",
+      "rule_transition_path": ["draft", "shadow", "approval_pending", "active"],
+      "independent_approval": true,
+      "atomic_writes": ["business_state", "immutable_history", "outbox", "audit", "idempotency_receipt"],
+      "ephemeral_postgresql_tests": ["repository lifecycle", "HTTP authorization and lifecycle"]
+	},
+    "rule_evaluation": {
+      "runtime_default": "disabled",
+      "eligible_rule_state": "active",
+      "dataset": "flows_raw",
+      "predicate_allowlist": ["not_empty", "nonzero"],
+      "empty_window_status": "unknown",
+      "bounded_by": ["tenant_id", "window_start", "window_end"],
+      "atomic_writes": ["rule_evaluation", "quality_event_on_failure", "outbox", "audit"],
+      "deterministic_replay": true
+    },
+    "repair_lifecycle": {
+      "operation_allowlist": ["flow_replay_window_v1"],
+      "runtime_default": "disabled",
+      "bounded_by": ["tenant_id", "flows_raw", "one_hour_window", "max_rows_100000", "max_duration_seconds_300", "registered_server_evidence_provider", "registered_ready_executor"],
+      "transition_path": ["planned", "dry_run_passed", "approval_pending", "approved", "executing", "executed", "reconciled"],
+      "independent_approval_and_reconciliation": true,
+      "client_summary_trusted_for_dry_run_or_reconcile": false,
+      "dry_run_evidence": "server reads persisted PostgreSQL scope and budget then executes a tenant and ingest-time bounded ClickHouse flows_raw aggregate",
+      "execution_worker": "PostgreSQL executing rows are a durable queue; a session advisory lock prevents concurrent replicas and server-derived outcomes commit through repair history outbox audit and idempotency receipt",
+      "execution_runtime": "default-off bounded ClickHouse source driver publishes stable Protobuf envelopes only to flow.projection-replay.v1; the consumer atomically commits an immutable PostgreSQL target object and receipt before Kafka acknowledgement",
+      "projection_target": "postgresql.data_quality_flow_replay_projection flow-replay-pg-v1",
+      "projection_receipt": "postgresql.data_quality_replay_projection_receipts",
+      "reconcile_runtime": "server independently compares the bounded ClickHouse source event set, PostgreSQL projection target set, receipt set and payload hashes",
+      "atomic_writes": ["repair_state", "quality_event_state", "immutable_history", "outbox", "audit", "idempotency_receipt"],
+      "http_start_execution_status": 202,
+      "ephemeral_postgresql_tests": ["repository lifecycle", "HTTP authorization and lifecycle"]
+    }
+  },
+  "safety": {
+    "rules_default_state": "draft",
+    "repair_default_mode": "dry_run",
+    "separate_requester_and_approver": true,
+    "no_automatic_delete": true,
+    "missing_measurement_state": "unknown",
+    "release_blocking_default": false
+  },
+  "expand_execution": {
+    "phase": "expand",
+    "renderer": "scripts/alignment/render_data_quality_postgres_expand.py",
+    "artifact": "immutable_configmap_secret_and_suspended_job",
+    "namespace": "databases",
+    "migration_versions": ["202608041400", "202608041500", "202608041600", "202608041700", "202608041800"],
+    "approval_window_max_seconds": 14400,
+    "safeguards": [
+      "independent_approval_identity",
+      "immutable_approval_nonce",
+      "bounded_not_before_and_expiry",
+      "postgres_system_identifier_precondition",
+      "expected_migration_ledger_precondition",
+      "g0_candidate_and_manifest_hash_binding",
+      "migration_bundle_hash_binding",
+      "suspended_by_default",
+      "no_retry",
+      "psql_stop_on_error",
+      "final_migration_ledger_and_table_inventory_verification",
+      "refuse_overwrite"
+    ]
+  },
+  "gate_status": {
+    "G0": "candidate",
+    "G1": "candidate_persistent_baseline_schema_guard_and_handoff_signals",
+    "G2": "partial_real_offsets_watermarks_sink_commit_and_candidate_rule_evaluation",
+    "G3": "candidate_bounded_repair_control_lifecycle_cross_store_execution_open",
+    "G4": "open",
+    "G5": "open",
+    "G6": "hold",
+    "G7": "open",
+    "G8": "blocked"
+  },
+  "closure_blockers": [
+    "real hand-off signals are implemented only for the flows_raw dataset contract; remaining datasets are not yet catalogued",
+    "default-off quality event detection is implemented but not deployed or proven against live ClickHouse facts",
+    "repair repository HTTP control lifecycle bounded ClickHouse dry-run provider durable execution worker dedicated replay topic atomic PostgreSQL target and receipt consumer and authoritative three-way reconciliation are implemented but default-off and not deployed or live-validated; this bounded target does not prove Session or later domain projections have been repaired",
+    "large samples and reports are not yet stored and reconciled through MinIO manifests",
+    "quality SLO error budgets performance failure Windows Chrome rollout rollback and observation evidence are incomplete"
+  ]
+}

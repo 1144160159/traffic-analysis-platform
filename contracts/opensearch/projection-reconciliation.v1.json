@@ -1,0 +1,74 @@
+{
+  "contract_version": "1.0.0",
+  "feature_id": "F-SEARCH-001",
+  "remediation_id": "T-OS-004",
+  "work_package": "WP-23-OS",
+  "status": "implementing",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "authority": {
+    "alert_facts": "clickhouse",
+    "projection": "opensearch",
+    "projection_debt_and_watermarks": "postgresql",
+    "opensearch_is_authoritative": false
+  },
+  "write_boundary": {
+    "clickhouse_success_opensearch_failure": "projection_pending_only_after_durable_debt",
+    "debt_persistence_failure": "return_error_and_block_offset_commit",
+    "projection_id": "alert_id",
+    "version_type": "external_gte",
+    "source_version_order": ["updated_ts_unix_millis", "last_seen_unix_millis", "first_seen_unix_millis", "1"]
+  },
+  "durable_state": {
+    "migration": "202608041100",
+    "debt_table": "alert_opensearch_projection_debts",
+    "watermark_table": "alert_opensearch_projection_watermarks",
+    "run_table": "alert_opensearch_reconcile_runs",
+    "claiming": "for_update_skip_locked_with_expiring_lease",
+    "maximum_attempts": 8
+  },
+  "rebuild_scope": {
+    "required": ["tenant_id", "target_index_version", "max_documents", "requested_by", "trace_id"],
+    "optional": ["start_time", "end_time", "business_alert_ids"],
+    "maximum_documents": 10000,
+    "comparison": ["count", "alert_id", "authoritative_field_sha256"],
+    "classifications": ["missing", "extra", "stale"],
+    "automatic_repairs": ["missing", "stale"],
+    "automatic_delete_extra": false
+  },
+  "runtime_guards": {
+    "feature_flag": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
+    "feature_flag_default_enabled": false,
+    "repair_requires_confirm_flag": true,
+    "stop_error_count": 25,
+    "repair_per_second": 100,
+    "source_or_target_truncation_is_partial": true,
+    "production_mutations_in_repository_candidate": []
+  },
+  "canonical_hash": {
+    "runtime_fields_excluded": ["attack_phase", "arkime_link", "evidence_count"],
+    "reason": "these fields are not authoritative ClickHouse columns and cannot be deterministically rebuilt"
+  },
+  "read_compatibility": {
+    "legacy_only_field_alias": {"dedup_fingerprint": "fingerprint"},
+    "v2_canonical_write_field": "fingerprint",
+    "legacy_alias_must_not_override_non_empty_canonical_field": true,
+    "clickhouse_timestamp_projection_aliases": ["first_seen_time", "last_seen_time", "updated_ts"],
+    "raw_millisecond_filter_columns": ["first_seen", "last_seen", "updated_at"],
+    "projection_alias_must_not_shadow_raw_filter_column": true
+  },
+  "observability": {
+    "post_commit_only": true,
+    "metrics_service_port": 9093,
+    "metrics_target_port": 8082,
+    "live_capture_transport": "kubernetes_service_proxy_without_container_shell",
+    "signals": ["alert_consumer_lag", "alert_consumer_last_committed_offset", "alert_consumer_last_committed_event_info", "projection_debt_status_and_age", "reconcile_missing_extra_stale_counts"]
+  },
+  "closure_blockers": [
+    "the expand-only PostgreSQL migration is present, but the candidate worker and an approved V2 OpenSearch target have not been deployed or exercised",
+    "real Kafka offset decisions and consumer lag versus last event_id have not been captured",
+    "real missing extra stale manifests and successful automatic repair rates are absent",
+    "fixed-scale P50 P95 P99 and resource budgets are not approved",
+    "canary rollback and T+0 T+1 T+3 T+7 observation are incomplete"
+  ]
+}

@@ -1,0 +1,1578 @@
+{
+  "schema_version": 1,
+  "feature_id": "F-COMMON-001",
+  "status": "implementing",
+  "production_runtime_dependency": false,
+  "authorities": [
+    {
+      "domain": "canonical_id_registry",
+      "path": "contracts/alignment/canonical-registry.json",
+      "sha256": "8afe68436bca1dabb2df294e1de9b98c84367d74f9b1228d26d900c60e1b7c3b"
+    },
+    {
+      "domain": "feature_contract_shape",
+      "path": "contracts/alignment/feature-contract.schema.json",
+      "sha256": "c2b2c1e216a559191917c570f63f46e22618796872ced97d8cb4c21ba66f2ea7"
+    },
+    {
+      "domain": "feature_contract_validation",
+      "path": "scripts/alignment/validate.py",
+      "sha256": "27414e0bd40711e20d9d9b0e75d05f9467c95c0949112a88759f8bde9082e5c8"
+    },
+    {
+      "domain": "frontend_operation_plan",
+      "path": "web/ui/src/services/pageApiPlans.ts",
+      "sha256": "1e5808de81289b8d1bac2a76232a9eca53a7d94b0b80ff4fdc3c786e6953b83b"
+    },
+    {
+      "domain": "frontend_route_authority",
+      "path": "web/ui/src/routes/routeManifest.tsx",
+      "sha256": "f3e5615f586221ff1745ab2a01debb38b9908e083aac88cf98fae58d08a0c963"
+    },
+    {
+      "domain": "rest_contract_authority",
+      "path": "contracts/openapi/alignment-v1.openapi.json",
+      "sha256": "ff966bef98ef0c863ac553b99244359a5498b2b93ca61f88da3a7d5edabbd54b"
+    },
+    {
+      "domain": "route_action_api_scope_inventory",
+      "path": "scripts/alignment/inventory.py",
+      "sha256": "15c0a212d9960e782a2b041dbc62fa4f048b197feb3992117eb6a34128376e64"
+    },
+    {
+      "domain": "work_package_ownership",
+      "path": "contracts/alignment/work-packages.json",
+      "sha256": "008bc48db78c115ed27497bf9e50ebee1019162d59bbb9e977b06b1bdf26a378"
+    }
+  ],
+  "policy": {
+    "one_canonical_feature_id": true,
+    "one_accountable_owner": true,
+    "contract_is_build_and_release_gate_not_runtime_dependency": true,
+    "frontend_generated_types_required": true,
+    "openapi_is_rest_authority": true,
+    "protobuf_is_grpc_and_event_authority": true,
+    "migration_is_schema_authority": true,
+    "compatibility_removal_allowed_in_current_program": false,
+    "unknown_enum_or_field_is_silent_success": false
+  },
+  "coverage": {
+    "canonical_feature_ids": 54,
+    "formal_contracts": 27,
+    "formal_contracts_valid": 27,
+    "standard_scope_features": 38,
+    "standard_scope_formal_contracts": 27,
+    "missing_standard_scope_contracts": [
+      "F-ALERT-003",
+      "F-ALERT-004",
+      "F-ALERT-005",
+      "F-ALERT-006",
+      "F-COMMON-001",
+      "F-EXPORT-001",
+      "F-GRAPH-002",
+      "F-GRAPH-003",
+      "F-GRAPH-004",
+      "F-TOPIC-003",
+      "F-TOPIC-004"
+    ],
+    "missing_backlog_contracts": [
+      "F-ATTACKCHAIN-001",
+      "F-BASELINE-001",
+      "F-COMPLIANCE-001",
+      "F-DEPLOY-001",
+      "F-ENCRYPTED-001",
+      "F-ENCRYPTED-002",
+      "F-FORENSICS-001",
+      "F-FUSION-001",
+      "F-MLOPS-001",
+      "F-NOTIFICATION-001",
+      "F-NOTIFY-001",
+      "F-PREF-001",
+      "F-PROBE-002",
+      "F-RULE-001",
+      "F-SCREEN-001",
+      "F-SETTINGS-001"
+    ],
+    "p0_features": 16,
+    "p0_features_with_formal_contract": 16
+  },
+  "integrity": {
+    "duplicate_contract_ids": [],
+    "unregistered_contract_ids": [],
+    "duplicate_operation_ids": {},
+    "contract_validation_errors": {}
+  },
+  "pilot_slices": [
+    {
+      "pilot_id": "asset_vertical",
+      "feature_ids": [
+        "F-ASSET-001",
+        "F-ASSET-002",
+        "F-ASSET-003",
+        "F-ASSET-004",
+        "F-ASSET-005",
+        "F-ASSET-006"
+      ],
+      "all_formal_contracts_present": true
+    },
+    {
+      "pilot_id": "topic_snapshot_and_actions",
+      "feature_ids": [
+        "F-TOPIC-001",
+        "F-TOPIC-002"
+      ],
+      "all_formal_contracts_present": true
+    },
+    {
+      "pilot_id": "alert_query_and_actions",
+      "feature_ids": [
+        "F-ALERT-001",
+        "F-ALERT-002"
+      ],
+      "all_formal_contracts_present": true
+    }
+  ],
+  "features": [
+    {
+      "feature_id": "F-COMMON-001",
+      "priority": "P1",
+      "work_package": "WP-00-INVENTORY",
+      "accountable": "platform-contract-owner",
+      "acceptance_case": "AC-WP-00-INVENTORY",
+      "rollback_runbook_id": "RB-WP-00-INVENTORY",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-COMMON-002",
+      "priority": "P1",
+      "work_package": "WP-01-ERROR-ADAPTER",
+      "accountable": "platform-contract-owner",
+      "acceptance_case": "AC-WP-01-ERROR-ADAPTER",
+      "rollback_runbook_id": "RB-WP-01-ERROR-ADAPTER",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-COMMON-002.json",
+        "sha256": "293a6860aa5ac916d5b36c9b75e5789989539c8e0a7bc7edd76dd1184c93fd4e",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "applyPageSnapshotEnvelopeV1",
+        "api_method": "GET",
+        "api_path": "/v1/{domain}/snapshot",
+        "required_scopes": [
+          "*"
+        ],
+        "preserved_routes": [
+          "/dashboard",
+          "/assets",
+          "/topics",
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/dashboard/snapshot",
+          "GET /v1/assets/{asset_id}/snapshot",
+          "GET /v1/topics/{topic}/snapshot"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-COMMON-003",
+      "priority": "P0",
+      "work_package": "WP-00-INVENTORY",
+      "accountable": "platform-contract-owner",
+      "acceptance_case": "AC-WP-00-INVENTORY",
+      "rollback_runbook_id": "RB-WP-00-INVENTORY",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-COMMON-003.json",
+        "sha256": "f993c26dc33396629ff2c08bbe05542febabd6e24de6c92b5b8c724c1e1a5e5a",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "submitStableAction",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/{id}/response-actions",
+        "required_scopes": [
+          "alert:write",
+          "playbook:approve"
+        ],
+        "preserved_routes": [
+          "/alerts",
+          "/alerts/:alertId"
+        ],
+        "preserved_actions": [
+          "alert-response-request",
+          "alert-investigation-note",
+          "alert-response-reanalyze"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/alerts/{id}/response-actions",
+          "GET /v1/alerts/{id}/response-actions/{job_id}",
+          "POST /v1/alerts/{id}/response-actions/{job_id}/approval",
+          "POST /v1/alerts/{id}/response-actions/{job_id}/cancel",
+          "POST /v1/alerts/{id}/response-actions/{job_id}/compensations",
+          "POST /v1/alerts/{id}/investigation-notes"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-COMMON-004",
+      "priority": "P1",
+      "work_package": "WP-01-ERROR-ADAPTER",
+      "accountable": "platform-contract-owner",
+      "acceptance_case": "AC-WP-01-ERROR-ADAPTER",
+      "rollback_runbook_id": "RB-WP-01-ERROR-ADAPTER",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-COMMON-004.json",
+        "sha256": "e70e529894f587ba77bd25dcb49712ad1993a60d37c838701761074a58a88aed",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "applyErrorResultEnvelopeV1",
+        "api_method": "POST",
+        "api_path": "/v1/{resource}",
+        "required_scopes": [
+          "*"
+        ],
+        "preserved_routes": [
+          "/dashboard",
+          "/assets",
+          "/alerts",
+          "/topics"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/dashboard/snapshot",
+          "GET /v1/assets/{asset_id}/snapshot",
+          "POST /v1/alerts/{id}/response-actions",
+          "POST /v1/topics/{topic}/actions"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-AUTH-001",
+      "priority": "P0",
+      "work_package": "WP-00-INVENTORY",
+      "accountable": "platform-contract-owner",
+      "acceptance_case": "AC-WP-00-INVENTORY",
+      "rollback_runbook_id": "RB-WP-00-INVENTORY",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-AUTH-001.json",
+        "sha256": "689444ce761cc835a2f8019302b3a8514387cee42aa7a7b3460523036227c238",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "getScopeCatalog",
+        "api_method": "GET",
+        "api_path": "/v1/auth/scopes",
+        "required_scopes": [
+          "admin:read"
+        ],
+        "preserved_routes": [
+          "/settings"
+        ],
+        "preserved_actions": [
+          "auth-user-profile-update",
+          "auth-user-password-change",
+          "auth-user-oidc-sync"
+        ],
+        "preserved_api_operations": [
+          "PATCH /v1/auth/me",
+          "POST /v1/auth/me/password"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-TOPIC-001",
+      "priority": "P0",
+      "work_package": "WP-09-TOPIC",
+      "accountable": "topic-domain-owner",
+      "acceptance_case": "AC-WP-09-TOPIC",
+      "rollback_runbook_id": "RB-WP-09-TOPIC",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-TOPIC-001.json",
+        "sha256": "4ec4e30a9c9fce7ff2b126de205a1b56e29217e611c4f0aabc20a75d49c82f16",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "getTopicSnapshot",
+        "api_method": "GET",
+        "api_path": "/v1/topics/{topic}/snapshot",
+        "required_scopes": [
+          "topic:read"
+        ],
+        "preserved_routes": [
+          "/topics",
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ],
+        "preserved_actions": [
+          "topic-view-save",
+          "topic-scope-update"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/topics/views",
+          "PUT /v1/topics/scopes/{topic}"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-TOPIC-002",
+      "priority": "P0",
+      "work_package": "WP-09-TOPIC",
+      "accountable": "topic-domain-owner",
+      "acceptance_case": "AC-WP-09-TOPIC",
+      "rollback_runbook_id": "RB-WP-09-TOPIC",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-TOPIC-002.json",
+        "sha256": "05b005d795a76e26536735b779bcf82253dd212cfc35e5958970929e80737212",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "createTopicActionJob",
+        "api_method": "POST",
+        "api_path": "/v1/topics/{topic}/actions",
+        "required_scopes": [
+          "topic:write"
+        ],
+        "preserved_routes": [
+          "/topics"
+        ],
+        "preserved_actions": [
+          "topic-action-submit"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/topics/{topic}/actions"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-TOPIC-003",
+      "priority": "P1",
+      "work_package": "WP-09-TOPIC",
+      "accountable": "topic-domain-owner",
+      "acceptance_case": "AC-WP-09-TOPIC",
+      "rollback_runbook_id": "RB-WP-09-TOPIC",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-TOPIC-004",
+      "priority": "P1",
+      "work_package": "WP-09-TOPIC",
+      "accountable": "topic-domain-owner",
+      "acceptance_case": "AC-WP-09-TOPIC",
+      "rollback_runbook_id": "RB-WP-09-TOPIC",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-ALERT-001",
+      "priority": "P0",
+      "work_package": "WP-07-ALERT",
+      "accountable": "alert-domain-owner",
+      "acceptance_case": "AC-WP-07-ALERT",
+      "rollback_runbook_id": "RB-WP-07-ALERT",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-001.json",
+        "sha256": "2b00648986d881cf342a3d74fb91fdc32425b67b0f7484ba766b84feb134de33",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "createAlertReport",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/{id}/reports/export",
+        "required_scopes": [
+          "alert:export"
+        ],
+        "preserved_routes": [
+          "/alerts",
+          "/alerts/:alertId"
+        ],
+        "preserved_actions": [
+          "alert-report-export",
+          "alert-report-cancel",
+          "alert-report-compensate"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/alerts/{id}/reports/{job_id}",
+          "GET /v1/alerts/{id}/reports/{job_id}/download",
+          "POST /v1/alerts/{id}/reports/export",
+          "POST /v1/alerts/{id}/reports/{job_id}/cancel",
+          "POST /v1/alerts/{id}/reports/{job_id}/compensations"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ALERT-002",
+      "priority": "P0",
+      "work_package": "WP-07-ALERT",
+      "accountable": "alert-domain-owner",
+      "acceptance_case": "AC-WP-07-ALERT",
+      "rollback_runbook_id": "RB-WP-07-ALERT",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-002.json",
+        "sha256": "70bd3e6efb89c0e7bd526c53c222e8ba2da64404bcf773fd210c56cc8f94f853",
+        "contract_version": 6,
+        "status": "verifying",
+        "operation_id": "linkAlertToCampaign",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/{id}/campaign-links",
+        "required_scopes": [
+          "alert:write",
+          "campaign:write"
+        ],
+        "preserved_routes": [
+          "/alerts",
+          "/alerts/:alertId",
+          "/campaigns"
+        ],
+        "preserved_actions": [
+          "alert-campaign-link"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/alerts/{id}/campaign-links",
+          "POST /v1/alerts/{id}/campaign-links",
+          "DELETE /v1/alerts/{id}/campaign-links/{campaign_id}",
+          "GET /v1/campaigns/{id}/members"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ALERT-003",
+      "priority": "P1",
+      "work_package": "WP-07-ALERT",
+      "accountable": "alert-domain-owner",
+      "acceptance_case": "AC-WP-07-ALERT",
+      "rollback_runbook_id": "RB-WP-07-ALERT",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-ALERT-004",
+      "priority": "P1",
+      "work_package": "WP-07-ALERT",
+      "accountable": "alert-domain-owner",
+      "acceptance_case": "AC-WP-07-ALERT",
+      "rollback_runbook_id": "RB-WP-07-ALERT",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-ALERT-005",
+      "priority": "P1",
+      "work_package": "WP-07-ALERT",
+      "accountable": "alert-domain-owner",
+      "acceptance_case": "AC-WP-07-ALERT",
+      "rollback_runbook_id": "RB-WP-07-ALERT",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-ALERT-006",
+      "priority": "P1",
+      "work_package": "WP-07-ALERT",
+      "accountable": "alert-domain-owner",
+      "acceptance_case": "AC-WP-07-ALERT",
+      "rollback_runbook_id": "RB-WP-07-ALERT",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-ASSET-001",
+      "priority": "P1",
+      "work_package": "WP-06-ASSET",
+      "accountable": "asset-domain-owner",
+      "acceptance_case": "AC-WP-06-ASSET",
+      "rollback_runbook_id": "RB-WP-06-ASSET",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ASSET-001.json",
+        "sha256": "d83b3d13cf3c1755aa2d663a271e8fe57e90567153d83397251375b47ab1e5e6",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "listAssetsV2",
+        "api_method": "GET",
+        "api_path": "/v1/assets",
+        "required_scopes": [
+          "asset:read"
+        ],
+        "preserved_routes": [
+          "/assets"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ASSET-002",
+      "priority": "P0",
+      "work_package": "WP-06-ASSET",
+      "accountable": "asset-domain-owner",
+      "acceptance_case": "AC-WP-06-ASSET",
+      "rollback_runbook_id": "RB-WP-06-ASSET",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ASSET-002.json",
+        "sha256": "ca3704d668ad099c6e5881d922ae45ce628de70078843ada4ba4f4e74ce31469",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "upsertAssetV2",
+        "api_method": "POST",
+        "api_path": "/v1/assets",
+        "required_scopes": [
+          "asset:discover"
+        ],
+        "preserved_routes": [
+          "/assets"
+        ],
+        "preserved_actions": [
+          "asset-upsert",
+          "asset-observation-upsert",
+          "asset-inactive-sweep",
+          "asset-active-discovery-run",
+          "asset-discovery-credential-register"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/assets",
+          "gRPC AssetService.UpsertAsset",
+          "gRPC AssetService.RecordMacIpBinding",
+          "consumer asset.bindings.v1",
+          "POST /v1/assets/discovery/credentials",
+          "POST /v1/assets/discovery/runs"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ASSET-003",
+      "priority": "P1",
+      "work_package": "WP-06-ASSET",
+      "accountable": "asset-domain-owner",
+      "acceptance_case": "AC-WP-06-ASSET",
+      "rollback_runbook_id": "RB-WP-06-ASSET",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ASSET-003.json",
+        "sha256": "76a81d6b85ea50bd29bf440ac8a8c72dc0207e277b22895d213f5e48202fc710",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "createAssetDiscoveryJob",
+        "api_method": "POST",
+        "api_path": "/v1/assets/discovery/runs",
+        "required_scopes": [
+          "asset:discover"
+        ],
+        "preserved_routes": [
+          "/assets"
+        ],
+        "preserved_actions": [
+          "asset-active-discovery-run",
+          "asset-discovery-credential-upsert",
+          "asset-discovery-topology-link-upsert"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/assets/discovery/credentials",
+          "GET /v1/assets/discovery/credentials",
+          "POST /v1/assets/discovery/runs",
+          "GET /v1/assets/discovery/runs"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ASSET-004",
+      "priority": "P1",
+      "work_package": "WP-06-ASSET",
+      "accountable": "asset-domain-owner",
+      "acceptance_case": "AC-WP-06-ASSET",
+      "rollback_runbook_id": "RB-WP-06-ASSET",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ASSET-004.json",
+        "sha256": "7feb9cf96667ad693d8e2f3c8510a955730ffbd94ff581239e692b086b714333",
+        "contract_version": 1,
+        "status": "implementing",
+        "operation_id": "createAssetExportJob",
+        "api_method": "POST",
+        "api_path": "/v1/assets/exports",
+        "required_scopes": [
+          "asset:export",
+          "asset:read"
+        ],
+        "preserved_routes": [
+          "/assets"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/assets"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ASSET-005",
+      "priority": "P1",
+      "work_package": "WP-06-ASSET",
+      "accountable": "asset-domain-owner",
+      "acceptance_case": "AC-WP-06-ASSET",
+      "rollback_runbook_id": "RB-WP-06-ASSET",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ASSET-005.json",
+        "sha256": "0258eb8bed66d9e0c7e0335fac9b69e4d23279da392c83969ec274e9103b14a9",
+        "contract_version": 1,
+        "status": "implementing",
+        "operation_id": "getAssetDetailSnapshot",
+        "api_method": "GET",
+        "api_path": "/v1/assets/{asset_id}/snapshot",
+        "required_scopes": [
+          "asset:read"
+        ],
+        "preserved_routes": [
+          "/assets",
+          "/graph",
+          "/forensics"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/assets/{id}",
+          "GET /v1/assets/{id}/details",
+          "GET /v1/assets/{id}/history",
+          "GET /v1/assets/{id}/topology"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ASSET-006",
+      "priority": "P1",
+      "work_package": "WP-06-ASSET",
+      "accountable": "asset-domain-owner",
+      "acceptance_case": "AC-WP-06-ASSET",
+      "rollback_runbook_id": "RB-WP-06-ASSET",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ASSET-006.json",
+        "sha256": "2ad60d1982121c4db0a2157883316db74718c0d2f1b484abfa6c002fba9adf94",
+        "contract_version": 1,
+        "status": "implementing",
+        "operation_id": "createAssetGovernanceWorkOrder",
+        "api_method": "POST",
+        "api_path": "/v1/assets/{asset_id}/governance/work-orders",
+        "required_scopes": [
+          "asset:govern",
+          "asset:read"
+        ],
+        "preserved_routes": [
+          "/assets"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/assets/{id}",
+          "GET /v1/assets/{id}/details"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-GRAPH-001",
+      "priority": "P1",
+      "work_package": "WP-12-GRAPH",
+      "accountable": "graph-domain-owner",
+      "acceptance_case": "AC-WP-12-GRAPH",
+      "rollback_runbook_id": "RB-WP-12-GRAPH",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-GRAPH-001.json",
+        "sha256": "667f33bef7013400c170f59616de679d26112b70ccab1da91373a1c40d01d641",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "exploreBoundedGraph",
+        "api_method": "GET",
+        "api_path": "/v1/graph/explore",
+        "required_scopes": [
+          "graph:read"
+        ],
+        "preserved_routes": [
+          "/graph"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-GRAPH-002",
+      "priority": "P1",
+      "work_package": "WP-12-GRAPH",
+      "accountable": "graph-domain-owner",
+      "acceptance_case": "AC-WP-12-GRAPH",
+      "rollback_runbook_id": "RB-WP-12-GRAPH",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-GRAPH-003",
+      "priority": "P1",
+      "work_package": "WP-12-GRAPH",
+      "accountable": "graph-domain-owner",
+      "acceptance_case": "AC-WP-12-GRAPH",
+      "rollback_runbook_id": "RB-WP-12-GRAPH",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-GRAPH-004",
+      "priority": "P1",
+      "work_package": "WP-12-GRAPH",
+      "accountable": "graph-domain-owner",
+      "acceptance_case": "AC-WP-12-GRAPH",
+      "rollback_runbook_id": "RB-WP-12-GRAPH",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-SEARCH-001",
+      "priority": "P1",
+      "work_package": "WP-20-SEARCH-EXPORT",
+      "accountable": "search-export-platform-owner",
+      "acceptance_case": "AC-WP-20-SEARCH-EXPORT",
+      "rollback_runbook_id": "RB-WP-20-SEARCH-EXPORT",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-SEARCH-001.json",
+        "sha256": "0cb033abd6b5aa618e96ad3c9c8cd4bb4d296816269c7cf3ef76b6871e448f85",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "searchAlertsCursorV1",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/search",
+        "required_scopes": [
+          "alert:read"
+        ],
+        "preserved_routes": [
+          "/alerts"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "POST /v1/alerts/search"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-EXPORT-001",
+      "priority": "P1",
+      "work_package": "WP-20-SEARCH-EXPORT",
+      "accountable": "search-export-platform-owner",
+      "acceptance_case": "AC-WP-20-SEARCH-EXPORT",
+      "rollback_runbook_id": "RB-WP-20-SEARCH-EXPORT",
+      "standard_24w_scope": true,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-AUDIT-001",
+      "priority": "P0",
+      "work_package": "WP-18-COMPLIANCE-AUDIT",
+      "accountable": "audit-domain-owner",
+      "acceptance_case": "AC-WP-18-COMPLIANCE-AUDIT",
+      "rollback_runbook_id": "RB-WP-18-COMPLIANCE-AUDIT",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-AUDIT-001.json",
+        "sha256": "3e60c3680db2b03e97174722501d67860649337ec62c09a703e8a7cd9b964b8d",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "ingestAuditLogBatch",
+        "api_method": "POST",
+        "api_path": "/internal/v1/audit/batches",
+        "required_scopes": [
+          "audit:write"
+        ],
+        "preserved_routes": [
+          "/audit-log"
+        ],
+        "preserved_actions": [
+          "audit-query-save",
+          "audit-export",
+          "audit-review-create",
+          "audit-integrity-check"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/audit/saved-queries",
+          "POST /v1/audit/exports",
+          "POST /v1/audit/reviews",
+          "POST /v1/audit/integrity-checks"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ADAPTER-001",
+      "priority": "P0",
+      "work_package": "WP-01-ERROR-ADAPTER",
+      "accountable": "platform-contract-owner",
+      "acceptance_case": "AC-WP-01-ERROR-ADAPTER",
+      "rollback_runbook_id": "RB-WP-01-ERROR-ADAPTER",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ADAPTER-001.json",
+        "sha256": "a6ce91bbda7a6ff15d758fd0e31078907267650f296c7ccb8dfc3fa4d515a004",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "submitSemanticCommand",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/{id}/reports/export",
+        "required_scopes": [
+          "alert:export",
+          "campaign:write"
+        ],
+        "preserved_routes": [
+          "/alerts/:alertId"
+        ],
+        "preserved_actions": [
+          "alert-report-export",
+          "alert-report-cancel",
+          "alert-report-compensate",
+          "alert-campaign-link",
+          "alert-campaign-unlink"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/alerts/{id}/reports/export",
+          "POST /v1/alerts/{id}/reports/{job_id}/cancel",
+          "POST /v1/alerts/{id}/reports/{job_id}/compensations",
+          "POST /v1/alerts/{id}/campaign-links",
+          "DELETE /v1/alerts/{id}/campaign-links/{campaign_id}"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ADAPTER-002",
+      "priority": "P1",
+      "work_package": "WP-01-ERROR-ADAPTER",
+      "accountable": "platform-contract-owner",
+      "acceptance_case": "AC-WP-01-ERROR-ADAPTER",
+      "rollback_runbook_id": "RB-WP-01-ERROR-ADAPTER",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ADAPTER-002.json",
+        "sha256": "b65874544a4d8a54c006c8c94c7e327378096e1d8377a7ec351fc7836a792935",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "normalizeTypedPageSnapshotV1",
+        "api_method": "GET",
+        "api_path": "/v1/{domain}/snapshot",
+        "required_scopes": [
+          "*"
+        ],
+        "preserved_routes": [
+          "/dashboard",
+          "/assets",
+          "/alerts",
+          "/graph",
+          "/topics",
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/dashboard/snapshot",
+          "GET /v1/assets/{asset_id}/snapshot",
+          "GET /v1/topics/{topic}/snapshot",
+          "GET /v1/graph/explore"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-NOTIFY-001",
+      "priority": "P2",
+      "work_package": "WP-19-NOTIFY-SETTINGS",
+      "accountable": "admin-platform-owner",
+      "acceptance_case": "AC-WP-19-NOTIFY-SETTINGS",
+      "rollback_runbook_id": "RB-WP-19-NOTIFY-SETTINGS",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-PREF-001",
+      "priority": "P2",
+      "work_package": "WP-19-NOTIFY-SETTINGS",
+      "accountable": "admin-platform-owner",
+      "acceptance_case": "AC-WP-19-NOTIFY-SETTINGS",
+      "rollback_runbook_id": "RB-WP-19-NOTIFY-SETTINGS",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-DASHBOARD-001",
+      "priority": "P0",
+      "work_package": "WP-04-DASHBOARD",
+      "accountable": "dashboard-domain-owner",
+      "acceptance_case": "AC-WP-04-DASHBOARD",
+      "rollback_runbook_id": "RB-WP-04-DASHBOARD",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-DASHBOARD-001.json",
+        "sha256": "846cceadeb687bfd16d5941bb93ed5ef7cf5632f46be3c726c1189e688185191",
+        "contract_version": 2,
+        "status": "implementing",
+        "operation_id": "getDashboardSnapshot",
+        "api_method": "GET",
+        "api_path": "/v1/dashboard/snapshot",
+        "required_scopes": [
+          "alert:read"
+        ],
+        "preserved_routes": [
+          "/dashboard"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/dashboard/stats",
+          "GET /v1/dashboard/alerts/trend",
+          "GET /v1/dashboard/attack-phases",
+          "GET /v1/dashboard/top-ips/{type}",
+          "GET /v1/dashboard/encrypted/trend"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-DASHBOARD-002",
+      "priority": "P0",
+      "work_package": "WP-04-DASHBOARD",
+      "accountable": "dashboard-domain-owner",
+      "acceptance_case": "AC-WP-04-DASHBOARD",
+      "rollback_runbook_id": "RB-WP-04-DASHBOARD",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-DASHBOARD-002.json",
+        "sha256": "c086af629857d5ca3cb82b1b85f413433b6b7ee7c92e4e7ae7459d26e9ddd10c",
+        "contract_version": 2,
+        "status": "implementing",
+        "operation_id": "createDashboardTask",
+        "api_method": "POST",
+        "api_path": "/v1/dashboard/tasks",
+        "required_scopes": [
+          "dashboard:write"
+        ],
+        "preserved_routes": [
+          "/dashboard"
+        ],
+        "preserved_actions": [
+          "dashboard-task-create",
+          "dashboard-evidence-task-create",
+          "dashboard-feedback-task-create",
+          "dashboard-audit-task-create",
+          "dashboard-sla-task-create",
+          "dashboard-compliance-task-create"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/dashboard/tasks",
+          "POST /v1/dashboard/tasks/evidence",
+          "POST /v1/dashboard/tasks/feedback",
+          "POST /v1/dashboard/tasks/audit",
+          "POST /v1/dashboard/tasks/sla",
+          "POST /v1/dashboard/tasks/compliance",
+          "GET /v1/dashboard/tasks/{task_id}"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-SCREEN-001",
+      "priority": "P1",
+      "work_package": "WP-04-DASHBOARD",
+      "accountable": "dashboard-domain-owner",
+      "acceptance_case": "AC-WP-04-DASHBOARD",
+      "rollback_runbook_id": "RB-WP-04-DASHBOARD",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-PROBE-001",
+      "priority": "P0",
+      "work_package": "WP-05-PROBE",
+      "accountable": "probe-domain-owner",
+      "acceptance_case": "AC-WP-05-PROBE",
+      "rollback_runbook_id": "RB-WP-05-PROBE",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-PROBE-001.json",
+        "sha256": "fb071ee86618356575fdcc0b04618873042588096e5605270c9f3429c5d4633d",
+        "contract_version": 2,
+        "status": "verifying",
+        "operation_id": "pushProbeConfig",
+        "api_method": "POST",
+        "api_path": "/v1/probes/{id}/config",
+        "required_scopes": [
+          "probe:write"
+        ],
+        "preserved_routes": [
+          "/probes"
+        ],
+        "preserved_actions": [
+          "probe-config-push",
+          "probe-connectivity-test",
+          "probe-cert-rotate",
+          "probe-restart",
+          "probe-batch-upgrade"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/probes/{id}/config",
+          "POST /v1/probes/{id}/connectivity-test",
+          "POST /v1/probes/{id}/certificates/rotate",
+          "POST /v1/probes/{id}/restart"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-PROBE-002",
+      "priority": "P1",
+      "work_package": "WP-05-PROBE",
+      "accountable": "probe-domain-owner",
+      "acceptance_case": "AC-WP-05-PROBE",
+      "rollback_runbook_id": "RB-WP-05-PROBE",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-DATAQUALITY-001",
+      "priority": "P1",
+      "work_package": "WP-03-OBS-DQ",
+      "accountable": "observability-data-quality-owner",
+      "acceptance_case": "AC-WP-03-OBS-DQ",
+      "rollback_runbook_id": "RB-WP-03-OBS-DQ",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-DATAQUALITY-001.json",
+        "sha256": "a9a2b05f219f07b45f8c945f3c9d74d067394e035a86ee4043be42895029adc6",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "getDataQualityControlPlaneSnapshot",
+        "api_method": "GET",
+        "api_path": "/v1/data-quality",
+        "required_scopes": [
+          "data-quality:read",
+          "data-quality:write"
+        ],
+        "preserved_routes": [
+          "/data-quality"
+        ],
+        "preserved_actions": [
+          "data-quality-context-action"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/data-quality",
+          "POST /v1/data-quality/actions"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-CAMPAIGN-001",
+      "priority": "P0",
+      "work_package": "WP-08-CAMPAIGN-CHAIN",
+      "accountable": "campaign-domain-owner",
+      "acceptance_case": "AC-WP-08-CAMPAIGN-CHAIN",
+      "rollback_runbook_id": "RB-WP-08-CAMPAIGN-CHAIN",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-CAMPAIGN-001.json",
+        "sha256": "2e173b56aeb017e8e0c0bd9211f30a18373af909c2a93801f543f43e61e4cdb5",
+        "contract_version": 13,
+        "status": "verifying",
+        "operation_id": "submitCampaignCommand",
+        "api_method": "POST",
+        "api_path": "/v1/campaigns/{id}/actions",
+        "required_scopes": [
+          "campaign:write"
+        ],
+        "preserved_routes": [
+          "/campaigns",
+          "/campaigns/:campaignId"
+        ],
+        "preserved_actions": [
+          "campaign-assign-owner",
+          "campaign-status-change",
+          "campaign-merge",
+          "campaign-report-generate",
+          "campaign-soar-response"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/campaigns",
+          "GET /v1/campaigns/{id}",
+          "POST /v1/campaigns/actions",
+          "POST /v1/campaigns/{id}/actions",
+          "GET /v1/campaigns/{id}/members",
+          "GET /v1/campaigns/{id}/reports/{report_id}",
+          "GET /v1/campaigns/{id}/reports/{report_id}/download",
+          "GET /v1/campaigns/{id}/soar-jobs/{job_id}",
+          "POST /v1/campaigns/{id}/soar-jobs/{job_id}/approval",
+          "POST /v1/campaigns/{id}/soar-jobs/{job_id}/cancel",
+          "POST /v1/campaigns/{id}/soar-jobs/{job_id}/compensate"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-ATTACKCHAIN-001",
+      "priority": "P1",
+      "work_package": "WP-08-CAMPAIGN-CHAIN",
+      "accountable": "campaign-domain-owner",
+      "acceptance_case": "AC-WP-08-CAMPAIGN-CHAIN",
+      "rollback_runbook_id": "RB-WP-08-CAMPAIGN-CHAIN",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-ENCRYPTED-001",
+      "priority": "P1",
+      "work_package": "WP-10-ENCRYPTED",
+      "accountable": "encrypted-traffic-domain-owner",
+      "acceptance_case": "AC-WP-10-ENCRYPTED",
+      "rollback_runbook_id": "RB-WP-10-ENCRYPTED",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-ENCRYPTED-002",
+      "priority": "P1",
+      "work_package": "WP-10-ENCRYPTED",
+      "accountable": "encrypted-traffic-domain-owner",
+      "acceptance_case": "AC-WP-10-ENCRYPTED",
+      "rollback_runbook_id": "RB-WP-10-ENCRYPTED",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-FORENSICS-001",
+      "priority": "P1",
+      "work_package": "WP-11-FORENSICS",
+      "accountable": "forensics-domain-owner",
+      "acceptance_case": "AC-WP-11-FORENSICS",
+      "rollback_runbook_id": "RB-WP-11-FORENSICS",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-FUSION-001",
+      "priority": "P1",
+      "work_package": "WP-13-FUSION-BASELINE",
+      "accountable": "fusion-domain-owner",
+      "acceptance_case": "AC-WP-13-FUSION-BASELINE",
+      "rollback_runbook_id": "RB-WP-13-FUSION-BASELINE",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-BASELINE-001",
+      "priority": "P1",
+      "work_package": "WP-13-FUSION-BASELINE",
+      "accountable": "fusion-domain-owner",
+      "acceptance_case": "AC-WP-13-FUSION-BASELINE",
+      "rollback_runbook_id": "RB-WP-13-FUSION-BASELINE",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-RULE-001",
+      "priority": "P1",
+      "work_package": "WP-14-RULE-DEPLOY",
+      "accountable": "rule-deployment-domain-owner",
+      "acceptance_case": "AC-WP-14-RULE-DEPLOY",
+      "rollback_runbook_id": "RB-WP-14-RULE-DEPLOY",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-DEPLOY-001",
+      "priority": "P1",
+      "work_package": "WP-14-RULE-DEPLOY",
+      "accountable": "rule-deployment-domain-owner",
+      "acceptance_case": "AC-WP-14-RULE-DEPLOY",
+      "rollback_runbook_id": "RB-WP-14-RULE-DEPLOY",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-MODEL-001",
+      "priority": "P0",
+      "work_package": "WP-15-MODEL-MLOPS",
+      "accountable": "model-domain-owner",
+      "acceptance_case": "AC-WP-15-MODEL-MLOPS",
+      "rollback_runbook_id": "RB-WP-15-MODEL-MLOPS",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-MODEL-001.json",
+        "sha256": "8c50a8c01cf4fd2a822c15983bf065b217c7c94b507da8cd8d3a4999433b370d",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "activateModelVersion",
+        "api_method": "POST",
+        "api_path": "/v1/models/{id}/versions/{version}/activate",
+        "required_scopes": [
+          "model:activate"
+        ],
+        "preserved_routes": [
+          "/models"
+        ],
+        "preserved_actions": [
+          "model-version-register",
+          "model-version-activate",
+          "model-version-rollback",
+          "model-evaluation-request"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/models/{id}/versions",
+          "POST /v1/models/{id}/versions/{version}/activate",
+          "POST /v1/models/{id}/versions/{version}/rollback"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-MLOPS-001",
+      "priority": "P1",
+      "work_package": "WP-15-MODEL-MLOPS",
+      "accountable": "model-domain-owner",
+      "acceptance_case": "AC-WP-15-MODEL-MLOPS",
+      "rollback_runbook_id": "RB-WP-15-MODEL-MLOPS",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-PLAYBOOK-001",
+      "priority": "P0",
+      "work_package": "WP-16-PLAYBOOK",
+      "accountable": "playbook-domain-owner",
+      "acceptance_case": "AC-WP-16-PLAYBOOK",
+      "rollback_runbook_id": "RB-WP-16-PLAYBOOK",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-PLAYBOOK-001.json",
+        "sha256": "8d55edfb7c92464c64e72114b95fa2a712c0196e7142e9c277c72f9a982afafd",
+        "contract_version": 2,
+        "status": "verifying",
+        "operation_id": "requestPlaybookExecution",
+        "api_method": "POST",
+        "api_path": "/v1/playbooks/{name}/execute",
+        "required_scopes": [
+          "playbook:execute"
+        ],
+        "preserved_routes": [
+          "/playbooks"
+        ],
+        "preserved_actions": [
+          "playbook-execute",
+          "playbook-state-update"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/playbooks/catalog",
+          "GET /v1/playbooks/executions",
+          "POST /v1/playbooks/{name}/execute",
+          "PATCH /v1/playbooks/{name}",
+          "GET /v1/playbooks/executions/{execution_id}",
+          "POST /v1/playbooks/executions/{execution_id}/approval",
+          "POST /v1/playbooks/executions/{execution_id}/cancel",
+          "POST /v1/playbooks/executions/{execution_id}/compensate"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-WHITELIST-001",
+      "priority": "P0",
+      "work_package": "WP-17-WHITELIST",
+      "accountable": "whitelist-domain-owner",
+      "acceptance_case": "AC-WP-17-WHITELIST",
+      "rollback_runbook_id": "RB-WP-17-WHITELIST",
+      "standard_24w_scope": true,
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-WHITELIST-001.json",
+        "sha256": "6dab610b515b3b2c1dd00f3dbe034df4fe1b18bcf7cda12808f7dd846ac3613d",
+        "contract_version": 2,
+        "status": "implementing",
+        "operation_id": "createWhitelistEntry",
+        "api_method": "POST",
+        "api_path": "/v1/whitelist",
+        "required_scopes": [
+          "alert:write"
+        ],
+        "preserved_routes": [
+          "/whitelist"
+        ],
+        "preserved_actions": [
+          "whitelist-create",
+          "whitelist-submit-approval",
+          "whitelist-disable",
+          "whitelist-extend"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/whitelist",
+          "POST /v1/whitelist",
+          "PATCH /v1/whitelist/{id}",
+          "DELETE /v1/whitelist/{id}",
+          "POST /v1/whitelist/check"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
+    },
+    {
+      "feature_id": "F-COMPLIANCE-001",
+      "priority": "P1",
+      "work_package": "WP-18-COMPLIANCE-AUDIT",
+      "accountable": "audit-domain-owner",
+      "acceptance_case": "AC-WP-18-COMPLIANCE-AUDIT",
+      "rollback_runbook_id": "RB-WP-18-COMPLIANCE-AUDIT",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-NOTIFICATION-001",
+      "priority": "P1",
+      "work_package": "WP-19-NOTIFY-SETTINGS",
+      "accountable": "admin-platform-owner",
+      "acceptance_case": "AC-WP-19-NOTIFY-SETTINGS",
+      "rollback_runbook_id": "RB-WP-19-NOTIFY-SETTINGS",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    },
+    {
+      "feature_id": "F-SETTINGS-001",
+      "priority": "P1",
+      "work_package": "WP-19-NOTIFY-SETTINGS",
+      "accountable": "admin-platform-owner",
+      "acceptance_case": "AC-WP-19-NOTIFY-SETTINGS",
+      "rollback_runbook_id": "RB-WP-19-NOTIFY-SETTINGS",
+      "standard_24w_scope": false,
+      "formal_contract_present": false,
+      "formal_contract": null,
+      "blocking_gaps": [
+        "versioned_feature_contract_missing",
+        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
+      ]
+    }
+  ],
+  "blocking_gaps": [
+    "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing",
+    "versioned_feature_contract_missing"
+  ],
+  "acceptance": {
+    "repository": [
+      "all 54 feature IDs resolve to exactly one accountable work package",
+      "all existing formal contracts hash-bind UI API domain data permission performance acceptance and rollout fields",
+      "all P0 feature contracts are present and the asset topic and alert pilots are traceable",
+      "missing standard-scope and backlog contracts remain explicit and cannot be hidden"
+    ],
+    "remaining": [
+      "author the missing standard-scope contracts before W1 contract freeze",
+      "author backlog contracts without deleting routes actions operations scopes or audit events",
+      "bind generated TypeScript and compatibility telemetry to every formal contract",
+      "capture old-client usage and live contract-version adoption by candidate",
+      "complete compatibility diff G2 through G7 and external G8 gates"
+    ]
+  },
+  "catalog_sha256": "96c9a23e405aeaefab52418d4fe979777004fea2ad86c47126db5844127c7e4f"
+}

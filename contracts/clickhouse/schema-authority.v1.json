@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-clickhouse-schema-authority-v1",
+  "remediation_id": "T-CH-001",
+  "status": "implementing",
+  "production_applied": false,
+  "authoritative_migration_directory": "deployments/clickhouse/migrations",
+  "migration_runner": "scripts/clickhouse/run-migrations.sh",
+  "execution_model": "direct_each_node",
+  "migration_ledger": {
+    "local_table": "traffic.alignment_schema_migrations_local",
+    "distributed_table": "traffic.alignment_schema_migrations",
+    "immutable_identity": [
+      "version",
+      "checksum"
+    ],
+    "checksum_algorithm": "sha256"
+  },
+  "legacy_schema_sources": [
+    {
+      "path": "common/sql/ch/00-all-tables.sql",
+      "sha256": "b2ad3129d5b130b1ebac09c9e8d613931f64495be36efa588d8fec3f7e09e15e",
+      "disposition": "legacy_drift_blocked"
+    },
+    {
+      "path": "common/sql/ch/01-extended.sql",
+      "sha256": "06160da7c1e38f504ea7726b62f13268ffba6fa97f0839e10218dcd0fcbac340",
+      "disposition": "legacy_drift_blocked"
+    },
+    {
+      "path": "common/sql/ch/03-attack-chain-recommendations.sql",
+      "sha256": "5afe1a2608293a5ee95f1189a9842184723468686c0f4f2a5468b9b35967be28",
+      "disposition": "legacy_drift_blocked"
+    },
+    {
+      "path": "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml",
+      "sha256": "262b49eef99b05aa37056f52b88e726370b56b70c117a32a755be6fa7b6dd468",
+      "disposition": "legacy_kubernetes_entrypoint"
+    },
+    {
+      "path": "go/control-plane/deployments/docker/init/clickhouse_merged.sql",
+      "sha256": "5e60ea14453ca59a901c46aadd49df7b8e6f077d0fbec9f758b3d7c9bc2663de",
+      "disposition": "legacy_docker_entrypoint"
+    },
+    {
+      "path": "java/flink-jobs/flink-alert-generator-job/deployments/docker/clickhouse/init.sql",
+      "sha256": "b39df625560767ab81d86863403fcfc3442bdec8861c69c20b44156d5138628f",
+      "disposition": "legacy_component_fixture"
+    },
+    {
+      "path": "java/flink-jobs/flink-behavior-job/deployments/docker/clickhouse-init.sql",
+      "sha256": "9b60d3c0c644081505a3302f911f513fff984cd74d7830422498a14afd74c323",
+      "disposition": "legacy_component_fixture"
+    },
+    {
+      "path": "java/flink-jobs/flink-cep-job/deployments/docker/clickhouse-init/01-init-campaigns.sql",
+      "sha256": "8660db3e1922423e636b0f7633a190483987657519b33c78cca2d848a563dfa7",
+      "disposition": "legacy_component_fixture"
+    },
+    {
+      "path": "java/flink-jobs/flink-feature-job/deployments/docker/init-clickhouse.sql",
+      "sha256": "2980d3f424d97dc50e82d3da62c1ca610f387355b0693e5295e8bd10e4c073a7",
+      "disposition": "legacy_component_fixture"
+    },
+    {
+      "path": "java/flink-jobs/flink-pcap-index-job/deployments/docker/init-scripts/clickhouse/01-create-tables.sql",
+      "sha256": "6f2c41a876a22137497ab551defca6e9ef32c85751b2a1654fd1f2d9dc27858d",
+      "disposition": "legacy_component_fixture"
+    },
+    {
+      "path": "java/flink-jobs/flink-rule-job/deployments/docker/clickhouse-init.sql",
+      "sha256": "a2e83e65fa8f1d1798a6f2f65baec0bf65539ddfb8f3504af6b06d0e8da90b20",
+      "disposition": "legacy_component_fixture"
+    },
+    {
+      "path": "java/flink-jobs/flink-session-job/deployments/docker/clickhouse/init.sql",
+      "sha256": "6273f9328ab7a2dcc10c996cb65834db84e119b1d29c2b5920ce7f55b76e1c88",
+      "disposition": "legacy_component_fixture"
+    }
+  ],
+  "required_live_inventory": [
+    "system.tables",
+    "system.columns",
+    "system.replicas",
+    "system.distributed_ddl_queue"
+  ],
+  "closure_blockers": [
+    "capture immutable live system table and column baseline from every shard and replica",
+    "model the production fact tables as ordered baseline migrations without destructive rewrites",
+    "replace Kubernetes Docker and component fixture DDL entrypoints with the same migration runner",
+    "execute expand backfill shadow reconcile cutover and rollback with resource budgets",
+    "prove shard replica materialized-view and deterministic projection reconciliation"
+  ]
+}

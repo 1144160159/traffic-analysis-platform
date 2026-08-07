@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-clickhouse-append-only-version-semantics-v1",
+  "remediation_id": "T-CH-004",
+  "status": "implementing",
+  "coverage_status": "PARTIAL_GO_ALERT_EVIDENCE_WRITER_SLICE",
+  "production_applied": false,
+  "implemented_slice": {
+    "scope": "go/control-plane/internal/alert",
+    "logical_tables": ["traffic.alerts", "traffic.evidence"],
+    "distributed_insert_sites": 8,
+    "local_insert_sites": 0,
+    "synchronous_mutation_sites": 0,
+    "removed_unreferenced_operation": "Generator.DeleteEvidenceByAlertID",
+    "routing_owner": "ClickHouse Distributed table"
+  },
+  "write_policy": {
+    "append_only_default": true,
+    "local_table_write_requires_explicit_shard_selection_contract": true,
+    "synchronous_request_waiting_for_mutation_forbidden": true,
+    "delete_requires_tombstone_ttl_or_separate_compliance_workflow": true,
+    "replay_requires_stable_event_identity": true,
+    "event_and_ingestion_time_must_be_distinct": true
+  },
+  "writer_inventory": [
+    {"source": "go/control-plane/internal/alert/repository/clickhouse.go", "table": "traffic.alerts", "sites": 2},
+    {"source": "go/control-plane/internal/alert/persistence/clickhouse.go", "table": "traffic.alerts", "sites": 2},
+    {"source": "go/control-plane/internal/alert/persistence/clickhouse.go", "table": "traffic.evidence", "sites": 2},
+    {"source": "go/control-plane/internal/alert/evidence/generator.go", "table": "traffic.evidence", "sites": 1},
+    {"source": "go/control-plane/internal/alert/evidence/auto_generator.go", "table": "traffic.evidence", "sites": 1}
+  ],
+  "closure_blockers": [
+    "inventory every Go Java Flink and maintenance ClickHouse writer and routing owner",
+    "add event_id aggregate_version ingested_at and tombstone semantics to each replayable projection",
+    "prove exact replay does not create logical duplicates by business key",
+    "separate event time ingestion time and late-data behavior in schemas and queries",
+    "design approved compliance erasure without synchronous request mutations",
+    "capture live Distributed routing partial-failure replica and replay reconciliation",
+    "complete performance failure rollout rollback observation and independent gates"
+  ]
+}

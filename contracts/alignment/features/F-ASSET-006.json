@@ -1,0 +1,87 @@
+{
+  "feature_id": "F-ASSET-006",
+  "contract_version": 1,
+  "status": "implementing",
+  "compatibility": {
+    "preserved_routes": ["/assets"],
+    "preserved_actions": [],
+    "preserved_api_operations": ["GET /v1/assets/{id}", "GET /v1/assets/{id}/details"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "asset.governance.work-orders",
+    "controls": [
+      {"control_id": "asset-governance-create", "action_id": "asset-governance-work-order-create"},
+      {"control_id": "asset-governance-approve", "action_id": "asset-governance-approve"},
+      {"control_id": "asset-governance-start", "action_id": "asset-governance-start"},
+      {"control_id": "asset-governance-complete", "action_id": "asset-governance-complete"},
+      {"control_id": "asset-governance-compensate", "action_id": "asset-governance-compensate"}
+    ],
+    "states": ["loading", "pending_approval", "approved", "executing", "completed", "rejected", "failed", "cancelled", "compensated", "stale"]
+  },
+  "api": {
+    "operation_id": "createAssetGovernanceWorkOrder",
+    "method": "POST",
+    "path": "/v1/assets/{asset_id}/governance/work-orders",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_asset_revision",
+    "additional_operations": [
+      {"operation_id": "listAssetGovernanceWorkOrders", "method": "GET", "path": "/v1/assets/{asset_id}/governance/work-orders"},
+      {"operation_id": "getAssetGovernanceWorkOrder", "method": "GET", "path": "/v1/assets/governance/work-orders/{work_order_id}"},
+      {"operation_id": "applyAssetGovernanceAction", "method": "POST", "path": "/v1/assets/governance/work-orders/{work_order_id}/actions", "revision_fields": ["expected_revision"]}
+    ]
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "a browser action only reports durable acceptance or an authoritative work-order state and never directly paints the asset lifecycle as successful",
+      "requester, owner, approver, deadline, evidence requirement, reason and every transition are durable tenant-scoped facts",
+      "the requester cannot approve the same work order and only the assigned owner can start execution",
+      "completion atomically applies the optimistic asset lifecycle revision, immutable asset history, work-order history, minimum audit and governance outbox",
+      "compensation requires the completed asset revision and atomically restores the original lifecycle without deleting evidence",
+      "merge completion records a same-tenant target asset and never collapses identities in the browser"
+    ],
+    "states": ["pending_approval", "approved", "rejected", "executing", "completed", "failed", "cancelled", "compensated"],
+    "compensation": "disable the API flag for rollback; a completed order can use the explicit compensate transition when its resulting asset revision is still current"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql"],
+    "migration": "202607311330_asset_governance_work_orders_v1.sql",
+    "event_types": ["traffic.asset.governance.v1.WorkOrderRequested", "traffic.asset.governance.v1.WorkOrderCompleted", "traffic.asset.governance.v1.WorkOrderCompensated"],
+    "source_watermarks": ["postgresql.assets.revision", "postgresql.asset_governance_work_orders.revision", "postgresql.asset_governance_outbox.outbox_id"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["asset:govern", "asset:read"],
+    "negative_tests": [
+      "asset:read cannot create or transition work orders",
+      "cross-tenant asset and work-order IDs return no resource",
+      "requester self approval is forbidden",
+      "stale asset or work-order revisions are rejected without side effects"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["work-order create", "approval", "execution", "completion", "compensation"],
+    "stop_conditions": ["transaction latency or lock wait exceeds the approved budget, audit/outbox reconciliation diverges, or active-order conflicts grow"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 OpenAPI, feature contract, migration and generated-client lint",
+      "G1 state machine, validation, scope, idempotency, self-approval, evidence and optimistic-revision tests",
+      "G2 real PostgreSQL create-approve-start-complete-compensate transaction",
+      "G3 asset, history, work order, control request, audit and outbox reconciliation",
+      "G4 fixed-concurrency lifecycle command P50/P95/P99 and lock budget",
+      "G5 Windows Chrome create-progress-action-evidence journey with mock disabled"
+    ],
+    "evidence": ["one trace_id binds each accepted HTTP response to work-order history, audit and governance outbox; completion also binds the resulting asset revision"]
+  },
+  "rollout": {
+    "feature_flag": "asset_governance_v1",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ASSET-006-rollback.md"
+  }
+}

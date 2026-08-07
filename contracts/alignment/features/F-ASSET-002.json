@@ -1,0 +1,77 @@
+{
+  "feature_id": "F-ASSET-002",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/assets"],
+    "preserved_actions": ["asset-upsert", "asset-observation-upsert", "asset-inactive-sweep", "asset-active-discovery-run", "asset-discovery-credential-register"],
+    "preserved_api_operations": ["POST /v1/assets", "gRPC AssetService.UpsertAsset", "gRPC AssetService.RecordMacIpBinding", "consumer asset.bindings.v1", "POST /v1/assets/discovery/credentials", "POST /v1/assets/discovery/runs"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "asset.inventory.upsert-result",
+    "controls": [
+      {"control_id": "asset-discovery-submit", "action_id": "asset-active-discovery-run"}
+    ],
+    "states": ["loading", "accepted", "running", "success", "partial", "failed", "cancelled", "compensating"]
+  },
+  "api": {
+    "operation_id": "upsertAssetV2",
+    "method": "POST",
+    "path": "/v1/assets",
+    "response_envelope": "data-meta-error",
+    "async": false,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "asset identity, history, minimum audit and outbox commit in one PostgreSQL transaction",
+      "tenant comes only from authenticated identity",
+      "human HTTP and gRPC upserts require stable idempotency identity, explicit reason and exact expected revision",
+      "Kafka binding replay identity derives from topic, partition, offset and item index before offset commit",
+      "direct binding identity includes tenant, MAC, IP, source and observed_at; missing tenant or observed_at is rejected",
+      "legacy discovery observations derive stable command identity from run and observation position and never append history outside the asset transaction",
+      "inactive lifecycle sweeps use a persistent daily request ledger and commit every changed revision, history, audit and outbox in one batch transaction",
+      "projection identifiers derive deterministically from tenant and asset identity",
+      "Kafka acceptance persists a verified inbox row before offset commit",
+      "OpenSearch and NebulaGraph advance independent idempotent watermarks without version regression"
+    ],
+    "states": ["validated", "committed", "projecting", "reconciled", "failed"],
+    "compensation": "rollback the PostgreSQL transaction before commit; after commit rebuild projections from outbox"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "nebulagraph"],
+    "migration": "202607310015_asset_atomic_upsert_v2.sql, 202607310030_asset_projection_inbox.sql and 202608031510_asset_legacy_mutation_atomic.sql",
+    "topics": {"events": "asset.events.v2"},
+    "event_types": ["traffic.asset.v2.AssetUpserted"],
+    "source_watermarks": [
+      "postgresql.asset_event_outbox.outbox_id",
+      "postgresql.asset_projection_inbox.kafka_partition+kafka_offset",
+      "postgresql.asset_projection_watermarks.aggregate_version",
+      "opensearch.assets-v2-write._version",
+      "nebulagraph.entity.metadata.revision"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["asset:discover"],
+    "negative_tests": ["cross-tenant body tenant is ignored and rejected on conflict", "viewer cannot write an asset"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["single upsert", "idempotent retry", "concurrent revision conflict", "Kafka offset replay", "out-of-order observed_at", "daily inactive sweep replay"],
+    "stop_conditions": ["transaction error rate or outbox lag exceeds approved budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 migration and generated contract", "G1 transaction fault injection including history/audit/outbox rollback", "G2 real PostgreSQL including gRPC, binding, V1 discovery and inactive sweep", "G3 projection reconcile", "G4 upsert and sweep load profile", "G5 Windows Chrome discovery receipt"],
+    "evidence": ["same trace_id across API, asset row, history, audit, outbox and projections"]
+  },
+  "rollout": {
+    "feature_flag": "asset_discovery_jobs_v2 for the discovery-job cutover; atomic asset mutations are mandatory",
+    "strategy": "expand-backfill-cutover with no legacy dual-write",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ASSET-002-rollback.md"
+  }
+}

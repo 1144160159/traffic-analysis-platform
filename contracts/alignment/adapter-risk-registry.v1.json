@@ -1,0 +1,450 @@
+{
+  "schema_version": 1,
+  "feature_id": "F-ADAPTER-002",
+  "status": "verifying",
+  "scope": "all production TypeScript sources under web/ui/src/pages and web/ui/src/services; tests and explicit mock fixture modules are excluded",
+  "authorities": [
+    {
+      "path": "web/ui/src/pages/AlertDetailPage.tsx",
+      "sha256": "1b190167fa705e1f29aaa64f30968b86768e41eac0a85740b8253ddb051ff433"
+    },
+    {
+      "path": "web/ui/src/pages/AlertTriagePage.tsx",
+      "sha256": "d1baa62f30f9783bad6fd7c469baa12bcec1f990a02f9e5f93e8889cc974283b"
+    },
+    {
+      "path": "web/ui/src/pages/AssetDetailWorkspace.tsx",
+      "sha256": "0cbe3981e5259cc7d45d94372f04feda1114e0fcd1331718d0e513c39fe873cd"
+    },
+    {
+      "path": "web/ui/src/pages/AssetInventoryPage.tsx",
+      "sha256": "3c930fd75edb5fb647cbfc4a9353e962fd72d2a03a2f90f25c2e8ace8ff4e973"
+    },
+    {
+      "path": "web/ui/src/pages/AttackChainAnalysisPage.tsx",
+      "sha256": "3a420f3eebb446356def325d98d7e6437d160b178a95787f5618e0ae2714b536"
+    },
+    {
+      "path": "web/ui/src/pages/AuditLogPage.tsx",
+      "sha256": "b40a574114208fc517ea93f1825e1e78206a0a0b270ec56e065cae3b1268e63e"
+    },
+    {
+      "path": "web/ui/src/pages/BaselineTypeWorkspace.tsx",
+      "sha256": "a095c2d0abcc917fbad3a5806ec946dc48e89315879da7a64282730d5861cc2a"
+    },
+    {
+      "path": "web/ui/src/pages/BaselineWorkbenchPage.tsx",
+      "sha256": "e5d9128779db2caffc4ef969ac1ce334ae926283c2b2ba8c5f94e8f417872008"
+    },
+    {
+      "path": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "sha256": "bc0cfb1d978600ef0b572800c9be59cc3d9d169d738999cd87c5337ecbe66cf8"
+    },
+    {
+      "path": "web/ui/src/pages/CampaignWorkbenchPage.tsx",
+      "sha256": "8a3b4864b7597299c6853c61ab0c1cce3a6a939c8c009d111d2a1185b50ea1ef"
+    },
+    {
+      "path": "web/ui/src/pages/ComplianceAuditPage.tsx",
+      "sha256": "58dc2cbc35b387281844eef1f763321685b26bf8f08cba1e2968833553a53b56"
+    },
+    {
+      "path": "web/ui/src/pages/DashboardOperationsPage.tsx",
+      "sha256": "aa2ed6445f9d1c10f2a50074b7de4115558684b92765f392e325ca72a792e26c"
+    },
+    {
+      "path": "web/ui/src/pages/DataQualityPage.tsx",
+      "sha256": "582618b06bb70fb622e08a4091924726a5f53e6b51391e885b92eaefc0f43f93"
+    },
+    {
+      "path": "web/ui/src/pages/DeploymentManagementPage.tsx",
+      "sha256": "559a8adcd4d239ae8238bb921fd9454ce85772638082d80f8f0c254a4a1a4044"
+    },
+    {
+      "path": "web/ui/src/pages/DeploymentManagementWorkspace.tsx",
+      "sha256": "9e290eefd6415fb02e332d7683f5b0a612b52250f2be5302822a562001c5fa18"
+    },
+    {
+      "path": "web/ui/src/pages/DetailPage.tsx",
+      "sha256": "6400a04e400dac6166ba702229e71a2e45010456834ea49b517cf16042875e22"
+    },
+    {
+      "path": "web/ui/src/pages/EncryptedTrafficPage.tsx",
+      "sha256": "fe65151da9a4af944f72940f472765040c164e5747ce205b4f361f4eca5cbd20"
+    },
+    {
+      "path": "web/ui/src/pages/ForensicsWorkbenchPage.tsx",
+      "sha256": "b399f2b0700049154c8c9298dfe00c69c8825372fa63d59d12cdfb018f5faf70"
+    },
+    {
+      "path": "web/ui/src/pages/FusionWorkbenchPage.tsx",
+      "sha256": "f21c46ef434783f28f498a4ce7b1d6feec4fd9a3896ba70814116dbb47cb65c0"
+    },
+    {
+      "path": "web/ui/src/pages/GraphEntityPage.tsx",
+      "sha256": "b41869e8abdeb0c8fe5e336751ca26c178040330e9db73dd9118ec9b65414483"
+    },
+    {
+      "path": "web/ui/src/pages/LoginPage.tsx",
+      "sha256": "f95e146668ccf42b94caecdbd6a8453aa63ce9091c9a4c21b178f8fd27083256"
+    },
+    {
+      "path": "web/ui/src/pages/MlopsOrchestrationPage.tsx",
+      "sha256": "a45af39de6e6ee8a9da7ada91bb466e03d3f7f35c1b7dbf6d962d0f31cbc5645"
+    },
+    {
+      "path": "web/ui/src/pages/ModelManagementPage.tsx",
+      "sha256": "a71f66e1befad1be9f7a18899e58c225d487a2361aff72194f7f7d3640abd8d5"
+    },
+    {
+      "path": "web/ui/src/pages/NotFoundPage.tsx",
+      "sha256": "44cb9f49c5452d80c71ef63dd59375c6bc59bf10afac60f884127208b34f3e6d"
+    },
+    {
+      "path": "web/ui/src/pages/NotificationConfigPage.tsx",
+      "sha256": "577dd52be0c124dd9e355506110f9f2e017c324d00a5524f83ef5d5d42d319ec"
+    },
+    {
+      "path": "web/ui/src/pages/OidcCallbackPage.tsx",
+      "sha256": "b82488b69a8cb5638f8fce0c4381e356f0efced5a74827330d2b30cbc18ba158"
+    },
+    {
+      "path": "web/ui/src/pages/PlaybookAutomationPage.tsx",
+      "sha256": "dc36458124bd8adaf3077d21a3814bfb384026a5019b41b49fec3cf925a9b94f"
+    },
+    {
+      "path": "web/ui/src/pages/ProbesManagementPage.tsx",
+      "sha256": "95c2381db299f2b8ad79fc8d40e447830c74497c99949c7e9adbd769366744ab"
+    },
+    {
+      "path": "web/ui/src/pages/ProductPage.tsx",
+      "sha256": "5b25d1e5796501382c5f645b90148aed8b705d0c4887668543361811062c84cf"
+    },
+    {
+      "path": "web/ui/src/pages/RuleManagementPage.tsx",
+      "sha256": "722163c5ae8350b3a2b8440ea911902ffc6726e7836273cfbe9581277201641f"
+    },
+    {
+      "path": "web/ui/src/pages/SettingsGovernancePage.tsx",
+      "sha256": "bbc80cf1dfe9987fbc4b9ed0c83373a663cfff0fe47bd6d945aea99c459e97c8"
+    },
+    {
+      "path": "web/ui/src/pages/SituationalScreen.tsx",
+      "sha256": "ecdc9c42b43a6c5fe35360f0e43c5b7d2687a1887e9de918cf109cf51dce074f"
+    },
+    {
+      "path": "web/ui/src/pages/TopicWorkbenchPage.tsx",
+      "sha256": "241b37c6f961769c5387d9800f6ac8e6eba41205b27b26dce7211d61758127aa"
+    },
+    {
+      "path": "web/ui/src/pages/WhitelistGovernancePage.tsx",
+      "sha256": "8ec7537814fc5b9b005181c1b88352cfa7aca48d7fb3ae92d0da42b42dfa90e7"
+    },
+    {
+      "path": "web/ui/src/pages/alertDetailLogic.ts",
+      "sha256": "3bc4c8fbfe3ea4382430f0766942df935253c73905b4cf88785b1cd6260606a6"
+    },
+    {
+      "path": "web/ui/src/pages/alertTriageLogic.ts",
+      "sha256": "30a8c87578d7f94ce7f59a73dbdae337b52a14d41d8621a96d62ef39ff145ae5"
+    },
+    {
+      "path": "web/ui/src/pages/assetInventoryState.ts",
+      "sha256": "a8502ee93894ab38b8d65eeb87c21ac74f4ab157c10b7d07df713e0cb7ddebb8"
+    },
+    {
+      "path": "web/ui/src/pages/baselineOverviewAdapters.ts",
+      "sha256": "8dfee78454f3abfeeb9737a017838e1c7f6e62b35f75b16801d689906e49f42f"
+    },
+    {
+      "path": "web/ui/src/pages/dashboardDisplay.ts",
+      "sha256": "7bf6b75b47cd6050693a18606b50fb0414ba55e8b2857bd87389dbca8062e1a6"
+    },
+    {
+      "path": "web/ui/src/pages/deploymentManagementLogic.ts",
+      "sha256": "e2eedfbc845f1b238e6603571bc594403106c27dfac53795c095912ac2817f4c"
+    },
+    {
+      "path": "web/ui/src/pages/ruleManagementLogic.ts",
+      "sha256": "24e0332b0540f0ca8310849d9ee592fd20d1a99db65f52cbd1296668f44dacb9"
+    },
+    {
+      "path": "web/ui/src/services/alertBatchApi.ts",
+      "sha256": "e83a715cc51235402c0f65f1f6cac8258d91211b7e0d2c214a68be2fd3d2d940"
+    },
+    {
+      "path": "web/ui/src/services/alertDetailActionApi.ts",
+      "sha256": "80b963f2116d5f4102f6ca43a195735df44db3d720893333280aabeaf7643e19"
+    },
+    {
+      "path": "web/ui/src/services/alertDetailApi.ts",
+      "sha256": "18036624790320c392ebb59307f27627076b89838615477c18677aa3ddc0241e"
+    },
+    {
+      "path": "web/ui/src/services/alertQueueActionsApi.ts",
+      "sha256": "bb889d72a8fe4c7f4bc9b6fe4424fec56c86f8343eb2f7df1ad4d629af9ee2d9"
+    },
+    {
+      "path": "web/ui/src/services/alertStatus.ts",
+      "sha256": "2d0767be9466c07b5354c0b8fddbc76d84df908fdd8edee2eff5335b4581502e"
+    },
+    {
+      "path": "web/ui/src/services/alertTriageApi.ts",
+      "sha256": "664a83767cc7106b5dc8a00b98a01a8ea06bbf0b287044de6f19b1afd1b615dc"
+    },
+    {
+      "path": "web/ui/src/services/api.ts",
+      "sha256": "0f3317d1ab2548716850e3b2cb350ce3b7a03b0f1fd1dd2d5360827897ad19ad"
+    },
+    {
+      "path": "web/ui/src/services/assetExportApi.ts",
+      "sha256": "ad06ad7624051fb327008a0abb84ee9e5a5a915c607b343ee7968857a6f7bfae"
+    },
+    {
+      "path": "web/ui/src/services/assetGovernanceApi.ts",
+      "sha256": "5201116525e6880dcbff9512697b36936559913cdb3913dc9b2c25dd100e7743"
+    },
+    {
+      "path": "web/ui/src/services/attackChainApi.ts",
+      "sha256": "0c29b1e1dc3797a98006a19c8dce05d46e36d6efc7f8a1f6d7db4a471f91ea53"
+    },
+    {
+      "path": "web/ui/src/services/auditGovernanceApi.ts",
+      "sha256": "6c852c82457b9daa67c59df9a68cdd71606dd6b4438113b00b4f89075815a5fb"
+    },
+    {
+      "path": "web/ui/src/services/authStorage.ts",
+      "sha256": "1791805c1ab2714b61808f2026a06589115143c39502319716baabe830cc756e"
+    },
+    {
+      "path": "web/ui/src/services/baselineApi.ts",
+      "sha256": "52a3dd380353da99ade908af5f737e99679a088313b2e8bc6d5fd05680f52854"
+    },
+    {
+      "path": "web/ui/src/services/campaignActionApi.ts",
+      "sha256": "6baa0876da10bacdde01dc8281ab32d838eb558452f2239678230d12f4b38cdd"
+    },
+    {
+      "path": "web/ui/src/services/campaignDetailApi.ts",
+      "sha256": "e63996cfa3c0095e07f9d562ccda1379a26f16524969b1c359fcca54ae3f79eb"
+    },
+    {
+      "path": "web/ui/src/services/complianceGovernanceApi.ts",
+      "sha256": "52a25ac2ffe30f8bd310652096db3b00fa80062bd55ac285e817d04ebe66a0f9"
+    },
+    {
+      "path": "web/ui/src/services/dashboardSnapshotApi.ts",
+      "sha256": "840746f504d2cf65e9a52fc4f3a25ad85856941a5a385326992999fde9d09c5f"
+    },
+    {
+      "path": "web/ui/src/services/dashboardTaskApi.ts",
+      "sha256": "03ccd0f392ed05ceaadc1faff9ac7f15595700408c05693d9e10b37d6cbd5def"
+    },
+    {
+      "path": "web/ui/src/services/dlqReplayApi.ts",
+      "sha256": "410533038f3ac72659f458e70d3d77709b84b3d1808c41da1f39b868e3e8cc2b"
+    },
+    {
+      "path": "web/ui/src/services/fusionApi.ts",
+      "sha256": "daf7ca40afbdf3d8c72c9d0679ca82bf2350f30d84486c0ae84490e40b44b8c7"
+    },
+    {
+      "path": "web/ui/src/services/mlopsActionApi.ts",
+      "sha256": "0708710f6a6838176368f04b34b3aff41e1763332b99863877306edf41d5ac45"
+    },
+    {
+      "path": "web/ui/src/services/modelActionApi.ts",
+      "sha256": "1f1bf9fc5209d4f49afc2c43e88cbb5a2b1d212cd349af491d7d2b2ad13f84ba"
+    },
+    {
+      "path": "web/ui/src/services/modelChartData.ts",
+      "sha256": "b3880a3e665091bba953e4a9cdbf58a9aa334c035ccf0cdb76b94dd8f2598ef1"
+    },
+    {
+      "path": "web/ui/src/services/modelWorkbenchApi.ts",
+      "sha256": "16b45977fda4d7a648fac408eb22cc8e39ada9499fde3f82bc2884886b502848"
+    },
+    {
+      "path": "web/ui/src/services/notFoundApi.ts",
+      "sha256": "88572060d5b78a2b4373f0eb3248bd86c42bd5bb659918b99ffad235472574cd"
+    },
+    {
+      "path": "web/ui/src/services/notificationGovernanceApi.ts",
+      "sha256": "99a0131ce5b8956c95c618b40415f41f9ade17dc9d475fda426900a54daabe57"
+    },
+    {
+      "path": "web/ui/src/services/pageApiPlans.ts",
+      "sha256": "1e5808de81289b8d1bac2a76232a9eca53a7d94b0b80ff4fdc3c786e6953b83b"
+    },
+    {
+      "path": "web/ui/src/services/pageSnapshotAdapters.ts",
+      "sha256": "80098ecf8bb58a88e7407c147483ce38cf31ff70e89da81a436304a9abc46ad7"
+    },
+    {
+      "path": "web/ui/src/services/playbookAutomationApi.ts",
+      "sha256": "f583c7fdfd8ac2093ccae6a39b745c17fc1fbc12736e3a3925d59da76065c120"
+    },
+    {
+      "path": "web/ui/src/services/realtime.ts",
+      "sha256": "2d1a15a2783ae75c38984f2d47d1d400f1978bac1ea3d8c525e94c8c0173d7b3"
+    },
+    {
+      "path": "web/ui/src/services/settingsGovernanceApi.ts",
+      "sha256": "b8f33c1a6bae8c8fc3c1fdd5261380d5941532a6f903ac039f3ba641df46c72e"
+    },
+    {
+      "path": "web/ui/src/services/whitelistGovernanceApi.ts",
+      "sha256": "69eacf3aa70cc504f2d1f121c519f824e6717d638764d789aa71e237d10c817c"
+    }
+  ],
+  "policy": {
+    "zero_empty_missing_unavailable_are_distinct": true,
+    "runtime_fixture_fallback_allowed": false,
+    "hardcoded_business_fact_allowed": false,
+    "frontend_derived_topology_or_kpi_allowed": false,
+    "new_findings_require_catalog_regeneration_and_owner_review": true,
+    "external_routes_fields_controls_operations_removed": false
+  },
+  "rules": [
+    {
+      "rule_id": "default_demo_resource_id",
+      "classification": "prohibited_demo_fill",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "derived_business_collection",
+      "classification": "prohibited_business_inference",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "derived_summary_fallback",
+      "classification": "prohibited_business_inference",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "fabricated_comparison_literal",
+      "classification": "prohibited_demo_fill",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "fabricated_generic_snapshot",
+      "classification": "prohibited_business_inference",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "fixed_detail_business_fallback",
+      "classification": "prohibited_demo_fill",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "fixed_detail_collection_fallback",
+      "classification": "prohibited_business_inference",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "fixed_detail_metric_literal",
+      "classification": "prohibited_business_inference",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "fixed_detail_timeline_literal",
+      "classification": "prohibited_demo_fill",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "fixed_numeric_business_fallback",
+      "classification": "prohibited_business_inference",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "fixed_page_metric_fallback",
+      "classification": "prohibited_business_inference",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "fixed_screen_visual_fixture",
+      "classification": "prohibited_business_inference",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "generated_business_trend",
+      "classification": "prohibited_business_inference",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "hardcoded_private_ip_literal",
+      "classification": "prohibited_demo_fill",
+      "owner": "frontend-contract-owner"
+    },
+    {
+      "rule_id": "runtime_business_fixture_object",
+      "classification": "prohibited_runtime_fixture_dependency",
+      "owner": "frontend-build-owner"
+    },
+    {
+      "rule_id": "runtime_mock_dependency",
+      "classification": "prohibited_runtime_fixture_dependency",
+      "owner": "frontend-build-owner"
+    },
+    {
+      "rule_id": "runtime_static_business_fallback",
+      "classification": "prohibited_runtime_fixture_dependency",
+      "owner": "frontend-build-owner"
+    },
+    {
+      "rule_id": "runtime_visual_fixture_bypass",
+      "classification": "prohibited_runtime_fixture_dependency",
+      "owner": "frontend-build-owner"
+    },
+    {
+      "rule_id": "truthy_numeric_fallback",
+      "classification": "review_required_null_semantics",
+      "owner": "frontend-contract-owner"
+    }
+  ],
+  "coverage": {
+    "source_files": 73,
+    "open_findings": 0,
+    "counts_by_rule": {
+      "default_demo_resource_id": 0,
+      "derived_business_collection": 0,
+      "derived_summary_fallback": 0,
+      "fabricated_comparison_literal": 0,
+      "fabricated_generic_snapshot": 0,
+      "fixed_detail_business_fallback": 0,
+      "fixed_detail_collection_fallback": 0,
+      "fixed_detail_metric_literal": 0,
+      "fixed_detail_timeline_literal": 0,
+      "fixed_numeric_business_fallback": 0,
+      "fixed_page_metric_fallback": 0,
+      "fixed_screen_visual_fixture": 0,
+      "generated_business_trend": 0,
+      "hardcoded_private_ip_literal": 0,
+      "runtime_business_fixture_object": 0,
+      "runtime_mock_dependency": 0,
+      "runtime_static_business_fallback": 0,
+      "runtime_visual_fixture_bypass": 0,
+      "truthy_numeric_fallback": 0
+    },
+    "resolved_in_this_slice": [
+      "pageSnapshotAdapters graph hard-coded center IP fallback",
+      "topic tunnel fabricated comparison literals",
+      "topic tunnel truthy summary fallback and display-list business-row inference",
+      "visual-breakdown query parameter no longer bypasses real page APIs with runtime fixture snapshots",
+      "untyped page responses render partial and unavailable instead of guessed KPI values rows IDs or statuses",
+      "graph landing queries no longer inject a fixed frontend center address",
+      "topic delivery summary no longer derives report and evidence counts from completeness or display rows",
+      "selected live adapters render missing addresses unavailable and contain no fixed private business address literals",
+      "selected adapters preserve authoritative zero values across compatibility aliases",
+      "data-quality topic rows require authoritative topic_health payloads instead of frontend-scaled aggregates",
+      "production bundle statically excludes MSW worker modules and runtime fixture source graphs",
+      "alert campaign and topic pilot fixture/live schema diff and sixteen-field displayed-value reconciliation are read-only and candidate-bound"
+    ],
+    "remaining": [
+      "capture additional live zero empty partial and unavailable pilot windows beyond the current sampled reconciliation",
+      "capture zero, empty, partial and unavailable live samples in Windows Chrome"
+    ]
+  },
+  "findings": [],
+  "catalog_sha256": "3616a5a0f4e77b781ff8b4dc07aec0da2a2c64c0e79ff05cfd74def657be1454"
+}

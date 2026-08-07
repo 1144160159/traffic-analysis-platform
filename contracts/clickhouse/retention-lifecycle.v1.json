@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-clickhouse-retention-lifecycle-v1",
+  "remediation_id": "T-CH-005",
+  "status": "implementing",
+  "coverage_status": "PARTIAL_REPOSITORY_RETENTION_MATRIX_PCAP_ALIGNMENT_AND_SESSION_ROLLUP",
+  "production_applied": false,
+  "policy": {
+    "retention_change_requires_capacity_and_compliance_approval": true,
+    "object_retention_must_exceed_reference_retention_by_grace_days": true,
+    "high_granularity_expiry_requires_versioned_rollup": true,
+    "expired_object_reference_requires_explicit_state_or_http_410": true,
+    "ttl_migration_must_use_versioned_migration": true,
+    "live_configuration_must_be_recaptured_before_cutover": true
+  },
+  "retention_matrix": [
+    {
+      "domain": "raw_flow",
+      "store": "clickhouse",
+      "dataset": "traffic.flows_raw_local",
+      "retention_days": 30,
+      "time_field": "ts_end",
+      "expiry_behavior": "detail expires after downstream session and rollup reconciliation",
+      "owner": "clickhouse-data-owner"
+    },
+    {
+      "domain": "session_detail",
+      "store": "clickhouse",
+      "dataset": "traffic.sessions_local",
+      "retention_days": 90,
+      "time_field": "ts_end",
+      "expiry_behavior": "daily rollup remains queryable after detail expiry",
+      "owner": "clickhouse-data-owner"
+    },
+    {
+      "domain": "session_daily_rollup",
+      "store": "clickhouse",
+      "dataset": "traffic.sessions_daily_rollup_v1_local",
+      "retention_days": 365,
+      "time_field": "day",
+      "aggregate_version": 1,
+      "source_dataset": "traffic.sessions_local",
+      "expiry_behavior": "versioned aggregate expires after annual reporting window",
+      "owner": "clickhouse-data-owner"
+    },
+    {
+      "domain": "alert_fact",
+      "store": "clickhouse",
+      "dataset": "traffic.alerts_local",
+      "retention_days": 30,
+      "time_field": "last_seen",
+      "expiry_behavior": "authoritative workflow and audit state remains outside ClickHouse",
+      "owner": "alert-domain-owner"
+    },
+    {
+      "domain": "audit_event",
+      "store": "clickhouse",
+      "dataset": "traffic.user_events_local",
+      "retention_days": 180,
+      "time_field": "timestamp",
+      "expiry_behavior": "compliance authority remains governed by PostgreSQL and archive policy",
+      "owner": "audit-security-owner"
+    },
+    {
+      "domain": "pcap_index",
+      "store": "clickhouse",
+      "dataset": "traffic.pcap_index_local",
+      "retention_days": 30,
+      "time_field": "ts_start",
+      "expiry_behavior": "index expires before object lifecycle deletion",
+      "owner": "pcap-domain-owner"
+    },
+    {
+      "domain": "pcap_object",
+      "store": "minio",
+      "dataset": "pcap-archive",
+      "retention_days": 37,
+      "reference_dataset": "traffic.pcap_index_local",
+      "reference_retention_days": 30,
+      "grace_days": 7,
+      "expiry_behavior": "download returns explicit retention-expired state after object deletion",
+      "owner": "pcap-domain-owner"
+    },
+    {
+      "domain": "topic_snapshot",
+      "store": "clickhouse",
+      "dataset": "traffic.campaign_projection_events_v2_local",
+      "retention_days": 180,
+      "time_field": "received_at",
+      "expiry_behavior": "snapshot metadata remains deterministic while exported objects follow their manifest lifecycle",
+      "owner": "topic-domain-owner"
+    },
+    {
+      "domain": "report_object",
+      "store": "minio",
+      "dataset": "report-artifacts",
+      "retention_days": 90,
+      "expiry_behavior": "manifest remains authoritative and download returns HTTP 410 after retention expiry",
+      "owner": "report-domain-owner"
+    }
+  ],
+  "repository_bindings": {
+    "common_sessions_ddl": "common/sql/ch/00-all-tables.sql",
+    "docker_sessions_ddl": "go/control-plane/deployments/docker/init/clickhouse_merged.sql",
+    "pcap_object_lifecycle": "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml",
+    "session_rollup_migration": "deployments/clickhouse/migrations/202608031600_sessions_daily_rollup_v1.sql"
+  },
+  "observed_live_before_candidate": {
+    "clickhouse_evidence": "doc/02_acceptance/runs/20260803-remediation-clickhouse-live-schema-v4/manifest.json",
+    "sessions_days": 90,
+    "pcap_index_days": 30,
+    "pcap_object_days": 14,
+    "maximum_dangling_reference_days": 16,
+    "session_rollup_v1_present": false,
+    "observation_is_not_production_apply_evidence": true
+  },
+  "closure_blockers": [
+    "approve storage and compliance impact of extending PCAP objects from 14 to 37 days",
+    "apply and verify the MinIO lifecycle candidate without deleting existing objects early",
+    "apply the rollup migration on every shard and replica and backfill bounded partitions",
+    "reconcile detail and rollup counts sums aggregate version and late events before any read cutover",
+    "inventory every ClickHouse TTL and every referenced MinIO object class against the retention matrix",
+    "define explicit expired-reference behavior for every report topic and evidence manifest",
+    "complete performance failure rollback observation and independent gates"
+  ]
+}

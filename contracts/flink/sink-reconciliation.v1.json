@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-flink-sink-reconciliation-v1",
+  "remediation_id": "T-FLINK-004",
+  "scope": "Canonical nine Flink jobs, external sink acknowledgement, replay marking and key-level reconciliation. Static G0/G1 guards do not prove live G2/G3 reconciliation.",
+  "protocol": {
+    "jdbc": "stable business key plus projection version; retain checkpoint state until executeBatch receipt",
+    "opensearch": "stable document id; bounded retry; any failed bulk item fails the operator",
+    "http": "stable event identity in payload or idempotency key; bounded retry; only explicit 2xx receipt clears pending state",
+    "minio": "temporary object followed by immutable manifest containing sha256, size, state and business reference",
+    "replay_marker": "replay_id is assigned before replay processing; empty means online traffic",
+    "reconciliation": "compare event_id or a documented derived business key and version; count-only comparison is forbidden"
+  },
+  "required_job_metrics": [
+    "input_total",
+    "accepted_total",
+    "dropped_total",
+    "late_total",
+    "failed_total",
+    "dlq_total",
+    "sink_success_total",
+    "last_watermark"
+  ],
+  "jobs": [
+    {
+      "id": "flink-session-job",
+      "reconciliation_keys": ["event_id", "tenant_id+session_id+state_version"],
+      "sinks": ["ClickHouse flows_raw", "ClickHouse sessions", "OpenSearch sessions_v1", "Kafka sessions.v1 and dlq.v1"],
+      "gaps": ["unified eight-metric vector", "replay_id on every projection", "live source-offset to CH/OS/Kafka key reconciliation"]
+    },
+    {
+      "id": "flink-feature-job",
+      "reconciliation_keys": ["event_id", "tenant_id+session_id+feature_set_id"],
+      "sinks": ["ClickHouse features", "Kafka features.v1, dlq.v1 and l2 trigger"],
+      "gaps": ["checkpointed JDBC ACK receipt", "unified eight-metric vector", "replay_id and live key reconciliation"]
+    },
+    {
+      "id": "flink-rule-job",
+      "reconciliation_keys": ["event_id", "tenant_id+detection_id"],
+      "sinks": ["ClickHouse detections", "Kafka detections.v1 and dlq.v1"],
+      "gaps": ["checkpointed JDBC ACK receipt", "unified eight-metric vector", "replay_id and live key reconciliation"]
+    },
+    {
+      "id": "flink-pcap-index-job",
+      "reconciliation_keys": ["tenant_id+probe_id+file_key+ts_start+ts_end"],
+      "sinks": ["ClickHouse pcap_index", "Kafka dlq.v1"],
+      "gaps": ["sink-owned executeBatch success metric", "checkpointed JDBC receipt", "replay_id and live object-manifest/index reconciliation"]
+    },
+    {
+      "id": "flink-cep-job",
+      "reconciliation_keys": ["event_id", "tenant_id+campaign_id"],
+      "sinks": ["ClickHouse campaigns", "Kafka campaigns.v1 and dlq.v1"],
+      "gaps": ["checkpointed JDBC ACK receipt", "unified eight-metric vector", "replay_id and live key reconciliation"]
+    },
+    {
+      "id": "flink-behavior-job",
+      "reconciliation_keys": ["event_id", "tenant_id+detection_id"],
+      "sinks": ["ClickHouse detections_behavior", "Kafka detections.v1 and model-update ACK"],
+      "gaps": ["checkpointed JDBC ACK receipt", "unified eight-metric vector", "replay_id and live key reconciliation"]
+    },
+    {
+      "id": "flink-alert-generator-job",
+      "reconciliation_keys": ["alert_id", "evidence_id", "event_id"],
+      "sinks": ["ClickHouse alerts and evidence", "OpenSearch alerts", "Kafka alerts.v1"],
+      "gaps": ["checkpointed JDBC ACK receipt", "unified eight-metric vector", "replay_id and live CH/OS/Kafka key reconciliation"]
+    },
+    {
+      "id": "flink-log-job",
+      "reconciliation_keys": ["log_id"],
+      "sinks": ["Loki HTTP push", "OpenSearch device logs"],
+      "gaps": ["Loki effect is at-least-once rather than idempotent", "unified eight-metric vector", "replay_id and live Loki/OpenSearch key reconciliation"]
+    },
+    {
+      "id": "flink-user-behavior-job",
+      "reconciliation_keys": ["anomaly_id+event_version", "alert_id"],
+      "sinks": ["ClickHouse user_anomalies_v2", "Kafka alerts.v1 and dlq.v1"],
+      "gaps": ["unified late/DLQ/last-watermark export", "live source-offset to user_anomalies_v2/alerts/DLQ key reconciliation"]
+    }
+  ],
+  "source_assertions": [
+    {
+      "source": "java/flink-jobs/flink-pcap-index-job/src/main/java/com/traffic/flink/pcap/sink/ClickHousePcapSinkFactory.java",
+      "required_tokens": ["JdbcSink.sink(", "PcapIndexStatementBuilder"],
+      "forbidden_tokens": ["recordInsertSuccess", "getSuccessCount"]
+    },
+    {
+      "source": "java/flink-jobs/flink-pcap-index-job/src/main/java/com/traffic/flink/pcap/metrics/PcapIndexMetrics.java",
+      "required_tokens": ["dlq_write_total"],
+      "forbidden_tokens": ["clickhouse_write_success_total", "clickhouse_write_failure_total"]
+    },
+    {
+      "source": "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/sink/ClickHouseAnomalySink.java",
+      "required_tokens": ["CheckpointedFunction", "clickhouse-user-anomaly-pending-v2", "writeWithRetry(batch);", "statement.executeBatch()", "results.length != batch.size()", "Statement.EXECUTE_FAILED", "event_version, replay_id", "buffer.subList(0, batch.size()).clear()"],
+      "forbidden_tokens": ["CREATE TABLE", "CREATE TABLE IF NOT EXISTS"],
+      "ordered_tokens": [["writeWithRetry(batch);", "buffer.subList(0, batch.size()).clear()"]]
+    },
+    {
+      "source": "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserBehaviorJob.java",
+      "required_tokens": ["clickhouse.anomaly.table", "clickhouse.batch.interval.ms", "clickhouse.max.retries", "replay.id", "mark-replay-context", "ClickHouseAnomalySink("]
+    },
+    {
+      "source": "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/sink/OpenSearchAlertSinkFactory.java",
+      "required_tokens": ["setFailureHandler", ".id(alert.getAlertId())", "bulk item failed after retries"]
+    },
+    {
+      "source": "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/sink/OpenSearchSinkFactory.java",
+      "required_tokens": ["setFailureHandler", ".id(log.getLogId())", "bulk item failed after retries"]
+    },
+    {
+      "source": "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/sink/LokiSinkFactory.java",
+      "required_tokens": ["CheckpointedFunction", "loki-pending-streams-v1", "status >= 200 && status < 300", "pendingStreams.subList(0, attempt.size()).clear()"],
+      "ordered_tokens": [["status >= 200 && status < 300", "pendingStreams.subList(0, attempt.size()).clear()"]]
+    },
+    {
+      "source": "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/FlowRawClickHouseSinkFunction.java",
+      "required_tokens": ["CheckpointedFunction", "clickhouse-flow-raw-pending-v1", "writeWithRetry(batch);", "buffer.subList(0, batch.size()).clear()"],
+      "ordered_tokens": [["writeWithRetry(batch);", "buffer.subList(0, batch.size()).clear()"]]
+    },
+    {
+      "source": "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/OpenSearchSinkFunction.java",
+      "required_tokens": ["CheckpointedFunction", "bulkResponse.getItems()", "itemResponse.isFailed()", "buffer.clear()"],
+      "ordered_tokens": [["client.bulk(bulkRequest, RequestOptions.DEFAULT)", "buffer.clear()"]]
+    }
+  ],
+  "schema_sources": [
+    "deployments/clickhouse/migrations/202608031000_user_anomalies_v2.sql",
+    "common/sql/ch/00-all-tables.sql",
+    "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml",
+    "go/control-plane/deployments/docker/init/clickhouse_merged.sql"
+  ],
+  "schema_required_tokens": [
+    "user_anomalies_v2_local",
+    "ReplicatedReplacingMergeTree",
+    "event_version",
+    "replay_id",
+    "cityHash64(tenant_id, anomaly_id)"
+  ],
+  "gate": {
+    "repository_guard": "PASS allows IMPLEMENTING only while any per-job gap remains",
+    "remaining": [
+      "complete the unified metric vector for all nine jobs",
+      "add replay_id to every replayable projection and HTTP request",
+      "checkpoint or durably quarantine every JDBC/HTTP partial failure path",
+      "run live failure injection and key-level source-offset/sink reconciliation",
+      "complete G4 through G8 performance, browser, release, rollback and observation gates"
+    ]
+  }
+}

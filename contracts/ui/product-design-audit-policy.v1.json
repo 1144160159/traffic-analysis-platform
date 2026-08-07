@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "policy_id": "UI-PRODUCT-DESIGN-AUDIT-V1",
+  "audit_method": "Product Design",
+  "figma_enabled": false,
+  "evidence": {
+    "current_run_screenshots_only": true,
+    "saved_screenshot_must_be_inspected": true,
+    "findings_must_reference_step_or_screenshot": true,
+    "screenshots_do_not_prove_full_accessibility": true,
+    "production_candidate_bundle_required_for_closure": true,
+    "mock_must_be_disabled_for_closure": true
+  },
+  "finding_lifecycle": {
+    "statuses": [
+      "OPEN",
+      "IN_PROGRESS",
+      "VERIFYING",
+      "CLOSED"
+    ],
+    "closed_is_terminal": true,
+    "close_immediately_when_all_close_conditions_pass": true,
+    "default_progress_report_statuses": [
+      "OPEN",
+      "IN_PROGRESS",
+      "VERIFYING"
+    ],
+    "closed_findings_excluded_from_future_open_lists": true,
+    "immutable_closure_evidence_retained": true,
+    "regression_requires_new_occurrence_id": true
+  },
+  "close_conditions": [
+    "the reported product or accessibility defect is fixed in the isolated remediation worktree",
+    "issue-specific tests and static guards pass",
+    "the corrected state is recaptured in the same production candidate bundle and viewport",
+    "the saved screenshot is inspected and accepted",
+    "the relevant interaction, API, permission and error state has no unresolved failure",
+    "the closure evidence is immutable and reviewer-verifiable"
+  ],
+  "audit_output": {
+    "required_sections": [
+      "scope",
+      "user_goal",
+      "numbered_steps",
+      "ux_findings",
+      "accessibility_risks",
+      "evidence_limits",
+      "open_remediation_items"
+    ],
+    "show_closed_findings": false,
+    "sort_open_findings": "severity_then_route_then_finding_id"
+  }
+}

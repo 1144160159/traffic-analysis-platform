@@ -1,0 +1,91 @@
+{
+  "feature_id": "F-DATAQUALITY-001",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/data-quality"],
+    "preserved_actions": ["data-quality-context-action"],
+    "preserved_api_operations": ["GET /v1/data-quality", "POST /v1/data-quality/actions"],
+    "added_api_operations": [
+      "GET /v1/data-quality/datasets",
+      "PUT /v1/data-quality/datasets/{dataset_id}",
+      "GET /v1/data-quality/rules",
+      "POST /v1/data-quality/rules",
+      "POST /v1/data-quality/rules/{rule_id}/transitions",
+      "POST /v1/data-quality/events/{quality_event_id}/repairs",
+      "POST /v1/data-quality/repairs/{repair_id}/transitions"
+    ],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "data-quality.control-plane.snapshot.v1",
+    "controls": [
+      {"control_id": "data-quality-context-action", "action_id": "data-quality-context-action"}
+    ],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed", "accepted", "running", "cancelled", "compensating"]
+  },
+  "api": {
+    "operation_id": "getDataQualityControlPlaneSnapshot",
+    "method": "GET",
+    "path": "/v1/data-quality",
+    "response_envelope": "data-meta-error",
+    "async": false,
+    "side_effects": "none",
+    "read_semantics": "reads the last PostgreSQL-persisted collection; source collection runs only in the background loop"
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "missing or unavailable measurements are unknown and never contribute to a passing quality score",
+      "formal Kafka lag comes from broker end offsets minus committed consumer-group offsets, never a ClickHouse insertion-rate proxy",
+      "dataset, baseline, minimum audit and outbox state commit atomically in PostgreSQL",
+      "quality rules and repairs are tenant-scoped, versioned and default to observe or dry-run until independently approved",
+      "flow replay uses a dedicated readiness-validated projection topic and must never feed flow.events.v1 or duplicate the flows_raw authority",
+      "repair success cannot close an issue until authoritative facts, projections, object manifests and watermarks reconcile"
+    ],
+    "states": ["detected", "triaged", "repair_planned", "dry_run_passed", "approved", "replaying", "reconciled", "closed", "failed"],
+    "compensation": "stop replay, preserve immutable evidence, reconcile in-flight identities, and execute an approved compensating repair without deleting authoritative facts"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "minio"],
+    "dataset_signal_contract": "contracts/data-quality/dataset-signals.v1.json",
+    "measurement_states": ["measured", "unknown", "not_applicable", "error"],
+    "migration": "expand with 202608041400 data-quality control plane, 202608041500 governance, 202608041600 rule evaluation and 202608041700 repair lifecycle migrations; shadow rules and real watermarks before any approved activation",
+    "event_types": ["data_quality.baseline.activated.v1", "data_quality.rule.changed.v1", "data_quality.repair.changed.v1"],
+    "source_watermarks": ["kafka.end_offset_minus_committed_offset", "flink.event_time_watermark", "sink.commit", "business.aggregate_version", "minio.object_manifest_sha256"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["data-quality:read", "data-quality:write"],
+    "negative_tests": [
+      "cross-tenant dataset, rule, baseline, event, repair and sample references are rejected",
+      "write operations require data-quality:write and cannot accept tenant identity from request payload",
+      "repair requester cannot approve the same repair",
+      "unknown measurements remain partial or gray rather than pass or green"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["quality snapshot by tenant and dataset", "24-hour baseline activation", "bounded rule evaluation", "repair dry-run and cross-store reconciliation"],
+    "stop_conditions": ["cross-tenant result, watermark regression, missing manifest, unreconciled replay expansion, online P99 or storage resource budget exceeds the approved baseline"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 Feature Contract, OpenAPI, migration and generated-client compatibility",
+      "G1 baseline transaction commit plus outbox and audit rollback injection",
+      "G2 real PostgreSQL, Kafka, Flink, ClickHouse and MinIO signal collection",
+      "G3 tenant-scoped repair replay and cross-store reconciliation",
+      "G4 fixed-scale quality evaluation and repair resource budgets",
+      "G5 Windows Chrome mock-off unknown, partial and lifecycle states",
+      "G6 expand, shadow, canary, rollback and in-flight repair handling"
+    ],
+    "evidence": ["immutable candidate manifest, rule and baseline versions, source watermarks, repair identities, audit/outbox rows, object manifests, reconcile report, HAR, trace, rollback and T+0/T+1/T+3/T+7 observations"]
+  },
+  "rollout": {
+    "feature_flag": "DATA_QUALITY_RELEASE_BLOCKING_ENABLED",
+    "default": false,
+    "strategy": "shadow-read",
+    "rollback_runbook": "doc/07_alignment/runbooks/T-DQ-001-persistent-quality-control-plane.md"
+  }
+}

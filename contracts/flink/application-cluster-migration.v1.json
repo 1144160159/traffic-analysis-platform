@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "contract_id": "flink-application-cluster-migration-v1",
+  "phase": "expand",
+  "namespace": "flink",
+  "source_session_cluster_id": "flink-traffic",
+  "application_image": {
+    "build_file": "java/flink-jobs/deployments/Dockerfile.application",
+    "required_reference": "repository@sha256:<64-lowercase-hex>"
+  },
+  "state": {
+    "checkpoint_root": "s3://flink-checkpoints/checkpoints/application-clusters",
+    "savepoint_root": "s3://flink-checkpoints/savepoints/application-clusters",
+    "ha_root": "s3://flink-checkpoints/ha/application-clusters",
+    "job_result_root": "s3://flink-checkpoints/job-result-store/application-clusters",
+    "rollback_savepoint_retention": "until G7 plus T+7 observation and explicit approval",
+    "allow_non_restored_state": false
+  },
+  "migration": {
+    "strategy": "serial-stop-with-savepoint-restore",
+    "max_parallel_applications_during_migration": 1,
+    "preconditions": [
+      "source job RUNNING with no root exception",
+      "fresh completed checkpoint recorded",
+      "stop-with-savepoint completed under the job-specific savepoint prefix",
+      "savepoint manifest sha256 and source job id recorded",
+      "application image digest and contract digest recorded"
+    ],
+    "success_conditions": [
+      "exactly one RUNNING job with canonical name",
+      "all expected tasks RUNNING",
+      "restore count is positive",
+      "new completed checkpoint exists under the job-specific checkpoint path",
+      "Kafka principal and consumer group match this contract",
+      "source and projections reconcile within the approved window"
+    ],
+    "rollback": [
+      "cancel the new application cluster without disposing the retained savepoint",
+      "restore the source Session Cluster job from the retained rollback savepoint",
+      "do not use allowNonRestoredState",
+      "verify RUNNING tasks, a new checkpoint, Kafka lag and sink reconciliation"
+    ]
+  },
+  "online_expand_budget": {
+    "max_additional_cpu_requests": 8,
+    "max_additional_memory_requests_gib": 22,
+    "automatic_pause_on_exceed": true
+  },
+  "common_resources": {
+    "jobmanager": {"cpu": 1, "memory_process": "2048m", "replicas": 2},
+    "taskmanager": {"cpu": 2, "memory_process": "6144m", "slots": 4},
+    "local_rocksdb_empty_dir_size": "20Gi"
+  },
+  "jobs": [
+    {
+      "migration_order": 1,
+      "id": "flink-pcap-index-job",
+      "cluster_id": "flink-app-pcap-index",
+      "principal_id": "flink-pcap-index-job",
+      "job_name": "PCAP Index Job v2",
+      "module": "flink-pcap-index-job",
+      "main_class": "com.traffic.flink.pcap.PcapIndexJob",
+      "jar_uri": "local:///opt/flink/usrlib/flink-pcap-index-job.jar",
+      "parallelism": 2,
+      "max_parallelism": 128,
+      "expected_tasks": 2,
+      "taskmanager_replicas_ceiling": 1
+    },
+    {
+      "migration_order": 2,
+      "id": "flink-user-behavior-job",
+      "cluster_id": "flink-app-user-behavior",
+      "principal_id": "flink-user-behavior-job",
+      "job_name": "User Behavior Anomaly Detection Job",
+      "module": "flink-user-behavior-job",
+      "main_class": "com.traffic.flink.behavior.user.UserBehaviorJob",
+      "jar_uri": "local:///opt/flink/usrlib/flink-user-behavior-job.jar",
+      "parallelism": 2,
+      "max_parallelism": 128,
+      "expected_tasks": 10,
+      "taskmanager_replicas_ceiling": 1
+    },
+    {
+      "migration_order": 3,
+      "id": "flink-session-job",
+      "cluster_id": "flink-app-session",
+      "principal_id": "flink-session-job",
+      "job_name": "Session Aggregation Job V2",
+      "module": "flink-session-job",
+      "main_class": "com.traffic.flink.session.SessionJob",
+      "jar_uri": "local:///opt/flink/usrlib/flink-session-job.jar",
+      "parallelism": 12,
+      "max_parallelism": 128,
+      "expected_tasks": 24,
+      "taskmanager_replicas_ceiling": 3
+    },
+    {
+      "migration_order": 4,
+      "id": "flink-feature-job",
+      "cluster_id": "flink-app-feature",
+      "principal_id": "flink-feature-job",
+      "job_name": "Feature Extraction Job v3 (Full Enhanced)",
+      "module": "flink-feature-job",
+      "main_class": "com.traffic.flink.feature.FeatureJob",
+      "jar_uri": "local:///opt/flink/usrlib/flink-feature-job.jar",
+      "parallelism": 4,
+      "max_parallelism": 128,
+      "expected_tasks": 18,
+      "taskmanager_replicas_ceiling": 1
+    },
+    {
+      "migration_order": 5,
+      "id": "flink-rule-job",
+      "cluster_id": "flink-app-rule",
+      "principal_id": "flink-rule-job",
+      "job_name": "Rule Engine Job (Enhanced)",
+      "module": "flink-rule-job",
+      "main_class": "com.traffic.flink.rule.RuleJob",
+      "jar_uri": "local:///opt/flink/usrlib/flink-rule-job.jar",
+      "parallelism": 4,
+      "max_parallelism": 128,
+      "expected_tasks": 12,
+      "taskmanager_replicas_ceiling": 1
+    },
+    {
+      "migration_order": 6,
+      "id": "flink-cep-job",
+      "cluster_id": "flink-app-cep",
+      "principal_id": "flink-cep-job",
+      "job_name": "CEP Correlation Job",
+      "module": "flink-cep-job",
+      "main_class": "com.traffic.flink.cep.CepJob",
+      "jar_uri": "local:///opt/flink/usrlib/flink-cep-job.jar",
+      "parallelism": 8,
+      "max_parallelism": 128,
+      "expected_tasks": 32,
+      "taskmanager_replicas_ceiling": 2
+    },
+    {
+      "migration_order": 7,
+      "id": "flink-behavior-job",
+      "cluster_id": "flink-app-behavior",
+      "principal_id": "flink-behavior-job",
+      "job_name": "Behavior Detection Job",
+      "module": "flink-behavior-job",
+      "main_class": "com.traffic.flink.behavior.BehaviorDetectionJob",
+      "jar_uri": "local:///opt/flink/usrlib/flink-behavior-job.jar",
+      "parallelism": 4,
+      "max_parallelism": 128,
+      "expected_tasks": 12,
+      "taskmanager_replicas_ceiling": 1
+    },
+    {
+      "migration_order": 8,
+      "id": "flink-alert-generator-job",
+      "cluster_id": "flink-app-alert-generator",
+      "principal_id": "flink-alert-generator-job",
+      "job_name": "Alert Generator Job",
+      "module": "flink-alert-generator-job",
+      "main_class": "com.traffic.flink.alert.AlertGeneratorJob",
+      "jar_uri": "local:///opt/flink/usrlib/flink-alert-generator-job.jar",
+      "parallelism": 4,
+      "max_parallelism": 128,
+      "expected_tasks": 16,
+      "taskmanager_replicas_ceiling": 1
+    },
+    {
+      "migration_order": 9,
+      "id": "flink-log-job",
+      "cluster_id": "flink-app-log",
+      "principal_id": "flink-log-job",
+      "job_name": "Device Log Job",
+      "module": "flink-log-job",
+      "main_class": "com.traffic.flink.log.LogJob",
+      "jar_uri": "local:///opt/flink/usrlib/flink-log-job.jar",
+      "parallelism": 1,
+      "max_parallelism": 128,
+      "expected_tasks": 2,
+      "taskmanager_replicas_ceiling": 1
+    }
+  ]
+}

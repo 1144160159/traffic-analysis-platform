@@ -1,0 +1,73 @@
+{
+  "feature_id": "F-COMMON-003",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/alerts", "/alerts/:alertId"],
+    "preserved_actions": ["alert-response-request", "alert-investigation-note", "alert-response-reanalyze"],
+    "preserved_api_operations": [
+      "POST /v1/alerts/{id}/response-actions",
+      "GET /v1/alerts/{id}/response-actions/{job_id}",
+      "POST /v1/alerts/{id}/response-actions/{job_id}/approval",
+      "POST /v1/alerts/{id}/response-actions/{job_id}/cancel",
+      "POST /v1/alerts/{id}/response-actions/{job_id}/compensations",
+      "POST /v1/alerts/{id}/investigation-notes"
+    ],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "common.action.receipt",
+    "controls": [
+      {"control_id": "alert-row-reanalyze", "action_id": "alert-response-reanalyze"},
+      {"control_id": "alert-row-note", "action_id": "alert-investigation-note"}
+    ],
+    "states": ["accepted", "pending_approval", "approved_awaiting_executor", "running", "success", "partial", "failed", "cancelled", "compensating", "compensation_blocked_external_executor"]
+  },
+  "api": {
+    "operation_id": "submitStableAction",
+    "method": "POST",
+    "path": "/v1/alerts/{id}/response-actions",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "display text is never parsed to choose command identity",
+      "action_id survives UI, API, transaction, outbox, audit and final receipt",
+      "accepted and running are never presented as final success",
+      "the requester cannot independently approve or reject the same action",
+      "terminal receipts cannot be overwritten by cancellation or compensation"
+    ],
+    "states": ["accepted", "pending_approval", "approved_awaiting_executor", "running", "completed", "partial", "failed", "cancelled", "compensating", "compensated", "blocked_external_executor", "compensation_blocked_external_executor"],
+    "compensation": "dispatch the compensation registered for the immutable action_id"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql"],
+    "migration": "202607302300 alert response execution projection plus 202607310000 approval and control workflow",
+    "event_types": ["alert.response.requested.v1"],
+    "source_watermarks": ["postgresql.alert_response_actions.revision", "postgresql.alert_response_outbox.outbox_id"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:write", "playbook:approve"],
+    "negative_tests": ["renamed display text does not change action_id", "viewer cannot submit a write action", "requester cannot approve own action", "stale revision cannot mutate action", "cancel cannot overtake a leased or published event"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["single command", "idempotent duplicate", "final receipt recovery"],
+    "stop_conditions": ["duplicate external effect or command/audit identity divergence"]
+  },
+  "acceptance": {
+    "tests": ["G0 action identity unit test", "G1 state machine", "G2 real API and outbox", "G3 audit/outbox reconcile", "G4 duplicate load profile", "G5 Windows Chrome renamed-label test"],
+    "evidence": ["one action_id and trace_id across browser, API, PG, outbox, audit and result"]
+  },
+  "rollout": {
+    "feature_flag": "stable_action_id_v1",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-COMMON-003-rollback.md"
+  }
+}

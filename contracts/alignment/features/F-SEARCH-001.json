@@ -1,0 +1,63 @@
+{
+  "feature_id": "F-SEARCH-001",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/alerts"],
+    "preserved_actions": [],
+    "preserved_api_operations": ["POST /v1/alerts/search"],
+    "preserved_query_states": ["query", "severity", "status", "alert_types", "labels", "src_ip", "dst_ip", "start_time", "end_time", "from", "size", "sort_field", "sort_order"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "alert.search.cursor.v1",
+    "controls": [],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "searchAlertsCursorV1",
+    "method": "POST",
+    "path": "/v1/alerts/search",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "tenant and permission clauses are generated from authenticated identity and execute in filter context",
+      "live traversal uses search_after with alert_id as a stable deterministic tie-breaker",
+      "consistent traversal uses a bounded PIT and never reports timed-out or failed shards as a complete result",
+      "signed cursors bind tenant, normalized filters, sort, page size, traversal mode and expiry",
+      "legacy from and size fields remain available only for the controlled shallow result window after cutover"
+    ]
+  },
+  "data": {
+    "authoritative_store": "clickhouse",
+    "read_models": ["opensearch"],
+    "migration": "publish the default-off cursor contract, validate alerts-v2 aliases, shadow query identities and latency, then canary the runtime flag while retaining legacy shallow requests",
+    "source_watermarks": ["opensearch.alerts.index_version", "opensearch.alerts.pit_id"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:read"],
+    "negative_tests": [
+      "cross-tenant signed cursor is rejected before OpenSearch access",
+      "cursor replay with changed filters, sort, size or mode is rejected",
+      "timed out or partially failed shard responses fail closed"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["controlled shallow search", "deep live search_after traversal", "consistent PIT traversal", "explicit PIT close"],
+    "stop_conditions": ["cross-tenant result, missing or duplicated page-boundary identity, P99 or OpenSearch resource budget exceeds the approved baseline"]
+  },
+  "acceptance": {
+    "tests": ["G0 OpenAPI and generated-client compatibility", "G1 signed cursor codec and HTTP repository protocol", "G2 real OpenSearch search_after and PIT traversal", "G3 page-boundary identity and tenant reconciliation", "G4 fixed-scale cold and warm performance", "G5 Windows Chrome traversal", "G6 canary, rollback and PIT cleanup"],
+    "evidence": ["candidate manifest, OpenSearch request profile, page-boundary identities, PIT inventory, HAR, trace, rollback and T+0/T+1/T+3/T+7 observations from immutable run_ids"]
+  },
+  "rollout": {
+    "feature_flag": "OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/T-OS-003-search-pagination-pit.md"
+  }
+}

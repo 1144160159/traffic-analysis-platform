@@ -1,0 +1,98 @@
+{
+  "contract_version": "1.0.0",
+  "feature_id": "F-SEARCH-001",
+  "remediation_id": "T-OS-003",
+  "work_package": "WP-23-OS",
+  "status": "implementing",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "authority": {
+    "mutable_alert_state": "postgresql",
+    "traffic_and_detection_facts": "clickhouse",
+    "search_projection": "opensearch",
+    "search_projection_is_authoritative": false
+  },
+  "api": {
+    "search": {"method": "POST", "path": "/v1/alerts/search", "operation_id": "searchAlertsCursorV1"},
+    "close_cursor": {"method": "DELETE", "path": "/v1/alerts/search/cursor", "operation_id": "closeAlertSearchCursorV1"},
+    "required_scope": "alert:read",
+    "tenant_source": "authenticated_identity"
+  },
+  "modes": {
+    "legacy_shallow": {
+      "request_fields_preserved": ["from", "size"],
+      "maximum_result_window": 1000,
+      "exact_total_and_aggregations_preserved": true
+    },
+    "live": {
+      "pagination": "search_after",
+      "snapshot_consistency": false,
+      "server_side_context": false
+    },
+    "pit": {
+      "pagination": "point_in_time_plus_search_after",
+      "snapshot_consistency": true,
+      "keep_alive": "2m",
+      "explicit_close": true,
+      "natural_expiry_fallback": true
+    }
+  },
+  "cursor": {
+    "format": "base64url_json_dot_hmac_sha256",
+    "signing_root": "JWT_SECRET_KEY",
+    "domain_separation": "traffic.alert.search.cursor.v1",
+    "maximum_bytes": 8192,
+    "ttl": "2m",
+    "bound_claims": ["tenant_id", "normalized_query_sha256", "cursor_mode", "page_size", "sort_values", "pit_id", "snapshot_at", "expires_at"],
+    "unknown_claims_rejected": true,
+    "cross_tenant_replay_rejected": true,
+    "query_drift_rejected": true
+  },
+  "query_guards": {
+    "maximum_page_size": 200,
+    "maximum_query_characters": 256,
+    "maximum_values_per_filter": 20,
+    "maximum_total_filter_values": 64,
+    "maximum_filter_value_characters": 128,
+    "query_timeout": "2s",
+    "allow_partial_search_results": false,
+    "track_total_hits_up_to": 10000,
+    "source_field_allowlist": ["tenant_id", "alert_id", "fingerprint", "community_id", "session_id", "campaign_id", "src_ip", "dst_ip", "src_port", "dst_port", "protocol", "alert_type", "labels", "score", "severity", "first_seen", "last_seen", "count", "status", "assignee", "updated_ts", "model_version", "rule_version", "feature_set_id", "evidence_ids", "event_id"],
+    "sort_field_allowlist": ["last_seen", "first_seen", "score", "severity", "status", "alert_type", "alert_id"],
+    "stable_tie_breaker": "alert_id",
+    "tenant_and_permission_filter_context": true,
+    "wildcard_query_type_exposed": false,
+    "regexp_query_type_exposed": false,
+    "timed_out_response_is_failure": true,
+    "failed_shard_response_is_failure": true
+  },
+  "runtime_guards": {
+    "feature_flag": "OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
+    "feature_flag_default_enabled": false,
+    "legacy_route_preserved": true,
+    "legacy_fields_preserved": true,
+    "production_mutations_in_repository_candidate": []
+  },
+  "observed_live_before_candidate": {
+    "captured_at": "2026-08-04T01:10:14+08:00",
+    "alerts_documents": 72065235,
+    "active_pit_contexts": 0,
+    "cursor_feature_flag_present": false,
+    "read_only_capture": true,
+    "observation_is_not_production_apply_evidence": true
+  },
+  "stop_conditions": [
+    "cross-tenant result or cursor acceptance",
+    "duplicate or missing identity at a page boundary",
+    "timed-out or failed-shard response presented as complete",
+    "PIT contexts fail to close or expire within the approved budget",
+    "P99 latency, rejection, heap, CPU or search-context budget exceeds the approved baseline"
+  ],
+  "closure_blockers": [
+    "candidate remains default-off and has not been built or deployed to a production canary",
+    "real OpenSearch search_after and PIT page-boundary reconciliation has not run",
+    "fixed-scale cold and warm query profiles and approved P50/P95/P99 budgets are absent",
+    "Windows Chrome production-bundle traversal, HAR and trace evidence is absent",
+    "canary rollback and T+0/T+1/T+3/T+7 PIT resource observation are incomplete"
+  ]
+}

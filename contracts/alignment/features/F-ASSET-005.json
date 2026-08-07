@@ -1,0 +1,100 @@
+{
+  "feature_id": "F-ASSET-005",
+  "contract_version": 1,
+  "status": "implementing",
+  "compatibility": {
+    "preserved_routes": ["/assets", "/graph", "/forensics"],
+    "preserved_actions": [],
+    "preserved_api_operations": [
+      "GET /v1/assets/{id}",
+      "GET /v1/assets/{id}/details",
+      "GET /v1/assets/{id}/history",
+      "GET /v1/assets/{id}/topology"
+    ],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "asset.detail.snapshot",
+    "controls": [
+      {"control_id": "asset-detail-refresh", "action_id": "asset-detail-refresh"},
+      {"control_id": "asset-detail-open-graph", "action_id": "asset-detail-open-graph"},
+      {"control_id": "asset-detail-open-evidence", "action_id": "asset-detail-open-evidence"}
+    ],
+    "states": ["loading", "success", "partial", "empty", "stale", "failed"]
+  },
+  "api": {
+    "operation_id": "getAssetDetailSnapshot",
+    "method": "GET",
+    "path": "/v1/assets/{asset_id}/snapshot",
+    "response_envelope": "data-meta-error",
+    "async": false,
+    "idempotency_key": "not-required-read-only",
+    "revision_field": "asset.revision"
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "asset, persisted detail, history and PostgreSQL topology are read under one tenant-scoped repeatable-read snapshot",
+      "the authenticated tenant is the only tenant authority and an asset from another tenant is indistinguishable from an absent asset",
+      "ClickHouse observations and alert context resolve the current PostgreSQL-owned IP identity for the stable asset ID, bind tenant plus bounded lookback plus PostgreSQL as_of, and never use a UI-provided identity",
+      "latest alert state uses deterministic argMax(state_version, updated_at, event_id) over the bounded raw alert stream and does not require a broad FINAL scan",
+      "NebulaGraph detail reads bind tenant_id plus stable asset_id and a hard relation limit; they never call the whole-tenant workbench loader",
+      "a NebulaGraph revision mismatch, future watermark or relation truncation remains partial until reconciled with the PostgreSQL asset revision",
+      "object evidence starts from bounded alert evidence IDs, resolves tenant-scoped ClickHouse evidence records and verifies MinIO Stat metadata; missing objects or SHA256 remain partial",
+      "unavailable ClickHouse observations, alert context, evidence objects and Nebula projection are listed in missing_sections and never synthesized from UI arrays, metadata arrays or hard-coded IP addresses",
+      "every returned section names an authoritative source watermark and topology edges preserve server-provided identity and direction"
+    ],
+    "states": ["complete", "partial", "stale", "failed"],
+    "compensation": "disable the additive snapshot endpoint and retain the four existing read endpoints; no business state is mutated"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "nebulagraph", "minio"],
+    "migration": "read-only additive contract; no schema migration required for the PostgreSQL subset",
+    "event_types": [],
+    "source_watermarks": [
+      "postgresql.snapshot_xids",
+      "postgresql.assets.revision",
+      "postgresql.asset_events.max_event_id",
+      "postgresql.asset_topology_links.observed_at",
+      "clickhouse.sessions.query_as_of",
+      "clickhouse.sessions.max_ts_end",
+      "clickhouse.alerts.query_as_of",
+      "clickhouse.alerts.max_last_seen",
+      "nebulagraph.entity.asset_revision",
+      "nebulagraph.entity.updated_at",
+      "clickhouse.evidence.query_as_of",
+      "clickhouse.evidence.max_ts",
+      "minio.evidence.max_last_modified"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["asset:read"],
+    "negative_tests": [
+      "an unauthenticated or asset-read-denied identity cannot read any snapshot section",
+      "a cross-tenant asset ID returns no asset, details, history, topology, observation, alert or evidence fact"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["asset detail snapshot", "bounded history", "bounded topology", "partial cross-store response"],
+    "stop_conditions": ["history or topology exceeds the hard limit, repeatable-read transaction exceeds the approved budget, missing sections are rendered as zero-valued success, or tenant filtering is absent"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 OpenAPI, feature contract and Go regression",
+      "G1 snapshot identity, explicit partial, bounds, scope and cross-tenant tests",
+      "G2 real PostgreSQL repeatable-read snapshot plus approved CH, alert, MinIO and Nebula readers",
+      "G3 sampled asset reconciliation across PG, CH, alerts, evidence manifest and graph projection",
+      "G4 fixed-scale detail and topology P50/P95/P99 resource budget",
+      "G5 Windows Chrome detail tabs, partial labels, graph and evidence deep links"
+    ],
+    "evidence": ["one trace_id and snapshot_id bind the browser response, source watermarks, authoritative rows and projection reconciliation"]
+  },
+  "rollout": {
+    "feature_flag": "asset_detail_snapshot_v1 + asset_detail_clickhouse_enabled + asset_detail_nebula_enabled + asset_detail_evidence_enabled",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ASSET-005-rollback.md"
+  }
+}

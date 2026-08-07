@@ -1,0 +1,91 @@
+{
+  "feature_id": "F-ASSET-004",
+  "contract_version": 1,
+  "status": "implementing",
+  "compatibility": {
+    "preserved_routes": ["/assets"],
+    "preserved_actions": [],
+    "preserved_api_operations": ["GET /v1/assets"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "asset.inventory.export",
+    "controls": [
+      {"control_id": "asset-export-submit", "action_id": "asset-inventory-export"},
+      {"control_id": "asset-column-settings", "action_id": "asset-column-preference-update"},
+      {"control_id": "asset-export-download", "action_id": "asset-inventory-export-download"}
+    ],
+    "states": ["loading", "accepted", "running", "success", "failed", "expired", "stale"]
+  },
+  "api": {
+    "operation_id": "createAssetExportJob",
+    "method": "POST",
+    "path": "/v1/assets/exports",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision",
+    "additional_operations": [
+      {"operation_id": "getAssetExportJob", "method": "GET", "path": "/v1/assets/exports/{job_id}"},
+      {"operation_id": "downloadAssetExport", "method": "GET", "path": "/v1/assets/exports/{job_id}/download"},
+      {"operation_id": "getAssetColumnPreference", "method": "GET", "path": "/v1/assets/preferences/columns"},
+      {"operation_id": "updateAssetColumnPreference", "method": "PUT", "path": "/v1/assets/preferences/columns", "revision_fields": ["expected_revision"]}
+    ]
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "export acceptance commits the frozen query, idempotency result, minimum audit and requested outbox in one PostgreSQL transaction",
+      "the worker reads a deterministic tenant-scoped PostgreSQL snapshot and never relies on the browser page currently in memory",
+      "a completed job points to a MinIO object through a PostgreSQL manifest containing sha256, size, MIME type, retention and business reference",
+      "requested and completed lifecycle events use a leased PostgreSQL outbox; broker acknowledgement precedes published state, transient failure is retried and exhausted delivery is retained as dead",
+      "download verifies tenant, lifecycle, retention, object size and sha256 and commits an audit record before serving bytes",
+      "column preferences are tenant-and-user scoped and require optimistic revision on every update"
+    ],
+    "states": ["accepted", "running", "completed", "failed", "cancelled"],
+    "compensation": "disable API and worker; retain jobs, audit, manifests and objects for reconciliation; deterministic object keys make retries overwrite-safe"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "minio"],
+    "migration": "202607311300_asset_export_jobs_v1.sql + 202607311315_asset_export_outbox_delivery.sql",
+    "event_types": ["traffic.asset.export.v1.Requested", "traffic.asset.export.v1.Completed"],
+    "source_watermarks": [
+      "postgresql.assets.max_updated_at",
+      "postgresql.asset_export_jobs.revision",
+      "postgresql.asset_export_outbox.outbox_id",
+      "kafka.asset.exports.v1.offset",
+      "minio.asset_export_object.sha256"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["asset:export", "asset:read"],
+    "negative_tests": [
+      "viewer cannot create, read or download exports without asset:export",
+      "cross-tenant job and object access returns no resource",
+      "a user cannot read or overwrite another user's column preference"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["export acceptance", "bounded snapshot scan", "object upload", "manifest-verified download", "preference revision update"],
+    "stop_conditions": ["row or byte cap exceeded, object manifest mismatch, PostgreSQL queue latency or worker resource usage exceeds the approved budget"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 OpenAPI, feature contract, generated client and migration lint",
+      "G1 validation, scope, idempotency, rendering and optimistic revision tests",
+      "G2 real PostgreSQL transaction, Kafka broker acknowledgement and MinIO object-store worker",
+      "G3 job, audit, leased outbox, consumed Kafka event, manifest, object and preference reconciliation",
+      "G4 fixed-scale export and download resource budget",
+      "G5 Windows Chrome submit-progress-download and column-settings journey"
+    ],
+    "evidence": ["same trace_id across 202 response, job, audit, outbox and object manifest; browser artifact sha256 equals PostgreSQL manifest and served header"]
+  },
+  "rollout": {
+    "feature_flag": "asset_export_jobs_v1",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ASSET-004-rollback.md"
+  }
+}

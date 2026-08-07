@@ -1,0 +1,1559 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-postgres-transaction-outbox-v1",
+  "remediation_id": "T-PG-002",
+  "coverage_status": "PARTIAL",
+  "required_outbox_fields": [
+    "event_id",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "tenant_id",
+    "event_type",
+    "schema_version",
+    "payload",
+    "trace_id",
+    "occurred_at",
+    "publish_attempts",
+    "next_retry_at"
+  ],
+  "implemented_slice": {
+    "feature_id": "F-ALERT-006",
+    "operation": "SaveAlertView",
+    "transaction_facts": [
+      "alert_saved_views",
+      "alert_saved_view_history",
+      "audit_logs",
+      "alert_saved_view_outbox",
+      "alert_saved_view_requests"
+    ],
+    "isolation": "serializable",
+    "idempotency_lock": "pg_advisory_xact_lock",
+    "event_type": "alert.saved-view.saved.v1",
+    "publisher_status": "IMPLEMENTED_REPOSITORY"
+  },
+  "additional_slices": [
+    {
+      "feature_id": "F-NOTIFICATION-001",
+      "operation": "CreateNotificationRule/PatchNotificationRule",
+      "transaction_facts": [
+        "notification_rules",
+        "notification_governance_history",
+        "audit_logs",
+        "notification_governance_outbox",
+        "notification_governance_requests"
+      ],
+      "isolation": "serializable",
+      "idempotency_lock": "pg_advisory_xact_lock",
+      "event_types": [
+        "traffic.notification.rule.v1.RuleCreated",
+        "traffic.notification.rule.v1.RuleUpdated"
+      ],
+      "publisher_status": "IMPLEMENTED_REPOSITORY"
+    },
+    {
+      "feature_id": "F-NOTIFICATION-001",
+      "operation": "CreateNotificationTemplate/PatchNotificationTemplate",
+      "transaction_facts": [
+        "notification_templates",
+        "notification_governance_history",
+        "audit_logs",
+        "notification_governance_outbox",
+        "notification_governance_requests"
+      ],
+      "isolation": "serializable",
+      "idempotency_lock": "pg_advisory_xact_lock",
+      "event_types": [
+        "traffic.notification.template.v1.TemplateCreated",
+        "traffic.notification.template.v1.TemplateUpdated"
+      ],
+      "publisher_status": "IMPLEMENTED_REPOSITORY"
+    },
+    {
+      "feature_id": "F-NOTIFY-001",
+      "operation": "CreateNotificationEscalationPolicy/PatchNotificationEscalationPolicy",
+      "transaction_facts": [
+        "notification_escalation_policies",
+        "notification_governance_history",
+        "audit_logs",
+        "notification_governance_outbox",
+        "notification_governance_requests"
+      ],
+      "isolation": "serializable",
+      "idempotency_lock": "pg_advisory_xact_lock",
+      "event_types": [
+        "traffic.notification.escalation.v1.PolicyCreated",
+        "traffic.notification.escalation.v1.PolicyUpdated"
+      ],
+      "publisher_status": "IMPLEMENTED_REPOSITORY"
+    },
+    {
+      "feature_id": "F-NOTIFY-001",
+      "operation": "CreateNotificationSilenceRule/PatchNotificationSilenceRule",
+      "transaction_facts": [
+        "notification_silence_rules",
+        "notification_governance_history",
+        "audit_logs",
+        "notification_governance_outbox",
+        "notification_governance_requests"
+      ],
+      "isolation": "serializable",
+      "idempotency_lock": "pg_advisory_xact_lock",
+      "event_types": [
+        "traffic.notification.silence.v1.SilenceCreated",
+        "traffic.notification.silence.v1.SilenceUpdated"
+      ],
+      "publisher_status": "IMPLEMENTED_REPOSITORY"
+    },
+    {
+      "feature_id": "F-NOTIFY-001",
+      "operation": "UpdateNotificationSettings",
+      "transaction_facts": [
+        "alert_notification_settings",
+        "notification_governance_history",
+        "audit_logs",
+        "notification_governance_outbox",
+        "notification_governance_requests"
+      ],
+      "isolation": "serializable",
+      "idempotency_lock": "pg_advisory_xact_lock",
+      "event_types": [
+        "traffic.notification.settings.v1.SettingsUpdated"
+      ],
+      "publisher_status": "IMPLEMENTED_REPOSITORY"
+    },
+    {
+      "feature_id": "F-PREF-001",
+      "operation": "UpdateUserSettingsCommand",
+      "transaction_facts": [
+        "user_settings",
+        "user_settings_history",
+        "audit_logs",
+        "user_settings_outbox",
+        "user_settings_requests"
+      ],
+      "isolation": "serializable",
+      "idempotency_lock": "pg_advisory_xact_lock",
+      "event_types": [
+        "traffic.user.settings.v1.SettingsUpdated"
+      ],
+      "publisher_status": "IMPLEMENTED_REPOSITORY"
+    },
+    {
+      "feature_id": "F-ASSET-002",
+      "operation": "UpsertAtomic",
+      "transaction_facts": [
+        "assets",
+        "asset_events",
+        "audit_logs",
+        "asset_event_outbox",
+        "asset_upsert_requests"
+      ],
+      "isolation": "read_committed_with_resource_and_idempotency_advisory_locks",
+      "idempotency_lock": "pg_advisory_xact_lock",
+      "event_types": [
+        "traffic.asset.v2.AssetUpserted"
+      ],
+      "publisher_status": "IMPLEMENTED_REPOSITORY"
+    },
+    {
+      "feature_id": "F-ASSET-002",
+      "operation": "MarkInactiveSinceAtomic",
+      "transaction_facts": [
+        "assets",
+        "asset_events",
+        "audit_logs",
+        "asset_event_outbox",
+        "asset_inactive_requests"
+      ],
+      "isolation": "read_committed_with_tenant_and_idempotency_advisory_locks",
+      "idempotency_lock": "pg_advisory_xact_lock",
+      "event_types": [
+        "traffic.asset.v2.AssetUpserted"
+      ],
+      "publisher_status": "IMPLEMENTED_REPOSITORY"
+    },
+    {
+      "feature_id": "F-ASSET-003",
+      "operation": "Create/Start/CompleteLegacyDiscoveryRunAtomic",
+      "transaction_facts": [
+        "asset_discovery_runs",
+        "asset_discovery_run_history",
+        "audit_logs",
+        "asset_discovery_outbox"
+      ],
+      "isolation": "read_committed_with_tenant_overlap_lock_and_row_revision_guards",
+      "idempotency_lock": "tenant_id_and_idempotency_key",
+      "event_types": [
+        "traffic.asset.discovery.v1.JobAccepted",
+        "traffic.asset.discovery.v1.JobStateChanged"
+      ],
+      "publisher_status": "IMPLEMENTED_PRODUCER_ONLY"
+    },
+    {
+      "feature_id": "F-ASSET-003",
+      "operation": "UpsertDiscoveryCredentialAtomic",
+      "transaction_facts": [
+        "asset_discovery_credentials",
+        "asset_discovery_resource_history",
+        "audit_logs",
+        "asset_discovery_outbox",
+        "asset_discovery_resource_requests"
+      ],
+      "isolation": "read_committed_with_resource_row_revision_guard",
+      "idempotency_lock": "tenant_id_and_idempotency_key",
+      "event_types": [
+        "traffic.asset.discovery.v1.CredentialUpserted"
+      ],
+      "publisher_status": "IMPLEMENTED_PRODUCER_ONLY"
+    },
+    {
+      "feature_id": "F-ASSET-003",
+      "operation": "UpsertTopologyLinkAtomic",
+      "transaction_facts": [
+        "asset_topology_links",
+        "asset_discovery_resource_history",
+        "audit_logs",
+        "asset_discovery_outbox",
+        "asset_discovery_resource_requests"
+      ],
+      "isolation": "read_committed_with_canonical_edge_revision_guard",
+      "idempotency_lock": "tenant_id_and_idempotency_key",
+      "event_types": [
+        "traffic.asset.discovery.v1.TopologyLinkUpserted"
+      ],
+      "publisher_status": "IMPLEMENTED_PRODUCER_ONLY"
+    },
+    {
+      "feature_id": "T-PG-002",
+      "operation": "AuthenticatedUserCommandsAtomic",
+      "transaction_facts": [
+        "users",
+        "user_roles",
+        "user_command_history",
+        "audit_logs",
+        "user_command_outbox",
+        "user_command_requests"
+      ],
+      "isolation": "serializable_with_tenant_user_advisory_lock_and_revision_guard",
+      "idempotency_lock": "tenant_id_and_idempotency_key",
+      "event_types": [
+        "traffic.user.command.v1.profile_update",
+        "traffic.user.command.v1.password_change",
+        "traffic.user.command.v1.login",
+        "traffic.user.command.v1.role_update",
+        "traffic.user.command.v1.status_update",
+        "traffic.user.command.v1.user_delete",
+        "traffic.user.command.v1.user_create"
+      ],
+      "publisher_status": "IMPLEMENTED_WITH_ACTIVE_USER_EVENT_CONSUMER"
+    },
+    {
+      "feature_id": "T-PG-002",
+      "operation": "SyncOIDCUserAtomic",
+      "transaction_facts": [
+        "users",
+        "user_roles",
+        "user_command_history",
+        "audit_logs",
+        "user_command_outbox",
+        "user_command_requests"
+      ],
+      "isolation": "serializable_with_external_identity_advisory_lock_and_tenant_guard",
+      "idempotency_lock": "tenant_id_and_idempotency_key",
+      "event_types": [
+        "traffic.user.command.v1.oidc_sync"
+      ],
+      "publisher_status": "IMPLEMENTED_WITH_ACTIVE_USER_EVENT_CONSUMER"
+    },
+    {
+      "feature_id": "F-CAMPAIGN-001",
+      "operation": "CampaignAggregateV2CommandCompatibility",
+      "transaction_facts": [
+        "campaign_workbench_state",
+        "campaign_aggregate_history",
+        "audit_logs",
+        "campaign_aggregate_outbox",
+        "campaign_action_jobs"
+      ],
+      "isolation": "serializable_with_campaign_row_revision_guard",
+      "idempotency_lock": "tenant_id_and_idempotency_key",
+      "event_types": [
+        "traffic.campaign.v2.OwnerAssigned",
+        "traffic.campaign.v2.StatusChanged"
+      ],
+      "publisher_status": "IMPLEMENTED_WITH_FAIL_CLOSED_LEGACY_MUTATION_PATH"
+    },
+    {
+      "feature_id": "F-PROBE-001",
+      "operation": "ProbeRegistrationAtomic",
+      "transaction_facts": [
+        "probes",
+        "probe_registry_history",
+        "audit_logs",
+        "probe_registry_outbox",
+        "probe_registry_requests"
+      ],
+      "isolation": "serializable_with_global_probe_id_advisory_lock_and_revision_guard",
+      "idempotency_lock": "server_derived_canonical_registration_payload",
+      "event_types": [
+        "traffic.probe.registry.v1.ProbeRegistered"
+      ],
+      "publisher_status": "IMPLEMENTED_PRODUCER_ONLY_PENDING_DISPATCHER"
+    },
+    {
+      "feature_id": "T-PG-002",
+      "operation": "ThreatIntelCommandAtomic",
+      "transaction_facts": [
+        "threat_intel",
+        "threat_intel_feeds",
+        "threat_intel_command_history",
+        "audit_logs",
+        "threat_intel_event_outbox",
+        "threat_intel_command_requests"
+      ],
+      "isolation": "serializable_with_entry_and_feed_row_revision_guards",
+      "idempotency_lock": "tenant_id_and_durable_idempotency_key_unique_constraint",
+      "event_types": [
+        "threat_intel.entry_upserted",
+        "threat_intel.feed_imported",
+        "threat_intel.feed_configured",
+        "threat_intel.feed_source_run",
+        "threat_intel.feed_scheduled_imported"
+      ],
+      "publisher_status": "IMPLEMENTED_WITH_ACTIVE_STRICT_CONSUMER"
+    },
+    {
+      "feature_id": "F-FORENSICS-001",
+      "operation": "ForensicsTaskCommandAtomic",
+      "transaction_facts": [
+        "tasks",
+        "forensics_task_history",
+        "audit_logs",
+        "forensics_task_outbox",
+        "forensics_task_requests"
+      ],
+      "isolation": "serializable_with_tenant_bound_row_revision_guard",
+      "idempotency_lock": "tenant_id_and_durable_idempotency_key_unique_constraint",
+      "event_types": [
+        "traffic.forensics.task.v1.create",
+        "traffic.forensics.task.v1.status",
+        "traffic.forensics.task.v1.progress",
+        "traffic.forensics.task.v1.complete",
+        "traffic.forensics.task.v1.fail",
+        "traffic.forensics.task.v1.cancel",
+        "traffic.forensics.task.v1.recover",
+        "traffic.forensics.task.v1.archive"
+      ],
+      "publisher_status": "IMPLEMENTED_PERSISTED_PENDING_DISPATCHER"
+    },
+    {
+      "feature_id": "F-WHITELIST-001",
+      "operation": "WhitelistGovernanceV2",
+      "transaction_facts": [
+        "whitelist",
+        "whitelist_entry_versions",
+        "audit_logs",
+        "whitelist_event_outbox",
+        "whitelist_command_requests",
+        "whitelist_rule_effects",
+        "whitelist_rule_projection"
+      ],
+      "isolation": "serializable_with_tenant_idempotency_advisory_lock_and_entry_version_guard",
+      "idempotency_lock": "tenant_id_and_durable_idempotency_key_unique_constraint",
+      "event_types": [
+        "traffic.whitelist.v2.EntryDrafted",
+        "traffic.whitelist.v2.ApprovalSubmitted",
+        "traffic.whitelist.v2.EntryApproved",
+        "traffic.whitelist.v2.EntryRejected",
+        "traffic.whitelist.v2.EntryExtended",
+        "traffic.whitelist.v2.EntryRevoked",
+        "traffic.whitelist.v2.EntryExpired",
+        "traffic.whitelist.v2.EntryArchived",
+        "traffic.whitelist.v2.EntryAssigned",
+        "traffic.whitelist.v2.EntryUpdated"
+      ],
+      "publisher_status": "IMPLEMENTED_DEFAULT_OFF_PENDING_REAL_KAFKA_ROLLOUT"
+    },
+    {
+      "feature_id": "F-DASHBOARD-002",
+      "operation": "DashboardTaskCreateV2",
+      "transaction_facts": [
+        "dashboard_tasks",
+        "dashboard_task_history",
+        "audit_logs",
+        "dashboard_task_outbox",
+        "dashboard_task_requests"
+      ],
+      "isolation": "serializable_with_authenticated_tenant_and_idempotency_unique_constraint",
+      "idempotency_lock": "tenant_id_and_durable_idempotency_key_unique_constraint",
+      "event_types": [
+        "traffic.dashboard.v1.TaskRequested"
+      ],
+      "publisher_status": "IMPLEMENTED_PERSISTED_PENDING_DISPATCHER"
+    }
+  ],
+  "source_assertions": [
+    {
+      "source": "go/control-plane/internal/alert/api/handler_alert_actions.go",
+      "required": [
+        "func (h *Handler) SaveAlertView",
+        "sql.LevelSerializable",
+        "SELECT pg_advisory_xact_lock",
+        "FROM alert_saved_view_requests r",
+        "INSERT INTO alert_saved_views",
+        "INSERT INTO alert_saved_view_history",
+        "INSERT INTO alert_saved_view_outbox",
+        "h.actionAudit.recordWithExecutor",
+        "INSERT INTO alert_saved_view_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "h.actionAudit.Record(ctx, r"
+      ],
+      "ordered": [
+        "INSERT INTO alert_saved_views",
+        "INSERT INTO alert_saved_view_history",
+        "INSERT INTO alert_saved_view_outbox",
+        "h.actionAudit.recordWithExecutor",
+        "INSERT INTO alert_saved_view_requests",
+        "failed to commit alert view\")"
+      ]
+    },
+    {
+      "source": "web/ui/src/services/alertTriageApi.ts",
+      "required": [
+        "input.kind === 'saved-view'",
+        "savedViewIdempotencyKey(input)",
+        "'Idempotency-Key'"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/handler_alert_saved_view_outbox.go",
+      "required": [
+        "func (h *Handler) StartSavedViewOutboxWorker",
+        "status IN ('pending','processing')",
+        "FOR UPDATE SKIP LOCKED",
+        "SET status='processing'",
+        "savedViewOutboxMaxAttempts = 10",
+        "h.savedViewProducer.SendJSON",
+        "status=CASE WHEN publish_attempts+1 >= $4 THEN 'dead' ELSE 'pending' END",
+        "SET status='published'",
+        "saved-view outbox lease lost after Kafka acknowledgement"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "h.savedViewProducer.SendJSON",
+        "SET status='published'"
+      ]
+    },
+    {
+      "source": "contracts/events/kafka-topic-catalog.v1.json",
+      "required": [
+        "alert.saved-view.events.v1",
+        "AlertSavedViewSavedV1Json",
+        "handler_alert_saved_view_outbox.go",
+        "producer_only"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_governance_transaction.go",
+      "operation_start": "func (r *AdvancedRepository) executeNotificationRuleCommand",
+      "operation_end": "func requestClientIP",
+      "required": [
+        "sql.LevelSerializable",
+        "SELECT pg_advisory_xact_lock",
+        "FROM notification_governance_requests r",
+        "record, found, err := mutation",
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "context.Background()"
+      ],
+      "ordered": [
+        "record, found, err := mutation",
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_governance_outbox.go",
+      "required": [
+        "func (h *AdvancedHandler) StartNotificationGovernanceOutboxWorker",
+        "status IN ('pending','processing')",
+        "FOR UPDATE SKIP LOCKED",
+        "notificationGovernanceOutboxMaxAttempts = 10",
+        "h.notificationGovernanceProducer.SendJSON",
+        "traffic.notification.template.v1.TemplateCreated",
+        "traffic.notification.template.v1.TemplateUpdated",
+        "traffic.notification.escalation.v1.PolicyCreated",
+        "traffic.notification.escalation.v1.PolicyUpdated",
+        "traffic.notification.silence.v1.SilenceCreated",
+        "traffic.notification.silence.v1.SilenceUpdated",
+        "traffic.notification.settings.v1.SettingsUpdated",
+        "status=CASE WHEN publish_attempts+1 >= $4 THEN 'dead' ELSE 'pending' END",
+        "SET status='published'",
+        "notification governance outbox lease lost after Kafka acknowledgement"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "h.notificationGovernanceProducer.SendJSON",
+        "SET status='published'"
+      ]
+    },
+    {
+      "source": "web/ui/src/services/notificationGovernanceApi.ts",
+      "required": [
+        "action_id: actionId",
+        "reason",
+        "expected_revision",
+        "'Idempotency-Key': actionId"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_template_transaction.go",
+      "operation_start": "func (r *AdvancedRepository) executeNotificationTemplateCommand",
+      "required": [
+        "sql.LevelSerializable",
+        "SELECT pg_advisory_xact_lock",
+        "FROM notification_governance_requests r",
+        "record, found, err := mutation",
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "context.Background()"
+      ],
+      "ordered": [
+        "record, found, err := mutation",
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_escalation_transaction.go",
+      "operation_start": "func (r *AdvancedRepository) executeNotificationEscalationCommand",
+      "required": [
+        "sql.LevelSerializable",
+        "SELECT pg_advisory_xact_lock",
+        "FROM notification_governance_requests r",
+        "record, found, err := mutation",
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "context.Background()"
+      ],
+      "ordered": [
+        "record, found, err := mutation",
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_silence_transaction.go",
+      "operation_start": "func (r *AdvancedRepository) executeNotificationSilenceCommand",
+      "required": [
+        "sql.LevelSerializable",
+        "SELECT pg_advisory_xact_lock",
+        "FROM notification_governance_requests r",
+        "record, found, err := mutation",
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "context.Background()"
+      ],
+      "ordered": [
+        "record, found, err := mutation",
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_settings_transaction.go",
+      "operation_start": "func (r *AdvancedRepository) SaveNotificationSettingsCommand",
+      "required": [
+        "sql.LevelSerializable",
+        "SELECT pg_advisory_xact_lock",
+        "FROM notification_governance_requests r",
+        "INSERT INTO alert_notification_settings",
+        "UPDATE alert_notification_settings",
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "context.Background()"
+      ],
+      "ordered": [
+        "INSERT INTO notification_governance_history",
+        "INSERT INTO notification_governance_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO notification_governance_requests",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "required": [
+        "cfg.Kafka.NotificationGovernanceEventTopic",
+        "SetNotificationGovernanceEventProducer",
+        "StartNotificationGovernanceOutboxWorker"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "contracts/events/kafka-topic-catalog.v1.json",
+      "required": [
+        "notification.governance.events.v1",
+        "NotificationRuleLifecycleV1Json",
+        "notification_governance_outbox.go",
+        "producer_only"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_settings_transaction.go",
+      "operation_start": "func (r *UserSettingsRepository) SaveCommand",
+      "required": [
+        "sql.LevelSerializable",
+        "SELECT pg_advisory_xact_lock",
+        "FROM user_settings_requests r",
+        "INSERT INTO user_settings",
+        "UPDATE user_settings SET",
+        "INSERT INTO user_settings_history",
+        "INSERT INTO user_settings_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO user_settings_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "context.Background()"
+      ],
+      "ordered": [
+        "INSERT INTO user_settings_history",
+        "INSERT INTO user_settings_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO user_settings_requests",
+        "failed to commit user settings command"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_settings_outbox.go",
+      "required": [
+        "func (w *UserSettingsOutboxWorker) Run",
+        "status IN ('pending','processing')",
+        "FOR UPDATE SKIP LOCKED",
+        "userSettingsOutboxMaxAttempts = 10",
+        "w.producer.SendProto",
+        "traffic.user.settings.v1.SettingsUpdated",
+        "status=CASE WHEN publish_attempts+1 >= $4 THEN 'dead' ELSE 'pending' END",
+        "SET status='published'",
+        "user settings outbox lease lost after Kafka acknowledgement"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "w.producer.SendProto",
+        "SET status='published'"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/auth/api/handler.go",
+      "operation_start": "func (h *Handler) UpdateUserSettings",
+      "operation_end": "func (h *Handler) ValidateToken",
+      "required": [
+        "optionalStringCommandField(req, \"action_id\")",
+        "optionalStringCommandField(req, \"reason\")",
+        "expected_revision must be a non-negative safe integer",
+        "r.Header.Get(\"Idempotency-Key\")",
+        "UpdateUserSettingsCommand",
+        "X-Event-ID",
+        "X-Outbox-Status"
+      ],
+      "forbidden_in_operation": [
+        "LogUserAction"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/cmd/auth-service/main.go",
+      "required": [
+        "cfg.Kafka.UserEventTopic",
+        "NewUserSettingsOutboxWorker",
+        "userSettingsOutboxWorker.Run"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "contracts/events/kafka-topic-catalog.v1.json",
+      "required": [
+        "user.events.v1",
+        "UserEvent",
+        "user_settings_outbox.go",
+        "active"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "web/ui/src/services/pageApiPlans.ts",
+      "required": [
+        "settings-preferences-save",
+        "action_id: \"settings-action-001\"",
+        "expected_revision: 0",
+        "Idempotency-Key and action_id must identify retries",
+        "user.events.v1 outbox"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/atomic_upsert.go",
+      "operation_start": "func (r *AssetRepository) UpsertAtomic",
+      "operation_end": "func findAssetByMACTx",
+      "required": [
+        "sql.LevelReadCommitted",
+        "SELECT pg_advisory_xact_lock",
+        "FROM asset_upsert_requests",
+        "INSERT INTO assets",
+        "INSERT INTO asset_events",
+        "INSERT INTO audit_logs",
+        "INSERT INTO asset_event_outbox",
+        "INSERT INTO asset_upsert_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "INSERT INTO assets",
+        "INSERT INTO asset_events",
+        "INSERT INTO audit_logs",
+        "INSERT INTO asset_event_outbox",
+        "INSERT INTO asset_upsert_requests",
+        "commit asset upsert"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/inactive_atomic.go",
+      "operation_start": "func (r *AssetRepository) MarkInactiveSinceAtomic",
+      "required": [
+        "sql.LevelReadCommitted",
+        "SELECT pg_advisory_xact_lock",
+        "FROM asset_inactive_requests",
+        "asset-inactive-tenant:",
+        "UPDATE assets",
+        "INSERT INTO asset_events",
+        "INSERT INTO audit_logs",
+        "INSERT INTO asset_event_outbox",
+        "INSERT INTO asset_inactive_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "UPDATE assets",
+        "INSERT INTO asset_events",
+        "INSERT INTO audit_logs",
+        "INSERT INTO asset_event_outbox",
+        "INSERT INTO asset_inactive_requests",
+        "commit inactive sweep"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/outbox_dispatcher.go",
+      "required": [
+        "func (d *AssetOutboxDispatcher) DispatchNext",
+        "FOR UPDATE SKIP LOCKED",
+        "SET status='processing'",
+        "d.publisher.Send",
+        "SET status='published'",
+        "status = \"dead\""
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "d.publisher.Send",
+        "SET status='published'"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_jobs.go",
+      "required": [
+        "func (r *AssetRepository) CreateDiscoveryJobAtomic",
+        "sql.LevelReadCommitted",
+        "SELECT pg_advisory_xact_lock",
+        "INSERT INTO asset_discovery_runs",
+        "INSERT INTO asset_discovery_run_history",
+        "INSERT INTO audit_logs",
+        "INSERT INTO asset_discovery_outbox",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_legacy_atomic.go",
+      "required": [
+        "func (r *AssetRepository) StartLegacyDiscoveryRunAtomic",
+        "func (r *AssetRepository) CompleteLegacyDiscoveryRunAtomic",
+        "sql.LevelReadCommitted",
+        "FOR UPDATE",
+        "INSERT INTO asset_discovery_run_history",
+        "INSERT INTO audit_logs",
+        "insertDiscoveryStateOutbox",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_resource_atomic.go",
+      "required": [
+        "func (r *AssetRepository) UpsertDiscoveryCredentialAtomic",
+        "func (r *AssetRepository) UpsertTopologyLinkAtomic",
+        "sql.LevelReadCommitted",
+        "FOR UPDATE",
+        "INSERT INTO asset_discovery_resource_history",
+        "INSERT INTO asset_discovery_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO asset_discovery_resource_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_outbox_dispatcher.go",
+      "required": [
+        "func (d *DiscoveryOutboxDispatcher) DispatchNext",
+        "FOR UPDATE SKIP LOCKED",
+        "SET status='processing'",
+        "d.publisher.Send",
+        "SET status='published'",
+        "status = \"dead\""
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "d.publisher.Send",
+        "SET status='published'"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_command_atomic.go",
+      "required": [
+        "func (r *UserRepository) executeExistingUserCommand",
+        "func (r *UserRepository) SyncOIDCUserAtomic",
+        "sql.LevelSerializable",
+        "SELECT pg_advisory_xact_lock",
+        "WHERE tenant_id=$1 AND user_id=$2 FOR UPDATE",
+        "OIDC identity belongs to a different tenant",
+        "INSERT INTO user_command_history",
+        "INSERT INTO user_command_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO user_command_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "context.Background()"
+      ],
+      "ordered": [
+        "INSERT INTO user_command_history",
+        "INSERT INTO user_command_outbox",
+        "INSERT INTO audit_logs",
+        "INSERT INTO user_command_requests",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_command_outbox.go",
+      "required": [
+        "func (w *UserSettingsOutboxWorker) DrainUserCommands",
+        "FOR UPDATE SKIP LOCKED",
+        "SET status='processing'",
+        "w.producer.SendProto",
+        "SET status='published'",
+        "status=CASE WHEN publish_attempts+1 >= $4 THEN 'dead' ELSE 'pending' END"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "w.producer.SendProto",
+        "SET status='published'"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/auth/api/handler.go",
+      "required": [
+        "repository.UserCommandMetadata",
+        "h.authService.UpdateCurrentUser",
+        "h.authService.ChangePassword",
+        "repository.UserOIDCSyncAction",
+        "h.authService.HandleOIDCCallback"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/handler_system.go",
+      "required": [
+        "if spec.Mutates && !h.campaignAggregateV2",
+        "CAMPAIGN_AGGREGATE_UNAVAILABLE",
+        "normalizeCampaignCommandCompatibility",
+        "h.submitCampaignAggregateV2Action"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "if spec.Mutates && !h.campaignAggregateV2",
+        "CAMPAIGN_AGGREGATE_UNAVAILABLE",
+        "normalizeCampaignCommandCompatibility",
+        "h.submitCampaignAggregateV2Action"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/campaign_action_jobs.go",
+      "required": [
+        "mutating campaign actions require the aggregate v2 transaction",
+        "if !job.Simulation || !job.DryRun"
+      ],
+      "forbidden_in_operation": [
+        "applyCampaignActionMutation"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/campaign_workbench_state.go",
+      "required": [
+        "func (h *SystemHandler) enrichCampaignWorkbenchStates"
+      ],
+      "forbidden_in_operation": [
+        "applyCampaignActionMutation",
+        "INSERT INTO campaign_workbench_state",
+        "INSERT INTO campaign_reports",
+        "UPDATE campaign_workbench_state"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/campaign_aggregate_v2.go",
+      "required": [
+        "func normalizeCampaignCommandCompatibility",
+        "sql.LevelSerializable",
+        "loadCampaignV2JobByIdempotency",
+        "FOR UPDATE",
+        "INSERT INTO campaign_aggregate_history",
+        "INSERT INTO campaign_aggregate_outbox",
+        "h.campaignAuditWriter.recordWithExecutor",
+        "\"compatibility_mode\": request.CompatibilityMode",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "context.Background()"
+      ],
+      "ordered": [
+        "INSERT INTO campaign_aggregate_history",
+        "INSERT INTO campaign_aggregate_outbox",
+        "h.campaignAuditWriter.recordWithExecutor",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/ingest/server/probe_registry.go",
+      "required": [
+        "sql.LevelSerializable",
+        "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
+        "SELECT request_sha256",
+        "SELECT tenant_id,revision",
+        "INSERT INTO probes",
+        "INSERT INTO probe_registry_history",
+        "INSERT INTO audit_logs",
+        "INSERT INTO probe_registry_outbox",
+        "INSERT INTO probe_registry_requests",
+        "Heartbeat is an authenticated liveness projection",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "INSERT INTO probes",
+        "INSERT INTO probe_registry_history",
+        "INSERT INTO audit_logs",
+        "INSERT INTO probe_registry_outbox",
+        "INSERT INTO probe_registry_requests",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/cmd/threat-intel-service/command_atomic.go",
+      "required": [
+        "sql.LevelSerializable",
+        "loadThreatIntelCommandReplay",
+        "SELECT revision FROM threat_intel",
+        "SELECT revision FROM threat_intel_feeds",
+        "INSERT INTO threat_intel (",
+        "INSERT INTO threat_intel_feeds (",
+        "INSERT INTO threat_intel_event_outbox",
+        "insertThreatIntelAudit",
+        "insertThreatIntelHistory",
+        "INSERT INTO threat_intel_command_requests",
+        "threat intel entry tenant mismatch",
+        "threat intel feed tenant mismatch",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "context.Background()"
+      ],
+      "ordered": [
+        "INSERT INTO threat_intel_event_outbox",
+        "insertThreatIntelAudit",
+        "insertThreatIntelHistory",
+        "INSERT INTO threat_intel_command_requests",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/threatintel/threat_intel.go",
+      "required": [
+        "PrepareEntriesForTenant",
+        "PrepareFeedForTenant",
+        "CacheCommittedEntries"
+      ],
+      "forbidden_in_operation": [
+        "func (s *Service) InsertForTenant",
+        "func (s *Service) ImportEntriesForTenant",
+        "func (s *Service) UpsertFeed",
+        "func (s *Service) RecordFeedRun",
+        "INSERT INTO threat_intel (",
+        "UPDATE threat_intel_feeds"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/forensics/repository/task_command_atomic.go",
+      "required": [
+        "func (r *TaskRepository) CreateAtomic",
+        "func (r *TaskRepository) mutateTaskAtomic",
+        "func (r *TaskRepository) leasePendingTasksAtomic",
+        "func (r *TaskRepository) batchTaskMutationAtomic",
+        "sql.LevelSerializable",
+        "loadTaskCommandReplay",
+        "WHERE tenant_id=$1 AND task_id=$2 AND revision=$3 AND deleted_at IS NULL",
+        "INSERT INTO forensics_task_outbox",
+        "INSERT INTO forensics_task_history",
+        "INSERT INTO audit_logs",
+        "INSERT INTO forensics_task_requests",
+        "Idempotency-Key was used for a different task command",
+        "task revision conflict",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "DELETE FROM tasks"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/forensics/repository/task_repository.go",
+      "required": [
+        "r.CreateAtomic",
+        "r.mutateTaskAtomic",
+        "r.leasePendingTasksAtomic",
+        "r.archiveOldTasksAtomic",
+        "r.recoverStuckTasksAtomic"
+      ],
+      "forbidden_in_operation": [
+        "DELETE FROM tasks",
+        "INSERT INTO tasks (",
+        "UPDATE tasks"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/forensics/api/handler.go",
+      "operation_start": "func (h *Handler) CreateJob",
+      "operation_end": "func (h *Handler) GetJob",
+      "required": [
+        "forensicsTaskCommandMeta",
+        "repository.ForensicsTaskCreateAction",
+        "Idempotency-Key",
+        "X-Event-ID",
+        "rw.Accepted(response)"
+      ],
+      "forbidden_in_operation": [
+        "recordPcapAudit"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/whitelist/command_atomic.go",
+      "required": [
+        "func (r *Repository) CreateAtomic",
+        "func (r *Repository) UpdateAtomic",
+        "func (r *Repository) ArchiveAtomic",
+        "func (r *Repository) ExpireDue",
+        "func (r *Repository) AcknowledgeRuleEffect",
+        "sql.LevelSerializable",
+        "loadWhitelistReplay",
+        "pg_advisory_xact_lock",
+        "INSERT INTO whitelist_entry_versions",
+        "INSERT INTO whitelist_event_outbox",
+        "INSERT INTO whitelist_rule_effects",
+        "insertAuditWithRunner",
+        "INSERT INTO whitelist_command_requests",
+        "tx.Commit()"
+      ],
+      "forbidden_in_operation": [
+        "DELETE FROM whitelist"
+      ],
+      "ordered": [
+        "INSERT INTO whitelist_entry_versions",
+        "INSERT INTO whitelist_event_outbox",
+        "INSERT INTO whitelist_rule_effects",
+        "insertAuditWithRunner",
+        "INSERT INTO whitelist_command_requests"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/whitelist/handler.go",
+      "required": [
+        "h.repo.CreateAtomic",
+        "h.repo.UpdateAtomic",
+        "h.repo.ArchiveAtomic",
+        "X-Action-ID",
+        "Idempotency-Key",
+        "X-Event-ID",
+        "X-Rule-Effect-Status",
+        "expected_revision"
+      ],
+      "forbidden_in_operation": [
+        "h.repo.CreateTx",
+        "h.repo.UpdateTx",
+        "h.repo.DeleteTx",
+        "DELETE FROM whitelist"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/whitelist/outbox_dispatcher.go",
+      "required": [
+        "WhitelistEventTopicV2",
+        "FOR UPDATE SKIP LOCKED",
+        "d.publisher.Send",
+        "status='published'",
+        "desired_rule_state"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "d.publisher.Send",
+        "status='published'"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/rules/consumer/whitelist_rule_effect_consumer.go",
+      "required": [
+        "DefaultWhitelistEventTopicV2",
+        "whitelist_rule_projection",
+        "whitelist_rule_effects",
+        "tx.Commit()",
+        "kafka_partition",
+        "kafka_offset"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": [
+        "whitelist_rule_projection",
+        "whitelist_rule_effects",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "web/ui/src/services/whitelistGovernanceApi.ts",
+      "required": [
+        "whitelist-create",
+        "whitelist-submit-approval",
+        "whitelist-approve",
+        "whitelist-disable",
+        "expected_revision",
+        "X-Action-ID",
+        "Idempotency-Key"
+      ],
+      "forbidden_in_operation": [
+        "expected_version: entry.version"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/forensics/api/handler.go",
+      "operation_start": "func (h *Handler) CancelJob",
+      "operation_end": "func (h *Handler) ListJobs",
+      "required": [
+        "parseForensicsTaskRevision",
+        "repository.ForensicsTaskCancelAction",
+        "h.asyncCutter.CancelTask",
+        "X-Event-ID"
+      ],
+      "forbidden_in_operation": [
+        "recordPcapAudit"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/dashboard_task_v2.go",
+      "required": [
+        "sql.LevelSerializable",
+        "authenticatedDashboardIdentity",
+        "INSERT INTO dashboard_tasks",
+        "INSERT INTO dashboard_task_history",
+        "INSERT INTO dashboard_task_outbox",
+        "insertDashboardTaskAudit",
+        "INSERT INTO dashboard_task_requests",
+        "tx.Commit()",
+        "JSONContractAccepted"
+      ],
+      "forbidden_in_operation": [
+        "tenant_id\"`json",
+        "context.Background()"
+      ],
+      "ordered": [
+        "INSERT INTO dashboard_tasks",
+        "INSERT INTO dashboard_task_history",
+        "INSERT INTO dashboard_task_outbox",
+        "insertDashboardTaskAudit",
+        "INSERT INTO dashboard_task_requests",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "web/ui/src/services/dashboardTaskApi.ts",
+      "required": [
+        "submitDashboardTask",
+        "fetchDashboardTask",
+        "X-Action-ID",
+        "Idempotency-Key",
+        "snapshot_id",
+        "dashboardTaskRequestFingerprint"
+      ],
+      "forbidden_in_operation": [
+        "tenant_id"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "web/ui/src/pages/DashboardOperationsPage.tsx",
+      "required": [
+        "const pageSnapshotId = data?.snapshot?.snapshotId ?? ''",
+        "if (!action || !pageSnapshotId) return",
+        "snapshotId: pageSnapshotId"
+      ],
+      "forbidden_in_operation": [
+        "dashboardPageSnapshotId"
+      ],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "required": [
+        "NewDashboardTaskHandler",
+        "DASHBOARD_TASK_V2_ENABLED",
+        "dashboardTaskHandler.RegisterRoutes"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    }
+  ],
+  "schema_sources": [
+    "deployments/postgres/migrations/202608031100_alert_saved_view_transaction_v2.sql",
+    "common/sql/pg/04-tasks-audit.sql",
+    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+    "go/control-plane/deployments/docker/init/postgres_merged.sql"
+  ],
+  "additional_schema_groups": [
+    {
+      "name": "notification_rule_transaction_v2",
+      "tokens": [
+        "202608031300",
+        "notification_rules",
+        "revision",
+        "notification_escalation_policies",
+        "alert_notification_settings",
+        "notification_silence_rules",
+        "notification_governance_requests",
+        "notification_governance_history",
+        "notification_governance_outbox",
+        "idx_notification_governance_outbox_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031300_notification_rule_transaction_v2.sql",
+        "common/sql/pg/04-tasks-audit.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "user_settings_transaction_v2",
+      "tokens": [
+        "user_settings",
+        "revision",
+        "user_settings_history",
+        "user_settings_outbox",
+        "user_settings_requests",
+        "idx_user_settings_outbox_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031500_user_settings_transaction_v2.sql",
+        "common/sql/pg/00-init.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "asset_atomic_upsert_v2",
+      "tokens": [
+        "asset_upsert_requests",
+        "asset_event_outbox",
+        "idx_asset_event_outbox_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202607310015_asset_atomic_upsert_v2.sql",
+        "common/sql/pg/01-assets.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "asset_projection_inbox",
+      "tokens": [
+        "asset_projection_inbox",
+        "idx_asset_projection_inbox_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202607310030_asset_projection_inbox.sql",
+        "common/sql/pg/01-assets.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "asset_legacy_mutation_atomic",
+      "tokens": [
+        "asset_inactive_requests",
+        "idx_asset_inactive_requests_cutoff"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031510_asset_legacy_mutation_atomic.sql",
+        "common/sql/pg/01-assets.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "asset_discovery_resource_atomic",
+      "tokens": [
+        "asset_discovery_credentials",
+        "asset_topology_links",
+        "asset_discovery_resource_requests",
+        "asset_discovery_resource_history",
+        "resource_type",
+        "resource_id",
+        "action_id",
+        "revision"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031520_asset_discovery_resource_atomic.sql",
+        "common/sql/pg/01-assets.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "user_commands_atomic",
+      "tokens": [
+        "ALTER TABLE users",
+        "revision",
+        "user_command_history",
+        "user_command_outbox",
+        "user_command_requests",
+        "idx_user_command_outbox_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031530_user_commands_atomic.sql",
+        "common/sql/pg/00-init.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "campaign_aggregate_v2",
+      "tokens": [
+        "campaign_workbench_state",
+        "campaign_aggregate_history",
+        "campaign_aggregate_outbox",
+        "campaign_action_jobs",
+        "idempotency_key",
+        "request_sha256",
+        "expected_revision",
+        "resource_revision"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608010700_campaign_aggregate_v2.sql",
+        "common/sql/pg/04-tasks-audit.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "probe_registry_atomic",
+      "tokens": [
+        "ALTER TABLE probes",
+        "revision",
+        "probe_registry_history",
+        "probe_registry_requests",
+        "probe_registry_outbox",
+        "request_sha256",
+        "resource_revision",
+        "idx_probe_registry_outbox_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031540_probe_registry_atomic.sql",
+        "common/sql/pg/00-init.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "threat_intel_command_atomic",
+      "tokens": [
+        "202608031550",
+        "ALTER TABLE threat_intel",
+        "ALTER TABLE threat_intel_feeds",
+        "revision",
+        "threat_intel_command_history",
+        "threat_intel_command_requests",
+        "request_sha256",
+        "compatibility_mode",
+        "idx_threat_intel_command_requests_created"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031550_threat_intel_command_atomic.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "forensics_task_command_atomic",
+      "tokens": [
+        "202608031600",
+        "ALTER TABLE tasks",
+        "revision",
+        "deleted_at",
+        "forensics_task_history",
+        "forensics_task_outbox",
+        "forensics_task_requests",
+        "request_sha256",
+        "compatibility_mode",
+        "idx_forensics_task_outbox_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031600_forensics_task_command_atomic.sql",
+        "common/sql/pg/09-forensics-task-atomic.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "whitelist_governance_v2",
+      "tokens": [
+        "202608031610",
+        "ALTER TABLE whitelist",
+        "archived_at",
+        "whitelist_entry_versions",
+        "whitelist_event_outbox",
+        "whitelist_command_requests",
+        "whitelist_rule_effects",
+        "request_sha256",
+        "idx_whitelist_event_outbox_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031610_whitelist_governance_v2.sql",
+        "common/sql/pg/10-whitelist-governance-v2.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "dashboard_task_v2",
+      "tokens": [
+        "202608031620",
+        "dashboard_tasks",
+        "dashboard_task_history",
+        "dashboard_task_outbox",
+        "dashboard_task_requests",
+        "request_sha256",
+        "idx_dashboard_task_outbox_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608031620_dashboard_task_v2.sql",
+        "common/sql/pg/11-dashboard-task-v2.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "whitelist_rule_projection_v1",
+      "tokens": [
+        "202608071930",
+        "whitelist_rule_projection",
+        "source_event_id",
+        "desired_state",
+        "kafka_partition",
+        "kafka_offset",
+        "idx_whitelist_rule_projection_effective"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608071930_whitelist_rule_projection_v1.sql",
+        "common/sql/pg/10-whitelist-governance-v2.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    }
+  ],
+  "gate": {
+    "repository_guard": "PASS permits IMPLEMENTING only while publisher and cross-domain gaps remain",
+    "remaining": [
+      "review the versioned mutable-command inventory and close each business-audit-outbox transaction gap",
+      "operate the saved-view, notification-governance, user-settings, user-command and asset outbox workers against the release-candidate Kafka and reconcile pending processing published and dead counts",
+      "run live fault injection after commit, before publish, and after Kafka ACK before published marking",
+      "prove event_id and aggregate_version deduplication in real consumers",
+      "run live debt queries, lock metrics, cleanup retention, rollback and observation gates"
+    ]
+  }
+}

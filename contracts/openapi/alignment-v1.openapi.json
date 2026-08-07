@@ -1,0 +1,1867 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Traffic Analysis Platform Alignment API",
+    "version": "1.2.0",
+    "description": "Additive contract for the four remediation vertical slices. Existing APIs remain available during migration."
+  },
+  "servers": [{"url": "/api"}],
+  "paths": {
+    "/v1/dashboard/snapshot": {
+      "get": {
+        "operationId": "getDashboardSnapshot",
+        "x-feature-id": "F-DASHBOARD-001",
+        "x-required-scope": "alert:read",
+        "parameters": [
+          {"name": "start_time", "in": "query", "schema": {"oneOf": [{"type": "integer", "format": "int64"}, {"type": "string", "format": "date-time"}]}},
+          {"name": "end_time", "in": "query", "schema": {"oneOf": [{"type": "integer", "format": "int64"}, {"type": "string", "format": "date-time"}]}}
+        ],
+        "responses": {
+          "200": {"description": "One tenant-bound time window and snapshot_id for all dashboard sections; unavailable sources are explicit in meta.partial and missing_sections", "content": {"application/json": {"schema": {"allOf": [{"$ref": "#/components/schemas/Envelope"}, {"type": "object", "properties": {"data": {"$ref": "#/components/schemas/DashboardSnapshot"}}}]}}}},
+          "400": {"description": "Invalid window or forbidden tenant_id query override"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:read scope required"},
+          "503": {"description": "dashboard_snapshot_v1 rollout flag disabled"}
+        }
+      }
+    },
+    "/v1/dashboard/stats": {
+      "get": {
+        "operationId": "getDashboardStats", "x-feature-id": "F-DASHBOARD-001", "x-required-scope": "alert:read",
+        "deprecated": true, "description": "Preserved compatibility read; new clients use getDashboardSnapshot and authenticated tenant identity always wins.",
+        "responses": {"200": {"description": "Legacy tenant-bound dashboard stats", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "400": {"description": "tenant_id query override forbidden"}, "403": {"description": "alert:read required"}}
+      }
+    },
+    "/v1/dashboard/alerts/trend": {
+      "get": {
+        "operationId": "getDashboardAlertTrend", "x-feature-id": "F-DASHBOARD-001", "x-required-scope": "alert:read",
+        "deprecated": true,
+        "parameters": [{"name": "start_time", "in": "query", "schema": {"type": "integer", "format": "int64"}}, {"name": "end_time", "in": "query", "schema": {"type": "integer", "format": "int64"}}, {"name": "granularity", "in": "query", "schema": {"enum": ["minute", "hour", "day"]}}],
+        "responses": {"200": {"description": "Legacy tenant-bound alert trend", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "400": {"description": "Invalid range or tenant override"}, "403": {"description": "alert:read required"}}
+      }
+    },
+    "/v1/dashboard/attack-phases": {
+      "get": {
+        "operationId": "getDashboardAttackPhases", "x-feature-id": "F-DASHBOARD-001", "x-required-scope": "alert:read", "deprecated": true,
+        "responses": {"200": {"description": "Legacy tenant-bound attack-phase distribution", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "400": {"description": "tenant_id query override forbidden"}, "403": {"description": "alert:read required"}}
+      }
+    },
+    "/v1/dashboard/top-ips/{type}": {
+      "get": {
+        "operationId": "getDashboardTopIPs", "x-feature-id": "F-DASHBOARD-001", "x-required-scope": "alert:read", "deprecated": true,
+        "parameters": [{"name": "type", "in": "path", "required": true, "schema": {"enum": ["src", "dst"]}}, {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100}}],
+        "responses": {"200": {"description": "Legacy tenant-bound Top IPs", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "400": {"description": "Invalid type or tenant override"}, "403": {"description": "alert:read required"}}
+      }
+    },
+    "/v1/dashboard/encrypted/trend": {
+      "get": {
+        "operationId": "getDashboardEncryptedTrend", "x-feature-id": "F-DASHBOARD-001", "x-required-scope": "alert:read", "deprecated": true,
+        "parameters": [{"name": "start_time", "in": "query", "schema": {"type": "integer", "format": "int64"}}, {"name": "end_time", "in": "query", "schema": {"type": "integer", "format": "int64"}}, {"name": "granularity", "in": "query", "schema": {"enum": ["minute", "hour", "day"]}}],
+        "responses": {"200": {"description": "Legacy tenant-bound encrypted traffic trend", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "400": {"description": "Invalid range or tenant override"}, "403": {"description": "alert:read required"}}
+      }
+    },
+    "/v1/dashboard/tasks": {
+      "post": {
+        "operationId": "createDashboardTask",
+        "x-feature-id": "F-DASHBOARD-002",
+        "x-required-scope": "dashboard:write",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DashboardTaskCreate"}}}},
+        "responses": {
+          "202": {"description": "Task, immutable history, minimum audit and outbox durably accepted; this is not final completion", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "dashboard:write scope required"},
+          "409": {"description": "Idempotency key reused with a different command"},
+          "503": {"description": "Feature, PostgreSQL or versioned schema unavailable"}
+        }
+      }
+    },
+    "/v1/dashboard/tasks/evidence": {
+      "post": {
+        "operationId": "createDashboardEvidenceTask", "x-feature-id": "F-DASHBOARD-002", "x-required-scope": "dashboard:write",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DashboardTaskCreate"}}}},
+        "responses": {"202": {"description": "Evidence repair task durably accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "403": {"description": "dashboard:write scope required"}, "409": {"description": "Idempotency conflict"}}
+      }
+    },
+    "/v1/dashboard/tasks/feedback": {
+      "post": {
+        "operationId": "createDashboardFeedbackTask", "x-feature-id": "F-DASHBOARD-002", "x-required-scope": "dashboard:write",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DashboardTaskCreate"}}}},
+        "responses": {"202": {"description": "Feedback replay task durably accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "403": {"description": "dashboard:write scope required"}, "409": {"description": "Idempotency conflict"}}
+      }
+    },
+    "/v1/dashboard/tasks/audit": {
+      "post": {
+        "operationId": "createDashboardAuditTask", "x-feature-id": "F-DASHBOARD-002", "x-required-scope": "dashboard:write",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DashboardTaskCreate"}}}},
+        "responses": {"202": {"description": "Audit repair task durably accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "403": {"description": "dashboard:write scope required"}, "409": {"description": "Idempotency conflict"}}
+      }
+    },
+    "/v1/dashboard/tasks/sla": {
+      "post": {
+        "operationId": "createDashboardSLATask", "x-feature-id": "F-DASHBOARD-002", "x-required-scope": "dashboard:write",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DashboardTaskCreate"}}}},
+        "responses": {"202": {"description": "SLA follow-up task durably accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "403": {"description": "dashboard:write scope required"}, "409": {"description": "Idempotency conflict"}}
+      }
+    },
+    "/v1/dashboard/tasks/compliance": {
+      "post": {
+        "operationId": "createDashboardComplianceTask", "x-feature-id": "F-DASHBOARD-002", "x-required-scope": "dashboard:write",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DashboardTaskCreate"}}}},
+        "responses": {"202": {"description": "Compliance repair task durably accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "403": {"description": "dashboard:write scope required"}, "409": {"description": "Idempotency conflict"}}
+      }
+    },
+    "/v1/dashboard/tasks/{task_id}": {
+      "get": {
+        "operationId": "getDashboardTask", "x-feature-id": "F-DASHBOARD-002", "x-required-scope": "dashboard:write",
+        "parameters": [{"name": "task_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {"description": "Authoritative tenant-scoped accepted, running, completed, partial, failed or cancelled state", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "dashboard:write scope required"},
+          "404": {"description": "Task is absent from the authenticated tenant"}
+        }
+      }
+    },
+    "/v1/alerts/search": {
+      "post": {
+        "operationId": "searchAlertsCursorV1",
+        "x-feature-id": "F-SEARCH-001",
+        "x-remediation-id": "T-OS-003",
+        "x-required-scope": "alert:read",
+        "description": "Preserves the legacy shallow from/size request while adding tenant-bound signed live search_after and consistent PIT traversal. The authenticated tenant always wins.",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AlertSearchRequest"}}}},
+        "responses": {
+          "200": {"description": "Complete OpenSearch page. Cursor pages expose next_cursor, has_more, cursor_mode, total_relation and a PIT snapshot_id when applicable.", "content": {"application/json": {"schema": {"allOf": [{"$ref": "#/components/schemas/Envelope"}, {"type": "object", "properties": {"data": {"$ref": "#/components/schemas/AlertSearchResult"}}}]}}}},
+          "400": {"description": "Invalid, expired, cross-tenant or query-mismatched cursor; unsupported sort; oversized query, filter or page"},
+          "403": {"description": "alert:read scope required"},
+          "503": {"description": "Cursor contract disabled or OpenSearch unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/search/cursor": {
+      "delete": {
+        "operationId": "closeAlertSearchCursorV1",
+        "x-feature-id": "F-SEARCH-001",
+        "x-remediation-id": "T-OS-003",
+        "x-required-scope": "alert:read",
+        "description": "Explicitly releases the PIT in a tenant-bound signed cursor; live cursors are idempotent no-ops.",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["cursor"], "properties": {"cursor": {"type": "string", "minLength": 1, "maxLength": 8192}}}}}},
+        "responses": {
+          "200": {"description": "PIT closed or live cursor accepted as an idempotent no-op", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid, expired or cross-tenant cursor"},
+          "403": {"description": "alert:read scope required"},
+          "503": {"description": "Cursor contract disabled or OpenSearch unavailable"}
+        }
+      }
+    },
+    "/v1/assets": {
+      "get": {
+        "operationId": "listAssetsV2",
+        "x-required-scope": "asset:read",
+        "x-feature-id": "F-ASSET-001",
+        "parameters": [
+          {"name": "cursor", "in": "query", "schema": {"type": "string"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 200}},
+          {"name": "offset", "in": "query", "deprecated": true, "schema": {"type": "integer", "minimum": 0}},
+          {"name": "asset_type", "in": "query", "schema": {"enum": ["endpoint", "server", "network-device", "business-system", "unknown"]}},
+          {"name": "status", "in": "query", "schema": {"type": "string"}},
+          {"name": "search", "in": "query", "schema": {"type": "string"}},
+          {"name": "department", "in": "query", "schema": {"type": "string"}},
+          {"name": "campus", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "Asset page with signed cursor metadata; explicit offset remains deprecated compatibility", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid, expired, cross-tenant or query-mismatched cursor", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}
+        }
+      },
+      "post": {
+        "operationId": "upsertAssetV2",
+        "x-required-scope": "asset:govern",
+        "x-feature-id": "F-ASSET-002",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["asset", "expected_revision", "reason"], "properties": {"asset": {"type": "object"}, "expected_revision": {"type": "integer", "minimum": 0}, "reason": {"type": "string", "minLength": 4, "maxLength": 1000}}}}}},
+        "responses": {"200": {"description": "Atomic upsert result", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/assets/{asset_id}/snapshot": {
+      "get": {
+        "operationId": "getAssetDetailSnapshot",
+        "x-feature-id": "F-ASSET-005",
+        "x-required-scope": "asset:read",
+        "parameters": [
+          {"name": "asset_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "history_limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}}
+        ],
+        "responses": {
+          "200": {
+              "description": "One repeatable-read PostgreSQL asset/detail/history/topology snapshot enriched by tenant/IP/time-bounded ClickHouse observations, deterministic latest alert context, bounded Nebula asset projection and reconciled ClickHouse/MinIO evidence manifests when enabled; stale, truncated, unavailable or integrity-unverified sections remain explicit in meta.missing_sections",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "403": {"description": "asset:read scope required"},
+          "404": {"description": "Feature disabled or asset absent from the authenticated tenant"}
+        }
+      }
+    },
+    "/v1/assets/{asset_id}/governance/work-orders": {
+      "get": {
+        "operationId": "listAssetGovernanceWorkOrders",
+        "x-feature-id": "F-ASSET-006",
+        "x-required-scope": "asset:read",
+        "parameters": [{"name": "asset_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {"description": "Tenant-scoped authoritative work-order list", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "404": {"description": "Feature disabled or asset absent from the authenticated tenant"}
+        }
+      },
+      "post": {
+        "operationId": "createAssetGovernanceWorkOrder",
+        "x-feature-id": "F-ASSET-006",
+        "x-required-scope": "asset:govern",
+        "parameters": [
+          {"name": "asset_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {
+          "type": "object",
+          "required": ["action_id", "target_lifecycle_state", "owner", "due_at", "evidence_required", "reason", "expected_asset_revision"],
+          "properties": {
+            "action_id": {"const": "asset-governance-work-order-create"},
+            "target_lifecycle_state": {"enum": ["candidate", "confirmed", "managed", "isolated", "retired", "merged"]},
+            "target_asset_id": {"type": "string", "format": "uuid"},
+            "owner": {"type": "string", "minLength": 1, "maxLength": 200},
+            "due_at": {"type": "string", "format": "date-time"},
+            "evidence_required": {"type": "boolean"},
+            "reason": {"type": "string", "minLength": 8, "maxLength": 2000},
+            "expected_asset_revision": {"type": "integer", "minimum": 1}
+          }
+        }}}},
+        "responses": {
+          "202": {"description": "Work order, initial history, minimum audit and outbox durably accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "Dedicated asset:govern scope required"},
+          "409": {"description": "Idempotency, active-order or asset-revision conflict"}
+        }
+      }
+    },
+    "/v1/assets/governance/work-orders/{work_order_id}": {
+      "get": {
+        "operationId": "getAssetGovernanceWorkOrder",
+        "x-feature-id": "F-ASSET-006",
+        "x-required-scope": "asset:read",
+        "parameters": [{"name": "work_order_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {"description": "Authoritative work order and immutable transition history", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "404": {"description": "Work order is absent from the authenticated tenant"}
+        }
+      }
+    },
+    "/v1/assets/governance/work-orders/{work_order_id}/actions": {
+      "post": {
+        "operationId": "applyAssetGovernanceAction",
+        "x-feature-id": "F-ASSET-006",
+        "x-required-scope": "asset:govern",
+        "parameters": [
+          {"name": "work_order_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {
+          "type": "object",
+          "required": ["action_id", "expected_revision", "reason"],
+          "properties": {
+            "action_id": {"enum": ["asset-governance-approve", "asset-governance-reject", "asset-governance-start", "asset-governance-complete", "asset-governance-fail", "asset-governance-cancel", "asset-governance-compensate"]},
+            "expected_revision": {"type": "integer", "minimum": 1},
+            "reason": {"type": "string", "minLength": 8, "maxLength": 2000},
+            "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 1000}}
+          }
+        }}}},
+        "responses": {
+          "202": {"description": "State transition and all durable side effects committed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "Scope or independent-approval policy denied"},
+          "409": {"description": "Idempotency, work-order revision, state or asset-revision conflict"},
+          "422": {"description": "Completion evidence is required"}
+        }
+      }
+    },
+    "/v1/assets/{id}": {
+      "get": {
+        "operationId": "getAssetLegacyCompatible",
+        "x-feature-id": "F-ASSET-005",
+        "x-required-scope": "asset:read",
+        "deprecated": true,
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Compatibility asset identity read retained during snapshot migration", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/assets/{id}/details": {
+      "get": {
+        "operationId": "getAssetDetailsLegacyCompatible",
+        "x-feature-id": "F-ASSET-005",
+        "x-required-scope": "asset:read",
+        "deprecated": true,
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Compatibility persisted asset details read retained during snapshot migration", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/assets/{id}/history": {
+      "get": {
+        "operationId": "getAssetHistoryLegacyCompatible",
+        "x-feature-id": "F-ASSET-005",
+        "x-required-scope": "asset:read",
+        "deprecated": true,
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}}
+        ],
+        "responses": {"200": {"description": "Compatibility bounded asset history read retained during snapshot migration", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/assets/{id}/topology": {
+      "get": {
+        "operationId": "getAssetTopologyLegacyCompatible",
+        "x-feature-id": "F-ASSET-005",
+        "x-required-scope": "asset:read",
+        "deprecated": true,
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Compatibility PostgreSQL topology read retained during snapshot migration", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/assets/exports": {
+      "post": {
+        "operationId": "createAssetExportJob",
+        "x-feature-id": "F-ASSET-004",
+        "x-required-scope": "asset:export",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {
+            "type": "object",
+            "required": ["action_id", "format", "columns", "filter", "reason"],
+            "properties": {
+              "action_id": {"const": "asset-inventory-export"},
+              "format": {"enum": ["csv", "jsonl"]},
+              "columns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+              "filter": {"type": "object"},
+              "reason": {"type": "string", "minLength": 4, "maxLength": 1000}
+            }
+          }}}
+        },
+        "responses": {
+          "202": {"description": "Tenant-scoped export durably accepted; artifact completion remains asynchronous", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "Dedicated asset:export scope required"},
+          "409": {"description": "Idempotency key reused with a different frozen query"}
+        }
+      }
+    },
+    "/v1/assets/exports/{job_id}": {
+      "get": {
+        "operationId": "getAssetExportJob",
+        "x-feature-id": "F-ASSET-004",
+        "x-required-scope": "asset:export",
+        "parameters": [{"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {"description": "Authoritative accepted, running, completed, failed or cancelled export state and manifest", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "404": {"description": "Job is absent from the authenticated tenant"}
+        }
+      }
+    },
+    "/v1/assets/exports/{job_id}/download": {
+      "get": {
+        "operationId": "downloadAssetExport",
+        "x-feature-id": "F-ASSET-004",
+        "x-required-scope": "asset:export",
+        "parameters": [{"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {"description": "Retention-valid checksum-verified artifact with a committed download audit", "headers": {"X-Content-SHA256": {"schema": {"type": "string"}}, "X-Asset-Snapshot-ID": {"schema": {"type": "string"}}}, "content": {"text/csv": {"schema": {"type": "string", "format": "binary"}}, "application/x-ndjson": {"schema": {"type": "string", "format": "binary"}}}},
+          "409": {"description": "Export is not completed"},
+          "410": {"description": "Retention expired"},
+          "502": {"description": "Object content disagrees with the authoritative manifest"}
+        }
+      }
+    },
+    "/v1/assets/preferences/columns": {
+      "get": {
+        "operationId": "getAssetColumnPreference",
+        "x-feature-id": "F-ASSET-004",
+        "x-required-scope": "asset:read",
+        "parameters": [{"name": "view_id", "in": "query", "schema": {"type": "string", "default": "asset-inventory"}}],
+        "responses": {"200": {"description": "User-scoped revisioned visible columns", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      },
+      "put": {
+        "operationId": "updateAssetColumnPreference",
+        "x-feature-id": "F-ASSET-004",
+        "x-required-scope": "asset:read",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {
+          "type": "object",
+          "required": ["view_id", "columns", "expected_revision", "reason"],
+          "properties": {
+            "view_id": {"type": "string", "minLength": 1, "maxLength": 100},
+            "columns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+            "expected_revision": {"type": "integer", "minimum": 0},
+            "reason": {"type": "string", "minLength": 4, "maxLength": 1000}
+          }
+        }}}},
+        "responses": {
+          "200": {"description": "Preference revision committed with audit", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "409": {"description": "Expected revision is stale"}
+        }
+      }
+    },
+  "/v1/assets/discovery/credentials": {
+    "post": {
+      "operationId": "upsertAssetDiscoveryCredential",
+      "x-feature-id": "F-ASSET-003",
+      "x-required-scope": "asset:discover",
+      "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+      "requestBody": {"required": true, "content": {"application/json": {"schema": {
+        "type": "object",
+        "required": ["action_id", "name", "protocol", "secret_ref", "expected_revision", "reason"],
+        "properties": {
+          "credential_id": {"type": "string", "format": "uuid"},
+          "action_id": {"const": "asset-discovery-credential-upsert"},
+          "name": {"type": "string", "minLength": 1},
+          "protocol": {"enum": ["snmp", "lldp", "snmp_lldp"]},
+          "endpoint": {"type": "string"},
+          "secret_ref": {"type": "string", "minLength": 1},
+          "expected_revision": {"type": "integer", "minimum": 0},
+          "reason": {"type": "string", "minLength": 4, "maxLength": 1000}
+        },
+        "additionalProperties": false
+      }}}},
+      "responses": {
+        "201": {"description": "Credential revision, history, minimum audit, outbox and idempotency result committed atomically", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+        "409": {"description": "Idempotency or expected revision conflict"}
+      }
+    },
+    "get": {
+      "operationId": "listAssetDiscoveryCredentials",
+      "x-feature-id": "F-ASSET-003",
+      "x-required-scope": "asset:read",
+      "responses": {"200": {"description": "Tenant-scoped revisioned credential references", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+    }
+  },
+  "/v1/assets/discovery/runs": {
+    "post": {
+      "operationId": "createAssetDiscoveryJob",
+      "x-required-scope": "asset:discover",
+      "x-feature-id": "F-ASSET-003",
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdempotencyKey"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "action_id",
+                "mode",
+                "target_cidr",
+                "reason",
+                "rate_limit_per_second",
+                "approved_by"
+              ],
+              "properties": {
+                "action_id": {
+                  "const": "asset-active-discovery-run"
+                },
+                "mode": {
+                  "enum": ["snmp", "lldp", "snmp_lldp"]
+                },
+                "target_cidr": {
+                  "type": "string"
+                },
+                "credential_id": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 4,
+                  "maxLength": 1000
+                },
+                "rate_limit_per_second": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000
+                },
+                "security_window_start": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "security_window_end": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "approved_by": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "202": {
+          "description": "Discovery job durably accepted; no asset has been ingested",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Envelope"
+              }
+            }
+          }
+        },
+        "409": {
+          "description": "Idempotency or overlapping active CIDR conflict"
+        }
+      }
+    },
+    "get": {
+      "operationId": "listAssetDiscoveryJobs",
+      "x-required-scope": "asset:read",
+      "x-feature-id": "F-ASSET-003",
+      "responses": {
+        "200": {
+          "description": "Tenant-scoped discovery jobs",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Envelope"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/assets/discovery/runs/{run_id}": {
+    "get": {
+      "operationId": "getAssetDiscoveryJob",
+      "x-required-scope": "asset:read",
+      "x-feature-id": "F-ASSET-003",
+      "parameters": [
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "schema": {"type": "string", "format": "uuid"}
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Authoritative discovery job state and watermark",
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/Envelope"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/assets/discovery/runs/{run_id}/cancel": {
+    "post": {
+      "operationId": "cancelAssetDiscoveryJob",
+      "x-required-scope": "asset:discover",
+      "x-feature-id": "F-ASSET-003",
+      "parameters": [
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "schema": {"type": "string", "format": "uuid"}
+        },
+        {
+          "$ref": "#/components/parameters/IdempotencyKey"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["expected_revision", "reason"],
+              "properties": {
+                "expected_revision": {"type": "integer", "minimum": 1},
+                "reason": {"type": "string", "minLength": 4, "maxLength": 1000}
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "202": {
+          "description": "Queued job cancelled or running job marked cancel_requested",
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/Envelope"}
+            }
+          }
+        },
+        "409": {
+          "description": "Revision or terminal-state conflict"
+        }
+      }
+    }
+  },
+  "/v1/assets/discovery/runs/{run_id}/candidates": {
+    "get": {
+      "operationId": "listAssetDiscoveryCandidates",
+      "x-required-scope": "asset:read",
+      "x-feature-id": "F-ASSET-003",
+      "parameters": [
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "schema": {"type": "string", "format": "uuid"}
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Non-authoritative discovery candidates",
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/Envelope"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/assets/discovery/runs/{run_id}/candidates/{candidate_id}/merge": {
+    "post": {
+      "operationId": "mergeAssetDiscoveryCandidate",
+      "x-feature-id": "F-ASSET-003",
+      "x-required-scope": "asset:discover",
+      "parameters": [
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "schema": {"type": "string", "format": "uuid"}
+        },
+        {
+          "name": "candidate_id",
+          "in": "path",
+          "required": true,
+          "schema": {"type": "string", "format": "uuid"}
+        },
+        {
+          "$ref": "#/components/parameters/IdempotencyKey"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["expected_candidate_revision", "expected_asset_revision", "merge_mode", "reason"],
+              "properties": {
+                "expected_candidate_revision": {"type": "integer", "minimum": 1},
+                "expected_asset_revision": {"type": "integer", "minimum": 0},
+                "merge_mode": {"enum": ["manual", "policy"]},
+                "reason": {"type": "string", "minLength": 4, "maxLength": 1000}
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Candidate and authoritative asset, history, audit, projection outbox and idempotency result committed atomically",
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/Envelope"}
+            }
+          }
+        },
+        "404": {
+          "description": "Candidate is absent from the authenticated tenant and run"
+        },
+        "409": {
+          "description": "Idempotency, candidate revision, asset revision or candidate state conflict"
+        }
+      }
+    }
+  },
+  "/v1/assets/discovery/runs/{run_id}/history": {
+    "get": {
+      "operationId": "listAssetDiscoveryJobHistory",
+      "x-required-scope": "asset:read",
+      "x-feature-id": "F-ASSET-003",
+      "parameters": [
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "schema": {"type": "string", "format": "uuid"}
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Ordered state transition history",
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/Envelope"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "/v1/alerts/{id}/response-actions": {
+      "post": {
+        "operationId": "createAlertResponseAction",
+        "x-required-scope": "playbook:execute",
+        "x-feature-id": "F-COMMON-003",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}, {"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["action_id", "action", "target", "reason", "dry_run", "expected_revision"], "properties": {"action_id": {"type": "string", "minLength": 1}, "action": {"type": "string", "minLength": 1}, "target": {"type": "string"}, "reason": {"type": "string", "minLength": 4, "maxLength": 1000}, "dry_run": {"type": "boolean"}, "expected_revision": {"const": 0}, "detail": {"type": "object"}}}}}},
+        "responses": {"202": {"description": "Idempotent action request accepted; real effects remain pending independent approval", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/alerts/{id}/response-actions/{job_id}": {
+      "get": {
+        "operationId": "getAlertResponseAction",
+        "x-required-scope": "playbook:read",
+        "x-feature-id": "F-COMMON-003",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}, {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Authoritative response action, approval, outbox and receipt state", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/alerts/{id}/response-actions/{job_id}/approval": {
+      "post": {
+        "operationId": "decideAlertResponseAction",
+        "x-feature-id": "F-COMMON-003",
+        "x-required-scope": "playbook:approve",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}, {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["decision", "expected_revision", "reason"], "properties": {"decision": {"enum": ["approve", "reject"]}, "expected_revision": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 8, "maxLength": 1000}}}}}},
+        "responses": {"202": {"description": "Independent approval decision committed atomically with audit and, on approval, outbox", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "403": {"description": "Requester cannot approve or reject own action"}, "409": {"description": "Revision, state or idempotency conflict"}}
+      }
+    },
+    "/v1/alerts/{id}/response-actions/{job_id}/cancel": {
+      "post": {
+        "operationId": "cancelAlertResponseAction",
+        "x-required-scope": "playbook:execute",
+        "x-feature-id": "F-COMMON-003",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}, {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"$ref": "#/components/requestBodies/VersionedResponseControl"},
+        "responses": {"202": {"description": "Queued response action cancelled before lease or publication", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "409": {"description": "Terminal, leased, published or revision-conflicting action"}}
+      }
+    },
+    "/v1/alerts/{id}/response-actions/{job_id}/compensations": {
+      "post": {
+        "operationId": "requestAlertResponseCompensation",
+        "x-feature-id": "F-COMMON-003",
+        "x-required-scope": "playbook:approve",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}, {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"$ref": "#/components/requestBodies/VersionedResponseControl"},
+        "responses": {"202": {"description": "Compensation request recorded with explicit executor-blocked state", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}, "409": {"description": "No confirmed external effect, no catalogued inverse, or terminal conflict"}}
+      }
+    },
+    "/v1/alerts/{id}/reports/export": {
+      "post": {
+        "operationId": "createAlertReport",
+        "x-required-scope": "alert:export",
+        "x-feature-id": "F-ALERT-001",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}, {"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["action_id", "format", "snapshot_id", "reason"], "properties": {"action_id": {"const": "alert-report-export"}, "format": {"enum": ["json", "pdf", "docx"]}, "snapshot_id": {"type": "string"}, "reason": {"type": "string", "minLength": 4}}}}}},
+        "responses": {"202": {"description": "Report job accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/alerts/{id}/reports/{job_id}": {
+      "get": {
+        "operationId": "getAlertReportJob",
+        "x-required-scope": "alert:export",
+        "x-feature-id": "F-ALERT-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {"200": {"description": "Report job state and manifest", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/alerts/{id}/reports/{job_id}/cancel": {
+      "post": {
+        "operationId": "cancelAlertReport",
+        "x-required-scope": "alert:export",
+        "x-feature-id": "F-ALERT-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["action_id", "expected_revision", "reason"], "properties": {"action_id": {"const": "alert-report-cancel"}, "expected_revision": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 8, "maxLength": 1000}}}}}},
+        "responses": {
+          "202": {"description": "Accepted report cancelled or running report moved to cooperative cancel_requested", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "409": {"description": "Revision, terminal state or idempotency conflict"}
+        }
+      }
+    },
+    "/v1/alerts/{id}/reports/{job_id}/compensations": {
+      "post": {
+        "operationId": "compensateAlertReport",
+        "x-required-scope": "alert:export",
+        "x-feature-id": "F-ALERT-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["action_id", "expected_revision", "reason"], "properties": {"action_id": {"const": "alert-report-compensate"}, "expected_revision": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 8, "maxLength": 1000}}}}}},
+        "responses": {
+          "202": {"description": "Residual report object cleanup compensation accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "409": {"description": "No residual object manifest, revision conflict or incompatible state"}
+        }
+      }
+    },
+    "/v1/alerts/{id}/reports/{job_id}/download": {
+      "get": {
+        "operationId": "downloadAlertReport",
+        "x-required-scope": "alert:export",
+        "x-feature-id": "F-ALERT-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {"200": {"description": "Checksum-verified report artifact", "headers": {"X-Content-SHA256": {"schema": {"type": "string"}}}, "content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}}}}
+      }
+    },
+    "/v1/alerts/{id}/campaign-links": {
+      "get": {
+        "operationId": "listAlertCampaignLinks",
+        "x-required-scope": "campaign:read",
+        "x-feature-id": "F-ALERT-002",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}],
+        "responses": {"200": {"description": "Current tenant campaign relations", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      },
+      "post": {
+        "operationId": "linkAlertToCampaign",
+        "x-required-scope": "campaign:write",
+        "x-feature-id": "F-ALERT-002",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}, {"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["campaign_id", "expected_revision", "reason"], "properties": {"campaign_id": {"type": "string"}, "expected_revision": {"type": "integer", "minimum": 0}, "expected_campaign_revision": {"type": "integer", "minimum": 0, "description": "Optional during compatibility rollout; required by the v2 UI path"}, "reason": {"type": "string", "minLength": 4, "maxLength": 1000}}}}}},
+        "responses": {"200": {"description": "Idempotent relation result", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/alerts/{id}/campaign-links/{campaign_id}": {
+      "delete": {
+        "operationId": "unlinkAlertFromCampaign",
+        "x-required-scope": "campaign:write",
+        "x-feature-id": "F-ALERT-002",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "campaign_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["expected_revision", "reason"], "properties": {"expected_revision": {"type": "integer", "minimum": 1}, "expected_campaign_revision": {"type": "integer", "minimum": 0}, "reason": {"type": "string", "minLength": 4, "maxLength": 1000}}}}}},
+        "responses": {
+          "200": {"description": "Idempotent unlink result bound to relation and campaign revisions", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "409": {"description": "Relation, campaign revision, or idempotency conflict"},
+          "503": {"description": "Default-off aggregate feature or schema unavailable"}
+        }
+      }
+    },
+    "/v1/campaigns": {
+      "get": {
+        "operationId": "listCampaigns",
+        "x-required-scope": "campaign:read",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [
+          {"name": "campaign_type", "in": "query", "schema": {"type": "string"}},
+          {"name": "risk", "in": "query", "schema": {"enum": ["high", "medium", "low"]}},
+          {"name": "status", "in": "query", "schema": {"enum": ["active", "investigating", "closed"]}},
+          {"name": "phase", "in": "query", "schema": {"enum": ["initial_access", "execution", "persistence", "lateral_movement", "command_and_control", "exfiltration", "impact"]}},
+          {"name": "keyword", "in": "query", "schema": {"type": "string", "maxLength": 128}},
+          {"name": "start_time", "in": "query", "schema": {"type": "integer", "minimum": 0}},
+          {"name": "end_time", "in": "query", "schema": {"type": "integer", "minimum": 0}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}},
+          {"name": "offset", "in": "query", "schema": {"type": "integer", "minimum": 0, "default": 0}}
+        ],
+        "responses": {
+          "200": {"description": "Campaign rows each carry a lifecycle snapshot identity; the page envelope carries a content-addressed list snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid campaign filter"}
+        }
+      }
+    },
+    "/v1/campaigns/{id}": {
+      "get": {
+        "operationId": "getCampaign",
+        "x-required-scope": "campaign:read",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"$ref": "#/components/parameters/CampaignSnapshotId"}
+        ],
+        "responses": {
+          "200": {"description": "Detail, authoritative membership and report summaries read from one lifecycle snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "409": {"description": "CAMPAIGN_SNAPSHOT_CONFLICT because the requested list-row snapshot is stale"},
+          "503": {"description": "Lifecycle snapshot source or required schema unavailable"}
+        }
+      }
+    },
+    "/v1/campaigns/{id}/members": {
+      "get": {
+        "operationId": "listCampaignMembers",
+        "x-required-scope": "campaign:read",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"$ref": "#/components/parameters/CampaignSnapshotId"},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 200}},
+          {"name": "offset", "in": "query", "schema": {"type": "integer", "minimum": 0, "default": 0}}
+        ],
+        "responses": {
+          "200": {"description": "Repeatable-read campaign membership snapshot with aggregate reconciliation state", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "409": {"description": "CAMPAIGN_SNAPSHOT_CONFLICT because the requested lifecycle snapshot is stale"},
+          "503": {"description": "Default-off aggregate feature or schema unavailable"}
+        }
+      }
+    },
+    "/v1/campaigns/{id}/actions": {
+      "post": {
+        "operationId": "submitCampaignCommand",
+        "x-required-scope": "campaign:write",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "x-compatibility": "Formal clients send Idempotency-Key, expected_revision and reason. With aggregate v2 enabled, legacy callers missing one or more are explicitly normalized and receive X-Compatibility-Mode=true plus the generated Idempotency-Key; with aggregate v2 disabled all mutating actions fail closed with 503 and execute no legacy business mutation.",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["action_id", "target", "metadata", "simulation", "dry_run", "expected_revision", "reason"], "properties": {"action_id": {"enum": ["campaign-assign-owner", "campaign-status-change", "campaign-merge", "campaign-report-generate", "campaign-soar-response"]}, "target": {"type": "string", "minLength": 1}, "metadata": {"type": "object", "description": "Carries the displayed lifecycle snapshot_id when available; campaign-merge also requires a distinct target_campaign_id", "properties": {"snapshot_id": {"type": "string", "description": "Optional for compatibility; v3 UI commands bind to the currently displayed lifecycle snapshot"}}, "additionalProperties": true}, "simulation": {"const": false}, "dry_run": {"const": false}, "expected_revision": {"type": "integer", "minimum": 0}, "target_expected_revision": {"type": "integer", "minimum": 0, "description": "Required for campaign-merge"}, "reason": {"type": "string", "minLength": 8, "maxLength": 1000}}}}}},
+        "responses": {
+          "202": {"description": "Versioned campaign command accepted; status distinguishes accepted from succeeded", "headers": {"X-Compatibility-Mode": {"description": "true only when legacy command metadata was normalized", "schema": {"type": "string", "enum": ["true"]}}, "Idempotency-Key": {"description": "Generated replay identity for a normalized compatibility request", "schema": {"type": "string", "minLength": 16, "maxLength": 200}}}, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "409": {"description": "Snapshot, revision, idempotency, state transition, or membership-backfill conflict"},
+          "503": {"description": "Default-off feature, schema, report executor, or SOAR executor unavailable"}
+        }
+      }
+    },
+    "/v1/campaigns/jobs/{job_id}": {
+      "get": {
+        "operationId": "getCampaignCommandJob",
+        "x-required-scope": "campaign:read",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [{"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Tenant-scoped campaign command lifecycle and result references", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/campaigns/{id}/reports/{report_id}": {
+      "get": {
+        "operationId": "getCampaignReport",
+        "x-required-scope": "campaign:report",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "report_id", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "Tenant-scoped frozen report lifecycle, snapshot revision and authoritative object manifest", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "404": {"description": "Report is absent from the authenticated tenant and campaign"}
+        }
+      }
+    },
+    "/v1/campaigns/{id}/reports/{report_id}/download": {
+      "get": {
+        "operationId": "downloadCampaignReport",
+        "x-required-scope": "campaign:report",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "report_id", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "Manifest-verified JSON, PDF or DOCX artifact", "headers": {"X-Content-SHA256": {"schema": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}}}},
+          "409": {"description": "Report is accepted or running but not terminal"},
+          "502": {"description": "Object bytes do not match PostgreSQL manifest"}
+        }
+      }
+    },
+    "/v1/campaigns/{id}/soar-jobs/{job_id}": {
+      "get": {
+        "operationId": "getCampaignSOARJob",
+        "x-required-scope": "playbook:read",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "Tenant-scoped approval, executor and provider receipt state", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "404": {"description": "SOAR job is absent from the authenticated tenant and campaign"}
+        }
+      }
+    },
+    "/v1/campaigns/{id}/soar-jobs/{job_id}/approval": {
+      "post": {
+        "operationId": "decideCampaignSOARJob",
+        "x-required-scope": "playbook:approve",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["decision", "expected_revision", "reason"], "properties": {"decision": {"enum": ["approve", "reject"]}, "expected_revision": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 8, "maxLength": 1000}}}}}},
+        "responses": {
+          "202": {"description": "Independent decision committed; approval and executor states remain distinct", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "playbook:approve missing or requester attempted self-approval"},
+          "409": {"description": "Revision, state, or idempotency conflict"}
+        }
+      }
+    },
+    "/v1/campaigns/{id}/soar-jobs/{job_id}/cancel": {
+      "post": {
+        "operationId": "cancelCampaignSOARJob",
+        "x-required-scope": "playbook:execute",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["expected_revision", "reason"], "properties": {"expected_revision": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 8, "maxLength": 1000}}}}}},
+        "responses": {
+          "202": {"description": "Pending or undispatched job cancelled atomically", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "409": {"description": "Job already leased, terminal, or revision changed"}
+        }
+      }
+    },
+    "/v1/campaigns/{id}/soar-jobs/{job_id}/compensate": {
+      "post": {
+        "operationId": "compensateCampaignSOARJob",
+        "x-required-scope": "playbook:approve",
+        "x-feature-id": "F-CAMPAIGN-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["expected_revision", "reason"], "properties": {"expected_revision": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 8, "maxLength": 1000}}}}}},
+        "responses": {
+          "202": {"description": "Independently approved compensation queued against a proven provider effect", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "playbook:approve missing or original requester attempted compensation approval"},
+          "409": {"description": "No external-effect receipt, invalid state, revision, or idempotency conflict"}
+        }
+      }
+    },
+    "/v1/playbooks/{name}/execute": {
+      "post": {
+        "operationId": "requestPlaybookExecution",
+        "x-feature-id": "F-PLAYBOOK-001",
+        "x-required-scope": "playbook:execute",
+        "x-compatibility-scopes": ["playbook:write", "alert:write"],
+        "parameters": [
+          {"name": "name", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expected_version", "reason", "alert_context"],
+          "properties": {
+            "expected_version": {"type": "integer", "minimum": 1},
+            "reason": {"type": "string", "minLength": 8, "maxLength": 1000},
+            "alert_context": {
+              "type": "object",
+              "required": ["alert_id"],
+              "properties": {
+                "alert_id": {"type": "string", "minLength": 1, "maxLength": 256},
+                "alert_type": {"type": "string"},
+                "severity": {"type": "string"},
+                "source_ip": {"type": "string"},
+                "asset_id": {"type": "string"}
+              },
+              "additionalProperties": true
+            }
+          }
+        }}}},
+        "responses": {
+          "202": {"description": "Request, minimum audit and outbox committed; acceptance is not provider success", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Missing stable idempotency, current playbook version, reason, or alert identity"},
+          "404": {"description": "Playbook is absent from the authenticated tenant"},
+          "409": {"description": "Playbook revision, enabled state, idempotency identity, run budget, or cooldown conflict"},
+          "503": {"description": "V2 feature or PostgreSQL authority is unavailable"}
+        }
+      }
+    },
+    "/v1/playbooks/executions/{execution_id}": {
+      "get": {
+        "operationId": "getPlaybookExecution",
+        "x-feature-id": "F-PLAYBOOK-001",
+        "x-required-scope": "playbook:read",
+        "parameters": [{"name": "execution_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {
+          "200": {"description": "Tenant-scoped approval, executor, workflow revision and immutable provider receipt state", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "404": {"description": "Execution is absent from the authenticated tenant"}
+        }
+      }
+    },
+    "/v1/playbooks/executions/{execution_id}/approval": {
+      "post": {
+        "operationId": "decidePlaybookExecution",
+        "x-feature-id": "F-PLAYBOOK-001",
+        "x-required-scope": "playbook:approve",
+        "parameters": [
+          {"name": "execution_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["decision", "expected_revision", "reason"], "properties": {"decision": {"enum": ["approve", "reject"]}, "expected_revision": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 8, "maxLength": 1000}}}}}},
+        "responses": {
+          "202": {"description": "Independent approval decision committed with optimistic revision, audit and outbox", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "playbook:approve missing or requester attempted self-approval"},
+          "409": {"description": "Revision, state, or idempotency conflict"}
+        }
+      }
+    },
+    "/v1/playbooks/executions/{execution_id}/cancel": {
+      "post": {
+        "operationId": "cancelPlaybookExecution",
+        "x-feature-id": "F-PLAYBOOK-001",
+        "x-required-scope": "playbook:execute",
+        "x-compatibility-scopes": ["playbook:write", "alert:write"],
+        "parameters": [
+          {"name": "execution_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"$ref": "#/components/requestBodies/VersionedResponseControl"},
+        "responses": {
+          "202": {"description": "Pending or approved but undispatched execution cancelled atomically", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "409": {"description": "Execution is leased, terminal, revision-conflicting, or idempotency-conflicting"}
+        }
+      }
+    },
+    "/v1/playbooks/executions/{execution_id}/compensate": {
+      "post": {
+        "operationId": "compensatePlaybookExecution",
+        "x-feature-id": "F-PLAYBOOK-001",
+        "x-required-scope": "playbook:approve",
+        "parameters": [
+          {"name": "execution_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"$ref": "#/components/requestBodies/VersionedResponseControl"},
+        "responses": {
+          "202": {"description": "Independently approved compensation queued against a durable external-effect receipt", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "playbook:approve missing or original requester attempted compensation approval"},
+          "409": {"description": "No effect receipt, invalid state, revision, or idempotency conflict"}
+        }
+      }
+    },
+    "/v1/topics/{topic}/snapshot": {
+      "get": {
+        "operationId": "getTopicSnapshot",
+        "x-required-scope": "topic:read",
+        "x-feature-id": "F-TOPIC-001",
+        "parameters": [{"name": "topic", "in": "path", "required": true, "schema": {"enum": ["tunnel", "exfil", "apt"]}}],
+        "responses": {"200": {"description": "Unified topic snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/topics/{topic}/actions": {
+      "post": {
+        "operationId": "createTopicActionJob",
+        "x-required-scope": "topic:write",
+        "x-feature-id": "F-TOPIC-002",
+        "parameters": [{"name": "topic", "in": "path", "required": true, "schema": {"enum": ["tunnel", "exfil", "apt"]}}, {"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["action_id", "target", "snapshot_id", "expected_revision", "reason"], "properties": {"action_id": {"type": "string"}, "target": {"type": "string", "maxLength": 500}, "snapshot_id": {"type": "string", "format": "uuid"}, "expected_revision": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 4, "maxLength": 1000}, "detail": {"type": "object"}}}}}},
+        "responses": {"202": {"description": "Action job accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/topics/{topic}/actions/{job_id}": {
+      "get": {
+        "operationId": "getTopicActionJob",
+        "x-required-scope": "topic:read",
+        "x-feature-id": "F-TOPIC-002",
+        "parameters": [
+          {"name": "topic", "in": "path", "required": true, "schema": {"enum": ["tunnel", "exfil", "apt"]}},
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {"200": {"description": "Action lifecycle and executor receipt", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/probes/{id}/config": {
+      "post": {
+        "operationId": "pushProbeConfigV2",
+        "x-required-scope": "probe:write",
+        "x-feature-id": "F-PROBE-001",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["config_version"],
+                "properties": {
+                  "config_version": {"type": "string", "minLength": 1},
+                  "capture_mode": {"type": "string"},
+                  "interfaces": {"type": "array", "items": {"type": "string"}},
+                  "archive_path": {"type": "string"},
+                  "reason": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Command accepted and atomically recorded with outbox and audit; not proof of agent application",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          }
+        }
+      }
+    },
+    "/v1/probes/operations/{operation_id}": {
+      "get": {
+        "operationId": "getProbeOperation",
+        "x-required-scope": "probe:read",
+        "x-feature-id": "F-PROBE-001",
+        "parameters": [
+          {"name": "operation_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Authoritative accepted, delivered, completed, failed, expired or stale lifecycle state",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          }
+        }
+      }
+    },
+    "/v1/probes/{id}/operations/{operation_id}/ack": {
+      "post": {
+        "operationId": "acknowledgeProbeOperation",
+        "x-required-scope": "probe:ingest",
+        "x-feature-id": "F-PROBE-001",
+        "x-authenticated-probe-binding": true,
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "operation_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["command_revision", "reported_hash", "agent_version", "applied"],
+                "properties": {
+                  "command_revision": {"type": "integer", "minimum": 1},
+                  "reported_version": {"type": "string"},
+                  "reported_hash": {"type": "string", "minLength": 1},
+                  "agent_version": {"type": "string", "minLength": 1},
+                  "applied": {"type": "boolean"},
+                  "error": {"type": "string"},
+                  "acknowledged_at": {"type": "string", "format": "date-time"},
+                  "detail": {"type": "object"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Idempotently persisted ACK state; stale receipts never regress reported state",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "403": {"description": "Probe token identity does not match path probe"},
+          "409": {"description": "ACK command revision does not match operation"}
+        }
+      }
+    },
+    "/v1/auth/me": {
+      "patch": {
+        "operationId": "updateAuthenticatedUserProfileAtomic",
+        "x-required-scope": "user:write",
+        "x-feature-id": "F-AUTH-001",
+        "x-compatibility": "PUT remains accepted and legacy requests missing command metadata are recorded with compatibility_mode=true",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {
+          "type": "object",
+          "required": ["email", "action_id", "reason", "expected_revision"],
+          "properties": {
+            "email": {"type": "string", "format": "email"},
+            "action_id": {"const": "auth-user-profile-update"},
+            "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+            "expected_revision": {"type": "integer", "minimum": 1}
+          }
+        }}}},
+        "responses": {
+          "200": {"description": "Backward-compatible user body with additive revision, event_id, outbox_status and idempotent_reuse", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AuthenticatedUserCommandResult"}}}},
+          "409": {"description": "Revision or idempotency conflict"}
+        }
+      }
+    },
+    "/v1/auth/me/password": {
+      "post": {
+        "operationId": "changeAuthenticatedUserPasswordAtomic",
+        "x-required-scope": "user:write",
+        "x-feature-id": "F-AUTH-001",
+        "x-compatibility": "/v1/auth/password remains an accepted alias; legacy requests missing command metadata are recorded with compatibility_mode=true",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {
+          "type": "object",
+          "required": ["current_password", "new_password", "action_id", "reason", "expected_revision"],
+          "properties": {
+            "current_password": {"type": "string", "minLength": 1, "writeOnly": true},
+            "new_password": {"type": "string", "minLength": 8, "writeOnly": true},
+            "action_id": {"const": "auth-user-password-change"},
+            "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+            "expected_revision": {"type": "integer", "minimum": 1}
+          }
+        }}}},
+        "responses": {
+          "200": {
+            "description": "Existing success message is preserved; command metadata is returned in headers",
+            "headers": {
+              "X-Resource-Revision": {"schema": {"type": "integer", "minimum": 1}},
+              "X-Event-ID": {"schema": {"type": "string", "format": "uuid"}},
+              "X-Outbox-Status": {"schema": {"const": "pending"}}
+            },
+            "content": {"application/json": {"schema": {"type": "object", "required": ["message"], "properties": {"message": {"type": "string"}}}}}
+          },
+          "409": {"description": "Revision or idempotency conflict"}
+        }
+      }
+    },
+    "/v1/data-quality": {
+      "get": {
+        "operationId": "getDataQualityControlPlaneSnapshot",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:read",
+        "description": "Returns tenant-scoped measured checks. Missing real signals remain unknown and set meta.partial=true.",
+        "responses": {
+          "200": {
+            "description": "Measured, unknown and partial quality state with explicit missing sections",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "403": {"description": "data-quality:read scope required"},
+          "503": {"description": "A required measurement source is unavailable"}
+        }
+      }
+    },
+    "/v1/data-quality/baseline": {
+      "post": {
+        "operationId": "activateDataQualityBaseline",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:write",
+        "description": "Atomically commits one tenant-scoped baseline version, minimum audit and outbox event. It does not enable release blocking.",
+        "responses": {
+          "200": {
+            "description": "Persistent baseline activated with schema hash and source watermarks",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "403": {"description": "data-quality:write scope required"},
+          "503": {"description": "ClickHouse measurement or PostgreSQL atomic commit failed"}
+        }
+      }
+    },
+    "/v1/data-quality/datasets": {
+      "get": {
+        "operationId": "listDataQualityDatasets",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:read",
+        "description": "Lists the authenticated tenant's versioned data-quality dataset contracts.",
+        "responses": {
+          "200": {"description": "Tenant-scoped dataset contracts", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "data-quality:read scope required"},
+          "503": {"description": "PostgreSQL governance control plane unavailable"}
+        }
+      }
+    },
+    "/v1/data-quality/datasets/{dataset_id}": {
+      "put": {
+        "operationId": "upsertDataQualityDataset",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:write",
+        "description": "Creates, updates, pauses or retires one tenant dataset with optimistic revision, idempotent receipt, immutable history, audit and outbox in one transaction.",
+        "parameters": [
+          {"name": "dataset_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 160}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 16, "maxLength": 200}}
+        ],
+        "responses": {
+          "200": {"description": "Dataset command committed or exactly replayed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid contract or command identity"},
+          "403": {"description": "data-quality:write scope required"},
+          "409": {"description": "Revision or idempotency collision"},
+          "503": {"description": "PostgreSQL governance control plane unavailable"}
+        }
+      }
+    },
+    "/v1/data-quality/rules": {
+      "get": {
+        "operationId": "listDataQualityRules",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:read",
+        "description": "Lists versioned rules for the authenticated tenant, optionally filtered by dataset_id.",
+        "parameters": [{"name": "dataset_id", "in": "query", "schema": {"type": "string"}}],
+        "responses": {
+          "200": {"description": "Tenant-scoped rule versions", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "data-quality:read scope required"},
+          "503": {"description": "PostgreSQL governance control plane unavailable"}
+        }
+      },
+      "post": {
+        "operationId": "createDataQualityRuleDraft",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:write",
+        "description": "Creates a draft rule only; activation requires shadow, approval submission and an independent approver transition.",
+        "parameters": [{"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 16, "maxLength": 200}}],
+        "responses": {
+          "200": {"description": "Draft rule committed or exactly replayed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid rule contract or command identity"},
+          "403": {"description": "data-quality:write scope required"},
+          "409": {"description": "Revision or idempotency collision"},
+          "503": {"description": "PostgreSQL governance control plane unavailable"}
+        }
+      }
+    },
+    "/v1/data-quality/rules/{rule_id}/transitions": {
+      "post": {
+        "operationId": "transitionDataQualityRule",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:write",
+        "description": "Applies one legal rule transition. Approve and reject require an authenticated actor different from the rule creator.",
+        "parameters": [
+          {"name": "rule_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 16, "maxLength": 200}}
+        ],
+        "responses": {
+          "200": {"description": "Rule transition committed or exactly replayed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid transition command"},
+          "403": {"description": "Scope denied or requester attempted self-approval"},
+          "404": {"description": "Rule not found in authenticated tenant"},
+          "409": {"description": "Illegal state transition, stale revision or idempotency collision"},
+          "503": {"description": "PostgreSQL governance control plane unavailable"}
+        }
+      }
+    },
+    "/v1/data-quality/events/{quality_event_id}/repairs": {
+      "post": {
+        "operationId": "createDataQualityRepair",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:write",
+        "description": "Plans one tenant-scoped, allowlisted and resource-bounded repair. Creation never executes replay work.",
+        "parameters": [
+          {"name": "quality_event_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 16, "maxLength": 200}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operation_id", "input_scope", "resource_budget", "action_id", "reason"],
+          "properties": {
+            "operation_id": {"const": "flow_replay_window_v1"},
+            "input_scope": {"type": "object"},
+            "resource_budget": {"type": "object"},
+            "action_id": {"type": "string", "minLength": 1},
+            "reason": {"type": "string", "minLength": 8, "maxLength": 1000}
+          }
+        }}}},
+        "responses": {
+          "200": {"description": "Planned repair committed or exactly replayed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Unknown operation, invalid tenant/window scope or resource budget"},
+          "403": {"description": "data-quality:write scope required"},
+          "404": {"description": "Quality event not found in authenticated tenant"},
+          "409": {"description": "Idempotency collision"},
+          "503": {"description": "PostgreSQL repair control plane unavailable"}
+        }
+      }
+    },
+    "/v1/data-quality/repairs/{repair_id}/transitions": {
+      "post": {
+        "operationId": "transitionDataQualityRepair",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:write",
+        "description": "Advances the bounded repair state machine. start_execution is fail-closed unless the server-side execution flag is enabled and a registered executor reports ready; it returns 202 when accepted.",
+        "parameters": [
+          {"name": "repair_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 16, "maxLength": 200}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "expected_revision", "action_id", "reason"],
+          "properties": {
+            "action": {"enum": ["complete_dry_run", "submit_approval", "approve", "reject", "start_execution", "record_partial", "record_failed", "reconcile", "cancel"]},
+            "expected_revision": {"type": "integer", "minimum": 1},
+            "summary": {"type": "object", "description": "Accepted for compatibility. The server ignores this field for complete_dry_run and reconcile and derives evidence from registered authorities."},
+            "action_id": {"type": "string", "minLength": 1},
+            "reason": {"type": "string", "minLength": 8, "maxLength": 1000}
+          }
+        }}}},
+        "responses": {
+          "200": {"description": "Repair transition committed or exactly replayed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "202": {"description": "Approved replay execution accepted", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid repair transition command"},
+          "403": {"description": "Scope denied, requester self-approval or requester self-reconciliation"},
+          "404": {"description": "Repair not found in authenticated tenant"},
+          "409": {"description": "Illegal state transition, stale revision or idempotency collision"},
+          "503": {"description": "Repair execution disabled or PostgreSQL unavailable"}
+        }
+      }
+    },
+    "/v1/data-quality/actions": {
+      "post": {
+        "operationId": "createDataQualityContextAction",
+        "x-feature-id": "F-DATAQUALITY-001",
+        "x-required-scope": "data-quality:write",
+        "description": "Persists the existing contextual action and minimum audit. The response remains partial until a durable repair job, executor receipt and reconcile report exist.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["view", "action", "target"],
+                "properties": {
+                  "view": {"enum": ["overview", "topic-health", "flink-quality", "field-quality", "storage-quality", "replay-reconcile", "report", "settings"]},
+                  "action": {"type": "string", "minLength": 1, "maxLength": 120},
+                  "target": {"type": "string", "minLength": 1, "maxLength": 240},
+                  "dry_run": {"type": "boolean", "default": true},
+                  "confirmed": {"type": "boolean", "default": false},
+                  "reason": {"type": "string", "maxLength": 1000},
+                  "parameters": {"type": "object"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Existing contextual action accepted; meta.partial remains true until a candidate replay executor and authoritative reconciliation are proven",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "400": {"description": "Invalid view, action, target or non-dry-run confirmation"},
+          "403": {"description": "data-quality:write scope required"},
+          "503": {"description": "Data-quality action repository unavailable"}
+        }
+      }
+    },
+    "/v1/graph/explore": {
+      "get": {
+        "operationId": "exploreBoundedGraph",
+        "x-required-scope": "graph:read",
+        "x-feature-id": "F-GRAPH-001",
+        "parameters": [
+          {"name": "start_id", "in": "query", "required": true, "schema": {"type": "string"}},
+          {"name": "max_depth", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 3}},
+          {"name": "max_nodes", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 1000}},
+          {"name": "max_edges", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 5000}}
+        ],
+        "responses": {"200": {"description": "Bounded graph result", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/whitelist": {
+      "get": {
+        "operationId": "listWhitelistEntries",
+        "x-feature-id": "F-WHITELIST-001",
+        "x-required-scope": "alert:read",
+        "parameters": [
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 200}},
+          {"name": "offset", "in": "query", "schema": {"type": "integer", "minimum": 0}}
+        ],
+        "responses": {
+          "200": {"description": "Tenant-scoped non-archived whitelist entries with approval and rule-effect ACK state", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "alert:read scope required"}
+        }
+      },
+      "post": {
+        "operationId": "createWhitelistEntry",
+        "x-feature-id": "F-WHITELIST-001",
+        "x-required-scope": "alert:write",
+        "parameters": [
+          {"$ref": "#/components/parameters/IdempotencyKey"},
+          {"name": "X-Action-ID", "in": "header", "required": true, "schema": {"const": "whitelist-create"}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WhitelistCreate"}}}},
+        "responses": {
+          "201": {"description": "Draft, immutable version, minimum audit, outbox and durable replay record committed atomically", "headers": {"X-Event-ID": {"schema": {"type": "string", "format": "uuid"}}, "X-Outbox-Status": {"schema": {"const": "pending"}}, "X-Idempotent-Replay": {"schema": {"type": "boolean"}}, "ETag": {"schema": {"type": "string"}}}, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Stable action, idempotency, reason, trace, type or value missing"},
+          "403": {"description": "alert:write scope required"},
+          "409": {"description": "Duplicate value or idempotency payload collision"}
+        }
+      }
+    },
+    "/v1/whitelist/check": {
+      "post": {
+        "operationId": "checkWhitelistValue",
+        "x-feature-id": "F-WHITELIST-001",
+        "x-required-scope": "alert:read",
+        "description": "Checks only the authenticated tenant and returns true after the current whitelist version has an applied effective-rule ACK.",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WhitelistCheckRequest"}}}},
+        "responses": {
+          "200": {"description": "Tenant-scoped effective whitelist match result", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "value is required"},
+          "403": {"description": "alert:read scope required"},
+          "503": {"description": "Whitelist repository unavailable"}
+        }
+      }
+    },
+    "/v1/whitelist/{id}": {
+      "patch": {
+        "operationId": "transitionWhitelistEntry",
+        "x-feature-id": "F-WHITELIST-001",
+        "x-required-scope": "alert:write",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"$ref": "#/components/parameters/IdempotencyKey"},
+          {"name": "X-Action-ID", "in": "header", "required": true, "schema": {"enum": ["whitelist-submit-approval", "whitelist-approve", "whitelist-reject", "whitelist-extend", "whitelist-disable", "whitelist-assign"]}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WhitelistTransition"}}}},
+        "responses": {
+          "200": {"description": "Versioned transition committed; active is not effective until rule_effect_status=applied", "headers": {"X-Event-ID": {"schema": {"type": "string", "format": "uuid"}}, "X-Outbox-Status": {"schema": {"const": "pending"}}, "X-Rule-Effect-Status": {"schema": {"enum": ["pending", "applied", "failed"]}}, "ETag": {"schema": {"type": "string"}}}, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "Missing write/approval role, cross-tenant request, or creator attempted own high-risk approval"},
+          "404": {"description": "Entry absent from authenticated tenant"},
+          "409": {"description": "Revision, lifecycle, two-person or idempotency conflict"}
+        }
+      },
+      "delete": {
+        "operationId": "archiveWhitelistEntry",
+        "x-feature-id": "F-WHITELIST-001",
+        "x-required-scope": "alert:write",
+        "x-compatibility": "Existing DELETE route is preserved but now performs a soft archive",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"$ref": "#/components/parameters/IdempotencyKey"},
+          {"name": "X-Action-ID", "in": "header", "required": true, "schema": {"const": "whitelist-archive"}},
+          {"name": "expected_revision", "in": "query", "required": true, "schema": {"type": "integer", "minimum": 1}}
+        ],
+        "responses": {
+          "200": {"description": "Disabled/draft row soft archived with immutable history, audit and outbox"},
+          "409": {"description": "Entry must first be disabled or revision/idempotency conflicted"}
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "ResourceId": {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}},
+      "IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 16}},
+      "CampaignSnapshotId": {"name": "snapshot_id", "in": "query", "required": false, "description": "Content-addressed lifecycle snapshot selected from the campaign list; stale values return 409", "schema": {"type": "string", "pattern": "^campaign:[^:]+:revision:[0-9]+:[0-9a-f]{16}$"}}
+    },
+    "requestBodies": {
+      "VersionedResponseControl": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["expected_revision", "reason"],
+              "properties": {
+                "expected_revision": {"type": "integer", "minimum": 1},
+                "reason": {"type": "string", "minLength": 8, "maxLength": 1000}
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "AlertSearchRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "query": {"type": "string", "maxLength": 256},
+          "severity": {"$ref": "#/components/schemas/AlertSearchFilterValues"},
+          "status": {"$ref": "#/components/schemas/AlertSearchFilterValues"},
+          "alert_types": {"$ref": "#/components/schemas/AlertSearchFilterValues"},
+          "labels": {"$ref": "#/components/schemas/AlertSearchFilterValues"},
+          "src_ip": {"type": "string", "maxLength": 64},
+          "dst_ip": {"type": "string", "maxLength": 64},
+          "start_time": {"type": "integer", "format": "int64", "minimum": 0},
+          "end_time": {"type": "integer", "format": "int64", "minimum": 0},
+          "from": {"type": "integer", "minimum": 0, "description": "Deprecated compatibility offset; after cursor cutover only the first 1000 results are allowed."},
+          "size": {"type": "integer", "minimum": 0, "maximum": 1000, "description": "Cursor modes are further limited to 200."},
+          "sort_field": {"enum": ["last_seen", "first_seen", "score", "severity", "status", "alert_type", "alert_id"]},
+          "sort_order": {"enum": ["asc", "desc"]},
+          "cursor": {"type": "string", "maxLength": 8192},
+          "cursor_mode": {"enum": ["live", "pit"]}
+        }
+      },
+      "AlertSearchFilterValues": {
+        "type": "array",
+        "maxItems": 20,
+        "items": {"type": "string", "maxLength": 128}
+      },
+      "AlertSearchResult": {
+        "type": "object",
+        "required": ["alerts", "total", "took", "has_more", "partial"],
+        "properties": {
+          "alerts": {"type": "array", "items": {"type": "object"}},
+          "total": {"type": "integer", "format": "int64", "minimum": 0},
+          "total_relation": {"enum": ["eq", "gte"]},
+          "aggregations": {"type": "object", "additionalProperties": true},
+          "aggregations_omitted": {"type": "boolean"},
+          "took": {"type": "integer", "minimum": 0},
+          "next_cursor": {"type": "string", "maxLength": 8192},
+          "has_more": {"type": "boolean"},
+          "cursor_mode": {"enum": ["live", "pit"]},
+          "snapshot_id": {"type": "string"},
+          "partial": {"const": false}
+        }
+      },
+      "DashboardSnapshot": {
+        "type": "object",
+        "required": ["window", "metrics", "queue_total", "queue", "health_gates", "stages", "quality_rings", "top_talkers", "alert_trend", "attack_phases"],
+        "properties": {
+          "window": {"type": "object", "required": ["start", "end"], "properties": {"start": {"type": "string", "format": "date-time"}, "end": {"type": "string", "format": "date-time"}}},
+          "metrics": {"type": "array", "items": {"type": "object", "required": ["key", "label", "value", "unit", "state", "delta", "spark"], "properties": {"key": {"type": "string"}, "label": {"type": "string"}, "value": {"type": ["number", "null"]}, "unit": {"type": "string"}, "state": {"enum": ["ok", "warn", "risk", "info", "unknown"]}, "delta": {"type": "string"}, "spark": {"type": "array", "items": {"type": "number"}}}}},
+          "queue_total": {"type": "integer", "minimum": 0},
+          "queue": {"type": "array", "items": {"type": "object", "required": ["event_id", "risk_level", "asset_group", "business_system", "stage", "remaining", "evidence_status", "last_seen", "evidence_count"]}},
+          "health_gates": {"type": "array", "items": {"type": "object"}},
+          "stages": {"type": "array", "items": {"type": "object"}},
+          "quality_rings": {"type": "array", "items": {"type": "object"}},
+          "top_talkers": {"type": "array", "items": {"type": "object"}},
+          "alert_trend": {"type": "array", "items": {"type": "object"}},
+          "attack_phases": {"type": "array", "items": {"type": "object"}}
+        }
+      },
+      "DashboardTaskCreate": {
+        "type": "object",
+        "required": ["target", "priority", "snapshot_id", "reason"],
+        "properties": {
+          "target": {"type": "string", "minLength": 1, "maxLength": 500},
+          "priority": {"enum": ["low", "medium", "high", "critical"]},
+          "snapshot_id": {"type": "string", "minLength": 1, "maxLength": 500},
+          "reason": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "context": {"type": "object", "additionalProperties": true}
+        }
+      },
+      "Envelope": {
+        "type": "object",
+        "required": ["data", "meta", "error"],
+        "properties": {
+          "data": {},
+          "meta": {"$ref": "#/components/schemas/Meta"},
+          "error": {"oneOf": [{"type": "null"}, {"$ref": "#/components/schemas/Error"}]}
+        }
+      },
+      "Meta": {
+        "type": "object",
+        "required": ["contract_version", "schema_version", "snapshot_id", "as_of", "generated_at", "trace_id", "result_code", "partial", "missing_sections", "source_watermarks"],
+        "properties": {
+          "contract_version": {"type": "integer"},
+          "schema_version": {"type": "integer"},
+          "snapshot_id": {"type": "string"},
+          "as_of": {"type": "string", "format": "date-time"},
+          "generated_at": {"type": "string", "format": "date-time"},
+          "trace_id": {"type": "string"},
+          "result_code": {"type": "string"},
+          "operation_id": {"type": "string"},
+          "tenant_id": {"type": "string"},
+          "partial": {"type": "boolean"},
+          "missing_sections": {"type": "array", "items": {"type": "string"}},
+          "source_watermarks": {"type": "object", "additionalProperties": {"type": "string"}},
+          "projection_status": {"type": "string"}
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message", "trace_id", "retryable"],
+        "properties": {
+          "code": {"type": "string"},
+          "message": {"type": "string"},
+          "trace_id": {"type": "string"},
+          "retryable": {"type": "boolean"},
+          "field_errors": {"type": "array", "items": {"type": "object", "required": ["field", "code", "message"], "properties": {"field": {"type": "string"}, "code": {"type": "string"}, "message": {"type": "string"}}}},
+          "operation_id": {"type": "string"},
+          "current_revision": {"type": "integer"},
+          "projection_status": {"type": "string"},
+          "status_url": {"type": "string"},
+          "expected_consistency_window": {"type": "string"}
+        }
+      },
+      "WhitelistEntry": {
+        "type": "object",
+        "required": ["id", "tenant_id", "type", "value", "reason", "status", "approval_status", "version", "created_by", "created_at", "updated_at"],
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "tenant_id": {"type": "string"},
+          "type": {"enum": ["ip", "domain", "fingerprint", "subnet", "asset", "account", "rule", "model"]},
+          "value": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "status": {"enum": ["draft", "pending", "active", "disabled"]},
+          "approval_status": {"enum": ["draft", "pending", "approved", "rejected"]},
+          "version": {"type": "integer", "minimum": 1},
+          "created_by": {"type": "string"},
+          "created_at": {"type": "string", "format": "date-time"},
+          "updated_at": {"type": "string", "format": "date-time"},
+          "expires_at": {"type": "string", "format": "date-time"},
+          "rule_effect_status": {"enum": ["pending", "applied", "failed"]},
+          "rule_desired_state": {"enum": ["effective", "revoked"]},
+          "rule_revision": {"type": "string"},
+          "last_action_id": {"type": "string"},
+          "last_trace_id": {"type": "string"}
+        }
+      },
+      "WhitelistCreate": {
+        "type": "object",
+        "required": ["type", "value", "reason", "description", "owner_role", "scope", "risk_level", "expires_at"],
+        "properties": {
+          "type": {"enum": ["ip", "domain", "fingerprint", "subnet", "asset", "account", "rule", "model"]},
+          "value": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "description": {"type": "string"},
+          "source_alert_id": {"type": "string"},
+          "feedback_id": {"type": "string"},
+          "owner_role": {"type": "string", "minLength": 1},
+          "scope": {"type": "string", "minLength": 1},
+          "risk_level": {"enum": ["low", "medium", "high", "critical"]},
+          "covered_alerts": {"type": "integer", "minimum": 0},
+          "covered_assets": {"type": "integer", "minimum": 0},
+          "expires_at": {"type": "string", "format": "date-time"},
+          "status": {"const": "draft"},
+          "approval_status": {"const": "draft"}
+        }
+      },
+      "WhitelistTransition": {
+        "type": "object",
+        "required": ["expected_revision", "reason"],
+        "properties": {
+          "expected_revision": {"type": "integer", "minimum": 1},
+          "expected_version": {"type": "integer", "minimum": 1, "deprecated": true},
+          "reason": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "status": {"enum": ["pending", "active", "disabled"]},
+          "approval_status": {"enum": ["pending", "approved", "rejected"]},
+          "expires_at": {"type": "string", "format": "date-time"},
+          "owner_role": {"type": "string", "minLength": 1}
+        }
+      },
+      "WhitelistCheckRequest": {
+        "type": "object",
+        "required": ["value"],
+        "properties": {
+          "value": {"type": "string", "minLength": 1},
+          "type": {"enum": ["ip", "domain", "fingerprint", "subnet"], "deprecated": true},
+          "tenant_id": {"type": "string", "readOnly": true, "description": "Ignored when supplied; tenant identity comes from authentication context."}
+        }
+      },
+      "AuthenticatedUserCommandResult": {
+        "type": "object",
+        "required": ["user_id", "tenant_id", "username", "email", "roles", "revision", "event_id", "outbox_status"],
+        "properties": {
+          "user_id": {"type": "string", "format": "uuid"},
+          "tenant_id": {"type": "string"},
+          "username": {"type": "string"},
+          "email": {"type": "string"},
+          "roles": {"type": "array", "items": {"type": "string"}},
+          "revision": {"type": "integer", "minimum": 1},
+          "event_id": {"type": "string", "format": "uuid"},
+          "outbox_status": {"const": "pending"},
+          "idempotent_reuse": {"type": "boolean"}
+        }
+      }
+    }
+  }
+}

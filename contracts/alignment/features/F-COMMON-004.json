@@ -1,0 +1,80 @@
+{
+  "feature_id": "F-COMMON-004",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/dashboard", "/assets", "/alerts", "/topics"],
+    "preserved_actions": [],
+    "preserved_api_operations": [
+      "GET /v1/dashboard/snapshot",
+      "GET /v1/assets/{asset_id}/snapshot",
+      "POST /v1/alerts/{id}/response-actions",
+      "POST /v1/topics/{topic}/actions"
+    ],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "common.error-result.v1",
+    "controls": [],
+    "states": ["loading", "accepted", "running", "success", "partial", "cancelled", "failed"]
+  },
+  "api": {
+    "operation_id": "applyErrorResultEnvelopeV1",
+    "method": "POST",
+    "path": "/v1/{resource}",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "HTTP status carries transport semantics while stable error_code or result_code carries business semantics",
+      "HTTP 202 means accepted and never final success",
+      "parameter, permission, revision, idempotency, state transition, quota, authority and projection failures remain distinguishable",
+      "trace_id and operation_id correlate the API result with logs, metrics and business audit without exposing a stack",
+      "unknown failures return a safe message and a searchable trace rather than a successful toast"
+    ],
+    "states": ["accepted", "running", "completed", "partial", "failed", "cancelled", "compensating", "compensated"],
+    "compensation": "preserve the failed terminal result and dispatch only the compensation registered for the stable action_id"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql"],
+    "migration": "no common schema mutation; each business command persists minimal audit and outbox in its owning PostgreSQL transaction",
+    "event_types": [],
+    "source_watermarks": ["postgresql.business_revision", "postgresql.audit_event_id", "postgresql.outbox_id"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["*"],
+    "negative_tests": [
+      "permission denial cannot be rewritten as HTTP 200 or a successful business result",
+      "error details and logs cannot expose stack traces, credentials or another tenant identifier",
+      "a stale revision returns current_revision without mutating the aggregate"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["validation failure", "revision conflict", "rate limit", "authority unavailable", "accepted asynchronous command", "compensated command"],
+    "stop_conditions": ["error/result identity diverges across HTTP, job state, audit or authoritative data"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 error catalog OpenAPI and generated TypeScript shape",
+      "G1 common response helper mapping and secret-safe error tests",
+      "G2 real P0 query and command failure injection",
+      "G3 HTTP job authoritative data audit and outbox reconciliation",
+      "G4 duplicate and dependency-failure profile",
+      "G5 Windows Chrome accepted partial failed and compensated states",
+      "G6 gateway preserves upstream status and rollback"
+    ],
+    "evidence": ["one trace proves the same code, operation, revision and final result across browser, HTTP, job, PG, audit and projection status"]
+  },
+  "rollout": {
+    "feature_flag": "common_error_result_v1",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-COMMON-004-rollback.md"
+  }
+}

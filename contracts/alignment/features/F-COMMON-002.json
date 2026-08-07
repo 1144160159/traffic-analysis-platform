@@ -1,0 +1,83 @@
+{
+  "feature_id": "F-COMMON-002",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/dashboard", "/assets", "/topics", "/topics/tunnel", "/topics/exfil", "/topics/apt"],
+    "preserved_actions": [],
+    "preserved_api_operations": [
+      "GET /v1/dashboard/snapshot",
+      "GET /v1/assets/{asset_id}/snapshot",
+      "GET /v1/topics/{topic}/snapshot"
+    ],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "common.page.snapshot.v1",
+    "controls": [],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "applyPageSnapshotEnvelopeV1",
+    "method": "GET",
+    "path": "/v1/{domain}/snapshot",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "one rendered workbench binds all sections to one immutable snapshot_id and one business as_of",
+      "contract_version, schema_version, generated_at, trace_id, partial, missing_sections and source_watermarks are explicit",
+      "a legal zero, an empty collection, an unavailable value and a stale value are distinct states",
+      "a failed projection becomes an explicit partial section and is never replaced by fixture or display-derived data",
+      "tenant and field trimming are decided by authenticated server-side authorization, not request parameters"
+    ],
+    "states": ["loading", "complete", "partial", "stale", "forbidden", "failed"],
+    "compensation": "disable the additive snapshot profile and retain the preserved legacy read operations without mutating business state"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "nebulagraph", "redis", "minio"],
+    "migration": "additive common response profile; domain snapshot manifests and migrations remain owned by their feature contracts",
+    "event_types": [],
+    "source_watermarks": [
+      "postgresql.domain_revision",
+      "clickhouse.query_as_of",
+      "opensearch.projection_version",
+      "nebulagraph.projection_version",
+      "redis.cache_watermark",
+      "minio.object_last_modified"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["*"],
+    "negative_tests": [
+      "a request tenant parameter cannot override the authenticated tenant",
+      "a source timeout cannot expose another tenant or be rendered as a zero-valued complete result"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["complete pilot snapshot", "one projection timeout", "legal zero and empty collection", "stale projection"],
+    "stop_conditions": ["source time skew, unbounded fanout, P99 or resource use exceeds the approved domain budget"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 OpenAPI and generated TypeScript metadata shape",
+      "G1 Go common envelope and zero/empty/partial semantics",
+      "G2 real dashboard asset and topic snapshot services",
+      "G3 source watermark and sampled fact reconciliation",
+      "G4 fixed-scale complete and partial response profile",
+      "G5 Windows Chrome mock-off same-snapshot rendering",
+      "G6 canary rollback to preserved reads"
+    ],
+    "evidence": ["one candidate-bound trace links browser payload, snapshot manifest, source watermarks and sampled source facts"]
+  },
+  "rollout": {
+    "feature_flag": "common_page_snapshot_v1",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-COMMON-002-rollback.md"
+  }
+}

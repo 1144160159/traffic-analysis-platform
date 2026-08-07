@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/schemas/feature-contract.schema.json",
+  "title": "Traffic Analysis Platform Feature Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "feature_id",
+    "contract_version",
+    "status",
+    "compatibility",
+    "ui",
+    "api",
+    "domain",
+    "data",
+    "permissions",
+    "performance",
+    "acceptance",
+    "rollout"
+  ],
+  "properties": {
+    "feature_id": {"type": "string", "pattern": "^F-[A-Z0-9-]+-[0-9]{3}$"},
+    "contract_version": {"type": "integer", "minimum": 1},
+    "status": {"enum": ["draft", "approved", "implemented", "verifying", "observing", "closed", "blocked"]},
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preserved_routes", "preserved_actions", "preserved_api_operations", "strategy"],
+      "properties": {
+        "preserved_routes": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "preserved_actions": {"type": "array", "items": {"type": "string"}},
+        "preserved_api_operations": {"type": "array", "items": {"type": "string"}},
+        "preserved_query_states": {"type": "array", "items": {"type": "string"}},
+        "strategy": {"enum": ["additive", "expand-migrate-contract", "compatibility-adapter"]}
+      }
+    },
+    "ui": {
+      "type": "object",
+      "required": ["query_id", "controls", "states"],
+      "properties": {
+        "query_id": {"type": "string", "minLength": 1},
+        "controls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["control_id", "action_id"],
+            "properties": {
+              "control_id": {"type": "string", "minLength": 1},
+              "action_id": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "states": {
+          "type": "array",
+          "items": {"enum": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed", "accepted", "running", "cancelled", "compensating"]},
+          "minItems": 4
+        }
+      }
+    },
+    "api": {
+      "type": "object",
+      "required": ["operation_id", "method", "path", "response_envelope"],
+      "properties": {
+        "operation_id": {"type": "string", "minLength": 1},
+        "method": {"enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]},
+        "path": {"type": "string", "pattern": "^/"},
+        "response_envelope": {"const": "data-meta-error"},
+        "async": {"type": "boolean"},
+        "idempotency_key": {"type": "string"},
+        "revision_field": {"type": "string"}
+      }
+    },
+    "domain": {
+      "type": "object",
+      "required": ["kind", "invariants"],
+      "properties": {
+        "kind": {"enum": ["query", "command"]},
+        "invariants": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "states": {"type": "array", "items": {"type": "string"}},
+        "compensation": {"type": "string"}
+      }
+    },
+    "data": {
+      "type": "object",
+      "required": ["authoritative_store", "read_models", "migration"],
+      "properties": {
+        "authoritative_store": {"enum": ["postgresql", "clickhouse", "minio", "external"]},
+        "read_models": {"type": "array", "items": {"enum": ["postgresql", "clickhouse", "opensearch", "nebulagraph", "redis", "minio"]}},
+        "migration": {"type": "string", "minLength": 1},
+        "event_types": {"type": "array", "items": {"type": "string"}},
+        "source_watermarks": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "required": ["tenant_source", "required_scopes", "negative_tests"],
+      "properties": {
+        "tenant_source": {"const": "authenticated_identity"},
+        "required_scopes": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "negative_tests": {"type": "array", "items": {"type": "string"}, "minItems": 2}
+      }
+    },
+    "performance": {
+      "type": "object",
+      "required": ["baseline_required", "journeys", "stop_conditions"],
+      "properties": {
+        "baseline_required": {"type": "boolean"},
+        "journeys": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "stop_conditions": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "required": ["tests", "evidence"],
+      "properties": {
+        "tests": {"type": "array", "items": {"type": "string"}, "minItems": 4},
+        "evidence": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    },
+    "rollout": {
+      "type": "object",
+      "required": ["feature_flag", "strategy", "rollback_runbook"],
+      "properties": {
+        "feature_flag": {"type": "string"},
+        "strategy": {"enum": ["additive", "shadow-read", "dual-write", "canary"]},
+        "rollback_runbook": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

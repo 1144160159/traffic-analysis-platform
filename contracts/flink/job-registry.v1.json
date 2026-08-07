@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-flink-job-registry-v1",
+  "remediation_id": "T-FLINK-005",
+  "coverage_status": "PARTIAL",
+  "authoritative_contracts": {
+    "deployment": "contracts/flink/application-cluster-migration.v1.json",
+    "operator_state": "contracts/flink/state-recovery.v1.json",
+    "checkpoint_ha": "contracts/flink/checkpoint-ha-upgrade.v1.json",
+    "sink_protocol": "contracts/flink/sink-reconciliation.v1.json"
+  },
+  "release_binding": {
+    "required_fields": [
+      "candidate_source_sha256",
+      "contract_sha256",
+      "job_id",
+      "artifact_sha256",
+      "image_digest",
+      "entry_class",
+      "parallelism",
+      "max_parallelism",
+      "operator_uid_sha256",
+      "savepoint_uri",
+      "savepoint_sha256"
+    ],
+    "image_pattern": "^[a-z0-9][a-z0-9._/:~-]*@sha256:[0-9a-f]{64}$",
+    "sha256_pattern": "^[0-9a-f]{64}$",
+    "mutable_tags_forbidden": true
+  },
+  "runtime_diff": {
+    "required_fields": [
+      "job_id",
+      "job_name",
+      "artifact_sha256",
+      "image_digest",
+      "entry_class",
+      "parallelism",
+      "max_parallelism",
+      "operator_uid_sha256",
+      "state_backend",
+      "checkpoint_path",
+      "savepoint_path",
+      "source_start_mode",
+      "sink_guarantee"
+    ],
+    "unknown_job_policy": "BLOCK",
+    "missing_job_policy": "BLOCK",
+    "field_mismatch_policy": "BLOCK"
+  },
+  "common": {
+    "owner": "flink-data-owner",
+    "state_backend": "rocksdb",
+    "source_start_mode": "committed-or-earliest",
+    "sink_guarantee": "at-least-once-with-per-sink-idempotency-and-reconciliation",
+    "slo_ref": "contracts/flink/checkpoint-ha-upgrade.v1.json#/slo",
+    "compatibility_scope": {
+      "flink_version": "1.18.1",
+      "savepoint_required": true,
+      "isolated_restore_required": true,
+      "output_diff_required": true,
+      "allow_non_restored_state": false,
+      "old_artifact_rollback_required": true,
+      "key_group_rescale_required": true
+    }
+  },
+  "jobs": [
+    {
+      "id": "flink-pcap-index-job",
+      "owner": "flink-data-owner",
+      "max_parallelism": 128,
+      "operator_uid_sha256": "c76686989e5ac9104608a2a4c503fda74310e37c315ec19a70ec57441c6ee63b"
+    },
+    {
+      "id": "flink-user-behavior-job",
+      "owner": "flink-data-owner",
+      "max_parallelism": 128,
+      "operator_uid_sha256": "ae23cbbf1fa4ba6ac574b74c970214c8d3f5344aa0e4fb6f851ab4fca2438ae5"
+    },
+    {
+      "id": "flink-session-job",
+      "owner": "flink-data-owner",
+      "max_parallelism": 128,
+      "operator_uid_sha256": "91bce376e7d19d9cb27aaa0ae8607164c1065a2459a9d6c6e3e56eb2a7ccb522"
+    },
+    {
+      "id": "flink-feature-job",
+      "owner": "flink-data-owner",
+      "max_parallelism": 128,
+      "operator_uid_sha256": "eda6717f901c3c917a47adb3d76c8717efc5ff40653e9c5bc8cc521b062a716f"
+    },
+    {
+      "id": "flink-rule-job",
+      "owner": "flink-data-owner",
+      "max_parallelism": 128,
+      "operator_uid_sha256": "786b18498d7aae125c1e9f6e6dad25225b1c061c617e41977235bcc948016eb6"
+    },
+    {
+      "id": "flink-cep-job",
+      "owner": "flink-data-owner",
+      "max_parallelism": 128,
+      "operator_uid_sha256": "d27456404ad29a847bd4695d27de68ad4ed8e33aa668cba6643ad8e396393ee1"
+    },
+    {
+      "id": "flink-behavior-job",
+      "owner": "flink-data-owner",
+      "max_parallelism": 128,
+      "operator_uid_sha256": "3cd3407dc4c401ef1140cd08aeb36d944d216620f9d3dcbd861f54a3f9e795f3"
+    },
+    {
+      "id": "flink-alert-generator-job",
+      "owner": "flink-data-owner",
+      "max_parallelism": 128,
+      "operator_uid_sha256": "00fc20e194459bc9b0e9ba2cbf73e66bac60bb335c79448bd5e1942871674f46"
+    },
+    {
+      "id": "flink-log-job",
+      "owner": "flink-data-owner",
+      "max_parallelism": 128,
+      "operator_uid_sha256": "88e857ac304c85b92710e70b8abc7215620b3b64d95b1923a80aefdd9888db49"
+    }
+  ],
+  "gate": {
+    "repository_guard": "PASS permits IMPLEMENTING only until a digest-bound release registry and matching live runtime snapshot pass",
+    "remaining": [
+      "build and publish nine digest-bound job images",
+      "materialize a release registry with artifact, image and savepoint hashes",
+      "capture the live job registry and prove an exact field diff",
+      "restore and rescale every stateful job across approved key-group ranges",
+      "complete failure, rollback, observation and independent G2 through G8 gates"
+    ]
+  }
+}

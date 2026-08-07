@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "features": ["F-COMMON-002", "F-COMMON-004"],
+  "status": "implementing",
+  "compatibility": {
+    "strategy": "additive",
+    "legacy_envelopes_remain_accepted": true,
+    "gateway_may_rewrite_business_failure_to_http_200": false,
+    "runtime_registry_dependency": false
+  },
+  "snapshot_meta": {
+    "required": [
+      "contract_version",
+      "schema_version",
+      "snapshot_id",
+      "as_of",
+      "generated_at",
+      "trace_id",
+      "result_code",
+      "partial",
+      "missing_sections",
+      "source_watermarks"
+    ],
+    "optional": ["operation_id", "tenant_id", "projection_status"],
+    "empty_semantics": {
+      "zero": "authoritative measured zero",
+      "empty_collection": "authoritative query completed with no members",
+      "missing": "field is absent from this contract version",
+      "unavailable": "source failed or was not queried and must appear in missing_sections",
+      "stale": "source watermark falls outside the approved consistency window"
+    }
+  },
+  "error": {
+    "required": ["code", "message", "trace_id", "retryable"],
+    "optional": [
+      "field_errors",
+      "operation_id",
+      "current_revision",
+      "projection_status",
+      "status_url",
+      "expected_consistency_window"
+    ],
+    "catalog": [
+      {"code": "INVALID_REQUEST", "http_status": 400, "retryable": false, "category": "validation"},
+      {"code": "INVALID_PARAMETER", "http_status": 400, "retryable": false, "category": "validation"},
+      {"code": "UNAUTHENTICATED", "http_status": 401, "retryable": false, "category": "authentication"},
+      {"code": "PERMISSION_DENIED", "http_status": 403, "retryable": false, "category": "authorization"},
+      {"code": "RESOURCE_NOT_FOUND", "http_status": 404, "retryable": false, "category": "resource"},
+      {"code": "REVISION_CONFLICT", "http_status": 409, "retryable": false, "category": "conflict"},
+      {"code": "IDEMPOTENCY_CONFLICT", "http_status": 409, "retryable": false, "category": "conflict"},
+      {"code": "INVALID_STATE_TRANSITION", "http_status": 409, "retryable": false, "category": "conflict"},
+      {"code": "RATE_LIMITED", "http_status": 429, "retryable": true, "category": "quota"},
+      {"code": "INTERNAL_ERROR", "http_status": 500, "retryable": false, "category": "internal"},
+      {"code": "AUTHORITY_UNAVAILABLE", "http_status": 503, "retryable": true, "category": "authority_dependency"},
+      {"code": "PROJECTION_UNAVAILABLE", "http_status": 503, "retryable": true, "category": "projection_dependency"},
+      {"code": "DEPENDENCY_TIMEOUT", "http_status": 504, "retryable": true, "category": "dependency_timeout"}
+    ]
+  },
+  "pilot_operations": [
+    {"operation_id": "getDashboardSnapshot", "feature_id": "F-DASHBOARD-001", "profile": "snapshot_meta", "adoption": "IMPLEMENTED_G1"},
+    {"operation_id": "getAssetDetailSnapshot", "feature_id": "F-ASSET-005", "profile": "snapshot_meta", "adoption": "IMPLEMENTED_G1"},
+    {"operation_id": "getTopicSnapshot", "feature_id": "F-TOPIC-001", "profile": "snapshot_meta", "adoption": "IMPLEMENTED_G1"},
+    {"operation_id": "createAlertResponseAction", "feature_id": "F-COMMON-003", "profile": "error_and_async_result", "adoption": "PARTIAL"},
+    {"operation_id": "createTopicActionJob", "feature_id": "F-TOPIC-002", "profile": "error_and_async_result", "adoption": "PARTIAL"}
+  ],
+  "adoption_gaps": [
+    "the full handler inventory still contains legacy and domain-specific error codes",
+    "operation_id current_revision projection_status and field_errors are not populated by every handler",
+    "gateway status preservation and production error-distribution telemetry are not yet candidate-bound",
+    "G2 through G8 evidence remains open"
+  ]
+}
