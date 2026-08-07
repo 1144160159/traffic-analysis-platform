@@ -92,6 +92,7 @@
     "all_approvals_default": "PENDING",
     "proposed_command_is_argv_not_shell": true
   },
+  "repair_execution_contract": "contracts/opensearch/projection-repair-execution.v1.json",
   "owned_g1": {
     "runner": "scripts/alignment/verify_alert_projection_shadow_ephemeral.py",
     "services": [
@@ -134,7 +135,7 @@
   "closure_blockers": [
     "the historical 883172-document gap is not bound to a present immutable source manifest",
     "a current production read-only shadow manifest has not been captured",
-    "an immutable alert projection tool image has not been built and bound",
+    "a pullable immutable alert projection tool image has not been published and bound to a current production shadow",
     "SRE, QA, security and domain accountable approvals are absent",
     "bounded repair, same-scope terminal reconciliation and PostgreSQL watermark receipts have not run in production",
     "canary, rollback exercise and T+0/T+1/T+3/T+7 observation are incomplete"

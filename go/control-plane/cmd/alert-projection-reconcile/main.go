@@ -24,6 +24,7 @@ import (
 func main() {
 	var tenantID, mode, requestedBy, traceID, startText, endText, idsText, targetVersion string
 	var expectedClusterUUID, expectedReadTarget, expectedWriteAlias, expectedWriteIndex string
+	var reviewPackage, approvalBundle, expectedReviewSHA, expectedApprovalSHA, expectedToolImage string
 	var maxDocuments int
 	var confirmRepair bool
 	flag.StringVar(&tenantID, "tenant", "", "required tenant scope")
@@ -38,6 +39,11 @@ func main() {
 	flag.StringVar(&expectedReadTarget, "expected-read-target", "", "repair-only exact approved projection read target")
 	flag.StringVar(&expectedWriteAlias, "expected-write-alias", "", "repair-only exact approved projection write alias")
 	flag.StringVar(&expectedWriteIndex, "expected-write-index", "", "repair-only exact physical write index")
+	flag.StringVar(&reviewPackage, "review-package", "", "repair-only immutable non-authorizing review JSON")
+	flag.StringVar(&approvalBundle, "approval-bundle", "", "repair-only immutable four-party approval JSON")
+	flag.StringVar(&expectedReviewSHA, "expected-review-sha256", "", "repair-only exact review file SHA-256")
+	flag.StringVar(&expectedApprovalSHA, "expected-approval-sha256", "", "repair-only exact approval file SHA-256")
+	flag.StringVar(&expectedToolImage, "expected-tool-image", "", "repair-only immutable repository@sha256 image reference")
 	flag.IntVar(&maxDocuments, "max-documents", 0, "bounded document count")
 	flag.BoolVar(&confirmRepair, "confirm-repair", false, "required for mode=repair")
 	flag.Parse()
@@ -46,6 +52,12 @@ func main() {
 	}
 	if mode == "repair" && !confirmRepair {
 		fatalf("--confirm-repair is required for mode=repair")
+	}
+	if err := validateRepairApproval(
+		mode, requestedBy, reviewPackage, approvalBundle, expectedReviewSHA, expectedApprovalSHA,
+		expectedToolImage, time.Now().UTC(), os.Args,
+	); err != nil {
+		fatalf("repair approval: %v", err)
 	}
 
 	cfg, err := config.Load()

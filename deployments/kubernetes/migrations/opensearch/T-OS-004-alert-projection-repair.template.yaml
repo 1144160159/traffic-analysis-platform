@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alert-projection-repair-RENDERED-RUN-ID
+  namespace: applications
+  labels:
+    traffic.io/remediation-id: T-OS-004
+    traffic.io/migration-phase: canary-repair
+  annotations:
+    traffic.io/execution-mode: separately-approved-explicit-unsuspend-required
+spec:
+  # This file is documentation-only. The fail-closed renderer binds every
+  # placeholder and still emits a suspended Job; do not apply this template.
+  suspend: true
+  backoffLimit: 0
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        traffic.io/remediation-id: T-OS-004
+        traffic.io/run-id: RENDERED-RUN-ID
+    spec:
+      serviceAccountName: alert-projection-repair-RENDERED-RUN-ID
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: repair
+        image: REQUIRED-REPOSITORY@sha256:REQUIRED-64-HEX-DIGEST
+        command: [/usr/local/bin/alert-projection-reconcile]
+        args: [RENDERED-ARGV-ONLY]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: "1", memory: 512Mi}

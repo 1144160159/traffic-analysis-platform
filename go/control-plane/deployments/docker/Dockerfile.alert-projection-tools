@@ -1,0 +1,34 @@
+FROM docker.io/library/golang@sha256:8bee1901f1e530bfb4a7850aa7a479d17ae3a18beb6e09064ed54cfd245b7191 AS builder
+
+WORKDIR /workspace
+ARG SOURCE_REVISION
+ARG SOURCE_CONTENT_SHA256
+ARG GOPROXY=https://goproxy.cn,direct
+ENV GOPROXY=${GOPROXY}
+RUN test -n "${SOURCE_REVISION}" \
+    && test -n "${SOURCE_CONTENT_SHA256}" \
+    && echo "${SOURCE_CONTENT_SHA256}" | grep -Eq '^[0-9a-f]{64}$'
+
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
+      -ldflags="-s -w -buildid=" -o /out/alert-projection-shadow \
+      ./cmd/alert-projection-shadow \
+    && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
+      -ldflags="-s -w -buildid=" -o /out/alert-projection-reconcile \
+      ./cmd/alert-projection-reconcile
+
+FROM docker.io/library/alpine@sha256:6baf43584bcb78f2e5847d1de515f23499913ac9f12bdf834811a3145eb11ca1 AS runtime-files
+
+FROM scratch
+ARG SOURCE_REVISION
+ARG SOURCE_CONTENT_SHA256
+LABEL org.opencontainers.image.title="traffic-analysis alert-projection-tools" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}" \
+      org.opencontainers.image.source-content-sha256="${SOURCE_CONTENT_SHA256}"
+COPY --from=runtime-files /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /out/alert-projection-shadow /usr/local/bin/alert-projection-shadow
+COPY --from=builder /out/alert-projection-reconcile /usr/local/bin/alert-projection-reconcile
+USER 65532:65532
+ENTRYPOINT ["/usr/local/bin/alert-projection-shadow"]

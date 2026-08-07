@@ -265,6 +265,8 @@ alignment-validate: ## Validate W0 registry, contracts, OpenAPI, migration and s
 	python scripts/alignment/verify_opensearch_index_governance.py
 	python scripts/alignment/verify_opensearch_search_pagination.py
 	python scripts/alignment/verify_opensearch_projection_reconciliation.py
+	python scripts/alignment/verify_alert_projection_shadow_backfill.py
+	python scripts/alignment/verify_alert_projection_repair_job.py
 	python scripts/alignment/verify_opensearch_ha_security_restore.py
 	python scripts/alignment/verify_trace_watermark_reconcile.py
 	python scripts/alignment/verify_data_quality_control_plane.py
@@ -589,6 +591,10 @@ alignment-verify-alert-projection-shadow-backfill: ## Verify read-only CH/OS sha
 alignment-verify-alert-projection-shadow-g1: ## Verify production CH/OS shadow readers in owned loopback services (RUN_ID required)
 	test -n "$(RUN_ID)"
 	python scripts/alignment/verify_alert_projection_shadow_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-alert-projection-repair-job
+alignment-verify-alert-projection-repair-job: ## Verify immutable tool image and default-suspended four-party repair Job guards
+	python scripts/alignment/verify_alert_projection_repair_job.py
 
 .PHONY: alignment-verify-alert-projection-watermark-postgres-g1
 alignment-verify-alert-projection-watermark-postgres-g1: ## Verify T-OS-004 watermark receipts in owned PostgreSQL (RUN_ID required)

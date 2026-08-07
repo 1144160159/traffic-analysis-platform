@@ -85,6 +85,29 @@ go run ./cmd/alert-projection-reconcile \
 
 ## 受控 repair
 
+### 不可变工具镜像与审批绑定 Job
+
+镜像只能从 `go/control-plane` 上下文构建，builder 与 runtime 来源均固定为 registry digest，必须传入非空源码 revision 和 64 位源码内容 SHA。镜像只包含 `alert-projection-shadow` 与 `alert-projection-reconcile` 两个静态二进制，scratch runtime 使用 `65532:65532`，没有 shell。示例仅进行本地构建；本地 image ID 不能填写到审批包，也不能替代发布后的 registry manifest digest：
+
+```bash
+docker build -f deployments/docker/Dockerfile.alert-projection-tools \
+  --build-arg SOURCE_REVISION=<candidate_git_head> \
+  --build-arg SOURCE_CONTENT_SHA256=<candidate_content_sha256> \
+  -t traffic/alert-projection-tools:<candidate-id> .
+```
+
+生产 repair 需要两个彼此独立的 JSON 工件：第一份仍是 `execution_authorized=false` 的 shadow review；第二份由变更流程签发，必须是 `mode=AUTHORIZED_BOUNDED_REPAIR`、`execution_authorized=true`，绑定 review 文件 SHA、完整的 `repository@sha256:<digest>`、请求人、nonce、最长四小时窗口，以及 `sre/qa/security/domain_accountable` 四个不同身份的 `APPROVED`。请求人不得审批任何角色。审批包不保存数据库口令；运行凭据仅从现有 `traffic-credentials` Secret key 引用。
+
+```bash
+python scripts/alignment/render_alert_projection_repair_job.py \
+  --review-package /tmp/<run-id>-repair-review.json \
+  --approval-bundle /secure/change/<run-id>-approval.json \
+  --run-id <run-id> \
+  --output /tmp/<run-id>-repair-candidate.yaml
+```
+
+渲染器校验当前源码内容 SHA、镜像 digest、审批身份/时间和精确 tenant/window/alert IDs/cluster/read alias/write alias/physical write index；输出为 immutable ConfigMap、专用 ServiceAccount、最小端口 NetworkPolicy 与 `suspend=true`、`backoffLimit=0` 的 Job。渲染不调用 Kubernetes API，也不会解除挂起。即使 YAML 之后被独立批准并解除挂起，repair 二进制仍会在连接 ClickHouse、OpenSearch 或 PostgreSQL 前重新计算 review/approval 文件 SHA 并复核审批窗口与镜像绑定。
+
 1. 在内部 tenant 先执行 plan；核验无跨租户、无重复 ID、目标版本一致。
 2. repair 需要额外 `--confirm-repair`。执行器只写 missing/stale，不自动删除 extra。
 3. 默认最大 10,000 文档、100 docs/s、25 个错误即停止；实际值只能更保守，放宽需新批准。
@@ -100,17 +123,7 @@ make alignment-verify-alert-projection-kafka-five-store-g1 \
   RUN_ID=<immutable-run-id> OUTPUT=/tmp/<run-id>.json
 ```
 
-```bash
-go run ./cmd/alert-projection-reconcile \
-  --mode repair --confirm-repair \
-  --tenant <tenant_id> --requested-by <operator_id> \
-  --target-index-version <approved_version> \
-  --expected-cluster-uuid <shadow_cluster_uuid> \
-  --expected-read-target alerts-v2-read \
-  --expected-write-alias alerts-v2-write \
-  --expected-write-index <shadow_physical_write_index> \
-  --alert-ids <id1,id2> --max-documents 100
-```
+不得再直接用 `go run ... --mode repair` 绕过审批工件；修复 argv 由非授权 review 固定范围，再由上述 renderer 绑定独立 approval bundle。手工 plan 仍可使用 CLI，但 repair 缺少 `--review-package`、`--approval-bundle`、两份文件 SHA 和完整镜像 digest 时会在连接任何存储前失败。
 
 repair 在连接 PostgreSQL 之前会重新读取 cluster UUID、read target、write alias 和唯一 physical write index；任一值与 shadow 审批绑定不一致即失败关闭。repair 后用相同 scope 再跑 shadow，要求 missing/stale 为零；extra 进入人工裁决清单。CLI 的 read target 与 write target 相互独立：legacy plan 读取冻结的精确索引，V2 repair 读取 read alias 并写 write alias；不得通过把两个字符串强行设为同一未批准索引来绕过迁移门禁。
 
