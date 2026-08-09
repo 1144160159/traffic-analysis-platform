@@ -381,6 +381,18 @@ def main() -> int:
             "owned_real_kafka_required_acks_all_passed": bool(
                 real_kafka_result and real_kafka_result.get("required_acks_all_verified")
             ),
+            "owned_real_kafka_external_provider_execution_passed": bool(
+                real_kafka_result
+                and real_kafka_result.get("real_kafka_external_provider_execution_verified")
+            ),
+            "owned_real_kafka_provider_single_effect_passed": bool(
+                real_kafka_result
+                and real_kafka_result.get("provider_single_effect_verified")
+            ),
+            "owned_real_kafka_same_trace_pg_provider_audit_passed": bool(
+                real_kafka_result
+                and real_kafka_result.get("same_trace_pg_provider_audit_verified")
+            ),
             "owned_real_kafka_dlq_ack_failure_retained_offset_passed": bool(
                 real_kafka_result
                 and real_kafka_result.get("dlq_ack_failure_offset_retention_verified")
@@ -503,7 +515,7 @@ def main() -> int:
             "the alert-domain poison receipt and quarantine audit commit atomically by immutable source topic partition and offset after a permanent processing failure",
             "partial unknown execution effects enter a bounded PostgreSQL queue whose worker only calls exact provider authority lookup and atomically reconciles receipt action audit and immutable attempt history",
             "a catalogued compensation request commits control request queue action revision and audit atomically; a transport-ambiguous inverse is submitted once and every later lease uses authority lookup only",
-            "an owned fixed-digest single-broker Redpanda rejects an invalid DLQ target without advancing the alert-response source offset then the same group redelivers and commits at offset one only after canonical dlq.v1 acknowledgement plus one PostgreSQL source-tuple receipt and quarantine audit",
+            "an owned fixed-digest single-broker Redpanda first commits one provider-confirmed real response with one trace across PostgreSQL receipt action audit and provider command then rejects the following poison event without advancing past that offset; the same group redelivers and commits at offset two only after canonical dlq.v1 acknowledgement plus one PostgreSQL source-tuple receipt and quarantine audit",
             "common Docker-merged and Kubernetes PostgreSQL schema entrypoints replay twice to one structural digest and register migrations 202608091130 202608091230 and 202608091500",
             "execution authority-recheck and compensation feature flags remain default-off and the rollback runbook preserves receipts queues and unknown effects",
         ],

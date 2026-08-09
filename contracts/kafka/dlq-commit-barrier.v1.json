@@ -13,7 +13,7 @@
     "a configured canonical DLQ target is used by both single and batch delivery",
     "asynchronous single-message commits retain pending offsets after a failed broker acknowledgement",
     "an optional domain acknowledgement barrier runs after the DLQ broker acknowledgement and before source offset commit; barrier failure or panic retains the source offset",
-    "owned single-broker alert-response evidence rejects an invalid DLQ target without advancing the source group offset, then redelivers under the same group and commits only after canonical dlq.v1 plus one PostgreSQL source-tuple receipt and quarantine audit"
+    "owned single-broker alert-response evidence first commits one provider-confirmed real event, rejects the following poison event against an invalid DLQ target without advancing past that valid offset, then redelivers under the same group and commits only after canonical dlq.v1 plus one PostgreSQL source-tuple receipt and quarantine audit"
   ],
   "source_assertions": [
     {
@@ -124,7 +124,9 @@
       "required_tokens": [
         "TestAlertResponseRealKafkaDLQBarrier",
         "alertResponseRealKafkaInvalidDLQ",
-        "committedMessages.Load() != 0 || maximumCommittedOffset.Load() >= 0",
+        "committedMessages.Load() != 1 || maximumCommittedOffset.Load() != 0",
+        "owned-real-kafka-firewall",
+        "providerCalls.Load() != 1",
         "DLQ receipt persisted before broker acknowledgement",
         "poison event redelivered after durable DLQ acknowledgement",
         "ALERT_RESPONSE_EVENT_QUARANTINED",
@@ -142,7 +144,7 @@
         "OWNED_REAL_POSTGRES_REDPANDA_ALERT_RESPONSE_POISON_DLQ_PRECOMMIT_G1",
         "required_acks_all_verified",
         "broker_group_commit_verified",
-        "current_offset\": 1",
+        "current_offset\": 2",
         "cleanup_identity_verified",
         "single_broker_owned_preflight",
         "persistent_volume_attached\": False",

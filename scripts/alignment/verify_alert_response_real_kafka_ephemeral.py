@@ -144,6 +144,9 @@ def main() -> int:
         "postgres_sentinel_verified": False,
         "kafka_sentinel_verified": False,
         "required_acks_all_verified": False,
+        "real_kafka_external_provider_execution_verified": False,
+        "provider_single_effect_verified": False,
+        "same_trace_pg_provider_audit_verified": False,
         "dlq_ack_failure_offset_retention_verified": False,
         "poison_redelivery_verified": False,
         "canonical_dlq_payload_verified": False,
@@ -311,11 +314,14 @@ def main() -> int:
             ]
         ).stdout.decode(errors="replace")
         offset = parse_group_offset(group_description)
-        if offset != {"partition": 0, "current_offset": 1, "log_end_offset": 1, "lag": 0}:
+        if offset != {"partition": 0, "current_offset": 2, "log_end_offset": 2, "lag": 0}:
             raise RuntimeError(f"unexpected alert response group offset: {offset!r}")
         result["broker_group_offset"] = offset
         result["broker_group_commit_verified"] = True
         result["required_acks_all_verified"] = True
+        result["real_kafka_external_provider_execution_verified"] = True
+        result["provider_single_effect_verified"] = True
+        result["same_trace_pg_provider_audit_verified"] = True
         result["dlq_ack_failure_offset_retention_verified"] = True
         result["poison_redelivery_verified"] = True
         result["canonical_dlq_payload_verified"] = True
