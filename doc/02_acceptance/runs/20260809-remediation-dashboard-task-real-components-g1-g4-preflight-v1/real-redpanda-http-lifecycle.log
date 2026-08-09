@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "run_id": "20260809-remediation-dashboard-task-real-components-g1-g4-preflight-v1-real-components",
+  "status": "PASS",
+  "mode": "correctness",
+  "coverage_status": "OWNED_REAL_POSTGRES_REDPANDA_AND_LOOPBACK_HTTP_PROVIDER_G1",
+  "postgres_container": "codex-dashboard-real-components-pg-78dbf8abafba",
+  "kafka_container": "codex-dashboard-real-components-broker-78dbf8abafba",
+  "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+  "kafka_image": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+  "postgres_image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+  "kafka_image_id": "sha256:7d60ffd7d82a80a25826b8aacf2698e78cb9d7f7312dea56b0e7e962b39f1c50",
+  "topic": "dashboard.task.events.v1",
+  "topic_partitions": 1,
+  "schema_files": 15,
+  "postgres_sentinel_verified": true,
+  "kafka_sentinel_verified": true,
+  "required_acks_all_verified": true,
+  "durable_inbox_verified": true,
+  "consumer_restart_replay_verified": true,
+  "out_of_order_authority_rejection_verified": true,
+  "http_execution_provider_verified": true,
+  "http_compensation_provider_verified": true,
+  "provider_idempotency_verified": true,
+  "execution_transport_ambiguity_verified": true,
+  "compensation_transport_ambiguity_verified": true,
+  "tenant_isolation_verified": true,
+  "same_trace_reconciliation_verified": true,
+  "bounded_profile_verified": false,
+  "bounded_profile": null,
+  "container_resource_limits": {
+    "postgres": {
+      "memory": "512m",
+      "cpus": "1"
+    },
+    "redpanda": {
+      "memory": "1g",
+      "cpus": "2"
+    }
+  },
+  "container_resource_snapshots": {
+    "postgres": {
+      "cpu_percent": "0.01%",
+      "memory_usage": "33.41MiB / 512MiB",
+      "memory_percent": "6.53%",
+      "network_io": "151kB / 93.3kB",
+      "block_io": "0B / 172MB",
+      "pids": "6",
+      "measurement": "post_workload_single_snapshot_not_capacity_evidence"
+    },
+    "redpanda": {
+      "cpu_percent": "0.06%",
+      "memory_usage": "81.93MiB / 1GiB",
+      "memory_percent": "8.00%",
+      "network_io": "38.9kB / 32.5kB",
+      "block_io": "57.3kB / 795kB",
+      "pids": "3",
+      "measurement": "post_workload_single_snapshot_not_capacity_evidence"
+    }
+  },
+  "loopback_only": true,
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "postgres_container_removed": true,
+  "kafka_container_removed": true,
+  "test_output": "=== RUN   TestDashboardTaskRealComponents\n    dashboard_task_real_components_integration_test.go:233: dashboard_real_components=pass group=dashboard-task-real-components-b17de388-dbb5-4be1-8ad7-35d355c7b718 committed_messages=12 max_offset=11 tasks=3 inbox=10 execution_trace=trace-dashboard-real-completed compensation_trace=trace-dashboard-real-compensated execution_calls=4 execution_effects=3 compensation_calls=3 compensation_effects=2\n--- PASS: TestDashboardTaskRealComponents (0.84s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api\t0.853s",
+  "errors": [],
+  "secrets_captured": false
+}
