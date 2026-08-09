@@ -173,6 +173,13 @@ export async function createAlertBatchAssignment(request: AlignmentRequest = {})
   return response.data;
 }
 
+export async function createAlertBatchAssignmentCompensation(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/assign/{batch_id}/compensations', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function createAlertBatchSelection(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/batches/selections', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -357,6 +364,13 @@ export async function exploreBoundedGraph(request: AlignmentRequest = {}) {
 
 export async function getAlertBatchAssignment(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/batches/assign/{batch_id}', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getAlertBatchAssignmentCompensation(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/assign/{batch_id}/compensations/{request_id}', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
   return response.data;

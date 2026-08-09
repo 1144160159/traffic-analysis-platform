@@ -40,6 +40,7 @@ type AlertBatchAssignmentHandler struct {
 	db                  *sql.DB
 	logger              *zap.Logger
 	enabled             bool
+	compensationEnabled bool
 	selectionSigningKey []byte
 	now                 func() time.Time
 }
@@ -127,10 +128,18 @@ func NewAlertBatchAssignmentHandler(db *sql.DB, logger *zap.Logger, enabled bool
 	return &AlertBatchAssignmentHandler{db: db, logger: logger, enabled: enabled, selectionSigningKey: []byte(selectionSigningSecret), now: time.Now}
 }
 
+// SetCompensationEnabled keeps the existing constructor source-compatible
+// while making the independent compensation rollout gate explicit.
+func (h *AlertBatchAssignmentHandler) SetCompensationEnabled(enabled bool) {
+	h.compensationEnabled = enabled
+}
+
 func (h *AlertBatchAssignmentHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/alerts/batches/selections", h.CreateSelection).Methods(http.MethodPost)
 	router.HandleFunc("/alerts/batches/assign", h.CreateAssignment).Methods(http.MethodPost)
 	router.HandleFunc("/alerts/batches/assign/{batch_id}", h.GetAssignment).Methods(http.MethodGet)
+	router.HandleFunc("/alerts/batches/assign/{batch_id}/compensations", h.CreateCompensation).Methods(http.MethodPost)
+	router.HandleFunc("/alerts/batches/assign/{batch_id}/compensations/{request_id}", h.GetCompensation).Methods(http.MethodGet)
 }
 
 func (h *AlertBatchAssignmentHandler) VerifySchema(ctx context.Context) error {
@@ -144,6 +153,11 @@ func (h *AlertBatchAssignmentHandler) VerifySchema(ctx context.Context) error {
 		"alert_assignment_selections", "alert_assignment_selection_requests", "alert_assignment_batches",
 		"alert_assignment_batch_items", "alert_assignment_batch_history", "alert_assignment_batch_item_history",
 		"alert_assignment_batch_outbox", "alert_assignment_batch_requests", "audit_logs",
+	}
+	if h.compensationEnabled {
+		required = append(required, "alert_assignment_compensation_requests", "alert_assignment_compensation_items",
+			"alert_assignment_compensation_history", "alert_assignment_compensation_item_history",
+			"alert_assignment_compensation_projection_receipts")
 	}
 	for _, table := range required {
 		var found sql.NullString
@@ -507,8 +521,8 @@ func (h *AlertBatchAssignmentHandler) createAssignment(ctx context.Context, comm
 	}
 	outboxPayload, _ := json.Marshal(map[string]interface{}{"event_id": eventID, "event_type": "alert.batch-assignment.requested.v1", "schema_version": 1, "aggregate_type": "alert_assignment_batch", "aggregate_id": batchID, "aggregate_version": 1, "partition_key": command.TenantID + ":" + batchID, "tenant_id": command.TenantID, "batch_id": batchID, "selection_id": selectionID, "selection_snapshot_id": snapshotID, "selection_sha256": selectionSHA, "assignee": request.Assignee, "requested_by": command.ActorID, "reason": request.Reason, "status": "accepted", "total_count": itemCount, "trace_id": command.TraceID, "occurred_at": now.Format(time.RFC3339Nano)})
 	if _, err := tx.ExecContext(ctx, `INSERT INTO alert_assignment_batch_outbox
-		(event_id,tenant_id,batch_id,aggregate_version,event_type,schema_version,partition_key,payload,trace_id,status,occurred_at)
-		VALUES ($1,$2,$3,1,'alert.batch-assignment.requested.v1',1,$4,$5::jsonb,$6,'pending',$7)`, eventID, command.TenantID, batchID, command.TenantID+":"+batchID, string(outboxPayload), command.TraceID, now); err != nil {
+		(event_id,tenant_id,batch_id,aggregate_version,aggregate_type,aggregate_id,event_type,schema_version,partition_key,payload,trace_id,status,occurred_at)
+		VALUES ($1,$2,$3::uuid,1,'alert_assignment_batch',$3::text,'alert.batch-assignment.requested.v1',1,$4,$5::jsonb,$6,'pending',$7)`, eventID, command.TenantID, batchID, command.TenantID+":"+batchID, string(outboxPayload), command.TraceID, now); err != nil {
 		return nil, err
 	}
 	receipt := AlertBatchAssignmentReceipt{BatchID: batchID, JobID: batchID, EventID: eventID, ActionID: "alert-batch-assignment-create", Status: "accepted", Revision: 1, SelectionID: selectionID, SelectionSnapshotID: snapshotID, SelectionSHA256: selectionSHA, TotalCount: itemCount, AcceptedCount: itemCount, TraceID: command.TraceID, OutboxStatus: "pending"}
@@ -560,7 +574,8 @@ func (h *AlertBatchAssignmentHandler) getAssignment(ctx context.Context, tenantI
 	var outboxStatus string
 	var eventID string
 	if err := h.db.QueryRowContext(ctx, `SELECT event_id::text,status FROM alert_assignment_batch_outbox
-		WHERE tenant_id=$1 AND batch_id=$2 ORDER BY aggregate_version DESC,outbox_id DESC LIMIT 1`, tenantID, batchID).Scan(&eventID, &outboxStatus); err != nil {
+		WHERE tenant_id=$1 AND batch_id=$2 AND event_type IN ('alert.batch-assignment.requested.v1','alert.assignment.changed.v1')
+		ORDER BY aggregate_version DESC,outbox_id DESC LIMIT 1`, tenantID, batchID).Scan(&eventID, &outboxStatus); err != nil {
 		return nil, h.schemaError(err)
 	}
 	job.EventID = eventID
@@ -594,7 +609,7 @@ func insertAlertBatchAudit(ctx context.Context, tx *sql.Tx, command alertBatchCo
 
 func (h *AlertBatchAssignmentHandler) schemaError(err error) error {
 	if isUndefinedTable(err) {
-		return fmt.Errorf("%w: apply migration 202608091900", errAlertBatchSchemaMissing)
+		return fmt.Errorf("%w: apply migrations 202608091900, 202608092130 and 202608092300", errAlertBatchSchemaMissing)
 	}
 	return err
 }

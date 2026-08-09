@@ -29,6 +29,7 @@ func TestAlertBatchAssignmentPostgresIntegration(t *testing.T) {
 
 	fixedNow := time.Date(2026, 8, 9, 7, 30, 0, 0, time.UTC)
 	handler := NewAlertBatchAssignmentHandler(db, nil, true, alertBatchTestSigningSecret)
+	handler.SetCompensationEnabled(true)
 	handler.now = func() time.Time { return fixedNow }
 	command := alertBatchCommandContext{TenantID: "tenant-batch-a", ActorID: "actor-a", IdempotencyKey: "selection-idempotency-0001", TraceID: "trace-batch-0001", SourceIP: "127.0.0.1", UserAgent: "integration"}
 	selectionRequest := AlertBatchSelectionRequest{SnapshotID: "alerts:snapshot:revision:42", Items: []AlertBatchSelectionItem{{AlertID: "alert-b", StateVersion: 12}, {AlertID: "alert-a", StateVersion: 11}}}
@@ -191,5 +192,87 @@ func TestAlertBatchAssignmentTerminalQueryPostgresIntegration(t *testing.T) {
 			t.Fatalf("terminal item receipt mismatch: %+v", item)
 		}
 	}
-	t.Logf("alert_batch_assignment_terminal_query_postgres=pass batch_id=%s event_id=%s", job.BatchID, job.EventID)
+	compensationCommand := alertBatchCommandContext{TenantID: "tenant-batch-a", ActorID: "actor-compensation-a",
+		IdempotencyKey: "assignment-compensation-0001", TraceID: "trace-assignment-compensation-0001",
+		SourceIP: "127.0.0.1", UserAgent: "integration"}
+	compensationRequest := AlertBatchAssignmentCompensationRequest{ActionID: alertBatchCompensationActionID,
+		ExpectedRevision: 3, Reason: "operator approved revision-safe rollback"}
+	compensation, err := handler.createCompensation(ctx, compensationCommand, batchID, compensationRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if compensation.Status != "accepted" || compensation.Revision != 1 || compensation.TotalCount != 2 ||
+		compensation.AcceptedCount != 2 || compensation.CompensatedCount != 0 || compensation.OutboxStatus != "pending" {
+		t.Fatalf("compensation 202 receipt must remain honestly non-final: %+v", compensation)
+	}
+	replayed, err := handler.createCompensation(ctx, compensationCommand, batchID, compensationRequest)
+	if err != nil || !replayed.Replayed || replayed.RequestID != compensation.RequestID || replayed.EventID != compensation.EventID {
+		t.Fatalf("compensation retry not idempotent: receipt=%+v err=%v", replayed, err)
+	}
+	changedRequest := compensationRequest
+	changedRequest.Reason = "different rollback reason must conflict"
+	if _, err := handler.createCompensation(ctx, compensationCommand, batchID, changedRequest); !errors.Is(err, errAlertBatchIdempotencyConflict) {
+		t.Fatalf("changed compensation retry must conflict: %v", err)
+	}
+	secondCommand := compensationCommand
+	secondCommand.IdempotencyKey = "assignment-compensation-0002"
+	if _, err := handler.createCompensation(ctx, secondCommand, batchID, compensationRequest); !errors.Is(err, errAlertBatchCompensationConflict) {
+		t.Fatalf("a second compensation request must not own the same batch: %v", err)
+	}
+	compensationJob, err := handler.getCompensation(ctx, "tenant-batch-a", batchID, compensation.RequestID)
+	if err != nil || compensationJob.Status != "accepted" || len(compensationJob.Items) != 2 {
+		t.Fatalf("accepted compensation query mismatch: job=%+v err=%v", compensationJob, err)
+	}
+	for _, item := range compensationJob.Items {
+		if item.Status != "accepted" || item.ItemRevision != 1 || item.ExpectedStateVersion <= 0 ||
+			item.RestoreStatus != "new" || item.CurrentStatus != "assigned" {
+			t.Fatalf("compensation source authority mismatch: %+v", item)
+		}
+	}
+	t.Logf("alert_batch_assignment_terminal_query_postgres=pass batch_id=%s event_id=%s compensation_request_id=%s",
+		job.BatchID, job.EventID, compensation.RequestID)
+}
+
+func TestAlertBatchAssignmentCompensationTerminalQueryPostgresIntegration(t *testing.T) {
+	dsn := os.Getenv("ALERT_BATCH_ASSIGNMENT_EXECUTION_INTEGRATION_DSN")
+	if dsn == "" {
+		t.Skip("ALERT_BATCH_ASSIGNMENT_EXECUTION_INTEGRATION_DSN is not configured")
+	}
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	var batchID, requestID string
+	if err := db.QueryRowContext(ctx, `SELECT batch_id::text,request_id::text FROM alert_assignment_compensation_requests
+		WHERE tenant_id='tenant-batch-a' AND status='partial' ORDER BY completed_at DESC LIMIT 1`).Scan(&batchID, &requestID); err != nil {
+		t.Fatalf("partial compensation prerequisite missing: %v", err)
+	}
+	handler := NewAlertBatchAssignmentHandler(db, nil, true, alertBatchTestSigningSecret)
+	handler.SetCompensationEnabled(true)
+	job, err := handler.getCompensation(ctx, "tenant-batch-a", batchID, requestID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.Status != "partial" || job.Revision != 3 || job.TotalCount != 2 || job.AcceptedCount != 0 ||
+		job.CompensatedCount != 1 || job.ConflictedCount != 1 || job.FailedCount != 0 ||
+		job.OutboxStatus != "published" || len(job.Items) != 2 {
+		t.Fatalf("terminal compensation receipt mismatch: %+v", job)
+	}
+	statuses := map[string]int{}
+	for _, item := range job.Items {
+		statuses[item.Status]++
+		if item.ItemRevision != 3 || item.CompensationStateVersion <= item.ExpectedStateVersion {
+			t.Fatalf("terminal compensation item mismatch: %+v", item)
+		}
+	}
+	if statuses["compensated"] != 1 || statuses["conflicted"] != 1 {
+		t.Fatalf("terminal compensation outcomes mismatch: %+v", statuses)
+	}
+	if _, err := handler.getCompensation(ctx, "tenant-batch-b", batchID, requestID); !errors.Is(err, errAlertBatchNotFound) {
+		t.Fatalf("cross-tenant compensation lookup must be indistinguishable from missing: %v", err)
+	}
+	t.Logf("alert_batch_assignment_compensation_terminal_query_postgres=pass batch_id=%s request_id=%s", batchID, requestID)
 }

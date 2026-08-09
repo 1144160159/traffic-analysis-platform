@@ -53,12 +53,14 @@ class AlertBatchAssignmentEphemeralGuardTest(unittest.TestCase):
         self.assertIn('"alert.assignment.changed.v1 consumer receipt"', api_source)
         self.assertIn('getBoolEnv("ALERT_BATCH_ASSIGNMENT_V1_ENABLED", false)', main_source)
         self.assertIn('getBoolEnv("ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED", false)', main_source)
+        self.assertIn('getBoolEnv("ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED", false)', main_source)
         self.assertIn('consumer.AlertAssignmentEventTopic', main_source)
         self.assertIn('SetDLQAcknowledgementBarrier(pipeline.RecordDLQAcknowledgement)', main_source)
         self.assertIn('ALERT_BATCH_SELECTION_SIGNING_SECRET', main_source)
         self.assertIn('storedReceipt.SelectionToken = ""', api_source)
         self.assertEqual(manifests.count('ALERT_BATCH_ASSIGNMENT_V1_ENABLED, value: "false"'), 2)
         self.assertEqual(manifests.count('ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED, value: "false"'), 2)
+        self.assertEqual(manifests.count('ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED, value: "false"'), 2)
         self.assertEqual(manifests.count('ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC, value: "alert.assignment.events.v1"'), 2)
         self.assertEqual(manifests.count('ALERT_BATCH_ASSIGNMENT_EVENT_GROUP, value: "alert-service-batch-assignment-execution-v1"'), 2)
         self.assertEqual(manifests.count('ALERT_BATCH_SELECTION_SIGNING_SECRET'), 4)
@@ -79,13 +81,33 @@ class AlertBatchAssignmentEphemeralGuardTest(unittest.TestCase):
         self.assertIn("35-alert-batch-assignment-execution-v1.sql", entrypoint_guard)
         self.assertIn("generated F-ALERT-004 execution block is missing or stale", entrypoint_guard)
 
+    def test_compensation_is_revision_safe_durable_and_default_off(self) -> None:
+        pipeline = (ROOT / "go/control-plane/internal/alert/consumer/alert_batch_assignment_compensation_pipeline.go").read_text()
+        api = (ROOT / "go/control-plane/internal/alert/api/alert_batch_assignment_compensation_v1.go").read_text()
+        migration = (ROOT / "deployments/postgres/migrations/202608092300_alert_batch_assignment_compensation_v1.sql").read_text()
+        guard = (ROOT / "scripts/alignment/sync_alert_batch_assignment_compensation_entrypoints.py").read_text()
+        for token in (
+            "expected_batch_revision",
+            "alert_assignment_compensation_items",
+            "alert_assignment_compensation_projection_receipts",
+            "ProjectAlertAssignmentCompensation",
+            "compensation_state_version",
+            "REVISION_CONFLICT",
+            "alert.assignment.compensated.v1",
+            "36-alert-batch-assignment-compensation-v1.sql",
+            "generated F-ALERT-004 compensation block is missing or stale",
+        ):
+            self.assertIn(token, pipeline + api + migration + guard)
+
     def test_owned_postgres_execution_g1_is_honest_about_clickhouse_boundary(self) -> None:
         source = (ROOT / "scripts/alignment/verify_alert_batch_assignment_ephemeral.py").read_text()
         for token in (
-            "OWNED_REAL_POSTGRES_ASSIGNMENT_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
+            "OWNED_REAL_POSTGRES_ASSIGNMENT_AND_COMPENSATION_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
             "ALERT_BATCH_ASSIGNMENT_EXECUTION_INTEGRATION_DSN",
             "alert_batch_assignment_execution_postgres=pass",
             "dlq_ack_source_tuple_barrier_idempotent",
+            "alert_batch_assignment_compensation_execution_postgres=pass",
+            "alert_batch_assignment_compensation_terminal_query_postgres=pass",
         ):
             self.assertIn(token, source)
 
@@ -94,7 +116,7 @@ class AlertBatchAssignmentEphemeralGuardTest(unittest.TestCase):
         for token in (
             "referenced G0 manifest does not cover the current candidate source",
             "candidate_source_stable",
-            "PARTIAL_OWNED_REAL_POSTGRES_ASSIGNMENT_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
+            "PARTIAL_OWNED_REAL_POSTGRES_ASSIGNMENT_AND_COMPENSATION_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
             "OPEN_FOR_APPROVED_RELEASE_CANDIDATE_POSTGRES_KAFKA_CLICKHOUSE_AND_OPENSEARCH",
             '"production_applied": False',
             "refusing to overwrite immutable evidence directory",

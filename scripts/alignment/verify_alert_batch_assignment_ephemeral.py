@@ -25,6 +25,8 @@ SENTINEL_VALUE = "ephemeral-only"
 PASS_MARKER = "alert_batch_assignment_postgres=pass"
 EXECUTION_PASS_MARKER = "alert_batch_assignment_execution_postgres=pass"
 TERMINAL_QUERY_PASS_MARKER = "alert_batch_assignment_terminal_query_postgres=pass"
+COMPENSATION_EXECUTION_PASS_MARKER = "alert_batch_assignment_compensation_execution_postgres=pass"
+COMPENSATION_TERMINAL_QUERY_PASS_MARKER = "alert_batch_assignment_compensation_terminal_query_postgres=pass"
 
 
 def run(command: list[str], *, input_bytes: bytes | None = None, env: dict[str, str] | None = None, check: bool = True) -> subprocess.CompletedProcess[bytes]:
@@ -85,7 +87,7 @@ def main() -> int:
         "schema_version": 1,
         "run_id": args.run_id,
         "status": "FAIL",
-        "coverage_status": "OWNED_REAL_POSTGRES_ASSIGNMENT_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
+        "coverage_status": "OWNED_REAL_POSTGRES_ASSIGNMENT_AND_COMPENSATION_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
         "production_applied": False,
         "shared_environment_touched": False,
         "loopback_only": True,
@@ -108,6 +110,8 @@ def main() -> int:
             "common/sql/pg/19-alert-batch-assignment-v1.sql",
             "deployments/postgres/migrations/202608092130_alert_batch_assignment_execution_v1.sql",
             "common/sql/pg/20-alert-batch-assignment-execution-v1.sql",
+            "deployments/postgres/migrations/202608092300_alert_batch_assignment_compensation_v1.sql",
+            "common/sql/pg/21-alert-batch-assignment-compensation-v1.sql",
         ],
         "schema_replay_count": 0,
         "test_output": "",
@@ -132,6 +136,14 @@ def main() -> int:
             "terminal_status_query_returns_latest_outbox_and_item_receipts": False,
             "exact_kafka_redelivery_does_not_repeat_projection": False,
             "dlq_ack_source_tuple_barrier_idempotent": False,
+            "pre_assignment_status_and_assignee_authority_captured": False,
+            "compensation_exact_idempotent_replay": False,
+            "compensation_changed_payload_conflict": False,
+            "one_compensation_request_per_batch": False,
+            "compensation_requested_and_changed_events_consumed_independently": False,
+            "compensation_intervening_revision_not_overwritten": False,
+            "compensation_terminal_item_receipts_complete": False,
+            "compensation_exact_kafka_redelivery_does_not_repeat_projection": False,
             "all_data_mounts_tmpfs": False,
             "no_persistent_volume": False,
         },
@@ -192,13 +204,19 @@ def main() -> int:
         acceptance = run(["go", "-C", "go/control-plane", "test", "./internal/alert/api", "-run", "^TestAlertBatchAssignmentPostgresIntegration$", "-count=1", "-v"], env=test_env, check=False)
         execution = run(["go", "-C", "go/control-plane", "test", "./internal/alert/consumer", "-run", "^TestAlertBatchAssignmentPipelinePostgresIntegration$", "-count=1", "-v"], env=test_env, check=False)
         terminal_query = run(["go", "-C", "go/control-plane", "test", "./internal/alert/api", "-run", "^TestAlertBatchAssignmentTerminalQueryPostgresIntegration$", "-count=1", "-v"], env=test_env, check=False)
-        result["test_output"] = (acceptance.stdout + b"\n" + execution.stdout + b"\n" + terminal_query.stdout).decode(errors="replace").strip()
+        compensation_execution = run(["go", "-C", "go/control-plane", "test", "./internal/alert/consumer", "-run", "^TestAlertBatchAssignmentCompensationPipelinePostgresIntegration$", "-count=1", "-v"], env=test_env, check=False)
+        compensation_terminal_query = run(["go", "-C", "go/control-plane", "test", "./internal/alert/api", "-run", "^TestAlertBatchAssignmentCompensationTerminalQueryPostgresIntegration$", "-count=1", "-v"], env=test_env, check=False)
+        result["test_output"] = (acceptance.stdout + b"\n" + execution.stdout + b"\n" + terminal_query.stdout + b"\n" + compensation_execution.stdout + b"\n" + compensation_terminal_query.stdout).decode(errors="replace").strip()
         if acceptance.returncode != 0 or PASS_MARKER not in result["test_output"]:
             raise RuntimeError(f"alert batch PostgreSQL acceptance integration exited {acceptance.returncode}")
         if execution.returncode != 0 or EXECUTION_PASS_MARKER not in result["test_output"]:
             raise RuntimeError(f"alert batch PostgreSQL execution integration exited {execution.returncode}")
         if terminal_query.returncode != 0 or TERMINAL_QUERY_PASS_MARKER not in result["test_output"]:
             raise RuntimeError(f"alert batch PostgreSQL terminal-query integration exited {terminal_query.returncode}")
+        if compensation_execution.returncode != 0 or COMPENSATION_EXECUTION_PASS_MARKER not in result["test_output"]:
+            raise RuntimeError(f"alert batch PostgreSQL compensation execution integration exited {compensation_execution.returncode}")
+        if compensation_terminal_query.returncode != 0 or COMPENSATION_TERMINAL_QUERY_PASS_MARKER not in result["test_output"]:
+            raise RuntimeError(f"alert batch PostgreSQL compensation terminal-query integration exited {compensation_terminal_query.returncode}")
         result["asserted_facts"] = {key: True for key in result["asserted_facts"]}
         result["status"] = "PASS"
     except Exception as exc:

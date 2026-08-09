@@ -130,14 +130,17 @@
       ],
       "properties": {
         "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"enum": ["alert.batch-assignment.requested.v1", "alert.assignment.changed.v1"]},
+        "event_type": {"enum": ["alert.batch-assignment.requested.v1", "alert.assignment.changed.v1", "alert.batch-assignment.compensation-requested.v1", "alert.assignment.compensated.v1"]},
         "schema_version": {"const": 1},
-        "aggregate_type": {"const": "alert_assignment_batch"},
+        "aggregate_type": {"enum": ["alert_assignment_batch", "alert_assignment_compensation"]},
         "aggregate_id": {"type": "string", "format": "uuid"},
         "aggregate_version": {"enum": [1, 2]},
         "partition_key": {"type": "string", "minLength": 3},
         "tenant_id": {"type": "string", "minLength": 1},
         "batch_id": {"type": "string", "format": "uuid"},
+        "request_id": {"type": "string", "format": "uuid"},
+        "action_id": {"const": "alert-batch-assignment-compensate"},
+        "expected_batch_revision": {"type": "integer", "minimum": 1},
         "selection_id": {"type": "string", "format": "uuid"},
         "selection_snapshot_id": {"type": "string", "minLength": 8, "maxLength": 256},
         "selection_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -155,7 +158,7 @@
             "type": "object",
             "required": [
               "alert_id", "position", "expected_state_version", "resulting_state_version",
-              "previous_assignee", "resulting_assignee"
+              "previous_assignee", "resulting_assignee", "previous_status", "resulting_status"
             ],
             "properties": {
               "alert_id": {"type": "string", "minLength": 1},
@@ -163,7 +166,9 @@
               "expected_state_version": {"type": "integer", "minimum": 1},
               "resulting_state_version": {"type": "integer", "minimum": 2},
               "previous_assignee": {"type": "string"},
-              "resulting_assignee": {"type": "string", "minLength": 1}
+              "resulting_assignee": {"type": "string"},
+              "previous_status": {"enum": ["new", "triage", "assigned", "closed"]},
+              "resulting_status": {"enum": ["new", "triage", "assigned", "closed"]}
             },
             "additionalProperties": false
           }
@@ -175,15 +180,29 @@
         {
           "if": {"properties": {"event_type": {"const": "alert.batch-assignment.requested.v1"}}, "required": ["event_type"]},
           "then": {
-            "properties": {"aggregate_version": {"const": 1}, "status": {"const": "accepted"}},
+            "properties": {"aggregate_type": {"const": "alert_assignment_batch"}, "aggregate_version": {"const": 1}, "status": {"const": "accepted"}},
             "required": ["selection_id", "selection_snapshot_id", "selection_sha256"]
           }
         },
         {
           "if": {"properties": {"event_type": {"const": "alert.assignment.changed.v1"}}, "required": ["event_type"]},
           "then": {
-            "properties": {"aggregate_version": {"const": 2}, "status": {"const": "running"}},
+            "properties": {"aggregate_type": {"const": "alert_assignment_batch"}, "aggregate_version": {"const": 2}, "status": {"const": "running"}},
             "required": ["items"]
+          }
+        },
+        {
+          "if": {"properties": {"event_type": {"const": "alert.batch-assignment.compensation-requested.v1"}}, "required": ["event_type"]},
+          "then": {
+            "properties": {"aggregate_type": {"const": "alert_assignment_compensation"}, "aggregate_version": {"const": 1}, "status": {"const": "accepted"}, "expected_batch_revision": {"const": 3}},
+            "required": ["request_id", "action_id", "expected_batch_revision"]
+          }
+        },
+        {
+          "if": {"properties": {"event_type": {"const": "alert.assignment.compensated.v1"}}, "required": ["event_type"]},
+          "then": {
+            "properties": {"aggregate_type": {"const": "alert_assignment_compensation"}, "aggregate_version": {"const": 2}, "status": {"const": "running"}, "expected_batch_revision": {"const": 3}},
+            "required": ["request_id", "action_id", "expected_batch_revision", "items"]
           }
         }
       ],

@@ -1,6 +1,6 @@
 {
   "feature_id": "F-ALERT-004",
-  "contract_version": 2,
+  "contract_version": 3,
   "status": "verifying",
   "compatibility": {
     "preserved_routes": ["/alerts"],
@@ -11,11 +11,15 @@
   },
   "ui": {
     "query_id": "alert.batch-assignment.job",
-    "controls": [{"control_id": "alert-batch-assign", "action_id": "alert-batch-assignment-create"}],
+    "controls": [
+      {"control_id": "alert-batch-assign", "action_id": "alert-batch-assignment-create"}
+    ],
     "states": ["loading", "accepted", "running", "success", "partial", "failed", "cancelled"]
   },
   "api": {
     "operation_id": "createAlertBatchAssignment",
+    "compensation_operation_id": "createAlertBatchAssignmentCompensation",
+    "compensation_query_operation_id": "getAlertBatchAssignmentCompensation",
     "method": "POST",
     "path": "/v1/alerts/batches/assign",
     "response_envelope": "data-meta-error",
@@ -31,7 +35,10 @@
       "a retried idempotency key never dispatches the same alert revision twice",
       "requested and changed events are accepted only when their complete identity and item set match PostgreSQL authority before external projection",
       "an exact Kafka inbox replay never repeats an external projection",
-      "permanent poison events advance their source offset only after canonical DLQ acknowledgement and an idempotent PostgreSQL source-tuple audit barrier"
+      "permanent poison events advance their source offset only after canonical DLQ acknowledgement and an idempotent PostgreSQL source-tuple audit barrier",
+      "compensation restores only applied items whose ClickHouse and PostgreSQL authority still equals the exact assignment result version, status and assignee",
+      "compensation writes the inverse state at a new monotonic version and never resurrects an old ClickHouse version",
+      "a batch has at most one compensation aggregate and every retry is bound to the original idempotency payload"
     ],
     "states": ["accepted", "running", "completed", "partial", "failed", "cancelled"],
     "compensation": "restore only items whose resulting revision still equals the batch revision and append per-item audit history"
@@ -39,13 +46,13 @@
   "data": {
     "authoritative_store": "postgresql",
     "read_models": ["postgresql", "clickhouse", "opensearch"],
-    "migration": "deployments/postgres/migrations/202608092130_alert_batch_assignment_execution_v1.sql",
-    "migrations": ["202608091900_alert_batch_assignment_v1", "202608092130_alert_batch_assignment_execution_v1"],
+    "migration": "deployments/postgres/migrations/202608092300_alert_batch_assignment_compensation_v1.sql",
+    "migrations": ["202608091900_alert_batch_assignment_v1", "202608092130_alert_batch_assignment_execution_v1", "202608092300_alert_batch_assignment_compensation_v1"],
     "event_topic": "alert.assignment.events.v1",
     "event_key": "tenant_id:batch_id",
-    "event_types": ["alert.batch-assignment.requested.v1", "alert.assignment.changed.v1"],
+    "event_types": ["alert.batch-assignment.requested.v1", "alert.assignment.changed.v1", "alert.batch-assignment.compensation-requested.v1", "alert.assignment.compensated.v1"],
     "event_delivery": "at-least-once with exact PostgreSQL inbox identity; changed events are preflighted against canonical outbox and every projecting item; permanent poison events require canonical dlq.v1 acknowledgement before PostgreSQL receipt/audit and source-offset commit",
-    "source_watermarks": ["postgresql.alert_assignment_batches.revision", "postgresql.alert_assignment_batch_items.item_revision", "kafka.alert.assignment.events.v1.partition_offset", "clickhouse.alerts.updated_at", "opensearch.alerts.projection_version"]
+    "source_watermarks": ["postgresql.alert_assignment_batches.revision", "postgresql.alert_assignment_batch_items.item_revision", "postgresql.alert_assignment_compensation_requests.revision", "postgresql.alert_assignment_compensation_items.item_revision", "kafka.alert.assignment.events.v1.partition_offset", "clickhouse.alerts.updated_at", "opensearch.alerts.projection_version"]
   },
   "permissions": {
     "tenant_source": "authenticated_identity",
@@ -62,12 +69,13 @@
     "stop_conditions": ["batch size, lock time, outbox lag or per-item error budget is exceeded"]
   },
   "acceptance": {
-    "tests": ["G0 contract and generated client", "G1 selection/idempotency/partial semantics", "G2 real PostgreSQL batch worker", "G3 batch-item-outbox-audit reconciliation", "G4 concurrent batch and retry profile", "G5 Windows Chrome partial-result recovery"],
-    "evidence": ["one batch_id proves a frozen selection and a complete per-item result set with no duplicate dispatch after network retry"]
+    "tests": ["G0 contract and generated client", "G1 selection/idempotency/partial semantics and revision-safe compensation", "G2 real PostgreSQL batch worker", "G3 batch-item-outbox-audit and compensation reconciliation", "G4 concurrent batch and retry profile", "G5 Windows Chrome partial-result recovery"],
+    "evidence": ["one batch_id proves a frozen selection and a complete per-item result set with no duplicate dispatch after network retry", "one compensation request proves exact prior status capture, an intervening revision conflict and complete terminal receipts"]
   },
   "rollout": {
     "feature_flag": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
     "pipeline_flag": "ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED",
+    "compensation_flag": "ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED",
     "default": false,
     "required_environment": ["ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC", "ALERT_BATCH_ASSIGNMENT_EVENT_GROUP"],
     "strategy": "canary",

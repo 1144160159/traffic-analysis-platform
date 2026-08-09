@@ -591,6 +591,7 @@ type BatchUpdateResult struct {
 type AlertAssignmentProjectionResult struct {
 	AlertID               string
 	Assignee              string
+	Status                string
 	ResultingStateVersion uint64
 }
 
@@ -613,7 +614,7 @@ func (s *AlertService) ProjectAlertAssignment(
 	}
 	currentVersion := stateVersionMillis(alert.UpdatedTs)
 	if currentVersion == resultingVersion && alert.Assignee == assignee && alert.Status == state.StatusAssigned.String() {
-		return &AlertAssignmentProjectionResult{AlertID: alertID, Assignee: assignee, ResultingStateVersion: resultingVersion}, nil
+		return &AlertAssignmentProjectionResult{AlertID: alertID, Assignee: assignee, Status: state.StatusAssigned.String(), ResultingStateVersion: resultingVersion}, nil
 	}
 	if currentVersion != expectedVersion {
 		return nil, errors.Newf(errors.ErrCodeVersionConflict,
@@ -640,7 +641,50 @@ func (s *AlertService) ProjectAlertAssignment(
 			zap.Uint64("expected_state_version", expectedVersion),
 			zap.Uint64("resulting_state_version", resultingVersion))
 	}
-	return &AlertAssignmentProjectionResult{AlertID: alertID, Assignee: assignee, ResultingStateVersion: resultingVersion}, nil
+	return &AlertAssignmentProjectionResult{AlertID: alertID, Assignee: assignee, Status: state.StatusAssigned.String(), ResultingStateVersion: resultingVersion}, nil
+}
+
+// ProjectAlertAssignmentCompensation restores the state captured before a
+// batch assignment, but at a fresh target version. It deliberately bypasses
+// the ordinary forward state-machine transition because this is a guarded
+// inverse operation: the caller must prove that the current version is exactly
+// the version produced by the original batch.
+func (s *AlertService) ProjectAlertAssignmentCompensation(
+	ctx context.Context,
+	tenantID, alertID, restoreAssignee, restoreStatus, requestedBy string,
+	expectedVersion, resultingVersion uint64,
+) (*AlertAssignmentProjectionResult, error) {
+	ctx, span := otel.StartSpan(ctx, "alert_service.project_alert_assignment_compensation")
+	defer span.End()
+	canonicalStatus, err := state.ParseStatus(restoreStatus)
+	if err != nil || expectedVersion == 0 || resultingVersion <= expectedVersion {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid assignment compensation projection")
+	}
+	alert, err := s.chRepo.GetByID(ctx, tenantID, alertID)
+	if err != nil {
+		return nil, err
+	}
+	currentVersion := stateVersionMillis(alert.UpdatedTs)
+	if currentVersion == resultingVersion && alert.Assignee == restoreAssignee && alert.Status == canonicalStatus.String() {
+		return &AlertAssignmentProjectionResult{AlertID: alertID, Assignee: restoreAssignee, Status: canonicalStatus.String(), ResultingStateVersion: resultingVersion}, nil
+	}
+	if currentVersion != expectedVersion || alert.Status != state.StatusAssigned.String() {
+		return nil, errors.Newf(errors.ErrCodeVersionConflict,
+			"alert assignment compensation changed: expected assigned version %d, actual %d/%s",
+			expectedVersion, currentVersion, alert.Status)
+	}
+	if err := s.chRepo.ProjectStateWithVersions(ctx, tenantID, alertID, restoreAssignee,
+		canonicalStatus.String(), int64(expectedVersion), int64(resultingVersion)); err != nil {
+		return nil, err
+	}
+	if s.logger != nil {
+		s.logger.Info("Alert assignment compensation projection applied",
+			zap.String("tenant_id", tenantID), zap.String("alert_id", alertID),
+			zap.String("restore_assignee", restoreAssignee), zap.String("restore_status", canonicalStatus.String()),
+			zap.String("requested_by", requestedBy), zap.Uint64("expected_state_version", expectedVersion),
+			zap.Uint64("resulting_state_version", resultingVersion))
+	}
+	return &AlertAssignmentProjectionResult{AlertID: alertID, Assignee: restoreAssignee, Status: canonicalStatus.String(), ResultingStateVersion: resultingVersion}, nil
 }
 
 // AssignAlert 分配告警

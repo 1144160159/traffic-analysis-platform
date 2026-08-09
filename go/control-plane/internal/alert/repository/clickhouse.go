@@ -480,6 +480,41 @@ func (r *AlertRepository) ProjectAssigneeWithVersions(
 	return r.upsertAlertWithVersionCheck(ctx, alert, previousVersion)
 }
 
+// ProjectStateWithVersions applies an exact alert state projection. It is used
+// by revision-safe compensation: the inverse state is written at a new,
+// monotonically increasing version instead of attempting to resurrect the old
+// ClickHouse row version. An exact target replay is idempotent; any intervening
+// version or different target state is a conflict.
+func (r *AlertRepository) ProjectStateWithVersions(
+	ctx context.Context,
+	tenantID, alertID, assignee, status string,
+	expectedVersionMillis, resultingVersionMillis int64,
+) error {
+	ctx, span := otel.StartSpan(ctx, "alert_repository.project_state_with_versions")
+	defer span.End()
+	if expectedVersionMillis <= 0 || resultingVersionMillis <= expectedVersionMillis || strings.TrimSpace(status) == "" {
+		return errors.New(errors.ErrCodeInvalidParameter, "invalid alert state projection")
+	}
+	alert, err := r.GetByID(ctx, tenantID, alertID)
+	if err != nil {
+		return err
+	}
+	currentVersion := alert.UpdatedTs.UnixMilli()
+	if currentVersion == resultingVersionMillis && alert.Assignee == assignee && alert.Status == status {
+		return nil
+	}
+	if currentVersion != expectedVersionMillis {
+		return errors.Newf(errors.ErrCodeVersionConflict,
+			"alert state projection version mismatch: expected %d, actual %d",
+			expectedVersionMillis, currentVersion)
+	}
+	previousVersion := alert.UpdatedTs
+	alert.Assignee = assignee
+	alert.Status = status
+	alert.UpdatedTs = time.UnixMilli(resultingVersionMillis).UTC()
+	return r.upsertAlertWithVersionCheck(ctx, alert, previousVersion)
+}
+
 // updateWithOptimisticLock 带乐观锁的更新辅助方法（带重试）
 func (r *AlertRepository) updateWithOptimisticLock(ctx context.Context, tenantID, alertID string, updateFn func(*persistence.Alert) error) error {
 	const maxRetries = 3

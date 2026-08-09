@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synchronize F-ALERT-004 execution migration compatibility entrypoints."""
+"""Synchronize F-ALERT-004 compensation migration entrypoints."""
 
 from __future__ import annotations
 
@@ -10,18 +10,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION = Path(
-    "deployments/postgres/migrations/202608092130_alert_batch_assignment_execution_v1.sql"
+    "deployments/postgres/migrations/202608092300_alert_batch_assignment_compensation_v1.sql"
 )
 DOCKER_ENTRYPOINT = Path("go/control-plane/deployments/docker/init/postgres_merged.sql")
 K8S_ENTRYPOINT = Path("deployments/kubernetes/init-jobs/02-postgres-schema.yaml")
-BEGIN_MARKER = "-- BEGIN GENERATED F-ALERT-004 ASSIGNMENT EXECUTION V1\n"
-END_MARKER = "-- END GENERATED F-ALERT-004 ASSIGNMENT EXECUTION V1"
-K8S_BEGIN_MARKER = "  # BEGIN GENERATED F-ALERT-004 ASSIGNMENT EXECUTION V1\n"
-K8S_END_MARKER = "  # END GENERATED F-ALERT-004 ASSIGNMENT EXECUTION V1"
-K8S_KEY = "35-alert-batch-assignment-execution-v1.sql"
-RUNNER_SUFFIX = (
-    "34-alert-batch-assignment-v1.sql "
-    "35-alert-batch-assignment-execution-v1.sql "
+BEGIN_MARKER = "-- BEGIN GENERATED F-ALERT-004 ASSIGNMENT COMPENSATION V1\n"
+END_MARKER = "-- END GENERATED F-ALERT-004 ASSIGNMENT COMPENSATION V1"
+K8S_BEGIN_MARKER = "  # BEGIN GENERATED F-ALERT-004 ASSIGNMENT COMPENSATION V1\n"
+K8S_END_MARKER = "  # END GENERATED F-ALERT-004 ASSIGNMENT COMPENSATION V1"
+K8S_KEY = "36-alert-batch-assignment-compensation-v1.sql"
+RUNNER_PREVIOUS = (
+    "34-alert-batch-assignment-v1.sql 35-alert-batch-assignment-execution-v1.sql; do"
+)
+RUNNER_CURRENT = (
+    "34-alert-batch-assignment-v1.sql 35-alert-batch-assignment-execution-v1.sql "
     "36-alert-batch-assignment-compensation-v1.sql; do"
 )
 
@@ -58,13 +60,7 @@ def synchronize(source: str, begin: str, end_marker: str, block: str, insertion:
 
 def render_docker(source: str, root: Path = ROOT) -> str:
     if BEGIN_MARKER in source:
-        return synchronize(
-            source,
-            BEGIN_MARKER,
-            END_MARKER,
-            docker_block(root),
-            0,
-        )
+        return synchronize(source, BEGIN_MARKER, END_MARKER, docker_block(root), 0)
     insertion = len(source.rstrip())
     prefix = source[:insertion]
     separator = "\n\n" if prefix else ""
@@ -76,15 +72,13 @@ def render_k8s(source: str, root: Path = ROOT) -> str:
     if boundary < 0:
         raise ValueError("Kubernetes init Job document boundary is missing")
     rendered = synchronize(
-        source,
-        K8S_BEGIN_MARKER,
-        K8S_END_MARKER,
-        k8s_block(root),
-        boundary + 1,
+        source, K8S_BEGIN_MARKER, K8S_END_MARKER, k8s_block(root), boundary + 1
     )
-    if RUNNER_SUFFIX not in rendered:
-        raise ValueError("Kubernetes init Job runner does not include migrations 35 and 36")
-    return rendered
+    if RUNNER_CURRENT in rendered:
+        return rendered
+    if RUNNER_PREVIOUS in rendered:
+        return rendered.replace(RUNNER_PREVIOUS, RUNNER_CURRENT, 1)
+    raise ValueError("Kubernetes init Job runner does not include migration 35")
 
 
 def check(root: Path = ROOT) -> list[str]:
@@ -100,7 +94,7 @@ def check(root: Path = ROOT) -> list[str]:
             errors.append(f"{relative}: {exc}")
             continue
         if rendered != source:
-            errors.append(f"{relative}: generated F-ALERT-004 execution block is missing or stale")
+            errors.append(f"{relative}: generated F-ALERT-004 compensation block is missing or stale")
     return errors
 
 

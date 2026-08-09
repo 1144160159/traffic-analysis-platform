@@ -26,6 +26,11 @@ func (spy *alertBatchAuthoritySpy) ProjectAlertAssignment(context.Context, strin
 	return &service.AlertAssignmentProjectionResult{}, nil
 }
 
+func (spy *alertBatchAuthoritySpy) ProjectAlertAssignmentCompensation(context.Context, string, string, string, string, string, uint64, uint64) (*service.AlertAssignmentProjectionResult, error) {
+	spy.projectionCalls++
+	return &service.AlertAssignmentProjectionResult{}, nil
+}
+
 func alertBatchRequestedFixture() alertBatchAssignmentLifecycleEvent {
 	return alertBatchAssignmentLifecycleEvent{
 		EventID:             "11111111-1111-4111-8111-111111111111",
@@ -60,8 +65,8 @@ func alertBatchChangedFixture() alertBatchAssignmentLifecycleEvent {
 	event.SelectionSHA256 = ""
 	event.Status = "running"
 	event.Items = []alertAssignmentEventItem{
-		{AlertID: "alert-a", Position: 0, ExpectedStateVersion: 1000, ResultingStateVersion: 1001, PreviousAssignee: "", ResultingAssignee: "analyst-a"},
-		{AlertID: "alert-b", Position: 1, ExpectedStateVersion: 2000, ResultingStateVersion: 2001, PreviousAssignee: "analyst-b", ResultingAssignee: "analyst-a"},
+		{AlertID: "alert-a", Position: 0, ExpectedStateVersion: 1000, ResultingStateVersion: 1001, PreviousAssignee: "", ResultingAssignee: "analyst-a", PreviousStatus: "new", ResultingStatus: "assigned"},
+		{AlertID: "alert-b", Position: 1, ExpectedStateVersion: 2000, ResultingStateVersion: 2001, PreviousAssignee: "analyst-b", ResultingAssignee: "analyst-a", PreviousStatus: "triage", ResultingStatus: "assigned"},
 	}
 	return event
 }
@@ -150,8 +155,8 @@ func TestAlertBatchAssignmentExactInboxReplaySkipsAuthority(t *testing.T) {
 	message := alertBatchMessage(t, event, 2, 41)
 	payloadSHA, headersSHA := alertBatchMessageDigests(message)
 	mock.ExpectQuery("SELECT event_type,tenant_id").WithArgs(event.EventID).WillReturnRows(
-		sqlmock.NewRows([]string{"event_type", "tenant_id", "batch_id", "aggregate_version", "source_topic", "source_partition", "source_offset", "payload_sha256", "headers_sha256", "trace_id"}).
-			AddRow(event.EventType, event.TenantID, event.BatchID, event.AggregateVersion, message.Topic, message.Partition, message.Offset, payloadSHA, headersSHA, event.TraceID),
+		sqlmock.NewRows([]string{"event_type", "tenant_id", "batch_id", "aggregate_type", "aggregate_id", "aggregate_version", "source_topic", "source_partition", "source_offset", "payload_sha256", "headers_sha256", "trace_id"}).
+			AddRow(event.EventType, event.TenantID, event.BatchID, event.AggregateType, event.AggregateID, event.AggregateVersion, message.Topic, message.Partition, message.Offset, payloadSHA, headersSHA, event.TraceID),
 	)
 	spy := &alertBatchAuthoritySpy{}
 	pipeline := &AlertBatchAssignmentPipeline{db: db, authority: spy, topic: AlertAssignmentEventTopic}
@@ -180,8 +185,8 @@ func TestAlertBatchAssignmentIncompleteChangedEventFailsBeforeProjection(t *test
 			AddRow("running", 2, event.TotalCount, event.Assignee, event.RequestedBy, event.Reason, event.TraceID, event.EventID, true),
 	)
 	mock.ExpectQuery("SELECT alert_id,position").WithArgs(event.TenantID, event.BatchID).WillReturnRows(
-		sqlmock.NewRows([]string{"alert_id", "position", "expected_state_version", "resulting_state_version", "previous_assignee", "resulting_assignee"}).
-			AddRow(event.Items[0].AlertID, event.Items[0].Position, event.Items[0].ExpectedStateVersion, event.Items[0].ResultingStateVersion, event.Items[0].PreviousAssignee, event.Items[0].ResultingAssignee),
+		sqlmock.NewRows([]string{"alert_id", "position", "expected_state_version", "resulting_state_version", "previous_assignee", "resulting_assignee", "previous_status", "resulting_status"}).
+			AddRow(event.Items[0].AlertID, event.Items[0].Position, event.Items[0].ExpectedStateVersion, event.Items[0].ResultingStateVersion, event.Items[0].PreviousAssignee, event.Items[0].ResultingAssignee, event.Items[0].PreviousStatus, event.Items[0].ResultingStatus),
 	)
 	spy := &alertBatchAuthoritySpy{}
 	pipeline := &AlertBatchAssignmentPipeline{db: db, authority: spy, topic: AlertAssignmentEventTopic}

@@ -1131,8 +1131,12 @@ func main() {
 	apiHandler.RegisterRoutes(apiRouter)
 	alertBatchAssignmentEnabled := getBoolEnv("ALERT_BATCH_ASSIGNMENT_V1_ENABLED", false) && !readOnlyVerificationMode
 	alertBatchAssignmentPipelineEnabled := getBoolEnv("ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED", false) && !readOnlyVerificationMode
+	alertBatchAssignmentCompensationEnabled := getBoolEnv("ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED", false) && !readOnlyVerificationMode
 	if alertBatchAssignmentPipelineEnabled && !alertBatchAssignmentEnabled {
 		logger.Fatal("Alert batch assignment execution pipeline requires ALERT_BATCH_ASSIGNMENT_V1_ENABLED")
+	}
+	if alertBatchAssignmentCompensationEnabled && (!alertBatchAssignmentEnabled || !alertBatchAssignmentPipelineEnabled) {
+		logger.Fatal("Alert batch assignment compensation requires the batch API and execution pipeline")
 	}
 	if alertBatchAssignmentEnabled && db == nil {
 		logger.Fatal("Alert batch assignment requires PostgreSQL")
@@ -1142,6 +1146,7 @@ func main() {
 		logger.Fatal("ALERT_BATCH_SELECTION_SIGNING_SECRET must contain at least 32 bytes when alert batch assignment is enabled")
 	}
 	alertBatchAssignmentHandler := api.NewAlertBatchAssignmentHandler(db, logger, alertBatchAssignmentEnabled, alertBatchSelectionSigningSecret)
+	alertBatchAssignmentHandler.SetCompensationEnabled(alertBatchAssignmentCompensationEnabled)
 	if alertBatchAssignmentEnabled {
 		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
 		err = alertBatchAssignmentHandler.VerifySchema(verifyCtx)

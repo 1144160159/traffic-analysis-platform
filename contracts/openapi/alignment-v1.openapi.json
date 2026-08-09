@@ -919,6 +919,65 @@
         }
       }
     },
+    "/v1/alerts/batches/assign/{batch_id}/compensations": {
+      "post": {
+        "operationId": "createAlertBatchAssignmentCompensation",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED",
+        "x-compatibility": "Additive compensation endpoint; original batch and legacy per-alert assignment receipts remain immutable",
+        "parameters": [
+          {"name": "batch_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["action_id", "expected_revision", "reason"],
+                "properties": {
+                  "action_id": {"const": "alert-batch-assignment-compensate"},
+                  "expected_revision": {"type": "integer", "format": "int64", "minimum": 1},
+                  "reason": {"type": "string", "minLength": 8, "maxLength": 1000}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {"description": "Revision-bound compensation aggregate, applied-item intents, history, outbox, audit and idempotency receipt committed atomically; inverse effects remain non-final", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid action, revision, reason, batch identifier or idempotency key"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "404": {"description": "Batch is absent from the authenticated tenant"},
+          "409": {"description": "Batch revision changed, compensation is unavailable, a compensation aggregate already exists or the idempotency payload changed"},
+          "503": {"description": "Compensation feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/batches/assign/{batch_id}/compensations/{request_id}": {
+      "get": {
+        "operationId": "getAlertBatchAssignmentCompensation",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED",
+        "parameters": [
+          {"name": "batch_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "request_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {"description": "Tenant-bound compensation aggregate and complete ordered per-item terminal or in-progress receipts", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid batch or compensation request identifier"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "404": {"description": "Compensation is absent from the authenticated tenant"},
+          "503": {"description": "Compensation feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
     "/v1/alerts/views": {
       "get": {
         "operationId": "listAlertViews",
