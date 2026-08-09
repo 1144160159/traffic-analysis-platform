@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T04:57:17Z",
+  "updated_at": "2026-08-09T05:15:46Z",
   "latest_g0": {
-    "run_id": "20260809-remediation-g0-full-v217",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v217/manifest.json",
-    "manifest_sha256": "0589b0d25203d47b6e2ad0a9f2cc2b5c91c73ba849e0b0ea6195178e985b0096",
-    "candidate_source_sha256": "b4da942487a39d1b726b181ae7d3fb018a1e227a3dc8f32079ccf52915eb3d04",
+    "run_id": "20260809-remediation-g0-full-v218",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v218/manifest.json",
+    "manifest_sha256": "5de624d54c5f19a9749283d52fdb21ca3b4619e880f10d218ff15eae578083c4",
+    "candidate_source_sha256": "50c0e124119548fcfdfc485eb2e024a5940bff4ce4fe97ab81f885abdec1cdcf",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -41,17 +41,17 @@
       "T-KAFKA-003",
       "T-SCHEMA-001"
     ],
-    "run_id": "20260809-remediation-alert-response-real-kafka-g1-v1",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/manifest.json",
-    "manifest_sha256": "f974c8777639703bd35aa40c45542c90213a2b4c86bafdbdf06416da4d607114",
-    "result": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/owned-real-kafka-result.json",
-    "result_sha256": "6de747c3adc8cc68ae6696005848a1847dcb4541a3ea3c05790d721af4a19eb0",
-    "candidate_source_sha256": "b4da942487a39d1b726b181ae7d3fb018a1e227a3dc8f32079ccf52915eb3d04",
+    "run_id": "20260809-remediation-alert-response-real-kafka-g1-v2",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v2/manifest.json",
+    "manifest_sha256": "8264b77a34b7159b4b53abbbc179f95c778589a0e2b867b5aec1bf285e20d7ff",
+    "result": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v2/owned-real-kafka-result.json",
+    "result_sha256": "bb603b650ba3f8934de471d2a7cae618d480c1ec364c9594cd8d5f3dacf3bfc3",
+    "candidate_source_sha256": "50c0e124119548fcfdfc485eb2e024a5940bff4ce4fe97ab81f885abdec1cdcf",
     "status": "PARTIAL",
     "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_REDPANDA_LOOPBACK_HTTP_PROVIDER_DLQ_AUTHORITY_RECHECK_AND_COMPENSATION_G1",
     "scoped_evidence_status": "PASS",
-    "g0_run_id": "20260809-remediation-g0-full-v217",
-    "g0_manifest_sha256": "0589b0d25203d47b6e2ad0a9f2cc2b5c91c73ba849e0b0ea6195178e985b0096",
+    "g0_run_id": "20260809-remediation-g0-full-v218",
+    "g0_manifest_sha256": "5de624d54c5f19a9749283d52fdb21ca3b4619e880f10d218ff15eae578083c4",
     "candidate_source_stable": true,
     "production_applied": false,
     "independent_approval_verified": true,
@@ -71,10 +71,13 @@
     "owned_real_kafka_dlq_ack_failure_retains_offset_verified": true,
     "owned_real_kafka_poison_redelivery_verified": true,
     "owned_real_kafka_canonical_dlq_verified": true,
+    "owned_real_kafka_external_provider_execution_verified": true,
+    "owned_real_kafka_provider_single_effect_verified": true,
+    "owned_real_kafka_same_trace_pg_provider_audit_verified": true,
     "owned_real_kafka_group_offset": {
       "partition": 0,
-      "current_offset": 1,
-      "log_end_offset": 1,
+      "current_offset": 2,
+      "log_end_offset": 2,
       "lag": 0
     },
     "owned_real_kafka_single_broker_only": true,
@@ -96,7 +99,7 @@
       "G7": "OPEN",
       "G8": "BLOCKED"
     },
-    "note": "The G0-bound owned G1 slice proves independent approval, stable provider idempotency, durable receipt validation, exact-identity authority recovery, fail-closed unknown effects, atomic PostgreSQL receipt/action/audit persistence, bounded periodic execution authority reconciliation, and a durable compensation queue whose inverse call is never blindly repeated after an ambiguous transport result. A fixed-digest owned single-broker Redpanda additionally proves invalid-DLQ offset retention, same-group poison redelivery, canonical dlq.v1 and PostgreSQL source-tuple receipt/audit before the source commit converges to offset one with zero lag. It does not prove an approved replicated Kafka or provider ledger, approved candidate services, performance, Windows Chrome or G2-G6."
+    "note": "The G0-bound owned G1 slice proves independent approval, stable provider idempotency, durable receipt validation, exact-identity authority recovery, fail-closed unknown effects, atomic PostgreSQL receipt/action/audit persistence, bounded periodic execution authority reconciliation, and a durable compensation queue whose inverse call is never blindly repeated after an ambiguous transport result. A fixed-digest owned single-broker Redpanda first executes one independently approved valid event through the production consumer and loopback provider exactly once, reconciling the same trace across PostgreSQL receipt, action, audit and provider command at offset zero. It then proves invalid-DLQ retention for the following poison event at offset one, same-group redelivery, canonical dlq.v1 and PostgreSQL source-tuple receipt/audit before the group converges to offset two with zero lag. It does not prove an approved replicated Kafka or provider ledger, approved candidate services, performance, Windows Chrome or G2-G6."
   },
   "latest_alert_response_executor_g1_failed_predecessor": {
     "run_id": "20260809-remediation-alert-response-executor-g1-v1",
@@ -753,13 +756,13 @@
       "go/control-plane/internal/alert/consumer/alert_response_real_kafka_integration_test.go",
       "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py"
     ],
-    "g0_run_id": "20260809-remediation-g0-full-v217",
-    "g0_manifest_sha256": "0589b0d25203d47b6e2ad0a9f2cc2b5c91c73ba849e0b0ea6195178e985b0096",
-    "g1_run_id": "20260809-remediation-alert-response-real-kafka-g1-v1",
-    "g1_manifest_sha256": "f974c8777639703bd35aa40c45542c90213a2b4c86bafdbdf06416da4d607114",
-    "g1_result": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/owned-real-kafka-result.json",
-    "g1_result_sha256": "6de747c3adc8cc68ae6696005848a1847dcb4541a3ea3c05790d721af4a19eb0",
-    "candidate_source_sha256": "b4da942487a39d1b726b181ae7d3fb018a1e227a3dc8f32079ccf52915eb3d04",
+    "g0_run_id": "20260809-remediation-g0-full-v218",
+    "g0_manifest_sha256": "5de624d54c5f19a9749283d52fdb21ca3b4619e880f10d218ff15eae578083c4",
+    "g1_run_id": "20260809-remediation-alert-response-real-kafka-g1-v2",
+    "g1_manifest_sha256": "8264b77a34b7159b4b53abbbc179f95c778589a0e2b867b5aec1bf285e20d7ff",
+    "g1_result": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v2/owned-real-kafka-result.json",
+    "g1_result_sha256": "bb603b650ba3f8934de471d2a7cae618d480c1ec364c9594cd8d5f3dacf3bfc3",
+    "candidate_source_sha256": "50c0e124119548fcfdfc485eb2e024a5940bff4ce4fe97ab81f885abdec1cdcf",
     "repository_status": "PASS",
     "coverage_status": "PARTIAL_SHARED_GO_CONSUMER_WITH_DASHBOARD_AND_ALERT_RESPONSE_OWNED_SINGLE_BROKER_G1",
     "alert_response_owned_postgres_receipt_verified": true,
@@ -767,6 +770,9 @@
     "alert_response_dlq_ack_failure_offset_retention_verified": true,
     "alert_response_poison_redelivery_verified": true,
     "alert_response_canonical_dlq_verified": true,
+    "alert_response_external_provider_execution_verified": true,
+    "alert_response_provider_single_effect_verified": true,
+    "alert_response_same_trace_pg_provider_audit_verified": true,
     "alert_response_group_offset_converged_verified": true,
     "alert_response_owned_single_broker_only": true,
     "production_applied": false,
@@ -778,7 +784,7 @@
       "approved canary rollback T+0 T+1 T+3 T+7 observation and independent sign-off",
       "inventory and migrate non-Go and dedicated consumer paths"
     ],
-    "note": "The shared consumer acknowledges the canonical DLQ before invoking an idempotent domain PostgreSQL barrier and commits the source offset only after that barrier succeeds. Dashboard and alert-response now both have owned single-broker G1. The alert-response run proves invalid-DLQ retention at source offset zero, same-group redelivery, one canonical DLQ record, one PostgreSQL source-tuple receipt and quarantine audit, then group offset one with zero lag. Approved replicated Kafka, production and HA completion remain open."
+    "note": "The shared consumer acknowledges the canonical DLQ before invoking an idempotent domain PostgreSQL barrier and commits the source offset only after that barrier succeeds. Dashboard and alert-response now both have owned single-broker G1. The alert-response run first proves one valid offset-zero event produces exactly one loopback-provider effect and one same-trace PostgreSQL receipt/action/audit reconciliation. It then proves invalid-DLQ retention for the following poison event at source offset one, same-group redelivery, one canonical DLQ record, one PostgreSQL source-tuple receipt and quarantine audit, then group offset two with zero lag. Approved replicated Kafka, production and HA completion remain open."
   },
   "latest_pcap_metadata_ack": {
     "canonical_ids": ["F-PROBE-001", "T-KAFKA-003"],
@@ -2993,12 +2999,12 @@
       "T-KAFKA-001",
       "T-SCHEMA-001"
     ],
-    "run_id": "20260809-remediation-alert-response-real-kafka-g1-v1",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/manifest.json",
-    "manifest_sha256": "f974c8777639703bd35aa40c45542c90213a2b4c86bafdbdf06416da4d607114",
-    "candidate_source_sha256": "b4da942487a39d1b726b181ae7d3fb018a1e227a3dc8f32079ccf52915eb3d04",
-    "g0_run_id": "20260809-remediation-g0-full-v217",
-    "g0_manifest_sha256": "0589b0d25203d47b6e2ad0a9f2cc2b5c91c73ba849e0b0ea6195178e985b0096",
+    "run_id": "20260809-remediation-alert-response-real-kafka-g1-v2",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v2/manifest.json",
+    "manifest_sha256": "8264b77a34b7159b4b53abbbc179f95c778589a0e2b867b5aec1bf285e20d7ff",
+    "candidate_source_sha256": "50c0e124119548fcfdfc485eb2e024a5940bff4ce4fe97ab81f885abdec1cdcf",
+    "g0_run_id": "20260809-remediation-g0-full-v218",
+    "g0_manifest_sha256": "5de624d54c5f19a9749283d52fdb21ca3b4619e880f10d218ff15eae578083c4",
     "status": "PARTIAL",
     "coverage_status": "PARTIAL_ALERT_RESPONSE_EXTERNAL_EXECUTION_DLQ_RECEIPT_AUTHORITY_RECHECK_AND_COMPENSATION",
     "scoped_evidence_status": "PASS",
@@ -3014,7 +3020,7 @@
       "G7": "OPEN",
       "G8": "BLOCKED"
     },
-    "note": "The current transaction contract is bound to the same b4da9424 candidate as G0 v217. The alert-response G1 proves atomic execution receipt/action/audit persistence, bounded authority rechecks, an atomic compensation request/attempt/action/audit queue, and a real owned single-broker source-offset to PostgreSQL DLQ receipt/audit precommit barrier. Approved replicated Kafka, approved services, performance, browser and rollout evidence remain open."
+    "note": "The current transaction contract is bound to the same 50c0e124 candidate as G0 v218. The alert-response G1 proves atomic execution receipt/action/audit persistence, bounded authority rechecks, an atomic compensation request/attempt/action/audit queue, one exactly-once loopback-provider effect reconciled with the same trace, and a real owned single-broker source-offset to PostgreSQL DLQ receipt/audit precommit barrier. Approved replicated Kafka, approved services, performance, browser and rollout evidence remain open."
   },
   "latest_pg_mutation_inventory": {
     "feature_id": "T-PG-002",
@@ -3026,12 +3032,12 @@
       "F-DASHBOARD-002",
       "F-ALERT-003"
     ],
-    "run_id": "20260809-remediation-alert-response-real-kafka-g1-v1",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/manifest.json",
-    "manifest_sha256": "f974c8777639703bd35aa40c45542c90213a2b4c86bafdbdf06416da4d607114",
-    "candidate_source_sha256": "b4da942487a39d1b726b181ae7d3fb018a1e227a3dc8f32079ccf52915eb3d04",
-    "g0_run_id": "20260809-remediation-g0-full-v217",
-    "g0_manifest_sha256": "0589b0d25203d47b6e2ad0a9f2cc2b5c91c73ba849e0b0ea6195178e985b0096",
+    "run_id": "20260809-remediation-alert-response-real-kafka-g1-v2",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v2/manifest.json",
+    "manifest_sha256": "8264b77a34b7159b4b53abbbc179f95c778589a0e2b867b5aec1bf285e20d7ff",
+    "candidate_source_sha256": "50c0e124119548fcfdfc485eb2e024a5940bff4ce4fe97ab81f885abdec1cdcf",
+    "g0_run_id": "20260809-remediation-g0-full-v218",
+    "g0_manifest_sha256": "5de624d54c5f19a9749283d52fdb21ca3b4619e880f10d218ff15eae578083c4",
     "status": "PARTIAL",
     "coverage_status": "REPOSITORY_STATIC_INVENTORY",
     "scoped_evidence_status": "PASS",
@@ -3058,7 +3064,7 @@
       "G7": "OPEN",
       "G8": "BLOCKED"
     },
-    "note": "The deterministic static inventory bound to G0 v217 covers 104 source files and 678 mutations (PostgreSQL 662, ClickHouse 16, unclassified 0), separates backends and fails closed on unknown dynamic tables or schemas. The review queue remains 29 with P0_REVIEW 0, P1_REVIEW 19 and P2_REVIEW 10. Source-level priority is not a confirmed defect count, and approved live database, replicated Kafka and full-domain reconciliation gates stay open."
+    "note": "The deterministic static inventory bound to G0 v218 covers 104 source files and 678 mutations (PostgreSQL 662, ClickHouse 16, unclassified 0), separates backends and fails closed on unknown dynamic tables or schemas. The review queue remains 29 with P0_REVIEW 0, P1_REVIEW 19 and P2_REVIEW 10. Source-level priority is not a confirmed defect count, and approved live database, replicated Kafka and full-domain reconciliation gates stay open."
   },
   "latest_opensearch_projection_reconciliation": {
     "feature_id": "T-OS-004",
