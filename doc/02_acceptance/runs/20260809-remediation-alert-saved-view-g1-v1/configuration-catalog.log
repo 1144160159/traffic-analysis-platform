@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "output": "contracts/configuration/configuration-catalog.v1.json",
+  "catalog_sha256": "73cd9da511674467d00e5eeff9923917c4c8a479c41f2a7cadbe2a5472c141e0",
+  "counts": {
+    "entries": 1938,
+    "go_env_consumers": 927,
+    "flink_properties": 261,
+    "kubernetes_env_bindings": 750,
+    "secret_entries": 186,
+    "source_files": 76
+  },
+  "parse_errors": []
+}

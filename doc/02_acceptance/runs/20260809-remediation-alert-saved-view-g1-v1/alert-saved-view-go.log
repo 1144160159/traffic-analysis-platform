@@ -1,0 +1,3 @@
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api	0.113s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/config	0.009s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/alert-service	0.012s

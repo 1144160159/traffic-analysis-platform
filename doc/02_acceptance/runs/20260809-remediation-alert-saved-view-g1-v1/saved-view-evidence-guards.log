@@ -1,0 +1,8 @@
+test_capture_binds_same_candidate_g0_and_keeps_later_gates_open (tests.alignment.test_alert_saved_view_ephemeral_guard.AlertSavedViewEphemeralGuardTest.test_capture_binds_same_candidate_g0_and_keeps_later_gates_open) ... ok
+test_owned_runner_is_fixed_digest_tmpfs_guarded_and_self_cleaning (tests.alignment.test_alert_saved_view_ephemeral_guard.AlertSavedViewEphemeralGuardTest.test_owned_runner_is_fixed_digest_tmpfs_guarded_and_self_cleaning) ... ok
+test_postgres_integration_covers_atomic_revision_boundaries (tests.alignment.test_alert_saved_view_ephemeral_guard.AlertSavedViewEphemeralGuardTest.test_postgres_integration_covers_atomic_revision_boundaries) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK

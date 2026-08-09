@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "run_id": "20260809-remediation-alert-saved-view-g1-v1-postgres",
+  "status": "PASS",
+  "coverage_status": "OWNED_REAL_POSTGRES_ALERT_SAVED_VIEW_ATOMIC_REVISION_G1",
+  "container": "codex-alert-saved-view-pg-212a1c506927",
+  "container_id": "50dce0c818e042d3eff76dab926b5b3a5ca635864ca90cecebd6589e48c31d1a",
+  "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+  "postgres_image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+  "schema_entrypoint": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+  "schema_files": 1,
+  "sentinel_verified": true,
+  "cleanup_sentinel_verified": true,
+  "container_identity_verified": true,
+  "container_resource_limits": {
+    "memory": "512m",
+    "cpus": "1"
+  },
+  "container_resource_snapshot": {
+    "cpu_percent": "0.01%",
+    "memory_usage": "101.7MiB / 512MiB",
+    "memory_percent": "19.86%",
+    "block_io": "0B / 16.4kB",
+    "pids": "6",
+    "measurement": "post_workload_single_snapshot_not_performance_evidence"
+  },
+  "loopback_only": true,
+  "data_mount_type": "tmpfs",
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "container_removed": true,
+  "test_output": "=== RUN   TestAlertSavedViewPostgresIntegration\n    handler_alert_saved_view_postgres_integration_test.go:136: alert_saved_view_postgres_transaction=pass\n--- PASS: TestAlertSavedViewPostgresIntegration (0.04s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api\t0.051s",
+  "asserted_facts": {
+    "create_revision_one": true,
+    "exact_idempotent_replay": true,
+    "changed_payload_conflict": true,
+    "revisioned_update": true,
+    "stale_revision_rejected": true,
+    "cross_tenant_isolation": true,
+    "audit_failure_full_rollback": true,
+    "history_outbox_audit_same_trace": true
+  },
+  "errors": [],
+  "secrets_captured": false
+}
