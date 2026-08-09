@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T02:05:22Z",
+  "updated_at": "2026-08-09T03:04:22Z",
   "latest_g0": {
-    "run_id": "20260809-remediation-g0-full-v209",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v209/manifest.json",
-    "manifest_sha256": "d9cde1732bf4da52f44a5d5d6d50c9882f9fc32f7b4e8cf5600d08de0932ced7",
-    "candidate_source_sha256": "fa3f494572439e9edefa8be52688c633cd061df1bec7f23e04d6ed41f8036b16",
+    "run_id": "20260809-remediation-g0-full-v212",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v212/manifest.json",
+    "manifest_sha256": "200cd1a07c586363ced21ff47d117c0ac05d18806042cd6ca485af24463a7618",
+    "candidate_source_sha256": "b82e59532f8624a60b41b26439a4f6e8cb585e42c1b886331c3515ae9c9c5938",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -30,6 +30,64 @@
     "failure": "Rust online capture tests raced AF_PACKET and XDP/fallback cases on the shared loopback interface; test_afpacket_pipeline observed zero packets while the same test passed in isolation",
     "remediation": "serialize only live interface tests with an in-process mutex; preserve packet-processing assertions and production capture code",
     "superseded_by_pass_run_id": "20260809-remediation-g0-full-v208"
+  },
+  "latest_alert_response_executor_g1": {
+    "canonical_ids": [
+      "F-ALERT-003",
+      "T-PG-002",
+      "T-KAFKA-001",
+      "T-KAFKA-003",
+      "T-SCHEMA-001"
+    ],
+    "run_id": "20260809-remediation-alert-response-executor-g1-v2",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v2/manifest.json",
+    "manifest_sha256": "20d1cdb490067a4a971a8408223ce6119cf2ca66106a1a92cf8d4a0599f3a019",
+    "candidate_source_sha256": "b82e59532f8624a60b41b26439a4f6e8cb585e42c1b886331c3515ae9c9c5938",
+    "status": "PARTIAL",
+    "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_G1",
+    "scoped_evidence_status": "PASS",
+    "g0_run_id": "20260809-remediation-g0-full-v212",
+    "g0_manifest_sha256": "200cd1a07c586363ced21ff47d117c0ac05d18806042cd6ca485af24463a7618",
+    "candidate_source_stable": true,
+    "production_applied": false,
+    "independent_approval_verified": true,
+    "stable_provider_idempotency_verified": true,
+    "durable_provider_receipt_verified": true,
+    "unknown_effect_fail_closed_verified": true,
+    "exact_identity_authority_lookup_verified": true,
+    "provider_receipt_action_audit_atomic_verified": true,
+    "owned_real_postgres_verified": true,
+    "owned_loopback_http_provider_verified": true,
+    "owned_real_kafka_verified": false,
+    "alert_domain_dlq_receipt_verified": false,
+    "external_compensation_executor_verified": false,
+    "periodic_unknown_effect_reconciliation_verified": false,
+    "postgres_schema_entrypoint_sha256": "ab0af05187ed38164dd7f36ae1787e055da96dd95bc534272acdea81e96649a2",
+    "gate_status": {
+      "G0": "PASS",
+      "G1": "PASS_FOR_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER",
+      "G2": "OPEN_FOR_APPROVED_RELEASE_CANDIDATE_POSTGRESQL_KAFKA_AND_PROVIDER",
+      "G3": "OPEN_FOR_SAME_TRACE_EVENT_OFFSET_RECEIPT_AUDIT_AND_PROVIDER_EFFECT_RECONCILIATION",
+      "G4": "OPEN_FOR_APPROVED_PERFORMANCE_FAULT_AND_RECOVERY_BUDGET",
+      "G5": "OPEN_FOR_CURRENT_CANDIDATE_WINDOWS_CHROME_MOCK_OFF",
+      "G6": "HOLD_FOR_EXPAND_SHADOW_CANARY_ROLLBACK_AND_OBSERVATION",
+      "G7": "OPEN",
+      "G8": "BLOCKED"
+    },
+    "note": "The G0-bound owned G1 slice proves independent approval, stable provider idempotency, durable receipt validation, exact-identity authority recovery, fail-closed unknown effects and atomic PostgreSQL receipt/action/audit persistence. It does not prove real Kafka offsets, an alert-domain DLQ receipt barrier, compensation execution, periodic unknown-effect reconciliation, approved candidate services, performance, Windows Chrome or G2-G6."
+  },
+  "latest_alert_response_executor_g1_failed_predecessor": {
+    "run_id": "20260809-remediation-alert-response-executor-g1-v1",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v1/manifest.json",
+    "manifest_sha256": "2a2a55a76f12aff682c16b76059001a109b8ea7567d3caf5741fae1d1e9a8512",
+    "candidate_source_sha256": "5170344848b193b5fde5772f780cc185376138c88c0bc8ea35226083df2d6630",
+    "g0_run_id": "20260809-remediation-g0-full-v211",
+    "g0_manifest_sha256": "3c9dca437ce041efc036ea4bae736f69c2dd1ec67830e05fdf73aedd18fd26be",
+    "status": "FAIL",
+    "failed_step": "owned-postgres-http-provider",
+    "failure": "the repeatable integration test reused a fixed Kafka partition and offset tuple and collided with an earlier run in the same sentinel PostgreSQL database",
+    "remediation": "derive a unique per-run base offset while preserving consecutive replay collision and cancelled-event cases; run the same integration suite twice against the same database",
+    "superseded_by_run_id": "20260809-remediation-alert-response-executor-g1-v2"
   },
   "latest_dashboard_task_compensation_g1": {
     "canonical_ids": [

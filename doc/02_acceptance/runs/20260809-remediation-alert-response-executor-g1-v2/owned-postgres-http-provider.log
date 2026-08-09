@@ -1,0 +1,6 @@
+=== RUN   TestPostgresAlertResponseProjectionIntegration
+--- PASS: TestPostgresAlertResponseProjectionIntegration (0.02s)
+=== RUN   TestPostgresAlertResponseExternalExecutorIntegration
+--- PASS: TestPostgresAlertResponseExternalExecutorIntegration (0.01s)
+PASS
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/consumer	0.046s

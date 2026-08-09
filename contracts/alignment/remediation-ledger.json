@@ -5,7 +5,7 @@
     "contracts/alignment/work-packages.json",
     "contracts/alignment/progress-overrides.json"
   ],
-  "as_of": "2026-08-09T02:05:22Z",
+  "as_of": "2026-08-09T03:04:22Z",
   "g7_status": "OPEN",
   "g8_status": "BLOCKED",
   "g8_blockers": [
@@ -19,9 +19,9 @@
     "total": 102,
     "by_status": {
       "BLOCKED": 3,
-      "IMPLEMENTING": 37,
+      "IMPLEMENTING": 38,
       "OBSERVING": 1,
-      "OPEN": 35,
+      "OPEN": 34,
       "VERIFYING": 26
     }
   },
@@ -299,10 +299,33 @@
       "work_package": "WP-07-ALERT",
       "planned_wave": "W3",
       "owner": "alert-domain-owner",
-      "status": "OPEN",
-      "evidence": [],
-      "blocker": null,
-      "note": ""
+      "status": "IMPLEMENTING",
+      "evidence": [
+        "contracts/alignment/features/F-ALERT-003.json",
+        "contracts/events/kafka-json-events-v1.schema.json",
+        "contracts/events/kafka-topic-catalog.v1.json",
+        "contracts/postgres/transaction-outbox.v1.json",
+        "contracts/postgres/mutable-command-inventory.v1.json",
+        "go/control-plane/internal/alert/api/handler_alert_actions.go",
+        "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
+        "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
+        "go/control-plane/internal/alert/consumer/alert_response_http_executor_test.go",
+        "go/control-plane/internal/alert/consumer/alert_response_event_consumer_integration_test.go",
+        "go/control-plane/cmd/alert-service/main.go",
+        "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
+        "common/sql/pg/15-alert-response-external-executor-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "deployments/kubernetes/applications/go-services.yaml",
+        "go/control-plane/deployments/kubernetes/alert-service.yaml",
+        "scripts/alignment/capture_alert_response_executor.py",
+        "doc/07_alignment/runbooks/F-ALERT-003-rollback.md",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v211/manifest.json#sha256=3c9dca437ce041efc036ea4bae736f69c2dd1ec67830e05fdf73aedd18fd26be",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v1/manifest.json#sha256=2a2a55a76f12aff682c16b76059001a109b8ea7567d3caf5741fae1d1e9a8512",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v212/manifest.json#sha256=200cd1a07c586363ced21ff47d117c0ac05d18806042cd6ca485af24463a7618",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v2/manifest.json#sha256=20d1cdb490067a4a971a8408223ce6119cf2ca66106a1a92cf8d4a0599f3a019"
+      ],
+      "blocker": "当前只完成默认关闭的告警响应外部执行器G1：生产者、真实Kafka consumer group与source offset、告警域DLQ PostgreSQL回执屏障、外部补偿执行器、unknown effect周期权威复核、批准provider ledger、同trace跨服务对账、批准性能/故障恢复、候选部署、Windows Chrome、canary、回滚和T+0/T+1/T+3/T+7观察均未完成；因此不得进入VERIFYING或CLOSED。",
+      "note": "G0 v212三道门分别PASS并绑定源码SHA b82e59532f8624a60b41b26439a4f6e8cb585e42c1b886331c3515ae9c9c5938。G1 v2十项范围检查全部PASS：真实响应事件要求稳定trace和独立审批，provider使用event派生幂等键；completed必须有确认副作用和唯一effect ID；丢响应只允许精确身份的provider authority receipt_found恢复，否则保持partial/effect_state=unknown；回执、action终态和audit在同一PG事务提交。自有PostgreSQL与loopback HTTP provider通过，三套PG入口双重回放SHA一致。v1固定offset重跑冲突失败事实保留，修复后同一集成用例连续两次通过。所有开关默认关闭，production_applied=false，F-ALERT-003仅从OPEN进入IMPLEMENTING。"
     },
     {
       "id": "F-ALERT-004",
@@ -1576,10 +1599,16 @@
         "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
         "go/control-plane/internal/common/kafka/consumer.go",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v209/manifest.json#sha256=d9cde1732bf4da52f44a5d5d6d50c9882f9fc32f7b4e8cf5600d08de0932ced7",
-        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-poison-dlq-g1-v1/manifest.json#sha256=9682ab7ea526500664851fd069833e85039a109911d5d9c04ed89061e289b918"
+        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-poison-dlq-g1-v1/manifest.json#sha256=9682ab7ea526500664851fd069833e85039a109911d5d9c04ed89061e289b918",
+        "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
+        "common/sql/pg/15-alert-response-external-executor-v1.sql",
+        "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
+        "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v212/manifest.json#sha256=200cd1a07c586363ced21ff47d117c0ac05d18806042cd6ca485af24463a7618",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v2/manifest.json#sha256=20d1cdb490067a4a971a8408223ce6119cf2ca66106a1a92cf8d4a0599f3a019"
       ],
-      "blocker": "全仓Go SQL清单仍有27个源文件需逐命令边界审查（19个P1_REVIEW、8个P2_REVIEW，P0_REVIEW与未分类均为0）；forensics、saved-view、notification治理、asset.discovery、probe registration及data-quality等其他outbox/consumer缺口仍按各自事实保留。dashboard poison source tuple receipt与audit barrier已在自有PG/Redpanda G1通过，但批准候选PG、复制broker故障、其余consumer域和跨存储对账尚未完成。其余生产migration/topic/ACL/候选镜像、锁竞争、outbox lag/dead告警、回滚及T+0/T+1/T+3/T+7观察仍未完成。",
-      "note": "现有原子命令边界继续保留。版本化清单已同步到102个源文件/655条SQL变更（PG 639、CH 16、review queue 27、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 8、未分类0）。dashboard_task_dlq_receipts按source topic/partition/offset幂等，并与quarantine audit在同一serializable事务提交；三个PG入口两次回放同哈希。该切片仍为自有G1且production_applied=false，因此T-PG-002继续IMPLEMENTING。"
+      "blocker": "全仓Go SQL清单仍有27个源文件需逐命令边界审查（19个P1_REVIEW、8个P2_REVIEW，P0_REVIEW与未分类均为0）；forensics、saved-view、notification治理、asset.discovery、probe registration及data-quality等其他outbox/consumer缺口仍按各自事实保留。dashboard poison屏障与alert response provider receipt/action/audit原子提交均已在自有G1通过，但批准候选PG、复制broker故障、unknown effect周期复核、其余consumer域和跨存储对账尚未完成。其余生产migration/topic/ACL/候选镜像、锁竞争、outbox lag/dead告警、回滚及T+0/T+1/T+3/T+7观察仍未完成。",
+      "note": "现有原子命令边界继续保留。版本化清单已同步到102个源文件/656条SQL变更（PG 640、CH 16、review queue 27、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 8、未分类0）。alert response的provider回执、action终态和audit已在同一PG事务提交；common、Docker merged与Kubernetes ConfigMap三个入口双重回放SHA均为ab0af05187ed38164dd7f36ae1787e055da96dd95bc534272acdea81e96649a2。该切片仍为自有G1且production_applied=false，因此T-PG-002继续IMPLEMENTING。"
     },
     {
       "id": "T-PG-003",
