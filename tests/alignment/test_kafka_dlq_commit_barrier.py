@@ -23,7 +23,7 @@ class KafkaDLQCommitBarrierTest(unittest.TestCase):
         result = verify(self.contract)
         self.assertEqual("PASS", result["status"], result)
         self.assertEqual(
-            "PARTIAL_SHARED_GO_CONSUMER_WITH_DASHBOARD_OWNED_G1",
+            "PARTIAL_SHARED_GO_CONSUMER_WITH_DASHBOARD_OWNED_G1_AND_ALERT_RESPONSE_REPOSITORY_BARRIER",
             result["coverage_status"],
         )
         self.assertGreater(len(result["remaining_gates"]), 0)
