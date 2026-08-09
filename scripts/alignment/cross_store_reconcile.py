@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded, tenant-scoped, plan-only cross-store reconciliation for T-OBS-001."""
+"""Bounded, tenant-scoped, plan-only seven-source reconciliation for T-OBS-001."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 
-ALLOWED_SOURCES = {"postgresql", "kafka", "clickhouse", "opensearch", "nebulagraph", "minio"}
+ALLOWED_SOURCES = {"postgresql", "kafka", "clickhouse", "opensearch", "nebulagraph", "minio", "audit"}
 TRACE_RE = re.compile(r"^[0-9a-f]{32}$")
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 FORBIDDEN_SCOPE_VALUES = {"*", "all", "any", "_all"}

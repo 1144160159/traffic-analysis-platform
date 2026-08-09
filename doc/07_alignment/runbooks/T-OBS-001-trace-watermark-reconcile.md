@@ -2,7 +2,7 @@
 
 ## 1. 当前结论
 
-本候选只形成 `PARTIAL` 的仓库侧纵切，不代表生产已应用或 T-OBS-001 已关闭。候选已统一 HTTP 与 Kafka 的 W3C trace 传播，并把告警 `trace_id` 写入 Proto、Go/Flink 告警模型、ClickHouse 和 OpenSearch 严格映射。PG/outbox、全部 Flink 作业、NebulaGraph 边、MinIO manifest、全部页面快照以及真实六存储同 trace 证据仍需后续完成。
+本候选只形成 `PARTIAL` 的仓库侧纵切，不代表生产已应用或 T-OBS-001 已关闭。候选已统一 HTTP 与 Kafka 的 W3C trace 传播，并把告警 `trace_id` 写入 Proto、Go/Flink 告警模型、ClickHouse 和 OpenSearch 严格映射。资产域另有一个固定摘要、无持久卷、仅回环端口的 G1 七源样例：生产资产路径覆盖 PostgreSQL/outbox/Kafka/durable inbox/OpenSearch/NebulaGraph/审计，ClickHouse 使用生产告警 writer 绑定同一身份，MinIO 为明确标注的适配写入。该样例不包含 Flink，也不证明同哈希候选部署、生产 G3、性能、浏览器、回滚或观察。
 
 仓库候选不得执行生产修复。`scripts/alignment/cross_store_reconcile.py` 仅生成确定性只读差异和修复计划；不会更新、删除、回放或隔离任何在线记录。
 
@@ -57,7 +57,7 @@ python3 scripts/alignment/cross_store_reconcile.py \
   --mode plan
 ```
 
-退出码：`0` 表示六源无差异；`3` 表示成功完成对账但存在差异或无法解析项；`2` 表示输入、范围或文件本身不合法。所有结果都必须保存输入hash、输出 `report_sha256`、查询时间窗、候选manifest和实际source watermarks。
+退出码：`0` 表示七源无差异；`3` 表示成功完成对账但存在差异或无法解析项；`2` 表示输入、范围或文件本身不合法。所有结果都必须保存输入hash、输出 `report_sha256`、查询时间窗、候选manifest和实际source watermarks。
 
 ## 5. 差异裁决
 
@@ -84,4 +84,4 @@ python3 scripts/alignment/cross_store_reconcile.py \
 
 ## 8. 关闭证据
 
-关闭T-OBS-001至少需要：生产候选同一用户动作的十阶段同trace证据、所有关键页面真实水位与partial语义、六存储全量/抽样对账、故障注入、固定规模P50/P95/P99、指定Windows Chrome、灰度/回滚，以及T+0、T+1、T+3、T+7观察。仓库测试或HTTP 2xx不能单独作为关闭依据。
+关闭T-OBS-001至少需要：生产候选同一用户动作的十阶段同trace证据、所有关键页面真实水位与partial语义、七源全量/抽样对账、故障注入、固定规模P50/P95/P99、指定Windows Chrome、灰度/回滚，以及T+0、T+1、T+3、T+7观察。仓库测试或HTTP 2xx不能单独作为关闭依据。

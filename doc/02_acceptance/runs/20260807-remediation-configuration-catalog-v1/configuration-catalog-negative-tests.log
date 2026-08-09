@@ -1,0 +1,10 @@
+test_checked_in_catalog_matches_all_go_flink_and_kubernetes_sources (tests.alignment.test_configuration_catalog.ConfigurationCatalogTests.test_checked_in_catalog_matches_all_go_flink_and_kubernetes_sources) ... ok
+test_conflicting_runtime_binding_fails_closed (tests.alignment.test_configuration_catalog.ConfigurationCatalogTests.test_conflicting_runtime_binding_fails_closed) ... ok
+test_nonempty_secret_default_fails_closed (tests.alignment.test_configuration_catalog.ConfigurationCatalogTests.test_nonempty_secret_default_fails_closed) ... ok
+test_runtime_declarations_have_no_unmarked_conflicts (tests.alignment.test_configuration_catalog.ConfigurationCatalogTests.test_runtime_declarations_have_no_unmarked_conflicts) ... ok
+test_secret_material_is_never_serialized (tests.alignment.test_configuration_catalog.ConfigurationCatalogTests.test_secret_material_is_never_serialized) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 8.640s
+
+OK

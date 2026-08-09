@@ -1,0 +1,5 @@
+statefulset.apps/minio configured (dry run)
+service/minio configured (dry run)
+poddisruptionbudget.policy/minio-pdb configured (dry run)
+deployment.apps/minio-proxy configured (dry run)
+service/minio-proxy configured (dry run)

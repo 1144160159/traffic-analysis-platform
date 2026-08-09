@@ -252,6 +252,10 @@ func JSONContractSuccess(w http.ResponseWriter, ctx context.Context, data interf
 	jsonContract(w, ctx, http.StatusOK, data, meta)
 }
 
+func JSONContractCreated(w http.ResponseWriter, ctx context.Context, data interface{}, meta ContractMeta) {
+	jsonContract(w, ctx, http.StatusCreated, data, meta)
+}
+
 func JSONContractAccepted(w http.ResponseWriter, ctx context.Context, data interface{}, meta ContractMeta) {
 	jsonContract(w, ctx, http.StatusAccepted, data, meta)
 }

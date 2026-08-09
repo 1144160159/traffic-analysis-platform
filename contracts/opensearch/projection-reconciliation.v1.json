@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.0.0",
+  "contract_version": "1.1.0",
   "feature_id": "F-SEARCH-001",
   "remediation_id": "T-OS-004",
   "work_package": "WP-23-OS",
@@ -15,6 +15,9 @@
   "write_boundary": {
     "clickhouse_success_opensearch_failure": "projection_pending_only_after_durable_debt",
     "debt_persistence_failure": "return_error_and_block_offset_commit",
+    "opensearch_success_with_receipt_store": "record_applied_watermarks_before_offset_commit",
+    "precise_partial_bulk": "atomically_record_applied_watermarks_and_failed_debts_before_offset_commit",
+    "receipt_persistence_failure": "return_error_and_block_offset_commit",
     "projection_id": "alert_id",
     "version_type": "external_gte",
     "source_version_order": ["updated_ts_unix_millis", "last_seen_unix_millis", "first_seen_unix_millis", "1"]
@@ -34,7 +37,21 @@
     "comparison": ["count", "alert_id", "authoritative_field_sha256"],
     "classifications": ["missing", "extra", "stale"],
     "automatic_repairs": ["missing", "stale"],
-    "automatic_delete_extra": false
+    "automatic_delete_extra": false,
+    "repair_terminal_receipt": "refresh_exact_write_alias_then_requery_same_scope",
+    "repair_converged": "remaining_missing_stale_and_watermark_mismatches_are_zero_and_error_count_is_zero",
+    "watermark_terminal_receipt": "compare_source_version_and_authoritative_sha256_in_postgresql_repair_missing_receipts_then_requery",
+    "cross_service_terminal_receipt": "same_owned_run_real_opensearch_requery_and_real_postgresql_watermark_requery",
+    "authoritative_three_store_receipt": "same_owned_run_real_clickhouse_authority_real_opensearch_target_real_postgresql_receipt_equal_hash_and_version",
+    "kafka_five_store_receipt": "same_owned_run_real_kafka_commit_after_redis_dedup_clickhouse_authority_opensearch_target_and_postgresql_applied_receipt",
+    "kafka_receipt_failure_recovery": "postgresql_receipt_failure_retains_offset_same_group_restart_redelivers_and_reconciles",
+    "kafka_exact_event_replay": "stable_event_identity_preserves_redis_count_source_version_and_cross_store_hash_across_restart",
+    "kafka_event_identity_collision": "same_event_id_with_different_fingerprint_fails_closed_without_aggregate_mutation",
+    "kafka_distinct_event_ordering": "source_time_bucket_distinct_events_project_independently_with_monotonic_aggregate_bounds",
+    "kafka_delayed_exact_replay": "per_event_redis_receipt_restores_original_count_first_seen_last_seen_after_later_events",
+    "kafka_multi_partition_rebalance": "two_partitions_two_members_then_one_member_takeover_with_receipts_before_each_commit",
+    "source_time_compatibility": "header_event_ts_then_legacy_behavior_ts_then_batch_created_at_then_fail_closed",
+    "extra_after_repair": "persist_for_manual_adjudication_never_auto_delete"
   },
   "runtime_guards": {
     "feature_flag": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
@@ -47,6 +64,7 @@
   },
   "canonical_hash": {
     "runtime_fields_excluded": ["attack_phase", "arkime_link", "evidence_count"],
+    "timestamp_precision": "utc_milliseconds_before_storage_writes_and_hashing",
     "reason": "these fields are not authoritative ClickHouse columns and cannot be deterministically rebuilt"
   },
   "read_compatibility": {
@@ -66,7 +84,7 @@
   },
   "closure_blockers": [
     "the expand-only PostgreSQL migration is present, but the candidate worker and an approved V2 OpenSearch target have not been deployed or exercised",
-    "real Kafka offset decisions and consumer lag versus last event_id have not been captured",
+    "owned G1 captures Kafka offset and last event_id, but the same candidate has not been deployed to the approved production-like G2 environment",
     "real missing extra stale manifests and successful automatic repair rates are absent",
     "fixed-scale P50 P95 P99 and resource budgets are not approved",
     "canary rollback and T+0 T+1 T+3 T+7 observation are incomplete"

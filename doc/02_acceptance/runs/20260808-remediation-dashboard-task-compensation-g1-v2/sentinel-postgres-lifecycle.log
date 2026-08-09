@@ -1,0 +1,48 @@
+=== RUN   TestAssetAtomicUpsertPostgresIntegration
+--- PASS: TestAssetAtomicUpsertPostgresIntegration (0.05s)
+=== RUN   TestDiscoveryResourceAtomicPostgresIntegration
+--- PASS: TestDiscoveryResourceAtomicPostgresIntegration (0.04s)
+PASS
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/repository	0.102s
+=== RUN   TestUserCommandAtomicPostgresIntegration
+--- PASS: TestUserCommandAtomicPostgresIntegration (0.30s)
+PASS
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository	0.306s
+=== RUN   TestCampaignAggregateV2PostgresIntegration
+--- PASS: TestCampaignAggregateV2PostgresIntegration (0.04s)
+PASS
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api	0.055s
+=== RUN   TestProbeRegistryAtomicPostgresIntegration
+--- PASS: TestProbeRegistryAtomicPostgresIntegration (0.01s)
+PASS
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/server	0.022s
+=== RUN   TestThreatIntelCommandAtomicEphemeralPostgres
+--- PASS: TestThreatIntelCommandAtomicEphemeralPostgres (0.02s)
+PASS
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/threat-intel-service	0.026s
+=== RUN   TestForensicsTaskCommandAtomicEphemeralPostgres
+--- PASS: TestForensicsTaskCommandAtomicEphemeralPostgres (0.04s)
+PASS
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/repository	0.051s
+=== RUN   TestWhitelistGovernanceAtomicEphemeralPostgres
+--- PASS: TestWhitelistGovernanceAtomicEphemeralPostgres (0.09s)
+PASS
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/whitelist	0.096s
+=== RUN   TestDashboardTaskV2EphemeralPostgres
+--- PASS: TestDashboardTaskV2EphemeralPostgres (0.07s)
+PASS
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api	0.086s
+{
+  "schema_version": 1,
+  "run_id": "20260808-remediation-dashboard-task-compensation-g1-v2-pg",
+  "container": "codex-asset-atomic-pg-8659e2741f35",
+  "image": "postgres:16",
+  "status": "PASS",
+  "schema_files": 22,
+  "sentinel_verified": true,
+  "shared_environment_touched": false,
+  "persistent_volume_attached": false,
+  "container_removed": true,
+  "secrets_captured": false,
+  "errors": []
+}

@@ -352,9 +352,9 @@ func TestCompensationRejectsReceiptWithoutExternalEffect(t *testing.T) {
 	expectNoControlRequest(mock)
 	expectLockedResponseAction(mock, "operator-a", "completed", "approved", false, 3)
 	expectNoControlRequest(mock)
-	mock.ExpectQuery("SELECT state,external_effect").
-		WillReturnRows(sqlmock.NewRows([]string{"state", "external_effect"}).
-			AddRow("completed", false))
+	mock.ExpectQuery("SELECT state,external_effect,provider,provider_receipt_id,effect_ids::text,trace_id").
+		WillReturnRows(sqlmock.NewRows([]string{"state", "external_effect", "provider", "provider_receipt_id", "effect_ids", "trace_id"}).
+			AddRow("completed", false, "ephemeral-firewall", "receipt-1", `["rule-1"]`, "trace-1"))
 	mock.ExpectRollback()
 
 	handler := NewHandler(nil, nil, zap.NewNop())
@@ -421,11 +421,11 @@ func expectLockedResponseAction(
 		WithArgs("tenant-a", "AL-1", responseJobID).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"job_id", "event_id", "tenant_id", "alert_id", "action_id", "action",
-			"target", "reason", "requested_by", "status", "approval_status", "dry_run", "revision",
+			"target", "reason", "requested_by", "trace_id", "status", "approval_status", "dry_run", "revision",
 		}).AddRow(
 			responseJobID, responseEventID, "tenant-a", "AL-1",
 			"alert-response-block-ip", "block_ip", "185.22.14.9", "confirmed response",
-			requestedBy, status, approvalStatus, dryRun, revision,
+			requestedBy, "trace-alert-response", status, approvalStatus, dryRun, revision,
 		))
 }
 

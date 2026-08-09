@@ -23,6 +23,8 @@ import (
 
 func main() {
 	var tenantID, mode, requestedBy, traceID, startText, endText, idsText, targetVersion string
+	var expectedClusterUUID, expectedReadTarget, expectedWriteAlias, expectedWriteIndex string
+	var reviewPackage, approvalBundle, expectedReviewSHA, expectedApprovalSHA, expectedToolImage string
 	var maxDocuments int
 	var confirmRepair bool
 	flag.StringVar(&tenantID, "tenant", "", "required tenant scope")
@@ -33,6 +35,15 @@ func main() {
 	flag.StringVar(&endText, "end", "", "optional RFC3339 upper bound")
 	flag.StringVar(&idsText, "alert-ids", "", "optional comma-separated business IDs")
 	flag.StringVar(&targetVersion, "target-index-version", "", "exact approved index generation")
+	flag.StringVar(&expectedClusterUUID, "expected-cluster-uuid", "", "repair-only approved OpenSearch cluster UUID")
+	flag.StringVar(&expectedReadTarget, "expected-read-target", "", "repair-only exact approved projection read target")
+	flag.StringVar(&expectedWriteAlias, "expected-write-alias", "", "repair-only exact approved projection write alias")
+	flag.StringVar(&expectedWriteIndex, "expected-write-index", "", "repair-only exact physical write index")
+	flag.StringVar(&reviewPackage, "review-package", "", "repair-only immutable non-authorizing review JSON")
+	flag.StringVar(&approvalBundle, "approval-bundle", "", "repair-only immutable four-party approval JSON")
+	flag.StringVar(&expectedReviewSHA, "expected-review-sha256", "", "repair-only exact review file SHA-256")
+	flag.StringVar(&expectedApprovalSHA, "expected-approval-sha256", "", "repair-only exact approval file SHA-256")
+	flag.StringVar(&expectedToolImage, "expected-tool-image", "", "repair-only immutable repository@sha256 image reference")
 	flag.IntVar(&maxDocuments, "max-documents", 0, "bounded document count")
 	flag.BoolVar(&confirmRepair, "confirm-repair", false, "required for mode=repair")
 	flag.Parse()
@@ -41,6 +52,12 @@ func main() {
 	}
 	if mode == "repair" && !confirmRepair {
 		fatalf("--confirm-repair is required for mode=repair")
+	}
+	if err := validateRepairApproval(
+		mode, requestedBy, reviewPackage, approvalBundle, expectedReviewSHA, expectedApprovalSHA,
+		expectedToolImage, time.Now().UTC(), os.Args,
+	); err != nil {
+		fatalf("repair approval: %v", err)
 	}
 
 	cfg, err := config.Load()
@@ -76,6 +93,13 @@ func main() {
 		fatalf("connect OpenSearch: %v", err)
 	}
 	defer osWriter.Close()
+	metadata, err := osWriter.ProjectionMetadata(ctx)
+	if err != nil {
+		fatalf("read OpenSearch projection target identity: %v", err)
+	}
+	if err := validateRepairTargetBinding(mode, metadata, expectedClusterUUID, expectedReadTarget, expectedWriteAlias, expectedWriteIndex); err != nil {
+		fatalf("repair target binding: %v", err)
+	}
 	pg, err := sql.Open("postgres", cfg.Auth.ConnectionString())
 	if err != nil {
 		fatalf("open PostgreSQL: %v", err)
@@ -114,6 +138,46 @@ func main() {
 	if err := encoder.Encode(result); err != nil {
 		fatalf("encode result: %v", err)
 	}
+}
+
+func validateRepairTargetBinding(
+	mode string,
+	metadata persistence.OpenSearchProjectionMetadata,
+	expectedClusterUUID, expectedReadTarget, expectedWriteAlias, expectedWriteIndex string,
+) error {
+	if !strings.EqualFold(strings.TrimSpace(mode), "repair") {
+		return nil
+	}
+	expectedClusterUUID = strings.TrimSpace(expectedClusterUUID)
+	expectedReadTarget = strings.TrimSpace(expectedReadTarget)
+	expectedWriteAlias = strings.TrimSpace(expectedWriteAlias)
+	expectedWriteIndex = strings.TrimSpace(expectedWriteIndex)
+	if expectedClusterUUID == "" || expectedReadTarget == "" || expectedWriteAlias == "" || expectedWriteIndex == "" {
+		return fmt.Errorf("repair requires expected cluster UUID, read target, write alias and physical write index")
+	}
+	for name, value := range map[string]string{
+		"read target": expectedReadTarget, "write alias": expectedWriteAlias, "write index": expectedWriteIndex,
+	} {
+		if strings.ContainsAny(value, "*?[]") {
+			return fmt.Errorf("expected %s must be exact and non-wildcard", name)
+		}
+	}
+	if metadata.ClusterUUID != expectedClusterUUID || metadata.ReadTarget != expectedReadTarget || metadata.WriteAlias != expectedWriteAlias {
+		return fmt.Errorf(
+			"approved target identity drifted: cluster=%s read=%s write_alias=%s",
+			metadata.ClusterUUID, metadata.ReadTarget, metadata.WriteAlias,
+		)
+	}
+	writeIndices := make([]string, 0, 1)
+	for _, index := range metadata.WriteIndices {
+		if index.IsWriteIndex {
+			writeIndices = append(writeIndices, index.Index)
+		}
+	}
+	if len(writeIndices) != 1 || writeIndices[0] != expectedWriteIndex {
+		return fmt.Errorf("approved write index drifted: current=%v expected=%s", writeIndices, expectedWriteIndex)
+	}
+	return nil
 }
 
 func validateModeConfiguration(mode string, cfg config.OpenSearchConfig) error {

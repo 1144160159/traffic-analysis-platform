@@ -37,6 +37,8 @@ type AlertProjectionWriter interface {
 type WriteOutcome struct {
 	ClickHouseCommitted bool
 	OpenSearchCommitted bool
+	ReceiptRecorded     bool
+	ReceiptCount        int
 	DebtRecorded        bool
 	DebtCount           int
 }
@@ -97,13 +99,13 @@ var (
 
 // DualWriter 双写器（ClickHouse + OpenSearch）
 type DualWriter struct {
-	chWriter      AlertPrimaryWriter
-	osWriter      AlertProjectionWriter
-	debtRecorder  ProjectionDebtRecorder
-	fallback      *fallback.FallbackStrategy
-	maxRetries    int
-	retryInterval time.Duration
-	logger        *zap.Logger
+	chWriter        AlertPrimaryWriter
+	osWriter        AlertProjectionWriter
+	receiptRecorder ProjectionReceiptRecorder
+	fallback        *fallback.FallbackStrategy
+	maxRetries      int
+	retryInterval   time.Duration
+	logger          *zap.Logger
 }
 
 // NewDualWriter 创建双写器
@@ -123,10 +125,10 @@ func NewDualWriter(
 	}
 }
 
-// SetProjectionDebtRecorder installs the durable acknowledgement barrier. It
-// must only be called after migration 202608041100 passes CheckSchema.
-func (d *DualWriter) SetProjectionDebtRecorder(recorder ProjectionDebtRecorder) {
-	d.debtRecorder = recorder
+// SetProjectionDebtRecorder installs the durable applied/debt receipt barrier.
+// It must only be called after migration 202608041100 passes CheckSchema.
+func (d *DualWriter) SetProjectionDebtRecorder(recorder ProjectionReceiptRecorder) {
+	d.receiptRecorder = recorder
 }
 
 // writeResult 写入结果
@@ -232,10 +234,10 @@ func (d *DualWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 		dualWritePartialFailures.Inc()
 	}
 	if chErr == nil && osErr != nil {
-		if d.debtRecorder == nil {
+		if d.receiptRecorder == nil {
 			return fmt.Errorf("OpenSearch projection failed and durable debt recorder is unavailable: %w", osErr)
 		}
-		if err := d.debtRecorder.RecordProjectionDebt(ctx, []*Alert{alert}, d.osWriter.TargetVersion(), osErr); err != nil {
+		if err := d.receiptRecorder.RecordProjectionOutcome(ctx, nil, []*Alert{alert}, d.osWriter.TargetVersion(), osErr); err != nil {
 			return fmt.Errorf("OpenSearch projection failed and debt persistence failed: projection=%v debt=%w", osErr, err)
 		}
 		return &ProjectionPendingError{Cause: osErr, DebtCount: 1}
@@ -244,6 +246,11 @@ func (d *DualWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 		return fmt.Errorf("primary storage failed: %w", chErr)
 	}
 
+	if d.receiptRecorder != nil {
+		if err := d.receiptRecorder.RecordProjectionOutcome(ctx, []*Alert{alert}, nil, d.osWriter.TargetVersion(), nil); err != nil {
+			return fmt.Errorf("OpenSearch projection succeeded but applied receipt persistence failed: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -415,18 +422,50 @@ func (d *DualWriter) WriteBatchWithOutcome(ctx context.Context, alerts []*Alert)
 			zap.Int("count", len(alerts)),
 			zap.Error(osErr))
 		failedAlerts := projectionDebtAlerts(alerts, osErr)
-		if d.debtRecorder == nil {
+		appliedAlerts := projectionAppliedAlerts(alerts, failedAlerts)
+		if d.receiptRecorder == nil {
 			return outcome, fmt.Errorf("OpenSearch projection failed and durable debt recorder is unavailable: %w", osErr)
 		}
-		if err := d.debtRecorder.RecordProjectionDebt(ctx, failedAlerts, d.osWriter.TargetVersion(), osErr); err != nil {
+		if err := d.receiptRecorder.RecordProjectionOutcome(ctx, appliedAlerts, failedAlerts, d.osWriter.TargetVersion(), osErr); err != nil {
 			return outcome, fmt.Errorf("OpenSearch projection failed and debt persistence failed: projection=%v debt=%w", osErr, err)
 		}
+		outcome.ReceiptRecorded = len(appliedAlerts) > 0
+		outcome.ReceiptCount = len(appliedAlerts)
 		outcome.DebtRecorded = true
 		outcome.DebtCount = len(failedAlerts)
 		return outcome, &ProjectionPendingError{Cause: osErr, DebtCount: len(failedAlerts)}
 	}
+	if d.receiptRecorder != nil {
+		if err := d.receiptRecorder.RecordProjectionOutcome(ctx, alerts, nil, d.osWriter.TargetVersion(), nil); err != nil {
+			return outcome, fmt.Errorf("OpenSearch projection succeeded but applied receipt persistence failed: %w", err)
+		}
+		outcome.ReceiptRecorded = true
+		outcome.ReceiptCount = len(alerts)
+	}
 
 	return outcome, nil
+}
+
+func projectionAppliedAlerts(alerts, failedAlerts []*Alert) []*Alert {
+	if len(failedAlerts) == 0 {
+		return append([]*Alert(nil), alerts...)
+	}
+	failed := make(map[string]struct{}, len(failedAlerts))
+	for _, alert := range failedAlerts {
+		if alert != nil {
+			failed[alert.AlertID] = struct{}{}
+		}
+	}
+	applied := make([]*Alert, 0, len(alerts)-len(failed))
+	for _, alert := range alerts {
+		if alert == nil {
+			continue
+		}
+		if _, isFailed := failed[alert.AlertID]; !isFailed {
+			applied = append(applied, alert)
+		}
+	}
+	return applied
 }
 
 func projectionDebtAlerts(alerts []*Alert, projectionErr error) []*Alert {

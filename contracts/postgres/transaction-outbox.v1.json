@@ -29,7 +29,9 @@
     ],
     "isolation": "serializable",
     "idempotency_lock": "pg_advisory_xact_lock",
+    "revision_guard": "strict clients send expected_revision while omission preserves legacy request digests during migration",
     "event_type": "alert.saved-view.saved.v1",
+    "feature_flag": "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED=false controls the dispatcher rollout",
     "publisher_status": "IMPLEMENTED_REPOSITORY"
   },
   "additional_slices": [
@@ -377,23 +379,142 @@
     },
     {
       "feature_id": "F-DASHBOARD-002",
-      "operation": "DashboardTaskCreateV2",
+      "operation": "DashboardTaskLifecycleV2",
       "transaction_facts": [
         "dashboard_tasks",
         "dashboard_task_history",
         "audit_logs",
         "dashboard_task_outbox",
-        "dashboard_task_requests"
+        "dashboard_task_requests",
+        "dashboard_task_event_inbox",
+        "dashboard_task_execution_attempts",
+        "dashboard_task_execution_receipts",
+        "dashboard_task_compensation_requests",
+        "dashboard_task_compensation_attempts",
+        "dashboard_task_compensation_receipts",
+        "dashboard_task_dlq_receipts"
       ],
       "isolation": "serializable_with_authenticated_tenant_and_idempotency_unique_constraint",
       "idempotency_lock": "tenant_id_and_durable_idempotency_key_unique_constraint",
       "event_types": [
-        "traffic.dashboard.v1.TaskRequested"
+        "traffic.dashboard.v1.TaskRequested",
+        "traffic.dashboard.v1.TaskResult",
+        "traffic.dashboard.v1.TaskCompensationRequested",
+        "traffic.dashboard.v1.TaskCompensationResult"
       ],
-      "publisher_status": "IMPLEMENTED_PERSISTED_PENDING_DISPATCHER"
+      "publisher_status": "IMPLEMENTED_DEFAULT_OFF_PENDING_APPROVED_CANDIDATE_ROLLOUT"
+    },
+    {
+      "feature_id": "F-ALERT-003",
+      "operation": "AlertResponseExternalExecutionV1",
+      "transaction_facts": [
+        "alert_response_actions",
+        "alert_response_outbox",
+        "alert_response_approvals",
+        "alert_response_execution_receipts",
+        "alert_response_dlq_receipts",
+        "alert_response_execution_authority_rechecks",
+        "alert_response_compensation_attempts",
+        "alert_response_compensation_receipts",
+        "alert_response_authority_check_history",
+        "audit_logs"
+      ],
+      "isolation": "stable_event_identity_with_provider_idempotency_atomic_postgres_receipts_and_leased_authority_only_recovery",
+      "idempotency_lock": "event_id_provider_receipt_control_request_and_provider_compensation_identities",
+      "event_types": [
+        "alert.response.requested.v1"
+      ],
+      "publisher_status": "IMPLEMENTED_DEFAULT_OFF_OWNED_POSTGRES_HTTP_G1_PENDING_APPROVED_CANDIDATE_ROLLOUT"
     }
   ],
   "source_assertions": [
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
+      "operation_start": "func (projection *PostgresAlertResponseProjection) ApplyAlertResponseProjection",
+      "operation_end": "type alertResponseExecutionOutcome struct",
+      "required": [
+        "hasExactCommittedReceipt",
+        "INSERT INTO alert_response_execution_receipts",
+        "UPDATE alert_response_actions",
+        "INSERT INTO audit_logs",
+        "receipt_sha256",
+        "authority_lookup",
+        "tx.Commit()"
+      ],
+      "ordered": [
+        "INSERT INTO alert_response_execution_receipts",
+        "UPDATE alert_response_actions",
+        "INSERT INTO audit_logs",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
+      "required": [
+        "Idempotency-Key",
+        "provider_receipt_id",
+        "effect_state",
+        "LookupAlertResponseExecution",
+        "CompensateAlertResponse",
+        "LookupAlertResponseCompensation",
+        "OriginalEffectIDs",
+        "receipt_found"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/handler_alert_response_workflow.go",
+      "operation_start": "func (h *Handler) compensateLockedAlertResponseAction",
+      "operation_end": "func (h *Handler) insertAlertResponseControl",
+      "required": [
+        "responseCompensationEnabled",
+        "INCOMPLETE_EFFECT_AUTHORITY",
+        "INSERT INTO alert_response_compensation_attempts",
+        "provider_idempotency_key",
+        "compensation_queued",
+        "ALERT_RESPONSE_COMPENSATION_QUEUED",
+        "tx.Commit()"
+      ],
+      "ordered": [
+        "insertAlertResponseControl",
+        "INSERT INTO alert_response_compensation_attempts",
+        "UPDATE alert_response_actions",
+        "ALERT_RESPONSE_COMPENSATION_QUEUED",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_recovery_worker.go",
+      "required": [
+        "LookupAlertResponseExecution",
+        "LookupAlertResponseCompensation",
+        "alert_response_authority_check_history",
+        "alert_response_compensation_receipts",
+        "authority_pending",
+        "exhausted_unknown",
+        "FOR UPDATE SKIP LOCKED",
+        "tx.Commit()"
+      ],
+      "forbidden": [
+        ".ExecuteAlertResponse("
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
+      "operation_start": "func (projection *PostgresAlertResponseProjection) RecordDLQAcknowledgement",
+      "required": [
+        "sql.LevelSerializable",
+        "INSERT INTO alert_response_dlq_receipts",
+        "ALERT_RESPONSE_EVENT_QUARANTINED",
+        "source_offset_commit_pending",
+        "INSERT INTO audit_logs",
+        "tx.Commit()"
+      ],
+      "ordered": [
+        "INSERT INTO alert_response_dlq_receipts",
+        "INSERT INTO audit_logs",
+        "tx.Commit()"
+      ]
+    },
     {
       "source": "go/control-plane/internal/alert/api/handler_alert_actions.go",
       "required": [
@@ -401,6 +522,9 @@
         "sql.LevelSerializable",
         "SELECT pg_advisory_xact_lock",
         "FROM alert_saved_view_requests r",
+        "SELECT revision FROM alert_saved_views",
+        "WHERE $6::bigint IS NULL OR alert_saved_views.revision=$6",
+        "REVISION_CONFLICT",
         "INSERT INTO alert_saved_views",
         "INSERT INTO alert_saved_view_history",
         "INSERT INTO alert_saved_view_outbox",
@@ -424,8 +548,36 @@
       "source": "web/ui/src/services/alertTriageApi.ts",
       "required": [
         "input.kind === 'saved-view'",
-        "savedViewIdempotencyKey(input)",
+        "savedViewIdempotencyKey(input, expectedRevision)",
+        "expected_revision: expectedRevision",
         "'Idempotency-Key'"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "required": [
+        "SavedViewTransactionEnabled",
+        "cfg.Kafka.SavedViewTransactionEnabled && !readOnlyVerificationMode",
+        "if savedViewTransactionEnabled",
+        "StartSavedViewOutboxWorker"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "required": [
+        "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED, value: \"false\""
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "required": [
+        "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED, value: \"false\""
       ],
       "forbidden_in_operation": [],
       "ordered": []
@@ -1253,6 +1405,27 @@
       ]
     },
     {
+      "source": "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
+      "required": [
+        "func (pipeline *DashboardTaskPipeline) DrainOutbox",
+        "func (pipeline *DashboardTaskPipeline) HandleKafkaMessage",
+        "func (pipeline *DashboardTaskPipeline) RecordDLQAcknowledgement",
+        "func (pipeline *DashboardTaskPipeline) DrainExecutions",
+        "func (pipeline *DashboardTaskPipeline) reconcileExecutionAuthority",
+        "func (pipeline *DashboardTaskPipeline) commitExecutionReceipt",
+        "func (pipeline *DashboardTaskPipeline) DrainCompensations",
+        "func (pipeline *DashboardTaskPipeline) reconcileCompensationAuthority",
+        "func (pipeline *DashboardTaskPipeline) commitCompensationReceipt",
+        "INSERT INTO dashboard_task_event_inbox",
+        "INSERT INTO dashboard_task_execution_receipts",
+        "INSERT INTO dashboard_task_compensation_receipts",
+        "INSERT INTO dashboard_task_dlq_receipts",
+        "DASHBOARD_TASK_EVENT_QUARANTINED"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
       "source": "web/ui/src/services/dashboardTaskApi.ts",
       "required": [
         "submitDashboardTask",
@@ -1284,6 +1457,13 @@
       "required": [
         "NewDashboardTaskHandler",
         "DASHBOARD_TASK_V2_ENABLED",
+        "DASHBOARD_TASK_PIPELINE_V1_ENABLED",
+        "DASHBOARD_TASK_COMPENSATION_V1_ENABLED",
+        "DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED",
+        "pipeline.StartOutboxWorker",
+        "pipeline.StartExecutionWorker",
+        "pipeline.StartCompensationWorker",
+        "kafkaConsumer.SetDLQAcknowledgementBarrier(pipeline.RecordDLQAcknowledgement)",
         "dashboardTaskHandler.RegisterRoutes"
       ],
       "forbidden_in_operation": [],
@@ -1528,6 +1708,105 @@
       ]
     },
     {
+      "name": "dashboard_task_execution_pipeline_v1",
+      "tokens": [
+        "202608041930",
+        "dashboard_task_execution_attempts",
+        "dashboard_task_execution_receipts",
+        "dashboard_task_event_inbox",
+        "idx_dashboard_task_execution_attempts_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608041930_dashboard_task_execution_pipeline_v1.sql",
+        "common/sql/pg/12-dashboard-task-execution-pipeline-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "dashboard_task_compensation_v1",
+      "tokens": [
+        "202608082100",
+        "dashboard_task_compensation_requests",
+        "dashboard_task_compensation_attempts",
+        "dashboard_task_compensation_receipts",
+        "idx_dashboard_task_compensation_attempts_ready"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608082100_dashboard_task_compensation_v1.sql",
+        "common/sql/pg/13-dashboard-task-compensation-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "dashboard_task_dlq_receipt_v1",
+      "tokens": [
+        "202608090945",
+        "dashboard_task_dlq_receipts",
+        "idx_dashboard_task_dlq_receipts_tenant_trace",
+        "idx_dashboard_task_dlq_receipts_event"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608090945_dashboard_task_dlq_receipt_v1.sql",
+        "common/sql/pg/14-dashboard-task-dlq-receipt-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "alert_response_external_executor_v1",
+      "tokens": [
+        "202608091130",
+        "alert_response_execution_receipts",
+        "provider_receipt_id",
+        "effect_state",
+        "receipt_sha256",
+        "uq_alert_response_provider_receipt",
+        "idx_alert_response_receipts_trace"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
+        "common/sql/pg/15-alert-response-external-executor-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "alert_response_dlq_receipt_v1",
+      "tokens": [
+        "202608091230",
+        "alert_response_dlq_receipts",
+        "idx_alert_response_dlq_receipts_tenant_trace",
+        "idx_alert_response_dlq_receipts_event"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
+        "common/sql/pg/16-alert-response-dlq-receipt-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "alert_response_reconciliation_compensation_v1",
+      "tokens": [
+        "202608091500",
+        "alert_response_execution_authority_rechecks",
+        "alert_response_compensation_attempts",
+        "alert_response_compensation_receipts",
+        "alert_response_authority_check_history",
+        "uq_alert_response_actions_tenant_idempotency",
+        "idx_alert_response_execution_rechecks_due",
+        "idx_alert_response_compensation_due"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608091500_alert_response_reconciliation_compensation_v1.sql",
+        "common/sql/pg/17-alert-response-reconciliation-compensation-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
       "name": "whitelist_rule_projection_v1",
       "tokens": [
         "202608071930",
@@ -1551,6 +1830,8 @@
     "remaining": [
       "review the versioned mutable-command inventory and close each business-audit-outbox transaction gap",
       "operate the saved-view, notification-governance, user-settings, user-command and asset outbox workers against the release-candidate Kafka and reconcile pending processing published and dead counts",
+      "operate the default-off dashboard lifecycle and poison-event DLQ barrier against one approved candidate and reconcile PostgreSQL Kafka provider audit and source-offset authority",
+      "operate the default-off alert response executor against one approved candidate and reconcile approval outbox Kafka provider receipt authority audit and compensation boundary",
       "run live fault injection after commit, before publish, and after Kafka ACK before published marking",
       "prove event_id and aggregate_version deduplication in real consumers",
       "run live debt queries, lock metrics, cleanup retention, rollback and observation gates"

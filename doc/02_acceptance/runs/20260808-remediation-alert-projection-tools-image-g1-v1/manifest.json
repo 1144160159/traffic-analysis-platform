@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "run_id": "20260808-remediation-alert-projection-tools-image-g1-v1",
+  "gate": "G1",
+  "status": "PASS",
+  "scoped_evidence_status": "PASS",
+  "coverage_status": "LOCAL_IMMUTABLE_IMAGE_BUILD_ONLY",
+  "captured_at": "2026-08-07T19:33:56Z",
+  "remediation_ids": [
+    "T-OS-002",
+    "T-OS-004"
+  ],
+  "candidate": {
+    "git_head": "392a7c0e56340e0711684a2a230183bf75d76c8d",
+    "source_content_sha256": "6a5818eaa36caa65cebd96e3b157b3636d2dc155ee69c4f360bd5abf3233d91d",
+    "g0_manifest": "doc/02_acceptance/runs/20260808-remediation-g0-full-v197/manifest.json",
+    "g0_manifest_sha256": "7d0fe176ae5d379e6e437d48a2ee73169c443dd104b704330cc1bf245ce527e1",
+    "g0_status": "PASS"
+  },
+  "build": {
+    "context": "go/control-plane",
+    "dockerfile": "go/control-plane/deployments/docker/Dockerfile.alert-projection-tools",
+    "dockerfile_sha256": "e7469cbe69d7243142718f4da6439e03f3dd40a20f2fab22461c1e31e4393ed5",
+    "tag": "traffic/alert-projection-tools:g0-v197-local",
+    "image_id": "sha256:0e0181c4a29363507122322753ec73727a3698400c41e63a37091d14056de910",
+    "repo_digests": [],
+    "registry_distribution_status": "NOT_PUBLISHED",
+    "registry_manifest_digest": null,
+    "local_image_id_is_registry_digest": false,
+    "approval_eligible_image_reference": false,
+    "architecture": "amd64",
+    "os": "linux",
+    "size_bytes": 52595252,
+    "base_images": [
+      "docker.io/library/golang@sha256:8bee1901f1e530bfb4a7850aa7a479d17ae3a18beb6e09064ed54cfd245b7191",
+      "docker.io/library/alpine@sha256:6baf43584bcb78f2e5847d1de515f23499913ac9f12bdf834811a3145eb11ca1",
+      "scratch"
+    ]
+  },
+  "runtime": {
+    "user": "65532:65532",
+    "entrypoint": [
+      "/usr/local/bin/alert-projection-shadow"
+    ],
+    "shell_present": false,
+    "labels": {
+      "org.opencontainers.image.title": "traffic-analysis alert-projection-tools",
+      "org.opencontainers.image.revision": "392a7c0e56340e0711684a2a230183bf75d76c8d",
+      "org.opencontainers.image.source-content-sha256": "6a5818eaa36caa65cebd96e3b157b3636d2dc155ee69c4f360bd5abf3233d91d"
+    },
+    "binaries": [
+      {
+        "path": "/usr/local/bin/alert-projection-shadow",
+        "sha256": "36c181342af8b200c491bd55ac91263f6694d738e01fb1b9f5ab6b5160316f26",
+        "format": "ELF 64-bit x86-64 statically linked stripped",
+        "help_smoke_exit_code": 0
+      },
+      {
+        "path": "/usr/local/bin/alert-projection-reconcile",
+        "sha256": "29efb4bf02ec00df0c4d1fb33eb454e9507032401599beab8a058ebd95086ccb",
+        "format": "ELF 64-bit x86-64 statically linked stripped",
+        "help_smoke_exit_code": 0
+      }
+    ]
+  },
+  "scope": {
+    "proves": [
+      "the two projection commands compile from the G0 v197 source candidate",
+      "the runtime is shell-free scratch and runs as a numeric non-root user",
+      "the source revision and source content SHA labels match G0 v197",
+      "both packaged commands start successfully in the local container runtime"
+    ],
+    "does_not_prove": [
+      "a pullable registry manifest digest exists",
+      "the image is signed, attested, scanned or available to Kubernetes",
+      "a current production shadow has been captured",
+      "SRE, QA, security or domain accountable approval exists",
+      "the suspended repair Job has been rendered, applied or unsuspended",
+      "any production repair, reconciliation, rollback or observation completed"
+    ]
+  },
+  "production_applied": false,
+  "production_mutations": [],
+  "temporary_resources": {
+    "inspection_container_removed": true,
+    "running_containers_remaining": 0
+  },
+  "closure_blockers": [
+    "publish the same-hash image to an approved registry and bind its manifest digest",
+    "capture a current approved production read-only shadow",
+    "obtain four independent approvals and render the still-suspended repair candidate",
+    "complete bounded canary repair, terminal PG/OS reconciliation, rollback and observation"
+  ]
+}

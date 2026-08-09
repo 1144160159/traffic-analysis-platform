@@ -343,6 +343,7 @@ func main() {
 	var feedbackProducer *kafka.Producer
 	var responseActionProducer *kafka.Producer
 	var savedViewEventProducer *kafka.Producer
+	savedViewTransactionEnabled := cfg.Kafka.SavedViewTransactionEnabled && !readOnlyVerificationMode
 	if !readOnlyVerificationMode {
 		feedbackProducerCfg := kafka.ProducerConfig{
 			Brokers:      cfg.Kafka.Brokers,
@@ -369,15 +370,17 @@ func main() {
 		} else {
 			defer responseActionProducer.Close()
 		}
-		savedViewEventProducer, err = kafka.NewProducer(kafka.ProducerConfig{
-			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.SavedViewEventTopic, BatchSize: 100,
-			RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
-		}, logger)
-		if err != nil {
-			logger.Warn("Failed to create saved-view Kafka producer; committed outbox events will remain pending", zap.Error(err))
-			savedViewEventProducer = nil
-		} else {
-			defer savedViewEventProducer.Close()
+		if savedViewTransactionEnabled {
+			savedViewEventProducer, err = kafka.NewProducer(kafka.ProducerConfig{
+				Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.SavedViewEventTopic, BatchSize: 100,
+				RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
+			}, logger)
+			if err != nil {
+				logger.Warn("Failed to create saved-view Kafka producer; committed outbox events will remain pending", zap.Error(err))
+				savedViewEventProducer = nil
+			} else {
+				defer savedViewEventProducer.Close()
+			}
 		}
 	}
 
@@ -386,9 +389,35 @@ func main() {
 	// temporarily unavailable producer leaves committed outbox rows pending.
 	apiHandler := api.NewHandlerWithFeedback(alertService, feedbackProducer, alertAuditLogger, logger)
 	apiHandler.SetActionAuditWriter(api.NewAlertActionAuditWriter(db, logger))
+	alertEvidenceChainEnabled := getBoolEnv("ALERT_EVIDENCE_CHAIN_V1_ENABLED", false)
+	if alertEvidenceChainEnabled && strings.TrimSpace(os.Getenv("ALERT_EVIDENCE_DOWNLOAD_SECRET")) == "" {
+		logger.Fatal("ALERT_EVIDENCE_DOWNLOAD_SECRET is required when strict evidence access is enabled")
+	}
+	alertEvidenceManifests := api.NewPostgresAlertEvidenceManifestStore(db)
+	if alertEvidenceChainEnabled {
+		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		err = alertEvidenceManifests.VerifySchema(verifyCtx)
+		cancelVerify()
+		if err != nil {
+			logger.Fatal("Alert evidence manifest schema is unavailable", zap.Error(err))
+		}
+	}
+	apiHandler.SetAlertEvidenceManifestStore(alertEvidenceManifests)
+	apiHandler.SetAlertEvidenceChainEnabled(alertEvidenceChainEnabled)
 	feedbackTransactionalOutboxEnabled := getBoolEnv("ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED", true) && !readOnlyVerificationMode
 	apiHandler.SetFeedbackTransactionalOutboxEnabled(feedbackTransactionalOutboxEnabled)
 	apiHandler.SetResponseActionProducer(responseActionProducer)
+	responseUnknownReconciliationEnabled := getBoolEnv("ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED", false) && !readOnlyVerificationMode
+	responseCompensationEnabled := getBoolEnv("ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED", false) && !readOnlyVerificationMode
+	responseCompensationMaxAttempts := getIntEnv("ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS", 8)
+	if (responseUnknownReconciliationEnabled || responseCompensationEnabled) && !cfg.Kafka.ResponseActionEnabled {
+		logger.Fatal("Alert response recovery requires ALERT_RESPONSE_EXECUTION_V1_ENABLED")
+	}
+	if responseCompensationEnabled && (responseCompensationMaxAttempts < 1 || responseCompensationMaxAttempts > 100) {
+		logger.Fatal("ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS must be between 1 and 100")
+	}
+	apiHandler.SetResponseCompensationEnabled(responseCompensationEnabled)
+	apiHandler.SetResponseCompensationMaxAttempts(responseCompensationMaxAttempts)
 	apiHandler.SetSavedViewEventProducer(savedViewEventProducer)
 	alertReportFeatureEnabled := getBoolEnv("ALERT_REPORT_JOBS_V1_ENABLED", true) && !readOnlyVerificationMode
 	campaignLinkFeatureEnabled := getBoolEnv("CAMPAIGN_ALERT_LINKS_V1_ENABLED", true)
@@ -398,21 +427,29 @@ func main() {
 	if chSQLDB != nil {
 		apiHandler.SetCampaignLookup(api.NewClickHouseAlertCampaignLookup(chSQLDB))
 	}
-	if responseActionProducer != nil {
+	if responseActionProducer != nil && cfg.Kafka.ResponseActionEnabled {
 		if err := apiHandler.StartResponseActionOutboxWorker(ctx, 2*time.Second); err != nil {
 			logger.Warn("Failed to start response-action outbox worker", zap.Error(err))
 		} else {
 			logger.Info("Response-action outbox worker started")
 		}
+	} else if !cfg.Kafka.ResponseActionEnabled {
+		logger.Warn("Response-action outbox worker is disabled; durable requests remain pending")
 	}
-	if savedViewEventProducer != nil {
+	if savedViewTransactionEnabled && savedViewEventProducer != nil {
 		if err := apiHandler.StartSavedViewOutboxWorker(ctx, 2*time.Second); err != nil {
 			logger.Warn("Failed to start saved-view outbox worker", zap.Error(err))
 		} else {
 			logger.Info("Saved-view outbox worker started", zap.String("topic", cfg.Kafka.SavedViewEventTopic))
 		}
+	} else if !savedViewTransactionEnabled {
+		logger.Warn("Saved-view transaction dispatcher is disabled; durable events remain pending")
 	}
 	if cfg.Kafka.ResponseActionEnabled && !readOnlyVerificationMode {
+		responseExternalExecutorEnabled := getBoolEnv("ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED", false)
+		if (responseUnknownReconciliationEnabled || responseCompensationEnabled) && !responseExternalExecutorEnabled {
+			logger.Fatal("Alert response recovery requires the external executor and authority gate")
+		}
 		responseProjection, projectionErr := consumer.NewPostgresAlertResponseProjection(db)
 		if projectionErr != nil {
 			logger.Fatal("Failed to initialize alert response execution projection", zap.Error(projectionErr))
@@ -423,15 +460,90 @@ func main() {
 		if projectionErr != nil {
 			logger.Fatal("Alert response execution projection schema is unavailable", zap.Error(projectionErr))
 		}
+		var responseExecutor *consumer.HTTPAlertResponseExecutor
+		if responseExternalExecutorEnabled {
+			executorURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_EXECUTOR_URL", ""))
+			lookupURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_EXECUTOR_LOOKUP_URL", ""))
+			if executorURL == "" || lookupURL == "" {
+				logger.Fatal("Alert response external execution requires executor and authority lookup URLs")
+			}
+			responseExecutor, projectionErr = consumer.NewHTTPAlertResponseExecutor(
+				executorURL, getEnv("ALERT_RESPONSE_EXECUTOR_TOKEN", ""),
+				time.Duration(getIntEnv("ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS", 30))*time.Second,
+			)
+			if projectionErr != nil {
+				logger.Fatal("Invalid alert response executor configuration", zap.Error(projectionErr))
+			}
+			if projectionErr = responseExecutor.ConfigureAuthorityLookup(lookupURL); projectionErr != nil {
+				logger.Fatal("Invalid alert response authority lookup configuration", zap.Error(projectionErr))
+			}
+			if responseCompensationEnabled {
+				compensationURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_COMPENSATION_URL", ""))
+				compensationLookupURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_COMPENSATION_LOOKUP_URL", ""))
+				if compensationURL == "" || compensationLookupURL == "" {
+					logger.Fatal("Alert response compensation requires executor and authority lookup URLs")
+				}
+				if projectionErr = responseExecutor.ConfigureCompensation(compensationURL, compensationLookupURL); projectionErr != nil {
+					logger.Fatal("Invalid alert response compensation configuration", zap.Error(projectionErr))
+				}
+			}
+			if projectionErr = responseProjection.ConfigureExecutor(responseExecutor); projectionErr != nil {
+				logger.Fatal("Failed to enable alert response external executor", zap.Error(projectionErr))
+			}
+			logger.Info("Alert response external executor enabled with mandatory authority lookup")
+		}
+		if responseUnknownReconciliationEnabled {
+			projectionErr = responseProjection.ConfigureUnknownEffectReconciliation(
+				getIntEnv("ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS", 8),
+				time.Duration(getIntEnv("ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS", 15))*time.Second,
+			)
+			if projectionErr != nil {
+				logger.Fatal("Invalid alert response unknown-effect reconciliation configuration", zap.Error(projectionErr))
+			}
+		}
+		if responseUnknownReconciliationEnabled || responseCompensationEnabled {
+			recoveryWorker, recoveryErr := consumer.NewAlertResponseRecoveryWorker(
+				db, responseExecutor, responseExecutor, responseExecutor,
+				consumer.AlertResponseRecoveryConfig{
+					ExecutionEnabled: responseUnknownReconciliationEnabled, CompensationEnabled: responseCompensationEnabled,
+					Interval:       time.Duration(getIntEnv("ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS", 5)) * time.Second,
+					Lease:          time.Duration(getIntEnv("ALERT_RESPONSE_RECOVERY_LEASE_SECONDS", 45)) * time.Second,
+					RequestTimeout: time.Duration(getIntEnv("ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS", 30)) * time.Second,
+					RetryBase:      time.Duration(getIntEnv("ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS", 15)) * time.Second,
+					BatchSize:      getIntEnv("ALERT_RESPONSE_RECOVERY_BATCH_SIZE", 25),
+				}, logger,
+			)
+			if recoveryErr != nil {
+				logger.Fatal("Failed to initialize alert response recovery worker", zap.Error(recoveryErr))
+			}
+			verifyCtx, cancelVerify = context.WithTimeout(context.Background(), 10*time.Second)
+			recoveryErr = recoveryWorker.VerifySchema(verifyCtx)
+			cancelVerify()
+			if recoveryErr != nil {
+				logger.Fatal("Alert response recovery schema is unavailable", zap.Error(recoveryErr))
+			}
+			recoveryCtx, cancelRecovery := context.WithCancel(context.Background())
+			defer cancelRecovery()
+			go func() {
+				if err := recoveryWorker.Start(recoveryCtx); err != nil && err != context.Canceled {
+					logger.Error("Alert response recovery worker stopped", zap.Error(err))
+				}
+			}()
+			logger.Info("Alert response recovery worker started",
+				zap.Bool("execution_authority_recheck", responseUnknownReconciliationEnabled),
+				zap.Bool("external_compensation", responseCompensationEnabled))
+		}
 		responseKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
 			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.ResponseActionTopic,
 			GroupID: cfg.Kafka.ResponseActionGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
 			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
-			CommitOnDLQSuccess: true, CommitOnHandlerError: false, Security: cfg.Kafka.Security,
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
 		}, logger)
 		if consumerErr != nil {
 			logger.Fatal("Failed to create alert response execution consumer", zap.Error(consumerErr))
 		}
+		responseKafkaConsumer.SetDLQAcknowledgementBarrier(responseProjection.RecordDLQAcknowledgement)
 		responseEventConsumer, consumerErr := consumer.NewAlertResponseEventConsumer(
 			responseKafkaConsumer, responseProjection, logger,
 		)
@@ -619,9 +731,25 @@ func main() {
 	topicSnapshotFeatureEnabled := getBoolEnv("TOPIC_SNAPSHOT_V1_ENABLED", true)
 	topicExecutorFeatureEnabled := getBoolEnv("TOPIC_EXECUTOR_V2_ENABLED", true) && !readOnlyVerificationMode
 	probeOperationFeatureEnabled := getBoolEnv("PROBE_OPERATION_ACK_V2_ENABLED", true) && !readOnlyVerificationMode
+	auditBatchFeatureEnabled := getBoolEnv("AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED", false) && !readOnlyVerificationMode
 	systemHandler.SetCampaignAggregateV2FeatureFlag(campaignAggregateV2Enabled)
 	systemHandler.SetTopicAlignmentFeatureFlags(topicSnapshotFeatureEnabled, topicExecutorFeatureEnabled)
 	systemHandler.SetProbeOperationAckFeatureFlag(probeOperationFeatureEnabled)
+	var auditBatchProducer *kafka.Producer
+	if auditBatchFeatureEnabled {
+		auditBatchProducer, err = kafka.NewProducer(kafka.ProducerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: "audit.logs", BatchSize: 200,
+			RequiredAcks: "all", Compression: "lz4", Async: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if err != nil {
+			logger.Fatal("Audit batch ingress is enabled but Kafka producer initialization failed", zap.Error(err))
+		}
+		defer auditBatchProducer.Close()
+		systemHandler.SetAuditBatchProducer(auditBatchProducer)
+		logger.Info("Fail-closed audit batch ingress enabled", zap.String("topic", auditBatchProducer.Topic()))
+	} else {
+		logger.Info("Fail-closed audit batch ingress is disabled")
+	}
 	if campaignSOARExecutorURL := strings.TrimSpace(getEnv("CAMPAIGN_SOAR_EXECUTOR_URL", "")); campaignSOARExecutorURL != "" {
 		campaignSOARExecutor, executorErr := api.NewHTTPCampaignSOARExecutor(
 			campaignSOARExecutorURL,
@@ -995,9 +1123,92 @@ func main() {
 
 	// 应用中间件链
 	applyAPIMiddlewares(apiRouter)
+	internalRouter := r.PathPrefix("/internal/v1").Subrouter()
+	applyAPIMiddlewares(internalRouter)
+	systemHandler.RegisterInternalRoutes(internalRouter)
 
 	// 注册 API 路由
 	apiHandler.RegisterRoutes(apiRouter)
+	alertBatchAssignmentEnabled := getBoolEnv("ALERT_BATCH_ASSIGNMENT_V1_ENABLED", false) && !readOnlyVerificationMode
+	alertBatchAssignmentPipelineEnabled := getBoolEnv("ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED", false) && !readOnlyVerificationMode
+	alertBatchAssignmentCompensationEnabled := getBoolEnv("ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED", false) && !readOnlyVerificationMode
+	if alertBatchAssignmentPipelineEnabled && !alertBatchAssignmentEnabled {
+		logger.Fatal("Alert batch assignment execution pipeline requires ALERT_BATCH_ASSIGNMENT_V1_ENABLED")
+	}
+	if alertBatchAssignmentCompensationEnabled && (!alertBatchAssignmentEnabled || !alertBatchAssignmentPipelineEnabled) {
+		logger.Fatal("Alert batch assignment compensation requires the batch API and execution pipeline")
+	}
+	if alertBatchAssignmentEnabled && db == nil {
+		logger.Fatal("Alert batch assignment requires PostgreSQL")
+	}
+	alertBatchSelectionSigningSecret := strings.TrimSpace(os.Getenv("ALERT_BATCH_SELECTION_SIGNING_SECRET"))
+	if alertBatchAssignmentEnabled && len(alertBatchSelectionSigningSecret) < 32 {
+		logger.Fatal("ALERT_BATCH_SELECTION_SIGNING_SECRET must contain at least 32 bytes when alert batch assignment is enabled")
+	}
+	alertBatchAssignmentHandler := api.NewAlertBatchAssignmentHandler(db, logger, alertBatchAssignmentEnabled, alertBatchSelectionSigningSecret)
+	alertBatchAssignmentHandler.SetCompensationEnabled(alertBatchAssignmentCompensationEnabled)
+	if alertBatchAssignmentEnabled {
+		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		err = alertBatchAssignmentHandler.VerifySchema(verifyCtx)
+		cancelVerify()
+		if err != nil {
+			logger.Fatal("Alert batch assignment schema is unavailable", zap.Error(err))
+		}
+	}
+	alertBatchAssignmentHandler.RegisterRoutes(apiRouter)
+	if alertBatchAssignmentPipelineEnabled {
+		topic := strings.TrimSpace(getEnv("ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC", consumer.AlertAssignmentEventTopic))
+		groupID := strings.TrimSpace(getEnv("ALERT_BATCH_ASSIGNMENT_EVENT_GROUP", "alert-service-batch-assignment-execution-v1"))
+		if groupID == "" {
+			logger.Fatal("ALERT_BATCH_ASSIGNMENT_EVENT_GROUP must not be empty")
+		}
+		producer, producerErr := kafka.NewProducer(kafka.ProducerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: topic, BatchSize: 100,
+			RequiredAcks: "all", Compression: "lz4", Async: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if producerErr != nil {
+			logger.Fatal("Failed to create alert batch assignment event producer", zap.Error(producerErr))
+		}
+		defer producer.Close()
+		pipeline, pipelineErr := consumer.NewAlertBatchAssignmentPipeline(db, alertService, producer.Send, topic, logger)
+		if pipelineErr != nil {
+			logger.Fatal("Failed to initialize alert batch assignment pipeline", zap.Error(pipelineErr))
+		}
+		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		pipelineErr = pipeline.VerifySchema(verifyCtx)
+		cancelVerify()
+		if pipelineErr != nil {
+			logger.Fatal("Alert batch assignment execution schema is unavailable", zap.Error(pipelineErr))
+		}
+		if workerErr := pipeline.StartOutboxWorker(ctx, 2*time.Second); workerErr != nil {
+			logger.Fatal("Failed to start alert batch assignment outbox worker", zap.Error(workerErr))
+		}
+		kafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: topic, GroupID: groupID,
+			MinBytes: 1, MaxWait: 500 * time.Millisecond, MaxRetries: 3, RetryBackoff: time.Second,
+			EnableDLQ: true, DLQTopic: "dlq.v1", CommitOnDLQSuccess: true,
+			CommitOnHandlerError: false, DLQPermanentOnly: true, Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create alert batch assignment event consumer", zap.Error(consumerErr))
+		}
+		kafkaConsumer.SetDLQAcknowledgementBarrier(pipeline.RecordDLQAcknowledgement)
+		eventConsumer, consumerErr := consumer.NewAlertBatchAssignmentEventConsumer(kafkaConsumer, pipeline)
+		if consumerErr != nil {
+			_ = kafkaConsumer.Close()
+			logger.Fatal("Failed to initialize alert batch assignment event consumer", zap.Error(consumerErr))
+		}
+		defer eventConsumer.Close()
+		go func() {
+			logger.Info("Starting alert batch assignment event consumer", zap.String("topic", topic), zap.String("group_id", groupID))
+			if startErr := eventConsumer.Start(ctx); startErr != nil && startErr != context.Canceled {
+				logger.Error("Alert batch assignment event consumer stopped", zap.Error(startErr))
+			}
+		}()
+		logger.Info("Alert batch assignment execution pipeline started", zap.String("topic", topic), zap.String("group_id", groupID))
+	} else {
+		logger.Info("Alert batch assignment execution pipeline is disabled")
+	}
 
 	// Dashboard API — 实时统计 (Web UI 大屏)
 	dashboardHandler := api.NewDashboardHandler(chClient, logger)
@@ -1009,8 +1220,12 @@ func main() {
 	apiRouter.HandleFunc("/dashboard/top-ips/{type}", dashboardHandler.GetTopIPs).Methods("GET")
 	apiRouter.HandleFunc("/dashboard/encrypted/trend", dashboardHandler.GetEncryptedTrend).Methods("GET")
 	dashboardTaskHandler := api.NewDashboardTaskHandler(db, logger, getBoolEnv("DASHBOARD_TASK_V2_ENABLED", true))
+	dashboardTaskPipelineEnabled := getBoolEnv("DASHBOARD_TASK_PIPELINE_V1_ENABLED", false) && !readOnlyVerificationMode
+	dashboardTaskCompensationEnabled := getBoolEnv("DASHBOARD_TASK_COMPENSATION_V1_ENABLED", false) && dashboardTaskPipelineEnabled
+	dashboardTaskProviderAuthorityLookupEnabled := getBoolEnv("DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED", false) && dashboardTaskPipelineEnabled
+	dashboardTaskHandler.EnableCompensation(dashboardTaskCompensationEnabled)
 	dashboardTaskHandler.RegisterRoutes(apiRouter)
-	if getBoolEnv("DASHBOARD_TASK_PIPELINE_V1_ENABLED", false) && !readOnlyVerificationMode {
+	if dashboardTaskPipelineEnabled {
 		if db == nil {
 			logger.Fatal("Dashboard task execution pipeline requires PostgreSQL")
 		}
@@ -1025,6 +1240,15 @@ func main() {
 		)
 		if executorErr != nil {
 			logger.Fatal("Invalid dashboard task executor configuration", zap.Error(executorErr))
+		}
+		if dashboardTaskProviderAuthorityLookupEnabled {
+			executorLookupURL := strings.TrimSpace(getEnv("DASHBOARD_TASK_EXECUTOR_LOOKUP_URL", ""))
+			if executorLookupURL == "" {
+				logger.Fatal("Dashboard task provider authority lookup requires DASHBOARD_TASK_EXECUTOR_LOOKUP_URL")
+			}
+			if lookupErr := executor.ConfigureAuthorityLookup(executorLookupURL); lookupErr != nil {
+				logger.Fatal("Invalid dashboard task executor authority lookup configuration", zap.Error(lookupErr))
+			}
 		}
 		topic := strings.TrimSpace(getEnv("DASHBOARD_TASK_EVENT_TOPIC", "dashboard.task.events.v1"))
 		producer, producerErr := kafka.NewProducer(kafka.ProducerConfig{
@@ -1045,6 +1269,34 @@ func main() {
 		if workerErr := pipeline.StartExecutionWorker(ctx, 2*time.Second); workerErr != nil {
 			logger.Fatal("Failed to start dashboard task execution worker", zap.Error(workerErr))
 		}
+		if dashboardTaskCompensationEnabled {
+			compensatorURL := strings.TrimSpace(getEnv("DASHBOARD_TASK_COMPENSATOR_URL", ""))
+			if compensatorURL == "" {
+				logger.Fatal("Dashboard task compensation requires DASHBOARD_TASK_COMPENSATOR_URL")
+			}
+			compensator, compensatorErr := api.NewHTTPDashboardTaskCompensator(
+				compensatorURL, getEnv("DASHBOARD_TASK_COMPENSATOR_TOKEN", ""),
+				time.Duration(getIntEnv("DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS", 30))*time.Second,
+			)
+			if compensatorErr != nil {
+				logger.Fatal("Invalid dashboard task compensator configuration", zap.Error(compensatorErr))
+			}
+			if dashboardTaskProviderAuthorityLookupEnabled {
+				compensatorLookupURL := strings.TrimSpace(getEnv("DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL", ""))
+				if compensatorLookupURL == "" {
+					logger.Fatal("Dashboard task provider authority lookup requires DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL when compensation is enabled")
+				}
+				if lookupErr := compensator.ConfigureAuthorityLookup(compensatorLookupURL); lookupErr != nil {
+					logger.Fatal("Invalid dashboard task compensator authority lookup configuration", zap.Error(lookupErr))
+				}
+			}
+			if enableErr := pipeline.EnableCompensation(compensator); enableErr != nil {
+				logger.Fatal("Failed to enable dashboard task compensation", zap.Error(enableErr))
+			}
+			if workerErr := pipeline.StartCompensationWorker(ctx, 2*time.Second); workerErr != nil {
+				logger.Fatal("Failed to start dashboard task compensation worker", zap.Error(workerErr))
+			}
+		}
 		kafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
 			Brokers: cfg.Kafka.Brokers, Topic: topic,
 			GroupID: "alert-service-dashboard-task-execution-v1", MinBytes: 1, MaxWait: 500 * time.Millisecond,
@@ -1055,6 +1307,7 @@ func main() {
 		if consumerErr != nil {
 			logger.Fatal("Failed to create dashboard task event consumer", zap.Error(consumerErr))
 		}
+		kafkaConsumer.SetDLQAcknowledgementBarrier(pipeline.RecordDLQAcknowledgement)
 		eventConsumer, consumerErr := api.NewDashboardTaskEventConsumer(kafkaConsumer, pipeline)
 		if consumerErr != nil {
 			_ = kafkaConsumer.Close()

@@ -1,0 +1,54 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "govulncheck",
+          "semanticVersion": "v1.1.4",
+          "informationUri": "https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck",
+          "properties": {
+            "protocol_version": "v1.0.0",
+            "scanner_name": "govulncheck",
+            "scanner_version": "v1.1.4",
+            "db": "https://vuln.go.dev",
+            "db_last_modified": "2026-07-27T20:14:16Z",
+            "scan_level": "symbol",
+            "scan_mode": "binary"
+          },
+          "rules": [
+            {
+              "id": "GO-2025-3603",
+              "shortDescription": {
+                "text": "[GO-2025-3603] Query smuggling in ch-go library in github.com/ClickHouse/ch-go"
+              },
+              "fullDescription": {
+                "text": "Query smuggling in ch-go library in github.com/ClickHouse/ch-go"
+              },
+              "help": {
+                "text": "Query smuggling in ch-go library in github.com/ClickHouse/ch-go"
+              },
+              "helpUri": "https://pkg.go.dev/vuln/GO-2025-3603",
+              "properties": {
+                "tags": [
+                  "CVE-2025-1386",
+                  "GHSA-m454-3xv7-qj85"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "GO-2025-3603",
+          "level": "note",
+          "message": {
+            "text": "Your code depends on 1 vulnerable module (github.com/ClickHouse/ch-go), but doesn't appear to call any of the vulnerable symbols."
+          }
+        }
+      ]
+    }
+  ]
+}

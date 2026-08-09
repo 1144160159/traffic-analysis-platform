@@ -36,6 +36,9 @@ CH_K8S = Path("deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml")
 OS_MAPPING = Path("common/opensearch/alerts-v2/mappings-component.json")
 OS_K8S = Path("deployments/kubernetes/migrations/opensearch/T-OS-002-alerts-v2-expand.yaml")
 TOOL = Path("scripts/alignment/cross_store_reconcile.py")
+ASSET_G1_RUNNER = Path("scripts/alignment/verify_asset_seven_source_ephemeral.py")
+ASSET_G1_TEST = Path("go/control-plane/internal/asset/consumer/asset_seven_source_integration_test.go")
+ASSET_G1_GUARD = Path("tests/alignment/test_asset_seven_source_ephemeral_guard.py")
 CAPTURE = Path("scripts/alignment/capture_trace_watermark_reconcile.py")
 RUNBOOK = Path("doc/07_alignment/runbooks/T-OBS-001-trace-watermark-reconcile.md")
 TESTS = (
@@ -66,7 +69,8 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         KAFKA_PRODUCER, KAFKA_CONSUMER, ALERT_MODEL, GO_CH_WRITER,
         GO_DETECTION_CONSUMER, GO_ALERT_CONSUMER, FLINK_BEHAVIOR,
         FLINK_BUSINESS, FLINK_CH, FLINK_OS, CH_MIGRATION, CH_COMMON,
-        CH_DOCKER, CH_K8S, OS_MAPPING, OS_K8S, TOOL, CAPTURE, RUNBOOK, *TESTS,
+        CH_DOCKER, CH_K8S, OS_MAPPING, OS_K8S, TOOL, ASSET_G1_RUNNER,
+        ASSET_G1_TEST, ASSET_G1_GUARD, CAPTURE, RUNBOOK, *TESTS,
     )
     missing = [str(path) for path in required if not (root / path).is_file()]
     if missing:
@@ -92,6 +96,9 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("end-to-end trace stage inventory is incomplete")
 
     normalized = contract.get("normalized_reconcile_record", {})
+    required_sources = {"postgresql", "kafka", "clickhouse", "opensearch", "nebulagraph", "minio", "audit"}
+    if set(normalized.get("sources", [])) != required_sources:
+        errors.append("normalized reconciliation source inventory must include audit and all six data transports/stores")
     if normalized.get("classifications") != ["missing", "extra", "stale_version", "hash_mismatch", "unparseable"]:
         errors.append("required reconciliation classifications drifted")
     runtime = contract.get("runtime_guards", {})
@@ -103,6 +110,11 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("bounded concrete-tenant reconcile guard drifted")
     if runtime.get("production_mutations_in_repository_candidate") != []:
         errors.append("repository candidate must not claim production mutations")
+    owned_g1 = contract.get("owned_g1_asset_reconciliation", {})
+    if set(owned_g1.get("sources", [])) != required_sources:
+        errors.append("owned G1 asset reconciliation must bind all seven sources")
+    if owned_g1.get("production_applied") is not False or owned_g1.get("minio_path") != "explicitly_seeded_adapter_not_asset_event_consumer":
+        errors.append("owned G1 evidence boundary must keep MinIO adapter and production application explicit")
 
     _require_tokens(errors, root, PROTO, ("string trace_id = 33;",))
     _require_tokens(errors, root, GO_PROTO, ('protobuf:"bytes,33,opt,name=trace_id', "func (x *Alert) GetTraceId() string"))
@@ -160,10 +172,19 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     _require_tokens(errors, root, TOOL, (
         "DEFAULT_MAX_RECORDS = 10_000", "FORBIDDEN_SCOPE_VALUES", '"missing"', '"extra"',
         '"stale_version"', '"hash_mismatch"', '"unparseable"', '"trace_mismatch"',
-        '"automatic_execution": False', "quarantine_review_no_delete", "report_sha256",
+        '"automatic_execution": False', "quarantine_review_no_delete", "report_sha256", '"audit"',
+    ))
+    _require_tokens(errors, root, ASSET_G1_RUNNER, (
+        "TestAssetSevenSourceTraceReconciliation", "cross_store_reconcile.py",
+        '"production_applied": False', "MinIO is explicitly seeded",
+    ))
+    _require_tokens(errors, root, ASSET_G1_TEST, (
+        "UpsertAtomic", "NewAssetOutboxDispatcher", "NewAssetProjectionEventConsumer",
+        "NewAssetProjectionWorker", "NewClickHouseWriter", "PutObject",
+        'sources := []string{"postgresql", "kafka", "clickhouse", "opensearch", "nebulagraph", "minio", "audit"}',
     ))
     _require_tokens(errors, root, CAPTURE, (
-        "build_snapshot", '"production_mutations": []', '"six_store_same_trace_manifest": None',
+        "build_snapshot", '"production_mutations": []', '"seven_source_same_trace_manifest": None',
         '"G8": "BLOCKED"', "refusing to overwrite immutable evidence directory",
     ))
     tests_text = "\n".join((root / path).read_text(encoding="utf-8") for path in TESTS)

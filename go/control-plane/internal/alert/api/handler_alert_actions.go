@@ -102,6 +102,10 @@ func (h *Handler) persistAlertAction(w http.ResponseWriter, r *http.Request, aud
 	}
 	jobID := "alert-action-" + uuid.NewString()
 	eventID := uuid.NewSHA1(uuid.NameSpaceOID, []byte("alert.response.requested.v1:"+jobID)).String()
+	traceID := strings.TrimSpace(httpx.GetTraceID(ctx))
+	if traceID == "" {
+		traceID = eventID
+	}
 	status := "recorded"
 	if responseAction {
 		status = "pending_approval"
@@ -137,7 +141,7 @@ func (h *Handler) persistAlertAction(w http.ResponseWriter, r *http.Request, aud
 		ON CONFLICT (tenant_id,idempotency_key) WHERE idempotency_key<>'' DO NOTHING`,
 		jobID, eventID, tenantID, alertID, request.ActionID, request.Action,
 		request.Target, request.Reason, request.DryRun, status, approvalStatus,
-		httpx.GetTraceID(ctx), idempotencyKey, expectedRevision, string(detailJSON), requestedBy)
+		traceID, idempotencyKey, expectedRevision, string(detailJSON), requestedBy)
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to persist alert action")
 		return
@@ -193,7 +197,7 @@ func (h *Handler) persistAlertAction(w http.ResponseWriter, r *http.Request, aud
 			"job_id": jobID, "tenant_id": tenantID, "alert_id": alertID,
 			"action_id": request.ActionID, "action": request.Action,
 			"target": request.Target, "reason": request.Reason,
-			"requested_by": requestedBy, "dry_run": true,
+			"requested_by": requestedBy, "trace_id": traceID, "dry_run": true,
 		})
 		if _, err = tx.ExecContext(ctx, `INSERT INTO alert_response_outbox
 			(job_id,event_id,tenant_id,event_type,schema_version,aggregate_version,
@@ -239,7 +243,7 @@ func responseActionOutboxStatus(status string, dryRun bool) string {
 		status == "completed" || status == "partial" || status == "failed" {
 		return "published"
 	}
-	if dryRun || status == "approved_awaiting_executor" || status == "accepted" {
+	if dryRun || status == "approved_awaiting_executor" || status == "accepted" || status == "compensation_queued" {
 		return "pending_retry"
 	}
 	return "not_required"
@@ -347,6 +351,16 @@ func (h *Handler) publishResponseOutboxItem(ctx context.Context, workerID string
 	}
 	alertID, _ := item.Payload["alert_id"].(string)
 	eventID, _ := item.Payload["event_id"].(string)
+	actionID, _ := item.Payload["action_id"].(string)
+	traceID, _ := item.Payload["trace_id"].(string)
+	for field, value := range map[string]string{
+		"event_id": eventID, "tenant_id": item.TenantID, "job_id": item.JobID,
+		"alert_id": alertID, "action_id": actionID, "trace_id": traceID,
+	} {
+		if strings.TrimSpace(value) == "" {
+			return fmt.Errorf("alert response outbox %s is missing", field)
+		}
+	}
 	aggregateVersion := fmt.Sprint(item.Payload["aggregate_version"])
 	if aggregateVersion == "" || aggregateVersion == "<nil>" {
 		return fmt.Errorf("alert response outbox aggregate_version is missing")
@@ -358,7 +372,9 @@ func (h *Handler) publishResponseOutboxItem(ctx context.Context, workerID string
 		kafka.MessageHeader{Key: "aggregate_version", Value: aggregateVersion},
 		kafka.MessageHeader{Key: "tenant_id", Value: item.TenantID},
 		kafka.MessageHeader{Key: "alert_id", Value: alertID},
-		kafka.MessageHeader{Key: "job_id", Value: item.JobID})
+		kafka.MessageHeader{Key: "job_id", Value: item.JobID},
+		kafka.MessageHeader{Key: "action_id", Value: actionID},
+		kafka.MessageHeader{Key: "trace_id", Value: traceID})
 	if err != nil {
 		_, _ = h.actionAudit.db.ExecContext(ctx, `UPDATE alert_response_outbox SET attempts=attempts+1,last_error=$2,next_attempt_at=now()+(LEAST(300,POWER(2,LEAST(attempts+1,8)))::text || ' seconds')::interval,locked_until=NULL,locked_by='' WHERE outbox_id=$1 AND published=false AND locked_by=$3`, item.OutboxID, err.Error(), workerID)
 		return err
@@ -472,9 +488,23 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		filters["time_window"] = timeWindow
 	}
 	filtersJSON, _ := json.Marshal(filters)
-	payloadHash := opaqueKeyDigest(strings.Join([]string{
+	payloadIdentity := []string{
 		tenantID, actor, request.ActionID, request.Target, request.Reason, string(filtersJSON),
-	}, "\x00"))
+	}
+	// Preserve the legacy request digest when expected_revision is omitted so
+	// that in-flight pre-rollout idempotency receipts remain replayable. Strict
+	// clients bind the expected revision into the command identity.
+	if request.ExpectedRevision != nil {
+		if *request.ExpectedRevision < 0 {
+			httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REVISION", "expected_revision must be zero for create or the current revision for update")
+			return
+		}
+		payloadIdentity = append(payloadIdentity, fmt.Sprint(*request.ExpectedRevision))
+	}
+	// The receipt schema stores the canonical 64-character hexadecimal digest;
+	// opaqueKeyDigest includes an audit-display prefix that is intentionally not
+	// part of the persisted value.
+	payloadHash := strings.TrimPrefix(opaqueKeyDigest(strings.Join(payloadIdentity, "\x00")), "sha256:")
 	eventID := uuid.NewSHA1(uuid.NameSpaceOID, []byte("alert.saved-view.v2:"+tenantID+":"+idempotencyKey)).String()
 	tx, err := h.actionAudit.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -510,12 +540,37 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 			httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to commit alert view replay")
 			return
 		}
-		httpx.JSONCreated(w, ctx, view)
+		httpx.JSONContractCreated(w, ctx, view, alertSavedViewContractMeta(ctx, tenantID, view.ViewID, view.Revision, "saveAlertView"))
 		return
 	}
 	if err != sql.ErrNoRows {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to resolve alert view idempotency")
 		return
+	}
+	// A name-scoped advisory lock closes the absent-row race for two new
+	// idempotency keys targeting the same view. The SQL update predicate below
+	// remains the final guard during mixed-version rollout.
+	if _, err = tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, tenantID+":alert-saved-view:"+request.Target); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to lock alert view revision")
+		return
+	}
+	var currentRevision int64
+	err = tx.QueryRowContext(ctx, `SELECT revision FROM alert_saved_views
+		WHERE tenant_id=$1 AND name=$2 FOR UPDATE`, tenantID, request.Target).Scan(&currentRevision)
+	switch {
+	case err == nil && request.ExpectedRevision != nil && currentRevision != *request.ExpectedRevision:
+		httpx.JSONError(w, ctx, http.StatusConflict, "REVISION_CONFLICT", "alert view revision changed; refresh before saving")
+		return
+	case err == sql.ErrNoRows && request.ExpectedRevision != nil && *request.ExpectedRevision != 0:
+		httpx.JSONError(w, ctx, http.StatusConflict, "REVISION_CONFLICT", "alert view does not exist at the expected revision")
+		return
+	case err != nil && err != sql.ErrNoRows:
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to resolve alert view revision")
+		return
+	}
+	var expectedRevision interface{}
+	if request.ExpectedRevision != nil {
+		expectedRevision = *request.ExpectedRevision
 	}
 	err = tx.QueryRowContext(ctx, `INSERT INTO alert_saved_views
 		(tenant_id,name,filters,created_by,updated_by,trace_id,revision)
@@ -523,9 +578,14 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		ON CONFLICT (tenant_id,name) DO UPDATE SET
 		filters=EXCLUDED.filters,updated_by=EXCLUDED.updated_by,trace_id=EXCLUDED.trace_id,
 		revision=alert_saved_views.revision+1,updated_at=now()
+		WHERE $6::bigint IS NULL OR alert_saved_views.revision=$6
 		RETURNING view_id::text,name,revision,created_at,updated_at`,
-		tenantID, request.Target, string(filtersJSON), actor, httpx.GetTraceID(ctx)).Scan(
+		tenantID, request.Target, string(filtersJSON), actor, httpx.GetTraceID(ctx), expectedRevision).Scan(
 		&view.ViewID, &view.Name, &view.Revision, &view.CreatedAt, &view.UpdatedAt)
+	if err == sql.ErrNoRows {
+		httpx.JSONError(w, ctx, http.StatusConflict, "REVISION_CONFLICT", "alert view revision changed; refresh before saving")
+		return
+	}
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to persist alert view")
 		return
@@ -534,7 +594,8 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		"event_id": eventID, "event_type": "alert.saved-view.saved.v1", "schema_version": 1,
 		"aggregate_type": "alert_saved_view", "aggregate_id": view.ViewID,
 		"aggregate_version": view.Revision, "tenant_id": tenantID, "view_id": view.ViewID,
-		"name": view.Name, "filters": filters, "changed_by": actor, "trace_id": httpx.GetTraceID(ctx),
+		"name": view.Name, "filters": filters, "expected_revision": request.ExpectedRevision,
+		"changed_by": actor, "trace_id": httpx.GetTraceID(ctx),
 	})
 	if _, err = tx.ExecContext(ctx, `INSERT INTO alert_saved_view_history
 		(event_id,tenant_id,view_id,revision,name,filters,action,changed_by,trace_id)
@@ -550,7 +611,7 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to enqueue alert view event")
 		return
 	}
-	if err = h.actionAudit.recordWithExecutor(ctx, tx, r, AlertActionAuditRecord{Action: "ALERT_VIEW_SAVED", ObjectType: "alert_saved_view", ObjectID: view.ViewID, TenantID: tenantID, UserID: actor, Reason: request.Reason, Result: "saved", StateVersion: uint64(view.Revision), Detail: map[string]interface{}{"event_id": eventID, "action_id": request.ActionID, "view_id": view.ViewID, "name": view.Name, "filters": filters}}); err != nil {
+	if err = h.actionAudit.recordWithExecutor(ctx, tx, r, AlertActionAuditRecord{Action: "ALERT_VIEW_SAVED", ObjectType: "alert_saved_view", ObjectID: view.ViewID, TenantID: tenantID, UserID: actor, Reason: request.Reason, Result: "saved", StateVersion: uint64(view.Revision), Detail: map[string]interface{}{"event_id": eventID, "action_id": request.ActionID, "view_id": view.ViewID, "name": view.Name, "filters": filters, "expected_revision": request.ExpectedRevision}}); err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to audit alert view")
 		return
 	}
@@ -565,7 +626,7 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to commit alert view")
 		return
 	}
-	httpx.JSONCreated(w, ctx, view)
+	httpx.JSONContractCreated(w, ctx, view, alertSavedViewContractMeta(ctx, tenantID, view.ViewID, view.Revision, "saveAlertView"))
 }
 
 func (h *Handler) ListAlertViews(w http.ResponseWriter, r *http.Request) {
@@ -598,7 +659,25 @@ func (h *Handler) ListAlertViews(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", err.Error())
 		return
 	}
-	httpx.JSONSuccess(w, ctx, map[string]interface{}{"views": views, "total": len(views)})
+	httpx.JSONContractSuccess(w, ctx, map[string]interface{}{"views": views, "total": len(views)}, alertSavedViewContractMeta(ctx, h.extractTenantID(r), "alert-views:"+httpx.GetTraceID(ctx), int64(len(views)), "listAlertViews"))
+}
+
+func alertSavedViewContractMeta(ctx context.Context, tenantID, snapshotID string, revision int64, operationID string) httpx.ContractMeta {
+	watermarkKey := "postgresql.alert_saved_views.revision"
+	if operationID == "listAlertViews" {
+		watermarkKey = "postgresql.alert_saved_views.result_count"
+	}
+	return httpx.ContractMeta{
+		ContractVersion: 1,
+		SnapshotID:      snapshotID,
+		OperationID:     operationID,
+		TenantID:        tenantID,
+		Partial:         false,
+		MissingSections: []string{},
+		SourceWatermarks: map[string]string{
+			watermarkKey: fmt.Sprint(revision),
+		},
+	}
 }
 
 func decodeAlertActionRequest(w http.ResponseWriter, r *http.Request) (alertWorkbenchActionRequest, bool) {

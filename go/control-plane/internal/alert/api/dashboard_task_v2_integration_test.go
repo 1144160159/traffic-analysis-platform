@@ -45,6 +45,7 @@ func TestDashboardTaskV2EphemeralPostgres(t *testing.T) {
 	}
 	defer cleanupDashboardTaskIntegration(t, db, tenantID, otherTenantID)
 	handler := NewDashboardTaskHandler(db, zap.NewNop(), true)
+	handler.EnableCompensation(true)
 
 	createBody := DashboardTaskCreateRequest{
 		Target: "critical-alert-queue", Priority: "critical", SnapshotID: "dashboard-snapshot-integration-1",
@@ -152,6 +153,10 @@ func TestDashboardTaskV2EphemeralPostgres(t *testing.T) {
 		Status: "completed", Provider: "integration-ticketing", ProviderReceiptID: "ticket-receipt-1",
 		EffectState: "confirmed", EffectIDs: []string{"ticket-42"},
 		Result: map[string]interface{}{"ticket_id": "ticket-42"}, ExecutedAt: time.Now().UTC(),
+	}, compensationReceipt: DashboardTaskCompensationReceipt{
+		Status: "compensated", Provider: "integration-ticketing", ProviderReceiptID: "compensation-receipt-1",
+		EffectState: "confirmed", CompensatedEffectIDs: []string{"ticket-42"},
+		Result: map[string]interface{}{"ticket_id": "ticket-42", "deleted": true}, CompensatedAt: time.Now().UTC(),
 	}}
 	published := make([]dashboardTaskPublishedMessage, 0, 2)
 	publish := func(_ context.Context, key string, value []byte, headers ...commonkafka.MessageHeader) error {
@@ -198,6 +203,77 @@ func TestDashboardTaskV2EphemeralPostgres(t *testing.T) {
 	if terminal.Status != "completed" || terminal.Revision != 3 || terminal.Result["provider"] != "integration-ticketing" {
 		t.Fatalf("unexpected terminal task: %+v", terminal)
 	}
+	if err := pipeline.EnableCompensation(executor); err != nil {
+		t.Fatal(err)
+	}
+	compensation := performDashboardTaskCompensation(t, handler, tenantID, receipt.TaskID,
+		"dashboard-compensation-key-0001", DashboardTaskCompensationCreateRequest{
+			ActionID: dashboardTaskCompensationAction, ExpectedRevision: terminal.Revision,
+			Reason: "remove the confirmed provider effect after operator review",
+		})
+	if compensation.Code != http.StatusAccepted {
+		t.Fatalf("compensation status=%d body=%s", compensation.Code, compensation.Body.String())
+	}
+	compensationAccepted := decodeDashboardTaskCompensationAccepted(t, compensation)
+	if compensationAccepted.Status != "compensating" || compensationAccepted.Revision != 4 || compensationAccepted.Replayed {
+		t.Fatalf("unexpected compensation receipt: %+v", compensationAccepted)
+	}
+	compensationReplay := performDashboardTaskCompensation(t, handler, tenantID, receipt.TaskID,
+		"dashboard-compensation-key-0001", DashboardTaskCompensationCreateRequest{
+			ActionID: dashboardTaskCompensationAction, ExpectedRevision: terminal.Revision,
+			Reason: "remove the confirmed provider effect after operator review",
+		})
+	replayedCompensation := decodeDashboardTaskCompensationAccepted(t, compensationReplay)
+	if compensationReplay.Code != http.StatusAccepted || !replayedCompensation.Replayed || replayedCompensation.EventID != compensationAccepted.EventID {
+		t.Fatalf("unexpected compensation replay status=%d receipt=%+v", compensationReplay.Code, replayedCompensation)
+	}
+	crossTenantCompensation := performDashboardTaskCompensation(t, handler, otherTenantID, receipt.TaskID,
+		"dashboard-compensation-key-0002", DashboardTaskCompensationCreateRequest{
+			ActionID: dashboardTaskCompensationAction, ExpectedRevision: terminal.Revision,
+			Reason: "cross tenant compensation must never be accepted",
+		})
+	if crossTenantCompensation.Code != http.StatusNotFound {
+		t.Fatalf("cross-tenant compensation status=%d body=%s", crossTenantCompensation.Code, crossTenantCompensation.Body.String())
+	}
+	if drained, err := pipeline.DrainOutbox(ctx, "dashboard-integration-outbox-compensation", 10); err != nil || drained != 1 {
+		t.Fatalf("drain compensation request count=%d err=%v", drained, err)
+	}
+	if err := pipeline.HandleKafkaMessage(ctx, dashboardTaskReceivedMessage(published[2], 0, 3)); err != nil {
+		t.Fatalf("consume compensation request: %v", err)
+	}
+	if err := pipeline.HandleKafkaMessage(ctx, dashboardTaskReceivedMessage(published[2], 0, 3)); err != nil {
+		t.Fatalf("replay compensation request: %v", err)
+	}
+	if drained, err := pipeline.DrainCompensations(ctx, "dashboard-integration-compensator", 10); err != nil || drained != 1 {
+		t.Fatalf("drain compensation count=%d err=%v", drained, err)
+	}
+	if executor.compensationCalls != 1 || executor.lastCompensation.CompensationIdempotency != "dashboard-task-compensation:"+compensationAccepted.EventID {
+		t.Fatalf("compensator identity calls=%d command=%+v", executor.compensationCalls, executor.lastCompensation)
+	}
+	if drained, err := pipeline.DrainOutbox(ctx, "dashboard-integration-outbox-compensation-result", 10); err != nil || drained != 1 {
+		t.Fatalf("drain compensation result count=%d err=%v", drained, err)
+	}
+	if err := pipeline.HandleKafkaMessage(ctx, dashboardTaskReceivedMessage(published[3], 0, 4)); err != nil {
+		t.Fatalf("consume compensation result: %v", err)
+	}
+	compensated, err := handler.getTask(ctx, tenantID, receipt.TaskID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if compensated.Status != "compensated" || compensated.Revision != 5 || compensated.CancelledAt == nil {
+		t.Fatalf("unexpected compensated task: %+v", compensated)
+	}
+	var compensationRequests, compensationAttempts, compensationReceipts int
+	if err := db.QueryRowContext(ctx, `SELECT
+		(SELECT count(*) FROM dashboard_task_compensation_requests WHERE tenant_id=$1),
+		(SELECT count(*) FROM dashboard_task_compensation_attempts WHERE tenant_id=$1 AND status='completed'),
+		(SELECT count(*) FROM dashboard_task_compensation_receipts WHERE tenant_id=$1 AND status='compensated')`, tenantID).
+		Scan(&compensationRequests, &compensationAttempts, &compensationReceipts); err != nil {
+		t.Fatal(err)
+	}
+	if compensationRequests != 1 || compensationAttempts != 1 || compensationReceipts != 1 {
+		t.Fatalf("compensation facts requests=%d attempts=%d receipts=%d", compensationRequests, compensationAttempts, compensationReceipts)
+	}
 	var attempts, executionReceipts, inbox, terminalHistory, resultOutbox int
 	if err := db.QueryRowContext(ctx, `SELECT
 		(SELECT count(*) FROM dashboard_task_execution_attempts WHERE tenant_id=$1 AND status='completed'),
@@ -208,7 +284,7 @@ func TestDashboardTaskV2EphemeralPostgres(t *testing.T) {
 		Scan(&attempts, &executionReceipts, &inbox, &terminalHistory, &resultOutbox); err != nil {
 		t.Fatal(err)
 	}
-	if attempts != 1 || executionReceipts != 1 || inbox != 2 || terminalHistory != 3 || resultOutbox != 2 {
+	if attempts != 1 || executionReceipts != 1 || inbox != 4 || terminalHistory != 5 || resultOutbox != 4 {
 		t.Fatalf("pipeline facts attempts=%d receipts=%d inbox=%d history=%d published=%d", attempts, executionReceipts, inbox, terminalHistory, resultOutbox)
 	}
 
@@ -225,7 +301,7 @@ func TestDashboardTaskV2EphemeralPostgres(t *testing.T) {
 	if drained, err := pipeline.DrainOutbox(ctx, "dashboard-integration-outbox-unknown", 10); err != nil || drained != 1 {
 		t.Fatalf("drain ambiguous request count=%d err=%v", drained, err)
 	}
-	if err := pipeline.HandleKafkaMessage(ctx, dashboardTaskReceivedMessage(published[2], 0, 3)); err != nil {
+	if err := pipeline.HandleKafkaMessage(ctx, dashboardTaskReceivedMessage(published[4], 0, 5)); err != nil {
 		t.Fatalf("consume ambiguous request: %v", err)
 	}
 	if drained, err := pipeline.DrainExecutions(ctx, "dashboard-integration-executor-unknown", 10); err != nil || drained != 1 {
@@ -234,7 +310,7 @@ func TestDashboardTaskV2EphemeralPostgres(t *testing.T) {
 	if drained, err := pipeline.DrainOutbox(ctx, "dashboard-integration-outbox-unknown-result", 10); err != nil || drained != 1 {
 		t.Fatalf("drain ambiguous result count=%d err=%v", drained, err)
 	}
-	if err := pipeline.HandleKafkaMessage(ctx, dashboardTaskReceivedMessage(published[3], 0, 4)); err != nil {
+	if err := pipeline.HandleKafkaMessage(ctx, dashboardTaskReceivedMessage(published[5], 0, 6)); err != nil {
 		t.Fatalf("consume ambiguous result: %v", err)
 	}
 	unknownTerminal, err := handler.getTask(ctx, tenantID, unknownReceipt.TaskID)
@@ -248,10 +324,23 @@ func TestDashboardTaskV2EphemeralPostgres(t *testing.T) {
 }
 
 type dashboardTaskIntegrationExecutor struct {
-	receipt DashboardTaskExecutionReceipt
-	err     error
-	calls   int
-	last    DashboardTaskExecutionRequest
+	receipt             DashboardTaskExecutionReceipt
+	err                 error
+	calls               int
+	last                DashboardTaskExecutionRequest
+	compensationReceipt DashboardTaskCompensationReceipt
+	compensationErr     error
+	compensationCalls   int
+	lastCompensation    DashboardTaskCompensationRequest
+}
+
+func (executor *dashboardTaskIntegrationExecutor) CompensateDashboardTask(_ context.Context, command DashboardTaskCompensationRequest) (DashboardTaskCompensationReceipt, error) {
+	executor.compensationCalls++
+	executor.lastCompensation = command
+	if executor.compensationErr != nil {
+		return DashboardTaskCompensationReceipt{}, executor.compensationErr
+	}
+	return executor.compensationReceipt, nil
 }
 
 func (executor *dashboardTaskIntegrationExecutor) ExecuteDashboardTask(_ context.Context, command DashboardTaskExecutionRequest) (DashboardTaskExecutionReceipt, error) {
@@ -321,6 +410,25 @@ func performDashboardTaskGet(handler *DashboardTaskHandler, tenantID, taskID str
 	return recorder
 }
 
+func performDashboardTaskCompensation(t *testing.T, handler *DashboardTaskHandler, tenantID, taskID, idempotencyKey string, body DashboardTaskCompensationCreateRequest) *httptest.ResponseRecorder {
+	t.Helper()
+	payload, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/dashboard/tasks/"+taskID+"/compensations", bytes.NewReader(payload))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Idempotency-Key", idempotencyKey)
+	ctx := context.WithValue(request.Context(), httpx.ContextKeyTenantID, tenantID)
+	ctx = context.WithValue(ctx, httpx.ContextKeyUserID, "dashboard-integration-operator")
+	ctx = context.WithValue(ctx, httpx.ContextKeyPermissions, []string{authmodel.ScopeDashboardWrite})
+	ctx = context.WithValue(ctx, httpx.ContextKeyTraceID, "trace-"+idempotencyKey)
+	request = mux.SetURLVars(request.WithContext(ctx), map[string]string{"task_id": taskID})
+	recorder := httptest.NewRecorder()
+	handler.Compensate(recorder, request)
+	return recorder
+}
+
 func decodeDashboardTaskReceipt(t *testing.T, recorder *httptest.ResponseRecorder) DashboardTaskReceipt {
 	t.Helper()
 	var envelope struct {
@@ -328,6 +436,17 @@ func decodeDashboardTaskReceipt(t *testing.T, recorder *httptest.ResponseRecorde
 	}
 	if err := json.Unmarshal(recorder.Body.Bytes(), &envelope); err != nil {
 		t.Fatalf("decode receipt: %v body=%s", err, recorder.Body.String())
+	}
+	return envelope.Data
+}
+
+func decodeDashboardTaskCompensationAccepted(t *testing.T, recorder *httptest.ResponseRecorder) DashboardTaskCompensationAccepted {
+	t.Helper()
+	var envelope struct {
+		Data DashboardTaskCompensationAccepted `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &envelope); err != nil {
+		t.Fatalf("decode compensation receipt: %v body=%s", err, recorder.Body.String())
 	}
 	return envelope.Data
 }
@@ -340,6 +459,9 @@ func cleanupDashboardTaskIntegration(t *testing.T, db *sql.DB, tenantIDs ...stri
 		for _, statement := range []string{
 			`DELETE FROM dashboard_task_requests WHERE tenant_id=$1`,
 			`DELETE FROM dashboard_task_event_inbox WHERE tenant_id=$1`,
+			`DELETE FROM dashboard_task_compensation_receipts WHERE tenant_id=$1`,
+			`DELETE FROM dashboard_task_compensation_attempts WHERE tenant_id=$1`,
+			`DELETE FROM dashboard_task_compensation_requests WHERE tenant_id=$1`,
 			`DELETE FROM dashboard_task_execution_receipts WHERE tenant_id=$1`,
 			`DELETE FROM dashboard_task_execution_attempts WHERE tenant_id=$1`,
 			`DELETE FROM dashboard_task_history WHERE tenant_id=$1`,

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "result": "pass",
+  "counts": {
+    "canonical_topics": 35,
+    "kubernetes_additional_topics": 7,
+    "observed_additional_topics": 6,
+    "readiness": {
+      "active": 27,
+      "consumer_only": 2,
+      "dlq": 2,
+      "producer_only": 4
+    },
+    "schema_kinds": {
+      "json-schema": 25,
+      "protobuf": 10
+    }
+  },
+  "gaps": {
+    "producer_only": [
+      "alert.saved-view.events.v1",
+      "asset.discovery.events.v1",
+      "asset.exports.v1",
+      "notification.governance.events.v1"
+    ],
+    "consumer_only": [
+      "asset.bindings.v1",
+      "device.logs.v1"
+    ],
+    "dlq": [
+      "dlq.probe.acks.v2",
+      "dlq.v1"
+    ],
+    "allowed_additional": [
+      "campaigns.v1",
+      "detections.behavior.v1",
+      "detections.business.v1",
+      "dlq.cep-job",
+      "dlq.feature-job",
+      "dlq.rule-job",
+      "l2.trigger.v1"
+    ],
+    "observed_additional": [
+      "alert.events.v1",
+      "dlq.pcap-index-job",
+      "dlq.session.ch.v1",
+      "perf-test",
+      "session.late.v1",
+      "test-metadata"
+    ]
+  },
+  "errors": []
+}

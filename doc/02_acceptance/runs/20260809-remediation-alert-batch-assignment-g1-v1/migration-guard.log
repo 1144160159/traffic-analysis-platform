@@ -1,0 +1,8 @@
+{
+  "result": "pass",
+  "migration_count": 66,
+  "clickhouse_migration_count": 7,
+  "startup_schema_calls": [],
+  "existing_runtime_ddl_debt": {},
+  "errors": []
+}

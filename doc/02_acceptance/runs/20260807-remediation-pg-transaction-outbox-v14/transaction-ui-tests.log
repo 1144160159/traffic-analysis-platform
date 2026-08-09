@@ -1,0 +1,16 @@
+
+> traffic-analysis-ui@2.0.0 test
+> vitest --run src/services/notificationGovernanceApi.test.ts src/services/pageApiPlans.test.ts src/services/whitelistGovernanceApi.test.ts
+
+
+ RUN  v1.6.1 /home/wangwt/phase_2/code/traffic-analysis-platform-remediation-integration/web/ui
+
+ ✓ src/services/notificationGovernanceApi.test.ts  (4 tests) 37ms
+ ✓ src/services/pageApiPlans.test.ts  (23 tests) 15ms
+ ✓ src/services/whitelistGovernanceApi.test.ts  (3 tests) 7ms
+
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+   Start at  12:18:21
+   Duration  3.70s (transform 526ms, setup 151ms, collect 1.27s, tests 59ms, environment 3.50s, prepare 3.87s)
+

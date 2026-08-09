@@ -32,7 +32,7 @@
     {
       "domain": "rest_contract_authority",
       "path": "contracts/openapi/alignment-v1.openapi.json",
-      "sha256": "ff966bef98ef0c863ac553b99244359a5498b2b93ca61f88da3a7d5edabbd54b"
+      "sha256": "972c2638c864f5a5a7c1973c13abc6c225f0ec7844b6b86ca1fc417b659fe763"
     },
     {
       "domain": "route_action_api_scope_inventory",
@@ -58,23 +58,13 @@
   },
   "coverage": {
     "canonical_feature_ids": 54,
-    "formal_contracts": 27,
-    "formal_contracts_valid": 27,
+    "formal_contracts": 38,
+    "formal_contracts_valid": 38,
+    "formal_contracts_openapi_bound": 26,
+    "non_draft_openapi_binding_gaps": [],
     "standard_scope_features": 38,
-    "standard_scope_formal_contracts": 27,
-    "missing_standard_scope_contracts": [
-      "F-ALERT-003",
-      "F-ALERT-004",
-      "F-ALERT-005",
-      "F-ALERT-006",
-      "F-COMMON-001",
-      "F-EXPORT-001",
-      "F-GRAPH-002",
-      "F-GRAPH-003",
-      "F-GRAPH-004",
-      "F-TOPIC-003",
-      "F-TOPIC-004"
-    ],
+    "standard_scope_formal_contracts": 38,
+    "missing_standard_scope_contracts": [],
     "missing_backlog_contracts": [
       "F-ATTACKCHAIN-001",
       "F-BASELINE-001",
@@ -119,7 +109,9 @@
       "pilot_id": "topic_snapshot_and_actions",
       "feature_ids": [
         "F-TOPIC-001",
-        "F-TOPIC-002"
+        "F-TOPIC-002",
+        "F-TOPIC-003",
+        "F-TOPIC-004"
       ],
       "all_formal_contracts_present": true
     },
@@ -127,7 +119,11 @@
       "pilot_id": "alert_query_and_actions",
       "feature_ids": [
         "F-ALERT-001",
-        "F-ALERT-002"
+        "F-ALERT-002",
+        "F-ALERT-003",
+        "F-ALERT-004",
+        "F-ALERT-005",
+        "F-ALERT-006"
       ],
       "all_formal_contracts_present": true
     }
@@ -141,12 +137,29 @@
       "acceptance_case": "AC-WP-00-INVENTORY",
       "rollback_runbook_id": "RB-WP-00-INVENTORY",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-COMMON-001.json",
+        "sha256": "b0215a85a641de260849e87b9f5171bfe28054cbf001f8c3ebbcfae3dfa07c8f",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "getFeatureContractAdoption",
+        "api_method": "GET",
+        "api_path": "/v1/meta/feature-contracts/adoption",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
+        "required_scopes": [
+          "admin:read"
+        ],
+        "preserved_routes": [
+          "/dashboard"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-COMMON-002",
@@ -165,6 +178,9 @@
         "operation_id": "applyPageSnapshotEnvelopeV1",
         "api_method": "GET",
         "api_path": "/v1/{domain}/snapshot",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
         "required_scopes": [
           "*"
         ],
@@ -203,6 +219,9 @@
         "operation_id": "submitStableAction",
         "api_method": "POST",
         "api_path": "/v1/alerts/{id}/response-actions",
+        "openapi_binding_status": "PROFILED",
+        "openapi_bound_operation_id": "createAlertResponseAction",
+        "openapi_bound_feature_id": "F-ALERT-003",
         "required_scopes": [
           "alert:write",
           "playbook:approve"
@@ -245,6 +264,9 @@
         "operation_id": "applyErrorResultEnvelopeV1",
         "api_method": "POST",
         "api_path": "/v1/{resource}",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
         "required_scopes": [
           "*"
         ],
@@ -276,12 +298,15 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-AUTH-001.json",
-        "sha256": "689444ce761cc835a2f8019302b3a8514387cee42aa7a7b3460523036227c238",
+        "sha256": "9f83a766f7bab326e08ac7b025f63082c9d0038d23e10673488b467d42f6fa65",
         "contract_version": 1,
         "status": "verifying",
         "operation_id": "getScopeCatalog",
         "api_method": "GET",
         "api_path": "/v1/auth/scopes",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "getScopeCatalog",
+        "openapi_bound_feature_id": "F-AUTH-001",
         "required_scopes": [
           "admin:read"
         ],
@@ -294,6 +319,7 @@
           "auth-user-oidc-sync"
         ],
         "preserved_api_operations": [
+          "GET /v1/tokens/scopes",
           "PATCH /v1/auth/me",
           "POST /v1/auth/me/password"
         ],
@@ -318,6 +344,9 @@
         "operation_id": "getTopicSnapshot",
         "api_method": "GET",
         "api_path": "/v1/topics/{topic}/snapshot",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "getTopicSnapshot",
+        "openapi_bound_feature_id": "F-TOPIC-001",
         "required_scopes": [
           "topic:read"
         ],
@@ -356,6 +385,9 @@
         "operation_id": "createTopicActionJob",
         "api_method": "POST",
         "api_path": "/v1/topics/{topic}/actions",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createTopicActionJob",
+        "openapi_bound_feature_id": "F-TOPIC-002",
         "required_scopes": [
           "topic:write"
         ],
@@ -380,12 +412,38 @@
       "acceptance_case": "AC-WP-09-TOPIC",
       "rollback_runbook_id": "RB-WP-09-TOPIC",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-TOPIC-003.json",
+        "sha256": "5eee05d96b7779c7c42a89e63fd9a55ee9cdb788dda827b7004ef7eaa11c4213",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "createTopicReport",
+        "api_method": "POST",
+        "api_path": "/v1/topics/reports/export",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
+        "required_scopes": [
+          "topic:export"
+        ],
+        "preserved_routes": [
+          "/topics",
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ],
+        "preserved_actions": [
+          "topic-report-export",
+          "topic-evidence-package-export"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/topics/reports/export",
+          "POST /v1/topics/evidence-packages/export"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-TOPIC-004",
@@ -395,12 +453,34 @@
       "acceptance_case": "AC-WP-09-TOPIC",
       "rollback_runbook_id": "RB-WP-09-TOPIC",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-TOPIC-004.json",
+        "sha256": "5fec5ae4d9955324dc2d69a0bc38c54d6f6ee7eabee7c2bc5cc8630db690357b",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "getTopicSnapshotSources",
+        "api_method": "GET",
+        "api_path": "/v1/topics/{topic}/snapshot",
+        "openapi_binding_status": "MISMATCH",
+        "openapi_bound_operation_id": "getTopicSnapshot",
+        "openapi_bound_feature_id": "F-TOPIC-001",
+        "required_scopes": [
+          "topic:read"
+        ],
+        "preserved_routes": [
+          "/topics",
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/topics/{topic}/snapshot"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ALERT-001",
@@ -419,6 +499,9 @@
         "operation_id": "createAlertReport",
         "api_method": "POST",
         "api_path": "/v1/alerts/{id}/reports/export",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createAlertReport",
+        "openapi_bound_feature_id": "F-ALERT-001",
         "required_scopes": [
           "alert:export"
         ],
@@ -459,6 +542,9 @@
         "operation_id": "linkAlertToCampaign",
         "api_method": "POST",
         "api_path": "/v1/alerts/{id}/campaign-links",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "linkAlertToCampaign",
+        "openapi_bound_feature_id": "F-ALERT-002",
         "required_scopes": [
           "alert:write",
           "campaign:write"
@@ -489,12 +575,42 @@
       "acceptance_case": "AC-WP-07-ALERT",
       "rollback_runbook_id": "RB-WP-07-ALERT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-003.json",
+        "sha256": "431daf97bbcf01a642d6ef30709702c74fac4f297eacb535f5544ac1895754cb",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "createAlertResponseAction",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/{id}/response-actions",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createAlertResponseAction",
+        "openapi_bound_feature_id": "F-ALERT-003",
+        "required_scopes": [
+          "alert:write"
+        ],
+        "preserved_routes": [
+          "/alerts",
+          "/alerts/:alertId"
+        ],
+        "preserved_actions": [
+          "alert-response-request",
+          "alert-response-status",
+          "alert-response-approval",
+          "alert-response-cancel",
+          "alert-response-compensate"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/alerts/{id}/response-actions",
+          "GET /v1/alerts/{id}/response-actions/{job_id}",
+          "POST /v1/alerts/{id}/response-actions/{job_id}/approval",
+          "POST /v1/alerts/{id}/response-actions/{job_id}/cancel",
+          "POST /v1/alerts/{id}/response-actions/{job_id}/compensations"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ALERT-004",
@@ -504,12 +620,29 @@
       "acceptance_case": "AC-WP-07-ALERT",
       "rollback_runbook_id": "RB-WP-07-ALERT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-004.json",
+        "sha256": "253d2093d39ca7e8dbe6d00d51a3c8466085a681d89e3b28122a4de0e1d085bb",
+        "contract_version": 3,
+        "status": "verifying",
+        "operation_id": "createAlertBatchAssignment",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/batches/assign",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createAlertBatchAssignment",
+        "openapi_bound_feature_id": "F-ALERT-004",
+        "required_scopes": [
+          "alert:write"
+        ],
+        "preserved_routes": [
+          "/alerts"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ALERT-005",
@@ -519,12 +652,35 @@
       "acceptance_case": "AC-WP-07-ALERT",
       "rollback_runbook_id": "RB-WP-07-ALERT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-005.json",
+        "sha256": "31e2d6789a2415f48bcc4d56c60e51b0fee8e23e96d693e2e5e54c3b06020806",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "getAlertEvidence",
+        "api_method": "GET",
+        "api_path": "/v1/alerts/{id}/evidence",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "getAlertEvidence",
+        "openapi_bound_feature_id": "F-ALERT-005",
+        "required_scopes": [
+          "alert:read"
+        ],
+        "preserved_routes": [
+          "/alerts",
+          "/alerts/:alertId"
+        ],
+        "preserved_actions": [
+          "alert-evidence-access"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/alerts/{id}/evidence",
+          "POST /v1/alerts/{id}/evidence/access"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ALERT-006",
@@ -534,12 +690,31 @@
       "acceptance_case": "AC-WP-07-ALERT",
       "rollback_runbook_id": "RB-WP-07-ALERT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-006.json",
+        "sha256": "e98d760a8acf4deebcbac92bb101e5e8e4a7c237f9f0b50273798ff7007be828",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "saveAlertView",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/views",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "saveAlertView",
+        "openapi_bound_feature_id": "F-ALERT-006",
+        "required_scopes": [
+          "alert:write"
+        ],
+        "preserved_routes": [
+          "/alerts"
+        ],
+        "preserved_actions": [
+          "alert-view-save"
+        ],
+        "preserved_api_operations": [],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ASSET-001",
@@ -558,6 +733,9 @@
         "operation_id": "listAssetsV2",
         "api_method": "GET",
         "api_path": "/v1/assets",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "listAssetsV2",
+        "openapi_bound_feature_id": "F-ASSET-001",
         "required_scopes": [
           "asset:read"
         ],
@@ -587,6 +765,9 @@
         "operation_id": "upsertAssetV2",
         "api_method": "POST",
         "api_path": "/v1/assets",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "upsertAssetV2",
+        "openapi_bound_feature_id": "F-ASSET-002",
         "required_scopes": [
           "asset:discover"
         ],
@@ -629,6 +810,9 @@
         "operation_id": "createAssetDiscoveryJob",
         "api_method": "POST",
         "api_path": "/v1/assets/discovery/runs",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createAssetDiscoveryJob",
+        "openapi_bound_feature_id": "F-ASSET-003",
         "required_scopes": [
           "asset:discover"
         ],
@@ -667,6 +851,9 @@
         "operation_id": "createAssetExportJob",
         "api_method": "POST",
         "api_path": "/v1/assets/exports",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createAssetExportJob",
+        "openapi_bound_feature_id": "F-ASSET-004",
         "required_scopes": [
           "asset:export",
           "asset:read"
@@ -699,6 +886,9 @@
         "operation_id": "getAssetDetailSnapshot",
         "api_method": "GET",
         "api_path": "/v1/assets/{asset_id}/snapshot",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "getAssetDetailSnapshot",
+        "openapi_bound_feature_id": "F-ASSET-005",
         "required_scopes": [
           "asset:read"
         ],
@@ -735,6 +925,9 @@
         "operation_id": "createAssetGovernanceWorkOrder",
         "api_method": "POST",
         "api_path": "/v1/assets/{asset_id}/governance/work-orders",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createAssetGovernanceWorkOrder",
+        "openapi_bound_feature_id": "F-ASSET-006",
         "required_scopes": [
           "asset:govern",
           "asset:read"
@@ -768,6 +961,9 @@
         "operation_id": "exploreBoundedGraph",
         "api_method": "GET",
         "api_path": "/v1/graph/explore",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "exploreBoundedGraph",
+        "openapi_bound_feature_id": "F-GRAPH-001",
         "required_scopes": [
           "graph:read"
         ],
@@ -788,12 +984,31 @@
       "acceptance_case": "AC-WP-12-GRAPH",
       "rollback_runbook_id": "RB-WP-12-GRAPH",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-GRAPH-002.json",
+        "sha256": "1c15d1c01092c21f56506ea4b5ecbefa73856f2c3da1b9d9a2bba4cdc8e5b095",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "saveGraphView",
+        "api_method": "POST",
+        "api_path": "/v1/graph/views",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
+        "required_scopes": [
+          "graph:read"
+        ],
+        "preserved_routes": [
+          "/graph"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/graph/explore"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-GRAPH-003",
@@ -803,12 +1018,32 @@
       "acceptance_case": "AC-WP-12-GRAPH",
       "rollback_runbook_id": "RB-WP-12-GRAPH",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-GRAPH-003.json",
+        "sha256": "18e59e827dc7cedb2485462ae87f42e96c8167c5f8aac7014fb8968091cc5c3f",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "resolveGraphAssetContext",
+        "api_method": "GET",
+        "api_path": "/v1/graph/context/assets/{asset_id}",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
+        "required_scopes": [
+          "graph:read"
+        ],
+        "preserved_routes": [
+          "/graph",
+          "/assets"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/graph/explore"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-GRAPH-004",
@@ -818,12 +1053,31 @@
       "acceptance_case": "AC-WP-12-GRAPH",
       "rollback_runbook_id": "RB-WP-12-GRAPH",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-GRAPH-004.json",
+        "sha256": "049b6ef1b20b1e3bdcc9cc44526eadee81861ee4ba77b6ed952e72c27aa3b859",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "getGraphProjectionStatus",
+        "api_method": "GET",
+        "api_path": "/v1/graph/projections/status",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
+        "required_scopes": [
+          "graph:read"
+        ],
+        "preserved_routes": [
+          "/graph"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/graph/explore"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-SEARCH-001",
@@ -842,6 +1096,9 @@
         "operation_id": "searchAlertsCursorV1",
         "api_method": "POST",
         "api_path": "/v1/alerts/search",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "searchAlertsCursorV1",
+        "openapi_bound_feature_id": "F-SEARCH-001",
         "required_scopes": [
           "alert:read"
         ],
@@ -864,12 +1121,44 @@
       "acceptance_case": "AC-WP-20-SEARCH-EXPORT",
       "rollback_runbook_id": "RB-WP-20-SEARCH-EXPORT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-EXPORT-001.json",
+        "sha256": "cfca367db409ca20b29e50f760a0ef3413e6a3b905883c463bcf8d17a49ecf5f",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "createUnifiedExportJob",
+        "api_method": "POST",
+        "api_path": "/v1/exports",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
+        "required_scopes": [
+          "asset:export"
+        ],
+        "preserved_routes": [
+          "/alerts",
+          "/assets",
+          "/topics"
+        ],
+        "preserved_actions": [
+          "alert-report-export",
+          "asset-inventory-export",
+          "asset-inventory-export-download",
+          "topic-report-export",
+          "topic-evidence-package-export"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/alerts/{id}/reports/export",
+          "POST /v1/assets/exports",
+          "GET /v1/assets/exports/{job_id}",
+          "GET /v1/assets/exports/{job_id}/download",
+          "POST /v1/topics/reports/export",
+          "POST /v1/topics/evidence-packages/export"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-AUDIT-001",
@@ -888,6 +1177,9 @@
         "operation_id": "ingestAuditLogBatch",
         "api_method": "POST",
         "api_path": "/internal/v1/audit/batches",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "ingestAuditLogBatch",
+        "openapi_bound_feature_id": "F-AUDIT-001",
         "required_scopes": [
           "audit:write"
         ],
@@ -927,6 +1219,9 @@
         "operation_id": "submitSemanticCommand",
         "api_method": "POST",
         "api_path": "/v1/alerts/{id}/reports/export",
+        "openapi_binding_status": "MISMATCH",
+        "openapi_bound_operation_id": "createAlertReport",
+        "openapi_bound_feature_id": "F-ALERT-001",
         "required_scopes": [
           "alert:export",
           "campaign:write"
@@ -969,6 +1264,9 @@
         "operation_id": "normalizeTypedPageSnapshotV1",
         "api_method": "GET",
         "api_path": "/v1/{domain}/snapshot",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
         "required_scopes": [
           "*"
         ],
@@ -1040,6 +1338,9 @@
         "operation_id": "getDashboardSnapshot",
         "api_method": "GET",
         "api_path": "/v1/dashboard/snapshot",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "getDashboardSnapshot",
+        "openapi_bound_feature_id": "F-DASHBOARD-001",
         "required_scopes": [
           "alert:read"
         ],
@@ -1069,12 +1370,15 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-DASHBOARD-002.json",
-        "sha256": "c086af629857d5ca3cb82b1b85f413433b6b7ee7c92e4e7ae7459d26e9ddd10c",
-        "contract_version": 2,
+        "sha256": "7a217e6149acd934c2a4ef3013665c3004d6342bb1a286f41ef2392d1d825a7d",
+        "contract_version": 4,
         "status": "implementing",
         "operation_id": "createDashboardTask",
         "api_method": "POST",
         "api_path": "/v1/dashboard/tasks",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createDashboardTask",
+        "openapi_bound_feature_id": "F-DASHBOARD-002",
         "required_scopes": [
           "dashboard:write"
         ],
@@ -1134,6 +1438,9 @@
         "operation_id": "pushProbeConfig",
         "api_method": "POST",
         "api_path": "/v1/probes/{id}/config",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "pushProbeConfig",
+        "openapi_bound_feature_id": "F-PROBE-001",
         "required_scopes": [
           "probe:write"
         ],
@@ -1189,6 +1496,9 @@
         "operation_id": "getDataQualityControlPlaneSnapshot",
         "api_method": "GET",
         "api_path": "/v1/data-quality",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "getDataQualityControlPlaneSnapshot",
+        "openapi_bound_feature_id": "F-DATAQUALITY-001",
         "required_scopes": [
           "data-quality:read",
           "data-quality:write"
@@ -1224,6 +1534,9 @@
         "operation_id": "submitCampaignCommand",
         "api_method": "POST",
         "api_path": "/v1/campaigns/{id}/actions",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "submitCampaignCommand",
+        "openapi_bound_feature_id": "F-CAMPAIGN-001",
         "required_scopes": [
           "campaign:write"
         ],
@@ -1392,6 +1705,9 @@
         "operation_id": "activateModelVersion",
         "api_method": "POST",
         "api_path": "/v1/models/{id}/versions/{version}/activate",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
         "required_scopes": [
           "model:activate"
         ],
@@ -1445,6 +1761,9 @@
         "operation_id": "requestPlaybookExecution",
         "api_method": "POST",
         "api_path": "/v1/playbooks/{name}/execute",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "requestPlaybookExecution",
+        "openapi_bound_feature_id": "F-PLAYBOOK-001",
         "required_scopes": [
           "playbook:execute"
         ],
@@ -1486,6 +1805,9 @@
         "operation_id": "createWhitelistEntry",
         "api_method": "POST",
         "api_path": "/v1/whitelist",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createWhitelistEntry",
+        "openapi_bound_feature_id": "F-WHITELIST-001",
         "required_scopes": [
           "alert:write"
         ],
@@ -1563,16 +1885,18 @@
     "repository": [
       "all 54 feature IDs resolve to exactly one accountable work package",
       "all existing formal contracts hash-bind UI API domain data permission performance acceptance and rollout fields",
-      "all P0 feature contracts are present and the asset topic and alert pilots are traceable",
-      "missing standard-scope and backlog contracts remain explicit and cannot be hidden"
+      "all 38 standard-scope feature contracts are present and the asset topic and alert pilots are traceable",
+      "implemented REST operations bind their method path operation_id and feature ownership to the OpenAPI authority",
+      "missing backlog contracts remain explicit and cannot be hidden"
     ],
     "remaining": [
-      "author the missing standard-scope contracts before W1 contract freeze",
       "author backlog contracts without deleting routes actions operations scopes or audit events",
+      "complete production adoption and observation for the audit batch ingress and governed scope catalog before closure",
+      "implement the draft standard-scope API migration projection and object boundaries before claiming runtime adoption",
       "bind generated TypeScript and compatibility telemetry to every formal contract",
       "capture old-client usage and live contract-version adoption by candidate",
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "96c9a23e405aeaefab52418d4fe979777004fea2ad86c47126db5844127c7e4f"
+  "catalog_sha256": "c8e8065087b498c4c7937cf14c9d2f7a3ac832bab9d64ff322350dade8d9d0ad"
 }

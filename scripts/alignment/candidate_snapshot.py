@@ -43,9 +43,20 @@ EXCLUDED_PARTS = {
 }
 EXCLUDED_SUFFIXES = {".log", ".pyc", ".pyo"}
 EXCLUDED_PATHS = {
+    "common/config/credentials.yaml",
     "contracts/alignment/evidence-index.json",
     "contracts/alignment/progress-overrides.json",
     "contracts/alignment/remediation-ledger.json",
+    "deployments/kubernetes/configmaps/credentials-secret.yaml",
+    "go/control-plane/alert-service",
+    "go/control-plane/deployments/docker/alert-service",
+    "mlops/workflows/mlops-secrets.yaml",
+    "rust/probe-agent/probe-agent/config.yaml",
+    "web/ui/.env",
+    "web/ui/.env.development.local",
+    "web/ui/.env.local",
+    "web/ui/.env.production.local",
+    "web/ui/.env.test.local",
 }
 
 

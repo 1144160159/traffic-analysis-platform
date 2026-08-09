@@ -1,0 +1,11 @@
+test_accidental_server_activation_is_rejected (tests.alignment.test_minio_tls_material.MinIOTLSMaterialTests.test_accidental_server_activation_is_rejected) ... ok
+test_capture_resolves_relative_tls_contract_without_crashing (tests.alignment.test_minio_tls_material.MinIOTLSMaterialTests.test_capture_resolves_relative_tls_contract_without_crashing) ... ok
+test_checked_in_candidate_material_is_valid_and_not_cutover_ready (tests.alignment.test_minio_tls_material.MinIOTLSMaterialTests.test_checked_in_candidate_material_is_valid_and_not_cutover_ready) ... ok
+test_false_cutover_claim_is_rejected (tests.alignment.test_minio_tls_material.MinIOTLSMaterialTests.test_false_cutover_claim_is_rejected) ... ok
+test_missing_client_ca_namespace_is_rejected (tests.alignment.test_minio_tls_material.MinIOTLSMaterialTests.test_missing_client_ca_namespace_is_rejected) ... ok
+test_missing_server_san_is_rejected (tests.alignment.test_minio_tls_material.MinIOTLSMaterialTests.test_missing_server_san_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.027s
+
+OK

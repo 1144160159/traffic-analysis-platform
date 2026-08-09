@@ -1,0 +1,6 @@
+test_alert_response_requests_require_provider_authority_for_real_effects (tests.alignment.test_alignment_registry.AlignmentRegistryTest.test_alert_response_requests_require_provider_authority_for_real_effects) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+OK

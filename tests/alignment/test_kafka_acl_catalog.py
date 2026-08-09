@@ -38,8 +38,8 @@ class KafkaAclCatalogTest(unittest.TestCase):
     def test_catalog_covers_every_canonical_topic_and_blocks_legacy_extras(self) -> None:
         result = validate_documents(self.acl, self.topics)
         self.assertEqual("pass", result["result"], result)
-        self.assertEqual(35, result["counts"]["canonical_topics"])
-        self.assertEqual(35, result["counts"]["topic_bindings"])
+        self.assertEqual(36, result["counts"]["canonical_topics"])
+        self.assertEqual(36, result["counts"]["topic_bindings"])
         self.assertEqual(7, result["counts"]["additional_topics_blocked"])
         self.assertEqual(20, result["counts"]["principals"])
         self.assertEqual(8, result["counts"]["expanded_service_identities"])
@@ -48,7 +48,7 @@ class KafkaAclCatalogTest(unittest.TestCase):
     def test_generated_plan_is_literal_and_contains_no_all_or_wildcard_grant(self) -> None:
         shell = render_shell(self.acl)
         grant_lines = [line for line in shell.splitlines() if line.startswith("apply_acl ")]
-        self.assertEqual(221, len(grant_lines))
+        self.assertEqual(226, len(grant_lines))
         self.assertTrue(all("--allow-principal User:traffic-" in line for line in grant_lines))
         self.assertTrue(all("--operation All" not in line for line in grant_lines))
         self.assertTrue(all("--topic *" not in line for line in grant_lines))
@@ -60,6 +60,14 @@ class KafkaAclCatalogTest(unittest.TestCase):
         )
         self.assertIn(
             "User:traffic-alert-service --operation Write --topic alert.saved-view.events.v1",
+            shell,
+        )
+        self.assertIn(
+            "User:traffic-alert-service --operation Read --group alert-service-batch-assignment-execution-v1",
+            shell,
+        )
+        self.assertIn(
+            "User:traffic-alert-service --operation Write --topic alert.assignment.events.v1",
             shell,
         )
         self.assertIn(

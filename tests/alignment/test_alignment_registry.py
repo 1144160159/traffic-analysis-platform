@@ -24,11 +24,11 @@ class AlignmentRegistryTest(unittest.TestCase):
     def test_kafka_topic_schema_and_implementation_catalog_is_complete(self) -> None:
         result = validate_event_catalog()
         self.assertEqual("pass", result["result"], result)
-        self.assertEqual(35, result["counts"]["canonical_topics"])
+        self.assertEqual(36, result["counts"]["canonical_topics"])
         self.assertEqual(7, result["counts"]["kubernetes_additional_topics"])
         self.assertEqual(6, result["counts"]["observed_additional_topics"])
         self.assertEqual(
-            {"json-schema": 25, "protobuf": 10},
+            {"json-schema": 26, "protobuf": 10},
             result["counts"]["schema_kinds"],
         )
 
@@ -276,7 +276,7 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn("locked_until", inbox_migration)
         self.assertIn("dead_letter", inbox_migration)
 
-    def test_alert_response_requests_are_receipted_without_fake_real_effects(self) -> None:
+    def test_alert_response_requests_require_provider_authority_for_real_effects(self) -> None:
         catalog = json.loads(
             (ROOT / "contracts/events/kafka-topic-catalog.v1.json").read_text(
                 encoding="utf-8"
@@ -303,15 +303,74 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn("simulated_completed", consumer)
         self.assertIn("blocked_external_executor", consumer)
         self.assertIn("external_effect_applied", consumer)
+        self.assertIn("hasExactCommittedReceipt", consumer)
+        self.assertIn("reconcileExecutionAuthority", consumer)
+        self.assertIn("INSERT INTO audit_logs", consumer)
+        provider = (
+            ROOT
+            / "go/control-plane/internal/alert/consumer/alert_response_http_executor.go"
+        ).read_text(encoding="utf-8")
+        for fragment in (
+            "Idempotency-Key",
+            "provider_receipt_id",
+            "effect_state",
+            "LookupAlertResponseExecution",
+            "receipt_found",
+        ):
+            self.assertIn(fragment, provider)
+        service = (
+            ROOT / "go/control-plane/cmd/alert-service/main.go"
+        ).read_text(encoding="utf-8")
         self.assertIn("CommitOnHandlerError: false", (
             ROOT / "go/control-plane/cmd/alert-service/main.go"
         ).read_text(encoding="utf-8"))
+        self.assertIn("ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED", service)
+        self.assertIn("ALERT_RESPONSE_EXECUTOR_LOOKUP_URL", service)
+        self.assertIn(
+            "responseKafkaConsumer.SetDLQAcknowledgementBarrier(responseProjection.RecordDLQAcknowledgement)",
+            service,
+        )
+        self.assertIn("DLQPermanentOnly: true", service)
         migration = (
             ROOT / "deployments/postgres/migrations"
             / "202607302300_alert_response_execution_projection.sql"
         ).read_text(encoding="utf-8")
         self.assertIn("alert_response_execution_receipts", migration)
         self.assertIn("ALERT_RESPONSE_EXECUTION_V1_ENABLED=false", migration)
+        executor_migration = (
+            ROOT / "deployments/postgres/migrations"
+            / "202608091130_alert_response_external_executor_v1.sql"
+        ).read_text(encoding="utf-8")
+        self.assertIn("provider_receipt_id", executor_migration)
+        self.assertIn("effect_state", executor_migration)
+        self.assertIn("receipt_sha256", executor_migration)
+        self.assertIn("202608091130", executor_migration)
+        dlq_barrier = (
+            ROOT
+            / "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go"
+        ).read_text(encoding="utf-8")
+        self.assertIn("INSERT INTO alert_response_dlq_receipts", dlq_barrier)
+        self.assertIn("ALERT_RESPONSE_EVENT_QUARANTINED", dlq_barrier)
+        self.assertIn("source_offset_commit_pending", dlq_barrier)
+        dlq_migration = (
+            ROOT / "deployments/postgres/migrations"
+            / "202608091230_alert_response_dlq_receipt_v1.sql"
+        ).read_text(encoding="utf-8")
+        self.assertIn("alert_response_dlq_receipts", dlq_migration)
+        self.assertIn("202608091230", dlq_migration)
+        for manifest_path in (
+            ROOT / "deployments/kubernetes/applications/go-services.yaml",
+            ROOT / "go/control-plane/deployments/kubernetes/alert-service.yaml",
+        ):
+            manifest = manifest_path.read_text(encoding="utf-8")
+            self.assertIn(
+                '{name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "false"}',
+                manifest,
+            )
+            self.assertIn(
+                '{name: ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED, value: "false"}',
+                manifest,
+            )
 
     def test_model_actions_use_outbox_and_non_terminal_execution_inbox(self) -> None:
         catalog = json.loads(
@@ -1059,7 +1118,9 @@ class AlignmentRegistryTest(unittest.TestCase):
         dockerfile = (
             ROOT / "rust/probe-agent/docker/Dockerfile"
         ).read_text(encoding="utf-8")
-        default_config = ROOT / "rust/probe-agent/probe-agent/config.yaml"
+        container_config = (
+            ROOT / "rust/probe-agent/probe-agent/config.container.yaml"
+        )
         probe_manifest = (
             ROOT / "deployments/kubernetes/applications/probe-agent.yaml"
         ).read_text(encoding="utf-8")
@@ -1070,7 +1131,14 @@ class AlignmentRegistryTest(unittest.TestCase):
             ROOT / "deployments/kubernetes/security/external-secrets-template.yaml"
         ).read_text(encoding="utf-8")
 
-        self.assertTrue(default_config.is_file())
+        self.assertTrue(container_config.is_file())
+        container_config_text = container_config.read_text(encoding="utf-8")
+        self.assertIn(
+            'gateway_addr: "${GATEWAY_ADDR:-http://127.0.0.1:50051}"',
+            container_config_text,
+        )
+        self.assertIn("auth_token: null", container_config_text)
+        self.assertNotIn("PROBE_AUTH_TOKEN", container_config_text)
         self.assertIn("FROM rust:1.93.0-slim-bookworm AS builder", dockerfile)
         self.assertIn(
             "RUSTUP_TOOLCHAIN=1.93.0-x86_64-unknown-linux-gnu",
@@ -1078,7 +1146,10 @@ class AlignmentRegistryTest(unittest.TestCase):
         )
         self.assertNotIn(" clang llvm lld cmake ", dockerfile)
         self.assertIn("cargo build --locked --release -p probe-agent", dockerfile)
-        self.assertIn("COPY probe-agent/config.yaml /etc/probe-agent/config.yaml", dockerfile)
+        self.assertIn(
+            "COPY probe-agent/config.container.yaml /etc/probe-agent/config.yaml",
+            dockerfile,
+        )
         self.assertIn('CMD ["/etc/probe-agent/config.yaml"]', dockerfile)
         self.assertNotIn('CMD ["--config"', dockerfile)
         self.assertNotIn("probe-token-default-001", probe_manifest)
@@ -1500,7 +1571,7 @@ class AlignmentRegistryTest(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual(2, contract["contract_version"])
+        self.assertEqual(4, contract["contract_version"])
         self.assertEqual("authenticated_identity", contract["permissions"]["tenant_source"])
         self.assertEqual(
             {
@@ -1512,6 +1583,14 @@ class AlignmentRegistryTest(unittest.TestCase):
                 "dashboard-compliance-task-create",
             },
             {item["action_id"] for item in contract["ui"]["controls"]},
+        )
+        self.assertEqual(
+            "dashboard_task_provider_authority_lookup_v1",
+            contract["rollout"]["provider_authority_lookup_flag"],
+        )
+        self.assertIn(
+            "only a receipt_found response",
+            contract["api"]["provider_authority_lookup"]["recovery_rule"],
         )
 
         openapi = json.loads(
@@ -1527,6 +1606,10 @@ class AlignmentRegistryTest(unittest.TestCase):
             "/v1/dashboard/tasks/sla": ("post", "createDashboardSLATask"),
             "/v1/dashboard/tasks/compliance": ("post", "createDashboardComplianceTask"),
             "/v1/dashboard/tasks/{task_id}": ("get", "getDashboardTask"),
+            "/v1/dashboard/tasks/{task_id}/compensations": (
+                "post",
+                "compensateDashboardTask",
+            ),
         }
         for path, (method, operation_id) in operations.items():
             operation = openapi["paths"][path][method]
@@ -1556,14 +1639,23 @@ class AlignmentRegistryTest(unittest.TestCase):
         provider = (
             ROOT / "go/control-plane/internal/alert/api/dashboard_task_http_provider.go"
         ).read_text(encoding="utf-8")
+        compensation = (
+            ROOT / "go/control-plane/internal/alert/api/dashboard_task_compensation.go"
+        ).read_text(encoding="utf-8")
         service = (ROOT / "go/control-plane/cmd/alert-service/main.go").read_text(
             encoding="utf-8"
         )
+        common_consumer = (
+            ROOT / "go/control-plane/internal/common/kafka/consumer.go"
+        ).read_text(encoding="utf-8")
         for fragment in (
             "dashboard.task.events.v1",
             "dashboard_task_event_inbox",
             "dashboard_task_execution_attempts",
             "dashboard_task_execution_receipts",
+            "dashboard_task_compensation_attempts",
+            "dashboard_task_compensation_receipts",
+            "dashboard_task_dlq_receipts",
             "CommitOnHandlerError: false",
             "DLQPermanentOnly: true",
             'RequiredAcks: "all"',
@@ -1571,12 +1663,29 @@ class AlignmentRegistryTest(unittest.TestCase):
             self.assertIn(fragment, pipeline + service)
         self.assertIn("Idempotency-Key", provider)
         self.assertIn("dashboard task executor response exceeds", provider)
+        self.assertIn("LookupDashboardTaskExecution", provider)
+        self.assertIn("LookupDashboardTaskCompensation", provider)
+        self.assertIn('lookup.State != "receipt_found"', pipeline)
+        self.assertIn('terminalResult["authority_lookup"]', pipeline)
+        self.assertIn(
+            "DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED", service
+        )
+        self.assertIn("SetDLQAcknowledgementBarrier", service)
+        self.assertIn("runDLQAcknowledgementBarrier", common_consumer)
+        self.assertIn("source_offset_commit_pending", pipeline)
+        self.assertIn("dashboard_task_compensation_requests", compensation)
+        self.assertIn("DASHBOARD_TASK_COMPENSATION_REQUESTED", compensation)
+        self.assertIn("CompensateDashboardTask", provider)
         self.assertEqual(
             "dashboard.task.events.v1", contract["data"]["event_topic"]
         )
         self.assertFalse(contract["rollout"]["default"])
         self.assertIn(
             "completed requires effect_state=confirmed and one or more stable effect_ids",
+            contract["domain"]["invariants"],
+        )
+        self.assertIn(
+            "a permanent poison event advances its source offset only after the canonical DLQ record is broker acknowledged and the source tuple is atomically materialized with an audit receipt in PostgreSQL",
             contract["domain"]["invariants"],
         )
 
@@ -1614,6 +1723,32 @@ class AlignmentRegistryTest(unittest.TestCase):
             "dashboard_task_event_inbox",
         ):
             self.assertIn(table, pipeline_schema)
+        compensation_schema = (
+            ROOT
+            / "deployments/postgres/migrations"
+            / "202608082100_dashboard_task_compensation_v1.sql"
+        ).read_text(encoding="utf-8")
+        for table in (
+            "dashboard_task_compensation_requests",
+            "dashboard_task_compensation_attempts",
+            "dashboard_task_compensation_receipts",
+        ):
+            self.assertIn(table, compensation_schema)
+        dlq_schema = (
+            ROOT
+            / "deployments/postgres/migrations"
+            / "202608090945_dashboard_task_dlq_receipt_v1.sql"
+        ).read_text(encoding="utf-8")
+        self.assertIn("dashboard_task_dlq_receipts", dlq_schema)
+        self.assertIn("PRIMARY KEY (source_topic,source_partition,source_offset)", dlq_schema)
+        for schema_path in (
+            ROOT / "common/sql/pg/14-dashboard-task-dlq-receipt-v1.sql",
+            ROOT / "go/control-plane/deployments/docker/init/postgres_merged.sql",
+            ROOT / "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        ):
+            schema = schema_path.read_text(encoding="utf-8")
+            self.assertIn("dashboard_task_dlq_receipts", schema)
+            self.assertIn("202608090945", schema)
 
         for manifest_path in (
             ROOT / "deployments/kubernetes/applications/go-services.yaml",
@@ -1628,6 +1763,16 @@ class AlignmentRegistryTest(unittest.TestCase):
                 '{name: DASHBOARD_TASK_PIPELINE_V1_ENABLED, value: "false"}',
                 manifest,
             )
+            self.assertIn(
+                '{name: DASHBOARD_TASK_COMPENSATION_V1_ENABLED, value: "false"}',
+                manifest,
+            )
+            self.assertIn(
+                '{name: DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED, value: "false"}',
+                manifest,
+            )
+            self.assertIn("DASHBOARD_TASK_EXECUTOR_LOOKUP_URL", manifest)
+            self.assertIn("DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL", manifest)
             self.assertIn("dashboard.task.events.v1", manifest)
 
         rollback = (
@@ -1638,6 +1783,10 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn("不允许用直接SQL伪造completed状态", rollback)
         self.assertIn("DASHBOARD_TASK_PIPELINE_V1_ENABLED", rollback)
         self.assertIn("dashboard_task_execution_receipts", rollback)
+        self.assertIn("receipt_found", rollback)
+        self.assertIn("DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED", rollback)
+        self.assertIn("dashboard_task_dlq_receipts", rollback)
+        self.assertIn("DASHBOARD_TASK_EVENT_QUARANTINED", rollback)
 
     def test_dashboard_snapshot_is_one_tenant_bound_partial_aware_query(self) -> None:
         feature = json.loads(

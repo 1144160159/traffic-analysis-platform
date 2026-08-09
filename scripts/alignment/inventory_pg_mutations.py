@@ -50,6 +50,10 @@ DYNAMIC_BACKEND_OVERRIDES: dict[str, dict[str, Any]] = {
 # Explicit semantic roles are intentionally narrow. They may only be used for
 # reviewed, rebuildable derived state whose table name cannot express its role.
 TABLE_ROLE_OVERRIDES: dict[str, dict[str, str]] = {
+    "dashboard_task_dlq_receipts": {
+        "role": "inbox_projection",
+        "review_basis": "idempotent source topic partition offset receipt materialized only after the canonical DLQ broker acknowledgement and before source offset commit",
+    },
     "graph_hot_ips": {
         "role": "inbox_projection",
         "review_basis": "derived query-frequency cache used only to select graph warmup targets; rebuildable from query telemetry",
@@ -125,7 +129,7 @@ def source_facts(source: str) -> dict[str, bool]:
         ),
         "has_audit_signal": bool(
             re.search(
-                r"audit_logs|AuditTx|auditTrail|auditWriter|actionAudit|recordWithExecutor|insertAuditWithRunner|insertThreatIntelAudit",
+                r"audit_logs|AuditTx|auditTrail|auditWriter|actionAudit|recordWithExecutor|insertAuditWithRunner|insertThreatIntelAudit|insertDashboardTaskPipelineAudit",
                 source,
                 re.I,
             )

@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "catalog_sha256": "cc32e8a6646149cc1c3685f41999548c6ee5ddeecf673302a57995dbe79a0c47",
+  "coverage": {
+    "canonical_feature_ids": 54,
+    "formal_contracts": 38,
+    "formal_contracts_valid": 38,
+    "formal_contracts_openapi_bound": 24,
+    "non_draft_openapi_binding_gaps": [
+      "F-AUDIT-001"
+    ],
+    "standard_scope_features": 38,
+    "standard_scope_formal_contracts": 38,
+    "missing_standard_scope_contracts": [],
+    "missing_backlog_contracts": [
+      "F-ATTACKCHAIN-001",
+      "F-BASELINE-001",
+      "F-COMPLIANCE-001",
+      "F-DEPLOY-001",
+      "F-ENCRYPTED-001",
+      "F-ENCRYPTED-002",
+      "F-FORENSICS-001",
+      "F-FUSION-001",
+      "F-MLOPS-001",
+      "F-NOTIFICATION-001",
+      "F-NOTIFY-001",
+      "F-PREF-001",
+      "F-PROBE-002",
+      "F-RULE-001",
+      "F-SCREEN-001",
+      "F-SETTINGS-001"
+    ],
+    "p0_features": 16,
+    "p0_features_with_formal_contract": 16
+  }
+}

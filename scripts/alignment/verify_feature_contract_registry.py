@@ -12,6 +12,8 @@ from build_feature_contract_registry import OUTPUT, ROOT, _canonical_sha256, bui
 
 EXPECTED_FEATURES = 54
 EXPECTED_STANDARD_SCOPE_FEATURES = 38
+EXPECTED_BACKLOG_CONTRACT_GAPS = 16
+EXPECTED_NON_DRAFT_OPENAPI_BINDING_GAPS: set[str] = set()
 EXPECTED_PILOTS = {"asset_vertical", "topic_snapshot_and_actions", "alert_query_and_actions"}
 
 
@@ -26,7 +28,7 @@ def verify() -> dict[str, Any]:
     if actual.get("schema_version") != 1 or actual.get("feature_id") != "F-COMMON-001":
         errors.append("registry identity must be schema v1 and F-COMMON-001")
     if actual.get("status") != "implementing":
-        errors.append("registry cannot claim closure while formal contract gaps remain")
+        errors.append("registry cannot claim closure while backlog and runtime-adoption gaps remain")
     if actual.get("production_runtime_dependency") is not False:
         errors.append("Feature Contract registry must remain a build and release gate, not a runtime dependency")
 
@@ -80,6 +82,12 @@ def verify() -> dict[str, Any]:
             errors.append(f"{entry.get('feature_id')}: formal contract hash drift")
         if contract.get("validation_errors"):
             errors.append(f"{entry.get('feature_id')}: formal contract validation errors are not empty")
+        binding_status = contract.get("openapi_binding_status")
+        if binding_status not in {"EXACT", "PROFILED", "MISSING", "MISMATCH"}:
+            errors.append(f"{entry.get('feature_id')}: OpenAPI binding status is absent or invalid")
+        if binding_status in {"MISSING", "MISMATCH"} and contract.get("status") != "draft":
+            if "openapi_operation_binding_missing" not in entry.get("blocking_gaps", []):
+                errors.append(f"{entry.get('feature_id')}: non-draft OpenAPI binding gap was hidden")
     missing = [item for item in features if not item.get("formal_contract_present")]
     for entry in missing:
         if "versioned_feature_contract_missing" not in entry.get("blocking_gaps", []):
@@ -110,6 +118,15 @@ def verify() -> dict[str, Any]:
         "formal_contracts_valid": sum(
             not (entry.get("formal_contract") or {}).get("validation_errors") for entry in formal
         ),
+        "formal_contracts_openapi_bound": sum(
+            (entry.get("formal_contract") or {}).get("openapi_binding_status") in {"EXACT", "PROFILED"}
+            for entry in formal
+        ),
+        "non_draft_openapi_binding_gaps": sorted(
+            entry["feature_id"]
+            for entry in formal
+            if "openapi_operation_binding_missing" in entry.get("blocking_gaps", [])
+        ),
         "standard_scope_features": len(standard),
         "standard_scope_formal_contracts": sum(item.get("formal_contract_present") is True for item in standard),
         "missing_standard_scope_contracts": sorted(
@@ -128,14 +145,21 @@ def verify() -> dict[str, Any]:
     }
     if coverage != expected_coverage:
         errors.append("Feature Contract coverage counts do not match registry content")
-    if not coverage.get("missing_standard_scope_contracts"):
-        errors.append("repository evidence cannot hide the current standard-scope contract backlog")
+    if expected_coverage["missing_standard_scope_contracts"]:
+        errors.append("all 38 standard-scope features must have formal contracts after W1 freeze")
+    if set(expected_coverage["non_draft_openapi_binding_gaps"]) != EXPECTED_NON_DRAFT_OPENAPI_BINDING_GAPS:
+        errors.append("non-draft OpenAPI binding gaps changed without explicit W1 adjudication")
+    if (
+        len(expected_coverage["missing_backlog_contracts"]) != EXPECTED_BACKLOG_CONTRACT_GAPS
+        or len(coverage.get("missing_backlog_contracts") or []) != EXPECTED_BACKLOG_CONTRACT_GAPS
+    ):
+        errors.append("repository evidence cannot hide or invent backlog contract gaps")
 
     return {
         "status": "PASS" if not errors else "FAIL",
         "feature_id": "F-COMMON-001",
         "registry_integrity": "PASS" if not errors else "FAIL",
-        "contract_coverage": "PARTIAL",
+        "contract_coverage": "STANDARD_SCOPE_COMPLETE_BACKLOG_PARTIAL",
         "catalog_sha256": actual.get("catalog_sha256"),
         "coverage": coverage,
         "errors": errors,

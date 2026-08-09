@@ -5,25 +5,27 @@ metadata:
   name: kafka-acl-plan-v1
   namespace: middleware
   annotations:
-    traffic.openai.com/source-sha256: "81259061c3b2a6873b3da694a3c112f5211ac2b4c45b85fbea566f5f9965351b"
+    traffic.openai.com/source-sha256: "eb678f8533e935398a5777846d212c629bce23a337b446ac8c14bb8f03b301b6"
 data:
   apply.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
-    
+
     BOOTSTRAP=${1:?bootstrap server required}
     CLIENT_CONFIG=${2:?client properties required}
     ACL_BIN=${3:?kafka-acls.sh path required}
-    
+
     apply_acl() {
       "$ACL_BIN" --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
         --add --resource-pattern-type literal "$@"
     }
-    
+
     # Generated from contracts/events/kafka-acl-catalog.v1.json. Do not edit.
     apply_acl --allow-principal User:traffic-alert-service --operation IdempotentWrite --cluster
     apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service
     apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service
+    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-batch-assignment-execution-v1
+    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-batch-assignment-execution-v1
     apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-campaign-event-projection-v2
     apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-campaign-event-projection-v2
     apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-campaign-membership-projection-v2
@@ -46,6 +48,9 @@ data:
     apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-threat-intel-projection-v1
     apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-topic-action-projection-v2
     apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-topic-action-projection-v2
+    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.assignment.events.v1
+    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic alert.assignment.events.v1
+    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.assignment.events.v1
     apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.feedback.v1
     apply_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.feedback.v1
     apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.response.requested.v1
@@ -242,4 +247,4 @@ data:
     apply_acl --allow-principal User:traffic-threat-intel-service --operation IdempotentWrite --cluster
     apply_acl --allow-principal User:traffic-threat-intel-service --operation Describe --topic threat.intel.v1
     apply_acl --allow-principal User:traffic-threat-intel-service --operation Write --topic threat.intel.v1
-    echo "Applied 221 literal least-privilege Kafka ACL grants."
+    echo "Applied 226 literal least-privilege Kafka ACL grants."

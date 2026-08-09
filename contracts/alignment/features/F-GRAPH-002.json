@@ -1,0 +1,66 @@
+{
+  "feature_id": "F-GRAPH-002",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/graph"],
+    "preserved_actions": [],
+    "preserved_api_operations": ["GET /v1/graph/explore"],
+    "preserved_query_states": ["entity_type", "relation_type", "start_time", "end_time", "max_depth", "limit"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "graph.saved-views-and-exports",
+    "controls": [],
+    "states": ["loading", "empty", "accepted", "running", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "saveGraphView",
+    "method": "POST",
+    "path": "/v1/graph/views",
+    "response_envelope": "data-meta-error",
+    "async": false,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "personal and shared graph views persist tenant-scoped query, layout, visibility and revision in PostgreSQL",
+      "browser-local drafts remain importable during compatibility but are never labelled platform-saved",
+      "formal graph export uses an asynchronous checksum-verified object job and never a browser-only Blob as evidence"
+    ],
+    "states": ["saved", "archived"],
+    "compensation": "archive the current view revision or cancel the export job while retaining history and audit"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "nebulagraph", "minio"],
+    "migration": "additive graph_saved_views, graph_view_history, graph_export_jobs and object manifest migration required",
+    "event_types": ["graph.view.saved.v1", "graph.export.requested.v1"],
+    "source_watermarks": ["postgresql.graph_saved_views.revision", "nebulagraph.projection.version", "minio.graph_exports.version_id"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["graph:read"],
+    "negative_tests": [
+      "cross-tenant personal or shared view cannot be listed or imported",
+      "viewer cannot publish or overwrite a shared view without write authority",
+      "export object cannot be downloaded after expiry or manifest mismatch"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["save personal view", "publish shared view", "import local draft", "large graph export"],
+    "stop_conditions": ["view conflict, export size, queue lag or object generation budget is exceeded"]
+  },
+  "acceptance": {
+    "tests": ["G0 saved-view and export contracts", "G1 revision/idempotency/local-draft migration", "G2 real PostgreSQL-Nebula-MinIO", "G3 view-query-object-audit reconciliation", "G4 large graph export profile", "G5 Windows Chrome cross-device restore and download"],
+    "evidence": ["a second browser restores the same revisioned platform view and a formal export matches its query snapshot and object manifest"]
+  },
+  "rollout": {
+    "feature_flag": "GRAPH_SAVED_VIEWS_V1_ENABLED",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-GRAPH-002-rollback.md"
+  }
+}

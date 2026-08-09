@@ -84,6 +84,26 @@ def validate(root: Path = ROOT) -> dict[str, Any]:
         if field not in error_schema.get("properties", {}):
             errors.append(f"OpenAPI Error property missing: {field}")
 
+    openapi_operations = {
+        operation.get("operationId"): operation
+        for path_item in (openapi.get("paths") or {}).values()
+        if isinstance(path_item, dict)
+        for method, operation in path_item.items()
+        if method in {"get", "post", "put", "patch", "delete"} and isinstance(operation, dict)
+    }
+    pilot_operations = protocol.get("pilot_operations") or []
+    pilot_operation_ids = [item.get("operation_id") for item in pilot_operations]
+    if len(pilot_operation_ids) != len(set(pilot_operation_ids)):
+        errors.append("common response pilot operation IDs must be unique")
+    for item in pilot_operations:
+        if item.get("adoption") != "IMPLEMENTED_G1":
+            continue
+        operation = openapi_operations.get(item.get("operation_id"))
+        if operation is None:
+            errors.append(f"implemented G1 pilot operation is absent from OpenAPI: {item.get('operation_id')}")
+        elif operation.get("x-feature-id") != item.get("feature_id"):
+            errors.append(f"implemented G1 pilot feature ownership differs: {item.get('operation_id')}")
+
     codes = protocol["error"]["catalog"]
     code_ids = [item["code"] for item in codes]
     if len(code_ids) != len(set(code_ids)):

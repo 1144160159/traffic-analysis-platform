@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-asset-projection-opensearch-g1-v1",
+  "captured_at": "2026-08-07T08:41:50Z",
+  "status": "PASS",
+  "scoped_evidence_status": "PASS_ISOLATED_ASSET_OPENSEARCH_PROJECTION",
+  "remediation_ids": [
+    "F-ASSET-002",
+    "T-OS-002"
+  ],
+  "candidate": {
+    "head": "fb47f160b7802b96de972fee4d5e58ebe024c847",
+    "source_sha256": "225dbc7ab93e285e91ff7f7f403755b1ec99b78914fa5e4130b74ddff5ecc01c",
+    "source_file_count": 2342,
+    "clean_before_and_after_g0": true
+  },
+  "g0_reference": {
+    "run_id": "20260807-remediation-g0-full-v177",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v177/manifest.json",
+    "manifest_sha256": "0a7b42dcb235815496f1f83deb6364b48c0a246b629abc1bbb7be83a75c9be9b",
+    "status": "PASS",
+    "commands": [
+      {
+        "name": "alignment",
+        "status": "PASS",
+        "duration_seconds": 81.182,
+        "artifact": "doc/02_acceptance/runs/20260807-remediation-g0-full-v177/alignment.log",
+        "sha256": "7710390b3ce18d9b83bde7bbd60f404252265ceb5ad029eb9d01effaefc27c57"
+      },
+      {
+        "name": "full",
+        "status": "PASS",
+        "duration_seconds": 114.889,
+        "artifact": "doc/02_acceptance/runs/20260807-remediation-g0-full-v177/full.log",
+        "sha256": "d870ab7f9057772df56a6147adcbee6e2555174f50a87d46eb70301486c55cbc"
+      },
+      {
+        "name": "python",
+        "status": "PASS",
+        "duration_seconds": 210.857,
+        "artifact": "doc/02_acceptance/runs/20260807-remediation-g0-full-v177/python.log",
+        "sha256": "d6c50cabbbdc371343d8980ae32e80bcffe88bf4aeef26e33ea14e31501e33f3"
+      }
+    ]
+  },
+  "g1_result": {
+    "artifact": "doc/02_acceptance/runs/20260807-remediation-asset-projection-opensearch-g1-v1/result.json",
+    "sha256": "c438527d30cf30a71a3fec2bdbf927179983b30f002fcf500d06c8c4427383d4",
+    "opensearch_image": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
+    "image_id": "sha256:bf1e1cd1fa30bd1da8596bff12630f5e67648dfb7720a52c773c495db1f0135a",
+    "template_authority": "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml",
+    "mapping_sha256": "53647de117e5558b9adcd2c1407a00bb566eafbdc66d5944cc2c6f91bf52bbc1",
+    "sentinel_verified": true,
+    "write_alias": "assets-v2-write",
+    "read_alias": "assets-v2-read",
+    "strict_mapping_verified": true,
+    "deterministic_document_id_verified": true,
+    "same_version_replay_verified": true,
+    "older_version_rejected": true,
+    "persistent_volume_attached": false,
+    "shared_environment_touched": false,
+    "container_removed": true
+  },
+  "source_artifacts": [
+    {
+      "path": "contracts/alignment/asset-expand-control.v1.json",
+      "sha256": "2703e3e8be58a54c3cbc975ad53dbaa1d319ff299382a2c54efd99acdb71a03b"
+    },
+    {
+      "path": "scripts/alignment/verify_asset_projection_opensearch_ephemeral.py",
+      "sha256": "78c8beb7d843e2c85b1c4e0fb81a5299ad9d6ecc8f9a0fe2ffb9246ef32dbce3"
+    },
+    {
+      "path": "scripts/alignment/verify_asset_expand_guardrails.py",
+      "sha256": "46ee5483b6c50402db71ac9354c81cd0c76c2435fb94f53873ac3602bb5e1f70"
+    },
+    {
+      "path": "tests/alignment/test_asset_projection_opensearch_ephemeral_guard.py",
+      "sha256": "a321c25fd1452ed1858b65e7e8c81bce001b35dd189ee07bf5203dcfd5fd68ee"
+    },
+    {
+      "path": "go/control-plane/internal/asset/consumer/asset_projection_targets_test.go",
+      "sha256": "c59d1fe27f07cd23ab8619ec696bce3da4e0e91037fe56d5714a94b06d5de4c9"
+    },
+    {
+      "path": "deployments/kubernetes/infrastructure/05-opensearch.yaml",
+      "sha256": "c8a8242b3678ba30f87f7b4354bf52c97a3bbac2779d0b3d9bca9abaf1f5dc13"
+    },
+    {
+      "path": "deployments/kubernetes/image-digests.lock.json",
+      "sha256": "ba5bc645a1e7b9d6c83ece1e9e1f054143919b0b3525416a1e8e1ed49ad16f47"
+    }
+  ],
+  "gate_status": {
+    "G0": "PASS_SAME_SOURCE",
+    "G1": "PASS_FOR_ISOLATED_ASSET_OPENSEARCH_TARGET_ONLY",
+    "G2": "OPEN_NO_RELEASE_CANDIDATE_IMAGE_OR_REAL_SERVICE_WRITE",
+    "G3": "OPEN_NO_PG_KAFKA_CH_OS_NEBULA_MINIO_AUDIT_RECONCILIATION",
+    "G4": "OPEN_NO_APPROVED_PERFORMANCE_OR_FAILURE_PROFILE",
+    "G5": "OPEN_NO_WINDOWS_CHROME_ASSET_JOURNEY",
+    "G6": "OPEN_NO_APPROVED_TARGET_EXPAND_CANARY_SWITCH_ROLLBACK_OR_OBSERVATION",
+    "G7": "OPEN",
+    "G8": "BLOCKED_EXTERNAL"
+  },
+  "production_applied": false,
+  "production_mutations": [],
+  "closure_claim": false,
+  "remaining_g1_scope": [
+    "temporary asset.events.v2 broker produce consume and durable inbox boundary",
+    "real NebulaGraph target and independent retry boundary",
+    "same-trace PostgreSQL Kafka OpenSearch NebulaGraph MinIO and audit reconciliation"
+  ],
+  "next_actions": [
+    "exercise asset.events.v2 through an owned Redpanda broker and sentinel PostgreSQL inbox",
+    "add an owned NebulaGraph projection target test without production credentials",
+    "run approved target readiness canaries before enabling ASSET_PROJECTION_ENABLED"
+  ]
+}

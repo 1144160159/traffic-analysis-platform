@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "run_id": "pg-transaction-outbox-whitelist-pipeline-v1",
+  "container": "codex-whitelist-pipeline-pg-e8566a00c61c",
+  "image": "postgres:16",
+  "status": "PASS",
+  "schema_files": 14,
+  "sentinel_verified": true,
+  "loopback_only": true,
+  "shared_environment_touched": false,
+  "persistent_volume_attached": false,
+  "container_removed": true,
+  "secrets_captured": false,
+  "test_output": "=== RUN   TestWhitelistEventPipelineEphemeralPostgres\n--- PASS: TestWhitelistEventPipelineEphemeralPostgres (0.06s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/consumer\t0.072s",
+  "errors": []
+}

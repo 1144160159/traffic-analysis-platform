@@ -142,4 +142,3 @@ public enum TaskType
 
   // @@protoc_insertion_point(enum_scope:traffic.v1.TaskType)
 }
-

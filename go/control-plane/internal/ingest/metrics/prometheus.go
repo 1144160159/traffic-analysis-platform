@@ -272,6 +272,10 @@ func (m *Metrics) RecordReject401() {
 	m.rejectTotal.WithLabelValues("401").Inc()
 }
 
+func (m *Metrics) RecordReject403() {
+	m.rejectTotal.WithLabelValues("403").Inc()
+}
+
 func (m *Metrics) RecordReject503() {
 	m.rejectTotal.WithLabelValues("503").Inc()
 }

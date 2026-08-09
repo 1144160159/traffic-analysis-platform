@@ -3,6 +3,7 @@ package service_test
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -401,6 +402,15 @@ func TestAssetExportRealMinIOArtifactLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
+		for object := range client.ListObjects(context.Background(), bucket, minio.ListObjectsOptions{Recursive: true}) {
+			if object.Err != nil {
+				t.Errorf("list ephemeral MinIO object: %v", object.Err)
+				continue
+			}
+			if err := client.RemoveObject(context.Background(), bucket, object.Key, minio.RemoveObjectOptions{}); err != nil {
+				t.Errorf("remove ephemeral MinIO object %q: %v", object.Key, err)
+			}
+		}
 		if err := client.RemoveBucket(context.Background(), bucket); err != nil {
 			t.Errorf("remove ephemeral MinIO bucket: %v", err)
 		}
@@ -438,12 +448,25 @@ func TestAssetExportRealMinIOArtifactLifecycle(t *testing.T) {
 	if completed.Status != config.AssetExportStatusCompleted || completed.ObjectBucket != bucket || completed.ArtifactSHA256 == "" || completed.SizeBytes <= 0 {
 		t.Fatalf("completed=%+v", completed)
 	}
+	if completed.TraceID != "trace-real-minio" || completed.SnapshotID == "" || completed.AsOf.IsZero() ||
+		len(completed.SourceWatermarks) != 4 || completed.RetentionUntil.Before(time.Now().UTC()) {
+		t.Fatalf("incomplete export manifest trace=%q snapshot=%q as_of=%v watermarks=%v retention=%v",
+			completed.TraceID, completed.SnapshotID, completed.AsOf, completed.SourceWatermarks, completed.RetentionUntil)
+	}
+	expectedObjectKey := assetExportMinIOIntegrationTenant + "/assets/exports/" + job.JobID + ".jsonl"
+	if completed.ObjectKey != expectedObjectKey {
+		t.Fatalf("object key=%q want=%q", completed.ObjectKey, expectedObjectKey)
+	}
 	content, err := svc.ReadAssetExportArtifact(context.Background(), completed)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !bytes.Contains(content, []byte("MINIO-001")) || !bytes.Contains(content, []byte("minio-server")) {
 		t.Fatalf("unexpected MinIO artifact: %s", content)
+	}
+	contentSHA256 := fmt.Sprintf("sha256:%x", sha256.Sum256(content))
+	if contentSHA256 != completed.ArtifactSHA256 {
+		t.Fatalf("download sha256=%q manifest=%q", contentSHA256, completed.ArtifactSHA256)
 	}
 
 	stat, err := client.StatObject(context.Background(), completed.ObjectBucket, completed.ObjectKey, minio.StatObjectOptions{})
@@ -452,6 +475,66 @@ func TestAssetExportRealMinIOArtifactLifecycle(t *testing.T) {
 	}
 	if stat.Size != completed.SizeBytes || stat.ContentType != completed.MIMEType {
 		t.Fatalf("MinIO metadata size=%d/%d content_type=%q/%q", stat.Size, completed.SizeBytes, stat.ContentType, completed.MIMEType)
+	}
+	if err := svc.RecordAssetExportDownload(
+		context.Background(), completed, "integration-analyst", "trace-real-minio",
+		"request-real-minio-download", "127.0.0.1", "integration-test",
+	); err != nil {
+		t.Fatal(err)
+	}
+	var reconciled bool
+	if err := db.QueryRow(`
+		SELECT
+		  j.trace_id=$3
+		  AND j.snapshot_id<>''
+		  AND j.artifact_sha256=$4
+		  AND j.object_bucket=$5
+		  AND j.object_key=$6
+		  AND j.size_bytes=$7
+		  AND (SELECT count(*) FROM jsonb_object_keys(j.source_watermarks))=4
+		  AND (SELECT count(*) FROM asset_export_outbox o
+		         WHERE o.tenant_id=$1 AND o.job_id=$2::uuid
+		           AND o.partition_key=$1 || ':' || $2::text
+		           AND o.payload->>'tenant_id'=$1
+		           AND o.payload->>'job_id'=$2::text
+		           AND o.payload->>'trace_id'=$3)=2
+		  AND (SELECT count(*) FROM asset_export_outbox o
+		         WHERE o.tenant_id=$1 AND o.job_id=$2::uuid
+		           AND o.event_type='traffic.asset.export.v1.Requested'
+		           AND o.aggregate_version=1
+		           AND o.payload->>'query_sha256'=j.query_sha256)=1
+		  AND (SELECT count(*) FROM asset_export_outbox o
+		         WHERE o.tenant_id=$1 AND o.job_id=$2::uuid
+		           AND o.event_type='traffic.asset.export.v1.Completed'
+		           AND o.aggregate_version=j.revision
+		           AND o.payload->>'snapshot_id'=j.snapshot_id
+		           AND o.payload->>'artifact_sha256'=j.artifact_sha256
+		           AND o.payload->>'object_bucket'=j.object_bucket
+		           AND o.payload->>'object_key'=j.object_key)=1
+		  AND (SELECT count(*) FROM audit_logs a
+		         WHERE a.tenant_id=$1 AND a.object_id=$2::text AND a.trace_id=$3
+		           AND a.detail->>'trace_id'=$3
+		           AND a.action IN ('ASSET_EXPORT_REQUESTED','ASSET_EXPORT_COMPLETED','ASSET_EXPORT_DOWNLOADED'))=3
+		  AND (SELECT count(*) FROM audit_logs a
+		         WHERE a.tenant_id=$1 AND a.object_id=$2::text AND a.trace_id=$3
+		           AND a.action='ASSET_EXPORT_COMPLETED'
+		           AND a.detail->>'snapshot_id'=j.snapshot_id
+		           AND a.detail->>'artifact_sha256'=j.artifact_sha256
+		           AND a.detail->>'object_key'=j.object_key)=1
+		  AND (SELECT count(*) FROM audit_logs a
+		         WHERE a.tenant_id=$1 AND a.object_id=$2::text AND a.trace_id=$3
+		           AND a.action='ASSET_EXPORT_DOWNLOADED'
+		           AND a.detail->>'artifact_sha256'=j.artifact_sha256
+		           AND a.detail->>'object_key'=j.object_key)=1
+		FROM asset_export_jobs j
+		WHERE j.tenant_id=$1 AND j.job_id=$2::uuid`,
+		assetExportMinIOIntegrationTenant, job.JobID, "trace-real-minio",
+		completed.ArtifactSHA256, bucket, completed.ObjectKey, completed.SizeBytes,
+	).Scan(&reconciled); err != nil {
+		t.Fatal(err)
+	}
+	if !reconciled {
+		t.Fatal("PostgreSQL job, outbox, audit, manifest and MinIO object did not reconcile")
 	}
 	if err := client.RemoveObject(context.Background(), completed.ObjectBucket, completed.ObjectKey, minio.RemoveObjectOptions{}); err != nil {
 		t.Fatal(err)

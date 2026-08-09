@@ -15,12 +15,16 @@ func TestMain(m *testing.M) {
 }
 
 func TestSavedViewEventTopicDefault(t *testing.T) {
+	t.Setenv("ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED", "false")
 	cfg, err := Load()
 	if err != nil {
 		t.Fatal(err)
 	}
 	if cfg.Kafka.SavedViewEventTopic != "alert.saved-view.events.v1" {
 		t.Fatalf("SavedViewEventTopic = %q", cfg.Kafka.SavedViewEventTopic)
+	}
+	if cfg.Kafka.SavedViewTransactionEnabled {
+		t.Fatal("saved-view transaction dispatcher must be disabled by default")
 	}
 }
 

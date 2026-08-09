@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-asset-expand-g1-v2",
+  "container": "codex-asset-expand-pg-6d222d34c8e4",
+  "image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+  "image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+  "status": "PASS",
+  "sentinel_verified": true,
+  "migration_count": 10,
+  "replay_count": 2,
+  "schema_fingerprints": [
+    "c7e0028272fc3b1abc33fb6fb940d3815dd1dc5e4d313c995a9f3849a20b3bc9",
+    "c7e0028272fc3b1abc33fb6fb940d3815dd1dc5e4d313c995a9f3849a20b3bc9"
+  ],
+  "migration_versions": [
+    "202607302030",
+    "202607310015",
+    "202607310030",
+    "202607310045",
+    "202607310100",
+    "202607311300",
+    "202607311315",
+    "202607311330",
+    "202608031510",
+    "202608031520"
+  ],
+  "expected_table_count": 22,
+  "actual_table_count": 22,
+  "baseline_backfill_verified": true,
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "container_removed": true,
+  "errors": []
+}

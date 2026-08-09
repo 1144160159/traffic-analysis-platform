@@ -1,0 +1,12 @@
+test_checked_in_bundle_is_valid_but_default_off (tests.alignment.test_minio_tls_cutover.MinIOTLSCutoverTests.test_checked_in_bundle_is_valid_but_default_off) ... ok
+test_false_cutover_readiness_claim_is_rejected (tests.alignment.test_minio_tls_cutover.MinIOTLSCutoverTests.test_false_cutover_readiness_claim_is_rejected) ... ok
+test_local_image_cannot_claim_registry_distribution (tests.alignment.test_minio_tls_cutover.MinIOTLSCutoverTests.test_local_image_cannot_claim_registry_distribution) ... ok
+test_local_image_id_cannot_be_used_as_registry_digest (tests.alignment.test_minio_tls_cutover.MinIOTLSCutoverTests.test_local_image_id_cannot_be_used_as_registry_digest) ... ok
+test_missing_component_is_rejected (tests.alignment.test_minio_tls_cutover.MinIOTLSCutoverTests.test_missing_component_is_rejected) ... ok
+test_plaintext_minio_regression_is_rejected (tests.alignment.test_minio_tls_cutover.MinIOTLSCutoverTests.test_plaintext_minio_regression_is_rejected) ... ok
+test_rendered_workload_cannot_fall_back_to_the_base_image (tests.alignment.test_minio_tls_cutover.MinIOTLSCutoverTests.test_rendered_workload_cannot_fall_back_to_the_base_image) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 2.278s
+
+OK

@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -30,6 +31,106 @@ func TestProjectionDebtBatchCommitsAtomically(t *testing.T) {
 	}
 	if err := NewProjectionDebtStore(db).RecordProjectionDebt(context.Background(), alerts, "alerts-v2-write", errors.New("OpenSearch failed")); err != nil {
 		t.Fatal(err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProjectionOutcomeCommitsAppliedAndPendingAtomically(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO alert_opensearch_projection_watermarks").
+		WithArgs("tenant-a", "alert-a", "event-a", sqlmock.AnyArg(), sqlmock.AnyArg(), "alerts-v2-write").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO alert_opensearch_projection_debts").
+		WithArgs("tenant-a", "alert-b", "event-b", sqlmock.AnyArg(), sqlmock.AnyArg(), "alerts-v2-write", "one item rejected").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+	now := time.Unix(1_800_000_000, 0).UTC()
+	alerts := projectionTestAlerts()
+	alerts[0].UpdatedTs, alerts[1].UpdatedTs = now, now
+	if err := NewProjectionDebtStore(db).RecordProjectionOutcome(
+		context.Background(), alerts[:1], alerts[1:], "alerts-v2-write", errors.New("one item rejected"),
+	); err != nil {
+		t.Fatal(err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProjectionOutcomeRollsBackAppliedIfDebtFails(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO alert_opensearch_projection_watermarks").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO alert_opensearch_projection_debts").WillReturnError(errors.New("PostgreSQL unavailable"))
+	mock.ExpectRollback()
+	alerts := projectionTestAlerts()
+	if err := NewProjectionDebtStore(db).RecordProjectionOutcome(
+		context.Background(), alerts[:1], alerts[1:], "alerts-v2-write", errors.New("one item rejected"),
+	); err == nil {
+		t.Fatal("mixed projection outcome must roll back when debt persistence fails")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProjectionReconcileManifestPersistsPostRepairReceipt(t *testing.T) {
+	payload, err := projectionReconcileManifest(ProjectionReconcileResult{
+		MissingIDs: []string{"before-missing"}, ExtraIDs: []string{"manual-extra"}, StaleIDs: []string{"before-stale"},
+		VerificationPerformed: true, VerificationTargetCount: 3, RemainingExtraCount: 1,
+		RemainingExtraIDs: []string{"manual-extra"}, WatermarksConverged: true, RepairConverged: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest struct {
+		PostRepair struct {
+			Performed           bool     `json:"performed"`
+			TargetCount         int      `json:"target_count"`
+			ExtraCount          int      `json:"extra_count"`
+			ExtraIDs            []string `json:"extra_ids"`
+			WatermarksConverged bool     `json:"watermarks_converged"`
+			RepairConverged     bool     `json:"repair_converged"`
+		} `json:"post_repair_verification"`
+	}
+	if err := json.Unmarshal(payload, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if !manifest.PostRepair.Performed || manifest.PostRepair.TargetCount != 3 || manifest.PostRepair.ExtraCount != 1 ||
+		len(manifest.PostRepair.ExtraIDs) != 1 || manifest.PostRepair.ExtraIDs[0] != "manual-extra" || !manifest.PostRepair.WatermarksConverged || !manifest.PostRepair.RepairConverged {
+		t.Fatalf("post-repair receipt missing from manifest: %s", payload)
+	}
+}
+
+func TestProjectionWatermarkMismatchQueryIsBoundedAndVersioned(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	mock.ExpectQuery("WITH expected AS").WithArgs(sqlmock.AnyArg(), "alerts-v2-write").
+		WillReturnRows(sqlmock.NewRows([]string{"alert_id"}).AddRow("alert-b"))
+	now := time.Unix(1_800_000_000, 0).UTC()
+	mismatches, err := NewProjectionDebtStore(db).ListProjectionWatermarkMismatches(context.Background(), []*Alert{
+		{TenantID: "tenant-a", AlertID: "alert-a", UpdatedTs: now},
+		{TenantID: "tenant-a", AlertID: "alert-b", UpdatedTs: now},
+	}, "alerts-v2-write")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(mismatches) != 1 || mismatches[0] != "alert-b" {
+		t.Fatalf("unexpected watermark mismatches: %v", mismatches)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)

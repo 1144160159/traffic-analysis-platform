@@ -1,0 +1,14 @@
+
+> traffic-analysis-ui@2.0.0 test
+> vitest --run src/services/alertTriageApi.test.ts
+
+
+ RUN  v1.6.1 /home/wangwt/phase_2/code/traffic-analysis-platform-remediation-integration/web/ui
+
+ ✓ src/services/alertTriageApi.test.ts  (3 tests) 5ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  13:55:31
+   Duration  2.71s (transform 177ms, setup 53ms, collect 37ms, tests 5ms, environment 567ms, prepare 1.46s)
+

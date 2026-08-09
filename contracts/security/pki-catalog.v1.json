@@ -12,7 +12,7 @@
     {
       "domain": "external_secret_rotation_metadata",
       "path": "deployments/kubernetes/security/external-secrets-template.yaml",
-      "sha256": "6cf6fb052d137d7331bedafd5246ccecccf0fe6fd92ffb8c29e765309ab9944a"
+      "sha256": "1bbc367a639559ff5c5790512cc222aff6f198baa5904fb7e64d91af1419f948"
     },
     {
       "domain": "gateway_and_keycloak_transport",
@@ -22,7 +22,7 @@
     {
       "domain": "go_workload_bindings",
       "path": "deployments/kubernetes/applications/go-services.yaml",
-      "sha256": "47178b3d1e62914e11147eea5045e7b6c17fa231332396a12c8a949534a34e5d"
+      "sha256": "5a90080c98ebc01e20a9e4cf9c66a34e0233410244a410ca1dbb0176f8000cca"
     },
     {
       "domain": "ingest_production_guard",
@@ -362,5 +362,5 @@
       "performance fault Windows Chrome independent G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "a8aa990682e5b65f5f720c600b0ea3d6e7003b4da232c3437854b79e8639507a"
+  "catalog_sha256": "fcec2cea02c7e804282db25783bd2581d4cbc2064c21f4c202a726f37bcaeb1d"
 }

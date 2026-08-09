@@ -1,0 +1,61 @@
+{
+  "feature_id": "F-GRAPH-003",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/graph", "/assets"],
+    "preserved_actions": [],
+    "preserved_api_operations": ["GET /v1/graph/explore"],
+    "preserved_query_states": ["assetId", "entity_type", "relation_type", "start_time", "end_time"],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "graph.asset-context",
+    "controls": [],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "resolveGraphAssetContext",
+    "method": "GET",
+    "path": "/v1/graph/context/assets/{asset_id}",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "graph:read can resolve only the minimum tenant-scoped asset context required for graph navigation",
+      "asset fields outside the graph projection require their original asset scopes and remain redacted otherwise",
+      "deep-link authorization is evaluated server-side and never inferred from client route possession"
+    ]
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "nebulagraph", "redis"],
+    "migration": "additive graph_asset_context projection and field-redaction policy version required",
+    "source_watermarks": ["postgresql.assets.revision", "nebulagraph.asset_projection.version", "redis.graph_context.policy_version"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["graph:read"],
+    "negative_tests": [
+      "graph-only role cannot observe restricted asset owner, credentials or governance fields",
+      "cross-tenant assetId returns not found",
+      "asset-read-only role receives no graph edges without graph:read"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["graph-only asset deep link", "graph plus asset read", "redacted field response", "missing asset"],
+    "stop_conditions": ["authorization, policy lookup or context projection latency exceeds budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 field and scope matrix", "G1 server-side redaction negative tests", "G2 real PG-Nebula policy read", "G3 asset-context-projection reconciliation", "G4 authorization cache profile", "G5 Windows Chrome graph-only deep link"],
+    "evidence": ["role-combination tests and HAR prove graph-only navigation succeeds with minimal fields while restricted asset fields never leave the server"]
+  },
+  "rollout": {
+    "feature_flag": "GRAPH_ASSET_CONTEXT_V1_ENABLED",
+    "strategy": "shadow-read",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-GRAPH-003-rollback.md"
+  }
+}

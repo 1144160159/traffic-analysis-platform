@@ -31,8 +31,8 @@ AUTHORITY_PATHS = {
 }
 PILOT_FEATURES = {
     "asset_vertical": ["F-ASSET-001", "F-ASSET-002", "F-ASSET-003", "F-ASSET-004", "F-ASSET-005", "F-ASSET-006"],
-    "topic_snapshot_and_actions": ["F-TOPIC-001", "F-TOPIC-002"],
-    "alert_query_and_actions": ["F-ALERT-001", "F-ALERT-002"],
+    "topic_snapshot_and_actions": ["F-TOPIC-001", "F-TOPIC-002", "F-TOPIC-003", "F-TOPIC-004"],
+    "alert_query_and_actions": ["F-ALERT-001", "F-ALERT-002", "F-ALERT-003", "F-ALERT-004", "F-ALERT-005", "F-ALERT-006"],
 }
 
 
@@ -63,6 +63,15 @@ def build_registry() -> dict[str, Any]:
     package_document = _load(PACKAGES)
     packages = {item["id"]: item for item in package_document["packages"]}
     inventory = build_inventory()
+    openapi = _load(AUTHORITY_PATHS["rest_contract_authority"])
+    openapi_by_route: dict[tuple[str, str], dict[str, Any]] = {}
+    for api_path, path_item in (openapi.get("paths") or {}).items():
+        if not isinstance(path_item, dict):
+            continue
+        for api_method, operation in path_item.items():
+            if api_method.lower() not in {"get", "post", "put", "patch", "delete"} or not isinstance(operation, dict):
+                continue
+            openapi_by_route[(api_method.upper(), str(api_path))] = operation
     formal: dict[str, tuple[Path, dict[str, Any]]] = {}
     duplicate_contract_ids: list[str] = []
     for path in sorted(CONTRACTS.glob("*.json")):
@@ -99,14 +108,35 @@ def build_registry() -> dict[str, Any]:
         else:
             path, contract = registered
             validation_errors = _validate_contract(contract, inventory)
+            contract_api = contract.get("api") or {}
+            api_method = str(contract_api.get("method") or "").upper()
+            api_path = str(contract_api.get("path") or "")
+            operation_id = str(contract_api.get("operation_id") or "")
+            bound_operation = openapi_by_route.get((api_method, api_path))
+            bound_operation_id = str((bound_operation or {}).get("operationId") or "")
+            bound_feature_id = str((bound_operation or {}).get("x-feature-id") or "")
+            profile_feature_ids = {
+                str(value) for value in (bound_operation or {}).get("x-contract-profile-feature-ids") or []
+            }
+            if bound_operation is None:
+                openapi_binding_status = "MISSING"
+            elif operation_id == bound_operation_id and feature_id == bound_feature_id:
+                openapi_binding_status = "EXACT"
+            elif feature_id in profile_feature_ids:
+                openapi_binding_status = "PROFILED"
+            else:
+                openapi_binding_status = "MISMATCH"
             entry["formal_contract"] = {
                 "path": _relative(path),
                 "sha256": _sha256(path.read_bytes()),
                 "contract_version": contract.get("contract_version"),
                 "status": contract.get("status"),
-                "operation_id": (contract.get("api") or {}).get("operation_id"),
-                "api_method": (contract.get("api") or {}).get("method"),
-                "api_path": (contract.get("api") or {}).get("path"),
+                "operation_id": contract_api.get("operation_id"),
+                "api_method": contract_api.get("method"),
+                "api_path": contract_api.get("path"),
+                "openapi_binding_status": openapi_binding_status,
+                "openapi_bound_operation_id": bound_operation_id or None,
+                "openapi_bound_feature_id": bound_feature_id or None,
                 "required_scopes": (contract.get("permissions") or {}).get("required_scopes") or [],
                 "preserved_routes": (contract.get("compatibility") or {}).get("preserved_routes") or [],
                 "preserved_actions": (contract.get("compatibility") or {}).get("preserved_actions") or [],
@@ -115,6 +145,8 @@ def build_registry() -> dict[str, Any]:
             }
             if validation_errors:
                 entry["blocking_gaps"].append("formal_contract_validation_failed")
+            if contract.get("status") != "draft" and openapi_binding_status not in {"EXACT", "PROFILED"}:
+                entry["blocking_gaps"].append("openapi_operation_binding_missing")
         features.append(entry)
 
     feature_ids = {entry["feature_id"] for entry in features}
@@ -179,6 +211,15 @@ def build_registry() -> dict[str, Any]:
             "formal_contracts_valid": sum(
                 not (entry["formal_contract"] or {}).get("validation_errors") for entry in formal_entries
             ),
+            "formal_contracts_openapi_bound": sum(
+                (entry["formal_contract"] or {}).get("openapi_binding_status") in {"EXACT", "PROFILED"}
+                for entry in formal_entries
+            ),
+            "non_draft_openapi_binding_gaps": sorted(
+                entry["feature_id"]
+                for entry in formal_entries
+                if "openapi_operation_binding_missing" in entry["blocking_gaps"]
+            ),
             "standard_scope_features": len(standard_entries),
             "standard_scope_formal_contracts": sum(entry["formal_contract_present"] for entry in standard_entries),
             "missing_standard_scope_contracts": missing_standard,
@@ -205,12 +246,14 @@ def build_registry() -> dict[str, Any]:
             "repository": [
                 "all 54 feature IDs resolve to exactly one accountable work package",
                 "all existing formal contracts hash-bind UI API domain data permission performance acceptance and rollout fields",
-                "all P0 feature contracts are present and the asset topic and alert pilots are traceable",
-                "missing standard-scope and backlog contracts remain explicit and cannot be hidden",
+                "all 38 standard-scope feature contracts are present and the asset topic and alert pilots are traceable",
+                "implemented REST operations bind their method path operation_id and feature ownership to the OpenAPI authority",
+                "missing backlog contracts remain explicit and cannot be hidden",
             ],
             "remaining": [
-                "author the missing standard-scope contracts before W1 contract freeze",
                 "author backlog contracts without deleting routes actions operations scopes or audit events",
+                "complete production adoption and observation for the audit batch ingress and governed scope catalog before closure",
+                "implement the draft standard-scope API migration projection and object boundaries before claiming runtime adoption",
                 "bind generated TypeScript and compatibility telemetry to every formal contract",
                 "capture old-client usage and live contract-version adoption by candidate",
                 "complete compatibility diff G2 through G7 and external G8 gates",

@@ -131,7 +131,23 @@
         "go/control-plane/internal/alert/api/handler_alert_response_workflow.go"
       ],
       "consumers": ["go/control-plane/internal/alert/consumer/alert_response_event_consumer.go"],
-      "known_gap": "Dry-run requests receive deterministic simulated receipts. Non-dry-run requests require an immutable independent approval before outbox delivery. The provider adapter remains unavailable, so approved real events truthfully terminate as blocked_external_executor and compensation requests cannot claim success."
+      "known_gap": "Dry-run requests receive deterministic simulated receipts. Approved real events can use the default-off provider executor with stable idempotency, mandatory authority lookup and atomic PostgreSQL receipt/action/audit commit. Permanent poison events have a repository-owned PostgreSQL DLQ receipt/audit barrier after canonical DLQ acknowledgement and before source-offset commit. Approved-candidate rollout, real Kafka/source-offset fault evidence, asynchronous authority recheck and external compensation execution remain open."
+    },
+    {
+      "name": "alert.assignment.events.v1",
+      "partitions": 6,
+      "retention_ms": 604800000,
+      "retention_bytes": 134217728,
+      "key_contract": "tenant_id+batch_id",
+      "message_type": "AlertBatchAssignmentLifecycleV1Json",
+      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AlertBatchAssignmentLifecycleV1Json"},
+      "readiness": "active",
+      "producers": [
+        "go/control-plane/internal/alert/api/alert_batch_assignment_v1.go",
+        "go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go"
+      ],
+      "consumers": ["go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go"],
+      "known_gap": "The default-off pipeline has deterministic PostgreSQL intent, a strict independently idempotent consumer, ClickHouse projection receipts and a post-DLQ-ack source-tuple barrier. Release-candidate Kafka/ClickHouse reconciliation, compensation and G2-G6 evidence remain open."
     },
     {
       "name": "alert.saved-view.events.v1",
@@ -237,7 +253,7 @@
       "readiness": "active",
       "producers": ["go/control-plane/internal/alert/api/dashboard_task_pipeline.go"],
       "consumers": ["go/control-plane/internal/alert/api/dashboard_task_pipeline.go"],
-      "known_gap": "The pipeline is default-off until PostgreSQL migration 202608041930, the strict provider adapter and the dedicated Kafka service identity are deployed; live broker offsets and provider-effect reconciliation remain G2/G3 evidence gates."
+      "known_gap": "The default-off owned G1 now covers execution and compensation authority lookup plus poison-message DLQ acknowledgement failure, source-offset retention, restart redelivery and PostgreSQL/audit materialization. Approved replicated Kafka, release-candidate provider effects and G2/G3 reconciliation remain open."
     },
     {
       "name": "probe.control.v2",
@@ -491,7 +507,7 @@
         "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java"
       ],
       "consumers": ["go/control-plane/internal/alert/api/handler_advanced.go"],
-      "known_gap": "Some legacy Flink jobs still emit noncanonical DLQ payloads; payload unification and replay fault evidence remain open."
+      "known_gap": "The dashboard owned G1 emits and decodes the canonical payload and persists its source tuple after DLQ acknowledgement; remaining non-dashboard and legacy Flink payload unification, approved replicated-broker failure injection and replay evidence remain open."
     }
   ]
 }

@@ -1,0 +1,5 @@
+serviceaccount/probe-agent configured (dry run)
+clusterrole.rbac.authorization.k8s.io/probe-agent configured (dry run)
+clusterrolebinding.rbac.authorization.k8s.io/probe-agent configured (dry run)
+configmap/probe-agent-config configured (dry run)
+daemonset.apps/probe-agent configured (dry run)

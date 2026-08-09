@@ -42,10 +42,51 @@ spec:
         - {name: KAFKA_RESPONSE_ACTION_TOPIC, value: "alert.response.requested.v1"}
         - {name: KAFKA_RESPONSE_ACTION_GROUP, value: "alert-service-response-execution-v1"}
         - {name: KAFKA_SAVED_VIEW_EVENT_TOPIC, value: "alert.saved-view.events.v1"}
+        - {name: ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED, value: "false"}
+        - {name: ALERT_BATCH_ASSIGNMENT_V1_ENABLED, value: "false"}
+        - {name: ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED, value: "false"}
+        - {name: ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED, value: "false"}
+        - {name: ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC, value: "alert.assignment.events.v1"}
+        - {name: ALERT_BATCH_ASSIGNMENT_EVENT_GROUP, value: "alert-service-batch-assignment-execution-v1"}
+        - name: ALERT_BATCH_SELECTION_SIGNING_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: ALERT_BATCH_SELECTION_SIGNING_SECRET
+              optional: true
+        - {name: ALERT_EVIDENCE_CHAIN_V1_ENABLED, value: "false"}
+        - name: ALERT_EVIDENCE_DOWNLOAD_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: ALERT_EVIDENCE_DOWNLOAD_SECRET
+              optional: true
         - {name: KAFKA_WHITELIST_EVENT_TOPIC, value: "whitelist.events.v2"}
         - {name: WHITELIST_EVENT_PIPELINE_V2_ENABLED, value: "false"}
         - {name: KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC, value: "notification.governance.events.v1"}
-        - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "true"}
+        - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_EXECUTOR_URL, value: ""}
+        - {name: ALERT_RESPONSE_EXECUTOR_LOOKUP_URL, value: ""}
+        - {name: ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
+        - {name: ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS, value: "8"}
+        - {name: ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS, value: "15"}
+        - {name: ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_COMPENSATION_URL, value: ""}
+        - {name: ALERT_RESPONSE_COMPENSATION_LOOKUP_URL, value: ""}
+        - {name: ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS, value: "8"}
+        - {name: ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS, value: "5"}
+        - {name: ALERT_RESPONSE_RECOVERY_LEASE_SECONDS, value: "45"}
+        - {name: ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS, value: "30"}
+        - {name: ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS, value: "15"}
+        - {name: ALERT_RESPONSE_RECOVERY_BATCH_SIZE, value: "25"}
+        - name: ALERT_RESPONSE_EXECUTOR_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: ALERT_RESPONSE_EXECUTOR_TOKEN
+              optional: true
         - {name: CAMPAIGN_ALERT_LINKS_V1_ENABLED, value: "true"}
         - {name: CAMPAIGN_AGGREGATE_V2_ENABLED, value: "false"}
         - {name: CAMPAIGN_EVENT_PIPELINE_V2_ENABLED, value: "false"}
@@ -61,8 +102,13 @@ spec:
         - {name: PLAYBOOK_EXECUTION_V2_ENABLED, value: "false"}
         - {name: DASHBOARD_TASK_V2_ENABLED, value: "false"}
         - {name: DASHBOARD_TASK_PIPELINE_V1_ENABLED, value: "false"}
+        - {name: DASHBOARD_TASK_COMPENSATION_V1_ENABLED, value: "false"}
+        - {name: DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED, value: "false"}
         - {name: DASHBOARD_TASK_EVENT_TOPIC, value: "dashboard.task.events.v1"}
+        - {name: DASHBOARD_TASK_EXECUTOR_LOOKUP_URL, value: ""}
+        - {name: DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL, value: ""}
         - {name: DASHBOARD_TASK_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
+        - {name: DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS, value: "30"}
         - {name: DASHBOARD_SNAPSHOT_V1_ENABLED, value: "true"}
         - {name: PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED, value: "false"}
         - {name: PLAYBOOK_EXECUTION_PROVIDER_URL, value: ""}

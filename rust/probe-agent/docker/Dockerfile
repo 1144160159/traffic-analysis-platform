@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     adduser --disabled-password --gecos "" --uid 1000 probe
 
 COPY --from=builder /workspace/target/release/probe-agent /usr/local/bin/
-COPY probe-agent/config.yaml /etc/probe-agent/config.yaml
+COPY probe-agent/config.container.yaml /etc/probe-agent/config.yaml
 
 RUN mkdir -p /var/lib/probe-agent/cache && chown -R probe:probe /var/lib/probe-agent
 

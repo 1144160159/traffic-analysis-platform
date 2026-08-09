@@ -1,0 +1,4857 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "mode": "read_only_shape_and_value_reconciliation",
+  "base_url_origin_sha256": "3c1e91ec4b3ae35f",
+  "tenant_sha256": "37a8eec1ce19687d",
+  "sample_identity_sha256": {
+    "alert": "10da671a1bb17ab1",
+    "campaign": "fa667d02efe30692"
+  },
+  "requests": [
+    {
+      "name": "topic_exfil",
+      "status": 200,
+      "duration_ms": 62,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.account_service_distribution": [
+          "array"
+        ],
+        "$.data.account_service_distribution[]": [
+          "object"
+        ],
+        "$.data.account_service_distribution[].count": [
+          "number"
+        ],
+        "$.data.account_service_distribution[].label": [
+          "string"
+        ],
+        "$.data.account_service_distribution[].type": [
+          "string"
+        ],
+        "$.data.data_mode": [
+          "string"
+        ],
+        "$.data.destinations": [
+          "array"
+        ],
+        "$.data.destinations[]": [
+          "object"
+        ],
+        "$.data.destinations[].asn": [
+          "string"
+        ],
+        "$.data.destinations[].dst_ip": [
+          "string"
+        ],
+        "$.data.destinations[].last_seen": [
+          "number"
+        ],
+        "$.data.destinations[].region": [
+          "string"
+        ],
+        "$.data.destinations[].risk": [
+          "string"
+        ],
+        "$.data.destinations[].session_count": [
+          "number"
+        ],
+        "$.data.destinations[].src_count": [
+          "number"
+        ],
+        "$.data.destinations[].total_bytes": [
+          "number"
+        ],
+        "$.data.destinations[].upload_bytes": [
+          "number"
+        ],
+        "$.data.events": [
+          "array"
+        ],
+        "$.data.events[]": [
+          "object"
+        ],
+        "$.data.events[].data_type": [
+          "string"
+        ],
+        "$.data.events[].dst_ip": [
+          "string"
+        ],
+        "$.data.events[].dst_port": [
+          "number"
+        ],
+        "$.data.events[].dst_region": [
+          "string"
+        ],
+        "$.data.events[].event_id": [
+          "string"
+        ],
+        "$.data.events[].last_seen": [
+          "number"
+        ],
+        "$.data.events[].protocol": [
+          "string"
+        ],
+        "$.data.events[].risk": [
+          "string"
+        ],
+        "$.data.events[].session_count": [
+          "number"
+        ],
+        "$.data.events[].src_ip": [
+          "string"
+        ],
+        "$.data.events[].upload_bytes": [
+          "number"
+        ],
+        "$.data.evidence_bundle": [
+          "array"
+        ],
+        "$.data.evidence_bundle[]": [
+          "object"
+        ],
+        "$.data.evidence_bundle[].complete": [
+          "number"
+        ],
+        "$.data.evidence_bundle[].label": [
+          "string"
+        ],
+        "$.data.evidence_bundle[].status": [
+          "string"
+        ],
+        "$.data.evidence_bundle[].total": [
+          "number"
+        ],
+        "$.data.paths": [
+          "array"
+        ],
+        "$.data.paths[]": [
+          "object"
+        ],
+        "$.data.paths[].data_type": [
+          "string"
+        ],
+        "$.data.paths[].dst_ip": [
+          "string"
+        ],
+        "$.data.paths[].dst_port": [
+          "number"
+        ],
+        "$.data.paths[].dst_region": [
+          "string"
+        ],
+        "$.data.paths[].event_id": [
+          "string"
+        ],
+        "$.data.paths[].last_seen": [
+          "number"
+        ],
+        "$.data.paths[].protocol": [
+          "string"
+        ],
+        "$.data.paths[].risk": [
+          "string"
+        ],
+        "$.data.paths[].session_count": [
+          "number"
+        ],
+        "$.data.paths[].src_ip": [
+          "string"
+        ],
+        "$.data.paths[].upload_bytes": [
+          "number"
+        ],
+        "$.data.presentation": [
+          "object"
+        ],
+        "$.data.presentation.asset_group": [
+          "string"
+        ],
+        "$.data.presentation.ip_range": [
+          "string"
+        ],
+        "$.data.presentation.model_version": [
+          "string"
+        ],
+        "$.data.presentation.protocols": [
+          "string"
+        ],
+        "$.data.presentation.report_conclusion": [
+          "string"
+        ],
+        "$.data.presentation.report_generated_at": [
+          "string"
+        ],
+        "$.data.presentation.report_scope": [
+          "string"
+        ],
+        "$.data.presentation.report_title": [
+          "string"
+        ],
+        "$.data.presentation.rule_version": [
+          "string"
+        ],
+        "$.data.presentation.site": [
+          "string"
+        ],
+        "$.data.presentation.time_window_label": [
+          "string"
+        ],
+        "$.data.presentation.topic_id": [
+          "string"
+        ],
+        "$.data.risk_types": [
+          "array"
+        ],
+        "$.data.risk_types[]": [
+          "object"
+        ],
+        "$.data.risk_types[].count": [
+          "number"
+        ],
+        "$.data.risk_types[].severity": [
+          "string"
+        ],
+        "$.data.risk_types[].total_bytes": [
+          "number"
+        ],
+        "$.data.risk_types[].type": [
+          "string"
+        ],
+        "$.data.scope": [
+          "object"
+        ],
+        "$.data.scope_applied": [
+          "object"
+        ],
+        "$.data.scope_applied.excluded_assets": [
+          "array"
+        ],
+        "$.data.scope_applied.included_assets": [
+          "array"
+        ],
+        "$.data.scope_applied.included_filter_effective": [
+          "boolean"
+        ],
+        "$.data.scope_applied.matched_events": [
+          "number"
+        ],
+        "$.data.scope_applied.risk_levels": [
+          "array"
+        ],
+        "$.data.scope_applied.source_events": [
+          "number"
+        ],
+        "$.data.scope_applied.time_window": [
+          "string"
+        ],
+        "$.data.scope.detail": [
+          "object"
+        ],
+        "$.data.scope.detail.source": [
+          "string"
+        ],
+        "$.data.scope.detail.target": [
+          "string"
+        ],
+        "$.data.scope.excluded_assets": [
+          "array"
+        ],
+        "$.data.scope.included_assets": [
+          "array"
+        ],
+        "$.data.scope.risk_levels": [
+          "array"
+        ],
+        "$.data.scope.scope_name": [
+          "string"
+        ],
+        "$.data.scope.tenant_id": [
+          "string"
+        ],
+        "$.data.scope.time_window": [
+          "string"
+        ],
+        "$.data.scope.topic": [
+          "string"
+        ],
+        "$.data.scope.updated_at": [
+          "number"
+        ],
+        "$.data.scope.updated_by": [
+          "string"
+        ],
+        "$.data.simulation_id": [
+          "string"
+        ],
+        "$.data.simulation_version": [
+          "string"
+        ],
+        "$.data.summary": [
+          "object"
+        ],
+        "$.data.summary.alert_count": [
+          "number"
+        ],
+        "$.data.summary.cross_border_destinations": [
+          "number"
+        ],
+        "$.data.summary.destination_count": [
+          "number"
+        ],
+        "$.data.summary.evidence_completeness": [
+          "number"
+        ],
+        "$.data.summary.high_risk_sources": [
+          "number"
+        ],
+        "$.data.summary.open_risk_count": [
+          "number"
+        ],
+        "$.data.summary.path_confidence": [
+          "number"
+        ],
+        "$.data.summary.path_count": [
+          "number"
+        ],
+        "$.data.summary.peak_upload_gbps": [
+          "number"
+        ],
+        "$.data.summary.pending_evidence_count": [
+          "number"
+        ],
+        "$.data.summary.report_confidence": [
+          "number"
+        ],
+        "$.data.summary.reportable_count": [
+          "number"
+        ],
+        "$.data.summary.sensitive_type_count": [
+          "number"
+        ],
+        "$.data.summary.session_count": [
+          "number"
+        ],
+        "$.data.summary.source_count": [
+          "number"
+        ],
+        "$.data.summary.total_events": [
+          "number"
+        ],
+        "$.data.summary.upload_bytes": [
+          "number"
+        ],
+        "$.data.time_range": [
+          "object"
+        ],
+        "$.data.time_range.end": [
+          "number"
+        ],
+        "$.data.time_range.start": [
+          "number"
+        ],
+        "$.data.top_sources": [
+          "array"
+        ],
+        "$.data.top_sources[]": [
+          "object"
+        ],
+        "$.data.top_sources[].dst_count": [
+          "number"
+        ],
+        "$.data.top_sources[].last_seen": [
+          "number"
+        ],
+        "$.data.top_sources[].risk": [
+          "string"
+        ],
+        "$.data.top_sources[].session_count": [
+          "number"
+        ],
+        "$.data.top_sources[].src_ip": [
+          "string"
+        ],
+        "$.data.top_sources[].total_bytes": [
+          "number"
+        ],
+        "$.data.top_sources[].upload_bytes": [
+          "number"
+        ],
+        "$.data.topic": [
+          "string"
+        ],
+        "$.data.topology_links": [
+          "array"
+        ],
+        "$.data.topology_links[]": [
+          "object"
+        ],
+        "$.data.topology_links[].label": [
+          "string"
+        ],
+        "$.data.topology_links[].line_type": [
+          "string"
+        ],
+        "$.data.topology_links[].source": [
+          "string"
+        ],
+        "$.data.topology_links[].target": [
+          "string"
+        ],
+        "$.data.topology_links[].tone": [
+          "string"
+        ],
+        "$.data.topology_links[].value": [
+          "number"
+        ],
+        "$.data.topology_links[].width": [
+          "number"
+        ],
+        "$.data.topology_nodes": [
+          "array"
+        ],
+        "$.data.topology_nodes[]": [
+          "object"
+        ],
+        "$.data.topology_nodes[].detail": [
+          "string"
+        ],
+        "$.data.topology_nodes[].height": [
+          "number"
+        ],
+        "$.data.topology_nodes[].icon": [
+          "string"
+        ],
+        "$.data.topology_nodes[].id": [
+          "string"
+        ],
+        "$.data.topology_nodes[].label": [
+          "string"
+        ],
+        "$.data.topology_nodes[].tone": [
+          "string"
+        ],
+        "$.data.topology_nodes[].width": [
+          "number"
+        ],
+        "$.data.topology_nodes[].x": [
+          "number"
+        ],
+        "$.data.topology_nodes[].y": [
+          "number"
+        ],
+        "$.data.trend": [
+          "array"
+        ],
+        "$.data.trend[]": [
+          "object"
+        ],
+        "$.data.trend[].bucket_start": [
+          "number"
+        ],
+        "$.data.trend[].destination_count": [
+          "number"
+        ],
+        "$.data.trend[].encrypted_sessions": [
+          "number"
+        ],
+        "$.data.trend[].large_upload_sessions": [
+          "number"
+        ],
+        "$.data.trend[].long_lived_sessions": [
+          "number"
+        ],
+        "$.data.trend[].non_standard_port_sessions": [
+          "number"
+        ],
+        "$.data.updated_at": [
+          "number"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.request_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "topic_tunnel",
+      "status": 200,
+      "duration_ms": 72,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.certificate_anomalies": [
+          "array"
+        ],
+        "$.data.certificate_anomalies[]": [
+          "object"
+        ],
+        "$.data.certificate_anomalies[].label": [
+          "string"
+        ],
+        "$.data.certificate_anomalies[].percent": [
+          "number"
+        ],
+        "$.data.certificate_anomalies[].sample": [
+          "string"
+        ],
+        "$.data.certificate_anomalies[].status": [
+          "string"
+        ],
+        "$.data.certificate_anomalies[].value": [
+          "number"
+        ],
+        "$.data.data_mode": [
+          "string"
+        ],
+        "$.data.destination_distribution": [
+          "array"
+        ],
+        "$.data.destination_distribution[]": [
+          "object"
+        ],
+        "$.data.destination_distribution[].asn": [
+          "string"
+        ],
+        "$.data.destination_distribution[].label": [
+          "string"
+        ],
+        "$.data.destination_distribution[].traffic_gb": [
+          "number"
+        ],
+        "$.data.destination_distribution[].value": [
+          "number"
+        ],
+        "$.data.events": [
+          "array"
+        ],
+        "$.data.events[]": [
+          "object"
+        ],
+        "$.data.events[].count": [
+          "number"
+        ],
+        "$.data.events[].dst_ip": [
+          "string"
+        ],
+        "$.data.events[].event_id": [
+          "string"
+        ],
+        "$.data.events[].evidence_type": [
+          "string"
+        ],
+        "$.data.events[].ip": [
+          "string"
+        ],
+        "$.data.events[].last_seen": [
+          "number"
+        ],
+        "$.data.events[].phase": [
+          "string"
+        ],
+        "$.data.events[].protocol": [
+          "string"
+        ],
+        "$.data.events[].risk": [
+          "string"
+        ],
+        "$.data.events[].risk_action": [
+          "string"
+        ],
+        "$.data.events[].time_window": [
+          "string"
+        ],
+        "$.data.events[].total_bytes": [
+          "number"
+        ],
+        "$.data.evidence_bundle": [
+          "array"
+        ],
+        "$.data.evidence_bundle[]": [
+          "object"
+        ],
+        "$.data.evidence_bundle[].complete": [
+          "number"
+        ],
+        "$.data.evidence_bundle[].label": [
+          "string"
+        ],
+        "$.data.evidence_bundle[].status": [
+          "string"
+        ],
+        "$.data.evidence_bundle[].total": [
+          "number"
+        ],
+        "$.data.impact_highlights": [
+          "array"
+        ],
+        "$.data.impact_highlights[]": [
+          "object"
+        ],
+        "$.data.impact_highlights[].detail": [
+          "string"
+        ],
+        "$.data.impact_highlights[].label": [
+          "string"
+        ],
+        "$.data.impact_highlights[].status": [
+          "string"
+        ],
+        "$.data.impact_highlights[].target_signal": [
+          "string"
+        ],
+        "$.data.impact_highlights[].value": [
+          "string"
+        ],
+        "$.data.metric_deltas": [
+          "object"
+        ],
+        "$.data.metric_deltas.active_users": [
+          "string"
+        ],
+        "$.data.metric_deltas.encrypted_traffic_gbps": [
+          "string"
+        ],
+        "$.data.metric_deltas.endpoint_count": [
+          "string"
+        ],
+        "$.data.metric_deltas.evidence_completeness": [
+          "string"
+        ],
+        "$.data.metric_deltas.open_risk_count": [
+          "string"
+        ],
+        "$.data.metric_deltas.protocol_count": [
+          "string"
+        ],
+        "$.data.metric_deltas.report_confidence": [
+          "string"
+        ],
+        "$.data.metric_deltas.session_count": [
+          "string"
+        ],
+        "$.data.metric_deltas.suspicious_ratio": [
+          "string"
+        ],
+        "$.data.presentation": [
+          "object"
+        ],
+        "$.data.presentation.asset_group": [
+          "string"
+        ],
+        "$.data.presentation.ip_range": [
+          "string"
+        ],
+        "$.data.presentation.model_version": [
+          "string"
+        ],
+        "$.data.presentation.protocols": [
+          "string"
+        ],
+        "$.data.presentation.report_conclusion": [
+          "string"
+        ],
+        "$.data.presentation.report_generated_at": [
+          "string"
+        ],
+        "$.data.presentation.report_scope": [
+          "string"
+        ],
+        "$.data.presentation.report_time_range": [
+          "string"
+        ],
+        "$.data.presentation.report_title": [
+          "string"
+        ],
+        "$.data.presentation.rule_version": [
+          "string"
+        ],
+        "$.data.presentation.site": [
+          "string"
+        ],
+        "$.data.presentation.time_window_label": [
+          "string"
+        ],
+        "$.data.presentation.topic_id": [
+          "string"
+        ],
+        "$.data.protocols": [
+          "array"
+        ],
+        "$.data.protocols[]": [
+          "object"
+        ],
+        "$.data.protocols[].count": [
+          "number"
+        ],
+        "$.data.protocols[].protocol": [
+          "string"
+        ],
+        "$.data.protocols[].total_bytes": [
+          "number"
+        ],
+        "$.data.reuse_paths": [
+          "array"
+        ],
+        "$.data.reuse_paths[]": [
+          "object"
+        ],
+        "$.data.reuse_paths[].destination": [
+          "string"
+        ],
+        "$.data.reuse_paths[].protocol": [
+          "string"
+        ],
+        "$.data.reuse_paths[].proxy": [
+          "string"
+        ],
+        "$.data.reuse_paths[].source": [
+          "string"
+        ],
+        "$.data.scope": [
+          "object"
+        ],
+        "$.data.scope_applied": [
+          "object"
+        ],
+        "$.data.scope_applied.excluded_assets": [
+          "array"
+        ],
+        "$.data.scope_applied.included_assets": [
+          "array"
+        ],
+        "$.data.scope_applied.included_filter_effective": [
+          "boolean"
+        ],
+        "$.data.scope_applied.matched_events": [
+          "number"
+        ],
+        "$.data.scope_applied.risk_levels": [
+          "array"
+        ],
+        "$.data.scope_applied.source_events": [
+          "number"
+        ],
+        "$.data.scope_applied.time_window": [
+          "string"
+        ],
+        "$.data.scope.detail": [
+          "object"
+        ],
+        "$.data.scope.detail.restored_by": [
+          "string"
+        ],
+        "$.data.scope.detail.source": [
+          "string"
+        ],
+        "$.data.scope.detail.target": [
+          "string"
+        ],
+        "$.data.scope.excluded_assets": [
+          "array"
+        ],
+        "$.data.scope.included_assets": [
+          "array"
+        ],
+        "$.data.scope.risk_levels": [
+          "array"
+        ],
+        "$.data.scope.scope_name": [
+          "string"
+        ],
+        "$.data.scope.tenant_id": [
+          "string"
+        ],
+        "$.data.scope.time_window": [
+          "string"
+        ],
+        "$.data.scope.topic": [
+          "string"
+        ],
+        "$.data.scope.updated_at": [
+          "number"
+        ],
+        "$.data.scope.updated_by": [
+          "string"
+        ],
+        "$.data.simulation_id": [
+          "string"
+        ],
+        "$.data.simulation_version": [
+          "string"
+        ],
+        "$.data.summary": [
+          "object"
+        ],
+        "$.data.summary.active_users": [
+          "number"
+        ],
+        "$.data.summary.encrypted_traffic_gbps": [
+          "number"
+        ],
+        "$.data.summary.endpoint_count": [
+          "number"
+        ],
+        "$.data.summary.evidence_completeness": [
+          "number"
+        ],
+        "$.data.summary.open_risk_count": [
+          "number"
+        ],
+        "$.data.summary.pending_evidence_count": [
+          "number"
+        ],
+        "$.data.summary.protocol_count": [
+          "number"
+        ],
+        "$.data.summary.report_confidence": [
+          "number"
+        ],
+        "$.data.summary.reportable_count": [
+          "number"
+        ],
+        "$.data.summary.session_count": [
+          "number"
+        ],
+        "$.data.summary.suspicious_ratio": [
+          "number"
+        ],
+        "$.data.summary.total_events": [
+          "number"
+        ],
+        "$.data.time_range": [
+          "object"
+        ],
+        "$.data.time_range.end": [
+          "number"
+        ],
+        "$.data.time_range.start": [
+          "number"
+        ],
+        "$.data.topic": [
+          "string"
+        ],
+        "$.data.topology_links": [
+          "array"
+        ],
+        "$.data.topology_links[]": [
+          "object"
+        ],
+        "$.data.topology_links[].label": [
+          "string"
+        ],
+        "$.data.topology_links[].line_type": [
+          "string"
+        ],
+        "$.data.topology_links[].source": [
+          "string"
+        ],
+        "$.data.topology_links[].target": [
+          "string"
+        ],
+        "$.data.topology_links[].tone": [
+          "string"
+        ],
+        "$.data.topology_links[].value": [
+          "number"
+        ],
+        "$.data.topology_nodes": [
+          "array"
+        ],
+        "$.data.topology_nodes[]": [
+          "object"
+        ],
+        "$.data.topology_nodes[].detail": [
+          "string"
+        ],
+        "$.data.topology_nodes[].height": [
+          "number"
+        ],
+        "$.data.topology_nodes[].icon": [
+          "string"
+        ],
+        "$.data.topology_nodes[].id": [
+          "string"
+        ],
+        "$.data.topology_nodes[].label": [
+          "string"
+        ],
+        "$.data.topology_nodes[].label_position": [
+          "string"
+        ],
+        "$.data.topology_nodes[].symbol": [
+          "string"
+        ],
+        "$.data.topology_nodes[].tone": [
+          "string"
+        ],
+        "$.data.topology_nodes[].width": [
+          "number"
+        ],
+        "$.data.topology_nodes[].x": [
+          "number"
+        ],
+        "$.data.topology_nodes[].y": [
+          "number"
+        ],
+        "$.data.tunnel_trend": [
+          "array"
+        ],
+        "$.data.tunnel_trend_unit": [
+          "string"
+        ],
+        "$.data.tunnel_trend[]": [
+          "object"
+        ],
+        "$.data.tunnel_trend[].label": [
+          "string"
+        ],
+        "$.data.tunnel_trend[].value": [
+          "number"
+        ],
+        "$.data.updated_at": [
+          "number"
+        ],
+        "$.data.users": [
+          "array"
+        ],
+        "$.data.users[]": [
+          "object"
+        ],
+        "$.data.users[].count": [
+          "number"
+        ],
+        "$.data.users[].dst_ip": [
+          "string"
+        ],
+        "$.data.users[].event_id": [
+          "string"
+        ],
+        "$.data.users[].evidence_type": [
+          "string"
+        ],
+        "$.data.users[].ip": [
+          "string"
+        ],
+        "$.data.users[].last_seen": [
+          "number"
+        ],
+        "$.data.users[].phase": [
+          "string"
+        ],
+        "$.data.users[].protocol": [
+          "string"
+        ],
+        "$.data.users[].risk": [
+          "string"
+        ],
+        "$.data.users[].risk_action": [
+          "string"
+        ],
+        "$.data.users[].total_bytes": [
+          "number"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.request_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "topic_apt",
+      "status": 200,
+      "duration_ms": 74,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.campaigns": [
+          "array"
+        ],
+        "$.data.campaigns[]": [
+          "object"
+        ],
+        "$.data.campaigns[].activity_status": [
+          "string"
+        ],
+        "$.data.campaigns[].alerts": [
+          "array"
+        ],
+        "$.data.campaigns[].alerts[]": [
+          "string"
+        ],
+        "$.data.campaigns[].attack_phases": [
+          "array"
+        ],
+        "$.data.campaigns[].attack_phases[]": [
+          "string"
+        ],
+        "$.data.campaigns[].campaign_id": [
+          "string"
+        ],
+        "$.data.campaigns[].campaign_type": [
+          "string"
+        ],
+        "$.data.campaigns[].entities": [
+          "array"
+        ],
+        "$.data.campaigns[].entities[]": [
+          "string"
+        ],
+        "$.data.campaigns[].score": [
+          "number"
+        ],
+        "$.data.campaigns[].status": [
+          "string"
+        ],
+        "$.data.campaigns[].ts_end": [
+          "number"
+        ],
+        "$.data.campaigns[].ts_start": [
+          "number"
+        ],
+        "$.data.data_mode": [
+          "string"
+        ],
+        "$.data.events": [
+          "array"
+        ],
+        "$.data.events[]": [
+          "object"
+        ],
+        "$.data.events[].activity_status": [
+          "string"
+        ],
+        "$.data.events[].alerts": [
+          "array"
+        ],
+        "$.data.events[].alerts[]": [
+          "string"
+        ],
+        "$.data.events[].attack_phases": [
+          "array"
+        ],
+        "$.data.events[].attack_phases[]": [
+          "string"
+        ],
+        "$.data.events[].campaign_id": [
+          "string"
+        ],
+        "$.data.events[].campaign_type": [
+          "string"
+        ],
+        "$.data.events[].entities": [
+          "array"
+        ],
+        "$.data.events[].entities[]": [
+          "string"
+        ],
+        "$.data.events[].event_id": [
+          "string"
+        ],
+        "$.data.events[].score": [
+          "number"
+        ],
+        "$.data.events[].status": [
+          "string"
+        ],
+        "$.data.events[].ts_end": [
+          "number"
+        ],
+        "$.data.events[].ts_start": [
+          "number"
+        ],
+        "$.data.evidence_bundle": [
+          "array"
+        ],
+        "$.data.evidence_bundle[]": [
+          "object"
+        ],
+        "$.data.evidence_bundle[].complete": [
+          "number"
+        ],
+        "$.data.evidence_bundle[].label": [
+          "string"
+        ],
+        "$.data.evidence_bundle[].status": [
+          "string"
+        ],
+        "$.data.evidence_bundle[].total": [
+          "number"
+        ],
+        "$.data.iocs": [
+          "array"
+        ],
+        "$.data.iocs[]": [
+          "object"
+        ],
+        "$.data.iocs[].campaign": [
+          "string"
+        ],
+        "$.data.iocs[].first_seen": [
+          "number"
+        ],
+        "$.data.iocs[].hits": [
+          "number"
+        ],
+        "$.data.iocs[].last_seen": [
+          "number"
+        ],
+        "$.data.iocs[].type": [
+          "string"
+        ],
+        "$.data.iocs[].value": [
+          "string"
+        ],
+        "$.data.phase_distribution": [
+          "object"
+        ],
+        "$.data.phase_distribution.侦察": [
+          "number"
+        ],
+        "$.data.phase_distribution.初始访问": [
+          "number"
+        ],
+        "$.data.phase_distribution.执行": [
+          "number"
+        ],
+        "$.data.phase_distribution.持久化": [
+          "number"
+        ],
+        "$.data.phase_distribution.横向移动": [
+          "number"
+        ],
+        "$.data.presentation": [
+          "object"
+        ],
+        "$.data.presentation.asset_group": [
+          "string"
+        ],
+        "$.data.presentation.ip_range": [
+          "string"
+        ],
+        "$.data.presentation.model_version": [
+          "string"
+        ],
+        "$.data.presentation.protocols": [
+          "string"
+        ],
+        "$.data.presentation.report_conclusion": [
+          "string"
+        ],
+        "$.data.presentation.report_generated_at": [
+          "string"
+        ],
+        "$.data.presentation.report_scope": [
+          "string"
+        ],
+        "$.data.presentation.report_title": [
+          "string"
+        ],
+        "$.data.presentation.rule_version": [
+          "string"
+        ],
+        "$.data.presentation.site": [
+          "string"
+        ],
+        "$.data.presentation.time_window_label": [
+          "string"
+        ],
+        "$.data.presentation.topic_id": [
+          "string"
+        ],
+        "$.data.response": [
+          "object"
+        ],
+        "$.data.response.closed": [
+          "number"
+        ],
+        "$.data.response.open": [
+          "number"
+        ],
+        "$.data.response.processing": [
+          "number"
+        ],
+        "$.data.response.total": [
+          "number"
+        ],
+        "$.data.scope": [
+          "object"
+        ],
+        "$.data.scope_applied": [
+          "object"
+        ],
+        "$.data.scope_applied.excluded_assets": [
+          "array"
+        ],
+        "$.data.scope_applied.included_assets": [
+          "array"
+        ],
+        "$.data.scope_applied.included_filter_effective": [
+          "boolean"
+        ],
+        "$.data.scope_applied.matched_events": [
+          "number"
+        ],
+        "$.data.scope_applied.risk_levels": [
+          "array"
+        ],
+        "$.data.scope_applied.source_events": [
+          "number"
+        ],
+        "$.data.scope_applied.time_window": [
+          "string"
+        ],
+        "$.data.scope.detail": [
+          "object"
+        ],
+        "$.data.scope.detail.source": [
+          "string"
+        ],
+        "$.data.scope.detail.target": [
+          "string"
+        ],
+        "$.data.scope.excluded_assets": [
+          "array"
+        ],
+        "$.data.scope.included_assets": [
+          "array"
+        ],
+        "$.data.scope.risk_levels": [
+          "array"
+        ],
+        "$.data.scope.scope_name": [
+          "string"
+        ],
+        "$.data.scope.tenant_id": [
+          "string"
+        ],
+        "$.data.scope.time_window": [
+          "string"
+        ],
+        "$.data.scope.topic": [
+          "string"
+        ],
+        "$.data.scope.updated_at": [
+          "number"
+        ],
+        "$.data.scope.updated_by": [
+          "string"
+        ],
+        "$.data.simulation_id": [
+          "string"
+        ],
+        "$.data.simulation_version": [
+          "string"
+        ],
+        "$.data.summary": [
+          "object"
+        ],
+        "$.data.summary.alert_count": [
+          "number"
+        ],
+        "$.data.summary.campaign_count": [
+          "number"
+        ],
+        "$.data.summary.closure_rate": [
+          "number"
+        ],
+        "$.data.summary.cluster_density": [
+          "number"
+        ],
+        "$.data.summary.entity_count": [
+          "number"
+        ],
+        "$.data.summary.evidence_completeness": [
+          "number"
+        ],
+        "$.data.summary.exfil_evidence_count": [
+          "number"
+        ],
+        "$.data.summary.high_risk_count": [
+          "number"
+        ],
+        "$.data.summary.lateral_move_links": [
+          "number"
+        ],
+        "$.data.summary.metric_scope": [
+          "string"
+        ],
+        "$.data.summary.open_risk_count": [
+          "number"
+        ],
+        "$.data.summary.pending_evidence_count": [
+          "number"
+        ],
+        "$.data.summary.persistence_signals": [
+          "number"
+        ],
+        "$.data.summary.phase_coverage_done": [
+          "number"
+        ],
+        "$.data.summary.phase_coverage_total": [
+          "number"
+        ],
+        "$.data.summary.report_confidence": [
+          "number"
+        ],
+        "$.data.summary.reportable_count": [
+          "number"
+        ],
+        "$.data.summary.total_events": [
+          "number"
+        ],
+        "$.data.time_range": [
+          "object"
+        ],
+        "$.data.time_range.end": [
+          "number"
+        ],
+        "$.data.time_range.start": [
+          "number"
+        ],
+        "$.data.topic": [
+          "string"
+        ],
+        "$.data.topology_links": [
+          "array"
+        ],
+        "$.data.topology_links[]": [
+          "object"
+        ],
+        "$.data.topology_links[].curveness": [
+          "number"
+        ],
+        "$.data.topology_links[].label": [
+          "string"
+        ],
+        "$.data.topology_links[].line_type": [
+          "string"
+        ],
+        "$.data.topology_links[].source": [
+          "string"
+        ],
+        "$.data.topology_links[].target": [
+          "string"
+        ],
+        "$.data.topology_links[].tone": [
+          "string"
+        ],
+        "$.data.topology_links[].value": [
+          "number"
+        ],
+        "$.data.topology_links[].width": [
+          "number"
+        ],
+        "$.data.topology_nodes": [
+          "array"
+        ],
+        "$.data.topology_nodes[]": [
+          "object"
+        ],
+        "$.data.topology_nodes[].detail": [
+          "string"
+        ],
+        "$.data.topology_nodes[].height": [
+          "number"
+        ],
+        "$.data.topology_nodes[].icon": [
+          "string"
+        ],
+        "$.data.topology_nodes[].id": [
+          "string"
+        ],
+        "$.data.topology_nodes[].label": [
+          "string"
+        ],
+        "$.data.topology_nodes[].tone": [
+          "string"
+        ],
+        "$.data.topology_nodes[].width": [
+          "number"
+        ],
+        "$.data.topology_nodes[].x": [
+          "number"
+        ],
+        "$.data.topology_nodes[].y": [
+          "number"
+        ],
+        "$.data.updated_at": [
+          "number"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.request_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "topic_views",
+      "status": 200,
+      "duration_ms": 75,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.total": [
+          "number"
+        ],
+        "$.data.views": [
+          "array"
+        ],
+        "$.data.views[]": [
+          "object"
+        ],
+        "$.data.views[].created_at": [
+          "number"
+        ],
+        "$.data.views[].created_by": [
+          "string"
+        ],
+        "$.data.views[].favorite": [
+          "boolean"
+        ],
+        "$.data.views[].filters": [
+          "object"
+        ],
+        "$.data.views[].filters.active_pages": [
+          "array"
+        ],
+        "$.data.views[].filters.active_tabs": [
+          "array"
+        ],
+        "$.data.views[].filters.active_tabs[]": [
+          "string"
+        ],
+        "$.data.views[].filters.captured_at": [
+          "string"
+        ],
+        "$.data.views[].filters.fullscreen": [
+          "boolean"
+        ],
+        "$.data.views[].filters.owner": [
+          "string"
+        ],
+        "$.data.views[].filters.risk": [
+          "string"
+        ],
+        "$.data.views[].filters.route": [
+          "string"
+        ],
+        "$.data.views[].filters.selections": [
+          "array"
+        ],
+        "$.data.views[].filters.selections[]": [
+          "string"
+        ],
+        "$.data.views[].filters.source": [
+          "string"
+        ],
+        "$.data.views[].filters.target": [
+          "string"
+        ],
+        "$.data.views[].filters.topic": [
+          "string"
+        ],
+        "$.data.views[].filters.values": [
+          "array"
+        ],
+        "$.data.views[].name": [
+          "string"
+        ],
+        "$.data.views[].share_token": [
+          "string"
+        ],
+        "$.data.views[].shared": [
+          "boolean"
+        ],
+        "$.data.views[].tenant_id": [
+          "string"
+        ],
+        "$.data.views[].topic": [
+          "string"
+        ],
+        "$.data.views[].updated_at": [
+          "number"
+        ],
+        "$.data.views[].view_id": [
+          "string"
+        ],
+        "$.data.views[].visibility": [
+          "string"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.request_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "topic_subscriptions",
+      "status": 200,
+      "duration_ms": 75,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.subscriptions": [
+          "array"
+        ],
+        "$.data.subscriptions[]": [
+          "object"
+        ],
+        "$.data.subscriptions[].channel": [
+          "string"
+        ],
+        "$.data.subscriptions[].created_at": [
+          "number"
+        ],
+        "$.data.subscriptions[].created_by": [
+          "string"
+        ],
+        "$.data.subscriptions[].detail": [
+          "object"
+        ],
+        "$.data.subscriptions[].enabled": [
+          "boolean"
+        ],
+        "$.data.subscriptions[].recipients": [
+          "array"
+        ],
+        "$.data.subscriptions[].recipients[]": [
+          "string"
+        ],
+        "$.data.subscriptions[].schedule": [
+          "string"
+        ],
+        "$.data.subscriptions[].subscription_id": [
+          "string"
+        ],
+        "$.data.subscriptions[].tenant_id": [
+          "string"
+        ],
+        "$.data.subscriptions[].threshold": [
+          "string"
+        ],
+        "$.data.subscriptions[].topic": [
+          "string"
+        ],
+        "$.data.subscriptions[].updated_at": [
+          "number"
+        ],
+        "$.data.total": [
+          "number"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.request_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "alert_list",
+      "status": 200,
+      "duration_ms": 2398,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "array"
+        ],
+        "$.data[]": [
+          "object"
+        ],
+        "$.data[].alert_id": [
+          "string"
+        ],
+        "$.data[].alert_type": [
+          "string"
+        ],
+        "$.data[].attack_phase": [
+          "string"
+        ],
+        "$.data[].community_id": [
+          "string"
+        ],
+        "$.data[].count": [
+          "number"
+        ],
+        "$.data[].dst_ip": [
+          "string"
+        ],
+        "$.data[].dst_port": [
+          "number"
+        ],
+        "$.data[].fingerprint": [
+          "string"
+        ],
+        "$.data[].first_seen": [
+          "string"
+        ],
+        "$.data[].labels": [
+          "null"
+        ],
+        "$.data[].last_seen": [
+          "string"
+        ],
+        "$.data[].model_version": [
+          "string"
+        ],
+        "$.data[].protocol": [
+          "number"
+        ],
+        "$.data[].protocol_name": [
+          "string"
+        ],
+        "$.data[].score": [
+          "number"
+        ],
+        "$.data[].severity": [
+          "string"
+        ],
+        "$.data[].src_ip": [
+          "string"
+        ],
+        "$.data[].src_port": [
+          "number"
+        ],
+        "$.data[].state_version": [
+          "number"
+        ],
+        "$.data[].status": [
+          "string"
+        ],
+        "$.data[].tenant_id": [
+          "string"
+        ],
+        "$.data[].updated_at": [
+          "string"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.page": [
+          "object"
+        ],
+        "$.meta.page.has_more": [
+          "boolean"
+        ],
+        "$.meta.page.limit": [
+          "number"
+        ],
+        "$.meta.page.offset": [
+          "number"
+        ],
+        "$.meta.page.total": [
+          "number"
+        ],
+        "$.meta.request_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "campaign_list",
+      "status": 200,
+      "duration_ms": 2959,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.campaigns": [
+          "array"
+        ],
+        "$.data.campaigns[]": [
+          "object"
+        ],
+        "$.data.campaigns[].activity_status": [
+          "string"
+        ],
+        "$.data.campaigns[].alerts": [
+          "array"
+        ],
+        "$.data.campaigns[].alerts[]": [
+          "string"
+        ],
+        "$.data.campaigns[].assignee": [
+          "string"
+        ],
+        "$.data.campaigns[].attack_phases": [
+          "array"
+        ],
+        "$.data.campaigns[].attack_phases[]": [
+          "string"
+        ],
+        "$.data.campaigns[].campaign_id": [
+          "string"
+        ],
+        "$.data.campaigns[].campaign_type": [
+          "string"
+        ],
+        "$.data.campaigns[].entities": [
+          "array"
+        ],
+        "$.data.campaigns[].entities[]": [
+          "string"
+        ],
+        "$.data.campaigns[].event_id": [
+          "string"
+        ],
+        "$.data.campaigns[].ingest_ts": [
+          "number"
+        ],
+        "$.data.campaigns[].member_count": [
+          "number"
+        ],
+        "$.data.campaigns[].model_ids": [
+          "array"
+        ],
+        "$.data.campaigns[].model_ids[]": [
+          "string"
+        ],
+        "$.data.campaigns[].rule_ids": [
+          "array"
+        ],
+        "$.data.campaigns[].score": [
+          "number"
+        ],
+        "$.data.campaigns[].snapshot_id": [
+          "string"
+        ],
+        "$.data.campaigns[].snapshot_sha256": [
+          "string"
+        ],
+        "$.data.campaigns[].state_version": [
+          "number"
+        ],
+        "$.data.campaigns[].status": [
+          "string"
+        ],
+        "$.data.campaigns[].summary": [
+          "string"
+        ],
+        "$.data.campaigns[].tenant_id": [
+          "string"
+        ],
+        "$.data.campaigns[].ts_end": [
+          "number"
+        ],
+        "$.data.campaigns[].ts_start": [
+          "number"
+        ],
+        "$.data.limit": [
+          "number"
+        ],
+        "$.data.offset": [
+          "number"
+        ],
+        "$.data.snapshot_id": [
+          "string"
+        ],
+        "$.data.snapshot_sha256": [
+          "string"
+        ],
+        "$.data.summary": [
+          "object"
+        ],
+        "$.data.summary.active": [
+          "number"
+        ],
+        "$.data.summary.affected_assets": [
+          "number"
+        ],
+        "$.data.summary.alert_count": [
+          "number"
+        ],
+        "$.data.summary.average_duration_hours": [
+          "number"
+        ],
+        "$.data.summary.high_risk": [
+          "number"
+        ],
+        "$.data.summary.low_risk": [
+          "number"
+        ],
+        "$.data.summary.max_score": [
+          "number"
+        ],
+        "$.data.summary.medium_risk": [
+          "number"
+        ],
+        "$.data.summary.total": [
+          "number"
+        ],
+        "$.data.total": [
+          "number"
+        ],
+        "$.error": [
+          "null"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.as_of": [
+          "string"
+        ],
+        "$.meta.contract_version": [
+          "number"
+        ],
+        "$.meta.generated_at": [
+          "string"
+        ],
+        "$.meta.missing_sections": [
+          "array"
+        ],
+        "$.meta.partial": [
+          "boolean"
+        ],
+        "$.meta.result_code": [
+          "string"
+        ],
+        "$.meta.schema_version": [
+          "number"
+        ],
+        "$.meta.snapshot_id": [
+          "string"
+        ],
+        "$.meta.source_watermarks": [
+          "object"
+        ],
+        "$.meta.source_watermarks.clickhouse.campaigns.max_ingest_ts": [
+          "string"
+        ],
+        "$.meta.source_watermarks.postgresql.campaign_workbench_state.max_revision": [
+          "string"
+        ],
+        "$.meta.tenant_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "alert_detail",
+      "status": 200,
+      "duration_ms": 1799,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.age": [
+          "string"
+        ],
+        "$.data.alert_id": [
+          "string"
+        ],
+        "$.data.alert_type": [
+          "string"
+        ],
+        "$.data.arkime_link": [
+          "string"
+        ],
+        "$.data.arkime_links": [
+          "object"
+        ],
+        "$.data.arkime_links.session_link": [
+          "string"
+        ],
+        "$.data.arkime_links.spi_view_link": [
+          "string"
+        ],
+        "$.data.community_id": [
+          "string"
+        ],
+        "$.data.count": [
+          "number"
+        ],
+        "$.data.dst_ip": [
+          "string"
+        ],
+        "$.data.dst_port": [
+          "number"
+        ],
+        "$.data.duration": [
+          "string"
+        ],
+        "$.data.event_id": [
+          "string"
+        ],
+        "$.data.evidence_count": [
+          "number"
+        ],
+        "$.data.evidence_ids": [
+          "array"
+        ],
+        "$.data.evidence_ids[]": [
+          "string"
+        ],
+        "$.data.feature_set_id": [
+          "string"
+        ],
+        "$.data.fingerprint": [
+          "string"
+        ],
+        "$.data.first_seen": [
+          "string"
+        ],
+        "$.data.labels": [
+          "array"
+        ],
+        "$.data.labels[]": [
+          "string"
+        ],
+        "$.data.last_seen": [
+          "string"
+        ],
+        "$.data.model_version": [
+          "string"
+        ],
+        "$.data.protocol": [
+          "number"
+        ],
+        "$.data.protocol_name": [
+          "string"
+        ],
+        "$.data.score": [
+          "number"
+        ],
+        "$.data.session_id": [
+          "string"
+        ],
+        "$.data.severity": [
+          "string"
+        ],
+        "$.data.src_ip": [
+          "string"
+        ],
+        "$.data.src_port": [
+          "number"
+        ],
+        "$.data.state_version": [
+          "number"
+        ],
+        "$.data.status": [
+          "string"
+        ],
+        "$.data.tenant_id": [
+          "string"
+        ],
+        "$.data.updated_at": [
+          "string"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.request_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "alert_evidence",
+      "status": 200,
+      "duration_ms": 7593,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.alert_id": [
+          "string"
+        ],
+        "$.data.count": [
+          "number"
+        ],
+        "$.data.evidences": [
+          "array"
+        ],
+        "$.data.evidences[]": [
+          "object"
+        ],
+        "$.data.evidences[].alert_id": [
+          "string"
+        ],
+        "$.data.evidences[].arkime_link": [
+          "string"
+        ],
+        "$.data.evidences[].confidence": [
+          "number"
+        ],
+        "$.data.evidences[].event_id": [
+          "string"
+        ],
+        "$.data.evidences[].evidence_id": [
+          "string"
+        ],
+        "$.data.evidences[].metrics": [
+          "object"
+        ],
+        "$.data.evidences[].metrics.community_id": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.dst_ip": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.dst_port": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.feature_set_id": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.label_0": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.label_1": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.label_2": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.label_3": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.label_4": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.model_version": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.object_id": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.object_type": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.probe_id": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.protocol": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.run_id": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.score_0": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.score_1": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.score_2": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.score_3": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.score_4": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.src_ip": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.src_port": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.top_label": [
+          "string"
+        ],
+        "$.data.evidences[].metrics.top_score": [
+          "string"
+        ],
+        "$.data.evidences[].snippet_ref": [
+          "object"
+        ],
+        "$.data.evidences[].snippet_ref.detection_source": [
+          "string"
+        ],
+        "$.data.evidences[].snippet_ref.detection_timestamp": [
+          "string"
+        ],
+        "$.data.evidences[].summary": [
+          "string"
+        ],
+        "$.data.evidences[].tenant_id": [
+          "string"
+        ],
+        "$.data.evidences[].timestamp": [
+          "string"
+        ],
+        "$.data.evidences[].type": [
+          "string"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.request_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "alert_feedback",
+      "status": 200,
+      "duration_ms": 480,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.alert_id": [
+          "string"
+        ],
+        "$.data.feedbacks": [
+          "array"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.request_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    },
+    {
+      "name": "campaign_detail",
+      "status": 200,
+      "duration_ms": 23457,
+      "shape": {
+        "$": [
+          "object"
+        ],
+        "$.data": [
+          "object"
+        ],
+        "$.data.activity_status": [
+          "string"
+        ],
+        "$.data.alert_ids": [
+          "array"
+        ],
+        "$.data.alert_ids[]": [
+          "string"
+        ],
+        "$.data.alerts": [
+          "array"
+        ],
+        "$.data.alerts[]": [
+          "object"
+        ],
+        "$.data.alerts[].alert_id": [
+          "string"
+        ],
+        "$.data.alerts[].alert_type": [
+          "string"
+        ],
+        "$.data.alerts[].attack_phase": [
+          "string"
+        ],
+        "$.data.alerts[].dst_ip": [
+          "string"
+        ],
+        "$.data.alerts[].entity": [
+          "string"
+        ],
+        "$.data.alerts[].evidence_count": [
+          "number"
+        ],
+        "$.data.alerts[].evidence_ids": [
+          "array"
+        ],
+        "$.data.alerts[].evidence_ids[]": [
+          "string"
+        ],
+        "$.data.alerts[].last_seen": [
+          "number"
+        ],
+        "$.data.alerts[].severity": [
+          "string"
+        ],
+        "$.data.alerts[].src_ip": [
+          "string"
+        ],
+        "$.data.assignee": [
+          "string"
+        ],
+        "$.data.attack_phases": [
+          "array"
+        ],
+        "$.data.attack_phases[]": [
+          "string"
+        ],
+        "$.data.campaign_id": [
+          "string"
+        ],
+        "$.data.campaign_type": [
+          "string"
+        ],
+        "$.data.entities": [
+          "array"
+        ],
+        "$.data.entities[]": [
+          "string"
+        ],
+        "$.data.event_id": [
+          "string"
+        ],
+        "$.data.evidence_summary": [
+          "array"
+        ],
+        "$.data.evidence_summary[]": [
+          "object"
+        ],
+        "$.data.evidence_summary[].available": [
+          "boolean"
+        ],
+        "$.data.evidence_summary[].current": [
+          "number"
+        ],
+        "$.data.evidence_summary[].key": [
+          "string"
+        ],
+        "$.data.evidence_summary[].label": [
+          "string"
+        ],
+        "$.data.impact_accounts": [
+          "array"
+        ],
+        "$.data.impact_accounts[]": [
+          "object"
+        ],
+        "$.data.impact_accounts[].account": [
+          "string"
+        ],
+        "$.data.impact_accounts[].account_type": [
+          "string"
+        ],
+        "$.data.impact_accounts[].login_path": [
+          "string"
+        ],
+        "$.data.impact_accounts[].permission_risk": [
+          "string"
+        ],
+        "$.data.impact_assets": [
+          "array"
+        ],
+        "$.data.impact_assets[]": [
+          "object"
+        ],
+        "$.data.impact_assets[].asset": [
+          "string"
+        ],
+        "$.data.impact_assets[].business_system": [
+          "string"
+        ],
+        "$.data.impact_assets[].campus": [
+          "string"
+        ],
+        "$.data.impact_assets[].department": [
+          "string"
+        ],
+        "$.data.impact_assets[].evidence": [
+          "string"
+        ],
+        "$.data.impact_assets[].owner": [
+          "string"
+        ],
+        "$.data.impact_assets[].risk": [
+          "string"
+        ],
+        "$.data.impact_assets[].type": [
+          "string"
+        ],
+        "$.data.impact_business_systems": [
+          "array"
+        ],
+        "$.data.impact_business_systems[]": [
+          "object"
+        ],
+        "$.data.impact_business_systems[].business_system": [
+          "string"
+        ],
+        "$.data.impact_business_systems[].key_service": [
+          "string"
+        ],
+        "$.data.impact_business_systems[].recovery_priority": [
+          "string"
+        ],
+        "$.data.impact_business_systems[].risk": [
+          "string"
+        ],
+        "$.data.impact_campuses": [
+          "array"
+        ],
+        "$.data.impact_campuses[]": [
+          "object"
+        ],
+        "$.data.impact_campuses[].campus": [
+          "string"
+        ],
+        "$.data.impact_campuses[].covered_assets": [
+          "number"
+        ],
+        "$.data.impact_campuses[].link": [
+          "string"
+        ],
+        "$.data.impact_campuses[].risk": [
+          "string"
+        ],
+        "$.data.impact_data_backed": [
+          "object"
+        ],
+        "$.data.impact_data_backed.accounts": [
+          "boolean"
+        ],
+        "$.data.impact_data_backed.assets": [
+          "boolean"
+        ],
+        "$.data.impact_data_backed.business_systems": [
+          "boolean"
+        ],
+        "$.data.impact_data_backed.campuses": [
+          "boolean"
+        ],
+        "$.data.impact_data_backed.departments": [
+          "boolean"
+        ],
+        "$.data.impact_data_backed.services": [
+          "boolean"
+        ],
+        "$.data.impact_departments": [
+          "array"
+        ],
+        "$.data.impact_departments[]": [
+          "object"
+        ],
+        "$.data.impact_departments[].department": [
+          "string"
+        ],
+        "$.data.impact_departments[].owner": [
+          "string"
+        ],
+        "$.data.impact_departments[].progress": [
+          "number"
+        ],
+        "$.data.impact_departments[].risk": [
+          "string"
+        ],
+        "$.data.impact_services": [
+          "array"
+        ],
+        "$.data.impact_services[]": [
+          "object"
+        ],
+        "$.data.impact_services[].dependency": [
+          "string"
+        ],
+        "$.data.impact_services[].port_protocol": [
+          "string"
+        ],
+        "$.data.impact_services[].risk": [
+          "string"
+        ],
+        "$.data.impact_services[].service_name": [
+          "string"
+        ],
+        "$.data.ingest_ts": [
+          "number"
+        ],
+        "$.data.member_count": [
+          "number"
+        ],
+        "$.data.model_ids": [
+          "array"
+        ],
+        "$.data.model_ids[]": [
+          "string"
+        ],
+        "$.data.phase_data_backed": [
+          "boolean"
+        ],
+        "$.data.phase_summaries": [
+          "array"
+        ],
+        "$.data.phase_summaries[]": [
+          "object"
+        ],
+        "$.data.phase_summaries[].alert_count": [
+          "number"
+        ],
+        "$.data.phase_summaries[].evidence_count": [
+          "number"
+        ],
+        "$.data.phase_summaries[].last_seen": [
+          "number"
+        ],
+        "$.data.phase_summaries[].phase": [
+          "string"
+        ],
+        "$.data.reports": [
+          "array"
+        ],
+        "$.data.rule_ids": [
+          "array"
+        ],
+        "$.data.score": [
+          "number"
+        ],
+        "$.data.snapshot_id": [
+          "string"
+        ],
+        "$.data.snapshot_sha256": [
+          "string"
+        ],
+        "$.data.state_version": [
+          "number"
+        ],
+        "$.data.status": [
+          "string"
+        ],
+        "$.data.status_transitions": [
+          "array"
+        ],
+        "$.data.status_transitions[]": [
+          "object"
+        ],
+        "$.data.status_transitions[].changed_at": [
+          "string"
+        ],
+        "$.data.status_transitions[].source": [
+          "string"
+        ],
+        "$.data.status_transitions[].status": [
+          "string"
+        ],
+        "$.data.summary": [
+          "string"
+        ],
+        "$.data.tenant_id": [
+          "string"
+        ],
+        "$.data.ts_end": [
+          "number"
+        ],
+        "$.data.ts_start": [
+          "number"
+        ],
+        "$.error": [
+          "null"
+        ],
+        "$.meta": [
+          "object"
+        ],
+        "$.meta.as_of": [
+          "string"
+        ],
+        "$.meta.contract_version": [
+          "number"
+        ],
+        "$.meta.generated_at": [
+          "string"
+        ],
+        "$.meta.missing_sections": [
+          "array"
+        ],
+        "$.meta.missing_sections[]": [
+          "string"
+        ],
+        "$.meta.partial": [
+          "boolean"
+        ],
+        "$.meta.result_code": [
+          "string"
+        ],
+        "$.meta.schema_version": [
+          "number"
+        ],
+        "$.meta.snapshot_id": [
+          "string"
+        ],
+        "$.meta.source_watermarks": [
+          "object"
+        ],
+        "$.meta.source_watermarks.clickhouse.campaigns.event_id": [
+          "string"
+        ],
+        "$.meta.source_watermarks.clickhouse.campaigns.ingest_ts": [
+          "string"
+        ],
+        "$.meta.source_watermarks.postgresql.campaign_alert_links.member_count": [
+          "string"
+        ],
+        "$.meta.source_watermarks.postgresql.campaign_alert_links.revision": [
+          "string"
+        ],
+        "$.meta.source_watermarks.postgresql.campaign_workbench_state.member_count": [
+          "string"
+        ],
+        "$.meta.source_watermarks.postgresql.campaign_workbench_state.revision": [
+          "string"
+        ],
+        "$.meta.tenant_id": [
+          "string"
+        ],
+        "$.meta.trace_id": [
+          "string"
+        ],
+        "$.success": [
+          "boolean"
+        ],
+        "$.timestamp": [
+          "string"
+        ]
+      }
+    }
+  ],
+  "fixture_shapes": {
+    "alert_detail": {
+      "$": [
+        "object"
+      ],
+      "$.alertId": [
+        "string"
+      ],
+      "$.assets": [
+        "array"
+      ],
+      "$.assets[]": [
+        "object"
+      ],
+      "$.assets[].business": [
+        "string"
+      ],
+      "$.assets[].facts": [
+        "array"
+      ],
+      "$.assets[].facts[]": [
+        "object"
+      ],
+      "$.assets[].facts[].label": [
+        "string"
+      ],
+      "$.assets[].facts[].value": [
+        "string"
+      ],
+      "$.assets[].hostname": [
+        "string"
+      ],
+      "$.assets[].ip": [
+        "string"
+      ],
+      "$.assets[].risk": [
+        "string"
+      ],
+      "$.assets[].role": [
+        "string"
+      ],
+      "$.assets[].service": [
+        "string"
+      ],
+      "$.assets[].title": [
+        "string"
+      ],
+      "$.assignee": [
+        "string"
+      ],
+      "$.attackPhase": [
+        "string"
+      ],
+      "$.businessSystem": [
+        "string"
+      ],
+      "$.confidence": [
+        "string"
+      ],
+      "$.evidence": [
+        "array"
+      ],
+      "$.evidence[]": [
+        "object"
+      ],
+      "$.evidence[].delta": [
+        "string"
+      ],
+      "$.evidence[].label": [
+        "string"
+      ],
+      "$.evidence[].status": [
+        "string"
+      ],
+      "$.evidence[].value": [
+        "string"
+      ],
+      "$.evidenceApiError": [
+        "string"
+      ],
+      "$.evidenceRows": [
+        "array"
+      ],
+      "$.evidenceRows[]": [
+        "object"
+      ],
+      "$.evidenceRows[].evidenceId": [
+        "string"
+      ],
+      "$.evidenceRows[].evidenceKind": [
+        "string"
+      ],
+      "$.evidenceRows[].fileTags": [
+        "array"
+      ],
+      "$.evidenceRows[].graphPath": [
+        "undefined"
+      ],
+      "$.evidenceRows[].hashValue": [
+        "string"
+      ],
+      "$.evidenceRows[].logEvidence": [
+        "undefined"
+      ],
+      "$.evidenceRows[].pcapEvidence": [
+        "object",
+        "undefined"
+      ],
+      "$.evidenceRows[].pcapEvidence.contentSummary": [
+        "string"
+      ],
+      "$.evidenceRows[].pcapEvidence.downloadAudit": [
+        "string"
+      ],
+      "$.evidenceRows[].pcapEvidence.fileName": [
+        "string"
+      ],
+      "$.evidenceRows[].pcapEvidence.generatedAt": [
+        "string"
+      ],
+      "$.evidenceRows[].pcapEvidence.objectPath": [
+        "string"
+      ],
+      "$.evidenceRows[].pcapEvidence.sha256": [
+        "string"
+      ],
+      "$.evidenceRows[].pcapEvidence.size": [
+        "string"
+      ],
+      "$.evidenceRows[].pcapEvidence.statusLines": [
+        "array"
+      ],
+      "$.evidenceRows[].pcapEvidence.statusLines[]": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence": [
+        "object",
+        "undefined"
+      ],
+      "$.evidenceRows[].sessionEvidence.actionKind": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence.bytes": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence.duration": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence.linkedPcap": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence.sessionId": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence.status": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence.summaryLines": [
+        "array"
+      ],
+      "$.evidenceRows[].sessionEvidence.summaryLines[]": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence.timeline": [
+        "array"
+      ],
+      "$.evidenceRows[].sessionEvidence.timeline[]": [
+        "object"
+      ],
+      "$.evidenceRows[].sessionEvidence.timeline[].label": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence.timeline[].time": [
+        "string"
+      ],
+      "$.evidenceRows[].sessionEvidence.tupleLines": [
+        "array"
+      ],
+      "$.evidenceRows[].sessionEvidence.tupleLines[]": [
+        "string"
+      ],
+      "$.evidenceRows[].signedUrl": [
+        "string"
+      ],
+      "$.evidenceRows[].viewUrl": [
+        "string"
+      ],
+      "$.evidenceRows[].内容摘要": [
+        "string"
+      ],
+      "$.evidenceRows[].大小": [
+        "string"
+      ],
+      "$.evidenceRows[].操作": [
+        "string"
+      ],
+      "$.evidenceRows[].文件记录": [
+        "string"
+      ],
+      "$.evidenceRows[].状态": [
+        "string"
+      ],
+      "$.evidenceRows[].生成时间": [
+        "string"
+      ],
+      "$.evidenceRows[].证据类型": [
+        "string"
+      ],
+      "$.feedback": [
+        "object"
+      ],
+      "$.feedback.defaultResult": [
+        "string"
+      ],
+      "$.feedback.reason": [
+        "string"
+      ],
+      "$.feedback.sampleReturn": [
+        "string"
+      ],
+      "$.feedback.whitelistDraft": [
+        "string"
+      ],
+      "$.feedbackApiError": [
+        "string"
+      ],
+      "$.firstSeen": [
+        "string"
+      ],
+      "$.metrics": [
+        "array"
+      ],
+      "$.metrics[]": [
+        "object"
+      ],
+      "$.metrics[].delta": [
+        "string"
+      ],
+      "$.metrics[].label": [
+        "string"
+      ],
+      "$.metrics[].status": [
+        "string"
+      ],
+      "$.metrics[].value": [
+        "string"
+      ],
+      "$.recommendation": [
+        "string"
+      ],
+      "$.responseActions": [
+        "array"
+      ],
+      "$.ruleModel": [
+        "string"
+      ],
+      "$.score": [
+        "number"
+      ],
+      "$.severity": [
+        "string"
+      ],
+      "$.stageTrail": [
+        "array"
+      ],
+      "$.stateVersion": [
+        "undefined"
+      ],
+      "$.status": [
+        "string"
+      ],
+      "$.tags": [
+        "array"
+      ],
+      "$.tags[]": [
+        "string"
+      ],
+      "$.timeline": [
+        "array"
+      ],
+      "$.title": [
+        "string"
+      ]
+    },
+    "campaign_detail": {
+      "$": [
+        "object"
+      ],
+      "$.activityStatus": [
+        "string"
+      ],
+      "$.alertCount": [
+        "number"
+      ],
+      "$.alerts": [
+        "array"
+      ],
+      "$.alerts[]": [
+        "object"
+      ],
+      "$.alerts[].告警ID": [
+        "string"
+      ],
+      "$.alerts[].告警名称": [
+        "string"
+      ],
+      "$.alerts[].告警时间": [
+        "string"
+      ],
+      "$.alerts[].影响资产": [
+        "string"
+      ],
+      "$.alerts[].操作": [
+        "string"
+      ],
+      "$.alerts[].攻击阶段": [
+        "string"
+      ],
+      "$.alerts[].状态": [
+        "string"
+      ],
+      "$.alerts[].风险": [
+        "string"
+      ],
+      "$.assetCount": [
+        "number"
+      ],
+      "$.assignee": [
+        "string"
+      ],
+      "$.campaignId": [
+        "string"
+      ],
+      "$.campaignType": [
+        "string"
+      ],
+      "$.currentPhase": [
+        "string"
+      ],
+      "$.duration": [
+        "string"
+      ],
+      "$.evidence": [
+        "array"
+      ],
+      "$.evidence[]": [
+        "object"
+      ],
+      "$.evidence[].delta": [
+        "string"
+      ],
+      "$.evidence[].label": [
+        "string"
+      ],
+      "$.evidence[].status": [
+        "string"
+      ],
+      "$.evidence[].value": [
+        "string"
+      ],
+      "$.evidenceChecks": [
+        "array"
+      ],
+      "$.evidenceChecks[]": [
+        "object"
+      ],
+      "$.evidenceChecks[].label": [
+        "string"
+      ],
+      "$.evidenceChecks[].percent": [
+        "number"
+      ],
+      "$.evidenceChecks[].status": [
+        "string"
+      ],
+      "$.evidenceChecks[].value": [
+        "string"
+      ],
+      "$.evidenceCompleteness": [
+        "number"
+      ],
+      "$.evidenceCompletenessAvailable": [
+        "boolean"
+      ],
+      "$.evidenceDigest": [
+        "array"
+      ],
+      "$.evidenceDigest[]": [
+        "object"
+      ],
+      "$.evidenceDigest[].label": [
+        "string"
+      ],
+      "$.evidenceDigest[].value": [
+        "string"
+      ],
+      "$.evidenceRail": [
+        "array"
+      ],
+      "$.evidenceRail[]": [
+        "object"
+      ],
+      "$.evidenceRail[].available": [
+        "boolean"
+      ],
+      "$.evidenceRail[].current": [
+        "null",
+        "number"
+      ],
+      "$.evidenceRail[].expected": [
+        "null"
+      ],
+      "$.evidenceRail[].key": [
+        "string"
+      ],
+      "$.evidenceRail[].label": [
+        "string"
+      ],
+      "$.evidenceSummaryRows": [
+        "array"
+      ],
+      "$.evidenceSummaryRows[]": [
+        "object"
+      ],
+      "$.evidenceSummaryRows[].完整度": [
+        "string"
+      ],
+      "$.evidenceSummaryRows[].文件记录": [
+        "string"
+      ],
+      "$.evidenceSummaryRows[].状态": [
+        "string"
+      ],
+      "$.evidenceSummaryRows[].证据类型": [
+        "string"
+      ],
+      "$.firstSeen": [
+        "string"
+      ],
+      "$.impactAccount": [
+        "object"
+      ],
+      "$.impactAccount.breakdown": [
+        "array"
+      ],
+      "$.impactAccount.breakdown[]": [
+        "object"
+      ],
+      "$.impactAccount.breakdown[].count": [
+        "number"
+      ],
+      "$.impactAccount.breakdown[].label": [
+        "string"
+      ],
+      "$.impactAccount.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactAccount.breakdown[].status": [
+        "string"
+      ],
+      "$.impactAccount.rows": [
+        "array"
+      ],
+      "$.impactAccount.total": [
+        "number"
+      ],
+      "$.impactAccount.unit": [
+        "string"
+      ],
+      "$.impactAsset": [
+        "object"
+      ],
+      "$.impactAsset.breakdown": [
+        "array"
+      ],
+      "$.impactAsset.breakdown[]": [
+        "object"
+      ],
+      "$.impactAsset.breakdown[].count": [
+        "number"
+      ],
+      "$.impactAsset.breakdown[].label": [
+        "string"
+      ],
+      "$.impactAsset.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactAsset.breakdown[].status": [
+        "string"
+      ],
+      "$.impactAsset.rows": [
+        "array"
+      ],
+      "$.impactAsset.rows[]": [
+        "object"
+      ],
+      "$.impactAsset.rows[].业务系统": [
+        "string"
+      ],
+      "$.impactAsset.rows[].类型": [
+        "string"
+      ],
+      "$.impactAsset.rows[].证据": [
+        "string"
+      ],
+      "$.impactAsset.rows[].资产": [
+        "string"
+      ],
+      "$.impactAsset.rows[].部门": [
+        "string"
+      ],
+      "$.impactAsset.rows[].风险": [
+        "string"
+      ],
+      "$.impactAsset.total": [
+        "number"
+      ],
+      "$.impactAsset.unit": [
+        "string"
+      ],
+      "$.impactBusinessSystem": [
+        "object"
+      ],
+      "$.impactBusinessSystem.breakdown": [
+        "array"
+      ],
+      "$.impactBusinessSystem.breakdown[]": [
+        "object"
+      ],
+      "$.impactBusinessSystem.breakdown[].count": [
+        "number"
+      ],
+      "$.impactBusinessSystem.breakdown[].label": [
+        "string"
+      ],
+      "$.impactBusinessSystem.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactBusinessSystem.breakdown[].status": [
+        "string"
+      ],
+      "$.impactBusinessSystem.rows": [
+        "array"
+      ],
+      "$.impactBusinessSystem.total": [
+        "number"
+      ],
+      "$.impactBusinessSystem.unit": [
+        "string"
+      ],
+      "$.impactCampus": [
+        "object"
+      ],
+      "$.impactCampus.breakdown": [
+        "array"
+      ],
+      "$.impactCampus.breakdown[]": [
+        "object"
+      ],
+      "$.impactCampus.breakdown[].count": [
+        "number"
+      ],
+      "$.impactCampus.breakdown[].label": [
+        "string"
+      ],
+      "$.impactCampus.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactCampus.breakdown[].status": [
+        "string"
+      ],
+      "$.impactCampus.rows": [
+        "array"
+      ],
+      "$.impactCampus.total": [
+        "number"
+      ],
+      "$.impactCampus.unit": [
+        "string"
+      ],
+      "$.impactDataBacked": [
+        "object"
+      ],
+      "$.impactDataBacked.account": [
+        "boolean"
+      ],
+      "$.impactDataBacked.asset": [
+        "boolean"
+      ],
+      "$.impactDataBacked.business-system": [
+        "boolean"
+      ],
+      "$.impactDataBacked.campus": [
+        "boolean"
+      ],
+      "$.impactDataBacked.department": [
+        "boolean"
+      ],
+      "$.impactDataBacked.service": [
+        "boolean"
+      ],
+      "$.impactDepartment": [
+        "object"
+      ],
+      "$.impactDepartment.breakdown": [
+        "array"
+      ],
+      "$.impactDepartment.breakdown[]": [
+        "object"
+      ],
+      "$.impactDepartment.breakdown[].count": [
+        "number"
+      ],
+      "$.impactDepartment.breakdown[].label": [
+        "string"
+      ],
+      "$.impactDepartment.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactDepartment.breakdown[].status": [
+        "string"
+      ],
+      "$.impactDepartment.rows": [
+        "array"
+      ],
+      "$.impactDepartment.total": [
+        "number"
+      ],
+      "$.impactDepartment.unit": [
+        "string"
+      ],
+      "$.impactService": [
+        "object"
+      ],
+      "$.impactService.breakdown": [
+        "array"
+      ],
+      "$.impactService.breakdown[]": [
+        "object"
+      ],
+      "$.impactService.breakdown[].count": [
+        "number"
+      ],
+      "$.impactService.breakdown[].label": [
+        "string"
+      ],
+      "$.impactService.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactService.breakdown[].status": [
+        "string"
+      ],
+      "$.impactService.rows": [
+        "array"
+      ],
+      "$.impactService.total": [
+        "number"
+      ],
+      "$.impactService.unit": [
+        "string"
+      ],
+      "$.impactTabs": [
+        "array"
+      ],
+      "$.impactTabs[]": [
+        "object"
+      ],
+      "$.impactTabs[].label": [
+        "string"
+      ],
+      "$.impactTabs[].status": [
+        "string"
+      ],
+      "$.impactTabs[].value": [
+        "string"
+      ],
+      "$.lastUpdated": [
+        "string"
+      ],
+      "$.metrics": [
+        "array"
+      ],
+      "$.metrics[]": [
+        "object"
+      ],
+      "$.metrics[].delta": [
+        "string"
+      ],
+      "$.metrics[].label": [
+        "string"
+      ],
+      "$.metrics[].status": [
+        "string"
+      ],
+      "$.metrics[].value": [
+        "string"
+      ],
+      "$.missingSections": [
+        "array"
+      ],
+      "$.partial": [
+        "boolean"
+      ],
+      "$.phaseDataBacked": [
+        "boolean"
+      ],
+      "$.phases": [
+        "array"
+      ],
+      "$.phases[]": [
+        "object"
+      ],
+      "$.phases[].alertCount": [
+        "number"
+      ],
+      "$.phases[].evidenceCount": [
+        "number"
+      ],
+      "$.phases[].phase": [
+        "string"
+      ],
+      "$.phases[].status": [
+        "string"
+      ],
+      "$.phases[].summary": [
+        "string"
+      ],
+      "$.phases[].time": [
+        "string"
+      ],
+      "$.profileFacts": [
+        "array"
+      ],
+      "$.profileFacts[]": [
+        "object"
+      ],
+      "$.profileFacts[].label": [
+        "string"
+      ],
+      "$.profileFacts[].status": [
+        "boolean"
+      ],
+      "$.profileFacts[].value": [
+        "string"
+      ],
+      "$.reports": [
+        "array"
+      ],
+      "$.responseActions": [
+        "array"
+      ],
+      "$.responseFlow": [
+        "array"
+      ],
+      "$.responseFlow[]": [
+        "object"
+      ],
+      "$.responseFlow[].status": [
+        "string"
+      ],
+      "$.responseFlow[].time": [
+        "string"
+      ],
+      "$.responseFlow[].title": [
+        "string"
+      ],
+      "$.reviewRows": [
+        "array"
+      ],
+      "$.reviewRows[]": [
+        "object"
+      ],
+      "$.reviewRows[].状态": [
+        "string"
+      ],
+      "$.reviewRows[].结论": [
+        "string"
+      ],
+      "$.reviewRows[].维度": [
+        "string"
+      ],
+      "$.riskScore": [
+        "number"
+      ],
+      "$.snapshotId": [
+        "string"
+      ],
+      "$.snapshotSHA256": [
+        "string"
+      ],
+      "$.sourceWatermarks": [
+        "object"
+      ],
+      "$.stateVersion": [
+        "number"
+      ],
+      "$.status": [
+        "string"
+      ],
+      "$.statusTransitions": [
+        "array"
+      ],
+      "$.summary": [
+        "string"
+      ],
+      "$.tags": [
+        "array"
+      ],
+      "$.tags[]": [
+        "string"
+      ],
+      "$.title": [
+        "string"
+      ],
+      "$.topAssets": [
+        "array"
+      ],
+      "$.topAssets[]": [
+        "object"
+      ],
+      "$.topAssets[].业务系统": [
+        "string"
+      ],
+      "$.topAssets[].类型": [
+        "string"
+      ],
+      "$.topAssets[].证据": [
+        "string"
+      ],
+      "$.topAssets[].资产": [
+        "string"
+      ],
+      "$.topAssets[].部门": [
+        "string"
+      ],
+      "$.topAssets[].风险": [
+        "string"
+      ],
+      "$.workflowStatus": [
+        "string"
+      ]
+    },
+    "topics_overview": {
+      "$": [
+        "object"
+      ],
+      "$.evidence": [
+        "array"
+      ],
+      "$.evidence[]": [
+        "object"
+      ],
+      "$.evidence[].label": [
+        "string"
+      ],
+      "$.evidence[].status": [
+        "string"
+      ],
+      "$.evidence[].value": [
+        "string"
+      ],
+      "$.id": [
+        "string"
+      ],
+      "$.metrics": [
+        "array"
+      ],
+      "$.metrics[]": [
+        "object"
+      ],
+      "$.metrics[].delta": [
+        "string"
+      ],
+      "$.metrics[].label": [
+        "string"
+      ],
+      "$.metrics[].status": [
+        "string"
+      ],
+      "$.metrics[].value": [
+        "string"
+      ],
+      "$.rows": [
+        "array"
+      ],
+      "$.rows[]": [
+        "object"
+      ],
+      "$.rows[].专题": [
+        "string"
+      ],
+      "$.rows[].处置": [
+        "string"
+      ],
+      "$.rows[].对象": [
+        "string"
+      ],
+      "$.rows[].状态": [
+        "string"
+      ],
+      "$.rows[].范围": [
+        "string"
+      ],
+      "$.rows[].证据": [
+        "string"
+      ],
+      "$.rows[].风险": [
+        "string"
+      ],
+      "$.timeline": [
+        "array"
+      ],
+      "$.timeline[]": [
+        "object"
+      ],
+      "$.timeline[].description": [
+        "string"
+      ],
+      "$.timeline[].status": [
+        "string"
+      ],
+      "$.timeline[].title": [
+        "string"
+      ],
+      "$.total": [
+        "number"
+      ]
+    }
+  },
+  "normalized_live_shapes": {
+    "alert_detail": {
+      "$": [
+        "object"
+      ],
+      "$.alertId": [
+        "string"
+      ],
+      "$.assets": [
+        "array"
+      ],
+      "$.assets[]": [
+        "object"
+      ],
+      "$.assets[].business": [
+        "string"
+      ],
+      "$.assets[].facts": [
+        "array"
+      ],
+      "$.assets[].facts[]": [
+        "object"
+      ],
+      "$.assets[].facts[].label": [
+        "string"
+      ],
+      "$.assets[].facts[].value": [
+        "string"
+      ],
+      "$.assets[].hostname": [
+        "string"
+      ],
+      "$.assets[].ip": [
+        "string"
+      ],
+      "$.assets[].risk": [
+        "string"
+      ],
+      "$.assets[].role": [
+        "string"
+      ],
+      "$.assets[].service": [
+        "string"
+      ],
+      "$.assets[].title": [
+        "string"
+      ],
+      "$.assignee": [
+        "string"
+      ],
+      "$.attackPhase": [
+        "string"
+      ],
+      "$.businessSystem": [
+        "string"
+      ],
+      "$.confidence": [
+        "string"
+      ],
+      "$.evidence": [
+        "array"
+      ],
+      "$.evidence[]": [
+        "object"
+      ],
+      "$.evidence[].delta": [
+        "string"
+      ],
+      "$.evidence[].label": [
+        "string"
+      ],
+      "$.evidence[].status": [
+        "string"
+      ],
+      "$.evidence[].value": [
+        "string"
+      ],
+      "$.evidenceApiError": [
+        "string"
+      ],
+      "$.evidenceRows": [
+        "array"
+      ],
+      "$.evidenceRows[]": [
+        "object"
+      ],
+      "$.evidenceRows[].evidenceId": [
+        "string"
+      ],
+      "$.evidenceRows[].evidenceKind": [
+        "string"
+      ],
+      "$.evidenceRows[].fileTags": [
+        "array"
+      ],
+      "$.evidenceRows[].graphPath": [
+        "undefined"
+      ],
+      "$.evidenceRows[].hashValue": [
+        "string"
+      ],
+      "$.evidenceRows[].logEvidence": [
+        "undefined"
+      ],
+      "$.evidenceRows[].pcapEvidence": [
+        "undefined"
+      ],
+      "$.evidenceRows[].sessionEvidence": [
+        "undefined"
+      ],
+      "$.evidenceRows[].signedUrl": [
+        "string"
+      ],
+      "$.evidenceRows[].viewUrl": [
+        "string"
+      ],
+      "$.evidenceRows[].内容摘要": [
+        "string"
+      ],
+      "$.evidenceRows[].大小": [
+        "string"
+      ],
+      "$.evidenceRows[].操作": [
+        "string"
+      ],
+      "$.evidenceRows[].文件记录": [
+        "string"
+      ],
+      "$.evidenceRows[].状态": [
+        "string"
+      ],
+      "$.evidenceRows[].生成时间": [
+        "string"
+      ],
+      "$.evidenceRows[].证据类型": [
+        "string"
+      ],
+      "$.feedback": [
+        "object"
+      ],
+      "$.feedback.defaultResult": [
+        "string"
+      ],
+      "$.feedback.reason": [
+        "string"
+      ],
+      "$.feedback.sampleReturn": [
+        "string"
+      ],
+      "$.feedback.whitelistDraft": [
+        "string"
+      ],
+      "$.feedbackApiError": [
+        "string"
+      ],
+      "$.firstSeen": [
+        "string"
+      ],
+      "$.metrics": [
+        "array"
+      ],
+      "$.metrics[]": [
+        "object"
+      ],
+      "$.metrics[].delta": [
+        "string"
+      ],
+      "$.metrics[].label": [
+        "string"
+      ],
+      "$.metrics[].status": [
+        "string"
+      ],
+      "$.metrics[].value": [
+        "string"
+      ],
+      "$.recommendation": [
+        "string"
+      ],
+      "$.responseActions": [
+        "array"
+      ],
+      "$.ruleModel": [
+        "string"
+      ],
+      "$.score": [
+        "number"
+      ],
+      "$.severity": [
+        "string"
+      ],
+      "$.stageTrail": [
+        "array"
+      ],
+      "$.stateVersion": [
+        "number"
+      ],
+      "$.status": [
+        "string"
+      ],
+      "$.tags": [
+        "array"
+      ],
+      "$.tags[]": [
+        "string"
+      ],
+      "$.timeline": [
+        "array"
+      ],
+      "$.title": [
+        "string"
+      ]
+    },
+    "campaign_detail": {
+      "$": [
+        "object"
+      ],
+      "$.activityStatus": [
+        "string"
+      ],
+      "$.alertCount": [
+        "number"
+      ],
+      "$.alerts": [
+        "array"
+      ],
+      "$.alerts[]": [
+        "object"
+      ],
+      "$.alerts[].告警ID": [
+        "string"
+      ],
+      "$.alerts[].告警名称": [
+        "string"
+      ],
+      "$.alerts[].告警时间": [
+        "string"
+      ],
+      "$.alerts[].影响资产": [
+        "string"
+      ],
+      "$.alerts[].操作": [
+        "string"
+      ],
+      "$.alerts[].攻击阶段": [
+        "string"
+      ],
+      "$.alerts[].状态": [
+        "string"
+      ],
+      "$.alerts[].风险": [
+        "string"
+      ],
+      "$.assetCount": [
+        "number"
+      ],
+      "$.assignee": [
+        "string"
+      ],
+      "$.campaignId": [
+        "string"
+      ],
+      "$.campaignType": [
+        "string"
+      ],
+      "$.currentPhase": [
+        "string"
+      ],
+      "$.duration": [
+        "string"
+      ],
+      "$.evidence": [
+        "array"
+      ],
+      "$.evidence[]": [
+        "object"
+      ],
+      "$.evidence[].delta": [
+        "string"
+      ],
+      "$.evidence[].label": [
+        "string"
+      ],
+      "$.evidence[].status": [
+        "string"
+      ],
+      "$.evidence[].value": [
+        "string"
+      ],
+      "$.evidenceChecks": [
+        "array"
+      ],
+      "$.evidenceChecks[]": [
+        "object"
+      ],
+      "$.evidenceChecks[].label": [
+        "string"
+      ],
+      "$.evidenceChecks[].percent": [
+        "number"
+      ],
+      "$.evidenceChecks[].status": [
+        "string"
+      ],
+      "$.evidenceChecks[].value": [
+        "string"
+      ],
+      "$.evidenceCompleteness": [
+        "number"
+      ],
+      "$.evidenceCompletenessAvailable": [
+        "boolean"
+      ],
+      "$.evidenceDigest": [
+        "array"
+      ],
+      "$.evidenceDigest[]": [
+        "object"
+      ],
+      "$.evidenceDigest[].label": [
+        "string"
+      ],
+      "$.evidenceDigest[].value": [
+        "string"
+      ],
+      "$.evidenceRail": [
+        "array"
+      ],
+      "$.evidenceRail[]": [
+        "object"
+      ],
+      "$.evidenceRail[].available": [
+        "boolean"
+      ],
+      "$.evidenceRail[].current": [
+        "null",
+        "number"
+      ],
+      "$.evidenceRail[].expected": [
+        "null"
+      ],
+      "$.evidenceRail[].key": [
+        "string"
+      ],
+      "$.evidenceRail[].label": [
+        "string"
+      ],
+      "$.evidenceSummaryRows": [
+        "array"
+      ],
+      "$.evidenceSummaryRows[]": [
+        "object"
+      ],
+      "$.evidenceSummaryRows[].完整度": [
+        "string"
+      ],
+      "$.evidenceSummaryRows[].文件记录": [
+        "string"
+      ],
+      "$.evidenceSummaryRows[].状态": [
+        "string"
+      ],
+      "$.evidenceSummaryRows[].证据类型": [
+        "string"
+      ],
+      "$.firstSeen": [
+        "string"
+      ],
+      "$.impactAccount": [
+        "object"
+      ],
+      "$.impactAccount.breakdown": [
+        "array"
+      ],
+      "$.impactAccount.breakdown[]": [
+        "object"
+      ],
+      "$.impactAccount.breakdown[].count": [
+        "number"
+      ],
+      "$.impactAccount.breakdown[].label": [
+        "string"
+      ],
+      "$.impactAccount.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactAccount.breakdown[].status": [
+        "string"
+      ],
+      "$.impactAccount.rows": [
+        "array"
+      ],
+      "$.impactAccount.rows[]": [
+        "object"
+      ],
+      "$.impactAccount.rows[].权限风险": [
+        "string"
+      ],
+      "$.impactAccount.rows[].登录链路": [
+        "string"
+      ],
+      "$.impactAccount.rows[].账号": [
+        "string"
+      ],
+      "$.impactAccount.rows[].账号类型": [
+        "string"
+      ],
+      "$.impactAccount.total": [
+        "number"
+      ],
+      "$.impactAccount.unit": [
+        "string"
+      ],
+      "$.impactAsset": [
+        "object"
+      ],
+      "$.impactAsset.breakdown": [
+        "array"
+      ],
+      "$.impactAsset.breakdown[]": [
+        "object"
+      ],
+      "$.impactAsset.breakdown[].count": [
+        "number"
+      ],
+      "$.impactAsset.breakdown[].label": [
+        "string"
+      ],
+      "$.impactAsset.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactAsset.breakdown[].status": [
+        "string"
+      ],
+      "$.impactAsset.rows": [
+        "array"
+      ],
+      "$.impactAsset.rows[]": [
+        "object"
+      ],
+      "$.impactAsset.rows[].业务系统": [
+        "string"
+      ],
+      "$.impactAsset.rows[].类型": [
+        "string"
+      ],
+      "$.impactAsset.rows[].证据": [
+        "string"
+      ],
+      "$.impactAsset.rows[].资产": [
+        "string"
+      ],
+      "$.impactAsset.rows[].部门": [
+        "string"
+      ],
+      "$.impactAsset.rows[].风险": [
+        "string"
+      ],
+      "$.impactAsset.total": [
+        "number"
+      ],
+      "$.impactAsset.unit": [
+        "string"
+      ],
+      "$.impactBusinessSystem": [
+        "object"
+      ],
+      "$.impactBusinessSystem.breakdown": [
+        "array"
+      ],
+      "$.impactBusinessSystem.breakdown[]": [
+        "object"
+      ],
+      "$.impactBusinessSystem.breakdown[].count": [
+        "number"
+      ],
+      "$.impactBusinessSystem.breakdown[].label": [
+        "string"
+      ],
+      "$.impactBusinessSystem.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactBusinessSystem.breakdown[].status": [
+        "string"
+      ],
+      "$.impactBusinessSystem.rows": [
+        "array"
+      ],
+      "$.impactBusinessSystem.rows[]": [
+        "object"
+      ],
+      "$.impactBusinessSystem.rows[].业务系统": [
+        "string"
+      ],
+      "$.impactBusinessSystem.rows[].关键服务": [
+        "string"
+      ],
+      "$.impactBusinessSystem.rows[].恢复优先级": [
+        "string"
+      ],
+      "$.impactBusinessSystem.rows[].风险": [
+        "string"
+      ],
+      "$.impactBusinessSystem.total": [
+        "number"
+      ],
+      "$.impactBusinessSystem.unit": [
+        "string"
+      ],
+      "$.impactCampus": [
+        "object"
+      ],
+      "$.impactCampus.breakdown": [
+        "array"
+      ],
+      "$.impactCampus.breakdown[]": [
+        "object"
+      ],
+      "$.impactCampus.breakdown[].count": [
+        "number"
+      ],
+      "$.impactCampus.breakdown[].label": [
+        "string"
+      ],
+      "$.impactCampus.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactCampus.breakdown[].status": [
+        "string"
+      ],
+      "$.impactCampus.rows": [
+        "array"
+      ],
+      "$.impactCampus.rows[]": [
+        "object"
+      ],
+      "$.impactCampus.rows[].校区楼宇": [
+        "string"
+      ],
+      "$.impactCampus.rows[].覆盖资产": [
+        "number"
+      ],
+      "$.impactCampus.rows[].链路": [
+        "string"
+      ],
+      "$.impactCampus.rows[].风险": [
+        "string"
+      ],
+      "$.impactCampus.total": [
+        "number"
+      ],
+      "$.impactCampus.unit": [
+        "string"
+      ],
+      "$.impactDataBacked": [
+        "object"
+      ],
+      "$.impactDataBacked.account": [
+        "boolean"
+      ],
+      "$.impactDataBacked.asset": [
+        "boolean"
+      ],
+      "$.impactDataBacked.business-system": [
+        "boolean"
+      ],
+      "$.impactDataBacked.campus": [
+        "boolean"
+      ],
+      "$.impactDataBacked.department": [
+        "boolean"
+      ],
+      "$.impactDataBacked.service": [
+        "boolean"
+      ],
+      "$.impactDepartment": [
+        "object"
+      ],
+      "$.impactDepartment.breakdown": [
+        "array"
+      ],
+      "$.impactDepartment.breakdown[]": [
+        "object"
+      ],
+      "$.impactDepartment.breakdown[].count": [
+        "number"
+      ],
+      "$.impactDepartment.breakdown[].label": [
+        "string"
+      ],
+      "$.impactDepartment.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactDepartment.breakdown[].status": [
+        "string"
+      ],
+      "$.impactDepartment.rows": [
+        "array"
+      ],
+      "$.impactDepartment.rows[]": [
+        "object"
+      ],
+      "$.impactDepartment.rows[].处置进度": [
+        "number"
+      ],
+      "$.impactDepartment.rows[].责任人": [
+        "string"
+      ],
+      "$.impactDepartment.rows[].部门名称": [
+        "string"
+      ],
+      "$.impactDepartment.rows[].风险": [
+        "string"
+      ],
+      "$.impactDepartment.total": [
+        "number"
+      ],
+      "$.impactDepartment.unit": [
+        "string"
+      ],
+      "$.impactService": [
+        "object"
+      ],
+      "$.impactService.breakdown": [
+        "array"
+      ],
+      "$.impactService.breakdown[]": [
+        "object"
+      ],
+      "$.impactService.breakdown[].count": [
+        "number"
+      ],
+      "$.impactService.breakdown[].label": [
+        "string"
+      ],
+      "$.impactService.breakdown[].percent": [
+        "string"
+      ],
+      "$.impactService.breakdown[].status": [
+        "string"
+      ],
+      "$.impactService.rows": [
+        "array"
+      ],
+      "$.impactService.rows[]": [
+        "object"
+      ],
+      "$.impactService.rows[].依赖关系": [
+        "string"
+      ],
+      "$.impactService.rows[].服务名称": [
+        "string"
+      ],
+      "$.impactService.rows[].端口协议": [
+        "string"
+      ],
+      "$.impactService.rows[].风险": [
+        "string"
+      ],
+      "$.impactService.total": [
+        "number"
+      ],
+      "$.impactService.unit": [
+        "string"
+      ],
+      "$.impactTabs": [
+        "array"
+      ],
+      "$.impactTabs[]": [
+        "object"
+      ],
+      "$.impactTabs[].label": [
+        "string"
+      ],
+      "$.impactTabs[].status": [
+        "string"
+      ],
+      "$.impactTabs[].value": [
+        "string"
+      ],
+      "$.lastUpdated": [
+        "string"
+      ],
+      "$.metrics": [
+        "array"
+      ],
+      "$.metrics[]": [
+        "object"
+      ],
+      "$.metrics[].delta": [
+        "string"
+      ],
+      "$.metrics[].label": [
+        "string"
+      ],
+      "$.metrics[].status": [
+        "string"
+      ],
+      "$.metrics[].value": [
+        "string"
+      ],
+      "$.missingSections": [
+        "array"
+      ],
+      "$.missingSections[]": [
+        "string"
+      ],
+      "$.partial": [
+        "boolean"
+      ],
+      "$.phaseDataBacked": [
+        "boolean"
+      ],
+      "$.phases": [
+        "array"
+      ],
+      "$.phases[]": [
+        "object"
+      ],
+      "$.phases[].alertCount": [
+        "number"
+      ],
+      "$.phases[].evidenceCount": [
+        "number"
+      ],
+      "$.phases[].phase": [
+        "string"
+      ],
+      "$.phases[].status": [
+        "string"
+      ],
+      "$.phases[].summary": [
+        "string"
+      ],
+      "$.phases[].time": [
+        "string"
+      ],
+      "$.profileFacts": [
+        "array"
+      ],
+      "$.profileFacts[]": [
+        "object"
+      ],
+      "$.profileFacts[].label": [
+        "string"
+      ],
+      "$.profileFacts[].status": [
+        "boolean"
+      ],
+      "$.profileFacts[].value": [
+        "string"
+      ],
+      "$.reports": [
+        "array"
+      ],
+      "$.responseActions": [
+        "array"
+      ],
+      "$.responseActions[]": [
+        "object"
+      ],
+      "$.responseActions[].动作": [
+        "string"
+      ],
+      "$.responseActions[].状态": [
+        "string"
+      ],
+      "$.responseActions[].目标": [
+        "string"
+      ],
+      "$.responseActions[].负责人": [
+        "string"
+      ],
+      "$.responseFlow": [
+        "array"
+      ],
+      "$.responseFlow[]": [
+        "object"
+      ],
+      "$.responseFlow[].status": [
+        "string"
+      ],
+      "$.responseFlow[].time": [
+        "string"
+      ],
+      "$.responseFlow[].title": [
+        "string"
+      ],
+      "$.reviewRows": [
+        "array"
+      ],
+      "$.reviewRows[]": [
+        "object"
+      ],
+      "$.reviewRows[].状态": [
+        "string"
+      ],
+      "$.reviewRows[].结论": [
+        "string"
+      ],
+      "$.reviewRows[].维度": [
+        "string"
+      ],
+      "$.riskScore": [
+        "number"
+      ],
+      "$.snapshotId": [
+        "string"
+      ],
+      "$.snapshotSHA256": [
+        "string"
+      ],
+      "$.sourceWatermarks": [
+        "object"
+      ],
+      "$.sourceWatermarks.clickhouse.campaigns.event_id": [
+        "string"
+      ],
+      "$.sourceWatermarks.clickhouse.campaigns.ingest_ts": [
+        "string"
+      ],
+      "$.sourceWatermarks.postgresql.campaign_alert_links.member_count": [
+        "string"
+      ],
+      "$.sourceWatermarks.postgresql.campaign_alert_links.revision": [
+        "string"
+      ],
+      "$.sourceWatermarks.postgresql.campaign_workbench_state.member_count": [
+        "string"
+      ],
+      "$.sourceWatermarks.postgresql.campaign_workbench_state.revision": [
+        "string"
+      ],
+      "$.stateVersion": [
+        "number"
+      ],
+      "$.status": [
+        "string"
+      ],
+      "$.statusTransitions": [
+        "array"
+      ],
+      "$.statusTransitions[]": [
+        "object"
+      ],
+      "$.statusTransitions[].changedAt": [
+        "string"
+      ],
+      "$.statusTransitions[].source": [
+        "string"
+      ],
+      "$.statusTransitions[].status": [
+        "string"
+      ],
+      "$.summary": [
+        "string"
+      ],
+      "$.tags": [
+        "array"
+      ],
+      "$.tags[]": [
+        "string"
+      ],
+      "$.title": [
+        "string"
+      ],
+      "$.topAssets": [
+        "array"
+      ],
+      "$.topAssets[]": [
+        "object"
+      ],
+      "$.topAssets[].业务系统": [
+        "string"
+      ],
+      "$.topAssets[].类型": [
+        "string"
+      ],
+      "$.topAssets[].证据": [
+        "string"
+      ],
+      "$.topAssets[].资产": [
+        "string"
+      ],
+      "$.topAssets[].部门": [
+        "string"
+      ],
+      "$.topAssets[].风险": [
+        "string"
+      ],
+      "$.workflowStatus": [
+        "string"
+      ]
+    },
+    "topics_overview": {
+      "$": [
+        "object"
+      ],
+      "$.evidence": [
+        "array"
+      ],
+      "$.evidence[]": [
+        "object"
+      ],
+      "$.evidence[].label": [
+        "string"
+      ],
+      "$.evidence[].status": [
+        "string"
+      ],
+      "$.evidence[].value": [
+        "string"
+      ],
+      "$.id": [
+        "string"
+      ],
+      "$.metrics": [
+        "array"
+      ],
+      "$.metrics[]": [
+        "object"
+      ],
+      "$.metrics[].delta": [
+        "string"
+      ],
+      "$.metrics[].label": [
+        "string"
+      ],
+      "$.metrics[].status": [
+        "string"
+      ],
+      "$.metrics[].value": [
+        "string"
+      ],
+      "$.rows": [
+        "array"
+      ],
+      "$.rows[]": [
+        "object"
+      ],
+      "$.rows[].专题": [
+        "string"
+      ],
+      "$.rows[].处置": [
+        "string"
+      ],
+      "$.rows[].对象": [
+        "string"
+      ],
+      "$.rows[].状态": [
+        "string"
+      ],
+      "$.rows[].范围": [
+        "string"
+      ],
+      "$.rows[].证据": [
+        "string"
+      ],
+      "$.rows[].风险": [
+        "string"
+      ],
+      "$.timeline": [
+        "array"
+      ],
+      "$.timeline[]": [
+        "object"
+      ],
+      "$.timeline[].description": [
+        "string"
+      ],
+      "$.timeline[].status": [
+        "string"
+      ],
+      "$.timeline[].title": [
+        "string"
+      ]
+    }
+  },
+  "diffs": {
+    "alert_detail": {
+      "fixture_path_count": 93,
+      "live_path_count": 70,
+      "common_path_count": 70,
+      "fixture_only_paths": [
+        "$.evidenceRows[].pcapEvidence.contentSummary",
+        "$.evidenceRows[].pcapEvidence.downloadAudit",
+        "$.evidenceRows[].pcapEvidence.fileName",
+        "$.evidenceRows[].pcapEvidence.generatedAt",
+        "$.evidenceRows[].pcapEvidence.objectPath",
+        "$.evidenceRows[].pcapEvidence.sha256",
+        "$.evidenceRows[].pcapEvidence.size",
+        "$.evidenceRows[].pcapEvidence.statusLines",
+        "$.evidenceRows[].pcapEvidence.statusLines[]",
+        "$.evidenceRows[].sessionEvidence.actionKind",
+        "$.evidenceRows[].sessionEvidence.bytes",
+        "$.evidenceRows[].sessionEvidence.duration",
+        "$.evidenceRows[].sessionEvidence.linkedPcap",
+        "$.evidenceRows[].sessionEvidence.sessionId",
+        "$.evidenceRows[].sessionEvidence.status",
+        "$.evidenceRows[].sessionEvidence.summaryLines",
+        "$.evidenceRows[].sessionEvidence.summaryLines[]",
+        "$.evidenceRows[].sessionEvidence.timeline",
+        "$.evidenceRows[].sessionEvidence.timeline[]",
+        "$.evidenceRows[].sessionEvidence.timeline[].label",
+        "$.evidenceRows[].sessionEvidence.timeline[].time",
+        "$.evidenceRows[].sessionEvidence.tupleLines",
+        "$.evidenceRows[].sessionEvidence.tupleLines[]"
+      ],
+      "live_only_paths": [],
+      "optional_presence_differences": [
+        {
+          "path": "$.evidenceRows[].pcapEvidence",
+          "fixture_types": [
+            "object",
+            "undefined"
+          ],
+          "live_types": [
+            "undefined"
+          ]
+        },
+        {
+          "path": "$.evidenceRows[].sessionEvidence",
+          "fixture_types": [
+            "object",
+            "undefined"
+          ],
+          "live_types": [
+            "undefined"
+          ]
+        },
+        {
+          "path": "$.stateVersion",
+          "fixture_types": [
+            "undefined"
+          ],
+          "live_types": [
+            "number"
+          ]
+        }
+      ],
+      "type_conflicts": []
+    },
+    "campaign_detail": {
+      "fixture_path_count": 185,
+      "live_path_count": 226,
+      "common_path_count": 185,
+      "fixture_only_paths": [],
+      "live_only_paths": [
+        "$.impactAccount.rows[]",
+        "$.impactAccount.rows[].权限风险",
+        "$.impactAccount.rows[].登录链路",
+        "$.impactAccount.rows[].账号",
+        "$.impactAccount.rows[].账号类型",
+        "$.impactBusinessSystem.rows[]",
+        "$.impactBusinessSystem.rows[].业务系统",
+        "$.impactBusinessSystem.rows[].关键服务",
+        "$.impactBusinessSystem.rows[].恢复优先级",
+        "$.impactBusinessSystem.rows[].风险",
+        "$.impactCampus.rows[]",
+        "$.impactCampus.rows[].校区楼宇",
+        "$.impactCampus.rows[].覆盖资产",
+        "$.impactCampus.rows[].链路",
+        "$.impactCampus.rows[].风险",
+        "$.impactDepartment.rows[]",
+        "$.impactDepartment.rows[].处置进度",
+        "$.impactDepartment.rows[].责任人",
+        "$.impactDepartment.rows[].部门名称",
+        "$.impactDepartment.rows[].风险",
+        "$.impactService.rows[]",
+        "$.impactService.rows[].依赖关系",
+        "$.impactService.rows[].服务名称",
+        "$.impactService.rows[].端口协议",
+        "$.impactService.rows[].风险",
+        "$.missingSections[]",
+        "$.responseActions[]",
+        "$.responseActions[].动作",
+        "$.responseActions[].状态",
+        "$.responseActions[].目标",
+        "$.responseActions[].负责人",
+        "$.sourceWatermarks.clickhouse.campaigns.event_id",
+        "$.sourceWatermarks.clickhouse.campaigns.ingest_ts",
+        "$.sourceWatermarks.postgresql.campaign_alert_links.member_count",
+        "$.sourceWatermarks.postgresql.campaign_alert_links.revision",
+        "$.sourceWatermarks.postgresql.campaign_workbench_state.member_count",
+        "$.sourceWatermarks.postgresql.campaign_workbench_state.revision",
+        "$.statusTransitions[]",
+        "$.statusTransitions[].changedAt",
+        "$.statusTransitions[].source",
+        "$.statusTransitions[].status"
+      ],
+      "optional_presence_differences": [],
+      "type_conflicts": []
+    },
+    "topics_overview": {
+      "fixture_path_count": 28,
+      "live_path_count": 27,
+      "common_path_count": 27,
+      "fixture_only_paths": [
+        "$.total"
+      ],
+      "live_only_paths": [],
+      "optional_presence_differences": [],
+      "type_conflicts": []
+    }
+  },
+  "required_raw_path_gaps": {
+    "alert_list": [],
+    "campaign_list": [],
+    "alert_detail": [],
+    "alert_evidence": [],
+    "alert_feedback": [],
+    "campaign_detail": [],
+    "topic_tunnel": [],
+    "topic_exfil": [],
+    "topic_apt": []
+  },
+  "required_normalized_path_gaps": {
+    "alert_detail": [],
+    "campaign_detail": [],
+    "topics_overview": []
+  },
+  "value_reconciliation": {
+    "status": "PASS",
+    "checks": [
+      {
+        "check_id": "alert.id",
+        "source_path": "$.data.alert_id",
+        "display_path": "$.alertId",
+        "source_present": true,
+        "source_type": "string",
+        "display_type": "string",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "alert.score",
+        "source_path": "$.data.score",
+        "display_path": "$.score",
+        "source_present": true,
+        "source_type": "number",
+        "display_type": "number",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "alert.confidence",
+        "source_path": "$.data.confidence",
+        "display_path": "$.confidence",
+        "source_present": false,
+        "source_type": "undefined",
+        "display_type": "string",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "alert.status",
+        "source_path": "$.data.status",
+        "display_path": "$.status",
+        "source_present": true,
+        "source_type": "string",
+        "display_type": "string",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "alert.evidence_count",
+        "source_path": "$.data[]",
+        "display_path": "$.evidenceRows.length",
+        "source_present": true,
+        "source_type": "number",
+        "display_type": "number",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "alert.response_action_count",
+        "source_path": "$.data.response_actions[]",
+        "display_path": "$.responseActions.length",
+        "source_present": true,
+        "source_type": "number",
+        "display_type": "number",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "alert.timeline_count",
+        "source_path": "$.data.timeline[]",
+        "display_path": "$.timeline.length",
+        "source_present": true,
+        "source_type": "number",
+        "display_type": "number",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "campaign.id",
+        "source_path": "$.data.campaign_id",
+        "display_path": "$.campaignId",
+        "source_present": true,
+        "source_type": "string",
+        "display_type": "string",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "campaign.score",
+        "source_path": "$.data.score",
+        "display_path": "$.riskScore",
+        "source_present": true,
+        "source_type": "number",
+        "display_type": "number",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "campaign.state_version",
+        "source_path": "$.data.state_version",
+        "display_path": "$.stateVersion",
+        "source_present": true,
+        "source_type": "number",
+        "display_type": "number",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "campaign.alert_count",
+        "source_path": "$.data.alerts|alert_ids",
+        "display_path": "$.alertCount",
+        "source_present": true,
+        "source_type": "array",
+        "display_type": "number",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "campaign.asset_count",
+        "source_path": "$.data.entities",
+        "display_path": "$.assetCount",
+        "source_present": true,
+        "source_type": "array",
+        "display_type": "number",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "campaign.response_progress",
+        "source_path": "$.data.response_progress",
+        "display_path": "$.metrics[处置进度].value",
+        "source_present": false,
+        "source_type": "undefined",
+        "display_type": "string",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "topics.tunnel_session_count",
+        "source_path": "$.data.summary.session_count",
+        "display_path": "$.metrics[隧道会话].value",
+        "source_present": true,
+        "source_type": "number",
+        "display_type": "string",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "topics.exfil_path_count",
+        "source_path": "$.data.summary.path_count",
+        "display_path": "$.metrics[外传路径].value",
+        "source_present": true,
+        "source_type": "number",
+        "display_type": "string",
+        "equal": true,
+        "values_captured": false
+      },
+      {
+        "check_id": "topics.apt_campaign_count",
+        "source_path": "$.data.summary.campaign_count",
+        "display_path": "$.metrics[APT 战役].value",
+        "source_present": true,
+        "source_type": "number",
+        "display_type": "string",
+        "equal": true,
+        "values_captured": false
+      }
+    ],
+    "check_count": 16,
+    "failure_count": 0,
+    "payload_values_captured": false
+  },
+  "all_http_200": true,
+  "type_conflict_count": 0,
+  "payload_values_captured": false,
+  "secrets_captured": false,
+  "production_mutations": []
+}

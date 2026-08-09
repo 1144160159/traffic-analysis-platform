@@ -1,0 +1,2800 @@
+python scripts/alignment/generate_ts_client.py
+python scripts/alignment/build_ledger.py
+python scripts/alignment/validate.py
+{
+  "schema_version": 1,
+  "result": "pass",
+  "blockers": 0,
+  "counts": {
+    "features": 54,
+    "technologies": 48,
+    "total": 102,
+    "priorities": {
+      "P0": 38,
+      "P1": 61,
+      "P2": 3
+    },
+    "work_packages": 29,
+    "standard_24w_scope": 84,
+    "backlog": 18,
+    "feature_contracts": 38,
+    "formal_nav_routes": 24
+  },
+  "standard_24w_scope": [
+    "F-ADAPTER-001",
+    "F-ADAPTER-002",
+    "F-ALERT-001",
+    "F-ALERT-002",
+    "F-ALERT-003",
+    "F-ALERT-004",
+    "F-ALERT-005",
+    "F-ALERT-006",
+    "F-ASSET-001",
+    "F-ASSET-002",
+    "F-ASSET-003",
+    "F-ASSET-004",
+    "F-ASSET-005",
+    "F-ASSET-006",
+    "F-AUDIT-001",
+    "F-AUTH-001",
+    "F-CAMPAIGN-001",
+    "F-COMMON-001",
+    "F-COMMON-002",
+    "F-COMMON-003",
+    "F-COMMON-004",
+    "F-DASHBOARD-001",
+    "F-DASHBOARD-002",
+    "F-DATAQUALITY-001",
+    "F-EXPORT-001",
+    "F-GRAPH-001",
+    "F-GRAPH-002",
+    "F-GRAPH-003",
+    "F-GRAPH-004",
+    "F-MODEL-001",
+    "F-PLAYBOOK-001",
+    "F-PROBE-001",
+    "F-SEARCH-001",
+    "F-TOPIC-001",
+    "F-TOPIC-002",
+    "F-TOPIC-003",
+    "F-TOPIC-004",
+    "F-WHITELIST-001",
+    "T-CH-001",
+    "T-CH-002",
+    "T-CH-003",
+    "T-CH-004",
+    "T-CH-005",
+    "T-CH-006",
+    "T-CONFIG-001",
+    "T-DQ-001",
+    "T-DR-001",
+    "T-FLINK-001",
+    "T-FLINK-002",
+    "T-FLINK-003",
+    "T-FLINK-004",
+    "T-FLINK-005",
+    "T-GW-001",
+    "T-KAFKA-001",
+    "T-KAFKA-002",
+    "T-KAFKA-003",
+    "T-KAFKA-004",
+    "T-KAFKA-005",
+    "T-MINIO-001",
+    "T-MINIO-002",
+    "T-MINIO-003",
+    "T-MINIO-004",
+    "T-NEBULA-001",
+    "T-NEBULA-002",
+    "T-NEBULA-003",
+    "T-NEBULA-004",
+    "T-OBS-001",
+    "T-OBS-002",
+    "T-OS-001",
+    "T-OS-002",
+    "T-OS-003",
+    "T-OS-004",
+    "T-OS-005",
+    "T-PG-001",
+    "T-PG-002",
+    "T-PG-003",
+    "T-PG-004",
+    "T-PG-005",
+    "T-PG-006",
+    "T-PKI-001",
+    "T-REDIS-001",
+    "T-REDIS-002",
+    "T-SCHEMA-001",
+    "T-SEC-001"
+  ],
+  "backlog": [
+    "F-ATTACKCHAIN-001",
+    "F-BASELINE-001",
+    "F-COMPLIANCE-001",
+    "F-DEPLOY-001",
+    "F-ENCRYPTED-001",
+    "F-ENCRYPTED-002",
+    "F-FORENSICS-001",
+    "F-FUSION-001",
+    "F-MLOPS-001",
+    "F-NOTIFICATION-001",
+    "F-NOTIFY-001",
+    "F-PREF-001",
+    "F-PROBE-002",
+    "F-RULE-001",
+    "F-SCREEN-001",
+    "F-SETTINGS-001",
+    "T-MLOPS-001",
+    "T-REDIS-003"
+  ],
+  "structural_failures": {
+    "invalid_ids": [],
+    "duplicate_ids": [],
+    "orphan_ids": [],
+    "duplicate_accountable_ids": [],
+    "p0_p1_without_acceptance_case": [],
+    "p0_p1_without_rollback": [],
+    "contract_errors": {}
+  },
+  "count_failures": {
+    "features": false,
+    "technologies": false,
+    "total": false,
+    "P0": false,
+    "P1": false,
+    "P2": false,
+    "formal_nav_routes": false
+  },
+  "w1_scope_gaps": {
+    "unknown_required_ui_scopes": [],
+    "unknown_accepted_ui_scopes": [],
+    "missing_feature_contracts_for_p0": []
+  }
+}
+python scripts/alignment/verify_ui_page_design_contracts.py
+{
+  "result": "pass",
+  "contract_version": "2026-08-04.4",
+  "page_count": 28,
+  "route_coverage": "28/28",
+  "compatibility_alias_count": 3,
+  "canonical_id_count": 102,
+  "api_plan_count": 29,
+  "duplicate_page_ids": [],
+  "duplicate_routes": [],
+  "unknown_route_ids": [],
+  "orphan_capture_ids": [],
+  "unknown_api_plans": [],
+  "orphan_api_plans": [],
+  "candidate_manifest": "doc/02_acceptance/runs/20260805-ui-page-design-contract-v5/candidate-manifest.json",
+  "candidate_image": "docker.io/traffic/web-ui:remediation-ui-c2975d525e67",
+  "errors": []
+}
+python scripts/alignment/verify_product_design_audit_policy.py
+{
+  "status": "PASS",
+  "policy_id": "UI-PRODUCT-DESIGN-AUDIT-V1",
+  "audit_method": "Product Design",
+  "figma_enabled": false,
+  "default_progress_report_statuses": [
+    "OPEN",
+    "IN_PROGRESS",
+    "VERIFYING"
+  ],
+  "closed_findings_excluded": true,
+  "errors": []
+}
+python scripts/alignment/build_feature_contract_registry.py --check
+{
+  "status": "PASS",
+  "catalog_sha256": "6c743cb48cc6117e87ab3a6e5e5bea231af22e7dd2056834d2396626fa5f48a4",
+  "coverage": {
+    "canonical_feature_ids": 54,
+    "formal_contracts": 38,
+    "formal_contracts_valid": 38,
+    "formal_contracts_openapi_bound": 25,
+    "non_draft_openapi_binding_gaps": [],
+    "standard_scope_features": 38,
+    "standard_scope_formal_contracts": 38,
+    "missing_standard_scope_contracts": [],
+    "missing_backlog_contracts": [
+      "F-ATTACKCHAIN-001",
+      "F-BASELINE-001",
+      "F-COMPLIANCE-001",
+      "F-DEPLOY-001",
+      "F-ENCRYPTED-001",
+      "F-ENCRYPTED-002",
+      "F-FORENSICS-001",
+      "F-FUSION-001",
+      "F-MLOPS-001",
+      "F-NOTIFICATION-001",
+      "F-NOTIFY-001",
+      "F-PREF-001",
+      "F-PROBE-002",
+      "F-RULE-001",
+      "F-SCREEN-001",
+      "F-SETTINGS-001"
+    ],
+    "p0_features": 16,
+    "p0_features_with_formal_contract": 16
+  }
+}
+python scripts/alignment/verify_feature_contract_registry.py
+{
+  "status": "PASS",
+  "feature_id": "F-COMMON-001",
+  "registry_integrity": "PASS",
+  "contract_coverage": "STANDARD_SCOPE_COMPLETE_BACKLOG_PARTIAL",
+  "catalog_sha256": "6c743cb48cc6117e87ab3a6e5e5bea231af22e7dd2056834d2396626fa5f48a4",
+  "coverage": {
+    "canonical_feature_ids": 54,
+    "formal_contracts": 38,
+    "formal_contracts_valid": 38,
+    "formal_contracts_openapi_bound": 25,
+    "non_draft_openapi_binding_gaps": [],
+    "standard_scope_features": 38,
+    "standard_scope_formal_contracts": 38,
+    "missing_standard_scope_contracts": [],
+    "missing_backlog_contracts": [
+      "F-ATTACKCHAIN-001",
+      "F-BASELINE-001",
+      "F-COMPLIANCE-001",
+      "F-DEPLOY-001",
+      "F-ENCRYPTED-001",
+      "F-ENCRYPTED-002",
+      "F-FORENSICS-001",
+      "F-FUSION-001",
+      "F-MLOPS-001",
+      "F-NOTIFICATION-001",
+      "F-NOTIFY-001",
+      "F-PREF-001",
+      "F-PROBE-002",
+      "F-RULE-001",
+      "F-SCREEN-001",
+      "F-SETTINGS-001"
+    ],
+    "p0_features": 16,
+    "p0_features_with_formal_contract": 16
+  },
+  "errors": []
+}
+python scripts/alignment/build_adapter_risk_registry.py --check
+{
+  "status": "PASS",
+  "catalog_sha256": "28f42fa3de31949a14234260347f31857ce6c27e2d3532aca7cefcfe08a4b120",
+  "coverage": {
+    "source_files": 73,
+    "open_findings": 0,
+    "counts_by_rule": {
+      "default_demo_resource_id": 0,
+      "derived_business_collection": 0,
+      "derived_summary_fallback": 0,
+      "fabricated_comparison_literal": 0,
+      "fabricated_generic_snapshot": 0,
+      "fixed_detail_business_fallback": 0,
+      "fixed_detail_collection_fallback": 0,
+      "fixed_detail_metric_literal": 0,
+      "fixed_detail_timeline_literal": 0,
+      "fixed_numeric_business_fallback": 0,
+      "fixed_page_metric_fallback": 0,
+      "fixed_screen_visual_fixture": 0,
+      "generated_business_trend": 0,
+      "hardcoded_private_ip_literal": 0,
+      "runtime_business_fixture_object": 0,
+      "runtime_mock_dependency": 0,
+      "runtime_static_business_fallback": 0,
+      "runtime_visual_fixture_bypass": 0,
+      "truthy_numeric_fallback": 0
+    },
+    "resolved_in_this_slice": [
+      "pageSnapshotAdapters graph hard-coded center IP fallback",
+      "topic tunnel fabricated comparison literals",
+      "topic tunnel truthy summary fallback and display-list business-row inference",
+      "visual-breakdown query parameter no longer bypasses real page APIs with runtime fixture snapshots",
+      "untyped page responses render partial and unavailable instead of guessed KPI values rows IDs or statuses",
+      "graph landing queries no longer inject a fixed frontend center address",
+      "topic delivery summary no longer derives report and evidence counts from completeness or display rows",
+      "selected live adapters render missing addresses unavailable and contain no fixed private business address literals",
+      "selected adapters preserve authoritative zero values across compatibility aliases",
+      "data-quality topic rows require authoritative topic_health payloads instead of frontend-scaled aggregates",
+      "production bundle statically excludes MSW worker modules and runtime fixture source graphs",
+      "alert campaign and topic pilot fixture/live schema diff and sixteen-field displayed-value reconciliation are read-only and candidate-bound"
+    ],
+    "remaining": [
+      "capture additional live zero empty partial and unavailable pilot windows beyond the current sampled reconciliation",
+      "capture zero, empty, partial and unavailable live samples in Windows Chrome"
+    ]
+  }
+}
+python scripts/alignment/verify_common_response_adapter.py
+{
+  "status": "PASS",
+  "features": [
+    "F-COMMON-002",
+    "F-COMMON-004",
+    "F-ADAPTER-002"
+  ],
+  "repository_integrity": "PASS",
+  "remediation_coverage": "PARTIAL",
+  "formal_contracts": 3,
+  "snapshot_required_fields": [
+    "as_of",
+    "contract_version",
+    "generated_at",
+    "missing_sections",
+    "partial",
+    "result_code",
+    "schema_version",
+    "snapshot_id",
+    "source_watermarks",
+    "trace_id"
+  ],
+  "error_catalog_codes": 13,
+  "adapter_open_findings": 0,
+  "adapter_counts_by_rule": {
+    "default_demo_resource_id": 0,
+    "derived_business_collection": 0,
+    "derived_summary_fallback": 0,
+    "fabricated_comparison_literal": 0,
+    "fabricated_generic_snapshot": 0,
+    "fixed_detail_business_fallback": 0,
+    "fixed_detail_collection_fallback": 0,
+    "fixed_detail_metric_literal": 0,
+    "fixed_detail_timeline_literal": 0,
+    "fixed_numeric_business_fallback": 0,
+    "fixed_page_metric_fallback": 0,
+    "fixed_screen_visual_fixture": 0,
+    "generated_business_trend": 0,
+    "hardcoded_private_ip_literal": 0,
+    "runtime_business_fixture_object": 0,
+    "runtime_mock_dependency": 0,
+    "runtime_static_business_fallback": 0,
+    "runtime_visual_fixture_bypass": 0,
+    "truthy_numeric_fallback": 0
+  },
+  "adoption_gaps": [
+    "the full handler inventory still contains legacy and domain-specific error codes",
+    "operation_id current_revision projection_status and field_errors are not populated by every handler",
+    "gateway status preservation and production error-distribution telemetry are not yet candidate-bound",
+    "G2 through G8 evidence remains open"
+  ],
+  "errors": []
+}
+python scripts/alignment/check_openapi.py
+{
+  "result": "pass",
+  "operations": 99,
+  "errors": []
+}
+python scripts/alignment/check_migrations.py
+{
+  "result": "pass",
+  "migration_count": 63,
+  "clickhouse_migration_count": 7,
+  "startup_schema_calls": [],
+  "existing_runtime_ddl_debt": {},
+  "errors": []
+}
+python scripts/alignment/check_event_catalog.py
+{
+  "schema_version": 1,
+  "result": "pass",
+  "counts": {
+    "canonical_topics": 35,
+    "kubernetes_additional_topics": 7,
+    "observed_additional_topics": 6,
+    "readiness": {
+      "active": 27,
+      "consumer_only": 2,
+      "dlq": 2,
+      "producer_only": 4
+    },
+    "schema_kinds": {
+      "json-schema": 25,
+      "protobuf": 10
+    }
+  },
+  "gaps": {
+    "producer_only": [
+      "alert.saved-view.events.v1",
+      "asset.discovery.events.v1",
+      "asset.exports.v1",
+      "notification.governance.events.v1"
+    ],
+    "consumer_only": [
+      "asset.bindings.v1",
+      "device.logs.v1"
+    ],
+    "dlq": [
+      "dlq.probe.acks.v2",
+      "dlq.v1"
+    ],
+    "allowed_additional": [
+      "campaigns.v1",
+      "detections.behavior.v1",
+      "detections.business.v1",
+      "dlq.cep-job",
+      "dlq.feature-job",
+      "dlq.rule-job",
+      "l2.trigger.v1"
+    ],
+    "observed_additional": [
+      "alert.events.v1",
+      "dlq.pcap-index-job",
+      "dlq.session.ch.v1",
+      "perf-test",
+      "session.late.v1",
+      "test-metadata"
+    ]
+  },
+  "errors": []
+}
+python scripts/alignment/generate_kafka_acl_plan.py --check-generated
+{
+  "schema_version": 1,
+  "result": "pass",
+  "counts": {
+    "principals": 20,
+    "canonical_topics": 35,
+    "topic_bindings": 35,
+    "additional_topics_blocked": 7,
+    "producer_principals": 15,
+    "consumer_principals": 14,
+    "expanded_service_identities": 8,
+    "expanded_workload_identities": 18
+  },
+  "errors": []
+}
+python scripts/alignment/verify_kafka_dlq_commit_barrier.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-kafka-dlq-commit-barrier-v1",
+  "remediation_id": "T-KAFKA-003",
+  "status": "PASS",
+  "coverage_status": "PARTIAL_SHARED_GO_CONSUMER_WITH_DASHBOARD_OWNED_G1_AND_ALERT_RESPONSE_REPOSITORY_BARRIER",
+  "guarantees": 7,
+  "source_assertions": [
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/dlq.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer_dlq_acknowledgement_barrier_test.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer_batch_commit_test.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/dlq_test.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    }
+  ],
+  "errors": [],
+  "remaining_gates": [
+    "repeat poison-message DLQ acknowledgement failure on the approved replicated release-candidate broker; owned dashboard single-broker G1 is not G2 or HA evidence",
+    "prove the alert-response PostgreSQL source-tuple receipt and source-offset barrier against owned and approved Kafka; repository wiring alone is insufficient",
+    "materialize and audit source-offset DLQ receipts for remaining non-dashboard and non-alert-response consumer domains",
+    "consumer restart rebalance lag and duplicate convergence evidence",
+    "approved canary rollback T+0 T+1 T+3 T+7 observation and independent sign-off",
+    "inventory and migrate non-Go and dedicated consumer paths"
+  ]
+}
+python scripts/alignment/verify_pcap_metadata_ack.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-pcap-metadata-ack-v1",
+  "remediation_ids": [
+    "F-PROBE-001",
+    "T-KAFKA-003"
+  ],
+  "status": "PASS",
+  "coverage_status": "PARTIAL_PROBE_TO_KAFKA_RECEIPT",
+  "source_assertions": [
+    {
+      "source": "go/control-plane/internal/ingest/queue/producer.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/ingest/server/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/ingest/server/pcap_ack_test.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    }
+  ],
+  "errors": [],
+  "remaining_gates": [
+    "real MinIO upload Kafka RequireAll ACK Flink consume and ClickHouse index reconciliation by tenant probe file_key and sha256",
+    "Kafka unavailable and ambiguous ACK fault injection with Agent restart and journal replay",
+    "MinIO object manifest and hash verification before metadata acceptance",
+    "bounded local retention capacity backpressure and cleanup evidence",
+    "candidate deployment canary rollback and T+0 T+1 T+3 T+7 observation"
+  ]
+}
+python scripts/alignment/verify_asset_expand_guardrails.py
+{
+  "status": "PASS",
+  "errors": [],
+  "remediation_ids": [
+    "F-ASSET-001",
+    "F-ASSET-002",
+    "F-ASSET-003",
+    "F-ASSET-004",
+    "F-ASSET-005",
+    "F-ASSET-006"
+  ],
+  "migration_versions": [
+    "202607302030",
+    "202607310015",
+    "202607310030",
+    "202607310045",
+    "202607310100",
+    "202607311300",
+    "202607311315",
+    "202607311330",
+    "202608031510",
+    "202608031520"
+  ],
+  "default_off_flags": [
+    "ASSET_EVENT_OUTBOX_ENABLED",
+    "ASSET_DISCOVERY_OUTBOX_ENABLED",
+    "ASSET_PROJECTION_ENABLED",
+    "ASSET_CURSOR_V2_ENABLED",
+    "ASSET_DETAIL_SNAPSHOT_V1_ENABLED",
+    "ASSET_DETAIL_CLICKHOUSE_ENABLED",
+    "ASSET_DETAIL_NEBULA_ENABLED",
+    "ASSET_DETAIL_EVIDENCE_ENABLED",
+    "ASSET_GOVERNANCE_V1_ENABLED",
+    "ASSET_DISCOVERY_JOBS_V2_ENABLED",
+    "ASSET_DISCOVERY_WORKER_ENABLED",
+    "ASSET_DISCOVERY_SCHEDULER_ENABLED",
+    "ASSET_EXPORT_JOBS_V1_ENABLED",
+    "ASSET_EXPORT_WORKER_ENABLED",
+    "ASSET_EXPORT_OUTBOX_ENABLED"
+  ],
+  "production_applied": false
+}
+python scripts/alignment/verify_flink_state_recovery.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-flink-state-recovery-v1",
+  "remediation_id": "T-FLINK-002",
+  "status": "PASS",
+  "canonical_jobs": 9,
+  "operator_uids": 92,
+  "deterministic_sources": 18,
+  "checkpointed_buffers": [
+    {
+      "source": "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/FlowRawClickHouseSinkFunction.java",
+      "state_name": "clickhouse-flow-raw-pending-v1",
+      "ack_before_clear": true,
+      "guarantee": "at-least-once with deterministic event_id"
+    },
+    {
+      "source": "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/OpenSearchSinkFunction.java",
+      "state_name": "opensearch-session-pending-v1",
+      "ack_before_clear": true,
+      "guarantee": "effectively-once document projection by deterministic event_id"
+    },
+    {
+      "source": "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/sink/LokiSinkFactory.java",
+      "state_name": "loki-pending-streams-v1",
+      "ack_before_clear": true,
+      "guarantee": "at-least-once HTTP delivery with retained retry buffer"
+    }
+  ],
+  "uid_results": [
+    {
+      "job_id": "flink-pcap-index-job",
+      "required": 7,
+      "found": 7,
+      "missing": [],
+      "unexpected": []
+    },
+    {
+      "job_id": "flink-user-behavior-job",
+      "required": 12,
+      "found": 12,
+      "missing": [],
+      "unexpected": []
+    },
+    {
+      "job_id": "flink-session-job",
+      "required": 11,
+      "found": 11,
+      "missing": [],
+      "unexpected": []
+    },
+    {
+      "job_id": "flink-feature-job",
+      "required": 12,
+      "found": 12,
+      "missing": [],
+      "unexpected": []
+    },
+    {
+      "job_id": "flink-rule-job",
+      "required": 9,
+      "found": 9,
+      "missing": [],
+      "unexpected": []
+    },
+    {
+      "job_id": "flink-cep-job",
+      "required": 11,
+      "found": 11,
+      "missing": [],
+      "unexpected": []
+    },
+    {
+      "job_id": "flink-behavior-job",
+      "required": 11,
+      "found": 11,
+      "missing": [],
+      "unexpected": []
+    },
+    {
+      "job_id": "flink-alert-generator-job",
+      "required": 14,
+      "found": 14,
+      "missing": [],
+      "unexpected": []
+    },
+    {
+      "job_id": "flink-log-job",
+      "required": 5,
+      "found": 5,
+      "missing": [],
+      "unexpected": []
+    }
+  ],
+  "forbidden_hits": [],
+  "errors": [],
+  "remaining_gates": [
+    "live checkpoint/restart fault injection",
+    "late/duplicate/loss reconciliation",
+    "production candidate rollout and observation"
+  ]
+}
+python scripts/alignment/verify_flink_checkpoint_ha.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-flink-checkpoint-ha-upgrade-v1",
+  "remediation_id": "T-FLINK-003",
+  "status": "PASS",
+  "canonical_jobs": 9,
+  "session_jobmanager_replicas": 2,
+  "application_jobmanager_replicas": 2,
+  "hard_coded_latest_sources": [],
+  "safe_default_sources": 5,
+  "slo_alerts": [
+    "FlinkCheckpointDurationExceedsHalfInterval",
+    "FlinkCheckpointSuccessRatioBelowSLO",
+    "FlinkJobRecoveryExceedsRTO"
+  ],
+  "errors": [],
+  "remaining_gates": [
+    "live HA topology and credential resolution",
+    "checkpoint/savepoint/source/sink reconciliation",
+    "SLO and RTO under approved state scale",
+    "serial canary and rollback",
+    "observation and independent approval",
+    "external project gates"
+  ]
+}
+python scripts/alignment/verify_flink_sink_reconciliation.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-flink-sink-reconciliation-v1",
+  "remediation_id": "T-FLINK-004",
+  "status": "PASS",
+  "coverage_status": "PARTIAL",
+  "canonical_jobs": 9,
+  "declared_sinks": 21,
+  "declared_gaps": 26,
+  "source_assertions": [
+    {
+      "source": "java/flink-jobs/flink-pcap-index-job/src/main/java/com/traffic/flink/pcap/sink/ClickHousePcapSinkFactory.java",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "java/flink-jobs/flink-pcap-index-job/src/main/java/com/traffic/flink/pcap/metrics/PcapIndexMetrics.java",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/sink/ClickHouseAnomalySink.java",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserBehaviorJob.java",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/sink/OpenSearchAlertSinkFactory.java",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/sink/OpenSearchSinkFactory.java",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/sink/LokiSinkFactory.java",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/FlowRawClickHouseSinkFunction.java",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/OpenSearchSinkFunction.java",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    }
+  ],
+  "schema_sources": [
+    {
+      "source": "deployments/clickhouse/migrations/202608031000_user_anomalies_v2.sql",
+      "missing": []
+    },
+    {
+      "source": "common/sql/ch/00-all-tables.sql",
+      "missing": []
+    },
+    {
+      "source": "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml",
+      "missing": []
+    },
+    {
+      "source": "go/control-plane/deployments/docker/init/clickhouse_merged.sql",
+      "missing": []
+    }
+  ],
+  "runtime_ddl_hits": [],
+  "errors": [],
+  "remaining_gates": [
+    "complete the unified metric vector for all nine jobs",
+    "add replay_id to every replayable projection and HTTP request",
+    "checkpoint or durably quarantine every JDBC/HTTP partial failure path",
+    "run live failure injection and key-level source-offset/sink reconciliation",
+    "complete G4 through G8 performance, browser, release, rollback and observation gates"
+  ]
+}
+python scripts/alignment/verify_flink_job_registry.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-flink-job-registry-v1",
+  "remediation_id": "T-FLINK-005",
+  "status": "PASS",
+  "coverage_status": "PARTIAL",
+  "canonical_jobs": 9,
+  "operator_uid_hashes": 9,
+  "release_registry": "NOT_PROVIDED",
+  "runtime_diff": "NOT_PROVIDED",
+  "contract_sha256": "9cee345ec830da0657b2c431fb0ad5de7d563a07636ec57e3bea325a3e8086a9",
+  "errors": [],
+  "remaining_gates": [
+    "build and publish nine digest-bound job images",
+    "materialize a release registry with artifact, image and savepoint hashes",
+    "capture the live job registry and prove an exact field diff",
+    "restore and rescale every stateful job across approved key-group ranges",
+    "complete failure, rollback, observation and independent G2 through G8 gates"
+  ]
+}
+python scripts/alignment/verify_pg_transaction_outbox.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-postgres-transaction-outbox-v1",
+  "remediation_id": "T-PG-002",
+  "status": "PASS",
+  "coverage_status": "PARTIAL",
+  "implemented_slice": "SaveAlertView",
+  "publisher_status": "IMPLEMENTED_REPOSITORY",
+  "transaction_facts": 5,
+  "outbox_fields": 12,
+  "source_assertions": [
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/handler_alert_actions.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/alertTriageApi.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/handler_alert_saved_view_outbox.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "contracts/events/kafka-topic-catalog.v1.json",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_governance_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_governance_outbox.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/notificationGovernanceApi.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_template_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_escalation_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_silence_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_settings_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "contracts/events/kafka-topic-catalog.v1.json",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_settings_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_settings_outbox.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/api/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/cmd/auth-service/main.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "contracts/events/kafka-topic-catalog.v1.json",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/pageApiPlans.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/atomic_upsert.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/inactive_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/outbox_dispatcher.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_jobs.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_legacy_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_resource_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_outbox_dispatcher.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_command_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_command_outbox.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/api/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/handler_system.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/campaign_action_jobs.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/campaign_workbench_state.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/campaign_aggregate_v2.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/ingest/server/probe_registry.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/cmd/threat-intel-service/command_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/threatintel/threat_intel.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/forensics/repository/task_command_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/forensics/repository/task_repository.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/forensics/api/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/whitelist/command_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/whitelist/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/whitelist/outbox_dispatcher.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/rules/consumer/whitelist_rule_effect_consumer.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/whitelistGovernanceApi.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/forensics/api/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/dashboard_task_v2.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/dashboardTaskApi.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/pages/DashboardOperationsPage.tsx",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    }
+  ],
+  "schema_sources": [
+    {
+      "source": "deployments/postgres/migrations/202608031100_alert_saved_view_transaction_v2.sql",
+      "missing": []
+    },
+    {
+      "source": "common/sql/pg/04-tasks-audit.sql",
+      "missing": []
+    },
+    {
+      "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+      "missing": []
+    },
+    {
+      "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+      "missing": []
+    }
+  ],
+  "additional_slices": [
+    "CreateNotificationRule/PatchNotificationRule",
+    "CreateNotificationTemplate/PatchNotificationTemplate",
+    "CreateNotificationEscalationPolicy/PatchNotificationEscalationPolicy",
+    "CreateNotificationSilenceRule/PatchNotificationSilenceRule",
+    "UpdateNotificationSettings",
+    "UpdateUserSettingsCommand",
+    "UpsertAtomic",
+    "MarkInactiveSinceAtomic",
+    "Create/Start/CompleteLegacyDiscoveryRunAtomic",
+    "UpsertDiscoveryCredentialAtomic",
+    "UpsertTopologyLinkAtomic",
+    "AuthenticatedUserCommandsAtomic",
+    "SyncOIDCUserAtomic",
+    "CampaignAggregateV2CommandCompatibility",
+    "ProbeRegistrationAtomic",
+    "ThreatIntelCommandAtomic",
+    "ForensicsTaskCommandAtomic",
+    "WhitelistGovernanceV2",
+    "DashboardTaskLifecycleV2",
+    "AlertResponseExternalExecutionV1"
+  ],
+  "noncanonical_slice_ids": [],
+  "additional_schema_groups": [
+    {
+      "name": "notification_rule_transaction_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031300_notification_rule_transaction_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/04-tasks-audit.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "user_settings_transaction_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031500_user_settings_transaction_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/00-init.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "asset_atomic_upsert_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202607310015_asset_atomic_upsert_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/01-assets.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "asset_projection_inbox",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202607310030_asset_projection_inbox.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/01-assets.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "asset_legacy_mutation_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031510_asset_legacy_mutation_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/01-assets.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "asset_discovery_resource_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031520_asset_discovery_resource_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/01-assets.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "user_commands_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031530_user_commands_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/00-init.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "campaign_aggregate_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608010700_campaign_aggregate_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/04-tasks-audit.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "probe_registry_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031540_probe_registry_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/00-init.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "threat_intel_command_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031550_threat_intel_command_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "forensics_task_command_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031600_forensics_task_command_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/09-forensics-task-atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "whitelist_governance_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031610_whitelist_governance_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/10-whitelist-governance-v2.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "dashboard_task_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031620_dashboard_task_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/11-dashboard-task-v2.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "dashboard_task_execution_pipeline_v1",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608041930_dashboard_task_execution_pipeline_v1.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/12-dashboard-task-execution-pipeline-v1.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "dashboard_task_compensation_v1",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608082100_dashboard_task_compensation_v1.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/13-dashboard-task-compensation-v1.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "dashboard_task_dlq_receipt_v1",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608090945_dashboard_task_dlq_receipt_v1.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/14-dashboard-task-dlq-receipt-v1.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "alert_response_external_executor_v1",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/15-alert-response-external-executor-v1.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "alert_response_dlq_receipt_v1",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/16-alert-response-dlq-receipt-v1.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "whitelist_rule_projection_v1",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608071930_whitelist_rule_projection_v1.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/10-whitelist-governance-v2.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "remaining_gates": [
+    "review the versioned mutable-command inventory and close each business-audit-outbox transaction gap",
+    "operate the saved-view, notification-governance, user-settings, user-command and asset outbox workers against the release-candidate Kafka and reconcile pending processing published and dead counts",
+    "operate the default-off dashboard lifecycle and poison-event DLQ barrier against one approved candidate and reconcile PostgreSQL Kafka provider audit and source-offset authority",
+    "operate the default-off alert response executor against one approved candidate and reconcile approval outbox Kafka provider receipt authority audit and compensation boundary",
+    "run live fault injection after commit, before publish, and after Kafka ACK before published marking",
+    "prove event_id and aggregate_version deduplication in real consumers",
+    "run live debt queries, lock metrics, cleanup retention, rollback and observation gates"
+  ]
+}
+python scripts/alignment/verify_pg_ha_pitr.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-postgres-ha-pitr-fencing-v1",
+  "remediation_id": "T-PG-006",
+  "status": "PASS",
+  "coverage_status": "PARTIAL_SAFE_HOLD",
+  "repository_mode": "safe-hold-readiness-only",
+  "automated_promotion_enabled": false,
+  "pitr_repository_state": "NOT_IMPLEMENTED",
+  "declared_primary_replicas": 1,
+  "declared_standby_replicas": 2,
+  "unsafe_promotion_hits": [],
+  "errors": [],
+  "remaining_gates": [
+    "release-candidate topology, controller, TLS, backup and WAL archive",
+    "primary epoch, transaction, outbox, replica and restored-data reconciliation",
+    "approved RTO, RPO, reconnect, WAL and resource budgets",
+    "maintenance-window failover, PITR, rollback and former-primary rejoin",
+    "T+0 T+1 T+3 T+7 observation and independent approval",
+    "external HA and site acceptance"
+  ]
+}
+python scripts/alignment/verify_redis_reliability_domains.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-redis-reliability-domains-v1",
+  "remediation_id": "T-REDIS-001",
+  "status": "PASS",
+  "coverage_status": "PARTIAL_SAFE_HOLD",
+  "repository_mode": "safe-hold-with-isolated-cache-target",
+  "production_applied": false,
+  "reliable_policies": {
+    "redis-master": "noeviction",
+    "redis-replica": "noeviction"
+  },
+  "cache_policy": "allkeys-lru",
+  "workload_bindings": 6,
+  "mixed_clients_remaining": 5,
+  "keyspace_prefixes": 9,
+  "errors": [],
+  "remaining_gates": [
+    "split rule-manager graph-service and forensics-service mixed clients by semantic domain",
+    "live prefix inventory and zero cross-domain key reconciliation",
+    "release-candidate noeviction and cache-bypass runtime proof",
+    "Sentinel failover reconnect and session authentication fault drills",
+    "cache eviction and stampede performance budgets",
+    "TLS ACL service identities and dangerous-command restrictions under T-REDIS-002",
+    "rollout rollback observation and independent approval"
+  ]
+}
+python scripts/alignment/verify_minio_object_governance.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-minio-object-governance-v1",
+  "remediation_ids": [
+    "T-MINIO-002",
+    "T-MINIO-003",
+    "T-MINIO-004"
+  ],
+  "status": "PASS",
+  "coverage_status": "REPOSITORY_BUCKET_AND_POLICY_BASELINE_PARTIAL",
+  "production_applied": false,
+  "bucket_count": 5,
+  "object_class_count": 8,
+  "repository_lifecycle_buckets": [
+    "pcap-archive",
+    "report-artifacts"
+  ],
+  "governed_bootstrap_buckets": [
+    "argo-artifacts",
+    "flink-checkpoints",
+    "pcap-archive",
+    "report-artifacts",
+    "traffic-models"
+  ],
+  "governed_bootstrap_verified_buckets": [
+    "argo-artifacts",
+    "flink-checkpoints",
+    "pcap-archive",
+    "report-artifacts",
+    "traffic-models"
+  ],
+  "workflow_minio_env_sets": 4,
+  "infrastructure": {
+    "server_replicas": 4,
+    "pdb_max_unavailable": 1,
+    "proxy_replicas": 1
+  },
+  "known_gap_count": 7,
+  "closure_blocker_count": 6,
+  "errors": []
+}
+python scripts/alignment/verify_minio_service_identities.py
+{
+  "consumer_manifest_count": 11,
+  "contract_id": "traffic-platform-minio-service-identities-v1",
+  "errors": [],
+  "identity_count": 7,
+  "policy_count": 7,
+  "production_applied": false,
+  "status": "PASS"
+}
+python scripts/alignment/verify_minio_tls_material.py
+{
+  "client_ca_namespace_count": 3,
+  "contract_id": "traffic-platform-minio-tls-material-v1",
+  "cutover_ready": false,
+  "errors": [],
+  "phase": "adapter_bundle_built_default_off",
+  "production_applied": false,
+  "server_san_count": 8,
+  "status": "PASS"
+}
+python scripts/alignment/verify_minio_tls_cutover.py
+{
+  "component_count": 14,
+  "contract_id": "traffic-platform-minio-tls-cutover-v1",
+  "cutover_ready": false,
+  "default_off": true,
+  "errors": [],
+  "production_applied": false,
+  "rendered_resource_count": 43,
+  "status": "PASS"
+}
+python scripts/alignment/verify_kafka_event_envelope.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-kafka-event-envelope-idempotency-v1",
+  "remediation_id": "T-KAFKA-002",
+  "status": "PASS",
+  "coverage_status": "PARTIAL_DETECTION_VERTICAL_SLICE",
+  "production_applied": false,
+  "header_field_count": 21,
+  "detection_partition_key": "tenant_id:community_id",
+  "errors": [],
+  "remaining_gates": [
+    "inventory and migrate every canonical producer and consumer to the envelope",
+    "register Proto and JSON compatibility policy in the approved registry",
+    "real Kafka replay proves one business ID set for the same source events",
+    "real duplicate out-of-order poison and DLQ failure injection",
+    "offset projection audit and cross-store reconciliation",
+    "partition ordering lag message-size PII and throughput budgets",
+    "approved canary rollback observation and independent sign-off"
+  ]
+}
+python scripts/alignment/verify_clickhouse_schema_authority.py
+{
+  "status": "PASS",
+  "coverage_status": "PARTIAL_MIGRATION_AUTHORITY_AND_DRIFT_INVENTORY",
+  "production_applied": false,
+  "migration_count": 7,
+  "migration_inventory": [
+    {
+      "path": "deployments/clickhouse/migrations/202607300000_schema_authority.sql",
+      "version": "202607300000",
+      "sha256": "b6e5dbda0ee12c2311d4b4c42112932153521062a5206efd7725cc1e207b440b",
+      "objects": [
+        "alignment_schema_migrations",
+        "alignment_schema_migrations_local"
+      ]
+    },
+    {
+      "path": "deployments/clickhouse/migrations/202607302045_alert_feedback.sql",
+      "version": "202607302045",
+      "sha256": "6985316c9db373d5e64bc3096164345c12fbe5c28654df39902dfa57b5792c08",
+      "objects": [
+        "alert_feedback",
+        "alert_feedback_local"
+      ]
+    },
+    {
+      "path": "deployments/clickhouse/migrations/202608010900_campaign_projection_events_v2.sql",
+      "version": "202608010900",
+      "sha256": "2e024b7c7e52da747d6d162de096e8bf0ac830c1c0be1d5485d9228de93ea9a1",
+      "objects": [
+        "campaign_projection_events_v2",
+        "campaign_projection_events_v2_local"
+      ]
+    },
+    {
+      "path": "deployments/clickhouse/migrations/202608031000_user_anomalies_v2.sql",
+      "version": "202608031000",
+      "sha256": "dee6b521924b39fc51494a99f6d9f1d995a57d73f92f4a8e5fe7ed32680443ae",
+      "objects": [
+        "user_anomalies_v2",
+        "user_anomalies_v2_local"
+      ]
+    },
+    {
+      "path": "deployments/clickhouse/migrations/202608031330_alert_feedback_v2.sql",
+      "version": "202608031330",
+      "sha256": "6fc1eb4bf080556c3e1c9248bbc35f44018fee8d1bd39ea9416253c984ddbc72",
+      "objects": [
+        "alert_feedback_v2",
+        "alert_feedback_v2_local"
+      ]
+    },
+    {
+      "path": "deployments/clickhouse/migrations/202608031600_sessions_daily_rollup_v1.sql",
+      "version": "202608031600",
+      "sha256": "46b2c5ad1bf46c8a132cd08f033e418961721aed037d559b1c1550dc7ec77a8b",
+      "objects": [
+        "mv_sessions_daily_rollup_v1_local",
+        "sessions_daily_rollup_v1",
+        "sessions_daily_rollup_v1_local"
+      ]
+    },
+    {
+      "path": "deployments/clickhouse/migrations/202608041300_alert_trace_correlation_v1.sql",
+      "version": "202608041300",
+      "sha256": "e70aea7b716c7d208daba84611463593adc9c5a49d53513585a0dc60c4c89fcc",
+      "objects": []
+    }
+  ],
+  "legacy_source_count": 12,
+  "legacy_drift_detected": true,
+  "legacy_inventory": [
+    {
+      "path": "common/sql/ch/00-all-tables.sql",
+      "sha256": "b2ad3129d5b130b1ebac09c9e8d613931f64495be36efa588d8fec3f7e09e15e",
+      "disposition": "legacy_drift_blocked",
+      "object_count": 22,
+      "objects": [
+        "alerts",
+        "alerts_local",
+        "attack_chain_recommendations",
+        "attack_chain_recommendations_local",
+        "campaign_projection_events_v2",
+        "campaign_projection_events_v2_local",
+        "campaigns",
+        "campaigns_local",
+        "evidence",
+        "evidence_local",
+        "feature_fp",
+        "feature_fp_local",
+        "feature_stat",
+        "feature_stat_local",
+        "flows_raw",
+        "flows_raw_local",
+        "pcap_index",
+        "pcap_index_local",
+        "sessions",
+        "sessions_local",
+        "user_anomalies_v2",
+        "user_anomalies_v2_local"
+      ]
+    },
+    {
+      "path": "common/sql/ch/01-extended.sql",
+      "sha256": "06160da7c1e38f504ea7726b62f13268ffba6fa97f0839e10218dcd0fcbac340",
+      "disposition": "legacy_drift_blocked",
+      "object_count": 8,
+      "objects": [
+        "device_logs",
+        "device_logs_local",
+        "dlq_events",
+        "dlq_events_local",
+        "graph_query_log",
+        "graph_query_log_local",
+        "user_events",
+        "user_events_local"
+      ]
+    },
+    {
+      "path": "common/sql/ch/03-attack-chain-recommendations.sql",
+      "sha256": "5afe1a2608293a5ee95f1189a9842184723468686c0f4f2a5468b9b35967be28",
+      "disposition": "legacy_drift_blocked",
+      "object_count": 2,
+      "objects": [
+        "attack_chain_recommendations",
+        "attack_chain_recommendations_local"
+      ]
+    },
+    {
+      "path": "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml",
+      "sha256": "8ca1010db70655b9740a0b3bf2327f99838145bf15b20d109c98dcb976895c6b",
+      "disposition": "legacy_kubernetes_entrypoint",
+      "object_count": 35,
+      "objects": [
+        "alerts",
+        "alerts_latest",
+        "alerts_latest_local",
+        "alerts_latest_mv",
+        "alerts_local",
+        "campaign_projection_events_v2",
+        "campaign_projection_events_v2_local",
+        "campaigns",
+        "campaigns_local",
+        "detections_behavior",
+        "detections_behavior_local",
+        "device_logs",
+        "device_logs_local",
+        "dlq_events",
+        "dlq_events_local",
+        "entity_graph_edges",
+        "entity_graph_edges_local",
+        "entity_graph_nodes",
+        "entity_graph_nodes_local",
+        "evidence",
+        "evidence_local",
+        "feature_fp",
+        "feature_fp_local",
+        "feature_stat",
+        "feature_stat_local",
+        "flows_raw",
+        "flows_raw_local",
+        "pcap_index",
+        "pcap_index_local",
+        "sessions",
+        "sessions_local",
+        "user_anomalies_v2",
+        "user_anomalies_v2_local",
+        "user_events",
+        "user_events_local"
+      ]
+    },
+    {
+      "path": "go/control-plane/deployments/docker/init/clickhouse_merged.sql",
+      "sha256": "5e60ea14453ca59a901c46aadd49df7b8e6f077d0fbec9f758b3d7c9bc2663de",
+      "disposition": "legacy_docker_entrypoint",
+      "object_count": 84,
+      "objects": [
+        "alert_correlation_graph",
+        "alert_correlation_graph_local",
+        "alert_feedback",
+        "alert_feedback_local",
+        "alert_state_transitions",
+        "alert_state_transitions_local",
+        "alert_status_transitions_summary",
+        "alert_status_transitions_summary_local",
+        "alert_trend_hour",
+        "alert_trend_hour_local",
+        "alerts",
+        "alerts_latest",
+        "alerts_latest_local",
+        "alerts_local",
+        "campaign_projection_events_v2",
+        "campaign_projection_events_v2_local",
+        "campaigns",
+        "campaigns_local",
+        "dedup_stats",
+        "dedup_stats_local",
+        "dedup_summary_hourly",
+        "dedup_summary_hourly_local",
+        "detections_behavior",
+        "detections_behavior_local",
+        "detections_business",
+        "detections_business_local",
+        "entity_graph_edges",
+        "entity_graph_edges_local",
+        "entity_graph_nodes",
+        "entity_graph_nodes_local",
+        "evidence",
+        "evidence_local",
+        "feature_fp",
+        "feature_fp_local",
+        "feature_seq",
+        "feature_seq_local",
+        "feature_stat",
+        "feature_stat_local",
+        "feedback_summary_daily",
+        "feedback_summary_daily_local",
+        "flows_raw",
+        "flows_raw_local",
+        "graph_cache_stats",
+        "graph_cache_stats_local",
+        "graph_hot_ips",
+        "graph_hot_ips_local",
+        "graph_ip_affinity",
+        "graph_ip_affinity_local",
+        "graph_query_log",
+        "graph_query_log_local",
+        "graph_slow_queries",
+        "graph_slow_queries_local",
+        "model_feedback_metrics",
+        "model_feedback_metrics_local",
+        "mv_alert_status_transitions_summary_local",
+        "mv_alert_trend_hour_local",
+        "mv_alerts_latest_local",
+        "mv_alerts_local",
+        "mv_dedup_summary_hourly_local",
+        "mv_feedback_summary_daily_local",
+        "mv_graph_cache_stats_local",
+        "mv_graph_hot_ips_local",
+        "mv_graph_ip_affinity_local",
+        "mv_graph_slow_queries_local",
+        "notification_events",
+        "notification_events_local",
+        "pcap_index",
+        "pcap_index_local",
+        "run_report",
+        "run_report_local",
+        "sessions",
+        "sessions_end_reason_hourly",
+        "sessions_end_reason_hourly_local",
+        "sessions_local",
+        "sessions_tcp_success_rate_hourly",
+        "sessions_tcp_success_rate_hourly_local",
+        "storage_health_events",
+        "storage_health_events_local",
+        "user_anomalies_v2",
+        "user_anomalies_v2_local",
+        "v_graph_query_performance",
+        "v_graph_top_ips_24h",
+        "whitelist_rules",
+        "whitelist_rules_local"
+      ]
+    },
+    {
+      "path": "java/flink-jobs/flink-alert-generator-job/deployments/docker/clickhouse/init.sql",
+      "sha256": "b39df625560767ab81d86863403fcfc3442bdec8861c69c20b44156d5138628f",
+      "disposition": "legacy_component_fixture",
+      "object_count": 7,
+      "objects": [
+        "alert_trend_hour",
+        "alerts_local",
+        "dedup_stats_local",
+        "detections_behavior_local",
+        "detections_business_local",
+        "evidence_local",
+        "mv_alert_trend_hour"
+      ]
+    },
+    {
+      "path": "java/flink-jobs/flink-behavior-job/deployments/docker/clickhouse-init.sql",
+      "sha256": "9b60d3c0c644081505a3302f911f513fff984cd74d7830422498a14afd74c323",
+      "disposition": "legacy_component_fixture",
+      "object_count": 5,
+      "objects": [
+        "detections_behavior_local",
+        "hot_objects_stats",
+        "model_performance_stats",
+        "mv_detections_daily",
+        "mv_detections_hourly"
+      ]
+    },
+    {
+      "path": "java/flink-jobs/flink-cep-job/deployments/docker/clickhouse-init/01-init-campaigns.sql",
+      "sha256": "8660db3e1922423e636b0f7633a190483987657519b33c78cca2d848a563dfa7",
+      "disposition": "legacy_component_fixture",
+      "object_count": 5,
+      "objects": [
+        "campaign_phase_stats_daily",
+        "campaign_stats_hourly",
+        "campaigns_local",
+        "v_campaigns_24h",
+        "v_high_risk_campaigns"
+      ]
+    },
+    {
+      "path": "java/flink-jobs/flink-feature-job/deployments/docker/init-clickhouse.sql",
+      "sha256": "2980d3f424d97dc50e82d3da62c1ca610f387355b0693e5295e8bd10e4c073a7",
+      "disposition": "legacy_component_fixture",
+      "object_count": 3,
+      "objects": [
+        "feature_stat_hourly",
+        "feature_stat_hourly_mv",
+        "feature_stat_local"
+      ]
+    },
+    {
+      "path": "java/flink-jobs/flink-pcap-index-job/deployments/docker/init-scripts/clickhouse/01-create-tables.sql",
+      "sha256": "6f2c41a876a22137497ab551defca6e9ef32c85751b2a1654fd1f2d9dc27858d",
+      "disposition": "legacy_component_fixture",
+      "object_count": 3,
+      "objects": [
+        "pcap_index_daily_stats",
+        "pcap_index_hourly_stats",
+        "pcap_index_local"
+      ]
+    },
+    {
+      "path": "java/flink-jobs/flink-rule-job/deployments/docker/clickhouse-init.sql",
+      "sha256": "a2e83e65fa8f1d1798a6f2f65baec0bf65539ddfb8f3504af6b06d0e8da90b20",
+      "disposition": "legacy_component_fixture",
+      "object_count": 5,
+      "objects": [
+        "detections_behavior_local",
+        "detections_by_ip_daily",
+        "detections_by_rule_hourly",
+        "detections_by_rule_hourly_mv",
+        "v_recent_detections"
+      ]
+    },
+    {
+      "path": "java/flink-jobs/flink-session-job/deployments/docker/clickhouse/init.sql",
+      "sha256": "6273f9328ab7a2dcc10c996cb65834db84e119b1d29c2b5920ce7f55b76e1c88",
+      "disposition": "legacy_component_fixture",
+      "object_count": 7,
+      "objects": [
+        "sessions_dist",
+        "sessions_hourly_stats_local",
+        "sessions_hourly_stats_mv",
+        "sessions_local",
+        "sessions_top_client_ips_mv",
+        "sessions_top_ips_local",
+        "sessions_top_server_ips_mv"
+      ]
+    }
+  ],
+  "closure_blockers": [
+    "capture immutable live system table and column baseline from every shard and replica",
+    "model the production fact tables as ordered baseline migrations without destructive rewrites",
+    "replace Kubernetes Docker and component fixture DDL entrypoints with the same migration runner",
+    "execute expand backfill shadow reconcile cutover and rollback with resource budgets",
+    "prove shard replica materialized-view and deterministic projection reconciliation"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_clickhouse_deterministic_sharding.py
+{
+  "status": "PASS",
+  "coverage_status": "PARTIAL_ALERT_FEEDBACK_V2_CANDIDATE",
+  "production_applied": false,
+  "distributed_table_count": 18,
+  "rand_sharded_count": 13,
+  "deterministic_count": 5,
+  "first_vertical_candidate": "alert_feedback",
+  "closure_blockers": [
+    "apply the alert_feedback V2 expand migration through the immutable migration runner on every node",
+    "capture replica health before enabling V2 dual-write",
+    "backfill and reconcile alert_feedback by business key count hash and sample",
+    "implement and prove shadow reads before any read cutover",
+    "profile and migrate the remaining twelve rand-sharded tables under explicit resource budgets",
+    "observe rollback windows before stopping V1 writes or removing V1 tables"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_clickhouse_query_paths.py
+{
+  "status": "PASS",
+  "coverage_status": "PARTIAL_ALERT_LIST_STRUCTURED_ROWS",
+  "production_applied": false,
+  "initial_slice": "alert_repository.list",
+  "maximum_rows_per_page": 1000,
+  "closure_blockers": [
+    "inventory every FINAL exact count OFFSET JSON aggregate wide-window and distributed-subquery path",
+    "add stable time plus ID cursors while preserving existing offset APIs",
+    "decouple or preaggregate exact counts under an approved response contract",
+    "prove FINAL alternatives by latest-row business-key reconciliation before cutover",
+    "capture query_log read_rows read_bytes memory duration and normalized query identity",
+    "run cold and warm cache correctness and P50 P95 P99 tests at approved scale",
+    "complete fault gray rollback observation and independent gates"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_clickhouse_append_only_semantics.py
+{
+  "status": "PASS",
+  "coverage_status": "PARTIAL_GO_ALERT_EVIDENCE_WRITER_SLICE",
+  "production_applied": false,
+  "distributed_insert_sites": 8,
+  "local_insert_sites": 0,
+  "synchronous_mutation_sites": 0,
+  "closure_blockers": [
+    "inventory every Go Java Flink and maintenance ClickHouse writer and routing owner",
+    "add event_id aggregate_version ingested_at and tombstone semantics to each replayable projection",
+    "prove exact replay does not create logical duplicates by business key",
+    "separate event time ingestion time and late-data behavior in schemas and queries",
+    "design approved compliance erasure without synchronous request mutations",
+    "capture live Distributed routing partial-failure replica and replay reconciliation",
+    "complete performance failure rollout rollback observation and independent gates"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_clickhouse_retention_lifecycle.py
+{
+  "status": "PASS",
+  "coverage_status": "PARTIAL_REPOSITORY_RETENTION_MATRIX_PCAP_ALIGNMENT_AND_SESSION_ROLLUP",
+  "production_applied": false,
+  "matrix_domains": 9,
+  "sessions_retention_days": 90,
+  "session_rollup_retention_days": 365,
+  "pcap_index_retention_days": 30,
+  "pcap_object_retention_days": 37,
+  "pcap_object_grace_days": 7,
+  "closure_blockers": [
+    "approve storage and compliance impact of extending PCAP objects from 14 to 37 days",
+    "apply and verify the MinIO lifecycle candidate without deleting existing objects early",
+    "apply the rollup migration on every shard and replica and backfill bounded partitions",
+    "reconcile detail and rollup counts sums aggregate version and late events before any read cutover",
+    "inventory every ClickHouse TTL and every referenced MinIO object class against the retention matrix",
+    "define explicit expired-reference behavior for every report topic and evidence manifest",
+    "complete performance failure rollback observation and independent gates"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_clickhouse_ha_security_backup.py
+{
+  "status": "PASS",
+  "coverage_status": "PARTIAL_REPOSITORY_METRICS_FAIL_CLOSED_PROFILE_DATASET_SEMANTICS_AND_RESTORE_PLAN",
+  "production_applied": false,
+  "required_signals": 10,
+  "alert_rules": 10,
+  "dataset_semantic_classes": 3,
+  "backup_sets": 2,
+  "formal_failure_domain_proof": false,
+  "runtime_collector_present": false,
+  "tls_target_applied": false,
+  "restore_evidence": null,
+  "closure_blockers": [
+    "add at least three labeled failure domains or approve a topology that can prove Keeper quorum isolation",
+    "deploy and verify a metrics collector rule evaluator and notification route for every required signal",
+    "issue TLS certificates and unique credentials then migrate every producer reader Flink job and operator away from default",
+    "profile per-service workloads and approve budgets before binding traffic_runtime",
+    "verify every API returns an error or explicit partial metadata during shard and replica faults",
+    "approve encrypted backup destination keys capacity retention RPO and RTO",
+    "complete an isolated restore and row partition key-sample aggregate and application-oracle reconciliation",
+    "execute approved fault drills rollback and T+0 T+1 T+3 T+7 observation",
+    "keep V2 migration and restore drills in separate resource windows"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_opensearch_index_governance.py
+{
+  "status": "PASS",
+  "remediation_id": "T-OS-002",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "mapping_fields": 41,
+  "producer_fields": 40,
+  "component_templates": [
+    "traffic-alerts-mappings-v2",
+    "traffic-alerts-settings-v2"
+  ],
+  "read_alias": "alerts-v2-read",
+  "write_alias": "alerts-v2-write",
+  "v2_traffic_default_enabled": false,
+  "closure_blockers": [
+    "candidate templates and bootstrap index have not been applied to production",
+    "72M document reindex or shadow backfill has not run",
+    "per-tenant count, sampled hash, permission and query performance reconciliation is absent",
+    "dual-write, atomic read switch, delayed write switch and rollback are unproven",
+    "T+0, T+1, T+3 and T+7 observation is incomplete"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_opensearch_search_pagination.py
+{
+  "status": "PASS",
+  "feature_id": "F-SEARCH-001",
+  "remediation_id": "T-OS-003",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "feature_flag_default_enabled": false,
+  "maximum_page_size": 200,
+  "shallow_result_window": 1000,
+  "source_allowlist_fields": 26,
+  "closure_blockers": [
+    "candidate remains default-off and has not been built or deployed to a production canary",
+    "real OpenSearch search_after and PIT page-boundary reconciliation has not run",
+    "fixed-scale cold and warm query profiles and approved P50/P95/P99 budgets are absent",
+    "Windows Chrome production-bundle traversal, HAR and trace evidence is absent",
+    "canary rollback and T+0/T+1/T+3/T+7 PIT resource observation are incomplete"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_opensearch_projection_reconciliation.py
+{
+  "status": "PASS",
+  "feature_id": "F-SEARCH-001",
+  "remediation_id": "T-OS-004",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "feature_flag_default_enabled": false,
+  "maximum_documents": 10000,
+  "closure_blockers": [
+    "the expand-only PostgreSQL migration is present, but the candidate worker and an approved V2 OpenSearch target have not been deployed or exercised",
+    "owned G1 captures Kafka offset and last event_id, but the same candidate has not been deployed to the approved production-like G2 environment",
+    "real missing extra stale manifests and successful automatic repair rates are absent",
+    "fixed-scale P50 P95 P99 and resource budgets are not approved",
+    "canary rollback and T+0 T+1 T+3 T+7 observation are incomplete"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_alert_projection_shadow_backfill.py
+{
+  "status": "PASS",
+  "remediation_ids": [
+    "T-OS-002",
+    "T-OS-004"
+  ],
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "historical_gap": {
+    "source_count": 1442312,
+    "target_count": 559140,
+    "delta": 883172,
+    "evidence_reference": "doc/02_acceptance/runs/20260805-remediation-dashboard-read-task-v1/manifest.json",
+    "reference_manifest_present_in_candidate": false,
+    "interpretation": "historical observed delta only; not a current executable scope and not closure evidence"
+  },
+  "closure_blockers": [
+    "the historical 883172-document gap is not bound to a present immutable source manifest",
+    "a current production read-only shadow manifest has not been captured",
+    "a pullable immutable alert projection tool image has not been published and bound to a current production shadow",
+    "SRE, QA, security and domain accountable approvals are absent",
+    "bounded repair, same-scope terminal reconciliation and PostgreSQL watermark receipts have not run in production",
+    "canary, rollback exercise and T+0/T+1/T+3/T+7 observation are incomplete"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_alert_projection_repair_job.py
+{
+  "status": "PASS",
+  "remediation_ids": [
+    "T-OS-002",
+    "T-OS-004"
+  ],
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "closure_blockers": [
+    "the current local image scan uses a vulnerability database older than the 24-hour approval limit and is not approval eligible",
+    "a pullable registry manifest digest for the final same-hash tool image is not yet published and bound",
+    "registry signature and SLSA provenance verification are absent",
+    "a current approved production read-only shadow package is absent",
+    "four independent production approvals are absent",
+    "the suspended repair candidate has not been independently reviewed or unsuspended",
+    "production terminal receipts, rollback drill and observation windows are incomplete"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_opensearch_ha_security_restore.py
+{
+  "status": "PASS",
+  "remediation_id": "T-OS-005",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "required_distinct_zones": 3,
+  "service_identity_count": 5,
+  "alert_rule_count": 12,
+  "fail_safe_image_guard": true,
+  "errors": []
+}
+python scripts/alignment/verify_trace_watermark_reconcile.py
+{
+  "status": "PASS",
+  "remediation_id": "T-OBS-001",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "implemented_candidate_stages": [
+    "http",
+    "kafka_header",
+    "kafka_consumer_context",
+    "alert_proto",
+    "flink_alert_generation",
+    "alert_clickhouse",
+    "alert_opensearch",
+    "asset_postgresql_outbox",
+    "asset_kafka_inbox",
+    "asset_opensearch",
+    "asset_nebulagraph",
+    "asset_audit"
+  ],
+  "remaining_stages": [
+    "generic_postgresql_outbox",
+    "flink_metrics_and_non_alert_rows",
+    "nebulagraph_edges",
+    "generic_minio_manifests",
+    "all_page_snapshots"
+  ],
+  "maximum_records": 10000,
+  "closure_blockers": [
+    "one release-candidate user action has not yet been proven through PG outbox Kafka Flink CH OS Nebula MinIO and audit under one trace_id",
+    "all critical page snapshots do not yet publish real per-projection watermarks",
+    "normalized live manifests for all seven required sources including audit and approved bounded repair adapters are absent",
+    "fixed-scale performance fault injection Windows Chrome canary rollback and T+0 T+1 T+3 T+7 observation are incomplete"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_data_quality_control_plane.py
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-data-quality-control-plane-v1",
+  "feature_id": "F-DATAQUALITY-001",
+  "remediation_id": "T-DQ-001",
+  "status": "PASS",
+  "coverage_status": "PARTIAL_PERSISTENT_CONTROL_PLANE_BASELINE_REAL_SIGNALS_DEFAULT_OFF_RULE_EVALUATION_AND_REPAIR_CONTROL_LIFECYCLE",
+  "production_applied": false,
+  "persistent_objects": [
+    "data_quality_baselines",
+    "data_quality_command_requests",
+    "data_quality_dataset_history",
+    "data_quality_datasets",
+    "data_quality_events",
+    "data_quality_flow_replay_projection",
+    "data_quality_outbox",
+    "data_quality_repair_history",
+    "data_quality_repair_requests",
+    "data_quality_repairs",
+    "data_quality_replay_projection_receipts",
+    "data_quality_rule_evaluations",
+    "data_quality_rule_history",
+    "data_quality_rules",
+    "data_quality_watermarks"
+  ],
+  "quality_dimensions": [
+    "completeness",
+    "duplicate",
+    "lateness",
+    "object_availability",
+    "ordering",
+    "referential_integrity",
+    "tenant_ownership",
+    "timeliness",
+    "uniqueness",
+    "validity"
+  ],
+  "real_handoff_signals": [
+    "business_version",
+    "flink_watermark",
+    "kafka_offset",
+    "object_manifest",
+    "sink_commit"
+  ],
+  "implemented_slice": {
+    "dataset": "flows_raw",
+    "baseline_window_hours": 24,
+    "schema_signature_fields": [
+      "name",
+      "type",
+      "default_kind"
+    ],
+    "transaction": [
+      "dataset",
+      "baseline",
+      "outbox",
+      "audit",
+      "commit"
+    ],
+    "handoff_signal_collection": [
+      "kafka_end_and_committed_offsets",
+      "flink_event_time_watermark",
+      "clickhouse_sink_commit",
+      "explicit_not_applicable_business_version",
+      "explicit_not_applicable_object_manifest"
+    ],
+    "collection_persistence": "postgresql.data_quality_watermarks",
+    "read_path_has_no_write_side_effect": true,
+    "api": "POST /v1/data-quality/baseline",
+    "governance": {
+      "datasets": "tenant-scoped list and optimistic upsert/pause/retire",
+      "rules": "tenant-scoped list, deterministic draft creation and bounded transitions",
+      "rule_transition_path": [
+        "draft",
+        "shadow",
+        "approval_pending",
+        "active"
+      ],
+      "independent_approval": true,
+      "atomic_writes": [
+        "business_state",
+        "immutable_history",
+        "outbox",
+        "audit",
+        "idempotency_receipt"
+      ],
+      "ephemeral_postgresql_tests": [
+        "repository lifecycle",
+        "HTTP authorization and lifecycle"
+      ]
+    },
+    "rule_evaluation": {
+      "runtime_default": "disabled",
+      "eligible_rule_state": "active",
+      "dataset": "flows_raw",
+      "predicate_allowlist": [
+        "not_empty",
+        "nonzero"
+      ],
+      "empty_window_status": "unknown",
+      "bounded_by": [
+        "tenant_id",
+        "window_start",
+        "window_end"
+      ],
+      "atomic_writes": [
+        "rule_evaluation",
+        "quality_event_on_failure",
+        "outbox",
+        "audit"
+      ],
+      "deterministic_replay": true
+    },
+    "repair_lifecycle": {
+      "operation_allowlist": [
+        "flow_replay_window_v1"
+      ],
+      "runtime_default": "disabled",
+      "bounded_by": [
+        "tenant_id",
+        "flows_raw",
+        "one_hour_window",
+        "max_rows_100000",
+        "max_duration_seconds_300",
+        "registered_server_evidence_provider",
+        "registered_ready_executor"
+      ],
+      "transition_path": [
+        "planned",
+        "dry_run_passed",
+        "approval_pending",
+        "approved",
+        "executing",
+        "executed",
+        "reconciled"
+      ],
+      "independent_approval_and_reconciliation": true,
+      "client_summary_trusted_for_dry_run_or_reconcile": false,
+      "dry_run_evidence": "server reads persisted PostgreSQL scope and budget then executes a tenant and ingest-time bounded ClickHouse flows_raw aggregate",
+      "execution_worker": "PostgreSQL executing rows are a durable queue; a session advisory lock prevents concurrent replicas and server-derived outcomes commit through repair history outbox audit and idempotency receipt",
+      "execution_runtime": "default-off bounded ClickHouse source driver publishes stable Protobuf envelopes only to flow.projection-replay.v1; the consumer atomically commits an immutable PostgreSQL target object and receipt before Kafka acknowledgement",
+      "projection_target": "postgresql.data_quality_flow_replay_projection flow-replay-pg-v1",
+      "projection_receipt": "postgresql.data_quality_replay_projection_receipts",
+      "reconcile_runtime": "server independently compares the bounded ClickHouse source event set, PostgreSQL projection target set, receipt set and payload hashes",
+      "atomic_writes": [
+        "repair_state",
+        "quality_event_state",
+        "immutable_history",
+        "outbox",
+        "audit",
+        "idempotency_receipt"
+      ],
+      "http_start_execution_status": 202,
+      "ephemeral_postgresql_tests": [
+        "repository lifecycle",
+        "HTTP authorization and lifecycle"
+      ]
+    }
+  },
+  "legacy_entrypoints_with_control_plane": {
+    "common/sql/pg/04-tasks-audit.sql": true,
+    "go/control-plane/deployments/docker/init/postgres_merged.sql": true
+  },
+  "closure_blockers": [
+    "real hand-off signals are implemented only for the flows_raw dataset contract; remaining datasets are not yet catalogued",
+    "default-off quality event detection is implemented but not deployed or proven against live ClickHouse facts",
+    "repair repository HTTP control lifecycle bounded ClickHouse dry-run provider durable execution worker dedicated replay topic atomic PostgreSQL target and receipt consumer and authoritative three-way reconciliation are implemented but default-off and not deployed or live-validated; this bounded target does not prove Session or later domain projections have been repaired",
+    "large samples and reports are not yet stored and reconciled through MinIO manifests",
+    "quality SLO error budgets performance failure Windows Chrome rollout rollback and observation evidence are incomplete"
+  ],
+  "errors": []
+}
+python scripts/alignment/verify_configuration_catalog.py
+{
+  "status": "PASS",
+  "control_id": "T-CONFIG-001",
+  "catalog_sha256": "2eeb65746ae5dc7357fddf265473a31c2763fa958a91b829d525e4d940868759",
+  "counts": {
+    "entries": 1911,
+    "go_env_consumers": 926,
+    "flink_properties": 261,
+    "kubernetes_env_bindings": 724,
+    "secret_entries": 186,
+    "source_files": 76
+  },
+  "shared_authority_domains": [
+    "apisix_routes",
+    "clickhouse_schema",
+    "flink_job_topology",
+    "iam_scopes",
+    "kafka_acl",
+    "kafka_topics",
+    "minio_lifecycle"
+  ],
+  "errors": []
+}
+python scripts/alignment/backfill_openapi_scopes.py --check
+{
+  "status": "PASS",
+  "governed_operations": 41
+}
+python scripts/alignment/verify_gateway_route_catalog.py
+{
+  "status": "PASS",
+  "control_id": "T-GW-001",
+  "catalog_integrity": "PASS",
+  "security_compliance": "PARTIAL",
+  "catalog_sha256": "a012c4e3388c0579da2d0bc0f08cf3738efb536ab022d90c7123989cb084b073",
+  "counts": {
+    "routes": 58,
+    "route_ids": 58,
+    "protected_routes": 52,
+    "protected_routes_with_gateway_auth": 0,
+    "routes_with_blocking_gaps": 58,
+    "declared_services": 62,
+    "gap_counts": {
+      "gateway_authentication_missing": 52,
+      "gateway_body_limit_missing": 52,
+      "gateway_rate_limit_missing": 57,
+      "gateway_request_validation_missing": 52,
+      "management_entry_not_gateway_protected": 18,
+      "upstream_retry_implicit": 51,
+      "upstream_timeout_implicit": 51
+    }
+  },
+  "openapi_coverage": {
+    "operations": 99,
+    "uncovered_operation_ids": [],
+    "overlapping_operation_routes": {
+      "acknowledgeProbeOperation": [
+        "24",
+        "44"
+      ],
+      "getProbeOperation": [
+        "24",
+        "44"
+      ],
+      "pushProbeConfig": [
+        "24",
+        "44"
+      ]
+    },
+    "operations_missing_required_scope": []
+  },
+  "errors": []
+}
+python scripts/alignment/build_service_identity_catalog.py --check
+{
+  "status": "PASS",
+  "catalog_sha256": "c4c36894dc7be9bb41622064a5e11f0d0ecfd72002f051d699de84e640dc7826",
+  "counts": {
+    "workloads": 11,
+    "dedicated_service_accounts": 11,
+    "workloads_with_token_automount_disabled": 10,
+    "approved_token_automount_exceptions": 1,
+    "hardened_or_approved_exception_containers": 9,
+    "containers": 11,
+    "secret_references": 66,
+    "literal_secret_findings": 0,
+    "unregistered_secret_references": 2,
+    "kafka_principals": 20,
+    "shared_sensitive_credentials": 5,
+    "tenant_untrusted_fallback_sites": 25,
+    "workloads_with_blocking_gaps": 11,
+    "gap_counts": {
+      "container_security_context_incomplete": 2,
+      "runtime_image_not_digest_pinned": 5,
+      "secret_provisioner_unregistered": 2,
+      "service_to_service_mtls_identity_missing": 7,
+      "shared_sensitive_credential": 8
+    }
+  }
+}
+python scripts/alignment/verify_service_identity_catalog.py
+{
+  "status": "PASS",
+  "control_id": "T-SEC-001",
+  "catalog_integrity": "PASS",
+  "security_compliance": "PARTIAL",
+  "catalog_sha256": "c4c36894dc7be9bb41622064a5e11f0d0ecfd72002f051d699de84e640dc7826",
+  "counts": {
+    "workloads": 11,
+    "dedicated_service_accounts": 11,
+    "workloads_with_token_automount_disabled": 10,
+    "approved_token_automount_exceptions": 1,
+    "hardened_or_approved_exception_containers": 9,
+    "containers": 11,
+    "secret_references": 66,
+    "literal_secret_findings": 0,
+    "unregistered_secret_references": 2,
+    "kafka_principals": 20,
+    "shared_sensitive_credentials": 5,
+    "tenant_untrusted_fallback_sites": 25,
+    "workloads_with_blocking_gaps": 11,
+    "gap_counts": {
+      "container_security_context_incomplete": 2,
+      "runtime_image_not_digest_pinned": 5,
+      "secret_provisioner_unregistered": 2,
+      "service_to_service_mtls_identity_missing": 7,
+      "shared_sensitive_credential": 8
+    }
+  },
+  "errors": []
+}
+python scripts/alignment/build_pki_catalog.py --check
+{
+  "status": "PASS",
+  "catalog_sha256": "a6c20b13d85a12cd71604b45298c6de1540beb83bf4b2cb177052232f2564325",
+  "counts": {
+    "certificate_domains": 5,
+    "domains_partial_or_default_off": 5,
+    "transport_guards": 18,
+    "transport_guards_passing": 18,
+    "plaintext_dependencies": 4,
+    "production_plaintext_gaps": 3,
+    "blocking_gaps": 19
+  }
+}
+python scripts/alignment/verify_pki_catalog.py
+{
+  "status": "PASS",
+  "control_id": "T-PKI-001",
+  "catalog_integrity": "PASS",
+  "pki_compliance": "PARTIAL",
+  "catalog_sha256": "a6c20b13d85a12cd71604b45298c6de1540beb83bf4b2cb177052232f2564325",
+  "counts": {
+    "certificate_domains": 5,
+    "domains_partial_or_default_off": 5,
+    "transport_guards": 18,
+    "transport_guards_passing": 18,
+    "plaintext_dependencies": 4,
+    "production_plaintext_gaps": 3,
+    "blocking_gaps": 19
+  },
+  "errors": []
+}
+python scripts/alignment/build_dr_recovery_catalog.py --check
+{
+  "status": "PASS",
+  "catalog_sha256": "5fc51ac017767b80fb95ad3be685e071a781279bb4bfa1d4bc2296fa5d67d65e",
+  "counts": {
+    "domains": 8,
+    "domains_pass": 0,
+    "domains_without_restore_evidence": 8,
+    "domains_without_approved_rpo_rto": 8,
+    "blocking_gaps": 28
+  }
+}
+python scripts/alignment/verify_dr_recovery_catalog.py
+{
+  "status": "PASS",
+  "control_id": "T-DR-001",
+  "catalog_integrity": "PASS",
+  "dr_readiness": "PARTIAL",
+  "catalog_sha256": "5fc51ac017767b80fb95ad3be685e071a781279bb4bfa1d4bc2296fa5d67d65e",
+  "counts": {
+    "domains": 8,
+    "domains_pass": 0,
+    "domains_without_restore_evidence": 8,
+    "domains_without_approved_rpo_rto": 8,
+    "blocking_gaps": 28
+  },
+  "errors": []
+}
+python scripts/alignment/inventory_pg_mutations.py --check
+{
+  "status": "FAIL",
+  "contract_id": "postgres.mutable-command-inventory.v1",
+  "remediation_id": "T-PG-002",
+  "coverage_status": "REPOSITORY_STATIC_INVENTORY",
+  "summary": {
+    "source_files": 103,
+    "mutation_statements": 658,
+    "backend_counts": {
+      "clickhouse": 16,
+      "postgresql": 642
+    },
+    "postgres_role_counts": {
+      "audit": 80,
+      "business": 296,
+      "control_idempotency": 29,
+      "history": 70,
+      "inbox_projection": 45,
+      "outbox": 122
+    },
+    "review_queue": 28,
+    "review_priority_counts": {
+      "P1_REVIEW": 19,
+      "P2_REVIEW": 9
+    },
+    "unclassified": 0
+  },
+  "errors": [
+    "repository mutable-command inventory differs from versioned snapshot"
+  ]
+}
+make: *** [Makefile:288: alignment-validate] Error 1

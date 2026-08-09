@@ -2,6 +2,7 @@ package dedup
 
 import (
 	"testing"
+	"time"
 
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 )
@@ -13,7 +14,7 @@ func TestCalculateFingerprint(t *testing.T) {
 		RunId:    "run-001",
 		Behaviors: []*pb.DetectionBehavior{
 			{
-				Header:      &pb.EventHeader{EventId: "e1", TenantId: "t1"},
+				Header:      &pb.EventHeader{EventId: "e1", TenantId: "t1", EventTs: 1786118400000},
 				CommunityId: "community-abc",
 				ObjectType:  "scan",
 				TopLabel:    "port_scan",
@@ -39,14 +40,42 @@ func TestCalculateFingerprintDifferentBuckets(t *testing.T) {
 		BatchId:  "batch-001",
 		TenantId: "t1",
 		Behaviors: []*pb.DetectionBehavior{
-			{CommunityId: "c1", ObjectType: "scan", TopLabel: "port_scan"},
+			{Header: &pb.EventHeader{EventTs: time.Date(2026, 8, 7, 16, 35, 0, 0, time.UTC).UnixMilli()}, CommunityId: "c1", ObjectType: "scan", TopLabel: "port_scan"},
 		},
 	}
 
 	fp1 := CalculateFingerprint(batch, 10)
-	fp2 := CalculateFingerprint(batch, 60) // Different time bucket
+	fp2 := CalculateFingerprint(batch, 60)
 	if fp1 == fp2 {
-		t.Log("same fingerprint despite different buckets (expected if time hasn't changed)")
+		t.Fatal("different source-time bucket widths produced the same fingerprint")
+	}
+}
+
+func TestCalculateFingerprintUsesSourceTimeAcrossDelayedReplay(t *testing.T) {
+	eventTs := time.Date(2026, 8, 7, 16, 35, 0, 0, time.UTC).UnixMilli()
+	batch := &pb.DetectionBatch{TenantId: "t1", Behaviors: []*pb.DetectionBehavior{{
+		Header:      &pb.EventHeader{EventId: "event-delayed", EventTs: eventTs},
+		CommunityId: "community-delayed", ObjectType: "session", TopLabel: "scan",
+	}}}
+	first := CalculateFingerprint(batch, 10)
+	batch.CreatedAt = eventTs + int64((24*time.Hour)/time.Millisecond)
+	second := CalculateFingerprint(batch, 10)
+	if first != second {
+		t.Fatalf("processing delay changed source-time fingerprint: %s != %s", first, second)
+	}
+}
+
+func TestCalculateFingerprintSeparatesSourceTimeBuckets(t *testing.T) {
+	base := time.Date(2026, 8, 7, 16, 30, 0, 0, time.UTC).UnixMilli()
+	batch := &pb.DetectionBatch{TenantId: "t1", Behaviors: []*pb.DetectionBehavior{{
+		Header:      &pb.EventHeader{EventId: "event-one", EventTs: base},
+		CommunityId: "community-one", ObjectType: "session", TopLabel: "scan",
+	}}}
+	first := CalculateFingerprint(batch, 10)
+	batch.Behaviors[0].Header.EventTs = base + int64((11*time.Minute)/time.Millisecond)
+	second := CalculateFingerprint(batch, 10)
+	if first == second {
+		t.Fatal("distinct source-time buckets produced the same fingerprint")
 	}
 }
 

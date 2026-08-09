@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-asset-expand-g1-v2",
+  "captured_at": "2026-08-07T08:20:49Z",
+  "status": "PASS",
+  "scoped_evidence_status": "PASS_ISOLATED_POSTGRES_EXPAND_DOUBLE_REPLAY",
+  "remediation_ids": [
+    "F-ASSET-001",
+    "F-ASSET-002",
+    "F-ASSET-003",
+    "F-ASSET-004",
+    "F-ASSET-005",
+    "F-ASSET-006"
+  ],
+  "candidate": {
+    "head": "ac74d6f51ff32076284444fe6ef812b4a9674f16",
+    "source_sha256": "3ba29b7c8d44d830d56a07048de68024c6f48f6c461a8c9b0f83127084fbc1e7",
+    "source_file_count": 2340,
+    "clean_before_and_after_g0": true
+  },
+  "g0_reference": {
+    "run_id": "20260807-remediation-g0-full-v176",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v176/manifest.json",
+    "manifest_sha256": "cccf2e64e201fbafa5a51d6fd1ddfb11d0003b8f7d9b0e713249c43dc597fd04",
+    "status": "PASS",
+    "commands": [
+      {
+        "name": "alignment",
+        "status": "PASS",
+        "duration_seconds": 81.24,
+        "artifact": "doc/02_acceptance/runs/20260807-remediation-g0-full-v176/alignment.log",
+        "sha256": "f64e90d744c896b1f3d98103fe3de6fa1318df63ba2b4f7daede08236eb00d1f"
+      },
+      {
+        "name": "full",
+        "status": "PASS",
+        "duration_seconds": 115.272,
+        "artifact": "doc/02_acceptance/runs/20260807-remediation-g0-full-v176/full.log",
+        "sha256": "941c5be44dbb9b8d4b121e249fc61dc8bba3ccff16eeb06e4e9c09555769dc00"
+      },
+      {
+        "name": "python",
+        "status": "PASS",
+        "duration_seconds": 210.78,
+        "artifact": "doc/02_acceptance/runs/20260807-remediation-g0-full-v176/python.log",
+        "sha256": "880d3c3ba365901ee6aa5dab086e2ea47f7c5c9588130f8d127816281fcaad76"
+      }
+    ]
+  },
+  "g1_result": {
+    "artifact": "doc/02_acceptance/runs/20260807-remediation-asset-expand-g1-v2/result.json",
+    "sha256": "ef9e286d6e90363a300a47e6f38fda673ea78ef03cf6eff01178e302be772bfc",
+    "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+    "sentinel_verified": true,
+    "migration_count": 10,
+    "replay_count": 2,
+    "schema_fingerprints": [
+      "c7e0028272fc3b1abc33fb6fb940d3815dd1dc5e4d313c995a9f3849a20b3bc9",
+      "c7e0028272fc3b1abc33fb6fb940d3815dd1dc5e4d313c995a9f3849a20b3bc9"
+    ],
+    "migration_registry_count": 10,
+    "expected_table_count": 22,
+    "actual_table_count": 22,
+    "baseline_backfill_verified": true,
+    "business_outbox_rows_created": 0,
+    "persistent_volume_attached": false,
+    "shared_environment_touched": false,
+    "container_removed": true
+  },
+  "source_artifacts": [
+    {
+      "path": "contracts/alignment/asset-expand-control.v1.json",
+      "sha256": "967deb24ff0e3140a89c158cd12d99c3a02b767ba44c40956a16f5b8c4c9992d"
+    },
+    {
+      "path": "scripts/alignment/verify_asset_expand_ephemeral.py",
+      "sha256": "2e52c79d0b6ad2c4c424fd55ba52f2d8255845deb2940c7594ee1bd9a0a9b7fb"
+    },
+    {
+      "path": "scripts/alignment/verify_asset_expand_guardrails.py",
+      "sha256": "a590759ee7f0c095ffcdd0a94ca94b98c4583d0f3f482b45924edcdba2046adb"
+    },
+    {
+      "path": "tests/alignment/test_asset_expand_ephemeral_guard.py",
+      "sha256": "4389e838c272fc2dcf7db89bbb32ba81aec1865823d1f98f8d9572395f76ad2f"
+    }
+  ],
+  "gate_status": {
+    "G0": "PASS_SAME_SOURCE",
+    "G1": "PASS_FOR_ISOLATED_POSTGRES_EXPAND_DOUBLE_REPLAY_AND_SCHEMA_STABILITY",
+    "G2": "OPEN_NO_RELEASE_CANDIDATE_IMAGE_OR_REAL_SERVICE_WRITE",
+    "G3": "OPEN_NO_PG_KAFKA_CH_OS_NEBULA_MINIO_AUDIT_RECONCILIATION",
+    "G4": "OPEN_NO_APPROVED_PERFORMANCE_OR_FAILURE_PROFILE",
+    "G5": "OPEN_NO_WINDOWS_CHROME_ASSET_JOURNEY",
+    "G6": "OPEN_NO_APPROVED_TARGET_EXPAND_CANARY_SWITCH_ROLLBACK_OR_OBSERVATION",
+    "G7": "OPEN",
+    "G8": "BLOCKED_EXTERNAL"
+  },
+  "production_applied": false,
+  "production_mutations": [],
+  "closure_claim": false,
+  "remaining_g1_scope": [
+    "temporary Kafka broker topic ACL producer and consumer boundaries",
+    "temporary OpenSearch and MinIO adapters for the same asset trace",
+    "component failure boundaries beyond PostgreSQL migration replay"
+  ],
+  "next_actions": [
+    "capture approved target PostgreSQL identity and current migration state read-only",
+    "render a same-source suspended expand Job for independent review",
+    "run Kafka and OpenSearch/Nebula readiness canaries before enabling any worker",
+    "execute one-flag-at-a-time canary and cross-store reconciliation only in an approved window"
+  ]
+}

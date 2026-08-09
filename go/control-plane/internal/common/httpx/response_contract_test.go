@@ -45,6 +45,28 @@ func TestJSONContractSuccessFillsStableSnapshotMetadata(t *testing.T) {
 	}
 }
 
+func TestJSONContractCreatedPreservesCreatedStatusAndEnvelope(t *testing.T) {
+	ctx := context.WithValue(context.Background(), ContextKeyTraceID, "trace-created-1")
+	recorder := httptest.NewRecorder()
+
+	JSONContractCreated(recorder, ctx, map[string]interface{}{"revision": 1}, ContractMeta{
+		SnapshotID:       "view-1",
+		OperationID:      "saveAlertView",
+		SourceWatermarks: map[string]string{"postgresql.alert_saved_views.revision": "1"},
+	})
+
+	if recorder.Code != http.StatusCreated {
+		t.Fatalf("status=%d want=%d", recorder.Code, http.StatusCreated)
+	}
+	var response ContractResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if response.Error != nil || response.Meta.OperationID != "saveAlertView" || response.Meta.SnapshotID != "view-1" {
+		t.Fatalf("created contract envelope=%+v", response)
+	}
+}
+
 func TestJSONContractErrorKeepsHTTPAndBusinessSemanticsDistinct(t *testing.T) {
 	ctx := context.WithValue(context.Background(), ContextKeyTraceID, "trace-conflict-1")
 	recorder := httptest.NewRecorder()

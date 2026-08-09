@@ -151,4 +151,3 @@ public enum TaskStatus
 
   // @@protoc_insertion_point(enum_scope:traffic.v1.TaskStatus)
 }
-

@@ -1,0 +1,6 @@
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/api	0.014s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/config	0.008s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/consumer	0.014s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/repository	0.012s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/service	0.012s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/asset-service	0.011s

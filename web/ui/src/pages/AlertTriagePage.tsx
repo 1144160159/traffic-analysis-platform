@@ -22,6 +22,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RiskScoreRingChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
+import { appConfig } from '@/config/runtime';
 import {
   ALERT_RESPONSE_CONTROLS,
   ALERT_ROW_CONTROLS,
@@ -39,7 +40,7 @@ import { batchUpdateAlertStatus } from '@/services/alertBatchApi';
 import { submitAlertFeedback } from '@/services/alertDetailApi';
 import { submitAlertTriageAction } from '@/services/alertTriageApi';
 import { fetchAlertSavedViews } from '@/services/alertTriageApi';
-import { batchAssignAlerts, exportAlertQueueCsv } from '@/services/alertQueueActionsApi';
+import { batchAssignAlerts, createDurableAlertBatchAssignment, exportAlertQueueCsv, waitForDurableAlertBatchAssignment } from '@/services/alertQueueActionsApi';
 import { alertAllowedNextStatuses, alertStatusLabel, alertStatusOptions, canTransitionAlertStatus, type AlertStatusCode } from '@/services/alertStatus';
 import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
 import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
@@ -59,6 +60,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
   const [batchTargetStatus, setBatchTargetStatus] = useState<AlertStatusCode>('triage');
   const [batchReason, setBatchReason] = useState('批量研判状态同步');
   const [batchAssignee, setBatchAssignee] = useState('security-analyst');
+  const [batchAssignmentReason, setBatchAssignmentReason] = useState('安全运营批量指派');
   const [batchDialog, setBatchDialog] = useState<BatchDialog>();
   const [listPage, setListPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -72,6 +74,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
   const [actionSubmitted, setActionSubmitted] = useState(false);
   const [actionReason, setActionReason] = useState('安全运营人员确认提交');
   const alertTableViewportRef = useRef<HTMLDivElement>(null);
+  const batchAssignmentAttemptRef = useRef('');
   const [alertTableScrollY, setAlertTableScrollY] = useState<number>();
   const visualBreakdownMode = import.meta.env.DEV && isVisualBreakdownMode();
   const { data, error, isError, isLoading, refetch } = useQuery({
@@ -177,9 +180,42 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
     },
   });
   const batchAssignMutation = useMutation({
-    mutationFn: () => batchAssignAlerts(selectedRows.map(alertIdFromRow), batchAssignee),
+    mutationFn: async () => {
+      if (!appConfig.enableAlertBatchAssignmentV1) {
+        const legacy = await batchAssignAlerts(selectedRows.map(alertIdFromRow), batchAssignee);
+        return { batchId: '', status: 'completed', total: legacy.total, accepted: legacy.success, applied: legacy.success, conflicted: 0, forbidden: 0, failed: 0, replayed: false, items: [] };
+      }
+      if (!batchAssignmentAttemptRef.current) {
+        batchAssignmentAttemptRef.current = `alert-batch:${crypto.randomUUID()}`;
+      }
+      const accepted = await createDurableAlertBatchAssignment(
+        selectedRows.map((row) => ({ alertId: alertIdFromRow(row), stateVersion: stateVersionFromRow(row) })),
+        batchAssignee,
+        batchAssignmentReason,
+        data?.snapshot?.snapshotId ?? '',
+        batchAssignmentAttemptRef.current,
+      );
+      try {
+        return await waitForDurableAlertBatchAssignment(accepted.batchId);
+      } catch {
+        return { ...accepted, applied: 0, conflicted: 0, forbidden: 0, failed: 0, items: [] };
+      }
+    },
     onSuccess: async (result) => {
-      message.success(`已指派 ${result.success} 条告警`);
+      if (result.batchId) {
+        if (result.status === 'completed') {
+          message.success(`批量指派完成 ${result.applied}/${result.total} 条，任务 ${result.batchId}`);
+        } else if (result.status === 'partial') {
+          message.warning(`批量指派部分完成：成功 ${result.applied}、冲突 ${result.conflicted}、无权限 ${result.forbidden}、失败 ${result.failed}，任务 ${result.batchId}`);
+        } else if (result.status === 'failed' || result.status === 'cancelled') {
+          message.error(`批量指派${result.status === 'cancelled' ? '已取消' : '失败'}：冲突 ${result.conflicted}、无权限 ${result.forbidden}、失败 ${result.failed}，任务 ${result.batchId}`);
+        } else {
+          message.info(`批量指派仍在${result.status === 'running' ? '执行' : '排队'}，任务 ${result.batchId}；可稍后刷新查看终态`);
+        }
+      } else {
+        message.success(`已指派 ${result.accepted} 条告警`);
+      }
+      batchAssignmentAttemptRef.current = '';
       setBatchDialog(undefined);
       await refetch();
     },
@@ -212,6 +248,9 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
         target: action.targetValue,
         reason: actionReason,
         dryRun: action.kind === 'response-action',
+        expectedRevision: action.kind === 'saved-view'
+          ? savedViews.find((saved) => saved.name === action.targetValue)?.revision ?? 0
+          : undefined,
         detail: { filter_notice: filterNotice, view, filters: appliedFilters, time_window: appliedTimeWindow },
       });
     },
@@ -440,7 +479,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
             title={`${route.page.tableTitle}（共 ${totalRows || 0} 条）`}
             extra={
               <Space>
-                  <Button size="small" icon={<SafetyCertificateOutlined />} disabled={!selectedRows.length} onClick={() => setBatchDialog('assign')}>批量指派</Button>
+                  <Button size="small" icon={<SafetyCertificateOutlined />} disabled={!selectedRows.length} onClick={() => { batchAssignmentAttemptRef.current = `alert-batch:${crypto.randomUUID()}`; setBatchDialog('assign'); }}>批量指派</Button>
                   <Button
                     size="small"
                     icon={<CheckCircleOutlined />}
@@ -518,12 +557,12 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
         confirmLoading={batchAssignMutation.isPending || batchStatusMutation.isPending}
         okButtonProps={{
           disabled: batchDialog === 'assign'
-            ? !batchAssignee.trim() || selectedRows.length === 0
+            ? !batchAssignee.trim() || selectedRows.length === 0 || (appConfig.enableAlertBatchAssignmentV1 && batchAssignmentReason.trim().length < 4)
             : !canSubmitBatchStatus,
         }}
         okText="确认提交"
         cancelText="取消"
-        onCancel={() => setBatchDialog(undefined)}
+        onCancel={() => { batchAssignmentAttemptRef.current = ''; setBatchDialog(undefined); }}
         onOk={() => {
           if (batchDialog === 'assign') batchAssignMutation.mutate();
           if (batchDialog === 'status') batchStatusMutation.mutate();
@@ -536,10 +575,16 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
             <strong>{selectedRows.length} 条告警</strong>
           </div>
           {batchDialog === 'assign' ? (
-            <label>
-              <span>指派对象</span>
-              <Input value={batchAssignee} onChange={(event) => setBatchAssignee(event.target.value)} placeholder="请输入安全分析员账号" />
-            </label>
+            <>
+              <label>
+                <span>指派对象</span>
+                <Input value={batchAssignee} onChange={(event) => setBatchAssignee(event.target.value)} placeholder="请输入安全分析员账号" />
+              </label>
+              {appConfig.enableAlertBatchAssignmentV1 && <label>
+                <span>指派原因</span>
+                <Input.TextArea rows={3} value={batchAssignmentReason} onChange={(event) => setBatchAssignmentReason(event.target.value)} placeholder="请输入批量指派原因（至少 4 个字符）" />
+              </label>}
+            </>
           ) : (
             <>
               <label>

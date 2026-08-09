@@ -131,3 +131,65 @@ func TestOpenSearchWriterPreservesLegacyWildcardReadCompatibility(t *testing.T) 
 		t.Fatalf("legacy compatibility target drifted: read=%s keyword_fields=%t", writer.readTarget, writer.legacyReadKeywordFields)
 	}
 }
+
+func TestProjectionMetadataBindsClusterAndSingleWriteIndexReadOnly(t *testing.T) {
+	var aliasMethod string
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		switch request.URL.Path {
+		case "/":
+			_, _ = io.WriteString(writer, `{"cluster_uuid":"cluster-a","version":{"number":"2.11.0"}}`)
+		case "/_alias/alerts-v2-write":
+			aliasMethod = request.Method
+			_, _ = io.WriteString(writer, `{"alerts-v2-000002":{"aliases":{"alerts-v2-write":{"is_write_index":false}}},"alerts-v2-000001":{"aliases":{"alerts-v2-write":{"is_write_index":true}}}}`)
+		default:
+			http.Error(writer, fmt.Sprintf("unexpected path %s", request.URL.Path), http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	projection, err := NewOpenSearchReconcileTarget(
+		[]string{server.URL}, "", "", "alerts", "alerts-v2-write", true, true, zap.NewNop(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer projection.Close()
+	metadata, err := projection.ProjectionMetadata(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if metadata.ClusterUUID != "cluster-a" || metadata.ReadTarget != "alerts" || metadata.WriteAlias != "alerts-v2-write" || len(metadata.WriteIndices) != 2 {
+		t.Fatalf("unexpected projection metadata: %+v", metadata)
+	}
+	if aliasMethod != http.MethodGet || metadata.WriteIndices[0].Index != "alerts-v2-000001" || !metadata.WriteIndices[0].IsWriteIndex || metadata.WriteIndices[1].IsWriteIndex {
+		t.Fatalf("alias membership was not read deterministically: method=%s metadata=%+v", aliasMethod, metadata)
+	}
+}
+
+func TestProjectionMetadataReturnsMissingAliasAsBlockedEvidence(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		if request.URL.Path == "/" {
+			_, _ = io.WriteString(writer, `{"cluster_uuid":"cluster-a","version":{"number":"2.11.0"}}`)
+			return
+		}
+		http.Error(writer, `{"error":"alias missing"}`, http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	projection, err := NewOpenSearchReconcileTarget(
+		[]string{server.URL}, "", "", "alerts", "alerts-v2-write", true, true, zap.NewNop(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer projection.Close()
+	metadata, err := projection.ProjectionMetadata(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if metadata.ClusterUUID != "cluster-a" || len(metadata.WriteIndices) != 0 {
+		t.Fatalf("missing alias did not produce blocked evidence metadata: %+v", metadata)
+	}
+}

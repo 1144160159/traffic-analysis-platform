@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-alert-projection-postgres-opensearch-g1-v1",
+  "gate": "G1",
+  "status": "PASS",
+  "captured_at": "2026-08-07T15:11:39Z",
+  "candidate": {
+    "git_head": "a54cbcd4288fbad014c4899a77e32743daf4ff3a",
+    "content_sha256": "18b937774831b57411d19a420bf72f459c540f6eaaa273bc83df0baa69f89106",
+    "file_count": 2365
+  },
+  "g0_reference": {
+    "run_id": "20260807-remediation-g0-full-v186",
+    "path": "doc/02_acceptance/runs/20260807-remediation-g0-full-v186/manifest.json",
+    "sha256": "4875a14fdf008f7a66cf5a272d7c55a9f905054a7e713331d66ca98a29096c6d",
+    "status": "PASS",
+    "candidate_content_sha256": "18b937774831b57411d19a420bf72f459c540f6eaaa273bc83df0baa69f89106"
+  },
+  "result": {
+    "path": "result.json",
+    "sha256": "7553628c5cbab08fa70d5af780697acc60ec2146df771f66d29641ec98127ecd",
+    "size_bytes": 1690,
+    "postgres_sentinel_verified": true,
+    "opensearch_sentinel_verified": true,
+    "missing_stale_extra_seed_verified": true,
+    "opensearch_terminal_requery_verified": true,
+    "postgres_watermarks_converged": true,
+    "deleted_receipt_recovered_without_projection_rewrite": true,
+    "durable_run_manifest_verified": true
+  },
+  "scope": {
+    "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "opensearch_image": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
+    "migration": "deployments/postgres/migrations/202608041100_alert_opensearch_projection_reconciliation_v1.sql",
+    "alert_mapping": "common/opensearch/alerts-v2/mappings-component.json",
+    "seeded_difference_classes": [
+      "missing",
+      "stale",
+      "extra"
+    ],
+    "automatic_repairs": [
+      "missing",
+      "stale",
+      "missing_postgresql_watermark"
+    ],
+    "automatic_extra_delete": false,
+    "second_run_opensearch_write_count": 0,
+    "loopback_only": true,
+    "persistent_volumes": false,
+    "shared_environment_touched": false,
+    "postgres_container_removed": true,
+    "opensearch_container_removed": true,
+    "production_applied": false
+  },
+  "gate_boundary": {
+    "proves": [
+      "the production reconciler repairs missing and stale documents through the real OpenSearch writer, refreshes and re-queries the exact V2 aliases, then records and re-queries real PostgreSQL watermarks in the same owned run",
+      "the durable PostgreSQL reconcile manifest records a converged post-repair terminal receipt while the extra OpenSearch document remains for manual adjudication",
+      "after one PostgreSQL receipt is deleted while OpenSearch remains converged, the next run restores and re-queries the receipt with zero OpenSearch write calls",
+      "both fixed-digest containers use loopback-only ephemeral storage and are removed after the test"
+    ],
+    "does_not_prove": [
+      "the production 883172-document projection gap has been repaired",
+      "real ClickHouse authoritative reads, Kafka offsets, consumer lag or end-to-end production event reconciliation",
+      "approved candidate deployment, production template application, full backfill, shadow count and hash reconciliation or alias cutover",
+      "fixed-scale performance, fault recovery, Windows Chrome, rollback or T+0 T+1 T+3 T+7 observation"
+    ]
+  },
+  "production_mutations": []
+}

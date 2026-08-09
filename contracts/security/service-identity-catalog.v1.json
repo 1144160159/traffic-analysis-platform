@@ -12,12 +12,12 @@
     {
       "domain": "kafka_principal_acl",
       "path": "contracts/events/kafka-acl-catalog.v1.json",
-      "sha256": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f"
+      "sha256": "2816db4026778ef92d478169513561ab51f1d93eefb06e053197a3cdd5731c57"
     },
     {
       "domain": "configuration_and_secret_binding",
       "path": "contracts/configuration/configuration-catalog.v1.json",
-      "sha256": "f80df36629d91d1d5c5d04a51db22251aa5bf26db53f543e6e4551f48f11c4e0"
+      "sha256": "f31930ee034316b72af8368d6625e002faa193b331f6c47c23bf21bb06e332d7"
     },
     {
       "domain": "iam_scopes",
@@ -299,6 +299,39 @@
           "consumer": "alert-service",
           "binding": "env:S3_SECRET_KEY",
           "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "ALERT_BATCH_SELECTION_SIGNING_SECRET",
+          "consumer": "alert-service",
+          "binding": "env:ALERT_BATCH_SELECTION_SIGNING_SECRET",
+          "optional": true,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "ALERT_EVIDENCE_DOWNLOAD_SECRET",
+          "consumer": "alert-service",
+          "binding": "env:ALERT_EVIDENCE_DOWNLOAD_SECRET",
+          "optional": true,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+          "consumer": "alert-service",
+          "binding": "env:ALERT_RESPONSE_EXECUTOR_TOKEN",
+          "optional": true,
           "external_secret_registered": true,
           "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
           "rotation_refresh_interval": "1h"
@@ -1730,13 +1763,13 @@
       },
       {
         "path": "go/control-plane/internal/alert/api/handler.go",
-        "line": 1624,
+        "line": 1691,
         "kind": "request_header",
         "line_sha256": "1ff5d9fad7a5781e5b9afcf2b3687fb13ef8d8b2b2bed9d87f4efb236c47b54b"
       },
       {
         "path": "go/control-plane/internal/alert/api/handler.go",
-        "line": 1627,
+        "line": 1694,
         "kind": "query_parameter",
         "line_sha256": "ed36c0ae6054d246976bc41c7bf69588afbde0f33b0179b10cbed4d8b83085d2"
       },
@@ -1766,7 +1799,7 @@
       },
       {
         "path": "go/control-plane/internal/alert/api/handler_system.go",
-        "line": 2813,
+        "line": 2825,
         "kind": "query_parameter",
         "line_sha256": "65f50649b6420f4c5aa63a786035c3ebf9763b6535ad5402813604ab623fa0d8"
       },
@@ -1784,13 +1817,13 @@
       },
       {
         "path": "go/control-plane/internal/auth/api/handler.go",
-        "line": 112,
+        "line": 147,
         "kind": "request_header",
         "line_sha256": "6fcf1223970a4d0643f2016edffee5197873862c247023dd04de63dde6678f5a"
       },
       {
         "path": "go/control-plane/internal/auth/api/handler.go",
-        "line": 499,
+        "line": 534,
         "kind": "query_parameter",
         "line_sha256": "c3eb4300ba1c1e771edafe6ea42ac6900fe9222fb2073ca9a8039399989aa04e"
       },
@@ -1883,7 +1916,7 @@
     "approved_token_automount_exceptions": 1,
     "hardened_or_approved_exception_containers": 9,
     "containers": 11,
-    "secret_references": 65,
+    "secret_references": 68,
     "literal_secret_findings": 0,
     "unregistered_secret_references": 2,
     "kafka_principals": 20,
@@ -1911,5 +1944,5 @@
       "wildcard_or_shared_kafka_principal"
     ]
   },
-  "catalog_sha256": "5258450991772783cab3adee73c790eddb093d375ed52cf13d129fed5f2c3363"
+  "catalog_sha256": "62cdfaa3b54bea5fa150fa455394df58cdbaf7b9c117acdba1b44e468a03bf67"
 }

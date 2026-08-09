@@ -11,6 +11,12 @@ MLOPS_DIR     := mlops
 PROTO_DIR     := proto
 DEPLOY_DIR    := deployments/kubernetes
 
+# Go 1.25 is required by the security-fixed gRPC/OpenTelemetry dependency set.
+# Do not inherit a developer-global GOSUMDB=off for repository gates. A
+# restricted environment can select a verified mirror with TRAFFIC_GO_SUMDB.
+GOSUMDB := $(if $(TRAFFIC_GO_SUMDB),$(TRAFFIC_GO_SUMDB),sum.golang.org)
+export GOSUMDB
+
 REGISTRY      ?= traffic
 TAG           ?= latest
 SOURCE_REVISION ?= unknown
@@ -241,6 +247,9 @@ alignment-validate: ## Validate W0 registry, contracts, OpenAPI, migration and s
 	python scripts/alignment/check_migrations.py
 	python scripts/alignment/check_event_catalog.py
 	python scripts/alignment/generate_kafka_acl_plan.py --check-generated
+	python scripts/alignment/verify_kafka_dlq_commit_barrier.py
+	python scripts/alignment/verify_pcap_metadata_ack.py
+	python scripts/alignment/verify_asset_expand_guardrails.py
 	python scripts/alignment/verify_flink_state_recovery.py
 	python scripts/alignment/verify_flink_checkpoint_ha.py
 	python scripts/alignment/verify_flink_sink_reconciliation.py
@@ -262,6 +271,8 @@ alignment-validate: ## Validate W0 registry, contracts, OpenAPI, migration and s
 	python scripts/alignment/verify_opensearch_index_governance.py
 	python scripts/alignment/verify_opensearch_search_pagination.py
 	python scripts/alignment/verify_opensearch_projection_reconciliation.py
+	python scripts/alignment/verify_alert_projection_shadow_backfill.py
+	python scripts/alignment/verify_alert_projection_repair_job.py
 	python scripts/alignment/verify_opensearch_ha_security_restore.py
 	python scripts/alignment/verify_trace_watermark_reconcile.py
 	python scripts/alignment/verify_data_quality_control_plane.py
@@ -280,6 +291,58 @@ alignment-validate: ## Validate W0 registry, contracts, OpenAPI, migration and s
 .PHONY: alignment-verify-flink-state-recovery
 alignment-verify-flink-state-recovery: ## Verify T-FLINK-002 deterministic IDs, operator state, UIDs, late data and async budgets
 	python scripts/alignment/verify_flink_state_recovery.py
+
+.PHONY: alignment-verify-kafka-dlq-commit-barrier
+alignment-verify-kafka-dlq-commit-barrier: ## Verify T-KAFKA-003 durable DLQ and source-offset commit barriers
+	python scripts/alignment/verify_kafka_dlq_commit_barrier.py
+	cd $(GO_DIR) && go test -race ./internal/common/kafka
+
+.PHONY: alignment-verify-pcap-metadata-ack
+alignment-verify-pcap-metadata-ack: ## Verify F-PROBE-001/T-KAFKA-003 non-final durable PCAP metadata receipts
+	python scripts/alignment/verify_pcap_metadata_ack.py
+	cd $(GO_DIR) && go test ./internal/ingest/queue ./internal/ingest/server
+
+.PHONY: alignment-verify-asset-expand-guardrails
+alignment-verify-asset-expand-guardrails: ## Verify F-ASSET-001..006 default-off and approval-bound PostgreSQL expand controls
+	python scripts/alignment/verify_asset_expand_guardrails.py
+	python -m unittest tests.alignment.test_asset_expand_renderer tests.alignment.test_asset_expand_guardrails -v
+	cd $(GO_DIR) && go test ./internal/asset/... ./cmd/asset-service/...
+
+.PHONY: alignment-verify-asset-expand-g1
+alignment-verify-asset-expand-g1: ## Replay the F-ASSET-001..006 PostgreSQL expand twice in an owned sentinel container (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_expand_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-asset-projection-opensearch-g1
+alignment-verify-asset-projection-opensearch-g1: ## Verify F-ASSET-002 projection semantics in an owned OpenSearch container (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_projection_opensearch_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-asset-projection-kafka-g1
+alignment-verify-asset-projection-kafka-g1: ## Verify F-ASSET-002 broker ACK and durable inbox in owned Kafka/PostgreSQL containers (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_projection_kafka_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-asset-export-minio-g1
+alignment-verify-asset-export-minio-g1: ## Verify F-ASSET-004 manifest, audit and outbox against owned MinIO/PostgreSQL containers (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_export_minio_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-asset-projection-nebula-g1
+alignment-verify-asset-projection-nebula-g1: ## Verify F-ASSET-002/005 deterministic projection in owned NebulaGraph containers (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_projection_nebula_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-asset-detail-clickhouse-g1
+alignment-verify-asset-detail-clickhouse-g1: ## Verify F-ASSET-005 facts and watermarks in an owned ClickHouse container (RUN_ID and G0_MANIFEST required)
+	test -n "$(RUN_ID)"
+	test -n "$(G0_MANIFEST)"
+	python scripts/alignment/verify_asset_detail_clickhouse_ephemeral.py --run-id "$(RUN_ID)" --g0-manifest "$(G0_MANIFEST)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-asset-seven-source-g1
+alignment-verify-asset-seven-source-g1: ## Reconcile one bounded asset revision across seven owned sources (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_seven_source_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
 .PHONY: alignment-verify-minio-object-governance
 alignment-verify-minio-object-governance: ## Verify T-MINIO-002/003/004 bucket, lifecycle and fail-closed credential governance
@@ -526,6 +589,47 @@ alignment-capture-opensearch-search-pagination: ## Capture repository and read-o
 .PHONY: alignment-verify-opensearch-projection-reconciliation
 alignment-verify-opensearch-projection-reconciliation: ## Verify T-OS-004 durable debt, external versions and bounded rebuild/reconcile guards
 	python scripts/alignment/verify_opensearch_projection_reconciliation.py
+
+.PHONY: alignment-verify-alert-projection-shadow-backfill
+alignment-verify-alert-projection-shadow-backfill: ## Verify read-only CH/OS shadow comparison and non-authorizing repair review package
+	python scripts/alignment/verify_alert_projection_shadow_backfill.py
+
+.PHONY: alignment-verify-alert-projection-shadow-g1
+alignment-verify-alert-projection-shadow-g1: ## Verify production CH/OS shadow readers in owned loopback services (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_alert_projection_shadow_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-alert-projection-repair-job
+alignment-verify-alert-projection-repair-job: ## Verify immutable tool image and default-suspended four-party repair Job guards
+	python scripts/alignment/verify_alert_projection_repair_job.py
+
+.PHONY: alignment-capture-alert-projection-tool-supply-chain
+alignment-capture-alert-projection-tool-supply-chain: ## Capture non-authorizing local SBOM and govulncheck evidence (RUN_ID, G0_MANIFEST, IMAGE and GOVULNCHECK required)
+	test -n "$(RUN_ID)"
+	test -n "$(G0_MANIFEST)"
+	test -n "$(IMAGE)"
+	test -n "$(GOVULNCHECK)"
+	python scripts/alignment/capture_alert_projection_tool_supply_chain.py --run-id "$(RUN_ID)" --g0-manifest "$(G0_MANIFEST)" --image "$(IMAGE)" --govulncheck "$(GOVULNCHECK)"
+
+.PHONY: alignment-verify-alert-projection-watermark-postgres-g1
+alignment-verify-alert-projection-watermark-postgres-g1: ## Verify T-OS-004 watermark receipts in owned PostgreSQL (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_alert_projection_watermark_postgres_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-alert-projection-postgres-opensearch-g1
+alignment-verify-alert-projection-postgres-opensearch-g1: ## Verify T-OS-004 terminal receipts across owned PostgreSQL and OpenSearch (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_alert_projection_postgres_opensearch_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-alert-projection-three-store-g1
+alignment-verify-alert-projection-three-store-g1: ## Verify T-OS-004 authoritative ClickHouse to PostgreSQL and OpenSearch receipts (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_alert_projection_clickhouse_postgres_opensearch_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
+.PHONY: alignment-verify-alert-projection-kafka-five-store-g1
+alignment-verify-alert-projection-kafka-five-store-g1: ## Verify Kafka commit after Redis, ClickHouse, OpenSearch and PostgreSQL receipts (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_alert_projection_kafka_five_store_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
 .PHONY: alignment-capture-opensearch-projection-reconciliation
 alignment-capture-opensearch-projection-reconciliation: ## Capture repository and read-only pre-canary T-OS-004 evidence (RUN_ID and G0_MANIFEST required)

@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODE="${1:-quick}"
+export GOSUMDB="${TRAFFIC_GO_SUMDB:-sum.golang.org}"
 
 usage() {
   cat <<'EOF'

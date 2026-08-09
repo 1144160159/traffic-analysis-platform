@@ -168,6 +168,7 @@ func (p *NebulaAssetProjection) Projection(event AssetUpsertedV2) ([]byte, error
 	metadata["asset_id"] = event.AssetID
 	metadata["revision"] = event.AggregateVersion
 	metadata["event_id"] = event.EventID
+	metadata["trace_id"] = event.TraceID
 	metadata["status"] = event.Asset.Status
 	metadata["source"] = event.Asset.Source
 	metadata["department"] = event.Asset.Department

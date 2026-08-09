@@ -56,6 +56,7 @@ type SystemHandler struct {
 	probeOperationAckV2   bool
 	probeCommandPublish   func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
 	probeEventPublish     func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
+	auditBatchPublisher   auditBatchPublisher
 	logger                *zap.Logger
 }
 
@@ -154,6 +155,17 @@ func (h *SystemHandler) SetProbeOperationEventProducer(producer *commonkafka.Pro
 		return
 	}
 	h.probeEventPublish = producer.Send
+}
+
+// SetAuditBatchProducer enables the default-off F-AUDIT-001 ingress. The
+// producer uses broker acknowledgements; a nil producer keeps the route
+// available but fail-closed until the canary flag is approved.
+func (h *SystemHandler) SetAuditBatchProducer(producer auditBatchPublisher) {
+	h.auditBatchPublisher = producer
+}
+
+func (h *SystemHandler) RegisterInternalRoutes(r *mux.Router) {
+	r.HandleFunc("/audit/batches", h.IngestAuditLogBatch).Methods(http.MethodPost)
 }
 
 func (h *SystemHandler) RegisterRoutes(r *mux.Router) {

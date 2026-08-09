@@ -1,0 +1,17 @@
+test_audit_materializer_expand_manifest_binds_dedicated_identity (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_audit_materializer_expand_manifest_binds_dedicated_identity) ... ok
+test_audit_materializer_renderer_rejects_mutable_or_unresolved_image (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_audit_materializer_renderer_rejects_mutable_or_unresolved_image) ... ok
+test_baseline_cannot_enable_replayer (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_baseline_cannot_enable_replayer) ... ok
+test_catalog_covers_every_canonical_topic_and_blocks_legacy_extras (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_catalog_covers_every_canonical_topic_and_blocks_legacy_extras) ... ok
+test_consumer_without_explicit_group_is_rejected (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_consumer_without_explicit_group_is_rejected) ... ok
+test_duplicate_service_secret_and_password_property_are_rejected (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_duplicate_service_secret_and_password_property_are_rejected) ... ok
+test_generated_configmap_matches_contract (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_generated_configmap_matches_contract) ... ok
+test_generated_plan_is_literal_and_contains_no_all_or_wildcard_grant (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_generated_plan_is_literal_and_contains_no_all_or_wildcard_grant) ... ok
+test_generated_service_identity_manifests_match_contract_and_shell_parses (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_generated_service_identity_manifests_match_contract_and_shell_parses) ... ok
+test_go_workloads_use_their_own_service_identity_secret (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_go_workloads_use_their_own_service_identity_secret) ... ok
+test_init_job_only_removes_legacy_wildcard_acl_at_cutover (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_init_job_only_removes_legacy_wildcard_acl_at_cutover) ... ok
+test_wildcard_principal_is_rejected (tests.alignment.test_kafka_acl_catalog.KafkaAclCatalogTest.test_wildcard_principal_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.125s
+
+OK

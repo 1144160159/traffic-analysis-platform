@@ -1,0 +1,48 @@
+cd mlops && python -m pytest scripts/test_mlops.py -v --tb=short
+============================= test session starts ==============================
+platform linux -- Python 3.12.1, pytest-9.1.0, pluggy-1.6.0 -- /home/wangwt/miniconda3/bin/python
+cachedir: .pytest_cache
+rootdir: /home/wangwt/phase_2/code/traffic-analysis-platform-remediation-integration/mlops
+plugins: anyio-4.14.0
+collecting ... collected 24 items
+
+scripts/test_mlops.py::TestModelArtifactStorageConfig::test_application_never_creates_missing_bucket PASSED [  4%]
+scripts/test_mlops.py::TestModelArtifactStorageConfig::test_default_administrator_credentials_are_rejected PASSED [  8%]
+scripts/test_mlops.py::TestModelArtifactStorageConfig::test_explicit_scoped_configuration_is_preserved PASSED [ 12%]
+scripts/test_mlops.py::TestModelArtifactStorageConfig::test_missing_credentials_fail_closed PASSED [ 16%]
+scripts/test_mlops.py::TestModelArtifactStorageConfig::test_plaintext_rejects_tls_material PASSED [ 20%]
+scripts/test_mlops.py::TestModelArtifactStorageConfig::test_secure_mode_must_be_explicit_boolean PASSED [ 25%]
+scripts/test_mlops.py::TestModelArtifactStorageConfig::test_tls_requires_private_ca PASSED [ 29%]
+scripts/test_mlops.py::TestDataExtraction::test_balanced_labels PASSED   [ 33%]
+scripts/test_mlops.py::TestDataExtraction::test_imbalanced_labels_raises PASSED [ 37%]
+scripts/test_mlops.py::TestDataExtraction::test_metadata_output PASSED   [ 41%]
+scripts/test_mlops.py::TestDataExtraction::test_preprocess_handles_inf PASSED [ 45%]
+scripts/test_mlops.py::TestDataExtraction::test_preprocess_handles_nan PASSED [ 50%]
+scripts/test_mlops.py::TestDataExtraction::test_preprocess_removes_duplicates PASSED [ 54%]
+scripts/test_mlops.py::TestDataExtraction::test_split_preserves_stratification PASSED [ 58%]
+scripts/test_mlops.py::TestModelTraining::test_class_imbalance_handling PASSED [ 62%]
+scripts/test_mlops.py::TestModelTraining::test_feature_importance_saved PASSED [ 66%]
+scripts/test_mlops.py::TestModelTraining::test_xgboost_save_and_load PASSED [ 70%]
+scripts/test_mlops.py::TestModelTraining::test_xgboost_training PASSED   [ 75%]
+scripts/test_mlops.py::TestModelEvaluation::test_best_threshold PASSED   [ 79%]
+scripts/test_mlops.py::TestModelEvaluation::test_confusion_matrix_sum PASSED [ 83%]
+scripts/test_mlops.py::TestModelEvaluation::test_evaluate_metrics PASSED [ 87%]
+scripts/test_mlops.py::TestModelEvaluation::test_f1_score_txt_format PASSED [ 91%]
+scripts/test_mlops.py::TestModelEvaluation::test_save_metrics PASSED     [ 95%]
+scripts/test_mlops.py::TestIntegration::test_full_pipeline PASSED        [100%]
+
+=============================== warnings summary ===============================
+scripts/test_mlops.py::TestDataExtraction::test_balanced_labels
+scripts/test_mlops.py::TestDataExtraction::test_imbalanced_labels_raises
+scripts/test_mlops.py::TestDataExtraction::test_metadata_output
+scripts/test_mlops.py::TestDataExtraction::test_preprocess_handles_inf
+scripts/test_mlops.py::TestDataExtraction::test_preprocess_handles_nan
+scripts/test_mlops.py::TestDataExtraction::test_preprocess_removes_duplicates
+scripts/test_mlops.py::TestDataExtraction::test_split_preserves_stratification
+scripts/test_mlops.py::TestIntegration::test_full_pipeline
+  /home/wangwt/phase_2/code/traffic-analysis-platform-remediation-integration/mlops/scripts/extract_data.py:243: Pandas4Warning: For backward compatibility, 'str' dtypes are included by select_dtypes when 'object' dtype is specified. This behavior is deprecated and will be removed in a future version. Explicitly pass 'str' to `include` to select them, or to `exclude` to remove them and silence this warning.
+  See https://pandas.pydata.org/docs/user_guide/migration-3-strings.html#string-migration-select-dtypes for details on how to write code that works with pandas 2 and 3.
+    string_cols = df.select_dtypes(include=['object']).columns
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 24 passed, 8 warnings in 210.28s (0:03:30) ==================

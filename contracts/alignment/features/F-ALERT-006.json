@@ -1,0 +1,65 @@
+{
+  "feature_id": "F-ALERT-006",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/alerts"],
+    "preserved_actions": ["alert-view-save"],
+    "preserved_api_operations": [],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "alert.saved-views",
+    "controls": [{"control_id": "alert-view-save", "action_id": "alert-view-save"}],
+    "states": ["loading", "empty", "success", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "saveAlertView",
+    "method": "POST",
+    "path": "/v1/alerts/views",
+    "response_envelope": "data-meta-error",
+    "async": false,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "revision"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "view state, immutable history, minimal audit, outbox and durable idempotency receipt commit in one serializable transaction",
+      "same tenant and idempotency key replays the committed result while a changed payload conflicts",
+      "an audit or outbox failure rolls back the saved view and its history"
+    ],
+    "states": ["saved"],
+    "compensation": "write a revisioned archive command; never delete history, audit or request receipts"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql"],
+    "migration": "deployments/postgres/migrations/202608031100_alert_saved_view_transaction_v2.sql",
+    "event_types": ["alert.saved-view.saved.v1"],
+    "source_watermarks": ["postgresql.alert_saved_views.revision", "postgresql.alert_saved_view_outbox.outbox_id"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:write"],
+    "negative_tests": [
+      "cross-tenant saved views cannot be listed or overwritten",
+      "missing or reused-with-different-payload idempotency key changes no state",
+      "injected audit failure leaves no view, history, outbox or receipt"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["new view", "same-name update", "exact retry", "concurrent conflicting save"],
+    "stop_conditions": ["serializable retries, lock contention or outbox lag exceed budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 handler and contract", "G1 atomic transaction and idempotency", "G2 real PostgreSQL double replay", "G3 view-history-audit-outbox reconciliation", "G4 concurrent save profile", "G5 Windows Chrome cross-session restore"],
+    "evidence": ["failure injection and one trace_id prove all-or-nothing view, history, audit, outbox and request receipt state"]
+  },
+  "rollout": {
+    "feature_flag": "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ALERT-006-rollback.md"
+  }
+}

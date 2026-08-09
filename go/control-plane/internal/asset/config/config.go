@@ -97,15 +97,15 @@ type KafkaConfig struct {
 	GroupID                string        `env:"ASSET_KAFKA_GROUP_ID" envDefault:"asset-service-bindings"`
 	MinBytes               int           `env:"ASSET_KAFKA_MIN_BYTES" envDefault:"1"`
 	MaxBytes               int           `env:"ASSET_KAFKA_MAX_BYTES" envDefault:"1048576"`
-	EventOutboxEnabled     bool          `env:"ASSET_EVENT_OUTBOX_ENABLED" envDefault:"true"`
+	EventOutboxEnabled     bool          `env:"ASSET_EVENT_OUTBOX_ENABLED" envDefault:"false"`
 	EventTopic             string        `env:"ASSET_EVENT_TOPIC" envDefault:"asset.events.v2"`
-	DiscoveryOutboxEnabled bool          `env:"ASSET_DISCOVERY_OUTBOX_ENABLED" envDefault:"true"`
+	DiscoveryOutboxEnabled bool          `env:"ASSET_DISCOVERY_OUTBOX_ENABLED" envDefault:"false"`
 	DiscoveryEventTopic    string        `env:"ASSET_DISCOVERY_EVENT_TOPIC" envDefault:"asset.discovery.events.v1"`
 	OutboxInterval         time.Duration `env:"ASSET_OUTBOX_INTERVAL" envDefault:"500ms"`
 	OutboxLease            time.Duration `env:"ASSET_OUTBOX_LEASE" envDefault:"30s"`
 	OutboxMaxAttempts      int           `env:"ASSET_OUTBOX_MAX_ATTEMPTS" envDefault:"8"`
 	OutboxBatchSize        int           `env:"ASSET_OUTBOX_BATCH_SIZE" envDefault:"50"`
-	ProjectionEnabled      bool          `env:"ASSET_PROJECTION_ENABLED" envDefault:"true"`
+	ProjectionEnabled      bool          `env:"ASSET_PROJECTION_ENABLED" envDefault:"false"`
 	ProjectionGroupID      string        `env:"ASSET_PROJECTION_GROUP_ID" envDefault:"asset-projection-v2"`
 	ProjectionDLQTopic     string        `env:"ASSET_PROJECTION_DLQ_TOPIC" envDefault:"dlq.v1"`
 	ProjectionMaxAttempts  int           `env:"ASSET_PROJECTION_MAX_ATTEMPTS" envDefault:"8"`

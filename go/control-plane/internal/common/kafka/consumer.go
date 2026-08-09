@@ -57,6 +57,8 @@ type Consumer struct {
 	lastProcessingErr  string
 	lastProcessingAt   time.Time
 	commitObserver     func([]kafka.Message)
+	dlqAckBarrier      DLQAcknowledgementBarrier
+	commitFunc         func(context.Context, ...kafka.Message) error
 }
 
 type ConsumerMetrics struct {
@@ -76,7 +78,6 @@ type ConsumerMetrics struct {
 
 type commitRequest struct {
 	messages []kafka.Message
-	doneChan chan error
 }
 
 func NewConsumer(config ConsumerConfig, logger *zap.Logger) (*Consumer, error) {
@@ -179,10 +180,11 @@ func (c *Consumer) backgroundCommitter() {
 	for {
 		select {
 		case <-c.stopCommitter:
-
 			mu.Lock()
 			if len(pendingMessages) > 0 {
-				c.commitMessages(pendingMessages)
+				if err := c.commitMessages(pendingMessages); err != nil {
+					c.recordProcessingFailure(fmt.Errorf("commit pending offsets during shutdown: %w", err))
+				}
 			}
 			mu.Unlock()
 			return
@@ -191,16 +193,18 @@ func (c *Consumer) backgroundCommitter() {
 			mu.Lock()
 			pendingMessages = append(pendingMessages, req.messages...)
 			mu.Unlock()
-			if req.doneChan != nil {
-				req.doneChan <- nil
-				close(req.doneChan)
-			}
 
 		case <-ticker.C:
 			mu.Lock()
 			if len(pendingMessages) > 0 {
-				c.commitMessages(pendingMessages)
-				pendingMessages = pendingMessages[:0]
+				if err := c.commitMessages(pendingMessages); err != nil {
+					// Retain the offsets for the next tick. Dropping this slice after a
+					// failed broker acknowledgement can skip the only local retry path.
+					c.recordProcessingFailure(fmt.Errorf("commit pending offsets: %w", err))
+				} else {
+					pendingMessages = pendingMessages[:0]
+					c.recordProcessingSuccess()
+				}
 			}
 			mu.Unlock()
 		}
@@ -215,7 +219,15 @@ func (c *Consumer) commitMessages(messages []kafka.Message) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := c.reader.CommitMessages(ctx, messages...); err != nil {
+	commitFunc := c.commitFunc
+	if commitFunc == nil {
+		if c.reader == nil {
+			return fmt.Errorf("kafka reader is not configured")
+		}
+		commitFunc = c.reader.CommitMessages
+	}
+
+	if err := commitFunc(ctx, messages...); err != nil {
 		atomic.AddInt64(&c.metrics.CommitsFailed, 1)
 		c.logger.Error("Failed to commit messages",
 			zap.Int("count", len(messages)),
@@ -242,6 +254,39 @@ func (c *Consumer) SetCommitObserver(observer func([]kafka.Message)) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.commitObserver = observer
+}
+
+// DLQAcknowledgementBarrier persists a domain receipt after Kafka has
+// acknowledged the DLQ record and before the source offset is committed. A
+// failure keeps the source offset replayable. Implementations must be
+// idempotent by source topic, partition and offset because a failed barrier is
+// retried after another durable DLQ write.
+type DLQAcknowledgementBarrier func(context.Context, *ReceivedMessage, error) error
+
+// SetDLQAcknowledgementBarrier installs an optional domain durability barrier.
+// It must be configured before Consume or BatchConsume starts.
+func (c *Consumer) SetDLQAcknowledgementBarrier(barrier DLQAcknowledgementBarrier) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.dlqAckBarrier = barrier
+}
+
+func (c *Consumer) runDLQAcknowledgementBarrier(ctx context.Context, message *ReceivedMessage, processingErr error) (err error) {
+	c.mu.RLock()
+	barrier := c.dlqAckBarrier
+	c.mu.RUnlock()
+	if barrier == nil {
+		return nil
+	}
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("DLQ acknowledgement persistence barrier panicked: %v", recovered)
+		}
+	}()
+	if err := barrier(ctx, message, processingErr); err != nil {
+		return fmt.Errorf("DLQ acknowledgement persistence barrier failed: %w", err)
+	}
+	return nil
 }
 
 func (c *Consumer) notifyCommitObserver(messages []kafka.Message) {
@@ -457,12 +502,18 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 					c.recordProcessingFailure(dlqErr)
 				} else {
 					atomic.AddInt64(&c.metrics.MessagesDLQ, 1)
-
-					shouldCommit = c.config.CommitOnDLQSuccess
-					if shouldCommit {
-						c.recordProcessingSuccess()
+					if barrierErr := c.runDLQAcknowledgementBarrier(messageContext, receivedMsg, err); barrierErr != nil {
+						shouldCommit = false
+						c.recordProcessingFailure(barrierErr)
+						c.logger.Error("DLQ acknowledgement persistence barrier failed",
+							zap.Error(barrierErr), zap.String("event_id", receivedMsg.EventID()))
 					} else {
-						c.recordProcessingFailure(err)
+						shouldCommit = c.config.CommitOnDLQSuccess
+						if shouldCommit {
+							c.recordProcessingSuccess()
+						} else {
+							c.recordProcessingFailure(err)
+						}
 					}
 					c.logger.Info("Message sent to DLQ",
 						zap.String("event_id", receivedMsg.EventID()),
@@ -516,67 +567,9 @@ func (c *Consumer) BatchConsume(ctx context.Context, batchSize int, flushInterva
 		if len(batch) == 0 {
 			return nil
 		}
-
-		shouldCommit := true
-		if err := handler(ctx, batch); err != nil {
-
-			c.logger.Error("Batch handler error",
-				zap.Int("batch_size", len(batch)),
-				zap.Error(err))
-
-			if c.dlqProducer != nil {
-				failedMessages := make([]struct {
-					Msg *ReceivedMessage
-					Err error
-				}, len(batch))
-				for i, msg := range batch {
-					failedMessages[i] = struct {
-						Msg *ReceivedMessage
-						Err error
-					}{Msg: msg, Err: err}
-				}
-
-				if dlqErr := c.dlqProducer.SendBatch(ctx, failedMessages); dlqErr != nil {
-					c.logger.Error("Failed to send batch to DLQ",
-						zap.Error(dlqErr))
-					shouldCommit = false
-				} else {
-					atomic.AddInt64(&c.metrics.MessagesDLQ, int64(len(batch)))
-					shouldCommit = c.config.CommitOnDLQSuccess
-					c.logger.Info("Batch sent to DLQ",
-						zap.Int("count", len(batch)),
-						zap.Bool("will_commit", shouldCommit))
-				}
-			} else {
-				shouldCommit = false
-			}
-
-			if !shouldCommit {
-
-				return err
-			}
+		if err := c.handleAndCommitBatch(ctx, batch, handler); err != nil {
+			return err
 		}
-
-		if shouldCommit {
-			messages := make([]kafka.Message, len(batch))
-			for i, msg := range batch {
-				messages[i] = msg.Message
-				atomic.AddInt64(&c.metrics.MessagesProcessed, 1)
-			}
-
-			if c.config.CommitInterval > 0 {
-				doneChan := make(chan error, 1)
-				c.commitChan <- commitRequest{
-					messages: messages,
-					doneChan: doneChan,
-				}
-
-				<-doneChan
-			} else {
-				c.commitMessages(messages)
-			}
-		}
-
 		batch = batch[:0]
 		return nil
 	}
@@ -584,21 +577,24 @@ func (c *Consumer) BatchConsume(ctx context.Context, batchSize int, flushInterva
 	for {
 		select {
 		case <-ctx.Done():
-
-			processBatch()
+			if err := processBatch(); err != nil {
+				return fmt.Errorf("flush batch during shutdown: %w", err)
+			}
 			return ctx.Err()
 
 		case <-ticker.C:
 
 			if err := processBatch(); err != nil {
-
+				return err
 			}
 
 		default:
 		}
 
 		if atomic.LoadInt32(&c.closed) == 1 {
-			processBatch()
+			if err := processBatch(); err != nil {
+				return fmt.Errorf("flush batch while closing: %w", err)
+			}
 			return fmt.Errorf("consumer is closed")
 		}
 
@@ -615,7 +611,9 @@ func (c *Consumer) BatchConsume(ctx context.Context, batchSize int, flushInterva
 			if err == context.Canceled || err == context.DeadlineExceeded {
 
 				if len(batch) > 0 {
-					processBatch()
+					if processErr := processBatch(); processErr != nil {
+						return processErr
+					}
 				}
 				continue
 			}
@@ -633,10 +631,81 @@ func (c *Consumer) BatchConsume(ctx context.Context, batchSize int, flushInterva
 
 		if len(batch) >= batchSize {
 			if err := processBatch(); err != nil {
-
+				return err
 			}
 		}
 	}
+}
+
+// handleAndCommitBatch treats the source offset commit as the final durability
+// barrier. A successful handler or DLQ write is not reported as processed until
+// Kafka acknowledges the corresponding offsets.
+func (c *Consumer) handleAndCommitBatch(ctx context.Context, batch []*ReceivedMessage, handler BatchMessageHandler) error {
+	if len(batch) == 0 {
+		return nil
+	}
+
+	shouldCommit := true
+	handlerErr := handler(ctx, batch)
+	if handlerErr != nil {
+		atomic.AddInt64(&c.metrics.MessagesFailed, int64(len(batch)))
+		c.logger.Error("Batch handler error",
+			zap.Int("batch_size", len(batch)),
+			zap.Error(handlerErr))
+
+		shouldCommit = c.config.CommitOnHandlerError
+		if c.dlqProducer != nil && c.dlqEligible(handlerErr) {
+			failedMessages := make([]struct {
+				Msg *ReceivedMessage
+				Err error
+			}, len(batch))
+			for i, msg := range batch {
+				failedMessages[i] = struct {
+					Msg *ReceivedMessage
+					Err error
+				}{Msg: msg, Err: handlerErr}
+			}
+
+			if dlqErr := c.dlqProducer.SendBatch(ctx, failedMessages); dlqErr != nil {
+				c.logger.Error("Failed to send batch to DLQ", zap.Error(dlqErr))
+				c.recordProcessingFailure(dlqErr)
+				return fmt.Errorf("batch handler failed and DLQ durability barrier failed: %v: %w", handlerErr, dlqErr)
+			}
+			atomic.AddInt64(&c.metrics.MessagesDLQ, int64(len(batch)))
+			for _, failed := range failedMessages {
+				if barrierErr := c.runDLQAcknowledgementBarrier(ctx, failed.Msg, failed.Err); barrierErr != nil {
+					c.recordProcessingFailure(barrierErr)
+					return fmt.Errorf("batch DLQ acknowledgement persistence barrier failed: %w", barrierErr)
+				}
+			}
+			shouldCommit = c.config.CommitOnDLQSuccess
+			c.logger.Info("Batch sent to DLQ",
+				zap.Int("count", len(batch)),
+				zap.Bool("will_commit", shouldCommit))
+		}
+
+		if !shouldCommit {
+			c.recordProcessingFailure(handlerErr)
+			return fmt.Errorf("batch handler failed; source offsets retained: %w", handlerErr)
+		}
+	}
+
+	messages := make([]kafka.Message, len(batch))
+	for i, msg := range batch {
+		messages[i] = msg.Message
+	}
+	// BatchConsume already coalesces source records. Commit synchronously even
+	// when the single-message consumer uses CommitInterval, otherwise enqueueing
+	// a commit could be mistaken for a broker acknowledgement.
+	if err := c.commitMessages(messages); err != nil {
+		commitErr := fmt.Errorf("commit batch offsets: %w", err)
+		c.recordProcessingFailure(commitErr)
+		return commitErr
+	}
+
+	atomic.AddInt64(&c.metrics.MessagesProcessed, int64(len(batch)))
+	c.recordProcessingSuccess()
+	return nil
 }
 
 func (c *Consumer) Commit(ctx context.Context, messages ...kafka.Message) error {

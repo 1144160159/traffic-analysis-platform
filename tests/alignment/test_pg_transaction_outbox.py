@@ -24,7 +24,16 @@ class PostgresTransactionOutboxTest(unittest.TestCase):
         self.assertIn("CreateNotificationRule/PatchNotificationRule", result["additional_slices"])
         self.assertIn("CreateNotificationTemplate/PatchNotificationTemplate", result["additional_slices"])
         self.assertIn("CreateNotificationEscalationPolicy/PatchNotificationEscalationPolicy", result["additional_slices"])
+        self.assertIn("DashboardTaskLifecycleV2", result["additional_slices"])
         self.assertEqual("notification_rule_transaction_v2", result["additional_schema_groups"][0]["name"])
+        schema_groups = {item["name"]: item for item in result["additional_schema_groups"]}
+        for name in (
+            "dashboard_task_execution_pipeline_v1",
+            "dashboard_task_compensation_v1",
+            "dashboard_task_dlq_receipt_v1",
+        ):
+            self.assertIn(name, schema_groups)
+            self.assertTrue(all(not source["missing"] for source in schema_groups[name]["sources"]))
 
     def test_missing_outbox_field_is_rejected(self):
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))

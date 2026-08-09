@@ -616,22 +616,14 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 	}
 
 	// 4. 去重检查（修复：优先使用 Lua 脚本原子版本）
-	eventTs := detection.Behaviors[0].Header.GetEventTs()
-	var dedupResult *dedup.DedupResult
-	var err error
-
-	if c.useLuaScript {
-		// 使用 Lua 脚本原子操作（性能更好）
-		dedupResult, err = c.redisDedup.CheckAndIncrementAtomic(ctx, fingerprint, eventTs, tenantID)
-		if err == nil {
-			dedupMethodUsed.WithLabelValues("lua_script").Inc()
-		}
-	} else {
-		// 回退到 Pipeline 版本
-		dedupResult, err = c.redisDedup.CheckAndIncrementWithTenant(ctx, fingerprint, eventTs, tenantID)
-		if err == nil {
-			dedupMethodUsed.WithLabelValues("pipeline").Inc()
-		}
+	eventTs := canonicalDetectionEventMillis(&detection)
+	if eventTs <= 0 {
+		return nil, nil, fmt.Errorf("invalid detection behavior: source event timestamp is required")
+	}
+	eventID := detection.Behaviors[0].Header.GetEventId()
+	dedupResult, err := c.redisDedup.CheckAndIncrementEventAtomic(ctx, fingerprint, eventID, eventTs, tenantID)
+	if err == nil {
+		dedupMethodUsed.WithLabelValues("event_identity_lua_script").Inc()
 	}
 
 	if err != nil {
@@ -685,6 +677,7 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 		zap.String("tenant_id", tenantID),
 		zap.String("fingerprint", fingerprint),
 		zap.Bool("is_new", dedupResult.IsNew),
+		zap.Bool("exact_replay", dedupResult.ExactReplay),
 		zap.Int64("count", dedupResult.Count),
 		zap.Int("evidence_count", len(evidences)),
 		zap.Bool("used_lua_script", c.useLuaScript))
@@ -756,6 +749,12 @@ func (c *Consumer) buildAlert(
 		probeID = header.GetProbeId()
 		runID = header.GetRunId()
 		eventTs = header.GetEventTs()
+	}
+	if eventTs <= 0 {
+		eventTs = detection.Behaviors[0].GetTs()
+	}
+	if eventTs <= 0 {
+		eventTs = detection.GetCreatedAt()
 	}
 
 	// Preserve the real source tuple carried through Session -> Feature ->
@@ -839,9 +838,12 @@ func (c *Consumer) buildAlert(
 		LastSeen:  lastSeen,
 		Count:     int32(dedupResult.Count),
 
-		Status:    state.StatusNew.String(),
-		Assignee:  "",
-		UpdatedTs: time.Now(),
+		Status:   state.StatusNew.String(),
+		Assignee: "",
+		// Bind the projection version to source event time. Reprocessing the same
+		// event after a downstream failure must produce the same version and hash,
+		// while OpenSearch external_gte rejects an older event for the same alert.
+		UpdatedTs: time.UnixMilli(eventTs).UTC(),
 
 		ModelVersion: detection.Behaviors[0].GetModelVersion(),
 		RuleVersion:  "",
@@ -868,6 +870,20 @@ func (c *Consumer) buildAlert(
 	)
 
 	return alert
+}
+
+func canonicalDetectionEventMillis(detection *pb.DetectionBatch) int64 {
+	if detection == nil || len(detection.Behaviors) == 0 || detection.Behaviors[0] == nil {
+		return 0
+	}
+	behavior := detection.Behaviors[0]
+	if eventTs := behavior.GetHeader().GetEventTs(); eventTs > 0 {
+		return eventTs
+	}
+	if eventTs := behavior.GetTs(); eventTs > 0 {
+		return eventTs
+	}
+	return detection.GetCreatedAt()
 }
 
 // categorizeError 分类错误类型

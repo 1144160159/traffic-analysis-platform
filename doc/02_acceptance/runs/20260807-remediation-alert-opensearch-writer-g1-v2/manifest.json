@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-alert-opensearch-writer-g1-v2",
+  "gate": "G1",
+  "status": "PASS",
+  "captured_at": "2026-08-07T11:41:39Z",
+  "candidate": {
+    "git_head": "5e8394db30b5e45acafd3416229b5e4d8a47edcf",
+    "content_sha256": "379e1f314579089c950db471b3fbab31277709fbc084e8dea705aa73917d5be3",
+    "file_count": 2359
+  },
+  "g0_reference": {
+    "run_id": "20260807-remediation-g0-full-v183",
+    "path": "doc/02_acceptance/runs/20260807-remediation-g0-full-v183/manifest.json",
+    "sha256": "9a7dd6cbe5a827673db47701b1eeb1bbc840c34c7e3e1c2b772d830af8988d15",
+    "status": "PASS",
+    "candidate_content_sha256": "379e1f314579089c950db471b3fbab31277709fbc084e8dea705aa73917d5be3"
+  },
+  "result": {
+    "path": "result.json",
+    "sha256": "3a9162d2d0bcbc4ccc666c058b1470c68658d65fa1c93e249b941d663e480d97",
+    "size_bytes": 1525,
+    "strict_mapping_verified": true,
+    "production_alert_writer_verified": true,
+    "asset_projection_verified": true
+  },
+  "scope": {
+    "opensearch_image": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
+    "alert_mapping_authority": "common/opensearch/alerts-v2/mappings-component.json",
+    "asset_template_authority": "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml",
+    "alert_write_target": "alerts-v2-write",
+    "alert_read_target": "alerts-v2-read",
+    "single_and_bulk_writer": true,
+    "external_gte": true,
+    "updated_at_state_version_trace_id_readback": true,
+    "loopback_only": true,
+    "persistent_volumes": false,
+    "shared_environment_touched": false,
+    "container_removed": true,
+    "production_applied": false
+  },
+  "gate_boundary": {
+    "proves": [
+      "the production Go single and bulk alert writers are accepted by the exact v2 strict mapping",
+      "updated_at state_version event_id and trace_id are persisted and read back",
+      "the same fixed-digest container also preserves the asset projection external version guards"
+    ],
+    "does_not_prove": [
+      "production template application",
+      "72M backfill or shadow reconciliation",
+      "dual write or alias cutover",
+      "performance fault recovery browser rollback or observation"
+    ]
+  },
+  "production_mutations": []
+}

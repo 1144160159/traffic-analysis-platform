@@ -1,0 +1,10 @@
+{
+  "component_count": 14,
+  "contract_id": "traffic-platform-minio-tls-cutover-v1",
+  "cutover_ready": false,
+  "default_off": true,
+  "errors": [],
+  "production_applied": false,
+  "rendered_resource_count": 43,
+  "status": "PASS"
+}

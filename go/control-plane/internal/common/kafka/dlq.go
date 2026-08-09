@@ -69,6 +69,8 @@ type ReplayPolicy struct {
 
 type DLQProducer struct {
 	writer      *kafka.Writer
+	initErr     error
+	marshalFunc func(interface{}) ([]byte, error)
 	config      DLQConfig
 	serviceName string
 	hostname    string
@@ -97,6 +99,13 @@ func NewDLQProducer(config DLQConfig, serviceName string, logger *zap.Logger) *D
 	dialer, err := config.Security.Dialer("traffic-control-plane-dlq")
 	if err != nil {
 		logger.Error("Invalid Kafka DLQ security configuration", zap.Error(err))
+		return &DLQProducer{
+			initErr:     fmt.Errorf("initialize Kafka DLQ security: %w", err),
+			config:      config,
+			serviceName: serviceName,
+			hostname:    hostname,
+			logger:      logger,
+		}
 	}
 
 	writer := kafka.NewWriter(kafka.WriterConfig{
@@ -126,6 +135,12 @@ func (p *DLQProducer) Send(ctx context.Context, msg *ReceivedMessage, err error)
 		return fmt.Errorf("DLQ producer is closed")
 	}
 	p.mu.Unlock()
+	if p.initErr != nil {
+		return p.initErr
+	}
+	if p.writer == nil {
+		return fmt.Errorf("DLQ producer writer is not configured")
+	}
 
 	dlqMsg := &DLQMessage{
 		OriginalTopic:     msg.Topic,
@@ -157,7 +172,7 @@ func (p *DLQProducer) Send(ctx context.Context, msg *ReceivedMessage, err error)
 		ReplayPolicy: determineReplayPolicy(categorizeError(err)),
 	}
 
-	payload, marshalErr := json.Marshal(dlqMsg)
+	payload, marshalErr := p.marshalMessage(dlqMsg)
 	if marshalErr != nil {
 		p.logger.Error("Failed to marshal DLQ message",
 			zap.Error(marshalErr),
@@ -257,6 +272,12 @@ func (p *DLQProducer) SendBatch(ctx context.Context, messages []struct {
 		return fmt.Errorf("DLQ producer is closed")
 	}
 	p.mu.Unlock()
+	if p.initErr != nil {
+		return p.initErr
+	}
+	if p.writer == nil {
+		return fmt.Errorf("DLQ producer writer is not configured")
+	}
 
 	if len(messages) == 0 {
 		return nil
@@ -298,16 +319,16 @@ func (p *DLQProducer) SendBatch(ctx context.Context, messages []struct {
 			ReplayPolicy: determineReplayPolicy(categorizeError(err)),
 		}
 
-		payload, marshalErr := json.Marshal(dlqMsg)
+		payload, marshalErr := p.marshalMessage(dlqMsg)
 		if marshalErr != nil {
 			p.logger.Error("Failed to marshal DLQ message",
 				zap.Error(marshalErr),
 				zap.String("original_topic", msg.Topic),
 				zap.Int64("original_offset", msg.Offset))
-			continue
+			return fmt.Errorf("marshal DLQ batch message at index %d: %w", len(kafkaMessages), marshalErr)
 		}
 
-		dlqTopic := p.config.TopicPrefix + msg.Topic
+		dlqTopic := resolveDLQTopic(p.config, msg.Topic)
 
 		kafkaMsg := kafka.Message{
 			Topic: dlqTopic,
@@ -364,6 +385,13 @@ func (p *DLQProducer) SendBatch(ctx context.Context, messages []struct {
 		zap.Int("count", len(kafkaMessages)))
 
 	return fmt.Errorf("failed to send batch to DLQ after %d retries: %w", p.config.MaxRetries, lastErr)
+}
+
+func (p *DLQProducer) marshalMessage(value interface{}) ([]byte, error) {
+	if p.marshalFunc != nil {
+		return p.marshalFunc(value)
+	}
+	return json.Marshal(value)
 }
 
 func (p *DLQProducer) Close() error {

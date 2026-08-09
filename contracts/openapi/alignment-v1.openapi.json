@@ -126,6 +126,25 @@
         }
       }
     },
+    "/v1/dashboard/tasks/{task_id}/compensations": {
+      "post": {
+        "operationId": "compensateDashboardTask",
+        "x-feature-id": "F-DASHBOARD-002",
+        "x-required-scope": "dashboard:write",
+        "parameters": [
+          {"name": "task_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DashboardTaskCompensationCreate"}}}},
+        "responses": {
+          "202": {"description": "Provider compensation durably accepted; final success still requires a confirmed provider receipt", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "dashboard:write scope required"},
+          "404": {"description": "Task or confirmed provider receipt is absent from the authenticated tenant"},
+          "409": {"description": "Idempotency, revision or task-state conflict"},
+          "503": {"description": "Compensation pipeline, provider or versioned schema unavailable"}
+        }
+      }
+    },
     "/v1/alerts/search": {
       "post": {
         "operationId": "searchAlertsCursorV1",
@@ -721,11 +740,295 @@
   "/v1/alerts/{id}/response-actions": {
       "post": {
         "operationId": "createAlertResponseAction",
-        "x-required-scope": "playbook:execute",
-        "x-feature-id": "F-COMMON-003",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-003",
+        "x-contract-profile-feature-ids": ["F-COMMON-003"],
         "parameters": [{"$ref": "#/components/parameters/ResourceId"}, {"$ref": "#/components/parameters/IdempotencyKey"}],
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["action_id", "action", "target", "reason", "dry_run", "expected_revision"], "properties": {"action_id": {"type": "string", "minLength": 1}, "action": {"type": "string", "minLength": 1}, "target": {"type": "string"}, "reason": {"type": "string", "minLength": 4, "maxLength": 1000}, "dry_run": {"type": "boolean"}, "expected_revision": {"const": 0}, "detail": {"type": "object"}}}}}},
         "responses": {"202": {"description": "Idempotent action request accepted; real effects remain pending independent approval", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/alerts/{id}/evidence": {
+      "get": {
+        "operationId": "getAlertEvidence",
+        "x-required-scope": "alert:read",
+        "x-feature-id": "F-ALERT-005",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}],
+        "responses": {
+          "200": {
+            "description": "Tenant-bound evidence manifest and object metadata; object access remains separately audited",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "403": {"description": "alert:read scope required"},
+          "404": {"description": "Alert or evidence is absent from the authenticated tenant"},
+          "503": {"description": "Evidence manifest or object storage is unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/{id}/evidence/access": {
+      "post": {
+        "operationId": "createAlertEvidenceAccess",
+        "x-required-scope": "alert:read",
+        "x-feature-id": "F-ALERT-005",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["target", "reason"],
+                "properties": {
+                  "target": {"type": "string", "minLength": 1},
+                  "reason": {"type": "string", "minLength": 4, "maxLength": 1000},
+                  "detail": {"type": "object"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Tenant-bound, audited short-lived access grant bound to manifest revision and object SHA-256", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "alert:read scope required"},
+          "404": {"description": "Alert, evidence manifest or immutable object is absent"},
+          "409": {"description": "Object size, version or SHA-256 does not match the manifest"},
+          "410": {"description": "Evidence manifest expired"},
+          "422": {"description": "Evidence has no authoritative downloadable object manifest"},
+          "503": {"description": "Manifest, signing or object storage is unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/{id}/evidence/{evidence_id}/download": {
+      "get": {
+        "operationId": "downloadAlertEvidence",
+        "x-required-scope": "alert:read",
+        "x-feature-id": "F-ALERT-005",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "evidence_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "expires", "in": "query", "required": true, "schema": {"type": "integer", "format": "int64"}},
+          {"name": "manifest_revision", "in": "query", "required": false, "schema": {"type": "integer", "format": "int64", "minimum": 1}, "description": "Required while ALERT_EVIDENCE_CHAIN_V1_ENABLED is active."},
+          {"name": "object_sha256", "in": "query", "required": false, "schema": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "description": "Required while ALERT_EVIDENCE_CHAIN_V1_ENABLED is active."},
+          {"name": "signature", "in": "query", "required": true, "schema": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+        ],
+        "responses": {
+          "200": {"description": "Checksum-validated immutable evidence bytes", "content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}}},
+          "403": {"description": "Expired or invalid tenant-bound signature"},
+          "404": {"description": "Evidence or object is absent"},
+          "409": {"description": "Manifest changed or object integrity validation failed"},
+          "503": {"description": "Manifest or object storage is unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/batches/selections": {
+      "post": {
+        "operationId": "createAlertBatchSelection",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+        "x-compatibility": "Additive frozen-selection endpoint; legacy per-alert assignment remains available while the rollout flag is disabled",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["snapshot_id", "items"],
+                "properties": {
+                  "snapshot_id": {"type": "string", "minLength": 8, "maxLength": 256},
+                  "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["alert_id", "state_version"],
+                      "properties": {
+                        "alert_id": {"type": "string", "minLength": 1, "maxLength": 200},
+                        "state_version": {"type": "integer", "format": "int64", "minimum": 1}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Tenant-bound, expiring server-side selection token created and audited", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid snapshot, duplicate alert, missing revision or invalid idempotency key"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "409": {"description": "Idempotency key reused with a different frozen selection"},
+          "503": {"description": "Feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/batches/assign": {
+      "post": {
+        "operationId": "createAlertBatchAssignment",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["selection_token", "assignee", "reason"],
+                "properties": {
+                  "selection_token": {"type": "string", "format": "uuid"},
+                  "assignee": {"type": "string", "minLength": 1, "maxLength": 128},
+                  "reason": {"type": "string", "minLength": 4, "maxLength": 1000}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {"description": "Frozen assignment batch, per-item accepted state, history, pending outbox, audit and idempotency receipt committed atomically; assignment effects remain non-final", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid assignee, reason or idempotency key"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "409": {"description": "Selection token is expired, consumed, cross-tenant or idempotency payload changed"},
+          "503": {"description": "Feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/batches/assign/{batch_id}": {
+      "get": {
+        "operationId": "getAlertBatchAssignment",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+        "parameters": [{"name": "batch_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {"description": "Tenant-bound batch and complete ordered per-item result set; accepted and running states remain explicitly partial", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid batch identifier"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "404": {"description": "Batch is absent from the authenticated tenant"},
+          "503": {"description": "Feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/batches/assign/{batch_id}/compensations": {
+      "post": {
+        "operationId": "createAlertBatchAssignmentCompensation",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED",
+        "x-compatibility": "Additive compensation endpoint; original batch and legacy per-alert assignment receipts remain immutable",
+        "parameters": [
+          {"name": "batch_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["action_id", "expected_revision", "reason"],
+                "properties": {
+                  "action_id": {"const": "alert-batch-assignment-compensate"},
+                  "expected_revision": {"type": "integer", "format": "int64", "minimum": 1},
+                  "reason": {"type": "string", "minLength": 8, "maxLength": 1000}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {"description": "Revision-bound compensation aggregate, applied-item intents, history, outbox, audit and idempotency receipt committed atomically; inverse effects remain non-final", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid action, revision, reason, batch identifier or idempotency key"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "404": {"description": "Batch is absent from the authenticated tenant"},
+          "409": {"description": "Batch revision changed, compensation is unavailable, a compensation aggregate already exists or the idempotency payload changed"},
+          "503": {"description": "Compensation feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/batches/assign/{batch_id}/compensations/{request_id}": {
+      "get": {
+        "operationId": "getAlertBatchAssignmentCompensation",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED",
+        "parameters": [
+          {"name": "batch_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "request_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {"description": "Tenant-bound compensation aggregate and complete ordered per-item terminal or in-progress receipts", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid batch or compensation request identifier"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "404": {"description": "Compensation is absent from the authenticated tenant"},
+          "503": {"description": "Compensation feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/views": {
+      "get": {
+        "operationId": "listAlertViews",
+        "x-required-scope": "alert:read",
+        "x-feature-id": "F-ALERT-006",
+        "responses": {
+          "200": {
+            "description": "Tenant-bound saved alert views ordered by latest revision",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "403": {"description": "alert:read scope required"}
+        }
+      },
+      "post": {
+        "operationId": "saveAlertView",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-006",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action_id", "action", "target", "reason", "detail"],
+                "properties": {
+                  "action_id": {"const": "alert-view-save"},
+                  "action": {"const": "save_view"},
+                  "target": {"type": "string", "minLength": 1, "maxLength": 200},
+                  "reason": {"type": "string", "minLength": 4, "maxLength": 1000},
+                  "expected_revision": {"type": "integer", "minimum": 0, "description": "Zero creates a new named view; updates must send the latest observed revision. Omission remains temporarily accepted for legacy clients."},
+                  "detail": {
+                    "type": "object",
+                    "required": ["filters"],
+                    "properties": {"filters": {"type": "object"}}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "View, immutable history, audit, outbox and idempotency receipt committed atomically",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "400": {"description": "Missing stable action, reason, target, filters or idempotency key"},
+          "403": {"description": "alert:write scope required"},
+          "409": {"description": "Idempotency key reused with a different command or the saved-view revision is stale"},
+          "503": {"description": "PostgreSQL, migration, audit or transaction boundary unavailable"}
+        }
       }
     },
     "/v1/alerts/{id}/response-actions/{job_id}": {
@@ -1188,7 +1491,7 @@
     },
     "/v1/probes/{id}/config": {
       "post": {
-        "operationId": "pushProbeConfigV2",
+        "operationId": "pushProbeConfig",
         "x-required-scope": "probe:write",
         "x-feature-id": "F-PROBE-001",
         "parameters": [
@@ -1275,6 +1578,49 @@
           },
           "403": {"description": "Probe token identity does not match path probe"},
           "409": {"description": "ACK command revision does not match operation"}
+        }
+      }
+    },
+    "/internal/v1/audit/batches": {
+      "post": {
+        "operationId": "ingestAuditLogBatch",
+        "x-required-scope": "audit:write",
+        "x-feature-id": "F-AUDIT-001",
+        "x-rollout-flag": "AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED",
+        "x-compatibility": "Additive internal ingress; existing /audit-log UI and audit command routes remain available",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/AuditLogBatchIngest"}
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Kafka acknowledged the complete immutable batch; PostgreSQL and ClickHouse projection remains non-final and queryable by event status URL",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "400": {"description": "The entire batch is rejected when any event or command field is invalid"},
+          "401": {"description": "Authenticated tenant identity required"},
+          "403": {"description": "audit:write scope required"},
+          "503": {"description": "Ingress disabled or Kafka did not acknowledge; no 202 acceptance is returned"}
+        }
+      }
+    },
+    "/v1/auth/scopes": {
+      "get": {
+        "operationId": "getScopeCatalog",
+        "x-required-scope": "admin:read",
+        "x-feature-id": "F-AUTH-001",
+        "x-compatibility": "/v1/tokens/scopes remains available during the additive migration window",
+        "responses": {
+          "200": {
+            "description": "Versioned canonical IAM scope catalog from the authenticated tenant context",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "401": {"description": "Authenticated identity required"},
+          "403": {"description": "admin:read scope required"}
         }
       }
     },
@@ -1667,6 +2013,38 @@
       }
     },
     "schemas": {
+      "AuditLogBatchIngest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action_id", "reason", "events"],
+        "properties": {
+          "action_id": {"const": "audit-batch-ingest"},
+          "reason": {"type": "string", "minLength": 3, "maxLength": 1000},
+          "events": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 200,
+            "items": {"$ref": "#/components/schemas/AuditLogIngestEvent"}
+          }
+        }
+      },
+      "AuditLogIngestEvent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_id", "action", "created_at"],
+        "properties": {
+          "event_id": {"type": "string", "minLength": 1, "maxLength": 200},
+          "tenant_id": {"type": "string", "description": "Optional assertion that must match the authenticated tenant; it never overrides authenticated identity"},
+          "user_id": {"type": "string", "maxLength": 200},
+          "action": {"type": "string", "minLength": 1, "maxLength": 200},
+          "object_type": {"type": "string", "maxLength": 200},
+          "object_id": {"type": "string", "maxLength": 512},
+          "detail": {},
+          "ip_addr": {"type": "string", "maxLength": 128},
+          "user_agent": {"type": "string", "maxLength": 2000},
+          "created_at": {"type": "integer", "format": "int64", "minimum": 1, "description": "Stable Unix millisecond timestamp included in idempotency identity"}
+        }
+      },
       "AlertSearchRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -1735,6 +2113,16 @@
           "snapshot_id": {"type": "string", "minLength": 1, "maxLength": 500},
           "reason": {"type": "string", "minLength": 1, "maxLength": 2000},
           "context": {"type": "object", "additionalProperties": true}
+        }
+      },
+      "DashboardTaskCompensationCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action_id", "expected_revision", "reason"],
+        "properties": {
+          "action_id": {"const": "dashboard-task-compensate"},
+          "expected_revision": {"type": "integer", "minimum": 1},
+          "reason": {"type": "string", "minLength": 8, "maxLength": 2000}
         }
       },
       "Envelope": {

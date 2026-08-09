@@ -12,6 +12,7 @@ package dedup
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"sync"
 	"time"
@@ -77,10 +78,11 @@ func NewRedisDedup(client *redis.Client, ttl time.Duration, logger *zap.Logger) 
 
 // DedupResult 去重结果
 type DedupResult struct {
-	IsNew     bool  // 是否为新告警
-	Count     int64 // 累计次数
-	FirstSeen int64 // 首次时间戳（毫秒）
-	LastSeen  int64 // 最后时间戳（毫秒）
+	IsNew       bool  // 是否为新告警
+	ExactReplay bool  // 同一event_id与同一fingerprint的精确重投
+	Count       int64 // 累计次数
+	FirstSeen   int64 // 首次时间戳（毫秒）
+	LastSeen    int64 // 最后时间戳（毫秒）
 }
 
 // CheckAndIncrementWithTenant 带租户信息的去重检查（推荐使用）
@@ -722,6 +724,124 @@ var dedupScript = redis.NewScript(`
         tonumber(last_seen) or event_ts
     }
 `)
+
+// eventIdentityDedupScript makes an event replay idempotent without changing
+// the existing fingerprint aggregation semantics. The first delivery stores
+// event_id -> {fingerprint,count,first_seen,last_seen} and increments the
+// aggregate. An exact replay returns that event's original tuple without
+// incrementing it. Reusing an event_id for a different fingerprint fails
+// closed. New out-of-order events update aggregate time bounds by min/max.
+var eventIdentityDedupScript = redis.NewScript(`
+    local count_key = KEYS[1]
+    local first_seen_key = KEYS[2]
+    local last_seen_key = KEYS[3]
+    local event_key = KEYS[4]
+    local event_ts = tonumber(ARGV[1])
+    local ttl = tonumber(ARGV[2])
+    local fingerprint = ARGV[3]
+
+    local existing_fingerprint = redis.call('HGET', event_key, 'fingerprint')
+    if existing_fingerprint then
+        if existing_fingerprint ~= fingerprint then
+            return redis.error_reply('event identity collision')
+        end
+        redis.call('EXPIRE', event_key, ttl)
+        local count = tonumber(redis.call('HGET', event_key, 'count'))
+        local first_seen = tonumber(redis.call('HGET', event_key, 'first_seen'))
+        local last_seen = tonumber(redis.call('HGET', event_key, 'last_seen'))
+        if not count or not first_seen or not last_seen then
+            return redis.error_reply('event identity receipt is incomplete')
+        end
+        return {count, 0, first_seen, last_seen, 1}
+    end
+
+    local count = redis.call('INCR', count_key)
+    redis.call('EXPIRE', count_key, ttl)
+    local first_seen = tonumber(redis.call('GET', first_seen_key))
+    local is_new = 0
+    if not first_seen then
+        first_seen = event_ts
+        is_new = 1
+    elseif event_ts < first_seen then
+        first_seen = event_ts
+    end
+    redis.call('SET', first_seen_key, first_seen, 'EX', ttl)
+
+    local last_seen = tonumber(redis.call('GET', last_seen_key))
+    if not last_seen or event_ts > last_seen then
+        last_seen = event_ts
+    end
+    redis.call('SET', last_seen_key, last_seen, 'EX', ttl)
+
+    redis.call('HSET', event_key,
+        'fingerprint', fingerprint,
+        'count', count,
+        'first_seen', first_seen,
+        'last_seen', last_seen)
+    redis.call('EXPIRE', event_key, ttl)
+
+    return {
+        count,
+        is_new,
+        first_seen,
+        last_seen,
+        0
+    }
+`)
+
+// CheckAndIncrementEventAtomic binds dedup aggregation to stable event
+// identity. It is the production consumer path because a downstream retry
+// must not inflate the Redis count or alter first/last seen.
+func (d *RedisDedup) CheckAndIncrementEventAtomic(
+	ctx context.Context,
+	fingerprint string,
+	eventID string,
+	eventTs int64,
+	tenantID string,
+) (*DedupResult, error) {
+	start := time.Now()
+	if eventID == "" {
+		return nil, fmt.Errorf("event identity is required")
+	}
+
+	keyPrefix := fmt.Sprintf("alert:dedup:%s:%s", tenantID, fingerprint)
+	eventIdentity := sha256.Sum256([]byte(tenantID + "\x00" + eventID))
+	eventKey := fmt.Sprintf("alert:dedup-event:%x", eventIdentity)
+	ttlSeconds := int(d.ttl.Seconds())
+
+	result, err := eventIdentityDedupScript.Run(ctx, d.client,
+		[]string{keyPrefix + ":count", keyPrefix + ":first_seen", keyPrefix + ":last_seen", eventKey},
+		eventTs, ttlSeconds, fingerprint,
+	).Slice()
+	if err != nil {
+		d.logger.Error("Event identity dedup script failed",
+			zap.String("event_id", eventID), zap.String("tenant_id", tenantID), zap.Error(err))
+		dedupCheckTotal.WithLabelValues(tenantID, "error").Inc()
+		dedupRedisErrors.WithLabelValues(tenantID, "event_identity_lua_script").Inc()
+		return nil, fmt.Errorf("event identity dedup script failed: %w", err)
+	}
+	if len(result) != 5 {
+		return nil, fmt.Errorf("unexpected event identity result length: %d", len(result))
+	}
+
+	count, _ := result[0].(int64)
+	isNewInt, _ := result[1].(int64)
+	firstSeen, _ := result[2].(int64)
+	lastSeen, _ := result[3].(int64)
+	exactReplayInt, _ := result[4].(int64)
+	dedupResult := &DedupResult{
+		IsNew: isNewInt == 1, ExactReplay: exactReplayInt == 1,
+		Count: count, FirstSeen: firstSeen, LastSeen: lastSeen,
+	}
+
+	dedupCheckLatency.WithLabelValues(tenantID).Observe(time.Since(start).Seconds())
+	resultLabel := "duplicate"
+	if dedupResult.IsNew {
+		resultLabel = "new"
+	}
+	dedupCheckTotal.WithLabelValues(tenantID, resultLabel).Inc()
+	return dedupResult, nil
+}
 
 // CheckAndIncrementAtomic 使用 Lua 脚本的原子去重检查（性能更好）
 func (d *RedisDedup) CheckAndIncrementAtomic(

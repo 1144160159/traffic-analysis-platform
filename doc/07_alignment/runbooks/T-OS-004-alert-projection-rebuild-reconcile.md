@@ -6,7 +6,9 @@
 
 - ClickHouse `traffic.alerts_latest` 是告警事实权威源；OpenSearch 仅为可重建搜索投影。
 - ClickHouse 成功、OpenSearch 失败不是最终成功。只有 PG `alert_opensearch_projection_debts` 已提交时，Kafka 消费者才可把该批次归类为 `projection_pending` 并继续 offset；PG 记债失败必须返回错误。
+- OpenSearch全部成功时，只要PG回执store已启用，也必须先批量提交`alert_opensearch_projection_watermarks`再允许Kafka提交。精确bulk部分失败时，成功项watermark与失败项debt必须在同一PG事务内提交；事务任一行失败时不得推进offset。
 - OpenSearch `_id=alert_id`，写入使用 `version_type=external_gte` 和源时间毫秒版本，旧重放不能覆盖新投影。
+- consumer在写入和计算权威SHA前把`updated_at`规范到UTC毫秒，避免ClickHouse毫秒权威像与OpenSearch/PG纳秒像在同一source version下产生不同SHA。
 - 权威字段哈希排除 `attack_phase`、`arkime_link`、`evidence_count`；它们不是 ClickHouse 权威列。
 
 ## 前置检查
@@ -18,6 +20,32 @@
 5. 记录 Kafka consumer group lag、最后提交 offset/事件 ID、PG 债务基线、OS 文档数、active search contexts、CPU/heap/磁盘水位。
 
 ## 只读 plan
+
+### 无状态 V2 shadow 与审批包
+
+历史 `--mode plan` 会在 PostgreSQL 写入 reconcile run，因此只能作为有审计副作用的诊断，不能作为严格无变更 shadow。候选新增独立 `alert-projection-shadow`：它只连接 ClickHouse 与 OpenSearch，只调用 SELECT/search/info/get-alias，并把本地 JSON 作为唯一输出；不连接 PostgreSQL，不写索引、不 refresh、不变更 alias。窗口必须是至少稳定 15 分钟的单租户闭区间，最长 1 小时、最多 10,000 条；任一侧截断、集群身份缺失或 write alias 不是唯一 write index 都返回 `BLOCKED`。
+
+```bash
+go run ./cmd/alert-projection-shadow \
+  --tenant <tenant_id> --requested-by <operator_id> \
+  --trace-id <stable_trace_id> --environment-id <candidate_environment_id> \
+  --start <RFC3339> --end <RFC3339> \
+  --read-target alerts-v2-read \
+  --target-write-alias alerts-v2-write \
+  --max-documents 10000 \
+  --output /tmp/<run-id>-shadow.json
+```
+
+只有 `approval_readiness=READY_FOR_BOUNDED_REPAIR_REVIEW`、shadow 未超过 15 分钟、binding SHA 完整且 G0 manifest 的候选源码内容 SHA 与当前受管源码快照一致时，才允许生成审查包。G0 HEAD 与渲染时 HEAD 都保留作审计；纯证据/账本提交可推进 HEAD，但任何受管源码漂移仍失败关闭。审查包始终保持 `execution_authorized=false`，SRE、QA、安全和领域 Accountable 均默认为 `PENDING`；它不会执行 repair：
+
+```bash
+python scripts/alignment/render_alert_projection_shadow_approval.py \
+  --shadow-manifest /tmp/<run-id>-shadow.json \
+  --g0-manifest doc/02_acceptance/runs/<g0-run-id>/manifest.json \
+  --output /tmp/<run-id>-repair-review.json
+```
+
+历史固定窗口 `ClickHouse=1,442,312 / OpenSearch=559,140 / delta=883,172` 的索引引用在当前候选中缺少对应 manifest；该数字只保留为历史差异，不能直接转成待执行 alert ID 或作为现状已复核证据。必须先在批准的环境重新取得当前 shadow。
 
 CLI 必须指定租户、操作者、精确索引版本和数量上限；时间或业务 ID 至少选一项用于首轮小范围验证。
 
@@ -57,20 +85,47 @@ go run ./cmd/alert-projection-reconcile \
 
 ## 受控 repair
 
+### 不可变工具镜像与审批绑定 Job
+
+镜像只能从 `go/control-plane` 上下文构建，builder 与 runtime 来源均固定为 registry digest，必须传入非空源码 revision 和 64 位源码内容 SHA。镜像只包含 `alert-projection-shadow` 与 `alert-projection-reconcile` 两个静态二进制，scratch runtime 使用 `65532:65532`，没有 shell。示例仅进行本地构建；本地 image ID 不能填写到审批包，也不能替代发布后的 registry manifest digest：
+
+```bash
+docker build -f deployments/docker/Dockerfile.alert-projection-tools \
+  --build-arg SOURCE_REVISION=<candidate_git_head> \
+  --build-arg SOURCE_CONTENT_SHA256=<candidate_content_sha256> \
+  -t traffic/alert-projection-tools:<candidate-id> .
+```
+
+生产 repair 需要两个彼此独立的 JSON 工件：第一份仍是 `execution_authorized=false` 的 shadow review；第二份由变更流程签发，必须是 `mode=AUTHORIZED_BOUNDED_REPAIR`、`execution_authorized=true`，绑定 review 文件 SHA、完整的 `repository@sha256:<digest>`、请求人、nonce、最长四小时窗口，以及 `sre/qa/security/domain_accountable` 四个不同身份的 `APPROVED`。请求人不得审批任何角色。审批包不保存数据库口令；运行凭据仅从现有 `traffic-credentials` Secret key 引用。
+
+```bash
+python scripts/alignment/render_alert_projection_repair_job.py \
+  --review-package /tmp/<run-id>-repair-review.json \
+  --approval-bundle /secure/change/<run-id>-approval.json \
+  --run-id <run-id> \
+  --output /tmp/<run-id>-repair-candidate.yaml
+```
+
+渲染器校验当前源码内容 SHA、镜像 digest、审批身份/时间和精确 tenant/window/alert IDs/cluster/read alias/write alias/physical write index；输出为 immutable ConfigMap、专用 ServiceAccount、最小端口 NetworkPolicy 与 `suspend=true`、`backoffLimit=0` 的 Job。渲染不调用 Kubernetes API，也不会解除挂起。即使 YAML 之后被独立批准并解除挂起，repair 二进制仍会在连接 ClickHouse、OpenSearch 或 PostgreSQL 前重新计算 review/approval 文件 SHA 并复核审批窗口与镜像绑定。
+
 1. 在内部 tenant 先执行 plan；核验无跨租户、无重复 ID、目标版本一致。
 2. repair 需要额外 `--confirm-repair`。执行器只写 missing/stale，不自动删除 extra。
 3. 默认最大 10,000 文档、100 docs/s、25 个错误即停止；实际值只能更保守，放宽需新批准。
 4. 每个成功写入必须推进 PG watermark；失败保持 debt 或 run error，不得记为 repaired。
+5. CLI 在受控写入后必须刷新精确 V2 write alias，并用相同 scope 回读。run manifest 同时保存修复前 `missing/extra/stale` 和修复后 remaining 清单；只有 remaining missing/stale 为零且 watermark error 为零才返回 `repair_converged=true`。remaining extra 继续人工裁决，绝不自动删除。
+6. 对目标内容已经一致的记录，repair 仍批量比较 PG watermark 的 `source_version + source_sha256`。缺失或不一致的 receipt 必须补写并再次查询；因此“OS 已写入但首次 PG watermark 失败”的后续运行能够恢复，不能因本轮没有 missing/stale 就跳过水位并伪报收敛。
+7. G1至少保留一次同一自有运行内的真实OpenSearch回读与真实PostgreSQL watermark回读。两个分离容器运行的PASS只能作为单组件诊断，不能替代这一跨服务终态回执；该G1仍不替代真实ClickHouse/Kafka或生产G3。
+8. 下一层G1必须把内存权威源替换为生产ClickHouse repository：同一alert逐项比较CH authoritative SHA、OS目标SHA与PG receipt SHA/source_version。该三存储样例未包含Kafka offset/last event_id前，仍不得写成G3。
+9. 五存储G1必须使用真实Redpanda和Redis，并通过生产alert consumer路径消费protobuf。只有CH、OS和PG应用回执一致后，broker consumer group committed offset、lag和post-commit `last_event_id`才可作为同一运行证据。随后必须令PG watermark表真实不可用：CH/OS成功而PG回执失败时offset和last event不得前移；恢复PG并以同一group重启后，原event必须重投且CH/OS/PG重新收敛。精确event重投不得再次增加Redis聚合count，source version与投影SHA在重启前后必须稳定。不同event按源时间乱序到达时必须独立投影，Redis聚合保持`min(first_seen) / max(last_seen)`；任何旧event在后续event之后精确重投都必须恢复该event自己的count和时间快照。source time依次采用`header.event_ts`、兼容`behavior.ts`、`batch.created_at`，三者均缺失时失败关闭，不得写Unix epoch版本。多分区证据至少使用2个partition和2个同组生产consumer，待group稳定且每个member各持有1个partition后向两个partition分别写入，两个consumer均须产生commit；再关闭其中一个member，待剩余member接管两个partition后向离开者原partition写入并完成CH/OS/PG回执后commit。单broker双partition只证明分区rebalance，不证明broker副本或故障转移。该自有loopback运行仍不是G2/G3，也不代表883172条现网差额已回填。
 
 ```bash
-go run ./cmd/alert-projection-reconcile \
-  --mode repair --confirm-repair \
-  --tenant <tenant_id> --requested-by <operator_id> \
-  --target-index-version <approved_version> \
-  --alert-ids <id1,id2> --max-documents 100
+make alignment-verify-alert-projection-kafka-five-store-g1 \
+  RUN_ID=<immutable-run-id> OUTPUT=/tmp/<run-id>.json
 ```
 
-repair 后用相同 scope 再跑 plan，要求 missing/stale 为零；extra 进入人工裁决清单。CLI 的 read target 与 write target 相互独立：legacy plan 读取冻结的精确索引，V2 repair 读取 read alias 并写 write alias；不得通过把两个字符串强行设为同一未批准索引来绕过迁移门禁。
+不得再直接用 `go run ... --mode repair` 绕过审批工件；修复 argv 由非授权 review 固定范围，再由上述 renderer 绑定独立 approval bundle。手工 plan 仍可使用 CLI，但 repair 缺少 `--review-package`、`--approval-bundle`、两份文件 SHA 和完整镜像 digest 时会在连接任何存储前失败。
+
+repair 在连接 PostgreSQL 之前会重新读取 cluster UUID、read target、write alias 和唯一 physical write index；任一值与 shadow 审批绑定不一致即失败关闭。repair 后用相同 scope 再跑 shadow，要求 missing/stale 为零；extra 进入人工裁决清单。CLI 的 read target 与 write target 相互独立：legacy plan 读取冻结的精确索引，V2 repair 读取 read alias 并写 write alias；不得通过把两个字符串强行设为同一未批准索引来绕过迁移门禁。
 
 ## 债务 worker 灰度
 

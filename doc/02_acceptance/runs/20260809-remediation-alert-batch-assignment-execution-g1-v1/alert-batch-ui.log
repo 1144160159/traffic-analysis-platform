@@ -1,0 +1,15 @@
+
+> traffic-analysis-ui@2.0.0 test
+> vitest --run src/services/alertQueueActionsApi.test.ts src/services/alertBatchApi.test.ts
+
+
+ RUN  v1.6.1 /home/wangwt/phase_2/code/traffic-analysis-platform-remediation-integration/web/ui
+
+ ✓ src/services/alertQueueActionsApi.test.ts  (5 tests) 7ms
+ ✓ src/services/alertBatchApi.test.ts  (1 test) 2ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  16:42:57
+   Duration  3.37s (transform 582ms, setup 108ms, collect 749ms, tests 9ms, environment 2.77s, prepare 1.30s)
+

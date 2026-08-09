@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "run_id": "20260809-remediation-alert-evidence-g1-v1-owned",
+  "status": "PASS",
+  "coverage_status": "OWNED_REAL_POSTGRES_MINIO_ALERT_EVIDENCE_MANIFEST_INTEGRITY_G1",
+  "production_applied": false,
+  "shared_environment_touched": false,
+  "loopback_only": true,
+  "container_resource_limits": {
+    "memory": "512m",
+    "cpus": "1"
+  },
+  "containers": {
+    "minio": {
+      "resource_snapshot": {
+        "cpu_percent": "0.01%",
+        "memory_usage": "89.12MiB / 512MiB",
+        "memory_percent": "17.41%",
+        "block_io": "0B / 0B",
+        "pids": "54",
+        "measurement": "post_workload_single_snapshot_not_performance_evidence"
+      },
+      "name": "codex-alert-evidence-minio-a6f484f3dd23",
+      "container_id": "bf842782d02e02f17bf594e23f6ea26dcc5800f7934d045af943c8542fd65c53",
+      "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+      "image_id": "sha256:69b2ec208575b69597784255eec6fa6a2985ee9e1a47f4411a51f7f5fdd193a9",
+      "identity_verified": true,
+      "cleanup_sentinel_verified": true,
+      "data_mount_type": "tmpfs",
+      "persistent_volume_attached": false,
+      "removed": true
+    },
+    "postgres": {
+      "resource_snapshot": {
+        "cpu_percent": "0.01%",
+        "memory_usage": "101.5MiB / 512MiB",
+        "memory_percent": "19.82%",
+        "block_io": "0B / 16.4kB",
+        "pids": "6",
+        "measurement": "post_workload_single_snapshot_not_performance_evidence"
+      },
+      "name": "codex-alert-evidence-pg-a6f484f3dd23",
+      "container_id": "2fbe081c61bd611ae88509b8834c5b1b948cfdcf48cf5658325cf3e5b8b33deb",
+      "image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+      "image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+      "identity_verified": true,
+      "cleanup_sentinel_verified": true,
+      "data_mount_type": "tmpfs",
+      "persistent_volume_attached": false,
+      "removed": true
+    }
+  },
+  "schema_entrypoints": [
+    "go/control-plane/deployments/docker/init/postgres_merged.sql",
+    "deployments/postgres/migrations/202608091700_alert_evidence_manifest_v1.sql",
+    "common/sql/pg/18-alert-evidence-manifest-v1.sql"
+  ],
+  "schema_replay_count": 5,
+  "test_output": "=== RUN   TestAlertEvidenceManifestPostgresIntegration\n    alert_evidence_manifest_postgres_integration_test.go:87: alert_evidence_postgres_manifest=pass\n--- PASS: TestAlertEvidenceManifestPostgresIntegration (0.01s)\n=== RUN   TestAlertEvidenceMinIOIntegrityIntegration\n    alert_evidence_minio_integration_test.go:84: alert_evidence_minio_integrity=pass version_id=5f4189c7-1d32-442e-9694-8dfd13fdef99 sha256=df82f1d5d5c3ecf31862ea74661042fb6d6924dfa66dddc515b4a0eb5c7f0345\n--- PASS: TestAlertEvidenceMinIOIntegrityIntegration (0.01s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api\t0.030s",
+  "asserted_facts": {
+    "postgres_manifest_schema_verified": true,
+    "tenant_isolation": true,
+    "monotonic_revision": true,
+    "immutable_object_identity": true,
+    "append_only_manifest_history": true,
+    "minio_version_identity": true,
+    "minio_sha256_match": true,
+    "minio_sha256_mismatch_rejected": true,
+    "all_data_mounts_tmpfs": true,
+    "no_persistent_volume": true
+  },
+  "errors": [],
+  "secrets_captured": false
+}

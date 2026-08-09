@@ -169,4 +169,3 @@ public enum AlertStatus
 
   // @@protoc_insertion_point(enum_scope:traffic.v1.AlertStatus)
 }
-

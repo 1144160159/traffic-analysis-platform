@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "run_id": "20260809-remediation-alert-response-real-kafka-g1-v2-real-kafka",
+  "status": "PASS",
+  "coverage_status": "OWNED_REAL_POSTGRES_REDPANDA_ALERT_RESPONSE_POISON_DLQ_PRECOMMIT_G1",
+  "postgres_container": "codex-alert-response-real-kafka-pg-24d4c34b5b55",
+  "kafka_container": "codex-alert-response-real-kafka-broker-24d4c34b5b55",
+  "postgres_container_id": "41b9aac9483bd857b7a0f9d0ed21ad972c988228d2be7fa3d30f52e9e036b56a",
+  "kafka_container_id": "bb8bc409e68541877d87f4e88f8d5c53055fc8df10733fcc78efadc2695d583d",
+  "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+  "kafka_image": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+  "postgres_image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+  "kafka_image_id": "sha256:7d60ffd7d82a80a25826b8aacf2698e78cb9d7f7312dea56b0e7e962b39f1c50",
+  "source_topic": "alert.response.requested.v1",
+  "source_topic_partitions": 1,
+  "dlq_topic": "dlq.v1",
+  "dlq_topic_partitions": 1,
+  "schema_files": 19,
+  "postgres_sentinel_verified": true,
+  "kafka_sentinel_verified": true,
+  "required_acks_all_verified": true,
+  "real_kafka_external_provider_execution_verified": true,
+  "provider_single_effect_verified": true,
+  "same_trace_pg_provider_audit_verified": true,
+  "dlq_ack_failure_offset_retention_verified": true,
+  "poison_redelivery_verified": true,
+  "canonical_dlq_payload_verified": true,
+  "source_offset_dlq_postgres_audit_verified": true,
+  "broker_group_commit_verified": true,
+  "broker_group": "alert-response-real-kafka-e9a7752b-8cab-483f-a429-b8b804b31874",
+  "broker_group_offset": {
+    "partition": 0,
+    "current_offset": 2,
+    "log_end_offset": 2,
+    "lag": 0
+  },
+  "cleanup_identity_verified": {
+    "postgres": true,
+    "redpanda": true
+  },
+  "container_resource_limits": {
+    "postgres": {
+      "memory": "512m",
+      "cpus": "1"
+    },
+    "redpanda": {
+      "memory": "1g",
+      "cpus": "2"
+    }
+  },
+  "container_resource_snapshots": {
+    "postgres": {
+      "cpu_percent": "0.01%",
+      "memory_usage": "32.97MiB / 512MiB",
+      "memory_percent": "6.44%",
+      "network_io": "17.1kB / 6.93kB",
+      "block_io": "0B / 172MB",
+      "pids": "6",
+      "measurement": "post_workload_single_snapshot_not_capacity_evidence"
+    },
+    "redpanda": {
+      "cpu_percent": "0.06%",
+      "memory_usage": "180.2MiB / 1GiB",
+      "memory_percent": "17.59%",
+      "network_io": "26kB / 23.5kB",
+      "block_io": "65.5kB / 762kB",
+      "pids": "3",
+      "measurement": "post_workload_single_snapshot_not_capacity_evidence"
+    }
+  },
+  "single_broker_owned_preflight": true,
+  "loopback_only": true,
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "postgres_container_removed": true,
+  "kafka_container_removed": true,
+  "test_output": "=== RUN   TestAlertResponseRealKafkaDLQBarrier\n    alert_response_real_kafka_integration_test.go:300: alert_response_real_kafka_dlq=pass group=alert-response-real-kafka-e9a7752b-8cab-483f-a429-b8b804b31874 source_offset=1 dlq_offset=0 receipt=1 audit=1 required_acks=all redelivered=true external_execution=1 provider_calls=1 valid_trace=trace-alert-response-valid-273313d6-95d5-46b3-8f64-02aa20180be6\n--- PASS: TestAlertResponseRealKafkaDLQBarrier (6.12s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/consumer\t6.129s",
+  "errors": [],
+  "secrets_captured": false
+}

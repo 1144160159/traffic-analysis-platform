@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "run_id": "20260808-remediation-alert-projection-kafka-five-store-g1-v1",
+  "gate": "G1",
+  "status": "PASS",
+  "captured_at": "2026-08-07T16:10:44Z",
+  "candidate": {
+    "git_head": "d729f638ef3fc94d0b8b1d7bc036f4a1662ddfcd",
+    "content_sha256": "fa8666e85b7888c66690a2fe3031ed5b7182734b7cd3c9b39b3e76913a29afcf",
+    "file_count": 2370
+  },
+  "g0_reference": {
+    "run_id": "20260808-remediation-g0-full-v188",
+    "path": "doc/02_acceptance/runs/20260808-remediation-g0-full-v188/manifest.json",
+    "sha256": "e0002d8a9abb56b07cd45741acead9aabb678ba6ac1f916c9868820ac0365704",
+    "status": "PASS",
+    "candidate_content_sha256": "fa8666e85b7888c66690a2fe3031ed5b7182734b7cd3c9b39b3e76913a29afcf"
+  },
+  "result": {
+    "path": "result.json",
+    "sha256": "9381e3cff11da36783c313504793eda3c383aeba953250693be326491b2fdc51",
+    "size_bytes": 3552,
+    "sentinels_verified": true,
+    "production_alert_consumer_verified": true,
+    "redis_dedup_verified": true,
+    "clickhouse_authority_verified": true,
+    "opensearch_projection_verified": true,
+    "postgres_applied_receipt_verified": true,
+    "broker_committed_offset_verified": true,
+    "last_event_id_observer_verified": true,
+    "cross_store_hash_and_version_verified": true,
+    "receipt_failure_blocks_commit_unit_verified": true
+  },
+  "scope": {
+    "topic": "detections.alert-projection-receipt.v1",
+    "consumer_group": "alert-projection-receipt-g1",
+    "event_id": "event-alert-projection-kafka-g1",
+    "broker_committed_offset": 1,
+    "broker_lag_after_commit": 0,
+    "clickhouse_image": "docker.io/clickhouse/clickhouse-server@sha256:458f72c00e4abc80c2950d8070bc5723b538544d72ea4a6a58d9ff4f8fadf8d7",
+    "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "opensearch_image": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
+    "redis_image": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+    "kafka_image": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+    "clickhouse_schema": "common/sql/ch/00-all-tables.sql",
+    "clickhouse_schema_sha256": "b2ad3129d5b130b1ebac09c9e8d613931f64495be36efa588d8fec3f7e09e15e",
+    "postgres_migration": "deployments/postgres/migrations/202608041100_alert_opensearch_projection_reconciliation_v1.sql",
+    "alert_mapping": "common/opensearch/alerts-v2/mappings-component.json",
+    "reconciled_fields": [
+      "event_id",
+      "alert_id",
+      "source_version",
+      "clickhouse_authoritative_sha256",
+      "opensearch_sha256",
+      "postgres_receipt_sha256",
+      "kafka_committed_offset",
+      "kafka_last_event_id"
+    ],
+    "loopback_only": true,
+    "persistent_volumes": false,
+    "shared_environment_touched": false,
+    "all_five_containers_removed": true,
+    "production_applied": false
+  },
+  "gate_boundary": {
+    "proves": [
+      "the production alert consumer accepts the canonical DetectionBatch protobuf through a real Redpanda broker and real Redis dedup path",
+      "the production ClickHouse writer, OpenSearch writer and atomic PostgreSQL applied receipt converge to one source version and authoritative field SHA before the broker consumer group offset advances",
+      "the post-commit observer records the same event_id only after Kafka acknowledges offset 1, and the resulting group lag is zero",
+      "the applied receipt persistence failure unit barrier returns an error rather than reporting the batch as committable",
+      "all five fixed-digest loopback-only containers are removed after the test"
+    ],
+    "does_not_prove": [
+      "the production 883172-document projection gap has been repaired",
+      "a real PostgreSQL receipt outage blocks a live broker offset across consumer restart and rebalance; this failure case remains unit-level",
+      "duplicate or out-of-order replay convergence under the full five-store path",
+      "approved candidate deployment, production template application, full backfill, shadow count and hash reconciliation or alias cutover",
+      "fixed-scale performance, fault recovery, Windows Chrome, rollback or T+0 T+1 T+3 T+7 observation"
+    ]
+  },
+  "production_mutations": []
+}

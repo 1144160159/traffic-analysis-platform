@@ -152,8 +152,43 @@ export async function compensateCampaignSOARJob(request: AlignmentRequest = {}) 
   return response.data;
 }
 
+export async function compensateDashboardTask(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/dashboard/tasks/{task_id}/compensations', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function compensatePlaybookExecution(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/playbooks/executions/{execution_id}/compensate', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function createAlertBatchAssignment(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/assign', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function createAlertBatchAssignmentCompensation(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/assign/{batch_id}/compensations', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function createAlertBatchSelection(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/selections', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function createAlertEvidenceAccess(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/{id}/evidence/access', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -292,6 +327,13 @@ export async function decidePlaybookExecution(request: AlignmentRequest = {}) {
   return response.data;
 }
 
+export async function downloadAlertEvidence(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/{id}/evidence/{evidence_id}/download', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function downloadAlertReport(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/{id}/reports/{job_id}/download', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -315,6 +357,27 @@ export async function downloadCampaignReport(request: AlignmentRequest = {}) {
 
 export async function exploreBoundedGraph(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/graph/explore', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getAlertBatchAssignment(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/assign/{batch_id}', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getAlertBatchAssignmentCompensation(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/assign/{batch_id}/compensations/{request_id}', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getAlertEvidence(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/{id}/evidence', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -495,6 +558,13 @@ export async function getProbeOperation(request: AlignmentRequest = {}) {
   return response.data;
 }
 
+export async function getScopeCatalog(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/auth/scopes', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function getTopicActionJob(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/topics/{topic}/actions/{job_id}', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -509,6 +579,13 @@ export async function getTopicSnapshot(request: AlignmentRequest = {}) {
   return response.data;
 }
 
+export async function ingestAuditLogBatch(request: AlignmentRequest = {}) {
+  const path = resolvePath('/internal/v1/audit/batches', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function linkAlertToCampaign(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/{id}/campaign-links', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -518,6 +595,13 @@ export async function linkAlertToCampaign(request: AlignmentRequest = {}) {
 
 export async function listAlertCampaignLinks(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/{id}/campaign-links', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function listAlertViews(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/views', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -607,7 +691,7 @@ export async function mergeAssetDiscoveryCandidate(request: AlignmentRequest = {
   return response.data;
 }
 
-export async function pushProbeConfigV2(request: AlignmentRequest = {}) {
+export async function pushProbeConfig(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/probes/{id}/config', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
@@ -623,6 +707,13 @@ export async function requestAlertResponseCompensation(request: AlignmentRequest
 
 export async function requestPlaybookExecution(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/playbooks/{name}/execute', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function saveAlertView(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/views', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
   return response.data;

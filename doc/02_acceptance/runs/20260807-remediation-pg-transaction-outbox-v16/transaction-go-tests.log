@@ -1,0 +1,23 @@
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api	0.109s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/config	0.009s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/whitelist	0.008s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/alert-service	0.012s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/threat-intel-service	0.012s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/threatintel	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/consumer	0.015s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/config	0.008s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/consumer	0.013s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/rule-manager	0.012s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository	0.013s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service	0.034s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/api	0.012s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/config	0.008s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/auth-service	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/api	0.015s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/config	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/converter	0.011s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/cutter	0.010s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/index	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/repository	0.006s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/s3client	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/task	[no test files]

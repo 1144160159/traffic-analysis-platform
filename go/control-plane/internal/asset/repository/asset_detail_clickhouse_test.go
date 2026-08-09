@@ -34,7 +34,7 @@ func TestAssetDetailClickHouseObservationsBindTenantIdentityAndPostgresAsOf(t *t
 	asset := &config.AssetRecord{AssetID: "asset-1", TenantID: "tenant-a", IPAddress: "192.0.2.8", Revision: 7}
 	windowStart := asOf.Add(-24 * time.Hour)
 	mock.ExpectQuery(regexp.QuoteMeta("FROM traffic.sessions")).
-		WithArgs(asset.IPAddress, asset.TenantID, windowStart.UnixMilli(), asOf.UnixMilli(), asset.IPAddress, asset.IPAddress).
+		WithArgs(asset.IPAddress, asset.TenantID, windowStart.UnixMilli(), asOf.UnixMilli(), asOf.UnixMilli(), asset.IPAddress, asset.IPAddress).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"session_count", "bytes_total", "packets_total", "distinct_peers", "protocols_json", "first_observed", "last_observed",
 		}).AddRow(int64(9), int64(1024), int64(88), int64(3), `[6,17]`, windowStart.Add(time.Minute).UnixMilli(), asOf.Add(-time.Second).UnixMilli()))

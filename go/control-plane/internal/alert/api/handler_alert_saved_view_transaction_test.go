@@ -18,7 +18,7 @@ import (
 
 func savedViewRequest() *http.Request {
 	request := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/views", bytes.NewBufferString(
-		`{"action_id":"alert-view-save","action":"save_view","target":"critical-alerts","reason":"operator workspace","detail":{"filters":{"severity":"critical"}}}`,
+		`{"action_id":"alert-view-save","action":"save_view","target":"critical-alerts","reason":"operator workspace","expected_revision":0,"detail":{"filters":{"severity":"critical"}}}`,
 	))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Tenant-ID", "tenant-a")
@@ -38,8 +38,14 @@ func expectSavedViewMutation(mock sqlmock.Sqlmock, auditErr error) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"payload_sha256", "view_id", "resulting_revision", "event_id", "name", "filters", "created_at", "updated_at", "status",
 		}))
+	mock.ExpectExec("SELECT pg_advisory_xact_lock").
+		WithArgs("tenant-a:alert-saved-view:critical-alerts").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery("SELECT revision FROM alert_saved_views").
+		WithArgs("tenant-a", "critical-alerts").
+		WillReturnRows(sqlmock.NewRows([]string{"revision"}))
 	mock.ExpectQuery("INSERT INTO alert_saved_views").
-		WithArgs("tenant-a", "critical-alerts", `{"severity":"critical"}`, "operator-a", sqlmock.AnyArg()).
+		WithArgs("tenant-a", "critical-alerts", `{"severity":"critical"}`, "operator-a", sqlmock.AnyArg(), int64(0)).
 		WillReturnRows(sqlmock.NewRows([]string{"view_id", "name", "revision", "created_at", "updated_at"}).
 			AddRow("00000000-0000-0000-0000-000000000101", "critical-alerts", int64(1), now, now))
 	mock.ExpectExec("INSERT INTO alert_saved_view_history").
@@ -141,9 +147,9 @@ func TestSaveAlertViewIdempotentReplayReturnsExistingCommittedResult(t *testing.
 	mock.ExpectExec("SELECT pg_advisory_xact_lock").
 		WithArgs("tenant-a:alert-saved-view-key-0001").
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	payloadHash := opaqueKeyDigest(strings.Join([]string{
-		"tenant-a", "operator-a", "alert-view-save", "critical-alerts", "operator workspace", `{"severity":"critical"}`,
-	}, "\x00"))
+	payloadHash := strings.TrimPrefix(opaqueKeyDigest(strings.Join([]string{
+		"tenant-a", "operator-a", "alert-view-save", "critical-alerts", "operator workspace", `{"severity":"critical"}`, "0",
+	}, "\x00")), "sha256:")
 	mock.ExpectQuery("FROM alert_saved_view_requests r").
 		WithArgs("tenant-a", "alert-saved-view-key-0001").
 		WillReturnRows(sqlmock.NewRows([]string{
@@ -159,6 +165,49 @@ func TestSaveAlertViewIdempotentReplayReturnsExistingCommittedResult(t *testing.
 	}
 	if !bytes.Contains(recorder.Body.Bytes(), []byte(`"outbox_status":"published"`)) {
 		t.Fatalf("replay lost final outbox status: %s", recorder.Body.String())
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSaveAlertViewRejectsStaleExpectedRevisionBeforeMutation(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	mock.ExpectBegin()
+	mock.ExpectExec("SELECT pg_advisory_xact_lock").
+		WithArgs("tenant-a:alert-saved-view-key-0001").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery("FROM alert_saved_view_requests r").
+		WithArgs("tenant-a", "alert-saved-view-key-0001").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"payload_sha256", "view_id", "resulting_revision", "event_id", "name", "filters", "created_at", "updated_at", "status",
+		}))
+	mock.ExpectExec("SELECT pg_advisory_xact_lock").
+		WithArgs("tenant-a:alert-saved-view:critical-alerts").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery("SELECT revision FROM alert_saved_views").
+		WithArgs("tenant-a", "critical-alerts").
+		WillReturnRows(sqlmock.NewRows([]string{"revision"}).AddRow(int64(2)))
+	mock.ExpectRollback()
+
+	handler := NewHandler(nil, nil, zap.NewNop())
+	handler.SetActionAuditWriter(NewAlertActionAuditWriter(db, zap.NewNop()))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/views", bytes.NewBufferString(
+		`{"action_id":"alert-view-save","action":"save_view","target":"critical-alerts","reason":"operator workspace","expected_revision":1,"detail":{"filters":{"severity":"critical"}}}`,
+	))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Tenant-ID", "tenant-a")
+	request.Header.Set("X-User-ID", "operator-a")
+	request.Header.Set("Idempotency-Key", "alert-saved-view-key-0001")
+	request = request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{model.ScopeAlertWrite}))
+	recorder := httptest.NewRecorder()
+	handler.SaveAlertView(recorder, request)
+	if recorder.Code != http.StatusConflict || !bytes.Contains(recorder.Body.Bytes(), []byte(`"REVISION_CONFLICT"`)) {
+		t.Fatalf("status=%d body=%s", recorder.Code, recorder.Body.String())
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)

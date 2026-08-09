@@ -25,6 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/middleware"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
@@ -88,6 +89,7 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	protected.Use(h.authMiddleware.Authenticate)
 	protected.HandleFunc("/logout", h.Logout).Methods("POST")
 	protected.HandleFunc("/me", h.GetCurrentUser).Methods("GET")
+	protected.HandleFunc("/scopes", h.GetScopeCatalog).Methods("GET")
 	protected.HandleFunc("/me", h.UpdateCurrentUser).Methods("PUT", "PATCH")
 	protected.HandleFunc("/password", h.ChangePassword).Methods("POST")
 	protected.HandleFunc("/me/password", h.ChangePassword).Methods("POST")
@@ -97,6 +99,39 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 
 	// Health
 	r.HandleFunc("/health", h.HealthCheck).Methods("GET")
+}
+
+// GetScopeCatalog exposes the versioned IAM scope authority for administrative
+// clients. The existing /api/v1/tokens/scopes endpoint remains available
+// during the additive compatibility window.
+func (h *Handler) GetScopeCatalog(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims := middleware.GetClaims(ctx)
+	if claims == nil {
+		httpx.JSONContractError(w, ctx, http.StatusUnauthorized, "UNAUTHENTICATED", "authenticated identity required", httpx.ErrorOptions{
+			OperationID: "getScopeCatalog",
+		})
+		return
+	}
+	if !claims.HasRole("admin") && !claims.HasPermission(model.ScopeAdminRead) {
+		httpx.JSONContractError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "admin:read scope required", httpx.ErrorOptions{
+			OperationID: "getScopeCatalog",
+		})
+		return
+	}
+	scopes := model.GetAllScopeInfos()
+	httpx.JSONContractSuccess(w, ctx, map[string]interface{}{"scopes": scopes, "total": len(scopes)}, httpx.ContractMeta{
+		ContractVersion: 1,
+		SnapshotID:      "iam-scope-catalog-v1",
+		OperationID:     "getScopeCatalog",
+		TenantID:        claims.TenantID,
+		Partial:         false,
+		MissingSections: []string{},
+		SourceWatermarks: map[string]string{
+			"iam.scope_catalog.version": "1",
+			"iam.scope_catalog.count":   strconv.Itoa(len(scopes)),
+		},
+	})
 }
 
 // Login 登录

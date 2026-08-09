@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "features": [
+    "F-COMMON-002",
+    "F-COMMON-004",
+    "F-ADAPTER-002"
+  ],
+  "repository_integrity": "PASS",
+  "remediation_coverage": "PARTIAL",
+  "formal_contracts": 3,
+  "snapshot_required_fields": [
+    "as_of",
+    "contract_version",
+    "generated_at",
+    "missing_sections",
+    "partial",
+    "result_code",
+    "schema_version",
+    "snapshot_id",
+    "source_watermarks",
+    "trace_id"
+  ],
+  "error_catalog_codes": 13,
+  "adapter_open_findings": 0,
+  "adapter_counts_by_rule": {
+    "default_demo_resource_id": 0,
+    "derived_business_collection": 0,
+    "derived_summary_fallback": 0,
+    "fabricated_comparison_literal": 0,
+    "fabricated_generic_snapshot": 0,
+    "fixed_detail_business_fallback": 0,
+    "fixed_detail_collection_fallback": 0,
+    "fixed_detail_metric_literal": 0,
+    "fixed_detail_timeline_literal": 0,
+    "fixed_numeric_business_fallback": 0,
+    "fixed_page_metric_fallback": 0,
+    "fixed_screen_visual_fixture": 0,
+    "generated_business_trend": 0,
+    "hardcoded_private_ip_literal": 0,
+    "runtime_business_fixture_object": 0,
+    "runtime_mock_dependency": 0,
+    "runtime_static_business_fallback": 0,
+    "runtime_visual_fixture_bypass": 0,
+    "truthy_numeric_fallback": 0
+  },
+  "adoption_gaps": [
+    "the full handler inventory still contains legacy and domain-specific error codes",
+    "operation_id current_revision projection_status and field_errors are not populated by every handler",
+    "gateway status preservation and production error-distribution telemetry are not yet candidate-bound",
+    "G2 through G8 evidence remains open"
+  ],
+  "errors": []
+}

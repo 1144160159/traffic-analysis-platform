@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -106,11 +107,14 @@ def _run_gate(name: str, command: list[str], output: Path) -> dict[str, Any]:
     started_at = datetime.now(timezone.utc)
     print(f"[G0] starting {name}: {' '.join(command)}", flush=True)
     with log_path.open("wb") as log:
+        environment = os.environ.copy()
+        environment["GOSUMDB"] = environment.get("TRAFFIC_GO_SUMDB", "sum.golang.org")
         completed = subprocess.run(
             command,
             cwd=ROOT,
             stdout=log,
             stderr=subprocess.STDOUT,
+            env=environment,
             check=False,
         )
     finished_at = datetime.now(timezone.utc)

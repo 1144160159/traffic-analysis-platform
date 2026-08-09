@@ -1,0 +1,62 @@
+{
+  "feature_id": "F-TOPIC-004",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/topics", "/topics/tunnel", "/topics/exfil", "/topics/apt"],
+    "preserved_actions": [],
+    "preserved_api_operations": ["GET /v1/topics/{topic}/snapshot"],
+    "preserved_query_states": ["topic", "start_time", "end_time", "filters"],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "topic.source-consistent.snapshot",
+    "controls": [],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "getTopicSnapshotSources",
+    "method": "GET",
+    "path": "/v1/topics/{topic}/snapshot",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "events, evidence, topology, metrics and summary use one tenant, filter set, time window, snapshot_id and as_of",
+      "each section reports source watermark, lag and missing reason rather than mixing latest values from different windows",
+      "production topology and evidence are backend projections and are never assembled from frontend fixture relationships"
+    ]
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "nebulagraph", "minio"],
+    "migration": "additive topic_snapshot_manifests and section_watermarks migration required",
+    "event_types": ["topic.snapshot.materialized.v1"],
+    "source_watermarks": ["postgresql.topic_scope.revision", "clickhouse.topic_fact.watermark", "opensearch.topic_evidence.projection_version", "nebulagraph.topic_projection.version", "minio.topic_evidence_manifest.sha256"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["topic:read"],
+    "negative_tests": [
+      "cross-tenant source sections and topology identifiers are not observable",
+      "a section requiring a missing scope is omitted with explicit metadata",
+      "a stale or incompatible watermark cannot be presented as a complete snapshot"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["all sources healthy", "one source lagging", "one source unavailable", "large topology truncated"],
+    "stop_conditions": ["snapshot skew, source lag, serialized size or query duration exceeds budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 snapshot metadata contract", "G1 deterministic manifest and partial semantics", "G2 real multi-source snapshot", "G3 same trace/snapshot/watermark reconciliation", "G4 source failure and large-window profile", "G5 Windows Chrome zero-empty-partial-unavailable"],
+    "evidence": ["one snapshot manifest reconciles every displayed event, evidence and topology section to the same tenant, filters, window and source watermarks"]
+  },
+  "rollout": {
+    "feature_flag": "TOPIC_SOURCE_CONSISTENT_SNAPSHOT_V1_ENABLED",
+    "strategy": "shadow-read",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-TOPIC-004-rollback.md"
+  }
+}

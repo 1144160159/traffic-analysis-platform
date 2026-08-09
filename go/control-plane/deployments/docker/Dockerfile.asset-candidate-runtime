@@ -5,4 +5,3 @@ ARG SOURCE_SHA256
 LABEL traffic.analysis.source-sha256=${SOURCE_SHA256}
 
 COPY bin/asset-service /usr/local/bin/app
-

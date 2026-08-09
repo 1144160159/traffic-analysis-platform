@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "run_id": "20260805-ui-page-design-contract-v5",
+  "gate": "UI_ADD_001_CANDIDATE_BINDING_VALIDATION",
+  "result": "pass",
+  "validated_at": "2026-08-04T17:40:55Z",
+  "full_ui_acceptance": false,
+  "candidate_manifest_sha256": "7e7871cf0c14c20498358e86878ab3898ee495366f12c8862a2f65577b7f08df",
+  "checks": [
+    {
+      "name": "page design contract verifier",
+      "command": "python3 scripts/alignment/verify_ui_page_design_contracts.py",
+      "status": "pass",
+      "facts": {
+        "contract_version": "2026-08-04.4",
+        "page_contracts": 28,
+        "route_coverage": "28/28",
+        "compatibility_aliases": 3,
+        "canonical_ids": 102,
+        "api_plans": 29,
+        "unknown_or_duplicate_or_orphan_entries": 0
+      }
+    },
+    {
+      "name": "alignment repository gates",
+      "command": "make alignment-validate",
+      "status": "pass",
+      "evidence": "doc/02_acceptance/runs/20260805-ui-page-design-contract-v5/alignment-validate.log",
+      "evidence_sha256": "2d6cfabdb2f7616e89e62b3f10de2dd8496475d71e793571558836eb82961008",
+      "facts": {
+        "p0_items": 38,
+        "canonical_ids": 102,
+        "adapter_open_findings": 0,
+        "postgres_mutations": 620,
+        "postgres_unclassified_mutations": 0,
+        "kafka_identity_workloads": 18
+      }
+    },
+    {
+      "name": "frontend lint tests typecheck and production build",
+      "command": "npm run lint; npx tsc --noEmit; npm test -- --run; npm run build",
+      "status": "pass_with_non_blocking_warning",
+      "facts": {
+        "lint_errors": 0,
+        "type_errors": 0,
+        "test_files_passed": 55,
+        "tests_passed": 297,
+        "modules_transformed": 3859,
+        "dist_sha256": "b95c0afdb2a540cf6570ff524840e45e7645663bbfad9ce8cb8f1fc6cbda4c56"
+      },
+      "warning": "vendor-antd and vendor-echarts remain above the 500 kB minified chunk warning threshold; profiling and an approved transfer/load budget remain open"
+    },
+    {
+      "name": "Windows Chrome read journeys and model layout",
+      "evidence": "doc/02_acceptance/runs/20260805-remediation-windows-chrome-g5-v13/report.json",
+      "evidence_sha256": "f2e3189559535ae0dff37e62cf84e332defa8b9c0e4a917c9bea03ba60ca03f4",
+      "status": "pass",
+      "facts": {
+        "journeys_passed": 6,
+        "journeys_total": 6,
+        "business_page_coverage": "6/28",
+        "runtime_mock": false,
+        "first_party_runtime_errors": 0,
+        "model_metric_cards": 7,
+        "model_metrics_client_height": 269,
+        "model_metrics_scroll_height": 269,
+        "model_metrics_clipped": false
+      }
+    },
+    {
+      "name": "Windows Chrome alert report export and cancellation journey",
+      "evidence": "doc/02_acceptance/runs/windows-alert-report-cancel-20260805T0107Z/windows-chrome-report-cancel.json",
+      "evidence_sha256": "b6cdc7f6275a0e289f47b9a027339a294d12f3ccd48bac66a099838dce29a0a4",
+      "status": "pass_scoped_historical_candidate",
+      "facts": {
+        "mock_enabled": false,
+        "exports_first_post_accepted": 4,
+        "authoritative_terminal_completion_after_cancel_conflict": 3,
+        "authoritative_cancelled": 1,
+        "first_party_runtime_errors": 0
+      }
+    },
+    {
+      "name": "deployed static bundle reconciliation",
+      "evidence": "doc/02_acceptance/runs/20260805-remediation-web-ui-static-bundle-v4/report.json",
+      "evidence_sha256": "8d2c187e0a8068c578b2b1d11a9ecbce8b1f7e8106d08326389888234d9b0084",
+      "status": "pass",
+      "facts": {
+        "compared_files": 83,
+        "missing_files": 0,
+        "extra_files": 0,
+        "mismatched_files": 0
+      }
+    },
+    {
+      "name": "Forensics source-reference write filter and reconciliation",
+      "evidence": "doc/02_acceptance/runs/20260804-remediation-forensics-source-refs-v4/report.json",
+      "evidence_sha256": "7878bdb42363bcd2b76f9d67dea39312d835e97c10b0dcdca83ecea5fe607870",
+      "status": "pass",
+      "facts": {
+        "checks_passed": 9,
+        "checks_total": 9
+      }
+    },
+    {
+      "name": "PostgreSQL migration identity and runtime reconciliation",
+      "evidence": "doc/02_acceptance/runs/20260805-remediation-postgres-migration-version-reconcile-v1/manifest.json",
+      "evidence_sha256": "78d106fb0512afe3c23d3c01b99216056b3f1cd2f7722f60d3e13ae7335b942e",
+      "status": "pass_scoped",
+      "facts": {
+        "migration_versions_unique": true,
+        "runtime_migration_records": 3,
+        "dashboard_tables_present": 7,
+        "destructive_operations": 0
+      }
+    },
+    {
+      "name": "working-tree whitespace and evidence integrity",
+      "command": "git diff --check plus JSON and referenced SHA-256 verification",
+      "status": "pass"
+    }
+  ],
+  "catalog_file_sha256": {
+    "feature_contract_registry": "33294ea1b7588a85d0d1ba3dc42aad8ad490d614f2200235cd4fa077e47ec7d0",
+    "adapter_risk_registry": "89a1e232c9a69f7d21e85a7a760d019f167b353e373d36f3cc166dbf515669e4",
+    "configuration_catalog": "dadeeaa9739da43012db4c441dac8347dec7fd2b9d128707fe2aa7ab5e521fd0",
+    "gateway_route_catalog": "0f528df7f142b056a52e7a098c55d1fcab82381f118a8093257f50a0b94ba983",
+    "service_identity_catalog": "a41aaf1453884dac25649db1f3111db48e185c9ee2bd8265cb4a91dd0e1dafc7",
+    "pki_catalog": "e3759af98627af51362369cc64e9f11709bb9246de1205b56b07f3b6a2cb8e01",
+    "dr_recovery_catalog": "4169104da6f8e0af6511feb45f18669169075de6bede1dc581159bfb643edc93",
+    "postgres_mutation_inventory": "f7b1db015b334670ef9e00e1d15ab44516976700974a5543555c6aebcc96ae8b"
+  },
+  "not_proven": [
+    "remaining 22 Windows Chrome page journeys",
+    "28/28 screenshot-to-reference Design QA",
+    "write interactions and terminal effects other than the scoped alert report journey",
+    "keyboard-only and screen-reader accessibility",
+    "multi-viewport behavior",
+    "production performance budget for large vendor chunks",
+    "contract registry embedded in the deployed bundle",
+    "G7 remediation closure and G8 project acceptance"
+  ]
+}

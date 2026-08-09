@@ -109,6 +109,17 @@ class OpenSearchProjectionReconciliationTest(unittest.TestCase):
             self.assertEqual("FAIL", result["status"])
             self.assertTrue(any("no-auto-delete" in error for error in result["errors"]))
 
+    def test_terminal_receipt_without_post_repair_query_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            candidate = copy_candidate(Path(directory))
+            path = candidate / CONTRACT
+            payload = json.loads(path.read_text())
+            payload["rebuild_scope"]["repair_terminal_receipt"] = "write_ack_only"
+            path.write_text(json.dumps(payload))
+            result = verify(candidate)
+            self.assertEqual("FAIL", result["status"])
+            self.assertTrue(any("terminal receipt" in error for error in result["errors"]))
+
     def test_clickhouse_timestamp_alias_shadow_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             candidate = copy_candidate(Path(directory))

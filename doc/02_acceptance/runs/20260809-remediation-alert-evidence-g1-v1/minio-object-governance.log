@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-minio-object-governance-v1",
+  "remediation_ids": [
+    "T-MINIO-002",
+    "T-MINIO-003",
+    "T-MINIO-004"
+  ],
+  "status": "PASS",
+  "coverage_status": "REPOSITORY_BUCKET_AND_POLICY_BASELINE_PARTIAL",
+  "production_applied": false,
+  "bucket_count": 5,
+  "object_class_count": 8,
+  "repository_lifecycle_buckets": [
+    "pcap-archive",
+    "report-artifacts"
+  ],
+  "governed_bootstrap_buckets": [
+    "argo-artifacts",
+    "flink-checkpoints",
+    "pcap-archive",
+    "report-artifacts",
+    "traffic-models"
+  ],
+  "governed_bootstrap_verified_buckets": [
+    "argo-artifacts",
+    "flink-checkpoints",
+    "pcap-archive",
+    "report-artifacts",
+    "traffic-models"
+  ],
+  "workflow_minio_env_sets": 4,
+  "infrastructure": {
+    "server_replicas": 4,
+    "pdb_max_unavailable": 1,
+    "proxy_replicas": 1
+  },
+  "known_gap_count": 7,
+  "closure_blocker_count": 6,
+  "errors": []
+}

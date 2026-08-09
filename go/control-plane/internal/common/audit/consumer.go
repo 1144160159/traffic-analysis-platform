@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -16,6 +17,8 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 )
+
+var ErrAuditEventIdentityCollision = errors.New("audit event_id payload collision")
 
 // ConsumerConfig 审计日志消费者配置
 type ConsumerConfig struct {
@@ -140,7 +143,11 @@ func (c *Consumer) handleMessage(ctx context.Context, message *kafka.ReceivedMes
 			err,
 		))
 	}
-	return c.persistEntries(ctx, entries)
+	err = c.persistEntries(ctx, entries)
+	if errors.Is(err, ErrAuditEventIdentityCollision) {
+		return kafka.Permanent(err)
+	}
+	return err
 }
 
 // StartAsync 异步启动
@@ -256,7 +263,11 @@ func (c *Consumer) handleBatch(ctx context.Context, messages []*kafka.ReceivedMe
 		}
 		entries = append(entries, parsed...)
 	}
-	return c.persistEntries(ctx, entries)
+	err := c.persistEntries(ctx, entries)
+	if errors.Is(err, ErrAuditEventIdentityCollision) {
+		return kafka.Permanent(err)
+	}
+	return err
 }
 
 func (c *Consumer) persistEntries(ctx context.Context, entries []auditEntry) error {
@@ -274,7 +285,16 @@ func (c *Consumer) persistEntries(ctx context.Context, entries []auditEntry) err
 	stmt, err := tx.PrepareContext(ctx,
 		`INSERT INTO audit_logs (event_id, tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent, created_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		 ON CONFLICT (event_id) DO NOTHING`)
+		 ON CONFLICT (event_id) DO UPDATE SET event_id=EXCLUDED.event_id
+		 WHERE audit_logs.tenant_id=EXCLUDED.tenant_id
+		   AND audit_logs.user_id IS NOT DISTINCT FROM EXCLUDED.user_id
+		   AND audit_logs.action=EXCLUDED.action
+		   AND audit_logs.object_type=EXCLUDED.object_type
+		   AND audit_logs.object_id IS NOT DISTINCT FROM EXCLUDED.object_id
+		   AND audit_logs.detail=EXCLUDED.detail
+		   AND audit_logs.ip_addr IS NOT DISTINCT FROM EXCLUDED.ip_addr
+		   AND audit_logs.user_agent IS NOT DISTINCT FROM EXCLUDED.user_agent
+		   AND ($11::boolean=false OR audit_logs.created_at=EXCLUDED.created_at)`)
 	if err != nil {
 		return fmt.Errorf("prepare stmt: %w", err)
 	}
@@ -285,11 +305,19 @@ func (c *Consumer) persistEntries(ctx context.Context, entries []auditEntry) err
 		if e.createdAt == 0 {
 			ts = time.Now()
 		}
-		if _, err := stmt.ExecContext(ctx,
+		result, err := stmt.ExecContext(ctx,
 			e.eventID, e.tenantID, e.userID, e.action,
-			e.objectType, e.objectID, e.detail, e.ipAddr, e.userAgent, ts,
-		); err != nil {
+			e.objectType, e.objectID, e.detail, e.ipAddr, e.userAgent, ts, e.createdAt != 0,
+		)
+		if err != nil {
 			return fmt.Errorf("insert audit event %s: %w", e.eventID, err)
+		}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("inspect audit event %s persistence: %w", e.eventID, err)
+		}
+		if affected != 1 {
+			return fmt.Errorf("%w: event_id=%s", ErrAuditEventIdentityCollision, e.eventID)
 		}
 	}
 
@@ -310,11 +338,16 @@ func (c *Consumer) parseMessages(msg *kafka.ReceivedMessage) ([]auditEntry, erro
 	var batch pb.AuditLogBatch
 	if err := proto.Unmarshal(msg.Value, &batch); err == nil && len(batch.Events) > 0 {
 		entries := make([]auditEntry, 0, len(batch.Events))
+		seen := make(map[string]struct{}, len(batch.Events))
 		for index, event := range batch.Events {
 			entry, err := auditEntryFromProto(event)
 			if err != nil {
 				return nil, fmt.Errorf("batch event %d: %w", index, err)
 			}
+			if _, duplicate := seen[entry.eventID]; duplicate {
+				return nil, fmt.Errorf("batch event %d: duplicate event_id %s", index, entry.eventID)
+			}
+			seen[entry.eventID] = struct{}{}
 			entries = append(entries, entry)
 		}
 		return entries, nil

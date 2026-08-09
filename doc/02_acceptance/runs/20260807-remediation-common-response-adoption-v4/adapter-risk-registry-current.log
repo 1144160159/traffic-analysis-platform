@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "catalog_sha256": "3616a5a0f4e77b781ff8b4dc07aec0da2a2c64c0e79ff05cfd74def657be1454",
+  "coverage": {
+    "source_files": 73,
+    "open_findings": 0,
+    "counts_by_rule": {
+      "default_demo_resource_id": 0,
+      "derived_business_collection": 0,
+      "derived_summary_fallback": 0,
+      "fabricated_comparison_literal": 0,
+      "fabricated_generic_snapshot": 0,
+      "fixed_detail_business_fallback": 0,
+      "fixed_detail_collection_fallback": 0,
+      "fixed_detail_metric_literal": 0,
+      "fixed_detail_timeline_literal": 0,
+      "fixed_numeric_business_fallback": 0,
+      "fixed_page_metric_fallback": 0,
+      "fixed_screen_visual_fixture": 0,
+      "generated_business_trend": 0,
+      "hardcoded_private_ip_literal": 0,
+      "runtime_business_fixture_object": 0,
+      "runtime_mock_dependency": 0,
+      "runtime_static_business_fallback": 0,
+      "runtime_visual_fixture_bypass": 0,
+      "truthy_numeric_fallback": 0
+    },
+    "resolved_in_this_slice": [
+      "pageSnapshotAdapters graph hard-coded center IP fallback",
+      "topic tunnel fabricated comparison literals",
+      "topic tunnel truthy summary fallback and display-list business-row inference",
+      "visual-breakdown query parameter no longer bypasses real page APIs with runtime fixture snapshots",
+      "untyped page responses render partial and unavailable instead of guessed KPI values rows IDs or statuses",
+      "graph landing queries no longer inject a fixed frontend center address",
+      "topic delivery summary no longer derives report and evidence counts from completeness or display rows",
+      "selected live adapters render missing addresses unavailable and contain no fixed private business address literals",
+      "selected adapters preserve authoritative zero values across compatibility aliases",
+      "data-quality topic rows require authoritative topic_health payloads instead of frontend-scaled aggregates",
+      "production bundle statically excludes MSW worker modules and runtime fixture source graphs",
+      "alert campaign and topic pilot fixture/live schema diff and sixteen-field displayed-value reconciliation are read-only and candidate-bound"
+    ],
+    "remaining": [
+      "capture additional live zero empty partial and unavailable pilot windows beyond the current sampled reconciliation",
+      "capture zero, empty, partial and unavailable live samples in Windows Chrome"
+    ]
+  }
+}

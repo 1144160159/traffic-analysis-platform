@@ -695,7 +695,7 @@ data:
     -- 默认数据 — RBAC 角色权限 + 默认配置
     -- =============================================================================
     BEGIN;
-    
+
     -- 默认角色
     INSERT INTO roles (role_id, tenant_id, name, permissions) VALUES
         (uuid_generate_v4(), 'default', 'admin', '{"*":"*"}'::jsonb),
@@ -703,7 +703,7 @@ data:
         (uuid_generate_v4(), 'default', 'operator', '{"alert":"*","flow":"read","pcap":"read"}'::jsonb),
         (uuid_generate_v4(), 'default', 'probe', '{"probe":"ingest","probe":"metrics"}'::jsonb)
     ON CONFLICT (tenant_id, name) DO NOTHING;
-    
+
     -- 资产台账验收数据：五类资产各 10 条，使用稳定主键，可重复执行。
     -- 默认不写入任何验收资产；仅在显式设置
     --   SET traffic.enable_asset_acceptance_fixture = 'on';
@@ -714,7 +714,7 @@ data:
       RAISE NOTICE 'asset inventory acceptance fixture is disabled';
       RETURN;
     END IF;
-    
+
     WITH asset_types(asset_type, prefix, type_ord, department, campus, owner, os_type) AS (
       VALUES
         ('endpoint', 'END', 1, '教务处', '主园区', '终端运维组', 'Windows 11'),
@@ -778,7 +778,7 @@ data:
       tags = EXCLUDED.tags,
       metadata = EXCLUDED.metadata,
       last_seen = EXCLUDED.last_seen;
-    
+
     -- 服务器详情验收数据：作为资产记录的持久化观测上下文，由 /details 子资源读取。
     UPDATE assets
     SET metadata = metadata || jsonb_build_object(
@@ -828,7 +828,7 @@ data:
     WHERE tenant_id = 'default'
       AND tags->>'fixture' = 'asset-inventory-v3'
       AND asset_type = 'server';
-    
+
     -- 分类 Tab 的持久化业务上下文：列表下方的画像、拓扑、依赖与研判模块均读取这些字段，
     -- 禁止前端用视觉常量替代生产 API 数据。
     UPDATE assets
@@ -870,7 +870,7 @@ data:
       'evidence', jsonb_build_object('pcap',23,'session',186,'dns',342,'tls',97,'alerts',9,'config',3)
     )
     WHERE tenant_id='default' AND tags->>'fixture'='asset-inventory-v3' AND asset_type='endpoint';
-    
+
     UPDATE assets
     SET metadata = metadata || jsonb_build_object(
       'risk_score', CASE WHEN criticality>=80 THEN 88 WHEN criticality>=50 THEN 67 ELSE 31 END,
@@ -916,7 +916,7 @@ data:
       'evidence', jsonb_build_object('pcap',42,'session',186,'dns',128,'tls',53,'alerts',9,'config',4)
     )
     WHERE tenant_id='default' AND tags->>'fixture'='asset-inventory-v3' AND asset_type='server';
-    
+
     UPDATE assets
     SET metadata = metadata || jsonb_build_object(
       'data_contract','canonical-network-device-v1',
@@ -980,7 +980,7 @@ data:
       'evidence', jsonb_build_object('pcap',32,'session',128,'dns',86,'tls',53,'alerts',19,'config',8)
     )
     WHERE tenant_id='default' AND tags->>'fixture'='asset-inventory-v3' AND asset_type='network-device';
-    
+
     UPDATE assets
     SET metadata = metadata || jsonb_build_object(
       'data_contract','canonical-business-system-v1',
@@ -1044,7 +1044,7 @@ data:
       'evidence', jsonb_build_object('pcap',42,'session',186,'dns',128,'tls',53,'alerts',9,'config',6)
     )
     WHERE tenant_id='default' AND tags->>'fixture'='asset-inventory-v3' AND asset_type='business-system';
-    
+
     UPDATE assets
     SET metadata = metadata || jsonb_build_object(
       'data_contract','canonical-unknown-asset-v1','risk_score',49,'suspected_type','未知识别','confidence',42,'ticket_status','待确认',
@@ -1096,13 +1096,13 @@ data:
       'evidence', jsonb_build_object('pcap',68,'session',156,'dns',342,'tls',97,'alerts',19,'config',8)
     )
     WHERE tenant_id='default' AND tags->>'fixture'='asset-inventory-v3' AND asset_type='unknown';
-    
+
     DELETE FROM asset_events
     WHERE asset_id IN (
       SELECT asset_id FROM assets
       WHERE tenant_id = 'default' AND tags->>'fixture' = 'asset-inventory-v3'
     );
-    
+
     INSERT INTO asset_events (asset_id, tenant_id, event_type, old_value, new_value, created_at)
     SELECT asset_id, tenant_id, 'asset.discovered', '{}'::jsonb,
            jsonb_build_object('display_code', display_code, 'asset_type', asset_type),
@@ -1116,7 +1116,7 @@ data:
            last_seen
     FROM assets
     WHERE tenant_id = 'default' AND tags->>'fixture' = 'asset-inventory-v3';
-    
+
     -- 跨页取证验收必须返回真实且按资产范围过滤的任务。该记录仍受上方
     -- traffic.enable_asset_acceptance_fixture 显式开关保护，不进入默认生产初始化。
     INSERT INTO tasks (
@@ -1156,26 +1156,26 @@ data:
       files_scanned = EXCLUDED.files_scanned,
       updated_at = EXCLUDED.updated_at,
       completed_at = EXCLUDED.completed_at;
-    
+
     END;
     $asset_inventory_acceptance_fixture$;
-    
+
     -- 默认 feature_set (L1 全量统计)
     INSERT INTO feature_sets (feature_set_id, name, params, schema_version)
     VALUES ('v1-l1-default', 'L1 Flow Statistics',
         '{"window":"flow","features":["packets","bytes","duration","pps","bps","pktlen_stats","iat_stats","tcp_flags","tos"]}'::jsonb,
         'v1')
     ON CONFLICT (feature_set_id) DO NOTHING;
-    
+
     -- 默认模型 (XGBoost 行为检测)
     INSERT INTO models (model_id, tenant_id, name, model_type, description) VALUES
         (uuid_generate_v4(), 'default', 'behavior-xgboost-v1', 'gbdt', 'XGBoost behavioral detection model'),
         (uuid_generate_v4(), 'default', 'business-rule-v1', 'rules', 'Business rule detection engine'),
         (uuid_generate_v4(), 'default', 'vpn-detector-v1', 'onnx', 'VPN traffic classifier')
     ON CONFLICT (tenant_id, name) DO NOTHING;
-    
+
     COMMIT;
-    
+
   07-campaign-impact-assets.sql: |
     BEGIN;
     INSERT INTO assets (
@@ -2982,6 +2982,811 @@ data:
     ON CONFLICT (version) DO NOTHING;
 
     COMMIT;
+  28-dashboard-task-compensation-v1.sql: |
+    -- F-DASHBOARD-002: provider-confirmed compensation; default-off expand objects.
+    BEGIN;
+    ALTER TABLE dashboard_tasks DROP CONSTRAINT IF EXISTS dashboard_tasks_status_check;
+    ALTER TABLE dashboard_tasks ADD CONSTRAINT dashboard_tasks_status_check CHECK (status IN (
+      'accepted','running','completed','partial','failed','cancelled',
+      'compensating','compensated','compensation_partial','compensation_failed'
+    ));
+    ALTER TABLE dashboard_task_event_inbox DROP CONSTRAINT IF EXISTS dashboard_task_event_inbox_event_type_check;
+    ALTER TABLE dashboard_task_event_inbox ADD CONSTRAINT dashboard_task_event_inbox_event_type_check CHECK (event_type IN (
+      'traffic.dashboard.v1.TaskRequested','traffic.dashboard.v1.TaskResult',
+      'traffic.dashboard.v1.TaskCompensationRequested','traffic.dashboard.v1.TaskCompensationResult'
+    ));
+    CREATE TABLE IF NOT EXISTS dashboard_task_compensation_requests (
+      request_event_id UUID PRIMARY KEY REFERENCES dashboard_task_outbox(event_id) ON DELETE RESTRICT,
+      tenant_id TEXT NOT NULL, task_id UUID NOT NULL REFERENCES dashboard_tasks(task_id) ON DELETE RESTRICT,
+      idempotency_key TEXT NOT NULL CHECK (length(idempotency_key) BETWEEN 16 AND 200),
+      request_sha256 TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+      expected_revision BIGINT NOT NULL CHECK (expected_revision > 0),
+      resulting_revision BIGINT NOT NULL CHECK (resulting_revision > expected_revision),
+      action_id TEXT NOT NULL CHECK (action_id = 'dashboard-task-compensate'),
+      reason TEXT NOT NULL CHECK (length(reason) BETWEEN 8 AND 2000), requested_by TEXT NOT NULL,
+      trace_id TEXT NOT NULL, response_payload JSONB NOT NULL CHECK (jsonb_typeof(response_payload) = 'object'),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id,idempotency_key), UNIQUE (tenant_id,task_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_dashboard_task_compensation_requests_task
+      ON dashboard_task_compensation_requests (tenant_id,task_id,created_at DESC);
+    CREATE TABLE IF NOT EXISTS dashboard_task_compensation_attempts (
+      request_event_id UUID PRIMARY KEY REFERENCES dashboard_task_compensation_requests(request_event_id) ON DELETE RESTRICT,
+      tenant_id TEXT NOT NULL, task_id UUID NOT NULL UNIQUE REFERENCES dashboard_tasks(task_id) ON DELETE RESTRICT,
+      idempotency_key TEXT NOT NULL CHECK (length(idempotency_key) BETWEEN 16 AND 300),
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','completed')),
+      attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+      available_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ,
+      locked_by TEXT NOT NULL DEFAULT '', last_error TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS idx_dashboard_task_compensation_attempts_ready
+      ON dashboard_task_compensation_attempts (available_at,created_at,request_event_id) WHERE status='pending';
+    CREATE INDEX IF NOT EXISTS idx_dashboard_task_compensation_attempts_reclaim
+      ON dashboard_task_compensation_attempts (locked_until,request_event_id) WHERE status='processing';
+    CREATE TABLE IF NOT EXISTS dashboard_task_compensation_receipts (
+      task_id UUID PRIMARY KEY REFERENCES dashboard_tasks(task_id) ON DELETE RESTRICT,
+      tenant_id TEXT NOT NULL, request_event_id UUID NOT NULL UNIQUE,
+      provider TEXT NOT NULL CHECK (provider <> ''), provider_receipt_id TEXT NOT NULL CHECK (provider_receipt_id <> ''),
+      status TEXT NOT NULL CHECK (status IN ('compensated','compensation_partial','compensation_failed')),
+      effect_state TEXT NOT NULL CHECK (effect_state IN ('confirmed','none','unknown')),
+      compensated_effect_ids JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(compensated_effect_ids) = 'array'),
+      result JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(result) = 'object'),
+      error_code TEXT NOT NULL DEFAULT '', error_message TEXT NOT NULL DEFAULT '',
+      receipt_sha256 TEXT NOT NULL CHECK (receipt_sha256 ~ '^[0-9a-f]{64}$'),
+      trace_id TEXT NOT NULL, compensated_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,provider,provider_receipt_id),
+      CHECK (status <> 'compensated' OR effect_state = 'confirmed'),
+      CHECK (status <> 'compensated' OR jsonb_array_length(compensated_effect_ids) > 0),
+      CHECK (status <> 'compensation_failed' OR effect_state <> 'unknown')
+    );
+    CREATE INDEX IF NOT EXISTS idx_dashboard_task_compensation_receipts_tenant_time
+      ON dashboard_task_compensation_receipts (tenant_id,compensated_at DESC,task_id);
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608082100','dashboard task provider-confirmed compensation lifecycle')
+    ON CONFLICT (version) DO NOTHING;
+    COMMIT;
+  29-dashboard-task-dlq-receipt-v1.sql: |
+    -- F-DASHBOARD-002 / T-KAFKA-003: durable DLQ acknowledgement receipt.
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS dashboard_task_dlq_receipts (
+      source_topic TEXT NOT NULL CHECK (source_topic = 'dashboard.task.events.v1'),
+      source_partition INTEGER NOT NULL CHECK (source_partition >= 0),
+      source_offset BIGINT NOT NULL CHECK (source_offset >= 0),
+      dlq_topic TEXT NOT NULL CHECK (dlq_topic = 'dlq.v1'),
+      event_id TEXT NOT NULL DEFAULT '', tenant_id TEXT NOT NULL DEFAULT '',
+      task_id TEXT NOT NULL DEFAULT '', aggregate_version BIGINT CHECK (aggregate_version > 0),
+      trace_id TEXT NOT NULL DEFAULT '',
+      error_code TEXT NOT NULL CHECK (error_code <> ''), error_message TEXT NOT NULL DEFAULT '',
+      payload_sha256 TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      headers_sha256 TEXT NOT NULL CHECK (headers_sha256 ~ '^[0-9a-f]{64}$'),
+      headers JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(headers) = 'object'),
+      acknowledged_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (source_topic,source_partition,source_offset)
+    );
+    CREATE INDEX IF NOT EXISTS idx_dashboard_task_dlq_receipts_tenant_trace
+      ON dashboard_task_dlq_receipts (tenant_id,trace_id,acknowledged_at DESC)
+      WHERE tenant_id <> '' AND trace_id <> '';
+    CREATE INDEX IF NOT EXISTS idx_dashboard_task_dlq_receipts_event
+      ON dashboard_task_dlq_receipts (event_id,acknowledged_at DESC) WHERE event_id <> '';
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608090945','dashboard task DLQ acknowledgement PostgreSQL and audit barrier')
+    ON CONFLICT (version) DO NOTHING;
+    COMMIT;
+  30-alert-response-external-executor-v1.sql: |
+    -- F-ALERT-003: provider-authoritative external response execution receipt.
+    BEGIN;
+    ALTER TABLE alert_response_execution_receipts
+      ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS provider_receipt_id TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS effect_state TEXT NOT NULL DEFAULT 'none',
+      ADD COLUMN IF NOT EXISTS effect_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS trace_id TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS receipt_sha256 TEXT NOT NULL DEFAULT repeat('0',64),
+      ADD COLUMN IF NOT EXISTS authority_lookup JSONB NOT NULL DEFAULT '{}'::jsonb,
+      ADD COLUMN IF NOT EXISTS executed_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    UPDATE alert_response_execution_receipts receipt
+    SET provider=CASE WHEN receipt.simulated THEN 'internal-simulation' ELSE 'legacy-approval-guard' END,
+        provider_receipt_id=CASE WHEN receipt.simulated THEN 'simulation:' ELSE 'blocked:' END || receipt.event_id::text,
+        effect_state=CASE WHEN receipt.external_effect THEN 'confirmed' ELSE 'none' END,
+        trace_id=action.trace_id, receipt_sha256=repeat('0',64), executed_at=receipt.created_at
+    FROM alert_response_actions action WHERE action.job_id=receipt.job_id
+      AND (receipt.provider='' OR receipt.provider_receipt_id='' OR receipt.trace_id='');
+    ALTER TABLE alert_response_execution_receipts
+      DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_state_check,
+      DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_effect_state_check,
+      DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_effect_ids_check,
+      DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_receipt_sha256_check,
+      DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_completed_effect_check,
+      DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_failed_effect_check;
+    ALTER TABLE alert_response_execution_receipts
+      ADD CONSTRAINT alert_response_execution_receipts_state_check CHECK (state IN ('simulated_completed','blocked_external_executor','completed','partial','failed')),
+      ADD CONSTRAINT alert_response_execution_receipts_effect_state_check CHECK (effect_state IN ('confirmed','none','unknown')),
+      ADD CONSTRAINT alert_response_execution_receipts_effect_ids_check CHECK (jsonb_typeof(effect_ids)='array'),
+      ADD CONSTRAINT alert_response_execution_receipts_receipt_sha256_check CHECK (receipt_sha256 ~ '^[0-9a-f]{64}$'),
+      ADD CONSTRAINT alert_response_execution_receipts_completed_effect_check CHECK (state<>'completed' OR (external_effect AND effect_state='confirmed' AND jsonb_array_length(effect_ids)>0)),
+      ADD CONSTRAINT alert_response_execution_receipts_failed_effect_check CHECK (state<>'failed' OR (NOT external_effect AND effect_state='none'));
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_alert_response_provider_receipt ON alert_response_execution_receipts(provider,provider_receipt_id) WHERE provider<>'' AND provider_receipt_id<>'';
+    CREATE INDEX IF NOT EXISTS idx_alert_response_receipts_trace ON alert_response_execution_receipts(tenant_id,trace_id,executed_at DESC) WHERE trace_id<>'';
+    INSERT INTO alignment_schema_migrations(version,description) VALUES ('202608091130','provider authoritative alert response execution receipts and audit') ON CONFLICT (version) DO NOTHING;
+    COMMIT;
+  31-alert-response-dlq-receipt-v1.sql: |
+    -- F-ALERT-003 / T-KAFKA-003: durable alert-response poison-event receipt.
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS alert_response_dlq_receipts (
+      source_topic TEXT NOT NULL CHECK (source_topic = 'alert.response.requested.v1'),
+      source_partition INTEGER NOT NULL CHECK (source_partition >= 0),
+      source_offset BIGINT NOT NULL CHECK (source_offset >= 0),
+      dlq_topic TEXT NOT NULL CHECK (dlq_topic = 'dlq.v1'),
+      event_id TEXT NOT NULL DEFAULT '', tenant_id TEXT NOT NULL DEFAULT '',
+      job_id TEXT NOT NULL DEFAULT '', alert_id TEXT NOT NULL DEFAULT '',
+      action_id TEXT NOT NULL DEFAULT '', aggregate_version BIGINT CHECK (aggregate_version > 0),
+      trace_id TEXT NOT NULL DEFAULT '',
+      error_code TEXT NOT NULL CHECK (error_code <> ''), error_message TEXT NOT NULL DEFAULT '',
+      payload_sha256 TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      headers_sha256 TEXT NOT NULL CHECK (headers_sha256 ~ '^[0-9a-f]{64}$'),
+      headers JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(headers) = 'object'),
+      acknowledged_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (source_topic,source_partition,source_offset)
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_response_dlq_receipts_tenant_trace
+      ON alert_response_dlq_receipts (tenant_id,trace_id,acknowledged_at DESC)
+      WHERE tenant_id <> '' AND trace_id <> '';
+    CREATE INDEX IF NOT EXISTS idx_alert_response_dlq_receipts_event
+      ON alert_response_dlq_receipts (event_id,acknowledged_at DESC) WHERE event_id <> '';
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608091230','alert response DLQ acknowledgement PostgreSQL and audit barrier')
+    ON CONFLICT (version) DO NOTHING;
+    COMMIT;
+  32-alert-response-reconciliation-compensation-v1.sql: |
+    -- F-ALERT-003: bounded authority-only reconciliation and asynchronous compensation.
+    BEGIN;
+    ALTER TABLE alert_response_control_requests DROP CONSTRAINT IF EXISTS alert_response_control_requests_state_check;
+    ALTER TABLE alert_response_control_requests ADD CONSTRAINT alert_response_control_requests_state_check CHECK (state IN ('cancelled','blocked_external_executor','queued'));
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_alert_response_actions_tenant_idempotency ON alert_response_actions(tenant_id,idempotency_key) WHERE idempotency_key<>'';
+    CREATE TABLE IF NOT EXISTS alert_response_execution_authority_rechecks (
+      recheck_id UUID PRIMARY KEY,
+      event_id UUID NOT NULL UNIQUE REFERENCES alert_response_execution_receipts(event_id) ON DELETE RESTRICT,
+      job_id TEXT NOT NULL REFERENCES alert_response_actions(job_id) ON DELETE RESTRICT,
+      tenant_id TEXT NOT NULL, trace_id TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('pending','checking','resolved','exhausted')),
+      attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+      max_attempts INTEGER NOT NULL CHECK (max_attempts BETWEEN 1 AND 100),
+      next_attempt_at TIMESTAMPTZ NOT NULL, locked_until TIMESTAMPTZ,
+      locked_by TEXT NOT NULL DEFAULT '', last_authority_state TEXT NOT NULL DEFAULT '',
+      last_error TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), resolved_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_response_execution_rechecks_due ON alert_response_execution_authority_rechecks(next_attempt_at,recheck_id) WHERE status IN ('pending','checking');
+    CREATE TABLE IF NOT EXISTS alert_response_compensation_attempts (
+      request_id UUID PRIMARY KEY REFERENCES alert_response_control_requests(request_id) ON DELETE RESTRICT,
+      event_id UUID NOT NULL REFERENCES alert_response_execution_receipts(event_id) ON DELETE RESTRICT,
+      job_id TEXT NOT NULL REFERENCES alert_response_actions(job_id) ON DELETE RESTRICT,
+      tenant_id TEXT NOT NULL, alert_id TEXT NOT NULL, original_action_id TEXT NOT NULL,
+      compensation_action_id TEXT NOT NULL, original_provider TEXT NOT NULL,
+      original_provider_receipt_id TEXT NOT NULL,
+      original_effect_ids JSONB NOT NULL CHECK (jsonb_typeof(original_effect_ids)='array' AND jsonb_array_length(original_effect_ids)>0),
+      requested_by TEXT NOT NULL, reason TEXT NOT NULL, trace_id TEXT NOT NULL,
+      aggregate_version BIGINT NOT NULL CHECK (aggregate_version>0),
+      provider_idempotency_key TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL CHECK (status IN ('pending','executing','authority_pending','compensated','failed','exhausted_unknown')),
+      attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts>=0),
+      max_attempts INTEGER NOT NULL DEFAULT 8 CHECK (max_attempts BETWEEN 1 AND 100),
+      next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ,
+      locked_by TEXT NOT NULL DEFAULT '', last_authority_state TEXT NOT NULL DEFAULT '',
+      last_error TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_response_compensation_due ON alert_response_compensation_attempts(next_attempt_at,request_id) WHERE status IN ('pending','executing','authority_pending');
+    CREATE INDEX IF NOT EXISTS idx_alert_response_compensation_tenant_job ON alert_response_compensation_attempts(tenant_id,job_id,created_at DESC);
+    CREATE TABLE IF NOT EXISTS alert_response_compensation_receipts (
+      request_id UUID PRIMARY KEY REFERENCES alert_response_compensation_attempts(request_id) ON DELETE RESTRICT,
+      event_id UUID NOT NULL, job_id TEXT NOT NULL, tenant_id TEXT NOT NULL,
+      provider TEXT NOT NULL, provider_receipt_id TEXT NOT NULL,
+      state TEXT NOT NULL CHECK (state IN ('compensated','failed')),
+      effect_state TEXT NOT NULL CHECK (effect_state IN ('compensated','none')),
+      compensated_effect_ids JSONB NOT NULL CHECK (jsonb_typeof(compensated_effect_ids)='array'),
+      result JSONB NOT NULL DEFAULT '{}'::jsonb, error_code TEXT NOT NULL DEFAULT '',
+      error_message TEXT NOT NULL DEFAULT '', receipt_sha256 TEXT NOT NULL CHECK (receipt_sha256 ~ '^[0-9a-f]{64}$'),
+      authority_lookup JSONB NOT NULL DEFAULT '{}'::jsonb, trace_id TEXT NOT NULL,
+      compensated_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE(provider,provider_receipt_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_response_compensation_receipts_trace ON alert_response_compensation_receipts(tenant_id,trace_id,compensated_at DESC);
+    CREATE TABLE IF NOT EXISTS alert_response_authority_check_history (
+      subject_type TEXT NOT NULL CHECK (subject_type IN ('execution','compensation')),
+      subject_id TEXT NOT NULL, attempt INTEGER NOT NULL CHECK (attempt>0),
+      tenant_id TEXT NOT NULL, job_id TEXT NOT NULL, trace_id TEXT NOT NULL,
+      provider TEXT NOT NULL DEFAULT '', authority_state TEXT NOT NULL,
+      error_code TEXT NOT NULL DEFAULT '', error_message TEXT NOT NULL DEFAULT '',
+      detail JSONB NOT NULL DEFAULT '{}'::jsonb, checked_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY(subject_type,subject_id,attempt)
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_response_authority_history_trace ON alert_response_authority_check_history(tenant_id,trace_id,checked_at DESC);
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608091500','bounded alert response authority reconciliation and external compensation')
+    ON CONFLICT (version) DO NOTHING;
+    COMMIT;
+  33-alert-evidence-manifest-v1.sql: |
+    -- F-ALERT-005 alert evidence manifest authority. Keep byte-for-byte semantics
+    -- aligned with deployments/postgres/migrations/202608091700_alert_evidence_manifest_v1.sql.
+
+    BEGIN;
+    SET LOCAL lock_timeout='5s';
+    SET LOCAL statement_timeout='2min';
+
+    CREATE TABLE IF NOT EXISTS alert_evidence_manifests (
+      tenant_id TEXT NOT NULL CHECK(tenant_id<>''), alert_id TEXT NOT NULL CHECK(alert_id<>''), evidence_id TEXT NOT NULL CHECK(evidence_id<>''),
+      event_id TEXT NOT NULL DEFAULT '', evidence_type TEXT NOT NULL CHECK(evidence_type<>''),
+      source_store TEXT NOT NULL CHECK(source_store IN ('postgresql','clickhouse','opensearch','minio','arkime')),
+      object_bucket TEXT NOT NULL DEFAULT '', object_key TEXT NOT NULL DEFAULT '', object_version TEXT NOT NULL DEFAULT '', object_sha256 TEXT NOT NULL DEFAULT '',
+      size_bytes BIGINT NOT NULL DEFAULT 0 CHECK(size_bytes>=0), content_type TEXT NOT NULL DEFAULT '',
+      state TEXT NOT NULL DEFAULT 'available' CHECK(state IN ('available','missing','expired','unavailable','integrity_failed')),
+      revision BIGINT NOT NULL DEFAULT 1 CHECK(revision>0), source_watermarks JSONB NOT NULL DEFAULT '{}'::jsonb CHECK(jsonb_typeof(source_watermarks)='object'),
+      observed_at TIMESTAMPTZ NOT NULL DEFAULT now(), expires_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY(tenant_id,alert_id,evidence_id),
+      CHECK(source_store<>'minio' OR (object_bucket<>'' AND object_key LIKE ('tenants/'||tenant_id||'/%') AND object_key NOT LIKE '%..%' AND object_sha256 ~ '^[0-9a-f]{64}$'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_evidence_manifest_event ON alert_evidence_manifests(tenant_id,event_id) WHERE event_id<>'';
+    CREATE INDEX IF NOT EXISTS idx_alert_evidence_manifest_state ON alert_evidence_manifests(tenant_id,state,observed_at DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_evidence_manifest_object_version ON alert_evidence_manifests(tenant_id,object_bucket,object_key,object_version) WHERE source_store='minio';
+
+    CREATE TABLE IF NOT EXISTS alert_evidence_manifest_history (
+      tenant_id TEXT NOT NULL, alert_id TEXT NOT NULL, evidence_id TEXT NOT NULL, event_id TEXT NOT NULL DEFAULT '', evidence_type TEXT NOT NULL,
+      source_store TEXT NOT NULL, object_bucket TEXT NOT NULL DEFAULT '', object_key TEXT NOT NULL DEFAULT '', object_version TEXT NOT NULL DEFAULT '', object_sha256 TEXT NOT NULL DEFAULT '',
+      size_bytes BIGINT NOT NULL, content_type TEXT NOT NULL DEFAULT '', state TEXT NOT NULL, revision BIGINT NOT NULL CHECK(revision>0),
+      source_watermarks JSONB NOT NULL, observed_at TIMESTAMPTZ NOT NULL, expires_at TIMESTAMPTZ, recorded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY(tenant_id,alert_id,evidence_id,revision)
+    );
+
+    CREATE OR REPLACE FUNCTION enforce_alert_evidence_manifest_revision() RETURNS trigger LANGUAGE plpgsql AS $body$
+    BEGIN
+      IF TG_OP='UPDATE' THEN
+        IF NEW.revision<=OLD.revision THEN RAISE EXCEPTION 'alert evidence manifest revision must increase'; END IF;
+        IF (NEW.tenant_id,NEW.alert_id,NEW.evidence_id,NEW.source_store,NEW.object_bucket,NEW.object_key,NEW.object_version,NEW.object_sha256,NEW.size_bytes)
+           IS DISTINCT FROM (OLD.tenant_id,OLD.alert_id,OLD.evidence_id,OLD.source_store,OLD.object_bucket,OLD.object_key,OLD.object_version,OLD.object_sha256,OLD.size_bytes)
+        THEN RAISE EXCEPTION 'immutable alert evidence identity or object reference changed'; END IF;
+        NEW.updated_at=now();
+      END IF;
+      RETURN NEW;
+    END $body$;
+    DROP TRIGGER IF EXISTS trg_alert_evidence_manifest_revision ON alert_evidence_manifests;
+    CREATE TRIGGER trg_alert_evidence_manifest_revision BEFORE UPDATE ON alert_evidence_manifests FOR EACH ROW EXECUTE FUNCTION enforce_alert_evidence_manifest_revision();
+
+    CREATE OR REPLACE FUNCTION record_alert_evidence_manifest_history() RETURNS trigger LANGUAGE plpgsql AS $body$
+    BEGIN
+      INSERT INTO alert_evidence_manifest_history(tenant_id,alert_id,evidence_id,event_id,evidence_type,source_store,object_bucket,object_key,object_version,object_sha256,size_bytes,content_type,state,revision,source_watermarks,observed_at,expires_at)
+      VALUES(NEW.tenant_id,NEW.alert_id,NEW.evidence_id,NEW.event_id,NEW.evidence_type,NEW.source_store,NEW.object_bucket,NEW.object_key,NEW.object_version,NEW.object_sha256,NEW.size_bytes,NEW.content_type,NEW.state,NEW.revision,NEW.source_watermarks,NEW.observed_at,NEW.expires_at)
+      ON CONFLICT DO NOTHING;
+      RETURN NEW;
+    END $body$;
+    DROP TRIGGER IF EXISTS trg_alert_evidence_manifest_history ON alert_evidence_manifests;
+    CREATE TRIGGER trg_alert_evidence_manifest_history AFTER INSERT OR UPDATE ON alert_evidence_manifests FOR EACH ROW EXECUTE FUNCTION record_alert_evidence_manifest_history();
+
+    CREATE TABLE IF NOT EXISTS alignment_schema_migrations(version TEXT PRIMARY KEY,description TEXT NOT NULL,applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),applied_by TEXT NOT NULL DEFAULT current_user);
+    INSERT INTO alignment_schema_migrations(version,description) VALUES('202608091700','tenant-bound immutable alert evidence manifest v1') ON CONFLICT(version) DO NOTHING;
+    COMMIT;
+  34-alert-batch-assignment-v1.sql: |
+    -- F-ALERT-004: frozen selection and durable batch-assignment acceptance.
+    BEGIN;
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_selections (
+      selection_id UUID PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      token_sha256 TEXT NOT NULL CHECK (token_sha256 ~ '^[0-9a-f]{64}$'),
+      snapshot_id TEXT NOT NULL CHECK (length(snapshot_id) BETWEEN 8 AND 256),
+      selection_sha256 TEXT NOT NULL CHECK (selection_sha256 ~ '^[0-9a-f]{64}$'),
+      items JSONB NOT NULL CHECK (jsonb_typeof(items) = 'array'),
+      item_count INTEGER NOT NULL CHECK (item_count BETWEEN 1 AND 100),
+      created_by TEXT NOT NULL,
+      trace_id TEXT NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      consumed_by_batch_id UUID,
+      consumed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id, token_sha256),
+      UNIQUE (tenant_id, selection_id),
+      CHECK ((consumed_by_batch_id IS NULL) = (consumed_at IS NULL))
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_assignment_selections_expiry
+      ON alert_assignment_selections (tenant_id, expires_at)
+      WHERE consumed_by_batch_id IS NULL;
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_selection_requests (
+      tenant_id TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL CHECK (length(idempotency_key) BETWEEN 16 AND 200),
+      request_sha256 TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+      selection_id UUID NOT NULL,
+      trace_id TEXT NOT NULL,
+      response_payload JSONB NOT NULL CHECK (jsonb_typeof(response_payload) = 'object'),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id, idempotency_key),
+      FOREIGN KEY (tenant_id, selection_id)
+        REFERENCES alert_assignment_selections (tenant_id, selection_id) ON DELETE RESTRICT
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_batches (
+      batch_id UUID PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      action_id TEXT NOT NULL CHECK (action_id = 'alert-batch-assignment-create'),
+      selection_id UUID NOT NULL,
+      selection_snapshot_id TEXT NOT NULL CHECK (length(selection_snapshot_id) BETWEEN 8 AND 256),
+      selection_sha256 TEXT NOT NULL CHECK (selection_sha256 ~ '^[0-9a-f]{64}$'),
+      assignee TEXT NOT NULL CHECK (length(assignee) BETWEEN 1 AND 128),
+      reason TEXT NOT NULL CHECK (length(reason) BETWEEN 4 AND 1000),
+      status TEXT NOT NULL CHECK (status IN ('accepted','running','completed','partial','failed','cancelled')),
+      revision BIGINT NOT NULL DEFAULT 1 CHECK (revision > 0),
+      total_count INTEGER NOT NULL CHECK (total_count BETWEEN 1 AND 100),
+      accepted_count INTEGER NOT NULL DEFAULT 0 CHECK (accepted_count >= 0),
+      applied_count INTEGER NOT NULL DEFAULT 0 CHECK (applied_count >= 0),
+      conflicted_count INTEGER NOT NULL DEFAULT 0 CHECK (conflicted_count >= 0),
+      forbidden_count INTEGER NOT NULL DEFAULT 0 CHECK (forbidden_count >= 0),
+      failed_count INTEGER NOT NULL DEFAULT 0 CHECK (failed_count >= 0),
+      requested_by TEXT NOT NULL,
+      trace_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      started_at TIMESTAMPTZ,
+      completed_at TIMESTAMPTZ,
+      cancelled_at TIMESTAMPTZ,
+      UNIQUE (tenant_id, batch_id),
+      UNIQUE (tenant_id, selection_id),
+      FOREIGN KEY (tenant_id, selection_id)
+        REFERENCES alert_assignment_selections (tenant_id, selection_id) ON DELETE RESTRICT,
+      CHECK (accepted_count + applied_count + conflicted_count + forbidden_count + failed_count <= total_count)
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_assignment_batches_tenant_status
+      ON alert_assignment_batches (tenant_id, status, updated_at DESC);
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'fk_alert_assignment_selection_consumed_batch'
+          AND conrelid = 'alert_assignment_selections'::regclass
+      ) THEN
+        ALTER TABLE alert_assignment_selections
+          ADD CONSTRAINT fk_alert_assignment_selection_consumed_batch
+          FOREIGN KEY (tenant_id, consumed_by_batch_id)
+          REFERENCES alert_assignment_batches (tenant_id, batch_id) ON DELETE RESTRICT;
+      END IF;
+    END $$;
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_batch_items (
+      tenant_id TEXT NOT NULL,
+      batch_id UUID NOT NULL,
+      position INTEGER NOT NULL CHECK (position BETWEEN 0 AND 99),
+      alert_id TEXT NOT NULL,
+      expected_state_version BIGINT NOT NULL CHECK (expected_state_version > 0),
+      status TEXT NOT NULL CHECK (status IN ('accepted','applied','conflicted','forbidden','failed','cancelled')),
+      item_revision BIGINT NOT NULL DEFAULT 1 CHECK (item_revision > 0),
+      resulting_state_version BIGINT NOT NULL DEFAULT 0 CHECK (resulting_state_version >= 0),
+      previous_assignee TEXT NOT NULL DEFAULT '',
+      resulting_assignee TEXT NOT NULL DEFAULT '',
+      error_code TEXT NOT NULL DEFAULT '',
+      error_message TEXT NOT NULL DEFAULT '',
+      event_id UUID NOT NULL UNIQUE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id, batch_id, alert_id),
+      UNIQUE (tenant_id, batch_id, position),
+      FOREIGN KEY (tenant_id, batch_id)
+        REFERENCES alert_assignment_batches (tenant_id, batch_id) ON DELETE RESTRICT
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_assignment_batch_items_status
+      ON alert_assignment_batch_items (tenant_id, batch_id, status, position);
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_batch_history (
+      event_id UUID PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      batch_id UUID NOT NULL,
+      revision BIGINT NOT NULL CHECK (revision > 0),
+      action_id TEXT NOT NULL,
+      previous_status TEXT NOT NULL,
+      resulting_status TEXT NOT NULL,
+      actor_id TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      trace_id TEXT NOT NULL,
+      snapshot JSONB NOT NULL CHECK (jsonb_typeof(snapshot) = 'object'),
+      occurred_at TIMESTAMPTZ NOT NULL,
+      UNIQUE (tenant_id, batch_id, revision),
+      FOREIGN KEY (tenant_id, batch_id)
+        REFERENCES alert_assignment_batches (tenant_id, batch_id) ON DELETE RESTRICT
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_batch_item_history (
+      event_id UUID PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      batch_id UUID NOT NULL,
+      alert_id TEXT NOT NULL,
+      item_revision BIGINT NOT NULL CHECK (item_revision > 0),
+      previous_status TEXT NOT NULL,
+      resulting_status TEXT NOT NULL,
+      expected_state_version BIGINT NOT NULL CHECK (expected_state_version > 0),
+      resulting_state_version BIGINT NOT NULL DEFAULT 0 CHECK (resulting_state_version >= 0),
+      actor_id TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      trace_id TEXT NOT NULL,
+      detail JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(detail) = 'object'),
+      occurred_at TIMESTAMPTZ NOT NULL,
+      UNIQUE (tenant_id, batch_id, alert_id, item_revision),
+      FOREIGN KEY (tenant_id, batch_id, alert_id)
+        REFERENCES alert_assignment_batch_items (tenant_id, batch_id, alert_id) ON DELETE RESTRICT
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_batch_outbox (
+      outbox_id BIGSERIAL PRIMARY KEY,
+      event_id UUID NOT NULL UNIQUE,
+      tenant_id TEXT NOT NULL,
+      batch_id UUID NOT NULL,
+      aggregate_version BIGINT NOT NULL CHECK (aggregate_version > 0),
+      event_type TEXT NOT NULL CHECK (event_type IN ('alert.batch-assignment.requested.v1','alert.assignment.changed.v1','alert.batch-assignment.cancelled.v1')),
+      schema_version INTEGER NOT NULL DEFAULT 1 CHECK (schema_version = 1),
+      partition_key TEXT NOT NULL,
+      payload JSONB NOT NULL CHECK (jsonb_typeof(payload) = 'object'),
+      trace_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','published','dead')),
+      publish_attempts INTEGER NOT NULL DEFAULT 0 CHECK (publish_attempts >= 0),
+      next_retry_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      locked_until TIMESTAMPTZ,
+      locked_by TEXT NOT NULL DEFAULT '',
+      last_error TEXT NOT NULL DEFAULT '',
+      occurred_at TIMESTAMPTZ NOT NULL,
+      published_at TIMESTAMPTZ,
+      UNIQUE (tenant_id, batch_id, aggregate_version, event_type),
+      FOREIGN KEY (tenant_id, batch_id)
+        REFERENCES alert_assignment_batches (tenant_id, batch_id) ON DELETE RESTRICT
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_assignment_batch_outbox_ready
+      ON alert_assignment_batch_outbox (next_retry_at, occurred_at, outbox_id)
+      WHERE status IN ('pending','processing');
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_batch_requests (
+      tenant_id TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL CHECK (length(idempotency_key) BETWEEN 16 AND 200),
+      request_sha256 TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+      batch_id UUID NOT NULL,
+      resulting_revision BIGINT NOT NULL CHECK (resulting_revision > 0),
+      event_id UUID NOT NULL REFERENCES alert_assignment_batch_outbox (event_id) ON DELETE RESTRICT,
+      trace_id TEXT NOT NULL,
+      response_payload JSONB NOT NULL CHECK (jsonb_typeof(response_payload) = 'object'),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id, idempotency_key),
+      FOREIGN KEY (tenant_id, batch_id)
+        REFERENCES alert_assignment_batches (tenant_id, batch_id) ON DELETE RESTRICT
+    );
+
+    INSERT INTO alignment_schema_migrations(version, description)
+    VALUES ('202608091900', 'frozen selection and durable alert batch assignment v1')
+    ON CONFLICT (version) DO NOTHING;
+
+    COMMIT;
+
+  # BEGIN GENERATED F-ALERT-004 ASSIGNMENT EXECUTION V1
+  35-alert-batch-assignment-execution-v1.sql: |
+    -- F-ALERT-004: independently consumed assignment execution and terminal receipts.
+    BEGIN;
+
+    ALTER TABLE alert_assignment_batch_items
+      DROP CONSTRAINT IF EXISTS alert_assignment_batch_items_status_check;
+    ALTER TABLE alert_assignment_batch_items
+      ADD CONSTRAINT alert_assignment_batch_items_status_check
+      CHECK (status IN ('accepted','projecting','applied','conflicted','forbidden','failed','cancelled'));
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_states (
+      tenant_id TEXT NOT NULL,
+      alert_id TEXT NOT NULL,
+      state_version BIGINT NOT NULL CHECK (state_version > 0),
+      assignee TEXT NOT NULL,
+      source_batch_id UUID NOT NULL,
+      source_event_id UUID NOT NULL,
+      previous_state_version BIGINT NOT NULL CHECK (previous_state_version > 0),
+      previous_assignee TEXT NOT NULL DEFAULT '',
+      projection_status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (projection_status IN ('pending','applied','conflicted','failed')),
+      last_error TEXT NOT NULL DEFAULT '',
+      trace_id TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (tenant_id, alert_id),
+      UNIQUE (source_event_id, alert_id),
+      FOREIGN KEY (tenant_id, source_batch_id)
+        REFERENCES alert_assignment_batches (tenant_id, batch_id) ON DELETE RESTRICT
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_assignment_states_batch
+      ON alert_assignment_states (tenant_id, source_batch_id, alert_id);
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_state_history (
+      event_id UUID PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      alert_id TEXT NOT NULL,
+      batch_id UUID NOT NULL,
+      previous_state_version BIGINT NOT NULL CHECK (previous_state_version > 0),
+      resulting_state_version BIGINT NOT NULL CHECK (resulting_state_version > previous_state_version),
+      previous_assignee TEXT NOT NULL DEFAULT '',
+      resulting_assignee TEXT NOT NULL,
+      requested_by TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      trace_id TEXT NOT NULL,
+      occurred_at TIMESTAMPTZ NOT NULL,
+      UNIQUE (tenant_id, alert_id, resulting_state_version),
+      FOREIGN KEY (tenant_id, batch_id, alert_id)
+        REFERENCES alert_assignment_batch_items (tenant_id, batch_id, alert_id) ON DELETE RESTRICT
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_batch_inbox (
+      event_id UUID PRIMARY KEY,
+      event_type TEXT NOT NULL CHECK (event_type IN ('alert.batch-assignment.requested.v1','alert.assignment.changed.v1')),
+      tenant_id TEXT NOT NULL,
+      batch_id UUID NOT NULL,
+      aggregate_version BIGINT NOT NULL CHECK (aggregate_version > 0),
+      source_topic TEXT NOT NULL,
+      source_partition INTEGER NOT NULL CHECK (source_partition >= 0),
+      source_offset BIGINT NOT NULL CHECK (source_offset >= 0),
+      payload_sha256 TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      headers_sha256 TEXT NOT NULL CHECK (headers_sha256 ~ '^[0-9a-f]{64}$'),
+      trace_id TEXT NOT NULL,
+      processed_at TIMESTAMPTZ NOT NULL,
+      UNIQUE (source_topic, source_partition, source_offset),
+      FOREIGN KEY (tenant_id, batch_id)
+        REFERENCES alert_assignment_batches (tenant_id, batch_id) ON DELETE RESTRICT
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_projection_receipts (
+      event_id UUID NOT NULL,
+      tenant_id TEXT NOT NULL,
+      batch_id UUID NOT NULL,
+      alert_id TEXT NOT NULL,
+      expected_state_version BIGINT NOT NULL CHECK (expected_state_version > 0),
+      resulting_state_version BIGINT NOT NULL DEFAULT 0 CHECK (resulting_state_version >= 0),
+      previous_assignee TEXT NOT NULL DEFAULT '',
+      resulting_assignee TEXT NOT NULL DEFAULT '',
+      outcome TEXT NOT NULL CHECK (outcome IN ('applied','conflicted','failed')),
+      error_code TEXT NOT NULL DEFAULT '',
+      error_message TEXT NOT NULL DEFAULT '',
+      source_topic TEXT NOT NULL,
+      source_partition INTEGER NOT NULL CHECK (source_partition >= 0),
+      source_offset BIGINT NOT NULL CHECK (source_offset >= 0),
+      trace_id TEXT NOT NULL,
+      applied_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (event_id, alert_id),
+      UNIQUE (tenant_id, batch_id, alert_id),
+      FOREIGN KEY (event_id) REFERENCES alert_assignment_batch_inbox(event_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id, batch_id, alert_id)
+        REFERENCES alert_assignment_batch_items (tenant_id, batch_id, alert_id) ON DELETE RESTRICT
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_batch_dlq_receipts (
+      source_topic TEXT NOT NULL,
+      source_partition INTEGER NOT NULL CHECK (source_partition >= 0),
+      source_offset BIGINT NOT NULL CHECK (source_offset >= 0),
+      dlq_topic TEXT NOT NULL CHECK (dlq_topic = 'dlq.v1'),
+      event_id TEXT NOT NULL DEFAULT '',
+      event_type TEXT NOT NULL DEFAULT '',
+      tenant_id TEXT NOT NULL DEFAULT '',
+      batch_id TEXT NOT NULL DEFAULT '',
+      aggregate_version BIGINT,
+      trace_id TEXT NOT NULL DEFAULT '',
+      error_code TEXT NOT NULL,
+      error_message TEXT NOT NULL,
+      payload_sha256 TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      headers_sha256 TEXT NOT NULL CHECK (headers_sha256 ~ '^[0-9a-f]{64}$'),
+      headers JSONB NOT NULL CHECK (jsonb_typeof(headers) = 'object'),
+      acknowledged_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (source_topic, source_partition, source_offset)
+    );
+
+    INSERT INTO alignment_schema_migrations(version, description)
+    VALUES ('202608092130', 'independent alert batch assignment execution and terminal receipts v1')
+    ON CONFLICT (version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED F-ALERT-004 ASSIGNMENT EXECUTION V1
+  # BEGIN GENERATED F-ALERT-004 ASSIGNMENT COMPENSATION V1
+  36-alert-batch-assignment-compensation-v1.sql: |
+    -- F-ALERT-004: revision-safe per-item batch-assignment compensation.
+    BEGIN;
+
+    ALTER TABLE alert_assignment_batch_items
+      ADD COLUMN IF NOT EXISTS previous_status TEXT NOT NULL DEFAULT '';
+    ALTER TABLE alert_assignment_batch_items
+      ADD COLUMN IF NOT EXISTS resulting_status TEXT NOT NULL DEFAULT 'assigned';
+
+    ALTER TABLE alert_assignment_states
+      ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'assigned';
+    ALTER TABLE alert_assignment_states
+      ADD COLUMN IF NOT EXISTS previous_status TEXT NOT NULL DEFAULT '';
+
+    ALTER TABLE alert_assignment_state_history
+      ADD COLUMN IF NOT EXISTS previous_status TEXT NOT NULL DEFAULT '';
+    ALTER TABLE alert_assignment_state_history
+      ADD COLUMN IF NOT EXISTS resulting_status TEXT NOT NULL DEFAULT 'assigned';
+
+    ALTER TABLE alert_assignment_projection_receipts
+      ADD COLUMN IF NOT EXISTS previous_status TEXT NOT NULL DEFAULT '';
+    ALTER TABLE alert_assignment_projection_receipts
+      ADD COLUMN IF NOT EXISTS resulting_status TEXT NOT NULL DEFAULT 'assigned';
+
+    ALTER TABLE alert_assignment_batch_outbox
+      ADD COLUMN IF NOT EXISTS aggregate_type TEXT NOT NULL DEFAULT 'alert_assignment_batch';
+    ALTER TABLE alert_assignment_batch_outbox
+      ADD COLUMN IF NOT EXISTS aggregate_id TEXT NOT NULL DEFAULT '';
+    UPDATE alert_assignment_batch_outbox
+    SET aggregate_id = batch_id::text
+    WHERE aggregate_id = '';
+    ALTER TABLE alert_assignment_batch_outbox
+      DROP CONSTRAINT IF EXISTS alert_assignment_batch_outbox_aggregate_identity_check;
+    ALTER TABLE alert_assignment_batch_outbox
+      ADD CONSTRAINT alert_assignment_batch_outbox_aggregate_identity_check
+      CHECK (length(aggregate_type) > 0 AND length(aggregate_id) > 0) NOT VALID;
+    ALTER TABLE alert_assignment_batch_outbox
+      VALIDATE CONSTRAINT alert_assignment_batch_outbox_aggregate_identity_check;
+
+    ALTER TABLE alert_assignment_batch_inbox
+      ADD COLUMN IF NOT EXISTS aggregate_type TEXT NOT NULL DEFAULT 'alert_assignment_batch';
+    ALTER TABLE alert_assignment_batch_inbox
+      ADD COLUMN IF NOT EXISTS aggregate_id TEXT NOT NULL DEFAULT '';
+    UPDATE alert_assignment_batch_inbox
+    SET aggregate_id = batch_id::text
+    WHERE aggregate_id = '';
+    ALTER TABLE alert_assignment_batch_inbox
+      DROP CONSTRAINT IF EXISTS alert_assignment_batch_inbox_aggregate_identity_check;
+    ALTER TABLE alert_assignment_batch_inbox
+      ADD CONSTRAINT alert_assignment_batch_inbox_aggregate_identity_check
+      CHECK (length(aggregate_type) > 0 AND length(aggregate_id) > 0) NOT VALID;
+    ALTER TABLE alert_assignment_batch_inbox
+      VALIDATE CONSTRAINT alert_assignment_batch_inbox_aggregate_identity_check;
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_compensation_requests (
+      request_id UUID PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      batch_id UUID NOT NULL,
+      action_id TEXT NOT NULL CHECK (action_id = 'alert-batch-assignment-compensate'),
+      expected_batch_revision BIGINT NOT NULL CHECK (expected_batch_revision > 0),
+      status TEXT NOT NULL CHECK (status IN ('accepted','running','completed','partial','failed','cancelled')),
+      revision BIGINT NOT NULL DEFAULT 1 CHECK (revision > 0),
+      total_count INTEGER NOT NULL CHECK (total_count BETWEEN 1 AND 100),
+      accepted_count INTEGER NOT NULL DEFAULT 0 CHECK (accepted_count >= 0),
+      compensated_count INTEGER NOT NULL DEFAULT 0 CHECK (compensated_count >= 0),
+      conflicted_count INTEGER NOT NULL DEFAULT 0 CHECK (conflicted_count >= 0),
+      failed_count INTEGER NOT NULL DEFAULT 0 CHECK (failed_count >= 0),
+      idempotency_key TEXT NOT NULL CHECK (length(idempotency_key) BETWEEN 16 AND 200),
+      request_sha256 TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+      requested_by TEXT NOT NULL,
+      reason TEXT NOT NULL CHECK (length(reason) BETWEEN 8 AND 1000),
+      trace_id TEXT NOT NULL,
+      response_payload JSONB NOT NULL CHECK (jsonb_typeof(response_payload) = 'object'),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      started_at TIMESTAMPTZ,
+      completed_at TIMESTAMPTZ,
+      UNIQUE (tenant_id, idempotency_key),
+      UNIQUE (tenant_id, batch_id),
+      UNIQUE (tenant_id, request_id),
+      FOREIGN KEY (tenant_id, batch_id)
+        REFERENCES alert_assignment_batches (tenant_id, batch_id) ON DELETE RESTRICT,
+      CHECK (accepted_count + compensated_count + conflicted_count + failed_count <= total_count)
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_assignment_compensation_requests_status
+      ON alert_assignment_compensation_requests (tenant_id, status, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_compensation_items (
+      tenant_id TEXT NOT NULL,
+      request_id UUID NOT NULL,
+      batch_id UUID NOT NULL,
+      alert_id TEXT NOT NULL,
+      position INTEGER NOT NULL CHECK (position BETWEEN 0 AND 99),
+      status TEXT NOT NULL CHECK (status IN ('accepted','projecting','compensated','conflicted','failed','cancelled')),
+      item_revision BIGINT NOT NULL DEFAULT 1 CHECK (item_revision > 0),
+      expected_state_version BIGINT NOT NULL CHECK (expected_state_version > 0),
+      compensation_state_version BIGINT NOT NULL DEFAULT 0 CHECK (compensation_state_version >= 0),
+      restore_assignee TEXT NOT NULL DEFAULT '',
+      restore_status TEXT NOT NULL CHECK (restore_status IN ('new','triage','assigned','closed')),
+      current_assignee TEXT NOT NULL DEFAULT '',
+      current_status TEXT NOT NULL CHECK (current_status = 'assigned'),
+      error_code TEXT NOT NULL DEFAULT '',
+      error_message TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id, request_id, alert_id),
+      UNIQUE (tenant_id, request_id, position),
+      FOREIGN KEY (tenant_id, request_id)
+        REFERENCES alert_assignment_compensation_requests (tenant_id, request_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id, batch_id, alert_id)
+        REFERENCES alert_assignment_batch_items (tenant_id, batch_id, alert_id) ON DELETE RESTRICT
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_assignment_compensation_items_status
+      ON alert_assignment_compensation_items (tenant_id, request_id, status, position);
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_compensation_history (
+      event_id UUID PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      request_id UUID NOT NULL,
+      batch_id UUID NOT NULL,
+      revision BIGINT NOT NULL CHECK (revision > 0),
+      previous_status TEXT NOT NULL,
+      resulting_status TEXT NOT NULL,
+      actor_id TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      trace_id TEXT NOT NULL,
+      snapshot JSONB NOT NULL CHECK (jsonb_typeof(snapshot) = 'object'),
+      occurred_at TIMESTAMPTZ NOT NULL,
+      UNIQUE (tenant_id, request_id, revision),
+      FOREIGN KEY (tenant_id, request_id)
+        REFERENCES alert_assignment_compensation_requests (tenant_id, request_id) ON DELETE RESTRICT
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_compensation_item_history (
+      event_id UUID PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      request_id UUID NOT NULL,
+      batch_id UUID NOT NULL,
+      alert_id TEXT NOT NULL,
+      item_revision BIGINT NOT NULL CHECK (item_revision > 0),
+      previous_status TEXT NOT NULL,
+      resulting_status TEXT NOT NULL,
+      expected_state_version BIGINT NOT NULL CHECK (expected_state_version > 0),
+      compensation_state_version BIGINT NOT NULL DEFAULT 0 CHECK (compensation_state_version >= 0),
+      actor_id TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      trace_id TEXT NOT NULL,
+      detail JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(detail) = 'object'),
+      occurred_at TIMESTAMPTZ NOT NULL,
+      UNIQUE (tenant_id, request_id, alert_id, item_revision),
+      FOREIGN KEY (tenant_id, request_id, alert_id)
+        REFERENCES alert_assignment_compensation_items (tenant_id, request_id, alert_id) ON DELETE RESTRICT
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_assignment_compensation_projection_receipts (
+      event_id UUID NOT NULL,
+      tenant_id TEXT NOT NULL,
+      request_id UUID NOT NULL,
+      batch_id UUID NOT NULL,
+      alert_id TEXT NOT NULL,
+      expected_state_version BIGINT NOT NULL CHECK (expected_state_version > 0),
+      compensation_state_version BIGINT NOT NULL DEFAULT 0 CHECK (compensation_state_version >= 0),
+      restore_assignee TEXT NOT NULL DEFAULT '',
+      restore_status TEXT NOT NULL CHECK (restore_status IN ('new','triage','assigned','closed')),
+      outcome TEXT NOT NULL CHECK (outcome IN ('compensated','conflicted','failed')),
+      error_code TEXT NOT NULL DEFAULT '',
+      error_message TEXT NOT NULL DEFAULT '',
+      source_topic TEXT NOT NULL,
+      source_partition INTEGER NOT NULL CHECK (source_partition >= 0),
+      source_offset BIGINT NOT NULL CHECK (source_offset >= 0),
+      trace_id TEXT NOT NULL,
+      applied_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (event_id, alert_id),
+      UNIQUE (tenant_id, request_id, alert_id),
+      FOREIGN KEY (event_id) REFERENCES alert_assignment_batch_inbox(event_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id, request_id, alert_id)
+        REFERENCES alert_assignment_compensation_items (tenant_id, request_id, alert_id) ON DELETE RESTRICT
+    );
+
+    ALTER TABLE alert_assignment_batch_outbox
+      DROP CONSTRAINT IF EXISTS alert_assignment_batch_outbox_event_type_check;
+    ALTER TABLE alert_assignment_batch_outbox
+      ADD CONSTRAINT alert_assignment_batch_outbox_event_type_check
+      CHECK (event_type IN (
+        'alert.batch-assignment.requested.v1',
+        'alert.assignment.changed.v1',
+        'alert.batch-assignment.cancelled.v1',
+        'alert.batch-assignment.compensation-requested.v1',
+        'alert.assignment.compensated.v1'
+      ));
+
+    ALTER TABLE alert_assignment_batch_inbox
+      DROP CONSTRAINT IF EXISTS alert_assignment_batch_inbox_event_type_check;
+    ALTER TABLE alert_assignment_batch_inbox
+      ADD CONSTRAINT alert_assignment_batch_inbox_event_type_check
+      CHECK (event_type IN (
+        'alert.batch-assignment.requested.v1',
+        'alert.assignment.changed.v1',
+        'alert.batch-assignment.compensation-requested.v1',
+        'alert.assignment.compensated.v1'
+      ));
+
+    INSERT INTO alignment_schema_migrations(version, description)
+    VALUES ('202608092300', 'revision-safe alert batch assignment compensation v1')
+    ON CONFLICT (version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED F-ALERT-004 ASSIGNMENT COMPENSATION V1
 ---
 apiVersion: batch/v1
 kind: Job
@@ -3008,7 +3813,7 @@ spec:
           set -euo pipefail
           echo "Initializing PostgreSQL schema..."
           cd /sql
-          for f in 00-init.sql 01-assets.sql 02-features-rules.sql 03-models-deploy.sql 04-tasks-audit.sql 05-default-data.sql 06-graph.sql 07-campaign-impact-assets.sql 08-alert-campaign-links.sql 09-alert-report-jobs.sql 10-campaign-event-projection-v2.sql 11-campaign-soar-workflow.sql 12-playbook-execution-v2.sql 13-playbook-event-pipeline-v2.sql 14-alert-saved-view-transaction-v2.sql 15-notification-rule-transaction-v2.sql 16-probe-registry-atomic.sql 17-threat-intel-command-atomic.sql 18-forensics-task-atomic.sql 19-whitelist-governance-v2.sql 20-dashboard-task-v2.sql 21-alert-opensearch-projection-reconcile-v1.sql 22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql; do
+          for f in 00-init.sql 01-assets.sql 02-features-rules.sql 03-models-deploy.sql 04-tasks-audit.sql 05-default-data.sql 06-graph.sql 07-campaign-impact-assets.sql 08-alert-campaign-links.sql 09-alert-report-jobs.sql 10-campaign-event-projection-v2.sql 11-campaign-soar-workflow.sql 12-playbook-execution-v2.sql 13-playbook-event-pipeline-v2.sql 14-alert-saved-view-transaction-v2.sql 15-notification-rule-transaction-v2.sql 16-probe-registry-atomic.sql 17-threat-intel-command-atomic.sql 18-forensics-task-atomic.sql 19-whitelist-governance-v2.sql 20-dashboard-task-v2.sql 21-alert-opensearch-projection-reconcile-v1.sql 22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql 32-alert-response-reconciliation-compensation-v1.sql 33-alert-evidence-manifest-v1.sql 34-alert-batch-assignment-v1.sql 35-alert-batch-assignment-execution-v1.sql 36-alert-batch-assignment-compensation-v1.sql; do
             echo "  Running $f..."
             psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -f "/sql/$f"
           done

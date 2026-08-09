@@ -71,8 +71,9 @@ type KafkaConfig struct {
 	ProbeEventGroup                  string   `env:"KAFKA_PROBE_EVENT_GROUP" envDefault:"alert-service-probe-event-projection-v2"`
 	ResponseActionTopic              string   `env:"KAFKA_RESPONSE_ACTION_TOPIC" envDefault:"alert.response.requested.v1"`
 	ResponseActionGroup              string   `env:"KAFKA_RESPONSE_ACTION_GROUP" envDefault:"alert-service-response-execution-v1"`
-	ResponseActionEnabled            bool     `env:"ALERT_RESPONSE_EXECUTION_V1_ENABLED" envDefault:"true"`
+	ResponseActionEnabled            bool     `env:"ALERT_RESPONSE_EXECUTION_V1_ENABLED" envDefault:"false"`
 	SavedViewEventTopic              string   `env:"KAFKA_SAVED_VIEW_EVENT_TOPIC" envDefault:"alert.saved-view.events.v1"`
+	SavedViewTransactionEnabled      bool     `env:"ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED" envDefault:"false"`
 	WhitelistEventTopic              string   `env:"KAFKA_WHITELIST_EVENT_TOPIC" envDefault:"whitelist.events.v2"`
 	WhitelistEventPipelineEnabled    bool     `env:"WHITELIST_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
 	NotificationGovernanceEventTopic string   `env:"KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC" envDefault:"notification.governance.events.v1"`

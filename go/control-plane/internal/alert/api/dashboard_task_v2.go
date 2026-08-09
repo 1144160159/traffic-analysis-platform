@@ -45,9 +45,10 @@ var dashboardTaskActionSpecs = map[string]dashboardTaskActionSpec{
 }
 
 type DashboardTaskHandler struct {
-	db      *sql.DB
-	logger  *zap.Logger
-	enabled bool
+	db                  *sql.DB
+	logger              *zap.Logger
+	enabled             bool
+	compensationEnabled bool
 }
 
 type DashboardTaskCreateRequest struct {
@@ -112,12 +113,15 @@ func NewDashboardTaskHandler(db *sql.DB, logger *zap.Logger, enabled bool) *Dash
 	return &DashboardTaskHandler{db: db, logger: logger, enabled: enabled}
 }
 
+func (h *DashboardTaskHandler) EnableCompensation(enabled bool) { h.compensationEnabled = enabled }
+
 func (h *DashboardTaskHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/dashboard/tasks", h.Create).Methods(http.MethodPost)
 	for _, kind := range []string{"evidence", "feedback", "audit", "sla", "compliance"} {
 		router.HandleFunc("/dashboard/tasks/"+kind, h.Create).Methods(http.MethodPost)
 	}
 	router.HandleFunc("/dashboard/tasks/{task_id}", h.Get).Methods(http.MethodGet)
+	router.HandleFunc("/dashboard/tasks/{task_id}/compensations", h.Compensate).Methods(http.MethodPost)
 }
 
 func (h *DashboardTaskHandler) Create(w http.ResponseWriter, r *http.Request) {

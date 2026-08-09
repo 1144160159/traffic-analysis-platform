@@ -1,0 +1,176 @@
+{
+  "schema_version": 2,
+  "contract_id": "traffic-platform-kafka-dlq-commit-barrier-v1",
+  "remediation_id": "T-KAFKA-003",
+  "status": "verifying",
+  "production_applied": false,
+  "coverage_status": "PARTIAL_SHARED_GO_CONSUMER_WITH_DASHBOARD_AND_ALERT_RESPONSE_OWNED_SINGLE_BROKER_G1",
+  "guarantees": [
+    "batch source offsets are committed synchronously and only a broker acknowledgement advances processed metrics",
+    "a handler or durable DLQ failure returns to the caller with source offsets retained",
+    "DLQ security initialization fails closed without a plaintext writer fallback",
+    "one DLQ batch serialization failure rejects the whole batch",
+    "a configured canonical DLQ target is used by both single and batch delivery",
+    "asynchronous single-message commits retain pending offsets after a failed broker acknowledgement",
+    "an optional domain acknowledgement barrier runs after the DLQ broker acknowledgement and before source offset commit; barrier failure or panic retains the source offset",
+    "owned single-broker alert-response evidence first commits one provider-confirmed real event, rejects the following poison event against an invalid DLQ target without advancing past that valid offset, then redelivers under the same group and commits only after canonical dlq.v1 plus one PostgreSQL source-tuple receipt and quarantine audit"
+  ],
+  "source_assertions": [
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer.go",
+      "required_tokens": [
+        "func (c *Consumer) handleAndCommitBatch",
+        "if err := c.commitMessages(messages); err != nil {",
+        "return commitErr",
+        "batch handler failed and DLQ durability barrier failed",
+        "SetDLQAcknowledgementBarrier",
+        "runDLQAcknowledgementBarrier",
+        "DLQ acknowledgement persistence barrier failed",
+        "pendingMessages = pendingMessages[:0]",
+        "commit pending offsets"
+      ],
+      "forbidden_tokens": [
+        "doneChan := make(chan error, 1)",
+        "<-doneChan",
+        "req.doneChan <- nil"
+      ],
+      "ordered_tokens": [
+        ["c.dlqProducer.SendBatch(ctx, failedMessages)", "if err := c.commitMessages(messages); err != nil {"],
+        ["if err := c.commitMessages(messages); err != nil {", "atomic.AddInt64(&c.metrics.MessagesProcessed, int64(len(batch)))"]
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/dlq.go",
+      "required_tokens": [
+        "initErr     error",
+        "initialize Kafka DLQ security",
+        "if p.initErr != nil {",
+        "marshal DLQ batch message at index",
+        "dlqTopic := resolveDLQTopic(p.config, msg.Topic)"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": [
+        ["payload, marshalErr := p.marshalMessage(dlqMsg)", "p.writer.WriteMessages(ctx, kafkaMessages...)"]
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer_dlq_acknowledgement_barrier_test.go",
+      "required_tokens": [
+        "TestDLQAcknowledgementBarrierReceivesSourceIdentity",
+        "TestDLQAcknowledgementBarrierFailureRetainsCommitAuthority",
+        "TestDLQAcknowledgementBarrierPanicFailsClosed"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
+      "required_tokens": [
+        "func (pipeline *DashboardTaskPipeline) RecordDLQAcknowledgement",
+        "INSERT INTO dashboard_task_dlq_receipts",
+        "DASHBOARD_TASK_EVENT_QUARANTINED",
+        "source_offset_commit_pending"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": [
+        ["INSERT INTO dashboard_task_dlq_receipts", "INSERT INTO audit_logs"],
+        ["INSERT INTO audit_logs", "return tx.Commit()"]
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
+      "required_tokens": [
+        "func (projection *PostgresAlertResponseProjection) RecordDLQAcknowledgement",
+        "INSERT INTO alert_response_dlq_receipts",
+        "ALERT_RESPONSE_EVENT_QUARANTINED",
+        "source_offset_commit_pending"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": [
+        ["INSERT INTO alert_response_dlq_receipts", "INSERT INTO audit_logs"],
+        ["INSERT INTO audit_logs", "return tx.Commit()"]
+      ]
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "required_tokens": [
+        "responseKafkaConsumer.SetDLQAcknowledgementBarrier(responseProjection.RecordDLQAcknowledgement)",
+        "CommitOnHandlerError: false, DLQPermanentOnly: true"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer_batch_commit_test.go",
+      "required_tokens": [
+        "TestHandleAndCommitBatchDoesNotReportProcessedBeforeBrokerAck",
+        "TestHandleAndCommitBatchRetainsOffsetsWhenDLQBarrierFails",
+        "TestBackgroundCommitterRetainsOffsetsUntilBrokerAck"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/dlq_test.go",
+      "required_tokens": [
+        "TestDLQProducerSecurityInitializationFailsClosed",
+        "TestDLQBatchMarshalFailureRejectsWholeBatch"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_real_kafka_integration_test.go",
+      "required_tokens": [
+        "TestAlertResponseRealKafkaDLQBarrier",
+        "alertResponseRealKafkaInvalidDLQ",
+        "committedMessages.Load() != 1 || maximumCommittedOffset.Load() != 0",
+        "owned-real-kafka-firewall",
+        "providerCalls.Load() != 1",
+        "DLQ receipt persisted before broker acknowledgement",
+        "poison event redelivered after durable DLQ acknowledgement",
+        "ALERT_RESPONSE_EVENT_QUARANTINED",
+        "alert_response_real_kafka_dlq=pass"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": [
+        ["projection, alertResponseRealKafkaInvalidDLQ,", "projection, alertResponseRealKafkaDLQTopic,"],
+        ["DLQ receipt persisted before broker acknowledgement", "poison event redelivered after durable DLQ acknowledgement"]
+      ]
+    },
+    {
+      "source": "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py",
+      "required_tokens": [
+        "OWNED_REAL_POSTGRES_REDPANDA_ALERT_RESPONSE_POISON_DLQ_PRECOMMIT_G1",
+        "required_acks_all_verified",
+        "broker_group_commit_verified",
+        "current_offset\": 2",
+        "cleanup_identity_verified",
+        "single_broker_owned_preflight",
+        "persistent_volume_attached\": False",
+        "shared_environment_touched\": False",
+        "production_applied\": False"
+      ],
+      "forbidden_tokens": [
+        "persistent_volume_attached\": True",
+        "shared_environment_touched\": True",
+        "production_applied\": True"
+      ],
+      "ordered_tokens": []
+    }
+  ],
+  "gate": {
+    "repository": [
+      "python scripts/alignment/verify_kafka_dlq_commit_barrier.py",
+      "go test -race ./internal/common/kafka"
+    ],
+    "remaining": [
+      "repeat dashboard and alert-response poison-message DLQ acknowledgement failure on the approved replicated release-candidate broker; both owned single-broker G1 runs are not G2 or HA evidence",
+      "reconcile the alert-response source offset DLQ target offset PostgreSQL receipt quarantine audit and provider ledger on the approved release candidate",
+      "materialize and audit source-offset DLQ receipts for remaining non-dashboard and non-alert-response consumer domains",
+      "consumer restart rebalance lag and duplicate convergence evidence",
+      "approved canary rollback T+0 T+1 T+3 T+7 observation and independent sign-off",
+      "inventory and migrate non-Go and dedicated consumer paths"
+    ]
+  }
+}

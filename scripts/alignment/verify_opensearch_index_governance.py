@@ -54,6 +54,7 @@ REQUIRED_TYPES = {
     "status": "keyword",
     "first_seen": "date",
     "last_seen": "date",
+    "updated_at": "date",
     "count": "integer",
     "state_version": "long",
     "search_text": "text",

@@ -49,7 +49,7 @@
         "common/kafka/create-topics.sh",
         "deployments/kubernetes/init-jobs/01-kafka-topics.yaml"
       ],
-      "source_sha256": "f517b239eaba7b288aca253e730862f3e78c374c61cbbe06116b9e4ed740abe3"
+      "source_sha256": "0c9aee30204a89cb2ef453120aef5e5be0cc66dad667577a74ffdfea92b96c40"
     },
     {
       "domain": "kafka_acl",
@@ -58,7 +58,7 @@
       "rendered_consumers": [
         "deployments/kubernetes/init-jobs/00-kafka-acl-plan.yaml"
       ],
-      "source_sha256": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f"
+      "source_sha256": "2816db4026778ef92d478169513561ab51f1d93eefb06e053197a3cdd5731c57"
     },
     {
       "domain": "flink_job_topology",
@@ -77,7 +77,7 @@
         "common/sql/ch/00-all-tables.sql",
         "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml"
       ],
-      "source_sha256": "8cc2faf54d1d0ea8cbc93e931e61f3b5fb10d81035931be673f3bcda506cca02"
+      "source_sha256": "ebb88a91605ba9273e5e9ee2370e4ed165a6503a99485e3b6b37662f4d7b5a90"
     },
     {
       "domain": "minio_lifecycle",
@@ -104,47 +104,47 @@
       "rendered_consumers": [
         "apisix_standalone_runtime"
       ],
-      "source_sha256": "86f9938071f94fbc7db5c548f179938b89c199300e474615cce4a1269612efd7"
+      "source_sha256": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79"
     }
   ],
   "source_hashes": {
-    "contracts/clickhouse/schema-authority.v1.json": "8cc2faf54d1d0ea8cbc93e931e61f3b5fb10d81035931be673f3bcda506cca02",
-    "contracts/events/kafka-acl-catalog.v1.json": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f",
-    "contracts/events/kafka-topic-catalog.v1.json": "f517b239eaba7b288aca253e730862f3e78c374c61cbbe06116b9e4ed740abe3",
+    "contracts/clickhouse/schema-authority.v1.json": "ebb88a91605ba9273e5e9ee2370e4ed165a6503a99485e3b6b37662f4d7b5a90",
+    "contracts/events/kafka-acl-catalog.v1.json": "2816db4026778ef92d478169513561ab51f1d93eefb06e053197a3cdd5731c57",
+    "contracts/events/kafka-topic-catalog.v1.json": "0c9aee30204a89cb2ef453120aef5e5be0cc66dad667577a74ffdfea92b96c40",
     "contracts/flink/job-registry.v1.json": "e1cfdb658c0cad53aeaa0aec55151fdc928169bb3bba8ac84a7db80009797c3c",
-    "deployments/kubernetes/applications/go-services.yaml": "47178b3d1e62914e11147eea5045e7b6c17fa231332396a12c8a949534a34e5d",
+    "deployments/kubernetes/applications/go-services.yaml": "d4ee3c3ab5fbf53658b2ca700bb5536d05f20c22135fdc6d682d7f4957a372ec",
     "deployments/kubernetes/applications/probe-agent.yaml": "b7969b9001297d381f09a09c9a3b71bd8bd3ccfc8bfca0a599f9a04afff865f3",
     "deployments/kubernetes/applications/web-ui.yaml": "8abbdbbef2621b300541a6cad56678cfe4115350c5c071304a9bc19f353a981f",
-    "deployments/kubernetes/configmaps/apisix-routes.yaml": "86f9938071f94fbc7db5c548f179938b89c199300e474615cce4a1269612efd7",
+    "deployments/kubernetes/configmaps/apisix-routes.yaml": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79",
     "deployments/kubernetes/flink/flink-log-job.yaml": "de7010b9a7fd35eec2ae249aeecc3a1f139574d4801481259fe2efc029f4097d",
     "deployments/kubernetes/infrastructure/01-kafka.yaml": "fe5ae4421e5adfef9bf98ba62188ce8f6220c8192c8d94695bae5bf0de538e2f",
-    "deployments/kubernetes/infrastructure/02-clickhouse.yaml": "8ef784f4133b9f25d24b0f0031e295a7fa26f428791d6585fd2cbd8a5c613368",
+    "deployments/kubernetes/infrastructure/02-clickhouse.yaml": "7765ef3745db9d84f988024ee7fef42f1e8d6b5b73259ac5f11d8c7c3c35891d",
     "deployments/kubernetes/infrastructure/03-postgresql.yaml": "23bad32a6ce7c00583822639b2c0c3807834eefccf881f7bec6e03bae9d62459",
-    "deployments/kubernetes/infrastructure/05-opensearch.yaml": "ad85a2209cf1d032dec570cac18f4de8fc3d416539d0cb09cf8983159aa19427",
+    "deployments/kubernetes/infrastructure/05-opensearch.yaml": "c8a8242b3678ba30f87f7b4354bf52c97a3bbac2779d0b3d9bca9abaf1f5dc13",
     "deployments/kubernetes/infrastructure/06-minio.yaml": "efecfa197f887fe61ade662581ac5f3d316d439240ed0fc4441e6347c3ea7243",
     "deployments/kubernetes/infrastructure/07-flink.yaml": "79ba8d96ee26a072c680db02b1204d3697a2a44d4072192a794416e6e45de755",
     "deployments/kubernetes/infrastructure/08-gateway.yaml": "687eaa2a0e2c31a5a46e493208ea946c7f596336c875df2ec3e74c29ed18d289",
     "deployments/kubernetes/infrastructure/09-nebula-graph.yaml": "4c26d5dc6d438bbdbb42808f6761c2ecb9535d1f5fe1a1488b7403c2e60aa17f",
     "deployments/kubernetes/infrastructure/10-observability.yaml": "8c2c1d390d40dac0096cf05cad025188603afd5698d8cd99d81d17f6f38ade24",
     "deployments/kubernetes/infrastructure/11-management.yaml": "ffd6c4384fd8376c92083c292ae2eae9c4b2a562897a629ee58c3698840e34d5",
-    "deployments/kubernetes/init-jobs/00-kafka-service-principals.yaml": "5301be563ddf3f65504dd421acde6bd81898649063b95275505ad13965f955ce",
-    "deployments/kubernetes/init-jobs/01-kafka-topics.yaml": "6e8f59c9ac3b4f0fb938bcdbb39dd07417fd506089cdb18e20ea66ba86ff0bca",
-    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "e160088d18fb92a451aa477bbab7ba6dc0b3efa627951a6b4f151ce0bb966ec2",
-    "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml": "262b49eef99b05aa37056f52b88e726370b56b70c117a32a755be6fa7b6dd468",
+    "deployments/kubernetes/init-jobs/00-kafka-service-principals.yaml": "d01a637fa8238db4d86261bae66ac8ab02a032dba3bca008a707fbffa20037d8",
+    "deployments/kubernetes/init-jobs/01-kafka-topics.yaml": "ea22f169a07e8f80e35b1ff91276a2ceeb66d84211a50790595f27f2cd106d81",
+    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "ba446642095ceea01015e662a190edfa5c62dea0a0647bac49996efcc44ae344",
+    "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml": "8ca1010db70655b9740a0b3bf2327f99838145bf15b20d109c98dcb976895c6b",
     "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml": "6d4fe42c60dd9f14fe27e65e924ea75bfcce2029989448f4e09f55d44fb5a44f",
     "deployments/kubernetes/init-jobs/05-nebula-schema.yaml": "7dfc2a4b67af004d132edc5c7882a67c705428d5529d8889108f6b0e4f1730c9",
     "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml": "d38d6008931e4442e7de6f28fb08ac3a6a59a28629bf39d190242743ed17922c",
     "deployments/kubernetes/init-jobs/06-nebula-workbench-seed.yaml": "74efd6ebe9c7689b95f6fd6a864f67982cf0d7ec059f763c5b82ce4e2c3e76b5",
     "deployments/kubernetes/init-jobs/07-fusion-acceptance-fixture.yaml": "c948d74059758ffab63249324f2a7638488fd37e3ec82a8e91996e7cc72b47a0",
-    "go/control-plane/deployments/kubernetes/alert-service.yaml": "c46ff9f9f9238252cbb21e3829674c755b9439cf4f1cb5f589e5dcfea68e8e84",
-    "go/control-plane/deployments/kubernetes/asset-service.yaml": "418ad455cb32797e224bcd28aa88a59d0689ef7350d894afa1ab0a55e0fb4765",
+    "go/control-plane/deployments/kubernetes/alert-service.yaml": "dc82a4608b0b16d23afc8e859cad6f0f42815e3df143f37605f974abe49661be",
+    "go/control-plane/deployments/kubernetes/asset-service.yaml": "1f0ed4273cb4b6f16faeb52581cb6acef1d61091ab899c8dbadb5ae6291122a7",
     "go/control-plane/deployments/kubernetes/forensics-service.yaml": "2f51466bb01a7b306c0b624ef27426549015226eec663b563db899ee3181962d",
     "go/control-plane/deployments/kubernetes/ingest-gateway.yaml": "08f17aae3b4a0e6e10a2a25b933fd8fe399b5a60e22f3814549522044cebcf61",
     "go/control-plane/deployments/kubernetes/rule-manager.yaml": "4b050763d1c785a71c80e8825f390caa0bad6f5320b75cb154b70bceb9174261",
     "go/control-plane/internal/alert/arkime/link_generator.go": "9ba0ad8d98e6baf5b8fda9022ab6cd25a7d476ff9f19adf1c1788303fb03dc82",
-    "go/control-plane/internal/alert/config/config.go": "4c17869da03cc6f780c5ce730aa79437797a1a599470a6df6e267877bb8f66c4",
+    "go/control-plane/internal/alert/config/config.go": "dce22297f27b7bf9aff73c9f257f068bdd869cedc7c4ce198140915ed5a3deee",
     "go/control-plane/internal/alert/notification/notification_service.go": "483cf30cb08478a3b44045abc0efc7ad8688930433550f6229c8d44eb4c98e29",
-    "go/control-plane/internal/asset/config/config.go": "a6b89f78da4d4ec899ee4f8b76fddfe48ee08f5c33c0e51e246231e95482390d",
+    "go/control-plane/internal/asset/config/config.go": "ebab4be9914de13654e3efd514a0753fcee72236d9ee03a6ad1cf0f0cb890079",
     "go/control-plane/internal/auth/config/config.go": "07e415bd74eef84dd2dbf2d2e10de9b27b756c12255411bb77debaf21c97176d",
     "go/control-plane/internal/auth/jwt/service.go": "33c583030feea21ffc23d9559a6be8bd990c2d3ad9a1e60a6ae93db58508d53e",
     "go/control-plane/internal/auth/model/scopes.go": "2497f575e9ce9516fd4d61eaa870b1f66780688335097d7aa12275381f2bd456",
@@ -168,9 +168,9 @@
     "go/control-plane/internal/ingest/auth/token_cache.go": "5fa5f7358e27d5ad3d710a56a8e9b0612bbf65545a21685428888799fdf065f4",
     "go/control-plane/internal/ingest/config/config.go": "89012db97b50fdc4758698f34061994a4ad09715ff365b003924afdfaccd603b",
     "go/control-plane/internal/ingest/dedup/lru_dedup.go": "62eda679a853f012bb89d69e8b331954e8a820c892c7d2a75394c6fd10b5b032",
-    "go/control-plane/internal/ingest/queue/producer.go": "82c12f9ee76c459e5e0ccc7c1d5dda21c4d07bae85c761596752528e4715cfaf",
+    "go/control-plane/internal/ingest/queue/producer.go": "b7ad3551586c3e9bd62a5548463b68b14aafafbd3e9ca5049921b9afd068ad72",
     "go/control-plane/internal/ingest/quota/limiter.go": "7e2a81333a841a1644c2d9bb22ee7b0f6e109fbe757b6fd3ceeabb3cc7e073b8",
-    "go/control-plane/internal/ingest/server/handler.go": "7674544c225e1f7d0b7492f6b0c3aaadd2cedbd3775e4fea6e258456494482b0",
+    "go/control-plane/internal/ingest/server/handler.go": "4f7d6edb8d25598e10419fc180d92d5a7abb5a9fad3a5f2fdf890dcc16baebdc",
     "go/control-plane/internal/rules/api/handler.go": "d5ae43f677a42ff0134caf4ae253791538803961c48c61ea8f8b367ed078be91",
     "go/control-plane/internal/rules/config/config.go": "09d767f719cd8abefc57a66421853f5978b5ec49a38ecf7c62c624e33801cbff",
     "go/control-plane/internal/rules/service/deployment_service.go": "68435994ae8df187bbd6c755386c1790bf9a338e632caadeed3c8496c17b82f6",
@@ -187,6 +187,38 @@
   },
   "parse_errors": [],
   "duplicate_runtime_bindings": {
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_GROUP": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_GROUP:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_GROUP:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_SELECTION_SIGNING_SECRET": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_SELECTION_SIGNING_SECRET:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_SELECTION_SIGNING_SECRET:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_CHAIN_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_CHAIN_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_CHAIN_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_DOWNLOAD_SECRET": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_DOWNLOAD_SECRET:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_DOWNLOAD_SECRET:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
@@ -195,9 +227,81 @@
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_REPORT_BUCKET:deployments/kubernetes/applications/go-services.yaml",
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_REPORT_BUCKET:go/control-plane/deployments/kubernetes/alert-service.yaml"
     ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_LOOKUP_URL": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_URL": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_URL:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_URL:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTION_V1_ENABLED": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_BATCH_SIZE": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_BATCH_SIZE:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_BATCH_SIZE:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_LEASE_SECONDS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_LEASE_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_LEASE_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
     ],
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:API_LISTEN_ADDR": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:API_LISTEN_ADDR:deployments/kubernetes/applications/go-services.yaml",
@@ -259,9 +363,25 @@
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_SNAPSHOT_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_SNAPSHOT_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
     ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EVENT_TOPIC": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EVENT_TOPIC:deployments/kubernetes/applications/go-services.yaml",
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EVENT_TOPIC:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EXECUTOR_LOOKUP_URL": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EXECUTOR_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EXECUTOR_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml"
     ],
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EXECUTOR_TIMEOUT_SECONDS": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EXECUTOR_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
@@ -270,6 +390,10 @@
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PIPELINE_V1_ENABLED": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PIPELINE_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PIPELINE_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
     ],
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_V2_ENABLED": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_V2_ENABLED:deployments/kubernetes/applications/go-services.yaml",
@@ -806,11 +930,11 @@
   },
   "conflicting_runtime_bindings": [],
   "counts": {
-    "entries": 1890,
-    "go_env_consumers": 926,
+    "entries": 1954,
+    "go_env_consumers": 927,
     "flink_properties": 261,
-    "kubernetes_env_bindings": 703,
-    "secret_entries": 184,
+    "kubernetes_env_bindings": 766,
+    "secret_entries": 190,
     "source_files": 76
   },
   "entries": [
@@ -9286,8 +9410,8 @@
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:104:DSN:CLICKHOUSE_DSN",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:104:DSN:CLICKHOUSE_DSN",
+      "id": "go:go/control-plane/internal/alert/config/config.go:105:DSN:CLICKHOUSE_DSN",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:105:DSN:CLICKHOUSE_DSN",
       "key": "CLICKHOUSE_DSN",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9312,15 +9436,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 104,
+          "line": 105,
           "field": "DSN"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:105:Hosts:CLICKHOUSE_HOSTS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:105:Hosts:CLICKHOUSE_HOSTS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:106:Hosts:CLICKHOUSE_HOSTS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:106:Hosts:CLICKHOUSE_HOSTS",
       "key": "CLICKHOUSE_HOSTS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9345,15 +9469,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 105,
+          "line": 106,
           "field": "Hosts"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:106:Database:CLICKHOUSE_DATABASE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:106:Database:CLICKHOUSE_DATABASE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:107:Database:CLICKHOUSE_DATABASE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:107:Database:CLICKHOUSE_DATABASE",
       "key": "CLICKHOUSE_DATABASE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9378,15 +9502,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 106,
+          "line": 107,
           "field": "Database"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:107:Username:CLICKHOUSE_USERNAME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:107:Username:CLICKHOUSE_USERNAME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:108:Username:CLICKHOUSE_USERNAME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:108:Username:CLICKHOUSE_USERNAME",
       "key": "CLICKHOUSE_USERNAME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9411,15 +9535,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 107,
+          "line": 108,
           "field": "Username"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:108:Password:CLICKHOUSE_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:108:Password:CLICKHOUSE_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:109:Password:CLICKHOUSE_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:109:Password:CLICKHOUSE_PASSWORD",
       "key": "CLICKHOUSE_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9444,15 +9568,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 108,
+          "line": 109,
           "field": "Password"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:109:MaxOpenConns:CLICKHOUSE_MAX_OPEN_CONNS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:109:MaxOpenConns:CLICKHOUSE_MAX_OPEN_CONNS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:110:MaxOpenConns:CLICKHOUSE_MAX_OPEN_CONNS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:110:MaxOpenConns:CLICKHOUSE_MAX_OPEN_CONNS",
       "key": "CLICKHOUSE_MAX_OPEN_CONNS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9477,15 +9601,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 109,
+          "line": 110,
           "field": "MaxOpenConns"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:110:MaxIdleConns:CLICKHOUSE_MAX_IDLE_CONNS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:110:MaxIdleConns:CLICKHOUSE_MAX_IDLE_CONNS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:111:MaxIdleConns:CLICKHOUSE_MAX_IDLE_CONNS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:111:MaxIdleConns:CLICKHOUSE_MAX_IDLE_CONNS",
       "key": "CLICKHOUSE_MAX_IDLE_CONNS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9510,15 +9634,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 110,
+          "line": 111,
           "field": "MaxIdleConns"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:258:Addresses:OPENSEARCH_ADDRS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:258:Addresses:OPENSEARCH_ADDRS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:259:Addresses:OPENSEARCH_ADDRS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:259:Addresses:OPENSEARCH_ADDRS",
       "key": "OPENSEARCH_ADDRS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9543,15 +9667,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 258,
+          "line": 259,
           "field": "Addresses"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:259:Username:OPENSEARCH_USERNAME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:259:Username:OPENSEARCH_USERNAME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:260:Username:OPENSEARCH_USERNAME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:260:Username:OPENSEARCH_USERNAME",
       "key": "OPENSEARCH_USERNAME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9576,15 +9700,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 259,
+          "line": 260,
           "field": "Username"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:260:Password:OPENSEARCH_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:260:Password:OPENSEARCH_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:261:Password:OPENSEARCH_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:261:Password:OPENSEARCH_PASSWORD",
       "key": "OPENSEARCH_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9609,15 +9733,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 260,
+          "line": 261,
           "field": "Password"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:261:Index:OPENSEARCH_INDEX",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:261:Index:OPENSEARCH_INDEX",
+      "id": "go:go/control-plane/internal/alert/config/config.go:262:Index:OPENSEARCH_INDEX",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:262:Index:OPENSEARCH_INDEX",
       "key": "OPENSEARCH_INDEX",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9642,15 +9766,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 261,
+          "line": 262,
           "field": "Index"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:262:LegacyReadTarget:OPENSEARCH_LEGACY_READ_TARGET",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:262:LegacyReadTarget:OPENSEARCH_LEGACY_READ_TARGET",
+      "id": "go:go/control-plane/internal/alert/config/config.go:263:LegacyReadTarget:OPENSEARCH_LEGACY_READ_TARGET",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:263:LegacyReadTarget:OPENSEARCH_LEGACY_READ_TARGET",
       "key": "OPENSEARCH_LEGACY_READ_TARGET",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9675,15 +9799,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 262,
+          "line": 263,
           "field": "LegacyReadTarget"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:263:V2Enabled:OPENSEARCH_ALERTS_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:263:V2Enabled:OPENSEARCH_ALERTS_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:264:V2Enabled:OPENSEARCH_ALERTS_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:264:V2Enabled:OPENSEARCH_ALERTS_V2_ENABLED",
       "key": "OPENSEARCH_ALERTS_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9708,15 +9832,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 263,
+          "line": 264,
           "field": "V2Enabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:264:ReadAlias:OPENSEARCH_ALERTS_READ_ALIAS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:264:ReadAlias:OPENSEARCH_ALERTS_READ_ALIAS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:265:ReadAlias:OPENSEARCH_ALERTS_READ_ALIAS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:265:ReadAlias:OPENSEARCH_ALERTS_READ_ALIAS",
       "key": "OPENSEARCH_ALERTS_READ_ALIAS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9741,15 +9865,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 264,
+          "line": 265,
           "field": "ReadAlias"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:265:WriteAlias:OPENSEARCH_ALERTS_WRITE_ALIAS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:265:WriteAlias:OPENSEARCH_ALERTS_WRITE_ALIAS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:266:WriteAlias:OPENSEARCH_ALERTS_WRITE_ALIAS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:266:WriteAlias:OPENSEARCH_ALERTS_WRITE_ALIAS",
       "key": "OPENSEARCH_ALERTS_WRITE_ALIAS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9774,15 +9898,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 265,
+          "line": 266,
           "field": "WriteAlias"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:266:SearchCursorEnabled:OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:266:SearchCursorEnabled:OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:267:SearchCursorEnabled:OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:267:SearchCursorEnabled:OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
       "key": "OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9807,15 +9931,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 266,
+          "line": 267,
           "field": "SearchCursorEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:267:SearchShallowLimit:OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:267:SearchShallowLimit:OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:268:SearchShallowLimit:OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:268:SearchShallowLimit:OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
       "key": "OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9840,15 +9964,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 267,
+          "line": 268,
           "field": "SearchShallowLimit"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:268:SearchMaxPageSize:OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:268:SearchMaxPageSize:OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:269:SearchMaxPageSize:OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:269:SearchMaxPageSize:OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
       "key": "OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9873,15 +9997,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 268,
+          "line": 269,
           "field": "SearchMaxPageSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:269:SearchQueryTimeout:OPENSEARCH_SEARCH_QUERY_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:269:SearchQueryTimeout:OPENSEARCH_SEARCH_QUERY_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:270:SearchQueryTimeout:OPENSEARCH_SEARCH_QUERY_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:270:SearchQueryTimeout:OPENSEARCH_SEARCH_QUERY_TIMEOUT",
       "key": "OPENSEARCH_SEARCH_QUERY_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9906,15 +10030,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 269,
+          "line": 270,
           "field": "SearchQueryTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:270:SearchCursorTTL:OPENSEARCH_SEARCH_CURSOR_TTL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:270:SearchCursorTTL:OPENSEARCH_SEARCH_CURSOR_TTL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:271:SearchCursorTTL:OPENSEARCH_SEARCH_CURSOR_TTL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:271:SearchCursorTTL:OPENSEARCH_SEARCH_CURSOR_TTL",
       "key": "OPENSEARCH_SEARCH_CURSOR_TTL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9939,15 +10063,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 270,
+          "line": 271,
           "field": "SearchCursorTTL"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:271:SearchTrackTotal:OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:271:SearchTrackTotal:OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
+      "id": "go:go/control-plane/internal/alert/config/config.go:272:SearchTrackTotal:OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:272:SearchTrackTotal:OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
       "key": "OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9972,15 +10096,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 271,
+          "line": 272,
           "field": "SearchTrackTotal"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:278:ReconcileEnabled:OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:278:ReconcileEnabled:OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:279:ReconcileEnabled:OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:279:ReconcileEnabled:OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10005,15 +10129,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 278,
+          "line": 279,
           "field": "ReconcileEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:279:Interval:OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:279:Interval:OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:280:Interval:OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:280:Interval:OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10038,15 +10162,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 279,
+          "line": 280,
           "field": "Interval"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:280:Lease:OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:280:Lease:OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:281:Lease:OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:281:Lease:OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10071,15 +10195,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 280,
+          "line": 281,
           "field": "Lease"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:281:BatchSize:OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:281:BatchSize:OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:282:BatchSize:OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:282:BatchSize:OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10104,15 +10228,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 281,
+          "line": 282,
           "field": "BatchSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:282:MaxAttempts:OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:282:MaxAttempts:OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:283:MaxAttempts:OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:283:MaxAttempts:OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10137,15 +10261,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 282,
+          "line": 283,
           "field": "MaxAttempts"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:283:MaxDocuments:OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:283:MaxDocuments:OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:284:MaxDocuments:OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:284:MaxDocuments:OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
       "key": "OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10170,15 +10294,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 283,
+          "line": 284,
           "field": "MaxDocuments"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:284:StopErrorCount:OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:284:StopErrorCount:OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:285:StopErrorCount:OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:285:StopErrorCount:OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
       "key": "OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10203,15 +10327,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 284,
+          "line": 285,
           "field": "StopErrorCount"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:285:RepairPerSecond:OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:285:RepairPerSecond:OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
+      "id": "go:go/control-plane/internal/alert/config/config.go:286:RepairPerSecond:OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:286:RepairPerSecond:OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
       "key": "OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10236,15 +10360,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 285,
+          "line": 286,
           "field": "RepairPerSecond"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:314:Enabled:CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:314:Enabled:CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:315:Enabled:CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:315:Enabled:CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
       "key": "CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10269,15 +10393,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 314,
+          "line": 315,
           "field": "Enabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:315:Interval:CAMPAIGN_TARGET_PROJECTION_INTERVAL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:315:Interval:CAMPAIGN_TARGET_PROJECTION_INTERVAL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:316:Interval:CAMPAIGN_TARGET_PROJECTION_INTERVAL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:316:Interval:CAMPAIGN_TARGET_PROJECTION_INTERVAL",
       "key": "CAMPAIGN_TARGET_PROJECTION_INTERVAL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10302,15 +10426,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 315,
+          "line": 316,
           "field": "Interval"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:316:Lease:CAMPAIGN_TARGET_PROJECTION_LEASE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:316:Lease:CAMPAIGN_TARGET_PROJECTION_LEASE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:317:Lease:CAMPAIGN_TARGET_PROJECTION_LEASE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:317:Lease:CAMPAIGN_TARGET_PROJECTION_LEASE",
       "key": "CAMPAIGN_TARGET_PROJECTION_LEASE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10335,15 +10459,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 316,
+          "line": 317,
           "field": "Lease"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:317:MaxAttempts:CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:317:MaxAttempts:CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:318:MaxAttempts:CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:318:MaxAttempts:CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
       "key": "CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10368,15 +10492,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 317,
+          "line": 318,
           "field": "MaxAttempts"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:318:ClickHouseTable:CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:318:ClickHouseTable:CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:319:ClickHouseTable:CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:319:ClickHouseTable:CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
       "key": "CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10401,15 +10525,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 318,
+          "line": 319,
           "field": "ClickHouseTable"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:319:OpenSearchWriteAlias:CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:319:OpenSearchWriteAlias:CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:320:OpenSearchWriteAlias:CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:320:OpenSearchWriteAlias:CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
       "key": "CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10434,15 +10558,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 319,
+          "line": 320,
           "field": "OpenSearchWriteAlias"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:324:Addresses:CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:324:Addresses:CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
+      "id": "go:go/control-plane/internal/alert/config/config.go:325:Addresses:CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:325:Addresses:CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10467,15 +10591,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 324,
+          "line": 325,
           "field": "Addresses"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:325:Username:CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:325:Username:CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:326:Username:CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:326:Username:CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10500,15 +10624,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 325,
+          "line": 326,
           "field": "Username"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:326:Password:CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:326:Password:CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:327:Password:CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:327:Password:CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10533,15 +10657,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 326,
+          "line": 327,
           "field": "Password"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:327:Space:CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:327:Space:CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:328:Space:CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:328:Space:CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10566,15 +10690,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 327,
+          "line": 328,
           "field": "Space"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:328:Timeout:CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:328:Timeout:CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:329:Timeout:CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:329:Timeout:CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10599,15 +10723,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 328,
+          "line": 329,
           "field": "Timeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:329:IdleTime:CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:329:IdleTime:CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:330:IdleTime:CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:330:IdleTime:CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10632,15 +10756,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 329,
+          "line": 330,
           "field": "IdleTime"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:330:MaxPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:330:MaxPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:331:MaxPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:331:MaxPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10665,15 +10789,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 330,
+          "line": 331,
           "field": "MaxPoolSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:331:MinPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:331:MinPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:332:MinPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:332:MinPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10698,15 +10822,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 331,
+          "line": 332,
           "field": "MinPoolSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:336:TimeBucketMinutes:DEDUP_TIME_BUCKET",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:336:TimeBucketMinutes:DEDUP_TIME_BUCKET",
+      "id": "go:go/control-plane/internal/alert/config/config.go:337:TimeBucketMinutes:DEDUP_TIME_BUCKET",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:337:TimeBucketMinutes:DEDUP_TIME_BUCKET",
       "key": "DEDUP_TIME_BUCKET",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10731,15 +10855,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 336,
+          "line": 337,
           "field": "TimeBucketMinutes"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:337:TTL:DEDUP_TTL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:337:TTL:DEDUP_TTL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:338:TTL:DEDUP_TTL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:338:TTL:DEDUP_TTL",
       "key": "DEDUP_TTL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10764,15 +10888,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 337,
+          "line": 338,
           "field": "TTL"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:342:ListenAddr:API_LISTEN_ADDR",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:342:ListenAddr:API_LISTEN_ADDR",
+      "id": "go:go/control-plane/internal/alert/config/config.go:343:ListenAddr:API_LISTEN_ADDR",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:343:ListenAddr:API_LISTEN_ADDR",
       "key": "API_LISTEN_ADDR",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10797,15 +10921,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 342,
+          "line": 343,
           "field": "ListenAddr"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:343:ReadTimeout:API_READ_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:343:ReadTimeout:API_READ_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:344:ReadTimeout:API_READ_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:344:ReadTimeout:API_READ_TIMEOUT",
       "key": "API_READ_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10830,15 +10954,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 343,
+          "line": 344,
           "field": "ReadTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:344:WriteTimeout:API_WRITE_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:344:WriteTimeout:API_WRITE_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:345:WriteTimeout:API_WRITE_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:345:WriteTimeout:API_WRITE_TIMEOUT",
       "key": "API_WRITE_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10863,15 +10987,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 344,
+          "line": 345,
           "field": "WriteTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:345:IdleTimeout:API_IDLE_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:345:IdleTimeout:API_IDLE_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:346:IdleTimeout:API_IDLE_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:346:IdleTimeout:API_IDLE_TIMEOUT",
       "key": "API_IDLE_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10896,15 +11020,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 345,
+          "line": 346,
           "field": "IdleTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:346:AllowedOrigins:API_ALLOWED_ORIGINS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:346:AllowedOrigins:API_ALLOWED_ORIGINS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:347:AllowedOrigins:API_ALLOWED_ORIGINS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:347:AllowedOrigins:API_ALLOWED_ORIGINS",
       "key": "API_ALLOWED_ORIGINS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10929,15 +11053,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 346,
+          "line": 347,
           "field": "AllowedOrigins"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:351:Enabled:AUTH_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:351:Enabled:AUTH_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:352:Enabled:AUTH_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:352:Enabled:AUTH_ENABLED",
       "key": "AUTH_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10962,15 +11086,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 351,
+          "line": 352,
           "field": "Enabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:352:PostgresDSN:AUTH_POSTGRES_DSN",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:352:PostgresDSN:AUTH_POSTGRES_DSN",
+      "id": "go:go/control-plane/internal/alert/config/config.go:353:PostgresDSN:AUTH_POSTGRES_DSN",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:353:PostgresDSN:AUTH_POSTGRES_DSN",
       "key": "AUTH_POSTGRES_DSN",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10995,15 +11119,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 352,
+          "line": 353,
           "field": "PostgresDSN"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:353:PostgresHost:AUTH_POSTGRES_HOST",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:353:PostgresHost:AUTH_POSTGRES_HOST",
+      "id": "go:go/control-plane/internal/alert/config/config.go:354:PostgresHost:AUTH_POSTGRES_HOST",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:354:PostgresHost:AUTH_POSTGRES_HOST",
       "key": "AUTH_POSTGRES_HOST",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11028,15 +11152,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 353,
+          "line": 354,
           "field": "PostgresHost"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:354:PostgresPort:AUTH_POSTGRES_PORT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:354:PostgresPort:AUTH_POSTGRES_PORT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:355:PostgresPort:AUTH_POSTGRES_PORT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:355:PostgresPort:AUTH_POSTGRES_PORT",
       "key": "AUTH_POSTGRES_PORT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11061,15 +11185,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 354,
+          "line": 355,
           "field": "PostgresPort"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:355:PostgresDatabase:AUTH_POSTGRES_DATABASE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:355:PostgresDatabase:AUTH_POSTGRES_DATABASE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:356:PostgresDatabase:AUTH_POSTGRES_DATABASE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:356:PostgresDatabase:AUTH_POSTGRES_DATABASE",
       "key": "AUTH_POSTGRES_DATABASE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11094,15 +11218,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 355,
+          "line": 356,
           "field": "PostgresDatabase"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:356:PostgresUsername:AUTH_POSTGRES_USERNAME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:356:PostgresUsername:AUTH_POSTGRES_USERNAME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:357:PostgresUsername:AUTH_POSTGRES_USERNAME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:357:PostgresUsername:AUTH_POSTGRES_USERNAME",
       "key": "AUTH_POSTGRES_USERNAME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11127,15 +11251,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 356,
+          "line": 357,
           "field": "PostgresUsername"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:357:PostgresPassword:AUTH_POSTGRES_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:357:PostgresPassword:AUTH_POSTGRES_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:358:PostgresPassword:AUTH_POSTGRES_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:358:PostgresPassword:AUTH_POSTGRES_PASSWORD",
       "key": "AUTH_POSTGRES_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11160,15 +11284,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 357,
+          "line": 358,
           "field": "PostgresPassword"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:358:PostgresSSLMode:AUTH_POSTGRES_SSL_MODE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:358:PostgresSSLMode:AUTH_POSTGRES_SSL_MODE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:359:PostgresSSLMode:AUTH_POSTGRES_SSL_MODE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:359:PostgresSSLMode:AUTH_POSTGRES_SSL_MODE",
       "key": "AUTH_POSTGRES_SSL_MODE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11193,15 +11317,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 358,
+          "line": 359,
           "field": "PostgresSSLMode"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:359:PostgresConnectTimeout:AUTH_POSTGRES_CONNECT_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:359:PostgresConnectTimeout:AUTH_POSTGRES_CONNECT_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:360:PostgresConnectTimeout:AUTH_POSTGRES_CONNECT_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:360:PostgresConnectTimeout:AUTH_POSTGRES_CONNECT_TIMEOUT",
       "key": "AUTH_POSTGRES_CONNECT_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11226,15 +11350,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 359,
+          "line": 360,
           "field": "PostgresConnectTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:360:JWTSecretKey:JWT_SECRET_KEY",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:360:JWTSecretKey:JWT_SECRET_KEY",
+      "id": "go:go/control-plane/internal/alert/config/config.go:361:JWTSecretKey:JWT_SECRET_KEY",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:361:JWTSecretKey:JWT_SECRET_KEY",
       "key": "JWT_SECRET_KEY",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11259,7 +11383,7 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 360,
+          "line": 361,
           "field": "JWTSecretKey"
         }
       ],
@@ -12328,7 +12452,7 @@
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
       "type": "boolean",
-      "default": "true",
+      "default": "false",
       "default_present": true,
       "secret_default_nonempty": false,
       "required": false,
@@ -12388,8 +12512,41 @@
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:76:WhitelistEventTopic:KAFKA_WHITELIST_EVENT_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:76:WhitelistEventTopic:KAFKA_WHITELIST_EVENT_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:76:SavedViewTransactionEnabled:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:76:SavedViewTransactionEnabled:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "key": "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "consumer": "go:alert",
+      "owner": "alert-domain-owner",
+      "type": "boolean",
+      "default": "false",
+      "default_present": true,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": true,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "go_env_tag",
+          "path": "go/control-plane/internal/alert/config/config.go",
+          "line": 76,
+          "field": "SavedViewTransactionEnabled"
+        }
+      ],
+      "separator": null
+    },
+    {
+      "id": "go:go/control-plane/internal/alert/config/config.go:77:WhitelistEventTopic:KAFKA_WHITELIST_EVENT_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:77:WhitelistEventTopic:KAFKA_WHITELIST_EVENT_TOPIC",
       "key": "KAFKA_WHITELIST_EVENT_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12414,15 +12571,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 76,
+          "line": 77,
           "field": "WhitelistEventTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:77:WhitelistEventPipelineEnabled:WHITELIST_EVENT_PIPELINE_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:77:WhitelistEventPipelineEnabled:WHITELIST_EVENT_PIPELINE_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:78:WhitelistEventPipelineEnabled:WHITELIST_EVENT_PIPELINE_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:78:WhitelistEventPipelineEnabled:WHITELIST_EVENT_PIPELINE_V2_ENABLED",
       "key": "WHITELIST_EVENT_PIPELINE_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12447,15 +12604,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 77,
+          "line": 78,
           "field": "WhitelistEventPipelineEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:78:NotificationGovernanceEventTopic:KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:78:NotificationGovernanceEventTopic:KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:79:NotificationGovernanceEventTopic:KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:79:NotificationGovernanceEventTopic:KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
       "key": "KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12480,15 +12637,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 78,
+          "line": 79,
           "field": "NotificationGovernanceEventTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:79:CampaignEventTopic:KAFKA_CAMPAIGN_EVENT_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:79:CampaignEventTopic:KAFKA_CAMPAIGN_EVENT_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:80:CampaignEventTopic:KAFKA_CAMPAIGN_EVENT_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:80:CampaignEventTopic:KAFKA_CAMPAIGN_EVENT_TOPIC",
       "key": "KAFKA_CAMPAIGN_EVENT_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12513,15 +12670,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 79,
+          "line": 80,
           "field": "CampaignEventTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:80:CampaignEventGroup:KAFKA_CAMPAIGN_EVENT_GROUP",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:80:CampaignEventGroup:KAFKA_CAMPAIGN_EVENT_GROUP",
+      "id": "go:go/control-plane/internal/alert/config/config.go:81:CampaignEventGroup:KAFKA_CAMPAIGN_EVENT_GROUP",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:81:CampaignEventGroup:KAFKA_CAMPAIGN_EVENT_GROUP",
       "key": "KAFKA_CAMPAIGN_EVENT_GROUP",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12546,15 +12703,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 80,
+          "line": 81,
           "field": "CampaignEventGroup"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:81:CampaignMemberTopic:KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:81:CampaignMemberTopic:KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:82:CampaignMemberTopic:KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:82:CampaignMemberTopic:KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
       "key": "KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12579,15 +12736,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 81,
+          "line": 82,
           "field": "CampaignMemberTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:82:CampaignMemberGroup:KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:82:CampaignMemberGroup:KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
+      "id": "go:go/control-plane/internal/alert/config/config.go:83:CampaignMemberGroup:KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:83:CampaignMemberGroup:KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
       "key": "KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12612,15 +12769,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 82,
+          "line": 83,
           "field": "CampaignMemberGroup"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:83:CampaignEventEnabled:CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:83:CampaignEventEnabled:CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:84:CampaignEventEnabled:CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:84:CampaignEventEnabled:CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
       "key": "CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12645,15 +12802,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 83,
+          "line": 84,
           "field": "CampaignEventEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:84:PlaybookEventTopic:KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:84:PlaybookEventTopic:KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:85:PlaybookEventTopic:KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:85:PlaybookEventTopic:KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
       "key": "KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12678,15 +12835,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 84,
+          "line": 85,
           "field": "PlaybookEventTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:85:PlaybookEventGroup:KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:85:PlaybookEventGroup:KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
+      "id": "go:go/control-plane/internal/alert/config/config.go:86:PlaybookEventGroup:KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:86:PlaybookEventGroup:KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
       "key": "KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12711,15 +12868,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 85,
+          "line": 86,
           "field": "PlaybookEventGroup"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:86:PlaybookEventEnabled:PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:86:PlaybookEventEnabled:PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:87:PlaybookEventEnabled:PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:87:PlaybookEventEnabled:PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
       "key": "PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12744,15 +12901,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 86,
+          "line": 87,
           "field": "PlaybookEventEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:92:Addrs:REDIS_ADDRS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:92:Addrs:REDIS_ADDRS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:93:Addrs:REDIS_ADDRS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:93:Addrs:REDIS_ADDRS",
       "key": "REDIS_ADDRS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12777,15 +12934,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 92,
+          "line": 93,
           "field": "Addrs"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:93:Password:REDIS_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:93:Password:REDIS_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:94:Password:REDIS_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:94:Password:REDIS_PASSWORD",
       "key": "REDIS_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12810,15 +12967,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 93,
+          "line": 94,
           "field": "Password"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:94:DB:REDIS_DB",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:94:DB:REDIS_DB",
+      "id": "go:go/control-plane/internal/alert/config/config.go:95:DB:REDIS_DB",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:95:DB:REDIS_DB",
       "key": "REDIS_DB",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12843,15 +13000,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 94,
+          "line": 95,
           "field": "DB"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:95:SentinelAddrs:REDIS_SENTINEL_ADDRS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:95:SentinelAddrs:REDIS_SENTINEL_ADDRS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:96:SentinelAddrs:REDIS_SENTINEL_ADDRS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:96:SentinelAddrs:REDIS_SENTINEL_ADDRS",
       "key": "REDIS_SENTINEL_ADDRS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12876,15 +13033,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 95,
+          "line": 96,
           "field": "SentinelAddrs"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:96:SentinelMaster:REDIS_SENTINEL_MASTER",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:96:SentinelMaster:REDIS_SENTINEL_MASTER",
+      "id": "go:go/control-plane/internal/alert/config/config.go:97:SentinelMaster:REDIS_SENTINEL_MASTER",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:97:SentinelMaster:REDIS_SENTINEL_MASTER",
       "key": "REDIS_SENTINEL_MASTER",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12909,15 +13066,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 96,
+          "line": 97,
           "field": "SentinelMaster"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:97:PoolSize:REDIS_POOL_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:97:PoolSize:REDIS_POOL_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:98:PoolSize:REDIS_POOL_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:98:PoolSize:REDIS_POOL_SIZE",
       "key": "REDIS_POOL_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12942,15 +13099,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 97,
+          "line": 98,
           "field": "PoolSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:98:TTL:REDIS_TTL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:98:TTL:REDIS_TTL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:99:TTL:REDIS_TTL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:99:TTL:REDIS_TTL",
       "key": "REDIS_TTL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12975,7 +13132,7 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 98,
+          "line": 99,
           "field": "TTL"
         }
       ],
@@ -13417,7 +13574,7 @@
       "consumer": "go:asset",
       "owner": "asset-domain-owner",
       "type": "boolean",
-      "default": "true",
+      "default": "false",
       "default_present": true,
       "secret_default_nonempty": false,
       "required": false,
@@ -13483,7 +13640,7 @@
       "consumer": "go:asset",
       "owner": "asset-domain-owner",
       "type": "boolean",
-      "default": "true",
+      "default": "false",
       "default_present": true,
       "secret_default_nonempty": false,
       "required": false,
@@ -13681,7 +13838,7 @@
       "consumer": "go:asset",
       "owner": "asset-domain-owner",
       "type": "boolean",
-      "default": "true",
+      "default": "false",
       "default_present": true,
       "secret_default_nonempty": false,
       "required": false,
@@ -34201,8 +34358,8 @@
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:90:MaxBatchSize:MAX_BATCH_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:90:MaxBatchSize:MAX_BATCH_SIZE",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:91:MaxBatchSize:MAX_BATCH_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:91:MaxBatchSize:MAX_BATCH_SIZE",
       "key": "MAX_BATCH_SIZE",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34227,15 +34384,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 90,
+          "line": 91,
           "field": "MaxBatchSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:91:MaxEventSize:MAX_EVENT_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:91:MaxEventSize:MAX_EVENT_SIZE",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:92:MaxEventSize:MAX_EVENT_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:92:MaxEventSize:MAX_EVENT_SIZE",
       "key": "MAX_EVENT_SIZE",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34260,15 +34417,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 91,
+          "line": 92,
           "field": "MaxEventSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:92:StreamBufferSize:STREAM_BUFFER_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:92:StreamBufferSize:STREAM_BUFFER_SIZE",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:93:StreamBufferSize:STREAM_BUFFER_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:93:StreamBufferSize:STREAM_BUFFER_SIZE",
       "key": "STREAM_BUFFER_SIZE",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34293,15 +34450,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 92,
+          "line": 93,
           "field": "StreamBufferSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:93:HeartbeatInterval:HEARTBEAT_INTERVAL",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:93:HeartbeatInterval:HEARTBEAT_INTERVAL",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:94:HeartbeatInterval:HEARTBEAT_INTERVAL",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:94:HeartbeatInterval:HEARTBEAT_INTERVAL",
       "key": "HEARTBEAT_INTERVAL",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34326,15 +34483,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 93,
+          "line": 94,
           "field": "HeartbeatInterval"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:94:EnableDLQ:ENABLE_DLQ",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:94:EnableDLQ:ENABLE_DLQ",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:95:EnableDLQ:ENABLE_DLQ",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:95:EnableDLQ:ENABLE_DLQ",
       "key": "ENABLE_DLQ",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34359,15 +34516,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 94,
+          "line": 95,
           "field": "EnableDLQ"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:95:EnableDedup:ENABLE_DEDUP",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:95:EnableDedup:ENABLE_DEDUP",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:96:EnableDedup:ENABLE_DEDUP",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:96:EnableDedup:ENABLE_DEDUP",
       "key": "ENABLE_DEDUP",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34392,15 +34549,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 95,
+          "line": 96,
           "field": "EnableDedup"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:96:ProbeStatusTimeout:PROBE_STATUS_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:96:ProbeStatusTimeout:PROBE_STATUS_TIMEOUT",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:97:ProbeStatusTimeout:PROBE_STATUS_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:97:ProbeStatusTimeout:PROBE_STATUS_TIMEOUT",
       "key": "PROBE_STATUS_TIMEOUT",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34425,15 +34582,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 96,
+          "line": 97,
           "field": "ProbeStatusTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:97:EnableAudit:ENABLE_AUDIT",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:97:EnableAudit:ENABLE_AUDIT",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:98:EnableAudit:ENABLE_AUDIT",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:98:EnableAudit:ENABLE_AUDIT",
       "key": "ENABLE_AUDIT",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34458,7 +34615,7 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 97,
+          "line": 98,
           "field": "EnableAudit"
         }
       ],
@@ -44662,6 +44819,554 @@
       ]
     },
     {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED",
+      "key": "ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED",
+      "key": "ALERT_BATCH_ASSIGNMENT_COMPENSATION_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_GROUP:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_GROUP",
+      "key": "ALERT_BATCH_ASSIGNMENT_EVENT_GROUP",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "f13c597ccbc5266504e5d7a91cfda8d40d1e58497856d62886adf111003106db",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_GROUP:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_GROUP",
+      "key": "ALERT_BATCH_ASSIGNMENT_EVENT_GROUP",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "f13c597ccbc5266504e5d7a91cfda8d40d1e58497856d62886adf111003106db",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC",
+      "key": "ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "f646904211d76b242ba37a3d1dc6b1b24a785dc623cda77c1941b808bbec935a",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC",
+      "key": "ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "f646904211d76b242ba37a3d1dc6b1b24a785dc623cda77c1941b808bbec935a",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED",
+      "key": "ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED",
+      "key": "ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+      "key": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+      "key": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_SELECTION_SIGNING_SECRET:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_SELECTION_SIGNING_SECRET",
+      "key": "ALERT_BATCH_SELECTION_SIGNING_SECRET",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": true,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_secretKeyRef",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "name": "traffic-credentials",
+            "key": "ALERT_BATCH_SELECTION_SIGNING_SECRET",
+            "optional": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_SELECTION_SIGNING_SECRET:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_BATCH_SELECTION_SIGNING_SECRET",
+      "key": "ALERT_BATCH_SELECTION_SIGNING_SECRET",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": true,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_secretKeyRef",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "name": "traffic-credentials",
+            "key": "ALERT_BATCH_SELECTION_SIGNING_SECRET",
+            "optional": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_CHAIN_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_CHAIN_V1_ENABLED",
+      "key": "ALERT_EVIDENCE_CHAIN_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_CHAIN_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_CHAIN_V1_ENABLED",
+      "key": "ALERT_EVIDENCE_CHAIN_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_DOWNLOAD_SECRET:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_DOWNLOAD_SECRET",
+      "key": "ALERT_EVIDENCE_DOWNLOAD_SECRET",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": true,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_secretKeyRef",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "name": "traffic-credentials",
+            "key": "ALERT_EVIDENCE_DOWNLOAD_SECRET",
+            "optional": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_DOWNLOAD_SECRET:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_EVIDENCE_DOWNLOAD_SECRET",
+      "key": "ALERT_EVIDENCE_DOWNLOAD_SECRET",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": true,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_secretKeyRef",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "name": "traffic-credentials",
+            "key": "ALERT_EVIDENCE_DOWNLOAD_SECRET",
+            "optional": true
+          }
+        }
+      ]
+    },
+    {
       "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
       "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED",
       "key": "ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED",
@@ -44832,6 +45537,278 @@
       ]
     },
     {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED",
+      "key": "ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED",
+      "key": "ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_LOOKUP_URL",
+      "key": "ALERT_RESPONSE_COMPENSATION_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_LOOKUP_URL",
+      "key": "ALERT_RESPONSE_COMPENSATION_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS",
+      "key": "ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS",
+      "key": "ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_URL:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_URL",
+      "key": "ALERT_RESPONSE_COMPENSATION_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_URL:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_COMPENSATION_URL",
+      "key": "ALERT_RESPONSE_COMPENSATION_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
       "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
       "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTION_V1_ENABLED",
       "key": "ALERT_RESPONSE_EXECUTION_V1_ENABLED",
@@ -44859,7 +45836,7 @@
           "kind": "kubernetes_literal",
           "path": "deployments/kubernetes/applications/go-services.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -44893,7 +45870,961 @@
           "kind": "kubernetes_literal",
           "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL",
+      "key": "ALERT_RESPONSE_EXECUTOR_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL",
+      "key": "ALERT_RESPONSE_EXECUTOR_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS",
+      "key": "ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS",
+      "key": "ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN",
+      "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": true,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_secretKeyRef",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "name": "traffic-credentials",
+            "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+            "optional": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN",
+      "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": true,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_secretKeyRef",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "name": "traffic-credentials",
+            "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+            "optional": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL",
+      "key": "ALERT_RESPONSE_EXECUTOR_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL",
+      "key": "ALERT_RESPONSE_EXECUTOR_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED",
+      "key": "ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED",
+      "key": "ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_BATCH_SIZE:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_BATCH_SIZE",
+      "key": "ALERT_RESPONSE_RECOVERY_BATCH_SIZE",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "b7a56873cd771f2c446d369b649430b65a756ba278ff97ec81bb6f55b2e73569",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_BATCH_SIZE:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_BATCH_SIZE",
+      "key": "ALERT_RESPONSE_RECOVERY_BATCH_SIZE",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "b7a56873cd771f2c446d369b649430b65a756ba278ff97ec81bb6f55b2e73569",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS",
+      "key": "ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS",
+      "key": "ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_LEASE_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_LEASE_SECONDS",
+      "key": "ALERT_RESPONSE_RECOVERY_LEASE_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "811786ad1ae74adfdd20dd0372abaaebc6246e343aebd01da0bfc4c02bf0106c",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_LEASE_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_LEASE_SECONDS",
+      "key": "ALERT_RESPONSE_RECOVERY_LEASE_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "811786ad1ae74adfdd20dd0372abaaebc6246e343aebd01da0bfc4c02bf0106c",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS",
+      "key": "ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS",
+      "key": "ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS",
+      "key": "ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e629fa6598d732768f7c726b4b621285f9c3b85303900aa912017db7617d8bdb",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS",
+      "key": "ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e629fa6598d732768f7c726b4b621285f9c3b85303900aa912017db7617d8bdb",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS",
+      "key": "ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e629fa6598d732768f7c726b4b621285f9c3b85303900aa912017db7617d8bdb",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS",
+      "key": "ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e629fa6598d732768f7c726b4b621285f9c3b85303900aa912017db7617d8bdb",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS",
+      "key": "ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS",
+      "key": "ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED",
+      "key": "ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED",
+      "key": "ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "key": "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "key": "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -44962,6 +46893,40 @@
           "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
           "reference": {
             "value_sha256": "eaa4cd10ce4288d75258c3ac815dbd3c111a88d453c39fe55afd07784c0d7ab4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED",
+      "key": "AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -46300,6 +48265,210 @@
       ]
     },
     {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED",
+      "key": "DASHBOARD_TASK_COMPENSATION_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED",
+      "key": "DASHBOARD_TASK_COMPENSATION_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL",
+      "key": "DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL",
+      "key": "DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS",
+      "key": "DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS",
+      "key": "DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
       "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EVENT_TOPIC:deployments/kubernetes/applications/go-services.yaml",
       "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EVENT_TOPIC",
       "key": "DASHBOARD_TASK_EVENT_TOPIC",
@@ -46363,6 +48532,74 @@
           "reference": {
             "value_sha256": "4be30d8e75ea6f8e389fb22e667dc69a24d1fae3ed7b634827ef54ab161aaf93",
             "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EXECUTOR_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EXECUTOR_LOOKUP_URL",
+      "key": "DASHBOARD_TASK_EXECUTOR_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EXECUTOR_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EXECUTOR_LOOKUP_URL",
+      "key": "DASHBOARD_TASK_EXECUTOR_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
           }
         }
       ]
@@ -46473,6 +48710,74 @@
       "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PIPELINE_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
       "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PIPELINE_V1_ENABLED",
       "key": "DASHBOARD_TASK_PIPELINE_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED",
+      "key": "DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED",
+      "key": "DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED",
       "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
       "owner": "alert-domain-owner",
       "type": "string",
@@ -52390,7 +54695,7 @@
           "kind": "kubernetes_literal",
           "path": "deployments/kubernetes/applications/go-services.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -52424,7 +54729,7 @@
           "kind": "kubernetes_literal",
           "path": "go/control-plane/deployments/kubernetes/asset-service.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -52526,7 +54831,7 @@
           "kind": "kubernetes_literal",
           "path": "deployments/kubernetes/applications/go-services.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -52560,7 +54865,7 @@
           "kind": "kubernetes_literal",
           "path": "go/control-plane/deployments/kubernetes/asset-service.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -54024,7 +56329,7 @@
           "kind": "kubernetes_literal",
           "path": "deployments/kubernetes/applications/go-services.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -54058,7 +56363,7 @@
           "kind": "kubernetes_literal",
           "path": "go/control-plane/deployments/kubernetes/asset-service.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -63769,5 +66074,5 @@
       ]
     }
   ],
-  "catalog_sha256": "78a88a37c4004dd4b701f30c46df9c8b05515e2e8add48d8fcbc4e5a2077b7d2"
+  "catalog_sha256": "d56b4f84ce4abcd1c36847fefd8556377dbcdfb00b478408f8ef28ca4f123382"
 }

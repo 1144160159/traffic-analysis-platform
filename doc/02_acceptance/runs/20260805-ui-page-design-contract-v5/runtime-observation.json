@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-04T17:29:04Z",
+  "kube_context": "kubernetes-admin@kubernetes",
+  "namespace": "traffic-analysis",
+  "deployment": {
+    "name": "web-ui",
+    "generation": 1117,
+    "observed_generation": 1117,
+    "available_replicas": 1,
+    "updated_replicas": 1,
+    "image": "docker.io/traffic/web-ui:remediation-ui-c2975d525e67",
+    "build_id": "remediation-ui-c2975d525e67",
+    "release": "frontend-remediation-20260805",
+    "source_sha256": "c2975d525e6748ff8151ccceb4957ce214d415972f993095dde2422ea8d1c76a",
+    "image_id": "sha256:164dd84cd683bf2db682bc72ca2e0141af0e5fd81b5a4864c9e4f2a88884d156",
+    "image_manifest_digest": "sha256:d258a503192a3376c4c85ca96278764f21bc2d3c35bba47c2df6dfd9c94f9eee"
+  },
+  "pod": {
+    "name": "web-ui-7b79c7d5d4-4k8bg",
+    "phase": "Running",
+    "ready": true,
+    "restart_count": 0,
+    "image": "docker.io/traffic/web-ui:remediation-ui-c2975d525e67",
+    "image_id": "sha256:164dd84cd683bf2db682bc72ca2e0141af0e5fd81b5a4864c9e4f2a88884d156"
+  }
+}
