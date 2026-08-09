@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "run_id": "20260809-remediation-dashboard-task-poison-dlq-g1-v1-real-components",
+  "status": "PASS",
+  "mode": "correctness",
+  "coverage_status": "OWNED_REAL_POSTGRES_REDPANDA_LOOPBACK_HTTP_PROVIDER_AUTHORITY_LOOKUP_POISON_DLQ_PG_AUDIT_G1",
+  "postgres_container": "codex-dashboard-real-components-pg-870cc82668e8",
+  "kafka_container": "codex-dashboard-real-components-broker-870cc82668e8",
+  "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+  "kafka_image": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+  "postgres_image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+  "kafka_image_id": "sha256:7d60ffd7d82a80a25826b8aacf2698e78cb9d7f7312dea56b0e7e962b39f1c50",
+  "topic": "dashboard.task.events.v1",
+  "topic_partitions": 1,
+  "dlq_topic": "dlq.v1",
+  "dlq_topic_partitions": 1,
+  "schema_files": 16,
+  "postgres_sentinel_verified": true,
+  "kafka_sentinel_verified": true,
+  "required_acks_all_verified": true,
+  "durable_inbox_verified": true,
+  "consumer_restart_replay_verified": true,
+  "out_of_order_authority_rejection_verified": true,
+  "http_execution_provider_verified": true,
+  "http_compensation_provider_verified": true,
+  "provider_idempotency_verified": true,
+  "execution_transport_ambiguity_verified": true,
+  "compensation_transport_ambiguity_verified": true,
+  "execution_authority_lookup_recovery_verified": true,
+  "compensation_authority_lookup_recovery_verified": true,
+  "authority_lookup_atomic_audit_verified": true,
+  "poison_message_dlq_ack_verified": true,
+  "dlq_ack_failure_offset_retention_verified": true,
+  "poison_redelivery_verified": true,
+  "canonical_dlq_payload_verified": true,
+  "source_offset_dlq_postgres_audit_verified": true,
+  "tenant_isolation_verified": true,
+  "same_trace_reconciliation_verified": true,
+  "bounded_profile_verified": false,
+  "bounded_profile": null,
+  "container_resource_limits": {
+    "postgres": {
+      "memory": "512m",
+      "cpus": "1"
+    },
+    "redpanda": {
+      "memory": "1g",
+      "cpus": "2"
+    }
+  },
+  "container_resource_snapshots": {
+    "postgres": {
+      "cpu_percent": "0.01%",
+      "memory_usage": "33.44MiB / 512MiB",
+      "memory_percent": "6.53%",
+      "network_io": "159kB / 96.9kB",
+      "block_io": "0B / 172MB",
+      "pids": "6",
+      "measurement": "post_workload_single_snapshot_not_capacity_evidence"
+    },
+    "redpanda": {
+      "cpu_percent": "0.05%",
+      "memory_usage": "81.91MiB / 1GiB",
+      "memory_percent": "8.00%",
+      "network_io": "59.3kB / 51.7kB",
+      "block_io": "65.5kB / 975kB",
+      "pids": "3",
+      "measurement": "post_workload_single_snapshot_not_capacity_evidence"
+    }
+  },
+  "loopback_only": true,
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "postgres_container_removed": true,
+  "kafka_container_removed": true,
+  "test_output": "=== RUN   TestDashboardTaskRealComponents\n    dashboard_task_real_components_integration_test.go:273: dashboard_real_components=pass group=dashboard-task-real-components-ad6141aa-1985-4a60-990b-d63aac275449 committed_messages=13 max_offset=12 tasks=3 inbox=10 execution_trace=trace-dashboard-real-completed compensation_trace=trace-dashboard-real-compensated execution_calls=4 execution_effects=3 compensation_calls=3 compensation_effects=2 poison_dlq_offset=12\n--- PASS: TestDashboardTaskRealComponents (1.82s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api\t1.830s",
+  "errors": [],
+  "secrets_captured": false
+}

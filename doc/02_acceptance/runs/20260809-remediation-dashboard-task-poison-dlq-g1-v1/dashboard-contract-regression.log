@@ -1,0 +1,6 @@
+test_dashboard_tasks_are_real_atomic_tenant_scoped_commands (tests.alignment.test_alignment_registry.AlignmentRegistryTest.test_dashboard_tasks_are_real_atomic_tenant_scoped_commands) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.010s
+
+OK

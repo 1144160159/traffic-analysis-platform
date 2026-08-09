@@ -5,7 +5,7 @@
     "contracts/alignment/work-packages.json",
     "contracts/alignment/progress-overrides.json"
   ],
-  "as_of": "2026-08-09T01:20:15Z",
+  "as_of": "2026-08-09T02:05:22Z",
   "g7_status": "OPEN",
   "g8_status": "BLOCKED",
   "g8_blockers": [
@@ -874,6 +874,8 @@
         "go/control-plane/internal/alert/api/dashboard_task_compensation.go",
         "go/control-plane/internal/alert/api/dashboard_task_http_provider.go",
         "go/control-plane/internal/alert/api/dashboard_task_http_provider_test.go",
+        "go/control-plane/internal/common/kafka/consumer.go",
+        "go/control-plane/internal/common/kafka/consumer_dlq_acknowledgement_barrier_test.go",
         "go/control-plane/cmd/alert-service/main.go",
         "web/ui/src/services/dashboardTaskApi.ts",
         "web/ui/src/services/dashboardTaskApi.test.ts",
@@ -881,9 +883,13 @@
         "deployments/postgres/migrations/202608031620_dashboard_task_v2.sql",
         "deployments/postgres/migrations/202608041930_dashboard_task_execution_pipeline_v1.sql",
         "deployments/postgres/migrations/202608082100_dashboard_task_compensation_v1.sql",
+        "deployments/postgres/migrations/202608090945_dashboard_task_dlq_receipt_v1.sql",
         "common/sql/pg/11-dashboard-task-v2.sql",
         "common/sql/pg/12-dashboard-task-execution-pipeline-v1.sql",
         "common/sql/pg/13-dashboard-task-compensation-v1.sql",
+        "common/sql/pg/14-dashboard-task-dlq-receipt-v1.sql",
+        "contracts/postgres/transaction-outbox.v1.json",
+        "contracts/kafka/dlq-commit-barrier.v1.json",
         "contracts/events/kafka-topic-catalog.v1.json",
         "contracts/events/kafka-acl-catalog.v1.json",
         "scripts/alignment/capture_dashboard_task_pipeline.py",
@@ -906,10 +912,12 @@
         "doc/02_acceptance/runs/20260809-remediation-dashboard-task-real-components-g1-g4-preflight-v1/manifest.json#sha256=04cf41e43527c227eee092db1745bef12200581587208320563a7cec713201db",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v207/manifest.json#sha256=12bb1dfbc610a6a49cd7c26f2b21fa6d48c47eb867333eebf96ff3f9a6365f5f",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v208/manifest.json#sha256=e61950a66587374da1a0ee8190f7576cdd4536b77f493958a8b5e29070a7a55f",
-        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-authority-lookup-g1-v1/manifest.json#sha256=88c78603121e6aeb082d2fdeddec51a90fdd71322f4bd366be677d5cce8479ba"
+        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-authority-lookup-g1-v1/manifest.json#sha256=88c78603121e6aeb082d2fdeddec51a90fdd71322f4bd366be677d5cce8479ba",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v209/manifest.json#sha256=d9cde1732bf4da52f44a5d5d6d50c9882f9fc32f7b4e8cf5600d08de0932ced7",
+        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-poison-dlq-g1-v1/manifest.json#sha256=9682ab7ea526500664851fd069833e85039a109911d5d9c04ed89061e289b918"
       ],
-      "blocker": "历史已部署候选和指定Windows Chrome仍只证明真实202受理，outbox为pending且pipeline关闭。v208同源码自有G1已用固定摘要PostgreSQL和Redpanda、生产kafka-go producer/consumer及真实loopback HTTP执行/补偿provider证明RequireAll ACK、consumer group重启、精确broker重放、幂等副作用、传输不确定态，以及执行与补偿丢响应后的完整身份权威查询和原子审计恢复；但这不是批准候选环境或批准G2/G3/G4。批准服务中的发布消费、真实broker毒消息/DLQ、批准provider ledger复证、每操作trace跨存储对账、批准预算校准、至少三轮固定规模与方差、持续队列年龄、执行与补偿性能、Windows Chrome补偿控件、canary、在途回滚和T+观察仍未完成，F-DASHBOARD-002保持IMPLEMENTING。",
-      "note": "G0 v207如实保留Rust在线抓包测试在共享loopback接口上的并发竞态失败；仅将共享真实接口测试串行化、保持生产抓包代码和原断言不变后，G0 v208三段分别PASS。v208同源码专项十项范围检查PASS：执行与补偿丢响应只有在provider返回receipt_found且request_event_id、tenant_id、task_id、idempotency_key、trace_id和provider身份全部匹配、耐久回执有效时才能恢复；pending、absent、unknown和查询失败继续保持partial/unknown，跨origin配置失败关闭，恢复事实与任务结果、历史和审计在同一PG事务提交。40个稳态任务仍为32个完成、8个partial；consumer冷启动5219.73ms单列，队列P99=253.336ms、provider P99=121.032ms、端到端P99=1205.655ms、吞吐27.622 task/s、调用放大1.075、最终Kafka lag=0。容器均删除且production_applied=false；阈值来源仍为OWNED_PREFLIGHT_CEILING_NOT_PRODUCTION_SLO，不冒充批准G4、G2-G6、补偿UI或最终成功。"
+      "blocker": "历史已部署候选和指定Windows Chrome仍只证明真实202受理，outbox为pending且pipeline关闭。v209同源码自有G1已补齐毒消息链路：错误DLQ目标下broker未ACK则源offset不提交且PG无receipt；同consumer group重启后重投至dlq.v1，只有DLQ ACK和同事务PG source tuple receipt、quarantine audit完成后才提交源offset。该证据仍是单broker自有环境，不是批准候选或批准G2/G3/G4。批准多副本Kafka/PG故障恢复、DLQ目标partition/offset、provider ledger复证、每操作trace跨存储对账、预算校准、至少三轮固定规模与方差、Windows Chrome补偿控件、canary、在途回滚和T+观察仍未完成，F-DASHBOARD-002保持IMPLEMENTING。",
+      "note": "G0 v209的alignment-test、tests/run_tests.sh full和make python-test分别PASS，候选源码哈希fa3f494572439e9edefa8be52688c633cd061df1bec7f23e04d6ed41f8036b16。专项13项范围检查PASS；PostgreSQL migration、common、Docker merged与Kubernetes ConfigMap三个入口两次回放哈希一致，并实际包含202608090945和dashboard_task_dlq_receipts。真实Redpanda复证毒消息ACK失败保留offset、重启重投、canonical DLQMessage、PG receipt和audit各一条。40任务预检为32 completed、8 partial，consumer冷启动230.875ms、队列P99=257.7ms、provider P99=120.907ms、端到端P99=1194.854ms、吞吐27.517 task/s、调用放大1.1、最终Kafka lag=0；容器均删除且production_applied=false，不冒充批准G4、G2-G6、Windows或最终成功。"
     },
     {
       "id": "F-SCREEN-001",
@@ -1562,10 +1570,16 @@
         "go/control-plane/internal/rules/consumer/whitelist_rule_effect_consumer_test.go",
         "scripts/alignment/verify_whitelist_event_pipeline_ephemeral.py",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v160/manifest.json#sha256=b84172fac0bb784eccfc1616471061f50c7865af2cfb4ba9a6e65a7cfbbc45de",
-        "doc/02_acceptance/runs/20260807-remediation-pg-transaction-outbox-v11/manifest.json#sha256=737ba600dff20232d82d5ca6acbabe6ab7c99cd8fe5e6d794afb89590b6e5aed"
+        "doc/02_acceptance/runs/20260807-remediation-pg-transaction-outbox-v11/manifest.json#sha256=737ba600dff20232d82d5ca6acbabe6ab7c99cd8fe5e6d794afb89590b6e5aed",
+        "deployments/postgres/migrations/202608090945_dashboard_task_dlq_receipt_v1.sql",
+        "common/sql/pg/14-dashboard-task-dlq-receipt-v1.sql",
+        "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
+        "go/control-plane/internal/common/kafka/consumer.go",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v209/manifest.json#sha256=d9cde1732bf4da52f44a5d5d6d50c9882f9fc32f7b4e8cf5600d08de0932ced7",
+        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-poison-dlq-g1-v1/manifest.json#sha256=9682ab7ea526500664851fd069833e85039a109911d5d9c04ed89061e289b918"
       ],
-      "blocker": "全仓Go SQL清单仍有27个源文件需逐命令边界审查（19个P1_REVIEW、8个P2_REVIEW，P0_REVIEW与未分类均为0）；forensics、saved-view、notification治理、asset.discovery、probe registration及data-quality等其他outbox/consumer缺口仍按各自事实保留。whitelist dispatcher、rule-manager投影和确定性ACK已实现并通过真实PostgreSQL加进程内broker验证，但真实Kafka消费、live offsets及跨存储对账尚未完成。其余生产migration/topic/ACL/候选镜像、故障注入、PG-Kafka-audit对账、锁竞争、outbox lag/dead告警、回滚及T+0/T+1/T+3/T+7观察仍未完成。",
-      "note": "现有原子命令边界继续保留。版本化清单已同步到101个源文件/640条SQL变更（PG 624、CH 16、review queue 27、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 8、未分类0）。whitelist切片现已具备ACK后发布、确定性规则投影、同事务ACK和摄取前匹配，隔离PG跨链与三入口Schema对账通过；真实Kafka和其余命令边界仍未闭环，因此继续IMPLEMENTING。"
+      "blocker": "全仓Go SQL清单仍有27个源文件需逐命令边界审查（19个P1_REVIEW、8个P2_REVIEW，P0_REVIEW与未分类均为0）；forensics、saved-view、notification治理、asset.discovery、probe registration及data-quality等其他outbox/consumer缺口仍按各自事实保留。dashboard poison source tuple receipt与audit barrier已在自有PG/Redpanda G1通过，但批准候选PG、复制broker故障、其余consumer域和跨存储对账尚未完成。其余生产migration/topic/ACL/候选镜像、锁竞争、outbox lag/dead告警、回滚及T+0/T+1/T+3/T+7观察仍未完成。",
+      "note": "现有原子命令边界继续保留。版本化清单已同步到102个源文件/655条SQL变更（PG 639、CH 16、review queue 27、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 8、未分类0）。dashboard_task_dlq_receipts按source topic/partition/offset幂等，并与quarantine audit在同一serializable事务提交；三个PG入口两次回放同哈希。该切片仍为自有G1且production_applied=false，因此T-PG-002继续IMPLEMENTING。"
     },
     {
       "id": "T-PG-003",
@@ -2117,6 +2131,9 @@
         "doc/02_acceptance/runs/20260802-remediation-kafka-acl-v3/manifest.json#sha256=0cef07d43b822b9c8c6db5213966ee95880281396c73a1d09f0d6a8284e26bb5",
         "go/control-plane/internal/common/kafka/errors.go",
         "go/control-plane/internal/common/kafka/consumer.go",
+        "go/control-plane/internal/common/kafka/consumer_dlq_acknowledgement_barrier_test.go",
+        "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
+        "deployments/postgres/migrations/202608090945_dashboard_task_dlq_receipt_v1.sql",
         "go/control-plane/internal/auth/repository/user_settings_outbox.go",
         "go/control-plane/cmd/auth-service/main.go",
         "doc/02_acceptance/runs/20260802-remediation-kafka-acl-v4/manifest.json#sha256=f93a96c35c647dcea3a3be2c2abb0477cd68be6a6459e9d5c19ba0be03f26bf2",
@@ -2177,6 +2194,9 @@
         "go/control-plane/internal/asset/consumer/binding_consumer.go",
         "go/control-plane/internal/common/kafka/errors.go",
         "go/control-plane/internal/common/kafka/consumer.go",
+        "go/control-plane/internal/common/kafka/consumer_dlq_acknowledgement_barrier_test.go",
+        "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
+        "deployments/postgres/migrations/202608090945_dashboard_task_dlq_receipt_v1.sql",
         "go/control-plane/internal/common/audit/consumer.go",
         "contracts/kafka/pcap-metadata-ack.v1.json",
         "scripts/alignment/verify_pcap_metadata_ack.py",
@@ -2189,10 +2209,12 @@
         "scripts/alignment/verify_asset_projection_kafka_ephemeral.py",
         "go/control-plane/internal/asset/consumer/asset_projection_real_kafka_integration_test.go",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v178/manifest.json#sha256=6c769f977d9ae1a4ddfa6bb40da7a0eea4344249dc3519c526422ac615d7ea8f",
-        "doc/02_acceptance/runs/20260807-remediation-asset-projection-kafka-g1-v1/manifest.json#sha256=f99a71e3fa6d82365240d1e6acbf1da08d8d58d7a66712ef384b1f3d23b40909"
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-kafka-g1-v1/manifest.json#sha256=f99a71e3fa6d82365240d1e6acbf1da08d8d58d7a66712ef384b1f3d23b40909",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v209/manifest.json#sha256=d9cde1732bf4da52f44a5d5d6d50c9882f9fc32f7b4e8cf5600d08de0932ced7",
+        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-poison-dlq-g1-v1/manifest.json#sha256=9682ab7ea526500664851fd069833e85039a109911d5d9c04ed89061e289b918"
       ],
       "blocker": null,
-      "note": "共享Go BatchConsume的commit/DLQ屏障与PCAP非最终ACK语义不变。v178新增固定digest Redpanda/PostgreSQL资产投影实测：asset.events.v2 RequireAll ACK后才标outbox published，严格headers/payload经consumer进入authoritative-history校验的durable inbox并记录partition/offset，精确broker重放只提交新offset、不复制inbox。该证据不覆盖毒消息、DLQ ACK失败、PG中断、rebalance、非Go consumer或生产ACL/性能/观察窗，故T-KAFKA-003仍为VERIFYING。"
+      "note": "共享Go consumer现支持可选的DLQ ACK后、源offset提交前领域持久化屏障，屏障错误或panic均失败关闭。v209自有真实Redpanda/PG证明错误DLQ目标不提交offset且不写receipt；同组重启后毒消息重投，canonical dlq.v1记录ACK、PG source tuple receipt与audit完成后才提交，精确重试保持PG事实幂等。该证据仍不覆盖批准多副本broker、PG中断、rebalance、剩余consumer域、非Go路径或生产ACL/性能/观察窗，故T-KAFKA-003保持VERIFYING。"
     },
     {
       "id": "T-KAFKA-004",

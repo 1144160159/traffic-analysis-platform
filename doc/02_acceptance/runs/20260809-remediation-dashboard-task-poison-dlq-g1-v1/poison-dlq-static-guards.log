@@ -1,0 +1,16 @@
+test_bounded_profile_has_fault_resource_and_lag_stop_conditions (tests.alignment.test_dashboard_task_real_components_ephemeral_guard.DashboardTaskRealComponentsGuardTests.test_bounded_profile_has_fault_resource_and_lag_stop_conditions) ... ok
+test_bounded_profile_is_sentinel_guarded_and_not_a_production_slo (tests.alignment.test_dashboard_task_real_components_ephemeral_guard.DashboardTaskRealComponentsGuardTests.test_bounded_profile_is_sentinel_guarded_and_not_a_production_slo) ... ok
+test_go_test_requires_sentinels_and_exercises_real_boundaries (tests.alignment.test_dashboard_task_real_components_ephemeral_guard.DashboardTaskRealComponentsGuardTests.test_go_test_requires_sentinels_and_exercises_real_boundaries) ... ok
+test_images_are_immutable_and_names_are_run_scoped (tests.alignment.test_dashboard_task_real_components_ephemeral_guard.DashboardTaskRealComponentsGuardTests.test_images_are_immutable_and_names_are_run_scoped) ... ok
+test_runner_is_loopback_volume_free_and_cleans_both_containers (tests.alignment.test_dashboard_task_real_components_ephemeral_guard.DashboardTaskRealComponentsGuardTests.test_runner_is_loopback_volume_free_and_cleans_both_containers) ... ok
+test_runner_records_the_exact_test_and_non_secret_sumdb_override (tests.alignment.test_dashboard_task_real_components_ephemeral_guard.DashboardTaskRealComponentsGuardTests.test_runner_records_the_exact_test_and_non_secret_sumdb_override) ... ok
+test_commit_after_processed_order_is_rejected (tests.alignment.test_kafka_dlq_commit_barrier.KafkaDLQCommitBarrierTest.test_commit_after_processed_order_is_rejected) ... ok
+test_fail_open_token_is_rejected (tests.alignment.test_kafka_dlq_commit_barrier.KafkaDLQCommitBarrierTest.test_fail_open_token_is_rejected) ... ok
+test_false_production_or_closure_claim_is_rejected (tests.alignment.test_kafka_dlq_commit_barrier.KafkaDLQCommitBarrierTest.test_false_production_or_closure_claim_is_rejected) ... ok
+test_missing_ack_barrier_token_is_rejected (tests.alignment.test_kafka_dlq_commit_barrier.KafkaDLQCommitBarrierTest.test_missing_ack_barrier_token_is_rejected) ... ok
+test_repository_barrier_passes_without_live_or_closure_claim (tests.alignment.test_kafka_dlq_commit_barrier.KafkaDLQCommitBarrierTest.test_repository_barrier_passes_without_live_or_closure_claim) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.009s
+
+OK
