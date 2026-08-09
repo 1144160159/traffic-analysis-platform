@@ -1,0 +1,69 @@
+{
+  "feature_id": "F-AUTH-001",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/settings"],
+    "preserved_actions": ["auth-user-profile-update", "auth-user-password-change", "auth-user-oidc-sync"],
+    "preserved_api_operations": ["PATCH /v1/auth/me", "POST /v1/auth/me/password"],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "iam.scope.catalog",
+    "controls": [
+      {"control_id": "auth-profile-save", "action_id": "auth-user-profile-update"},
+      {"control_id": "auth-password-change", "action_id": "auth-user-password-change"},
+      {"control_id": "auth-oidc-callback", "action_id": "auth-user-oidc-sync"}
+    ],
+    "states": ["loading", "success", "partial", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "getScopeCatalog",
+    "method": "GET",
+    "path": "/v1/auth/scopes",
+    "response_envelope": "data-meta-error",
+    "async": false,
+    "additional_operations": [
+      {"operation_id": "updateAuthenticatedUserProfileAtomic", "method": "PATCH", "path": "/v1/auth/me", "idempotency_key": "Idempotency-Key", "revision_field": "expected_revision"},
+      {"operation_id": "changeAuthenticatedUserPasswordAtomic", "method": "POST", "path": "/v1/auth/me/password", "idempotency_key": "Idempotency-Key", "revision_field": "expected_revision"},
+      {"operation_id": "syncOIDCUserAtomic", "method": "GET", "path": "/v1/auth/oidc/callback", "idempotency_key": "verified OIDC state"}
+    ]
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "every required and accepted UI scope can be legally represented by the IAM catalog",
+      "wildcards remain domain bounded",
+      "catalog registration never grants the scope to a default role",
+      "authenticated profile and password changes bind tenant and actor from verified claims and atomically commit user revision, history, minimum audit, user event outbox and idempotency result",
+      "OIDC external identity cannot cross tenants and user plus exact mapped role set commit in one serializable transaction",
+      "password and password_hash values never enter history, audit, outbox or request payloads"
+    ]
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "redis"],
+    "migration": "catalog expansion remains additive; 202608031530_user_commands_atomic.sql adds user revision, history, outbox and request state without removing compatibility routes",
+    "event_types": ["traffic.user.command.v1.profile_update", "traffic.user.command.v1.password_change", "traffic.user.command.v1.oidc_sync"],
+    "source_watermarks": ["iam.scope_catalog.version", "postgresql.users.revision", "postgresql.user_command_outbox.outbox_id"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["admin:read"],
+    "negative_tests": ["viewer cannot mint a write scope", "domain wildcard cannot delegate cross-tenant admin", "authenticated user ID cannot mutate another tenant user", "OIDC subject already bound to tenant A is rejected for tenant B"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["token issue", "route authorization", "button authorization", "profile and password command commit", "OIDC user and exact role synchronization"],
+    "stop_conditions": ["scope diff is non-empty or a default role gains unapproved privilege", "user command lock, outbox lag or error rate exceeds the approved budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 scope diff and OpenAPI lint", "G1 IAM catalog and user command unit tests", "G2 sentinel PostgreSQL profile password and OIDC transaction", "G3 user history audit outbox request and Kafka consumer reconciliation", "G5 Windows Chrome role matrix and self-service journey"],
+    "evidence": ["route UI API token and audit scope matrices share one catalog version", "same trace and event identity across user revision history audit outbox and idempotency result with no credential material"]
+  },
+  "rollout": {
+    "feature_flag": "iam_scope_catalog_v2",
+    "strategy": "additive",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-AUTH-001-rollback.md"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "feature_id": "F-DASHBOARD-001",
+  "contract_version": 2,
+  "status": "implementing",
+  "compatibility": {"preserved_routes": ["/dashboard"], "preserved_actions": [], "preserved_api_operations": ["GET /v1/dashboard/stats", "GET /v1/dashboard/alerts/trend", "GET /v1/dashboard/attack-phases", "GET /v1/dashboard/top-ips/{type}", "GET /v1/dashboard/encrypted/trend"], "strategy": "additive-unified-snapshot"},
+  "ui": {"query_id": "dashboard.operations.snapshot", "controls": [], "states": ["loading", "empty", "success", "partial", "stale", "failed"]},
+  "api": {"operation_id": "getDashboardSnapshot", "method": "GET", "path": "/v1/dashboard/snapshot", "response_envelope": "data-meta-error", "async": false},
+  "domain": {"kind": "query", "invariants": ["all KPI, trend and drilldown sections share one time window and snapshot_id", "zero, unknown, partial and stale are distinct states"]},
+  "data": {"authoritative_store": "clickhouse-alerts-flows-campaigns-plus-postgresql-tasks-audit", "read_models": ["postgresql", "clickhouse", "opensearch", "redis"], "migration": "add snapshot manifest and source watermarks without removing existing stats APIs", "source_watermarks": ["clickhouse.dashboard.watermark", "postgresql.dashboard_tasks.updated_at", "opensearch.alerts.projection_version", "redis.dashboard.cache_watermark"]},
+  "permissions": {"tenant_source": "authenticated_identity", "required_scopes": ["alert:read"], "negative_tests": ["cross-tenant KPI data is absent", "restricted drilldown fields remain redacted"]},
+  "performance": {"baseline_required": true, "journeys": ["24-hour dashboard", "cold cache", "one source timeout"], "stop_conditions": ["P99, source skew or cache staleness exceeds approved budget"]},
+  "acceptance": {"tests": ["G0 snapshot schema", "G1 aggregation", "G2 real stores", "G3 source reconcile", "G4 dashboard profile", "G5 Windows Chrome mock-off"], "evidence": ["one snapshot_id across page, HAR, trace and source-watermark queries"]},
+  "rollout": {"feature_flag": "DASHBOARD_SNAPSHOT_V1_ENABLED", "default": false, "strategy": "shadow-read", "rollback_runbook": "doc/07_alignment/runbooks/F-DASHBOARD-001-rollback.md"}
+}

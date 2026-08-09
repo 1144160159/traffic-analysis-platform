@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "contract_id": "data-quality-dataset-signals-v1",
+  "remediation_id": "T-DQ-001",
+  "status": "candidate",
+  "production_applied": false,
+  "measurement_states": ["measured", "unknown", "not_applicable", "error"],
+  "invariants": [
+    "measured requires a non-empty watermark_value and observed_at",
+    "unknown and not_applicable never carry a watermark_value",
+    "error requires measurement_error and never carries a watermark_value",
+    "collection failures are persisted independently per source and never converted to pass",
+    "GET /v1/data-quality reads the last persisted collection and has no write side effect"
+  ],
+  "datasets": [
+    {
+      "dataset_id": "flows_raw",
+      "display_name": "Raw flow facts",
+      "owner": "data-reliability",
+      "schema_version": 1,
+      "business_keys": ["event_id"],
+      "allowed_lateness_seconds": 60,
+      "retention_seconds": 2592000,
+      "upstreams": ["flow.events.v1"],
+      "downstreams": ["Session Aggregation Job V2", "traffic.sessions"],
+      "slo_target": 0.999,
+      "signals": [
+        {
+          "kind": "kafka_offset",
+          "source_id": "flow.events.v1/flink-session-job",
+          "required": true,
+          "applicability": "required",
+          "unit": "records",
+          "source": "Kafka ListOffsets plus OffsetFetch",
+          "aggregation": "sum(max(end_offset - max(committed_offset, first_offset), 0))",
+          "scope": "shared_pipeline"
+        },
+        {
+          "kind": "flink_watermark",
+          "source_id": "Session Aggregation Job V2/Assign FlowEvent Watermarks",
+          "required": true,
+          "applicability": "required",
+          "unit": "unix_ms",
+          "source": "Flink JobManager REST currentOutputWatermark",
+          "metric_contains": "currentOutputWatermark",
+          "aggregation": "minimum finite active-subtask value",
+          "scope": "shared_pipeline"
+        },
+        {
+          "kind": "sink_commit",
+          "source_id": "clickhouse.traffic.flows_raw.max_ingest_ts",
+          "required": true,
+          "applicability": "required",
+          "unit": "unix_ms",
+          "source": "ClickHouse max(ingest_ts) filtered by tenant_id",
+          "scope": "tenant"
+        },
+        {
+          "kind": "business_version",
+          "source_id": "flows_raw.immutable_event",
+          "required": false,
+          "applicability": "not_applicable",
+          "unit": "none",
+          "reason": "immutable flow facts do not have an aggregate revision"
+        },
+        {
+          "kind": "object_manifest",
+          "source_id": "flows_raw.no_object_payload",
+          "required": false,
+          "applicability": "not_applicable",
+          "unit": "none",
+          "reason": "flow facts are not object-backed artifacts"
+        }
+      ]
+    }
+  ],
+  "runtime": {
+    "service": "alert-service",
+    "collection_enabled_env": "DATA_QUALITY_SIGNAL_COLLECTION_ENABLED",
+    "default_enabled": false,
+    "deployment_enabled_after_migration": true,
+    "interval_env": "DATA_QUALITY_SIGNAL_COLLECTION_INTERVAL",
+    "timeout_env": "DATA_QUALITY_SIGNAL_COLLECTION_TIMEOUT",
+    "read_api": "GET /v1/data-quality"
+  }
+}

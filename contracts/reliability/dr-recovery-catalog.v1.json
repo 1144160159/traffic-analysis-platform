@@ -1,0 +1,493 @@
+{
+  "schema_version": 1,
+  "control_id": "T-DR-001",
+  "work_package": "WP-28-DR",
+  "status": "candidate_default_off",
+  "production_applied": false,
+  "destructive_execution_authorized": false,
+  "authorities": [
+    {
+      "domain": "clickhouse_ha_backup",
+      "path": "contracts/clickhouse/ha-security-backup.v1.json",
+      "sha256": "7de5d3f8a164fa4f0a73d31b90dfb0b93e1c6f07fd17c9c085e07232bf75e6f5"
+    },
+    {
+      "domain": "clickhouse_topology",
+      "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
+      "sha256": "8ef784f4133b9f25d24b0f0031e295a7fa26f428791d6585fd2cbd8a5c613368"
+    },
+    {
+      "domain": "flink_checkpoint_ha",
+      "path": "contracts/flink/checkpoint-ha-upgrade.v1.json",
+      "sha256": "cbee944a21515257795a9dddf1b0e20e4d185630894dfa4eeaccca2ba1bdee93"
+    },
+    {
+      "domain": "flink_topology",
+      "path": "deployments/kubernetes/infrastructure/07-flink.yaml",
+      "sha256": "79ba8d96ee26a072c680db02b1204d3697a2a44d4072192a794416e6e45de755"
+    },
+    {
+      "domain": "kafka_topology",
+      "path": "deployments/kubernetes/infrastructure/01-kafka.yaml",
+      "sha256": "fe5ae4421e5adfef9bf98ba62188ce8f6220c8192c8d94695bae5bf0de538e2f"
+    },
+    {
+      "domain": "minio_topology",
+      "path": "deployments/kubernetes/infrastructure/06-minio.yaml",
+      "sha256": "efecfa197f887fe61ade662581ac5f3d316d439240ed0fc4441e6347c3ea7243"
+    },
+    {
+      "domain": "nebula_topology",
+      "path": "deployments/kubernetes/infrastructure/09-nebula-graph.yaml",
+      "sha256": "4c26d5dc6d438bbdbb42808f6761c2ecb9535d1f5fe1a1488b7403c2e60aa17f"
+    },
+    {
+      "domain": "opensearch_snapshot_restore",
+      "path": "contracts/opensearch/ha-security-restore.v1.json",
+      "sha256": "ecb6101a60652f6a175a669435e014980a19b6f38d90f83ca35bbf29ec44657e"
+    },
+    {
+      "domain": "opensearch_topology",
+      "path": "deployments/kubernetes/infrastructure/05-opensearch.yaml",
+      "sha256": "ad85a2209cf1d032dec570cac18f4de8fc3d416539d0cb09cf8983159aa19427"
+    },
+    {
+      "domain": "postgres_ha_pitr",
+      "path": "contracts/postgres/ha-pitr-fencing.v1.json",
+      "sha256": "93bf5cb93db942333803f52600a22c052368dc0783ac1556dce667d5cf06b7bf"
+    },
+    {
+      "domain": "postgres_topology",
+      "path": "deployments/kubernetes/infrastructure/03-postgresql.yaml",
+      "sha256": "23bad32a6ce7c00583822639b2c0c3807834eefccf881f7bec6e03bae9d62459"
+    },
+    {
+      "domain": "redis_reliability_domains",
+      "path": "contracts/redis/reliability-domains.v1.json",
+      "sha256": "299104a0589adf56435e0ab77b079881a5618f11db40aa366bf16422f35ee2dc"
+    },
+    {
+      "domain": "redis_topology",
+      "path": "deployments/kubernetes/infrastructure/04-redis.yaml",
+      "sha256": "0e483d9e1834b8ae2106a37dc17969f047c61f7752d0f7ce9fa7b5c25cffeb5b"
+    }
+  ],
+  "policy": {
+    "backup_success_is_restore_success": false,
+    "same_cluster_restore_is_acceptance_evidence": false,
+    "isolated_restore_required": true,
+    "business_oracle_required": true,
+    "immutable_manifest_and_sha256_required": true,
+    "approved_maintenance_window_required": true,
+    "two_person_approval_required": true,
+    "latest_pointer_must_resolve_to_hash": true
+  },
+  "recovery_order": [
+    {
+      "order": 1,
+      "step": "identity_dns_configuration_and_certificate_authorities"
+    },
+    {
+      "order": 2,
+      "step": "postgresql_authoritative_state_outbox_and_audit"
+    },
+    {
+      "order": 3,
+      "step": "kafka_topics_acls_offsets_and_event_replay"
+    },
+    {
+      "order": 4,
+      "step": "clickhouse_analytical_facts"
+    },
+    {
+      "order": 5,
+      "step": "minio_objects_against_postgresql_manifests"
+    },
+    {
+      "order": 6,
+      "step": "nebula_and_opensearch_rebuildable_projections"
+    },
+    {
+      "order": 7,
+      "step": "redis_coordination_session_and_cache_domains"
+    },
+    {
+      "order": 8,
+      "step": "flink_from_approved_savepoint_then_sink_reconcile"
+    },
+    {
+      "order": 9,
+      "step": "cross_store_watermark_manifest_and_business_reconciliation"
+    }
+  ],
+  "domains": [
+    {
+      "domain_id": "postgresql_authority",
+      "authority_class": "authoritative_transactional_state",
+      "owner": "postgres-platform-owner",
+      "restore_order": 2,
+      "repository_state": "NOT_IMPLEMENTED",
+      "rpo_minutes": null,
+      "rto_minutes": null,
+      "rpo_rto_approved": false,
+      "backup": {
+        "mode": "PITR_WAL_AND_BASE_BACKUP_REQUIRED",
+        "evidence": null
+      },
+      "restore": {
+        "target": "isolated_postgresql",
+        "last_successful_evidence": null
+      },
+      "fencing": {
+        "required": true,
+        "controller_state": "NOT_IMPLEMENTED",
+        "old_primary_fenced_before_endpoint_publication": false
+      },
+      "business_oracles": [
+        "no interval has more than one writable primary",
+        "acknowledged transaction marker is not lost beyond approved RPO",
+        "in-flight transaction result is classifiable",
+        "outbox event_id and aggregate_version are not duplicated",
+        "old primary rejoins as a replica and cannot preempt"
+      ],
+      "blocking_gaps": [
+        "approved_rpo_rto_missing",
+        "wal_archive_and_base_backup_missing",
+        "isolated_pitr_restore_missing",
+        "single_writer_controller_and_fencing_missing"
+      ]
+    },
+    {
+      "domain_id": "kafka_event_log",
+      "authority_class": "durable_event_and_replay_log",
+      "owner": "kafka-platform-owner",
+      "restore_order": 3,
+      "repository_state": "MANIFEST_ONLY_NO_DR_CONTRACT",
+      "rpo_minutes": null,
+      "rto_minutes": null,
+      "rpo_rto_approved": false,
+      "backup": {
+        "mode": "topic_configuration_acl_offset_and_payload_strategy_required",
+        "evidence": null
+      },
+      "restore": {
+        "target": "isolated_kafka_cluster",
+        "last_successful_evidence": null
+      },
+      "fencing": {
+        "required": true,
+        "producer_epoch_or_writer_fence_verified": false
+      },
+      "business_oracles": [
+        "topic partition replication and ACL inventory matches manifest",
+        "bounded offset ranges replay without unexplained gaps",
+        "duplicate and out-of-order events remain classifiable",
+        "downstream deterministic event IDs reconcile"
+      ],
+      "blocking_gaps": [
+        "approved_rpo_rto_missing",
+        "backup_and_restore_strategy_missing",
+        "isolated_restore_and_offset_replay_missing",
+        "producer_fencing_and_cross_store_reconcile_missing"
+      ]
+    },
+    {
+      "domain_id": "clickhouse_facts",
+      "authority_class": "analytical_fact_store",
+      "owner": "clickhouse-platform-owner",
+      "restore_order": 4,
+      "repository_state": "PARTIAL_PLAN_DEFAULT_OFF",
+      "rpo_minutes": 60,
+      "rto_minutes": 240,
+      "rpo_rto_approved": false,
+      "backup": {
+        "mode": "native_backup_to_approved_encrypted_object_storage",
+        "destination_approved": false,
+        "evidence": null
+      },
+      "restore": {
+        "target": "new isolated ClickHouse and Keeper cluster",
+        "isolated_required": true,
+        "last_successful_evidence": null
+      },
+      "failure_domains": {
+        "clickhouse": {
+          "shards": 2,
+          "replicas_per_shard": 2,
+          "minimum_distinct_failure_domains_per_shard": 2
+        },
+        "keeper": {
+          "members": 3,
+          "quorum": 2,
+          "minimum_distinct_failure_domains": 3
+        },
+        "topology_key": "topology.kubernetes.io/zone",
+        "current_cluster_distinct_nodes": 2,
+        "current_cluster_distinct_zones": 0,
+        "formal_failure_domain_proof": false
+      },
+      "business_oracles": [
+        "manifest and object sha256",
+        "database table and partition inventory",
+        "row counts by tenant and partition",
+        "stable primary-key sample",
+        "aggregate count sum min max comparison",
+        "replica queue and readonly state",
+        "application query oracle before read cutover"
+      ],
+      "blocking_gaps": [
+        "backup_destination_and_key_recovery_unapproved",
+        "isolated_restore_missing",
+        "failure_domain_proof_missing",
+        "approved_rpo_rto_missing"
+      ]
+    },
+    {
+      "domain_id": "minio_objects",
+      "authority_class": "content_addressed_object_payloads",
+      "owner": "minio-platform-owner",
+      "restore_order": 5,
+      "repository_state": "TOPOLOGY_ONLY_NO_DR_CONTRACT",
+      "rpo_minutes": null,
+      "rto_minutes": null,
+      "rpo_rto_approved": false,
+      "backup": {
+        "mode": "versioning_replication_or_immutable_backup_required",
+        "evidence": null
+      },
+      "restore": {
+        "target": "isolated_minio_tenant",
+        "last_successful_evidence": null
+      },
+      "fencing": {
+        "required": true,
+        "writer_and_bucket_cutover_fenced": false
+      },
+      "business_oracles": [
+        "PostgreSQL manifest object key size sha256 and media type match",
+        "missing orphan and corrupt objects are enumerated",
+        "retention legal hold and lifecycle remain intact",
+        "partial object and metadata success cannot be reported as complete"
+      ],
+      "blocking_gaps": [
+        "approved_rpo_rto_missing",
+        "versioning_replication_backup_authority_missing",
+        "isolated_restore_missing",
+        "manifest_object_reconciliation_missing"
+      ]
+    },
+    {
+      "domain_id": "nebula_projection",
+      "authority_class": "rebuildable_graph_projection",
+      "owner": "graph-platform-owner",
+      "restore_order": 6,
+      "repository_state": "TOPOLOGY_ONLY_NO_DR_CONTRACT",
+      "rpo_minutes": null,
+      "rto_minutes": null,
+      "rpo_rto_approved": false,
+      "backup": {
+        "mode": "projection_backup_optional_if_rebuild_budget_proven",
+        "evidence": null
+      },
+      "restore": {
+        "target": "isolated_nebula_or_rebuild_from_authorities",
+        "last_successful_evidence": null
+      },
+      "fencing": {
+        "required": true,
+        "projection_writer_watermark_fenced": false
+      },
+      "business_oracles": [
+        "PG and ClickHouse source watermarks are recorded",
+        "deterministic vertex and edge IDs reconcile",
+        "tenant bounded node edge and property samples match",
+        "query truncation and partial state remain explicit during rebuild"
+      ],
+      "blocking_gaps": [
+        "approved_rebuild_or_backup_budget_missing",
+        "isolated_restore_or_full_rebuild_missing",
+        "meta_storage_failure_domain_proof_missing",
+        "source_watermark_reconciliation_missing"
+      ]
+    },
+    {
+      "domain_id": "opensearch_projection",
+      "authority_class": "rebuildable_search_projection",
+      "owner": "opensearch-platform-owner",
+      "restore_order": 6,
+      "repository_state": "PARTIAL_TARGET_DEFAULT_OFF",
+      "rpo_minutes": null,
+      "rto_minutes": null,
+      "rpo_rto_approved": false,
+      "backup": {
+        "mode": "versioned_s3_snapshot",
+        "repository": "opensearch-snapshots",
+        "evidence": null
+      },
+      "restore": {
+        "target": "isolated_opensearch_cluster",
+        "isolated_required": true,
+        "same_cluster_forbidden": true,
+        "last_successful_evidence": null
+      },
+      "failure_domains": {
+        "topology_key": "topology.kubernetes.io/zone",
+        "required_distinct_zones": 3,
+        "allocation_awareness_attribute": "zone",
+        "forced_awareness": true,
+        "pod_spread_max_skew": 1,
+        "when_unsatisfiable": "DoNotSchedule",
+        "base_manifest_mutated": false,
+        "target_overlay_default_applied": false
+      },
+      "business_oracles": [
+        "mapping_sha256",
+        "settings_sha256",
+        "aliases",
+        "document_count",
+        "sample_document_ids",
+        "sample_versions",
+        "sample_content_sha256",
+        "query_oracle"
+      ],
+      "blocking_gaps": [
+        "approved_rpo_rto_missing",
+        "live_snapshot_repository_missing",
+        "isolated_restore_missing",
+        "three_failure_domain_proof_missing"
+      ]
+    },
+    {
+      "domain_id": "redis_runtime_state",
+      "authority_class": "recoverable_coordination_session_and_cache_state",
+      "owner": "redis-platform-owner",
+      "restore_order": 7,
+      "repository_state": "PARTIAL_SAFE_HOLD",
+      "rpo_minutes": null,
+      "rto_minutes": null,
+      "rpo_rto_approved": false,
+      "backup": {
+        "mode": "aof_for_coordination_session_cache_discardable",
+        "evidence": null
+      },
+      "restore": {
+        "target": "fresh_sentinel_domains_and_rebuilt_cache",
+        "last_successful_evidence": null
+      },
+      "fencing": {
+        "required": true,
+        "sentinel_failover_writer_fence_verified": false
+      },
+      "business_oracles": [
+        "coordination keys fail closed or recover from PostgreSQL authority",
+        "session validation falls back only to PostgreSQL authority",
+        "cache can be discarded and rebuilt without business data loss",
+        "cross-domain key prefixes remain zero"
+      ],
+      "blocking_gaps": [
+        "split rule-manager graph-service and forensics-service mixed clients by semantic domain",
+        "live prefix inventory and zero cross-domain key reconciliation",
+        "release-candidate noeviction and cache-bypass runtime proof",
+        "Sentinel failover reconnect and session authentication fault drills",
+        "cache eviction and stampede performance budgets",
+        "TLS ACL service identities and dangerous-command restrictions under T-REDIS-002",
+        "rollout rollback observation and independent approval"
+      ]
+    },
+    {
+      "domain_id": "flink_state",
+      "authority_class": "stream_processor_checkpoint_and_savepoint_state",
+      "owner": "flink-platform-owner",
+      "restore_order": 8,
+      "repository_state": "PARTIAL_CONTRACT_NO_LIVE_RESTORE",
+      "rpo_minutes": null,
+      "rto_minutes": 5.0,
+      "rpo_rto_approved": false,
+      "backup": {
+        "mode": "durable_checkpoint_and_savepoint_on_minio",
+        "checkpoint_root": "s3://flink-checkpoints/checkpoints",
+        "savepoint_root": "s3://flink-checkpoints/savepoints",
+        "evidence": null
+      },
+      "restore": {
+        "target": "isolated_application_cluster",
+        "last_successful_evidence": null
+      },
+      "fencing": {
+        "required": true,
+        "single_job_writer_and_sink_epoch_verified": false
+      },
+      "business_oracles": [
+        "completed",
+        "failed",
+        "duration_ms",
+        "alignment_ms",
+        "state_size_bytes",
+        "external_path",
+        "restore_time_ms",
+        "source_offsets",
+        "sink_reconciliation"
+      ],
+      "blocking_gaps": [
+        "approved_rpo_rto_missing",
+        "live_checkpoint_savepoint_manifest_missing",
+        "isolated_restore_and_state_compatibility_missing",
+        "source_offset_and_sink_reconciliation_missing"
+      ]
+    }
+  ],
+  "blocking_gaps": [
+    "Sentinel failover reconnect and session authentication fault drills",
+    "TLS ACL service identities and dangerous-command restrictions under T-REDIS-002",
+    "approved_rebuild_or_backup_budget_missing",
+    "approved_rpo_rto_missing",
+    "backup_and_restore_strategy_missing",
+    "backup_destination_and_key_recovery_unapproved",
+    "cache eviction and stampede performance budgets",
+    "failure_domain_proof_missing",
+    "isolated_pitr_restore_missing",
+    "isolated_restore_and_offset_replay_missing",
+    "isolated_restore_and_state_compatibility_missing",
+    "isolated_restore_missing",
+    "isolated_restore_or_full_rebuild_missing",
+    "live prefix inventory and zero cross-domain key reconciliation",
+    "live_checkpoint_savepoint_manifest_missing",
+    "live_snapshot_repository_missing",
+    "manifest_object_reconciliation_missing",
+    "meta_storage_failure_domain_proof_missing",
+    "producer_fencing_and_cross_store_reconcile_missing",
+    "release-candidate noeviction and cache-bypass runtime proof",
+    "rollout rollback observation and independent approval",
+    "single_writer_controller_and_fencing_missing",
+    "source_offset_and_sink_reconciliation_missing",
+    "source_watermark_reconciliation_missing",
+    "split rule-manager graph-service and forensics-service mixed clients by semantic domain",
+    "three_failure_domain_proof_missing",
+    "versioning_replication_backup_authority_missing",
+    "wal_archive_and_base_backup_missing"
+  ],
+  "counts": {
+    "domains": 8,
+    "domains_pass": 0,
+    "domains_without_restore_evidence": 8,
+    "domains_without_approved_rpo_rto": 8,
+    "blocking_gaps": 28
+  },
+  "acceptance": {
+    "repository": [
+      "all eight recovery domains are inventoried with immutable authorities",
+      "backup evidence cannot substitute for isolated restore evidence",
+      "recovery order preserves PostgreSQL authority and projection rebuild semantics",
+      "destructive failover restore and cutover remain unapproved by repository changes"
+    ],
+    "remaining": [
+      "approved per-domain RPO RTO capacity retention and encryption-key recovery",
+      "isolated restore manifests object hashes and business oracles",
+      "fencing failure-domain and former-writer rejoin proof",
+      "cross-store event watermark object and projection reconciliation",
+      "fault drills rollback T+0 T+1 T+3 T+7 and independent approval",
+      "external G8 HA site and third-party acceptance"
+    ]
+  },
+  "catalog_sha256": "06fbf717da0f9d0406f4198796e5348e01bba581b0bf4b183cedb5ac82d86fb8"
+}

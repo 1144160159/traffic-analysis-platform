@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -30,19 +31,35 @@ public final class ConfigUtils {
         // 1. 从配置文件加载
         ParameterTool fileParams = loadFromFile(propertiesFile);
         
-        // 2. 从环境变量加载
-        ParameterTool envParams = ParameterTool.fromSystemProperties();
-        
-        // 3. 从命令行参数加载
+        // 2. 从环境变量加载。环境变量同时保留原名，并映射
+        // FOO_BAR_BAZ -> foo.bar.baz，使其能覆盖 properties 中的同名配置。
+        ParameterTool envParams = environmentParameters(System.getenv());
+
+        // 3. JVM system properties（低于命令行，高于环境变量）
+        ParameterTool systemParams = ParameterTool.fromSystemProperties();
+
+        // 4. 从命令行参数加载
         ParameterTool cliParams = ParameterTool.fromArgs(args);
         
-        // 合并（优先级：CLI > ENV > File）
+        // 合并（优先级：CLI > JVM system properties > ENV > File）
         ParameterTool merged = fileParams
                 .mergeWith(envParams)
+                .mergeWith(systemParams)
                 .mergeWith(cliParams);
         
         LOG.info("Configuration loaded from: {}", propertiesFile);
         return merged;
+    }
+
+    static ParameterTool environmentParameters(Map<String, String> environment) {
+        Map<String, String> normalized = new HashMap<>();
+        for (Map.Entry<String, String> entry : environment.entrySet()) {
+            normalized.put(entry.getKey(), entry.getValue());
+            normalized.put(
+                    entry.getKey().toLowerCase(Locale.ROOT).replace('_', '.'),
+                    entry.getValue());
+        }
+        return ParameterTool.fromMap(normalized);
     }
 
     private static ParameterTool loadFromFile(String filename) throws IOException {

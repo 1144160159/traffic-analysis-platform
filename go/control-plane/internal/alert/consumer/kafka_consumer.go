@@ -11,7 +11,9 @@ package consumer
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -20,6 +22,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	segmentKafka "github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/arkime"
@@ -101,6 +104,22 @@ var (
 		[]string{"topic", "partition"},
 	)
 
+	consumerLastCommittedOffset = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "alert_consumer_last_committed_offset",
+			Help: "Last Kafka offset acknowledged as committed by topic and partition",
+		},
+		[]string{"topic", "partition"},
+	)
+
+	consumerLastCommittedEvent = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "alert_consumer_last_committed_event_info",
+			Help: "Last event ID whose Kafka offset was acknowledged as committed",
+		},
+		[]string{"topic", "partition", "event_id"},
+	)
+
 	dedupMethodUsed = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "alert_consumer_dedup_method_total",
@@ -108,18 +127,37 @@ var (
 		},
 		[]string{"method"},
 	)
+
+	whitelistSuppressed = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "alert_consumer_whitelist_suppressed_total",
+			Help: "Total number of detections suppressed by an applied whitelist rule projection",
+		},
+		[]string{"tenant_id"},
+	)
+
+	whitelistLookupFailures = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "alert_consumer_whitelist_lookup_failures_total",
+			Help: "Total number of whitelist projection lookup failures that failed open",
+		},
+		[]string{"tenant_id"},
+	)
 )
 
 // Consumer Alert消费者
 type Consumer struct {
 	kafkaConsumer     *kafka.Consumer
-	dlqProducer       *kafka.DLQProducer
+	dlqProducer       alertDLQProducer
 	redisDedup        *dedup.RedisDedup
 	dualWriter        *persistence.DualWriter
 	evidenceGenerator *evidence.Generator
 	arkimeLinkGen     *arkime.LinkGenerator
 	notifier          interface {
 		Notify(context.Context, *notification.AlertInfo) error
+	}
+	whitelistMatcher interface {
+		MatchDetection(context.Context, string, string, string, string) (bool, error)
 	}
 	timeBucket    int
 	logger        *zap.Logger
@@ -139,6 +177,14 @@ type Consumer struct {
 	generateEvidence bool
 	generateArkime   bool
 	useLuaScript     bool // 新增：是否使用 Lua 脚本去重
+	commitMetricMu   sync.Mutex
+	lastCommitEvent  map[string]string
+	topic            string
+}
+
+type alertDLQProducer interface {
+	Send(context.Context, *kafka.ReceivedMessage, error) error
+	Close() error
 }
 
 // SetNotificationDispatcher connects persisted detections to the governed
@@ -150,6 +196,17 @@ func (c *Consumer) SetNotificationDispatcher(dispatcher interface {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.notifier = dispatcher
+}
+
+// SetWhitelistMatcher connects alert ingestion to the durable rule-manager
+// projection. A lookup failure is fail-open: detections remain visible while
+// the broken control-plane dependency is surfaced through logs and metrics.
+func (c *Consumer) SetWhitelistMatcher(matcher interface {
+	MatchDetection(context.Context, string, string, string, string) (bool, error)
+}) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.whitelistMatcher = matcher
 }
 
 // ConsumerConfig 消费者配置
@@ -195,7 +252,7 @@ func NewConsumerWithEvidence(
 	// common consumer's per-message DLQ path.
 	dlqProducer := kafka.NewDLQProducer(buildKafkaDLQConfig(kafkaCfg), "alert-service", logger)
 
-	return &Consumer{
+	consumer := &Consumer{
 		kafkaConsumer:     kafkaConsumer,
 		dlqProducer:       dlqProducer,
 		redisDedup:        redisDedup,
@@ -210,7 +267,53 @@ func NewConsumerWithEvidence(
 		generateEvidence:  evidenceGen != nil,
 		generateArkime:    arkimeGen != nil,
 		useLuaScript:      true, // 默认启用 Lua 脚本优化
+		lastCommitEvent:   make(map[string]string),
+		topic:             kafkaCfg.Topic,
 	}
+	kafkaConsumer.SetCommitObserver(consumer.observeCommittedMessages)
+	return consumer
+}
+
+func (c *Consumer) observeCommittedMessages(messages []segmentKafka.Message) {
+	latest := make(map[int]segmentKafka.Message)
+	for _, message := range messages {
+		current, exists := latest[message.Partition]
+		if !exists || message.Offset > current.Offset {
+			latest[message.Partition] = message
+		}
+	}
+	c.commitMetricMu.Lock()
+	defer c.commitMetricMu.Unlock()
+	for partition, message := range latest {
+		partitionLabel := strconv.Itoa(partition)
+		consumerLastCommittedOffset.WithLabelValues(c.kafkaConsumerTopic(), partitionLabel).Set(float64(message.Offset))
+		eventID := kafkaMessageHeader(message, "event_id")
+		if eventID == "" {
+			eventID = kafkaMessageHeader(message, "x-event-id")
+		}
+		key := c.kafkaConsumerTopic() + ":" + partitionLabel
+		if previous := c.lastCommitEvent[key]; previous != "" {
+			consumerLastCommittedEvent.DeleteLabelValues(c.kafkaConsumerTopic(), partitionLabel, previous)
+		}
+		if eventID != "" {
+			consumerLastCommittedEvent.WithLabelValues(c.kafkaConsumerTopic(), partitionLabel, eventID).Set(1)
+			c.lastCommitEvent[key] = eventID
+		}
+	}
+	if lag, err := c.kafkaConsumer.Lag(context.Background()); err == nil {
+		consumerLag.WithLabelValues(c.kafkaConsumerTopic(), "all").Set(float64(lag))
+	}
+}
+
+func (c *Consumer) kafkaConsumerTopic() string { return c.topic }
+
+func kafkaMessageHeader(message segmentKafka.Message, key string) string {
+	for _, header := range message.Headers {
+		if header.Key == key {
+			return string(header.Value)
+		}
+	}
+	return ""
 }
 
 func buildKafkaConsumerConfig(kafkaCfg config.KafkaConfig) kafka.ConsumerConfig {
@@ -302,6 +405,7 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 	alertChan := make(chan *persistence.Alert, len(msgs))
 	evidenceChan := make(chan *evidence.Evidence, len(msgs)*4)
 	errorChan := make(chan error, len(msgs))
+	unsafeFailureChan := make(chan error, len(msgs))
 
 	var wg sync.WaitGroup
 
@@ -328,7 +432,10 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 						logger.Error("Failed to send to DLQ",
 							zap.Error(dlqErr),
 							zap.String("event_id", m.EventID()))
+						unsafeFailureChan <- fmt.Errorf("event %s failed processing and DLQ persistence: %w", m.EventID(), dlqErr)
 					}
+				} else {
+					unsafeFailureChan <- fmt.Errorf("event %s failed processing while DLQ is unavailable: %w", m.EventID(), err)
 				}
 				return
 			}
@@ -351,6 +458,7 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 	close(alertChan)
 	close(evidenceChan)
 	close(errorChan)
+	close(unsafeFailureChan)
 
 	// 收集结果
 	alerts := make([]*persistence.Alert, 0, len(alertChan))
@@ -367,15 +475,33 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 	for err := range errorChan {
 		processErrors = append(processErrors, err)
 	}
+	unsafeFailures := make([]error, 0, len(unsafeFailureChan))
+	for err := range unsafeFailureChan {
+		unsafeFailures = append(unsafeFailures, err)
+	}
+	if len(unsafeFailures) > 0 {
+		// Returning an error is the commit barrier used by BatchConsume. The
+		// common consumer will not advance the batch offset unless its own DLQ
+		// handoff is durably acknowledged.
+		return errors.Join(unsafeFailures...)
+	}
 
 	// 批量写入告警
 	if len(alerts) > 0 {
 		writeStart := time.Now()
-		if err := c.dualWriter.WriteBatch(ctx, alerts); err != nil {
+		outcome, err := c.dualWriter.WriteBatchWithOutcome(ctx, alerts)
+		var projectionPending *persistence.ProjectionPendingError
+		if err != nil && !(errors.As(err, &projectionPending) && outcome.ClickHouseCommitted && outcome.DebtRecorded) {
 			logger.Error("Failed to write alert detection",
 				zap.Int("count", len(alerts)),
 				zap.Error(err))
 			return err // 不提交offset
+		}
+		if projectionPending != nil {
+			logger.Warn("Alert source committed with durable OpenSearch projection debt",
+				zap.Int("alert_count", len(alerts)),
+				zap.Int("projection_debt_count", outcome.DebtCount),
+				zap.Error(projectionPending))
 		}
 		batchWriteLatency.WithLabelValues("dual").Observe(time.Since(writeStart).Seconds())
 		c.mu.Lock()
@@ -452,6 +578,12 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 	if err := msg.UnmarshalProto(&detection); err != nil {
 		return nil, nil, fmt.Errorf("failed to unmarshal detection: %w", err)
 	}
+	if len(detection.Behaviors) == 0 || detection.Behaviors[0] == nil {
+		return nil, nil, fmt.Errorf("invalid detection batch: behaviors must contain at least one item")
+	}
+	if err := validateDetectionBehavior(detection.Behaviors[0]); err != nil {
+		return nil, nil, err
+	}
 
 	// 2. 获取租户ID
 	tenantID := ""
@@ -464,6 +596,24 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 
 	// 3. 计算指纹
 	fingerprint := dedup.CalculateFingerprint(&detection, c.timeBucket)
+	tuple := detection.Behaviors[0].GetTuple()
+	c.mu.Lock()
+	whitelistMatcher := c.whitelistMatcher
+	c.mu.Unlock()
+	if whitelistMatcher != nil {
+		matched, matchErr := whitelistMatcher.MatchDetection(ctx, tenantID, tuple.GetSrcIp(), tuple.GetDstIp(), fingerprint)
+		if matchErr != nil {
+			whitelistLookupFailures.WithLabelValues(tenantID).Inc()
+			c.logger.Warn("Whitelist projection lookup failed open",
+				zap.String("tenant_id", tenantID), zap.String("event_id", msg.EventID()), zap.Error(matchErr))
+		} else if matched {
+			whitelistSuppressed.WithLabelValues(tenantID).Inc()
+			c.logger.Info("Detection suppressed by applied whitelist projection",
+				zap.String("tenant_id", tenantID), zap.String("event_id", msg.EventID()),
+				zap.String("fingerprint", fingerprint))
+			return nil, nil, nil
+		}
+	}
 
 	// 4. 去重检查（修复：优先使用 Lua 脚本原子版本）
 	eventTs := detection.Behaviors[0].Header.GetEventTs()
@@ -542,6 +692,46 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 	return alert, evidences, nil
 }
 
+func validateDetectionBehavior(behavior *pb.DetectionBehavior) error {
+	if behavior == nil {
+		return fmt.Errorf("invalid detection behavior: item is nil")
+	}
+	header := behavior.GetHeader()
+	if header == nil {
+		return fmt.Errorf("invalid detection behavior: event header is required")
+	}
+	required := map[string]string{
+		"event_id": header.GetEventId(), "tenant_id": header.GetTenantId(),
+		"event_type": header.GetEventType(), "schema_version": header.GetSchemaVersion(),
+		"aggregate_type": header.GetAggregateType(), "aggregate_id": header.GetAggregateId(),
+		"trace_id": header.GetTraceId(), "causation_id": header.GetCausationId(),
+		"correlation_id": header.GetCorrelationId(), "idempotency_key": header.GetIdempotencyKey(),
+		"producer": header.GetProducer(),
+	}
+	for field, value := range required {
+		if strings.TrimSpace(value) == "" {
+			return fmt.Errorf("invalid detection behavior: envelope %s is required", field)
+		}
+	}
+	if header.GetEventType() != "traffic.detection.behavior.v1" || header.GetSchemaVersion() != "1" {
+		return fmt.Errorf("invalid detection behavior: unsupported event contract %s/%s", header.GetEventType(), header.GetSchemaVersion())
+	}
+	if header.GetAggregateVersion() == 0 || header.GetOccurredAt() <= 0 || header.GetProducedAt() <= 0 {
+		return fmt.Errorf("invalid detection behavior: aggregate version and event timestamps must be positive")
+	}
+	if header.GetIdempotencyKey() != header.GetEventId() {
+		return fmt.Errorf("invalid detection behavior: idempotency_key must equal event_id")
+	}
+	if behavior.GetTuple() == nil {
+		return fmt.Errorf("invalid detection behavior: source tuple is required")
+	}
+	tuple := behavior.GetTuple()
+	if strings.TrimSpace(tuple.GetSrcIp()) == "" || strings.TrimSpace(tuple.GetDstIp()) == "" || tuple.GetProtocol() == 0 {
+		return fmt.Errorf("invalid detection behavior: source tuple addresses and protocol are required")
+	}
+	return nil
+}
+
 // buildAlert 构建告警对象
 func (c *Consumer) buildAlert(
 	detection *pb.DetectionBatch,
@@ -552,6 +742,7 @@ func (c *Consumer) buildAlert(
 	header := detection.Behaviors[0].GetHeader()
 	tenantID := ""
 	eventID := ""
+	traceID := ""
 	featureSetID := ""
 	probeID := ""
 	runID := ""
@@ -560,25 +751,21 @@ func (c *Consumer) buildAlert(
 	if header != nil {
 		tenantID = header.GetTenantId()
 		eventID = header.GetEventId()
+		traceID = header.GetTraceId()
 		featureSetID = header.GetFeatureSetId()
 		probeID = header.GetProbeId()
 		runID = header.GetRunId()
 		eventTs = header.GetEventTs()
 	}
 
-	// 提取五元组信息
-	srcIP := ""
-	dstIP := ""
-	var srcPort, dstPort uint16
-	var protocol uint8
-
-	if detection.Behaviors[0].Header != nil {
-		srcIP = ""
-		dstIP = ""
-		srcPort = uint16(0)
-		dstPort = uint16(0)
-		protocol = uint8(0)
-	}
+	// Preserve the real source tuple carried through Session -> Feature ->
+	// Detection. Empty hard-coded network identity is not a valid alert.
+	tuple := detection.Behaviors[0].GetTuple()
+	srcIP := tuple.GetSrcIp()
+	dstIP := tuple.GetDstIp()
+	srcPort := uint16(tuple.GetSrcPort())
+	dstPort := uint16(tuple.GetDstPort())
+	protocol := uint8(tuple.GetProtocol())
 
 	// Preserve detector labels: notification routing, asset/campus scoping and
 	// downstream investigation all depend on this business context.
@@ -588,15 +775,9 @@ func (c *Consumer) buildAlert(
 		"object_id:"+detection.Behaviors[0].GetObjectId(),
 	)
 
-	// 提取evidence_ids（从证据条目中）
-	evidenceIDs := make([]string, 0)
-	for _, ev := range []*pb.Evidence{} {
-		if ev != nil && ev.Type != "" {
-			// 为每个 evidence entry 生成唯一 ID
-			evidenceID := fmt.Sprintf("%s:%s:%s", eventID, ev.Type, ev.Summary)
-			evidenceIDs = append(evidenceIDs, evidenceID)
-		}
-	}
+	// Evidence references are source facts. Do not synthesize references from
+	// empty placeholders; retain the producer-provided flow/evidence IDs.
+	evidenceIDs := append([]string(nil), detection.Behaviors[0].GetEvidenceIds()...)
 
 	// 计算时间范围
 	var tsStart, tsEnd int64
@@ -624,8 +805,9 @@ func (c *Consumer) buildAlert(
 		lastSeen = time.UnixMilli(tsEnd)
 	}
 
-	// 生成 alert_id
-	alertID := uuid.New().String()
+	// Stable identity makes replay effectively-once at the projection ID
+	// boundary even when the detector does not provide alert_id.
+	alertID := stableAlertID(tenantID, eventID, fingerprint)
 
 	// 获取 detection 的 ID 用于调试
 	detectionID := "detection-unknown"
@@ -639,7 +821,7 @@ func (c *Consumer) buildAlert(
 		AlertID:     alertID,
 		Fingerprint: fingerprint,
 		CommunityID: detection.Behaviors[0].GetCommunityId(),
-		SessionID:   "",
+		SessionID:   detection.Behaviors[0].GetObjectId(),
 		CampaignID:  "", // 后续由 CEP 填充
 
 		SrcIP:    srcIP,
@@ -667,6 +849,7 @@ func (c *Consumer) buildAlert(
 
 		EvidenceIDs: evidenceIDs,
 		EventID:     eventID,
+		TraceID:     traceID,
 	}
 
 	// 记录额外字段用于调试

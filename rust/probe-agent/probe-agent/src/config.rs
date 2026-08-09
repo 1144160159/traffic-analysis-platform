@@ -136,6 +136,7 @@ impl ProbeConfig {
         if self.sender.gateway_addr.is_empty() {
             anyhow::bail!("sender.gateway_addr cannot be empty");
         }
+        validate_gateway_transport(&self.sender)?;
 
         if !self
             .tenant_id
@@ -198,6 +199,63 @@ impl ProbeConfig {
     pub fn active_timeout(&self) -> Duration {
         self.aggregator.active_timeout()
     }
+}
+
+fn validate_gateway_transport(sender: &SenderConfig) -> Result<()> {
+    let tls_file_count = [
+        sender.tls_ca_cert.as_deref(),
+        sender.tls_client_cert.as_deref(),
+        sender.tls_client_key.as_deref(),
+    ]
+    .into_iter()
+    .filter(|value| value.is_some_and(|path| !path.trim().is_empty()))
+    .count();
+
+    if tls_file_count != 0 && tls_file_count != 3 {
+        anyhow::bail!(
+            "sender TLS configuration must include CA certificate, client certificate and client key together"
+        );
+    }
+
+    if sender.gateway_addr.starts_with("https://") {
+        if tls_file_count != 3 {
+            anyhow::bail!("https gateway requires the complete mTLS certificate set");
+        }
+        return Ok(());
+    }
+
+    if sender.gateway_addr.starts_with("http://") {
+        if tls_file_count != 0 {
+            anyhow::bail!("TLS certificate files cannot be used with a plaintext gateway URL");
+        }
+        if !is_loopback_http_endpoint(&sender.gateway_addr) {
+            anyhow::bail!(
+                "plaintext gateway transport is restricted to loopback development endpoints"
+            );
+        }
+        return Ok(());
+    }
+
+    anyhow::bail!(
+        "sender.gateway_addr must use an explicit https scheme, or loopback http for development"
+    )
+}
+
+fn is_loopback_http_endpoint(endpoint: &str) -> bool {
+    let authority = endpoint
+        .strip_prefix("http://")
+        .unwrap_or("")
+        .split('/')
+        .next()
+        .unwrap_or("");
+    if authority.contains('@') {
+        return false;
+    }
+    if authority.starts_with("[::1]") {
+        return authority.len() == 5 || authority.as_bytes().get(5) == Some(&b':');
+    }
+    let host = authority.split(':').next().unwrap_or("");
+    host == "localhost" || host == "127.0.0.1"
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -344,6 +402,8 @@ pub struct ArchiverConfig {
     pub s3_access_key: String,
     #[serde(default)]
     pub s3_secret_key: String,
+    #[serde(default)]
+    pub s3_ca_cert: Option<String>,
     #[serde(default = "default_max_uploads")]
     pub max_concurrent_uploads: usize,
     #[serde(default = "default_cache_path")]
@@ -398,6 +458,7 @@ impl Default for ArchiverConfig {
             s3_region: default_s3_region(),
             s3_access_key: std::env::var("PROBE_S3_ACCESS_KEY").unwrap_or_default(),
             s3_secret_key: std::env::var("PROBE_S3_SECRET_KEY").unwrap_or_default(),
+            s3_ca_cert: None,
             max_concurrent_uploads: default_max_uploads(),
             cache_path: default_cache_path(),
         }
@@ -478,6 +539,72 @@ impl Default for MetricsConfig {
             enabled: true,
             listen_addr: default_metrics_listen(),
         }
+    }
+}
+
+#[cfg(test)]
+mod transport_tests {
+    use super::{validate_gateway_transport, SenderConfig};
+
+    fn sender(endpoint: &str) -> SenderConfig {
+        SenderConfig {
+            gateway_addr: endpoint.to_string(),
+            ..SenderConfig::default()
+        }
+    }
+
+    fn with_mtls(mut config: SenderConfig) -> SenderConfig {
+        config.tls_ca_cert = Some("/run/pki/ca.crt".to_string());
+        config.tls_client_cert = Some("/run/pki/tls.crt".to_string());
+        config.tls_client_key = Some("/run/pki/tls.key".to_string());
+        config
+    }
+
+    #[test]
+    fn remote_https_requires_complete_mtls_identity() {
+        let result = validate_gateway_transport(&sender("https://ingest-gateway:50051"));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("complete mTLS"));
+    }
+
+    #[test]
+    fn partial_mtls_identity_is_rejected() {
+        let mut config = sender("https://ingest-gateway:50051");
+        config.tls_ca_cert = Some("/run/pki/ca.crt".to_string());
+        let result = validate_gateway_transport(&config);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("must include"));
+    }
+
+    #[test]
+    fn remote_plaintext_transport_is_rejected() {
+        let result = validate_gateway_transport(&sender("http://ingest-gateway:50051"));
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("restricted to loopback"));
+    }
+
+    #[test]
+    fn loopback_plaintext_is_allowed_only_without_tls_files() {
+        assert!(validate_gateway_transport(&sender("http://127.0.0.1:50051")).is_ok());
+        assert!(validate_gateway_transport(&sender("http://localhost:50051")).is_ok());
+        assert!(validate_gateway_transport(&sender("http://[::1]:50051")).is_ok());
+        let result = validate_gateway_transport(&with_mtls(sender("http://127.0.0.1:50051")));
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("plaintext gateway URL"));
+    }
+
+    #[test]
+    fn remote_https_with_complete_identity_is_allowed() {
+        assert!(validate_gateway_transport(&with_mtls(sender(
+            "https://ingest-gateway.traffic-analysis.svc:50051"
+        )))
+        .is_ok());
     }
 }
 

@@ -92,6 +92,27 @@ secrets:
         - kafka.truststore.p12
         - ca.crt
     - namespace: middleware
+      name: kafka-principal-credentials
+      keys:
+        - KAFKA_AUDIT_MATERIALIZER_PASSWORD
+        - KAFKA_ALERT_SERVICE_PASSWORD
+        - KAFKA_ASSET_SERVICE_PASSWORD
+        - KAFKA_AUTH_SERVICE_PASSWORD
+        - KAFKA_FORENSICS_SERVICE_PASSWORD
+        - KAFKA_GRAPH_SERVICE_PASSWORD
+        - KAFKA_INGEST_GATEWAY_PASSWORD
+        - KAFKA_RULE_MANAGER_PASSWORD
+        - KAFKA_THREAT_INTEL_SERVICE_PASSWORD
+        - KAFKA_FLINK_ALERT_GENERATOR_JOB_PASSWORD
+        - KAFKA_FLINK_BEHAVIOR_JOB_PASSWORD
+        - KAFKA_FLINK_CEP_JOB_PASSWORD
+        - KAFKA_FLINK_FEATURE_JOB_PASSWORD
+        - KAFKA_FLINK_LOG_JOB_PASSWORD
+        - KAFKA_FLINK_PCAP_INDEX_JOB_PASSWORD
+        - KAFKA_FLINK_RULE_JOB_PASSWORD
+        - KAFKA_FLINK_SESSION_JOB_PASSWORD
+        - KAFKA_FLINK_USER_BEHAVIOR_JOB_PASSWORD
+    - namespace: middleware
       name: kafka-client-tls
       keys:
         - kafka.truststore.p12
@@ -108,14 +129,39 @@ secrets:
         - JWT_SECRET
         - OIDC_CLIENT_SECRET
         - OPENSEARCH_ADMIN_PASSWORD
-        - KAFKA_CLIENT_USERNAME
-        - KAFKA_CLIENT_PASSWORD
         - KAFKA_TLS_TRUSTSTORE_PASSWORD
     - namespace: traffic-analysis
       name: kafka-client-tls
       keys:
         - kafka.truststore.p12
         - ca.crt
+    - namespace: traffic-analysis
+      name: kafka-ingest-gateway-credentials
+      keys: [username, password]
+    - namespace: traffic-analysis
+      name: kafka-auth-service-credentials
+      keys: [username, password]
+    - namespace: traffic-analysis
+      name: kafka-alert-service-credentials
+      keys: [username, password]
+    - namespace: traffic-analysis
+      name: kafka-audit-materializer-credentials
+      keys: [username, password]
+    - namespace: traffic-analysis
+      name: kafka-asset-service-credentials
+      keys: [username, password]
+    - namespace: traffic-analysis
+      name: kafka-rule-manager-credentials
+      keys: [username, password]
+    - namespace: traffic-analysis
+      name: kafka-graph-service-credentials
+      keys: [username, password]
+    - namespace: traffic-analysis
+      name: kafka-threat-intel-service-credentials
+      keys: [username, password]
+    - namespace: traffic-analysis
+      name: kafka-forensics-service-credentials
+      keys: [username, password]
     - namespace: databases
       name: traffic-credentials
       keys:
@@ -141,6 +187,33 @@ secrets:
       keys:
         - kafka.truststore.p12
         - ca.crt
+    - namespace: flink
+      name: kafka-flink-alert-generator-job-credentials
+      keys: [username, password]
+    - namespace: flink
+      name: kafka-flink-behavior-job-credentials
+      keys: [username, password]
+    - namespace: flink
+      name: kafka-flink-cep-job-credentials
+      keys: [username, password]
+    - namespace: flink
+      name: kafka-flink-feature-job-credentials
+      keys: [username, password]
+    - namespace: flink
+      name: kafka-flink-log-job-credentials
+      keys: [username, password]
+    - namespace: flink
+      name: kafka-flink-pcap-index-job-credentials
+      keys: [username, password]
+    - namespace: flink
+      name: kafka-flink-rule-job-credentials
+      keys: [username, password]
+    - namespace: flink
+      name: kafka-flink-session-job-credentials
+      keys: [username, password]
+    - namespace: flink
+      name: kafka-flink-user-behavior-job-credentials
+      keys: [username, password]
     - namespace: minio
       name: traffic-credentials
       keys:

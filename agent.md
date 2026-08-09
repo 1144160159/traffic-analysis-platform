@@ -113,6 +113,8 @@ TypeScript/Web:
 - 运行时 mock 只能在 `VITE_USE_MOCK=true` 下启用。
 - 生产 Web UI nginx 代理指向 `apisix.gateway.svc:9080`; 本地 Vite 开发代理可指向真实 APISIX `10.0.5.8:30180`。
 - 桌面端 Modal 必须保持小尺寸，不得铺满或遮住整个浏览器业务区域；业务详情、证据和日志优先使用右侧窄 Drawer，并保持宿主页面上下文可见。验收专用 focus 路由不代表生产弹层形态。
+- 前端页面审计统一使用 Product Design，证据必须来自本轮实际截图并在保存后检查；每条发现绑定步骤或截图，同时区分可见 UX 问题、可访问性风险和截图无法证明的边界。
+- 前端问题执行解决即关闭：修复、定向测试、同一生产候选 bundle 重拍和相关交互/API/权限/错误态证据全部通过时立即标记 `CLOSED`；CLOSED 项不再进入后续开放清单、进度播报、难度排序或阻塞项，回归问题使用新的 occurrence ID。
 
 Proto:
 
@@ -205,3 +207,13 @@ Community ID 跨语言固定向量:
 - [ ] 批量写入、State TTL、缓存 key、索引或 N+1 查询是否检查过？
 - [ ] 使用了最小相关测试，并记录无法运行的检查？
 - [ ] 前端真实链路是否确认无 4xx/5xx、request failed、非 warning console/pageerror？
+- [ ] 前端审计是否使用 Product Design 本轮截图，已解决问题是否当轮 `CLOSED` 并从后续开放清单移除？
+
+## 9. Codex 命令完成后的连续响应
+
+- 命令工具返回 `session_id`、`cell_id` 或“仍在运行”时，必须继续轮询到明确终态；不得把一次中间 yield 当作完成。
+- 终态优先使用明确 `exit_code` 判断成功或失败。若工具只返回 `Script completed` 且不再提供可轮询 ID，则按已终止处理、说明退出码缺失并检查产物；不得为了补退出码而重跑命令。
+- 得到终态后，先用一句话向用户报告结果，再解释并继续当前任务；不得停在原始工具输出后。
+- 不得为确认状态而重跑已经完成的命令，尤其不得重复有副作用的写入、迁移、发布或删除。
+- 项目级 `.codex/hooks.json` 会调用 `scripts/codex_hooks/command_completion_guard.py` 注入上述提醒并写 metadata-only 完成日志；运行日志不得包含命令正文、stdout、stderr 或密钥。
+- hook 不自动启动子代理、第二个 Codex 进程或 `codex exec resume`。若 app-server 或模型采样链路本身冻结，应由产品侧线程心跳或用户新消息恢复，避免并发 turn 导致重复副作用。

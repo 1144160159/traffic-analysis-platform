@@ -24,6 +24,15 @@ public class OpenSearchSinkFactory {
         ElasticsearchSink.Builder<DeviceLog> builder = new ElasticsearchSink.Builder<>(hosts, new LogIndexer());
         builder.setBulkFlushMaxActions(1000);
         builder.setBulkFlushInterval(5000);
+        builder.setBulkFlushBackoff(true);
+        builder.setBulkFlushBackoffType(ElasticsearchSink.FlushBackoffType.EXPONENTIAL);
+        builder.setBulkFlushBackoffRetries(3);
+        builder.setBulkFlushBackoffDelay(1000);
+        builder.setFailureHandler((action, failure, restStatusCode, indexer) -> {
+            throw new RuntimeException(
+                    "OpenSearch device-log bulk item failed after retries: status=" + restStatusCode,
+                    failure);
+        });
         return builder.build();
     }
 
@@ -31,6 +40,9 @@ public class OpenSearchSinkFactory {
         private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(ZoneId.of("UTC"));
 
         @Override public void process(DeviceLog log, RuntimeContext ctx, RequestIndexer indexer) {
+            if (log == null || log.getLogId().isBlank()) {
+                throw new IllegalArgumentException("OpenSearch device-log projection requires log_id");
+            }
             String index = "device-logs-" + FMT.format(Instant.ofEpochMilli(log.getTimestamp()));
             Map<String, Object> doc = new LinkedHashMap<>();
             doc.put("tenant_id", log.getTenantId());
@@ -41,7 +53,8 @@ public class OpenSearchSinkFactory {
             doc.put("timestamp", Instant.ofEpochMilli(log.getTimestamp()).toString());
             doc.put("message", log.getMessage());
             doc.put("source", log.getSource());
-            IndexRequest req = Requests.indexRequest().index(index).source(doc);
+            // Stable log_id makes a checkpoint replay overwrite the same projection.
+            IndexRequest req = Requests.indexRequest().index(index).id(log.getLogId()).source(doc);
             indexer.add(req);
         }
     }

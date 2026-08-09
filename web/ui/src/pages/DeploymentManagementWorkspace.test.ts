@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { deploymentActionAvailability, deploymentStatusLabel } from './DeploymentManagementWorkspace';
+import { deploymentActionAvailability, deploymentStatusLabel } from './deploymentManagementLogic';
 
 describe('deploymentStatusLabel', () => {
   it.each([

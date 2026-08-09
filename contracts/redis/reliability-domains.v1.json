@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-redis-reliability-domains-v1",
+  "remediation_id": "T-REDIS-001",
+  "status": "implementing",
+  "production_applied": false,
+  "repository_mode": "safe-hold-with-isolated-cache-target",
+  "infrastructure_manifest": "deployments/kubernetes/infrastructure/04-redis.yaml",
+  "application_manifest": "deployments/kubernetes/applications/go-services.yaml",
+  "legacy_service": {
+    "name": "redis",
+    "compatibility_only": true,
+    "new_client_use": "forbidden"
+  },
+  "domains": {
+    "coordination": {
+      "endpoint_mode": "sentinel",
+      "sentinel_service": "redis-sentinel.databases.svc:26379",
+      "sentinel_master": "mymaster",
+      "database": 0,
+      "maxmemory_policy": "noeviction",
+      "persistence": "aof",
+      "failure_semantics": "fail-closed-or-recover-from-postgresql-authority",
+      "allowed_roles": ["idempotency", "dedup", "rate-limit", "lease", "revocation"]
+    },
+    "session": {
+      "endpoint_mode": "sentinel",
+      "sentinel_service": "redis-sentinel.databases.svc:26379",
+      "sentinel_master": "mymaster",
+      "database": 1,
+      "maxmemory_policy": "noeviction",
+      "persistence": "aof",
+      "failure_semantics": "authentication-fails-closed-when-postgresql-validation-cannot-complete",
+      "authoritative_store": "postgresql"
+    },
+    "cache": {
+      "endpoint_mode": "standalone-discardable",
+      "service": "redis-cache.databases.svc:6379",
+      "database": 0,
+      "maxmemory_policy": "allkeys-lru",
+      "persistence": "none",
+      "failure_semantics": "bypass-and-rebuild-from-authoritative-store",
+      "authoritative_store_required": true
+    },
+    "stream_queue": {
+      "repository_state": "FORBIDDEN_AS_KAFKA_REPLACEMENT",
+      "required_before_use": [
+        "versioned stream contract",
+        "persistence and consumer-group semantics",
+        "replay and reconciliation plan",
+        "independent approval"
+      ]
+    }
+  },
+  "workload_bindings": [
+    {"workload": "ingest-gateway", "domain": "coordination", "database": 0, "mixed_client_safe_hold": true},
+    {"workload": "auth-service", "domain": "session", "database": 1, "mixed_client_safe_hold": false},
+    {"workload": "alert-service", "domain": "coordination", "database": 0, "mixed_client_safe_hold": true},
+    {"workload": "rule-manager", "domain": "coordination", "database": 0, "mixed_client_safe_hold": true},
+    {"workload": "graph-service", "domain": "coordination", "database": 0, "mixed_client_safe_hold": true},
+    {"workload": "forensics-service", "domain": "session", "database": 1, "mixed_client_safe_hold": true}
+  ],
+  "keyspace_inventory": [
+    {"prefix": "ratelimit:", "domain": "coordination", "authority": "request-policy", "tenant_binding_required": true},
+    {"prefix": "dedup:", "domain": "coordination", "authority": "event-or-postgresql-history", "tenant_binding_required": true},
+    {"prefix": "dlq:replay:", "domain": "coordination", "authority": "postgresql-replay-receipt-target", "tenant_binding_required": true},
+    {"prefix": "jwt:blacklist:", "domain": "session", "authority": "postgresql-token-state", "tenant_binding_required": false},
+    {"prefix": "oidc_state:", "domain": "session", "authority": "single-use-authentication-flow", "tenant_binding_required": false},
+    {"prefix": "captcha:", "domain": "session", "authority": "single-use-authentication-flow", "tenant_binding_required": false},
+    {"prefix": "rule:", "domain": "cache", "authority": "postgresql", "tenant_binding_required": true},
+    {"prefix": "graph:", "domain": "cache", "authority": "postgresql-clickhouse-nebula", "tenant_binding_required": true},
+    {"prefix": "dashboard:", "domain": "cache", "authority": "postgresql-clickhouse-opensearch", "tenant_binding_required": true}
+  ],
+  "migration": {
+    "current_stage": "SAFE_HOLD",
+    "safe_hold_rule": "mixed clients remain on noeviction until cache and reliability clients are separated in code",
+    "required_sequence": [
+      "inventory and classify every live key prefix without reading values",
+      "apply coordination noeviction policy and verify zero evictions",
+      "deploy isolated discardable cache target",
+      "split pure cache clients from auth rate-limit dedup and idempotency clients",
+      "shadow cache reads and compare authoritative values",
+      "switch one workload at a time and retain bypass",
+      "run eviction failover reconnect and cache-stampede drills",
+      "observe T+0 T+1 T+3 T+7 before closure"
+    ],
+    "rollback": "route pure cache clients back to reliable noeviction domain or disable cache; never route coordination or session keys to redis-cache"
+  },
+  "initial_slos": {
+    "coordination_evictions_total": 0,
+    "session_evictions_total": 0,
+    "cache_failure_behavior": "bypass",
+    "cross_domain_key_count": 0
+  },
+  "remaining_gates": [
+    "split rule-manager graph-service and forensics-service mixed clients by semantic domain",
+    "live prefix inventory and zero cross-domain key reconciliation",
+    "release-candidate noeviction and cache-bypass runtime proof",
+    "Sentinel failover reconnect and session authentication fault drills",
+    "cache eviction and stampede performance budgets",
+    "TLS ACL service identities and dangerous-command restrictions under T-REDIS-002",
+    "rollout rollback observation and independent approval"
+  ]
+}

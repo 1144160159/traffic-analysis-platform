@@ -46,6 +46,8 @@ describe('data quality tab geometry', () => {
     const css = read(stylesPath);
 
     expect(page).toContain('DataQualityDonutChart');
+    expect(page).toContain("scoreValue === null ? '暂不可用'");
+    expect(page).toContain("'质量总分暂不可用'");
     expect(page).toContain('DataQualityFieldTrendChart');
     expect(page).toContain('DataQualityHeatmapChart');
     expect(page).toContain('DataQualityKpiSparklineChart');
@@ -64,17 +66,44 @@ describe('data quality tab geometry', () => {
     expect(normalizedPage).toContain("fetchPageSnapshot(route.id, { dataQualityTimeRange: timeRange })");
     expect(page).toContain('onChange={onTimeRangeChange}');
     expect(page).toContain('className="taf-data-quality-field-detail-drawer"');
-    expect(page).toContain('function FieldQualityRailLinks');
+    expect(page).toContain('function FieldQualitySideRail');
+    expect(page).toContain('<DataUnavailable section="字段质量侧栏统计" />');
     expect(page).toContain('function DataQualityPagination');
     expect(page).toContain('function useDataQualityPagination');
     expect(page).toContain('fetchDataQualityTablePage');
     expect(page).toContain('data-pagination-source={dataset ?');
     expect(page).toContain('aria-label={`${label}分页`}');
     expect(page).toContain('className="taf-data-quality-field-table-rows"');
-    expect(page).toContain('onOpenReplayReconcile={openReplayReconcile}');
+    expect(page).toContain('return <DataUnavailable section="质量设置" />;');
+    expect(page).toContain('<QualityCheckLinks checks={snapshot?.dataQualityChecks} mode="locate"');
+    expect(page).toContain('<QualityCheckLinks checks={snapshot?.dataQualityChecks} mode="repair"');
+    expect(page).toContain('data-check-measured={String(check.measured)}');
+    expect(page).toContain('data-check-source={check.source}');
+    expect(page.match(/data-dq-action-managed="true"/gu)?.length ?? 0).toBeGreaterThanOrEqual(3);
+    expect(page).not.toContain('<DataUnavailable section="快速定位" />');
+    expect(page).not.toContain('<DataUnavailable section="质量修复建议" />');
+    expect(css).toContain('grid-auto-rows: minmax(30px, auto);');
+    expect(css).toContain('align-content: start;');
     expect(css).toContain('scrollbar-gutter: stable;');
     expect(css).toContain('.taf-data-quality-field-pagination');
     expect(css).toContain('.taf-data-quality-paged-table');
     expect(css).toContain('flex: 0 0 34px;');
+  });
+
+  it('never substitutes static business facts for missing production snapshot sections', () => {
+    const page = read(pagePath);
+
+    expect(page).not.toContain('?? topicHealthFallbackMetrics');
+    expect(page).not.toContain('?? flinkQualityFallbackMetrics');
+    expect(page).not.toContain('?? fieldQualityFallbackMetrics');
+    expect(page).not.toContain('?? storageQualityFallbackMetrics');
+    expect(page).not.toContain('?? replayReconcileFallbackMetrics');
+    expect(page).not.toMatch(/rows\?\.length\s*\?\s*rows\s*:\s*\w*Fallback/);
+    expect(page).not.toContain('|| 92');
+    expect(page).not.toContain('rows={replayRows}');
+    expect(page).not.toContain("const rangeLabel = '2025-");
+    expect(page).not.toContain('buildFallbackHeatmap(');
+    expect(page).not.toContain('buildFallbackFlinkMetrics(');
+    expect(page).toContain('页面不会以静态业务数据替代');
   });
 });

@@ -1,5 +1,6 @@
 package com.traffic.flink.feature.calculator;
 
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.proto.traffic.v1.EventHeader;
 import com.traffic.proto.traffic.v1.FeatureStat;
 import com.traffic.proto.traffic.v1.SessionEvent;
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * L1 统计特征计算器（增强版 v2）
@@ -157,14 +157,37 @@ public class FeatureCalculator {
         List<Float> extra = buildExtraFeaturesV2(session, packetsTotal, iatMinMs, iatMaxMs);
 
         // ==================== 构造 EventHeader ====================
+        long producedAt = System.currentTimeMillis();
+        String eventId = generateEventId(session, "feature");
+        EventHeader sourceHeader = session.hasHeader()
+                ? session.getHeader()
+                : EventHeader.getDefaultInstance();
+        String traceId = sourceHeader.getTraceId().isEmpty()
+                ? sourceHeader.getEventId()
+                : sourceHeader.getTraceId();
+        String correlationId = sourceHeader.getCorrelationId().isEmpty()
+                ? session.getCommunityId()
+                : sourceHeader.getCorrelationId();
         EventHeader header = EventHeader.newBuilder()
-                .setEventId(generateEventId())
+                .setEventId(eventId)
                 .setTenantId(session.getHeader().getTenantId())
                 .setRunId(session.getHeader().getRunId())
                 .setEventTs(session.getTsEnd())
-                .setIngestTs(System.currentTimeMillis())
+                .setIngestTs(producedAt)
                 .setProbeId(session.getHeader().getProbeId())
                 .setFeatureSetId(session.getHeader().getFeatureSetId())
+                .setEventType("traffic.feature.stat.v1")
+                .setSchemaVersion(SCHEMA_VERSION)
+                .setAggregateType("session")
+                .setAggregateId(session.getSessionId())
+                .setAggregateVersion(1)
+                .setOccurredAt(session.getTsEnd())
+                .setProducedAt(producedAt)
+                .setTraceId(traceId)
+                .setCausationId(sourceHeader.getEventId())
+                .setCorrelationId(correlationId)
+                .setIdempotencyKey(eventId)
+                .setProducer("flink-feature-job")
                 .build();
 
         // ==================== 构造 FeatureStat ====================
@@ -198,6 +221,8 @@ public class FeatureCalculator {
                 .setTcpInitWinBytesBwd(tcpInitWinBytesBwd > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) tcpInitWinBytesBwd)
                 // 扩展特征（20 个槽位）
                 .addAllExtra(extra)
+                .setTuple(session.getTuple())
+                .addAllEvidenceIds(session.getFlowIdsList())
                 .build();
     }
 
@@ -361,8 +386,17 @@ public class FeatureCalculator {
     /**
      * 生成事件 ID
      */
-    private static String generateEventId() {
-        return UUID.randomUUID().toString();
+    private static String generateEventId(SessionEvent session, String outputKind) {
+        EventHeader inputHeader = session.getHeader();
+        return DeterministicId.uuid(
+                "flink-feature-event/v1",
+                outputKind,
+                inputHeader.getTenantId(),
+                inputHeader.getEventId(),
+                session.getSessionId(),
+                session.getTsStart(),
+                session.getTsEnd(),
+                SCHEMA_VERSION);
     }
 
     /**
@@ -374,10 +408,10 @@ public class FeatureCalculator {
 
         return FeatureStat.newBuilder()
                 .setHeader(EventHeader.newBuilder()
-                        .setEventId(generateEventId())
+                        .setEventId(generateEventId(session, "error"))
                         .setTenantId(tenantId)
-                        .setEventTs(System.currentTimeMillis())
-                        .setIngestTs(System.currentTimeMillis())
+                        .setEventTs(session.getTsEnd())
+                        .setIngestTs(session.getHeader().getIngestTs())
                         .build())
                 .setSchemaVersion(SCHEMA_VERSION)
                 .setObjectType("error")

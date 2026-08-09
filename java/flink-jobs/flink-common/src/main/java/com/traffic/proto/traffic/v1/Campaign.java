@@ -72,7 +72,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       tenantId_ = s;
@@ -88,7 +88,7 @@ private static final long serialVersionUID = 0L;
       getTenantIdBytes() {
     java.lang.Object ref = tenantId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       tenantId_ = b;
@@ -111,7 +111,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       campaignId_ = s;
@@ -127,7 +127,7 @@ private static final long serialVersionUID = 0L;
       getCampaignIdBytes() {
     java.lang.Object ref = campaignId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       campaignId_ = b;
@@ -257,7 +257,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       summary_ = s;
@@ -273,7 +273,7 @@ private static final long serialVersionUID = 0L;
       getSummaryBytes() {
     java.lang.Object ref = summary_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       summary_ = b;
@@ -296,7 +296,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       eventId_ = s;
@@ -312,7 +312,7 @@ private static final long serialVersionUID = 0L;
       getEventIdBytes() {
     java.lang.Object ref = eventId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       eventId_ = b;
@@ -372,7 +372,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       campaignType_ = s;
@@ -388,7 +388,7 @@ private static final long serialVersionUID = 0L;
       getCampaignTypeBytes() {
     java.lang.Object ref = campaignType_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       campaignType_ = b;
@@ -1297,7 +1297,7 @@ private static final long serialVersionUID = 0L;
         getTenantIdBytes() {
       java.lang.Object ref = tenantId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         tenantId_ = b;
@@ -1369,7 +1369,7 @@ private static final long serialVersionUID = 0L;
         getCampaignIdBytes() {
       java.lang.Object ref = campaignId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         campaignId_ = b;
@@ -1759,7 +1759,7 @@ private static final long serialVersionUID = 0L;
         getSummaryBytes() {
       java.lang.Object ref = summary_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         summary_ = b;
@@ -1831,7 +1831,7 @@ private static final long serialVersionUID = 0L;
         getEventIdBytes() {
       java.lang.Object ref = eventId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         eventId_ = b;
@@ -2018,7 +2018,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.EventHeader header = 11 [json_name = "header"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder> 
+        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder>
         getHeaderFieldBuilder() {
       if (headerBuilder_ == null) {
         headerBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -2056,7 +2056,7 @@ private static final long serialVersionUID = 0L;
         getCampaignTypeBytes() {
       java.lang.Object ref = campaignType_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         campaignType_ = b;

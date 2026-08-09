@@ -1,0 +1,83 @@
+{
+  "feature_id": "F-ASSET-003",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/assets"],
+    "preserved_actions": ["asset-active-discovery-run", "asset-discovery-credential-upsert", "asset-discovery-topology-link-upsert"],
+    "preserved_api_operations": ["POST /v1/assets/discovery/credentials", "GET /v1/assets/discovery/credentials", "POST /v1/assets/discovery/runs", "GET /v1/assets/discovery/runs"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "asset.discovery.job",
+    "controls": [
+      {"control_id": "asset-discovery-submit", "action_id": "asset-active-discovery-run"},
+      {"control_id": "asset-discovery-credential-upsert", "action_id": "asset-discovery-credential-upsert"},
+      {"control_id": "asset-discovery-cancel", "action_id": "asset-active-discovery-cancel"},
+      {"control_id": "asset-discovery-candidate-merge", "action_id": "asset-discovery-candidate-merge"}
+    ],
+    "states": ["loading", "accepted", "running", "success", "partial", "failed", "cancelled", "stale"]
+  },
+  "api": {
+    "operation_id": "createAssetDiscoveryJob",
+    "method": "POST",
+    "path": "/v1/assets/discovery/runs",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision",
+    "additional_operations": [
+      {
+        "operation_id": "mergeAssetDiscoveryCandidate",
+        "method": "POST",
+        "path": "/v1/assets/discovery/runs/{run_id}/candidates/{candidate_id}/merge",
+        "revision_fields": ["expected_candidate_revision", "expected_asset_revision"],
+        "modes": ["manual", "policy"]
+      }
+    ]
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "acceptance commits the job, initial history, minimum audit and outbox in one PostgreSQL transaction",
+      "discovery observations remain candidates until a separate manual or policy merge",
+      "candidate merge commits candidate state, authoritative asset revision, immutable asset history, minimum audit, asset projection outbox and idempotency result in one PostgreSQL transaction",
+      "legacy synchronous run transitions and credential/topology mutations commit revision, immutable history, minimum audit, outbox and idempotency result in one PostgreSQL transaction",
+      "active CIDR scopes cannot overlap within one tenant",
+      "expired worker leases are reclaimable and terminal state is never inferred from HTTP acceptance"
+    ],
+    "states": ["queued", "running", "cancel_requested", "cancelled", "succeeded", "partial", "failed", "blocked"],
+    "compensation": "cancel before lease; request cancellation while running; pending candidates remain non-authoritative; merged assets require a separately authorized revisioned correction"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql"],
+    "migration": "202607310100_asset_discovery_jobs_v2.sql",
+    "additional_migrations": ["202608031520_asset_discovery_resource_atomic.sql"],
+    "event_types": ["traffic.asset.discovery.v1.JobAccepted", "traffic.asset.discovery.v1.JobStateChanged", "traffic.asset.discovery.v1.CredentialUpserted", "traffic.asset.discovery.v1.TopologyLinkUpserted", "traffic.asset.v2.AssetUpserted"],
+    "source_watermarks": [
+      "postgresql.asset_discovery_runs.revision",
+      "postgresql.asset_discovery_candidates.discovered_at",
+      "postgresql.asset_discovery_outbox.outbox_id"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["asset:discover"],
+    "negative_tests": ["viewer cannot submit, cancel or merge discovery", "cross-tenant run, candidate, merge and history access returns no resource"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["job acceptance", "worker lease and recovery", "candidate result pagination", "candidate-to-authoritative-asset merge"],
+    "stop_conditions": ["configured scan rate, worker lease age or PostgreSQL queue latency exceeds the approved budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 contract and migration lint", "G1 state and request validation", "G2 real PostgreSQL transaction and worker", "G3 job/history/audit/outbox/candidate/asset reconciliation", "G4 fixed-scope scan budget", "G5 Windows Chrome submit-progress-cancel journey"],
+    "evidence": ["same trace_id across accepted response, run, history, audit, outbox and isolated candidates"]
+  },
+  "rollout": {
+    "feature_flag": "asset_discovery_jobs_v2",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ASSET-003-rollback.md"
+  }
+}

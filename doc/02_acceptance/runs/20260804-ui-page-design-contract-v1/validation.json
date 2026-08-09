@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "run_id": "20260804-ui-page-design-contract-v1",
+  "validated_at": "2026-08-04T13:47:02Z",
+  "result": "pass",
+  "scope": "UI-ADD-001 code-side page design contract and engineering gate",
+  "checks": [
+    {
+      "command": "python3 scripts/alignment/verify_ui_page_design_contracts.py",
+      "result": "pass",
+      "facts": {
+        "page_count": 28,
+        "route_coverage": "28/28",
+        "compatibility_alias_count": 3,
+        "canonical_id_count": 102,
+        "api_plan_count": 29,
+        "duplicate_or_unknown_or_orphan_count": 0
+      }
+    },
+    {
+      "command": "cd web/ui && npm run test -- --run",
+      "result": "pass",
+      "facts": {
+        "test_files": 52,
+        "tests": 277,
+        "warnings": 0
+      }
+    },
+    {
+      "command": "cd web/ui && npm run lint:check",
+      "result": "pass",
+      "facts": {
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "command": "cd web/ui && npm run build",
+      "result": "pass",
+      "facts": {
+        "typescript": "pass",
+        "vite_modules_transformed": 3858,
+        "production_mock_guard": "pass"
+      }
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "make alignment-validate",
+      "result": "pass",
+      "facts": {
+        "canonical_ids": 102,
+        "p0_ids": 38,
+        "orphan_ids": 0,
+        "adapter_source_files": 72,
+        "adapter_open_findings": 0,
+        "postgres_mutation_statements": 620,
+        "postgres_unclassified_mutations": 0,
+        "kafka_identity_workloads": 18
+      }
+    }
+  ],
+  "corrective_changes": [
+    "replaced test-file references in four page contracts with production TypeScript sources",
+    "bound tokens, capture plan, image ID and image manifest digest into the candidate manifest",
+    "fixed stale Hook dependencies in campaign, encrypted-traffic, notification, playbook and rule pages",
+    "split non-component exports from four page modules so Fast Refresh boundaries are clean",
+    "enabled matching React Router v7 future behavior in production and test routers",
+    "regenerated the adapter-risk, configuration, service-identity, PKI and PostgreSQL mutation catalogs after governed-source drift"
+  ],
+  "release_state": {
+    "current_local_bundle_deployed": false,
+    "deployed_candidate_unchanged": "docker.io/traffic/web-ui:remediation-ui-60871b6a7a18",
+    "contract_binding_mode": "external-versioned-contract-to-existing-deployed-candidate",
+    "windows_chrome_sampled_business_page_coverage": "4/28",
+    "full_ui_acceptance": false
+  },
+  "open_follow_up": [
+    "Vite reports raw vendor chunks above 500 kB; capture a production transfer/runtime profile and define a gzip/load budget before changing chunk topology",
+    "deploy a new immutable bundle containing the router and page-module fixes",
+    "execute the remaining 24 Windows Chrome page journeys and 28/28 Design QA",
+    "verify write actions, keyboard navigation, screen reader semantics and multi-viewport behavior"
+  ]
+}

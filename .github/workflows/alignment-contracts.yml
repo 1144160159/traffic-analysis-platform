@@ -1,0 +1,38 @@
+name: alignment-contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  alignment:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/control-plane/go.mod
+      - uses: bufbuild/buf-setup-action@v1
+      - name: Validate registry, feature contracts, OpenAPI, generated client and migration policy
+        run: |
+          make alignment-test
+          git diff --exit-code -- \
+            web/ui/src/generated/alignmentClient.ts \
+            contracts/alignment/remediation-ledger.json
+      - name: Lint Protobuf source of truth
+        working-directory: proto
+        run: buf lint
+      - name: Reject Protobuf breaking changes
+        if: github.event_name == 'pull_request'
+        working-directory: proto
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: buf breaking --against "../.git#ref=${BASE_SHA},subdir=proto"

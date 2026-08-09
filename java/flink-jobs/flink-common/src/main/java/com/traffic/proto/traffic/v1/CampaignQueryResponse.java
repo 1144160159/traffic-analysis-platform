@@ -58,7 +58,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.Campaign campaigns = 1 [json_name = "campaigns"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder>
       getCampaignsOrBuilderList() {
     return campaigns_;
   }
@@ -452,7 +452,7 @@ private static final long serialVersionUID = 0L;
             campaignsBuilder_ = null;
             campaigns_ = other.campaigns_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            campaignsBuilder_ = 
+            campaignsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getCampaignsFieldBuilder() : null;
           } else {
@@ -727,7 +727,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Campaign campaigns = 1 [json_name = "campaigns"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder>
          getCampaignsOrBuilderList() {
       if (campaignsBuilder_ != null) {
         return campaignsBuilder_.getMessageOrBuilderList();
@@ -753,12 +753,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Campaign campaigns = 1 [json_name = "campaigns"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.Campaign.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.Campaign.Builder>
          getCampaignsBuilderList() {
       return getCampaignsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.Campaign, com.traffic.proto.traffic.v1.Campaign.Builder, com.traffic.proto.traffic.v1.CampaignOrBuilder> 
+        com.traffic.proto.traffic.v1.Campaign, com.traffic.proto.traffic.v1.Campaign.Builder, com.traffic.proto.traffic.v1.CampaignOrBuilder>
         getCampaignsFieldBuilder() {
       if (campaignsBuilder_ == null) {
         campaignsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<

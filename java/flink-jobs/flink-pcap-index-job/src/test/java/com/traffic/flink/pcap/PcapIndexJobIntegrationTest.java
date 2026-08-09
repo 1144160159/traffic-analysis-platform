@@ -2,11 +2,13 @@ package com.traffic.flink.pcap;
 
 import com.traffic.proto.traffic.v1.PcapIndexMeta;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@EnabledIfEnvironmentVariable(named = "K8S_INTEGRATION_TEST_ENABLED", matches = "true")
 class PcapIndexJobIntegrationTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(PcapIndexJobIntegrationTest.class);
@@ -26,13 +29,25 @@ class PcapIndexJobIntegrationTest {
         fullCmd[0] = "kubectl"; fullCmd[1] = "exec"; fullCmd[2] = "-n";
         fullCmd[3] = namespace; fullCmd[4] = pod; fullCmd[5] = "--";
         System.arraycopy(cmd, 0, fullCmd, 6, cmd.length);
-        Process p = new ProcessBuilder(fullCmd).redirectErrorStream(true).start();
+        ProcessBuilder processBuilder = new ProcessBuilder(fullCmd).redirectErrorStream(true);
+        Map<String, String> environment = processBuilder.environment();
+        for (String proxyVariable : new String[]{
+                "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY",
+                "http_proxy", "https_proxy", "all_proxy"
+        }) {
+            environment.remove(proxyVariable);
+        }
+        Process p = processBuilder.start();
         StringBuilder sb = new StringBuilder();
         try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
             String line; while ((line = r.readLine()) != null) sb.append(line).append("\n");
         }
-        p.waitFor();
-        return sb.toString().trim();
+        int exitCode = p.waitFor();
+        String output = sb.toString().trim();
+        assertThat(exitCode)
+                .as("kubectl exec failed: %s", output)
+                .isZero();
+        return output;
     }
 
     @Test @Order(1)

@@ -145,7 +145,10 @@ export default function App() {
   return (
     <ConfigProvider locale={zhCN} theme={darkTheme}>
       <QueryClientProvider client={queryClient}>
-        <Router basename={routerBasename}>
+        <Router
+          basename={routerBasename}
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<Suspense fallback={<RouteLoading />}><LoginPage /></Suspense>} />

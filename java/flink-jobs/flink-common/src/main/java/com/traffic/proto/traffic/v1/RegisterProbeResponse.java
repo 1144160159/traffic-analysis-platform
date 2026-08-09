@@ -65,7 +65,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       message_ = s;
@@ -81,7 +81,7 @@ private static final long serialVersionUID = 0L;
       getMessageBytes() {
     java.lang.Object ref = message_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       message_ = b;
@@ -569,7 +569,7 @@ private static final long serialVersionUID = 0L;
         getMessageBytes() {
       java.lang.Object ref = message_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         message_ = b;
@@ -724,7 +724,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.ProbeConfig initial_config = 3 [json_name = "initialConfig"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.ProbeConfig, com.traffic.proto.traffic.v1.ProbeConfig.Builder, com.traffic.proto.traffic.v1.ProbeConfigOrBuilder> 
+        com.traffic.proto.traffic.v1.ProbeConfig, com.traffic.proto.traffic.v1.ProbeConfig.Builder, com.traffic.proto.traffic.v1.ProbeConfigOrBuilder>
         getInitialConfigFieldBuilder() {
       if (initialConfigBuilder_ == null) {
         initialConfigBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<

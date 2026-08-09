@@ -60,7 +60,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.GraphQueryLog logs = 1 [json_name = "logs"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphQueryLogOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphQueryLogOrBuilder>
       getLogsOrBuilderList() {
     return logs_;
   }
@@ -100,7 +100,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       batchId_ = s;
@@ -116,7 +116,7 @@ private static final long serialVersionUID = 0L;
       getBatchIdBytes() {
     java.lang.Object ref = batchId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       batchId_ = b;
@@ -139,7 +139,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       tenantId_ = s;
@@ -155,7 +155,7 @@ private static final long serialVersionUID = 0L;
       getTenantIdBytes() {
     java.lang.Object ref = tenantId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       tenantId_ = b;
@@ -534,7 +534,7 @@ private static final long serialVersionUID = 0L;
             logsBuilder_ = null;
             logs_ = other.logs_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            logsBuilder_ = 
+            logsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getLogsFieldBuilder() : null;
           } else {
@@ -821,7 +821,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphQueryLog logs = 1 [json_name = "logs"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphQueryLogOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphQueryLogOrBuilder>
          getLogsOrBuilderList() {
       if (logsBuilder_ != null) {
         return logsBuilder_.getMessageOrBuilderList();
@@ -847,12 +847,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphQueryLog logs = 1 [json_name = "logs"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.GraphQueryLog.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.GraphQueryLog.Builder>
          getLogsBuilderList() {
       return getLogsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.GraphQueryLog, com.traffic.proto.traffic.v1.GraphQueryLog.Builder, com.traffic.proto.traffic.v1.GraphQueryLogOrBuilder> 
+        com.traffic.proto.traffic.v1.GraphQueryLog, com.traffic.proto.traffic.v1.GraphQueryLog.Builder, com.traffic.proto.traffic.v1.GraphQueryLogOrBuilder>
         getLogsFieldBuilder() {
       if (logsBuilder_ == null) {
         logsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -891,7 +891,7 @@ private static final long serialVersionUID = 0L;
         getBatchIdBytes() {
       java.lang.Object ref = batchId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         batchId_ = b;
@@ -963,7 +963,7 @@ private static final long serialVersionUID = 0L;
         getTenantIdBytes() {
       java.lang.Object ref = tenantId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         tenantId_ = b;

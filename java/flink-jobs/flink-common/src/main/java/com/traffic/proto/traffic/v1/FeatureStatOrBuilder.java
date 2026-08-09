@@ -183,4 +183,56 @@ public interface FeatureStatOrBuilder extends
    * @return The extra at the given index.
    */
   float getExtra(int index);
+
+  /**
+   * <pre>
+   * Original session context required by downstream detections and evidence.
+   * </pre>
+   *
+   * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+   * @return Whether the tuple field is set.
+   */
+  boolean hasTuple();
+  /**
+   * <pre>
+   * Original session context required by downstream detections and evidence.
+   * </pre>
+   *
+   * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+   * @return The tuple.
+   */
+  com.traffic.proto.traffic.v1.FiveTuple getTuple();
+  /**
+   * <pre>
+   * Original session context required by downstream detections and evidence.
+   * </pre>
+   *
+   * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+   */
+  com.traffic.proto.traffic.v1.FiveTupleOrBuilder getTupleOrBuilder();
+
+  /**
+   * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+   * @return A list containing the evidenceIds.
+   */
+  java.util.List<java.lang.String>
+      getEvidenceIdsList();
+  /**
+   * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+   * @return The count of evidenceIds.
+   */
+  int getEvidenceIdsCount();
+  /**
+   * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+   * @param index The index of the element to return.
+   * @return The evidenceIds at the given index.
+   */
+  java.lang.String getEvidenceIds(int index);
+  /**
+   * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the evidenceIds at the given index.
+   */
+  com.google.protobuf.ByteString
+      getEvidenceIdsBytes(int index);
 }

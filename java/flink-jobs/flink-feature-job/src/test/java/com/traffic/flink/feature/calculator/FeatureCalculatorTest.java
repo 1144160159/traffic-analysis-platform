@@ -56,6 +56,35 @@ class FeatureCalculatorTest {
     // ==================== 基础特征测试 ====================
 
     @Test
+    @DisplayName("同一 Session 重放保持 Feature event_id")
+    void testReplayStableEventId() {
+        SessionEvent session = sessionBuilder
+                .setPacketsTotal(100)
+                .setBytesTotal(1_000)
+                .addFlowIds("flow-1")
+                .addFlowIds("flow-2")
+                .build();
+
+        FeatureStat first = FeatureCalculator.calculate(session);
+        FeatureStat replay = FeatureCalculator.calculate(session);
+        FeatureStat errorFirst = FeatureCalculator.createErrorFeature(session, "forced");
+        FeatureStat errorReplay = FeatureCalculator.createErrorFeature(session, "forced");
+
+        assertEquals(first.getHeader().getEventId(), replay.getHeader().getEventId());
+        assertEquals(errorFirst.getHeader().getEventId(), errorReplay.getHeader().getEventId());
+        assertNotEquals(first.getHeader().getEventId(), errorFirst.getHeader().getEventId());
+        assertEquals("traffic.feature.stat.v1", first.getHeader().getEventType());
+        assertEquals("v2.0", first.getHeader().getSchemaVersion());
+        assertEquals("session", first.getHeader().getAggregateType());
+        assertEquals("session-1", first.getHeader().getAggregateId());
+        assertEquals(1, first.getHeader().getAggregateVersion());
+        assertEquals(first.getHeader().getEventId(), first.getHeader().getIdempotencyKey());
+        assertEquals("flink-feature-job", first.getHeader().getProducer());
+        assertEquals(session.getTuple(), first.getTuple());
+        assertEquals(session.getFlowIdsList(), first.getEvidenceIdsList());
+    }
+
+    @Test
     @DisplayName("计算基本速率特征 - PPS 和 BPS")
     void testCalculateRateFeatures() {
         SessionEvent session = sessionBuilder

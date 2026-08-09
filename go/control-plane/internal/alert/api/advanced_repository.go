@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/notification"
@@ -24,22 +26,34 @@ type AdvancedRepository struct {
 }
 
 type PlaybookExecutionRecord struct {
-	ExecutionID    string                 `json:"execution_id"`
-	TenantID       string                 `json:"tenant_id"`
-	PlaybookName   string                 `json:"playbook"`
-	AlertID        string                 `json:"alert_id"`
-	SuccessActions int                    `json:"success_actions"`
-	FailedActions  int                    `json:"failed_actions"`
-	DurationMS     int64                  `json:"duration_ms"`
-	RequestPayload map[string]interface{} `json:"request_payload"`
-	Result         map[string]interface{} `json:"result"`
-	Mode           string                 `json:"mode"`
-	Status         string                 `json:"status"`
-	RollbackOf     string                 `json:"rollback_of,omitempty"`
-	Effect         map[string]interface{} `json:"effect"`
-	RequestedBy    string                 `json:"requested_by"`
-	RolledBackAt   *time.Time             `json:"rolled_back_at,omitempty"`
-	CreatedAt      time.Time              `json:"created_at"`
+	ExecutionID         string                 `json:"execution_id"`
+	TenantID            string                 `json:"tenant_id"`
+	PlaybookName        string                 `json:"playbook_name"`
+	LegacyPlaybook      string                 `json:"playbook,omitempty"`
+	AlertID             string                 `json:"alert_id"`
+	SuccessActions      int                    `json:"success_actions"`
+	FailedActions       int                    `json:"failed_actions"`
+	DurationMS          int64                  `json:"duration_ms"`
+	RequestPayload      map[string]interface{} `json:"request_payload"`
+	Result              map[string]interface{} `json:"result"`
+	Mode                string                 `json:"mode"`
+	Status              string                 `json:"status"`
+	RollbackOf          string                 `json:"rollback_of,omitempty"`
+	Effect              map[string]interface{} `json:"effect"`
+	RequestedBy         string                 `json:"requested_by"`
+	RolledBackAt        *time.Time             `json:"rolled_back_at,omitempty"`
+	CreatedAt           time.Time              `json:"created_at"`
+	PlaybookVersion     int                    `json:"playbook_version,omitempty"`
+	WorkflowRevision    int64                  `json:"workflow_revision,omitempty"`
+	ApprovalStatus      string                 `json:"approval_status,omitempty"`
+	ExecutorStatus      string                 `json:"executor_status,omitempty"`
+	ExecutionReceipt    map[string]interface{} `json:"execution_receipt,omitempty"`
+	CompensationReceipt map[string]interface{} `json:"compensation_receipt,omitempty"`
+	ErrorMessage        string                 `json:"error_message,omitempty"`
+	ApprovedBy          string                 `json:"approved_by,omitempty"`
+	UpdatedAt           *time.Time             `json:"updated_at,omitempty"`
+	CompletedAt         *time.Time             `json:"completed_at,omitempty"`
+	TraceID             string                 `json:"trace_id,omitempty"`
 }
 
 type PlaybookDefinitionRecord struct {
@@ -90,6 +104,10 @@ type NotificationSilenceRule struct {
 	Reason          string    `json:"reason"`
 	Enabled         bool      `json:"enabled"`
 	CreatedBy       string    `json:"created_by"`
+	Revision        int64     `json:"revision"`
+	EventID         string    `json:"event_id,omitempty"`
+	OutboxStatus    string    `json:"outbox_status,omitempty"`
+	IdempotentReuse bool      `json:"idempotent_reuse,omitempty"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
@@ -134,264 +152,6 @@ func (r *AdvancedRepository) SetNotificationAlertStateResolver(resolver func(con
 	if r != nil {
 		r.notificationStateResolver = resolver
 	}
-}
-
-func (r *AdvancedRepository) InitSchema(ctx context.Context) error {
-	if r == nil || r.db == nil {
-		return nil
-	}
-
-	statements := []string{
-		`CREATE TABLE IF NOT EXISTS alert_playbook_executions (
-			execution_id TEXT PRIMARY KEY,
-			tenant_id TEXT NOT NULL,
-			playbook_name TEXT NOT NULL,
-			alert_id TEXT NOT NULL,
-			success_actions INTEGER NOT NULL DEFAULT 0,
-			failed_actions INTEGER NOT NULL DEFAULT 0,
-			duration_ms BIGINT NOT NULL DEFAULT 0,
-			request_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-			result_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-			mode TEXT NOT NULL DEFAULT 'legacy',
-			status TEXT NOT NULL DEFAULT 'succeeded',
-			rollback_of TEXT,
-			effect_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-			requested_by TEXT NOT NULL DEFAULT '',
-			rolled_back_at TIMESTAMPTZ,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS mode TEXT NOT NULL DEFAULT 'legacy'`,
-		`ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'succeeded'`,
-		`ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS rollback_of TEXT`,
-		`ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS effect_payload JSONB NOT NULL DEFAULT '{}'::jsonb`,
-		`ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS requested_by TEXT NOT NULL DEFAULT ''`,
-		`ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS rolled_back_at TIMESTAMPTZ`,
-		`DO $do$ BEGIN ALTER TABLE alert_playbook_executions ADD CONSTRAINT alert_playbook_execution_mode_check CHECK (mode IN ('legacy', 'drill')); EXCEPTION WHEN duplicate_object THEN NULL; END $do$`,
-		`DO $do$ BEGIN ALTER TABLE alert_playbook_executions ADD CONSTRAINT alert_playbook_execution_status_check CHECK (status IN ('succeeded', 'failed', 'rolled_back', 'rollback_recorded')); EXCEPTION WHEN duplicate_object THEN NULL; END $do$`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_playbook_executions_tenant_id ON alert_playbook_executions (tenant_id, execution_id)`,
-		`DO $do$ BEGIN ALTER TABLE alert_playbook_executions ADD CONSTRAINT alert_playbook_execution_rollback_fk FOREIGN KEY (tenant_id, rollback_of) REFERENCES alert_playbook_executions (tenant_id, execution_id); EXCEPTION WHEN duplicate_object THEN NULL; END $do$`,
-		`CREATE INDEX IF NOT EXISTS idx_alert_playbook_executions_tenant_created
-			ON alert_playbook_executions (tenant_id, created_at DESC)`,
-		`CREATE TABLE IF NOT EXISTS alert_playbook_overrides (
-			tenant_id TEXT NOT NULL,
-			name TEXT NOT NULL,
-			enabled BOOLEAN NOT NULL DEFAULT TRUE,
-			max_runs INTEGER NOT NULL DEFAULT 0,
-			cooldown_seconds BIGINT NOT NULL DEFAULT 0,
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			PRIMARY KEY (tenant_id, name)
-		)`,
-		`CREATE TABLE IF NOT EXISTS alert_playbook_definitions (
-			tenant_id TEXT NOT NULL,
-			name TEXT NOT NULL,
-			display_name TEXT NOT NULL,
-			description TEXT NOT NULL DEFAULT '',
-			version INTEGER NOT NULL DEFAULT 1,
-			stage TEXT NOT NULL DEFAULT 'draft',
-			enabled BOOLEAN NOT NULL DEFAULT FALSE,
-			risk_level TEXT NOT NULL DEFAULT 'medium',
-			definition_payload JSONB NOT NULL,
-			created_by TEXT NOT NULL DEFAULT '',
-			submitted_by TEXT NOT NULL DEFAULT '',
-			approved_by TEXT NOT NULL DEFAULT '',
-			rejection_reason TEXT NOT NULL DEFAULT '',
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			PRIMARY KEY (tenant_id, name),
-			CONSTRAINT alert_playbook_definition_stage_check CHECK (stage IN ('draft', 'approval_pending', 'approved', 'rejected')),
-			CONSTRAINT alert_playbook_definition_risk_check CHECK (risk_level IN ('low', 'medium', 'high', 'critical'))
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_alert_playbook_definitions_tenant_stage
-			ON alert_playbook_definitions (tenant_id, stage, updated_at DESC)`,
-		`CREATE TABLE IF NOT EXISTS alert_notification_settings (
-			tenant_id TEXT PRIMARY KEY,
-			settings JSONB NOT NULL DEFAULT '{}'::jsonb,
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`CREATE TABLE IF NOT EXISTS notification_silence_rules (
-			rule_id TEXT PRIMARY KEY,
-			tenant_id TEXT NOT NULL,
-			name TEXT NOT NULL,
-			scope TEXT NOT NULL DEFAULT '',
-			starts_at TIMESTAMPTZ NOT NULL,
-			ends_at TIMESTAMPTZ NOT NULL,
-			affected_targets JSONB NOT NULL DEFAULT '[]'::jsonb,
-			policy TEXT NOT NULL DEFAULT 'all',
-			reason TEXT NOT NULL DEFAULT '',
-			enabled BOOLEAN NOT NULL DEFAULT TRUE,
-			created_by TEXT NOT NULL DEFAULT '',
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`CREATE TABLE IF NOT EXISTS notification_rules (
-			rule_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id TEXT NOT NULL,
-			name TEXT NOT NULL,
-			conditions JSONB NOT NULL DEFAULT '{}'::jsonb,
-			channels JSONB NOT NULL DEFAULT '[]'::jsonb,
-			enabled BOOLEAN NOT NULL DEFAULT TRUE,
-			created_by UUID,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			UNIQUE (tenant_id, name)
-		)`,
-		`CREATE TABLE IF NOT EXISTS notification_history (
-			notification_id BIGSERIAL PRIMARY KEY,
-			tenant_id TEXT NOT NULL,
-			rule_id UUID REFERENCES notification_rules(rule_id) ON DELETE SET NULL,
-			alert_id TEXT NOT NULL DEFAULT '',
-			target_name TEXT NOT NULL DEFAULT '',
-			channel TEXT NOT NULL,
-			alert_type TEXT NOT NULL DEFAULT '',
-			status TEXT NOT NULL,
-			error_message TEXT,
-			retry_count INTEGER NOT NULL DEFAULT 0,
-			trace_id TEXT NOT NULL DEFAULT '',
-			sent_at TIMESTAMPTZ,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS target_name TEXT NOT NULL DEFAULT ''`,
-		`ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS alert_type TEXT NOT NULL DEFAULT ''`,
-		`ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS retry_count INTEGER NOT NULL DEFAULT 0`,
-		`ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS trace_id TEXT NOT NULL DEFAULT ''`,
-		`CREATE TABLE IF NOT EXISTS notification_escalation_policies (
-			policy_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id TEXT NOT NULL,
-			name TEXT NOT NULL,
-			stages JSONB NOT NULL DEFAULT '[]'::jsonb,
-			enabled BOOLEAN NOT NULL DEFAULT TRUE,
-			created_by TEXT NOT NULL DEFAULT '',
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			UNIQUE (tenant_id, name)
-		)`,
-		`CREATE TABLE IF NOT EXISTS notification_escalation_jobs (
-			job_id BIGSERIAL PRIMARY KEY,
-			tenant_id TEXT NOT NULL,
-			alert_key TEXT NOT NULL,
-			alert_id TEXT NOT NULL DEFAULT '',
-			rule_id UUID NOT NULL REFERENCES notification_rules(rule_id) ON DELETE CASCADE,
-			stage_index INTEGER NOT NULL,
-			policy_id UUID,
-			policy_updated_at TIMESTAMPTZ,
-			stage_after_minutes DOUBLE PRECISION,
-			stage_fingerprint TEXT NOT NULL DEFAULT '',
-			target_role TEXT NOT NULL,
-			channel TEXT NOT NULL,
-			due_at TIMESTAMPTZ NOT NULL,
-			alert_payload JSONB NOT NULL,
-			status TEXT NOT NULL DEFAULT 'pending',
-			attempts INTEGER NOT NULL DEFAULT 0,
-			last_error TEXT,
-			locked_at TIMESTAMPTZ,
-			lock_token TEXT NOT NULL DEFAULT '',
-			trace_id TEXT NOT NULL DEFAULT '',
-			completed_at TIMESTAMPTZ,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			UNIQUE (tenant_id, alert_key, rule_id, stage_index, channel)
-		)`,
-		`ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS locked_at TIMESTAMPTZ`,
-		`ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS lock_token TEXT NOT NULL DEFAULT ''`,
-		`ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS policy_id UUID`,
-		`ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS policy_updated_at TIMESTAMPTZ`,
-		`ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS stage_after_minutes DOUBLE PRECISION`,
-		`ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS stage_fingerprint TEXT NOT NULL DEFAULT ''`,
-		`CREATE TABLE IF NOT EXISTS notification_templates (
-			template_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id TEXT NOT NULL,
-			template_type TEXT NOT NULL,
-			name TEXT NOT NULL,
-			version INTEGER NOT NULL DEFAULT 1,
-			subject TEXT NOT NULL DEFAULT '',
-			body TEXT NOT NULL DEFAULT '',
-			variable_schema JSONB NOT NULL DEFAULT '{}'::jsonb,
-			validation_status TEXT NOT NULL DEFAULT 'passed',
-			enabled BOOLEAN NOT NULL DEFAULT TRUE,
-			created_by TEXT NOT NULL DEFAULT '',
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			UNIQUE (tenant_id, name)
-		)`,
-		`CREATE TABLE IF NOT EXISTS data_quality_actions (
-			action_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id TEXT NOT NULL,
-			view_name TEXT NOT NULL,
-			action_name TEXT NOT NULL,
-			target TEXT NOT NULL,
-			dry_run BOOLEAN NOT NULL DEFAULT TRUE,
-			status TEXT NOT NULL DEFAULT 'dry_run',
-			requested_by TEXT NOT NULL DEFAULT '',
-			request_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_data_quality_actions_tenant_created
-			ON data_quality_actions (tenant_id, created_at DESC)`,
-		`CREATE TABLE IF NOT EXISTS data_quality_ui_fixtures (
-			tenant_id TEXT PRIMARY KEY,
-			fixture_version TEXT NOT NULL,
-			payload JSONB NOT NULL,
-			active BOOLEAN NOT NULL DEFAULT false,
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_data_quality_ui_fixtures_active
-			ON data_quality_ui_fixtures (tenant_id, active)`,
-		`CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_time
-			ON notification_silence_rules (tenant_id, starts_at DESC)`,
-		`CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_enabled
-			ON notification_silence_rules (tenant_id, enabled, starts_at DESC)`,
-		`CREATE INDEX IF NOT EXISTS idx_notification_rules_tenant_enabled
-			ON notification_rules (tenant_id, enabled, updated_at DESC)`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_notification_rules_tenant_name
-			ON notification_rules (tenant_id, name)`,
-		`CREATE INDEX IF NOT EXISTS idx_notification_history_tenant_created
-			ON notification_history (tenant_id, created_at DESC)`,
-		`CREATE INDEX IF NOT EXISTS idx_notification_history_tenant_status
-			ON notification_history (tenant_id, status, created_at DESC)`,
-		`CREATE INDEX IF NOT EXISTS idx_notification_escalation_tenant_enabled
-			ON notification_escalation_policies (tenant_id, enabled, updated_at DESC)`,
-		`CREATE INDEX IF NOT EXISTS idx_notification_escalation_jobs_due
-			ON notification_escalation_jobs (status, due_at, job_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_notification_templates_tenant_enabled
-			ON notification_templates (tenant_id, enabled, updated_at DESC)`,
-		`CREATE OR REPLACE FUNCTION notification_governance_atomic_audit()
-		RETURNS TRIGGER AS $$
-		DECLARE row_data JSONB; tenant_value TEXT; object_value TEXT; action_prefix TEXT;
-		BEGIN
-			row_data := CASE WHEN TG_OP='DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;
-			tenant_value := COALESCE(row_data->>'tenant_id','default');
-			object_value := CASE WHEN TG_TABLE_NAME='notification_escalation_jobs' THEN COALESCE(row_data->>'job_id',tenant_value) ELSE COALESCE(row_data->>'rule_id',row_data->>'template_id',row_data->>'policy_id',row_data->>'notification_id',tenant_value) END;
-			action_prefix := CASE TG_TABLE_NAME
-				WHEN 'alert_notification_settings' THEN 'NOTIFICATION_SETTINGS'
-				WHEN 'notification_rules' THEN 'NOTIFICATION_RULE'
-				WHEN 'notification_templates' THEN 'NOTIFICATION_TEMPLATE'
-				WHEN 'notification_escalation_policies' THEN 'NOTIFICATION_ESCALATION'
-				WHEN 'notification_escalation_jobs' THEN 'NOTIFICATION_ESCALATION_JOB'
-				WHEN 'notification_silence_rules' THEN 'NOTIFICATION_SILENCE_RULE'
-				WHEN 'notification_history' THEN 'NOTIFICATION_DELIVERY'
-				ELSE 'NOTIFICATION_GOVERNANCE' END;
-			INSERT INTO audit_logs(event_id,tenant_id,user_id,action,object_type,object_id,detail)
-			VALUES ('audit-'||uuid_generate_v4()::TEXT,tenant_value,NULL,action_prefix||'_DB_'||TG_OP,TG_TABLE_NAME,object_value,jsonb_build_object('atomic',true,'operation',TG_OP));
-			RETURN CASE WHEN TG_OP='DELETE' THEN OLD ELSE NEW END;
-		END;
-		$$ LANGUAGE plpgsql`,
-		`DO $$
-		DECLARE table_name TEXT; trigger_name TEXT;
-		BEGIN
-			FOREACH table_name IN ARRAY ARRAY['alert_notification_settings','notification_rules','notification_templates','notification_escalation_policies','notification_escalation_jobs','notification_silence_rules','notification_history'] LOOP
-				trigger_name := 'trg_'||table_name||'_atomic_audit';
-				EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I',trigger_name,table_name);
-				EXECUTE format('CREATE TRIGGER %I AFTER INSERT OR UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION notification_governance_atomic_audit()',trigger_name,table_name);
-			END LOOP;
-		END $$`,
-	}
-
-	for _, statement := range statements {
-		if _, err := r.db.ExecContext(ctx, statement); err != nil {
-			return fmt.Errorf("init advanced API schema: %w", err)
-		}
-	}
-	return nil
 }
 
 func (r *AdvancedRepository) SavePlaybookExecution(
@@ -440,6 +200,7 @@ func (r *AdvancedRepository) SavePlaybookExecutionWithMetadata(
 		ExecutionID:    uuid.NewString(),
 		TenantID:       tenantID,
 		PlaybookName:   result.PlaybookName,
+		LegacyPlaybook: result.PlaybookName,
 		AlertID:        result.AlertID,
 		SuccessActions: result.SuccessActions,
 		FailedActions:  result.FailedActions,
@@ -515,12 +276,30 @@ func (r *AdvancedRepository) queryPlaybookExecutions(ctx context.Context, tenant
 			success_actions, failed_actions, duration_ms,
 			request_payload, result_payload, mode, status,
 			COALESCE(rollback_of, ''), effect_payload, requested_by,
-			rolled_back_at, created_at
+			rolled_back_at, created_at, playbook_version, workflow_revision,
+			approval_status, executor_status, execution_receipt, compensation_receipt,
+			COALESCE(result_payload->>'error_message',''), approved_by, updated_at,
+			completed_at, trace_id
 		FROM alert_playbook_executions
 		WHERE tenant_id = $1 AND ($2 = '' OR playbook_name = $2)
 		ORDER BY created_at DESC
 		LIMIT NULLIF($3, 0)
 	`, tenantID, playbookName, limit)
+	legacySchema := false
+	if isMissingPlaybookExecutionV2Column(err) {
+		legacySchema = true
+		rows, err = r.db.QueryContext(ctx, `
+			SELECT execution_id, tenant_id, playbook_name, alert_id,
+				success_actions, failed_actions, duration_ms,
+				request_payload, result_payload, mode, status,
+				COALESCE(rollback_of, ''), effect_payload, requested_by,
+				rolled_back_at, created_at
+			FROM alert_playbook_executions
+			WHERE tenant_id = $1 AND ($2 = '' OR playbook_name = $2)
+			ORDER BY created_at DESC
+			LIMIT NULLIF($3, 0)
+		`, tenantID, playbookName, limit)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("list playbook executions: %w", err)
 	}
@@ -529,34 +308,80 @@ func (r *AdvancedRepository) queryPlaybookExecutions(ctx context.Context, tenant
 	records := make([]PlaybookExecutionRecord, 0)
 	for rows.Next() {
 		var record PlaybookExecutionRecord
-		var requestPayload, resultPayload, effectPayload []byte
-		var rolledBackAt sql.NullTime
-		if err := rows.Scan(
-			&record.ExecutionID,
-			&record.TenantID,
-			&record.PlaybookName,
-			&record.AlertID,
-			&record.SuccessActions,
-			&record.FailedActions,
-			&record.DurationMS,
-			&requestPayload,
-			&resultPayload,
-			&record.Mode,
-			&record.Status,
-			&record.RollbackOf,
-			&effectPayload,
-			&record.RequestedBy,
-			&rolledBackAt,
-			&record.CreatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("scan playbook execution: %w", err)
+		var requestPayload, resultPayload, effectPayload, executionReceipt, compensationReceipt []byte
+		var rolledBackAt, completedAt sql.NullTime
+		var updatedAt time.Time
+		var scanErr error
+		if legacySchema {
+			scanErr = rows.Scan(
+				&record.ExecutionID,
+				&record.TenantID,
+				&record.PlaybookName,
+				&record.AlertID,
+				&record.SuccessActions,
+				&record.FailedActions,
+				&record.DurationMS,
+				&requestPayload,
+				&resultPayload,
+				&record.Mode,
+				&record.Status,
+				&record.RollbackOf,
+				&effectPayload,
+				&record.RequestedBy,
+				&rolledBackAt,
+				&record.CreatedAt,
+			)
+			record.ApprovalStatus = "not_required"
+			record.ExecutorStatus = "simulated"
+			updatedAt = record.CreatedAt
+		} else {
+			scanErr = rows.Scan(
+				&record.ExecutionID,
+				&record.TenantID,
+				&record.PlaybookName,
+				&record.AlertID,
+				&record.SuccessActions,
+				&record.FailedActions,
+				&record.DurationMS,
+				&requestPayload,
+				&resultPayload,
+				&record.Mode,
+				&record.Status,
+				&record.RollbackOf,
+				&effectPayload,
+				&record.RequestedBy,
+				&rolledBackAt,
+				&record.CreatedAt,
+				&record.PlaybookVersion,
+				&record.WorkflowRevision,
+				&record.ApprovalStatus,
+				&record.ExecutorStatus,
+				&executionReceipt,
+				&compensationReceipt,
+				&record.ErrorMessage,
+				&record.ApprovedBy,
+				&updatedAt,
+				&completedAt,
+				&record.TraceID,
+			)
+		}
+		if scanErr != nil {
+			return nil, fmt.Errorf("scan playbook execution: %w", scanErr)
 		}
 		record.RequestPayload = decodeJSONMap(requestPayload)
 		record.Result = decodeJSONMap(resultPayload)
 		record.Effect = decodeJSONMap(effectPayload)
+		record.LegacyPlaybook = record.PlaybookName
+		record.ExecutionReceipt = decodeJSONMap(executionReceipt)
+		record.CompensationReceipt = decodeJSONMap(compensationReceipt)
+		record.UpdatedAt = &updatedAt
 		if rolledBackAt.Valid {
 			value := rolledBackAt.Time
 			record.RolledBackAt = &value
+		}
+		if completedAt.Valid {
+			value := completedAt.Time
+			record.CompletedAt = &value
 		}
 		records = append(records, record)
 	}
@@ -564,6 +389,33 @@ func (r *AdvancedRepository) queryPlaybookExecutions(ctx context.Context, tenant
 		return nil, fmt.Errorf("iterate playbook executions: %w", err)
 	}
 	return records, nil
+}
+
+var playbookExecutionV2Columns = map[string]struct{}{
+	"playbook_version": {}, "workflow_revision": {}, "approval_status": {},
+	"executor_status": {}, "execution_receipt": {}, "compensation_receipt": {},
+	"approved_by": {}, "updated_at": {}, "completed_at": {}, "trace_id": {},
+}
+
+func isMissingPlaybookExecutionV2Column(err error) bool {
+	if err == nil {
+		return false
+	}
+	var pqErr *pq.Error
+	if !errors.As(err, &pqErr) || pqErr.Code != "42703" {
+		return false
+	}
+	column := strings.TrimSpace(pqErr.Column)
+	if column == "" {
+		for candidate := range playbookExecutionV2Columns {
+			if strings.Contains(pqErr.Message, `"`+candidate+`"`) {
+				column = candidate
+				break
+			}
+		}
+	}
+	_, ok := playbookExecutionV2Columns[column]
+	return ok
 }
 
 func (r *AdvancedRepository) EnsurePlaybookDefinitions(ctx context.Context, tenantID string, defaults []*playbook.Playbook) error {
@@ -912,7 +764,8 @@ func (r *AdvancedRepository) RollbackPlaybookDrill(
 	}
 	return &PlaybookExecutionRecord{
 		ExecutionID: rollbackID, TenantID: tenantID, PlaybookName: playbookName, AlertID: alertID,
-		Mode: "drill", Status: "rollback_recorded", RollbackOf: executionID,
+		LegacyPlaybook: playbookName,
+		Mode:           "drill", Status: "rollback_recorded", RollbackOf: executionID,
 		RequestPayload: requestPayload, Result: resultPayload, Effect: effectPayload,
 		RequestedBy: actor, CreatedAt: now,
 	}, nil
@@ -982,41 +835,21 @@ func (r *AdvancedRepository) GetNotificationSettings(ctx context.Context, tenant
 	}
 
 	var settingsBytes []byte
+	var revision int64
 	err := r.db.QueryRowContext(ctx, `
-		SELECT settings
+		SELECT settings, revision
 		FROM alert_notification_settings
 		WHERE tenant_id = $1
-	`, tenantID).Scan(&settingsBytes)
+	`, tenantID).Scan(&settingsBytes, &revision)
 	if err == sql.ErrNoRows {
 		return nil, false, nil
 	}
 	if err != nil {
 		return nil, false, fmt.Errorf("get notification settings: %w", err)
 	}
-	return decodeJSONMap(settingsBytes), true, nil
-}
-
-func (r *AdvancedRepository) SaveNotificationSettings(ctx context.Context, tenantID string, settings map[string]interface{}) error {
-	if r == nil || r.db == nil {
-		return nil
-	}
-
-	payload, err := json.Marshal(settings)
-	if err != nil {
-		return fmt.Errorf("marshal notification settings: %w", err)
-	}
-
-	_, err = r.db.ExecContext(ctx, `
-		INSERT INTO alert_notification_settings (tenant_id, settings, updated_at)
-		VALUES ($1, $2::jsonb, now())
-		ON CONFLICT (tenant_id) DO UPDATE SET
-			settings = EXCLUDED.settings,
-			updated_at = now()
-	`, tenantID, string(payload))
-	if err != nil {
-		return fmt.Errorf("save notification settings: %w", err)
-	}
-	return nil
+	settings := decodeJSONMap(settingsBytes)
+	settings["revision"] = revision
+	return settings, true, nil
 }
 
 func (r *AdvancedRepository) ListNotificationSilenceRules(ctx context.Context, tenantID string, limit int) ([]NotificationSilenceRule, error) {
@@ -1029,7 +862,7 @@ func (r *AdvancedRepository) ListNotificationSilenceRules(ctx context.Context, t
 
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT rule_id, tenant_id, name, scope, starts_at, ends_at,
-			affected_targets, policy, reason, enabled, created_by, created_at, updated_at
+			affected_targets, policy, reason, enabled, created_by, revision, created_at, updated_at
 		FROM notification_silence_rules
 		WHERE tenant_id = $1
 		ORDER BY starts_at DESC, updated_at DESC, rule_id ASC
@@ -1054,75 +887,19 @@ func (r *AdvancedRepository) ListNotificationSilenceRules(ctx context.Context, t
 	return rules, nil
 }
 
-func (r *AdvancedRepository) CreateNotificationSilenceRule(ctx context.Context, rule NotificationSilenceRule) (*NotificationSilenceRule, error) {
-	if r == nil || r.db == nil {
-		return nil, nil
-	}
-	if rule.RuleID == "" {
-		rule.RuleID = uuid.NewString()
-	}
-	targets, err := json.Marshal(rule.AffectedTargets)
-	if err != nil {
-		return nil, fmt.Errorf("marshal silence rule targets: %w", err)
-	}
-
-	row := r.db.QueryRowContext(ctx, `
-		INSERT INTO notification_silence_rules (
-			rule_id, tenant_id, name, scope, starts_at, ends_at,
-			affected_targets, policy, reason, enabled, created_by, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, now(), now())
-		RETURNING rule_id, tenant_id, name, scope, starts_at, ends_at,
-			affected_targets, policy, reason, enabled, created_by, created_at, updated_at
-	`, rule.RuleID, rule.TenantID, rule.Name, rule.Scope, rule.StartsAt, rule.EndsAt,
-		string(targets), rule.Policy, rule.Reason, rule.Enabled, rule.CreatedBy)
-	created, err := scanNotificationSilenceRule(row)
-	if err != nil {
-		return nil, err
-	}
-	return &created, nil
+func (r *AdvancedRepository) CreateNotificationSilenceRule(ctx context.Context, request *http.Request, rule NotificationSilenceRule, req notificationSilenceRuleRequest) (*NotificationSilenceRule, error) {
+	return r.createNotificationSilenceCommand(ctx, request, rule, req)
 }
 
 func (r *AdvancedRepository) PatchNotificationSilenceRule(
 	ctx context.Context,
+	request *http.Request,
 	tenantID string,
 	ruleID string,
+	actor string,
 	patch notificationSilencePatchRequest,
 ) (*NotificationSilenceRule, bool, error) {
-	if r == nil || r.db == nil {
-		return nil, false, nil
-	}
-
-	var targets interface{}
-	if patch.AffectedTargets != nil {
-		encoded, err := json.Marshal(*patch.AffectedTargets)
-		if err != nil {
-			return nil, false, fmt.Errorf("marshal silence rule targets: %w", err)
-		}
-		targets = string(encoded)
-	}
-	row := r.db.QueryRowContext(ctx, `
-		UPDATE notification_silence_rules
-		SET name = COALESCE(NULLIF(BTRIM($3), ''), name),
-			scope = COALESCE($4, scope),
-			starts_at = COALESCE($5, starts_at),
-			ends_at = COALESCE($6, ends_at),
-			affected_targets = COALESCE($7::jsonb, affected_targets),
-			policy = COALESCE($8, policy),
-			reason = COALESCE($9, reason),
-			enabled = COALESCE($10, enabled),
-			updated_at = now()
-		WHERE tenant_id = $1 AND rule_id = $2
-		RETURNING rule_id, tenant_id, name, scope, starts_at, ends_at,
-			affected_targets, policy, reason, enabled, created_by, created_at, updated_at
-	`, tenantID, ruleID, patch.Name, patch.Scope, patch.StartsAt, patch.EndsAt, targets, patch.Policy, patch.Reason, patch.Enabled)
-	rule, err := scanNotificationSilenceRule(row)
-	if err == sql.ErrNoRows {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, err
-	}
-	return &rule, true, nil
+	return r.patchNotificationSilenceCommand(ctx, request, tenantID, ruleID, actor, patch)
 }
 
 func (r *AdvancedRepository) RecordAuditLog(
@@ -1561,6 +1338,7 @@ func scanNotificationSilenceRule(scanner notificationSilenceScanner) (Notificati
 		&rule.Reason,
 		&rule.Enabled,
 		&rule.CreatedBy,
+		&rule.Revision,
 		&rule.CreatedAt,
 		&rule.UpdatedAt,
 	); err != nil {

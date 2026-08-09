@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-flink-state-recovery-v1",
+  "remediation_id": "T-FLINK-002",
+  "scope": "G0/G1 source, component and replay semantics for the canonical nine Flink jobs; live restart and cross-store reconciliation remain G2/G3",
+  "identity": {
+    "algorithm": "SHA-256 with length-prefixed UTF-8 components and UUIDv8/RFC4122 variant",
+    "utility": "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/DeterministicId.java",
+    "forbidden_production_tokens": ["UUID.randomUUID", "Math.random()", "UUID.nameUUIDFromBytes"],
+    "required_sources": [
+      "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/aggregator/SessionAggregator.java",
+      "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/calculator/FeatureCalculator.java",
+      "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/processor/FeatureProcessFunction.java",
+      "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/processor/FeatureProcessFunctionV3.java",
+      "java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/broadcast/RuleBroadcastProcessFunction.java",
+      "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/BehaviorDetectorFunction.java",
+      "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/SyncBehaviorDetector.java",
+      "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/generator/AlertGenerator.java",
+      "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/generator/BusinessAlertGenerator.java",
+      "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/evidence/EvidenceBuilder.java",
+      "java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/select/CampaignBuilderUtils.java",
+      "java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/select/BruteForceSelector.java",
+      "java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/select/ScanExploitSelector.java",
+      "java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/select/LateralMovementSelector.java",
+      "java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/select/DataExfilSelector.java",
+      "java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/select/C2BeaconSelector.java",
+      "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/model/AnomalyEvent.java",
+      "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/LateUserEventRouter.java"
+    ]
+  },
+  "checkpointed_buffers": [
+    {
+      "source": "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/FlowRawClickHouseSinkFunction.java",
+      "state_name": "clickhouse-flow-raw-pending-v1",
+      "ack_token": "writeWithRetry(batch);",
+      "clear_token": "buffer.subList(0, batch.size()).clear();",
+      "guarantee": "at-least-once with deterministic event_id"
+    },
+    {
+      "source": "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/OpenSearchSinkFunction.java",
+      "state_name": "opensearch-session-pending-v1",
+      "ack_token": "client.bulk(bulkRequest, RequestOptions.DEFAULT)",
+      "clear_token": "buffer.clear();",
+      "guarantee": "effectively-once document projection by deterministic event_id"
+    },
+    {
+      "source": "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/sink/LokiSinkFactory.java",
+      "state_name": "loki-pending-streams-v1",
+      "ack_token": "status >= 200 && status < 300",
+      "clear_token": "pendingStreams.subList(0, attempt.size()).clear();",
+      "guarantee": "at-least-once HTTP delivery with retained retry buffer"
+    }
+  ],
+  "business_time": {
+    "job_id": "flink-user-behavior-job",
+    "watermark_config": "watermark.max.out.of.orderness.seconds",
+    "allowed_lateness_config": "watermark.allowed.lateness.seconds",
+    "late_output_tag": "late-user-events-v1",
+    "durable_topic": "dlq.v1",
+    "producer_principal": "flink-user-behavior-job"
+  },
+  "async_boundary": {
+    "job_id": "flink-behavior-job",
+    "timeout_config": "inference.async.timeout.ms",
+    "capacity_config": "inference.async.capacity",
+    "retry_config": "inference.async.max.retries"
+  },
+  "required_uids": {
+    "flink-pcap-index-job": ["pcap-index-source", "filter-invalid-basic", "pcap-index-processor", "clickhouse-sink", "dlq-sink", "print-sink", "print-dlq"],
+    "flink-user-behavior-job": ["kafka-source", "null-filter", "late-user-event-router", "late-user-event-dlq-sink", "travel-detector", "brute-detector", "priv-detector", "merge-anomalies", "mark-replay-context", "anomaly-to-alert", "alert-kafka-sink", "ch-sink"],
+    "flink-session-job": ["kafka-raw-source", "flow-event-parse", "flow-parse-dlq-sink", "flow-event-watermark", "flow-raw-clickhouse-sink", "late-data-sink", "ch-dlq-sink", "kafka-sink", "opensearch-sink", "session-process-function", "session-window-aggregator"],
+    "flink-feature-job": ["session-source", "feature-set-config-source", "tenant-config-source", "filter-invalid", "feature-calculator-v3", "clickhouse-sink", "kafka-sink", "dlq-sink", "l2-trigger-sink", "print-feature", "print-dlq", "print-l2"],
+    "flink-rule-job": ["feature-source", "filter-invalid-features", "rule-source", "parse-rules", "rule-matcher", "clickhouse-sink", "kafka-sink", "dlq-sink", "print-sink"],
+    "flink-cep-job": ["alert-source", "validate-alerts", "dlq-sink", "kafka-sink", "clickhouse-sink", "print-sink", "scan-exploit-pattern", "brute-force-pattern", "lateral-movement-pattern", "data-exfil-pattern", "c2-beacon-pattern"],
+    "flink-behavior-job": ["kafka-source", "filter-invalid", "kafka-model-update-source", "model-update-broadcast", "model-update-applied-ack-sink", "async-behavior-detector", "sync-behavior-detector", "filter-low-confidence", "clickhouse-sink", "kafka-sink", "print-sink"],
+    "flink-alert-generator-job": ["behavior-detection-source", "filter-invalid-behavior-detections", "behavior-alert-generator", "business-detection-source", "filter-invalid-business-detections", "business-alert-generator", "extract-alert", "extract-evidence", "clickhouse-alert-sink", "opensearch-alert-sink", "kafka-alert-sink", "clickhouse-evidence-sink", "print-alert-sink", "print-evidence-sink"],
+    "flink-log-job": ["kafka-source", "syslog-parser", "asset-enricher", "loki-sink", "opensearch-sink"]
+  },
+  "gate": {
+    "source_and_component_status": "eligible_for_VERIFYING_after_G0_PASS",
+    "remaining": ["live checkpoint/restart fault injection", "late/duplicate/loss reconciliation", "production candidate rollout and observation"]
+  }
+}

@@ -1,83 +1,42 @@
 {
-  "index_patterns": ["audit-*"],
-  "template": {
-    "settings": {
-      "number_of_shards": 3,
-      "number_of_replicas": 1,
-      "index.lifecycle.name": "30-day-retention"
+  "schema_version": 2,
+  "kind": "OpenSearchTemplateSourceCatalog",
+  "authoritative_deployment": "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml",
+  "entries": [
+    {
+      "logical_index": "alerts",
+      "version": 2,
+      "component_mapping": "common/opensearch/alerts-v2/mappings-component.json",
+      "component_settings": "common/opensearch/alerts-v2/settings-component.json",
+      "index_template": "common/opensearch/alerts-v2/index-template.json",
+      "ism_policy": "common/opensearch/alerts-v2/ism-policy.json",
+      "bootstrap_index": "common/opensearch/alerts-v2/bootstrap-index.json",
+      "remediation_contract": "contracts/opensearch/index-governance.v1.json"
     },
-    "mappings": {
-      "properties": {
-        "tenant_id":    {"type": "keyword"},
-        "user_id":      {"type": "keyword"},
-        "action":       {"type": "keyword"},
-        "object_type":  {"type": "keyword"},
-        "object_id":    {"type": "keyword"},
-        "detail":       {"type": "object", "enabled": false},
-        "ip_addr":      {"type": "ip"},
-        "created_at":   {"type": "date"}
-      }
+    {
+      "logical_index": "audit",
+      "deployment_template": "audit-template"
+    },
+    {
+      "logical_index": "device-logs",
+      "deployment_template": "device-logs-template"
+    },
+    {
+      "logical_index": "evidence",
+      "deployment_template": "evidence-template"
+    },
+    {
+      "logical_index": "assets",
+      "version": 2,
+      "index_template": "common/opensearch/assets-v2/index-template.json",
+      "bootstrap_index": "common/opensearch/assets-v2/bootstrap-index.json",
+      "deployment_template": "assets-v2-template"
+    },
+    {
+      "logical_index": "campaign-projections",
+      "deployment_template": "campaign-projections-v2-template"
     }
-  }
-}
----
-{
-  "index_patterns": ["alerts-*"],
-  "template": {
-    "settings": {"number_of_shards": 6, "number_of_replicas": 1},
-    "mappings": {
-      "properties": {
-        "tenant_id":      {"type": "keyword"},
-        "alert_id":       {"type": "keyword"},
-        "community_id":   {"type": "keyword"},
-        "src_ip":         {"type": "ip"},
-        "dst_ip":         {"type": "ip"},
-        "alert_type":     {"type": "keyword"},
-        "severity":       {"type": "keyword"},
-        "score":          {"type": "float"},
-        "status":         {"type": "keyword"},
-        "first_seen":     {"type": "date"},
-        "last_seen":      {"type": "date"},
-        "labels":         {"type": "keyword"},
-        "dedup_fingerprint": {"type": "keyword"}
-      }
-    }
-  }
-}
----
-{
-  "index_patterns": ["device-logs-*"],
-  "template": {
-    "settings": {"number_of_shards": 3, "number_of_replicas": 1},
-    "mappings": {
-      "properties": {
-        "tenant_id":   {"type": "keyword"},
-        "device_ip":   {"type": "ip"},
-        "device_type": {"type": "keyword"},
-        "severity":    {"type": "integer"},
-        "timestamp":   {"type": "date"},
-        "message":     {"type": "text"},
-        "source":      {"type": "keyword"}
-      }
-    }
-  }
-}
----
-{
-  "index_patterns": ["evidence-*"],
-  "template": {
-    "settings": {"number_of_shards": 3, "number_of_replicas": 1},
-    "mappings": {
-      "properties": {
-        "tenant_id":    {"type": "keyword"},
-        "evidence_id":  {"type": "keyword"},
-        "alert_id":     {"type": "keyword"},
-        "type":         {"type": "keyword"},
-        "summary":      {"type": "text"},
-        "confidence":   {"type": "float"},
-        "metrics_json": {"type": "text"},
-        "ts":           {"type": "date"}
-      }
-    }
-  }
+  ],
+  "legacy_multi_document_payload_removed": true,
+  "note": "This file is a valid JSON catalog. API payloads are versioned files or named blocks in the authoritative deployment manifest; applications must never create templates at startup."
 }

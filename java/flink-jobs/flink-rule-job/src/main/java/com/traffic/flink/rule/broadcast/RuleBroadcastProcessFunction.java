@@ -1,5 +1,6 @@
 package com.traffic.flink.rule.broadcast;
 
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.flink.rule.matcher.*;
 import com.traffic.flink.rule.model.*;
 import com.traffic.flink.rule.util.CommunityIdParser;
@@ -324,11 +325,20 @@ public class RuleBroadcastProcessFunction
      * 构建检测事件
      */
     private DetectionBehavior buildDetectionEvent(FeatureStat feature, DetectionResult detection) {
+        long eventTime = feature.getTs();
+        String eventId = DeterministicId.uuid(
+                "flink-rule-detection/v1",
+                feature.getHeader().getTenantId(),
+                feature.getHeader().getEventId(),
+                detection.getRuleId(),
+                detection.getRuleType().getValue(),
+                eventTime,
+                "rule-engine-v1");
         EventHeader header = EventHeader.newBuilder()
-                .setEventId(UUID.randomUUID().toString())
+                .setEventId(eventId)
                 .setTenantId(feature.getHeader().getTenantId())
                 .setRunId(feature.getHeader().getRunId())
-                .setEventTs(System.currentTimeMillis())
+                .setEventTs(eventTime)
                 .setIngestTs(System.currentTimeMillis())
                 .setProbeId(feature.getHeader().getProbeId())
                 .setFeatureSetId(feature.getHeader().getFeatureSetId())
@@ -351,7 +361,7 @@ public class RuleBroadcastProcessFunction
                 .setCommunityId(feature.getCommunityId())
                 .setObjectType(feature.getObjectType())
                 .setObjectId(feature.getObjectId())
-                .setTs(System.currentTimeMillis())
+                .setTs(eventTime)
                 .addAllLabels(labels)
                 .addAllScores(scores)
                 .setTopLabel(detection.getRuleType().getValue())

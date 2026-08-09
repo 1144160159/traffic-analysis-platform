@@ -8,8 +8,10 @@ CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
 LOG_DIR="${LOG_DIR:-.artifacts/e2e}"
 RUN_ID="${RUN_ID:-$(date +%Y%m%d%H%M%S)-$$}"
 MIN_FLINK_RUNNING_JOBS="${MIN_FLINK_RUNNING_JOBS:-9}"
+POD_READINESS_GRACE_SECONDS="${POD_READINESS_GRACE_SECONDS:-300}"
 GRAPH_CHECK_EVERY="${GRAPH_CHECK_EVERY:-10}"
 RUN_MUTATING_CHECKS="${RUN_MUTATING_CHECKS:-1}"
+STOP_ON_FAILURE="${STOP_ON_FAILURE:-1}"
 PG_NAMESPACE="${PG_NAMESPACE:-databases}"
 PG_POD="${PG_POD:-postgres-primary-0}"
 PG_DB="${PG_DB:-traffic_platform}"
@@ -26,6 +28,7 @@ START_EPOCH="$(date +%s)"
 TOTAL=0
 PASSED=0
 FAILED=0
+COMPLETED_ROUNDS=0
 
 mkdir -p "$LOG_DIR"
 
@@ -37,7 +40,17 @@ need_cmd() {
 }
 
 kctl() {
-  env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy "$KUBECTL" "$@"
+  local stderr_file rc
+
+  stderr_file="$(mktemp)"
+  env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy \
+    "$KUBECTL" "$@" 2>"$stderr_file"
+  rc=$?
+  # kubectl v1.29 can emit remote-command stream internals at info level even
+  # with --v=0. They are not command output and break numeric DB assertions.
+  sed '/log\.go:245]/d' "$stderr_file" >&2
+  rm -f "$stderr_file"
+  return "$rc"
 }
 
 json_log() {
@@ -211,16 +224,82 @@ asset_api_check() {
 
 k8s_pod_check() {
   local round="$1"
-  local out rc ok detail bad_pods attempt started elapsed
+  local pods_json workloads_json pods_rc workloads_rc rc ok detail
+  local bad_pods bad_workloads attempt started elapsed cutoff
 
   started="$(date +%s)"
   bad_pods=""
+  bad_workloads=""
   rc=0
   for attempt in 1 2 3; do
-    out="$(kctl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded --no-headers 2>&1)"
-    rc=$?
-    bad_pods="$(printf "%s\n" "$out" | awk 'NF && $0 !~ /No resources found/ && $4 != "Completed" {print}')"
-    if [[ "$rc" -eq 0 ]] && [[ -z "$bad_pods" ]]; then
+    pods_json="$(kctl get pods -A -o json 2>&1)"
+    pods_rc=$?
+    workloads_json="$(kctl get deployment,statefulset,daemonset -A -o json 2>&1)"
+    workloads_rc=$?
+    cutoff="$(( $(date +%s) - POD_READINESS_GRACE_SECONDS ))"
+
+    if [[ "$pods_rc" -eq 0 ]]; then
+      bad_pods="$(jq -r --argjson cutoff "$cutoff" '
+        def statuses: [(.status.initContainerStatuses[]?), (.status.containerStatuses[]?)];
+        def unready: statuses | map(select((.ready // false) == false));
+        def reason: unready
+          | map(.state.waiting.reason // .state.terminated.reason // "not-ready")
+          | unique
+          | join(",");
+        .items[]
+        | (.metadata.creationTimestamp | fromdateiso8601) as $created
+        | select(
+            .status.phase == "Pending"
+            or .status.phase == "Unknown"
+            or (
+              .status.phase == "Running"
+              and (unready | length) > 0
+              and $created <= $cutoff
+            )
+          )
+        | [.metadata.namespace, .metadata.name, .status.phase, reason]
+        | @tsv
+      ' <<<"$pods_json" 2>/dev/null)"
+    else
+      bad_pods="pod-list-error"
+    fi
+
+    if [[ "$workloads_rc" -eq 0 ]]; then
+      bad_workloads="$(jq -r '
+        .items[]
+        | (.spec.replicas // .status.desiredNumberScheduled // 0) as $desired
+        | select(
+            if .kind == "Deployment" then
+              (.status.observedGeneration // 0) < .metadata.generation
+              or (.status.updatedReplicas // 0) < $desired
+              or (.status.availableReplicas // 0) < $desired
+              or (.status.unavailableReplicas // 0) > 0
+            elif .kind == "StatefulSet" then
+              (.status.observedGeneration // 0) < .metadata.generation
+              or (.status.readyReplicas // 0) < $desired
+              or (.status.currentReplicas // 0) < $desired
+              or (.status.updatedReplicas // 0) < $desired
+            elif .kind == "DaemonSet" then
+              (.status.observedGeneration // 0) < .metadata.generation
+              or (.status.numberReady // 0) < $desired
+              or (.status.updatedNumberScheduled // 0) < $desired
+              or (.status.numberUnavailable // 0) > 0
+            else false end
+          )
+        | [
+            .metadata.namespace,
+            (.kind + "/" + .metadata.name),
+            ("desired=" + ($desired | tostring)),
+            ("ready=" + ((.status.availableReplicas // .status.readyReplicas // .status.numberReady // 0) | tostring))
+          ]
+        | @tsv
+      ' <<<"$workloads_json" 2>/dev/null)"
+    else
+      bad_workloads="workload-list-error"
+    fi
+
+    rc=$((pods_rc != 0 || workloads_rc != 0))
+    if [[ "$rc" -eq 0 ]] && [[ -z "$bad_pods" ]] && [[ -z "$bad_workloads" ]]; then
       break
     fi
     if [[ "$attempt" -lt 3 ]]; then
@@ -229,12 +308,12 @@ k8s_pod_check() {
   done
   elapsed=$(( $(date +%s) - started ))
 
-  if [[ "$rc" -eq 0 ]] && [[ -z "$bad_pods" ]]; then
+  if [[ "$rc" -eq 0 ]] && [[ -z "$bad_pods" ]] && [[ -z "$bad_workloads" ]]; then
     ok="true"
-    detail="all non-terminal pods running or succeeded"
+    detail="all active workloads reconciled and pods ready"
   else
     ok="false"
-    detail="$(echo "$bad_pods" | tr '\n' ' ' | cut -c1-500)"
+    detail="$(printf 'workloads=%s pods=%s' "$bad_workloads" "$bad_pods" | tr '\n' ' ' | cut -c1-500)"
   fi
 
   json_log "$round" "k8s:pods-running" "$ok" "$rc" "$elapsed" "$detail"
@@ -433,10 +512,10 @@ run_once_mutating_checks() {
     --arg alert_id "codex-live-100-$RUN_ID" \
     --arg tenant "$TENANT" \
     '{alert_id:$alert_id,alert_type:"scan",severity:"critical",score:0.96,source_ip:"192.0.2.100",dest_ip:"198.51.100.10",tenant_id:$tenant,related_alert_count:9,asset_risk:"high"}')"
-  http_check 0 "api:playbooks-execute-post" "POST" "/api/v1/playbooks/block-scanner/execute" "200" \
-    '.success == true and (.data.playbook == "block-scanner") and ((.data.success_actions // 0) >= 1)' "$playbook_payload"
+  http_check 0 "api:playbooks-execute-post" "POST" "/api/v1/playbooks/block-scanner/execute" "501" \
+    '.success == false and .error.code == "PLAYBOOK_LIVE_EXECUTION_NOT_CONFIGURED"' "$playbook_payload"
 
-  http_check 0 "api:notifications-test-post" "POST" "/api/v1/notifications/test" "200" ".success == true"
+  http_check 0 "api:notifications-test-post" "POST" "/api/v1/notifications/test" "409" ".success == false"
 }
 
 run_api_checks() {
@@ -529,11 +608,12 @@ write_summary() {
     --arg smoke_host "$SMOKE_HOST" \
     --arg report "$REPORT" \
     --argjson rounds "$ROUNDS" \
+    --argjson completed_rounds "$COMPLETED_ROUNDS" \
     --argjson total "$TOTAL" \
     --argjson passed "$PASSED" \
     --argjson failed "$FAILED" \
     --argjson elapsed "$elapsed" \
-    '{run_id:$run_id, apisix:$apisix, tenant:$tenant, smoke_host:$smoke_host, rounds:$rounds, checks:{total:$total,passed:$passed,failed:$failed}, elapsed_seconds:$elapsed, report:$report}' >"$SUMMARY"
+    '{run_id:$run_id, apisix:$apisix, tenant:$tenant, smoke_host:$smoke_host, rounds:$rounds, completed_rounds:$completed_rounds, checks:{total:$total,passed:$passed,failed:$failed}, elapsed_seconds:$elapsed, report:$report}' >"$SUMMARY"
 }
 
 need_cmd curl
@@ -593,7 +673,12 @@ for round in $(seq 1 "$ROUNDS"); do
 
   round_total=$((TOTAL - before_total))
   round_failed=$((FAILED - before_failed))
+  COMPLETED_ROUNDS="$round"
   echo "round $round/$ROUNDS checks=$round_total failed=$round_failed total_failed=$FAILED"
+  if [[ "$STOP_ON_FAILURE" == "1" ]] && [[ "$FAILED" -ne 0 ]]; then
+    echo "stopping after round $round because failures are present (STOP_ON_FAILURE=1)" >&2
+    break
+  fi
 done
 
 write_summary

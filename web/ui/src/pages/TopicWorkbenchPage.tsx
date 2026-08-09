@@ -50,6 +50,7 @@ import {
 import { MetricTile } from '@/components/MetricTile';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
+import { mergeRouteSearchParams } from '@/routes/pageRouteState';
 import { findRouteById } from '@/routes/routeManifest';
 import type { NavRoute } from '@/routes/routeManifest';
 import {
@@ -237,7 +238,11 @@ function collectTopicViewState() {
 function collectTopicDataContext() {
   const shell = document.querySelector<HTMLElement>('.taf-topic-shell');
   return {
-    data_mode: shell?.dataset.dataMode === 'simulated' ? 'simulated' as const : 'live' as const,
+    data_mode: shell?.dataset.dataMode === 'simulated'
+      ? 'simulated' as const
+      : shell?.dataset.dataMode === 'partial' ? 'partial' as const : 'live' as const,
+    snapshot_id: shell?.dataset.snapshotId || undefined,
+    expected_revision: Number(shell?.dataset.snapshotRevision || 0) || undefined,
     simulation_id: shell?.dataset.simulationId || undefined,
     simulation_version: shell?.dataset.simulationVersion || undefined,
     view_state: collectTopicViewState(),
@@ -787,14 +792,16 @@ function topicReportCollectionLabel(key: string) {
   return labels[key] ?? key.replace(/_/gu, ' ');
 }
 
-function TopicReportThumbnail({ title, topicId, completeness }: { title: string; topicId: string; completeness: number }) {
+function TopicReportThumbnail({ title, topicId, completeness }: { title: string; topicId: string; completeness?: number }) {
+  const available = typeof completeness === 'number' && Number.isFinite(completeness);
+  const normalized = available ? Math.max(0, Math.min(100, completeness)) : 0;
   return (
     <div className="taf-topic-report-sheet" aria-label={`${title} 首屏缩略图`}>
       <FileDoneOutlined />
       <strong>{title}</strong>
       <span>{topicId}</span>
-      <small>证据完整度 {Math.max(0, Math.min(100, Math.round(completeness)))}%</small>
-      <i style={{ '--report-progress': `${Math.max(0, Math.min(100, completeness))}%` } as CSSProperties} />
+      <small>{available ? `证据完整度 ${Math.round(normalized)}%` : '证据完整度暂不可用'}</small>
+      <i style={{ '--report-progress': `${normalized}%` } as CSSProperties} />
     </div>
   );
 }
@@ -806,15 +813,16 @@ function TopicProgressDonut({
   caption,
   detail,
 }: {
-  value: number;
+  value?: number;
   ariaLabel: string;
   className: string;
   caption: string;
   detail?: string;
 }) {
-  const normalized = Math.max(0, Math.min(100, value));
+  const available = typeof value === 'number' && Number.isFinite(value);
+  const normalized = available ? Math.max(0, Math.min(100, value)) : 0;
   return (
-    <div className={`${className} taf-topic-progress-donut`} data-center-value={`${Math.round(normalized)}%`}>
+    <div className={`${className} taf-topic-progress-donut`} data-center-value={available ? `${Math.round(normalized)}%` : 'unavailable'}>
       <div className="taf-topic-progress-donut__ring">
         <DataQualityDonutChart
           ariaLabel={ariaLabel}
@@ -824,7 +832,7 @@ function TopicProgressDonut({
             { label: '待完成', value: 100 - normalized, color: 'rgba(56, 151, 201, 0.18)' },
           ]}
         />
-        <strong className="taf-topic-progress-donut__value">{Math.round(normalized)}%</strong>
+        <strong className="taf-topic-progress-donut__value">{available ? `${Math.round(normalized)}%` : '--'}</strong>
       </div>
       <span className="taf-topic-progress-donut__caption">{caption}</span>
       {detail ? <small className="taf-topic-progress-donut__detail">{detail}</small> : null}
@@ -838,7 +846,7 @@ const topicConfigs: Record<TopicId, TopicConfig> = {
     topicCode: 'tunnel',
     site: '主校区',
     assetGroup: '办公终端 / 服务群组',
-    ipRange: '10.12.0.0/16',
+    ipRange: '未提供',
     protocol: 'SSH / TLS / HTTPS / RDP / SOCKS',
     timeRange: '当前查询窗口',
     rule: '加密隧道识别规则集 v2.1',
@@ -885,7 +893,7 @@ const topicConfigs: Record<TopicId, TopicConfig> = {
     topicCode: 'exfil',
     site: '主校区',
     assetGroup: '科研文件服务 / 办公终端',
-    ipRange: '10.14.0.0/16',
+    ipRange: '未提供',
     protocol: 'HTTPS / S3 / WebDAV / DNS',
     timeRange: '当前查询窗口',
     rule: '数据外传识别模型 v3.2',
@@ -932,7 +940,7 @@ const topicConfigs: Record<TopicId, TopicConfig> = {
     topicCode: 'apt',
     site: '主园区',
     assetGroup: '办公终端 / 数据中心',
-    ipRange: '10.12.0.0/16',
+    ipRange: '未提供',
     protocol: '初始访问 / 执行 / 横向移动 / 数据外传',
     timeRange: '当前查询窗口',
     rule: '战役关联规则 v2.4',
@@ -1039,6 +1047,9 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
   const [selectedSignal, setSelectedSignal] = useState(config.signals[0].label);
   const [scopeRevision, setScopeRevision] = useState(0);
   const [reportSnapshot, setReportSnapshot] = useState<TopicReportSnapshotState>();
+  const changeTopic = (topic: string) => {
+    setSearchParams((current) => mergeRouteSearchParams(current, { topic, tab: topic }));
+  };
 
   useEffect(() => {
     setFocusMode(config.focusModes[0]);
@@ -1099,7 +1110,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
     reportSubject: presentation?.reportScope || config.reportSubject,
     eventTotal: data?.total || config.eventTotal,
   };
-  const metrics = topicPage.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? fallbackMetric(label));
+  const metrics = topicPage.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? unavailableMetric(label));
   const evidenceRows = data?.evidence.length ? data.evidence : topicPage.evidence.map((label) => ({ label, value: '待返回', status: 'info' as const }));
   const columns: ColumnsType<SnapshotRow> = topicPage.tableColumns.map((column) => ({
     title: column,
@@ -1113,7 +1124,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
   if (selectedTopic === 'topic-tunnel') {
     return (
       <div className={`taf-page taf-topic-page taf-topic-${config.tone}`}>
-        <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
+        <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-snapshot-id={topicVisuals?.snapshotId || ''} data-snapshot-revision={topicVisuals?.snapshotRevision || ''} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
           <div className="taf-topic-tunnel-layout">
             <div className="taf-topic-tunnel-left">
               <header className="taf-topic-titlebar">
@@ -1128,7 +1139,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                       role="tab"
                       aria-selected={option.id === selectedTopic}
                       className={option.id === selectedTopic ? 'is-active' : ''}
-                      onClick={() => setSearchParams({ topic: option.param, tab: option.param })}
+                      onClick={() => changeTopic(option.param)}
                     >
                       {option.label}
                     </button>
@@ -1203,7 +1214,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
   if (selectedTopic === 'topic-exfil') {
     return (
       <div className={`taf-page taf-topic-page taf-topic-${config.tone}`}>
-        <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
+        <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-snapshot-id={topicVisuals?.snapshotId || ''} data-snapshot-revision={topicVisuals?.snapshotRevision || ''} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
           <div className="taf-topic-exfil-layout">
             <div className="taf-topic-exfil-left">
               <header className="taf-topic-titlebar">
@@ -1218,7 +1229,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                       role="tab"
                       aria-selected={option.id === selectedTopic}
                       className={option.id === selectedTopic ? 'is-active' : ''}
-                      onClick={() => setSearchParams({ topic: option.param, tab: option.param })}
+                      onClick={() => changeTopic(option.param)}
                     >
                       {option.label}
                     </button>
@@ -1297,7 +1308,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
   if (selectedTopic === 'topic-apt') {
     return (
       <div className={`taf-page taf-topic-page taf-topic-${config.tone}`}>
-        <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
+        <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-snapshot-id={topicVisuals?.snapshotId || ''} data-snapshot-revision={topicVisuals?.snapshotRevision || ''} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
           <div className="taf-topic-apt-layout">
             <div className="taf-topic-apt-left">
               <header className="taf-topic-titlebar">
@@ -1312,7 +1323,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                       role="tab"
                       aria-selected={option.id === selectedTopic}
                       className={option.id === selectedTopic ? 'is-active' : ''}
-                      onClick={() => setSearchParams({ topic: option.param, tab: option.param })}
+                      onClick={() => changeTopic(option.param)}
                     >
                       {option.label}
                     </button>
@@ -1390,7 +1401,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
 
   return (
     <div className={`taf-page taf-topic-page taf-topic-${config.tone}`}>
-      <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
+      <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-snapshot-id={topicVisuals?.snapshotId || ''} data-snapshot-revision={topicVisuals?.snapshotRevision || ''} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
         <header className="taf-topic-titlebar">
           <div className="taf-topic-title-main">
             <h1>{route.page.title}</h1>
@@ -1403,7 +1414,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                 role="tab"
                 aria-selected={option.id === selectedTopic}
                 className={option.id === selectedTopic ? 'is-active' : ''}
-                onClick={() => setSearchParams({ topic: option.param, tab: option.param })}
+                onClick={() => changeTopic(option.param)}
               >
                 {option.label}
               </button>
@@ -2085,12 +2096,14 @@ function TunnelRightRail({
   visuals?: TopicVisuals;
   reportBinding: TopicReportSnapshotBinding;
 }) {
-  const completeness = Math.round(metricValueNumber(metrics, '证据完整度'));
+  const completenessMetric = metrics.find((item) => item.label === '证据完整度');
+  const completeness = metricOptionalNumber(metrics, '证据完整度');
+  const summaryValue = (key: string) => visuals?.summary?.[key];
   const evidence = evidenceRows;
-  const summary = [
-    ['可生成报告', String(visuals?.summary?.reportable_count ?? (completeness > 0 ? 1 : 0)), completeness > 0 ? 'ok' : 'warn'],
-    ['待补证据', String(visuals?.summary?.pending_evidence_count ?? evidence.filter((item) => item.status === 'warn').length), 'warn'],
-    ['未闭环风险', String(visuals?.summary?.open_risk_count ?? metricValueNumber(metrics, '未闭环风险数')), 'risk'],
+  const summary: Array<[string, string, 'ok' | 'warn' | 'risk']> = [
+    ['可生成报告', summaryValue('reportable_count') === undefined ? '暂不可用' : String(summaryValue('reportable_count')), summaryValue('reportable_count') === undefined ? 'warn' : 'ok'],
+    ['待补证据', summaryValue('pending_evidence_count') === undefined ? '暂不可用' : String(summaryValue('pending_evidence_count')), 'warn'],
+    ['未闭环风险', summaryValue('open_risk_count') === undefined ? '暂不可用' : String(summaryValue('open_risk_count')), 'risk'],
   ];
   const actions: Array<[string, ReactNode]> = [
     ['编辑范围', <EditOutlined key="edit" />],
@@ -2114,7 +2127,7 @@ function TunnelRightRail({
             ariaLabel="加密隧道报告就绪度"
             className="taf-topic-tunnel-ring"
             caption="报告就绪度"
-            detail="较昨日 +8%"
+            detail={completenessMetric?.delta || '未提供比较基线'}
           />
           <div className="taf-topic-tunnel-delivery-stats">
             {summary.map(([label, value, tone]) => (
@@ -2215,12 +2228,13 @@ function ExfilRightRail({
   visuals?: TopicVisuals;
   reportBinding: TopicReportSnapshotBinding;
 }) {
-  const completeness = Math.max(0, Math.min(100, Math.round(metricValueNumber(metrics, '证据完整度'))));
+  const completeness = metricOptionalNumber(metrics, '证据完整度');
   const evidence = evidenceRows;
+  const summaryValue = (key: string) => visuals?.summary?.[key];
   const summaryStats: Array<[string, string]> = [
-    ['可生成报告', String(visuals?.summary?.reportable_count ?? (metricValueNumber(metrics, '外传路径数') > 0 ? 1 : 0))],
-    ['待补证据', String(visuals?.summary?.pending_evidence_count ?? evidence.filter((item) => item.status === 'warn').length)],
-    ['未闭环风险', String(visuals?.summary?.open_risk_count ?? metricValueNumber(metrics, '外传预警量'))],
+    ['可生成报告', summaryValue('reportable_count') === undefined ? '暂不可用' : String(summaryValue('reportable_count'))],
+    ['待补证据', summaryValue('pending_evidence_count') === undefined ? '暂不可用' : String(summaryValue('pending_evidence_count'))],
+    ['未闭环风险', summaryValue('open_risk_count') === undefined ? '暂不可用' : String(summaryValue('open_risk_count'))],
   ];
   const actions: Array<[string, ReactNode]> = [
     ['编辑范围', <EditOutlined key="edit" />],
@@ -2492,7 +2506,7 @@ function ExfilAnalysisDashboard({ rows, metrics, focusMode, visuals }: { rows: S
           </header>
           {model.accounts.length
             ? <ExfilBarChart items={model.accounts} ariaLabel="可疑账号和服务分布 TOP 5" />
-            : <div className="taf-topic-empty">account_service_distribution 未返回</div>}
+            : <div className="taf-topic-empty">账号 / 服务分布暂不可用</div>}
         </div>
       </div>
     </WorkPanel>
@@ -2722,6 +2736,13 @@ function metricNumber(metrics: SnapshotMetric[], label: string) {
 
 function metricValueNumber(metrics: SnapshotMetric[], label: string) {
   return metricNumber(metrics, label);
+}
+
+function metricOptionalNumber(metrics: SnapshotMetric[], label: string) {
+  const value = metrics.find((item) => item.label === label)?.value;
+  if (!value || /暂不可用|未提供|unavailable|unknown|^[-—]+$/i.test(value.trim())) return undefined;
+  const numeric = parseNumericValue(value);
+  return Number.isFinite(numeric) ? numeric : undefined;
 }
 
 function compactPaginationTokens(pageCount: number, currentPage: number): Array<number | string> {
@@ -3193,10 +3214,9 @@ function AptRightRail({
     ['分享', <ShareAltOutlined key="share" />],
     ['收藏', <StarOutlined key="star" />],
   ];
-  const riskOpen = model.response.find((item) => item.label === '待处置')?.value ?? 0;
-  const reportableCount = visuals?.summary?.reportable_count ?? model.campaigns.length;
-  const pendingEvidenceCount = visuals?.summary?.pending_evidence_count ?? model.evidenceRows.filter((item) => item.status === 'warn').length;
-  const openRiskCount = visuals?.summary?.open_risk_count ?? riskOpen;
+  const reportableCount = visuals?.summary?.reportable_count ?? '暂不可用';
+  const pendingEvidenceCount = visuals?.summary?.pending_evidence_count ?? '暂不可用';
+  const openRiskCount = visuals?.summary?.open_risk_count ?? '暂不可用';
 
   return (
     <>
@@ -3737,6 +3757,6 @@ function renderTopicCell(topic: string, column: string, value: unknown, record: 
   return String(value ?? '-');
 }
 
-function fallbackMetric(label: string): PageSnapshot['metrics'][number] {
-  return { label, value: label.includes('完整') ? '0.0%' : '0', delta: '等待 API', status: 'info' };
+function unavailableMetric(label: string): PageSnapshot['metrics'][number] {
+  return { label, value: '-', delta: '暂不可用', status: 'warn' };
 }

@@ -1,0 +1,50 @@
+{
+  "contract_version": "1.0.0",
+  "remediation_id": "T-OS-005",
+  "contains_secrets": false,
+  "authentication": {
+    "mode": "mutual_tls",
+    "role_mapping_key": "users",
+    "default_admin_application_access": false,
+    "certificate_rotation": "serial_canary_then_rollout"
+  },
+  "roles": [
+    {
+      "role": "traffic_alert_projection",
+      "identities": ["CN=alert-service,OU=traffic-analysis"],
+      "cluster_permissions": ["cluster_monitor"],
+      "index_permissions": [{"index_patterns": ["alerts-*"], "allowed_actions": ["indices:data/read/*", "indices:data/write/index", "indices:data/write/bulk*"]}]
+    },
+    {
+      "role": "traffic_asset_projection",
+      "identities": ["CN=asset-service,OU=traffic-analysis"],
+      "cluster_permissions": ["cluster_monitor"],
+      "index_permissions": [{"index_patterns": ["assets-*"], "allowed_actions": ["indices:data/read/*", "indices:data/write/index", "indices:data/write/bulk*"]}]
+    },
+    {
+      "role": "traffic_flink_alert_sink",
+      "identities": ["CN=flink-alert-generator,OU=traffic-analysis"],
+      "cluster_permissions": [],
+      "index_permissions": [{"index_patterns": ["alerts-write"], "allowed_actions": ["indices:data/write/index", "indices:data/write/bulk*"]}]
+    },
+    {
+      "role": "traffic_opensearch_snapshot_operator",
+      "identities": ["CN=opensearch-snapshot-operator,OU=traffic-analysis"],
+      "cluster_permissions": ["cluster_monitor", "manage_snapshots"],
+      "index_permissions": [{"index_patterns": ["alerts-*", "assets-*", "audit-*"], "allowed_actions": ["indices_monitor"]}]
+    },
+    {
+      "role": "traffic_opensearch_monitor",
+      "identities": ["CN=opensearch-monitor,OU=traffic-analysis"],
+      "cluster_permissions": ["cluster_monitor"],
+      "index_permissions": []
+    }
+  ],
+  "forbidden": [
+    "passwords_or_password_hashes_in_git",
+    "all_access_for_application_identity",
+    "wildcard_index_access_for_application_identity",
+    "shared_admin_credential_in_health_probe",
+    "anonymous_http_access"
+  ]
+}

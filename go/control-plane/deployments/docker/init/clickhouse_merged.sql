@@ -175,7 +175,7 @@ ENGINE = ReplicatedMergeTree(
 )
 PARTITION BY toDate(ts_end)
 ORDER BY (tenant_id, ts_end, community_id, session_id)
-TTL toDateTime(ts_end) + INTERVAL 30 DAY
+TTL toDateTime(ts_end) + INTERVAL 90 DAY
 SETTINGS index_granularity = 8192;
 
 CREATE TABLE IF NOT EXISTS ${CH_DB}.sessions
@@ -507,8 +507,9 @@ alerts_local ON CLUSTER '{cluster}' (
     -- 去重指纹
     dedup_fingerprint String,
     
-    -- 事件 ID
-    event_id String
+    -- 事件与跨存储追踪 ID
+    event_id String,
+    trace_id String,
 
     arkime_session_link String DEFAULT '', -- 新增：Arkime 会话链接
     feedback_label LowCardinality(String) DEFAULT '', -- 新增：用户反馈标签
@@ -1883,3 +1884,87 @@ WHERE created_at > now() - INTERVAL 24 HOUR
 GROUP BY tenant_id, center_ip
 ORDER BY tenant_id, query_count DESC
 LIMIT 100 BY tenant_id;
+
+-- -----------------------------------------------------------------------------------------
+-- campaign_projection_events_v2: deterministic campaign aggregate/membership shadow
+-- -----------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ${CH_DB}.campaign_projection_events_v2_local
+ON CLUSTER ${CH_CLUSTER}
+(
+  projection_id FixedString(64),
+  event_id UUID,
+  tenant_id String,
+  stream LowCardinality(String),
+  projection_key String,
+  projection_version UInt64,
+  campaign_id String,
+  relation_id String,
+  alert_id String,
+  event_type LowCardinality(String),
+  schema_version UInt16,
+  trace_id String,
+  received_at DateTime64(3, 'UTC'),
+  payload String CODEC(ZSTD(3)),
+  projection_sha256 FixedString(64),
+  projected_at DateTime64(3, 'UTC') DEFAULT now64(3)
+)
+ENGINE = ReplicatedReplacingMergeTree(
+  '${CH_KEEPER_PREFIX}/{shard}/${CH_DB}/campaign_projection_events_v2_local',
+  '{replica}',
+  projected_at
+)
+PARTITION BY toYYYYMM(received_at)
+ORDER BY (tenant_id, projection_key, projection_version, event_id)
+TTL toDateTime(received_at) + INTERVAL 180 DAY;
+
+CREATE TABLE IF NOT EXISTS ${CH_DB}.campaign_projection_events_v2
+ON CLUSTER ${CH_CLUSTER}
+AS ${CH_DB}.campaign_projection_events_v2_local
+ENGINE = Distributed(
+  ${CH_CLUSTER},
+  ${CH_DB},
+  campaign_projection_events_v2_local,
+  cityHash64(tenant_id, projection_key)
+);
+
+-- -----------------------------------------------------------------------------------------
+-- user_anomalies_v2: stable-key, versioned and replay-marked anomaly projection
+-- -----------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ${CH_DB}.user_anomalies_v2_local
+ON CLUSTER ${CH_CLUSTER}
+(
+  anomaly_id String,
+  tenant_id String,
+  user_id String,
+  username String,
+  detector_type LowCardinality(String),
+  severity LowCardinality(String),
+  score Float32,
+  description String,
+  detail_json String CODEC(ZSTD(3)),
+  source_ip1 String,
+  source_ip2 String,
+  detected_at DateTime64(3, 'UTC'),
+  event_version UInt64,
+  replay_id String DEFAULT '',
+  projected_at DateTime64(3, 'UTC') DEFAULT now64(3)
+)
+ENGINE = ReplicatedReplacingMergeTree(
+  '${CH_KEEPER_PREFIX}/{shard}/${CH_DB}/user_anomalies_v2_local',
+  '{replica}',
+  event_version
+)
+PARTITION BY toYYYYMM(detected_at)
+ORDER BY (tenant_id, anomaly_id)
+TTL toDateTime(detected_at) + INTERVAL 180 DAY
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS ${CH_DB}.user_anomalies_v2
+ON CLUSTER ${CH_CLUSTER}
+AS ${CH_DB}.user_anomalies_v2_local
+ENGINE = Distributed(
+  ${CH_CLUSTER},
+  ${CH_DB},
+  user_anomalies_v2_local,
+  cityHash64(tenant_id, anomaly_id)
+);

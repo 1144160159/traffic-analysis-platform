@@ -8,8 +8,8 @@ spec:
     app: forensics-service
   ports:
     - name: http
-      port: 8083
-      targetPort: 8083
+      port: 8086
+      targetPort: 8086
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -30,30 +30,32 @@ spec:
       - name: forensics-service
         image: registry.example.com/traffic/forensics-service:latest
         ports:
-        - containerPort: 8083
+        - containerPort: 8086
         env:
         - name: CLICKHOUSE_DSN
           value: "clickhouse://clickhouse:9000/traffic"
         - name: S3_ENDPOINT
-          value: "minio:9000"
+          value: "minio.minio.svc:9000"
         - name: S3_BUCKET
-          value: "traffic-pcap"
+          value: "pcap-archive"
+        - name: S3_RESULT_BUCKET
+          value: "pcap-archive"
         - name: S3_ACCESS_KEY
           valueFrom:
             secretKeyRef:
-              name: minio-credentials
-              key: access-key
+              name: minio-forensics-service-credentials
+              key: accesskey
         - name: S3_SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: minio-credentials
-              key: secret-key
+              name: minio-forensics-service-credentials
+              key: secretkey
         - name: S3_USE_SSL
           value: "false"
         - name: MAX_CONCURRENT
           value: "5"
         - name: API_LISTEN_ADDR
-          value: ":8083"
+          value: ":8086"
         resources:
           requests:
             memory: "512Mi"

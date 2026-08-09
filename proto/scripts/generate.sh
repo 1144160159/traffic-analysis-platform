@@ -155,15 +155,53 @@ lint_protos() {
 
 generate_code() {
     log_info "Generating code for all languages..."
-    
-    cd "${PROTO_DIR}"
-    
-    # 执行 buf generate
-    if ! buf generate; then
-        log_error "Code generation failed"
-        exit 1
+
+    local skip_clean="${1:-false}"
+    local max_attempts="${BUF_GENERATE_MAX_ATTEMPTS:-3}"
+    if [[ ! "${max_attempts}" =~ ^[1-9]$ ]]; then
+        log_error "BUF_GENERATE_MAX_ATTEMPTS must be an integer from 1 to 9"
+        return 1
     fi
-    
+    local stage_dir
+    stage_dir=$(mktemp -d)
+    local stage_template="${stage_dir}/buf.gen.yaml"
+    sed \
+        -e "s|out: ../rust/probe-agent/proto-gen/src|out: ${stage_dir}/rust|" \
+        -e "s|out: ../go/control-plane/pkg/proto|out: ${stage_dir}/go|" \
+        -e "s|out: ../java/flink-jobs/flink-common/src/main/java|out: ${stage_dir}/java|" \
+        "${PROTO_DIR}/buf.gen.yaml" > "${stage_template}"
+
+    cd "${PROTO_DIR}"
+
+    local attempt=1
+    local generated=false
+    while [[ ${attempt} -le ${max_attempts} ]]; do
+        rm -rf "${stage_dir}/rust" "${stage_dir}/go" "${stage_dir}/java"
+        if buf generate --template "${stage_template}"; then
+            generated=true
+            break
+        fi
+        log_warn "Code generation attempt ${attempt}/${max_attempts} failed"
+        attempt=$((attempt + 1))
+        if [[ ${attempt} -le ${max_attempts} ]]; then
+            sleep $((attempt - 1))
+        fi
+    done
+    if [[ "${generated}" != true ]]; then
+        rm -rf "${stage_dir}"
+        log_error "Code generation failed after ${max_attempts} attempts; existing generated files were preserved"
+        return 1
+    fi
+
+    if [[ "${skip_clean}" != true ]]; then
+        clean_generated
+    fi
+    create_output_dirs
+    cp -a "${stage_dir}/rust/." "${RUST_OUT}/"
+    cp -a "${stage_dir}/go/." "${GO_OUT}/"
+    cp -a "${stage_dir}/java/." "${JAVA_OUT}/"
+    rm -rf "${stage_dir}"
+
     log_success "Code generation completed"
 }
 
@@ -203,6 +241,24 @@ pub const GENERATED_AT: &str = env!("CARGO_PKG_VERSION");
 EOF
 
     log_success "Rust lib.rs generated"
+}
+
+# =============================================================================
+# 规范化生成物
+# =============================================================================
+
+normalize_generated_code() {
+    log_info "Normalizing generated source whitespace..."
+
+    local file
+    while IFS= read -r -d '' file; do
+        sed -i 's/[[:space:]]\+$//' "$file"
+    done < <(
+        find "${RUST_OUT}" "${GO_OUT}" "${JAVA_OUT}/com/traffic/proto" \
+            -type f \( -name "*.rs" -o -name "*.go" -o -name "*.java" \) -print0
+    )
+
+    log_success "Generated source whitespace normalized"
 }
 
 # =============================================================================
@@ -468,18 +524,15 @@ main() {
     # 执行步骤
     check_dependencies
     
-    if [[ "$skip_clean" != true ]]; then
-        clean_generated
-    fi
-    
     create_output_dirs
     
     if [[ "$skip_lint" != true ]]; then
         lint_protos
     fi
     
-    generate_code
+    generate_code "$skip_clean"
     generate_rust_lib
+    normalize_generated_code
     
     if [[ "$skip_verify" != true ]]; then
         verify_all

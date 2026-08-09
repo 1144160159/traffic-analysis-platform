@@ -99,4 +99,140 @@ public interface EventHeaderOrBuilder extends
    * @return The flinkOutTs.
    */
   long getFlinkOutTs();
+
+  /**
+   * <pre>
+   * The fields below are an additive v1 event envelope. Existing fields remain
+   * wire-compatible while producers migrate to the complete contract.
+   * </pre>
+   *
+   * <code>string event_type = 10 [json_name = "eventType"];</code>
+   * @return The eventType.
+   */
+  java.lang.String getEventType();
+  /**
+   * <pre>
+   * The fields below are an additive v1 event envelope. Existing fields remain
+   * wire-compatible while producers migrate to the complete contract.
+   * </pre>
+   *
+   * <code>string event_type = 10 [json_name = "eventType"];</code>
+   * @return The bytes for eventType.
+   */
+  com.google.protobuf.ByteString
+      getEventTypeBytes();
+
+  /**
+   * <code>string schema_version = 11 [json_name = "schemaVersion"];</code>
+   * @return The schemaVersion.
+   */
+  java.lang.String getSchemaVersion();
+  /**
+   * <code>string schema_version = 11 [json_name = "schemaVersion"];</code>
+   * @return The bytes for schemaVersion.
+   */
+  com.google.protobuf.ByteString
+      getSchemaVersionBytes();
+
+  /**
+   * <code>string aggregate_type = 12 [json_name = "aggregateType"];</code>
+   * @return The aggregateType.
+   */
+  java.lang.String getAggregateType();
+  /**
+   * <code>string aggregate_type = 12 [json_name = "aggregateType"];</code>
+   * @return The bytes for aggregateType.
+   */
+  com.google.protobuf.ByteString
+      getAggregateTypeBytes();
+
+  /**
+   * <code>string aggregate_id = 13 [json_name = "aggregateId"];</code>
+   * @return The aggregateId.
+   */
+  java.lang.String getAggregateId();
+  /**
+   * <code>string aggregate_id = 13 [json_name = "aggregateId"];</code>
+   * @return The bytes for aggregateId.
+   */
+  com.google.protobuf.ByteString
+      getAggregateIdBytes();
+
+  /**
+   * <code>uint64 aggregate_version = 14 [json_name = "aggregateVersion"];</code>
+   * @return The aggregateVersion.
+   */
+  long getAggregateVersion();
+
+  /**
+   * <code>int64 occurred_at = 15 [json_name = "occurredAt"];</code>
+   * @return The occurredAt.
+   */
+  long getOccurredAt();
+
+  /**
+   * <code>int64 produced_at = 16 [json_name = "producedAt"];</code>
+   * @return The producedAt.
+   */
+  long getProducedAt();
+
+  /**
+   * <code>string trace_id = 17 [json_name = "traceId"];</code>
+   * @return The traceId.
+   */
+  java.lang.String getTraceId();
+  /**
+   * <code>string trace_id = 17 [json_name = "traceId"];</code>
+   * @return The bytes for traceId.
+   */
+  com.google.protobuf.ByteString
+      getTraceIdBytes();
+
+  /**
+   * <code>string causation_id = 18 [json_name = "causationId"];</code>
+   * @return The causationId.
+   */
+  java.lang.String getCausationId();
+  /**
+   * <code>string causation_id = 18 [json_name = "causationId"];</code>
+   * @return The bytes for causationId.
+   */
+  com.google.protobuf.ByteString
+      getCausationIdBytes();
+
+  /**
+   * <code>string correlation_id = 19 [json_name = "correlationId"];</code>
+   * @return The correlationId.
+   */
+  java.lang.String getCorrelationId();
+  /**
+   * <code>string correlation_id = 19 [json_name = "correlationId"];</code>
+   * @return The bytes for correlationId.
+   */
+  com.google.protobuf.ByteString
+      getCorrelationIdBytes();
+
+  /**
+   * <code>string idempotency_key = 20 [json_name = "idempotencyKey"];</code>
+   * @return The idempotencyKey.
+   */
+  java.lang.String getIdempotencyKey();
+  /**
+   * <code>string idempotency_key = 20 [json_name = "idempotencyKey"];</code>
+   * @return The bytes for idempotencyKey.
+   */
+  com.google.protobuf.ByteString
+      getIdempotencyKeyBytes();
+
+  /**
+   * <code>string producer = 21 [json_name = "producer"];</code>
+   * @return The producer.
+   */
+  java.lang.String getProducer();
+  /**
+   * <code>string producer = 21 [json_name = "producer"];</code>
+   * @return The bytes for producer.
+   */
+  com.google.protobuf.ByteString
+      getProducerBytes();
 }

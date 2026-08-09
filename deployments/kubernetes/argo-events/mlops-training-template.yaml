@@ -87,7 +87,7 @@ spec:
     - name: trigger-reason
       value: ""
     - name: trainer-image
-      value: docker.io/traffic/mlops-trainer@sha256:4f40de900eed37b8fa169660edda9e53626cd596b53a0aeaf677b08e1e6b4011
+      value: traffic/mlops-trainer:remediation-20260731
   templates:
   - name: orchestrator-pipeline
     steps:
@@ -233,7 +233,7 @@ spec:
   - name: extract-data
     container:
       image: "{{workflow.parameters.trainer-image}}"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Never
       command: ["python", "/app/scripts/extract_data.py"]
       env:
       - name: CLICKHOUSE_HOST
@@ -283,7 +283,7 @@ spec:
         path: /tmp/data/metadata.json
     container:
       image: "{{workflow.parameters.trainer-image}}"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Never
       command: ["python", "/app/scripts/train_model.py"]
       env:
       - name: MODEL_TYPE
@@ -322,7 +322,7 @@ spec:
         path: /tmp/data/metadata.json
     container:
       image: "{{workflow.parameters.trainer-image}}"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Never
       command: ["python", "/app/scripts/evaluate_model.py"]
       env:
       - name: MODEL_TYPE
@@ -369,7 +369,7 @@ spec:
         path: /metrics/metrics.json
     container:
       image: "{{workflow.parameters.trainer-image}}"
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Never
       command: ["/bin/sh", "-c"]
       args:
       - |
@@ -391,16 +391,18 @@ spec:
         value: "{{workflow.parameters.auto-activate}}"
       - name: MINIO_ENDPOINT
         value: minio.minio.svc:9000
+      - name: MINIO_SECURE
+        value: "false"
       - name: MINIO_ACCESS_KEY
         valueFrom:
           secretKeyRef:
-            name: traffic-credentials
-            key: MINIO_ACCESS_KEY
+            name: minio-mlops-model-writer-credentials
+            key: accesskey
       - name: MINIO_SECRET_KEY
         valueFrom:
           secretKeyRef:
-            name: traffic-credentials
-            key: MINIO_SECRET_KEY
+            name: minio-mlops-model-writer-credentials
+            key: secretkey
       - name: MINIO_BUCKET
         value: traffic-models
       - name: MODEL_REGISTRY_URL

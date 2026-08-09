@@ -13,6 +13,14 @@ It models the required direction for GATE-P0-07 and GATE-P0-10:
 - DNS egress kept explicit;
 - ExternalSecret templates for the namespaces that currently need
   `traffic-credentials`;
+- the generated `generated-kafka-service-identities.v1.yaml` expand template
+  provides nine distinct Kafka workload identities (eight Go services plus the
+  audit materializer) from the versioned ACL catalog; its matching SCRAM Job is
+  generated under `init-jobs/`;
+- the audit materializer is staged in
+  `canary/audit-materializer-expand.template.yaml`; render it only through
+  `scripts/alignment/render_audit_materializer_expand.py`, which rejects
+  mutable image tags and unresolved variables;
 - live Kafka TLS/SASL/ACL and External Secrets Operator rollout are tracked by
   acceptance evidence; this profile still does not prove NetworkPolicy
   enforcement until the cluster CNI supports it.

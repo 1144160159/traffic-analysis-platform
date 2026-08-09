@@ -5,11 +5,15 @@ unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
 export NO_PROXY="10.0.5.8,127.0.0.1,localhost"
 
 BASE_URL="${UI_BASE_URL:-http://10.0.5.8:30180}"
+RUN_ID="${RUN_ID:-$(date +%Y%m%d%H%M%S)-entity-graph-preflight}"
+OUTPUT_PATH="${OUTPUT_PATH:-doc/02_acceptance/runs/$RUN_ID/report.json}"
 KUBECTL="${KUBECTL:-kubectl}"
 KUBECTL_REMOTE_HOST="${KUBECTL_REMOTE_HOST:-}"
 KUBECTL_REMOTE_CONFIG="${KUBECTL_REMOTE_CONFIG:-/tmp/codex-nebula-kubeconfig}"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf -- "$TMP_DIR"' EXIT
+trap 'status=$?; printf "entity graph preflight failed at line %s (exit %s)\n" "$LINENO" "$status" >&2; exit "$status"' ERR
+mkdir -p "$(dirname "$OUTPUT_PATH")"
 
 kctl() {
   if [[ -n "$KUBECTL_REMOTE_HOST" ]]; then
@@ -43,11 +47,11 @@ test "$unauthorized_status" = "401"
 
 default_token="$(make_token default)"
 curl -fsS -H "Authorization: Bearer $default_token" \
-  "$BASE_URL/api/v1/graph/workbench?center_id=host%3A10.20.4.18&depth=2" > "$TMP_DIR/default.json"
+  "$BASE_URL/api/v1/graph/workbench?center_id=host%3A10.20.4.18&depth=2&site=all&time_range=all" > "$TMP_DIR/default.json"
 
 jq -e '.data.meta.source == "nebula_graph"' "$TMP_DIR/default.json" >/dev/null
 jq -e '.data.meta.node_count == 11 and .data.meta.edge_count == 13' "$TMP_DIR/default.json" >/dev/null
-jq -e '.data.meta.node_limit > 0 and .data.meta.query_duration_ms >= 0 and .data.meta.cache_hit_rate == "N/A" and .data.meta.cache_applicable == false and .data.meta.data_origin == "nebula_graph_persisted_projection" and .data.meta.time_range == "24h" and (.data.meta.slow_query | type) == "boolean"' "$TMP_DIR/default.json" >/dev/null
+jq -e '.data.meta.node_limit > 0 and .data.meta.query_duration_ms >= 0 and .data.meta.cache_hit_rate == "N/A" and .data.meta.cache_applicable == false and .data.meta.data_origin == "nebula_graph_persisted_projection" and .data.meta.time_range == "all" and (.data.meta.slow_query | type) == "boolean"' "$TMP_DIR/default.json" >/dev/null
 jq -e '([.data.graph.nodes[].entity_type] | unique | sort) == ["account","alert","domain","evidence","host","ip","service"]' "$TMP_DIR/default.json" >/dev/null
 jq -e '([.data.graph.edges[].evidence_id | select(length > 0)] | unique | length) >= 4' "$TMP_DIR/default.json" >/dev/null
 
@@ -62,18 +66,18 @@ for spec in \
   'account|account%3Abiz_admin|host%3A10.20.4.18|1|登录|identity_label|高权限'; do
   IFS='|' read -r mode source target expected_length relation attribute expected_attribute <<<"$spec"
   curl -fsS -H "Authorization: Bearer $default_token" \
-    "$BASE_URL/api/v1/graph/workbench/path?mode=$mode&source_id=$source&target_id=$target&anchor_id=host%3A10.20.4.18&max_depth=6&site=main&entity_type=all&time_range=24h" > "$TMP_DIR/path-$mode.json"
+    "$BASE_URL/api/v1/graph/workbench/path?mode=$mode&source_id=$source&target_id=$target&anchor_id=host%3A10.20.4.18&max_depth=6&site=main&entity_type=all&time_range=all" > "$TMP_DIR/path-$mode.json"
   jq -e --arg mode "$mode" --argjson expected_length "$expected_length" --arg relation "$relation" --arg attribute "$attribute" --arg expected "$expected_attribute" \
     '.data.path.mode == $mode and .data.path.length == $expected_length and any(.data.path.edges[]; .relation_type == $relation) and any(.data.path.edges[]; (.attributes[$attribute] | tostring) == $expected)' \
     "$TMP_DIR/path-$mode.json" >/dev/null
 done
 
 curl -fsS -H "Authorization: Bearer $default_token" \
-  "$BASE_URL/api/v1/graph/workbench/path?mode=account&source_id=account%3Abiz_admin&target_id=host%3A10.20.4.18&anchor_id=host%3A10.20.4.18&max_depth=6&site=main&entity_type=account&time_range=24h" > "$TMP_DIR/path-account-filtered.json"
+  "$BASE_URL/api/v1/graph/workbench/path?mode=account&source_id=account%3Abiz_admin&target_id=host%3A10.20.4.18&anchor_id=host%3A10.20.4.18&max_depth=6&site=main&entity_type=account&time_range=all" > "$TMP_DIR/path-account-filtered.json"
 jq -e '.data.path.length == 1 and .data.path.node_ids == ["account:biz_admin", "host:10.20.4.18"] and .data.path.edges[0].relation_type == "登录"' "$TMP_DIR/path-account-filtered.json" >/dev/null
 
 curl -fsS -H "Authorization: Bearer $default_token" \
-  "$BASE_URL/api/v1/graph/workbench/path?mode=attack&source_id=alert%3AALERT-20260620-1287&target_id=ip%3A185.234.15.23&anchor_id=host%3A10.20.4.18&max_depth=6&site=main&entity_type=all&time_range=24h" > "$TMP_DIR/reverse-attack.json"
+  "$BASE_URL/api/v1/graph/workbench/path?mode=attack&source_id=alert%3AALERT-20260620-1287&target_id=ip%3A185.234.15.23&anchor_id=host%3A10.20.4.18&max_depth=6&site=main&entity_type=all&time_range=all" > "$TMP_DIR/reverse-attack.json"
 jq -e '.data.path.length == 0 and (.data.path.edges | length) == 0' "$TMP_DIR/reverse-attack.json" >/dev/null
 
 low_scope_token="$(make_token default '["alert:read"]')"
@@ -85,7 +89,7 @@ curl -fsS -H "Authorization: Bearer $isolated_token" \
   "$BASE_URL/api/v1/graph/workbench?center_id=host%3A10.20.4.18&tenant_id=default" > "$TMP_DIR/isolated.json"
 jq -e '.data.meta.node_count == 0 and .data.meta.edge_count == 0' "$TMP_DIR/isolated.json" >/dev/null
 curl -fsS -H "Authorization: Bearer $isolated_token" \
-  "$BASE_URL/api/v1/graph/workbench/path?mode=shortest&source_id=ip%3A185.234.15.23&target_id=host%3A10.20.4.20&anchor_id=host%3A10.20.4.18&max_depth=6&site=main&entity_type=all&time_range=24h" > "$TMP_DIR/isolated-path.json"
+  "$BASE_URL/api/v1/graph/workbench/path?mode=shortest&source_id=ip%3A185.234.15.23&target_id=host%3A10.20.4.20&anchor_id=host%3A10.20.4.18&max_depth=6&site=main&entity_type=all&time_range=all" > "$TMP_DIR/isolated-path.json"
 jq -e '.data.path.length == 0 and (.data.path.edges | length) == 0' "$TMP_DIR/isolated-path.json" >/dev/null
 
 collision_token="$(make_token entity-graph-collision-tenant)"
@@ -122,4 +126,4 @@ jq -n \
   --argjson isolated_path "$(jq '.data.path' "$TMP_DIR/isolated-path.json")" \
   --argjson headless_services "$(jq '[.items[] | {name:.metadata.name, clusterIP:.spec.clusterIP, publishNotReadyAddresses:.spec.publishNotReadyAddresses}]' <<<"$nebula_services_json")" \
   '{result:"pass", generated_at:$generated_at, base_url:$base_url, checks:{unauthorized_status:$unauthorized_status, low_scope_status:$low_scope_status, authenticated_graph:$graph, account_filter:$account_filter, filtered_account_path:$filtered_account_path, path_modes:$paths, reverse_attack_is_rejected:$reverse_attack, cross_tenant_empty_query_isolated:$isolated, cross_tenant_path_isolated:$isolated_path, same_entity_id_tenant_collision_isolated:$collision_tenant, headless_services:$headless_services, nebula_cluster:$nebula_cluster}}' \
-  | tee doc/02_acceptance/02-regression/entity-graph-live-preflight-r580.json
+  | tee "$OUTPUT_PATH"

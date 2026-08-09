@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from './api';
-import { drillPlaybook, savePlaybookDraft, setPlaybookEnabled, transitionPlaybook } from './playbookAutomationApi';
+import {
+  applyPlaybookExecutionOperation,
+  drillPlaybook,
+  getPlaybookExecution,
+  requestPlaybookExecution,
+  savePlaybookDraft,
+  setPlaybookEnabled,
+  transitionPlaybook,
+} from './playbookAutomationApi';
 
 describe('playbookAutomationApi', () => {
   beforeEach(() => {
@@ -42,5 +50,43 @@ describe('playbookAutomationApi', () => {
     await expect(drillPlaybook('block-scanner', 3)).resolves.toMatchObject({ mode: 'drill' });
     post.mockResolvedValueOnce({ data: { success: true, data: { mode: 'drill', result: { actions: [{ action_type: 'block_ip', simulated: false }] } } } } as never);
     await expect(drillPlaybook('block-scanner', 3)).rejects.toThrow('未标记为 simulated');
+  });
+
+  it('requests a versioned live execution without treating acceptance as success', async () => {
+    const request = vi.spyOn(api, 'request').mockResolvedValue({ data: { success: true, data: {
+      execution_id: 'execution-a', tenant_id: 'tenant-a', playbook_name: 'block-scanner',
+      playbook_version: 3, workflow_revision: 1, mode: 'live', status: 'pending_approval',
+      approval_status: 'pending', executor_status: 'not_dispatched',
+    } } } as never);
+    const execution = await requestPlaybookExecution('block-scanner', 3, '请求执行扫描源隔离剧本', { alert_id: 'alert-a' });
+    expect(execution.status).toBe('pending_approval');
+    expect(request).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/v1/playbooks/block-scanner/execute', method: 'POST',
+      data: { expected_version: 3, reason: '请求执行扫描源隔离剧本', alert_context: { alert_id: 'alert-a' } },
+      headers: { 'Idempotency-Key': expect.stringMatching(/^playbook-v2:request:3:/) },
+    }));
+  });
+
+  it('uses optimistic revision and a stable key for independent approval', async () => {
+    const request = vi.spyOn(api, 'request').mockResolvedValue({ data: { success: true, data: {
+      execution_id: 'execution-a', tenant_id: 'tenant-a', playbook_name: 'block-scanner',
+      playbook_version: 3, workflow_revision: 2, mode: 'live', status: 'approved_awaiting_executor',
+      approval_status: 'approved', executor_status: 'queued',
+    } } } as never);
+    await applyPlaybookExecutionOperation('execution-a', 'approve', 1, '独立审批人确认执行剧本');
+    expect(request).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/v1/playbooks/executions/execution-a/approval', method: 'POST',
+      data: { decision: 'approve', expected_revision: 1, reason: '独立审批人确认执行剧本' },
+      headers: { 'Idempotency-Key': expect.stringMatching(/^playbook-v2:approve:1:/) },
+    }));
+  });
+
+  it('rejects a live terminal state without a provider step receipt', async () => {
+    vi.spyOn(api, 'get').mockResolvedValue({ data: { success: true, data: {
+      execution_id: 'execution-a', tenant_id: 'tenant-a', playbook_name: 'block-scanner',
+      playbook_version: 3, workflow_revision: 3, mode: 'live', status: 'completed',
+      approval_status: 'approved', executor_status: 'succeeded', execution_receipt: {},
+    } } } as never);
+    await expect(getPlaybookExecution('execution-a')).rejects.toThrow('缺少 provider 步骤回执');
   });
 });

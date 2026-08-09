@@ -1,0 +1,12 @@
+[
+  {"op":"test","path":"/spec/arguments/parameters/12/name","value":"trainer-image"},
+  {"op":"replace","path":"/spec/arguments/parameters/12/value","value":"docker.io/traffic/mlops-trainer:minio-tls-5b947fffa651"},
+  {"op":"test","path":"/spec/templates/6/name","value":"register-model"},
+  {"op":"test","path":"/spec/templates/6/container/env/5/name","value":"MINIO_ENDPOINT"},
+  {"op":"test","path":"/spec/templates/6/container/env/6/name","value":"MINIO_SECURE"},
+  {"op":"replace","path":"/spec/templates/6/container/env/5/value","value":"minio.minio.svc:9000"},
+  {"op":"replace","path":"/spec/templates/6/container/env/6/value","value":"true"},
+  {"op":"add","path":"/spec/templates/6/container/env/-","value":{"name":"MINIO_CA_FILE","value":"/etc/minio/tls/ca.crt"}},
+  {"op":"add","path":"/spec/templates/6/container/volumeMounts","value":[{"name":"minio-client-ca","mountPath":"/etc/minio/tls","readOnly":true}]},
+  {"op":"add","path":"/spec/volumes","value":[{"name":"minio-client-ca","secret":{"secretName":"minio-client-ca","optional":false}}]}
+]

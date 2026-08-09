@@ -54,7 +54,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.DeviceLog events = 1 [json_name = "events"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.DeviceLogOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.DeviceLogOrBuilder>
       getEventsOrBuilderList() {
     return events_;
   }
@@ -391,7 +391,7 @@ private static final long serialVersionUID = 0L;
             eventsBuilder_ = null;
             events_ = other.events_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            eventsBuilder_ = 
+            eventsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getEventsFieldBuilder() : null;
           } else {
@@ -650,7 +650,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.DeviceLog events = 1 [json_name = "events"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.DeviceLogOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.DeviceLogOrBuilder>
          getEventsOrBuilderList() {
       if (eventsBuilder_ != null) {
         return eventsBuilder_.getMessageOrBuilderList();
@@ -676,12 +676,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.DeviceLog events = 1 [json_name = "events"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.DeviceLog.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.DeviceLog.Builder>
          getEventsBuilderList() {
       return getEventsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.DeviceLog, com.traffic.proto.traffic.v1.DeviceLog.Builder, com.traffic.proto.traffic.v1.DeviceLogOrBuilder> 
+        com.traffic.proto.traffic.v1.DeviceLog, com.traffic.proto.traffic.v1.DeviceLog.Builder, com.traffic.proto.traffic.v1.DeviceLogOrBuilder>
         getEventsFieldBuilder() {
       if (eventsBuilder_ == null) {
         eventsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<

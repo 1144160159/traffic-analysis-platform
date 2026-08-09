@@ -8,8 +8,11 @@ spec:
     app: alert-service
   ports:
     - name: http
-      port: 8081
-      targetPort: 8081
+      port: 8082
+      targetPort: 8082
+    - name: metrics
+      port: 9093
+      targetPort: 8082
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,37 +28,169 @@ spec:
     metadata:
       labels:
         app: alert-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
     spec:
       containers:
       - name: alert-service
         image: registry.example.com/traffic/alert-service:latest
         ports:
-        - containerPort: 8081
+        - containerPort: 8082
         env:
+        - {name: ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED, value: "true"}
+        - {name: KAFKA_RESPONSE_ACTION_TOPIC, value: "alert.response.requested.v1"}
+        - {name: KAFKA_RESPONSE_ACTION_GROUP, value: "alert-service-response-execution-v1"}
+        - {name: KAFKA_SAVED_VIEW_EVENT_TOPIC, value: "alert.saved-view.events.v1"}
+        - {name: KAFKA_WHITELIST_EVENT_TOPIC, value: "whitelist.events.v2"}
+        - {name: WHITELIST_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC, value: "notification.governance.events.v1"}
+        - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "true"}
+        - {name: CAMPAIGN_ALERT_LINKS_V1_ENABLED, value: "true"}
+        - {name: CAMPAIGN_AGGREGATE_V2_ENABLED, value: "false"}
+        - {name: CAMPAIGN_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_V2_ENABLED, value: "false"}
+        - {name: CAMPAIGN_SOAR_EXECUTOR_URL, value: ""}
+        - {name: CAMPAIGN_SOAR_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
+        - name: CAMPAIGN_SOAR_EXECUTOR_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: CAMPAIGN_SOAR_EXECUTOR_TOKEN
+              optional: true
+        - {name: PLAYBOOK_EXECUTION_V2_ENABLED, value: "false"}
+        - {name: DASHBOARD_TASK_V2_ENABLED, value: "false"}
+        - {name: DASHBOARD_TASK_PIPELINE_V1_ENABLED, value: "false"}
+        - {name: DASHBOARD_TASK_EVENT_TOPIC, value: "dashboard.task.events.v1"}
+        - {name: DASHBOARD_TASK_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
+        - {name: DASHBOARD_SNAPSHOT_V1_ENABLED, value: "true"}
+        - {name: PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: PLAYBOOK_EXECUTION_PROVIDER_URL, value: ""}
+        - {name: PLAYBOOK_EXECUTION_PROVIDER_TIMEOUT_SECONDS, value: "30"}
+        - name: PLAYBOOK_EXECUTION_PROVIDER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PLAYBOOK_EXECUTION_PROVIDER_TOKEN
+              optional: true
+        - {name: CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE, value: "traffic.campaign_projection_events_v2"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS, value: "campaign-projections-v2-write"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES, value: "nebula-graph.middleware.svc:9669"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME, value: "traffic_graph"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE, value: "traffic_graph"}
+        - name: CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: NEBULA_SERVICE_PASSWORD
+        - {name: TOPIC_SNAPSHOT_V1_ENABLED, value: "true"}
+        - {name: TOPIC_EXECUTOR_V2_ENABLED, value: "true"}
+        - {name: PROBE_OPERATION_ACK_V2_ENABLED, value: "true"}
         - name: KAFKA_BROKERS
-          value: "kafka-0.kafka:9092,kafka-1.kafka:9092"
+          value: "kafka-bootstrap.middleware.svc:9092"
         - name: KAFKA_TOPIC
           value: "detections.v1"
         - name: KAFKA_GROUP_ID
           value: "alert-service"
+        - name: DATA_QUALITY_SIGNAL_COLLECTION_ENABLED
+          value: "true"
+        - name: DATA_QUALITY_SIGNAL_COLLECTION_INTERVAL
+          value: "1m"
+        - name: DATA_QUALITY_SIGNAL_COLLECTION_TIMEOUT
+          value: "10s"
+        - name: DATA_QUALITY_KAFKA_TOPIC
+          value: "flow.events.v1"
+        - name: DATA_QUALITY_KAFKA_GROUP_ID
+          value: "flink-session-job"
+        - name: DATA_QUALITY_FLINK_REST_URL
+          value: "http://flink-jobmanager.flink.svc:8081"
+        - name: DATA_QUALITY_FLINK_JOB_NAME
+          value: "Session Aggregation Job V2"
+        - name: DATA_QUALITY_FLINK_VERTEX_CONTAINS
+          value: "Assign FlowEvent Watermarks"
+        - name: DATA_QUALITY_FLINK_METRIC_CONTAINS
+          value: "currentOutputWatermark"
+        - name: DQ_MAX_KAFKA_LAG
+          value: "10000"
+        - name: DQ_MAX_SIGNAL_AGE
+          value: "5m"
+        - name: KAFKA_PROBE_ACK_TOPIC
+          value: "probe.acks.v2"
+        - name: KAFKA_PROBE_ACK_GROUP
+          value: "alert-service-probe-acks-v2"
+        - name: KAFKA_PROBE_EVENT_TOPIC
+          value: "probe.events.v2"
+        - name: KAFKA_PROBE_EVENT_GROUP
+          value: "alert-service-probe-event-projection-v2"
+        - name: KAFKA_TOPIC_ACTION_EVENT_TOPIC
+          value: "traffic.topic.action.v2"
+        - name: KAFKA_TOPIC_ACTION_EVENT_GROUP
+          value: "alert-service-topic-action-projection-v2"
+        - name: KAFKA_CAMPAIGN_EVENT_TOPIC
+          value: "campaign.events.v2"
+        - name: KAFKA_CAMPAIGN_EVENT_GROUP
+          value: "alert-service-campaign-event-projection-v2"
+        - name: KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC
+          value: "campaign.membership.events.v2"
+        - name: KAFKA_CAMPAIGN_MEMBERSHIP_GROUP
+          value: "alert-service-campaign-membership-projection-v2"
+        - name: KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC
+          value: "playbook.execution.events.v2"
+        - name: KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP
+          value: "alert-service-playbook-execution-projection-v2"
+        - name: KAFKA_THREAT_INTEL_EVENT_TOPIC
+          value: "threat.intel.v1"
+        - name: KAFKA_THREAT_INTEL_EVENT_GROUP
+          value: "alert-service-threat-intel-projection-v1"
+        - name: THREAT_INTEL_EVENT_PROJECTION_V1_ENABLED
+          value: "true"
         - name: REDIS_ADDRS
           value: "redis-cluster:6379"
         - name: CLICKHOUSE_DSN
           value: "clickhouse://clickhouse:9000/traffic"
         - name: OPENSEARCH_ADDRS
-          value: "http://opensearch:9200"
+          value: "http://opensearch.middleware.svc:9200"
         - name: OPENSEARCH_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: opensearch-credentials
-              key: username
+          value: "admin"
         - name: OPENSEARCH_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: opensearch-credentials
-              key: password
+              name: traffic-credentials
+              key: OPENSEARCH_ADMIN_PASSWORD
+        - name: OPENSEARCH_LEGACY_READ_TARGET
+          value: "alerts"
+        - name: OPENSEARCH_ALERTS_V2_ENABLED
+          value: "false"
+        - name: OPENSEARCH_ALERTS_READ_ALIAS
+          value: "alerts-v2-read"
+        - name: OPENSEARCH_ALERTS_WRITE_ALIAS
+          value: "alerts-v2-write"
+        - name: OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED
+          value: "false"
+        - name: OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS
+          value: "10000"
+        - name: OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT
+          value: "25"
+        - name: OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND
+          value: "100"
+        - name: S3_ENDPOINT
+          value: "minio.minio.svc:9000"
+        - name: S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-alert-service-credentials
+              key: accesskey
+        - name: S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-alert-service-credentials
+              key: secretkey
+        - name: S3_USE_SSL
+          value: "false"
+        - name: ALERT_REPORT_BUCKET
+          value: "report-artifacts"
         - name: API_LISTEN_ADDR
-          value: ":8081"
+          value: ":8082"
         resources:
           requests:
             memory: "256Mi"

@@ -90,7 +90,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       sessionId_ = s;
@@ -106,7 +106,7 @@ private static final long serialVersionUID = 0L;
       getSessionIdBytes() {
     java.lang.Object ref = sessionId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       sessionId_ = b;
@@ -129,7 +129,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       communityId_ = s;
@@ -145,7 +145,7 @@ private static final long serialVersionUID = 0L;
       getCommunityIdBytes() {
     java.lang.Object ref = communityId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       communityId_ = b;
@@ -238,7 +238,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       clientIp_ = s;
@@ -254,7 +254,7 @@ private static final long serialVersionUID = 0L;
       getClientIpBytes() {
     java.lang.Object ref = clientIp_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       clientIp_ = b;
@@ -277,7 +277,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       serverIp_ = s;
@@ -293,7 +293,7 @@ private static final long serialVersionUID = 0L;
       getServerIpBytes() {
     java.lang.Object ref = serverIp_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       serverIp_ = b;
@@ -683,7 +683,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       endReason_ = s;
@@ -699,7 +699,7 @@ private static final long serialVersionUID = 0L;
       getEndReasonBytes() {
     java.lang.Object ref = endReason_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       endReason_ = b;
@@ -2178,7 +2178,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.EventHeader header = 1 [json_name = "header"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder> 
+        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder>
         getHeaderFieldBuilder() {
       if (headerBuilder_ == null) {
         headerBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -2216,7 +2216,7 @@ private static final long serialVersionUID = 0L;
         getSessionIdBytes() {
       java.lang.Object ref = sessionId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         sessionId_ = b;
@@ -2288,7 +2288,7 @@ private static final long serialVersionUID = 0L;
         getCommunityIdBytes() {
       java.lang.Object ref = communityId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         communityId_ = b;
@@ -2443,7 +2443,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.FiveTuple tuple = 4 [json_name = "tuple"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.FiveTuple, com.traffic.proto.traffic.v1.FiveTuple.Builder, com.traffic.proto.traffic.v1.FiveTupleOrBuilder> 
+        com.traffic.proto.traffic.v1.FiveTuple, com.traffic.proto.traffic.v1.FiveTuple.Builder, com.traffic.proto.traffic.v1.FiveTupleOrBuilder>
         getTupleFieldBuilder() {
       if (tupleBuilder_ == null) {
         tupleBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -2609,7 +2609,7 @@ private static final long serialVersionUID = 0L;
         getClientIpBytes() {
       java.lang.Object ref = clientIp_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         clientIp_ = b;
@@ -2681,7 +2681,7 @@ private static final long serialVersionUID = 0L;
         getServerIpBytes() {
       java.lang.Object ref = serverIp_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         serverIp_ = b;
@@ -3824,7 +3824,7 @@ private static final long serialVersionUID = 0L;
         getEndReasonBytes() {
       java.lang.Object ref = endReason_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         endReason_ = b;

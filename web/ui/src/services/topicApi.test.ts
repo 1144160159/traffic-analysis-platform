@@ -74,4 +74,44 @@ describe('topic API contracts', () => {
       target: 'APT-EVT-001',
     }));
   });
+
+  it('binds a versioned action to the rendered snapshot and idempotency key', async () => {
+    const post = vi.spyOn(api, 'post').mockResolvedValue({
+      data: {
+        data: {
+          job_id: '11111111-1111-1111-1111-111111111111',
+          action_id: 'trace',
+          tenant_id: 'default',
+          topic: 'apt',
+          target: 'APT-EVT-001',
+          snapshot_id: '22222222-2222-2222-2222-222222222222',
+          expected_revision: 7,
+          revision: 1,
+          status: 'completed',
+          requested_by: 'tester',
+          created_at: 1,
+        },
+      },
+    } as never);
+
+    await submitTopicAction('apt', '下钻', 'APT-EVT-001', {
+      data_mode: 'partial',
+      snapshot_id: '22222222-2222-2222-2222-222222222222',
+      expected_revision: 7,
+    });
+
+    expect(post).toHaveBeenCalledWith(
+      '/v1/topics/apt/actions',
+      expect.objectContaining({
+        action_id: 'trace',
+        target: 'APT-EVT-001',
+        snapshot_id: '22222222-2222-2222-2222-222222222222',
+        expected_revision: 7,
+        reason: 'topic-workbench:下钻',
+      }),
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'Idempotency-Key': expect.any(String) }),
+      }),
+    );
+  });
 });

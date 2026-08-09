@@ -1,0 +1,8 @@
+ARG BASE_ASSET_IMAGE=docker.io/traffic/asset-service:remediation-766d31c43a4c
+FROM ${BASE_ASSET_IMAGE}
+
+ARG SOURCE_SHA256
+LABEL traffic.analysis.source-sha256=${SOURCE_SHA256}
+
+COPY bin/asset-service /usr/local/bin/app
+

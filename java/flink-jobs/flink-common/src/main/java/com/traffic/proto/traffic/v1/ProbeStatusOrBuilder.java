@@ -53,7 +53,7 @@ public interface ProbeStatusOrBuilder extends
   /**
    * <code>repeated .traffic.v1.InterfaceStatus interfaces = 10 [json_name = "interfaces"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.InterfaceStatus> 
+  java.util.List<com.traffic.proto.traffic.v1.InterfaceStatus>
       getInterfacesList();
   /**
    * <code>repeated .traffic.v1.InterfaceStatus interfaces = 10 [json_name = "interfaces"];</code>
@@ -66,7 +66,7 @@ public interface ProbeStatusOrBuilder extends
   /**
    * <code>repeated .traffic.v1.InterfaceStatus interfaces = 10 [json_name = "interfaces"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.InterfaceStatusOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.InterfaceStatusOrBuilder>
       getInterfacesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.InterfaceStatus interfaces = 10 [json_name = "interfaces"];</code>

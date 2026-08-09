@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 	"github.com/gorilla/mux"
@@ -27,9 +28,9 @@ func NewDashboardHandler(chClient *storage.ClickHouseClient, logger *zap.Logger)
 // GetStats 获取 Dashboard 总览统计
 func (h *DashboardHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
+	tenantID, ok := dashboardReadTenant(w, r)
+	if !ok {
+		return
 	}
 
 	stats := map[string]interface{}{
@@ -62,9 +63,9 @@ func (h *DashboardHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 // GetAlertTrend 告警趋势 (最近 24h 按小时)
 func (h *DashboardHandler) GetAlertTrend(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
+	tenantID, ok := dashboardReadTenant(w, r)
+	if !ok {
+		return
 	}
 
 	start, end, err := dashboardRange(r, 24*time.Hour)
@@ -112,9 +113,9 @@ func (h *DashboardHandler) GetAlertTrend(w http.ResponseWriter, r *http.Request)
 // GetAttackPhases 攻击阶段分布 (基于 Campaign 数据)
 func (h *DashboardHandler) GetAttackPhases(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
+	tenantID, ok := dashboardReadTenant(w, r)
+	if !ok {
+		return
 	}
 
 	sql := `SELECT campaign_type, count() as cnt, avg(score) as avg_score
@@ -153,9 +154,9 @@ func (h *DashboardHandler) GetAttackPhases(w http.ResponseWriter, r *http.Reques
 // GetTopIPs 获取 Top-N 活跃 IP
 func (h *DashboardHandler) GetTopIPs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
+	tenantID, ok := dashboardReadTenant(w, r)
+	if !ok {
+		return
 	}
 
 	start, end, err := dashboardRange(r, time.Hour)
@@ -213,9 +214,9 @@ func (h *DashboardHandler) GetTopIPs(w http.ResponseWriter, r *http.Request) {
 // GetEncryptedTrend 加密流量趋势
 func (h *DashboardHandler) GetEncryptedTrend(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := r.URL.Query().Get("tenant_id")
-	if tenantID == "" {
-		tenantID = "default"
+	tenantID, ok := dashboardReadTenant(w, r)
+	if !ok {
+		return
 	}
 
 	start, end, err := dashboardRange(r, 24*time.Hour)
@@ -489,4 +490,22 @@ func parseDashboardLimit(value string, fallback, max int) int {
 		return max
 	}
 	return parsed
+}
+
+func dashboardReadTenant(w http.ResponseWriter, r *http.Request) (string, bool) {
+	ctx := r.Context()
+	tenantID, _, ok := authenticatedDashboardIdentity(ctx)
+	if !ok {
+		httpx.JSONError(w, ctx, http.StatusUnauthorized, "UNAUTHENTICATED", "authenticated tenant and user are required")
+		return "", false
+	}
+	if !hasSystemPermission(ctx, authmodel.ScopeAlertRead) {
+		httpx.JSONError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "permission denied: alert:read required")
+		return "", false
+	}
+	if r.URL.Query().Has("tenant_id") {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "TENANT_SOURCE_FORBIDDEN", "tenant_id is derived from authenticated identity")
+		return "", false
+	}
+	return tenantID, true
 }

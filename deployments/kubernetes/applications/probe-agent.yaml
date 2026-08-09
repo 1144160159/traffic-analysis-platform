@@ -72,7 +72,6 @@ data:
       gateway_addr: "https://ingest-gateway.traffic-analysis.svc:50051"
       tenant_id: "default"
       probe_id: "probe-${NODE_NAME}"
-      auth_token: "probe-token-default-001"
       batch_size: 100
       batch_timeout_ms: 100
       max_retries: 3
@@ -118,16 +117,21 @@ spec:
           valueFrom: {fieldRef: {fieldPath: spec.nodeName}}
         - name: RUST_LOG
           value: "probe_agent=info"
+        - name: AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PROBE_AUTH_TOKEN
         - name: PROBE_S3_ACCESS_KEY
           valueFrom:
             secretKeyRef:
-              name: traffic-credentials
-              key: MINIO_ACCESS_KEY
+              name: minio-probe-agent-credentials
+              key: accesskey
         - name: PROBE_S3_SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: traffic-credentials
-              key: MINIO_SECRET_KEY
+              name: minio-probe-agent-credentials
+              key: secretkey
         ports:
         - {containerPort: 9091, name: metrics}
         livenessProbe:

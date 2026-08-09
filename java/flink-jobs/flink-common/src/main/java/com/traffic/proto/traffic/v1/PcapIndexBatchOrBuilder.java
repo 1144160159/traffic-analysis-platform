@@ -11,7 +11,7 @@ public interface PcapIndexBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.PcapIndexMeta indexes = 1 [json_name = "indexes"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.PcapIndexMeta> 
+  java.util.List<com.traffic.proto.traffic.v1.PcapIndexMeta>
       getIndexesList();
   /**
    * <code>repeated .traffic.v1.PcapIndexMeta indexes = 1 [json_name = "indexes"];</code>
@@ -24,7 +24,7 @@ public interface PcapIndexBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.PcapIndexMeta indexes = 1 [json_name = "indexes"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.PcapIndexMetaOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.PcapIndexMetaOrBuilder>
       getIndexesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.PcapIndexMeta indexes = 1 [json_name = "indexes"];</code>

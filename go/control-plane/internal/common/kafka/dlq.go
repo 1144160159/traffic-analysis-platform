@@ -18,6 +18,7 @@ import (
 type DLQConfig struct {
 	Brokers     []string
 	TopicPrefix string
+	TargetTopic string
 	BatchSize   int
 	MaxRetries  int
 	RetryDelay  time.Duration
@@ -165,7 +166,7 @@ func (p *DLQProducer) Send(ctx context.Context, msg *ReceivedMessage, err error)
 		return fmt.Errorf("failed to marshal DLQ message: %w", marshalErr)
 	}
 
-	dlqTopic := p.config.TopicPrefix + msg.Topic
+	dlqTopic := resolveDLQTopic(p.config, msg.Topic)
 
 	kafkaMsg := kafka.Message{
 		Topic: dlqTopic,
@@ -237,6 +238,13 @@ func (p *DLQProducer) Send(ctx context.Context, msg *ReceivedMessage, err error)
 		zap.Int64("original_offset", msg.Offset))
 
 	return fmt.Errorf("failed to send to DLQ after %d retries: %w", p.config.MaxRetries, lastErr)
+}
+
+func resolveDLQTopic(config DLQConfig, originalTopic string) string {
+	if target := strings.TrimSpace(config.TargetTopic); target != "" {
+		return target
+	}
+	return config.TopicPrefix + originalTopic
 }
 
 func (p *DLQProducer) SendBatch(ctx context.Context, messages []struct {

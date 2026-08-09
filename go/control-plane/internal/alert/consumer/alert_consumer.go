@@ -3,10 +3,10 @@ package consumer
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
@@ -39,8 +39,8 @@ type AlertConsumer struct {
 	consumer      *kafka.Consumer
 	repo          *repository.AlertRepository
 	dedup         *dedup.RedisDedup
-	evidenceGen   EvidenceGenerator    // 自动证据生成器
-	tiEnricher    ThreatIntelEnricher  // 威胁情报富化器
+	evidenceGen   EvidenceGenerator   // 自动证据生成器
+	tiEnricher    ThreatIntelEnricher // 威胁情报富化器
 	logger        *zap.Logger
 	topic         string
 	groupID       string
@@ -227,7 +227,7 @@ func (c *AlertConsumer) processMessage(ctx context.Context, msg *kafka.ReceivedM
 	// 构建持久化 Alert
 	alertID := pbAlert.AlertId
 	if alertID == "" {
-		alertID = uuid.New().String()
+		alertID = stableAlertID(tenantID, pbAlert.EventId, fingerprint)
 	}
 
 	firstSeen := time.UnixMilli(pbAlert.FirstSeen)
@@ -288,7 +288,8 @@ func (c *AlertConsumer) processMessage(ctx context.Context, msg *kafka.ReceivedM
 		RuleVersion:  pbAlert.RuleVersion,
 		FeatureSetID: pbAlert.FeatureSetId,
 		EvidenceIDs:  evidenceIDs,
-		EventID:      alertID,
+		EventID:      firstNonEmpty(pbAlert.EventId, alertID),
+		TraceID:      pbAlert.TraceId,
 	}, nil
 }
 
@@ -296,7 +297,7 @@ func (c *AlertConsumer) processMessage(ctx context.Context, msg *kafka.ReceivedM
 func (c *AlertConsumer) unmarshalAlert(data []byte) (*pb.Alert, error) {
 	// 尝试 Alert
 	var alert pb.Alert
-	if err := proto.Unmarshal(data, &alert); err == nil && alert.AlertId != "" {
+	if err := proto.Unmarshal(data, &alert); err == nil && (alert.AlertId != "" || alert.EventId != "") {
 		return &alert, nil
 	}
 
@@ -306,23 +307,41 @@ func (c *AlertConsumer) unmarshalAlert(data []byte) (*pb.Alert, error) {
 		// 从 DetectionBatch 提取告警信息
 		if len(batch.Businesses) > 0 {
 			biz := batch.Businesses[0]
+			eventID := ""
+			if biz.GetHeader() != nil {
+				eventID = biz.GetHeader().GetEventId()
+			}
+			traceID := ""
+			if biz.GetHeader() != nil {
+				traceID = biz.GetHeader().GetTraceId()
+			}
 			return &pb.Alert{
-				TenantId:    batch.TenantId,
-				AlertId:     uuid.New().String(),
-				CommunityId: biz.CommunityId,
-				SessionId:   biz.SessionId,
-				CampaignId:  biz.CampaignId,
-				AlertType:   biz.DetectionType,
-				Labels:      []string{biz.Label},
-				Score:       biz.Score,
-				Severity:    pb.Severity_SEVERITY_MEDIUM,
-				FirstSeen:   biz.Ts,
-				LastSeen:    biz.Ts,
-				RuleVersion: biz.RuleVersion,
+				TenantId:     batch.TenantId,
+				EventId:      eventID,
+				CommunityId:  biz.CommunityId,
+				SessionId:    biz.SessionId,
+				CampaignId:   biz.CampaignId,
+				AlertType:    biz.DetectionType,
+				Labels:       []string{biz.Label},
+				Score:        biz.Score,
+				Severity:     pb.Severity_SEVERITY_MEDIUM,
+				FirstSeen:    biz.Ts,
+				LastSeen:     biz.Ts,
+				RuleVersion:  biz.RuleVersion,
 				ModelVersion: biz.ModelVersion,
+				TraceId:      traceID,
 			}, nil
 		}
 	}
 
 	return nil, fmt.Errorf("unmarshal alert: unknown format")
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
 }

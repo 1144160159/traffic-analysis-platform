@@ -5,11 +5,14 @@ import com.traffic.proto.traffic.v1.FiveTuple;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
 import org.junit.jupiter.api.Test;
+import org.opensearch.action.bulk.BulkItemResponse;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * OpenSearchSinkFunction 单元测试
@@ -93,6 +96,21 @@ class OpenSearchSinkFunctionTest {
         // 验证空字符串被正确处理
         assertEquals("", doc.get("run_id"));
         assertEquals("", doc.get("community_id"));
+    }
+
+    @Test
+    void testBulkPartialFailureIsExplicitAndNamesFailedDocument() {
+        BulkItemResponse succeeded = mock(BulkItemResponse.class);
+        when(succeeded.isFailed()).thenReturn(false);
+        BulkItemResponse failed = mock(BulkItemResponse.class);
+        when(failed.isFailed()).thenReturn(true);
+        when(failed.getId()).thenReturn("evt-failed-1");
+        when(failed.getFailureMessage()).thenReturn("version conflict");
+
+        String summary = OpenSearchSinkFunction.bulkFailureSummary(
+                new BulkItemResponse[]{succeeded, failed});
+
+        assertEquals("evt-failed-1: version conflict", summary);
     }
 
     // ==================== 辅助方法 ====================

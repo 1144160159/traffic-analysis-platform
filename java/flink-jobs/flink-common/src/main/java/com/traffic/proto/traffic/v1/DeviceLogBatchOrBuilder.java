@@ -11,7 +11,7 @@ public interface DeviceLogBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DeviceLog events = 1 [json_name = "events"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.DeviceLog> 
+  java.util.List<com.traffic.proto.traffic.v1.DeviceLog>
       getEventsList();
   /**
    * <code>repeated .traffic.v1.DeviceLog events = 1 [json_name = "events"];</code>
@@ -24,7 +24,7 @@ public interface DeviceLogBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DeviceLog events = 1 [json_name = "events"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.DeviceLogOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.DeviceLogOrBuilder>
       getEventsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.DeviceLog events = 1 [json_name = "events"];</code>

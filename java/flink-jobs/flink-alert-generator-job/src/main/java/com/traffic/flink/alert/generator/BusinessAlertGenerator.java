@@ -2,6 +2,7 @@ package com.traffic.flink.alert.generator;
 
 import com.traffic.flink.alert.dedup.DedupState;
 import com.traffic.flink.alert.evidence.EvidenceBuilder;
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.proto.traffic.v1.*;
 
 import org.apache.flink.api.common.state.StateTtlConfig;
@@ -20,9 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Business Alert 生成器
@@ -158,7 +159,7 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
         }
 
         // 生成新告警
-        String alertId = generateAlertId(tenantId, currentTime);
+        String alertId = generateAlertId(detection, currentTime);
         String evidenceId = generateEvidenceId(alertId);
         String arkimeLink = generateArkimeLink(communityId, currentTime);
 
@@ -213,7 +214,7 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
         try {
             String raw = String.format("%s:%s:%s:%s", tenantId, detectionType, label, communityId);
             MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] hash = md.digest(raw.getBytes());
+            byte[] hash = md.digest(raw.getBytes(StandardCharsets.UTF_8));
 
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) {
@@ -222,18 +223,27 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
             return sb.toString();
         } catch (Exception e) {
             LOG.error("Failed to generate fingerprint", e);
-            return UUID.randomUUID().toString();
+            return DeterministicId.shortId(
+                    "flink-business-alert-fingerprint-fallback/v1", 32,
+                    tenantId, detectionType, label, communityId);
         }
     }
 
     /**
      * 生成 Alert ID
      */
-    private String generateAlertId(String tenantId, long timestamp) {
+    private String generateAlertId(DetectionBusiness detection, long timestamp) {
+        String tenantId = detection.getHeader().getTenantId();
         return String.format("alert-biz-%s-%d-%s",
                 tenantId,
                 timestamp,
-                UUID.randomUUID().toString().substring(0, 8));
+                DeterministicId.shortId(
+                        "flink-business-alert/v1", 8,
+                        tenantId,
+                        detection.getHeader().getEventId(),
+                        detection.getDetectionType(),
+                        detection.getRuleVersion(),
+                        timestamp));
     }
 
     /**
@@ -242,7 +252,8 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
     private String generateEvidenceId(String alertId) {
         return String.format("evidence-%s-%s",
                 alertId.substring(10),
-                UUID.randomUUID().toString().substring(0, 8));
+                DeterministicId.shortId(
+                        "flink-business-evidence/v1", 8, alertId));
     }
 
     /**
@@ -327,7 +338,9 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
                 .addAllEvidenceIds(evidenceIds)
                 .setDedupFingerprint(fingerprint)
                 .setUpdatedTs(currentTime)
-                .setEventId(UUID.randomUUID().toString())
+                .setEventId(DeterministicId.uuid(
+                        "flink-business-alert-event/v1", alertId, fingerprint, currentTime, 1))
+                .setTraceId(header.getTraceId())
                 .setIngestTs(System.currentTimeMillis())
                 .setCount(1)
                 .setArkimeSessionLink(arkimeLink)
@@ -381,7 +394,9 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
                 .setAssignee("")
                 .setDedupFingerprint(fingerprint)
                 .setUpdatedTs(lastSeen)
-                .setEventId(UUID.randomUUID().toString())
+                .setEventId(DeterministicId.uuid(
+                        "flink-business-alert-event/v1", alertId, fingerprint, lastSeen, stateVersion))
+                .setTraceId(header.getTraceId())
                 .setIngestTs(System.currentTimeMillis())
                 .setCount(count)
                 .setArkimeSessionLink(generateArkimeLink(detection.getCommunityId(), lastSeen))

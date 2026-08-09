@@ -311,7 +311,7 @@ curl_status "read-only token cannot upsert threat intel" "POST" "/api/v1/threat-
 
 UPSERT_JSON="$LOG_DIR/api-upsert-entry.json"
 if curl_json "upsert smoke threat intel entry" "POST" "/api/v1/threat-intel/entries" "$UPSERT_JSON" "$ENTRY_BODY"; then
-  assert_json "upsert echoes smoke entry and publishing evidence" "$UPSERT_JSON" --arg value "$SMOKE_VALUE" '.success == true and .data.entry.value == $value and .data.entry.reputation == "malicious" and .data.audit_written == true and .data.kafka_published == true and .data.kafka_topic == "threat.intel.v1" and (.data.event_id | startswith("ti-"))'
+  assert_json "upsert commits business state, audit and queued delivery" "$UPSERT_JSON" --arg value "$SMOKE_VALUE" '.success == true and .data.entry.value == $value and .data.entry.reputation == "malicious" and .data.audit_written == true and .data.kafka_published == false and .data.event_delivery == "queued" and .data.kafka_topic == "threat.intel.v1" and (.data.event_id | startswith("ti-"))'
 fi
 UPSERT_EVENT_ID="$(jq -r '.data.event_id // ""' "$UPSERT_JSON" 2>/dev/null || true)"
 
@@ -333,7 +333,7 @@ jq -nc \
 
 OTHER_UPSERT_JSON="$LOG_DIR/api-upsert-other-tenant.json"
 if curl_status "other tenant can upsert isolated threat intel entry" "POST" "/api/v1/threat-intel/entries" "201" "$OTHER_ADMIN_TOKEN" "$OTHER_UPSERT_JSON" "$OTHER_ENTRY_BODY"; then
-  assert_json "other tenant upsert records tenant id" "$OTHER_UPSERT_JSON" --arg value "$OTHER_VALUE" --arg tenant "$OTHER_TENANT" '.success == true and .data.entry.value == $value and .data.entry.tenant_id == $tenant and .data.audit_written == true and .data.kafka_published == true'
+  assert_json "other tenant upsert records tenant id" "$OTHER_UPSERT_JSON" --arg value "$OTHER_VALUE" --arg tenant "$OTHER_TENANT" '.success == true and .data.entry.value == $value and .data.entry.tenant_id == $tenant and .data.audit_written == true and .data.kafka_published == false and .data.event_delivery == "queued"'
 fi
 
 CROSS_LOOKUP_JSON="$LOG_DIR/api-lookup-cross-tenant-default.json"
@@ -354,7 +354,7 @@ jq -nc \
 
 IMPORT_JSON="$LOG_DIR/api-import.json"
 if curl_json "import threat intel feed entry" "POST" "/api/v1/threat-intel/import" "$IMPORT_JSON" "$IMPORT_BODY"; then
-  assert_json "import reports one entry and publishing evidence" "$IMPORT_JSON" '.success == true and .data.imported == 1 and .data.source == "codex-live-import" and .data.audit_written == true and .data.kafka_published == true and .data.kafka_topic == "threat.intel.v1" and (.data.event_id | startswith("ti-"))'
+  assert_json "import reports one entry and queued delivery" "$IMPORT_JSON" '.success == true and .data.imported == 1 and .data.source == "codex-live-import" and .data.audit_written == true and .data.kafka_published == false and .data.event_delivery == "queued" and .data.kafka_topic == "threat.intel.v1" and (.data.event_id | startswith("ti-"))'
 fi
 IMPORT_EVENT_ID="$(jq -r '.data.event_id // ""' "$IMPORT_JSON" 2>/dev/null || true)"
 

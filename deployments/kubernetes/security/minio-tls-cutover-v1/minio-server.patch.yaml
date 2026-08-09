@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: minio
+  annotations:
+    traffic.platform/minio-tls-cutover: v1
+    traffic.platform/production-applied: "false"
+spec:
+  template:
+    metadata:
+      annotations:
+        traffic.platform/minio-tls-cutover: v1
+    spec:
+      containers:
+      - name: minio
+        args:
+        - server
+        - --certs-dir
+        - /etc/minio/certs
+        - --console-address
+        - :9001
+        - https://minio-{0...3}.minio.minio.svc.cluster.local/data
+        volumeMounts:
+        - name: minio-server-tls
+          mountPath: /etc/minio/certs
+          readOnly: true
+      volumes:
+      - name: minio-server-tls
+        secret:
+          secretName: minio-server-tls
+          optional: false
+          items:
+          - {key: public.crt, path: public.crt}
+          - {key: private.key, path: private.key}
+          - {key: ca.crt, path: CAs/ca.crt}

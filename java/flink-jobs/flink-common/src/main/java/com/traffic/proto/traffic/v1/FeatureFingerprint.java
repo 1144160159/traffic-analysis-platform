@@ -91,7 +91,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       communityId_ = s;
@@ -107,7 +107,7 @@ private static final long serialVersionUID = 0L;
       getCommunityIdBytes() {
     java.lang.Object ref = communityId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       communityId_ = b;
@@ -130,7 +130,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       sessionId_ = s;
@@ -146,7 +146,7 @@ private static final long serialVersionUID = 0L;
       getSessionIdBytes() {
     java.lang.Object ref = sessionId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       sessionId_ = b;
@@ -191,7 +191,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       tlsVersion_ = s;
@@ -207,7 +207,7 @@ private static final long serialVersionUID = 0L;
       getTlsVersionBytes() {
     java.lang.Object ref = tlsVersion_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       tlsVersion_ = b;
@@ -230,7 +230,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       ja3_ = s;
@@ -246,7 +246,7 @@ private static final long serialVersionUID = 0L;
       getJa3Bytes() {
     java.lang.Object ref = ja3_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       ja3_ = b;
@@ -269,7 +269,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       sniHash_ = s;
@@ -285,7 +285,7 @@ private static final long serialVersionUID = 0L;
       getSniHashBytes() {
     java.lang.Object ref = sniHash_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       sniHash_ = b;
@@ -308,7 +308,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       certSha256_ = s;
@@ -324,7 +324,7 @@ private static final long serialVersionUID = 0L;
       getCertSha256Bytes() {
     java.lang.Object ref = certSha256_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       certSha256_ = b;
@@ -1299,7 +1299,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.EventHeader header = 1 [json_name = "header"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder> 
+        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder>
         getHeaderFieldBuilder() {
       if (headerBuilder_ == null) {
         headerBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -1337,7 +1337,7 @@ private static final long serialVersionUID = 0L;
         getCommunityIdBytes() {
       java.lang.Object ref = communityId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         communityId_ = b;
@@ -1409,7 +1409,7 @@ private static final long serialVersionUID = 0L;
         getSessionIdBytes() {
       java.lang.Object ref = sessionId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         sessionId_ = b;
@@ -1545,7 +1545,7 @@ private static final long serialVersionUID = 0L;
         getTlsVersionBytes() {
       java.lang.Object ref = tlsVersion_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         tlsVersion_ = b;
@@ -1617,7 +1617,7 @@ private static final long serialVersionUID = 0L;
         getJa3Bytes() {
       java.lang.Object ref = ja3_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         ja3_ = b;
@@ -1689,7 +1689,7 @@ private static final long serialVersionUID = 0L;
         getSniHashBytes() {
       java.lang.Object ref = sniHash_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         sniHash_ = b;
@@ -1761,7 +1761,7 @@ private static final long serialVersionUID = 0L;
         getCertSha256Bytes() {
       java.lang.Object ref = certSha256_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         certSha256_ = b;

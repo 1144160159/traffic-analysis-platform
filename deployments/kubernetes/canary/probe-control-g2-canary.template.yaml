@@ -1,0 +1,239 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-agent-g2-canary-config
+  namespace: traffic-analysis
+  labels: {alignment.traffic.io/canary: probe-control-g2}
+  annotations: {alignment.traffic.io/source-sha256: "__SOURCE_SHA256__"}
+data:
+  config.yaml: |
+    tenant_id: "default"
+    probe_id: "probe-agent"
+    run_id: "g2-canary"
+    capture:
+      interface: "eth0"
+      mode: "af_packet"
+      queue_id: 0
+      buffer_size: 8388608
+      frame_size: 4096
+      frame_count: 2048
+      bpf_filter: null
+      promiscuous_mode: false
+      cpu_cores: []
+      numa_aware: false
+    aggregator:
+      flow_capacity: 10000
+      idle_timeout_sec: 30
+      active_timeout_sec: 300
+      scan_interval_sec: 1
+      use_generational: false
+    archiver:
+      enabled: false
+    sender:
+      gateway_addr: "https://ingest-gateway-probe-canary.traffic-analysis.svc:50051"
+      batch_size: 10
+      batch_timeout_ms: 250
+      max_retries: 3
+      tls_ca_cert: "/etc/probe-agent/certs/ca-cert.pem"
+      tls_client_cert: "/etc/probe-agent/certs/client-cert.pem"
+      tls_client_key: "/etc/probe-agent/certs/client-key.pem"
+      auth_token: null
+      tenant_id: "default"
+      probe_id: "probe-agent"
+      cache_path: "/var/lib/probe-agent/cache"
+      cache_max_size: 10000
+    metrics:
+      enabled: true
+      listen_addr: "0.0.0.0:9091"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingest-gateway-probe-canary
+  namespace: traffic-analysis
+  labels: {alignment.traffic.io/canary: probe-control-g2}
+spec:
+  selector: {app: ingest-gateway-probe-canary}
+  ports:
+  - {name: grpc, port: 50051, targetPort: 50051}
+  - {name: health, port: 8080, targetPort: 8080}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingest-gateway-probe-canary
+  namespace: traffic-analysis
+  labels: {alignment.traffic.io/canary: probe-control-g2}
+  annotations: {alignment.traffic.io/source-sha256: "__SOURCE_SHA256__"}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: ingest-gateway-probe-canary}}
+  template:
+    metadata:
+      labels:
+        app: ingest-gateway-probe-canary
+        alignment.traffic.io/canary: probe-control-g2
+      annotations: {alignment.traffic.io/source-sha256: "__SOURCE_SHA256__"}
+    spec:
+      nodeSelector: {kubernetes.io/hostname: "__CANARY_NODE__"}
+      tolerations:
+      - {key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule}
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: ingest-gateway
+        image: "__INGEST_IMAGE__"
+        imagePullPolicy: Never
+        ports:
+        - {name: grpc, containerPort: 50051}
+        - {name: health, containerPort: 8080}
+        - {name: metrics, containerPort: 9091}
+        env:
+        - {name: GRPC_ADDR, value: ":50051"}
+        - {name: HEALTH_ADDR, value: ":8080"}
+        - {name: METRICS_ADDR, value: ":9091"}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-ingest-gateway-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-ingest-gateway-credentials, key: password}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: KAFKA_PROBE_CONTROL_TOPIC, value: "probe.control.v2"}
+        - {name: KAFKA_PROBE_ACK_TOPIC, value: "probe.acks.v2"}
+        - {name: KAFKA_PROBE_CONTROL_GROUP, value: "ingest-gateway-probe-control-g2-canary-v2"}
+        - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
+        - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: POSTGRES_PORT, value: "5432"}
+        - {name: POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: POSTGRES_USERNAME, value: "postgres"}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        - {name: REQUIRE_MTLS, value: "true"}
+        - {name: TLS_CA_FILE, value: "/etc/ingest-gateway/certs/ca-cert.pem"}
+        - {name: TLS_CERT_FILE, value: "/etc/ingest-gateway/certs/server-cert.pem"}
+        - {name: TLS_KEY_FILE, value: "/etc/ingest-gateway/certs/server-key.pem"}
+        - {name: LOG_LEVEL, value: "info"}
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: "1", memory: 512Mi}
+        livenessProbe: {httpGet: {path: /health, port: health}, initialDelaySeconds: 10, periodSeconds: 10}
+        readinessProbe: {httpGet: {path: /health, port: health}, initialDelaySeconds: 5, periodSeconds: 5}
+        volumeMounts:
+        - {name: certs, mountPath: /etc/ingest-gateway/certs, readOnly: true}
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: dlq-fallback, mountPath: /var/log/ingest-gateway}
+      volumes:
+      - {name: certs, secret: {secretName: ingest-gateway-certs, optional: false}}
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}
+      - {name: dlq-fallback, emptyDir: {}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: probe-agent-g2-canary
+  namespace: traffic-analysis
+  labels: {alignment.traffic.io/canary: probe-control-g2}
+  annotations: {alignment.traffic.io/source-sha256: "__SOURCE_SHA256__"}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: probe-agent-g2-canary}}
+  template:
+    metadata:
+      labels:
+        app: probe-agent-g2-canary
+        alignment.traffic.io/canary: probe-control-g2
+      annotations: {alignment.traffic.io/source-sha256: "__SOURCE_SHA256__"}
+    spec:
+      nodeSelector: {kubernetes.io/hostname: "__CANARY_NODE__"}
+      tolerations:
+      - {key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule}
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: probe-agent
+        image: "__PROBE_IMAGE__"
+        imagePullPolicy: Never
+        args: ["/etc/probe-agent/config.yaml"]
+        securityContext:
+          privileged: true
+          runAsUser: 0
+          runAsGroup: 0
+          capabilities: {add: ["NET_ADMIN", "NET_RAW"]}
+        env:
+        - {name: RUST_LOG, value: "probe_agent=info"}
+        - name: AUTH_TOKEN
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: PROBE_AUTH_TOKEN}}
+        ports:
+        - {name: metrics, containerPort: 9091}
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: "1", memory: 1Gi}
+        livenessProbe: {httpGet: {path: /metrics, port: metrics}, initialDelaySeconds: 30, periodSeconds: 15}
+        readinessProbe: {httpGet: {path: /metrics, port: metrics}, initialDelaySeconds: 10, periodSeconds: 10}
+        volumeMounts:
+        - {name: config, mountPath: /etc/probe-agent}
+        - {name: cache, mountPath: /var/lib/probe-agent}
+        - {name: certs, mountPath: /etc/probe-agent/certs, readOnly: true}
+      volumes:
+      - {name: config, configMap: {name: probe-agent-g2-canary-config}}
+      - {name: cache, emptyDir: {}}
+      - {name: certs, secret: {secretName: probe-agent-certs, optional: false}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: probe-control-g2-smoke
+  namespace: traffic-analysis
+  labels: {alignment.traffic.io/canary: probe-control-g2}
+  annotations: {alignment.traffic.io/source-sha256: "__SOURCE_SHA256__"}
+spec:
+  suspend: true
+  backoffLimit: 0
+  activeDeadlineSeconds: 360
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: probe-control-g2-smoke
+        alignment.traffic.io/canary: probe-control-g2
+      annotations: {alignment.traffic.io/source-sha256: "__SOURCE_SHA256__"}
+    spec:
+      restartPolicy: Never
+      nodeSelector: {kubernetes.io/hostname: "__CANARY_NODE__"}
+      tolerations:
+      - {key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule}
+      containers:
+      - name: smoke
+        image: "__SMOKE_IMAGE__"
+        imagePullPolicy: Never
+        env:
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-alert-service-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-alert-service-credentials, key: password}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: KAFKA_PROBE_ACK_TOPIC, value: "probe.acks.v2"}
+        - {name: KAFKA_PROBE_ACK_GROUP, value: "probe-control-g2-smoke-acks-v2"}
+        - {name: AUTH_ENABLED, value: "true"}
+        - {name: AUTH_POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: AUTH_POSTGRES_PORT, value: "5432"}
+        - {name: AUTH_POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: AUTH_POSTGRES_USERNAME, value: "postgres"}
+        - {name: AUTH_POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        - {name: PROBE_SMOKE_TENANT_ID, value: "default"}
+        - {name: PROBE_SMOKE_PROBE_ID, value: "probe-agent"}
+        - {name: PROBE_SMOKE_TIMEOUT, value: "4m"}
+        - {name: LOG_LEVEL, value: "info"}
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 500m, memory: 256Mi}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}

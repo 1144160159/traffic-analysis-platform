@@ -1,5 +1,6 @@
 package com.traffic.flink.alert.evidence;
 
+import com.traffic.flink.common.DeterministicId;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -8,11 +9,8 @@ import com.traffic.proto.traffic.v1.Evidence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Evidence 构建器 (修复版)
@@ -243,30 +241,10 @@ public class EvidenceBuilder {
 
     /**
      * 生成确定性 UUID（基于输入参数，确保幂等）
-     * 使用 MD5 哈希生成 UUID v3 风格的确定性 UUID
+     * 使用共享的长度分隔 SHA-256 派生 UUID，避免分量拼接歧义
      */
     private static String generateDeterministicUUID(String... components) {
-        try {
-            String combined = String.join("::", components);
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] hash = md.digest(combined.getBytes(StandardCharsets.UTF_8));
-            // 将 MD5 哈希格式化为 UUID (设置 version 3 variant)
-            long msb = 0;
-            long lsb = 0;
-            for (int i = 0; i < 8; i++) {
-                msb = (msb << 8) | (hash[i] & 0xff);
-            }
-            for (int i = 8; i < 16; i++) {
-                lsb = (lsb << 8) | (hash[i] & 0xff);
-            }
-            // UUID v3: version=3 (0x3000), variant=10 (0x8000)
-            msb = (msb & 0xffffffffffff0fffL) | 0x0000000000003000L;
-            lsb = (lsb & 0x3fffffffffffffffL) | 0x8000000000000000L;
-            return new UUID(msb, lsb).toString();
-        } catch (Exception e) {
-            LOG.error("Failed to generate deterministic UUID: {}", e.getMessage());
-            return UUID.randomUUID().toString();
-        }
+        return DeterministicId.uuid("flink-evidence/v1", (Object[]) components);
     }
 
     /**

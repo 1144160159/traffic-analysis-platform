@@ -227,19 +227,45 @@ func (r *ModelRepository) CreateModelAction(ctx context.Context, job *model.Mode
 
 	result, err := tx.ExecContext(ctx, `
 		INSERT INTO model_action_jobs (
-			job_id, action_id, tenant_id, model_id, version, action, target,
-			payload, status, requested_by, created_at
+			job_id, event_id, action_id, revision, tenant_id, model_id, version,
+			action, target, payload, status, requested_by, trace_id, created_at
 		)
-		SELECT $1, $2, $3, model_id, $5, $6, $7, $8::jsonb, $9, $10, $11
+		SELECT $1, $2::uuid, $3, $4, $5, model_id, $7, $8, $9, $10::jsonb,
+		       $11, $12, $13, $14
 		FROM models
-		WHERE model_id = $4::uuid AND tenant_id = $3
-	`, job.JobID, job.ActionID, job.TenantID, job.ModelID, job.Version, job.Action,
-		job.Target, string(payload), job.Status, job.RequestedBy, job.CreatedAt)
+		WHERE model_id = $6::uuid AND tenant_id = $5
+	`, job.JobID, job.EventID, job.ActionID, job.Revision, job.TenantID,
+		job.ModelID, job.Version, job.Action, job.Target, string(payload),
+		job.Status, job.RequestedBy, job.TraceID, job.CreatedAt)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to create model action job")
 	}
 	if affected, _ := result.RowsAffected(); affected != 1 {
 		return errors.Newf(errors.ErrCodeModelNotFound, "model not found for tenant: %s", job.ModelID)
+	}
+
+	if isAsynchronousModelAction(job.Action) {
+		eventPayload, marshalErr := json.Marshal(map[string]interface{}{
+			"event_id": job.EventID, "event_type": "model.action.requested.v1",
+			"schema_version": 1, "aggregate_version": job.Revision,
+			"job_id": job.JobID, "action_id": job.ActionID,
+			"tenant_id": job.TenantID, "model_id": job.ModelID,
+			"version": job.Version, "action": job.Action, "target": job.Target,
+			"payload": job.Payload, "status": job.Status,
+			"requested_by": job.RequestedBy, "trace_id": job.TraceID,
+			"created_at": job.CreatedAt.Format(time.RFC3339Nano),
+		})
+		if marshalErr != nil {
+			return errors.Wrap(marshalErr, errors.ErrCodeSerializationError, "failed to marshal model action outbox payload")
+		}
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO model_action_outbox (
+				event_id,job_id,tenant_id,model_id,partition_key,event_type,
+				schema_version,aggregate_version,payload
+			) VALUES ($1::uuid,$2,$3,$4::uuid,$4,'model.action.requested.v1',1,$5,$6::jsonb)
+		`, job.EventID, job.JobID, job.TenantID, job.ModelID, job.Revision, string(eventPayload)); err != nil {
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to persist model action outbox")
+		}
 	}
 
 	detail, err := json.Marshal(map[string]interface{}{
@@ -263,6 +289,15 @@ func (r *ModelRepository) CreateModelAction(ctx context.Context, job *model.Mode
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to commit model action transaction")
 	}
 	return nil
+}
+
+func isAsynchronousModelAction(action string) bool {
+	switch action {
+	case "append-feedback-samples", "request-retraining", "request-evaluation":
+		return true
+	default:
+		return false
+	}
 }
 
 func (r *ModelRepository) ListModelWorkbenchItems(ctx context.Context, tenantID, modelID string) ([]*model.ModelWorkbenchItem, error) {
@@ -295,8 +330,9 @@ func (r *ModelRepository) ListModelActions(ctx context.Context, tenantID, modelI
 		limit = 20
 	}
 	rows, err := r.db.QueryContext(ctx, `
-		SELECT job_id, action_id, tenant_id, model_id::text, version, action, target,
-		       payload, status, requested_by, created_at
+		SELECT job_id, event_id::text, action_id, revision, tenant_id, model_id::text,
+		       version, action, target, payload, status, result, error, trace_id,
+		       requested_by, created_at
 		FROM model_action_jobs
 		WHERE tenant_id = $1 AND model_id = $2::uuid
 		ORDER BY created_at DESC
@@ -309,14 +345,21 @@ func (r *ModelRepository) ListModelActions(ctx context.Context, tenantID, modelI
 	actions := make([]*model.ModelActionJob, 0)
 	for rows.Next() {
 		job := &model.ModelActionJob{}
-		var payload []byte
-		if err := rows.Scan(&job.JobID, &job.ActionID, &job.TenantID, &job.ModelID, &job.Version, &job.Action,
-			&job.Target, &payload, &job.Status, &job.RequestedBy, &job.CreatedAt); err != nil {
+		var payload, result []byte
+		if err := rows.Scan(&job.JobID, &job.EventID, &job.ActionID, &job.Revision,
+			&job.TenantID, &job.ModelID, &job.Version, &job.Action,
+			&job.Target, &payload, &job.Status, &result, &job.Error,
+			&job.TraceID, &job.RequestedBy, &job.CreatedAt); err != nil {
 			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan model action")
 		}
 		if len(payload) > 0 {
 			if err := json.Unmarshal(payload, &job.Payload); err != nil {
 				return nil, errors.Wrap(err, errors.ErrCodeSerializationError, "failed to decode model action payload")
+			}
+		}
+		if len(result) > 0 {
+			if err := json.Unmarshal(result, &job.Result); err != nil {
+				return nil, errors.Wrap(err, errors.ErrCodeSerializationError, "failed to decode model action result")
 			}
 		}
 		actions = append(actions, job)
@@ -337,6 +380,7 @@ func (r *ModelRepository) ClaimNextModelAction(ctx context.Context) (*model.Mode
 			SELECT job_id
 			FROM model_action_jobs
 			WHERE status = 'queued'
+			  AND action IN ('inspect-context','rollback-version')
 			ORDER BY created_at
 			FOR UPDATE SKIP LOCKED
 			LIMIT 1
@@ -345,11 +389,13 @@ func (r *ModelRepository) ClaimNextModelAction(ctx context.Context) (*model.Mode
 		SET status = 'running', updated_at = now()
 		FROM next_job
 		WHERE jobs.job_id = next_job.job_id
-		RETURNING jobs.job_id, jobs.action_id, jobs.tenant_id, jobs.model_id::text,
-		          jobs.version, jobs.action, jobs.target, jobs.payload, jobs.status,
+		RETURNING jobs.job_id, jobs.event_id::text, jobs.action_id, jobs.revision,
+		          jobs.tenant_id, jobs.model_id::text, jobs.version, jobs.action,
+		          jobs.target, jobs.payload, jobs.status, jobs.trace_id,
 		          jobs.requested_by, jobs.created_at
-	`).Scan(&job.JobID, &job.ActionID, &job.TenantID, &job.ModelID, &job.Version,
-		&job.Action, &job.Target, &payload, &job.Status, &job.RequestedBy, &job.CreatedAt)
+	`).Scan(&job.JobID, &job.EventID, &job.ActionID, &job.Revision,
+		&job.TenantID, &job.ModelID, &job.Version, &job.Action, &job.Target,
+		&payload, &job.Status, &job.TraceID, &job.RequestedBy, &job.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -384,9 +430,9 @@ func (r *ModelRepository) RecoverStaleModelActions(ctx context.Context, age time
 	return nil
 }
 
-// FinishModelAction persists the terminal job state and matching audit row in
-// one transaction. For asynchronous MLOps actions, completed means the durable
-// Kafka dispatch was acknowledged, not that training itself finished.
+// FinishModelAction persists a local-action terminal state and matching audit
+// row in one transaction. Asynchronous MLOps dispatch is non-terminal and is
+// handled by the model action outbox.
 func (r *ModelRepository) FinishModelAction(ctx context.Context, job *model.ModelActionJob, status, auditAction, failure string) error {
 	if status != "completed" && status != "failed" {
 		return errors.New(errors.ErrCodeInvalidParameter, "invalid model action terminal status")

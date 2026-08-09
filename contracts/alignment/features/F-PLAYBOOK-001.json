@@ -1,0 +1,248 @@
+{
+  "feature_id": "F-PLAYBOOK-001",
+  "contract_version": 2,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": [
+      "/playbooks"
+    ],
+    "preserved_actions": [
+      "playbook-execute",
+      "playbook-state-update"
+    ],
+    "preserved_api_operations": [
+      "GET /v1/playbooks/catalog",
+      "GET /v1/playbooks/executions",
+      "POST /v1/playbooks/{name}/execute",
+      "PATCH /v1/playbooks/{name}",
+      "GET /v1/playbooks/executions/{execution_id}",
+      "POST /v1/playbooks/executions/{execution_id}/approval",
+      "POST /v1/playbooks/executions/{execution_id}/cancel",
+      "POST /v1/playbooks/executions/{execution_id}/compensate"
+    ],
+    "preserved_response_fields": [
+      "playbook",
+      "playbook_name",
+      "mode",
+      "status",
+      "result",
+      "effect"
+    ],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "playbook.execution.job",
+    "controls": [
+      {
+        "control_id": "playbook-execute",
+        "action_id": "playbook-execute"
+      },
+      {
+        "control_id": "playbook-execution-refresh",
+        "action_id": "playbook-execution-status"
+      },
+      {
+        "control_id": "playbook-execution-approval",
+        "action_id": "playbook-execution-approval"
+      },
+      {
+        "control_id": "playbook-execution-cancel",
+        "action_id": "playbook-execution-cancel"
+      },
+      {
+        "control_id": "playbook-execution-compensate",
+        "action_id": "playbook-execution-compensate"
+      }
+    ],
+    "states": [
+      "loading",
+      "accepted",
+      "pending_approval",
+      "approved_awaiting_executor",
+      "running",
+      "completed",
+      "partial",
+      "failed",
+      "cancelled",
+      "compensation_queued",
+      "compensating",
+      "compensated",
+      "compensation_failed"
+    ]
+  },
+  "api": {
+    "operation_id": "requestPlaybookExecution",
+    "method": "POST",
+    "path": "/v1/playbooks/{name}/execute",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "accepted_status": 202,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_version",
+    "workflow_revision_field": "expected_revision",
+    "reason_required": true,
+    "operations": [
+      "requestPlaybookExecution",
+      "getPlaybookExecution",
+      "decidePlaybookExecution",
+      "cancelPlaybookExecution",
+      "compensatePlaybookExecution"
+    ]
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "only the current approved and enabled definition revision may be accepted or leased",
+      "live execution requires a stable Idempotency-Key, the current definition version, an explicit reason and a real alert identity",
+      "one tenant/playbook definition row serializes run-budget and cooldown admission so concurrent requests cannot overrun the approved policy",
+      "acceptance, independent approval, provider execution, cancellation and independent compensation are separate states",
+      "the original requester cannot approve or reject its execution and cannot approve compensation",
+      "provider calls execute outside the PostgreSQL transaction under a recoverable lease and use execution_id plus phase as the stable idempotency identity",
+      "HTTP success without exactly one durable provider receipt for every approved step never proves an external effect",
+      "a failed provider result that reports an external effect is classified partial instead of failed",
+      "compensation is available only for a completed or partial execution whose immutable receipt proves an external effect",
+      "request, approval and control transitions atomically commit workflow state, minimum audit and outbox",
+      "terminal step receipts, aggregate receipt, execution state, audit and outbox commit in one serializable PostgreSQL transaction",
+      "missing provider configuration remains approved_awaiting_executor with executor_status not_configured and is never displayed as success",
+      "legacy drill rows and response fields remain readable and never acquire a live external-effect identity"
+    ],
+    "states": [
+      "pending_approval",
+      "approved_awaiting_executor",
+      "running",
+      "completed",
+      "partial",
+      "failed",
+      "cancelled",
+      "compensation_queued",
+      "compensating",
+      "compensated",
+      "compensation_failed"
+    ],
+    "compensation": "execute only the reverse steps corresponding to immutable execution receipts with external_effect=true and retain both receipt chains"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": [
+      "postgresql"
+    ],
+    "migration": "deployments/postgres/migrations/202608021000_playbook_execution_v2.sql",
+    "projection_migration": "deployments/postgres/migrations/202608021030_playbook_event_pipeline_v2.sql",
+    "tables": [
+      "alert_playbook_definitions",
+      "alert_playbook_executions",
+      "alert_playbook_execution_approvals",
+      "alert_playbook_execution_controls",
+      "alert_playbook_step_receipts",
+      "alert_playbook_execution_outbox",
+      "alert_playbook_execution_event_projection",
+      "alert_playbook_execution_state_projection",
+      "audit_logs"
+    ],
+    "event_types": [
+      "traffic.playbook.v2.ExecutionRequested",
+      "traffic.playbook.v2.ExecutionApproved",
+      "traffic.playbook.v2.ExecutionRejected",
+      "traffic.playbook.v2.ExecutionCancelled",
+      "traffic.playbook.v2.ExecutionCompleted",
+      "traffic.playbook.v2.ExecutionPartial",
+      "traffic.playbook.v2.ExecutionFailed",
+      "traffic.playbook.v2.CompensationRequested",
+      "traffic.playbook.v2.Compensated",
+      "traffic.playbook.v2.CompensationFailed"
+    ],
+    "projection_identity": "event_id is the immutable inbox identity; tenant_id + execution_id + aggregate_version is the aggregate ordering identity; provider receipts are tenant_id + provider + provider_receipt_id + phase",
+    "source_watermarks": [
+      "postgresql.alert_playbook_definitions.version",
+      "postgresql.alert_playbook_executions.workflow_revision+approval_status+executor_status",
+      "postgresql.alert_playbook_step_receipts.phase+attempt+step_index+payload_sha256",
+      "postgresql.alert_playbook_execution_outbox.aggregate_version",
+      "postgresql.alert_playbook_execution_event_projection.event_id+kafka_topic+kafka_partition+kafka_offset+payload_sha256",
+      "postgresql.alert_playbook_execution_state_projection.aggregate_version+last_event_id",
+      "provider.provider_receipt_id"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": [
+      "playbook:execute"
+    ],
+    "compatibility_scopes": [
+      "playbook:write",
+      "alert:write"
+    ],
+    "action_overrides": {
+      "playbook-execution-status": [
+        "playbook:read"
+      ],
+      "playbook-execution-approval": [
+        "playbook:approve"
+      ],
+      "playbook-execution-cancel": [
+        "playbook:execute",
+        "playbook:write",
+        "alert:write"
+      ],
+      "playbook-execution-compensate": [
+        "playbook:approve"
+      ]
+    },
+    "negative_tests": [
+      "cross-tenant execution reads return not found",
+      "unapproved, disabled or stale definition revision cannot execute",
+      "missing alert identity or unstable idempotency is rejected",
+      "requester self-approval and self-compensation are rejected",
+      "stale workflow revision and changed idempotency payload are rejected",
+      "run-budget and cooldown conflicts create no execution side effect",
+      "provider success without durable step identities is rejected",
+      "compensation without a proven external effect is rejected"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": [
+      "versioned request and independent approval",
+      "provider execution and immutable step receipts",
+      "provider timeout, lease recovery and retry exhaustion",
+      "partial external effect and independent compensation",
+      "concurrent run-budget and cooldown admission"
+    ],
+    "stop_conditions": [
+      "untracked or ambiguous external effect",
+      "execution lease heartbeat or queue age budget breach",
+      "provider receipt identity collision",
+      "audit, outbox or workflow revision divergence"
+    ]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 route, OpenAPI, generated client and action catalog",
+      "G1 lifecycle, tenant, approval, run-budget, receipt and compensation component tests",
+      "G2 sentinel PostgreSQL plus an approved real provider sandbox",
+      "G3 execution event, audit, provider and Kafka projection reconciliation",
+      "G4 execution concurrency, timeout and retry profile",
+      "G5 Windows Chrome request, approve, refresh, terminal receipt and compensate journey",
+      "G6 canary, in-flight rollback and observation"
+    ],
+    "evidence": [
+      "one trace binds definition version, request, approval, execution, every provider step receipt, compensation, audit and outbox",
+      "browser accepted/running/partial/failed/compensated states match the authoritative PostgreSQL workflow revision",
+      "Kafka acknowledgement occurs before the outbox row is marked published and terminal consumers reconcile by event_id and aggregate_version"
+    ]
+  },
+  "rollout": {
+    "feature_flag": "PLAYBOOK_EXECUTION_V2_ENABLED",
+    "provider_url": "PLAYBOOK_EXECUTION_PROVIDER_URL",
+    "provider_token_secret": "PLAYBOOK_EXECUTION_PROVIDER_TOKEN",
+    "default": false,
+    "strategy": "canary",
+    "prerequisites": [
+      "versioned migration applied and replayed",
+      "provider endpoint, token and per-step durable receipt contract approved",
+      "playbook execution event topic and ACL exist",
+      "outbox publisher and downstream idempotent consumer are ready",
+      "current alert-service and Web UI images are bound to one immutable candidate manifest"
+    ],
+    "rollback_runbook": "doc/07_alignment/runbooks/F-PLAYBOOK-001-rollback.md"
+  }
+}

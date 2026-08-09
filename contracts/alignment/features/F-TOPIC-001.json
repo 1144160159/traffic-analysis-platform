@@ -1,0 +1,59 @@
+{
+  "feature_id": "F-TOPIC-001",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/topics", "/topics/tunnel", "/topics/exfil", "/topics/apt"],
+    "preserved_actions": ["topic-view-save", "topic-scope-update"],
+    "preserved_api_operations": ["POST /v1/topics/views", "PUT /v1/topics/scopes/{topic}"],
+    "strategy": "compatibility-adapter"
+  },
+  "ui": {
+    "query_id": "topic.workbench.snapshot",
+    "controls": [
+      {"control_id": "topic-view-save", "action_id": "topic-view-save"},
+      {"control_id": "topic-scope-update", "action_id": "topic-scope-update"}
+    ],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "getTopicSnapshot",
+    "method": "GET",
+    "path": "/v1/topics/{topic}/snapshot",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "three tabs and right summary consume one snapshot_id and as_of",
+      "mock-disabled production responses never synthesize richer fixture-only fields",
+      "partial sections list source and missing reason"
+    ]
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "nebulagraph", "minio"],
+    "migration": "deployments/postgres/migrations/202607302000_topic_alignment.sql",
+    "source_watermarks": ["postgresql.topic_scope.revision", "clickhouse.topic_fact.watermark", "opensearch.topic_evidence.projection_version", "nebulagraph.topic_projection.version"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["topic:read"],
+    "negative_tests": ["cross-tenant scope is rejected", "snapshot omits fields not allowed by evidence permission"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["tunnel snapshot", "exfiltration snapshot", "APT snapshot", "partial source timeout"],
+    "stop_conditions": ["snapshot time skew, P99 or source resource budget exceeds approved limit"]
+  },
+  "acceptance": {
+    "tests": ["G0 snapshot schema and generated client", "G1 aggregation and partial semantics", "G2 real multi-store services", "G3 source-watermark reconcile", "G4 three-tab profile", "G5 Windows Chrome mock-off tabs"],
+    "evidence": ["same snapshot_id in three tab payloads, summary, trace and sampled source facts"]
+  },
+  "rollout": {
+    "feature_flag": "topic_snapshot_v1",
+    "strategy": "shadow-read",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-TOPIC-001-rollback.md"
+  }
+}

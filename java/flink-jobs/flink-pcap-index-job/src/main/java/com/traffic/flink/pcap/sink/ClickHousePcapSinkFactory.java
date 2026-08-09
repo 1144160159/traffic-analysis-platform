@@ -15,19 +15,17 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * ClickHouse PCAP 索引 Sink 工厂（修复版 v3）
+ * ClickHouse PCAP 索引 Sink 工厂（修复版 v4）
  * 
  * 修复内容：
  * 1. ✅ Community IDs 截断逻辑（超过 1000 个时自动截断并告警）
  * 2. ✅ 时区处理优化（使用 Instant 替代 Calendar，线程安全）
- * 3. ✅ 失败回调增强（记录更多上下文信息）
- * 4. ✅ 插入成功计数（用于 Metrics 统计）
- * 5. ✅ Nullable 字段处理优化（统一使用 setNull）
- * 6. ✅ 增加详细注释与日志
+ * 3. ✅ 参数绑定不再伪装为外部批次 ACK
+ * 4. ✅ Nullable 字段处理优化（统一使用 setNull）
+ * 5. ✅ 增加详细注释与日志
  * 
  * 对应 DDL：
  * - Table: pcap_index_local
@@ -42,12 +40,6 @@ public class ClickHousePcapSinkFactory {
     // ==================== 业务常量 ====================
     private static final int MAX_COMMUNITY_IDS = 1000; // DDL 注释建议值
 
-    // ==================== 失败计数器 ====================
-    private static final AtomicInteger consecutiveFailures = new AtomicInteger(0);
-    private static final int CONSECUTIVE_FAILURE_THRESHOLD = 5;
-
-    // ==================== 成功计数器（用于 Metrics）====================
-    private static final AtomicLong successCount = new AtomicLong(0);
     private static final AtomicLong truncatedCommunityIdsCount = new AtomicLong(0);
 
     /**
@@ -91,58 +83,6 @@ public class ClickHousePcapSinkFactory {
     }
 
     /**
-     * 处理插入失败（增强版）
-     */
-    private static void handleInsertFailure(String sql, Object[] params, Throwable exception) {
-        int failureCount = consecutiveFailures.incrementAndGet();
-        
-        // 提取关键参数信息（避免 NPE）
-        String tenantId = "UNKNOWN";
-        String probeId = "UNKNOWN";
-        String fileKey = "UNKNOWN";
-        
-        if (params != null && params.length >= 3) {
-            tenantId = params[0] != null ? params[0].toString() : "NULL";
-            probeId = params[1] != null ? params[1].toString() : "NULL";
-            fileKey = params[2] != null ? params[2].toString() : "NULL";
-        }
-
-        LOG.error("ClickHouse PCAP index insert failed (consecutive: {}): " +
-                        "tenant={}, probe={}, file={}, SQL={}, Error={}",
-                failureCount, tenantId, probeId, fileKey, sql, exception.getMessage(), exception);
-
-        // 连续失败超过阈值，触发告警
-        if (failureCount >= CONSECUTIVE_FAILURE_THRESHOLD) {
-            LOG.error("CRITICAL: ClickHouse PCAP index consecutive failures exceeded threshold ({}). " +
-                            "Check database connectivity, schema compatibility, and network stability. " +
-                            "Last failed record: tenant={}, probe={}, file={}",
-                    CONSECUTIVE_FAILURE_THRESHOLD, tenantId, probeId, fileKey);
-        }
-    }
-
-    /**
-     * 插入成功回调（用于重置失败计数）
-     */
-    public static void recordInsertSuccess() {
-        consecutiveFailures.set(0);
-        long count = successCount.incrementAndGet();
-        
-        // 每 10000 条记录一次日志
-        if (count % 10000 == 0) {
-            LOG.info("ClickHouse PCAP index insert progress: {} records inserted, " +
-                            "{} records had community_ids truncated",
-                    count, truncatedCommunityIdsCount.get());
-        }
-    }
-
-    /**
-     * 获取插入成功计数（用于外部 Metrics）
-     */
-    public static long getSuccessCount() {
-        return successCount.get();
-    }
-
-    /**
      * 获取截断计数（用于外部 Metrics）
      */
     public static long getTruncatedCommunityIdsCount() {
@@ -174,9 +114,10 @@ public class ClickHousePcapSinkFactory {
     }
 
     /**
-     * JDBC Statement Builder（内部类，修复版 v3）
+     * JDBC Statement Builder（内部类，修复版 v4）。这里只绑定参数；
+     * JdbcSink 在 executeBatch 返回前不得发布 sink success。
      */
-    private static class PcapIndexStatementBuilder implements JdbcStatementBuilder<PcapIndexMeta> {
+    static final class PcapIndexStatementBuilder implements JdbcStatementBuilder<PcapIndexMeta> {
 
         private static final long serialVersionUID = 1L;
 
@@ -226,9 +167,6 @@ public class ClickHousePcapSinkFactory {
                 // ==================== 6. 创建时间（毫秒时间戳）====================
                 long createdTs = meta.getCreatedTs() > 0 ? meta.getCreatedTs() : System.currentTimeMillis();
                 ps.setLong(idx++, createdTs);
-
-                // ✅ 插入成功，重置失败计数
-                recordInsertSuccess();
 
             } catch (Exception e) {
                 LOG.error("Failed to bind parameters for PCAP index: tenant={}, probe={}, file={}, error={}",

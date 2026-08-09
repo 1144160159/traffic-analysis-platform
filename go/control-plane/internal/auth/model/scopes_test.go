@@ -32,15 +32,17 @@ func TestDefaultViewerRoleIncludesScreenView(t *testing.T) {
 }
 
 func TestAssetDiscoveryScopeIsValidAndRoleBounded(t *testing.T) {
-	valid, invalid := ValidateScopes([]string{ScopeAssetRead, ScopeAssetDiscover})
+	valid, invalid := ValidateScopes([]string{ScopeAssetRead, ScopeAssetDiscover, ScopeAssetExport, ScopeAssetGovern})
 	if len(invalid) != 0 {
 		t.Fatalf("invalid asset scopes = %v, want none", invalid)
 	}
-	if len(valid) != 2 {
-		t.Fatalf("valid asset scopes = %v, want two scopes", valid)
+	if len(valid) != 4 {
+		t.Fatalf("valid asset scopes = %v, want four scopes", valid)
 	}
 
 	foundDiscover := false
+	foundExport := false
+	foundGovern := false
 	for _, info := range GetAllScopeInfos() {
 		if info.Name == ScopeAssetDiscover {
 			foundDiscover = true
@@ -48,19 +50,49 @@ func TestAssetDiscoveryScopeIsValidAndRoleBounded(t *testing.T) {
 				t.Fatalf("asset discovery scope category = %q, want asset", info.Category)
 			}
 		}
+		if info.Name == ScopeAssetExport {
+			foundExport = true
+			if info.Category != "asset" {
+				t.Fatalf("asset export scope category = %q, want asset", info.Category)
+			}
+		}
+		if info.Name == ScopeAssetGovern {
+			foundGovern = true
+			if info.Category != "asset" {
+				t.Fatalf("asset governance scope category = %q, want asset", info.Category)
+			}
+		}
 	}
 	if !foundDiscover {
 		t.Fatalf("%s missing from scope infos", ScopeAssetDiscover)
 	}
+	if !foundExport {
+		t.Fatalf("%s missing from scope infos", ScopeAssetExport)
+	}
+	if !foundGovern {
+		t.Fatalf("%s missing from scope infos", ScopeAssetGovern)
+	}
 
 	if !HasScope(GetScopesForRoles([]string{"operator"}), ScopeAssetDiscover) {
 		t.Fatalf("operator role should include %s", ScopeAssetDiscover)
+	}
+	if !HasScope(GetScopesForRoles([]string{"operator"}), ScopeAssetGovern) {
+		t.Fatalf("operator role should include %s", ScopeAssetGovern)
+	}
+	if HasScope(GetScopesForRoles([]string{"viewer"}), ScopeAssetGovern) {
+		t.Fatalf("viewer role should not include %s", ScopeAssetGovern)
 	}
 	if HasScope(GetScopesForRoles([]string{"viewer"}), ScopeAssetDiscover) {
 		t.Fatalf("viewer role should not include %s", ScopeAssetDiscover)
 	}
 	if !HasScope(GetScopesForRoles([]string{"viewer"}), ScopeAssetRead) {
 		t.Fatalf("viewer role should include %s", ScopeAssetRead)
+	}
+	if HasScope(GetScopesForRoles([]string{"viewer"}), ScopeAssetExport) {
+		t.Fatalf("viewer role should not include %s", ScopeAssetExport)
+	}
+	if !HasScope(GetScopesForRoles([]string{"analyst"}), ScopeAssetExport) {
+		t.Fatalf("analyst role should include %s", ScopeAssetExport)
 	}
 }
 
@@ -79,6 +111,36 @@ func TestDeploymentWorkflowScopesAreValidAndDocumented(t *testing.T) {
 	for _, scope := range want {
 		if !documented[scope] {
 			t.Fatalf("%s missing from deployment scope infos", scope)
+		}
+	}
+}
+
+func TestFrontendRequiredScopesAreValidAndDocumented(t *testing.T) {
+	want := []string{
+		ScopeDashboardWrite,
+		ScopeTopicRead,
+		ScopeTopicWrite,
+		ScopeTopicExport,
+		ScopeCampaignWrite,
+		ScopePlaybookExecute,
+		ScopeRuleEnable,
+		ScopeModelRead,
+		ScopeModelCreate,
+		ScopeModelWrite,
+		ScopeModelActivate,
+		ScopePcapWrite,
+	}
+	valid, invalid := ValidateScopes(want)
+	if len(invalid) != 0 || len(valid) != len(want) {
+		t.Fatalf("frontend contract scopes valid=%v invalid=%v, want all valid", valid, invalid)
+	}
+	documented := map[string]bool{}
+	for _, info := range GetAllScopeInfos() {
+		documented[info.Name] = true
+	}
+	for _, scope := range want {
+		if !documented[scope] {
+			t.Fatalf("%s missing from scope infos", scope)
 		}
 	}
 }

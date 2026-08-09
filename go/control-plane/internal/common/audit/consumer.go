@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
@@ -49,6 +51,20 @@ type Consumer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
+	ready  atomic.Bool
+}
+
+type auditEntry struct {
+	eventID    string
+	tenantID   string
+	userID     string
+	action     string
+	objectType string
+	objectID   string
+	detail     string
+	ipAddr     string
+	userAgent  string
+	createdAt  int64
 }
 
 // NewConsumer 创建审计日志消费者
@@ -69,15 +85,62 @@ func NewConsumer(kc *kafka.Consumer, db *sql.DB, logger *zap.Logger, topic, grou
 
 // Start 启动消费循环（阻塞）
 func (c *Consumer) Start(ctx context.Context) error {
+	runCtx, runCancel := context.WithCancel(ctx)
+	defer runCancel()
+	if c.ctx != nil {
+		go func() {
+			select {
+			case <-c.ctx.Done():
+				runCancel()
+			case <-runCtx.Done():
+			}
+		}()
+	}
 	c.logger.Info("Audit log consumer starting",
 		zap.String("topic", c.topic),
 		zap.String("group_id", c.groupID))
 
-	if err := c.initSchema(ctx); err != nil {
-		return fmt.Errorf("init audit schema: %w", err)
+	if err := c.verifySchema(runCtx); err != nil {
+		return fmt.Errorf("verify audit schema: %w", err)
 	}
+	c.ready.Store(true)
+	defer c.ready.Store(false)
 
-	return c.kafkaConsumer.BatchConsume(ctx, c.batchSize, c.flushInterval, c.handleBatch)
+	return c.kafkaConsumer.Consume(runCtx, c.handleMessageWithReadiness)
+}
+
+// Ready reports whether the versioned PostgreSQL schema has been verified and
+// the consumer loop is active. It deliberately becomes false again when the
+// loop exits so Kubernetes readiness cannot hide a stopped materializer.
+func (c *Consumer) Ready() bool {
+	return c.ready.Load()
+}
+
+func (c *Consumer) handleBatchWithReadiness(ctx context.Context, messages []*kafka.ReceivedMessage) error {
+	err := c.handleBatch(ctx, messages)
+	c.ready.Store(err == nil || kafka.IsPermanent(err))
+	return err
+}
+
+func (c *Consumer) handleMessageWithReadiness(ctx context.Context, message *kafka.ReceivedMessage) error {
+	err := c.handleMessage(ctx, message)
+	// A permanent payload error is handled by the shared consumer's durable DLQ
+	// barrier. Retryable PG failures withdraw readiness until a later success.
+	c.ready.Store(err == nil || kafka.IsPermanent(err))
+	return err
+}
+
+func (c *Consumer) handleMessage(ctx context.Context, message *kafka.ReceivedMessage) error {
+	entries, err := c.parseMessages(message)
+	if err != nil {
+		return kafka.Permanent(fmt.Errorf(
+			"parse audit message partition=%d offset=%d: %w",
+			message.Partition,
+			message.Offset,
+			err,
+		))
+	}
+	return c.persistEntries(ctx, entries)
 }
 
 // StartAsync 异步启动
@@ -99,28 +162,84 @@ func (c *Consumer) Stop() {
 	c.logger.Info("Audit log consumer stopped")
 }
 
-// initSchema 初始化审计日志表
-func (c *Consumer) initSchema(ctx context.Context) error {
-	ddl := `
-	CREATE TABLE IF NOT EXISTS audit_logs (
-		id          BIGSERIAL PRIMARY KEY,
-		event_id    TEXT NOT NULL UNIQUE,
-		tenant_id   TEXT NOT NULL,
-		user_id     TEXT,
-		action      TEXT NOT NULL,
-		object_type TEXT,
-		object_id   TEXT,
-		detail      JSONB,
-		ip_addr     TEXT,
-		user_agent  TEXT,
-		created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-	);
-	CREATE INDEX IF NOT EXISTS idx_audit_tenant ON audit_logs(tenant_id);
-	CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(tenant_id, user_id);
-	CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
-	`
-	_, err := c.db.ExecContext(ctx, ddl)
-	return err
+type auditSchemaColumn struct {
+	dataType string
+	nullable bool
+}
+
+var requiredAuditSchema = map[string]auditSchemaColumn{
+	"event_id":    {dataType: "text", nullable: false},
+	"tenant_id":   {dataType: "text", nullable: false},
+	"user_id":     {dataType: "text", nullable: true},
+	"action":      {dataType: "text", nullable: false},
+	"object_type": {dataType: "text", nullable: false},
+	"object_id":   {dataType: "text", nullable: true},
+	"detail":      {dataType: "jsonb", nullable: false},
+	"ip_addr":     {dataType: "text", nullable: true},
+	"user_agent":  {dataType: "text", nullable: true},
+	"created_at":  {dataType: "timestamp with time zone", nullable: false},
+}
+
+// verifySchema treats versioned migrations as the only schema authority.
+// Startup may prove required capabilities, but must never create or alter a
+// production table as a side effect of starting a consumer.
+func (c *Consumer) verifySchema(ctx context.Context) error {
+	rows, err := c.db.QueryContext(ctx, `
+		SELECT column_name, data_type, is_nullable
+		  FROM information_schema.columns
+		 WHERE table_schema = current_schema()
+		   AND table_name = 'audit_logs'`)
+	if err != nil {
+		return fmt.Errorf("read audit_logs columns: %w", err)
+	}
+	defer rows.Close()
+
+	observed := make(map[string]auditSchemaColumn)
+	for rows.Next() {
+		var name, dataType, nullable string
+		if err := rows.Scan(&name, &dataType, &nullable); err != nil {
+			return fmt.Errorf("scan audit_logs column: %w", err)
+		}
+		observed[name] = auditSchemaColumn{
+			dataType: dataType,
+			nullable: strings.EqualFold(nullable, "YES"),
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate audit_logs columns: %w", err)
+	}
+
+	for name, expected := range requiredAuditSchema {
+		actual, ok := observed[name]
+		if !ok {
+			return fmt.Errorf("audit_logs schema is below the required migration: missing column %s", name)
+		}
+		if actual != expected {
+			return fmt.Errorf(
+				"audit_logs column %s mismatch: type=%s nullable=%t, require type=%s nullable=%t",
+				name, actual.dataType, actual.nullable, expected.dataType, expected.nullable,
+			)
+		}
+	}
+
+	var eventIDUnique bool
+	if err := c.db.QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			  FROM pg_index i
+			  JOIN pg_class t ON t.oid = i.indrelid
+			  JOIN pg_namespace n ON n.oid = t.relnamespace
+			 WHERE n.nspname = current_schema()
+			   AND t.relname = 'audit_logs'
+			   AND i.indisunique
+			   AND pg_get_indexdef(i.indexrelid) ~* '\(event_id\)'
+		)`).Scan(&eventIDUnique); err != nil {
+		return fmt.Errorf("verify audit_logs event_id uniqueness: %w", err)
+	}
+	if !eventIDUnique {
+		return fmt.Errorf("audit_logs schema is below the required migration: event_id unique index missing")
+	}
+	return nil
 }
 
 // handleBatch 批量处理审计日志消息
@@ -129,34 +248,18 @@ func (c *Consumer) handleBatch(ctx context.Context, messages []*kafka.ReceivedMe
 		return nil
 	}
 
-	// 按租户分组，批量 INSERT
-	type auditEntry struct {
-		eventID    string
-		tenantID   string
-		userID     string
-		action     string
-		objectType string
-		objectID   string
-		detail     string
-		ipAddr     string
-		userAgent  string
-		createdAt  int64
-	}
-
 	entries := make([]auditEntry, 0, len(messages))
 	for _, msg := range messages {
-		entry, err := c.parseMessage(msg)
+		parsed, err := c.parseMessages(msg)
 		if err != nil {
-			c.logger.Warn("Failed to parse audit message, skipping",
-				zap.Int64("offset", msg.Offset),
-				zap.Error(err))
-			continue
+			return kafka.Permanent(fmt.Errorf("parse audit message partition=%d offset=%d: %w", msg.Partition, msg.Offset, err))
 		}
-		if entry != nil {
-			entries = append(entries, *entry)
-		}
+		entries = append(entries, parsed...)
 	}
+	return c.persistEntries(ctx, entries)
+}
 
+func (c *Consumer) persistEntries(ctx context.Context, entries []auditEntry) error {
 	if len(entries) == 0 {
 		return nil
 	}
@@ -186,9 +289,7 @@ func (c *Consumer) handleBatch(ctx context.Context, messages []*kafka.ReceivedMe
 			e.eventID, e.tenantID, e.userID, e.action,
 			e.objectType, e.objectID, e.detail, e.ipAddr, e.userAgent, ts,
 		); err != nil {
-			c.logger.Warn("Failed to insert audit log",
-				zap.String("event_id", e.eventID),
-				zap.Error(err))
+			return fmt.Errorf("insert audit event %s: %w", e.eventID, err)
 		}
 	}
 
@@ -197,55 +298,36 @@ func (c *Consumer) handleBatch(ctx context.Context, messages []*kafka.ReceivedMe
 	}
 
 	c.logger.Debug("Audit batch committed",
-		zap.Int("messages", len(messages)),
-		zap.Int("inserted", len(entries)))
+		zap.Int("events", len(entries)))
 	return nil
 }
 
-// parseMessage 解析审计日志消息（支持 AuditLog 和 AuditLogBatch 格式）
-func (c *Consumer) parseMessage(msg *kafka.ReceivedMessage) (*struct {
-	eventID, tenantID, userID, action, objectType, objectID, detail, ipAddr, userAgent string
-	createdAt                                                                           int64
-}, error) {
+// parseMessages parses every event in AuditLogBatch. Returning an error is
+// intentionally fail-closed: the consumer must not commit an offset whose
+// audit payload was only partially persisted.
+func (c *Consumer) parseMessages(msg *kafka.ReceivedMessage) ([]auditEntry, error) {
 	// 尝试 AuditLogBatch
 	var batch pb.AuditLogBatch
 	if err := proto.Unmarshal(msg.Value, &batch); err == nil && len(batch.Events) > 0 {
-		e := batch.Events[0]
-		return &struct {
-			eventID, tenantID, userID, action, objectType, objectID, detail, ipAddr, userAgent string
-			createdAt                                                                           int64
-		}{
-			eventID:    e.EventId,
-			tenantID:   e.TenantId,
-			userID:     e.UserId,
-			action:     e.Action,
-			objectType: e.ObjectType,
-			objectID:   e.ObjectId,
-			detail:     e.Detail,
-			ipAddr:     e.IpAddr,
-			userAgent:  e.UserAgent,
-			createdAt:  e.CreatedAt,
-		}, nil
+		entries := make([]auditEntry, 0, len(batch.Events))
+		for index, event := range batch.Events {
+			entry, err := auditEntryFromProto(event)
+			if err != nil {
+				return nil, fmt.Errorf("batch event %d: %w", index, err)
+			}
+			entries = append(entries, entry)
+		}
+		return entries, nil
 	}
 
 	// 尝试单个 AuditLog
 	var single pb.AuditLog
 	if err := proto.Unmarshal(msg.Value, &single); err == nil && single.EventId != "" {
-		return &struct {
-			eventID, tenantID, userID, action, objectType, objectID, detail, ipAddr, userAgent string
-			createdAt                                                                           int64
-		}{
-			eventID:    single.EventId,
-			tenantID:   single.TenantId,
-			userID:     single.UserId,
-			action:     single.Action,
-			objectType: single.ObjectType,
-			objectID:   single.ObjectId,
-			detail:     single.Detail,
-			ipAddr:     single.IpAddr,
-			userAgent:  single.UserAgent,
-			createdAt:  single.CreatedAt,
-		}, nil
+		entry, err := auditEntryFromProto(&single)
+		if err != nil {
+			return nil, err
+		}
+		return []auditEntry{entry}, nil
 	}
 
 	// 尝试 JSON 格式（兼容性）
@@ -266,10 +348,7 @@ func (c *Consumer) parseMessage(msg *kafka.ReceivedMessage) (*struct {
 		if eid == "" {
 			return nil, fmt.Errorf("unknown audit format")
 		}
-		return &struct {
-			eventID, tenantID, userID, action, objectType, objectID, detail, ipAddr, userAgent string
-			createdAt                                                                           int64
-		}{
+		entry := auditEntry{
 			eventID:    eid,
 			tenantID:   getStr("tenant_id"),
 			userID:     getStr("user_id"),
@@ -280,8 +359,68 @@ func (c *Consumer) parseMessage(msg *kafka.ReceivedMessage) (*struct {
 			ipAddr:     getStr("ip_addr"),
 			userAgent:  getStr("user_agent"),
 			createdAt:  0, // JSON uses created_at as string
-		}, nil
+		}
+		if entry.tenantID == "" || entry.action == "" {
+			return nil, fmt.Errorf("JSON audit event requires tenant_id and action")
+		}
+		if value, ok := raw["detail"]; ok {
+			switch typed := value.(type) {
+			case string:
+				entry.detail = typed
+			default:
+				encoded, err := json.Marshal(typed)
+				if err != nil {
+					return nil, fmt.Errorf("marshal JSON audit detail: %w", err)
+				}
+				entry.detail = string(encoded)
+			}
+		}
+		normalized, err := normalizeAuditEntry(entry)
+		if err != nil {
+			return nil, err
+		}
+		return []auditEntry{normalized}, nil
 	}
 
 	return nil, fmt.Errorf("unmarshal audit message: unknown format")
+}
+
+func auditEntryFromProto(event *pb.AuditLog) (auditEntry, error) {
+	if event == nil {
+		return auditEntry{}, fmt.Errorf("event is nil")
+	}
+	if strings.TrimSpace(event.EventId) == "" || strings.TrimSpace(event.TenantId) == "" || strings.TrimSpace(event.Action) == "" {
+		return auditEntry{}, fmt.Errorf("event_id, tenant_id and action are required")
+	}
+	return normalizeAuditEntry(auditEntry{
+		eventID:    event.EventId,
+		tenantID:   event.TenantId,
+		userID:     event.UserId,
+		action:     event.Action,
+		objectType: event.ObjectType,
+		objectID:   event.ObjectId,
+		detail:     event.Detail,
+		ipAddr:     event.IpAddr,
+		userAgent:  event.UserAgent,
+		createdAt:  event.CreatedAt,
+	})
+}
+
+func normalizeAuditEntry(entry auditEntry) (auditEntry, error) {
+	entry.eventID = strings.TrimSpace(entry.eventID)
+	entry.tenantID = strings.TrimSpace(entry.tenantID)
+	entry.userID = strings.TrimSpace(entry.userID)
+	entry.action = strings.TrimSpace(entry.action)
+	entry.objectType = strings.TrimSpace(entry.objectType)
+	if entry.objectType == "" {
+		entry.objectType = "unknown"
+	}
+	entry.detail = strings.TrimSpace(entry.detail)
+	if entry.detail == "" {
+		entry.detail = "{}"
+	}
+	if !json.Valid([]byte(entry.detail)) {
+		return auditEntry{}, fmt.Errorf("audit detail must be valid JSON")
+	}
+	return entry, nil
 }

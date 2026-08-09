@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-clickhouse-ha-security-backup-v1",
+  "remediation_id": "T-CH-006",
+  "status": "implementing",
+  "coverage_status": "PARTIAL_REPOSITORY_METRICS_FAIL_CLOSED_PROFILE_DATASET_SEMANTICS_AND_RESTORE_PLAN",
+  "production_applied": false,
+  "policy": {
+    "current_health_is_not_ha_proof": true,
+    "preferred_anti_affinity_is_not_failure_domain_proof": true,
+    "silent_undercount_is_forbidden": true,
+    "destructive_drills_require_approved_window": true,
+    "backup_success_is_not_restore_success": true,
+    "v2_migration_and_restore_drill_must_not_overlap": true,
+    "tls_and_per_service_identity_are_required_before_closure": true
+  },
+  "topology_target": {
+    "clickhouse": {
+      "shards": 2,
+      "replicas_per_shard": 2,
+      "minimum_distinct_failure_domains_per_shard": 2
+    },
+    "keeper": {
+      "members": 3,
+      "quorum": 2,
+      "minimum_distinct_failure_domains": 3
+    },
+    "topology_key": "topology.kubernetes.io/zone",
+    "current_cluster_distinct_nodes": 2,
+    "current_cluster_distinct_zones": 0,
+    "formal_failure_domain_proof": false
+  },
+  "monitoring": {
+    "server_endpoint": {
+      "port": 9363,
+      "path": "/metrics",
+      "repository_binding": "deployments/kubernetes/infrastructure/02-clickhouse.yaml"
+    },
+    "keeper_endpoint": {
+      "port": 9363,
+      "path": "/metrics",
+      "repository_binding": "deployments/kubernetes/infrastructure/02-clickhouse.yaml"
+    },
+    "rule_binding": "deployments/kubernetes/observability/clickhouse-ha-alert-rules.yaml",
+    "required_signals": [
+      "keeper_quorum",
+      "replica_queue",
+      "replica_delay",
+      "parts_per_partition",
+      "mutation_activity",
+      "merge_saturation",
+      "disk_available_ratio",
+      "distributed_queue",
+      "readonly_replica",
+      "scrape_availability"
+    ],
+    "runtime_collector_present": false,
+    "runtime_rule_evaluator_present": false,
+    "notification_route_verified": false
+  },
+  "query_profile": {
+    "name": "traffic_runtime",
+    "repository_binding": "deployments/kubernetes/infrastructure/02-clickhouse.yaml#users-governance.xml",
+    "bound_users": [],
+    "settings": {
+      "max_memory_usage": 8589934592,
+      "max_memory_usage_for_user": 12884901888,
+      "max_threads": 8,
+      "max_execution_time": 120,
+      "max_bytes_to_read": 1099511627776,
+      "max_distributed_connections": 64,
+      "max_distributed_depth": 2,
+      "skip_unavailable_shards": 0,
+      "fallback_to_stale_replicas_for_distributed_queries": 0
+    },
+    "quota": {
+      "interval_seconds": 3600,
+      "queries": 100000,
+      "errors": 10000
+    },
+    "candidate_is_inactive_until_per_service_users_are_bound": true
+  },
+  "service_identity_target": {
+    "default_user_allowed_for_runtime": false,
+    "transport": "tls",
+    "native_secure_port": 9440,
+    "users": [
+      "traffic_ingest",
+      "traffic_alert",
+      "traffic_asset",
+      "traffic_rules",
+      "traffic_forensics",
+      "traffic_flink",
+      "traffic_migration",
+      "traffic_backup",
+      "traffic_monitor"
+    ],
+    "credential_source": "external_secret_per_identity",
+    "current_target_applied": false
+  },
+  "dataset_failure_semantics": [
+    {
+      "dataset_class": "raw_flow_and_session_fact",
+      "datasets": ["traffic.flows_raw", "traffic.sessions"],
+      "one_replica_unavailable": "serve_from_current_replica_or_fail",
+      "one_shard_unavailable": "fail_query",
+      "response_requirement": "error envelope with trace_id; never return a lower count as complete"
+    },
+    {
+      "dataset_class": "alert_and_evidence_fact",
+      "datasets": ["traffic.alerts", "traffic.evidence_index", "traffic.pcap_index"],
+      "one_replica_unavailable": "serve_from_current_replica_or_fail",
+      "one_shard_unavailable": "fail_query",
+      "response_requirement": "error envelope or partial=true with missing_sections and source_watermarks"
+    },
+    {
+      "dataset_class": "derived_rollup",
+      "datasets": ["traffic.sessions_daily_rollup_v1"],
+      "one_replica_unavailable": "serve_from_current_replica_or_fail",
+      "one_shard_unavailable": "partial_only_when_contract_explicitly_allows_it",
+      "response_requirement": "partial=true, missing_sections, source_watermarks and trace_id"
+    }
+  ],
+  "backup_restore_plan": {
+    "backup_destination_approved": false,
+    "encryption_key_recovery_verified": false,
+    "rpo_minutes": 60,
+    "rto_minutes": 240,
+    "backup_sets": [
+      {
+        "name": "critical_raw_facts",
+        "datasets": [
+          "traffic.flows_raw_local",
+          "traffic.sessions_local",
+          "traffic.alerts_local",
+          "traffic.pcap_index_local"
+        ],
+        "method": "native BACKUP to approved encrypted object storage",
+        "frequency": "hourly incremental plus daily full",
+        "retention_days": 30
+      },
+      {
+        "name": "ddl_and_dictionary_authority",
+        "datasets": [
+          "deployments/clickhouse/migrations",
+          "traffic.schema_migrations",
+          "registered dictionaries and source revisions"
+        ],
+        "method": "immutable candidate manifest plus native metadata backup",
+        "frequency": "every release",
+        "retention_days": 180
+      }
+    ],
+    "restore_target": "new isolated ClickHouse and Keeper cluster",
+    "required_validation": [
+      "manifest and object sha256",
+      "database table and partition inventory",
+      "row counts by tenant and partition",
+      "stable primary-key sample",
+      "aggregate count sum min max comparison",
+      "replica queue and readonly state",
+      "application query oracle before read cutover"
+    ],
+    "last_successful_restore_evidence": null
+  },
+  "required_drills": [
+    "keeper_member_loss",
+    "replica_delay",
+    "shard_unavailable",
+    "disk_watermark",
+    "bad_part",
+    "isolated_backup_restore"
+  ],
+  "observed_live_before_candidate": {
+    "captured_at": "2026-08-04T00:15:00+08:00",
+    "clickhouse_pods": 4,
+    "keeper_members": 3,
+    "keeper_leader_count": 1,
+    "keeper_synced_followers": 2,
+    "distinct_nodes": 2,
+    "distinct_zones": 0,
+    "readonly_replicas": 0,
+    "replica_queue": 0,
+    "max_replica_delay_seconds": 0,
+    "active_mutations": 0,
+    "minimum_disk_free_percent": 70.35,
+    "runtime_users": ["default"],
+    "default_user_host_scope": "::/0",
+    "default_user_auth_type": "plaintext_password",
+    "runtime_quotas": ["default"],
+    "tls_native_port_enabled": false,
+    "centralized_clickhouse_alerts_active": false,
+    "observation_is_not_ha_security_or_restore_proof": true
+  },
+  "closure_blockers": [
+    "add at least three labeled failure domains or approve a topology that can prove Keeper quorum isolation",
+    "deploy and verify a metrics collector rule evaluator and notification route for every required signal",
+    "issue TLS certificates and unique credentials then migrate every producer reader Flink job and operator away from default",
+    "profile per-service workloads and approve budgets before binding traffic_runtime",
+    "verify every API returns an error or explicit partial metadata during shard and replica faults",
+    "approve encrypted backup destination keys capacity retention RPO and RTO",
+    "complete an isolated restore and row partition key-sample aggregate and application-oracle reconciliation",
+    "execute approved fault drills rollback and T+0 T+1 T+3 T+7 observation",
+    "keep V2 migration and restore drills in separate resource windows"
+  ]
+}

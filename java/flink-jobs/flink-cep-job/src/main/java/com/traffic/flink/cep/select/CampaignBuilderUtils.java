@@ -4,6 +4,7 @@
 
 package com.traffic.flink.cep.select;
 
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.proto.traffic.v1.Alert;
 import com.traffic.proto.traffic.v1.EventHeader;
 
@@ -74,7 +75,8 @@ public final class CampaignBuilderUtils {
      * 构建 EventHeader
      */
     public static EventHeader buildEventHeader(String tenantId, long eventTs) {
-        String eventId = UUID.randomUUID().toString();
+        String eventId = DeterministicId.uuid(
+                "flink-cep-header/v1", tenantId, eventTs, "campaign");
         long now = System.currentTimeMillis();
         
         return EventHeader.newBuilder()
@@ -140,6 +142,7 @@ public final class CampaignBuilderUtils {
                 prefix,
                 tenantId, 
                 tsStart, 
-                UUID.randomUUID().toString().substring(0, 8));
+                DeterministicId.shortId(
+                        "flink-cep-campaign-legacy/v1", 8, prefix, tenantId, tsStart));
     }
 }

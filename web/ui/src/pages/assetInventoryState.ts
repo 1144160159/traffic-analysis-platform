@@ -29,8 +29,12 @@ export function assetSearchParams(input: {
   assetId?: string;
   detail?: AssetDetailSlug | null;
   search?: string;
-}) {
-  const params = new URLSearchParams();
+}, current: URLSearchParams = new URLSearchParams()) {
+  const params = new URLSearchParams(current);
+  params.delete('tab');
+  params.delete('assetId');
+  params.delete('detail');
+  params.delete('search');
   params.set('tab', input.tab);
   if (input.assetId) params.set('assetId', input.assetId);
   if (input.detail) params.set('detail', input.detail);

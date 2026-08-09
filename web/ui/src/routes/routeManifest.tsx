@@ -127,7 +127,7 @@ const pageOverrides: Record<string, Partial<PageSpec>> = {
     rightRailTitle: "验收缺口与建议动作",
     actions: ["补齐证据", "回流样本", "完善留痕", "跟进处理"],
     evidence: ["PCAP 覆盖率", "Session 还原率", "日志关联率", "审计留痕"],
-    apiHints: ["/api/v1/dashboard/stats", "/api/v1/alerts", "/ws/events"],
+    apiHints: ["/api/v1/dashboard/snapshot", "/api/v1/dashboard/tasks", "/ws/events"],
   },
   screen: {
     variant: "screen",

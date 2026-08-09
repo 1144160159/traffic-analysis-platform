@@ -29,6 +29,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class AlertGeneratorTest {
 
+    private static final String TRACE_ID = "0123456789abcdef0123456789abcdef";
+
     private KeyedOneInputStreamOperatorTestHarness<String, DetectionBehavior, Tuple2<Alert, Evidence>> testHarness;
     private AlertGenerator alertGenerator;
 
@@ -82,6 +84,7 @@ class AlertGeneratorTest {
         assertEquals(1L, alert.getStateVersion());
         assertTrue(alert.getAlertId().startsWith("alert-tenant-1-"));
         assertFalse(alert.getEventId().isEmpty());
+        assertEquals(TRACE_ID, alert.getTraceId());
         assertTrue(alert.getArkimeSessionLink().contains("arkime.test"));
 
         // 验证 Evidence
@@ -287,6 +290,7 @@ class AlertGeneratorTest {
                 .setIngestTs(ts)
                 .setProbeId("probe-1")
                 .setFeatureSetId("fs-1")
+                .setTraceId(TRACE_ID)
                 .build();
 
         return DetectionBehavior.newBuilder()

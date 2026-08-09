@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: flink-jobmanager, namespace: flink}
+spec:
+  template:
+    metadata:
+      annotations: {traffic.platform/minio-tls-cutover: v1}
+    spec:
+      containers:
+      - name: jobmanager
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: -Djavax.net.ssl.trustStore=/etc/minio/tls/truststore.p12 -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=changeit
+        - name: FLINK_PROPERTIES
+          value: |
+            jobmanager.rpc.address: flink-jobmanager.flink.svc
+            jobmanager.memory.process.size: 4g
+            taskmanager.memory.process.size: 8g
+            taskmanager.memory.jvm-metaspace.size: 1024m
+            taskmanager.numberOfTaskSlots: 32
+            parallelism.default: 32
+            state.backend: rocksdb
+            state.checkpoints.dir: s3://flink-checkpoints/checkpoints/flink-traffic
+            state.savepoints.dir: s3://flink-checkpoints/savepoints/flink-traffic
+            state.backend.rocksdb.localdir: /home/k8s-data/flink/rocksdb
+            s3.endpoint: https://minio.minio.svc:9000
+            s3.path.style.access: true
+            fs.allowed-fallback-filesystems: s3
+            high-availability.type: kubernetes
+            high-availability.cluster-id: flink-traffic
+            high-availability.storageDir: s3://flink-checkpoints/ha/flink-traffic
+            job-result-store.storage-path: s3://flink-checkpoints/job-result-store/flink-traffic
+            job-result-store.delete-on-commit: false
+            kubernetes.cluster-id: flink-traffic
+            kubernetes.namespace: flink
+            kubernetes.jobmanager.service-account: flink
+            restart-strategy: fixed-delay
+            restart-strategy.fixed-delay.attempts: 10
+            restart-strategy.fixed-delay.delay: 10s
+        volumeMounts:
+        - {name: minio-client-tls, mountPath: /etc/minio/tls, readOnly: true}
+      volumes:
+      - name: minio-client-tls
+        secret:
+          secretName: minio-client-ca
+          optional: false
+          items:
+          - {key: truststore.p12, path: truststore.p12}

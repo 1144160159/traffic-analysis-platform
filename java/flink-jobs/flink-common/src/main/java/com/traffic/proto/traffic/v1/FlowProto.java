@@ -17,17 +17,17 @@ public final class FlowProto {
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_FlowEvent_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_FlowEvent_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_FlowBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_FlowBatch_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_BatchMetadata_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_BatchMetadata_fieldAccessorTable;
 

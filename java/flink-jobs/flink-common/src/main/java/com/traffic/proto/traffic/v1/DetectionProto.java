@@ -17,17 +17,17 @@ public final class DetectionProto {
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_DetectionBehavior_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_DetectionBehavior_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_DetectionBusiness_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_DetectionBusiness_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_DetectionBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_DetectionBatch_fieldAccessorTable;
 
@@ -40,7 +40,7 @@ public final class DetectionProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\032traffic/v1/detection.proto\022\ntraffic.v1" +
-      "\032\027traffic/v1/common.proto\"\304\002\n\021DetectionB" +
+      "\032\027traffic/v1/common.proto\"\224\003\n\021DetectionB" +
       "ehavior\022/\n\006header\030\001 \001(\0132\027.traffic.v1.Eve" +
       "ntHeaderR\006header\022#\n\rmodel_version\030\002 \001(\tR" +
       "\014modelVersion\022!\n\014community_id\030\003 \001(\tR\013com" +
@@ -48,7 +48,9 @@ public final class DetectionProto {
       "e\022\033\n\tobject_id\030\005 \001(\tR\010objectId\022\016\n\002ts\030\006 \001" +
       "(\003R\002ts\022\026\n\006labels\030\007 \003(\tR\006labels\022\026\n\006scores" +
       "\030\010 \003(\002R\006scores\022\033\n\ttop_label\030\t \001(\tR\010topLa" +
-      "bel\022\033\n\ttop_score\030\n \001(\002R\010topScore\"\322\002\n\021Det" +
+      "bel\022\033\n\ttop_score\030\n \001(\002R\010topScore\022+\n\005tupl" +
+      "e\030\013 \001(\0132\025.traffic.v1.FiveTupleR\005tuple\022!\n" +
+      "\014evidence_ids\030\014 \003(\tR\013evidenceIds\"\322\002\n\021Det" +
       "ectionBusiness\022/\n\006header\030\001 \001(\0132\027.traffic" +
       ".v1.EventHeaderR\006header\022#\n\rmodel_version" +
       "\030\002 \001(\tR\014modelVersion\022!\n\014rule_version\030\003 \001" +
@@ -81,7 +83,7 @@ public final class DetectionProto {
     internal_static_traffic_v1_DetectionBehavior_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_DetectionBehavior_descriptor,
-        new java.lang.String[] { "Header", "ModelVersion", "CommunityId", "ObjectType", "ObjectId", "Ts", "Labels", "Scores", "TopLabel", "TopScore", });
+        new java.lang.String[] { "Header", "ModelVersion", "CommunityId", "ObjectType", "ObjectId", "Ts", "Labels", "Scores", "TopLabel", "TopScore", "Tuple", "EvidenceIds", });
     internal_static_traffic_v1_DetectionBusiness_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_traffic_v1_DetectionBusiness_fieldAccessorTable = new

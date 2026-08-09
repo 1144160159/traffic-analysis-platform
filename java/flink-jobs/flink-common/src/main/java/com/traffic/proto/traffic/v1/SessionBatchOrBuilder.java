@@ -11,7 +11,7 @@ public interface SessionBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.SessionEvent sessions = 1 [json_name = "sessions"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.SessionEvent> 
+  java.util.List<com.traffic.proto.traffic.v1.SessionEvent>
       getSessionsList();
   /**
    * <code>repeated .traffic.v1.SessionEvent sessions = 1 [json_name = "sessions"];</code>
@@ -24,7 +24,7 @@ public interface SessionBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.SessionEvent sessions = 1 [json_name = "sessions"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.SessionEventOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.SessionEventOrBuilder>
       getSessionsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.SessionEvent sessions = 1 [json_name = "sessions"];</code>

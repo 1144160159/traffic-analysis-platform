@@ -1,6 +1,7 @@
 package com.traffic.flink.feature;
 
 import com.traffic.flink.common.ConfigUtils;
+import com.traffic.flink.common.KafkaStartingOffsets;
 import com.traffic.flink.common.ProtoDeserializer;
 import com.traffic.flink.feature.config.FeatureSetConfig;
 import com.traffic.flink.feature.config.TenantConfig;
@@ -17,7 +18,6 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.kafka.source.KafkaSource;
-import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend;
 import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
 import org.apache.flink.streaming.api.CheckpointingMode;
@@ -108,10 +108,11 @@ public class FeatureJob {
         // 配置 Checkpoint
         configureCheckpoint(env, checkpointPath, checkpointInterval);
 
-        // 配置重启策略
+        // 配置重启策略。默认覆盖短时 Kafka/存储故障窗口，仍允许通过合同化参数调整。
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
-                3,
-                org.apache.flink.api.common.time.Time.seconds(30)
+                ConfigUtils.getInt(params, "restart.attempts", 10),
+                org.apache.flink.api.common.time.Time.seconds(
+                        ConfigUtils.getInt(params, "restart.delay.seconds", 30))
         ));
 
         // ==================== Kafka Source ====================
@@ -119,7 +120,7 @@ public class FeatureJob {
                 .setBootstrapServers(kafkaBrokers)
                 .setTopics(inputTopic)
                 .setGroupId(groupId)
-                .setStartingOffsets(OffsetsInitializer.latest())
+                .setStartingOffsets(KafkaStartingOffsets.from(params))
                 .setValueOnlyDeserializer(new ProtoDeserializer<>(SessionEvent.class, true, true))
                 .setProperties(ConfigUtils.kafkaClientProperties(params))
                 .setProperty("partition.discovery.interval.ms", "30000")

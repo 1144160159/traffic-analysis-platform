@@ -217,6 +217,16 @@ export type DataQualityVisuals = {
   };
 };
 
+export type DataQualityCheck = {
+  name: string;
+  status: 'pass' | 'warn' | 'fail' | 'unknown';
+  message: string;
+  value?: number;
+  threshold?: number;
+  measured: boolean;
+  source: string;
+};
+
 export type EncryptedTrafficVisuals = {
   tabKpis: {
     fingerprint: string[][];
@@ -370,7 +380,22 @@ export type TopicVisuals = {
   topic: 'tunnel' | 'exfil' | 'apt';
   updatedAt: number;
   timeRange: { start: number; end: number };
-  dataMode?: 'live' | 'simulated';
+  dataMode?: 'live' | 'partial' | 'simulated';
+  snapshotId?: string;
+  snapshotRevision?: number;
+  snapshotAsOf?: string;
+  partial?: boolean;
+  missingSections?: string[];
+  sourceWatermarks?: Record<string, string>;
+  actionCatalog?: Array<{
+    actionId: string;
+    risk: string;
+    approval: string;
+    executor: string;
+    compensation: string;
+    enabled: boolean;
+    unavailableCause?: string;
+  }>;
   simulationId?: string;
   simulationVersion?: string;
   presentation?: {
@@ -548,6 +573,16 @@ export type PageSnapshot = {
   rows: SnapshotRow[];
   timeline: Array<{ title: string; description: string; status: 'ok' | 'warn' | 'risk' | 'info' }>;
   evidence: Array<{ label: string; value: string; status: 'ok' | 'warn' | 'risk' | 'info' }>;
+  dataQualityChecks?: DataQualityCheck[];
+  snapshot?: {
+    contractVersion: number;
+    snapshotId: string;
+    asOf: string;
+    traceId: string;
+    partial: boolean;
+    missingSections: string[];
+    sourceWatermarks: Record<string, string>;
+  };
   visuals?: {
     dashboard?: DashboardVisuals;
     screen?: ScreenVisuals;

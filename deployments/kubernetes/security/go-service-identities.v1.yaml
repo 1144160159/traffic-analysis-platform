@@ -1,0 +1,82 @@
+# T-SEC-001 workload identities. These service accounts intentionally have no
+# Kubernetes API RBAC grants; application services use external data-plane
+# identities and must not inherit the namespace default token.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ingest-gateway
+  namespace: traffic-analysis
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flink-log-job
+  namespace: flink
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: auth-service
+  namespace: traffic-analysis
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alert-service
+  namespace: traffic-analysis
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: asset-service
+  namespace: traffic-analysis
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rule-manager
+  namespace: traffic-analysis
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: graph-service
+  namespace: traffic-analysis
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: threat-intel-service
+  namespace: traffic-analysis
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: forensics-service
+  namespace: traffic-analysis
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web-ui
+  namespace: traffic-analysis
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false

@@ -22,8 +22,29 @@ type AssetService struct {
 	repo   *repository.AssetRepository
 	logger *zap.Logger
 	// ouiCache 可选的 OUI 缓存（Redis），nil 时使用本地内置表
-	ouiCache OUILookup
-	scanner  DiscoveryScanner
+	ouiCache              OUILookup
+	scanner               DiscoveryScanner
+	exportObjects         AssetExportObjectStore
+	observationReader     AssetObservationReader
+	alertContextReader    AssetAlertContextReader
+	graphProjectionReader AssetGraphProjectionReader
+	evidenceObjectReader  AssetEvidenceObjectReader
+}
+
+type AssetObservationReader interface {
+	ReadAssetObservations(context.Context, string, *config.AssetRecord, time.Time) (*config.AssetObservationSummary, map[string]string, error)
+}
+
+type AssetAlertContextReader interface {
+	ReadAssetAlertContext(context.Context, string, *config.AssetRecord, time.Time) (*config.AssetAlertContext, map[string]string, error)
+}
+
+type AssetGraphProjectionReader interface {
+	ReadAssetGraphProjection(context.Context, string, *config.AssetRecord, time.Time) (*config.AssetGraphProjection, map[string]string, bool, error)
+}
+
+type AssetEvidenceObjectReader interface {
+	ReadAssetEvidenceObjects(context.Context, string, *config.AssetRecord, time.Time, *config.AssetAlertContext) (*config.AssetEvidenceObjectSet, map[string]string, bool, error)
 }
 
 // OUILookup OUI 厂商查询接口
@@ -71,6 +92,30 @@ func (s *AssetService) WithDiscoveryScanner(scanner DiscoveryScanner) *AssetServ
 	return s
 }
 
+func (s *AssetService) WithAssetExportObjectStore(store AssetExportObjectStore) *AssetService {
+	s.exportObjects = store
+	return s
+}
+
+// WithAssetDetailReaders installs optional, independently degradable
+// cross-store readers. A failed reader never turns missing data into a
+// zero-valued success section.
+func (s *AssetService) WithAssetDetailReaders(observations AssetObservationReader, alerts AssetAlertContextReader) *AssetService {
+	s.observationReader = observations
+	s.alertContextReader = alerts
+	return s
+}
+
+func (s *AssetService) WithAssetGraphProjectionReader(reader AssetGraphProjectionReader) *AssetService {
+	s.graphProjectionReader = reader
+	return s
+}
+
+func (s *AssetService) WithAssetEvidenceObjectReader(reader AssetEvidenceObjectReader) *AssetService {
+	s.evidenceObjectReader = reader
+	return s
+}
+
 func (s *AssetService) JWTSigningKey() string {
 	if s == nil || s.cfg == nil {
 		return ""
@@ -78,64 +123,81 @@ func (s *AssetService) JWTSigningKey() string {
 	return s.cfg.Auth.JWTSigningKey
 }
 
+func (s *AssetService) AssetCursorV2Enabled() bool {
+	return s != nil && s.cfg != nil && s.cfg.Cursor.Enabled
+}
+
+func (s *AssetService) AssetDetailSnapshotV1Enabled() bool {
+	return s != nil && s.cfg != nil && s.cfg.Detail.SnapshotV1Enabled
+}
+
+func (s *AssetService) AssetGovernanceV1Enabled() bool {
+	return s != nil && s.cfg != nil && s.cfg.Governance.Enabled
+}
+
 // =============================================================================
 // 业务方法
 // =============================================================================
 
-// UpsertAsset 创建或更新资产
-func (s *AssetService) UpsertAsset(ctx context.Context, rec *config.AssetRecord) (string, bool, error) {
-	if rec == nil || rec.MACAddress == "" {
-		return "", false, errors.New(errors.ErrCodeInvalidParameter, "mac_address is required")
+// UpsertAssetAtomic is the single authoritative asset mutation boundary.
+// Human commands use an explicit expected revision. Trusted observation paths
+// may resolve the current revision only when they also carry a stable source
+// event identity, so replay is still decided before another revision is made.
+func (s *AssetService) UpsertAssetAtomic(
+	ctx context.Context,
+	rec *config.AssetRecord,
+	command config.AssetUpsertCommand,
+) (*config.AssetUpsertResult, error) {
+	if rec == nil || strings.TrimSpace(rec.MACAddress) == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "mac_address is required")
 	}
-	if rec.TenantID == "" {
-		return "", false, errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
+	if strings.TrimSpace(rec.TenantID) == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
 	}
-
-	// 规范化 MAC 地址
+	if len(command.IdempotencyKey) < 16 || len(command.IdempotencyKey) > 200 {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "Idempotency-Key must be 16-200 characters")
+	}
+	if command.ExpectedRevision < 0 {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "expected_revision must be non-negative")
+	}
+	if command.ActionID == "" {
+		command.ActionID = config.AssetUpsertAction
+	}
+	if command.ActionID != config.AssetUpsertAction && command.ActionID != config.AssetObservationUpsertAction {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "unsupported asset upsert action_id")
+	}
+	if command.ActionID == config.AssetUpsertAction && strings.TrimSpace(command.Reason) == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "reason is required for an asset upsert command")
+	}
+	if command.ResolveCurrentRevision && command.ActionID != config.AssetObservationUpsertAction {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "current revision resolution is restricted to observation commands")
+	}
+	if command.HistoryEventType != "" && command.ActionID != config.AssetObservationUpsertAction {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "custom history event is restricted to observation commands")
+	}
+	if command.ObservedAt.After(time.Now().UTC().Add(5 * time.Minute)) {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "observed_at is too far in the future")
+	}
+	if strings.TrimSpace(command.Actor) == "" || strings.TrimSpace(command.TraceID) == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "authenticated actor and trace_id are required")
+	}
 	rec.MACAddress = normalizeMAC(rec.MACAddress)
-
-	// OUI 厂商识别
+	if rec.AssetID != "" {
+		if _, err := uuid.Parse(rec.AssetID); err != nil {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "asset_id must be a UUID")
+		}
+	}
 	if rec.Vendor == "" || rec.Vendor == "Unknown" {
 		rec.Vendor = s.ouiCache.LookupVendor(rec.MACAddress)
 	}
-
-	// 默认来源
 	if rec.Source == "" {
 		rec.Source = "manual"
 	}
-
-	// 生成 AssetID
-	if rec.AssetID == "" {
-		rec.AssetID = uuid.New().String()
-	}
-
-	now := time.Now()
-	rec.LastSeen = now
-	if rec.FirstSeen.IsZero() {
-		rec.FirstSeen = now
-	}
-
-	id, created, err := s.repo.Upsert(ctx, rec)
+	result, err := s.repo.UpsertAtomic(ctx, rec, command)
 	if err != nil {
-		s.logger.Error("UpsertAsset failed",
-			zap.String("mac", rec.MACAddress),
-			zap.String("tenant", rec.TenantID),
-			zap.Error(err))
-		return "", false, fmt.Errorf("upsert asset: %w", err)
+		return nil, err
 	}
-
-	if created {
-		s.logger.Info("Asset created",
-			zap.String("asset_id", id),
-			zap.String("mac", rec.MACAddress),
-			zap.String("ip", rec.IPAddress))
-	} else {
-		s.logger.Debug("Asset updated",
-			zap.String("asset_id", id),
-			zap.String("mac", rec.MACAddress))
-	}
-
-	return id, created, nil
+	return result, nil
 }
 
 // GetAsset 获取单个资产（按 ID 或 MAC）
@@ -181,7 +243,7 @@ func (s *AssetService) ListAssetsFiltered(ctx context.Context, tenantID string, 
 	if filter.AssetType != "" && !IsAssetType(filter.AssetType) {
 		return nil, 0, errors.New(errors.ErrCodeInvalidParameter, "invalid asset_type")
 	}
-	if limit <= 0 || limit > 100 {
+	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
 	if offset < 0 {
@@ -199,6 +261,35 @@ func (s *AssetService) ListAssetsFiltered(ctx context.Context, tenantID string, 
 	return recs, total, nil
 }
 
+// ListAssetsCursor returns a stable PostgreSQL snapshot traversal. Cursor
+// authenticity and tenant/filter binding are enforced by the HTTP boundary;
+// the service independently validates the resulting authoritative scope.
+func (s *AssetService) ListAssetsCursor(
+	ctx context.Context,
+	tenantID string,
+	filter config.AssetListFilter,
+	limit int,
+	position *config.AssetCursorPosition,
+) (*config.AssetCursorPage, error) {
+	if strings.TrimSpace(tenantID) == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
+	}
+	if filter.AssetType != "" && !IsAssetType(filter.AssetType) {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid asset_type")
+	}
+	if limit < 1 || limit > 200 {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "limit must be between 1 and 200")
+	}
+	page, err := s.repo.ListByTenantCursor(ctx, tenantID, filter, limit, position)
+	if err != nil {
+		s.logger.Error("ListAssetsCursor failed",
+			zap.String("tenant", tenantID),
+			zap.Error(err))
+		return nil, fmt.Errorf("list assets cursor: %w", err)
+	}
+	return page, nil
+}
+
 func IsAssetType(assetType string) bool {
 	switch assetType {
 	case "endpoint", "server", "network-device", "business-system", "unknown":
@@ -206,49 +297,6 @@ func IsAssetType(assetType string) bool {
 	default:
 		return false
 	}
-}
-
-// RecordMacIpBinding 批量记录 MAC→IP 绑定（来自探针 ARP/DHCP 被动发现）
-func (s *AssetService) RecordMacIpBinding(ctx context.Context, bindings []*config.MacIpBinding) (accepted, rejected int32, err error) {
-	if len(bindings) == 0 {
-		return 0, 0, errors.New(errors.ErrCodeInvalidParameter, "at least one binding required")
-	}
-
-	for _, b := range bindings {
-		if b.MACAddress == "" || b.IPAddress == "" {
-			rejected++
-			continue
-		}
-
-		b.MACAddress = normalizeMAC(b.MACAddress)
-		if b.TenantID == "" {
-			b.TenantID = "default"
-		}
-		if b.Source == "" {
-			b.Source = "passive"
-		}
-
-		rec := &config.AssetRecord{
-			AssetID:    uuid.New().String(),
-			TenantID:   b.TenantID,
-			IPAddress:  b.IPAddress,
-			MACAddress: b.MACAddress,
-			Source:     b.Source,
-			Vendor:     s.ouiCache.LookupVendor(b.MACAddress),
-		}
-
-		if _, _, err := s.repo.Upsert(ctx, rec); err != nil {
-			s.logger.Warn("RecordMacIpBinding upsert failed",
-				zap.String("mac", b.MACAddress),
-				zap.String("ip", b.IPAddress),
-				zap.Error(err))
-			rejected++
-		} else {
-			accepted++
-		}
-	}
-
-	return accepted, rejected, nil
 }
 
 // GetAssetHistory 获取资产变更历史
@@ -496,8 +544,24 @@ func (s *AssetService) GetAssetStatsFiltered(ctx context.Context, tenantID strin
 
 // MarkInactiveAssets 标记 7 天无活跃的资产为 inactive（定时任务调用）
 func (s *AssetService) MarkInactiveAssets(ctx context.Context, tenantID string) (int, error) {
-	threshold := time.Now().Add(-7 * 24 * time.Hour)
-	count, err := s.repo.MarkInactiveSince(ctx, tenantID, threshold)
+	tenantID = strings.TrimSpace(tenantID)
+	if tenantID == "" {
+		return 0, errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
+	}
+	// A daily UTC boundary makes scheduler retries identify the same logical
+	// sweep while keeping the seven-day lifecycle policy deterministic.
+	sweepAt := time.Now().UTC().Truncate(24 * time.Hour)
+	threshold := sweepAt.Add(-7 * 24 * time.Hour)
+	identity := fmt.Sprintf("%s:%s", tenantID, sweepAt.Format("2006-01-02"))
+	result, err := s.repo.MarkInactiveSinceAtomic(ctx, tenantID, config.AssetInactiveCommand{
+		ActionID:       config.AssetInactiveSweepAction,
+		IdempotencyKey: stableAssetCommandKey("asset-inactive-sweep", identity),
+		Actor:          "asset-lifecycle-scheduler",
+		Reason:         "mark assets inactive after seven days without observation",
+		TraceID:        "asset-inactive:" + identity,
+		RequestID:      "asset-inactive:" + identity,
+		Cutoff:         threshold,
+	})
 	if err != nil {
 		s.logger.Error("MarkInactiveAssets failed",
 			zap.String("tenant", tenantID),
@@ -505,18 +569,14 @@ func (s *AssetService) MarkInactiveAssets(ctx context.Context, tenantID string) 
 		return 0, fmt.Errorf("mark inactive: %w", err)
 	}
 
-	if count > 0 {
+	if result.Count > 0 {
 		s.logger.Info("Marked inactive assets",
 			zap.String("tenant", tenantID),
-			zap.Int("count", count))
+			zap.Int("count", result.Count),
+			zap.Bool("idempotent_replay", result.IdempotentReplay))
 	}
 
-	return count, nil
-}
-
-// InitSchema 初始化数据库 Schema
-func (s *AssetService) InitSchema(ctx context.Context) error {
-	return s.repo.InitSchema(ctx)
+	return result.Count, nil
 }
 
 // =============================================================================

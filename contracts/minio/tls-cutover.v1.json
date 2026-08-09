@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-minio-tls-cutover-v1",
+  "remediation_ids": ["T-MINIO-003", "T-PKI-001"],
+  "status": "implementing",
+  "phase": "default_off_atomic_bundle",
+  "default_off": true,
+  "production_applied": false,
+  "cutover_ready": false,
+  "maintenance_outage_required": true,
+  "overlay": "deployments/kubernetes/security/minio-tls-cutover-v1",
+  "render_command": "kubectl kustomize --load-restrictor=LoadRestrictionsNone deployments/kubernetes/security/minio-tls-cutover-v1",
+  "components": [
+    "minio-server",
+    "minio-console-proxy",
+    "alert-service",
+    "asset-service",
+    "forensics-service",
+    "probe-agent",
+    "flink-jobmanager",
+    "flink-taskmanager",
+    "flink-job-config",
+    "argo-artifact-repositories",
+    "argo-workflow-controller",
+    "mlops-register-model",
+    "minio-multipart-cleanup",
+    "minio-post-cutover-verifier"
+  ],
+  "candidate_images": [
+    {
+      "workload": "alert-service",
+      "status": "BUILT_LOCAL_NOT_DISTRIBUTED",
+      "image": "docker.io/traffic/alert-service:minio-tls-8cb5c91b5f32",
+      "local_image_id": "sha256:e48f0cae289a55ade7a9c76f485e106d9bba70707ba230f4a1f8384b70cb2351",
+      "registry_digest": null,
+      "component_source_sha256": "8cb5c91b5f320a98def1e3f7a3e98899c7ff8937c68c6bf10fe452b76af2da26",
+      "platform": "linux/amd64",
+      "distributed_to_nodes": false,
+      "signed": false
+    },
+    {
+      "workload": "asset-service",
+      "status": "BUILT_LOCAL_NOT_DISTRIBUTED",
+      "image": "docker.io/traffic/asset-service:minio-tls-8cb5c91b5f32",
+      "local_image_id": "sha256:f58745663dc60a037415c17dcfc9178318e3b8eb7da31a421315e9758fed77e4",
+      "registry_digest": null,
+      "component_source_sha256": "8cb5c91b5f320a98def1e3f7a3e98899c7ff8937c68c6bf10fe452b76af2da26",
+      "platform": "linux/amd64",
+      "distributed_to_nodes": false,
+      "signed": false
+    },
+    {
+      "workload": "forensics-service",
+      "status": "BUILT_LOCAL_NOT_DISTRIBUTED",
+      "image": "docker.io/traffic/forensics-service:minio-tls-8cb5c91b5f32",
+      "local_image_id": "sha256:d369e7790bb4ada7ba4f65825a70236dae40ef91f4c2f42148835cbd38c66f41",
+      "registry_digest": null,
+      "component_source_sha256": "8cb5c91b5f320a98def1e3f7a3e98899c7ff8937c68c6bf10fe452b76af2da26",
+      "platform": "linux/amd64",
+      "distributed_to_nodes": false,
+      "signed": false
+    },
+    {
+      "workload": "probe-agent",
+      "status": "BUILT_LOCAL_NOT_DISTRIBUTED",
+      "image": "docker.io/traffic/probe-agent:minio-tls-3f4da2fc0e5b",
+      "local_image_id": "sha256:21a6b22df4a59b335b640d8aa29736fb1b5f41bfcbdd5f133831eb28a9356874",
+      "registry_digest": null,
+      "component_source_sha256": "3f4da2fc0e5b09399979d07d57b77a142d3102319618366a139e3e02f933fd6a",
+      "platform": "linux/amd64",
+      "distributed_to_nodes": false,
+      "signed": false
+    },
+    {
+      "workload": "mlops-trainer",
+      "status": "BUILT_LOCAL_NOT_DISTRIBUTED",
+      "image": "docker.io/traffic/mlops-trainer:minio-tls-5b947fffa651",
+      "local_image_id": "sha256:4cc57c8acc2518d5478514be667dcd9f5d5bf257a9c6081e9020c94f725cc68b",
+      "registry_digest": null,
+      "component_source_sha256": "5b947fffa651219b6139cc64decff67846b28d3eec9fb5be4536bd0e02025e16",
+      "platform": "linux/amd64",
+      "distributed_to_nodes": false,
+      "signed": false
+    }
+  ],
+  "preflight": [
+    "approved maintenance window and named incident commander",
+    "immutable candidate manifest and all required image digests share one source hash",
+    "minio-server-tls and all three minio-client-ca ExternalSecrets are Ready",
+    "certificate key match chain SAN hostname expiry and TLS1.2 checks pass without capturing private keys",
+    "Flink savepoint completes and checkpoint plus job inventory is captured",
+    "Argo submissions probe archive rotation and MinIO cleanup CronJob are quiesced",
+    "multipart uploads and application object jobs are drained or explicitly inventoried",
+    "all current resources and replica counts are captured for rollback",
+    "rendered overlay passes client dry-run and contains no plaintext MinIO endpoint"
+  ],
+  "cutover_sequence": [
+    "suspend MinIO cleanup CronJob and block new S3-producing commands",
+    "take Flink savepoint then stop Flink and other MinIO clients",
+    "scale MinIO StatefulSet to zero to avoid a mixed HTTP and HTTPS distributed cluster",
+    "apply TLS material and the rendered candidate bundle while clients remain stopped",
+    "start all MinIO replicas and require four-node TLS health plus post-cutover verifier PASS",
+    "start Flink from the captured savepoint and reconcile checkpoints",
+    "start Go Rust Argo MLOps and proxy consumers in controlled order",
+    "resume cleanup CronJob and S3-producing commands only after cross-client reconcile PASS"
+  ],
+  "rollback_sequence": [
+    "stop expansion immediately and quiesce all S3 clients",
+    "capture failed candidate logs traces resource state multipart inventory and Flink checkpoint state",
+    "stop MinIO completely to avoid mixed transport membership",
+    "restore the immutable pre-cutover HTTP MinIO resource and replica count",
+    "restore each client proxy Argo Flink probe workflow and CronJob resource from the same rollback run",
+    "restart Flink from the pre-cutover savepoint and reconcile all object manifests",
+    "resume producers only after legacy-path health and reconciliation pass"
+  ],
+  "stop_conditions": [
+    "certificate key chain SAN hostname or expiry validation fails",
+    "any required candidate image digest is absent or mismatched",
+    "any ExternalSecret is not Ready",
+    "Flink savepoint checkpoint or restore evidence is incomplete",
+    "MinIO does not regain four-node health",
+    "any client fails hostname or CA verification",
+    "multipart object manifest or cross-store reconciliation diverges",
+    "rollback resource set cannot be reproduced"
+  ],
+  "known_blockers": [
+    "approved external Secret material is not yet present",
+    "five candidate images are built locally but are not registry-signed repo-digest-pinned or distributed to both target nodes",
+    "maintenance outage and destructive HA window are not approved",
+    "live savepoint restore multi-client handshake fault and rollback evidence are absent",
+    "two consecutive certificate rotations remain unproven"
+  ],
+  "official_references": [
+    "https://docs.min.io/aistor/installation/linux/network-encryption/enable-tls-encryption/",
+    "https://argo-workflows.readthedocs.io/en/release-3.5/fields/",
+    "https://nightlies.apache.org/flink/flink-docs-stable/docs/deployment/filesystems/s3/"
+  ]
+}

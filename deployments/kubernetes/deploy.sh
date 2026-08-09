@@ -20,7 +20,7 @@
 # =============================================================================
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KUBECTL="${KUBECTL:-kubectl}"
 
 # ---- 颜色 ----
@@ -81,6 +81,68 @@ secret_value() {
     -o "jsonpath={.data.${key}}" 2>/dev/null | base64 -d 2>/dev/null || true
 }
 
+named_secret_value() {
+  local namespace="$1"
+  local secret_name="$2"
+  local key="$3"
+  $KUBECTL get secret "$secret_name" -n "$namespace" \
+    -o "jsonpath={.data.${key}}" 2>/dev/null | base64 -d 2>/dev/null || true
+}
+
+sync_kafka_service_identity_secrets() {
+  local catalog="$SCRIPT_DIR/../../contracts/events/kafka-acl-catalog.v1.json"
+  local identities username namespace secret_name password_env password
+  local expected_identities identity_count=0
+  local aggregate_args=()
+  if [ ! -f "$catalog" ]; then
+    error "Kafka ACL catalog not found: $catalog"
+    return 1
+  fi
+  identities="$(python3 - "$catalog" <<'PY'
+import json
+import sys
+
+catalog = json.load(open(sys.argv[1], encoding="utf-8"))
+for principal in sorted(catalog["principals"], key=lambda item: item["id"]):
+    if principal.get("rollout_state") != "expand" or not isinstance(principal.get("credential"), dict):
+        continue
+    credential = principal["credential"]
+    username = principal["principal"].removeprefix("User:")
+    print("\t".join((username, credential["namespace"], credential["secret_name"], credential["password_env"])))
+PY
+)" || return 1
+  expected_identities="$(printf '%s\n' "$identities" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')"
+
+  while IFS=$'\t' read -r username namespace secret_name password_env; do
+    [ -n "$username" ] || continue
+    password="$(named_secret_value "$namespace" "$secret_name" password)"
+    password="${password:-$(named_secret_value middleware kafka-principal-credentials "$password_env")}"
+    password="${password:-$(openssl rand -base64 48)}"
+    if ! [[ "$username" =~ ^traffic-[a-z0-9-]+$ ]] ||
+       ! [[ "$password_env" =~ ^KAFKA_[A-Z0-9_]+_PASSWORD$ ]] ||
+       ! [[ "$password" =~ ^[A-Za-z0-9._@%+=:/-]{32,}$ ]]; then
+      error "Kafka service credential failed validation for $username"
+      return 1
+    fi
+    $KUBECTL create secret generic "$secret_name" \
+      --from-literal=username="$username" \
+      --from-literal=password="$password" \
+      -n "$namespace" --dry-run=client -o yaml | $KUBECTL apply -f - >/dev/null
+    aggregate_args+=(--from-literal="$password_env=$password")
+    identity_count=$((identity_count + 1))
+    info "Synced Kafka workload identity Secret $namespace/$secret_name"
+  done <<<"$identities"
+
+  if [ "$identity_count" -eq 0 ] || [ "${#aggregate_args[@]}" -ne "$expected_identities" ]; then
+    error "Expected $expected_identities Kafka workload identities, found ${#aggregate_args[@]}"
+    return 1
+  fi
+  $KUBECTL create secret generic kafka-principal-credentials \
+    "${aggregate_args[@]}" \
+    -n middleware --dry-run=client -o yaml | $KUBECTL apply -f - >/dev/null
+  info "Synced middleware/kafka-principal-credentials for SCRAM expand"
+}
+
 ensure_application_credentials() {
   local pg_password pg_dsn pg_replication_password minio_access_key minio_secret_key
   local ch_password jwt_secret redis_password apisix_admin_key oidc_client_secret
@@ -88,6 +150,7 @@ ensure_application_credentials() {
   local kafka_client_username kafka_client_password kafka_client_jaas_config
   local kafka_inter_broker_username kafka_inter_broker_password
   local kafka_tls_keystore_password kafka_tls_truststore_password
+  local probe_auth_token
 
   pg_password="$(secret_value databases PG_PASSWORD)"
   pg_password="${pg_password:-$(secret_value traffic-analysis PG_PASSWORD)}"
@@ -150,6 +213,9 @@ ensure_application_credentials() {
   keycloak_admin_password="$(secret_value iam KEYCLOAK_ADMIN_PASSWORD)"
   keycloak_admin_password="${keycloak_admin_password:-$(secret_value middleware KEYCLOAK_ADMIN_PASSWORD)}"
   keycloak_admin_password="${keycloak_admin_password:-$(openssl rand -base64 32)}"
+  probe_auth_token="$(secret_value traffic-analysis PROBE_AUTH_TOKEN)"
+  probe_auth_token="${probe_auth_token:-${PROBE_AUTH_TOKEN:-}}"
+  probe_auth_token="${probe_auth_token:-$(openssl rand -base64 48)}"
 
   info "Syncing application credentials with running infrastructure..."
   for target_namespace in middleware traffic-analysis gateway flink databases minio observability iam; do
@@ -179,8 +245,10 @@ ensure_application_credentials() {
       --from-literal=KAFKA_TLS_TRUSTSTORE_PASSWORD="$kafka_tls_truststore_password" \
       --from-literal=GRAFANA_ADMIN_PASSWORD="$grafana_admin_password" \
       --from-literal=KEYCLOAK_ADMIN_PASSWORD="$keycloak_admin_password" \
+      --from-literal=PROBE_AUTH_TOKEN="$probe_auth_token" \
       -n "$target_namespace" --dry-run=client -o yaml | $KUBECTL apply -f -
   done
+  sync_kafka_service_identity_secrets
 }
 
 ensure_kafka_tls_secrets() {
@@ -372,8 +440,30 @@ seed_kafka_scram_users() {
 ensure_probe_mtls_certs() {
   if $KUBECTL get secret probe-agent-certs -n traffic-analysis >/dev/null 2>&1 &&
      $KUBECTL get secret ingest-gateway-certs -n traffic-analysis >/dev/null 2>&1; then
-    info "Probe/Ingest mTLS secrets already exist."
-    return
+    local existing_tmp_dir
+    existing_tmp_dir="$(mktemp -d)"
+    if $KUBECTL get secret probe-agent-certs -n traffic-analysis \
+         -o jsonpath='{.data.ca-cert\.pem}' | base64 -d >"$existing_tmp_dir/client-ca.pem" 2>/dev/null &&
+       $KUBECTL get secret probe-agent-certs -n traffic-analysis \
+         -o jsonpath='{.data.client-cert\.pem}' | base64 -d >"$existing_tmp_dir/client-cert.pem" 2>/dev/null &&
+       $KUBECTL get secret ingest-gateway-certs -n traffic-analysis \
+         -o jsonpath='{.data.ca-cert\.pem}' | base64 -d >"$existing_tmp_dir/server-ca.pem" 2>/dev/null &&
+       $KUBECTL get secret ingest-gateway-certs -n traffic-analysis \
+         -o jsonpath='{.data.server-cert\.pem}' | base64 -d >"$existing_tmp_dir/server-cert.pem" 2>/dev/null &&
+       cmp -s "$existing_tmp_dir/client-ca.pem" "$existing_tmp_dir/server-ca.pem" &&
+       openssl verify -purpose sslclient -CAfile "$existing_tmp_dir/client-ca.pem" \
+         "$existing_tmp_dir/client-cert.pem" >/dev/null 2>&1 &&
+       openssl verify -purpose sslserver -verify_hostname ingest-gateway.traffic-analysis.svc \
+         -CAfile "$existing_tmp_dir/server-ca.pem" "$existing_tmp_dir/server-cert.pem" >/dev/null 2>&1 &&
+       openssl x509 -checkend 2592000 -noout -in "$existing_tmp_dir/client-cert.pem" >/dev/null 2>&1 &&
+       openssl x509 -checkend 2592000 -noout -in "$existing_tmp_dir/server-cert.pem" >/dev/null 2>&1; then
+      rm -rf "$existing_tmp_dir"
+      info "Probe/Ingest mTLS secrets exist and remain valid for at least 30 days."
+      return
+    fi
+    rm -rf "$existing_tmp_dir"
+    error "Probe/Ingest mTLS secrets are incomplete, mismatched, invalid, or expire within 30 days; controlled dual-trust rotation is required"
+    return 1
   fi
 
   local cert_script="${SCRIPT_DIR}/../../rust/probe-agent/scripts/generate-mtls-certs.sh"
@@ -403,9 +493,15 @@ ensure_probe_mtls_certs() {
 }
 
 seed_probe_token() {
-  local token="${PROBE_AUTH_TOKEN:-probe-token-default-001}"
+  local token
   local tenant="${PROBE_TENANT_ID:-default}"
   local probe_cn="${PROBE_CERT_CN:-probe-agent}"
+
+  token="$(secret_value traffic-analysis PROBE_AUTH_TOKEN)"
+  if [ -z "$token" ]; then
+    warn "PROBE_AUTH_TOKEN is missing from traffic-credentials; refusing to seed an unknown token"
+    return 1
+  fi
 
   if ! $KUBECTL get pod redis-master-0 -n databases >/dev/null 2>&1; then
     warn "redis-master-0 not found; skipping probe token seed"
@@ -494,6 +590,10 @@ deploy_init() {
 
   info "Creating Kafka topics..."
   apply "$SCRIPT_DIR/init-jobs" "Kafka Topics Job"
+  $KUBECTL wait --for=condition=complete job/init-kafka-principals -n middleware --timeout=360s 2>/dev/null || {
+    error "Kafka service principal provisioning did not complete; refusing to continue with application ACL rollout"
+    return 1
+  }
   $KUBECTL wait --for=condition=complete job/init-kafka-topics -n middleware --timeout=120s 2>/dev/null || warn "Kafka topic init may still be running"
 
   info "Initializing PostgreSQL schema..."
@@ -594,6 +694,9 @@ clean() {
 }
 
 # ---- Main ----
+if [ "${TRAFFIC_DEPLOY_LIB_ONLY:-false}" = "true" ]; then
+  return 0 2>/dev/null || exit 0
+fi
 case "${1:-}" in
   secrets)
     ensure_secret_readiness

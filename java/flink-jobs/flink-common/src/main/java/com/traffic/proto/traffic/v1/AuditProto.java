@@ -17,42 +17,42 @@ public final class AuditProto {
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_AuditLog_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_AuditLog_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_UserEvent_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_UserEvent_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_DeviceLog_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_DeviceLog_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_DeadLetter_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_DeadLetter_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_AuditLogBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_AuditLogBatch_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_UserEventBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_UserEventBatch_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_DeviceLogBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_DeviceLogBatch_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_DeadLetterBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_DeadLetterBatch_fieldAccessorTable;
 

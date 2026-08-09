@@ -6,6 +6,7 @@ describe('campaignDetailApi', () => {
     const snapshot = normalizeCampaignDetailSnapshot('APT-20260619-001', {
       data: {
         campaign_id: 'APT-20260619-001',
+        state_version: 7,
         campaign_type: 'APT 定向窃密',
         score: 0.92,
         summary: '园区科研网络定向窃密战役',
@@ -29,7 +30,36 @@ describe('campaignDetailApi', () => {
         attack_phases: ['初始访问', '执行', '持久化', '横向移动', 'C2通信', '数据外传', '处置闭环'],
         rule_ids: ['C2_Tunnel_v3', 'Data_Exfil_v1'],
         model_ids: ['APT_Campaign_Cluster_v2'],
+        snapshot_id: 'campaign:APT-20260619-001:revision:7:0123456789abcdef',
+        snapshot_sha256: '0'.repeat(64),
+        reports: [
+          {
+            report_id: 'campaign-report-a', job_id: 'campaign-job-a', format: 'pdf', status: 'completed',
+            campaign_revision: 8,
+            source_snapshot_id: 'campaign:APT-20260619-001:revision:7:0123456789abcdef',
+            snapshot_id: '00000000-0000-4000-8000-000000000008',
+            snapshot_sha256: '1'.repeat(64), artifact_sha256: '2'.repeat(64), size_bytes: 4096, attempts: 1,
+          },
+        ],
       },
+      meta: {
+        contract_version: 3,
+        snapshot_id: 'campaign:APT-20260619-001:revision:7:0123456789abcdef',
+        partial: false,
+        missing_sections: [],
+        source_watermarks: { 'postgresql.campaign_workbench_state.revision': '7' },
+      },
+    });
+
+    expect(snapshot.stateVersion).toBe(7);
+    expect(snapshot.snapshotId).toBe('campaign:APT-20260619-001:revision:7:0123456789abcdef');
+    expect(snapshot.partial).toBe(false);
+    expect(snapshot.sourceWatermarks).toEqual({ 'postgresql.campaign_workbench_state.revision': '7' });
+    expect(snapshot.reports[0]).toMatchObject({
+      reportId: 'campaign-report-a',
+      campaignRevision: 8,
+      sourceSnapshotId: 'campaign:APT-20260619-001:revision:7:0123456789abcdef',
+      snapshotId: '00000000-0000-4000-8000-000000000008',
     });
 
     expect(snapshot.campaignId).toBe('APT-20260619-001');
@@ -101,6 +131,19 @@ describe('campaignDetailApi', () => {
     expect(snapshot.evidenceRail[1].available).toBe(false);
     expect(snapshot.statusTransitions).toEqual([]);
     expect(snapshot.status).toBe('进行中');
+    expect(snapshot.metrics.find((item) => item.label === '处置进度')?.value).toBe('暂不可用');
+  });
+
+  it('uses only explicit campaign response progress unless the campaign is closed', () => {
+    const active = normalizeCampaignDetailSnapshot('APT-PROGRESS', {
+      data: { campaign_id: 'APT-PROGRESS', status: 'investigating', response_progress: 41 },
+    });
+    const closed = normalizeCampaignDetailSnapshot('APT-CLOSED', {
+      data: { campaign_id: 'APT-CLOSED', status: 'closed' },
+    });
+
+    expect(active.metrics.find((item) => item.label === '处置进度')?.value).toBe('41%');
+    expect(closed.metrics.find((item) => item.label === '处置进度')?.value).toBe('100%');
   });
 
   it('maps department impact payload rows and progress percentages', () => {

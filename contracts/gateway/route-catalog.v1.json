@@ -1,0 +1,4655 @@
+{
+  "schema_version": 1,
+  "control_id": "T-GW-001",
+  "status": "candidate_default_off",
+  "production_applied": false,
+  "authority": {
+    "route_source": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+    "route_source_sha256": "86f9938071f94fbc7db5c548f179938b89c199300e474615cce4a1269612efd7",
+    "rendered_apisix_sha256": "7ec73cd52560c30b8fc285e365644200f252834a90d453db1f584e5753d3ad78",
+    "openapi_source": "contracts/openapi/alignment-v1.openapi.json",
+    "openapi_sha256": "ff966bef98ef0c863ac553b99244359a5498b2b93ca61f88da3a7d5edabbd54b"
+  },
+  "trust_zones": {
+    "public_web_ui": "static application shell only; no business API authorization",
+    "public_identity": "identity protocol endpoints; authentication cannot precede login",
+    "business_api": "authenticated tenant-bound REST operations",
+    "business_websocket": "authenticated tenant-bound streaming session",
+    "internal_management": "operator-only infrastructure administration"
+  },
+  "policy_contract": {
+    "external_tls_boundary": "external load balancer or ingress; evidence required before G2",
+    "admin_api_exposure": "ClusterIP only; external exposure forbidden",
+    "tenant_identity": "trusted authenticated claim only; request tenant headers are not authoritative",
+    "timeout_and_retry": "explicit per route; mutation retries require idempotency proof",
+    "audit": "gateway access trace plus transactional service audit for business mutations",
+    "rollout": "content-hashed shadow, internal tenant canary, atomic previous-hash rollback"
+  },
+  "routes": [
+    {
+      "route_id": "1",
+      "uri": "/grafana",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "grafana.observability.svc:3000",
+            "host": "grafana.observability.svc",
+            "port": "3000",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/10-observability.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "115c97f6ad16d1afbbc798a59cf33269e6b7c1b33e786c508649f9f5a9d58758"
+    },
+    {
+      "route_id": "2",
+      "uri": "/nacos",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": null,
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "redirect": {
+          "uri": "/nacos/",
+          "ret_code": 301
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected"
+      ],
+      "source_sha256": "66cc07a6e398d24744e6bb49275a0f32de0b66292c8746a5a08775fb401759ab"
+    },
+    {
+      "route_id": "3",
+      "uri": "/flink",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": null,
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "redirect": {
+          "uri": "/flink/",
+          "ret_code": 301
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected"
+      ],
+      "source_sha256": "ca7796ce490237dcbffca13e83bfb013ece828a618c20713bc1aa15782c30050"
+    },
+    {
+      "route_id": "4",
+      "uri": "/kafka-ui",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "kafka-ui.middleware.svc:8080",
+            "host": "kafka-ui.middleware.svc",
+            "port": "8080",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/01-kafka.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "80c68ebc46c87d60afd302fe10adc096599d2bd9ea7e0bb11f0aae1a33599ca1"
+    },
+    {
+      "route_id": "5",
+      "uri": "/auth",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "public_identity",
+      "owner": "identity-platform-owner",
+      "upstream": null,
+      "authentication": {
+        "required": false,
+        "observed_plugins": [],
+        "status": "not_required"
+      },
+      "authorization": {
+        "enforcement": "not_required",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": false
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "redirect": {
+          "uri": "/auth/",
+          "ret_code": 301
+        }
+      },
+      "blocking_gaps": [
+        "gateway_rate_limit_missing"
+      ],
+      "source_sha256": "a43d85447ccb5fc0e0e4fbb3ab7e4156546aca0663117bac11d9a61622c4ecc8"
+    },
+    {
+      "route_id": "6",
+      "uri": "/streampark",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": null,
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "redirect": {
+          "uri": "/streampark/",
+          "ret_code": 301
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected"
+      ],
+      "source_sha256": "cc2acb347f536b55fcab166224ab140136c242d261ce28a11457eb756e59b797"
+    },
+    {
+      "route_id": "7",
+      "uri": "/argo",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": null,
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "redirect": {
+          "uri": "/argo/",
+          "ret_code": 301
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected"
+      ],
+      "source_sha256": "40f7c7f5a2a827d65598b25d6cd5406d6a3fb9bdbe07e734c1b9b190c8b175a7"
+    },
+    {
+      "route_id": "8",
+      "uri": "/nebula",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": null,
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "redirect": {
+          "uri": "/nebula/",
+          "ret_code": 301
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected"
+      ],
+      "source_sha256": "c3807457dd0e7ad66967388ba5aff2f041b098724a29f7dda802586b4d967dda"
+    },
+    {
+      "route_id": "9",
+      "uri": "/minio",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": null,
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "redirect": {
+          "uri": "/minio/",
+          "ret_code": 301
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected"
+      ],
+      "source_sha256": "2fae088d2d8264227aa55e6ec3e169c5844d70043abab9a5096a2e569858c9cb"
+    },
+    {
+      "route_id": "10",
+      "uri": "/apicurio",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "apicurio.registry.svc:8080",
+            "host": "apicurio.registry.svc",
+            "port": "8080",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/11-management.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "9fd2ce407c7c497dcb8c8a6d0dd6f60bbaf01dbb20fb691f71089377a0c0135f"
+    },
+    {
+      "route_id": "11",
+      "uri": "/api/v1/alerts*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "alert:export",
+          "alert:read",
+          "campaign:read",
+          "campaign:write",
+          "playbook:approve",
+          "playbook:execute",
+          "playbook:read"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "searchAlertsCursorV1",
+          "method": "POST",
+          "path": "/api/v1/alerts/search",
+          "feature_id": "F-SEARCH-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "closeAlertSearchCursorV1",
+          "method": "DELETE",
+          "path": "/api/v1/alerts/search/cursor",
+          "feature_id": "F-SEARCH-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listAlertCampaignLinks",
+          "method": "GET",
+          "path": "/api/v1/alerts/{id}/campaign-links",
+          "feature_id": "F-ALERT-002",
+          "required_scope": "campaign:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "linkAlertToCampaign",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/campaign-links",
+          "feature_id": "F-ALERT-002",
+          "required_scope": "campaign:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "unlinkAlertFromCampaign",
+          "method": "DELETE",
+          "path": "/api/v1/alerts/{id}/campaign-links/{campaign_id}",
+          "feature_id": "F-ALERT-002",
+          "required_scope": "campaign:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createAlertReport",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/reports/export",
+          "feature_id": "F-ALERT-001",
+          "required_scope": "alert:export",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAlertReportJob",
+          "method": "GET",
+          "path": "/api/v1/alerts/{id}/reports/{job_id}",
+          "feature_id": "F-ALERT-001",
+          "required_scope": "alert:export",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "cancelAlertReport",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/reports/{job_id}/cancel",
+          "feature_id": "F-ALERT-001",
+          "required_scope": "alert:export",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "compensateAlertReport",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/reports/{job_id}/compensations",
+          "feature_id": "F-ALERT-001",
+          "required_scope": "alert:export",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "downloadAlertReport",
+          "method": "GET",
+          "path": "/api/v1/alerts/{id}/reports/{job_id}/download",
+          "feature_id": "F-ALERT-001",
+          "required_scope": "alert:export",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createAlertResponseAction",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/response-actions",
+          "feature_id": "F-COMMON-003",
+          "required_scope": "playbook:execute",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAlertResponseAction",
+          "method": "GET",
+          "path": "/api/v1/alerts/{id}/response-actions/{job_id}",
+          "feature_id": "F-COMMON-003",
+          "required_scope": "playbook:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "decideAlertResponseAction",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/response-actions/{job_id}/approval",
+          "feature_id": "F-COMMON-003",
+          "required_scope": "playbook:approve",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "cancelAlertResponseAction",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/response-actions/{job_id}/cancel",
+          "feature_id": "F-COMMON-003",
+          "required_scope": "playbook:execute",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "requestAlertResponseCompensation",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/response-actions/{job_id}/compensations",
+          "feature_id": "F-COMMON-003",
+          "required_scope": "playbook:approve",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "b185f7035ad97384f130a886a49a84a52fccb5bbf38f8c35735ec4a6bded9958"
+    },
+    {
+      "route_id": "12",
+      "uri": "/api/v1/auth*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "auth-service.traffic-analysis.svc:8081",
+            "host": "auth-service.traffic-analysis.svc",
+            "port": "8081",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "user:write"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "updateAuthenticatedUserProfileAtomic",
+          "method": "PATCH",
+          "path": "/api/v1/auth/me",
+          "feature_id": "F-AUTH-001",
+          "required_scope": "user:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "changeAuthenticatedUserPasswordAtomic",
+          "method": "POST",
+          "path": "/api/v1/auth/me/password",
+          "feature_id": "F-AUTH-001",
+          "required_scope": "user:write",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "3e55f555a25b226e41b059e5a3f976c0c98d0e2ded1f32f17873c098bf7b2a55"
+    },
+    {
+      "route_id": "13",
+      "uri": "/api/v1/graph*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "graph-service.traffic-analysis.svc:8085",
+            "host": "graph-service.traffic-analysis.svc",
+            "port": "8085",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "graph:read"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "exploreBoundedGraph",
+          "method": "GET",
+          "path": "/api/v1/graph/explore",
+          "feature_id": "F-GRAPH-001",
+          "required_scope": "graph:read",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "3c4e7e761a3395d9076247a8d7601a6be40f33250107bb667422da402e7a1f06"
+    },
+    {
+      "route_id": "14",
+      "uri": "/api/v1/rules*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "rule-manager.traffic-analysis.svc:8084",
+            "host": "rule-manager.traffic-analysis.svc",
+            "port": "8084",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/rule-manager.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "019e4b5e7cee650d3e37bb1fe7fd10d882d8828ddbcf601c9d5fa55275e7f84b"
+    },
+    {
+      "route_id": "15",
+      "uri": "/api/v1/forensics*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "forensics-service.traffic-analysis.svc:8086",
+            "host": "forensics-service.traffic-analysis.svc",
+            "port": "8086",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/forensics-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "f516cff225e7fabf6c0aa493017e86d7aab9772b08bae5d859512d3359d883da"
+    },
+    {
+      "route_id": "16",
+      "uri": "/api/v1/assets*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "asset-service.traffic-analysis.svc:8083",
+            "host": "asset-service.traffic-analysis.svc",
+            "port": "8083",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/asset-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "asset:discover",
+          "asset:export",
+          "asset:govern",
+          "asset:read"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "listAssetsV2",
+          "method": "GET",
+          "path": "/api/v1/assets",
+          "feature_id": "F-ASSET-001",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "upsertAssetV2",
+          "method": "POST",
+          "path": "/api/v1/assets",
+          "feature_id": "F-ASSET-002",
+          "required_scope": "asset:govern",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listAssetDiscoveryCredentials",
+          "method": "GET",
+          "path": "/api/v1/assets/discovery/credentials",
+          "feature_id": "F-ASSET-003",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "upsertAssetDiscoveryCredential",
+          "method": "POST",
+          "path": "/api/v1/assets/discovery/credentials",
+          "feature_id": "F-ASSET-003",
+          "required_scope": "asset:discover",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listAssetDiscoveryJobs",
+          "method": "GET",
+          "path": "/api/v1/assets/discovery/runs",
+          "feature_id": "F-ASSET-003",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createAssetDiscoveryJob",
+          "method": "POST",
+          "path": "/api/v1/assets/discovery/runs",
+          "feature_id": "F-ASSET-003",
+          "required_scope": "asset:discover",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAssetDiscoveryJob",
+          "method": "GET",
+          "path": "/api/v1/assets/discovery/runs/{run_id}",
+          "feature_id": "F-ASSET-003",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "cancelAssetDiscoveryJob",
+          "method": "POST",
+          "path": "/api/v1/assets/discovery/runs/{run_id}/cancel",
+          "feature_id": "F-ASSET-003",
+          "required_scope": "asset:discover",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listAssetDiscoveryCandidates",
+          "method": "GET",
+          "path": "/api/v1/assets/discovery/runs/{run_id}/candidates",
+          "feature_id": "F-ASSET-003",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "mergeAssetDiscoveryCandidate",
+          "method": "POST",
+          "path": "/api/v1/assets/discovery/runs/{run_id}/candidates/{candidate_id}/merge",
+          "feature_id": "F-ASSET-003",
+          "required_scope": "asset:discover",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listAssetDiscoveryJobHistory",
+          "method": "GET",
+          "path": "/api/v1/assets/discovery/runs/{run_id}/history",
+          "feature_id": "F-ASSET-003",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createAssetExportJob",
+          "method": "POST",
+          "path": "/api/v1/assets/exports",
+          "feature_id": "F-ASSET-004",
+          "required_scope": "asset:export",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAssetExportJob",
+          "method": "GET",
+          "path": "/api/v1/assets/exports/{job_id}",
+          "feature_id": "F-ASSET-004",
+          "required_scope": "asset:export",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "downloadAssetExport",
+          "method": "GET",
+          "path": "/api/v1/assets/exports/{job_id}/download",
+          "feature_id": "F-ASSET-004",
+          "required_scope": "asset:export",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAssetGovernanceWorkOrder",
+          "method": "GET",
+          "path": "/api/v1/assets/governance/work-orders/{work_order_id}",
+          "feature_id": "F-ASSET-006",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "applyAssetGovernanceAction",
+          "method": "POST",
+          "path": "/api/v1/assets/governance/work-orders/{work_order_id}/actions",
+          "feature_id": "F-ASSET-006",
+          "required_scope": "asset:govern",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAssetColumnPreference",
+          "method": "GET",
+          "path": "/api/v1/assets/preferences/columns",
+          "feature_id": "F-ASSET-004",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "updateAssetColumnPreference",
+          "method": "PUT",
+          "path": "/api/v1/assets/preferences/columns",
+          "feature_id": "F-ASSET-004",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listAssetGovernanceWorkOrders",
+          "method": "GET",
+          "path": "/api/v1/assets/{asset_id}/governance/work-orders",
+          "feature_id": "F-ASSET-006",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createAssetGovernanceWorkOrder",
+          "method": "POST",
+          "path": "/api/v1/assets/{asset_id}/governance/work-orders",
+          "feature_id": "F-ASSET-006",
+          "required_scope": "asset:govern",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAssetDetailSnapshot",
+          "method": "GET",
+          "path": "/api/v1/assets/{asset_id}/snapshot",
+          "feature_id": "F-ASSET-005",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAssetLegacyCompatible",
+          "method": "GET",
+          "path": "/api/v1/assets/{id}",
+          "feature_id": "F-ASSET-005",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAssetDetailsLegacyCompatible",
+          "method": "GET",
+          "path": "/api/v1/assets/{id}/details",
+          "feature_id": "F-ASSET-005",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAssetHistoryLegacyCompatible",
+          "method": "GET",
+          "path": "/api/v1/assets/{id}/history",
+          "feature_id": "F-ASSET-005",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAssetTopologyLegacyCompatible",
+          "method": "GET",
+          "path": "/api/v1/assets/{id}/topology",
+          "feature_id": "F-ASSET-005",
+          "required_scope": "asset:read",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "9b77a2f5f3dff2a464cbc41b2314add675c9849cc2c8942e17d56c0ce48481f1"
+    },
+    {
+      "route_id": "17",
+      "uri": "/api/v1/dashboard*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "alert:read",
+          "dashboard:write"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "getDashboardAlertTrend",
+          "method": "GET",
+          "path": "/api/v1/dashboard/alerts/trend",
+          "feature_id": "F-DASHBOARD-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getDashboardAttackPhases",
+          "method": "GET",
+          "path": "/api/v1/dashboard/attack-phases",
+          "feature_id": "F-DASHBOARD-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getDashboardEncryptedTrend",
+          "method": "GET",
+          "path": "/api/v1/dashboard/encrypted/trend",
+          "feature_id": "F-DASHBOARD-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getDashboardSnapshot",
+          "method": "GET",
+          "path": "/api/v1/dashboard/snapshot",
+          "feature_id": "F-DASHBOARD-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getDashboardStats",
+          "method": "GET",
+          "path": "/api/v1/dashboard/stats",
+          "feature_id": "F-DASHBOARD-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createDashboardTask",
+          "method": "POST",
+          "path": "/api/v1/dashboard/tasks",
+          "feature_id": "F-DASHBOARD-002",
+          "required_scope": "dashboard:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createDashboardAuditTask",
+          "method": "POST",
+          "path": "/api/v1/dashboard/tasks/audit",
+          "feature_id": "F-DASHBOARD-002",
+          "required_scope": "dashboard:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createDashboardComplianceTask",
+          "method": "POST",
+          "path": "/api/v1/dashboard/tasks/compliance",
+          "feature_id": "F-DASHBOARD-002",
+          "required_scope": "dashboard:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createDashboardEvidenceTask",
+          "method": "POST",
+          "path": "/api/v1/dashboard/tasks/evidence",
+          "feature_id": "F-DASHBOARD-002",
+          "required_scope": "dashboard:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createDashboardFeedbackTask",
+          "method": "POST",
+          "path": "/api/v1/dashboard/tasks/feedback",
+          "feature_id": "F-DASHBOARD-002",
+          "required_scope": "dashboard:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createDashboardSLATask",
+          "method": "POST",
+          "path": "/api/v1/dashboard/tasks/sla",
+          "feature_id": "F-DASHBOARD-002",
+          "required_scope": "dashboard:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getDashboardTask",
+          "method": "GET",
+          "path": "/api/v1/dashboard/tasks/{task_id}",
+          "feature_id": "F-DASHBOARD-002",
+          "required_scope": "dashboard:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getDashboardTopIPs",
+          "method": "GET",
+          "path": "/api/v1/dashboard/top-ips/{type}",
+          "feature_id": "F-DASHBOARD-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "eeb322c509713395ccc21df5dd9ee014efd4034f5f5d799c9fec24be88c353d4"
+    },
+    {
+      "route_id": "18",
+      "uri": "/api/v1/campaigns*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "campaign:read",
+          "campaign:report",
+          "campaign:write",
+          "playbook:approve",
+          "playbook:execute",
+          "playbook:read"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "listCampaigns",
+          "method": "GET",
+          "path": "/api/v1/campaigns",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "campaign:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getCampaignCommandJob",
+          "method": "GET",
+          "path": "/api/v1/campaigns/jobs/{job_id}",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "campaign:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getCampaign",
+          "method": "GET",
+          "path": "/api/v1/campaigns/{id}",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "campaign:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "submitCampaignCommand",
+          "method": "POST",
+          "path": "/api/v1/campaigns/{id}/actions",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "campaign:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listCampaignMembers",
+          "method": "GET",
+          "path": "/api/v1/campaigns/{id}/members",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "campaign:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getCampaignReport",
+          "method": "GET",
+          "path": "/api/v1/campaigns/{id}/reports/{report_id}",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "campaign:report",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "downloadCampaignReport",
+          "method": "GET",
+          "path": "/api/v1/campaigns/{id}/reports/{report_id}/download",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "campaign:report",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getCampaignSOARJob",
+          "method": "GET",
+          "path": "/api/v1/campaigns/{id}/soar-jobs/{job_id}",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "playbook:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "decideCampaignSOARJob",
+          "method": "POST",
+          "path": "/api/v1/campaigns/{id}/soar-jobs/{job_id}/approval",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "playbook:approve",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "cancelCampaignSOARJob",
+          "method": "POST",
+          "path": "/api/v1/campaigns/{id}/soar-jobs/{job_id}/cancel",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "playbook:execute",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "compensateCampaignSOARJob",
+          "method": "POST",
+          "path": "/api/v1/campaigns/{id}/soar-jobs/{job_id}/compensate",
+          "feature_id": "F-CAMPAIGN-001",
+          "required_scope": "playbook:approve",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "826216d1862cef72cc5391e2ba817632639b4f86c4fc9769d5a834eb4d33db4a"
+    },
+    {
+      "route_id": "19",
+      "uri": "/api/v1/attack-chains*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "b4c1e79aae84a4d91641e5d41cf9c8239edcbc30a15a4686852112c97fa47f57"
+    },
+    {
+      "route_id": "20",
+      "uri": "/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "public_web_ui",
+      "owner": "web-ui-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "web-ui.traffic-analysis.svc:80",
+            "host": "web-ui.traffic-analysis.svc",
+            "port": "80",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/web-ui.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": false,
+        "observed_plugins": [],
+        "status": "not_required"
+      },
+      "authorization": {
+        "enforcement": "not_required",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": false
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "b83a3aebad48610c7a182e34fd0e6abd6896a77d4bad9bf0ebecd7c439a45bbd"
+    },
+    {
+      "route_id": "21",
+      "uri": "/api/v1/pcap*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "forensics-service.traffic-analysis.svc:8086",
+            "host": "forensics-service.traffic-analysis.svc",
+            "port": "8086",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/forensics-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "d603b25523ce24d3f7b6d3aca59bbec8cb95239d3afe6e64cc57551c715cfc08"
+    },
+    {
+      "route_id": "22",
+      "uri": "/api/v1/deployments*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "rule-manager.traffic-analysis.svc:8084",
+            "host": "rule-manager.traffic-analysis.svc",
+            "port": "8084",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/rule-manager.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "9fdb7e963288d09baaf1602318d34e48f5192dedcd5e6a08b801be465d3d7a27"
+    },
+    {
+      "route_id": "23",
+      "uri": "/api/v1/whitelist*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "alert:read",
+          "alert:write"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "listWhitelistEntries",
+          "method": "GET",
+          "path": "/api/v1/whitelist",
+          "feature_id": "F-WHITELIST-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createWhitelistEntry",
+          "method": "POST",
+          "path": "/api/v1/whitelist",
+          "feature_id": "F-WHITELIST-001",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "checkWhitelistValue",
+          "method": "POST",
+          "path": "/api/v1/whitelist/check",
+          "feature_id": "F-WHITELIST-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "archiveWhitelistEntry",
+          "method": "DELETE",
+          "path": "/api/v1/whitelist/{id}",
+          "feature_id": "F-WHITELIST-001",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "transitionWhitelistEntry",
+          "method": "PATCH",
+          "path": "/api/v1/whitelist/{id}",
+          "feature_id": "F-WHITELIST-001",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "15224fc5c896629584c4780a4a59ff122b93a8e687326105e8a5709d6eca35dc"
+    },
+    {
+      "route_id": "24",
+      "uri": "/api/v1/probes*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "probe:ingest",
+          "probe:read",
+          "probe:write"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "getProbeOperation",
+          "method": "GET",
+          "path": "/api/v1/probes/operations/{operation_id}",
+          "feature_id": "F-PROBE-001",
+          "required_scope": "probe:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "pushProbeConfigV2",
+          "method": "POST",
+          "path": "/api/v1/probes/{id}/config",
+          "feature_id": "F-PROBE-001",
+          "required_scope": "probe:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "acknowledgeProbeOperation",
+          "method": "POST",
+          "path": "/api/v1/probes/{id}/operations/{operation_id}/ack",
+          "feature_id": "F-PROBE-001",
+          "required_scope": "probe:ingest",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "26362c0481384146c430125257b4976da5935c288ab6b7369e54ab729e1d7440"
+    },
+    {
+      "route_id": "25",
+      "uri": "/api/v1/encrypted-traffic*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "67591acf2245d8f13577a71507076831f69cec52e99a3088312ba25d6f17026c"
+    },
+    {
+      "route_id": "26",
+      "uri": "/api/v1/fusion*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "7d1030bf22d8062d3f288f9d3571084f55bb2451aa05524a20883b5d2eab0096"
+    },
+    {
+      "route_id": "27",
+      "uri": "/api/v1/baselines*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "eb5049eaa2d8f836b2939b315ce2cc8bb8578d64be3dc62acd37a9eec86d8dda"
+    },
+    {
+      "route_id": "28",
+      "uri": "/api/v1/compliance*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "3046a73d8a21b6ad10c18773edc85215e4534ba1b388577e19431c7694970259"
+    },
+    {
+      "route_id": "29",
+      "uri": "/api/v1/tokens*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "auth-service.traffic-analysis.svc:8081",
+            "host": "auth-service.traffic-analysis.svc",
+            "port": "8081",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "4a7e9794947a186eac7b2da683935126103abe10ea18fe10380d13f1bc7c35f6"
+    },
+    {
+      "route_id": "30",
+      "uri": "/api/v1/topics*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "topic:read",
+          "topic:write"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "createTopicActionJob",
+          "method": "POST",
+          "path": "/api/v1/topics/{topic}/actions",
+          "feature_id": "F-TOPIC-002",
+          "required_scope": "topic:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getTopicActionJob",
+          "method": "GET",
+          "path": "/api/v1/topics/{topic}/actions/{job_id}",
+          "feature_id": "F-TOPIC-002",
+          "required_scope": "topic:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getTopicSnapshot",
+          "method": "GET",
+          "path": "/api/v1/topics/{topic}/snapshot",
+          "feature_id": "F-TOPIC-001",
+          "required_scope": "topic:read",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "205beb433cd9a77f2e3f3395f06410892d578f4e079cbcad61f3a34cd352e904"
+    },
+    {
+      "route_id": "31",
+      "uri": "/api/v1/audit*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "744bcf9006ae4234ab97eeda395ccb39ac4d8059e6d3179ac689d2cbe48a6057"
+    },
+    {
+      "route_id": "32",
+      "uri": "/api/v1/evidence*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "1ce628dd83dff57bc35db7e6eb47c7bee7a1ebd6ba5e0a3f95bd7e7dfbed5157"
+    },
+    {
+      "route_id": "33",
+      "uri": "/api/v1/models*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "rule-manager.traffic-analysis.svc:8084",
+            "host": "rule-manager.traffic-analysis.svc",
+            "port": "8084",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/rule-manager.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "6c9632c8c4f3801ec5196b692b6b4635fc80faa3aba5c35e88e0411a8b0cf4bc"
+    },
+    {
+      "route_id": "34",
+      "uri": "/api/v1/mlops*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "rule-manager.traffic-analysis.svc:8084",
+            "host": "rule-manager.traffic-analysis.svc",
+            "port": "8084",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/rule-manager.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "d4a5bed9ad5881eb93c10c98e5cefdc451b7a77bae5dbdeebdfd1e24293292d4"
+    },
+    {
+      "route_id": "35",
+      "uri": "/api/v1/feedback*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "d376620b014597b02c5b1c4fee122c7f10d025e66e5c88f6388b5c1e19433a90"
+    },
+    {
+      "route_id": "36",
+      "uri": "/api/v1/risk*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "bc2b5e3b38d57d21f826abfd730ab3042fab5c43cdd2e46fdfa5c23f34c184e3"
+    },
+    {
+      "route_id": "37",
+      "uri": "/api/v1/playbooks*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "playbook:approve",
+          "playbook:execute",
+          "playbook:read"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "getPlaybookExecution",
+          "method": "GET",
+          "path": "/api/v1/playbooks/executions/{execution_id}",
+          "feature_id": "F-PLAYBOOK-001",
+          "required_scope": "playbook:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "decidePlaybookExecution",
+          "method": "POST",
+          "path": "/api/v1/playbooks/executions/{execution_id}/approval",
+          "feature_id": "F-PLAYBOOK-001",
+          "required_scope": "playbook:approve",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "cancelPlaybookExecution",
+          "method": "POST",
+          "path": "/api/v1/playbooks/executions/{execution_id}/cancel",
+          "feature_id": "F-PLAYBOOK-001",
+          "required_scope": "playbook:execute",
+          "compatibility_scopes": [
+            "playbook:write",
+            "alert:write"
+          ]
+        },
+        {
+          "operation_id": "compensatePlaybookExecution",
+          "method": "POST",
+          "path": "/api/v1/playbooks/executions/{execution_id}/compensate",
+          "feature_id": "F-PLAYBOOK-001",
+          "required_scope": "playbook:approve",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "requestPlaybookExecution",
+          "method": "POST",
+          "path": "/api/v1/playbooks/{name}/execute",
+          "feature_id": "F-PLAYBOOK-001",
+          "required_scope": "playbook:execute",
+          "compatibility_scopes": [
+            "playbook:write",
+            "alert:write"
+          ]
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "189611c34e99428e90cf1e62a98c262503c63beb0e3a54fabdc064b6634adce6"
+    },
+    {
+      "route_id": "38",
+      "uri": "/api/v1/data-quality*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "data-quality:read",
+          "data-quality:write"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "getDataQualityControlPlaneSnapshot",
+          "method": "GET",
+          "path": "/api/v1/data-quality",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createDataQualityContextAction",
+          "method": "POST",
+          "path": "/api/v1/data-quality/actions",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "activateDataQualityBaseline",
+          "method": "POST",
+          "path": "/api/v1/data-quality/baseline",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listDataQualityDatasets",
+          "method": "GET",
+          "path": "/api/v1/data-quality/datasets",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "upsertDataQualityDataset",
+          "method": "PUT",
+          "path": "/api/v1/data-quality/datasets/{dataset_id}",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createDataQualityRepair",
+          "method": "POST",
+          "path": "/api/v1/data-quality/events/{quality_event_id}/repairs",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "transitionDataQualityRepair",
+          "method": "POST",
+          "path": "/api/v1/data-quality/repairs/{repair_id}/transitions",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listDataQualityRules",
+          "method": "GET",
+          "path": "/api/v1/data-quality/rules",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createDataQualityRuleDraft",
+          "method": "POST",
+          "path": "/api/v1/data-quality/rules",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "transitionDataQualityRule",
+          "method": "POST",
+          "path": "/api/v1/data-quality/rules/{rule_id}/transitions",
+          "feature_id": "F-DATAQUALITY-001",
+          "required_scope": "data-quality:write",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "c82a850eea773004e620ba14287595dc7bba62808b649f315dac0178c49bafb8"
+    },
+    {
+      "route_id": "39",
+      "uri": "/api/v1/notify*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "6564270ac7490310c93b7f0ca2fb2052d15c43ffb1b3066374b1c2391c61ecae"
+    },
+    {
+      "route_id": "40",
+      "uri": "/api/v1/notifications*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "4d627712a653b76a53d7b273ede3142c384fccea5fa1af89cdbde855c51474c4"
+    },
+    {
+      "route_id": "41",
+      "uri": "/api/v1/dlq*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "ingest-gateway.traffic-analysis.svc:8080",
+            "host": "ingest-gateway.traffic-analysis.svc",
+            "port": "8080",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/ingest-gateway.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "6204614a5f75804faad1dbec08081f626401ca845ceb1a597e3fd24b6ce8922d"
+    },
+    {
+      "route_id": "42",
+      "uri": "/ws*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_websocket",
+      "owner": "alert-domain-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": true,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "5118c6f8ebc8917b6ef1a66eb88fc12060dc85062f8d0ff30bb84ac29566bef4"
+    },
+    {
+      "route_id": "43",
+      "uri": "/api/v1/threat-intel*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "threat-intel-service.traffic-analysis.svc:8087",
+            "host": "threat-intel-service.traffic-analysis.svc",
+            "port": "8087",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "ff1c6978b30632c6f849d451f7161406cffcc385680b57ba332cb1feadd71e6a"
+    },
+    {
+      "route_id": "44",
+      "uri": "/api/v1/probes/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "business_api",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "alert-service.traffic-analysis.svc:8082",
+            "host": "alert-service.traffic-analysis.svc",
+            "port": "8082",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/applications/go-services.yaml",
+              "go/control-plane/deployments/kubernetes/alert-service.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [
+          "probe:ingest",
+          "probe:read",
+          "probe:write"
+        ],
+        "operations_missing_scope": []
+      },
+      "tenant_source": "authenticated_tenant_claim",
+      "limits": {
+        "body_bytes": null,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [
+        {
+          "operation_id": "getProbeOperation",
+          "method": "GET",
+          "path": "/api/v1/probes/operations/{operation_id}",
+          "feature_id": "F-PROBE-001",
+          "required_scope": "probe:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "pushProbeConfigV2",
+          "method": "POST",
+          "path": "/api/v1/probes/{id}/config",
+          "feature_id": "F-PROBE-001",
+          "required_scope": "probe:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "acknowledgeProbeOperation",
+          "method": "POST",
+          "path": "/api/v1/probes/{id}/operations/{operation_id}/ack",
+          "feature_id": "F-PROBE-001",
+          "required_scope": "probe:ingest",
+          "compatibility_scopes": []
+        }
+      ],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "01e31079567a285ca5ecddf3a974aa0da14a6f4a623f20eac373870c18b6160f"
+    },
+    {
+      "route_id": "101",
+      "uri": "/grafana/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "grafana.observability.svc:3000",
+            "host": "grafana.observability.svc",
+            "port": "3000",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/10-observability.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "8b06000a7542b6d113a6d421ae58da7bdeb922d3929056476a99ba5ce469b826"
+    },
+    {
+      "route_id": "102",
+      "uri": "/nacos/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "nacos.nacos.svc:8848",
+            "host": "nacos.nacos.svc",
+            "port": "8848",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/11-management.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "proxy-rewrite": {
+          "regex_uri": [
+            "^/nacos(.*)",
+            "/nacos$1"
+          ]
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "e93cf9e37533419c065e71f60558028b9e9b3431ba1264e3b39f86073d9031da"
+    },
+    {
+      "route_id": "103",
+      "uri": "/flink/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "flink-jobmanager.flink.svc:8081",
+            "host": "flink-jobmanager.flink.svc",
+            "port": "8081",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/.archive/07-flink.yaml",
+              "deployments/kubernetes/infrastructure/07-flink.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "proxy-rewrite": {
+          "regex_uri": [
+            "^/flink(.*)",
+            "$1"
+          ]
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "eff79b38953352b3f8fc750de556c21bd65fb33943c31cebea033fdb1a12669e"
+    },
+    {
+      "route_id": "104",
+      "uri": "/kafka-ui/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "kafka-ui.middleware.svc:8080",
+            "host": "kafka-ui.middleware.svc",
+            "port": "8080",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/01-kafka.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "ad80f3f0b9deeaa4563fbecea700a794e66de92efc2a08b2001aa78a617574e4"
+    },
+    {
+      "route_id": "105",
+      "uri": "/auth/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "public_identity",
+      "owner": "identity-platform-owner",
+      "upstream": {
+        "scheme": "https",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "keycloak.iam.svc:8443",
+            "host": "keycloak.iam.svc",
+            "port": "8443",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/08-gateway.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": false,
+        "observed_plugins": [],
+        "status": "not_required"
+      },
+      "authorization": {
+        "enforcement": "not_required",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": false
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "proxy-rewrite": {
+          "regex_uri": [
+            "^/auth(.*)",
+            "$1"
+          ]
+        }
+      },
+      "blocking_gaps": [
+        "gateway_rate_limit_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "63932e41860b6d22933c6ac56f6599b17e2defe7b8cf9790e55eef371ed9ee29"
+    },
+    {
+      "route_id": "106",
+      "uri": "/streampark/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "streampark-proxy.streampark.svc:8080",
+            "host": "streampark-proxy.streampark.svc",
+            "port": "8080",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/.archive/streampark-proxy-svc.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "proxy-rewrite": {
+          "regex_uri": [
+            "^/streampark(.*)",
+            "$1"
+          ]
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "e2ed7c3c25365b9d771a6ca2cfb939b929156c0a565bc83a901b219ed6d1d2b9"
+    },
+    {
+      "route_id": "107",
+      "uri": "/argo/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "argo-server.argo.svc:2746",
+            "host": "argo-server.argo.svc",
+            "port": "2746",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/11-management.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "proxy-rewrite": {
+          "regex_uri": [
+            "^/argo(.*)",
+            "$1"
+          ]
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "f6cf2047ae18a2d21ae3a1f8f486d610449895ca62dc9696eafc9a57f3a1de9d"
+    },
+    {
+      "route_id": "108",
+      "uri": "/nebula/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "nebula-proxy.middleware.svc:7002",
+            "host": "nebula-proxy.middleware.svc",
+            "port": "7002",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/.archive/nebula-proxy-svc.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "proxy-rewrite": {
+          "regex_uri": [
+            "^/nebula(.*)",
+            "$1"
+          ]
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "3b8ef0a9a2e3478b09efad08bef265961e3dca96f2ec15761278c1a452a4def1"
+    },
+    {
+      "route_id": "109",
+      "uri": "/minio/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "minio-proxy.minio.svc:9002",
+            "host": "minio-proxy.minio.svc",
+            "port": "9002",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/06-minio.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {
+        "proxy-rewrite": {
+          "regex_uri": [
+            "^/minio(.*)",
+            "$1"
+          ]
+        }
+      },
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "b047d535b75c2a8e37398ef8afdb692f2d0690813532bc5990e7027ddf7e8b17"
+    },
+    {
+      "route_id": "110",
+      "uri": "/apicurio/*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "internal_management",
+      "owner": "security-platform-owner",
+      "upstream": {
+        "scheme": "http",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "apicurio.registry.svc:8080",
+            "host": "apicurio.registry.svc",
+            "port": "8080",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/11-management.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": true,
+        "observed_plugins": [],
+        "status": "missing"
+      },
+      "authorization": {
+        "enforcement": "service_operation_scope",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": true
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_authentication_missing",
+        "gateway_body_limit_missing",
+        "gateway_rate_limit_missing",
+        "gateway_request_validation_missing",
+        "management_entry_not_gateway_protected",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "cfb9170369851e52cf4bd0600c65c498aafd8390e0d2bec3e502e469516d8de9"
+    },
+    {
+      "route_id": "111",
+      "uri": "/realms*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "public_identity",
+      "owner": "identity-platform-owner",
+      "upstream": {
+        "scheme": "https",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "keycloak.iam.svc:8443",
+            "host": "keycloak.iam.svc",
+            "port": "8443",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/08-gateway.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": false,
+        "observed_plugins": [],
+        "status": "not_required"
+      },
+      "authorization": {
+        "enforcement": "not_required",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": false
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_rate_limit_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "153fff5843c0e35c537b547501a518499596ccb121ce4141d3b5a5b9d193efe7"
+    },
+    {
+      "route_id": "112",
+      "uri": "/resources*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "public_identity",
+      "owner": "identity-platform-owner",
+      "upstream": {
+        "scheme": "https",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "keycloak.iam.svc:8443",
+            "host": "keycloak.iam.svc",
+            "port": "8443",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/08-gateway.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": false,
+        "observed_plugins": [],
+        "status": "not_required"
+      },
+      "authorization": {
+        "enforcement": "not_required",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": false
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_rate_limit_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "c6def0816b954560acec91f227dac582b27fa7d2151d511dd969ab34b2fc30c0"
+    },
+    {
+      "route_id": "113",
+      "uri": "/login-actions*",
+      "methods": [
+        "ANY"
+      ],
+      "priority": null,
+      "trust_zone": "public_identity",
+      "owner": "identity-platform-owner",
+      "upstream": {
+        "scheme": "https",
+        "type": "roundrobin",
+        "nodes": [
+          {
+            "endpoint": "keycloak.iam.svc:8443",
+            "host": "keycloak.iam.svc",
+            "port": "8443",
+            "weight": 1,
+            "service_declared": true,
+            "service_sources": [
+              "deployments/kubernetes/infrastructure/08-gateway.yaml"
+            ]
+          }
+        ],
+        "timeout": null,
+        "retries": null
+      },
+      "authentication": {
+        "required": false,
+        "observed_plugins": [],
+        "status": "not_required"
+      },
+      "authorization": {
+        "enforcement": "not_required",
+        "required_scopes": [],
+        "operations_missing_scope": []
+      },
+      "tenant_source": null,
+      "limits": {
+        "body_bytes": null,
+        "field_limits": null,
+        "rate_limit_plugins": []
+      },
+      "cors": null,
+      "cache": null,
+      "websocket": false,
+      "audit": {
+        "gateway_plugin": null,
+        "service_business_audit_required": false
+      },
+      "rollback": {
+        "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+        "strategy": "restore_previous_content_hash_and_restart_statefulset"
+      },
+      "openapi_operations": [],
+      "plugins": {},
+      "blocking_gaps": [
+        "gateway_rate_limit_missing",
+        "upstream_retry_implicit",
+        "upstream_timeout_implicit"
+      ],
+      "source_sha256": "04a887b768df67d30a662565748775595853423a12e4447a48d3e5e1efa8a238"
+    }
+  ],
+  "openapi_coverage": {
+    "operations": 93,
+    "uncovered_operation_ids": [],
+    "overlapping_operation_routes": {
+      "acknowledgeProbeOperation": [
+        "24",
+        "44"
+      ],
+      "getProbeOperation": [
+        "24",
+        "44"
+      ],
+      "pushProbeConfigV2": [
+        "24",
+        "44"
+      ]
+    },
+    "operations_missing_required_scope": []
+  },
+  "counts": {
+    "routes": 57,
+    "route_ids": 57,
+    "protected_routes": 51,
+    "protected_routes_with_gateway_auth": 0,
+    "routes_with_blocking_gaps": 57,
+    "declared_services": 62,
+    "gap_counts": {
+      "gateway_authentication_missing": 51,
+      "gateway_body_limit_missing": 51,
+      "gateway_rate_limit_missing": 56,
+      "gateway_request_validation_missing": 51,
+      "management_entry_not_gateway_protected": 18,
+      "upstream_retry_implicit": 50,
+      "upstream_timeout_implicit": 50
+    }
+  },
+  "acceptance": {
+    "catalog_integrity_gate": "must_pass",
+    "security_compliance_gate": "partial_until_blocking_gaps_empty",
+    "negative_tests": [
+      "undocumented_route",
+      "removed_route",
+      "protected_route_without_recorded_auth_gap",
+      "uncovered_openapi_operation",
+      "undeclared_upstream_service",
+      "admin_api_external_exposure"
+    ]
+  },
+  "catalog_sha256": "563890c4faa69209aa298ae74f2770e834b777b51c30b57f2ff0ac4ea96e6936"
+}

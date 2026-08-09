@@ -27,7 +27,7 @@ import { MetricTile } from '@/components/MetricTile';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
-import { fetchPageSnapshot, fetchProbeTopology, submitProbeOperation } from '@/services/api';
+import { fetchPageSnapshot, fetchProbeOperation, fetchProbeTopology, submitProbeOperation } from '@/services/api';
 import type { ProbeOperationActionId, ProbeOperationResult, ProbeTopologyGraph, ProbeTopologyNode, ProbeTopologyPoint } from '@/services/api';
 import { pageApiPlans } from '@/services/pageApiPlans';
 import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
@@ -94,6 +94,21 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
     refetchInterval: 15_000,
     refetchIntervalInBackground: true,
   });
+  const actionOperationIDs = useMemo(
+    () => actionResult?.operation_ids ?? (actionResult?.operation_id ? [actionResult.operation_id] : []),
+    [actionResult?.operation_id, actionResult?.operation_ids],
+  );
+  const { data: actionOperationStates = [] } = useQuery({
+    queryKey: ['probe-operation-state', actionOperationIDs],
+    queryFn: () => Promise.all(actionOperationIDs.map(fetchProbeOperation)),
+    enabled: actionSubmitted && actionOperationIDs.length > 0,
+    refetchInterval: (query) => {
+      const states = query.state.data ?? [];
+      const terminal = states.length > 0 && states.every((item) => ['completed', 'failed', 'expired', 'stale', 'cancelled'].includes(item.status));
+      return terminal ? false : 2_000;
+    },
+    refetchIntervalInBackground: true,
+  });
 
   const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
   const probeRows = useMemo(() => buildProbeRows(rows), [rows]);
@@ -101,7 +116,7 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
   const pageCount = Math.max(1, Math.ceil(probeRows.length / pageSize));
   const visibleRows = probeRows.slice((matrixPage - 1) * pageSize, matrixPage * pageSize);
   const selected = useMemo(() => probeRows.find((row) => rowKey(row) === selectedKey) ?? probeRows[0], [probeRows, selectedKey]);
-  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? fallbackMetric(label));
+  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? unavailableMetric(label));
   const probeIds = useMemo(() => probeRows.map((row) => rowKey(row)).filter(Boolean), [probeRows]);
   const openAction = (title: string, target: string | string[]) => {
     setActionSubmitted(false);
@@ -245,7 +260,7 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
         onClose={closeAction}
         extra={action && !action.readOnly ? <Button size="small" type="primary" loading={actionPending} disabled={actionSubmitted} onClick={() => void submitAction()}>{actionSubmitted ? '后端已受理' : '确认提交'}</Button> : undefined}
       >
-        {action && <ProbeActionBody action={action} onPayloadChange={(payload) => setAction({ ...action, payload: { ...action.payload, ...payload } })} submitted={actionSubmitted} pending={actionPending} error={actionError} result={actionResult} />}
+        {action && <ProbeActionBody action={action} onPayloadChange={(payload) => setAction({ ...action, payload: { ...action.payload, ...payload } })} submitted={actionSubmitted} pending={actionPending} error={actionError} result={actionResult} operationStates={actionOperationStates} />}
       </Drawer>
       <Modal
         className="taf-probe-action-modal"
@@ -258,7 +273,7 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
           <Button key="submit" type="primary" loading={actionPending} disabled={actionSubmitted} onClick={() => void submitAction()}>{actionSubmitted ? '后端已受理' : '确认提交'}</Button>,
         ]}
       >
-        {action && <ProbeActionBody action={action} onPayloadChange={(payload) => setAction({ ...action, payload: { ...action.payload, ...payload } })} submitted={actionSubmitted} pending={actionPending} error={actionError} result={actionResult} />}
+        {action && <ProbeActionBody action={action} onPayloadChange={(payload) => setAction({ ...action, payload: { ...action.payload, ...payload } })} submitted={actionSubmitted} pending={actionPending} error={actionError} result={actionResult} operationStates={actionOperationStates} />}
       </Modal>
       <Drawer title="探针状态矩阵" placement="bottom" height="72%" open={matrixExpanded} onClose={() => setMatrixExpanded(false)}>
         <ProbeStatusMatrix columns={route.page.tableColumns} rows={visibleRows} isLoading={isLoading} onSelect={(record) => setSelectedKey(rowKey(record))} onAction={(title, record) => openAction(title, rowKey(record))} />
@@ -274,6 +289,7 @@ function ProbeActionBody({
   pending,
   error,
   result,
+  operationStates,
 }: {
   action: ProbeAction;
   onPayloadChange: (payload: Record<string, unknown>) => void;
@@ -281,7 +297,14 @@ function ProbeActionBody({
   pending: boolean;
   error: string;
   result?: ProbeOperationResult;
+  operationStates: ProbeOperationResult[];
 }) {
+  const statuses = operationStates.length ? operationStates.map((item) => item.status) : [result?.status || 'accepted'];
+  const allCompleted = statuses.every((status) => status === 'completed');
+  const anyFailed = statuses.some((status) => ['failed', 'expired'].includes(status));
+  const anyStale = statuses.some((status) => status === 'stale');
+  const statusText = statuses.join('、');
+  const operationIDs = result?.operation_id || result?.operation_ids?.join(', ') || result?.batch_id || '-';
   return (
     <div className="taf-alert-detail-action-body">
       <p>{action.readOnly ? '当前抽屉展示真实探针 API 返回的对象上下文。' : `将通过控制面 API 创建“${action.title}”任务；执行前校验租户、权限、版本兼容性和影响范围，并保留操作者与审计上下文。`}</p>
@@ -293,7 +316,14 @@ function ProbeActionBody({
       {!action.readOnly && <ProbeActionFields action={action} onChange={onPayloadChange} />}
       {pending && <Alert type="info" showIcon message="正在提交探针运维请求" />}
       {error && <Alert type="error" showIcon message="探针运维请求失败" description={error} />}
-      {submitted && <Alert type="success" showIcon message="探针业务操作已由后端受理" description={`状态：${result?.status || 'completed'}；操作 ID：${result?.operation_id || result?.operation_ids?.join(', ') || result?.batch_id || '-'}`} />}
+      {submitted && (
+        <Alert
+          type={allCompleted ? 'success' : anyFailed ? 'error' : anyStale ? 'warning' : 'info'}
+          showIcon
+          message={allCompleted ? '探针已回传最终成功 ACK' : anyFailed ? '探针操作已进入失败或过期终态' : anyStale ? '探针 ACK 已保留但未覆盖新版本' : '控制面已受理，等待探针 ACK'}
+          description={`状态：${statusText}；操作 ID：${operationIDs}${operationStates[0]?.command_revision ? `；命令版本：${operationStates[0].command_revision}` : ''}`}
+        />
+      )}
     </div>
   );
 }
@@ -559,8 +589,8 @@ function renderProbeCell(column: string, value: unknown, row: SnapshotRow, onAct
   return <span className="taf-cell-ellipsis" title={text}>{text}</span>;
 }
 
-function fallbackMetric(label: string): PageSnapshot['metrics'][number] {
-  return { label, value: label.includes('率') ? '0.0%' : '0', delta: '等待 API', status: 'info' };
+function unavailableMetric(label: string): PageSnapshot['metrics'][number] {
+  return { label, value: '-', delta: '暂不可用', status: 'warn' };
 }
 
 function rowKey(record: SnapshotRow) {

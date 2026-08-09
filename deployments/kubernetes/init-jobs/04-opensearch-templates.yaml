@@ -1,4 +1,17 @@
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opensearch-assets-v2-contract
+  namespace: middleware
+  labels:
+    traffic.io/remediation-id: T-OS-002
+data:
+  index-template.json: |-
+    {"index_patterns":["assets-v2-*"],"priority":200,"template":{"settings":{"number_of_shards":3,"number_of_replicas":1},"mappings":{"dynamic":"strict","properties":{"contract_version":{"type":"keyword"},"event_id":{"type":"keyword"},"trace_id":{"type":"keyword"},"tenant_id":{"type":"keyword"},"asset_id":{"type":"keyword"},"revision":{"type":"long"},"asset":{"properties":{"asset_id":{"type":"keyword"},"revision":{"type":"long"},"display_code":{"type":"keyword"},"tenant_id":{"type":"keyword"},"asset_type":{"type":"keyword"},"status":{"type":"keyword"},"ip_address":{"type":"ip","ignore_malformed":true},"mac_address":{"type":"keyword"},"hostname":{"type":"keyword"},"vendor":{"type":"keyword"},"os_type":{"type":"keyword"},"source":{"type":"keyword"},"vlan_id":{"type":"keyword"},"switch_port":{"type":"keyword"},"department":{"type":"keyword"},"campus":{"type":"keyword"},"owner":{"type":"keyword"},"criticality":{"type":"integer"},"tags":{"type":"object","enabled":false},"metadata":{"type":"object","enabled":false},"first_seen":{"type":"date"},"last_seen":{"type":"date"}}}}}}}
+  bootstrap-index.json: |-
+    {"aliases":{"assets-v2-write":{"is_write_index":true},"assets-v2-read":{}}}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -13,6 +26,10 @@ spec:
       - name: init-os
         image: docker.io/curlimages/curl@sha256:1ab04d023ece37e6ec991bf3306ad04e0ef0084e94a5c6b6563cfcb9563169db
         command: ["sh", "-c"]
+        volumeMounts:
+        - name: assets-v2-contract
+          mountPath: /etc/opensearch-contract/assets-v2
+          readOnly: true
         env:
         - name: OPENSEARCH_ADMIN_PASSWORD
           valueFrom:
@@ -29,4 +46,16 @@ spec:
           curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/alerts-template" -H 'Content-Type: application/json' -d '{"index_patterns":["alerts-*"],"template":{"settings":{"number_of_shards":6,"number_of_replicas":1},"mappings":{"properties":{"tenant_id":{"type":"keyword"},"alert_id":{"type":"keyword"},"community_id":{"type":"keyword"},"src_ip":{"type":"ip"},"dst_ip":{"type":"ip"},"alert_type":{"type":"keyword"},"severity":{"type":"keyword"},"score":{"type":"float"},"status":{"type":"keyword"},"first_seen":{"type":"date"},"last_seen":{"type":"date"}}}}}'
           curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/device-logs-template" -H 'Content-Type: application/json' -d '{"index_patterns":["device-logs-*"],"template":{"settings":{"number_of_shards":3,"number_of_replicas":1},"mappings":{"properties":{"tenant_id":{"type":"keyword"},"device_ip":{"type":"ip"},"device_type":{"type":"keyword"},"severity":{"type":"integer"},"timestamp":{"type":"date"},"message":{"type":"text"},"source":{"type":"keyword"}}}}}'
           curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/evidence-template" -H 'Content-Type: application/json' -d '{"index_patterns":["evidence-*"],"template":{"settings":{"number_of_shards":3,"number_of_replicas":1},"mappings":{"properties":{"tenant_id":{"type":"keyword"},"evidence_id":{"type":"keyword"},"alert_id":{"type":"keyword"},"type":{"type":"keyword"},"summary":{"type":"text"},"confidence":{"type":"float"},"ts":{"type":"date"}}}}}'
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/assets-v2-template" -H 'Content-Type: application/json' --data-binary @/etc/opensearch-contract/assets-v2/index-template.json
+          if ! curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -I "$OS/assets-v2-000001" >/dev/null; then
+            curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/assets-v2-000001" -H 'Content-Type: application/json' --data-binary @/etc/opensearch-contract/assets-v2/bootstrap-index.json
+          fi
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/campaign-projections-v2-template" -H 'Content-Type: application/json' -d '{"index_patterns":["campaign-projections-v2-*"],"priority":220,"template":{"settings":{"number_of_shards":3,"number_of_replicas":1},"mappings":{"dynamic":"strict","properties":{"contract_version":{"type":"keyword"},"projection_id":{"type":"keyword"},"projection_key":{"type":"keyword"},"projection_version":{"type":"long"},"stream":{"type":"keyword"},"event_id":{"type":"keyword"},"tenant_id":{"type":"keyword"},"campaign_id":{"type":"keyword"},"relation_id":{"type":"keyword"},"alert_id":{"type":"keyword"},"event_type":{"type":"keyword"},"schema_version":{"type":"integer"},"aggregate_revision":{"type":"long"},"relation_revision":{"type":"long"},"partition_key":{"type":"keyword"},"trace_id":{"type":"keyword"},"received_at":{"type":"date"},"payload":{"type":"object","enabled":false}}}}}'
+          if ! curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -I "$OS/campaign-projections-v2-000001" >/dev/null; then
+            curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/campaign-projections-v2-000001" -H 'Content-Type: application/json' -d '{"aliases":{"campaign-projections-v2-write":{"is_write_index":true},"campaign-projections-v2-read":{}}}'
+          fi
           echo "OpenSearch templates created."
+      volumes:
+      - name: assets-v2-contract
+        configMap:
+          name: opensearch-assets-v2-contract

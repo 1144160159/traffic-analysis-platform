@@ -20,9 +20,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies (layered for cache efficiency)
+ARG PIP_INDEX_URL=https://pypi.org/simple
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
-    pip install --no-cache-dir ruff mypy bandit
+RUN pip install --no-cache-dir --index-url "${PIP_INDEX_URL}" -r /tmp/requirements.txt && \
+    pip install --no-cache-dir --index-url "${PIP_INDEX_URL}" ruff mypy bandit
 
 # Copy training scripts
 COPY scripts/ /app/scripts/

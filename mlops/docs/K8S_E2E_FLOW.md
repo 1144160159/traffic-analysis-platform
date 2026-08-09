@@ -434,7 +434,7 @@ cat /tmp/metrics.json | jq '.f1_score'
 kubectl port-forward -n minio svc/minio 9001:9001 &
 
 # 浏览器访问: http://localhost:9001
-# Login: minioadmin / minioadmin123
+# Login: use the approved operator credential from the Secret provider; do not copy it into shell history
 # Bucket: traffic-models → models/ → 查看各版本模型文件
 ```
 

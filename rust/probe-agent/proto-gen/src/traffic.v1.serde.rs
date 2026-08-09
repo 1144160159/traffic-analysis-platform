@@ -112,7 +112,7 @@ impl<'de> serde::Deserialize<'de> for ActiveIdleStats {
                             if min_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("minMs"));
                             }
-                            min_ms__ = 
+                            min_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -120,7 +120,7 @@ impl<'de> serde::Deserialize<'de> for ActiveIdleStats {
                             if mean_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("meanMs"));
                             }
-                            mean_ms__ = 
+                            mean_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -128,7 +128,7 @@ impl<'de> serde::Deserialize<'de> for ActiveIdleStats {
                             if max_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("maxMs"));
                             }
-                            max_ms__ = 
+                            max_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -136,7 +136,7 @@ impl<'de> serde::Deserialize<'de> for ActiveIdleStats {
                             if std_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("stdMs"));
                             }
-                            std_ms__ = 
+                            std_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -257,6 +257,9 @@ impl serde::Serialize for Alert {
         if self.state_version != 0 {
             len += 1;
         }
+        if !self.trace_id.is_empty() {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("traffic.v1.Alert", len)?;
         if !self.tenant_id.is_empty() {
             struct_ser.serialize_field("tenantId", &self.tenant_id)?;
@@ -368,6 +371,9 @@ impl serde::Serialize for Alert {
             #[allow(clippy::needless_borrows_for_generic_args)]
             struct_ser.serialize_field("stateVersion", ToString::to_string(&self.state_version).as_str())?;
         }
+        if !self.trace_id.is_empty() {
+            struct_ser.serialize_field("traceId", &self.trace_id)?;
+        }
         struct_ser.end()
     }
 }
@@ -435,6 +441,8 @@ impl<'de> serde::Deserialize<'de> for Alert {
             "feedbackCount",
             "state_version",
             "stateVersion",
+            "trace_id",
+            "traceId",
         ];
 
         #[allow(clippy::enum_variant_names)]
@@ -471,6 +479,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
             FeedbackLabel,
             FeedbackCount,
             StateVersion,
+            TraceId,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -524,6 +533,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             "feedbackLabel" | "feedback_label" => Ok(GeneratedField::FeedbackLabel),
                             "feedbackCount" | "feedback_count" => Ok(GeneratedField::FeedbackCount),
                             "stateVersion" | "state_version" => Ok(GeneratedField::StateVersion),
+                            "traceId" | "trace_id" => Ok(GeneratedField::TraceId),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -575,6 +585,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                 let mut feedback_label__ = None;
                 let mut feedback_count__ = None;
                 let mut state_version__ = None;
+                let mut trace_id__ = None;
                 while let Some(k) = map_.next_key()? {
                     match k {
                         GeneratedField::TenantId => {
@@ -593,7 +604,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if first_seen__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("firstSeen"));
                             }
-                            first_seen__ = 
+                            first_seen__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -601,7 +612,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if last_seen__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("lastSeen"));
                             }
-                            last_seen__ = 
+                            last_seen__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -621,7 +632,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if score__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("score"));
                             }
-                            score__ = 
+                            score__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -647,7 +658,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if src_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("srcPort"));
                             }
-                            src_port__ = 
+                            src_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -655,7 +666,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if dst_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("dstPort"));
                             }
-                            dst_port__ = 
+                            dst_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -663,7 +674,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if protocol__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("protocol"));
                             }
-                            protocol__ = 
+                            protocol__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -731,7 +742,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if updated_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("updatedTs"));
                             }
-                            updated_ts__ = 
+                            updated_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -745,7 +756,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -759,7 +770,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("count"));
                             }
-                            count__ = 
+                            count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -779,7 +790,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if feedback_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("feedbackCount"));
                             }
-                            feedback_count__ = 
+                            feedback_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -787,9 +798,15 @@ impl<'de> serde::Deserialize<'de> for Alert {
                             if state_version__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("stateVersion"));
                             }
-                            state_version__ = 
+                            state_version__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
+                        }
+                        GeneratedField::TraceId => {
+                            if trace_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("traceId"));
+                            }
+                            trace_id__ = Some(map_.next_value()?);
                         }
                     }
                 }
@@ -826,6 +843,7 @@ impl<'de> serde::Deserialize<'de> for Alert {
                     feedback_label: feedback_label__.unwrap_or_default(),
                     feedback_count: feedback_count__.unwrap_or_default(),
                     state_version: state_version__.unwrap_or_default(),
+                    trace_id: trace_id__.unwrap_or_default(),
                 })
             }
         }
@@ -996,7 +1014,7 @@ impl<'de> serde::Deserialize<'de> for AlertBatch {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -1229,7 +1247,7 @@ impl<'de> serde::Deserialize<'de> for AlertCorrelationEdge {
                             if correlation_score__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("correlationScore"));
                             }
-                            correlation_score__ = 
+                            correlation_score__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -1243,7 +1261,7 @@ impl<'de> serde::Deserialize<'de> for AlertCorrelationEdge {
                             if time_delta_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("timeDeltaMs"));
                             }
-                            time_delta_ms__ = 
+                            time_delta_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -1251,7 +1269,7 @@ impl<'de> serde::Deserialize<'de> for AlertCorrelationEdge {
                             if ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ts"));
                             }
-                            ts__ = 
+                            ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -1259,7 +1277,7 @@ impl<'de> serde::Deserialize<'de> for AlertCorrelationEdge {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -1515,7 +1533,7 @@ impl<'de> serde::Deserialize<'de> for AlertExtendedBatch {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -1873,7 +1891,7 @@ impl<'de> serde::Deserialize<'de> for AlertFeedback {
                             if add_to_whitelist__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("addToWhitelist"));
                             }
-                            add_to_whitelist__ = 
+                            add_to_whitelist__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -1905,7 +1923,7 @@ impl<'de> serde::Deserialize<'de> for AlertFeedback {
                             if ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ts"));
                             }
-                            ts__ = 
+                            ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -1913,7 +1931,7 @@ impl<'de> serde::Deserialize<'de> for AlertFeedback {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -2200,7 +2218,7 @@ impl<'de> serde::Deserialize<'de> for AlertStateTransition {
                             if state_version__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("stateVersion"));
                             }
-                            state_version__ = 
+                            state_version__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -2208,7 +2226,7 @@ impl<'de> serde::Deserialize<'de> for AlertStateTransition {
                             if ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ts"));
                             }
-                            ts__ = 
+                            ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -2216,7 +2234,7 @@ impl<'de> serde::Deserialize<'de> for AlertStateTransition {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -2496,7 +2514,7 @@ impl<'de> serde::Deserialize<'de> for AlertUpdate {
                             if updated_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("updatedAt"));
                             }
-                            updated_at__ = 
+                            updated_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -2765,7 +2783,7 @@ impl<'de> serde::Deserialize<'de> for Asset {
                             if first_seen__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("firstSeen"));
                             }
-                            first_seen__ = 
+                            first_seen__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -2773,7 +2791,7 @@ impl<'de> serde::Deserialize<'de> for Asset {
                             if last_seen__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("lastSeen"));
                             }
-                            last_seen__ = 
+                            last_seen__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -2994,7 +3012,7 @@ impl<'de> serde::Deserialize<'de> for AssetEvent {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -3247,7 +3265,7 @@ impl<'de> serde::Deserialize<'de> for AuditLog {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -3532,7 +3550,7 @@ impl<'de> serde::Deserialize<'de> for BatchMetadata {
                             if batch_size__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("batchSize"));
                             }
-                            batch_size__ = 
+                            batch_size__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -3546,7 +3564,7 @@ impl<'de> serde::Deserialize<'de> for BatchMetadata {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -3657,7 +3675,7 @@ impl<'de> serde::Deserialize<'de> for CpuAffinityConfig {
                             if cpu_cores__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("cpuCores"));
                             }
-                            cpu_cores__ = 
+                            cpu_cores__ =
                                 Some(map_.next_value::<Vec<::pbjson::private::NumberDeserialize<_>>>()?
                                     .into_iter().map(|x| x.0).collect())
                             ;
@@ -3926,7 +3944,7 @@ impl<'de> serde::Deserialize<'de> for Campaign {
                             if ts_start__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsStart"));
                             }
-                            ts_start__ = 
+                            ts_start__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -3934,7 +3952,7 @@ impl<'de> serde::Deserialize<'de> for Campaign {
                             if ts_end__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsEnd"));
                             }
-                            ts_end__ = 
+                            ts_end__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -3954,7 +3972,7 @@ impl<'de> serde::Deserialize<'de> for Campaign {
                             if score__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("score"));
                             }
-                            score__ = 
+                            score__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -3974,7 +3992,7 @@ impl<'de> serde::Deserialize<'de> for Campaign {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -4164,7 +4182,7 @@ impl<'de> serde::Deserialize<'de> for CampaignBatch {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -4321,7 +4339,7 @@ impl<'de> serde::Deserialize<'de> for CampaignQuery {
                             if start_time__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("startTime"));
                             }
-                            start_time__ = 
+                            start_time__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -4329,7 +4347,7 @@ impl<'de> serde::Deserialize<'de> for CampaignQuery {
                             if end_time__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("endTime"));
                             }
-                            end_time__ = 
+                            end_time__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -4460,7 +4478,7 @@ impl<'de> serde::Deserialize<'de> for CampaignQueryResponse {
                             if total_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalCount"));
                             }
-                            total_count__ = 
+                            total_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -4677,7 +4695,7 @@ impl<'de> serde::Deserialize<'de> for DeadLetter {
                             if retry_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("retryCount"));
                             }
-                            retry_count__ = 
+                            retry_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -4685,7 +4703,7 @@ impl<'de> serde::Deserialize<'de> for DeadLetter {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -5040,7 +5058,7 @@ impl<'de> serde::Deserialize<'de> for DedupStats {
                             if dst_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("dstPort"));
                             }
-                            dst_port__ = 
+                            dst_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -5048,7 +5066,7 @@ impl<'de> serde::Deserialize<'de> for DedupStats {
                             if first_seen__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("firstSeen"));
                             }
-                            first_seen__ = 
+                            first_seen__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -5056,7 +5074,7 @@ impl<'de> serde::Deserialize<'de> for DedupStats {
                             if last_seen__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("lastSeen"));
                             }
-                            last_seen__ = 
+                            last_seen__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -5064,7 +5082,7 @@ impl<'de> serde::Deserialize<'de> for DedupStats {
                             if occurrence_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("occurrenceCount"));
                             }
-                            occurrence_count__ = 
+                            occurrence_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -5078,7 +5096,7 @@ impl<'de> serde::Deserialize<'de> for DedupStats {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -5351,7 +5369,7 @@ impl<'de> serde::Deserialize<'de> for DetectionBatch {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -5408,6 +5426,12 @@ impl serde::Serialize for DetectionBehavior {
         if self.top_score != 0. {
             len += 1;
         }
+        if self.tuple.is_some() {
+            len += 1;
+        }
+        if !self.evidence_ids.is_empty() {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("traffic.v1.DetectionBehavior", len)?;
         if let Some(v) = self.header.as_ref() {
             struct_ser.serialize_field("header", v)?;
@@ -5441,6 +5465,12 @@ impl serde::Serialize for DetectionBehavior {
         if self.top_score != 0. {
             struct_ser.serialize_field("topScore", &self.top_score)?;
         }
+        if let Some(v) = self.tuple.as_ref() {
+            struct_ser.serialize_field("tuple", v)?;
+        }
+        if !self.evidence_ids.is_empty() {
+            struct_ser.serialize_field("evidenceIds", &self.evidence_ids)?;
+        }
         struct_ser.end()
     }
 }
@@ -5467,6 +5497,9 @@ impl<'de> serde::Deserialize<'de> for DetectionBehavior {
             "topLabel",
             "top_score",
             "topScore",
+            "tuple",
+            "evidence_ids",
+            "evidenceIds",
         ];
 
         #[allow(clippy::enum_variant_names)]
@@ -5481,6 +5514,8 @@ impl<'de> serde::Deserialize<'de> for DetectionBehavior {
             Scores,
             TopLabel,
             TopScore,
+            Tuple,
+            EvidenceIds,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -5512,6 +5547,8 @@ impl<'de> serde::Deserialize<'de> for DetectionBehavior {
                             "scores" => Ok(GeneratedField::Scores),
                             "topLabel" | "top_label" => Ok(GeneratedField::TopLabel),
                             "topScore" | "top_score" => Ok(GeneratedField::TopScore),
+                            "tuple" => Ok(GeneratedField::Tuple),
+                            "evidenceIds" | "evidence_ids" => Ok(GeneratedField::EvidenceIds),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -5541,6 +5578,8 @@ impl<'de> serde::Deserialize<'de> for DetectionBehavior {
                 let mut scores__ = None;
                 let mut top_label__ = None;
                 let mut top_score__ = None;
+                let mut tuple__ = None;
+                let mut evidence_ids__ = None;
                 while let Some(k) = map_.next_key()? {
                     match k {
                         GeneratedField::Header => {
@@ -5577,7 +5616,7 @@ impl<'de> serde::Deserialize<'de> for DetectionBehavior {
                             if ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ts"));
                             }
-                            ts__ = 
+                            ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -5591,7 +5630,7 @@ impl<'de> serde::Deserialize<'de> for DetectionBehavior {
                             if scores__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("scores"));
                             }
-                            scores__ = 
+                            scores__ =
                                 Some(map_.next_value::<Vec<::pbjson::private::NumberDeserialize<_>>>()?
                                     .into_iter().map(|x| x.0).collect())
                             ;
@@ -5606,9 +5645,21 @@ impl<'de> serde::Deserialize<'de> for DetectionBehavior {
                             if top_score__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("topScore"));
                             }
-                            top_score__ = 
+                            top_score__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
+                        }
+                        GeneratedField::Tuple => {
+                            if tuple__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("tuple"));
+                            }
+                            tuple__ = map_.next_value()?;
+                        }
+                        GeneratedField::EvidenceIds => {
+                            if evidence_ids__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("evidenceIds"));
+                            }
+                            evidence_ids__ = Some(map_.next_value()?);
                         }
                     }
                 }
@@ -5623,6 +5674,8 @@ impl<'de> serde::Deserialize<'de> for DetectionBehavior {
                     scores: scores__.unwrap_or_default(),
                     top_label: top_label__.unwrap_or_default(),
                     top_score: top_score__.unwrap_or_default(),
+                    tuple: tuple__,
+                    evidence_ids: evidence_ids__.unwrap_or_default(),
                 })
             }
         }
@@ -5824,7 +5877,7 @@ impl<'de> serde::Deserialize<'de> for DetectionBusiness {
                             if ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ts"));
                             }
-                            ts__ = 
+                            ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -5862,7 +5915,7 @@ impl<'de> serde::Deserialize<'de> for DetectionBusiness {
                             if score__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("score"));
                             }
-                            score__ = 
+                            score__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6084,7 +6137,7 @@ impl<'de> serde::Deserialize<'de> for DeviceLog {
                             if facility__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("facility"));
                             }
-                            facility__ = 
+                            facility__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6092,7 +6145,7 @@ impl<'de> serde::Deserialize<'de> for DeviceLog {
                             if severity__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("severity"));
                             }
-                            severity__ = 
+                            severity__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6100,7 +6153,7 @@ impl<'de> serde::Deserialize<'de> for DeviceLog {
                             if timestamp__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("timestamp"));
                             }
-                            timestamp__ = 
+                            timestamp__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6267,6 +6320,42 @@ impl serde::Serialize for EventHeader {
         if self.flink_out_ts != 0 {
             len += 1;
         }
+        if !self.event_type.is_empty() {
+            len += 1;
+        }
+        if !self.schema_version.is_empty() {
+            len += 1;
+        }
+        if !self.aggregate_type.is_empty() {
+            len += 1;
+        }
+        if !self.aggregate_id.is_empty() {
+            len += 1;
+        }
+        if self.aggregate_version != 0 {
+            len += 1;
+        }
+        if self.occurred_at != 0 {
+            len += 1;
+        }
+        if self.produced_at != 0 {
+            len += 1;
+        }
+        if !self.trace_id.is_empty() {
+            len += 1;
+        }
+        if !self.causation_id.is_empty() {
+            len += 1;
+        }
+        if !self.correlation_id.is_empty() {
+            len += 1;
+        }
+        if !self.idempotency_key.is_empty() {
+            len += 1;
+        }
+        if !self.producer.is_empty() {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("traffic.v1.EventHeader", len)?;
         if !self.event_id.is_empty() {
             struct_ser.serialize_field("eventId", &self.event_id)?;
@@ -6303,6 +6392,48 @@ impl serde::Serialize for EventHeader {
             #[allow(clippy::needless_borrows_for_generic_args)]
             struct_ser.serialize_field("flinkOutTs", ToString::to_string(&self.flink_out_ts).as_str())?;
         }
+        if !self.event_type.is_empty() {
+            struct_ser.serialize_field("eventType", &self.event_type)?;
+        }
+        if !self.schema_version.is_empty() {
+            struct_ser.serialize_field("schemaVersion", &self.schema_version)?;
+        }
+        if !self.aggregate_type.is_empty() {
+            struct_ser.serialize_field("aggregateType", &self.aggregate_type)?;
+        }
+        if !self.aggregate_id.is_empty() {
+            struct_ser.serialize_field("aggregateId", &self.aggregate_id)?;
+        }
+        if self.aggregate_version != 0 {
+            #[allow(clippy::needless_borrow)]
+            #[allow(clippy::needless_borrows_for_generic_args)]
+            struct_ser.serialize_field("aggregateVersion", ToString::to_string(&self.aggregate_version).as_str())?;
+        }
+        if self.occurred_at != 0 {
+            #[allow(clippy::needless_borrow)]
+            #[allow(clippy::needless_borrows_for_generic_args)]
+            struct_ser.serialize_field("occurredAt", ToString::to_string(&self.occurred_at).as_str())?;
+        }
+        if self.produced_at != 0 {
+            #[allow(clippy::needless_borrow)]
+            #[allow(clippy::needless_borrows_for_generic_args)]
+            struct_ser.serialize_field("producedAt", ToString::to_string(&self.produced_at).as_str())?;
+        }
+        if !self.trace_id.is_empty() {
+            struct_ser.serialize_field("traceId", &self.trace_id)?;
+        }
+        if !self.causation_id.is_empty() {
+            struct_ser.serialize_field("causationId", &self.causation_id)?;
+        }
+        if !self.correlation_id.is_empty() {
+            struct_ser.serialize_field("correlationId", &self.correlation_id)?;
+        }
+        if !self.idempotency_key.is_empty() {
+            struct_ser.serialize_field("idempotencyKey", &self.idempotency_key)?;
+        }
+        if !self.producer.is_empty() {
+            struct_ser.serialize_field("producer", &self.producer)?;
+        }
         struct_ser.end()
     }
 }
@@ -6331,6 +6462,29 @@ impl<'de> serde::Deserialize<'de> for EventHeader {
             "kafkaTs",
             "flink_out_ts",
             "flinkOutTs",
+            "event_type",
+            "eventType",
+            "schema_version",
+            "schemaVersion",
+            "aggregate_type",
+            "aggregateType",
+            "aggregate_id",
+            "aggregateId",
+            "aggregate_version",
+            "aggregateVersion",
+            "occurred_at",
+            "occurredAt",
+            "produced_at",
+            "producedAt",
+            "trace_id",
+            "traceId",
+            "causation_id",
+            "causationId",
+            "correlation_id",
+            "correlationId",
+            "idempotency_key",
+            "idempotencyKey",
+            "producer",
         ];
 
         #[allow(clippy::enum_variant_names)]
@@ -6344,6 +6498,18 @@ impl<'de> serde::Deserialize<'de> for EventHeader {
             FeatureSetId,
             KafkaTs,
             FlinkOutTs,
+            EventType,
+            SchemaVersion,
+            AggregateType,
+            AggregateId,
+            AggregateVersion,
+            OccurredAt,
+            ProducedAt,
+            TraceId,
+            CausationId,
+            CorrelationId,
+            IdempotencyKey,
+            Producer,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -6374,6 +6540,18 @@ impl<'de> serde::Deserialize<'de> for EventHeader {
                             "featureSetId" | "feature_set_id" => Ok(GeneratedField::FeatureSetId),
                             "kafkaTs" | "kafka_ts" => Ok(GeneratedField::KafkaTs),
                             "flinkOutTs" | "flink_out_ts" => Ok(GeneratedField::FlinkOutTs),
+                            "eventType" | "event_type" => Ok(GeneratedField::EventType),
+                            "schemaVersion" | "schema_version" => Ok(GeneratedField::SchemaVersion),
+                            "aggregateType" | "aggregate_type" => Ok(GeneratedField::AggregateType),
+                            "aggregateId" | "aggregate_id" => Ok(GeneratedField::AggregateId),
+                            "aggregateVersion" | "aggregate_version" => Ok(GeneratedField::AggregateVersion),
+                            "occurredAt" | "occurred_at" => Ok(GeneratedField::OccurredAt),
+                            "producedAt" | "produced_at" => Ok(GeneratedField::ProducedAt),
+                            "traceId" | "trace_id" => Ok(GeneratedField::TraceId),
+                            "causationId" | "causation_id" => Ok(GeneratedField::CausationId),
+                            "correlationId" | "correlation_id" => Ok(GeneratedField::CorrelationId),
+                            "idempotencyKey" | "idempotency_key" => Ok(GeneratedField::IdempotencyKey),
+                            "producer" => Ok(GeneratedField::Producer),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -6402,6 +6580,18 @@ impl<'de> serde::Deserialize<'de> for EventHeader {
                 let mut feature_set_id__ = None;
                 let mut kafka_ts__ = None;
                 let mut flink_out_ts__ = None;
+                let mut event_type__ = None;
+                let mut schema_version__ = None;
+                let mut aggregate_type__ = None;
+                let mut aggregate_id__ = None;
+                let mut aggregate_version__ = None;
+                let mut occurred_at__ = None;
+                let mut produced_at__ = None;
+                let mut trace_id__ = None;
+                let mut causation_id__ = None;
+                let mut correlation_id__ = None;
+                let mut idempotency_key__ = None;
+                let mut producer__ = None;
                 while let Some(k) = map_.next_key()? {
                     match k {
                         GeneratedField::EventId => {
@@ -6426,7 +6616,7 @@ impl<'de> serde::Deserialize<'de> for EventHeader {
                             if event_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("eventTs"));
                             }
-                            event_ts__ = 
+                            event_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6434,7 +6624,7 @@ impl<'de> serde::Deserialize<'de> for EventHeader {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6454,7 +6644,7 @@ impl<'de> serde::Deserialize<'de> for EventHeader {
                             if kafka_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("kafkaTs"));
                             }
-                            kafka_ts__ = 
+                            kafka_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6462,9 +6652,87 @@ impl<'de> serde::Deserialize<'de> for EventHeader {
                             if flink_out_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("flinkOutTs"));
                             }
-                            flink_out_ts__ = 
+                            flink_out_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
+                        }
+                        GeneratedField::EventType => {
+                            if event_type__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("eventType"));
+                            }
+                            event_type__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::SchemaVersion => {
+                            if schema_version__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("schemaVersion"));
+                            }
+                            schema_version__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::AggregateType => {
+                            if aggregate_type__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("aggregateType"));
+                            }
+                            aggregate_type__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::AggregateId => {
+                            if aggregate_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("aggregateId"));
+                            }
+                            aggregate_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::AggregateVersion => {
+                            if aggregate_version__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("aggregateVersion"));
+                            }
+                            aggregate_version__ =
+                                Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::OccurredAt => {
+                            if occurred_at__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("occurredAt"));
+                            }
+                            occurred_at__ =
+                                Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::ProducedAt => {
+                            if produced_at__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("producedAt"));
+                            }
+                            produced_at__ =
+                                Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::TraceId => {
+                            if trace_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("traceId"));
+                            }
+                            trace_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::CausationId => {
+                            if causation_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("causationId"));
+                            }
+                            causation_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::CorrelationId => {
+                            if correlation_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("correlationId"));
+                            }
+                            correlation_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::IdempotencyKey => {
+                            if idempotency_key__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("idempotencyKey"));
+                            }
+                            idempotency_key__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::Producer => {
+                            if producer__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("producer"));
+                            }
+                            producer__ = Some(map_.next_value()?);
                         }
                     }
                 }
@@ -6478,6 +6746,18 @@ impl<'de> serde::Deserialize<'de> for EventHeader {
                     feature_set_id: feature_set_id__.unwrap_or_default(),
                     kafka_ts: kafka_ts__.unwrap_or_default(),
                     flink_out_ts: flink_out_ts__.unwrap_or_default(),
+                    event_type: event_type__.unwrap_or_default(),
+                    schema_version: schema_version__.unwrap_or_default(),
+                    aggregate_type: aggregate_type__.unwrap_or_default(),
+                    aggregate_id: aggregate_id__.unwrap_or_default(),
+                    aggregate_version: aggregate_version__.unwrap_or_default(),
+                    occurred_at: occurred_at__.unwrap_or_default(),
+                    produced_at: produced_at__.unwrap_or_default(),
+                    trace_id: trace_id__.unwrap_or_default(),
+                    causation_id: causation_id__.unwrap_or_default(),
+                    correlation_id: correlation_id__.unwrap_or_default(),
+                    idempotency_key: idempotency_key__.unwrap_or_default(),
+                    producer: producer__.unwrap_or_default(),
                 })
             }
         }
@@ -6714,7 +6994,7 @@ impl<'de> serde::Deserialize<'de> for Evidence {
                             if ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ts"));
                             }
-                            ts__ = 
+                            ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6752,7 +7032,7 @@ impl<'de> serde::Deserialize<'de> for Evidence {
                             if confidence__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("confidence"));
                             }
-                            confidence__ = 
+                            confidence__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6766,7 +7046,7 @@ impl<'de> serde::Deserialize<'de> for Evidence {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -6979,7 +7259,7 @@ impl<'de> serde::Deserialize<'de> for FeatureBatch {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7250,7 +7530,7 @@ impl<'de> serde::Deserialize<'de> for FeatureFingerprint {
                             if ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ts"));
                             }
-                            ts__ = 
+                            ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7258,7 +7538,7 @@ impl<'de> serde::Deserialize<'de> for FeatureFingerprint {
                             if is_encrypted__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("isEncrypted"));
                             }
-                            is_encrypted__ = 
+                            is_encrypted__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7290,7 +7570,7 @@ impl<'de> serde::Deserialize<'de> for FeatureFingerprint {
                             if cert_is_self_signed__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("certIsSelfSigned"));
                             }
-                            cert_is_self_signed__ = 
+                            cert_is_self_signed__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7298,7 +7578,7 @@ impl<'de> serde::Deserialize<'de> for FeatureFingerprint {
                             if pubkey_len__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("pubkeyLen"));
                             }
-                            pubkey_len__ = 
+                            pubkey_len__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7306,7 +7586,7 @@ impl<'de> serde::Deserialize<'de> for FeatureFingerprint {
                             if hex_freq__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("hexFreq"));
                             }
-                            hex_freq__ = 
+                            hex_freq__ =
                                 Some(map_.next_value::<Vec<::pbjson::private::NumberDeserialize<_>>>()?
                                     .into_iter().map(|x| x.0).collect())
                             ;
@@ -7315,7 +7595,7 @@ impl<'de> serde::Deserialize<'de> for FeatureFingerprint {
                             if hex_ratio__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("hexRatio"));
                             }
-                            hex_ratio__ = 
+                            hex_ratio__ =
                                 Some(map_.next_value::<Vec<::pbjson::private::NumberDeserialize<_>>>()?
                                     .into_iter().map(|x| x.0).collect())
                             ;
@@ -7324,7 +7604,7 @@ impl<'de> serde::Deserialize<'de> for FeatureFingerprint {
                             if entropy_payload__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("entropyPayload"));
                             }
-                            entropy_payload__ = 
+                            entropy_payload__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7332,7 +7612,7 @@ impl<'de> serde::Deserialize<'de> for FeatureFingerprint {
                             if chi_square_bfd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("chiSquareBfd"));
                             }
-                            chi_square_bfd__ = 
+                            chi_square_bfd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7660,7 +7940,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if ts_start__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsStart"));
                             }
-                            ts_start__ = 
+                            ts_start__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7668,7 +7948,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if ts_end__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsEnd"));
                             }
-                            ts_end__ = 
+                            ts_end__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7688,7 +7968,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if wavelet_releng_fwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("waveletRelengFwd"));
                             }
-                            wavelet_releng_fwd__ = 
+                            wavelet_releng_fwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7696,7 +7976,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if wavelet_releng_bwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("waveletRelengBwd"));
                             }
-                            wavelet_releng_bwd__ = 
+                            wavelet_releng_bwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7704,7 +7984,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if wavelet_entropy_fwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("waveletEntropyFwd"));
                             }
-                            wavelet_entropy_fwd__ = 
+                            wavelet_entropy_fwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7712,7 +7992,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if wavelet_entropy_bwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("waveletEntropyBwd"));
                             }
-                            wavelet_entropy_bwd__ = 
+                            wavelet_entropy_bwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7720,7 +8000,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if wavelet_detail_mean_fwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("waveletDetailMeanFwd"));
                             }
-                            wavelet_detail_mean_fwd__ = 
+                            wavelet_detail_mean_fwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7728,7 +8008,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if wavelet_detail_mean_bwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("waveletDetailMeanBwd"));
                             }
-                            wavelet_detail_mean_bwd__ = 
+                            wavelet_detail_mean_bwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7736,7 +8016,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if wavelet_detail_std_fwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("waveletDetailStdFwd"));
                             }
-                            wavelet_detail_std_fwd__ = 
+                            wavelet_detail_std_fwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7744,7 +8024,7 @@ impl<'de> serde::Deserialize<'de> for FeatureSeq {
                             if wavelet_detail_std_bwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("waveletDetailStdBwd"));
                             }
-                            wavelet_detail_std_bwd__ = 
+                            wavelet_detail_std_bwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -7855,6 +8135,12 @@ impl serde::Serialize for FeatureStat {
         if !self.extra.is_empty() {
             len += 1;
         }
+        if self.tuple.is_some() {
+            len += 1;
+        }
+        if !self.evidence_ids.is_empty() {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("traffic.v1.FeatureStat", len)?;
         if let Some(v) = self.header.as_ref() {
             struct_ser.serialize_field("header", v)?;
@@ -7924,6 +8210,12 @@ impl serde::Serialize for FeatureStat {
         if !self.extra.is_empty() {
             struct_ser.serialize_field("extra", &self.extra)?;
         }
+        if let Some(v) = self.tuple.as_ref() {
+            struct_ser.serialize_field("tuple", v)?;
+        }
+        if !self.evidence_ids.is_empty() {
+            struct_ser.serialize_field("evidenceIds", &self.evidence_ids)?;
+        }
         struct_ser.end()
     }
 }
@@ -7972,6 +8264,9 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
             "tcp_init_win_bytes_bwd",
             "tcpInitWinBytesBwd",
             "extra",
+            "tuple",
+            "evidence_ids",
+            "evidenceIds",
         ];
 
         #[allow(clippy::enum_variant_names)]
@@ -7998,6 +8293,8 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
             TcpInitWinBytesFwd,
             TcpInitWinBytesBwd,
             Extra,
+            Tuple,
+            EvidenceIds,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -8041,6 +8338,8 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             "tcpInitWinBytesFwd" | "tcp_init_win_bytes_fwd" => Ok(GeneratedField::TcpInitWinBytesFwd),
                             "tcpInitWinBytesBwd" | "tcp_init_win_bytes_bwd" => Ok(GeneratedField::TcpInitWinBytesBwd),
                             "extra" => Ok(GeneratedField::Extra),
+                            "tuple" => Ok(GeneratedField::Tuple),
+                            "evidenceIds" | "evidence_ids" => Ok(GeneratedField::EvidenceIds),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -8082,6 +8381,8 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                 let mut tcp_init_win_bytes_fwd__ = None;
                 let mut tcp_init_win_bytes_bwd__ = None;
                 let mut extra__ = None;
+                let mut tuple__ = None;
+                let mut evidence_ids__ = None;
                 while let Some(k) = map_.next_key()? {
                     match k {
                         GeneratedField::Header => {
@@ -8118,7 +8419,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ts"));
                             }
-                            ts__ = 
+                            ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8126,7 +8427,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if protocol__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("protocol"));
                             }
-                            protocol__ = 
+                            protocol__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8134,7 +8435,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("durationMs"));
                             }
-                            duration_ms__ = 
+                            duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8142,7 +8443,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if pps__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("pps"));
                             }
-                            pps__ = 
+                            pps__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8150,7 +8451,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if bps__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("bps"));
                             }
-                            bps__ = 
+                            bps__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8158,7 +8459,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if up_down_ratio__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("upDownRatio"));
                             }
-                            up_down_ratio__ = 
+                            up_down_ratio__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8166,7 +8467,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if pktlen_mean__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("pktlenMean"));
                             }
-                            pktlen_mean__ = 
+                            pktlen_mean__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8174,7 +8475,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if pktlen_std__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("pktlenStd"));
                             }
-                            pktlen_std__ = 
+                            pktlen_std__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8182,7 +8483,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if iat_mean_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("iatMeanMs"));
                             }
-                            iat_mean_ms__ = 
+                            iat_mean_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8190,7 +8491,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if iat_std_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("iatStdMs"));
                             }
-                            iat_std_ms__ = 
+                            iat_std_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8198,7 +8499,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if active_mean_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("activeMeanMs"));
                             }
-                            active_mean_ms__ = 
+                            active_mean_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8206,7 +8507,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if idle_mean_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("idleMeanMs"));
                             }
-                            idle_mean_ms__ = 
+                            idle_mean_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8214,7 +8515,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if tcp_flag_syn_cnt__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tcpFlagSynCnt"));
                             }
-                            tcp_flag_syn_cnt__ = 
+                            tcp_flag_syn_cnt__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8222,7 +8523,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if tcp_flag_ack_cnt__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tcpFlagAckCnt"));
                             }
-                            tcp_flag_ack_cnt__ = 
+                            tcp_flag_ack_cnt__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8230,7 +8531,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if tcp_init_win_bytes_fwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tcpInitWinBytesFwd"));
                             }
-                            tcp_init_win_bytes_fwd__ = 
+                            tcp_init_win_bytes_fwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8238,7 +8539,7 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if tcp_init_win_bytes_bwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tcpInitWinBytesBwd"));
                             }
-                            tcp_init_win_bytes_bwd__ = 
+                            tcp_init_win_bytes_bwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8246,10 +8547,22 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                             if extra__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("extra"));
                             }
-                            extra__ = 
+                            extra__ =
                                 Some(map_.next_value::<Vec<::pbjson::private::NumberDeserialize<_>>>()?
                                     .into_iter().map(|x| x.0).collect())
                             ;
+                        }
+                        GeneratedField::Tuple => {
+                            if tuple__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("tuple"));
+                            }
+                            tuple__ = map_.next_value()?;
+                        }
+                        GeneratedField::EvidenceIds => {
+                            if evidence_ids__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("evidenceIds"));
+                            }
+                            evidence_ids__ = Some(map_.next_value()?);
                         }
                     }
                 }
@@ -8276,6 +8589,8 @@ impl<'de> serde::Deserialize<'de> for FeatureStat {
                     tcp_init_win_bytes_fwd: tcp_init_win_bytes_fwd__.unwrap_or_default(),
                     tcp_init_win_bytes_bwd: tcp_init_win_bytes_bwd__.unwrap_or_default(),
                     extra: extra__.unwrap_or_default(),
+                    tuple: tuple__,
+                    evidence_ids: evidence_ids__.unwrap_or_default(),
                 })
             }
         }
@@ -8417,7 +8732,7 @@ impl<'de> serde::Deserialize<'de> for FiveTuple {
                             if src_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("srcPort"));
                             }
-                            src_port__ = 
+                            src_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8425,7 +8740,7 @@ impl<'de> serde::Deserialize<'de> for FiveTuple {
                             if dst_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("dstPort"));
                             }
-                            dst_port__ = 
+                            dst_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8433,7 +8748,7 @@ impl<'de> serde::Deserialize<'de> for FiveTuple {
                             if protocol__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("protocol"));
                             }
-                            protocol__ = 
+                            protocol__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8979,7 +9294,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if ts_start__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsStart"));
                             }
-                            ts_start__ = 
+                            ts_start__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8987,7 +9302,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if ts_end__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsEnd"));
                             }
-                            ts_end__ = 
+                            ts_end__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -8995,7 +9310,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("durationMs"));
                             }
-                            duration_ms__ = 
+                            duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9003,7 +9318,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if packets_fwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("packetsFwd"));
                             }
-                            packets_fwd__ = 
+                            packets_fwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9011,7 +9326,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if packets_bwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("packetsBwd"));
                             }
-                            packets_bwd__ = 
+                            packets_bwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9019,7 +9334,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if bytes_fwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("bytesFwd"));
                             }
-                            bytes_fwd__ = 
+                            bytes_fwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9027,7 +9342,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if bytes_bwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("bytesBwd"));
                             }
-                            bytes_bwd__ = 
+                            bytes_bwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9035,7 +9350,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if pps__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("pps"));
                             }
-                            pps__ = 
+                            pps__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9043,7 +9358,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if bps__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("bps"));
                             }
-                            bps__ = 
+                            bps__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9063,7 +9378,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if tcp_flags_fwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tcpFlagsFwd"));
                             }
-                            tcp_flags_fwd__ = 
+                            tcp_flags_fwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9071,7 +9386,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if tcp_flags_bwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tcpFlagsBwd"));
                             }
-                            tcp_flags_bwd__ = 
+                            tcp_flags_bwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9079,7 +9394,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if tos__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tos"));
                             }
-                            tos__ = 
+                            tos__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9099,7 +9414,7 @@ impl<'de> serde::Deserialize<'de> for FlowEvent {
                             if subflow_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("subflowCount"));
                             }
-                            subflow_count__ = 
+                            subflow_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9248,7 +9563,7 @@ impl<'de> serde::Deserialize<'de> for GetAssetHistoryRequest {
                             if page_size__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("pageSize"));
                             }
-                            page_size__ = 
+                            page_size__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9807,7 +10122,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if hour__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("hour"));
                             }
-                            hour__ = 
+                            hour__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9821,7 +10136,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if total_queries__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalQueries"));
                             }
-                            total_queries__ = 
+                            total_queries__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9829,7 +10144,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if cache_hits__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("cacheHits"));
                             }
-                            cache_hits__ = 
+                            cache_hits__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9837,7 +10152,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if cache_misses__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("cacheMisses"));
                             }
-                            cache_misses__ = 
+                            cache_misses__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9845,7 +10160,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if avg_duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("avgDurationMs"));
                             }
-                            avg_duration_ms__ = 
+                            avg_duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9853,7 +10168,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if p95_duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("p95DurationMs"));
                             }
-                            p95_duration_ms__ = 
+                            p95_duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9861,7 +10176,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if p99_duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("p99DurationMs"));
                             }
-                            p99_duration_ms__ = 
+                            p99_duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9869,7 +10184,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if total_nodes__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalNodes"));
                             }
-                            total_nodes__ = 
+                            total_nodes__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9877,7 +10192,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if total_edges__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalEdges"));
                             }
-                            total_edges__ = 
+                            total_edges__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9885,7 +10200,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if error_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("errorCount"));
                             }
-                            error_count__ = 
+                            error_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -9893,7 +10208,7 @@ impl<'de> serde::Deserialize<'de> for GraphCacheStats {
                             if timeout_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("timeoutCount"));
                             }
-                            timeout_count__ = 
+                            timeout_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10077,7 +10392,7 @@ impl<'de> serde::Deserialize<'de> for GraphHotIp {
                             if date__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("date"));
                             }
-                            date__ = 
+                            date__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10091,7 +10406,7 @@ impl<'de> serde::Deserialize<'de> for GraphHotIp {
                             if query_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("queryCount"));
                             }
-                            query_count__ = 
+                            query_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10099,7 +10414,7 @@ impl<'de> serde::Deserialize<'de> for GraphHotIp {
                             if total_neighbors__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalNeighbors"));
                             }
-                            total_neighbors__ = 
+                            total_neighbors__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10107,7 +10422,7 @@ impl<'de> serde::Deserialize<'de> for GraphHotIp {
                             if avg_session_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("avgSessionCount"));
                             }
-                            avg_session_count__ = 
+                            avg_session_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10115,7 +10430,7 @@ impl<'de> serde::Deserialize<'de> for GraphHotIp {
                             if last_query_time__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("lastQueryTime"));
                             }
-                            last_query_time__ = 
+                            last_query_time__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10338,7 +10653,7 @@ impl<'de> serde::Deserialize<'de> for GraphIpAffinity {
                             if date__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("date"));
                             }
-                            date__ = 
+                            date__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10358,7 +10673,7 @@ impl<'de> serde::Deserialize<'de> for GraphIpAffinity {
                             if session_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("sessionCount"));
                             }
-                            session_count__ = 
+                            session_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10366,7 +10681,7 @@ impl<'de> serde::Deserialize<'de> for GraphIpAffinity {
                             if total_bytes__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalBytes"));
                             }
-                            total_bytes__ = 
+                            total_bytes__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10374,7 +10689,7 @@ impl<'de> serde::Deserialize<'de> for GraphIpAffinity {
                             if avg_duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("avgDurationMs"));
                             }
-                            avg_duration_ms__ = 
+                            avg_duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10382,7 +10697,7 @@ impl<'de> serde::Deserialize<'de> for GraphIpAffinity {
                             if a_to_b_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("aToBCount"));
                             }
-                            a_to_b_count__ = 
+                            a_to_b_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10390,7 +10705,7 @@ impl<'de> serde::Deserialize<'de> for GraphIpAffinity {
                             if b_to_a_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("bToACount"));
                             }
-                            b_to_a_count__ = 
+                            b_to_a_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10398,7 +10713,7 @@ impl<'de> serde::Deserialize<'de> for GraphIpAffinity {
                             if first_seen__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("firstSeen"));
                             }
-                            first_seen__ = 
+                            first_seen__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10406,7 +10721,7 @@ impl<'de> serde::Deserialize<'de> for GraphIpAffinity {
                             if last_seen__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("lastSeen"));
                             }
-                            last_seen__ = 
+                            last_seen__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10842,7 +11157,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if depth__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("depth"));
                             }
-                            depth__ = 
+                            depth__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10856,7 +11171,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if query_start_time__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("queryStartTime"));
                             }
-                            query_start_time__ = 
+                            query_start_time__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10864,7 +11179,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if query_end_time__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("queryEndTime"));
                             }
-                            query_end_time__ = 
+                            query_end_time__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10872,7 +11187,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if node_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("nodeCount"));
                             }
-                            node_count__ = 
+                            node_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10880,7 +11195,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if edge_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("edgeCount"));
                             }
-                            edge_count__ = 
+                            edge_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10888,7 +11203,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if path_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("pathCount"));
                             }
-                            path_count__ = 
+                            path_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10896,7 +11211,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if result_size_bytes__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("resultSizeBytes"));
                             }
-                            result_size_bytes__ = 
+                            result_size_bytes__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10904,7 +11219,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("durationMs"));
                             }
-                            duration_ms__ = 
+                            duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10912,7 +11227,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if cache_hit__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("cacheHit"));
                             }
-                            cache_hit__ = 
+                            cache_hit__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10920,7 +11235,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if ch_query_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("chQueryCount"));
                             }
-                            ch_query_count__ = 
+                            ch_query_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10928,7 +11243,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if ch_total_duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("chTotalDurationMs"));
                             }
-                            ch_total_duration_ms__ = 
+                            ch_total_duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10936,7 +11251,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if ch_rows_read__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("chRowsRead"));
                             }
-                            ch_rows_read__ = 
+                            ch_rows_read__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10944,7 +11259,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if ch_bytes_read__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("chBytesRead"));
                             }
-                            ch_bytes_read__ = 
+                            ch_bytes_read__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -10988,7 +11303,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLog {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11160,7 +11475,7 @@ impl<'de> serde::Deserialize<'de> for GraphQueryLogBatch {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11418,7 +11733,7 @@ impl<'de> serde::Deserialize<'de> for GraphSlowQuery {
                             if depth__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("depth"));
                             }
-                            depth__ = 
+                            depth__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11432,7 +11747,7 @@ impl<'de> serde::Deserialize<'de> for GraphSlowQuery {
                             if duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("durationMs"));
                             }
-                            duration_ms__ = 
+                            duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11440,7 +11755,7 @@ impl<'de> serde::Deserialize<'de> for GraphSlowQuery {
                             if node_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("nodeCount"));
                             }
-                            node_count__ = 
+                            node_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11448,7 +11763,7 @@ impl<'de> serde::Deserialize<'de> for GraphSlowQuery {
                             if edge_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("edgeCount"));
                             }
-                            edge_count__ = 
+                            edge_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11456,7 +11771,7 @@ impl<'de> serde::Deserialize<'de> for GraphSlowQuery {
                             if ch_rows_read__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("chRowsRead"));
                             }
-                            ch_rows_read__ = 
+                            ch_rows_read__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11464,7 +11779,7 @@ impl<'de> serde::Deserialize<'de> for GraphSlowQuery {
                             if ch_bytes_read__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("chBytesRead"));
                             }
-                            ch_bytes_read__ = 
+                            ch_bytes_read__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11478,7 +11793,7 @@ impl<'de> serde::Deserialize<'de> for GraphSlowQuery {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11688,7 +12003,7 @@ impl<'de> serde::Deserialize<'de> for GraphStatsBatch {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11839,7 +12154,7 @@ impl<'de> serde::Deserialize<'de> for HardwareInfo {
                             if cpu_cores__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("cpuCores"));
                             }
-                            cpu_cores__ = 
+                            cpu_cores__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11847,7 +12162,7 @@ impl<'de> serde::Deserialize<'de> for HardwareInfo {
                             if memory_mb__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("memoryMb"));
                             }
-                            memory_mb__ = 
+                            memory_mb__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -11894,6 +12209,9 @@ impl serde::Serialize for HeartbeatRequest {
         if self.status.is_some() {
             len += 1;
         }
+        if !self.operation_acks.is_empty() {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("traffic.v1.HeartbeatRequest", len)?;
         if !self.tenant_id.is_empty() {
             struct_ser.serialize_field("tenantId", &self.tenant_id)?;
@@ -11903,6 +12221,9 @@ impl serde::Serialize for HeartbeatRequest {
         }
         if let Some(v) = self.status.as_ref() {
             struct_ser.serialize_field("status", v)?;
+        }
+        if !self.operation_acks.is_empty() {
+            struct_ser.serialize_field("operationAcks", &self.operation_acks)?;
         }
         struct_ser.end()
     }
@@ -11919,6 +12240,8 @@ impl<'de> serde::Deserialize<'de> for HeartbeatRequest {
             "probe_id",
             "probeId",
             "status",
+            "operation_acks",
+            "operationAcks",
         ];
 
         #[allow(clippy::enum_variant_names)]
@@ -11926,6 +12249,7 @@ impl<'de> serde::Deserialize<'de> for HeartbeatRequest {
             TenantId,
             ProbeId,
             Status,
+            OperationAcks,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -11950,6 +12274,7 @@ impl<'de> serde::Deserialize<'de> for HeartbeatRequest {
                             "tenantId" | "tenant_id" => Ok(GeneratedField::TenantId),
                             "probeId" | "probe_id" => Ok(GeneratedField::ProbeId),
                             "status" => Ok(GeneratedField::Status),
+                            "operationAcks" | "operation_acks" => Ok(GeneratedField::OperationAcks),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -11972,6 +12297,7 @@ impl<'de> serde::Deserialize<'de> for HeartbeatRequest {
                 let mut tenant_id__ = None;
                 let mut probe_id__ = None;
                 let mut status__ = None;
+                let mut operation_acks__ = None;
                 while let Some(k) = map_.next_key()? {
                     match k {
                         GeneratedField::TenantId => {
@@ -11992,12 +12318,19 @@ impl<'de> serde::Deserialize<'de> for HeartbeatRequest {
                             }
                             status__ = map_.next_value()?;
                         }
+                        GeneratedField::OperationAcks => {
+                            if operation_acks__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("operationAcks"));
+                            }
+                            operation_acks__ = Some(map_.next_value()?);
+                        }
                     }
                 }
                 Ok(HeartbeatRequest {
                     tenant_id: tenant_id__.unwrap_or_default(),
                     probe_id: probe_id__.unwrap_or_default(),
                     status: status__,
+                    operation_acks: operation_acks__.unwrap_or_default(),
                 })
             }
         }
@@ -12018,12 +12351,24 @@ impl serde::Serialize for HeartbeatResponse {
         if self.config.is_some() {
             len += 1;
         }
+        if !self.operation_commands.is_empty() {
+            len += 1;
+        }
+        if !self.accepted_ack_operation_ids.is_empty() {
+            len += 1;
+        }
         let mut struct_ser = serializer.serialize_struct("traffic.v1.HeartbeatResponse", len)?;
         if self.ok {
             struct_ser.serialize_field("ok", &self.ok)?;
         }
         if let Some(v) = self.config.as_ref() {
             struct_ser.serialize_field("config", v)?;
+        }
+        if !self.operation_commands.is_empty() {
+            struct_ser.serialize_field("operationCommands", &self.operation_commands)?;
+        }
+        if !self.accepted_ack_operation_ids.is_empty() {
+            struct_ser.serialize_field("acceptedAckOperationIds", &self.accepted_ack_operation_ids)?;
         }
         struct_ser.end()
     }
@@ -12037,12 +12382,18 @@ impl<'de> serde::Deserialize<'de> for HeartbeatResponse {
         const FIELDS: &[&str] = &[
             "ok",
             "config",
+            "operation_commands",
+            "operationCommands",
+            "accepted_ack_operation_ids",
+            "acceptedAckOperationIds",
         ];
 
         #[allow(clippy::enum_variant_names)]
         enum GeneratedField {
             Ok,
             Config,
+            OperationCommands,
+            AcceptedAckOperationIds,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -12066,6 +12417,8 @@ impl<'de> serde::Deserialize<'de> for HeartbeatResponse {
                         match value {
                             "ok" => Ok(GeneratedField::Ok),
                             "config" => Ok(GeneratedField::Config),
+                            "operationCommands" | "operation_commands" => Ok(GeneratedField::OperationCommands),
+                            "acceptedAckOperationIds" | "accepted_ack_operation_ids" => Ok(GeneratedField::AcceptedAckOperationIds),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -12087,6 +12440,8 @@ impl<'de> serde::Deserialize<'de> for HeartbeatResponse {
             {
                 let mut ok__ = None;
                 let mut config__ = None;
+                let mut operation_commands__ = None;
+                let mut accepted_ack_operation_ids__ = None;
                 while let Some(k) = map_.next_key()? {
                     match k {
                         GeneratedField::Ok => {
@@ -12101,11 +12456,25 @@ impl<'de> serde::Deserialize<'de> for HeartbeatResponse {
                             }
                             config__ = map_.next_value()?;
                         }
+                        GeneratedField::OperationCommands => {
+                            if operation_commands__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("operationCommands"));
+                            }
+                            operation_commands__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::AcceptedAckOperationIds => {
+                            if accepted_ack_operation_ids__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("acceptedAckOperationIds"));
+                            }
+                            accepted_ack_operation_ids__ = Some(map_.next_value()?);
+                        }
                     }
                 }
                 Ok(HeartbeatResponse {
                     ok: ok__.unwrap_or_default(),
                     config: config__,
+                    operation_commands: operation_commands__.unwrap_or_default(),
+                    accepted_ack_operation_ids: accepted_ack_operation_ids__.unwrap_or_default(),
                 })
             }
         }
@@ -12225,7 +12594,7 @@ impl<'de> serde::Deserialize<'de> for InterArrivalStats {
                             if min_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("minMs"));
                             }
-                            min_ms__ = 
+                            min_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12233,7 +12602,7 @@ impl<'de> serde::Deserialize<'de> for InterArrivalStats {
                             if max_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("maxMs"));
                             }
-                            max_ms__ = 
+                            max_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12241,7 +12610,7 @@ impl<'de> serde::Deserialize<'de> for InterArrivalStats {
                             if mean_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("meanMs"));
                             }
-                            mean_ms__ = 
+                            mean_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12249,7 +12618,7 @@ impl<'de> serde::Deserialize<'de> for InterArrivalStats {
                             if std_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("stdMs"));
                             }
-                            std_ms__ = 
+                            std_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12497,7 +12866,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if speed_mbps__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("speedMbps"));
                             }
-                            speed_mbps__ = 
+                            speed_mbps__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12505,7 +12874,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if rx_packets__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("rxPackets"));
                             }
-                            rx_packets__ = 
+                            rx_packets__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12513,7 +12882,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if tx_packets__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("txPackets"));
                             }
-                            tx_packets__ = 
+                            tx_packets__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12521,7 +12890,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if rx_bytes__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("rxBytes"));
                             }
-                            rx_bytes__ = 
+                            rx_bytes__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12529,7 +12898,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if tx_bytes__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("txBytes"));
                             }
-                            tx_bytes__ = 
+                            tx_bytes__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12537,7 +12906,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if rx_errors__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("rxErrors"));
                             }
-                            rx_errors__ = 
+                            rx_errors__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12545,7 +12914,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if tx_errors__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("txErrors"));
                             }
-                            tx_errors__ = 
+                            tx_errors__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12553,7 +12922,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if rx_crc_errors__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("rxCrcErrors"));
                             }
-                            rx_crc_errors__ = 
+                            rx_crc_errors__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12561,7 +12930,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if rx_dropped__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("rxDropped"));
                             }
-                            rx_dropped__ = 
+                            rx_dropped__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12569,7 +12938,7 @@ impl<'de> serde::Deserialize<'de> for InterfaceStatus {
                             if collisions__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("collisions"));
                             }
-                            collisions__ = 
+                            collisions__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12724,7 +13093,7 @@ impl<'de> serde::Deserialize<'de> for ListAssetsRequest {
                             if page_size__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("pageSize"));
                             }
-                            page_size__ = 
+                            page_size__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -12873,7 +13242,7 @@ impl<'de> serde::Deserialize<'de> for ListAssetsResponse {
                             if total_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalCount"));
                             }
-                            total_count__ = 
+                            total_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13032,7 +13401,7 @@ impl<'de> serde::Deserialize<'de> for MacIpBinding {
                             if observed_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("observedAt"));
                             }
-                            observed_at__ = 
+                            observed_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13284,7 +13653,7 @@ impl<'de> serde::Deserialize<'de> for ModelFeedbackMetrics {
                             if hour__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("hour"));
                             }
-                            hour__ = 
+                            hour__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13292,7 +13661,7 @@ impl<'de> serde::Deserialize<'de> for ModelFeedbackMetrics {
                             if total_alerts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalAlerts"));
                             }
-                            total_alerts__ = 
+                            total_alerts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13300,7 +13669,7 @@ impl<'de> serde::Deserialize<'de> for ModelFeedbackMetrics {
                             if tp_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tpCount"));
                             }
-                            tp_count__ = 
+                            tp_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13308,7 +13677,7 @@ impl<'de> serde::Deserialize<'de> for ModelFeedbackMetrics {
                             if fp_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("fpCount"));
                             }
-                            fp_count__ = 
+                            fp_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13316,7 +13685,7 @@ impl<'de> serde::Deserialize<'de> for ModelFeedbackMetrics {
                             if unlabeled_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("unlabeledCount"));
                             }
-                            unlabeled_count__ = 
+                            unlabeled_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13324,7 +13693,7 @@ impl<'de> serde::Deserialize<'de> for ModelFeedbackMetrics {
                             if precision__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("precision"));
                             }
-                            precision__ = 
+                            precision__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13332,7 +13701,7 @@ impl<'de> serde::Deserialize<'de> for ModelFeedbackMetrics {
                             if recall__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("recall"));
                             }
-                            recall__ = 
+                            recall__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13340,7 +13709,7 @@ impl<'de> serde::Deserialize<'de> for ModelFeedbackMetrics {
                             if f1_score__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("f1Score"));
                             }
-                            f1_score__ = 
+                            f1_score__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13348,7 +13717,7 @@ impl<'de> serde::Deserialize<'de> for ModelFeedbackMetrics {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13532,7 +13901,7 @@ impl<'de> serde::Deserialize<'de> for Nic {
                             if speed_mbps__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("speedMbps"));
                             }
-                            speed_mbps__ = 
+                            speed_mbps__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13710,7 +14079,7 @@ impl<'de> serde::Deserialize<'de> for NetworkInterfaceConfig {
                             if ring_buffer_size_mb__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ringBufferSizeMb"));
                             }
-                            ring_buffer_size_mb__ = 
+                            ring_buffer_size_mb__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13969,7 +14338,7 @@ impl<'de> serde::Deserialize<'de> for NotificationEvent {
                             if sent_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("sentAt"));
                             }
-                            sent_at__ = 
+                            sent_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -13977,7 +14346,7 @@ impl<'de> serde::Deserialize<'de> for NotificationEvent {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14109,7 +14478,7 @@ impl<'de> serde::Deserialize<'de> for PacketLengthStats {
                             if min__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("min"));
                             }
-                            min__ = 
+                            min__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14117,7 +14486,7 @@ impl<'de> serde::Deserialize<'de> for PacketLengthStats {
                             if max__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("max"));
                             }
-                            max__ = 
+                            max__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14125,7 +14494,7 @@ impl<'de> serde::Deserialize<'de> for PacketLengthStats {
                             if mean__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("mean"));
                             }
-                            mean__ = 
+                            mean__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14133,7 +14502,7 @@ impl<'de> serde::Deserialize<'de> for PacketLengthStats {
                             if std__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("std"));
                             }
-                            std__ = 
+                            std__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14505,7 +14874,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutRequest {
                             if src_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("srcPort"));
                             }
-                            src_port__ = 
+                            src_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14513,7 +14882,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutRequest {
                             if dst_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("dstPort"));
                             }
-                            dst_port__ = 
+                            dst_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14521,7 +14890,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutRequest {
                             if protocol__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("protocol"));
                             }
-                            protocol__ = 
+                            protocol__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14529,7 +14898,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutRequest {
                             if start_time__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("startTime"));
                             }
-                            start_time__ = 
+                            start_time__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14537,7 +14906,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutRequest {
                             if end_time__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("endTime"));
                             }
-                            end_time__ = 
+                            end_time__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14557,7 +14926,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutRequest {
                             if max_packets__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("maxPackets"));
                             }
-                            max_packets__ = 
+                            max_packets__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14565,7 +14934,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutRequest {
                             if max_bytes__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("maxBytes"));
                             }
-                            max_bytes__ = 
+                            max_bytes__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14845,7 +15214,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutResponse {
                             if progress_percent__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("progressPercent"));
                             }
-                            progress_percent__ = 
+                            progress_percent__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14859,7 +15228,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutResponse {
                             if total_packets__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalPackets"));
                             }
-                            total_packets__ = 
+                            total_packets__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14867,7 +15236,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutResponse {
                             if total_bytes__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("totalBytes"));
                             }
-                            total_bytes__ = 
+                            total_bytes__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14875,7 +15244,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutResponse {
                             if files_scanned__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("filesScanned"));
                             }
-                            files_scanned__ = 
+                            files_scanned__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14883,7 +15252,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutResponse {
                             if files_matched__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("filesMatched"));
                             }
-                            files_matched__ = 
+                            files_matched__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14891,7 +15260,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutResponse {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14899,7 +15268,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutResponse {
                             if started_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("startedAt"));
                             }
-                            started_at__ = 
+                            started_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14907,7 +15276,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutResponse {
                             if completed_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("completedAt"));
                             }
-                            completed_at__ = 
+                            completed_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -14915,7 +15284,7 @@ impl<'de> serde::Deserialize<'de> for PcapCutResponse {
                             if expires_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("expiresAt"));
                             }
-                            expires_at__ = 
+                            expires_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15090,7 +15459,7 @@ impl<'de> serde::Deserialize<'de> for PcapIndexBatch {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15371,7 +15740,7 @@ impl<'de> serde::Deserialize<'de> for PcapIndexMeta {
                             if ts_start__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsStart"));
                             }
-                            ts_start__ = 
+                            ts_start__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15379,7 +15748,7 @@ impl<'de> serde::Deserialize<'de> for PcapIndexMeta {
                             if ts_end__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsEnd"));
                             }
-                            ts_end__ = 
+                            ts_end__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15387,7 +15756,7 @@ impl<'de> serde::Deserialize<'de> for PcapIndexMeta {
                             if byte_size__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("byteSize"));
                             }
-                            byte_size__ = 
+                            byte_size__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15395,7 +15764,7 @@ impl<'de> serde::Deserialize<'de> for PcapIndexMeta {
                             if zstd_level__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("zstdLevel"));
                             }
-                            zstd_level__ = 
+                            zstd_level__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15421,7 +15790,7 @@ impl<'de> serde::Deserialize<'de> for PcapIndexMeta {
                             if offset_start__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("offsetStart"));
                             }
-                            offset_start__ = 
+                            offset_start__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15429,7 +15798,7 @@ impl<'de> serde::Deserialize<'de> for PcapIndexMeta {
                             if offset_end__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("offsetEnd"));
                             }
-                            offset_end__ = 
+                            offset_end__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15449,7 +15818,7 @@ impl<'de> serde::Deserialize<'de> for PcapIndexMeta {
                             if created_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdTs"));
                             }
-                            created_ts__ = 
+                            created_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15662,7 +16031,7 @@ impl<'de> serde::Deserialize<'de> for ProbeConfig {
                             if sample_rate__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("sampleRate"));
                             }
-                            sample_rate__ = 
+                            sample_rate__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15676,7 +16045,7 @@ impl<'de> serde::Deserialize<'de> for ProbeConfig {
                             if idle_timeout_sec__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("idleTimeoutSec"));
                             }
-                            idle_timeout_sec__ = 
+                            idle_timeout_sec__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15684,7 +16053,7 @@ impl<'de> serde::Deserialize<'de> for ProbeConfig {
                             if active_timeout_sec__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("activeTimeoutSec"));
                             }
-                            active_timeout_sec__ = 
+                            active_timeout_sec__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15692,7 +16061,7 @@ impl<'de> serde::Deserialize<'de> for ProbeConfig {
                             if batch_size__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("batchSize"));
                             }
-                            batch_size__ = 
+                            batch_size__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15712,7 +16081,7 @@ impl<'de> serde::Deserialize<'de> for ProbeConfig {
                             if ring_buffer_size__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ringBufferSize"));
                             }
-                            ring_buffer_size__ = 
+                            ring_buffer_size__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15720,7 +16089,7 @@ impl<'de> serde::Deserialize<'de> for ProbeConfig {
                             if batch_drain_timeout_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("batchDrainTimeoutMs"));
                             }
-                            batch_drain_timeout_ms__ = 
+                            batch_drain_timeout_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15741,6 +16110,536 @@ impl<'de> serde::Deserialize<'de> for ProbeConfig {
             }
         }
         deserializer.deserialize_struct("traffic.v1.ProbeConfig", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for ProbeOperationAck {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if !self.operation_id.is_empty() {
+            len += 1;
+        }
+        if self.command_revision != 0 {
+            len += 1;
+        }
+        if !self.reported_version.is_empty() {
+            len += 1;
+        }
+        if !self.reported_hash.is_empty() {
+            len += 1;
+        }
+        if !self.agent_version.is_empty() {
+            len += 1;
+        }
+        if self.applied {
+            len += 1;
+        }
+        if !self.error.is_empty() {
+            len += 1;
+        }
+        if self.acknowledged_at_ms != 0 {
+            len += 1;
+        }
+        if !self.detail_json.is_empty() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("traffic.v1.ProbeOperationAck", len)?;
+        if !self.operation_id.is_empty() {
+            struct_ser.serialize_field("operationId", &self.operation_id)?;
+        }
+        if self.command_revision != 0 {
+            #[allow(clippy::needless_borrow)]
+            #[allow(clippy::needless_borrows_for_generic_args)]
+            struct_ser.serialize_field("commandRevision", ToString::to_string(&self.command_revision).as_str())?;
+        }
+        if !self.reported_version.is_empty() {
+            struct_ser.serialize_field("reportedVersion", &self.reported_version)?;
+        }
+        if !self.reported_hash.is_empty() {
+            struct_ser.serialize_field("reportedHash", &self.reported_hash)?;
+        }
+        if !self.agent_version.is_empty() {
+            struct_ser.serialize_field("agentVersion", &self.agent_version)?;
+        }
+        if self.applied {
+            struct_ser.serialize_field("applied", &self.applied)?;
+        }
+        if !self.error.is_empty() {
+            struct_ser.serialize_field("error", &self.error)?;
+        }
+        if self.acknowledged_at_ms != 0 {
+            #[allow(clippy::needless_borrow)]
+            #[allow(clippy::needless_borrows_for_generic_args)]
+            struct_ser.serialize_field("acknowledgedAtMs", ToString::to_string(&self.acknowledged_at_ms).as_str())?;
+        }
+        if !self.detail_json.is_empty() {
+            #[allow(clippy::needless_borrow)]
+            #[allow(clippy::needless_borrows_for_generic_args)]
+            struct_ser.serialize_field("detailJson", pbjson::private::base64::encode(&self.detail_json).as_str())?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for ProbeOperationAck {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "operation_id",
+            "operationId",
+            "command_revision",
+            "commandRevision",
+            "reported_version",
+            "reportedVersion",
+            "reported_hash",
+            "reportedHash",
+            "agent_version",
+            "agentVersion",
+            "applied",
+            "error",
+            "acknowledged_at_ms",
+            "acknowledgedAtMs",
+            "detail_json",
+            "detailJson",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            OperationId,
+            CommandRevision,
+            ReportedVersion,
+            ReportedHash,
+            AgentVersion,
+            Applied,
+            Error,
+            AcknowledgedAtMs,
+            DetailJson,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "operationId" | "operation_id" => Ok(GeneratedField::OperationId),
+                            "commandRevision" | "command_revision" => Ok(GeneratedField::CommandRevision),
+                            "reportedVersion" | "reported_version" => Ok(GeneratedField::ReportedVersion),
+                            "reportedHash" | "reported_hash" => Ok(GeneratedField::ReportedHash),
+                            "agentVersion" | "agent_version" => Ok(GeneratedField::AgentVersion),
+                            "applied" => Ok(GeneratedField::Applied),
+                            "error" => Ok(GeneratedField::Error),
+                            "acknowledgedAtMs" | "acknowledged_at_ms" => Ok(GeneratedField::AcknowledgedAtMs),
+                            "detailJson" | "detail_json" => Ok(GeneratedField::DetailJson),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = ProbeOperationAck;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct traffic.v1.ProbeOperationAck")
+            }
+
+            fn visit_map<V>(self, mut map_: V) -> std::result::Result<ProbeOperationAck, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut operation_id__ = None;
+                let mut command_revision__ = None;
+                let mut reported_version__ = None;
+                let mut reported_hash__ = None;
+                let mut agent_version__ = None;
+                let mut applied__ = None;
+                let mut error__ = None;
+                let mut acknowledged_at_ms__ = None;
+                let mut detail_json__ = None;
+                while let Some(k) = map_.next_key()? {
+                    match k {
+                        GeneratedField::OperationId => {
+                            if operation_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("operationId"));
+                            }
+                            operation_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::CommandRevision => {
+                            if command_revision__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("commandRevision"));
+                            }
+                            command_revision__ =
+                                Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::ReportedVersion => {
+                            if reported_version__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("reportedVersion"));
+                            }
+                            reported_version__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::ReportedHash => {
+                            if reported_hash__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("reportedHash"));
+                            }
+                            reported_hash__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::AgentVersion => {
+                            if agent_version__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("agentVersion"));
+                            }
+                            agent_version__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::Applied => {
+                            if applied__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("applied"));
+                            }
+                            applied__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::Error => {
+                            if error__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("error"));
+                            }
+                            error__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::AcknowledgedAtMs => {
+                            if acknowledged_at_ms__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("acknowledgedAtMs"));
+                            }
+                            acknowledged_at_ms__ =
+                                Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::DetailJson => {
+                            if detail_json__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("detailJson"));
+                            }
+                            detail_json__ =
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
+                        }
+                    }
+                }
+                Ok(ProbeOperationAck {
+                    operation_id: operation_id__.unwrap_or_default(),
+                    command_revision: command_revision__.unwrap_or_default(),
+                    reported_version: reported_version__.unwrap_or_default(),
+                    reported_hash: reported_hash__.unwrap_or_default(),
+                    agent_version: agent_version__.unwrap_or_default(),
+                    applied: applied__.unwrap_or_default(),
+                    error: error__.unwrap_or_default(),
+                    acknowledged_at_ms: acknowledged_at_ms__.unwrap_or_default(),
+                    detail_json: detail_json__.unwrap_or_default(),
+                })
+            }
+        }
+        deserializer.deserialize_struct("traffic.v1.ProbeOperationAck", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for ProbeOperationCommand {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if !self.event_id.is_empty() {
+            len += 1;
+        }
+        if !self.tenant_id.is_empty() {
+            len += 1;
+        }
+        if !self.probe_id.is_empty() {
+            len += 1;
+        }
+        if !self.operation_id.is_empty() {
+            len += 1;
+        }
+        if !self.operation_type.is_empty() {
+            len += 1;
+        }
+        if self.command_revision != 0 {
+            len += 1;
+        }
+        if !self.desired_version.is_empty() {
+            len += 1;
+        }
+        if !self.command_hash.is_empty() {
+            len += 1;
+        }
+        if self.expires_at_ms != 0 {
+            len += 1;
+        }
+        if !self.trace_id.is_empty() {
+            len += 1;
+        }
+        if !self.command_json.is_empty() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("traffic.v1.ProbeOperationCommand", len)?;
+        if !self.event_id.is_empty() {
+            struct_ser.serialize_field("eventId", &self.event_id)?;
+        }
+        if !self.tenant_id.is_empty() {
+            struct_ser.serialize_field("tenantId", &self.tenant_id)?;
+        }
+        if !self.probe_id.is_empty() {
+            struct_ser.serialize_field("probeId", &self.probe_id)?;
+        }
+        if !self.operation_id.is_empty() {
+            struct_ser.serialize_field("operationId", &self.operation_id)?;
+        }
+        if !self.operation_type.is_empty() {
+            struct_ser.serialize_field("operationType", &self.operation_type)?;
+        }
+        if self.command_revision != 0 {
+            #[allow(clippy::needless_borrow)]
+            #[allow(clippy::needless_borrows_for_generic_args)]
+            struct_ser.serialize_field("commandRevision", ToString::to_string(&self.command_revision).as_str())?;
+        }
+        if !self.desired_version.is_empty() {
+            struct_ser.serialize_field("desiredVersion", &self.desired_version)?;
+        }
+        if !self.command_hash.is_empty() {
+            struct_ser.serialize_field("commandHash", &self.command_hash)?;
+        }
+        if self.expires_at_ms != 0 {
+            #[allow(clippy::needless_borrow)]
+            #[allow(clippy::needless_borrows_for_generic_args)]
+            struct_ser.serialize_field("expiresAtMs", ToString::to_string(&self.expires_at_ms).as_str())?;
+        }
+        if !self.trace_id.is_empty() {
+            struct_ser.serialize_field("traceId", &self.trace_id)?;
+        }
+        if !self.command_json.is_empty() {
+            #[allow(clippy::needless_borrow)]
+            #[allow(clippy::needless_borrows_for_generic_args)]
+            struct_ser.serialize_field("commandJson", pbjson::private::base64::encode(&self.command_json).as_str())?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for ProbeOperationCommand {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "event_id",
+            "eventId",
+            "tenant_id",
+            "tenantId",
+            "probe_id",
+            "probeId",
+            "operation_id",
+            "operationId",
+            "operation_type",
+            "operationType",
+            "command_revision",
+            "commandRevision",
+            "desired_version",
+            "desiredVersion",
+            "command_hash",
+            "commandHash",
+            "expires_at_ms",
+            "expiresAtMs",
+            "trace_id",
+            "traceId",
+            "command_json",
+            "commandJson",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            EventId,
+            TenantId,
+            ProbeId,
+            OperationId,
+            OperationType,
+            CommandRevision,
+            DesiredVersion,
+            CommandHash,
+            ExpiresAtMs,
+            TraceId,
+            CommandJson,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "eventId" | "event_id" => Ok(GeneratedField::EventId),
+                            "tenantId" | "tenant_id" => Ok(GeneratedField::TenantId),
+                            "probeId" | "probe_id" => Ok(GeneratedField::ProbeId),
+                            "operationId" | "operation_id" => Ok(GeneratedField::OperationId),
+                            "operationType" | "operation_type" => Ok(GeneratedField::OperationType),
+                            "commandRevision" | "command_revision" => Ok(GeneratedField::CommandRevision),
+                            "desiredVersion" | "desired_version" => Ok(GeneratedField::DesiredVersion),
+                            "commandHash" | "command_hash" => Ok(GeneratedField::CommandHash),
+                            "expiresAtMs" | "expires_at_ms" => Ok(GeneratedField::ExpiresAtMs),
+                            "traceId" | "trace_id" => Ok(GeneratedField::TraceId),
+                            "commandJson" | "command_json" => Ok(GeneratedField::CommandJson),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = ProbeOperationCommand;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct traffic.v1.ProbeOperationCommand")
+            }
+
+            fn visit_map<V>(self, mut map_: V) -> std::result::Result<ProbeOperationCommand, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut event_id__ = None;
+                let mut tenant_id__ = None;
+                let mut probe_id__ = None;
+                let mut operation_id__ = None;
+                let mut operation_type__ = None;
+                let mut command_revision__ = None;
+                let mut desired_version__ = None;
+                let mut command_hash__ = None;
+                let mut expires_at_ms__ = None;
+                let mut trace_id__ = None;
+                let mut command_json__ = None;
+                while let Some(k) = map_.next_key()? {
+                    match k {
+                        GeneratedField::EventId => {
+                            if event_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("eventId"));
+                            }
+                            event_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::TenantId => {
+                            if tenant_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("tenantId"));
+                            }
+                            tenant_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::ProbeId => {
+                            if probe_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("probeId"));
+                            }
+                            probe_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::OperationId => {
+                            if operation_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("operationId"));
+                            }
+                            operation_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::OperationType => {
+                            if operation_type__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("operationType"));
+                            }
+                            operation_type__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::CommandRevision => {
+                            if command_revision__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("commandRevision"));
+                            }
+                            command_revision__ =
+                                Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::DesiredVersion => {
+                            if desired_version__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("desiredVersion"));
+                            }
+                            desired_version__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::CommandHash => {
+                            if command_hash__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("commandHash"));
+                            }
+                            command_hash__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::ExpiresAtMs => {
+                            if expires_at_ms__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("expiresAtMs"));
+                            }
+                            expires_at_ms__ =
+                                Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::TraceId => {
+                            if trace_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("traceId"));
+                            }
+                            trace_id__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::CommandJson => {
+                            if command_json__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("commandJson"));
+                            }
+                            command_json__ =
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
+                        }
+                    }
+                }
+                Ok(ProbeOperationCommand {
+                    event_id: event_id__.unwrap_or_default(),
+                    tenant_id: tenant_id__.unwrap_or_default(),
+                    probe_id: probe_id__.unwrap_or_default(),
+                    operation_id: operation_id__.unwrap_or_default(),
+                    operation_type: operation_type__.unwrap_or_default(),
+                    command_revision: command_revision__.unwrap_or_default(),
+                    desired_version: desired_version__.unwrap_or_default(),
+                    command_hash: command_hash__.unwrap_or_default(),
+                    expires_at_ms: expires_at_ms__.unwrap_or_default(),
+                    trace_id: trace_id__.unwrap_or_default(),
+                    command_json: command_json__.unwrap_or_default(),
+                })
+            }
+        }
+        deserializer.deserialize_struct("traffic.v1.ProbeOperationCommand", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for ProbeStatus {
@@ -15909,7 +16808,7 @@ impl<'de> serde::Deserialize<'de> for ProbeStatus {
                             if cpu_usage__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("cpuUsage"));
                             }
-                            cpu_usage__ = 
+                            cpu_usage__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15917,7 +16816,7 @@ impl<'de> serde::Deserialize<'de> for ProbeStatus {
                             if memory_usage__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("memoryUsage"));
                             }
-                            memory_usage__ = 
+                            memory_usage__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15925,7 +16824,7 @@ impl<'de> serde::Deserialize<'de> for ProbeStatus {
                             if capture_pps__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("capturePps"));
                             }
-                            capture_pps__ = 
+                            capture_pps__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15933,7 +16832,7 @@ impl<'de> serde::Deserialize<'de> for ProbeStatus {
                             if upload_bps__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("uploadBps"));
                             }
-                            upload_bps__ = 
+                            upload_bps__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15941,7 +16840,7 @@ impl<'de> serde::Deserialize<'de> for ProbeStatus {
                             if packets_captured__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("packetsCaptured"));
                             }
-                            packets_captured__ = 
+                            packets_captured__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15949,7 +16848,7 @@ impl<'de> serde::Deserialize<'de> for ProbeStatus {
                             if packets_dropped__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("packetsDropped"));
                             }
-                            packets_dropped__ = 
+                            packets_dropped__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -15957,7 +16856,7 @@ impl<'de> serde::Deserialize<'de> for ProbeStatus {
                             if uptime_seconds__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("uptimeSeconds"));
                             }
-                            uptime_seconds__ = 
+                            uptime_seconds__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -16164,7 +17063,7 @@ impl<'de> serde::Deserialize<'de> for RecordMacIpBindingResponse {
                             if accepted__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("accepted"));
                             }
-                            accepted__ = 
+                            accepted__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -16172,7 +17071,7 @@ impl<'de> serde::Deserialize<'de> for RecordMacIpBindingResponse {
                             if rejected__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("rejected"));
                             }
-                            rejected__ = 
+                            rejected__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -16353,7 +17252,7 @@ impl<'de> serde::Deserialize<'de> for RegisterProbeRequest {
                             if build_timestamp__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("buildTimestamp"));
                             }
-                            build_timestamp__ = 
+                            build_timestamp__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -16685,7 +17584,7 @@ impl<'de> serde::Deserialize<'de> for SessionBatch {
                             if batch_size__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("batchSize"));
                             }
-                            batch_size__ = 
+                            batch_size__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -16699,7 +17598,7 @@ impl<'de> serde::Deserialize<'de> for SessionBatch {
                             if created_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdAt"));
                             }
-                            created_at__ = 
+                            created_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17284,7 +18183,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if ts_start__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsStart"));
                             }
-                            ts_start__ = 
+                            ts_start__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17292,7 +18191,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if ts_end__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tsEnd"));
                             }
-                            ts_end__ = 
+                            ts_end__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17300,7 +18199,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if duration_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("durationMs"));
                             }
-                            duration_ms__ = 
+                            duration_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17308,7 +18207,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if protocol__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("protocol"));
                             }
-                            protocol__ = 
+                            protocol__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17328,7 +18227,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if client_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("clientPort"));
                             }
-                            client_port__ = 
+                            client_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17336,7 +18235,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if server_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("serverPort"));
                             }
-                            server_port__ = 
+                            server_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17344,7 +18243,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if packets_total__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("packetsTotal"));
                             }
-                            packets_total__ = 
+                            packets_total__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17352,7 +18251,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if bytes_total__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("bytesTotal"));
                             }
-                            bytes_total__ = 
+                            bytes_total__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17360,7 +18259,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if bytes_fwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("bytesFwd"));
                             }
-                            bytes_fwd__ = 
+                            bytes_fwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17368,7 +18267,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if bytes_bwd__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("bytesBwd"));
                             }
-                            bytes_bwd__ = 
+                            bytes_bwd__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17376,7 +18275,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if up_down_ratio__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("upDownRatio"));
                             }
-                            up_down_ratio__ = 
+                            up_down_ratio__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17384,7 +18283,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if num_pkts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("numPkts"));
                             }
-                            num_pkts__ = 
+                            num_pkts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17392,7 +18291,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if avg_payload__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("avgPayload"));
                             }
-                            avg_payload__ = 
+                            avg_payload__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17400,7 +18299,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if min_payload__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("minPayload"));
                             }
-                            min_payload__ = 
+                            min_payload__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17408,7 +18307,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if max_payload__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("maxPayload"));
                             }
-                            max_payload__ = 
+                            max_payload__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17416,7 +18315,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if std_payload__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("stdPayload"));
                             }
-                            std_payload__ = 
+                            std_payload__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17424,7 +18323,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if mean_iat_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("meanIatMs"));
                             }
-                            mean_iat_ms__ = 
+                            mean_iat_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17432,7 +18331,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if min_iat_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("minIatMs"));
                             }
-                            min_iat_ms__ = 
+                            min_iat_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17440,7 +18339,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if max_iat_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("maxIatMs"));
                             }
-                            max_iat_ms__ = 
+                            max_iat_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17448,7 +18347,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if std_iat_ms__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("stdIatMs"));
                             }
-                            std_iat_ms__ = 
+                            std_iat_ms__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17456,7 +18355,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if flags_syn__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("flagsSyn"));
                             }
-                            flags_syn__ = 
+                            flags_syn__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17464,7 +18363,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if flags_ack__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("flagsAck"));
                             }
-                            flags_ack__ = 
+                            flags_ack__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17472,7 +18371,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if flags_fin__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("flagsFin"));
                             }
-                            flags_fin__ = 
+                            flags_fin__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17480,7 +18379,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if flags_psh__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("flagsPsh"));
                             }
-                            flags_psh__ = 
+                            flags_psh__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17488,7 +18387,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if flags_rst__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("flagsRst"));
                             }
-                            flags_rst__ = 
+                            flags_rst__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17496,7 +18395,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if dns_pkt_cnt__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("dnsPktCnt"));
                             }
-                            dns_pkt_cnt__ = 
+                            dns_pkt_cnt__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17504,7 +18403,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if tcp_pkt_cnt__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("tcpPktCnt"));
                             }
-                            tcp_pkt_cnt__ = 
+                            tcp_pkt_cnt__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17512,7 +18411,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if udp_pkt_cnt__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("udpPktCnt"));
                             }
-                            udp_pkt_cnt__ = 
+                            udp_pkt_cnt__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17520,7 +18419,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if icmp_pkt_cnt__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("icmpPktCnt"));
                             }
-                            icmp_pkt_cnt__ = 
+                            icmp_pkt_cnt__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17552,7 +18451,7 @@ impl<'de> serde::Deserialize<'de> for SessionEvent {
                             if evidence_count__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("evidenceCount"));
                             }
-                            evidence_count__ = 
+                            evidence_count__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17874,7 +18773,7 @@ impl<'de> serde::Deserialize<'de> for StorageHealthEvent {
                             if consecutive_failures__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("consecutiveFailures"));
                             }
-                            consecutive_failures__ = 
+                            consecutive_failures__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17882,7 +18781,7 @@ impl<'de> serde::Deserialize<'de> for StorageHealthEvent {
                             if ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ts"));
                             }
-                            ts__ = 
+                            ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -17890,7 +18789,7 @@ impl<'de> serde::Deserialize<'de> for StorageHealthEvent {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -18508,7 +19407,7 @@ impl<'de> serde::Deserialize<'de> for UploadFlowsResponse {
                             if accepted__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("accepted"));
                             }
-                            accepted__ = 
+                            accepted__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -18516,7 +19415,7 @@ impl<'de> serde::Deserialize<'de> for UploadFlowsResponse {
                             if rejected__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("rejected"));
                             }
-                            rejected__ = 
+                            rejected__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -18962,7 +19861,7 @@ impl<'de> serde::Deserialize<'de> for UploadSessionsResponse {
                             if accepted__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("accepted"));
                             }
-                            accepted__ = 
+                            accepted__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -18970,7 +19869,7 @@ impl<'de> serde::Deserialize<'de> for UploadSessionsResponse {
                             if rejected__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("rejected"));
                             }
-                            rejected__ = 
+                            rejected__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -19446,7 +20345,7 @@ impl<'de> serde::Deserialize<'de> for UserEvent {
                             if timestamp__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("timestamp"));
                             }
-                            timestamp__ = 
+                            timestamp__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -19852,7 +20751,7 @@ impl<'de> serde::Deserialize<'de> for WhitelistRule {
                             if src_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("srcPort"));
                             }
-                            src_port__ = 
+                            src_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -19860,7 +20759,7 @@ impl<'de> serde::Deserialize<'de> for WhitelistRule {
                             if dst_port__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("dstPort"));
                             }
-                            dst_port__ = 
+                            dst_port__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -19868,7 +20767,7 @@ impl<'de> serde::Deserialize<'de> for WhitelistRule {
                             if protocol__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("protocol"));
                             }
-                            protocol__ = 
+                            protocol__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -19906,7 +20805,7 @@ impl<'de> serde::Deserialize<'de> for WhitelistRule {
                             if created_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("createdTs"));
                             }
-                            created_ts__ = 
+                            created_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -19914,7 +20813,7 @@ impl<'de> serde::Deserialize<'de> for WhitelistRule {
                             if updated_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("updatedTs"));
                             }
-                            updated_ts__ = 
+                            updated_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -19922,7 +20821,7 @@ impl<'de> serde::Deserialize<'de> for WhitelistRule {
                             if expires_at__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("expiresAt"));
                             }
-                            expires_at__ = 
+                            expires_at__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }
@@ -19930,7 +20829,7 @@ impl<'de> serde::Deserialize<'de> for WhitelistRule {
                             if ingest_ts__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ingestTs"));
                             }
-                            ingest_ts__ = 
+                            ingest_ts__ =
                                 Some(map_.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
                             ;
                         }

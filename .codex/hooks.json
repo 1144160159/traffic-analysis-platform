@@ -1,0 +1,19 @@
+{
+  "description": "Record terminal command results and remind Codex to continue immediately after a completed command.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/codex_hooks/command_completion_guard.py\" post-tool",
+            "timeout": 5,
+            "statusMessage": "Continuing after command completion",
+            "additionalContextLimit": 500
+          }
+        ]
+      }
+    ]
+  }
+}

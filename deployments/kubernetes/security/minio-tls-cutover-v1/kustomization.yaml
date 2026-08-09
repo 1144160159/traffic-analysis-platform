@@ -1,0 +1,52 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../infrastructure/06-minio.yaml
+- ../../infrastructure/07-flink.yaml
+- ../../applications/go-services.yaml
+- ../../applications/probe-agent.yaml
+- ../../argo-events/argo-artifact-repository.yaml
+- ../../argo-events/mlops-training-template.yaml
+- ../minio-tls-material.v1.yaml
+- minio-proxy-config.yaml
+- minio-operations-tls.yaml
+images:
+- name: docker.io/traffic/alert-service
+  newName: docker.io/traffic/alert-service
+  newTag: minio-tls-8cb5c91b5f32
+- name: docker.io/traffic/asset-service
+  newName: docker.io/traffic/asset-service
+  newTag: minio-tls-8cb5c91b5f32
+- name: docker.io/traffic/forensics-service
+  newName: docker.io/traffic/forensics-service
+  newTag: minio-tls-8cb5c91b5f32
+- name: docker.io/traffic/probe-agent
+  newName: docker.io/traffic/probe-agent
+  newTag: minio-tls-3f4da2fc0e5b
+patches:
+- path: minio-server.patch.yaml
+  target: {group: apps, version: v1, kind: StatefulSet, name: minio, namespace: minio}
+- path: minio-proxy.patch.yaml
+  target: {group: apps, version: v1, kind: Deployment, name: minio-proxy, namespace: minio}
+- path: alert-service.patch.yaml
+  target: {group: apps, version: v1, kind: Deployment, name: alert-service, namespace: traffic-analysis}
+- path: asset-service.patch.yaml
+  target: {group: apps, version: v1, kind: Deployment, name: asset-service, namespace: traffic-analysis}
+- path: forensics-service.patch.yaml
+  target: {group: apps, version: v1, kind: Deployment, name: forensics-service, namespace: traffic-analysis}
+- path: probe-agent.patch.yaml
+  target: {group: apps, version: v1, kind: DaemonSet, name: probe-agent, namespace: traffic-analysis}
+- path: probe-agent-config.patch.yaml
+  target: {version: v1, kind: ConfigMap, name: probe-agent-config, namespace: traffic-analysis}
+- path: flink-jobmanager.patch.yaml
+  target: {group: apps, version: v1, kind: StatefulSet, name: flink-jobmanager, namespace: flink}
+- path: flink-taskmanager.patch.yaml
+  target: {group: apps, version: v1, kind: StatefulSet, name: flink-taskmanager, namespace: flink}
+- path: flink-job-config.patch.yaml
+  target: {version: v1, kind: ConfigMap, name: flink-job-config, namespace: flink}
+- path: argo-artifact-repositories.patch.yaml
+  target: {version: v1, kind: ConfigMap, name: artifact-repositories, namespace: argo}
+- path: argo-controller.patch.yaml
+  target: {version: v1, kind: ConfigMap, name: workflow-controller-configmap, namespace: argo}
+- path: mlops-workflow.patch.json
+  target: {group: argoproj.io, version: v1alpha1, kind: WorkflowTemplate, name: mlops-training-template, namespace: argo}

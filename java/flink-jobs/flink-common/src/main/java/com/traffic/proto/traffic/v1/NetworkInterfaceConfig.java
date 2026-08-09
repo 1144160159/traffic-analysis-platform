@@ -57,7 +57,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       interfaceName_ = s;
@@ -73,7 +73,7 @@ private static final long serialVersionUID = 0L;
       getInterfaceNameBytes() {
     java.lang.Object ref = interfaceName_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       interfaceName_ = b;
@@ -155,7 +155,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       driverMode_ = s;
@@ -171,7 +171,7 @@ private static final long serialVersionUID = 0L;
       getDriverModeBytes() {
     java.lang.Object ref = driverMode_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       driverMode_ = b;
@@ -713,7 +713,7 @@ private static final long serialVersionUID = 0L;
         getInterfaceNameBytes() {
       java.lang.Object ref = interfaceName_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         interfaceName_ = b;
@@ -960,7 +960,7 @@ private static final long serialVersionUID = 0L;
         getDriverModeBytes() {
       java.lang.Object ref = driverMode_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         driverMode_ = b;
@@ -1115,7 +1115,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.CPUAffinityConfig cpu_affinity = 6 [json_name = "cpuAffinity"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.CPUAffinityConfig, com.traffic.proto.traffic.v1.CPUAffinityConfig.Builder, com.traffic.proto.traffic.v1.CPUAffinityConfigOrBuilder> 
+        com.traffic.proto.traffic.v1.CPUAffinityConfig, com.traffic.proto.traffic.v1.CPUAffinityConfig.Builder, com.traffic.proto.traffic.v1.CPUAffinityConfigOrBuilder>
         getCpuAffinityFieldBuilder() {
       if (cpuAffinityBuilder_ == null) {
         cpuAffinityBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<

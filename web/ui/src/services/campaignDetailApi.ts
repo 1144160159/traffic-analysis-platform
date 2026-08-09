@@ -1,6 +1,5 @@
 import { appConfig } from '@/config/runtime';
 import { api } from '@/services/api';
-import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 
 export type CampaignDetailMetric = {
   label: string;
@@ -182,6 +181,13 @@ export type CampaignDetailReviewRow = {
 
 export type CampaignDetailSnapshot = {
   campaignId: string;
+  stateVersion: number;
+  snapshotId: string;
+  snapshotSHA256: string;
+  partial: boolean;
+  missingSections: string[];
+  sourceWatermarks: Record<string, string>;
+  reports: CampaignDetailReport[];
   campaignType: string;
   title: string;
   riskScore: number;
@@ -224,13 +230,36 @@ export type CampaignDetailSnapshot = {
   evidence: CampaignDetailMetric[];
 };
 
+export type CampaignDetailReport = {
+  reportId: string;
+  jobId: string;
+  format: string;
+  status: string;
+  campaignRevision: number;
+  sourceSnapshotId: string;
+  snapshotId: string;
+  snapshotSHA256: string;
+  artifactSHA256: string;
+  sizeBytes: number;
+  attempts: number;
+  errorMessage: string;
+};
+
 const canonicalPhases = ['初始访问', '执行', '持久化', '横向移动', 'C2通信', '数据外传', '处置闭环'];
 
-export async function fetchCampaignDetailSnapshot(campaignId: string): Promise<CampaignDetailSnapshot> {
-  const normalizedId = campaignId || 'APT-20260619-001';
-  if (appConfig.useMock || isVisualBreakdownMode()) return buildMockCampaignDetailSnapshot(normalizedId);
+function requiredCampaignId(campaignId: string): string {
+  const normalized = campaignId.trim();
+  if (!normalized) throw new Error('campaign_id 不能为空');
+  return normalized;
+}
 
-  const response = await api.get(`/v1/campaigns/${encodeURIComponent(normalizedId)}`);
+export async function fetchCampaignDetailSnapshot(campaignId: string, snapshotId?: string): Promise<CampaignDetailSnapshot> {
+  const normalizedId = requiredCampaignId(campaignId);
+  if (appConfig.useMock) return buildMockCampaignDetailSnapshot(normalizedId);
+
+  const response = await api.get(`/v1/campaigns/${encodeURIComponent(normalizedId)}`, {
+    params: snapshotId ? { snapshot_id: snapshotId } : undefined,
+  });
   return normalizeCampaignDetailSnapshot(normalizedId, response.data);
 }
 
@@ -238,6 +267,8 @@ export function normalizeCampaignDetailSnapshot(
   requestedCampaignId: string,
   campaignPayload: unknown,
 ): CampaignDetailSnapshot {
+  const envelope = isRecord(campaignPayload) ? campaignPayload : {};
+  const meta = isRecord(envelope.meta) ? envelope.meta : {};
   const campaign = unwrapPayload(campaignPayload);
   const record = isRecord(campaign) ? campaign : {};
   const campaignId = textFrom(record, ['campaign_id', 'campaignId', 'id', 'event_id']) || requestedCampaignId;
@@ -245,7 +276,7 @@ export function normalizeCampaignDetailSnapshot(
   const alertRows = extractList(record, ['alerts']).length ? extractList(record, ['alerts']) : alertIds.map((id) => ({ alert_id: id }));
   const phaseSummaryRows = extractList(record, ['phase_summaries']);
   const entityIds = stringListFrom(valueAt(record, ['entities']));
-  const referenceFixture = appConfig.useMock || isVisualBreakdownMode() || valueAt(record, ['__reference_fixture']) === true;
+  const referenceFixture = appConfig.useMock;
   const score = normalizeScore(numberAt(record, ['score', 'risk_score', 'riskScore']));
   const rawAlertCount = Math.max(alertRows.length, alertIds.length);
   const alertCount = rawAlertCount;
@@ -271,7 +302,7 @@ export function normalizeCampaignDetailSnapshot(
   const summary = textFrom(record, ['summary', 'description'])
     || (referenceFixture ? '园区科研网络定向窃密战役，跨办公区、科研网与数据中心产生多阶段告警和取证证据。' : '未提供战役摘要');
   const tags = [
-    textFrom(record, ['campaign_type', 'campaignType']) || 'APT 定向攻击',
+    textFrom(record, ['campaign_type', 'campaignType']),
     ...stringListFrom(valueAt(record, ['rule_ids'])).slice(0, 2),
     ...stringListFrom(valueAt(record, ['model_ids'])).slice(0, 2),
   ].filter(Boolean).slice(0, 4);
@@ -295,9 +326,22 @@ export function normalizeCampaignDetailSnapshot(
   const campaignType = textFrom(record, ['campaign_type', 'campaignType']) || '未分类';
   const statusTransitions = normalizeStatusTransitions(record);
   const assignee = textFrom(record, ['owner', 'assignee', 'analyst']) || (referenceFixture ? 'sec_analyst' : '未分配');
+  const explicitResponseProgress = optionalNumberAt(record, ['response_progress', 'responseProgress', 'disposition_progress', 'dispositionProgress']);
+  const responseProgress = status === '已结束'
+    ? 100
+    : explicitResponseProgress === undefined
+      ? undefined
+      : Math.max(0, Math.min(100, Math.round(explicitResponseProgress)));
 
   return {
     campaignId,
+    stateVersion: Math.max(0, Math.trunc(numberAt(record, ['state_version', 'stateVersion']))),
+    snapshotId: textFrom(record, ['snapshot_id']) || textFrom(meta, ['snapshot_id']),
+    snapshotSHA256: textFrom(record, ['snapshot_sha256']),
+    partial: valueAt(meta, ['partial']) === true,
+    missingSections: stringListFrom(valueAt(meta, ['missing_sections'])),
+    sourceWatermarks: stringRecordFrom(valueAt(meta, ['source_watermarks'])),
+    reports: normalizeCampaignReports(record),
     campaignType,
     title: summaryTitle(summary, campaignId),
     riskScore: score,
@@ -331,7 +375,7 @@ export function normalizeCampaignDetailSnapshot(
       metric('影响资产', `${assetCount}`, 'asset graph', assetCount ? 'warn' : 'ok'),
       metric('攻击阶段', `${phases.length}`, 'ATT&CK', 'info'),
       metric('证据完整度', `${evidenceCompleteness}%`, 'evidence bundle', evidenceCompleteness >= 80 ? 'ok' : 'warn'),
-      metric('处置进度', status === '已结束' ? '100%' : '68%', status, status === '已结束' ? 'ok' : 'warn'),
+      metric('处置进度', responseProgress === undefined ? '暂不可用' : `${responseProgress}%`, status, responseProgress === undefined ? 'info' : responseProgress >= 100 ? 'ok' : 'warn'),
     ],
     phases,
     alerts: buildAlertRows(alertRows, alertIds, phases, assetCount, referenceFixture),
@@ -375,7 +419,7 @@ export function normalizeCampaignDetailSnapshot(
   };
 }
 
-function buildMockCampaignDetailSnapshot(campaignId: string) {
+export function buildMockCampaignDetailSnapshot(campaignId: string) {
   return normalizeCampaignDetailSnapshot(campaignId, {
     data: {
       campaign_id: campaignId,
@@ -662,13 +706,13 @@ function buildImpactAccount(record: Record<string, unknown>, referenceFixture = 
   ];
   const usesFallbackRows = referenceFixture && accountRows.length === 0;
   const rows = usesFallbackRows ? defaults : accountRows.slice(0, 5);
-  const explicitTotal = numberAt(record, ['account_count', 'affected_account_count', 'affectedAccounts', 'accounts_total']);
-  const total = explicitTotal || (usesFallbackRows ? 31 : accountRows.length);
-  const high = numberAt(record, ['account_high_risk', 'high_risk_accounts'])
-    || (usesFallbackRows ? 8 : accountRows.filter((row) => row.权限风险.includes('高')).length);
-  const medium = numberAt(record, ['account_medium_risk', 'medium_risk_accounts'])
-    || (usesFallbackRows ? 14 : accountRows.filter((row) => row.权限风险.includes('中')).length);
-  const low = numberAt(record, ['account_low_risk', 'low_risk_accounts']) || Math.max(0, total - high - medium);
+  const total = optionalNumberAt(record, ['account_count', 'affected_account_count', 'affectedAccounts', 'accounts_total'])
+    ?? (usesFallbackRows ? 31 : accountRows.length);
+  const high = optionalNumberAt(record, ['account_high_risk', 'high_risk_accounts'])
+    ?? (usesFallbackRows ? 8 : accountRows.filter((row) => row.权限风险.includes('高')).length);
+  const medium = optionalNumberAt(record, ['account_medium_risk', 'medium_risk_accounts'])
+    ?? (usesFallbackRows ? 14 : accountRows.filter((row) => row.权限风险.includes('中')).length);
+  const low = optionalNumberAt(record, ['account_low_risk', 'low_risk_accounts']) ?? Math.max(0, total - high - medium);
   return {
     total,
     unit: '受影响账号',
@@ -1163,6 +1207,30 @@ function extractList(payload: unknown, keys: string[]): Record<string, unknown>[
   return [];
 }
 
+function normalizeCampaignReports(record: Record<string, unknown>): CampaignDetailReport[] {
+  return extractList(record, ['reports']).map((item) => ({
+    reportId: textFrom(item, ['report_id']),
+    jobId: textFrom(item, ['job_id']),
+    format: textFrom(item, ['format']),
+    status: textFrom(item, ['status']),
+    campaignRevision: Math.max(0, Math.trunc(numberAt(item, ['campaign_revision']))),
+    sourceSnapshotId: textFrom(item, ['source_snapshot_id']),
+    snapshotId: textFrom(item, ['snapshot_id']),
+    snapshotSHA256: textFrom(item, ['snapshot_sha256']),
+    artifactSHA256: textFrom(item, ['artifact_sha256']),
+    sizeBytes: Math.max(0, Math.trunc(numberAt(item, ['size_bytes']))),
+    attempts: Math.max(0, Math.trunc(numberAt(item, ['attempts']))),
+    errorMessage: textFrom(item, ['error_message']),
+  })).filter((item) => item.reportId);
+}
+
+function stringRecordFrom(value: unknown): Record<string, string> {
+  if (!isRecord(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  );
+}
+
 function valueAt(source: unknown, keys: string[]) {
   if (!isRecord(source)) return undefined;
   for (const key of keys) {
@@ -1181,6 +1249,13 @@ function numberAt(source: Record<string, unknown>, keys: string[]) {
   const value = valueAt(source, keys);
   const numeric = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function optionalNumberAt(source: Record<string, unknown>, keys: string[]) {
+  const value = valueAt(source, keys);
+  if (value === undefined || value === null || value === '') return undefined;
+  const numeric = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : undefined;
 }
 
 function stringListFrom(value: unknown): string[] {

@@ -49,9 +49,12 @@ spec:
           initialDelaySeconds: 15
           periodSeconds: 5
           successThreshold: 1
-          tcpSocket:
-            port: 5432
-          timeoutSeconds: 1
+          exec:
+            command:
+            - /bin/sh
+            - -ec
+            - test "$(psql -h 127.0.0.1 -U postgres -d traffic_platform -Atqc 'SELECT NOT pg_is_in_recovery()')" = t
+          timeoutSeconds: 3
         resources:
           limits:
             cpu: '4'
@@ -142,6 +145,17 @@ spec:
         ports:
         - containerPort: 5432
           protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          successThreshold: 1
+          exec:
+            command:
+            - /bin/sh
+            - -ec
+            - test "$(psql -h 127.0.0.1 -U postgres -Atqc 'SELECT pg_is_in_recovery()')" = t
+          timeoutSeconds: 3
         resources:
           limits:
             cpu: '4'
@@ -296,13 +310,18 @@ kind: CronJob
 metadata:
   name: pg-failover-check
   namespace: databases
+  annotations:
+    alignment.traffic-platform.io/remediation-id: T-PG-006
+    alignment.traffic-platform.io/automation-mode: readiness-only
 spec:
-  concurrencyPolicy: Allow
+  concurrencyPolicy: Forbid
   failedJobsHistoryLimit: 3
   jobTemplate:
     metadata:
       creationTimestamp: null
     spec:
+      activeDeadlineSeconds: 55
+      backoffLimit: 0
       template:
         metadata:
           creationTimestamp: null
@@ -317,6 +336,8 @@ spec:
                 secretKeyRef:
                   name: traffic-credentials
                   key: PG_PASSWORD
+            - name: PGCONNECT_TIMEOUT
+              value: "5"
             image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
             imagePullPolicy: IfNotPresent
             name: failover-check
@@ -345,62 +366,40 @@ apiVersion: v1
 data:
   failover.sh: |
     #!/bin/sh
-    # PG Auto-Failover Script
-    # Checks primary health and promotes replica if primary is down
+    # T-PG-006 safe-hold readiness check.
+    # This script must never promote a replica or mutate a Service. Automated
+    # failover stays disabled until one HA controller owns election, fencing,
+    # epoch publication and endpoint cutover as a single verified protocol.
 
     set -eu
 
     PRIMARY_SVC="postgres-primary.databases.svc"
-    REPLICA_HOST="postgres-replica-0.postgres-replica.databases.svc"
-    LOCK_FILE="/tmp/pg-failover.lock"
     export PGPASSWORD="${PGPASSWORD:?PGPASSWORD env is required}"
 
-    # Check if primary is reachable
-    if psql -h "$PRIMARY_SVC" -p 5432 -U postgres -c "SELECT 1;" -t 2>/dev/null; then
-      echo "$(date): Primary is healthy"
-      exit 0
-    fi
-
-    echo "$(date): Primary is DOWN! Checking if we should promote..."
-
-    # Prevent concurrent promotions (simple lock via file)
-    if [ -f "$LOCK_FILE" ]; then
-      LOCK_AGE=$(($(date +%s) - $(stat -c %Y "$LOCK_FILE" 2>/dev/null || echo 0)))
-      if [ "$LOCK_AGE" -lt 120 ]; then
-        echo "$(date): Another promotion was attempted recently ($LOCK_AGE seconds ago). Skipping."
-        exit 0
-      fi
-    fi
-
-    touch "$LOCK_FILE"
-
-    # Check if the replica we're promoting is healthy
-    IS_RECOVERY=$(psql -h "$REPLICA_HOST" -p 5432 -U postgres -c "SELECT pg_is_in_recovery();" -t 2>/dev/null | tr -d ' ')
-    if [ "$IS_RECOVERY" != "t" ]; then
-      echo "$(date): Replica is NOT in recovery mode - cannot promote"
+    PRIMARY_WRITABLE=$(psql -h "$PRIMARY_SVC" -p 5432 -U postgres -d traffic_platform -Atqc \
+      "SELECT NOT pg_is_in_recovery()" 2>/dev/null || true)
+    if [ "$PRIMARY_WRITABLE" != "t" ]; then
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ): BLOCKED: declared primary is unreachable or not writable; automatic promotion is disabled"
       exit 1
     fi
 
-    # Check replication lag
-    LAG=$(psql -h "$REPLICA_HOST" -p 5432 -U postgres -c "SELECT COALESCE(EXTRACT(EPOCH FROM replay_lag), 999) FROM pg_stat_replication WHERE application_name='walreceiver';" -t 2>/dev/null | tr -d ' ')
-    if [ -n "$LAG" ] && [ "$(echo "$LAG > 60" | bc 2>/dev/null || echo 0)" = "1" ]; then
-      echo "$(date): Replication lag too high ($LAG sec). Skipping promotion."
-      exit 0
-    fi
+    for ordinal in 0 1; do
+      replica="postgres-replica-${ordinal}.postgres-replica.databases.svc"
+      recovery=$(psql -h "$replica" -p 5432 -U postgres -Atqc \
+        "SELECT pg_is_in_recovery()" 2>/dev/null || true)
+      if [ "$recovery" != "t" ]; then
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ): BLOCKED: $replica is unreachable or not a standby"
+        exit 1
+      fi
+    done
 
-    echo "$(date): PROMOTING replica-0 to primary..."
-    psql -h "$REPLICA_HOST" -p 5432 -U postgres -c "SELECT pg_promote();" 2>&1
-    PROMOTE_RESULT=$?
-
-    if [ "$PROMOTE_RESULT" -eq 0 ]; then
-      echo "$(date): Promotion successful!"
-      echo "$(date): Note: Service re-pointing requires K8s API access"
-    else
-      echo "$(date): Promotion failed with code $PROMOTE_RESULT"
-    fi
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ): PASS: exactly the declared write endpoint is writable and both declared replicas are in recovery"
 kind: ConfigMap
 metadata:
   name: pg-failover-script
   namespace: databases
+  annotations:
+    alignment.traffic-platform.io/remediation-id: T-PG-006
+    alignment.traffic-platform.io/automation-mode: readiness-only
 
 ---

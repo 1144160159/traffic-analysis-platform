@@ -2,10 +2,14 @@ package risk
 
 import (
 	"database/sql"
+	"errors"
+	"math"
 	"os"
+	"strings"
 	"testing"
 
 	_ "github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 )
@@ -59,8 +63,9 @@ func getClickHouseDB(t *testing.T) *sql.DB {
 	if port == "" {
 		port = "9000"
 	}
+	password := os.Getenv("CH_PASSWORD")
 
-	dsn := "clickhouse://default:@" + host + ":" + port + "/traffic?dial_timeout=5s&read_timeout=10s"
+	dsn := "clickhouse://default:" + password + "@" + host + ":" + port + "/traffic?dial_timeout=5s&read_timeout=10s"
 	db, err := sql.Open("clickhouse", dsn)
 	if err != nil || db.Ping() != nil {
 		t.Logf("CH unavailable (%s:%s)", host, port)
@@ -142,7 +147,143 @@ func TestScoreAssetRequiresBothDBs(t *testing.T) {
 		score.TotalScore, score.RiskLevel, score.ActiveAlerts, score.CriticalAlerts)
 }
 
+func TestScoreAssetPropagatesClickHouseQueryFailure(t *testing.T) {
+	chDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer chDB.Close()
+	mock.MatchExpectationsInOrder(false)
+
+	mock.ExpectQuery("FROM traffic\\.alerts_latest FINAL").
+		WithArgs("10.0.0.8", "tenant-a").
+		WillReturnError(errors.New("clickhouse unavailable"))
+	mock.ExpectQuery("observed_destination_ports").
+		WithArgs("10.0.0.8", "tenant-a").
+		WillReturnError(errors.New("clickhouse unavailable"))
+
+	scorer := NewAssetRiskScorer(chDB, nil, zap.NewNop())
+	_, err = scorer.ScoreAsset(t.Context(), "tenant-a", "10.0.0.8")
+	if err == nil || !strings.Contains(err.Error(), "all asset risk dimensions unavailable") {
+		t.Fatalf("expected visible batch dimension error, got %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRiskSummaryReportsBoundedCompleteEvaluation(t *testing.T) {
+	pgDB, pgMock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pgDB.Close()
+	chDB, chMock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer chDB.Close()
+	chMock.MatchExpectationsInOrder(false)
+
+	pgMock.ExpectQuery("WITH candidates AS").
+		WithArgs("tenant-a", maxRiskSummaryCandidates).
+		WillReturnRows(sqlmock.NewRows([]string{"ip_address", "total_assets"}).
+			AddRow("10.0.0.8", 1))
+	chMock.ExpectQuery("FROM traffic\\.alerts_latest FINAL").
+		WithArgs("10.0.0.8", "tenant-a").
+		WillReturnRows(sqlmock.NewRows([]string{"ip", "active", "total_7d", "critical"}).
+			AddRow("10.0.0.8", 1, 2, 1))
+	chMock.ExpectQuery("observed_destination_ports").
+		WithArgs("10.0.0.8", "tenant-a").
+		WillReturnRows(sqlmock.NewRows([]string{"dst_ip", "observed_destination_ports", "has_risky_port", "is_server"}).
+			AddRow("10.0.0.8", 2, 0, 1))
+
+	scorer := NewAssetRiskScorer(chDB, pgDB, zap.NewNop())
+	summary, err := scorer.GetRiskSummary(t.Context(), "tenant-a", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if summary.TotalAssets != 1 || summary.EvaluatedAssets != 1 || summary.FailedAssets != 0 {
+		t.Fatalf("unexpected evaluation counts: %+v", summary)
+	}
+	if !summary.Partial {
+		t.Fatal("summary must remain partial while vulnerability and behavior lineage is unavailable")
+	}
+	if strings.Join(summary.AvailableDimensions, ",") != "alert,exposure" {
+		t.Fatalf("unexpected available dimensions: %v", summary.AvailableDimensions)
+	}
+	if strings.Join(summary.MissingDimensions, ",") != "vulnerability,behavior" {
+		t.Fatalf("unexpected missing dimensions: %v", summary.MissingDimensions)
+	}
+	if len(summary.TopRiskyAssets) != 1 {
+		t.Fatalf("expected one top risk asset, got %d", len(summary.TopRiskyAssets))
+	}
+	if got := summary.TopRiskyAssets[0].TotalScore; math.Abs(got-38) > 0.001 {
+		t.Fatalf("expected available-weight normalized score 38, got %.2f", got)
+	}
+	if err := pgMock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+	if err := chMock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRiskSummaryMakesDimensionFailureVisibleAsPartial(t *testing.T) {
+	pgDB, pgMock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pgDB.Close()
+	chDB, chMock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer chDB.Close()
+	chMock.MatchExpectationsInOrder(false)
+
+	pgMock.ExpectQuery("WITH candidates AS").
+		WithArgs("tenant-a", maxRiskSummaryCandidates).
+		WillReturnRows(sqlmock.NewRows([]string{"ip_address", "total_assets"}).
+			AddRow("10.0.0.8", 1))
+	chMock.ExpectQuery("FROM traffic\\.alerts_latest FINAL").
+		WithArgs("10.0.0.8", "tenant-a").
+		WillReturnError(errors.New("alerts shard unavailable"))
+	chMock.ExpectQuery("observed_destination_ports").
+		WithArgs("10.0.0.8", "tenant-a").
+		WillReturnRows(sqlmock.NewRows([]string{"dst_ip", "observed_destination_ports", "has_risky_port", "is_server"}).
+			AddRow("10.0.0.8", 2, 0, 1))
+
+	scorer := NewAssetRiskScorer(chDB, pgDB, zap.NewNop())
+	summary, err := scorer.GetRiskSummary(t.Context(), "tenant-a", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !summary.Partial || summary.FailedAssets != 0 || summary.EvaluatedAssets != 1 {
+		t.Fatalf("expected one partial score rather than a fake complete score: %+v", summary)
+	}
+	if strings.Join(summary.AvailableDimensions, ",") != "exposure" {
+		t.Fatalf("unexpected available dimensions: %v", summary.AvailableDimensions)
+	}
+	if strings.Join(summary.MissingDimensions, ",") != "vulnerability,behavior,alert" {
+		t.Fatalf("unexpected missing dimensions: %v", summary.MissingDimensions)
+	}
+	if got := summary.TopRiskyAssets[0].TotalScore; math.Abs(got-34) > 0.001 {
+		t.Fatalf("expected exposure-only normalized score 34, got %.2f", got)
+	}
+	if err := pgMock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+	if err := chMock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestRiskSummaryWithDB(t *testing.T) {
+	tenantID := os.Getenv("RISK_TEST_TENANT")
+	if tenantID == "" {
+		tenantID = "campus-net"
+	}
 	db := getTestDB(t)
 	if db == nil {
 		t.Skip("No PostgreSQL connection available (set PG_HOST or run in K8s Pod)")
@@ -156,8 +297,18 @@ func TestRiskSummaryWithDB(t *testing.T) {
 		t.Skip("assets table not found in database (Asset Service schema not initialized)")
 	}
 
-	scorer := NewAssetRiskScorer(nil, db, zap.NewNop())
-	summary, err := scorer.GetRiskSummary(t.Context(), "campus-net", 10)
+	chDB := getClickHouseDB(t)
+	if chDB == nil {
+		scorer := NewAssetRiskScorer(nil, db, zap.NewNop())
+		if _, err := scorer.GetRiskSummary(t.Context(), tenantID, 10); err == nil {
+			t.Fatal("GetRiskSummary must fail when ClickHouse is unavailable")
+		}
+		return
+	}
+	defer chDB.Close()
+
+	scorer := NewAssetRiskScorer(chDB, db, zap.NewNop())
+	summary, err := scorer.GetRiskSummary(t.Context(), tenantID, 10)
 	if err != nil {
 		t.Fatalf("GetRiskSummary failed: %v", err)
 	}

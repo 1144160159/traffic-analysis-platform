@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-postgres-ha-pitr-fencing-v1",
+  "remediation_id": "T-PG-006",
+  "status": "implementing",
+  "scope": {
+    "manifest": "deployments/kubernetes/infrastructure/03-postgresql.yaml",
+    "namespace": "databases",
+    "declared_primary": "postgres-primary",
+    "declared_replicas": "postgres-replica",
+    "write_service": "postgres",
+    "read_service": "postgres-replica",
+    "readiness_cronjob": "pg-failover-check",
+    "readiness_configmap": "pg-failover-script"
+  },
+  "repository_mode": {
+    "mode": "safe-hold-readiness-only",
+    "automated_promotion_enabled": false,
+    "service_cutover_enabled": false,
+    "reason": "No single HA controller currently owns election, fencing, epoch publication and endpoint cutover.",
+    "required_role_checks": [
+      "declared write endpoint returns NOT pg_is_in_recovery()",
+      "each declared replica returns pg_is_in_recovery()",
+      "role mismatch removes the pod from readiness",
+      "readiness failure never promotes or relabels a pod"
+    ]
+  },
+  "unsafe_legacy_tokens": [
+    "pg_promote(",
+    "pg_ctl promote",
+    "/tmp/pg-failover.lock",
+    "LOCK_FILE=",
+    "kubectl patch service",
+    "kubectl label pod"
+  ],
+  "target_ha_controller": {
+    "repository_state": "NOT_IMPLEMENTED",
+    "required_capabilities": [
+      "one distributed lease or consensus owner for primary election",
+      "monotonic primary epoch recorded outside a PostgreSQL pod",
+      "old-primary fencing before endpoint publication",
+      "atomic role and write-endpoint publication by the same controller",
+      "former primary rejoins only through rewind or base-backup as a replica",
+      "TLS client endpoint with bounded reconnect and topology refresh"
+    ],
+    "forbidden_shortcuts": [
+      "pod-local lock as election authority",
+      "promotion without verified old-primary fencing",
+      "manual Service selector change represented as automatic failover",
+      "two independent controllers allowed to promote"
+    ]
+  },
+  "pitr": {
+    "repository_state": "NOT_IMPLEMENTED",
+    "required_capabilities": [
+      "archive_mode and durable archive_command",
+      "replication-slot and WAL-retention budgets",
+      "encrypted base backups with immutable manifest and sha256",
+      "restore_command and approved recovery target",
+      "pg_verifybackup plus isolated restore rehearsal",
+      "RPO derived from committed marker and restored timeline"
+    ],
+    "required_evidence": [
+      "backup manifest and object hashes",
+      "WAL archive continuity and gap check",
+      "restore start and finish timestamps",
+      "recovery target and achieved recovery point",
+      "schema migration version and checksum",
+      "tenant and outbox reconciliation"
+    ]
+  },
+  "observability": {
+    "required_metrics": [
+      "writable_primary_count",
+      "primary_epoch",
+      "replication_lag_bytes",
+      "replication_lag_seconds",
+      "wal_archive_age_seconds",
+      "wal_archive_failures_total",
+      "replication_slot_retained_bytes",
+      "read_only_endpoint_mismatch_total",
+      "failover_duration_seconds",
+      "fencing_failures_total"
+    ],
+    "initial_invariants": {
+      "writable_primary_count": 1,
+      "unfenced_old_primary_count": 0,
+      "formal_rto_rpo_report_required": true
+    }
+  },
+  "drill": {
+    "maintenance_window_required": true,
+    "destructive_execution_authorized_by_repository_change": false,
+    "faults": [
+      "primary pod loss",
+      "primary node loss",
+      "network partition",
+      "write Service endpoint failure",
+      "persistent-volume attach failure",
+      "PITR to an approved timestamp"
+    ],
+    "business_oracles": [
+      "no interval has more than one writable primary",
+      "acknowledged transaction marker is not lost beyond approved RPO",
+      "in-flight transaction result is classifiable",
+      "outbox event_id and aggregate_version are not duplicated",
+      "old primary rejoins as a replica and cannot preempt"
+    ]
+  },
+  "remaining_gates": {
+    "G2": "release-candidate topology, controller, TLS, backup and WAL archive",
+    "G3": "primary epoch, transaction, outbox, replica and restored-data reconciliation",
+    "G4": "approved RTO, RPO, reconnect, WAL and resource budgets",
+    "G6": "maintenance-window failover, PITR, rollback and former-primary rejoin",
+    "G7": "T+0 T+1 T+3 T+7 observation and independent approval",
+    "G8": "external HA and site acceptance"
+  }
+}

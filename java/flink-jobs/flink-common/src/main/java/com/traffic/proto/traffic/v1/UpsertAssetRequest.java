@@ -521,7 +521,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.Asset asset = 1 [json_name = "asset"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.Asset, com.traffic.proto.traffic.v1.Asset.Builder, com.traffic.proto.traffic.v1.AssetOrBuilder> 
+        com.traffic.proto.traffic.v1.Asset, com.traffic.proto.traffic.v1.Asset.Builder, com.traffic.proto.traffic.v1.AssetOrBuilder>
         getAssetFieldBuilder() {
       if (assetBuilder_ == null) {
         assetBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<

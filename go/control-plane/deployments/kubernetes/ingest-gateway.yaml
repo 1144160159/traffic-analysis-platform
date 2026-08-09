@@ -11,8 +11,8 @@ spec:
     app: ingest-gateway
   ports:
     - name: grpc
-      port: 9090
-      targetPort: 9090
+      port: 50051
+      targetPort: 50051
     - name: metrics
       port: 9091
       targetPort: 9091
@@ -39,21 +39,23 @@ spec:
       - name: ingest-gateway
         image: registry.example.com/traffic/ingest-gateway:latest
         ports:
-        - containerPort: 9090
+        - containerPort: 50051
           name: grpc
         - containerPort: 9091
           name: metrics
         env:
         - name: GRPC_ADDR
-          value: ":9090"
+          value: ":50051"
         - name: KAFKA_BROKERS
-          value: "kafka-0.kafka:9092,kafka-1.kafka:9092,kafka-2.kafka:9092"
+          value: "kafka-bootstrap.middleware.svc:9092"
         - name: KAFKA_FLOW_TOPIC
           value: "flow.events.v1"
         - name: REDIS_ADDRS
           value: "redis-cluster:6379"
         - name: REQUIRE_MTLS
-          value: "false"
+          value: "true"
+        - name: MTLS_SHARED_IDENTITY
+          value: "probe-agent"
         - name: METRICS_ENABLED
           value: "true"
         - name: METRICS_ADDR

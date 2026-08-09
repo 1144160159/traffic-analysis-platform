@@ -1,0 +1,6 @@
+{
+  "aliases": {
+    "assets-v2-write": {"is_write_index": true},
+    "assets-v2-read": {}
+  }
+}

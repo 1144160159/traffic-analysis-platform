@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,20 +20,50 @@ import (
 	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
 	"go.uber.org/zap"
 
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/opensearchbulk"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 )
 
 // OpenSearchWriter OpenSearch写入器
 type OpenSearchWriter struct {
-	client    *opensearch.Client
-	indexName string
-	logger    *zap.Logger
-	mu        sync.RWMutex
-	closed    bool
+	client      *opensearch.Client
+	readTarget  string
+	writeTarget string
+	exactTarget bool
+	// legacyReadKeywordFields is only used while reading a frozen legacy
+	// dynamic-mapping index. V2 aliases expose first-class keyword fields and
+	// must keep this disabled.
+	legacyReadKeywordFields bool
+	logger                  *zap.Logger
+	mu                      sync.RWMutex
+	closed                  bool
 }
 
 // NewOpenSearchWriter 创建OpenSearch写入器
-func NewOpenSearchWriter(addrs []string, username, password, indexName string, logger *zap.Logger) (*OpenSearchWriter, error) {
+func NewOpenSearchWriter(addrs []string, username, password, writeTarget string, exactTarget bool, logger *zap.Logger) (*OpenSearchWriter, error) {
+	readTarget := writeTarget
+	if !exactTarget {
+		readTarget += "-*"
+	}
+	return newOpenSearchWriter(addrs, username, password, readTarget, writeTarget, exactTarget, !exactTarget, logger)
+}
+
+// NewOpenSearchReconcileTarget decouples the projection read target from the
+// write target. This is required during migration: the frozen legacy read
+// index can be an exact name such as "alerts", while approved repair writes
+// must still target the versioned V2 write alias. The constructor performs no
+// schema or alias mutations.
+func NewOpenSearchReconcileTarget(addrs []string, username, password, readTarget, writeTarget string, exactWriteTarget, legacyReadKeywordFields bool, logger *zap.Logger) (*OpenSearchWriter, error) {
+	if strings.TrimSpace(readTarget) == "" {
+		return nil, fmt.Errorf("opensearch read target is required")
+	}
+	return newOpenSearchWriter(addrs, username, password, readTarget, writeTarget, exactWriteTarget, legacyReadKeywordFields, logger)
+}
+
+func newOpenSearchWriter(addrs []string, username, password, readTarget, writeTarget string, exactTarget, legacyReadKeywordFields bool, logger *zap.Logger) (*OpenSearchWriter, error) {
+	if writeTarget == "" {
+		return nil, fmt.Errorf("opensearch write target is required")
+	}
 	cfg := opensearch.Config{
 		Addresses: addrs,
 		Username:  username,
@@ -62,20 +93,37 @@ func NewOpenSearchWriter(addrs []string, username, password, indexName string, l
 
 	logger.Info("Connected to OpenSearch",
 		zap.Strings("addresses", addrs),
-		zap.String("index", indexName))
+		zap.String("read_target", readTarget),
+		zap.String("write_target", writeTarget),
+		zap.Bool("exact_target", exactTarget),
+		zap.Bool("legacy_read_keyword_fields", legacyReadKeywordFields))
 
 	w := &OpenSearchWriter{
-		client:    client,
-		indexName: indexName,
-		logger:    logger,
-	}
-
-	// 确保索引模板存在
-	if err := w.EnsureIndex(context.Background()); err != nil {
-		logger.Warn("Failed to ensure index template", zap.Error(err))
+		client:                  client,
+		readTarget:              readTarget,
+		writeTarget:             writeTarget,
+		exactTarget:             exactTarget,
+		legacyReadKeywordFields: legacyReadKeywordFields,
+		logger:                  logger,
 	}
 
 	return w, nil
+}
+
+func (w *OpenSearchWriter) targetFor(firstSeen time.Time) string {
+	if w.exactTarget {
+		return w.writeTarget
+	}
+	return fmt.Sprintf("%s-%s", w.writeTarget, firstSeen.Format("2006-01-02"))
+}
+
+// TargetVersion identifies the exact logical projection generation recorded in
+// durable debt and reconcile evidence. It is never inferred from "latest".
+func (w *OpenSearchWriter) TargetVersion() string {
+	if w.exactTarget {
+		return w.writeTarget
+	}
+	return defaultAlertProjectionTargetVersion
 }
 
 // retryTransport 带重试的传输层
@@ -128,7 +176,7 @@ func (w *OpenSearchWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 	ctx, span := otel.StartSpan(ctx, "opensearch_writer.write_alert")
 	defer span.End()
 
-	indexName := fmt.Sprintf("%s-%s", w.indexName, alert.FirstSeen.Format("2006-01-02"))
+	indexName := w.targetFor(alert.FirstSeen)
 
 	body, err := json.Marshal(alert)
 	if err != nil {
@@ -136,11 +184,14 @@ func (w *OpenSearchWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 	}
 
 	start := time.Now()
+	version := int(AlertSourceVersion(alert))
 	req := opensearchapi.IndexRequest{
-		Index:      indexName,
-		DocumentID: alert.AlertID,
-		Body:       bytes.NewReader(body),
-		Refresh:    "false",
+		Index:       indexName,
+		DocumentID:  alert.AlertID,
+		Body:        bytes.NewReader(body),
+		Refresh:     "false",
+		Version:     &version,
+		VersionType: "external_gte",
 	}
 
 	res, err := req.Do(ctx, w.client)
@@ -190,29 +241,27 @@ func (w *OpenSearchWriter) WriteBatch(ctx context.Context, alerts []*Alert) erro
 
 	var buf bytes.Buffer
 	for _, alert := range alerts {
-		indexName := fmt.Sprintf("%s-%s", w.indexName, alert.FirstSeen.Format("2006-01-02"))
+		indexName := w.targetFor(alert.FirstSeen)
 
 		meta := map[string]interface{}{
 			"index": map[string]interface{}{
-				"_index": indexName,
-				"_id":    alert.AlertID,
+				"_index":       indexName,
+				"_id":          alert.AlertID,
+				"version":      AlertSourceVersion(alert),
+				"version_type": "external_gte",
 			},
 		}
 
 		metaBytes, err := json.Marshal(meta)
 		if err != nil {
-			w.logger.Error("Failed to marshal meta", zap.Error(err))
-			continue
+			return fmt.Errorf("marshal bulk metadata for alert %s: %w", alert.AlertID, err)
 		}
 		buf.Write(metaBytes)
 		buf.WriteByte('\n')
 
 		docBytes, err := json.Marshal(alert)
 		if err != nil {
-			w.logger.Error("Failed to marshal alert",
-				zap.String("alert_id", alert.AlertID),
-				zap.Error(err))
-			continue
+			return fmt.Errorf("marshal alert %s for bulk write: %w", alert.AlertID, err)
 		}
 		buf.Write(docBytes)
 		buf.WriteByte('\n')
@@ -242,31 +291,10 @@ func (w *OpenSearchWriter) WriteBatch(ctx context.Context, alerts []*Alert) erro
 		return fmt.Errorf("bulk response error: %s", res.Status())
 	}
 
-	// 检查是否有部分失败
-	var bulkResp struct {
-		Errors bool `json:"errors"`
-		Items  []struct {
-			Index struct {
-				ID     string      `json:"_id"`
-				Status int         `json:"status"`
-				Error  interface{} `json:"error,omitempty"`
-			} `json:"index"`
-		} `json:"items"`
-	}
-
-	if err := json.NewDecoder(res.Body).Decode(&bulkResp); err == nil && bulkResp.Errors {
-		errorCount := 0
-		for _, item := range bulkResp.Items {
-			if item.Index.Error != nil {
-				errorCount++
-				w.logger.Warn("Bulk item error",
-					zap.String("id", item.Index.ID),
-					zap.Int("status", item.Index.Status))
-			}
-		}
-		w.logger.Warn("Bulk write had partial failures",
-			zap.Int("total", len(alerts)),
-			zap.Int("errors", errorCount))
+	if err := opensearchbulk.DecodeSuccess(res.Body, len(alerts)); err != nil {
+		w.logger.Error("Bulk write was not fully acknowledged", zap.Error(err))
+		otel.RecordError(ctx, err)
+		return err
 	}
 
 	w.logger.Info("Batch write completed",
@@ -274,6 +302,126 @@ func (w *OpenSearchWriter) WriteBatch(ctx context.Context, alerts []*Alert) erro
 		zap.Duration("duration", time.Since(start)))
 
 	return nil
+}
+
+type openSearchProjectionSource struct {
+	Alert
+	DedupFingerprint string `json:"dedup_fingerprint"`
+}
+
+func (s openSearchProjectionSource) canonicalAlert(legacy bool) Alert {
+	alert := s.Alert
+	if legacy && strings.TrimSpace(alert.Fingerprint) == "" {
+		alert.Fingerprint = s.DedupFingerprint
+	}
+	return alert
+}
+
+// ListProjectionAlerts reads a bounded, stable alert-id ordered projection
+// image for T-OS-004 reconciliation. It never uses from+size or an unversioned
+// target and fails closed on timeout or shard failure.
+func (w *OpenSearchWriter) ListProjectionAlerts(ctx context.Context, scope ProjectionScope) ([]*Alert, bool, error) {
+	if strings.TrimSpace(scope.TenantID) == "" || scope.MaxDocuments < 1 || scope.MaxDocuments > 100000 {
+		return nil, false, fmt.Errorf("invalid projection reconciliation scope")
+	}
+	if scope.TargetIndexVersion != w.TargetVersion() {
+		return nil, false, fmt.Errorf("projection target mismatch: scope=%s writer=%s", scope.TargetIndexVersion, w.TargetVersion())
+	}
+	index := w.readTarget
+	tenantField := "tenant_id"
+	alertIDField := "alert_id"
+	if w.legacyReadKeywordFields {
+		tenantField += ".keyword"
+		alertIDField += ".keyword"
+	}
+	alerts := make([]*Alert, 0, min(scope.MaxDocuments, 1000))
+	var searchAfter []interface{}
+	for len(alerts) <= scope.MaxDocuments {
+		remaining := scope.MaxDocuments + 1 - len(alerts)
+		pageSize := min(remaining, 1000)
+		filters := []interface{}{map[string]interface{}{"term": map[string]interface{}{tenantField: scope.TenantID}}}
+		if !scope.StartTime.IsZero() || !scope.EndTime.IsZero() {
+			rangeBounds := map[string]interface{}{}
+			if !scope.StartTime.IsZero() {
+				rangeBounds["gte"] = scope.StartTime.UTC().Format(time.RFC3339Nano)
+			}
+			if !scope.EndTime.IsZero() {
+				rangeBounds["lte"] = scope.EndTime.UTC().Format(time.RFC3339Nano)
+			}
+			filters = append(filters, map[string]interface{}{"range": map[string]interface{}{"last_seen": rangeBounds}})
+		}
+		if len(scope.BusinessIDs) > 0 {
+			filters = append(filters, map[string]interface{}{"terms": map[string]interface{}{alertIDField: scope.BusinessIDs}})
+		}
+		body := map[string]interface{}{
+			"size":             pageSize,
+			"query":            map[string]interface{}{"bool": map[string]interface{}{"filter": filters}},
+			"sort":             []interface{}{map[string]interface{}{alertIDField: map[string]interface{}{"order": "asc"}}},
+			"track_total_hits": false,
+		}
+		if len(searchAfter) > 0 {
+			body["search_after"] = searchAfter
+		}
+		payload, err := json.Marshal(body)
+		if err != nil {
+			return nil, false, err
+		}
+		allowPartial := false
+		ignoreUnavailable := false
+		request := opensearchapi.SearchRequest{
+			Index: []string{index}, Body: bytes.NewReader(payload),
+			AllowPartialSearchResults: &allowPartial, IgnoreUnavailable: &ignoreUnavailable,
+		}
+		response, err := request.Do(ctx, w.client)
+		if err != nil {
+			return nil, false, fmt.Errorf("read OpenSearch alert projection: %w", err)
+		}
+		if response.IsError() {
+			responseBody, _ := io.ReadAll(response.Body)
+			response.Body.Close()
+			return nil, false, fmt.Errorf("OpenSearch projection search failed: %s %s", response.Status(), strings.TrimSpace(string(responseBody)))
+		}
+		var result struct {
+			TimedOut bool `json:"timed_out"`
+			Shards   struct {
+				Failed int `json:"failed"`
+			} `json:"_shards"`
+			Hits struct {
+				Hits []struct {
+					Source openSearchProjectionSource `json:"_source"`
+					Sort   []interface{}              `json:"sort"`
+				} `json:"hits"`
+			} `json:"hits"`
+		}
+		decodeErr := json.NewDecoder(response.Body).Decode(&result)
+		response.Body.Close()
+		if decodeErr != nil {
+			return nil, false, fmt.Errorf("decode OpenSearch projection search: %w", decodeErr)
+		}
+		if result.TimedOut || result.Shards.Failed > 0 {
+			return nil, false, fmt.Errorf("OpenSearch projection search incomplete: timed_out=%t failed_shards=%d", result.TimedOut, result.Shards.Failed)
+		}
+		if len(result.Hits.Hits) == 0 {
+			break
+		}
+		for index := range result.Hits.Hits {
+			hit := &result.Hits.Hits[index]
+			alert := hit.Source.canonicalAlert(w.legacyReadKeywordFields)
+			if alert.TenantID != scope.TenantID || strings.TrimSpace(alert.AlertID) == "" {
+				return nil, false, fmt.Errorf("OpenSearch projection returned invalid tenant or alert identity")
+			}
+			alerts = append(alerts, &alert)
+			searchAfter = hit.Sort
+		}
+		if len(result.Hits.Hits) < pageSize {
+			break
+		}
+	}
+	truncated := len(alerts) > scope.MaxDocuments
+	if truncated {
+		alerts = alerts[:scope.MaxDocuments]
+	}
+	return alerts, truncated, nil
 }
 
 // Ping 健康检查
@@ -310,76 +458,5 @@ func (w *OpenSearchWriter) Close() error {
 
 	w.logger.Info("OpenSearch writer closed")
 	// OpenSearch client不需要显式关闭
-	return nil
-}
-
-// EnsureIndex 确保索引存在（创建索引模板）
-func (w *OpenSearchWriter) EnsureIndex(ctx context.Context) error {
-	// 创建索引模板，包含 count 字段
-	template := map[string]interface{}{
-		"index_patterns": []string{w.indexName + "-*"},
-		"template": map[string]interface{}{
-			"settings": map[string]interface{}{
-				"number_of_shards":   3,
-				"number_of_replicas": 1,
-				"refresh_interval":   "5s",
-			},
-			"mappings": map[string]interface{}{
-				"properties": map[string]interface{}{
-					"tenant_id":      map[string]string{"type": "keyword"},
-					"alert_id":       map[string]string{"type": "keyword"},
-					"fingerprint":    map[string]string{"type": "keyword"},
-					"community_id":   map[string]string{"type": "keyword"},
-					"session_id":     map[string]string{"type": "keyword"},
-					"campaign_id":    map[string]string{"type": "keyword"},
-					"src_ip":         map[string]string{"type": "ip"},
-					"dst_ip":         map[string]string{"type": "ip"},
-					"src_port":       map[string]string{"type": "integer"},
-					"dst_port":       map[string]string{"type": "integer"},
-					"protocol":       map[string]string{"type": "short"},
-					"alert_type":     map[string]string{"type": "keyword"},
-					"labels":         map[string]string{"type": "keyword"},
-					"score":          map[string]string{"type": "float"},
-					"severity":       map[string]string{"type": "keyword"},
-					"first_seen":     map[string]string{"type": "date"},
-					"last_seen":      map[string]string{"type": "date"},
-					"count":          map[string]string{"type": "integer"}, // 添加 count 字段
-					"status":         map[string]string{"type": "keyword"},
-					"assignee":       map[string]string{"type": "keyword"},
-					"updated_ts":     map[string]string{"type": "date"},
-					"model_version":  map[string]string{"type": "keyword"},
-					"rule_version":   map[string]string{"type": "keyword"},
-					"feature_set_id": map[string]string{"type": "keyword"},
-					"evidence_ids":   map[string]string{"type": "keyword"},
-					"event_id":       map[string]string{"type": "keyword"},
-				},
-			},
-		},
-	}
-
-	body, err := json.Marshal(template)
-	if err != nil {
-		return fmt.Errorf("failed to marshal template: %w", err)
-	}
-
-	req := opensearchapi.IndicesPutIndexTemplateRequest{
-		Name: w.indexName + "-template",
-		Body: bytes.NewReader(body),
-	}
-
-	res, err := req.Do(ctx, w.client)
-	if err != nil {
-		return fmt.Errorf("failed to create index template: %w", err)
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		bodyBytes, _ := io.ReadAll(res.Body)
-		return fmt.Errorf("index template error: %s - %s", res.Status(), string(bodyBytes))
-	}
-
-	w.logger.Info("Index template created/updated",
-		zap.String("template", w.indexName+"-template"))
-
 	return nil
 }

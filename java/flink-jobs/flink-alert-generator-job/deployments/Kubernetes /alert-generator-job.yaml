@@ -25,6 +25,8 @@ data:
     # OpenSearch
     opensearch.url=http://opensearch.traffic-analysis.svc.cluster.local:9200
     opensearch.index=alerts
+    opensearch.alerts.v2.enabled=false
+    opensearch.alerts.write.alias=alerts-v2-write
     opensearch.user=admin
     opensearch.password=${OPENSEARCH_PASSWORD}
 

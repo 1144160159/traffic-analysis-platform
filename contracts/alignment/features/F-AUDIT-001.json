@@ -1,0 +1,63 @@
+{
+  "feature_id": "F-AUDIT-001",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/audit-log"],
+    "preserved_actions": ["audit-query-save", "audit-export", "audit-review-create", "audit-integrity-check"],
+    "preserved_api_operations": ["POST /v1/audit/saved-queries", "POST /v1/audit/exports", "POST /v1/audit/reviews", "POST /v1/audit/integrity-checks"],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "audit.timeline.query",
+    "controls": [
+      {"control_id": "audit-export", "action_id": "audit-export"},
+      {"control_id": "audit-integrity-check", "action_id": "audit-integrity-check"}
+    ],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "ingestAuditLogBatch",
+    "method": "POST",
+    "path": "/internal/v1/audit/batches",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "event_id"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "every event in AuditLogBatch is validated and persisted",
+      "one invalid or failed event rolls back the database batch and prevents Kafka offset commit",
+      "event_id is the stable idempotency identity"
+    ],
+    "states": ["received", "validated", "persisted", "failed", "dead_lettered", "reconciled"],
+    "compensation": "redeliver the uncommitted batch or replay an approved DLQ range with new repair identity"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "minio"],
+    "migration": "move audit runtime DDL to versioned migrations and preserve event_id uniqueness",
+    "event_types": ["traffic.v1.AuditLogBatch"],
+    "source_watermarks": ["kafka.audit.logs.offset", "postgresql.audit_logs.event_id", "clickhouse.audit.watermark"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["audit:write"],
+    "negative_tests": ["batch tenant cannot override authenticated tenant", "invalid event prevents partial commit"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["single event", "multi-event protobuf batch", "duplicate batch", "one invalid event"],
+    "stop_conditions": ["consumed offset advances beyond an unpersisted audit event"]
+  },
+  "acceptance": {
+    "tests": ["G0 all-events parser test", "G1 transaction rollback injection", "G2 real Kafka and PostgreSQL", "G3 offset/event reconcile", "G4 batch throughput", "G6 redelivery and DLQ recovery"],
+    "evidence": ["batch event IDs, PostgreSQL rows and committed Kafka offsets reconcile exactly"]
+  },
+  "rollout": {
+    "feature_flag": "audit_batch_fail_closed_v1",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-AUDIT-001-rollback.md"
+  }
+}

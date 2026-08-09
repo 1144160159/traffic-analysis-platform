@@ -57,7 +57,7 @@ export function AppShell({ children, currentUser }: AppShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const visualBreakdownMode = isVisualBreakdownMode();
+  const visualBreakdownMode = import.meta.env.DEV && isVisualBreakdownMode();
   const realtime = useAuthorizedRealtime(visualBreakdownMode ? undefined : currentUser);
   const allowedGroups = visibleNavGroups(navGroups, currentUser);
   const activeRoute = findRouteByPath(location.pathname) ?? navGroups[0].children[0];

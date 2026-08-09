@@ -1,0 +1,67 @@
+{
+  "feature_id": "F-ADAPTER-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/alerts/:alertId"],
+    "preserved_actions": ["alert-report-export", "alert-report-cancel", "alert-report-compensate", "alert-campaign-link", "alert-campaign-unlink"],
+    "preserved_api_operations": ["POST /v1/alerts/{id}/reports/export", "POST /v1/alerts/{id}/reports/{job_id}/cancel", "POST /v1/alerts/{id}/reports/{job_id}/compensations", "POST /v1/alerts/{id}/campaign-links", "DELETE /v1/alerts/{id}/campaign-links/{campaign_id}"],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "adapter.semantic-routing",
+    "controls": [
+      {"control_id": "alert-report-export", "action_id": "alert-report-export"},
+      {"control_id": "alert-report-cancel", "action_id": "alert-report-cancel"},
+      {"control_id": "alert-report-compensate", "action_id": "alert-report-compensate"},
+      {"control_id": "alert-campaign-link", "action_id": "alert-campaign-link"},
+      {"control_id": "alert-campaign-unlink", "action_id": "alert-campaign-unlink"}
+    ],
+    "states": ["accepted", "running", "cancel_requested", "success", "partial", "failed", "cancelled", "compensating", "compensated", "compensation_failed", "forbidden"]
+  },
+  "api": {
+    "operation_id": "submitSemanticCommand",
+    "method": "POST",
+    "path": "/v1/alerts/{id}/reports/export",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "snapshot_id"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "report export cannot be rewritten as an investigation note",
+      "campaign membership cannot be rewritten as an investigation note",
+      "compatibility adapters preserve shape but never replace business meaning"
+    ],
+    "states": ["accepted", "running", "cancel_requested", "completed", "partial", "failed", "cancelled", "compensating", "compensated", "compensation_failed"],
+    "compensation": "fail without creating substitute business facts; a running report becomes cancelled only after its deterministic temporary object is removed"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "minio"],
+    "migration": "add real report-job and campaign-link aggregates before switching UI dispatch",
+    "event_types": ["traffic.alert.v2.AlertReportRequested", "traffic.alert.v2.AlertReportCancelRequested", "traffic.alert.v2.AlertReportCancelled", "traffic.alert.v2.AlertReportCompensationRequested", "traffic.alert.v2.AlertReportCompensated", "traffic.campaign.v2.AlertLinked", "traffic.campaign.v2.AlertUnlinked"],
+    "source_watermarks": ["postgresql.alert_report_jobs.revision", "postgresql.campaign_alert_links.revision"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:export", "campaign:write"],
+    "negative_tests": ["report failure creates no successful note", "campaign link failure creates no membership-looking note"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["report dispatch", "campaign link dispatch", "legacy adapter rejection"],
+    "stop_conditions": ["requested endpoint differs from executed business endpoint"]
+  },
+  "acceptance": {
+    "tests": ["G0 endpoint dispatch test", "G1 no-substitute invariant", "G2 real service", "G3 business-fact reconcile", "G5 Windows Chrome HAR"],
+    "evidence": ["HAR and trace show declared endpoint, matching aggregate, audit and no substitute note"]
+  },
+  "rollout": {
+    "feature_flag": "semantic_adapter_exit_v1",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ADAPTER-001-rollback.md"
+  }
+}

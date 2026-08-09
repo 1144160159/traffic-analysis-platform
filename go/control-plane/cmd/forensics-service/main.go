@@ -120,6 +120,7 @@ func main() {
 		cfg.S3.SecretKey,
 		cfg.S3.Bucket,
 		cfg.S3.UseSSL,
+		cfg.S3.CAFile,
 		cfg.S3.ResultBucket,
 		logger,
 	)
@@ -413,13 +414,30 @@ func buildMiddlewareChain(cfg *config.Config, logger *zap.Logger, db *sql.DB, rd
 		if authMw == nil {
 			panic("authentication middleware initialization failed")
 		}
-		chain = chain.Append(authMw.Authenticate)
+		chain = chain.Append(authenticateExceptHealth(authMw.Authenticate))
 		logger.Info("Auth middleware enabled")
 	} else {
 		logger.Warn("Auth middleware disabled - API endpoints are not protected")
 	}
 
 	return chain
+}
+
+// authenticateExceptHealth keeps the two exact Kubernetes probe endpoints
+// public while preserving authentication for every business and API route.
+// Prefix matching is intentionally forbidden so /health/* cannot become an
+// unauthenticated namespace.
+func authenticateExceptHealth(authenticate func(http.Handler) http.Handler) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		protected := authenticate(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/health" || r.URL.Path == "/ready" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			protected.ServeHTTP(w, r)
+		})
+	}
 }
 
 // buildAuthMiddleware 构建认证中间件

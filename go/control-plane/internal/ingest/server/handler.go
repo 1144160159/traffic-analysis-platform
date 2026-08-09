@@ -57,6 +57,8 @@ type IngestHandler struct {
 	deduper       *dedup.Deduplicator
 	metrics       *metrics.Metrics
 	configManager *config.ProbeConfigManager
+	controlBridge ProbeControlBridge
+	probeRegistry ProbeRegistry
 	auditLogger   *audit.Logger
 	logger        *zap.Logger
 
@@ -70,6 +72,18 @@ type IngestHandler struct {
 	totalEventsDedupe   int64
 
 	defaultFeatureSetID string
+}
+
+// ProbeControlBridge durably accepts Agent ACKs and returns only commands
+// already routed to the authenticated tenant/probe identity. Implementations
+// must not return an accepted ACK id before it is durable.
+type ProbeControlBridge interface {
+	Exchange(
+		ctx context.Context,
+		tenantID string,
+		probeID string,
+		acks []*pb.ProbeOperationAck,
+	) (commands []*pb.ProbeOperationCommand, acceptedAckOperationIDs []string, err error)
 }
 
 type HandlerConfig struct {
@@ -129,6 +143,16 @@ func NewIngestHandlerWithConfig(
 func (h *IngestHandler) SetConfigManager(cm *config.ProbeConfigManager) {
 	h.configManager = cm
 	h.logger.Info("Config manager set")
+}
+
+func (h *IngestHandler) SetProbeControlBridge(bridge ProbeControlBridge) {
+	h.controlBridge = bridge
+	h.logger.Info("Probe control bridge set", zap.Bool("enabled", bridge != nil))
+}
+
+func (h *IngestHandler) SetProbeRegistry(registry ProbeRegistry) {
+	h.probeRegistry = registry
+	h.logger.Info("Probe registry set", zap.Bool("enabled", registry != nil))
 }
 
 func (h *IngestHandler) SetDeduplicator(d *dedup.Deduplicator) {
@@ -1030,6 +1054,14 @@ func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest)
 	tenantID := auth.GetTenantID(ctx)
 	probeID := auth.GetProbeID(ctx)
 
+	if req != nil {
+		if tenantID != "" && req.TenantId != "" && tenantID != req.TenantId {
+			return nil, status.Error(codes.PermissionDenied, "heartbeat tenant identity mismatch")
+		}
+		if probeID != "" && req.ProbeId != "" && probeID != req.ProbeId {
+			return nil, status.Error(codes.PermissionDenied, "heartbeat probe identity mismatch")
+		}
+	}
 	if probeID == "" && req != nil {
 		probeID = req.ProbeId
 	}
@@ -1046,6 +1078,13 @@ func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest)
 		zap.String("tenant_id", tenantID),
 		zap.String("probe_id", probeID))
 
+	if req != nil && h.probeRegistry != nil && tenantID != "" && probeID != "" {
+		if err := h.probeRegistry.Heartbeat(ctx, tenantID, probeID); err != nil {
+			logger.Warn("Failed to persist probe heartbeat", zap.Error(err))
+			return nil, status.Error(codes.Unavailable, "probe heartbeat persistence unavailable")
+		}
+	}
+
 	if req != nil && req.Status != nil {
 		h.probeStatus.Store(probeID, &probeStatusEntry{
 			Status:    req.Status,
@@ -1056,6 +1095,22 @@ func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest)
 
 	response := &pb.HeartbeatResponse{
 		Ok: true,
+	}
+
+	if h.controlBridge != nil && tenantID != "" && probeID != "" {
+		var acks []*pb.ProbeOperationAck
+		if req != nil {
+			acks = req.OperationAcks
+		}
+		commands, acceptedAckIDs, err := h.controlBridge.Exchange(
+			ctx, tenantID, probeID, acks,
+		)
+		if err != nil {
+			logger.Warn("Probe control exchange failed", zap.Error(err))
+			return nil, status.Error(codes.Unavailable, "probe control exchange unavailable")
+		}
+		response.OperationCommands = commands
+		response.AcceptedAckOperationIds = acceptedAckIDs
 	}
 
 	if h.configManager != nil && tenantID != "" && probeID != "" {
@@ -1157,6 +1212,12 @@ func (h *IngestHandler) RegisterProbe(ctx context.Context, req *pb.RegisterProbe
 			Message: "tenant_id is required",
 		}, nil
 	}
+	if tenantID != "" && tenantID != req.TenantId {
+		return nil, status.Error(codes.PermissionDenied, "registration tenant identity mismatch")
+	}
+	if probeID != "" && probeID != req.ProbeId {
+		return nil, status.Error(codes.PermissionDenied, "registration probe identity mismatch")
+	}
 
 	logger.Info("Probe registration request received",
 		zap.String("tenant_id", req.TenantId),
@@ -1172,6 +1233,19 @@ func (h *IngestHandler) RegisterProbe(ctx context.Context, req *pb.RegisterProbe
 			zap.Uint64("memory_mb", req.Hardware.MemoryMb),
 			zap.String("os_version", req.Hardware.OsVersion),
 			zap.Int("nic_count", len(req.Hardware.Nics)))
+	}
+	if h.probeRegistry != nil {
+		if err := h.probeRegistry.Register(
+			ctx,
+			req.TenantId,
+			req.ProbeId,
+			req.SoftwareVersion,
+			req.BuildCommit,
+			req.Hardware,
+		); err != nil {
+			logger.Warn("Failed to persist probe registration", zap.Error(err))
+			return nil, status.Error(codes.Unavailable, "probe registration persistence unavailable")
+		}
 	}
 
 	h.probeStatus.Store(req.ProbeId, &probeStatusEntry{
@@ -1209,15 +1283,6 @@ func (h *IngestHandler) RegisterProbe(ctx context.Context, req *pb.RegisterProbe
 
 	if initialConfig.FeatureSetVersion == "" {
 		initialConfig.FeatureSetVersion = h.defaultFeatureSetID
-	}
-
-	if h.handlerConfig.EnableAudit && h.auditLogger != nil {
-		h.recordAudit(ctx, audit.EventTypeProbeRegister, req.TenantId, req.ProbeId, "register_probe", map[string]interface{}{
-			"software_version": req.SoftwareVersion,
-			"build_commit":     req.BuildCommit,
-			"cpu_cores":        req.Hardware.GetCpuCores(),
-			"memory_mb":        req.Hardware.GetMemoryMb(),
-		})
 	}
 
 	logger.Info("Probe registered successfully",

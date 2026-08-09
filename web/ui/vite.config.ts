@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 const packageNameFromId = (id: string) => {
@@ -31,8 +32,33 @@ const miscVendorPackages = new Set([
 
 const vendorChunkName = (packageName: string) => `vendor-${packageName.replace(/^@/, '').replace(/[/.]/g, '-')}`;
 
+const productionMockWorkerGuard = () => ({
+  name: 'production-mock-worker-guard',
+  apply: 'build' as const,
+  generateBundle(_options: unknown, bundle: Record<string, { type: string; moduleIds?: string[] }>) {
+    const forbiddenModules = Object.values(bundle)
+      .filter((item) => item.type === 'chunk')
+      .flatMap((item) => item.moduleIds ?? [])
+      .filter((id) =>
+        id.includes('/src/mocks/')
+        || id.endsWith('/src/services/mockData.ts')
+        || id.includes('/node_modules/msw/')
+        || id.includes('/node_modules/@mswjs/'),
+      );
+    if (forbiddenModules.length > 0) {
+      throw new Error(`production bundle contains mock runtime modules: ${forbiddenModules.join(', ')}`);
+    }
+  },
+  closeBundle() {
+    // Vite copies public/ verbatim. The worker is required by the development
+    // server but must not be present in a deployable production directory.
+    rmSync(path.resolve(__dirname, 'dist/mockServiceWorker.js'), { force: true });
+  },
+});
+
 export default defineConfig({
-  plugins: [react()],
+  root: __dirname,
+  plugins: [react(), productionMockWorkerGuard()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -60,6 +86,7 @@ export default defineConfig({
     globals: true,
   },
   build: {
+    manifest: true,
     rollupOptions: {
       output: {
         manualChunks(id) {

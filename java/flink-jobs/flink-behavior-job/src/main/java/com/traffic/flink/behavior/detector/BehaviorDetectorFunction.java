@@ -1,5 +1,6 @@
 package com.traffic.flink.behavior.detector;
 
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.flink.behavior.config.BehaviorJobConfig;
 import com.traffic.flink.behavior.model.BehaviorModel;
 import com.traffic.flink.behavior.model.ModelInferenceResult;
@@ -18,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -165,7 +165,7 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
 
             try {
                 if (model.isReady()) {
-                    ModelInferenceResult result = model.infer(feature);
+                    ModelInferenceResult result = inferWithRetry(modelName, model, feature);
                     if (result != null && !result.hasError()) {
                         results.add(result);
                         modelRegistry.recordInvocation(modelName);
@@ -178,6 +178,30 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
         }
 
         return results;
+    }
+
+    private ModelInferenceResult inferWithRetry(
+            String modelName, BehaviorModel model, FeatureStat feature) throws Exception {
+        int allowedAttempts = Math.max(1, config.getAsyncMaxRetries() + 1);
+        Exception lastFailure = null;
+        for (int attempt = 1; attempt <= allowedAttempts; attempt++) {
+            try {
+                return model.infer(feature);
+            } catch (Exception e) {
+                lastFailure = e;
+                LOG.warn("Model {} inference failed (attempt {}/{}): {}",
+                        modelName, attempt, allowedAttempts, e.getMessage());
+                if (attempt < allowedAttempts) {
+                    try {
+                        Thread.sleep(Math.min(500L, 50L << (attempt - 1)));
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        throw interrupted;
+                    }
+                }
+            }
+        }
+        throw lastFailure;
     }
 
     /**
@@ -216,11 +240,31 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
      * 将推理结果转换为 DetectionBehavior Protobuf 消息
      */
     private DetectionBehavior toDetectionBehavior(FeatureStat input, ModelInferenceResult result) {
+        String tenantId = input.hasHeader() ? input.getHeader().getTenantId() : "";
+        String modelVersion = modelRegistry.getModelVersion(tenantId, result.getModelName());
+        if (modelVersion == null || modelVersion.isEmpty()) {
+            modelVersion = result.getModelVersion();
+        }
+        long eventTime = input.getTs();
+        long ingestTime = input.hasHeader() && input.getHeader().getIngestTs() > 0
+                ? input.getHeader().getIngestTs()
+                : eventTime;
         // 构建 EventHeader
+        String eventId = generateEventId(input, result, modelVersion);
+        long producedAt = System.currentTimeMillis();
         EventHeader.Builder headerBuilder = EventHeader.newBuilder()
-                .setEventId(generateEventId(input, result))
-                .setEventTs(System.currentTimeMillis())
-                .setIngestTs(System.currentTimeMillis());
+                .setEventId(eventId)
+                .setEventTs(eventTime)
+                .setIngestTs(ingestTime)
+                .setEventType("traffic.detection.behavior.v1")
+                .setSchemaVersion("1")
+                .setAggregateType("detection")
+                .setAggregateId(input.getObjectId())
+                .setAggregateVersion(1)
+                .setOccurredAt(eventTime)
+                .setProducedAt(producedAt)
+                .setIdempotencyKey(eventId)
+                .setProducer("flink-behavior-job");
 
         // 复制输入的 Header 字段
         if (input.hasHeader()) {
@@ -229,15 +273,14 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
             headerBuilder.setRunId(inputHeader.getRunId());
             headerBuilder.setProbeId(inputHeader.getProbeId());
             headerBuilder.setFeatureSetId(inputHeader.getFeatureSetId());
+            headerBuilder.setTraceId(inputHeader.getTraceId().isEmpty()
+                    ? inputHeader.getEventId() : inputHeader.getTraceId());
+            headerBuilder.setCausationId(inputHeader.getEventId());
+            headerBuilder.setCorrelationId(inputHeader.getCorrelationId().isEmpty()
+                    ? input.getCommunityId() : inputHeader.getCorrelationId());
         }
 
         // 构建 DetectionBehavior
-        String tenantId = input.hasHeader() ? input.getHeader().getTenantId() : "";
-        String modelVersion = modelRegistry.getModelVersion(tenantId, result.getModelName());
-        if (modelVersion == null || modelVersion.isEmpty()) {
-            modelVersion = result.getModelVersion();
-        }
-
         DetectionBehavior.Builder builder = DetectionBehavior.newBuilder()
                 .setHeader(headerBuilder.build())
                 .setModelVersion(modelVersion)
@@ -246,7 +289,9 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
                 .setObjectId(input.getObjectId())
                 .setTs(input.getTs())
                 .setTopLabel(result.getTopLabel())
-                .setTopScore(result.getTopScore());
+                .setTopScore(result.getTopScore())
+                .setTuple(input.getTuple())
+                .addAllEvidenceIds(input.getEvidenceIdsList());
 
         // 添加所有标签和分数
         List<String> labels = result.getLabels();
@@ -263,19 +308,21 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
      * 生成事件ID
      * 格式：hash(tenant_id + run_id + object_id + ts + model_name)
      */
-    private String generateEventId(FeatureStat input, ModelInferenceResult result) {
-        StringBuilder sb = new StringBuilder();
-        
-        if (input.hasHeader()) {
-            sb.append(input.getHeader().getTenantId());
-            sb.append(input.getHeader().getRunId());
-        }
-        sb.append(input.getObjectId());
-        sb.append(input.getTs());
-        sb.append(result.getModelName());
-
-        // 使用 UUID v5 风格的确定性 ID
-        return UUID.nameUUIDFromBytes(sb.toString().getBytes()).toString();
+    private String generateEventId(
+            FeatureStat input, ModelInferenceResult result, String modelVersion) {
+        EventHeader header = input.hasHeader()
+                ? input.getHeader()
+                : EventHeader.getDefaultInstance();
+        return DeterministicId.uuid(
+                "flink-behavior-detection/v1",
+                header.getTenantId(),
+                header.getEventId(),
+                header.getRunId(),
+                input.getObjectId(),
+                input.getTs(),
+                result.getModelName(),
+                modelVersion,
+                result.getTopLabel());
     }
 
     @Override

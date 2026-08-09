@@ -1,0 +1,1915 @@
+{
+  "schema_version": 1,
+  "control_id": "T-SEC-001",
+  "status": "candidate_default_off",
+  "production_applied": false,
+  "authorities": [
+    {
+      "domain": "kubernetes_workload_identity",
+      "path": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+      "sha256": "acec8105c89d9077b7c26ae99af8029c98d950192f15524b26d46ebe2ac91002"
+    },
+    {
+      "domain": "kafka_principal_acl",
+      "path": "contracts/events/kafka-acl-catalog.v1.json",
+      "sha256": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f"
+    },
+    {
+      "domain": "configuration_and_secret_binding",
+      "path": "contracts/configuration/configuration-catalog.v1.json",
+      "sha256": "f80df36629d91d1d5c5d04a51db22251aa5bf26db53f543e6e4551f48f11c4e0"
+    },
+    {
+      "domain": "iam_scopes",
+      "path": "go/control-plane/internal/auth/model/scopes.go",
+      "sha256": "2497f575e9ce9516fd4d61eaa870b1f66780688335097d7aa12275381f2bd456"
+    },
+    {
+      "domain": "network_policy",
+      "path": "deployments/kubernetes/security/00-network-policies.yaml",
+      "sha256": "dc5c0ba8421d49bfb794af4a16191a8a94c3a4bf2feb3dbf50b325e988eff996"
+    },
+    {
+      "domain": "go_runtime_user",
+      "path": "go/control-plane/deployments/docker/Dockerfile.runtime",
+      "sha256": "3c2d8ddef5bb9ed4d1bfba3d9051d51ba9e73392a471e588612e814107dc725c"
+    }
+  ],
+  "policy": {
+    "kubernetes_identity": "one dedicated no-RBAC service account per workload; API token automount disabled unless explicitly required",
+    "secret_material": "SecretRef or external provider only; values never enter catalog, ConfigMap, logs or evidence",
+    "backend_identity": "unique least-privilege principal per workload and backend; shared admin/root accounts forbidden",
+    "tenant_authority": "authenticated claims or verified probe identity only; request payload/header/query is never authoritative",
+    "service_transport": "unique service identity with mTLS for service-to-service and probe traffic",
+    "rotation": "trust bundle first, dual identity window, cutover acknowledgement, old credential revocation and reconcile",
+    "privileged_workload": "explicit exception, minimum capabilities, node admission and per-release independent review"
+  },
+  "workloads": [
+    {
+      "workload_id": "flink/Job/flink-log-job",
+      "name": "flink-log-job",
+      "namespace": "flink",
+      "kind": "Job",
+      "owner": "flink-data-owner",
+      "source": "deployments/kubernetes/flink/flink-log-job.yaml",
+      "service_account": {
+        "name": "flink-log-job",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": null,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "flink-log-job",
+          "run_as_non_root": null,
+          "run_as_user": null,
+          "run_as_group": null,
+          "allow_privilege_escalation": null,
+          "capabilities_drop": [],
+          "capabilities_add": [],
+          "seccomp_profile": null,
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": false
+        }
+      ],
+      "images": [
+        {
+          "reference": "traffic/flink-log-job:log-job-20260629-r1",
+          "digest_pinned": false,
+          "mutable_tag": true
+        }
+      ],
+      "secret_references": [],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "flink-log-job",
+        "principal": "User:traffic-flink-log",
+        "kind": "flink_job",
+        "rollout_state": "expand",
+        "credential_namespace": "flink",
+        "credential_secret": "kafka-flink-log-job-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "container_security_context_incomplete",
+        "runtime_image_not_digest_pinned"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/DaemonSet/probe-agent",
+      "name": "probe-agent",
+      "namespace": "traffic-analysis",
+      "kind": "DaemonSet",
+      "owner": "probe-domain-owner",
+      "source": "deployments/kubernetes/applications/probe-agent.yaml",
+      "service_account": {
+        "name": "probe-agent",
+        "declared": true,
+        "source": "deployments/kubernetes/applications/probe-agent.yaml",
+        "pod_token_automount": null,
+        "account_token_automount": null,
+        "rbac_grants_expected": null,
+        "token_automount_exception": true
+      },
+      "containers": [
+        {
+          "name": "probe-agent",
+          "run_as_non_root": null,
+          "run_as_user": 0,
+          "run_as_group": 0,
+          "allow_privilege_escalation": null,
+          "capabilities_drop": [],
+          "capabilities_add": [
+            "NET_ADMIN",
+            "NET_RAW",
+            "SYS_ADMIN",
+            "SYS_NICE"
+          ],
+          "seccomp_profile": null,
+          "privileged": true,
+          "privileged_exception": {
+            "reason": "packet capture requires host network and approved capture capabilities",
+            "required_review": "capability and node admission review per release",
+            "service_account_token_required": true
+          },
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/probe-agent@sha256:1760b0cfd6ff0666e221bb055d5a6abb7df69b2c7dbb0e856517d6be1adbcec7",
+          "digest_pinned": true,
+          "mutable_tag": false
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "minio-probe-agent-credentials",
+          "key": "accesskey",
+          "consumer": "probe-agent",
+          "binding": "env:PROBE_S3_ACCESS_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "minio-probe-agent-credentials",
+          "key": "secretkey",
+          "consumer": "probe-agent",
+          "binding": "env:PROBE_S3_SECRET_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "probe-agent-certs",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:certs",
+          "optional": false,
+          "external_secret_registered": false,
+          "external_secret_source": null,
+          "rotation_refresh_interval": null
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PROBE_AUTH_TOKEN",
+          "consumer": "probe-agent",
+          "binding": "env:AUTH_TOKEN",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": null,
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": {
+        "reason": "packet capture requires host network and approved capture capabilities",
+        "required_review": "capability and node admission review per release",
+        "service_account_token_required": true
+      },
+      "blocking_gaps": [
+        "secret_provisioner_unregistered"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/Deployment/alert-service",
+      "name": "alert-service",
+      "namespace": "traffic-analysis",
+      "kind": "Deployment",
+      "owner": "alert-domain-owner",
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "service_account": {
+        "name": "alert-service",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": false,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "alert-service",
+          "run_as_non_root": true,
+          "run_as_user": 1000,
+          "run_as_group": 1000,
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
+          "capabilities_add": [],
+          "seccomp_profile": "RuntimeDefault",
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/alert-service:remediation-dashboard-159fca0eb395",
+          "digest_pinned": false,
+          "mutable_tag": true
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-alert-service-credentials",
+          "key": "password",
+          "consumer": "alert-service",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-alert-service-credentials",
+          "key": "username",
+          "consumer": "alert-service",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "minio-alert-service-credentials",
+          "key": "accesskey",
+          "consumer": "alert-service",
+          "binding": "env:S3_ACCESS_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "minio-alert-service-credentials",
+          "key": "secretkey",
+          "consumer": "alert-service",
+          "binding": "env:S3_SECRET_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "CAMPAIGN_SOAR_EXECUTOR_TOKEN",
+          "consumer": "alert-service",
+          "binding": "env:CAMPAIGN_SOAR_EXECUTOR_TOKEN",
+          "optional": true,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "CLICKHOUSE_PASSWORD",
+          "consumer": "alert-service",
+          "binding": "env:CLICKHOUSE_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "JWT_SECRET",
+          "consumer": "alert-service",
+          "binding": "env:JWT_SECRET_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "NEBULA_SERVICE_PASSWORD",
+          "consumer": "alert-service",
+          "binding": "env:CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "OPENSEARCH_ADMIN_PASSWORD",
+          "consumer": "alert-service",
+          "binding": "env:OPENSEARCH_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PG_PASSWORD",
+          "consumer": "alert-service",
+          "binding": "env:AUTH_POSTGRES_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PLAYBOOK_EXECUTION_PROVIDER_TOKEN",
+          "consumer": "alert-service",
+          "binding": "env:PLAYBOOK_EXECUTION_PROVIDER_TOKEN",
+          "optional": true,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "alert-service",
+        "principal": "User:traffic-alert-service",
+        "kind": "service",
+        "rollout_state": "expand",
+        "credential_namespace": "traffic-analysis",
+        "credential_secret": "kafka-alert-service-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "runtime_image_not_digest_pinned",
+        "service_to_service_mtls_identity_missing",
+        "shared_sensitive_credential"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/Deployment/asset-service",
+      "name": "asset-service",
+      "namespace": "traffic-analysis",
+      "kind": "Deployment",
+      "owner": "asset-domain-owner",
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "service_account": {
+        "name": "asset-service",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": false,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "asset-service",
+          "run_as_non_root": true,
+          "run_as_user": 1000,
+          "run_as_group": 1000,
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
+          "capabilities_add": [],
+          "seccomp_profile": "RuntimeDefault",
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/asset-service:remediation-asset-audit-d6546314264d",
+          "digest_pinned": false,
+          "mutable_tag": true
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-asset-service-credentials",
+          "key": "password",
+          "consumer": "asset-service",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-asset-service-credentials",
+          "key": "username",
+          "consumer": "asset-service",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "minio-asset-service-credentials",
+          "key": "accesskey",
+          "consumer": "asset-service",
+          "binding": "env:S3_ACCESS_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "minio-asset-service-credentials",
+          "key": "secretkey",
+          "consumer": "asset-service",
+          "binding": "env:S3_SECRET_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "CLICKHOUSE_PASSWORD",
+          "consumer": "asset-service",
+          "binding": "env:CLICKHOUSE_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "JWT_SECRET",
+          "consumer": "asset-service",
+          "binding": "env:JWT_SIGNING_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "NEBULA_SERVICE_PASSWORD",
+          "consumer": "asset-service",
+          "binding": "env:ASSET_PROJECTION_NEBULA_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "OPENSEARCH_ADMIN_PASSWORD",
+          "consumer": "asset-service",
+          "binding": "env:ASSET_PROJECTION_OS_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PG_PASSWORD",
+          "consumer": "asset-service",
+          "binding": "env:ASSET_PG_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "asset-service",
+        "principal": "User:traffic-asset-service",
+        "kind": "service",
+        "rollout_state": "expand",
+        "credential_namespace": "traffic-analysis",
+        "credential_secret": "kafka-asset-service-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "runtime_image_not_digest_pinned",
+        "service_to_service_mtls_identity_missing",
+        "shared_sensitive_credential"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/Deployment/auth-service",
+      "name": "auth-service",
+      "namespace": "traffic-analysis",
+      "kind": "Deployment",
+      "owner": "security-platform-owner",
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "service_account": {
+        "name": "auth-service",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": false,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "auth-service",
+          "run_as_non_root": true,
+          "run_as_user": 1000,
+          "run_as_group": 1000,
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
+          "capabilities_add": [],
+          "seccomp_profile": "RuntimeDefault",
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/auth-service@sha256:d02bbf843802240955626a728781b220f89e90c92762639196d98c3165c383b6",
+          "digest_pinned": true,
+          "mutable_tag": false
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-auth-service-credentials",
+          "key": "password",
+          "consumer": "auth-service",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-auth-service-credentials",
+          "key": "username",
+          "consumer": "auth-service",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "JWT_SECRET",
+          "consumer": "auth-service",
+          "binding": "env:JWT_SIGNING_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "OIDC_CLIENT_SECRET",
+          "consumer": "auth-service",
+          "binding": "env:OIDC_CLIENT_SECRET",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PG_PASSWORD",
+          "consumer": "auth-service",
+          "binding": "env:POSTGRES_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "auth-service",
+        "principal": "User:traffic-auth-service",
+        "kind": "service",
+        "rollout_state": "expand",
+        "credential_namespace": "traffic-analysis",
+        "credential_secret": "kafka-auth-service-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "service_to_service_mtls_identity_missing",
+        "shared_sensitive_credential"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/Deployment/forensics-service",
+      "name": "forensics-service",
+      "namespace": "traffic-analysis",
+      "kind": "Deployment",
+      "owner": "forensics-domain-owner",
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "service_account": {
+        "name": "forensics-service",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": false,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "forensics-service",
+          "run_as_non_root": true,
+          "run_as_user": 1000,
+          "run_as_group": 1000,
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
+          "capabilities_add": [],
+          "seccomp_profile": "RuntimeDefault",
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/forensics-service:remediation-forensics-7d3aba0ae1b7",
+          "digest_pinned": false,
+          "mutable_tag": true
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-forensics-service-credentials",
+          "key": "password",
+          "consumer": "forensics-service",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-forensics-service-credentials",
+          "key": "username",
+          "consumer": "forensics-service",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "minio-forensics-service-credentials",
+          "key": "accesskey",
+          "consumer": "forensics-service",
+          "binding": "env:S3_ACCESS_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "minio-forensics-service-credentials",
+          "key": "secretkey",
+          "consumer": "forensics-service",
+          "binding": "env:S3_SECRET_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "CLICKHOUSE_PASSWORD",
+          "consumer": "forensics-service",
+          "binding": "env:CLICKHOUSE_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "JWT_SECRET",
+          "consumer": "forensics-service",
+          "binding": "env:JWT_SIGNING_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PG_PASSWORD",
+          "consumer": "forensics-service",
+          "binding": "env:POSTGRES_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "forensics-service",
+        "principal": "User:traffic-forensics-service",
+        "kind": "service",
+        "rollout_state": "expand",
+        "credential_namespace": "traffic-analysis",
+        "credential_secret": "kafka-forensics-service-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "runtime_image_not_digest_pinned",
+        "service_to_service_mtls_identity_missing",
+        "shared_sensitive_credential"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/Deployment/graph-service",
+      "name": "graph-service",
+      "namespace": "traffic-analysis",
+      "kind": "Deployment",
+      "owner": "graph-domain-owner",
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "service_account": {
+        "name": "graph-service",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": false,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "graph-service",
+          "run_as_non_root": true,
+          "run_as_user": 1000,
+          "run_as_group": 1000,
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
+          "capabilities_add": [],
+          "seccomp_profile": "RuntimeDefault",
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/graph-service@sha256:c2af7b2361d1bb606d10e24e5251ab59a8200d6424752b4964ec5dade7b6db6c",
+          "digest_pinned": true,
+          "mutable_tag": false
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-graph-service-credentials",
+          "key": "password",
+          "consumer": "graph-service",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-graph-service-credentials",
+          "key": "username",
+          "consumer": "graph-service",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "CLICKHOUSE_PASSWORD",
+          "consumer": "graph-service",
+          "binding": "env:CLICKHOUSE_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "JWT_SECRET",
+          "consumer": "graph-service",
+          "binding": "env:JWT_SECRET_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "NEBULA_SERVICE_PASSWORD",
+          "consumer": "graph-service",
+          "binding": "env:NEBULA_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PG_PASSWORD",
+          "consumer": "graph-service",
+          "binding": "env:POSTGRES_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "POSTGRES_DSN",
+          "consumer": "graph-service",
+          "binding": "env:POSTGRES_DSN",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "graph-service",
+        "principal": "User:traffic-graph-service",
+        "kind": "service",
+        "rollout_state": "expand",
+        "credential_namespace": "traffic-analysis",
+        "credential_secret": "kafka-graph-service-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "service_to_service_mtls_identity_missing",
+        "shared_sensitive_credential"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/Deployment/ingest-gateway",
+      "name": "ingest-gateway",
+      "namespace": "traffic-analysis",
+      "kind": "Deployment",
+      "owner": "probe-domain-owner",
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "service_account": {
+        "name": "ingest-gateway",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": false,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "ingest-gateway",
+          "run_as_non_root": true,
+          "run_as_user": 1000,
+          "run_as_group": 1000,
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
+          "capabilities_add": [],
+          "seccomp_profile": "RuntimeDefault",
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/ingest-gateway@sha256:7e5895b2402581820859acbf48c5a0a532237ab2352826cfcf199d0c2a1f5d0a",
+          "digest_pinned": true,
+          "mutable_tag": false
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "ingest-gateway-certs",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:certs",
+          "optional": false,
+          "external_secret_registered": false,
+          "external_secret_source": null,
+          "rotation_refresh_interval": null
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-ingest-gateway-credentials",
+          "key": "password",
+          "consumer": "ingest-gateway",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-ingest-gateway-credentials",
+          "key": "username",
+          "consumer": "ingest-gateway",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "JWT_SECRET",
+          "consumer": "ingest-gateway",
+          "binding": "env:JWT_SIGNING_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PG_PASSWORD",
+          "consumer": "ingest-gateway",
+          "binding": "env:POSTGRES_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "ingest-gateway",
+        "principal": "User:traffic-ingest-gateway",
+        "kind": "service",
+        "rollout_state": "expand",
+        "credential_namespace": "traffic-analysis",
+        "credential_secret": "kafka-ingest-gateway-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "secret_provisioner_unregistered",
+        "shared_sensitive_credential"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/Deployment/rule-manager",
+      "name": "rule-manager",
+      "namespace": "traffic-analysis",
+      "kind": "Deployment",
+      "owner": "rule-deployment-domain-owner",
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "service_account": {
+        "name": "rule-manager",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": false,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "rule-manager",
+          "run_as_non_root": true,
+          "run_as_user": 1000,
+          "run_as_group": 1000,
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
+          "capabilities_add": [],
+          "seccomp_profile": "RuntimeDefault",
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/rule-manager@sha256:27f53d3029d9bc6d2d304c7e6b0e0c7f8428910638e01f47e78f1a4177bc818d",
+          "digest_pinned": true,
+          "mutable_tag": false
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-rule-manager-credentials",
+          "key": "password",
+          "consumer": "rule-manager",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-rule-manager-credentials",
+          "key": "username",
+          "consumer": "rule-manager",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "CLICKHOUSE_PASSWORD",
+          "consumer": "rule-manager",
+          "binding": "env:CLICKHOUSE_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "JWT_SECRET",
+          "consumer": "rule-manager",
+          "binding": "env:JWT_SECRET_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PG_PASSWORD",
+          "consumer": "rule-manager",
+          "binding": "env:POSTGRES_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "rule-manager",
+        "principal": "User:traffic-rule-manager",
+        "kind": "service",
+        "rollout_state": "expand",
+        "credential_namespace": "traffic-analysis",
+        "credential_secret": "kafka-rule-manager-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "service_to_service_mtls_identity_missing",
+        "shared_sensitive_credential"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/Deployment/threat-intel-service",
+      "name": "threat-intel-service",
+      "namespace": "traffic-analysis",
+      "kind": "Deployment",
+      "owner": "threat-intel-domain-owner",
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "service_account": {
+        "name": "threat-intel-service",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": false,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "threat-intel-service",
+          "run_as_non_root": true,
+          "run_as_user": 1000,
+          "run_as_group": 1000,
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
+          "capabilities_add": [],
+          "seccomp_profile": "RuntimeDefault",
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/threat-intel-service@sha256:d87ccc7066dbd2d04aa55db16c1e2ca271e0d5274373ba0ca5159b513c0c629c",
+          "digest_pinned": true,
+          "mutable_tag": false
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-threat-intel-service-credentials",
+          "key": "password",
+          "consumer": "threat-intel-service",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-threat-intel-service-credentials",
+          "key": "username",
+          "consumer": "threat-intel-service",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "JWT_SECRET",
+          "consumer": "threat-intel-service",
+          "binding": "env:JWT_SECRET_KEY",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "PG_PASSWORD",
+          "consumer": "threat-intel-service",
+          "binding": "env:POSTGRES_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "threat-intel-service",
+        "principal": "User:traffic-threat-intel-service",
+        "kind": "service",
+        "rollout_state": "expand",
+        "credential_namespace": "traffic-analysis",
+        "credential_secret": "kafka-threat-intel-service-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "service_to_service_mtls_identity_missing",
+        "shared_sensitive_credential"
+      ]
+    },
+    {
+      "workload_id": "traffic-analysis/Deployment/web-ui",
+      "name": "web-ui",
+      "namespace": "traffic-analysis",
+      "kind": "Deployment",
+      "owner": "web-ui-owner",
+      "source": "deployments/kubernetes/applications/web-ui.yaml",
+      "service_account": {
+        "name": "web-ui",
+        "declared": true,
+        "source": "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": false,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "web-ui",
+          "run_as_non_root": null,
+          "run_as_user": null,
+          "run_as_group": null,
+          "allow_privilege_escalation": null,
+          "capabilities_drop": [],
+          "capabilities_add": [],
+          "seccomp_profile": null,
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": false
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/traffic/web-ui:remediation-ui-56a48b6ac667",
+          "digest_pinned": false,
+          "mutable_tag": true
+        }
+      ],
+      "secret_references": [],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": null,
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": [
+        "container_security_context_incomplete",
+        "runtime_image_not_digest_pinned"
+      ]
+    }
+  ],
+  "kafka_principals": [
+    {
+      "id": "ingest-gateway",
+      "principal": "User:traffic-ingest-gateway",
+      "kind": "service",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-ingest-gateway-credentials",
+        "password_env": "KAFKA_INGEST_GATEWAY_PASSWORD",
+        "remote_password_property": "KAFKA_INGEST_GATEWAY_PASSWORD",
+        "workload": "ingest-gateway"
+      }
+    },
+    {
+      "id": "auth-service",
+      "principal": "User:traffic-auth-service",
+      "kind": "service",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-auth-service-credentials",
+        "password_env": "KAFKA_AUTH_SERVICE_PASSWORD",
+        "remote_password_property": "KAFKA_AUTH_SERVICE_PASSWORD",
+        "workload": "auth-service"
+      }
+    },
+    {
+      "id": "alert-service",
+      "principal": "User:traffic-alert-service",
+      "kind": "service",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-alert-service-credentials",
+        "password_env": "KAFKA_ALERT_SERVICE_PASSWORD",
+        "remote_password_property": "KAFKA_ALERT_SERVICE_PASSWORD",
+        "workload": "alert-service"
+      }
+    },
+    {
+      "id": "asset-service",
+      "principal": "User:traffic-asset-service",
+      "kind": "service",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-asset-service-credentials",
+        "password_env": "KAFKA_ASSET_SERVICE_PASSWORD",
+        "remote_password_property": "KAFKA_ASSET_SERVICE_PASSWORD",
+        "workload": "asset-service"
+      }
+    },
+    {
+      "id": "rule-manager",
+      "principal": "User:traffic-rule-manager",
+      "kind": "service",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-rule-manager-credentials",
+        "password_env": "KAFKA_RULE_MANAGER_PASSWORD",
+        "remote_password_property": "KAFKA_RULE_MANAGER_PASSWORD",
+        "workload": "rule-manager"
+      }
+    },
+    {
+      "id": "graph-service",
+      "principal": "User:traffic-graph-service",
+      "kind": "service",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-graph-service-credentials",
+        "password_env": "KAFKA_GRAPH_SERVICE_PASSWORD",
+        "remote_password_property": "KAFKA_GRAPH_SERVICE_PASSWORD",
+        "workload": "graph-service"
+      }
+    },
+    {
+      "id": "forensics-service",
+      "principal": "User:traffic-forensics-service",
+      "kind": "service",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-forensics-service-credentials",
+        "password_env": "KAFKA_FORENSICS_SERVICE_PASSWORD",
+        "remote_password_property": "KAFKA_FORENSICS_SERVICE_PASSWORD",
+        "workload": "forensics-service"
+      }
+    },
+    {
+      "id": "threat-intel-service",
+      "principal": "User:traffic-threat-intel-service",
+      "kind": "service",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-threat-intel-service-credentials",
+        "password_env": "KAFKA_THREAT_INTEL_SERVICE_PASSWORD",
+        "remote_password_property": "KAFKA_THREAT_INTEL_SERVICE_PASSWORD",
+        "workload": "threat-intel-service"
+      }
+    },
+    {
+      "id": "audit-materializer",
+      "principal": "User:traffic-audit-materializer",
+      "kind": "consumer",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-audit-materializer-credentials",
+        "password_env": "KAFKA_AUDIT_MATERIALIZER_PASSWORD",
+        "remote_password_property": "KAFKA_AUDIT_MATERIALIZER_PASSWORD",
+        "workload": "audit-materializer"
+      }
+    },
+    {
+      "id": "flink-session-job",
+      "principal": "User:traffic-flink-session",
+      "kind": "flink_job",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "flink",
+        "secret_name": "kafka-flink-session-job-credentials",
+        "password_env": "KAFKA_FLINK_SESSION_JOB_PASSWORD",
+        "remote_password_property": "KAFKA_FLINK_SESSION_JOB_PASSWORD",
+        "workload": "flink-session-job"
+      }
+    },
+    {
+      "id": "flink-feature-job",
+      "principal": "User:traffic-flink-feature",
+      "kind": "flink_job",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "flink",
+        "secret_name": "kafka-flink-feature-job-credentials",
+        "password_env": "KAFKA_FLINK_FEATURE_JOB_PASSWORD",
+        "remote_password_property": "KAFKA_FLINK_FEATURE_JOB_PASSWORD",
+        "workload": "flink-feature-job"
+      }
+    },
+    {
+      "id": "flink-rule-job",
+      "principal": "User:traffic-flink-rule",
+      "kind": "flink_job",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "flink",
+        "secret_name": "kafka-flink-rule-job-credentials",
+        "password_env": "KAFKA_FLINK_RULE_JOB_PASSWORD",
+        "remote_password_property": "KAFKA_FLINK_RULE_JOB_PASSWORD",
+        "workload": "flink-rule-job"
+      }
+    },
+    {
+      "id": "flink-behavior-job",
+      "principal": "User:traffic-flink-behavior",
+      "kind": "flink_job",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "flink",
+        "secret_name": "kafka-flink-behavior-job-credentials",
+        "password_env": "KAFKA_FLINK_BEHAVIOR_JOB_PASSWORD",
+        "remote_password_property": "KAFKA_FLINK_BEHAVIOR_JOB_PASSWORD",
+        "workload": "flink-behavior-job"
+      }
+    },
+    {
+      "id": "flink-alert-generator-job",
+      "principal": "User:traffic-flink-alert-generator",
+      "kind": "flink_job",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "flink",
+        "secret_name": "kafka-flink-alert-generator-job-credentials",
+        "password_env": "KAFKA_FLINK_ALERT_GENERATOR_JOB_PASSWORD",
+        "remote_password_property": "KAFKA_FLINK_ALERT_GENERATOR_JOB_PASSWORD",
+        "workload": "flink-alert-generator-job"
+      }
+    },
+    {
+      "id": "flink-cep-job",
+      "principal": "User:traffic-flink-cep",
+      "kind": "flink_job",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "flink",
+        "secret_name": "kafka-flink-cep-job-credentials",
+        "password_env": "KAFKA_FLINK_CEP_JOB_PASSWORD",
+        "remote_password_property": "KAFKA_FLINK_CEP_JOB_PASSWORD",
+        "workload": "flink-cep-job"
+      }
+    },
+    {
+      "id": "flink-pcap-index-job",
+      "principal": "User:traffic-flink-pcap-index",
+      "kind": "flink_job",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "flink",
+        "secret_name": "kafka-flink-pcap-index-job-credentials",
+        "password_env": "KAFKA_FLINK_PCAP_INDEX_JOB_PASSWORD",
+        "remote_password_property": "KAFKA_FLINK_PCAP_INDEX_JOB_PASSWORD",
+        "workload": "flink-pcap-index-job"
+      }
+    },
+    {
+      "id": "flink-log-job",
+      "principal": "User:traffic-flink-log",
+      "kind": "flink_job",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "flink",
+        "secret_name": "kafka-flink-log-job-credentials",
+        "password_env": "KAFKA_FLINK_LOG_JOB_PASSWORD",
+        "remote_password_property": "KAFKA_FLINK_LOG_JOB_PASSWORD",
+        "workload": "flink-log-job"
+      }
+    },
+    {
+      "id": "flink-user-behavior-job",
+      "principal": "User:traffic-flink-user-behavior",
+      "kind": "flink_job",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "flink",
+        "secret_name": "kafka-flink-user-behavior-job-credentials",
+        "password_env": "KAFKA_FLINK_USER_BEHAVIOR_JOB_PASSWORD",
+        "remote_password_property": "KAFKA_FLINK_USER_BEHAVIOR_JOB_PASSWORD",
+        "workload": "flink-user-behavior-job"
+      }
+    },
+    {
+      "id": "kafka-replayer",
+      "principal": "User:traffic-kafka-replayer",
+      "kind": "replayer",
+      "rollout_state": "disabled"
+    },
+    {
+      "id": "kafka-operator",
+      "principal": "User:traffic-kafka-operator",
+      "kind": "operator",
+      "rollout_state": "planned"
+    }
+  ],
+  "shared_sensitive_credentials": [
+    {
+      "namespace": "traffic-analysis",
+      "secret_name": "traffic-credentials",
+      "key": "CLICKHOUSE_PASSWORD",
+      "consumers": [
+        "alert-service",
+        "asset-service",
+        "forensics-service",
+        "graph-service",
+        "rule-manager"
+      ],
+      "consumer_count": 5
+    },
+    {
+      "namespace": "traffic-analysis",
+      "secret_name": "traffic-credentials",
+      "key": "JWT_SECRET",
+      "consumers": [
+        "alert-service",
+        "asset-service",
+        "auth-service",
+        "forensics-service",
+        "graph-service",
+        "ingest-gateway",
+        "rule-manager",
+        "threat-intel-service"
+      ],
+      "consumer_count": 8
+    },
+    {
+      "namespace": "traffic-analysis",
+      "secret_name": "traffic-credentials",
+      "key": "NEBULA_SERVICE_PASSWORD",
+      "consumers": [
+        "alert-service",
+        "asset-service",
+        "graph-service"
+      ],
+      "consumer_count": 3
+    },
+    {
+      "namespace": "traffic-analysis",
+      "secret_name": "traffic-credentials",
+      "key": "OPENSEARCH_ADMIN_PASSWORD",
+      "consumers": [
+        "alert-service",
+        "asset-service"
+      ],
+      "consumer_count": 2
+    },
+    {
+      "namespace": "traffic-analysis",
+      "secret_name": "traffic-credentials",
+      "key": "PG_PASSWORD",
+      "consumers": [
+        "alert-service",
+        "asset-service",
+        "auth-service",
+        "forensics-service",
+        "graph-service",
+        "ingest-gateway",
+        "rule-manager",
+        "threat-intel-service"
+      ],
+      "consumer_count": 8
+    }
+  ],
+  "tenant_authority_findings": {
+    "trusted_source": "authenticated context or verified probe binding",
+    "untrusted_fallback_sites": [
+      {
+        "path": "go/control-plane/cmd/threat-intel-service/main.go",
+        "line": 845,
+        "kind": "request_header",
+        "line_sha256": "6c81817635f81fed93a775910550439b8c531d134b9c6fc6084e38b885fa7fb7"
+      },
+      {
+        "path": "go/control-plane/internal/alert/api/handler.go",
+        "line": 1624,
+        "kind": "request_header",
+        "line_sha256": "1ff5d9fad7a5781e5b9afcf2b3687fb13ef8d8b2b2bed9d87f4efb236c47b54b"
+      },
+      {
+        "path": "go/control-plane/internal/alert/api/handler.go",
+        "line": 1627,
+        "kind": "query_parameter",
+        "line_sha256": "ed36c0ae6054d246976bc41c7bf69588afbde0f33b0179b10cbed4d8b83085d2"
+      },
+      {
+        "path": "go/control-plane/internal/alert/api/handler_advanced.go",
+        "line": 1452,
+        "kind": "request_header",
+        "line_sha256": "a6224d6dc79fffc06a25fd1f26d65e42d6d57d593ee97075721952f4812ec3a6"
+      },
+      {
+        "path": "go/control-plane/internal/alert/api/handler_advanced.go",
+        "line": 1455,
+        "kind": "query_parameter",
+        "line_sha256": "65f50649b6420f4c5aa63a786035c3ebf9763b6535ad5402813604ab623fa0d8"
+      },
+      {
+        "path": "go/control-plane/internal/alert/api/handler_feedback.go",
+        "line": 506,
+        "kind": "request_header",
+        "line_sha256": "1ff5d9fad7a5781e5b9afcf2b3687fb13ef8d8b2b2bed9d87f4efb236c47b54b"
+      },
+      {
+        "path": "go/control-plane/internal/alert/api/handler_feedback.go",
+        "line": 509,
+        "kind": "query_parameter",
+        "line_sha256": "ed36c0ae6054d246976bc41c7bf69588afbde0f33b0179b10cbed4d8b83085d2"
+      },
+      {
+        "path": "go/control-plane/internal/alert/api/handler_system.go",
+        "line": 2813,
+        "kind": "query_parameter",
+        "line_sha256": "65f50649b6420f4c5aa63a786035c3ebf9763b6535ad5402813604ab623fa0d8"
+      },
+      {
+        "path": "go/control-plane/internal/alert/realtime/handler.go",
+        "line": 77,
+        "kind": "query_parameter",
+        "line_sha256": "e09f5e9b50b970fa367e2b05ec5d07ba381afbb12d011488621cc689af0172e4"
+      },
+      {
+        "path": "go/control-plane/internal/asset/api/http_handler.go",
+        "line": 1001,
+        "kind": "request_header",
+        "line_sha256": "a6224d6dc79fffc06a25fd1f26d65e42d6d57d593ee97075721952f4812ec3a6"
+      },
+      {
+        "path": "go/control-plane/internal/auth/api/handler.go",
+        "line": 112,
+        "kind": "request_header",
+        "line_sha256": "6fcf1223970a4d0643f2016edffee5197873862c247023dd04de63dde6678f5a"
+      },
+      {
+        "path": "go/control-plane/internal/auth/api/handler.go",
+        "line": 499,
+        "kind": "query_parameter",
+        "line_sha256": "c3eb4300ba1c1e771edafe6ea42ac6900fe9222fb2073ca9a8039399989aa04e"
+      },
+      {
+        "path": "go/control-plane/internal/common/httpx/logging.go",
+        "line": 64,
+        "kind": "request_header",
+        "line_sha256": "6860965ce4e4bb5fe8c5f8f05330367a3e8e2fa5a8c5d9e1654191cdd2784d34"
+      },
+      {
+        "path": "go/control-plane/internal/common/httpx/tenant.go",
+        "line": 17,
+        "kind": "request_header",
+        "line_sha256": "6860965ce4e4bb5fe8c5f8f05330367a3e8e2fa5a8c5d9e1654191cdd2784d34"
+      },
+      {
+        "path": "go/control-plane/internal/common/httpx/tenant.go",
+        "line": 19,
+        "kind": "query_parameter",
+        "line_sha256": "ed36c0ae6054d246976bc41c7bf69588afbde0f33b0179b10cbed4d8b83085d2"
+      },
+      {
+        "path": "go/control-plane/internal/common/httpx/tenant.go",
+        "line": 79,
+        "kind": "request_header",
+        "line_sha256": "6860965ce4e4bb5fe8c5f8f05330367a3e8e2fa5a8c5d9e1654191cdd2784d34"
+      },
+      {
+        "path": "go/control-plane/internal/common/httpx/tenant.go",
+        "line": 82,
+        "kind": "query_parameter",
+        "line_sha256": "ed36c0ae6054d246976bc41c7bf69588afbde0f33b0179b10cbed4d8b83085d2"
+      },
+      {
+        "path": "go/control-plane/internal/common/httpx/tenant.go",
+        "line": 112,
+        "kind": "request_header",
+        "line_sha256": "1ff5d9fad7a5781e5b9afcf2b3687fb13ef8d8b2b2bed9d87f4efb236c47b54b"
+      },
+      {
+        "path": "go/control-plane/internal/common/httpx/tenant.go",
+        "line": 145,
+        "kind": "request_header",
+        "line_sha256": "1dd4559f31bfbbacbec050903256b4728f27f17480e093f202fb6d61913b3b28"
+      },
+      {
+        "path": "go/control-plane/internal/common/httpx/tenant.go",
+        "line": 147,
+        "kind": "query_parameter",
+        "line_sha256": "6197d21e16866c831e2bb0417e85521d9db716b15f163e8e3db81809a8963dc1"
+      },
+      {
+        "path": "go/control-plane/internal/common/otel/middleware.go",
+        "line": 32,
+        "kind": "request_header",
+        "line_sha256": "a6224d6dc79fffc06a25fd1f26d65e42d6d57d593ee97075721952f4812ec3a6"
+      },
+      {
+        "path": "go/control-plane/internal/forensics/api/handler.go",
+        "line": 636,
+        "kind": "query_parameter",
+        "line_sha256": "b250df657b61d63d320149ebc79d69404ace7f795523d0e63da0254510c1fb7c"
+      },
+      {
+        "path": "go/control-plane/internal/forensics/api/handler.go",
+        "line": 1167,
+        "kind": "query_parameter",
+        "line_sha256": "b250df657b61d63d320149ebc79d69404ace7f795523d0e63da0254510c1fb7c"
+      },
+      {
+        "path": "go/control-plane/internal/rules/api/handler.go",
+        "line": 178,
+        "kind": "request_header",
+        "line_sha256": "1ff5d9fad7a5781e5b9afcf2b3687fb13ef8d8b2b2bed9d87f4efb236c47b54b"
+      },
+      {
+        "path": "go/control-plane/internal/rules/rbac/checker.go",
+        "line": 526,
+        "kind": "request_header",
+        "line_sha256": "6860965ce4e4bb5fe8c5f8f05330367a3e8e2fa5a8c5d9e1654191cdd2784d34"
+      }
+    ],
+    "untrusted_fallback_count": 25,
+    "status": "PARTIAL"
+  },
+  "counts": {
+    "workloads": 11,
+    "dedicated_service_accounts": 11,
+    "workloads_with_token_automount_disabled": 10,
+    "approved_token_automount_exceptions": 1,
+    "hardened_or_approved_exception_containers": 9,
+    "containers": 11,
+    "secret_references": 65,
+    "literal_secret_findings": 0,
+    "unregistered_secret_references": 2,
+    "kafka_principals": 20,
+    "shared_sensitive_credentials": 5,
+    "tenant_untrusted_fallback_sites": 25,
+    "workloads_with_blocking_gaps": 11,
+    "gap_counts": {
+      "container_security_context_incomplete": 2,
+      "runtime_image_not_digest_pinned": 5,
+      "secret_provisioner_unregistered": 2,
+      "service_to_service_mtls_identity_missing": 7,
+      "shared_sensitive_credential": 8
+    }
+  },
+  "acceptance": {
+    "catalog_integrity_gate": "must_pass",
+    "security_compliance_gate": "partial_until_shared_credentials_tenant_fallbacks_and_workload_gaps_are_empty",
+    "negative_tests": [
+      "default_service_account",
+      "service_account_token_automount",
+      "privilege_escalation_or_capability_regression",
+      "literal_secret_value",
+      "shared_sensitive_credential",
+      "untrusted_tenant_authority",
+      "wildcard_or_shared_kafka_principal"
+    ]
+  },
+  "catalog_sha256": "5258450991772783cab3adee73c790eddb093d375ed52cf13d129fed5f2c3363"
+}

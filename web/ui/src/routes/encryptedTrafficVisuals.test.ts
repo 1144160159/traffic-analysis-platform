@@ -89,8 +89,9 @@ describe('encrypted traffic visual implementation', () => {
     expect(page).toContain('submitEncryptedTrafficEgressAction');
     expect(page).toContain('接口失败不会显示成功');
     expect(page).toContain('onNavigate(`/alerts?destination=${encodeURIComponent(target)}`)');
-    expect(page).toContain('anchor.download = `encrypted-egress-${Date.now()}.json`;');
-    expect(page).toContain('document.body.append(anchor);');
+    expect(page).toContain("onExport={() => openEvidenceAction('导出证据报告', currentEgressTarget)}");
+    expect(page).not.toContain('new Blob(');
+    expect(page).not.toContain('encrypted-egress-${Date.now()}.json');
     expect(page).toContain('function DomainCards({');
     expect(page).toContain('const cards = visuals?.egressDomainCards ?? [];');
     expect(page).not.toContain('buildDomainCards');

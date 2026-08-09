@@ -30,13 +30,19 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AssetServiceClient interface {
-	// RegisterOrUpdate creates or updates an asset.
+	// RegisterOrUpdate creates or updates an asset. Mutation metadata must carry
+	// authorization: Bearer <access JWT>, idempotency-key, x-expected-revision,
+	// x-reason and x-trace-id. The token must grant asset:discover and its tenant
+	// is authoritative over any tenant supplied in the payload.
 	UpsertAsset(ctx context.Context, in *UpsertAssetRequest, opts ...grpc.CallOption) (*UpsertAssetResponse, error)
 	// GetAsset retrieves an asset by ID or MAC.
 	GetAsset(ctx context.Context, in *GetAssetRequest, opts ...grpc.CallOption) (*GetAssetResponse, error)
 	// ListAssets returns assets for a tenant, with optional filters.
 	ListAssets(ctx context.Context, in *ListAssetsRequest, opts ...grpc.CallOption) (*ListAssetsResponse, error)
-	// RecordMacIpBinding records a MAC→IP binding observed from traffic.
+	// RecordMacIpBinding records a MAC→IP binding observed from traffic. Direct
+	// gRPC delivery requires the same Bearer access JWT/asset:discover tenant
+	// gate plus observed_at; Kafka delivery instead uses the canonical
+	// topic/partition/offset/item identity before committing offset.
 	RecordMacIpBinding(ctx context.Context, in *RecordMacIpBindingRequest, opts ...grpc.CallOption) (*RecordMacIpBindingResponse, error)
 	// GetAssetHistory returns the change event history for an asset.
 	GetAssetHistory(ctx context.Context, in *GetAssetHistoryRequest, opts ...grpc.CallOption) (*GetAssetHistoryResponse, error)
@@ -99,13 +105,19 @@ func (c *assetServiceClient) GetAssetHistory(ctx context.Context, in *GetAssetHi
 // All implementations should embed UnimplementedAssetServiceServer
 // for forward compatibility
 type AssetServiceServer interface {
-	// RegisterOrUpdate creates or updates an asset.
+	// RegisterOrUpdate creates or updates an asset. Mutation metadata must carry
+	// authorization: Bearer <access JWT>, idempotency-key, x-expected-revision,
+	// x-reason and x-trace-id. The token must grant asset:discover and its tenant
+	// is authoritative over any tenant supplied in the payload.
 	UpsertAsset(context.Context, *UpsertAssetRequest) (*UpsertAssetResponse, error)
 	// GetAsset retrieves an asset by ID or MAC.
 	GetAsset(context.Context, *GetAssetRequest) (*GetAssetResponse, error)
 	// ListAssets returns assets for a tenant, with optional filters.
 	ListAssets(context.Context, *ListAssetsRequest) (*ListAssetsResponse, error)
-	// RecordMacIpBinding records a MAC→IP binding observed from traffic.
+	// RecordMacIpBinding records a MAC→IP binding observed from traffic. Direct
+	// gRPC delivery requires the same Bearer access JWT/asset:discover tenant
+	// gate plus observed_at; Kafka delivery instead uses the canonical
+	// topic/partition/offset/item identity before committing offset.
 	RecordMacIpBinding(context.Context, *RecordMacIpBindingRequest) (*RecordMacIpBindingResponse, error)
 	// GetAssetHistory returns the change event history for an asset.
 	GetAssetHistory(context.Context, *GetAssetHistoryRequest) (*GetAssetHistoryResponse, error)

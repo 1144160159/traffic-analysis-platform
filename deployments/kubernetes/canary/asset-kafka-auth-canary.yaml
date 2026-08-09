@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: asset-kafka-auth-canary
+  namespace: traffic-analysis
+  labels:
+    traffic.io/remediation-id: F-ASSET-002
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kafka-auth-check
+        image: docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a
+        command: ["bash", "-c"]
+        args:
+        - |
+          set -euo pipefail
+          client_config() {
+            printf '%s\n' \
+              'security.protocol=SASL_SSL' \
+              'sasl.mechanism=SCRAM-SHA-512' \
+              "sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username=\"${KAFKA_SASL_USERNAME}\" password=\"${KAFKA_SASL_PASSWORD}\";" \
+              'ssl.truststore.location=/etc/kafka/tls/kafka.truststore.p12' \
+              'ssl.truststore.type=PKCS12' \
+              "ssl.truststore.password=${KAFKA_TLS_TRUSTSTORE_PASSWORD}"
+          }
+          verify_topic_metadata() {
+            local topic="$1" expected="$2" output partitions
+            output="$(/opt/kafka/bin/kafka-get-offsets.sh \
+              --bootstrap-server kafka-bootstrap.middleware.svc:9092 \
+              --command-config <(client_config) --topic "$topic")"
+            partitions="$(printf '%s\n' "$output" | grep -c "^${topic}:")"
+            test "$partitions" -eq "$expected"
+            printf 'topic=%s partitions=%s auth=pass\n' "$topic" "$expected"
+            printf '%s\n' "$output"
+          }
+          verify_topic_metadata asset.bindings.v1 4
+          verify_topic_metadata asset.events.v2 6
+          verify_topic_metadata asset.discovery.events.v1 3
+        env:
+        - name: KAFKA_SASL_USERNAME
+          valueFrom: {secretKeyRef: {name: kafka-asset-service-credentials, key: username}}
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom: {secretKeyRef: {name: kafka-asset-service-credentials, key: password}}
+        - name: KAFKA_TLS_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls, optional: false}

@@ -85,7 +85,10 @@ pub mod asset_service_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
-        /** RegisterOrUpdate creates or updates an asset.
+        /** RegisterOrUpdate creates or updates an asset. Mutation metadata must carry
+ authorization: Bearer <access JWT>, idempotency-key, x-expected-revision,
+ x-reason and x-trace-id. The token must grant asset:discover and its tenant
+ is authoritative over any tenant supplied in the payload.
 */
         pub async fn upsert_asset(
             &mut self,
@@ -227,7 +230,10 @@ pub mod asset_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with AssetServiceServer.
     #[async_trait]
     pub trait AssetService: Send + Sync + 'static {
-        /** RegisterOrUpdate creates or updates an asset.
+        /** RegisterOrUpdate creates or updates an asset. Mutation metadata must carry
+ authorization: Bearer <access JWT>, idempotency-key, x-expected-revision,
+ x-reason and x-trace-id. The token must grant asset:discover and its tenant
+ is authoritative over any tenant supplied in the payload.
 */
         async fn upsert_asset(
             &self,

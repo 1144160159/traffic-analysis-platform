@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -200,27 +201,13 @@ func (p *Producer) SendBatch(ctx context.Context, messages []Message) error {
 	var totalBytes int64
 
 	for _, msg := range messages {
-		headers := make([]kafka.Header, 0, len(msg.Headers))
-
-		existingKeys := make(map[string]bool)
-		for _, h := range msg.Headers {
-			headers = append(headers, kafka.Header{
-				Key:   h.Key,
-				Value: []byte(h.Value),
-			})
-			existingKeys[h.Key] = true
-		}
-
-		traceID := otel.GetTraceID(ctx)
-		if traceID != "" && !existingKeys["trace_id"] {
-			headers = append(headers, kafka.Header{
-				Key:   "trace_id",
-				Value: []byte(traceID),
-			})
+		headers, err := buildKafkaHeaders(ctx, msg.Headers)
+		if err != nil {
+			return err
 		}
 
 		lc := logging.LogContextFromContext(ctx)
-		if lc.TenantID != "" && !existingKeys["tenant_id"] {
+		if lc.TenantID != "" && !hasKafkaHeader(headers, "tenant_id") {
 			headers = append(headers, kafka.Header{
 				Key:   "tenant_id",
 				Value: []byte(lc.TenantID),
@@ -274,6 +261,45 @@ func (p *Producer) SendBatch(ctx context.Context, messages []Message) error {
 	return nil
 }
 
+func buildKafkaHeaders(ctx context.Context, declared []MessageHeader) ([]kafka.Header, error) {
+	headers := make([]kafka.Header, 0, len(declared)+3)
+	existing := make(map[string]string, len(declared))
+	for _, item := range declared {
+		key := strings.ToLower(strings.TrimSpace(item.Key))
+		if key == "" {
+			continue
+		}
+		headers = append(headers, kafka.Header{Key: key, Value: []byte(item.Value)})
+		existing[key] = item.Value
+	}
+
+	traceID := otel.GetTraceID(ctx)
+	if traceID != "" {
+		if declaredTrace := strings.TrimSpace(existing["trace_id"]); declaredTrace != "" && declaredTrace != traceID {
+			return nil, fmt.Errorf("declared trace_id conflicts with W3C context")
+		}
+		if existing["trace_id"] == "" {
+			headers = append(headers, kafka.Header{Key: "trace_id", Value: []byte(traceID)})
+		}
+		carrier := otel.InjectToMap(ctx)
+		for _, key := range []string{"traceparent", "tracestate"} {
+			if value := strings.TrimSpace(carrier[key]); value != "" && existing[key] == "" {
+				headers = append(headers, kafka.Header{Key: key, Value: []byte(value)})
+			}
+		}
+	}
+	return headers, nil
+}
+
+func hasKafkaHeader(headers []kafka.Header, key string) bool {
+	for _, header := range headers {
+		if strings.EqualFold(header.Key, key) {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Producer) GetMetrics() ProducerMetricsSnapshot {
 	return ProducerMetricsSnapshot{
 		MessagesSent:  atomic.LoadInt64(&p.metrics.MessagesSent),
@@ -297,6 +323,9 @@ type ProducerMetricsSnapshot struct {
 }
 
 func (p *Producer) Topic() string {
+	if p == nil {
+		return ""
+	}
 	return p.config.Topic
 }
 

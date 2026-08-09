@@ -6,6 +6,15 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Migration fragments loaded by other entrypoints may register versions before
+-- the historical definition near the end of this file is reached.
+CREATE TABLE IF NOT EXISTS alignment_schema_migrations (
+  version TEXT PRIMARY KEY,
+  description TEXT NOT NULL,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  applied_by TEXT NOT NULL DEFAULT current_user
+);
+
 -- 租户
 CREATE TABLE IF NOT EXISTS tenants (
   tenant_id      TEXT PRIMARY KEY,
@@ -47,6 +56,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS external_id TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
 ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE users ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 1 CHECK(revision>0);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_tenant_username ON users (tenant_id, username);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_external_id ON users (external_id) WHERE external_id IS NOT NULL;
 
@@ -86,15 +96,100 @@ CREATE TABLE IF NOT EXISTS user_settings (
   user_id    UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   category   TEXT NOT NULL,
   settings   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  revision   BIGINT NOT NULL DEFAULT 1,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (tenant_id, user_id, category)
 );
 
 ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 1;
 ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
 ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
 CREATE INDEX IF NOT EXISTS idx_user_settings_user ON user_settings (tenant_id, user_id);
+
+CREATE TABLE IF NOT EXISTS user_settings_history (
+  event_id UUID PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  user_id UUID NOT NULL,
+  category TEXT NOT NULL,
+  revision BIGINT NOT NULL,
+  action_id TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  snapshot JSONB NOT NULL,
+  changed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, user_id, category, revision)
+);
+
+CREATE TABLE IF NOT EXISTS user_settings_outbox (
+  outbox_id BIGSERIAL PRIMARY KEY,
+  event_id UUID NOT NULL UNIQUE,
+  tenant_id TEXT NOT NULL,
+  user_id UUID NOT NULL,
+  category TEXT NOT NULL,
+  aggregate_version BIGINT NOT NULL,
+  event_type TEXT NOT NULL,
+  schema_version INTEGER NOT NULL DEFAULT 1,
+  partition_key TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','published','dead')),
+  publish_attempts INTEGER NOT NULL DEFAULT 0,
+  next_retry_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  locked_until TIMESTAMPTZ,
+  locked_by TEXT NOT NULL DEFAULT '',
+  last_error TEXT NOT NULL DEFAULT '',
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  published_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_user_settings_outbox_ready ON user_settings_outbox(next_retry_at,occurred_at,outbox_id) WHERE status='pending';
+CREATE INDEX IF NOT EXISTS idx_user_settings_outbox_reclaim ON user_settings_outbox(locked_until,outbox_id) WHERE status='processing';
+
+CREATE TABLE IF NOT EXISTS user_settings_requests (
+  tenant_id TEXT NOT NULL,
+  user_id UUID NOT NULL,
+  category TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL,
+  payload_sha256 TEXT NOT NULL,
+  action_id TEXT NOT NULL,
+  resulting_revision BIGINT NOT NULL,
+  event_id UUID NOT NULL REFERENCES user_settings_outbox(event_id) ON DELETE RESTRICT,
+  response_payload JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id,user_id,category,idempotency_key)
+);
+
+CREATE TABLE IF NOT EXISTS user_command_history (
+  history_id BIGSERIAL PRIMARY KEY, tenant_id TEXT NOT NULL, user_id UUID NOT NULL,
+  revision BIGINT NOT NULL CHECK(revision>0), action_id TEXT NOT NULL, actor_id UUID,
+  reason TEXT NOT NULL, trace_id TEXT NOT NULL, old_value JSONB NOT NULL DEFAULT '{}'::jsonb,
+  new_value JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(tenant_id,user_id,revision,action_id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_command_history_lookup ON user_command_history(tenant_id,user_id,revision DESC);
+CREATE TABLE IF NOT EXISTS user_command_outbox (
+  outbox_id BIGSERIAL PRIMARY KEY, event_id UUID NOT NULL UNIQUE, tenant_id TEXT NOT NULL,
+  user_id UUID NOT NULL, aggregate_version BIGINT NOT NULL CHECK(aggregate_version>0),
+  event_type TEXT NOT NULL, schema_version INTEGER NOT NULL DEFAULT 1 CHECK(schema_version=1),
+  partition_key TEXT NOT NULL, payload JSONB NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','processing','published','dead')),
+  publish_attempts INTEGER NOT NULL DEFAULT 0 CHECK(publish_attempts>=0),
+  next_retry_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ,
+  locked_by TEXT NOT NULL DEFAULT '', last_error TEXT NOT NULL DEFAULT '',
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ,
+  UNIQUE(tenant_id,user_id,aggregate_version,event_type)
+);
+CREATE INDEX IF NOT EXISTS idx_user_command_outbox_ready ON user_command_outbox(next_retry_at,occurred_at,outbox_id) WHERE status IN ('pending','processing');
+CREATE TABLE IF NOT EXISTS user_command_requests (
+  request_id UUID PRIMARY KEY, tenant_id TEXT NOT NULL, user_id UUID NOT NULL,
+  idempotency_key TEXT NOT NULL CHECK(length(idempotency_key) BETWEEN 16 AND 200),
+  request_hash TEXT NOT NULL CHECK(length(request_hash)=64), action_id TEXT NOT NULL,
+  expected_revision BIGINT NOT NULL CHECK(expected_revision>=0), resulting_revision BIGINT NOT NULL CHECK(resulting_revision>0),
+  response_payload JSONB NOT NULL, event_id UUID NOT NULL REFERENCES user_command_outbox(event_id) ON DELETE RESTRICT,
+  actor_id UUID, reason TEXT NOT NULL, trace_id TEXT NOT NULL,
+  compatibility_mode BOOLEAN NOT NULL DEFAULT false, created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(tenant_id,idempotency_key)
+);
+CREATE INDEX IF NOT EXISTS idx_user_command_requests_user ON user_command_requests(tenant_id,user_id,created_at DESC);
 
 -- 租户级系统设置。与 user_settings 的个人偏好分离，revision 用于防止并发覆盖。
 CREATE TABLE IF NOT EXISTS tenant_system_settings (
@@ -190,21 +285,37 @@ CREATE TABLE IF NOT EXISTS probes (
   tenant_id        TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
   name             TEXT NOT NULL,
   status           TEXT NOT NULL DEFAULT 'active',
+  location         TEXT,
+  metadata         JSONB NOT NULL DEFAULT '{}'::jsonb,
   hardware_info    JSONB,
   software_version TEXT,
   last_heartbeat   TIMESTAMPTZ,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, name)
 );
 
 ALTER TABLE probes ADD COLUMN IF NOT EXISTS tenant_id TEXT;
 ALTER TABLE probes ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';
 ALTER TABLE probes ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+ALTER TABLE probes ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE probes ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE probes ADD COLUMN IF NOT EXISTS hardware_info JSONB;
 ALTER TABLE probes ADD COLUMN IF NOT EXISTS software_version TEXT;
 ALTER TABLE probes ADD COLUMN IF NOT EXISTS last_heartbeat TIMESTAMPTZ;
 ALTER TABLE probes ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
 ALTER TABLE probes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS idx_probes_tenant ON probes(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_probes_status ON probes(status);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid='probes'::regclass AND conname='probes_tenant_id_name_key'
+  ) THEN
+    ALTER TABLE probes ADD CONSTRAINT probes_tenant_id_name_key UNIQUE (tenant_id,name);
+  END IF;
+END $$;
 
 -- 探针运维操作流水
 CREATE TABLE IF NOT EXISTS probe_operations (
@@ -220,6 +331,71 @@ CREATE TABLE IF NOT EXISTS probe_operations (
 );
 CREATE INDEX IF NOT EXISTS idx_probe_operations_tenant_probe_time ON probe_operations (tenant_id, probe_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_probe_operations_tenant_type_time ON probe_operations (tenant_id, operation_type, created_at DESC);
+
+ALTER TABLE probes ADD COLUMN IF NOT EXISTS hardware_info JSONB;
+ALTER TABLE probes ADD COLUMN IF NOT EXISTS software_version TEXT;
+ALTER TABLE probes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS command_revision BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS state_revision BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS desired_version TEXT NOT NULL DEFAULT '';
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS command_hash TEXT NOT NULL DEFAULT '';
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS reported_version TEXT NOT NULL DEFAULT '';
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS reported_hash TEXT NOT NULL DEFAULT '';
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS agent_version TEXT NOT NULL DEFAULT '';
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS ack_error TEXT NOT NULL DEFAULT '';
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS trace_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NOT NULL DEFAULT (now()+interval '10 minutes');
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS acknowledged_at TIMESTAMPTZ;
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
+ALTER TABLE probe_operations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+UPDATE probe_operations SET expires_at=created_at+interval '10 minutes' WHERE command_revision=0;
+WITH ranked AS (
+  SELECT operation_id,row_number() OVER (
+    PARTITION BY tenant_id,probe_id ORDER BY created_at,operation_id
+  ) AS revision
+  FROM probe_operations WHERE command_revision=0
+)
+UPDATE probe_operations p SET command_revision=ranked.revision
+FROM ranked WHERE p.operation_id=ranked.operation_id;
+UPDATE probe_operations
+SET status=CASE WHEN expires_at<=now() THEN 'expired' ELSE 'accepted' END
+WHERE status='queued';
+UPDATE probe_operations
+SET desired_version=COALESCE(
+  NULLIF(request->>'config_version',''),NULLIF(request->>'target_version',''),
+  NULLIF(request->>'desired_state',''),NULLIF(request->>'rotation_window',''),''
+) WHERE desired_version='';
+UPDATE probe_operations SET command_hash='legacy-unavailable' WHERE command_hash='';
+CREATE UNIQUE INDEX IF NOT EXISTS uq_probe_operations_tenant_idempotency ON probe_operations (tenant_id,idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_probe_operations_command_revision ON probe_operations (tenant_id,probe_id,command_revision);
+CREATE INDEX IF NOT EXISTS idx_probe_operations_status_expiry ON probe_operations (status,expires_at) WHERE status IN ('accepted','delivered');
+CREATE TABLE IF NOT EXISTS probe_operation_history (
+  history_id BIGSERIAL PRIMARY KEY, operation_id UUID NOT NULL REFERENCES probe_operations(operation_id) ON DELETE RESTRICT,
+  tenant_id TEXT NOT NULL, state_revision BIGINT NOT NULL CHECK (state_revision > 0),
+  from_status TEXT NOT NULL, to_status TEXT NOT NULL, detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (operation_id,state_revision)
+);
+CREATE INDEX IF NOT EXISTS idx_probe_operation_history_tenant_operation ON probe_operation_history (tenant_id,operation_id,state_revision);
+CREATE TABLE IF NOT EXISTS probe_operation_ack_receipts (
+  ack_id UUID PRIMARY KEY, operation_id UUID NOT NULL REFERENCES probe_operations(operation_id) ON DELETE RESTRICT,
+  tenant_id TEXT NOT NULL, probe_id TEXT NOT NULL, command_revision BIGINT NOT NULL CHECK (command_revision > 0),
+  reported_version TEXT NOT NULL DEFAULT '', reported_hash TEXT NOT NULL, agent_version TEXT NOT NULL,
+  applied BOOLEAN NOT NULL, error TEXT NOT NULL DEFAULT '', acknowledged_at TIMESTAMPTZ NOT NULL,
+  accepted BOOLEAN NOT NULL, rejection_reason TEXT NOT NULL DEFAULT '', payload JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (operation_id)
+);
+CREATE INDEX IF NOT EXISTS idx_probe_operation_ack_tenant_probe ON probe_operation_ack_receipts (tenant_id,probe_id,command_revision DESC);
+CREATE TABLE IF NOT EXISTS probe_operation_outbox (
+  event_id UUID PRIMARY KEY, operation_id UUID NOT NULL REFERENCES probe_operations(operation_id) ON DELETE RESTRICT,
+  tenant_id TEXT NOT NULL, event_type TEXT NOT NULL, aggregate_version BIGINT NOT NULL CHECK (aggregate_version > 0),
+  schema_version INTEGER NOT NULL DEFAULT 2 CHECK (schema_version > 0), partition_key TEXT NOT NULL,
+  payload JSONB NOT NULL, published BOOLEAN NOT NULL DEFAULT false, attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  last_error TEXT NOT NULL DEFAULT '', next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ,
+  locked_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ,
+  UNIQUE (operation_id,event_type)
+);
+CREATE INDEX IF NOT EXISTS idx_probe_operation_outbox_pending ON probe_operation_outbox (next_attempt_at,created_at) WHERE published=false;
 
 -- 页面业务状态: 行为基线重置点
 CREATE TABLE IF NOT EXISTS behavior_baseline_resets (
@@ -452,6 +628,53 @@ CREATE TRIGGER compliance_finalizations_immutable
 BEFORE UPDATE OR DELETE ON compliance_finalizations
 FOR EACH ROW EXECUTE FUNCTION prevent_compliance_finalization_mutation();
 
+-- Authenticated probe registration commands are revisioned and replayable.
+-- Heartbeat liveness remains a bounded projection and is not audited per tick.
+ALTER TABLE probes ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE probes DROP CONSTRAINT IF EXISTS probes_revision_nonnegative;
+ALTER TABLE probes ADD CONSTRAINT probes_revision_nonnegative CHECK (revision >= 0);
+CREATE TABLE IF NOT EXISTS probe_registry_history (
+  history_id BIGSERIAL PRIMARY KEY, event_id UUID NOT NULL UNIQUE,
+  tenant_id TEXT NOT NULL, probe_id TEXT NOT NULL REFERENCES probes(probe_id) ON DELETE RESTRICT,
+  revision BIGINT NOT NULL CHECK (revision > 0), event_type TEXT NOT NULL,
+  request_sha256 TEXT NOT NULL CHECK (length(request_sha256) = 64),
+  detail JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id,probe_id,revision)
+);
+CREATE INDEX IF NOT EXISTS idx_probe_registry_history_tenant_probe
+  ON probe_registry_history (tenant_id,probe_id,revision);
+CREATE TABLE IF NOT EXISTS probe_registry_requests (
+  tenant_id TEXT NOT NULL, idempotency_key TEXT NOT NULL,
+  request_sha256 TEXT NOT NULL CHECK (length(request_sha256) = 64),
+  probe_id TEXT NOT NULL REFERENCES probes(probe_id) ON DELETE RESTRICT,
+  event_id UUID NOT NULL UNIQUE, resource_revision BIGINT NOT NULL CHECK (resource_revision > 0),
+  result JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id,idempotency_key)
+);
+CREATE TABLE IF NOT EXISTS probe_registry_outbox (
+  event_id UUID PRIMARY KEY, tenant_id TEXT NOT NULL,
+  probe_id TEXT NOT NULL REFERENCES probes(probe_id) ON DELETE RESTRICT,
+  event_type TEXT NOT NULL, aggregate_version BIGINT NOT NULL CHECK (aggregate_version > 0),
+  schema_version INTEGER NOT NULL DEFAULT 1 CHECK (schema_version > 0), partition_key TEXT NOT NULL,
+  payload JSONB NOT NULL, status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending','processing','published','dead')),
+  publish_attempts INTEGER NOT NULL DEFAULT 0 CHECK (publish_attempts >= 0),
+  next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ,
+  locked_by TEXT NOT NULL DEFAULT '', last_error TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_probe_registry_outbox_ready
+  ON probe_registry_outbox (next_attempt_at,created_at) WHERE status='pending';
+CREATE TABLE IF NOT EXISTS alignment_schema_migrations (
+  version TEXT PRIMARY KEY,
+  description TEXT NOT NULL,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  applied_by TEXT NOT NULL DEFAULT current_user
+);
+INSERT INTO alignment_schema_migrations(version,description)
+VALUES ('202608031540','authenticated probe registration revision history audit outbox and idempotency')
+ON CONFLICT (version) DO NOTHING;
+
 -- 默认数据
 INSERT INTO tenants (tenant_id, tenant_name, name)
 VALUES ('default', '默认租户', '默认租户')
@@ -460,4 +683,34 @@ SET
   tenant_name = COALESCE(NULLIF(tenants.tenant_name, ''), EXCLUDED.tenant_name),
   name = COALESCE(NULLIF(tenants.name, ''), EXCLUDED.name);
 
+COMMIT;
+
+-- T-OS-004 is an additive migration owned by deployments/postgres/migrations/202608041100_alert_opensearch_projection_reconciliation_v1.sql.
+-- Runtime startup never creates these tables; this bootstrap mirror is for clean-room environments only.
+BEGIN;
+CREATE TABLE IF NOT EXISTS alert_opensearch_projection_debts (
+  tenant_id TEXT NOT NULL, alert_id TEXT NOT NULL, source_event_id TEXT NOT NULL DEFAULT '',
+  source_version BIGINT NOT NULL CHECK (source_version>0), source_sha256 TEXT NOT NULL CHECK (length(source_sha256)=64),
+  target_index_version TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','resolved','dead')),
+  attempt_count INTEGER NOT NULL DEFAULT 0, available_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ,
+  locked_by TEXT NOT NULL DEFAULT '', last_error TEXT NOT NULL DEFAULT '', first_failed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_failed_at TIMESTAMPTZ NOT NULL DEFAULT now(), resolved_at TIMESTAMPTZ, updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id,alert_id,target_index_version)
+);
+CREATE INDEX IF NOT EXISTS idx_alert_os_projection_debts_ready ON alert_opensearch_projection_debts(available_at,first_failed_at,tenant_id,alert_id) WHERE status='pending';
+CREATE TABLE IF NOT EXISTS alert_opensearch_projection_watermarks (
+  tenant_id TEXT NOT NULL, alert_id TEXT NOT NULL, source_event_id TEXT NOT NULL DEFAULT '', source_version BIGINT NOT NULL,
+  source_sha256 TEXT NOT NULL CHECK (length(source_sha256)=64), target_index_version TEXT NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id,alert_id,target_index_version)
+);
+CREATE TABLE IF NOT EXISTS alert_opensearch_reconcile_runs (
+  run_id UUID PRIMARY KEY, tenant_id TEXT NOT NULL, requested_by TEXT NOT NULL, trace_id TEXT NOT NULL,
+  mode TEXT NOT NULL CHECK (mode IN ('plan','repair')), target_index_version TEXT NOT NULL, start_time TIMESTAMPTZ, end_time TIMESTAMPTZ,
+  business_ids JSONB NOT NULL DEFAULT '[]'::jsonb, max_documents INTEGER NOT NULL, stop_error_count INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'running', source_count BIGINT NOT NULL DEFAULT 0, target_count BIGINT NOT NULL DEFAULT 0,
+  missing_count BIGINT NOT NULL DEFAULT 0, extra_count BIGINT NOT NULL DEFAULT 0, stale_count BIGINT NOT NULL DEFAULT 0,
+  repaired_count BIGINT NOT NULL DEFAULT 0, error_count BIGINT NOT NULL DEFAULT 0, result_manifest JSONB NOT NULL DEFAULT '{}'::jsonb,
+  stop_reason TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ
+);
+INSERT INTO alignment_schema_migrations(version,description) VALUES ('202608041100','durable alert OpenSearch projection debt watermarks and bounded reconcile runs') ON CONFLICT (version) DO NOTHING;
 COMMIT;

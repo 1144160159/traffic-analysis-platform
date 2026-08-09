@@ -11,7 +11,7 @@ public interface UserEventBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.UserEvent events = 1 [json_name = "events"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.UserEvent> 
+  java.util.List<com.traffic.proto.traffic.v1.UserEvent>
       getEventsList();
   /**
    * <code>repeated .traffic.v1.UserEvent events = 1 [json_name = "events"];</code>
@@ -24,7 +24,7 @@ public interface UserEventBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.UserEvent events = 1 [json_name = "events"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.UserEventOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.UserEventOrBuilder>
       getEventsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.UserEvent events = 1 [json_name = "events"];</code>

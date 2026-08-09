@@ -1,0 +1,65 @@
+# Expand-stage template. Render AUDIT_MATERIALIZER_IMAGE to an immutable
+# repository@sha256 reference before applying in an approved G2 window.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-materializer
+  namespace: traffic-analysis
+  labels: {app: audit-materializer}
+  annotations:
+    traffic.analysis/rollout-phase: expand
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: audit-materializer}}
+  template:
+    metadata:
+      labels: {app: audit-materializer}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8090"
+    spec:
+      containers:
+      - name: audit-materializer
+        image: "${AUDIT_MATERIALIZER_IMAGE}"
+        imagePullPolicy: IfNotPresent
+        ports: [{name: health, containerPort: 8090}]
+        env:
+        - {name: HTTP_LISTEN_ADDR, value: ":8090"}
+        - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: POSTGRES_PORT, value: "5432"}
+        - {name: POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: POSTGRES_USERNAME, value: "postgres"}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: POSTGRES_SSL_MODE, value: "disable"}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-audit-materializer-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-audit-materializer-credentials, key: password}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: AUDIT_TOPIC, value: "audit.logs"}
+        - {name: AUDIT_DLQ_TOPIC, value: "dlq.v1"}
+        - {name: AUDIT_CONSUMER_GROUP, value: "audit-consumer"}
+        - {name: LOG_LEVEL, value: "info"}
+        livenessProbe:
+          httpGet: {path: /health, port: health}
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet: {path: /readyz, port: health}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: 500m, memory: 512Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities: {drop: ["ALL"]}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}

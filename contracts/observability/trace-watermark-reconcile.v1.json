@@ -1,0 +1,51 @@
+{
+  "contract_version": "1.0.0",
+  "remediation_id": "T-OBS-001",
+  "work_package": "WP-03-OBS-DQ",
+  "status": "implementing",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "trace_contract": {
+    "format": "w3c_trace_id_lowercase_32_hex",
+    "http_precedence": ["valid_traceparent", "valid_x_trace_id", "cryptographic_new_trace_id"],
+    "invalid_inbound_behavior": "regenerate_and_never_trust_as_correlation_identity",
+    "conflicting_kafka_trace_behavior": "reject_before_publish",
+    "exporter_disabled_behavior": "continue_propagation",
+    "required_stages": ["http", "postgresql", "outbox", "kafka", "flink", "clickhouse", "opensearch", "nebulagraph", "minio_manifest", "audit"],
+    "implemented_candidate_stages": ["http", "kafka_header", "kafka_consumer_context", "alert_proto", "flink_alert_generation", "alert_clickhouse", "alert_opensearch"],
+    "remaining_stages": ["generic_postgresql_outbox", "flink_metrics_and_non_alert_rows", "nebulagraph_edges", "generic_minio_manifests", "all_page_snapshots"]
+  },
+  "page_snapshot_meta": {
+    "required": ["contract_version", "snapshot_id", "as_of", "trace_id", "partial", "missing_sections", "source_watermarks"],
+    "source_watermark_required": ["source", "position_kind", "position", "observed_at", "trace_id", "state"],
+    "no_data_state": "complete_empty",
+    "not_projected_state": "lagging_or_unavailable_and_partial",
+    "unknown_must_not_be_rendered_as_zero": true
+  },
+  "normalized_reconcile_record": {
+    "required": ["record_id", "version", "sha256", "trace_id"],
+    "sources": ["postgresql", "kafka", "clickhouse", "opensearch", "nebulagraph", "minio"],
+    "authority_is_explicit_per_run": true,
+    "classifications": ["missing", "extra", "stale_version", "hash_mismatch", "unparseable"],
+    "trace_mismatch_is_integrity_failure": true
+  },
+  "runtime_guards": {
+    "mode": "plan_only",
+    "tenant_id_required": true,
+    "wildcard_tenant_forbidden": true,
+    "data_domain_required": true,
+    "maximum_records": 10000,
+    "automatic_repair": false,
+    "automatic_delete_extra": false,
+    "extra_action": "quarantine_review",
+    "missing_or_stale_action": "bounded_reproject_from_authority_after_approval",
+    "unparseable_action": "stop_and_fix_source_contract",
+    "production_mutations_in_repository_candidate": []
+  },
+  "closure_blockers": [
+    "one release-candidate user action has not yet been proven through PG outbox Kafka Flink CH OS Nebula MinIO and audit under one trace_id",
+    "all critical page snapshots do not yet publish real per-projection watermarks",
+    "normalized live manifests for all six stores and approved bounded repair adapters are absent",
+    "fixed-scale performance fault injection Windows Chrome canary rollback and T+0 T+1 T+3 T+7 observation are incomplete"
+  ]
+}

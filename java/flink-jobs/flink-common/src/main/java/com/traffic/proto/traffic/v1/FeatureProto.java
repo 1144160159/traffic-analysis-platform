@@ -17,22 +17,22 @@ public final class FeatureProto {
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_FeatureStat_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_FeatureStat_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_FeatureSeq_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_FeatureSeq_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_FeatureFingerprint_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_FeatureFingerprint_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_FeatureBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_FeatureBatch_fieldAccessorTable;
 
@@ -45,7 +45,7 @@ public final class FeatureProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\030traffic/v1/feature.proto\022\ntraffic.v1\032\027" +
-      "traffic/v1/common.proto\"\361\005\n\013FeatureStat\022" +
+      "traffic/v1/common.proto\"\301\006\n\013FeatureStat\022" +
       "/\n\006header\030\001 \001(\0132\027.traffic.v1.EventHeader" +
       "R\006header\022%\n\016schema_version\030\002 \001(\tR\rschema" +
       "Version\022\037\n\013object_type\030\003 \001(\tR\nobjectType" +
@@ -64,7 +64,9 @@ public final class FeatureProto {
       "tcpFlagAckCnt\0222\n\026tcp_init_win_bytes_fwd\030" +
       "\024 \001(\rR\022tcpInitWinBytesFwd\0222\n\026tcp_init_wi" +
       "n_bytes_bwd\030\025 \001(\rR\022tcpInitWinBytesBwd\022\024\n" +
-      "\005extra\030\026 \003(\002R\005extra\"\355\005\n\nFeatureSeq\022/\n\006he" +
+      "\005extra\030\026 \003(\002R\005extra\022+\n\005tuple\030\027 \001(\0132\025.tra" +
+      "ffic.v1.FiveTupleR\005tuple\022!\n\014evidence_ids" +
+      "\030\030 \003(\tR\013evidenceIds\"\355\005\n\nFeatureSeq\022/\n\006he" +
       "ader\030\001 \001(\0132\027.traffic.v1.EventHeaderR\006hea" +
       "der\022\037\n\013object_type\030\002 \001(\tR\nobjectType\022\033\n\t" +
       "object_id\030\003 \001(\tR\010objectId\022!\n\014community_i" +
@@ -121,7 +123,7 @@ public final class FeatureProto {
     internal_static_traffic_v1_FeatureStat_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_FeatureStat_descriptor,
-        new java.lang.String[] { "Header", "SchemaVersion", "ObjectType", "ObjectId", "CommunityId", "Ts", "Protocol", "DurationMs", "Pps", "Bps", "UpDownRatio", "PktlenMean", "PktlenStd", "IatMeanMs", "IatStdMs", "ActiveMeanMs", "IdleMeanMs", "TcpFlagSynCnt", "TcpFlagAckCnt", "TcpInitWinBytesFwd", "TcpInitWinBytesBwd", "Extra", });
+        new java.lang.String[] { "Header", "SchemaVersion", "ObjectType", "ObjectId", "CommunityId", "Ts", "Protocol", "DurationMs", "Pps", "Bps", "UpDownRatio", "PktlenMean", "PktlenStd", "IatMeanMs", "IatStdMs", "ActiveMeanMs", "IdleMeanMs", "TcpFlagSynCnt", "TcpFlagAckCnt", "TcpInitWinBytesFwd", "TcpInitWinBytesBwd", "Extra", "Tuple", "EvidenceIds", });
     internal_static_traffic_v1_FeatureSeq_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_traffic_v1_FeatureSeq_fieldAccessorTable = new

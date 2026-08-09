@@ -62,7 +62,20 @@ export type PlaybookExecutionRecord = {
   requested_by: string;
   rolled_back_at?: string;
   created_at: string;
+  playbook_version?: number;
+  workflow_revision?: number;
+  approval_status?: 'not_required' | 'pending' | 'approved' | 'rejected' | 'cancelled';
+  executor_status?: string;
+  execution_receipt?: Record<string, unknown>;
+  compensation_receipt?: Record<string, unknown>;
+  error_message?: string;
+  approved_by?: string;
+  updated_at?: string;
+  completed_at?: string;
+  trace_id?: string;
 };
+
+export type PlaybookExecutionOperation = 'approve' | 'reject' | 'cancel' | 'compensate';
 
 export type PlaybookAuditRecord = {
   event_id: string;
@@ -141,6 +154,54 @@ export async function drillPlaybook(name: string, expectedVersion: number): Prom
   return execution;
 }
 
+export async function requestPlaybookExecution(
+  name: string,
+  expectedVersion: number,
+  reason: string,
+  alertContext: Record<string, unknown>,
+): Promise<PlaybookExecutionRecord> {
+  if (!Number.isSafeInteger(expectedVersion) || expectedVersion <= 0 || reason.trim().length < 8) {
+    throw new Error('实行动作需要当前正整数版本和至少 8 个字符的原因');
+  }
+  const body = { expected_version: expectedVersion, reason: reason.trim(), alert_context: alertContext };
+  const response = await api.request<Envelope<PlaybookExecutionRecord>>({
+    url: `/v1/playbooks/${encodeURIComponent(name)}/execute`,
+    method: 'POST',
+    data: body,
+    headers: { 'Idempotency-Key': playbookExecutionIdempotencyKey(name, 'request', expectedVersion, body) },
+  });
+  return validatePlaybookExecution(response.data.data);
+}
+
+export async function getPlaybookExecution(executionId: string): Promise<PlaybookExecutionRecord> {
+  const response = await api.get<Envelope<PlaybookExecutionRecord>>(`/v1/playbooks/executions/${encodeURIComponent(executionId)}`);
+  return validatePlaybookExecution(response.data.data, executionId);
+}
+
+export async function applyPlaybookExecutionOperation(
+  executionId: string,
+  operation: PlaybookExecutionOperation,
+  expectedRevision: number,
+  reason: string,
+): Promise<PlaybookExecutionRecord> {
+  if (!Number.isSafeInteger(expectedRevision) || expectedRevision <= 0 || reason.trim().length < 8) {
+    throw new Error('执行控制需要当前正整数 revision 和至少 8 个字符的原因');
+  }
+  const endpoint = operation === 'approve' || operation === 'reject'
+    ? `/v1/playbooks/executions/${encodeURIComponent(executionId)}/approval`
+    : `/v1/playbooks/executions/${encodeURIComponent(executionId)}/${operation}`;
+  const body = operation === 'approve' || operation === 'reject'
+    ? { decision: operation, expected_revision: expectedRevision, reason: reason.trim() }
+    : { expected_revision: expectedRevision, reason: reason.trim() };
+  const response = await api.request<Envelope<PlaybookExecutionRecord>>({
+    url: endpoint,
+    method: 'POST',
+    data: body,
+    headers: { 'Idempotency-Key': playbookExecutionIdempotencyKey(executionId, operation, expectedRevision, body) },
+  });
+  return validatePlaybookExecution(response.data.data, executionId);
+}
+
 export async function rollbackPlaybookDrill(executionId: string, reason: string): Promise<PlaybookExecutionRecord> {
   const response = await api.post<Envelope<PlaybookExecutionRecord>>(
     `/v1/playbooks/executions/${encodeURIComponent(executionId)}/rollback`,
@@ -172,3 +233,43 @@ export const newPlaybookDraft = (): PlaybookDefinition => ({
   approval_policy: { required: true, minimum_role: '安全运营组（L2）', two_person_rule: true },
   rollback_policy: { supported: true, automatic: false },
 });
+
+const validatePlaybookExecution = (execution: PlaybookExecutionRecord, expectedId?: string): PlaybookExecutionRecord => {
+  if (!execution?.execution_id || execution.mode !== 'live' || !execution.playbook_name ||
+      !Number.isSafeInteger(execution.playbook_version) || Number(execution.playbook_version) <= 0 ||
+      !Number.isSafeInteger(execution.workflow_revision) || Number(execution.workflow_revision) <= 0) {
+    throw new Error('服务端未返回可验证的实行动作工作流');
+  }
+  if (expectedId && execution.execution_id !== expectedId) throw new Error('执行状态响应与请求资源不一致');
+  if (['completed', 'partial', 'compensated'].includes(execution.status) &&
+      !Object.keys(execution.status === 'compensated' ? execution.compensation_receipt ?? {} : execution.execution_receipt ?? {}).length) {
+    throw new Error('实行动作终态缺少 provider 步骤回执');
+  }
+  return execution;
+};
+
+const playbookExecutionIdempotencyKey = (
+  identity: string,
+  operation: string,
+  revision: number,
+  body: Record<string, unknown>,
+) => {
+  const material = `${identity}:${operation}:${revision}:${stableJSONStringify(body)}`;
+  let hash = 2166136261;
+  for (let index = 0; index < material.length; index += 1) {
+    hash ^= material.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `playbook-v2:${operation}:${revision}:${(hash >>> 0).toString(16).padStart(8, '0')}`;
+};
+
+const stableJSONStringify = (value: unknown): string => {
+  if (Array.isArray(value)) return `[${value.map(stableJSONStringify).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableJSONStringify(item)}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+};

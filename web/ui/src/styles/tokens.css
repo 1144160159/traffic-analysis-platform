@@ -15,6 +15,14 @@
   --ui-warning: #ffb020;
   --ui-danger: #ff4d4f;
   --ui-critical: #ff2d2d;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-6: 24px;
+  --ui-space-8: 32px;
+  --ui-space-12: 48px;
+  --ui-radius-control: 4px;
   --shell-topbar: 80px;
   --shell-sidebar: 166px;
   --shell-bottombar: 83px;
