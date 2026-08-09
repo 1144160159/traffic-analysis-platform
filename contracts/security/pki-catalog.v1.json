@@ -22,7 +22,7 @@
     {
       "domain": "go_workload_bindings",
       "path": "deployments/kubernetes/applications/go-services.yaml",
-      "sha256": "0593bb75acbfc69d91133aafb931f5fae6c6b1adb18015576b91c60e511e2ff1"
+      "sha256": "15dc72cc0a3bb5d7730c49d9d6565b85a1fc329c50cb61a053eeb99716b99541"
     },
     {
       "domain": "ingest_production_guard",
@@ -362,5 +362,5 @@
       "performance fault Windows Chrome independent G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "3177b67513fcbb8cdb35175f0471afdc0650ce7c9363d2099bcadd2c82625a87"
+  "catalog_sha256": "a6c20b13d85a12cd71604b45298c6de1540beb83bf4b2cb177052232f2564325"
 }

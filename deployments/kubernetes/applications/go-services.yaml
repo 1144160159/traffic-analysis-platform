@@ -313,7 +313,12 @@ spec:
         - {name: ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED, value: "true"}
         - {name: KAFKA_RESPONSE_ACTION_TOPIC, value: "alert.response.requested.v1"}
         - {name: KAFKA_RESPONSE_ACTION_GROUP, value: "alert-service-response-execution-v1"}
-        - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "true"}
+        - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_EXECUTOR_URL, value: ""}
+        - {name: ALERT_RESPONSE_EXECUTOR_LOOKUP_URL, value: ""}
+        - {name: ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
+        - {name: ALERT_RESPONSE_EXECUTOR_TOKEN, valueFrom: {secretKeyRef: {name: traffic-credentials, key: ALERT_RESPONSE_EXECUTOR_TOKEN, optional: true}}}
         - {name: AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED, value: "false"}
         - {name: TOPIC_SNAPSHOT_V1_ENABLED, value: "true"}
         - {name: TOPIC_EXECUTOR_V2_ENABLED, value: "true"}

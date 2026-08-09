@@ -49,7 +49,7 @@
         "common/kafka/create-topics.sh",
         "deployments/kubernetes/init-jobs/01-kafka-topics.yaml"
       ],
-      "source_sha256": "16545ab7d56a01ad3e623a056fe37f2fdcf0bacec676c04bd5450f5e29428682"
+      "source_sha256": "006fb8f1b29431641dedc86de1277160db08935c34d6bc8295f69650b91c88e7"
     },
     {
       "domain": "kafka_acl",
@@ -110,9 +110,9 @@
   "source_hashes": {
     "contracts/clickhouse/schema-authority.v1.json": "ebb88a91605ba9273e5e9ee2370e4ed165a6503a99485e3b6b37662f4d7b5a90",
     "contracts/events/kafka-acl-catalog.v1.json": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f",
-    "contracts/events/kafka-topic-catalog.v1.json": "16545ab7d56a01ad3e623a056fe37f2fdcf0bacec676c04bd5450f5e29428682",
+    "contracts/events/kafka-topic-catalog.v1.json": "006fb8f1b29431641dedc86de1277160db08935c34d6bc8295f69650b91c88e7",
     "contracts/flink/job-registry.v1.json": "e1cfdb658c0cad53aeaa0aec55151fdc928169bb3bba8ac84a7db80009797c3c",
-    "deployments/kubernetes/applications/go-services.yaml": "0593bb75acbfc69d91133aafb931f5fae6c6b1adb18015576b91c60e511e2ff1",
+    "deployments/kubernetes/applications/go-services.yaml": "15dc72cc0a3bb5d7730c49d9d6565b85a1fc329c50cb61a053eeb99716b99541",
     "deployments/kubernetes/applications/probe-agent.yaml": "b7969b9001297d381f09a09c9a3b71bd8bd3ccfc8bfca0a599f9a04afff865f3",
     "deployments/kubernetes/applications/web-ui.yaml": "8abbdbbef2621b300541a6cad56678cfe4115350c5c071304a9bc19f353a981f",
     "deployments/kubernetes/configmaps/apisix-routes.yaml": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79",
@@ -129,20 +129,20 @@
     "deployments/kubernetes/infrastructure/11-management.yaml": "ffd6c4384fd8376c92083c292ae2eae9c4b2a562897a629ee58c3698840e34d5",
     "deployments/kubernetes/init-jobs/00-kafka-service-principals.yaml": "d01a637fa8238db4d86261bae66ac8ab02a032dba3bca008a707fbffa20037d8",
     "deployments/kubernetes/init-jobs/01-kafka-topics.yaml": "6e8f59c9ac3b4f0fb938bcdbb39dd07417fd506089cdb18e20ea66ba86ff0bca",
-    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "f9a4f3565c551cdbf2781a35b4ba971a87474c9460bb2de544056ee985349e2a",
+    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "9e855b936a59e20d104e10cddbbbe33c8799d0708dd485ead271822a2dabed72",
     "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml": "8ca1010db70655b9740a0b3bf2327f99838145bf15b20d109c98dcb976895c6b",
     "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml": "6d4fe42c60dd9f14fe27e65e924ea75bfcce2029989448f4e09f55d44fb5a44f",
     "deployments/kubernetes/init-jobs/05-nebula-schema.yaml": "7dfc2a4b67af004d132edc5c7882a67c705428d5529d8889108f6b0e4f1730c9",
     "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml": "d38d6008931e4442e7de6f28fb08ac3a6a59a28629bf39d190242743ed17922c",
     "deployments/kubernetes/init-jobs/06-nebula-workbench-seed.yaml": "74efd6ebe9c7689b95f6fd6a864f67982cf0d7ec059f763c5b82ce4e2c3e76b5",
     "deployments/kubernetes/init-jobs/07-fusion-acceptance-fixture.yaml": "c948d74059758ffab63249324f2a7638488fd37e3ec82a8e91996e7cc72b47a0",
-    "go/control-plane/deployments/kubernetes/alert-service.yaml": "512214695080810ce9bee81806e12d6aadedc34325461a401018a085164057d8",
+    "go/control-plane/deployments/kubernetes/alert-service.yaml": "0f23b8d6758de63b538b21e1ee6d16d7ccacce01ee1820726cc2087d65e26128",
     "go/control-plane/deployments/kubernetes/asset-service.yaml": "1f0ed4273cb4b6f16faeb52581cb6acef1d61091ab899c8dbadb5ae6291122a7",
     "go/control-plane/deployments/kubernetes/forensics-service.yaml": "2f51466bb01a7b306c0b624ef27426549015226eec663b563db899ee3181962d",
     "go/control-plane/deployments/kubernetes/ingest-gateway.yaml": "08f17aae3b4a0e6e10a2a25b933fd8fe399b5a60e22f3814549522044cebcf61",
     "go/control-plane/deployments/kubernetes/rule-manager.yaml": "4b050763d1c785a71c80e8825f390caa0bad6f5320b75cb154b70bceb9174261",
     "go/control-plane/internal/alert/arkime/link_generator.go": "9ba0ad8d98e6baf5b8fda9022ab6cd25a7d476ff9f19adf1c1788303fb03dc82",
-    "go/control-plane/internal/alert/config/config.go": "4c17869da03cc6f780c5ce730aa79437797a1a599470a6df6e267877bb8f66c4",
+    "go/control-plane/internal/alert/config/config.go": "0a324efa3c1ee2a0cad19eb61d7cc718fbac08d22cd3dae7168804dd3c1a68be",
     "go/control-plane/internal/alert/notification/notification_service.go": "483cf30cb08478a3b44045abc0efc7ad8688930433550f6229c8d44eb4c98e29",
     "go/control-plane/internal/asset/config/config.go": "ebab4be9914de13654e3efd514a0753fcee72236d9ee03a6ad1cf0f0cb890079",
     "go/control-plane/internal/auth/config/config.go": "07e415bd74eef84dd2dbf2d2e10de9b27b756c12255411bb77debaf21c97176d",
@@ -198,6 +198,26 @@
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTION_V1_ENABLED": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
     ],
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:API_LISTEN_ADDR": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:API_LISTEN_ADDR:deployments/kubernetes/applications/go-services.yaml",
@@ -826,11 +846,11 @@
   },
   "conflicting_runtime_bindings": [],
   "counts": {
-    "entries": 1901,
+    "entries": 1911,
     "go_env_consumers": 926,
     "flink_properties": 261,
-    "kubernetes_env_bindings": 714,
-    "secret_entries": 184,
+    "kubernetes_env_bindings": 724,
+    "secret_entries": 186,
     "source_files": 76
   },
   "entries": [
@@ -12348,7 +12368,7 @@
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
       "type": "boolean",
-      "default": "true",
+      "default": "false",
       "default_present": true,
       "secret_default_nonempty": false,
       "required": false,
@@ -44879,7 +44899,7 @@
           "kind": "kubernetes_literal",
           "path": "deployments/kubernetes/applications/go-services.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -44913,7 +44933,349 @@
           "kind": "kubernetes_literal",
           "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
           "reference": {
-            "value_sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL",
+      "key": "ALERT_RESPONSE_EXECUTOR_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_LOOKUP_URL",
+      "key": "ALERT_RESPONSE_EXECUTOR_LOOKUP_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS",
+      "key": "ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS",
+      "key": "ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN",
+      "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": true,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_secretKeyRef",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "name": "traffic-credentials",
+            "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+            "optional": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_TOKEN",
+      "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": true,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_secretKeyRef",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "name": "traffic-credentials",
+            "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+            "optional": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL",
+      "key": "ALERT_RESPONSE_EXECUTOR_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXECUTOR_URL",
+      "key": "ALERT_RESPONSE_EXECUTOR_URL",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "empty": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED",
+      "key": "ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED",
+      "key": "ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
             "empty": false
           }
         }
@@ -64163,5 +64525,5 @@
       ]
     }
   ],
-  "catalog_sha256": "619ada4d5e3e12a0c5d184dfc752223f1d187ecee13bbf25b83d2fa2d23728e0"
+  "catalog_sha256": "34a058f06d564c5c03a6262a5797b55675d519461f1507641c51aff03f90cb6f"
 }

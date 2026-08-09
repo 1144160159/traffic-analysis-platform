@@ -276,7 +276,7 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn("locked_until", inbox_migration)
         self.assertIn("dead_letter", inbox_migration)
 
-    def test_alert_response_requests_are_receipted_without_fake_real_effects(self) -> None:
+    def test_alert_response_requests_require_provider_authority_for_real_effects(self) -> None:
         catalog = json.loads(
             (ROOT / "contracts/events/kafka-topic-catalog.v1.json").read_text(
                 encoding="utf-8"
@@ -303,15 +303,56 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn("simulated_completed", consumer)
         self.assertIn("blocked_external_executor", consumer)
         self.assertIn("external_effect_applied", consumer)
+        self.assertIn("hasExactCommittedReceipt", consumer)
+        self.assertIn("reconcileExecutionAuthority", consumer)
+        self.assertIn("INSERT INTO audit_logs", consumer)
+        provider = (
+            ROOT
+            / "go/control-plane/internal/alert/consumer/alert_response_http_executor.go"
+        ).read_text(encoding="utf-8")
+        for fragment in (
+            "Idempotency-Key",
+            "provider_receipt_id",
+            "effect_state",
+            "LookupAlertResponseExecution",
+            "receipt_found",
+        ):
+            self.assertIn(fragment, provider)
+        service = (
+            ROOT / "go/control-plane/cmd/alert-service/main.go"
+        ).read_text(encoding="utf-8")
         self.assertIn("CommitOnHandlerError: false", (
             ROOT / "go/control-plane/cmd/alert-service/main.go"
         ).read_text(encoding="utf-8"))
+        self.assertIn("ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED", service)
+        self.assertIn("ALERT_RESPONSE_EXECUTOR_LOOKUP_URL", service)
         migration = (
             ROOT / "deployments/postgres/migrations"
             / "202607302300_alert_response_execution_projection.sql"
         ).read_text(encoding="utf-8")
         self.assertIn("alert_response_execution_receipts", migration)
         self.assertIn("ALERT_RESPONSE_EXECUTION_V1_ENABLED=false", migration)
+        executor_migration = (
+            ROOT / "deployments/postgres/migrations"
+            / "202608091130_alert_response_external_executor_v1.sql"
+        ).read_text(encoding="utf-8")
+        self.assertIn("provider_receipt_id", executor_migration)
+        self.assertIn("effect_state", executor_migration)
+        self.assertIn("receipt_sha256", executor_migration)
+        self.assertIn("202608091130", executor_migration)
+        for manifest_path in (
+            ROOT / "deployments/kubernetes/applications/go-services.yaml",
+            ROOT / "go/control-plane/deployments/kubernetes/alert-service.yaml",
+        ):
+            manifest = manifest_path.read_text(encoding="utf-8")
+            self.assertIn(
+                '{name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "false"}',
+                manifest,
+            )
+            self.assertIn(
+                '{name: ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED, value: "false"}',
+                manifest,
+            )
 
     def test_model_actions_use_outbox_and_non_terminal_execution_inbox(self) -> None:
         catalog = json.loads(

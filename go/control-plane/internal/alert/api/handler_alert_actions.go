@@ -102,6 +102,10 @@ func (h *Handler) persistAlertAction(w http.ResponseWriter, r *http.Request, aud
 	}
 	jobID := "alert-action-" + uuid.NewString()
 	eventID := uuid.NewSHA1(uuid.NameSpaceOID, []byte("alert.response.requested.v1:"+jobID)).String()
+	traceID := strings.TrimSpace(httpx.GetTraceID(ctx))
+	if traceID == "" {
+		traceID = eventID
+	}
 	status := "recorded"
 	if responseAction {
 		status = "pending_approval"
@@ -137,7 +141,7 @@ func (h *Handler) persistAlertAction(w http.ResponseWriter, r *http.Request, aud
 		ON CONFLICT (tenant_id,idempotency_key) WHERE idempotency_key<>'' DO NOTHING`,
 		jobID, eventID, tenantID, alertID, request.ActionID, request.Action,
 		request.Target, request.Reason, request.DryRun, status, approvalStatus,
-		httpx.GetTraceID(ctx), idempotencyKey, expectedRevision, string(detailJSON), requestedBy)
+		traceID, idempotencyKey, expectedRevision, string(detailJSON), requestedBy)
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to persist alert action")
 		return
@@ -193,7 +197,7 @@ func (h *Handler) persistAlertAction(w http.ResponseWriter, r *http.Request, aud
 			"job_id": jobID, "tenant_id": tenantID, "alert_id": alertID,
 			"action_id": request.ActionID, "action": request.Action,
 			"target": request.Target, "reason": request.Reason,
-			"requested_by": requestedBy, "dry_run": true,
+			"requested_by": requestedBy, "trace_id": traceID, "dry_run": true,
 		})
 		if _, err = tx.ExecContext(ctx, `INSERT INTO alert_response_outbox
 			(job_id,event_id,tenant_id,event_type,schema_version,aggregate_version,

@@ -398,12 +398,14 @@ func main() {
 	if chSQLDB != nil {
 		apiHandler.SetCampaignLookup(api.NewClickHouseAlertCampaignLookup(chSQLDB))
 	}
-	if responseActionProducer != nil {
+	if responseActionProducer != nil && cfg.Kafka.ResponseActionEnabled {
 		if err := apiHandler.StartResponseActionOutboxWorker(ctx, 2*time.Second); err != nil {
 			logger.Warn("Failed to start response-action outbox worker", zap.Error(err))
 		} else {
 			logger.Info("Response-action outbox worker started")
 		}
+	} else if !cfg.Kafka.ResponseActionEnabled {
+		logger.Warn("Response-action outbox worker is disabled; durable requests remain pending")
 	}
 	if savedViewEventProducer != nil {
 		if err := apiHandler.StartSavedViewOutboxWorker(ctx, 2*time.Second); err != nil {
@@ -422,6 +424,27 @@ func main() {
 		cancelVerify()
 		if projectionErr != nil {
 			logger.Fatal("Alert response execution projection schema is unavailable", zap.Error(projectionErr))
+		}
+		if getBoolEnv("ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED", false) {
+			executorURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_EXECUTOR_URL", ""))
+			lookupURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_EXECUTOR_LOOKUP_URL", ""))
+			if executorURL == "" || lookupURL == "" {
+				logger.Fatal("Alert response external execution requires executor and authority lookup URLs")
+			}
+			executor, executorErr := consumer.NewHTTPAlertResponseExecutor(
+				executorURL, getEnv("ALERT_RESPONSE_EXECUTOR_TOKEN", ""),
+				time.Duration(getIntEnv("ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS", 30))*time.Second,
+			)
+			if executorErr != nil {
+				logger.Fatal("Invalid alert response executor configuration", zap.Error(executorErr))
+			}
+			if executorErr = executor.ConfigureAuthorityLookup(lookupURL); executorErr != nil {
+				logger.Fatal("Invalid alert response authority lookup configuration", zap.Error(executorErr))
+			}
+			if executorErr = responseProjection.ConfigureExecutor(executor); executorErr != nil {
+				logger.Fatal("Failed to enable alert response external executor", zap.Error(executorErr))
+			}
+			logger.Info("Alert response external executor enabled with mandatory authority lookup")
 		}
 		responseKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
 			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.ResponseActionTopic,

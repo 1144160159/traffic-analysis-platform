@@ -131,7 +131,7 @@
         "go/control-plane/internal/alert/api/handler_alert_response_workflow.go"
       ],
       "consumers": ["go/control-plane/internal/alert/consumer/alert_response_event_consumer.go"],
-      "known_gap": "Dry-run requests receive deterministic simulated receipts. Non-dry-run requests require an immutable independent approval before outbox delivery. The provider adapter remains unavailable, so approved real events truthfully terminate as blocked_external_executor and compensation requests cannot claim success."
+      "known_gap": "Dry-run requests receive deterministic simulated receipts. Approved real events can use the default-off provider executor with stable idempotency, mandatory authority lookup and atomic PostgreSQL receipt/action/audit commit. Approved-candidate rollout, Kafka/source-offset fault evidence, asynchronous authority recheck and external compensation execution remain open."
     },
     {
       "name": "alert.saved-view.events.v1",

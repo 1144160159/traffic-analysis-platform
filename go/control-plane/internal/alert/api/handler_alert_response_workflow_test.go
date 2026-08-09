@@ -421,11 +421,11 @@ func expectLockedResponseAction(
 		WithArgs("tenant-a", "AL-1", responseJobID).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"job_id", "event_id", "tenant_id", "alert_id", "action_id", "action",
-			"target", "reason", "requested_by", "status", "approval_status", "dry_run", "revision",
+			"target", "reason", "requested_by", "trace_id", "status", "approval_status", "dry_run", "revision",
 		}).AddRow(
 			responseJobID, responseEventID, "tenant-a", "AL-1",
 			"alert-response-block-ip", "block_ip", "185.22.14.9", "confirmed response",
-			requestedBy, status, approvalStatus, dryRun, revision,
+			requestedBy, "trace-alert-response", status, approvalStatus, dryRun, revision,
 		))
 }
 

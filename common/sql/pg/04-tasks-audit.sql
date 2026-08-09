@@ -347,6 +347,34 @@ CREATE INDEX IF NOT EXISTS idx_alert_response_approvals_job ON alert_response_ap
 CREATE TABLE IF NOT EXISTS alert_response_control_requests (request_id UUID PRIMARY KEY, job_id TEXT NOT NULL REFERENCES alert_response_actions(job_id) ON DELETE RESTRICT, tenant_id TEXT NOT NULL, alert_id TEXT NOT NULL, operation TEXT NOT NULL CHECK (operation IN ('cancel','compensate')), expected_revision BIGINT NOT NULL CHECK (expected_revision>0), idempotency_key TEXT NOT NULL CHECK (length(idempotency_key) BETWEEN 16 AND 200), reason TEXT NOT NULL CHECK (length(reason) BETWEEN 8 AND 1000), requested_by TEXT NOT NULL CHECK (requested_by<>''), state TEXT NOT NULL CHECK (state IN ('cancelled','blocked_external_executor')), resulting_revision BIGINT NOT NULL, resulting_status TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id,idempotency_key));
 CREATE INDEX IF NOT EXISTS idx_alert_response_control_job ON alert_response_control_requests(tenant_id,job_id,created_at);
 CREATE INDEX IF NOT EXISTS idx_alert_response_receipts_tenant_job ON alert_response_execution_receipts(tenant_id,job_id,created_at);
+-- BEGIN GENERATED F-ALERT-003 EXTERNAL EXECUTOR
+ALTER TABLE alert_response_execution_receipts
+  ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS provider_receipt_id TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS effect_state TEXT NOT NULL DEFAULT 'none',
+  ADD COLUMN IF NOT EXISTS effect_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS trace_id TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS receipt_sha256 TEXT NOT NULL DEFAULT repeat('0',64),
+  ADD COLUMN IF NOT EXISTS authority_lookup JSONB NOT NULL DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS executed_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE alert_response_execution_receipts
+  DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_state_check,
+  DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_effect_state_check,
+  DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_effect_ids_check,
+  DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_receipt_sha256_check,
+  DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_completed_effect_check,
+  DROP CONSTRAINT IF EXISTS alert_response_execution_receipts_failed_effect_check;
+ALTER TABLE alert_response_execution_receipts
+  ADD CONSTRAINT alert_response_execution_receipts_state_check CHECK (state IN ('simulated_completed','blocked_external_executor','completed','partial','failed')),
+  ADD CONSTRAINT alert_response_execution_receipts_effect_state_check CHECK (effect_state IN ('confirmed','none','unknown')),
+  ADD CONSTRAINT alert_response_execution_receipts_effect_ids_check CHECK (jsonb_typeof(effect_ids)='array'),
+  ADD CONSTRAINT alert_response_execution_receipts_receipt_sha256_check CHECK (receipt_sha256 ~ '^[0-9a-f]{64}$'),
+  ADD CONSTRAINT alert_response_execution_receipts_completed_effect_check CHECK (state<>'completed' OR (external_effect AND effect_state='confirmed' AND jsonb_array_length(effect_ids)>0)),
+  ADD CONSTRAINT alert_response_execution_receipts_failed_effect_check CHECK (state<>'failed' OR (NOT external_effect AND effect_state='none'));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_alert_response_provider_receipt ON alert_response_execution_receipts(provider,provider_receipt_id) WHERE provider<>'' AND provider_receipt_id<>'';
+CREATE INDEX IF NOT EXISTS idx_alert_response_receipts_trace ON alert_response_execution_receipts(tenant_id,trace_id,executed_at DESC) WHERE trace_id<>'';
+INSERT INTO alignment_schema_migrations(version,description) VALUES ('202608091130','provider authoritative alert response execution receipts and audit') ON CONFLICT (version) DO NOTHING;
+-- END GENERATED F-ALERT-003 EXTERNAL EXECUTOR
 
 CREATE TABLE IF NOT EXISTS alert_playbook_overrides (
   tenant_id        TEXT NOT NULL,

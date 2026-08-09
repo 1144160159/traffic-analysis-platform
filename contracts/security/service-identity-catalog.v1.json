@@ -17,7 +17,7 @@
     {
       "domain": "configuration_and_secret_binding",
       "path": "contracts/configuration/configuration-catalog.v1.json",
-      "sha256": "d7ec1ec24577257f2dcd61f3d3b3c8ad4350c84d2272561e1528fb5006523fa5"
+      "sha256": "a639ecbc1615a341041559ff9aa49045e019af15d2b71997d0240c90dfe2cfa9"
     },
     {
       "domain": "iam_scopes",
@@ -299,6 +299,17 @@
           "consumer": "alert-service",
           "binding": "env:S3_SECRET_KEY",
           "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "ALERT_RESPONSE_EXECUTOR_TOKEN",
+          "consumer": "alert-service",
+          "binding": "env:ALERT_RESPONSE_EXECUTOR_TOKEN",
+          "optional": true,
           "external_secret_registered": true,
           "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
           "rotation_refresh_interval": "1h"
@@ -1883,7 +1894,7 @@
     "approved_token_automount_exceptions": 1,
     "hardened_or_approved_exception_containers": 9,
     "containers": 11,
-    "secret_references": 65,
+    "secret_references": 66,
     "literal_secret_findings": 0,
     "unregistered_secret_references": 2,
     "kafka_principals": 20,
@@ -1911,5 +1922,5 @@
       "wildcard_or_shared_kafka_principal"
     ]
   },
-  "catalog_sha256": "900f5c17f7764411743bc6064428afa326b56136d984c1be76dade9c4efc7081"
+  "catalog_sha256": "6ccbb50fb8d8ccf525a9268dae39c8c3344a6386488077ac0ea18729d1822632"
 }

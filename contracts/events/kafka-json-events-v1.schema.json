@@ -92,7 +92,7 @@
       "required": [
         "event_id", "event_type", "schema_version", "aggregate_version",
         "job_id", "tenant_id", "alert_id", "action_id", "action", "target",
-        "reason", "requested_by", "dry_run"
+        "reason", "requested_by", "trace_id", "dry_run"
       ],
       "properties": {
         "event_id": {"type": "string", "format": "uuid"},
@@ -104,13 +104,20 @@
         "alert_id": {"type": "string", "minLength": 1},
         "action_id": {"type": "string", "minLength": 1},
         "action": {"type": "string", "minLength": 1},
-        "target": {"type": "string"},
+        "target": {"type": "string", "minLength": 1},
         "reason": {"type": "string", "minLength": 1},
-        "requested_by": {"type": "string"},
-        "approved_by": {"type": "string"},
-        "approval_reason": {"type": "string"},
+		"requested_by": {"type": "string", "minLength": 1},
+		"approved_by": {"type": "string", "minLength": 1},
+		"approval_reason": {"type": "string", "minLength": 1},
+		"trace_id": {"type": "string", "minLength": 1},
         "dry_run": {"type": "boolean"}
       },
+	  "allOf": [
+		{
+		  "if": {"properties": {"dry_run": {"const": false}}, "required": ["dry_run"]},
+		  "then": {"required": ["approved_by", "approval_reason"]}
+		}
+	  ],
       "additionalProperties": false
     },
     "AlertSavedViewSavedV1Json": {

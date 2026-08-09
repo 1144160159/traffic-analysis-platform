@@ -32,7 +32,7 @@ func alertResponseMessage(t *testing.T, dryRun bool) *commonkafka.ReceivedMessag
 		"tenant_id": "tenant-a", "alert_id": "alert-1",
 		"action_id": "alert-response-block-ip", "action": "block_ip",
 		"target": "198.51.100.10", "reason": "approved test",
-		"requested_by": "operator-a", "dry_run": dryRun,
+		"requested_by": "operator-a", "trace_id": "trace-alert-response-test", "dry_run": dryRun,
 	}
 	payload, err := json.Marshal(event)
 	if err != nil {
@@ -119,9 +119,10 @@ func TestPostgresAlertResponseProjectionCompletesSimulation(t *testing.T) {
 		EventID:  "11111111-1111-4111-8111-111111111111",
 		JobID:    "alert-action-22222222-2222-4222-8222-222222222222",
 		TenantID: "tenant-a", AlertID: "alert-1", ActionID: "block-ip",
-		Action: "block_ip", Target: "198.51.100.10", Reason: "test",
+		Action: "block_ip", Target: "198.51.100.10", Reason: "test", TraceID: "trace-test",
 		DryRun: true, AggregateVersion: 1, KafkaPartition: 1, KafkaOffset: 9,
 	}
+	expectNoCommittedAlertResponseReceipt(mock)
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO alert_response_execution_receipts").
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -150,9 +151,10 @@ func TestPostgresAlertResponseProjectionBlocksLegacyRealEvent(t *testing.T) {
 		EventID:  "11111111-1111-4111-8111-111111111111",
 		JobID:    "alert-action-22222222-2222-4222-8222-222222222222",
 		TenantID: "tenant-a", AlertID: "alert-1", ActionID: "block-ip",
-		Action: "block_ip", Target: "198.51.100.10", Reason: "test",
+		Action: "block_ip", Target: "198.51.100.10", Reason: "test", TraceID: "trace-test",
 		DryRun: false, AggregateVersion: 1, KafkaPartition: 1, KafkaOffset: 10,
 	}
+	expectNoCommittedAlertResponseReceipt(mock)
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO alert_response_execution_receipts").
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -182,8 +184,9 @@ func TestPostgresAlertResponseProjectionRejectsAuthoritativePayloadMismatch(t *t
 		JobID:    "alert-action-22222222-2222-4222-8222-222222222222",
 		TenantID: "tenant-a", AlertID: "alert-1", ActionID: "block-ip",
 		Action: "block_ip", Target: "198.51.100.10", Reason: "test",
-		RequestedBy: "operator-a", DryRun: true, AggregateVersion: 1, KafkaPartition: 1, KafkaOffset: 9,
+		RequestedBy: "operator-a", TraceID: "trace-test", DryRun: true, AggregateVersion: 1, KafkaPartition: 1, KafkaOffset: 9,
 	}
+	expectNoCommittedAlertResponseReceipt(mock)
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO alert_response_execution_receipts").
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -212,19 +215,12 @@ func TestPostgresAlertResponseProjectionExactReplayAtNewOffsetIsIdempotent(t *te
 		EventID:  "11111111-1111-4111-8111-111111111111",
 		JobID:    "alert-action-22222222-2222-4222-8222-222222222222",
 		TenantID: "tenant-a", AlertID: "alert-1", ActionID: "block-ip",
-		Action: "block_ip", Target: "198.51.100.10", Reason: "test",
+		Action: "block_ip", Target: "198.51.100.10", Reason: "test", TraceID: "trace-test",
 		DryRun: true, AggregateVersion: 1, KafkaPartition: 2, KafkaOffset: 99,
 	}
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO alert_response_execution_receipts").
-		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectQuery("SELECT EXISTS").WillReturnRows(
-		sqlmock.NewRows([]string{"exists"}).AddRow(true),
+	mock.ExpectQuery("SELECT").WillReturnRows(
+		sqlmock.NewRows([]string{"receipt_exists", "exact"}).AddRow(true, true),
 	)
-	mock.ExpectQuery("SELECT EXISTS").WillReturnRows(
-		sqlmock.NewRows([]string{"exists"}).AddRow(true),
-	)
-	mock.ExpectCommit()
 	projection, err := NewPostgresAlertResponseProjection(db)
 	if err != nil {
 		t.Fatal(err)
@@ -235,4 +231,10 @@ func TestPostgresAlertResponseProjectionExactReplayAtNewOffsetIsIdempotent(t *te
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func expectNoCommittedAlertResponseReceipt(mock sqlmock.Sqlmock) {
+	mock.ExpectQuery("SELECT").WillReturnRows(
+		sqlmock.NewRows([]string{"receipt_exists", "exact"}).AddRow(false, false),
+	)
 }

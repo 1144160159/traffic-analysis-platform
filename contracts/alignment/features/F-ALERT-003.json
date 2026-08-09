@@ -46,9 +46,9 @@
   "data": {
     "authoritative_store": "postgresql",
     "read_models": ["postgresql", "redis"],
-    "migration": "deployments/postgres/migrations/202607302300_alert_response_execution_projection.sql",
+    "migration": "deployments/postgres/migrations/202607302300_alert_response_execution_projection.sql + deployments/postgres/migrations/202607310000_alert_response_approval_control.sql + deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
     "event_types": ["alert.response.requested.v1", "alert.response.approved.v1", "alert.response.cancelled.v1", "alert.response.compensation.requested.v1"],
-    "source_watermarks": ["postgresql.alert_response_actions.revision", "postgresql.alert_response_outbox.outbox_id", "postgresql.alert_response_execution_receipts.kafka_offset"]
+    "source_watermarks": ["postgresql.alert_response_actions.revision", "postgresql.alert_response_outbox.outbox_id", "postgresql.alert_response_execution_receipts.kafka_offset", "postgresql.alert_response_execution_receipts.receipt_sha256"]
   },
   "permissions": {
     "tenant_source": "authenticated_identity",

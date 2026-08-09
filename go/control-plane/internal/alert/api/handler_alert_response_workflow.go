@@ -36,6 +36,7 @@ type alertResponseActionState struct {
 	Target         string
 	Reason         string
 	RequestedBy    string
+	TraceID        string
 	Status         string
 	ApprovalStatus string
 	DryRun         bool
@@ -214,6 +215,10 @@ func (h *Handler) DecideAlertResponseAction(w http.ResponseWriter, r *http.Reque
 
 	outboxStatus := "not_required"
 	if request.Decision == "approve" {
+		traceID := strings.TrimSpace(action.TraceID)
+		if traceID == "" {
+			traceID = action.EventID
+		}
 		payload, _ := json.Marshal(map[string]interface{}{
 			"event_id": action.EventID, "event_type": "alert.response.requested.v1",
 			"schema_version": 1, "aggregate_version": newRevision,
@@ -221,7 +226,7 @@ func (h *Handler) DecideAlertResponseAction(w http.ResponseWriter, r *http.Reque
 			"action_id": action.ActionID, "action": action.Action,
 			"target": action.Target, "reason": action.Reason,
 			"requested_by": action.RequestedBy, "approved_by": actor,
-			"approval_reason": request.Reason, "dry_run": false,
+			"approval_reason": request.Reason, "trace_id": traceID, "dry_run": false,
 		})
 		if _, err = tx.ExecContext(ctx, `INSERT INTO alert_response_outbox
 			(job_id,event_id,tenant_id,event_type,schema_version,aggregate_version,partition_key,payload)
@@ -577,7 +582,7 @@ func lockAlertResponseAction(
 ) (alertResponseActionState, bool, error) {
 	var action alertResponseActionState
 	err := tx.QueryRowContext(ctx, `SELECT job_id,event_id::text,tenant_id,alert_id,
-		action_id,action,target,reason,requested_by,status,approval_status,dry_run,revision
+			action_id,action,target,reason,requested_by,trace_id,status,approval_status,dry_run,revision
 		FROM alert_response_actions
 		WHERE tenant_id=$1 AND alert_id=$2 AND job_id=$3
 		FOR UPDATE`,
@@ -585,7 +590,7 @@ func lockAlertResponseAction(
 	).Scan(
 		&action.JobID, &action.EventID, &action.TenantID, &action.AlertID,
 		&action.ActionID, &action.Action, &action.Target, &action.Reason,
-		&action.RequestedBy, &action.Status, &action.ApprovalStatus,
+		&action.RequestedBy, &action.TraceID, &action.Status, &action.ApprovalStatus,
 		&action.DryRun, &action.Revision,
 	)
 	if err == sql.ErrNoRows {

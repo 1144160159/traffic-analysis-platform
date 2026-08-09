@@ -401,9 +401,56 @@
         "traffic.dashboard.v1.TaskCompensationResult"
       ],
       "publisher_status": "IMPLEMENTED_DEFAULT_OFF_PENDING_APPROVED_CANDIDATE_ROLLOUT"
+    },
+    {
+      "feature_id": "F-ALERT-003",
+      "operation": "AlertResponseExternalExecutionV1",
+      "transaction_facts": [
+        "alert_response_actions",
+        "alert_response_outbox",
+        "alert_response_approvals",
+        "alert_response_execution_receipts",
+        "audit_logs"
+      ],
+      "isolation": "stable_event_identity_with_provider_idempotency_and_atomic_postgres_terminal_receipt",
+      "idempotency_lock": "event_id_and_provider_receipt_unique_constraints",
+      "event_types": [
+        "alert.response.requested.v1"
+      ],
+      "publisher_status": "IMPLEMENTED_DEFAULT_OFF_OWNED_POSTGRES_HTTP_G1_PENDING_APPROVED_CANDIDATE_ROLLOUT"
     }
   ],
   "source_assertions": [
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
+      "operation_start": "func (projection *PostgresAlertResponseProjection) ApplyAlertResponseProjection",
+      "operation_end": "type alertResponseExecutionOutcome struct",
+      "required": [
+        "hasExactCommittedReceipt",
+        "INSERT INTO alert_response_execution_receipts",
+        "UPDATE alert_response_actions",
+        "INSERT INTO audit_logs",
+        "receipt_sha256",
+        "authority_lookup",
+        "tx.Commit()"
+      ],
+      "ordered": [
+        "INSERT INTO alert_response_execution_receipts",
+        "UPDATE alert_response_actions",
+        "INSERT INTO audit_logs",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
+      "required": [
+        "Idempotency-Key",
+        "provider_receipt_id",
+        "effect_state",
+        "LookupAlertResponseExecution",
+        "receipt_found"
+      ]
+    },
     {
       "source": "go/control-plane/internal/alert/api/handler_alert_actions.go",
       "required": [
@@ -1613,6 +1660,24 @@
       ]
     },
     {
+      "name": "alert_response_external_executor_v1",
+      "tokens": [
+        "202608091130",
+        "alert_response_execution_receipts",
+        "provider_receipt_id",
+        "effect_state",
+        "receipt_sha256",
+        "uq_alert_response_provider_receipt",
+        "idx_alert_response_receipts_trace"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
+        "common/sql/pg/15-alert-response-external-executor-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
       "name": "whitelist_rule_projection_v1",
       "tokens": [
         "202608071930",
@@ -1637,6 +1702,7 @@
       "review the versioned mutable-command inventory and close each business-audit-outbox transaction gap",
       "operate the saved-view, notification-governance, user-settings, user-command and asset outbox workers against the release-candidate Kafka and reconcile pending processing published and dead counts",
       "operate the default-off dashboard lifecycle and poison-event DLQ barrier against one approved candidate and reconcile PostgreSQL Kafka provider audit and source-offset authority",
+      "operate the default-off alert response executor against one approved candidate and reconcile approval outbox Kafka provider receipt authority audit and compensation boundary",
       "run live fault injection after commit, before publish, and after Kafka ACK before published marking",
       "prove event_id and aggregate_version deduplication in real consumers",
       "run live debt queries, lock metrics, cleanup retention, rollback and observation gates"

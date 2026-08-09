@@ -45,7 +45,17 @@ spec:
         - {name: KAFKA_WHITELIST_EVENT_TOPIC, value: "whitelist.events.v2"}
         - {name: WHITELIST_EVENT_PIPELINE_V2_ENABLED, value: "false"}
         - {name: KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC, value: "notification.governance.events.v1"}
-        - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "true"}
+        - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_EXECUTOR_URL, value: ""}
+        - {name: ALERT_RESPONSE_EXECUTOR_LOOKUP_URL, value: ""}
+        - {name: ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
+        - name: ALERT_RESPONSE_EXECUTOR_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: ALERT_RESPONSE_EXECUTOR_TOKEN
+              optional: true
         - {name: CAMPAIGN_ALERT_LINKS_V1_ENABLED, value: "true"}
         - {name: CAMPAIGN_AGGREGATE_V2_ENABLED, value: "false"}
         - {name: CAMPAIGN_EVENT_PIPELINE_V2_ENABLED, value: "false"}
