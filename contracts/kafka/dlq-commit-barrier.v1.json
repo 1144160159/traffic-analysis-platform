@@ -4,7 +4,7 @@
   "remediation_id": "T-KAFKA-003",
   "status": "verifying",
   "production_applied": false,
-  "coverage_status": "PARTIAL_SHARED_GO_CONSUMER_WITH_DASHBOARD_OWNED_G1_AND_ALERT_RESPONSE_REPOSITORY_BARRIER",
+  "coverage_status": "PARTIAL_SHARED_GO_CONSUMER_WITH_DASHBOARD_AND_ALERT_RESPONSE_OWNED_SINGLE_BROKER_G1",
   "guarantees": [
     "batch source offsets are committed synchronously and only a broker acknowledgement advances processed metrics",
     "a handler or durable DLQ failure returns to the caller with source offsets retained",
@@ -12,7 +12,8 @@
     "one DLQ batch serialization failure rejects the whole batch",
     "a configured canonical DLQ target is used by both single and batch delivery",
     "asynchronous single-message commits retain pending offsets after a failed broker acknowledgement",
-    "an optional domain acknowledgement barrier runs after the DLQ broker acknowledgement and before source offset commit; barrier failure or panic retains the source offset"
+    "an optional domain acknowledgement barrier runs after the DLQ broker acknowledgement and before source offset commit; barrier failure or panic retains the source offset",
+    "owned single-broker alert-response evidence rejects an invalid DLQ target without advancing the source group offset, then redelivers under the same group and commits only after canonical dlq.v1 plus one PostgreSQL source-tuple receipt and quarantine audit"
   ],
   "source_assertions": [
     {
@@ -117,6 +118,43 @@
       ],
       "forbidden_tokens": [],
       "ordered_tokens": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_real_kafka_integration_test.go",
+      "required_tokens": [
+        "TestAlertResponseRealKafkaDLQBarrier",
+        "alertResponseRealKafkaInvalidDLQ",
+        "committedMessages.Load() != 0 || maximumCommittedOffset.Load() >= 0",
+        "DLQ receipt persisted before broker acknowledgement",
+        "poison event redelivered after durable DLQ acknowledgement",
+        "ALERT_RESPONSE_EVENT_QUARANTINED",
+        "alert_response_real_kafka_dlq=pass"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": [
+        ["projection, alertResponseRealKafkaInvalidDLQ,", "projection, alertResponseRealKafkaDLQTopic,"],
+        ["DLQ receipt persisted before broker acknowledgement", "poison event redelivered after durable DLQ acknowledgement"]
+      ]
+    },
+    {
+      "source": "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py",
+      "required_tokens": [
+        "OWNED_REAL_POSTGRES_REDPANDA_ALERT_RESPONSE_POISON_DLQ_PRECOMMIT_G1",
+        "required_acks_all_verified",
+        "broker_group_commit_verified",
+        "current_offset\": 1",
+        "cleanup_identity_verified",
+        "single_broker_owned_preflight",
+        "persistent_volume_attached\": False",
+        "shared_environment_touched\": False",
+        "production_applied\": False"
+      ],
+      "forbidden_tokens": [
+        "persistent_volume_attached\": True",
+        "shared_environment_touched\": True",
+        "production_applied\": True"
+      ],
+      "ordered_tokens": []
     }
   ],
   "gate": {
@@ -125,8 +163,8 @@
       "go test -race ./internal/common/kafka"
     ],
     "remaining": [
-      "repeat poison-message DLQ acknowledgement failure on the approved replicated release-candidate broker; owned dashboard single-broker G1 is not G2 or HA evidence",
-      "prove the alert-response PostgreSQL source-tuple receipt and source-offset barrier against owned and approved Kafka; repository wiring alone is insufficient",
+      "repeat dashboard and alert-response poison-message DLQ acknowledgement failure on the approved replicated release-candidate broker; both owned single-broker G1 runs are not G2 or HA evidence",
+      "reconcile the alert-response source offset DLQ target offset PostgreSQL receipt quarantine audit and provider ledger on the approved release candidate",
       "materialize and audit source-offset DLQ receipts for remaining non-dashboard and non-alert-response consumer domains",
       "consumer restart rebalance lag and duplicate convergence evidence",
       "approved canary rollback T+0 T+1 T+3 T+7 observation and independent sign-off",
