@@ -27,6 +27,10 @@ export const appConfig = {
     runtime.ALERT_DETAIL_API_ENABLED ?? import.meta.env.VITE_ALERT_DETAIL_API_ENABLED,
     false,
   ),
+  enableAlertBatchAssignmentV1: toBoolean(
+    runtime.ALERT_BATCH_ASSIGNMENT_V1_ENABLED ?? import.meta.env.VITE_ALERT_BATCH_ASSIGNMENT_V1_ENABLED,
+    false,
+  ),
   enableAssetDetailSnapshotV1: toBoolean(
     runtime.ASSET_DETAIL_SNAPSHOT_V1_ENABLED ?? import.meta.env.VITE_ASSET_DETAIL_SNAPSHOT_V1_ENABLED,
     false,

@@ -166,6 +166,20 @@ export async function compensatePlaybookExecution(request: AlignmentRequest = {}
   return response.data;
 }
 
+export async function createAlertBatchAssignment(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/assign', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function createAlertBatchSelection(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/selections', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function createAlertEvidenceAccess(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/{id}/evidence/access', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -336,6 +350,13 @@ export async function downloadCampaignReport(request: AlignmentRequest = {}) {
 
 export async function exploreBoundedGraph(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/graph/explore', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getAlertBatchAssignment(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/batches/assign/{batch_id}', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
   return response.data;

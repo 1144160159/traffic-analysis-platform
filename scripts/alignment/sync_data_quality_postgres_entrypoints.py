@@ -42,8 +42,12 @@ K8S_GENERATED = (
     ("25-data-quality-repair-lifecycle-v1.sql", MIGRATIONS[3]),
     ("26-data-quality-replay-projection-v1.sql", MIGRATIONS[4]),
 )
-K8S_RUNNER_PREVIOUS = "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql; do"
-K8S_RUNNER_CURRENT = "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql 32-alert-response-reconciliation-compensation-v1.sql; do"
+K8S_RUNNER_PREVIOUS = (
+    "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql; do",
+    "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql 32-alert-response-reconciliation-compensation-v1.sql; do",
+    "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql 32-alert-response-reconciliation-compensation-v1.sql 33-alert-evidence-manifest-v1.sql; do",
+)
+K8S_RUNNER_CURRENT = "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql 32-alert-response-reconciliation-compensation-v1.sql 33-alert-evidence-manifest-v1.sql 34-alert-batch-assignment-v1.sql; do"
 
 
 def generated_block(root: Path = ROOT) -> str:
@@ -99,9 +103,10 @@ def synchronize_k8s(source: str, block: str) -> str:
         source = source[:start] + block + source[end:]
     if K8S_RUNNER_CURRENT in source:
         return source
-    if K8S_RUNNER_PREVIOUS not in source:
-        raise ValueError("Kubernetes init Job runner does not end at the expected migration")
-    return source.replace(K8S_RUNNER_PREVIOUS, K8S_RUNNER_CURRENT, 1)
+    for previous in K8S_RUNNER_PREVIOUS:
+        if previous in source:
+            return source.replace(previous, K8S_RUNNER_CURRENT, 1)
+    raise ValueError("Kubernetes init Job runner does not end at the expected migration")
 
 
 def check(root: Path = ROOT) -> list[str]:

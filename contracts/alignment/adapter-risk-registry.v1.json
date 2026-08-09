@@ -10,7 +10,7 @@
     },
     {
       "path": "web/ui/src/pages/AlertTriagePage.tsx",
-      "sha256": "a6ac5acd5e26d780570d72bd62a1d8ee16851db23f663ca9ae4ae266f3032e52"
+      "sha256": "ffbff67f5eebf40370dfd3f0eb3c7545e6ae13d000e4e690d199b49113ce2ee8"
     },
     {
       "path": "web/ui/src/pages/AssetDetailWorkspace.tsx",
@@ -182,7 +182,7 @@
     },
     {
       "path": "web/ui/src/services/alertQueueActionsApi.ts",
-      "sha256": "bb889d72a8fe4c7f4bc9b6fe4424fec56c86f8343eb2f7df1ad4d629af9ee2d9"
+      "sha256": "5e68a6683d34853807f423946d2c48afa512f3a6416eaf014ddff3ec9f305e2a"
     },
     {
       "path": "web/ui/src/services/alertStatus.ts",
@@ -446,5 +446,5 @@
     ]
   },
   "findings": [],
-  "catalog_sha256": "d4ceb04617fbd70da05eec0381da49fb42782c8eb6a03a8ed87b4cfafa04e557"
+  "catalog_sha256": "afaa96660f2915f171b8849cf77284914886785acba36c645e0886eee24509eb"
 }

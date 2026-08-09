@@ -820,6 +820,105 @@
         }
       }
     },
+    "/v1/alerts/batches/selections": {
+      "post": {
+        "operationId": "createAlertBatchSelection",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+        "x-compatibility": "Additive frozen-selection endpoint; legacy per-alert assignment remains available while the rollout flag is disabled",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["snapshot_id", "items"],
+                "properties": {
+                  "snapshot_id": {"type": "string", "minLength": 8, "maxLength": 256},
+                  "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["alert_id", "state_version"],
+                      "properties": {
+                        "alert_id": {"type": "string", "minLength": 1, "maxLength": 200},
+                        "state_version": {"type": "integer", "format": "int64", "minimum": 1}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Tenant-bound, expiring server-side selection token created and audited", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid snapshot, duplicate alert, missing revision or invalid idempotency key"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "409": {"description": "Idempotency key reused with a different frozen selection"},
+          "503": {"description": "Feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/batches/assign": {
+      "post": {
+        "operationId": "createAlertBatchAssignment",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["selection_token", "assignee", "reason"],
+                "properties": {
+                  "selection_token": {"type": "string", "format": "uuid"},
+                  "assignee": {"type": "string", "minLength": 1, "maxLength": 128},
+                  "reason": {"type": "string", "minLength": 4, "maxLength": 1000}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {"description": "Frozen assignment batch, per-item accepted state, history, pending outbox, audit and idempotency receipt committed atomically; assignment effects remain non-final", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid assignee, reason or idempotency key"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "409": {"description": "Selection token is expired, consumed, cross-tenant or idempotency payload changed"},
+          "503": {"description": "Feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/batches/assign/{batch_id}": {
+      "get": {
+        "operationId": "getAlertBatchAssignment",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-004",
+        "x-rollout-flag": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+        "parameters": [{"name": "batch_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {"description": "Tenant-bound batch and complete ordered per-item result set; accepted and running states remain explicitly partial", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "400": {"description": "Invalid batch identifier"},
+          "401": {"description": "Authenticated tenant and user required"},
+          "403": {"description": "alert:write scope required"},
+          "404": {"description": "Batch is absent from the authenticated tenant"},
+          "503": {"description": "Feature disabled or PostgreSQL schema unavailable"}
+        }
+      }
+    },
     "/v1/alerts/views": {
       "get": {
         "operationId": "listAlertViews",

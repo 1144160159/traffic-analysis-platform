@@ -32,7 +32,7 @@
     {
       "domain": "rest_contract_authority",
       "path": "contracts/openapi/alignment-v1.openapi.json",
-      "sha256": "5b51f5404da6644931959e75230654e55225dae486d6a6edef99694cd7ed5506"
+      "sha256": "608c229984c26da9a8e05ff908590558038a07f4f4a82d78cfad11fe55255f4a"
     },
     {
       "domain": "route_action_api_scope_inventory",
@@ -60,7 +60,7 @@
     "canonical_feature_ids": 54,
     "formal_contracts": 38,
     "formal_contracts_valid": 38,
-    "formal_contracts_openapi_bound": 25,
+    "formal_contracts_openapi_bound": 26,
     "non_draft_openapi_binding_gaps": [],
     "standard_scope_features": 38,
     "standard_scope_formal_contracts": 38,
@@ -623,15 +623,15 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-ALERT-004.json",
-        "sha256": "b3a071a4b603cff654b75fdfdfb6739d796987da1013fdc19da60e48c76b629a",
+        "sha256": "aa6837ec97c0e4c26cff2adf5f81650b60bc40a7ff256230b269175739b1051e",
         "contract_version": 1,
-        "status": "draft",
+        "status": "verifying",
         "operation_id": "createAlertBatchAssignment",
         "api_method": "POST",
         "api_path": "/v1/alerts/batches/assign",
-        "openapi_binding_status": "MISSING",
-        "openapi_bound_operation_id": null,
-        "openapi_bound_feature_id": null,
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createAlertBatchAssignment",
+        "openapi_bound_feature_id": "F-ALERT-004",
         "required_scopes": [
           "alert:write"
         ],
@@ -1898,5 +1898,5 @@
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "8f7ccd59dbf62fd984600309430b7b4aa526396569e16c4a8b48ce1b34df7965"
+  "catalog_sha256": "4df5825dde757822de887c3bf310b9d6c249de84d7981a9c43b38c143416d359"
 }

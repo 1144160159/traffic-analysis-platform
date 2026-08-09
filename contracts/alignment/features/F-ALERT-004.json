@@ -1,7 +1,7 @@
 {
   "feature_id": "F-ALERT-004",
   "contract_version": 1,
-  "status": "draft",
+  "status": "verifying",
   "compatibility": {
     "preserved_routes": ["/alerts"],
     "preserved_actions": [],
@@ -11,7 +11,7 @@
   },
   "ui": {
     "query_id": "alert.batch-assignment.job",
-    "controls": [],
+    "controls": [{"control_id": "alert-batch-assign", "action_id": "alert-batch-assignment-create"}],
     "states": ["loading", "accepted", "running", "success", "partial", "failed", "cancelled"]
   },
   "api": {
@@ -36,7 +36,7 @@
   "data": {
     "authoritative_store": "postgresql",
     "read_models": ["postgresql", "opensearch"],
-    "migration": "additive alert_assignment_batches, alert_assignment_batch_items, history, outbox and idempotency receipt migration required",
+    "migration": "deployments/postgres/migrations/202608091900_alert_batch_assignment_v1.sql",
     "event_types": ["alert.batch-assignment.requested.v1", "alert.assignment.changed.v1"],
     "source_watermarks": ["postgresql.alert_assignment_batches.revision", "postgresql.alert_assignment_batch_items.revision", "opensearch.alerts.projection_version"]
   },

@@ -1129,6 +1129,24 @@ func main() {
 
 	// 注册 API 路由
 	apiHandler.RegisterRoutes(apiRouter)
+	alertBatchAssignmentEnabled := getBoolEnv("ALERT_BATCH_ASSIGNMENT_V1_ENABLED", false) && !readOnlyVerificationMode
+	if alertBatchAssignmentEnabled && db == nil {
+		logger.Fatal("Alert batch assignment requires PostgreSQL")
+	}
+	alertBatchSelectionSigningSecret := strings.TrimSpace(os.Getenv("ALERT_BATCH_SELECTION_SIGNING_SECRET"))
+	if alertBatchAssignmentEnabled && len(alertBatchSelectionSigningSecret) < 32 {
+		logger.Fatal("ALERT_BATCH_SELECTION_SIGNING_SECRET must contain at least 32 bytes when alert batch assignment is enabled")
+	}
+	alertBatchAssignmentHandler := api.NewAlertBatchAssignmentHandler(db, logger, alertBatchAssignmentEnabled, alertBatchSelectionSigningSecret)
+	if alertBatchAssignmentEnabled {
+		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		err = alertBatchAssignmentHandler.VerifySchema(verifyCtx)
+		cancelVerify()
+		if err != nil {
+			logger.Fatal("Alert batch assignment schema is unavailable", zap.Error(err))
+		}
+	}
+	alertBatchAssignmentHandler.RegisterRoutes(apiRouter)
 
 	// Dashboard API — 实时统计 (Web UI 大屏)
 	dashboardHandler := api.NewDashboardHandler(chClient, logger)
