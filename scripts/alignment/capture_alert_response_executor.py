@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Capture immutable scoped evidence for the F-ALERT-003 response executor.
 
-The capture is deliberately limited to G1.  It uses an explicitly named,
-sentinel-protected PostgreSQL container and a loopback ``httptest`` provider;
-it does not claim a release-candidate deployment, real Kafka offsets,
-production performance, browser acceptance, or rollout observation.
+The capture is deliberately limited to G1. It uses an explicitly named,
+sentinel-protected PostgreSQL container, a loopback ``httptest`` provider and
+a fixed-digest owned single-broker Redpanda preflight. It does not claim a
+release-candidate deployment, replicated Kafka/HA, production performance,
+browser acceptance, or rollout observation.
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ SOURCE_ARTIFACTS = (
     "scripts/alignment/verify_playbook_schema_entrypoints.py",
     "scripts/alignment/verify_pg_transaction_outbox.py",
     "scripts/alignment/verify_kafka_dlq_commit_barrier.py",
+    "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py",
     "scripts/alignment/inventory_pg_mutations.py",
     "scripts/alignment/check_event_catalog.py",
     "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
@@ -40,6 +42,7 @@ SOURCE_ARTIFACTS = (
     "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
     "go/control-plane/internal/alert/consumer/alert_response_recovery_worker.go",
     "go/control-plane/internal/alert/consumer/alert_response_recovery_worker_integration_test.go",
+    "go/control-plane/internal/alert/consumer/alert_response_real_kafka_integration_test.go",
     "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
     "go/control-plane/internal/alert/consumer/alert_response_event_consumer_test.go",
     "go/control-plane/internal/alert/consumer/alert_response_event_consumer_integration_test.go",
@@ -194,6 +197,7 @@ def main() -> int:
     unit_environment = base_environment.copy()
     unit_environment.pop(POSTGRES_ENV, None)
     integration_environment = base_environment.copy()
+    real_kafka_result_path = output / "owned-real-kafka-result.json"
 
     commands: tuple[tuple[str, list[str], dict[str, str], bool], ...] = (
         (
@@ -290,6 +294,19 @@ def main() -> int:
             True,
         ),
         (
+            "owned-real-kafka-dlq-precommit",
+            [
+                "python3",
+                "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py",
+                "--run-id",
+                args.run_id + "-real-kafka",
+                "--output",
+                str(real_kafka_result_path),
+            ],
+            unit_environment,
+            True,
+        ),
+        (
             "strict-registry",
             ["python3", "scripts/alignment/validate.py", "--strict-w1"],
             unit_environment,
@@ -351,6 +368,44 @@ def main() -> int:
         "--- PASS: TestAlertResponseCompensationQueuePostgresIntegration"
         in compensation_text
     )
+    real_kafka_result: dict[str, Any] | None = None
+    if real_kafka_result_path.is_file():
+        try:
+            real_kafka_result = json.loads(
+                real_kafka_result_path.read_text(encoding="utf-8")
+            )
+        except json.JSONDecodeError:
+            real_kafka_result = None
+    integration_facts.update(
+        {
+            "owned_real_kafka_required_acks_all_passed": bool(
+                real_kafka_result and real_kafka_result.get("required_acks_all_verified")
+            ),
+            "owned_real_kafka_dlq_ack_failure_retained_offset_passed": bool(
+                real_kafka_result
+                and real_kafka_result.get("dlq_ack_failure_offset_retention_verified")
+            ),
+            "owned_real_kafka_poison_redelivery_passed": bool(
+                real_kafka_result and real_kafka_result.get("poison_redelivery_verified")
+            ),
+            "owned_real_kafka_canonical_dlq_passed": bool(
+                real_kafka_result and real_kafka_result.get("canonical_dlq_payload_verified")
+            ),
+            "owned_real_kafka_pg_receipt_audit_passed": bool(
+                real_kafka_result
+                and real_kafka_result.get("source_offset_dlq_postgres_audit_verified")
+            ),
+            "owned_real_kafka_group_offset_converged_passed": bool(
+                real_kafka_result
+                and real_kafka_result.get("broker_group_commit_verified")
+            ),
+            "owned_real_kafka_containers_removed": bool(
+                real_kafka_result
+                and real_kafka_result.get("postgres_container_removed")
+                and real_kafka_result.get("kafka_container_removed")
+            ),
+        }
+    )
     schema_log = output / "schema-entrypoints.log"
     schema_result: dict[str, Any] | None = None
     if schema_log.is_file():
@@ -396,10 +451,25 @@ def main() -> int:
         "feature_id": "F-ALERT-003",
         "related_ids": ["T-PG-002", "T-KAFKA-001", "T-KAFKA-003", "T-SCHEMA-001"],
         "status": "PARTIAL" if scoped_pass else "FAIL",
-        "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_DLQ_AUTHORITY_RECHECK_AND_COMPENSATION_G1",
+        "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_REDPANDA_LOOPBACK_HTTP_PROVIDER_DLQ_AUTHORITY_RECHECK_AND_COMPENSATION_G1",
         "scoped_evidence_status": "PASS" if scoped_pass else "FAIL",
         "candidate_source": candidate_before,
         "candidate_source_stable": candidate_stable,
+        "owned_real_kafka_result": (
+            {
+                "path": str(real_kafka_result_path.relative_to(ROOT)),
+                "sha256": sha256(real_kafka_result_path),
+                "status": real_kafka_result.get("status"),
+                "coverage_status": real_kafka_result.get("coverage_status"),
+                "single_broker_owned_preflight": real_kafka_result.get(
+                    "single_broker_owned_preflight"
+                ),
+                "broker_group_offset": real_kafka_result.get("broker_group_offset"),
+                "production_applied": real_kafka_result.get("production_applied"),
+            }
+            if real_kafka_result and real_kafka_result_path.is_file()
+            else None
+        ),
         "g0_reference": {
             "run_id": g0.get("run_id"),
             "manifest": str(g0_manifest.relative_to(ROOT)),
@@ -409,7 +479,7 @@ def main() -> int:
         },
         "gate_status": {
             "G0": "PASS" if scoped_pass else "FAIL",
-            "G1": "PASS_FOR_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_DLQ_AUTHORITY_RECHECK_AND_COMPENSATION",
+            "G1": "PASS_FOR_OWNED_REAL_POSTGRES_REDPANDA_LOOPBACK_HTTP_PROVIDER_DLQ_AUTHORITY_RECHECK_AND_COMPENSATION",
             "G2": "OPEN_FOR_APPROVED_RELEASE_CANDIDATE_POSTGRESQL_KAFKA_AND_PROVIDER",
             "G3": "OPEN_FOR_SAME_TRACE_EVENT_OFFSET_RECEIPT_AUDIT_AND_PROVIDER_EFFECT_RECONCILIATION",
             "G4": "OPEN_FOR_APPROVED_PERFORMANCE_FAULT_AND_RECOVERY_BUDGET",
@@ -433,12 +503,13 @@ def main() -> int:
             "the alert-domain poison receipt and quarantine audit commit atomically by immutable source topic partition and offset after a permanent processing failure",
             "partial unknown execution effects enter a bounded PostgreSQL queue whose worker only calls exact provider authority lookup and atomically reconciles receipt action audit and immutable attempt history",
             "a catalogued compensation request commits control request queue action revision and audit atomically; a transport-ambiguous inverse is submitted once and every later lease uses authority lookup only",
+            "an owned fixed-digest single-broker Redpanda rejects an invalid DLQ target without advancing the alert-response source offset then the same group redelivers and commits at offset one only after canonical dlq.v1 acknowledgement plus one PostgreSQL source-tuple receipt and quarantine audit",
             "common Docker-merged and Kubernetes PostgreSQL schema entrypoints replay twice to one structural digest and register migrations 202608091130 202608091230 and 202608091500",
             "execution authority-recheck and compensation feature flags remain default-off and the rollback runbook preserves receipts queues and unknown effects",
         ],
         "open": [
-            "prove DLQ acknowledgement failure source-offset retention redelivery and the alert-domain PostgreSQL receipt barrier against owned and approved Kafka",
-            "exercise the production producer consumer group source offsets replay and DLQ boundaries on owned real Redpanda or Kafka",
+            "repeat the alert-response DLQ acknowledgement failure source-offset retention redelivery and PostgreSQL barrier against the approved replicated release-candidate Kafka; the owned single-broker G1 is not G2 or HA evidence",
+            "exercise the production producer consumer group source offsets replay and DLQ boundaries on the approved release-candidate Kafka",
             "run the exact release candidate against approved PostgreSQL Kafka and response provider services",
             "reconcile the same tenant trace event aggregate revision source offset receipt effect identity and audit across approved services",
             "record approved performance fault recovery and resource budgets",
