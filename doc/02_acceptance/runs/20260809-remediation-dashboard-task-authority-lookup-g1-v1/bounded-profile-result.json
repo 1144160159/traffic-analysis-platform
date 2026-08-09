@@ -1,0 +1,120 @@
+{
+  "approved_release_candidate": false,
+  "checks": {
+    "consumer_cold_start_below_owned_ceiling": true,
+    "create_p99_below_owned_ceiling": true,
+    "durable_facts_exact": true,
+    "end_to_end_p99_below_owned_ceiling": true,
+    "goroutine_growth_below_owned_ceiling": true,
+    "heap_growth_below_owned_ceiling": true,
+    "kafka_final_lag_zero": true,
+    "provider_idempotency_exact": true,
+    "provider_p99_below_owned_ceiling": true,
+    "queue_p99_below_owned_ceiling": true,
+    "retry_amplification_bounded": true,
+    "sample_count_exact": true,
+    "terminal_oracle_exact": true,
+    "wall_time_below_owned_ceiling": true
+  },
+  "coverage_status": "OWNED_BOUNDED_POSTGRES_REDPANDA_HTTP_G4_PREFLIGHT_NOT_APPROVED_G4",
+  "fault_oracle": {
+    "unknown_connection_loss": 4,
+    "unknown_timeout_with_external_effect": 4
+  },
+  "metrics": {
+    "consumer_cold_start_ms": 5219.73,
+    "create_api": {
+      "count": 40,
+      "min_ms": 2.618,
+      "p50_ms": 2.758,
+      "p95_ms": 2.899,
+      "p99_ms": 6.722,
+      "max_ms": 6.722
+    },
+    "end_to_end": {
+      "count": 40,
+      "min_ms": 890.886,
+      "p50_ms": 1036.619,
+      "p95_ms": 1179.341,
+      "p99_ms": 1205.655,
+      "max_ms": 1205.655
+    },
+    "goroutine_growth": -7,
+    "goroutines_after": 11,
+    "goroutines_before": 18,
+    "heap_alloc_after_bytes": 3783168,
+    "heap_alloc_before_bytes": 3353656,
+    "heap_growth_bytes": 429512,
+    "kafka_committed_offset": 81,
+    "kafka_end_offset": 82,
+    "kafka_final_lag": 0,
+    "peak_queue_depth": 40,
+    "profile_wall_ms": 1448.103,
+    "provider_calls": 43,
+    "provider_external_effects": 36,
+    "provider_request": {
+      "count": 43,
+      "min_ms": 0.018,
+      "p50_ms": 0.035,
+      "p95_ms": 120.069,
+      "p99_ms": 121.032,
+      "max_ms": 121.032
+    },
+    "provider_unique_commands": 40,
+    "queue_wait": {
+      "count": 40,
+      "min_ms": 123.296,
+      "p50_ms": 182.608,
+      "p95_ms": 245.859,
+      "p99_ms": 253.336,
+      "max_ms": 253.336
+    },
+    "result_propagation": {
+      "count": 40,
+      "min_ms": 238.139,
+      "p50_ms": 390.934,
+      "p95_ms": 557.245,
+      "p99_ms": 562.427,
+      "max_ms": 562.427
+    },
+    "retry_amplification": 1.075,
+    "terminal": {
+      "count": 40,
+      "min_ms": 371.365,
+      "p50_ms": 632.38,
+      "p95_ms": 928.18,
+      "p99_ms": 956.726,
+      "max_ms": 956.726
+    },
+    "throughput_tasks_per_second": 27.622329836471366
+  },
+  "production_applied": false,
+  "sample_count": 40,
+  "schema_version": 1,
+  "secrets_captured": false,
+  "status": "PASS",
+  "stop_conditions": {
+    "max_consumer_cold_start_ms": 10000,
+    "max_create_p99_ms": 1000,
+    "max_end_to_end_p99_ms": 15000,
+    "max_goroutine_growth": 32,
+    "max_heap_growth_bytes": 134217728,
+    "max_provider_p99_ms": 1000,
+    "max_queue_p99_ms": 5000,
+    "max_retry_amplification": 1.5,
+    "max_wall_ms": 30000,
+    "required_duplicate_effects": 0,
+    "required_final_kafka_lag": 0
+  },
+  "task_states": {
+    "completed": 32,
+    "partial": 8
+  },
+  "threshold_source": "OWNED_PREFLIGHT_CEILING_NOT_PRODUCTION_SLO",
+  "workload": {
+    "connection_loss": 4,
+    "fast": 24,
+    "provider_timeout_50ms": 4,
+    "slow_25ms": 8
+  }
+}

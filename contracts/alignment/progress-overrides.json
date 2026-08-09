@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T00:40:27Z",
+  "updated_at": "2026-08-09T01:20:15Z",
   "overrides": {
     "F-COMMON-001": {
       "status": "IMPLEMENTING",
@@ -161,6 +161,7 @@
         "scripts/alignment/capture_dashboard_task_pipeline.py",
         "scripts/alignment/verify_dashboard_task_real_components_ephemeral.py",
         "tests/alignment/test_dashboard_task_real_components_ephemeral_guard.py",
+        "rust/probe-agent/tests/online_capture_test.rs",
         "doc/07_alignment/runbooks/F-DASHBOARD-002-rollback.md",
         "doc/02_acceptance/runs/20260803-remediation-g0-full-v106/manifest.json#sha256=77446bb055128cb5568c25db0186db40613855acc5f1464f27ca273c4ccfd63c",
         "doc/02_acceptance/runs/20260803-remediation-pg-transaction-outbox-v12/manifest.json#sha256=b0734531bed9e03c3015ea461f7ef3c7b64be30bf9695025e94af12628d17974",
@@ -174,10 +175,13 @@
         "doc/02_acceptance/runs/20260808-remediation-g0-full-v205/manifest.json#sha256=c5c8da119b613a58ed01094e67a183e5c04a4b2ef8d20fa138b154608b2b945d",
         "doc/02_acceptance/runs/20260808-remediation-dashboard-task-real-components-g1-v3/manifest.json#sha256=0915637a98db9183f317093b5a378353b251a8b1cadb0ee0ae1376f958c5fa74",
         "doc/02_acceptance/runs/20260808-remediation-g0-full-v206/manifest.json#sha256=59a9bad9bdedbbef44c38b22af5051a998cd19593ab899db2a4f20f23d48afdd",
-        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-real-components-g1-g4-preflight-v1/manifest.json#sha256=04cf41e43527c227eee092db1745bef12200581587208320563a7cec713201db"
+        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-real-components-g1-g4-preflight-v1/manifest.json#sha256=04cf41e43527c227eee092db1745bef12200581587208320563a7cec713201db",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v207/manifest.json#sha256=12bb1dfbc610a6a49cd7c26f2b21fa6d48c47eb867333eebf96ff3f9a6365f5f",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v208/manifest.json#sha256=e61950a66587374da1a0ee8190f7576cdd4536b77f493958a8b5e29070a7a55f",
+        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-authority-lookup-g1-v1/manifest.json#sha256=88c78603121e6aeb082d2fdeddec51a90fdd71322f4bd366be677d5cce8479ba"
       ],
-      "blocker": "历史已部署候选和指定Windows Chrome仍只证明真实202受理，outbox为pending且pipeline关闭。v206同源码自有G1继续用固定摘要PostgreSQL和Redpanda、生产kafka-go producer/consumer及真实loopback HTTP执行/补偿provider证明RequireAll ACK、consumer group重启、精确broker重放、幂等副作用和传输不确定态，并新增资源限额下40任务的G4前置画像；但这不是批准候选环境或批准G4。批准服务中的发布消费、真实broker毒消息/DLQ、提供方权威幂等查询与丢响应恢复、每操作trace跨链对账、批准预算校准、至少三轮固定规模与方差、持续队列年龄、执行与补偿性能、Windows Chrome补偿控件、canary、在途回滚和T+观察仍未完成，F-DASHBOARD-002保持IMPLEMENTING。",
-      "note": "F-DASHBOARD-002新增同哈希自有G4前置画像：G0 v206三段PASS，专项十项范围检查PASS。40个稳态任务中32个完成，4个连接丢失和4个50ms超时均保持partial；consumer冷启动5221.709ms单列，队列P99=250.36ms、provider P99=121.094ms、端到端P99=1156.161ms、吞吐27.886 task/s、调用放大1.05、最终Kafka lag=0。PG与Redpanda分别受512MiB/1CPU和1GiB/2CPU限制，两个正确性容器和两个画像容器均删除，production_applied=false；阈值来源明确为OWNED_PREFLIGHT_CEILING_NOT_PRODUCTION_SLO，不冒充批准G4、G2-G6、补偿UI或最终成功。"
+      "blocker": "历史已部署候选和指定Windows Chrome仍只证明真实202受理，outbox为pending且pipeline关闭。v208同源码自有G1已用固定摘要PostgreSQL和Redpanda、生产kafka-go producer/consumer及真实loopback HTTP执行/补偿provider证明RequireAll ACK、consumer group重启、精确broker重放、幂等副作用、传输不确定态，以及执行与补偿丢响应后的完整身份权威查询和原子审计恢复；但这不是批准候选环境或批准G2/G3/G4。批准服务中的发布消费、真实broker毒消息/DLQ、批准provider ledger复证、每操作trace跨存储对账、批准预算校准、至少三轮固定规模与方差、持续队列年龄、执行与补偿性能、Windows Chrome补偿控件、canary、在途回滚和T+观察仍未完成，F-DASHBOARD-002保持IMPLEMENTING。",
+      "note": "G0 v207如实保留Rust在线抓包测试在共享loopback接口上的并发竞态失败；仅将共享真实接口测试串行化、保持生产抓包代码和原断言不变后，G0 v208三段分别PASS。v208同源码专项十项范围检查PASS：执行与补偿丢响应只有在provider返回receipt_found且request_event_id、tenant_id、task_id、idempotency_key、trace_id和provider身份全部匹配、耐久回执有效时才能恢复；pending、absent、unknown和查询失败继续保持partial/unknown，跨origin配置失败关闭，恢复事实与任务结果、历史和审计在同一PG事务提交。40个稳态任务仍为32个完成、8个partial；consumer冷启动5219.73ms单列，队列P99=253.336ms、provider P99=121.032ms、端到端P99=1205.655ms、吞吐27.622 task/s、调用放大1.075、最终Kafka lag=0。容器均删除且production_applied=false；阈值来源仍为OWNED_PREFLIGHT_CEILING_NOT_PRODUCTION_SLO，不冒充批准G4、G2-G6、补偿UI或最终成功。"
     },
     "F-DATAQUALITY-001": {
       "status": "IMPLEMENTING",

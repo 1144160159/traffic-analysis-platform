@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "run_id": "20260809-remediation-dashboard-task-authority-lookup-g1-v1-bounded-profile",
+  "status": "PASS",
+  "mode": "bounded-profile",
+  "coverage_status": "OWNED_BOUNDED_POSTGRES_REDPANDA_HTTP_G4_PREFLIGHT_NOT_APPROVED_G4",
+  "postgres_container": "codex-dashboard-real-components-pg-7e14665f0ed2",
+  "kafka_container": "codex-dashboard-real-components-broker-7e14665f0ed2",
+  "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+  "kafka_image": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+  "postgres_image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+  "kafka_image_id": "sha256:7d60ffd7d82a80a25826b8aacf2698e78cb9d7f7312dea56b0e7e962b39f1c50",
+  "topic": "dashboard.task.events.v1",
+  "topic_partitions": 1,
+  "schema_files": 15,
+  "postgres_sentinel_verified": true,
+  "kafka_sentinel_verified": true,
+  "required_acks_all_verified": true,
+  "durable_inbox_verified": true,
+  "consumer_restart_replay_verified": false,
+  "out_of_order_authority_rejection_verified": false,
+  "http_execution_provider_verified": true,
+  "http_compensation_provider_verified": false,
+  "provider_idempotency_verified": true,
+  "execution_transport_ambiguity_verified": true,
+  "compensation_transport_ambiguity_verified": false,
+  "execution_authority_lookup_recovery_verified": false,
+  "compensation_authority_lookup_recovery_verified": false,
+  "authority_lookup_atomic_audit_verified": false,
+  "tenant_isolation_verified": false,
+  "same_trace_reconciliation_verified": false,
+  "bounded_profile_verified": true,
+  "bounded_profile": {
+    "approved_release_candidate": false,
+    "checks": {
+      "consumer_cold_start_below_owned_ceiling": true,
+      "create_p99_below_owned_ceiling": true,
+      "durable_facts_exact": true,
+      "end_to_end_p99_below_owned_ceiling": true,
+      "goroutine_growth_below_owned_ceiling": true,
+      "heap_growth_below_owned_ceiling": true,
+      "kafka_final_lag_zero": true,
+      "provider_idempotency_exact": true,
+      "provider_p99_below_owned_ceiling": true,
+      "queue_p99_below_owned_ceiling": true,
+      "retry_amplification_bounded": true,
+      "sample_count_exact": true,
+      "terminal_oracle_exact": true,
+      "wall_time_below_owned_ceiling": true
+    },
+    "coverage_status": "OWNED_BOUNDED_POSTGRES_REDPANDA_HTTP_G4_PREFLIGHT_NOT_APPROVED_G4",
+    "fault_oracle": {
+      "unknown_connection_loss": 4,
+      "unknown_timeout_with_external_effect": 4
+    },
+    "metrics": {
+      "consumer_cold_start_ms": 5219.73,
+      "create_api": {
+        "count": 40,
+        "min_ms": 2.618,
+        "p50_ms": 2.758,
+        "p95_ms": 2.899,
+        "p99_ms": 6.722,
+        "max_ms": 6.722
+      },
+      "end_to_end": {
+        "count": 40,
+        "min_ms": 890.886,
+        "p50_ms": 1036.619,
+        "p95_ms": 1179.341,
+        "p99_ms": 1205.655,
+        "max_ms": 1205.655
+      },
+      "goroutine_growth": -7,
+      "goroutines_after": 11,
+      "goroutines_before": 18,
+      "heap_alloc_after_bytes": 3783168,
+      "heap_alloc_before_bytes": 3353656,
+      "heap_growth_bytes": 429512,
+      "kafka_committed_offset": 81,
+      "kafka_end_offset": 82,
+      "kafka_final_lag": 0,
+      "peak_queue_depth": 40,
+      "profile_wall_ms": 1448.103,
+      "provider_calls": 43,
+      "provider_external_effects": 36,
+      "provider_request": {
+        "count": 43,
+        "min_ms": 0.018,
+        "p50_ms": 0.035,
+        "p95_ms": 120.069,
+        "p99_ms": 121.032,
+        "max_ms": 121.032
+      },
+      "provider_unique_commands": 40,
+      "queue_wait": {
+        "count": 40,
+        "min_ms": 123.296,
+        "p50_ms": 182.608,
+        "p95_ms": 245.859,
+        "p99_ms": 253.336,
+        "max_ms": 253.336
+      },
+      "result_propagation": {
+        "count": 40,
+        "min_ms": 238.139,
+        "p50_ms": 390.934,
+        "p95_ms": 557.245,
+        "p99_ms": 562.427,
+        "max_ms": 562.427
+      },
+      "retry_amplification": 1.075,
+      "terminal": {
+        "count": 40,
+        "min_ms": 371.365,
+        "p50_ms": 632.38,
+        "p95_ms": 928.18,
+        "p99_ms": 956.726,
+        "max_ms": 956.726
+      },
+      "throughput_tasks_per_second": 27.622329836471366
+    },
+    "production_applied": false,
+    "sample_count": 40,
+    "schema_version": 1,
+    "secrets_captured": false,
+    "status": "PASS",
+    "stop_conditions": {
+      "max_consumer_cold_start_ms": 10000,
+      "max_create_p99_ms": 1000,
+      "max_end_to_end_p99_ms": 15000,
+      "max_goroutine_growth": 32,
+      "max_heap_growth_bytes": 134217728,
+      "max_provider_p99_ms": 1000,
+      "max_queue_p99_ms": 5000,
+      "max_retry_amplification": 1.5,
+      "max_wall_ms": 30000,
+      "required_duplicate_effects": 0,
+      "required_final_kafka_lag": 0
+    },
+    "task_states": {
+      "completed": 32,
+      "partial": 8
+    },
+    "threshold_source": "OWNED_PREFLIGHT_CEILING_NOT_PRODUCTION_SLO",
+    "workload": {
+      "connection_loss": 4,
+      "fast": 24,
+      "provider_timeout_50ms": 4,
+      "slow_25ms": 8
+    }
+  },
+  "container_resource_limits": {
+    "postgres": {
+      "memory": "512m",
+      "cpus": "1"
+    },
+    "redpanda": {
+      "memory": "1g",
+      "cpus": "2"
+    }
+  },
+  "container_resource_snapshots": {
+    "postgres": {
+      "cpu_percent": "0.01%",
+      "memory_usage": "33.73MiB / 512MiB",
+      "memory_percent": "6.59%",
+      "network_io": "997kB / 529kB",
+      "block_io": "0B / 177MB",
+      "pids": "6",
+      "measurement": "post_workload_single_snapshot_not_capacity_evidence"
+    },
+    "redpanda": {
+      "cpu_percent": "0.12%",
+      "memory_usage": "179.9MiB / 1GiB",
+      "memory_percent": "17.57%",
+      "network_io": "190kB / 166kB",
+      "block_io": "57.3kB / 1.58MB",
+      "pids": "3",
+      "measurement": "post_workload_single_snapshot_not_capacity_evidence"
+    }
+  },
+  "loopback_only": true,
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "postgres_container_removed": true,
+  "kafka_container_removed": true,
+  "test_output": "=== RUN   TestDashboardTaskBoundedPerformanceProfile\n    dashboard_task_bounded_profile_integration_test.go:375: dashboard_bounded_profile=pass samples=40 wall_ms=1448.103 throughput=27.622 retry_amplification=1.075 kafka_lag=0 end_to_end_p99_ms=1205.655\n--- PASS: TestDashboardTaskBoundedPerformanceProfile (6.68s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api\t6.696s",
+  "errors": [],
+  "secrets_captured": false
+}
