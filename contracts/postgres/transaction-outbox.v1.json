@@ -410,6 +410,7 @@
         "alert_response_outbox",
         "alert_response_approvals",
         "alert_response_execution_receipts",
+        "alert_response_dlq_receipts",
         "audit_logs"
       ],
       "isolation": "stable_event_identity_with_provider_idempotency_and_atomic_postgres_terminal_receipt",
@@ -449,6 +450,23 @@
         "effect_state",
         "LookupAlertResponseExecution",
         "receipt_found"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
+      "operation_start": "func (projection *PostgresAlertResponseProjection) RecordDLQAcknowledgement",
+      "required": [
+        "sql.LevelSerializable",
+        "INSERT INTO alert_response_dlq_receipts",
+        "ALERT_RESPONSE_EVENT_QUARANTINED",
+        "source_offset_commit_pending",
+        "INSERT INTO audit_logs",
+        "tx.Commit()"
+      ],
+      "ordered": [
+        "INSERT INTO alert_response_dlq_receipts",
+        "INSERT INTO audit_logs",
+        "tx.Commit()"
       ]
     },
     {
@@ -1673,6 +1691,21 @@
       "sources": [
         "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
         "common/sql/pg/15-alert-response-external-executor-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "alert_response_dlq_receipt_v1",
+      "tokens": [
+        "202608091230",
+        "alert_response_dlq_receipts",
+        "idx_alert_response_dlq_receipts_tenant_trace",
+        "idx_alert_response_dlq_receipts_event"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
+        "common/sql/pg/16-alert-response-dlq-receipt-v1.sql",
         "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
         "go/control-plane/deployments/docker/init/postgres_merged.sql"
       ]

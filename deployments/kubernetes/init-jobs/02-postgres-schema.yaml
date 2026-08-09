@@ -3109,6 +3109,34 @@ data:
     CREATE INDEX IF NOT EXISTS idx_alert_response_receipts_trace ON alert_response_execution_receipts(tenant_id,trace_id,executed_at DESC) WHERE trace_id<>'';
     INSERT INTO alignment_schema_migrations(version,description) VALUES ('202608091130','provider authoritative alert response execution receipts and audit') ON CONFLICT (version) DO NOTHING;
     COMMIT;
+  31-alert-response-dlq-receipt-v1.sql: |
+    -- F-ALERT-003 / T-KAFKA-003: durable alert-response poison-event receipt.
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS alert_response_dlq_receipts (
+      source_topic TEXT NOT NULL CHECK (source_topic = 'alert.response.requested.v1'),
+      source_partition INTEGER NOT NULL CHECK (source_partition >= 0),
+      source_offset BIGINT NOT NULL CHECK (source_offset >= 0),
+      dlq_topic TEXT NOT NULL CHECK (dlq_topic = 'dlq.v1'),
+      event_id TEXT NOT NULL DEFAULT '', tenant_id TEXT NOT NULL DEFAULT '',
+      job_id TEXT NOT NULL DEFAULT '', alert_id TEXT NOT NULL DEFAULT '',
+      action_id TEXT NOT NULL DEFAULT '', aggregate_version BIGINT CHECK (aggregate_version > 0),
+      trace_id TEXT NOT NULL DEFAULT '',
+      error_code TEXT NOT NULL CHECK (error_code <> ''), error_message TEXT NOT NULL DEFAULT '',
+      payload_sha256 TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      headers_sha256 TEXT NOT NULL CHECK (headers_sha256 ~ '^[0-9a-f]{64}$'),
+      headers JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(headers) = 'object'),
+      acknowledged_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (source_topic,source_partition,source_offset)
+    );
+    CREATE INDEX IF NOT EXISTS idx_alert_response_dlq_receipts_tenant_trace
+      ON alert_response_dlq_receipts (tenant_id,trace_id,acknowledged_at DESC)
+      WHERE tenant_id <> '' AND trace_id <> '';
+    CREATE INDEX IF NOT EXISTS idx_alert_response_dlq_receipts_event
+      ON alert_response_dlq_receipts (event_id,acknowledged_at DESC) WHERE event_id <> '';
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608091230','alert response DLQ acknowledgement PostgreSQL and audit barrier')
+    ON CONFLICT (version) DO NOTHING;
+    COMMIT;
 ---
 apiVersion: batch/v1
 kind: Job
@@ -3135,7 +3163,7 @@ spec:
           set -euo pipefail
           echo "Initializing PostgreSQL schema..."
           cd /sql
-          for f in 00-init.sql 01-assets.sql 02-features-rules.sql 03-models-deploy.sql 04-tasks-audit.sql 05-default-data.sql 06-graph.sql 07-campaign-impact-assets.sql 08-alert-campaign-links.sql 09-alert-report-jobs.sql 10-campaign-event-projection-v2.sql 11-campaign-soar-workflow.sql 12-playbook-execution-v2.sql 13-playbook-event-pipeline-v2.sql 14-alert-saved-view-transaction-v2.sql 15-notification-rule-transaction-v2.sql 16-probe-registry-atomic.sql 17-threat-intel-command-atomic.sql 18-forensics-task-atomic.sql 19-whitelist-governance-v2.sql 20-dashboard-task-v2.sql 21-alert-opensearch-projection-reconcile-v1.sql 22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql; do
+          for f in 00-init.sql 01-assets.sql 02-features-rules.sql 03-models-deploy.sql 04-tasks-audit.sql 05-default-data.sql 06-graph.sql 07-campaign-impact-assets.sql 08-alert-campaign-links.sql 09-alert-report-jobs.sql 10-campaign-event-projection-v2.sql 11-campaign-soar-workflow.sql 12-playbook-execution-v2.sql 13-playbook-event-pipeline-v2.sql 14-alert-saved-view-transaction-v2.sql 15-notification-rule-transaction-v2.sql 16-probe-registry-atomic.sql 17-threat-intel-command-atomic.sql 18-forensics-task-atomic.sql 19-whitelist-governance-v2.sql 20-dashboard-task-v2.sql 21-alert-opensearch-projection-reconcile-v1.sql 22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql; do
             echo "  Running $f..."
             psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -f "/sql/$f"
           done

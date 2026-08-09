@@ -90,49 +90,50 @@ func (consumer *AlertResponseEventConsumer) handle(
 	message *commonkafka.ReceivedMessage,
 ) error {
 	if message == nil {
-		return fmt.Errorf("alert response Kafka message is nil")
+		return commonkafka.Permanent(fmt.Errorf("alert response Kafka message is nil"))
 	}
 	var event alertResponseRequestedV1
 	decoder := json.NewDecoder(strings.NewReader(string(message.Value)))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&event); err != nil {
-		return fmt.Errorf("decode alert response event: %w", err)
+		return commonkafka.Permanent(fmt.Errorf("decode alert response event: %w", err))
 	}
 	var trailing interface{}
 	if err := decoder.Decode(&trailing); err != io.EOF {
-		return fmt.Errorf("decode alert response trailing data")
+		return commonkafka.Permanent(fmt.Errorf("decode alert response trailing data"))
 	}
 	if event.EventType != "alert.response.requested.v1" ||
 		event.SchemaVersion != 1 || event.AggregateVersion <= 0 {
-		return fmt.Errorf("unsupported alert response event contract")
+		return commonkafka.Permanent(fmt.Errorf("unsupported alert response event contract"))
 	}
 	if _, err := uuid.Parse(event.EventID); err != nil {
-		return fmt.Errorf("invalid alert response event_id")
+		return commonkafka.Permanent(fmt.Errorf("invalid alert response event_id"))
 	}
 	if strings.TrimSpace(event.JobID) == "" || strings.TrimSpace(event.TenantID) == "" ||
 		strings.TrimSpace(event.AlertID) == "" || strings.TrimSpace(event.ActionID) == "" ||
 		strings.TrimSpace(event.Action) == "" || strings.TrimSpace(event.Target) == "" ||
 		strings.TrimSpace(event.Reason) == "" || strings.TrimSpace(event.RequestedBy) == "" ||
 		strings.TrimSpace(event.TraceID) == "" {
-		return fmt.Errorf("incomplete alert response event contract")
+		return commonkafka.Permanent(fmt.Errorf("incomplete alert response event contract"))
 	}
 	if !event.DryRun && event.AggregateVersion >= 2 &&
 		(strings.TrimSpace(event.ApprovedBy) == "" || strings.TrimSpace(event.ApprovalReason) == "" ||
 			event.RequestedBy == event.ApprovedBy) {
-		return fmt.Errorf("real alert response event lacks independent approval authority")
+		return commonkafka.Permanent(fmt.Errorf("real alert response event lacks independent approval authority"))
 	}
 	expectedHeaders := map[string]string{
 		"event_id": event.EventID, "event_type": event.EventType,
 		"schema_version": "1", "aggregate_version": strconv.FormatInt(event.AggregateVersion, 10),
 		"tenant_id": event.TenantID, "alert_id": event.AlertID, "job_id": event.JobID,
+		"action_id": event.ActionID, "trace_id": event.TraceID,
 	}
 	for key, expected := range expectedHeaders {
 		if actual := message.GetHeader(key); actual != expected {
-			return fmt.Errorf("alert response %s header/body mismatch", key)
+			return commonkafka.Permanent(fmt.Errorf("alert response %s header/body mismatch", key))
 		}
 	}
 	if string(message.Key) != event.TenantID+":"+event.JobID {
-		return fmt.Errorf("alert response partition key/body mismatch")
+		return commonkafka.Permanent(fmt.Errorf("alert response partition key/body mismatch"))
 	}
 	input := AlertResponseProjectionInput{
 		EventID: event.EventID, JobID: event.JobID, TenantID: event.TenantID,
@@ -188,12 +189,17 @@ func (projection *PostgresAlertResponseProjection) VerifySchema(ctx context.Cont
 			    (table_name='alert_response_execution_receipts' AND column_name IN
 			      ('event_id','job_id','state','simulated','external_effect','aggregate_version','kafka_partition','kafka_offset',
 			       'provider','provider_receipt_id','effect_state','effect_ids','trace_id','receipt_sha256','authority_lookup','executed_at'))
+			    OR
+			    (table_name='alert_response_dlq_receipts' AND column_name IN
+			      ('source_topic','source_partition','source_offset','dlq_topic','event_id','tenant_id','job_id',
+			       'alert_id','action_id','aggregate_version','trace_id','error_code','error_message',
+			       'payload_sha256','headers_sha256','headers','acknowledged_at'))
 		  )`,
 	).Scan(&columns); err != nil {
 		return fmt.Errorf("verify alert response projection schema: %w", err)
 	}
-	if columns != 23 {
-		return fmt.Errorf("alert response projection schema is incomplete: columns=%d want=23", columns)
+	if columns != 40 {
+		return fmt.Errorf("alert response projection schema is incomplete: columns=%d want=40", columns)
 	}
 	return nil
 }

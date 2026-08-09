@@ -43,7 +43,8 @@ func alertResponseMessage(t *testing.T, dryRun bool) *commonkafka.ReceivedMessag
 		"event_id": event["event_id"].(string), "event_type": event["event_type"].(string),
 		"schema_version": "1", "aggregate_version": "1",
 		"tenant_id": "tenant-a", "alert_id": "alert-1",
-		"job_id": event["job_id"].(string),
+		"job_id": event["job_id"].(string), "action_id": "alert-response-block-ip",
+		"trace_id": "trace-alert-response-test",
 	} {
 		headers = append(headers, segmentkafka.Header{Key: key, Value: []byte(value)})
 	}
@@ -103,6 +104,8 @@ func TestAlertResponseEventConsumerRejectsIdentityMismatch(t *testing.T) {
 	message.Key = []byte("tenant-b:wrong")
 	if err := consumer.handle(context.Background(), message); err == nil {
 		t.Fatal("expected partition identity mismatch")
+	} else if !commonkafka.IsPermanent(err) {
+		t.Fatalf("identity mismatch must be permanently quarantinable: %v", err)
 	}
 	if len(projection.inputs) != 0 {
 		t.Fatal("invalid event reached projection")

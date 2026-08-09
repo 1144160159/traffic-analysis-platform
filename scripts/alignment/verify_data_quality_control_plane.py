@@ -683,7 +683,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
             "24-data-quality-rule-evaluation-v1.sql: |",
             "25-data-quality-repair-lifecycle-v1.sql: |",
             "26-data-quality-replay-projection-v1.sql: |",
-            "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql; do",
+            "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql; do",
         ],
     )
     deployment = read(root, ALERT_DEPLOYMENT)

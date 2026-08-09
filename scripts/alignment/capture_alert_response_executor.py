@@ -32,13 +32,17 @@ SOURCE_ARTIFACTS = (
     "scripts/alignment/capture_alert_response_executor.py",
     "scripts/alignment/verify_playbook_schema_entrypoints.py",
     "scripts/alignment/verify_pg_transaction_outbox.py",
+    "scripts/alignment/verify_kafka_dlq_commit_barrier.py",
     "scripts/alignment/inventory_pg_mutations.py",
     "scripts/alignment/check_event_catalog.py",
     "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
     "go/control-plane/internal/alert/consumer/alert_response_http_executor_test.go",
     "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
+    "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
     "go/control-plane/internal/alert/consumer/alert_response_event_consumer_test.go",
     "go/control-plane/internal/alert/consumer/alert_response_event_consumer_integration_test.go",
+    "go/control-plane/internal/common/kafka/consumer.go",
+    "go/control-plane/internal/common/kafka/consumer_dlq_acknowledgement_barrier_test.go",
     "go/control-plane/internal/alert/api/handler_alert_actions.go",
     "go/control-plane/internal/alert/api/handler_alert_response_workflow.go",
     "go/control-plane/internal/alert/config/config.go",
@@ -47,6 +51,7 @@ SOURCE_ARTIFACTS = (
     "contracts/alignment/feature-contract-registry.v1.json",
     "contracts/events/kafka-json-events-v1.schema.json",
     "contracts/events/kafka-topic-catalog.v1.json",
+    "contracts/kafka/dlq-commit-barrier.v1.json",
     "contracts/postgres/transaction-outbox.v1.json",
     "contracts/postgres/mutable-command-inventory.v1.json",
     "contracts/configuration/configuration-catalog.v1.json",
@@ -54,7 +59,9 @@ SOURCE_ARTIFACTS = (
     "contracts/security/pki-catalog.v1.json",
     "deployments/postgres/migrations/202607302300_alert_response_execution_projection.sql",
     "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
+    "deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
     "common/sql/pg/15-alert-response-external-executor-v1.sql",
+    "common/sql/pg/16-alert-response-dlq-receipt-v1.sql",
     "go/control-plane/deployments/docker/init/postgres_merged.sql",
     "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
     "deployments/kubernetes/applications/go-services.yaml",
@@ -189,7 +196,8 @@ def main() -> int:
             [
                 "go", "-C", "go/control-plane", "test",
                 "./internal/alert/consumer", "./internal/alert/api",
-                "./internal/alert/config", "./cmd/alert-service", "-count=1",
+                "./internal/alert/config", "./internal/common/kafka",
+                "./cmd/alert-service", "-count=1",
             ],
             unit_environment,
             False,
@@ -229,6 +237,12 @@ def main() -> int:
             False,
         ),
         (
+            "kafka-dlq-commit-barrier",
+            ["python3", "scripts/alignment/verify_kafka_dlq_commit_barrier.py"],
+            unit_environment,
+            False,
+        ),
+        (
             "postgres-entrypoint-sync",
             [
                 "python3",
@@ -253,7 +267,7 @@ def main() -> int:
             [
                 "go", "-C", "go/control-plane", "test",
                 "./internal/alert/consumer",
-                "-run", "^TestPostgresAlertResponse(Projection|ExternalExecutor)Integration$",
+                "-run", "^TestPostgresAlertResponse(Projection|ExternalExecutor|DLQAcknowledgement)Integration$",
                 "-count=1", "-v",
             ],
             integration_environment,
@@ -296,6 +310,10 @@ def main() -> int:
         ),
         "loopback_http_provider_receipt_passed": (
             "--- PASS: TestPostgresAlertResponseExternalExecutorIntegration"
+            in integration_text
+        ),
+        "postgres_dlq_receipt_audit_passed": (
+            "--- PASS: TestPostgresAlertResponseDLQAcknowledgementIntegration"
             in integration_text
         ),
     }
@@ -344,7 +362,7 @@ def main() -> int:
         "feature_id": "F-ALERT-003",
         "related_ids": ["T-PG-002", "T-KAFKA-001", "T-KAFKA-003", "T-SCHEMA-001"],
         "status": "PARTIAL" if scoped_pass else "FAIL",
-        "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_G1",
+        "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_AND_DLQ_RECEIPT_G1",
         "scoped_evidence_status": "PASS" if scoped_pass else "FAIL",
         "candidate_source": candidate_before,
         "candidate_source_stable": candidate_stable,
@@ -357,7 +375,7 @@ def main() -> int:
         },
         "gate_status": {
             "G0": "PASS" if scoped_pass else "FAIL",
-            "G1": "PASS_FOR_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER",
+            "G1": "PASS_FOR_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_AND_DLQ_RECEIPT",
             "G2": "OPEN_FOR_APPROVED_RELEASE_CANDIDATE_POSTGRESQL_KAFKA_AND_PROVIDER",
             "G3": "OPEN_FOR_SAME_TRACE_EVENT_OFFSET_RECEIPT_AUDIT_AND_PROVIDER_EFFECT_RECONCILIATION",
             "G4": "OPEN_FOR_APPROVED_PERFORMANCE_FAULT_AND_RECOVERY_BUDGET",
@@ -378,12 +396,13 @@ def main() -> int:
             "the final provider receipt response action state and audit record commit in one PostgreSQL transaction",
             "stable event replay at a different Kafka offset is idempotent and a mismatched aggregate version is rejected",
             "an owned sentinel-protected PostgreSQL 16 database and loopback HTTP provider exercise blocked-no-executor and confirmed-external-effect paths",
-            "common Docker-merged and Kubernetes PostgreSQL schema entrypoints replay twice to one structural digest and register migration 202608091130",
+            "the alert-domain poison receipt and quarantine audit commit atomically by immutable source topic partition and offset after a permanent processing failure",
+            "common Docker-merged and Kubernetes PostgreSQL schema entrypoints replay twice to one structural digest and register migrations 202608091130 and 202608091230",
             "execution and external executor feature flags remain default-off and the rollback runbook preserves receipts and unknown effects",
         ],
         "open": [
             "implement and prove an external compensation executor with durable receipt and exact-identity authority lookup",
-            "add an alert-domain PostgreSQL DLQ acknowledgement receipt and source-offset barrier then prove it against owned and approved Kafka",
+            "prove DLQ acknowledgement failure source-offset retention redelivery and the alert-domain PostgreSQL receipt barrier against owned and approved Kafka",
             "add a bounded periodic authority reconciliation worker for partial unknown effects without blind execution retry",
             "exercise the production producer consumer group source offsets replay and DLQ boundaries on owned real Redpanda or Kafka",
             "run the exact release candidate against approved PostgreSQL Kafka and response provider services",

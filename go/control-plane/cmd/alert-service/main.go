@@ -450,11 +450,13 @@ func main() {
 			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.ResponseActionTopic,
 			GroupID: cfg.Kafka.ResponseActionGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
 			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
-			CommitOnDLQSuccess: true, CommitOnHandlerError: false, Security: cfg.Kafka.Security,
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
 		}, logger)
 		if consumerErr != nil {
 			logger.Fatal("Failed to create alert response execution consumer", zap.Error(consumerErr))
 		}
+		responseKafkaConsumer.SetDLQAcknowledgementBarrier(responseProjection.RecordDLQAcknowledgement)
 		responseEventConsumer, consumerErr := consumer.NewAlertResponseEventConsumer(
 			responseKafkaConsumer, responseProjection, logger,
 		)

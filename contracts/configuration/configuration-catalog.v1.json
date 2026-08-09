@@ -49,7 +49,7 @@
         "common/kafka/create-topics.sh",
         "deployments/kubernetes/init-jobs/01-kafka-topics.yaml"
       ],
-      "source_sha256": "006fb8f1b29431641dedc86de1277160db08935c34d6bc8295f69650b91c88e7"
+      "source_sha256": "593f1baec4682266c8a6c3d172360208ec6e00b0ea559b15c4a9e36e2e51cbf4"
     },
     {
       "domain": "kafka_acl",
@@ -110,7 +110,7 @@
   "source_hashes": {
     "contracts/clickhouse/schema-authority.v1.json": "ebb88a91605ba9273e5e9ee2370e4ed165a6503a99485e3b6b37662f4d7b5a90",
     "contracts/events/kafka-acl-catalog.v1.json": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f",
-    "contracts/events/kafka-topic-catalog.v1.json": "006fb8f1b29431641dedc86de1277160db08935c34d6bc8295f69650b91c88e7",
+    "contracts/events/kafka-topic-catalog.v1.json": "593f1baec4682266c8a6c3d172360208ec6e00b0ea559b15c4a9e36e2e51cbf4",
     "contracts/flink/job-registry.v1.json": "e1cfdb658c0cad53aeaa0aec55151fdc928169bb3bba8ac84a7db80009797c3c",
     "deployments/kubernetes/applications/go-services.yaml": "15dc72cc0a3bb5d7730c49d9d6565b85a1fc329c50cb61a053eeb99716b99541",
     "deployments/kubernetes/applications/probe-agent.yaml": "b7969b9001297d381f09a09c9a3b71bd8bd3ccfc8bfca0a599f9a04afff865f3",
@@ -129,7 +129,7 @@
     "deployments/kubernetes/infrastructure/11-management.yaml": "ffd6c4384fd8376c92083c292ae2eae9c4b2a562897a629ee58c3698840e34d5",
     "deployments/kubernetes/init-jobs/00-kafka-service-principals.yaml": "d01a637fa8238db4d86261bae66ac8ab02a032dba3bca008a707fbffa20037d8",
     "deployments/kubernetes/init-jobs/01-kafka-topics.yaml": "6e8f59c9ac3b4f0fb938bcdbb39dd07417fd506089cdb18e20ea66ba86ff0bca",
-    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "9e855b936a59e20d104e10cddbbbe33c8799d0708dd485ead271822a2dabed72",
+    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "848f86db76c1495cf4a2f747d08261a443ac1db8fc4c9a0fafe25b82c9cfe540",
     "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml": "8ca1010db70655b9740a0b3bf2327f99838145bf15b20d109c98dcb976895c6b",
     "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml": "6d4fe42c60dd9f14fe27e65e924ea75bfcce2029989448f4e09f55d44fb5a44f",
     "deployments/kubernetes/init-jobs/05-nebula-schema.yaml": "7dfc2a4b67af004d132edc5c7882a67c705428d5529d8889108f6b0e4f1730c9",
@@ -64525,5 +64525,5 @@
       ]
     }
   ],
-  "catalog_sha256": "34a058f06d564c5c03a6262a5797b55675d519461f1507641c51aff03f90cb6f"
+  "catalog_sha256": "2eeb65746ae5dc7357fddf265473a31c2763fa958a91b829d525e4d940868759"
 }

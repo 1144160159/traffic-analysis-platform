@@ -578,7 +578,7 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-ALERT-003.json",
-        "sha256": "5eab4096db5a5c62796da23edca691cc77240321c6729302ffc526aed210eaa3",
+        "sha256": "764cb4252208f5e6b91536d7031af38448aa342df08744d6a7372a3e399f547a",
         "contract_version": 1,
         "status": "verifying",
         "operation_id": "createAlertResponseAction",
@@ -1898,5 +1898,5 @@
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "01674c523d3ae3c4ae2192ca2734b9038bc506bb2870b4ea284e688250322e38"
+  "catalog_sha256": "6c743cb48cc6117e87ab3a6e5e5bea231af22e7dd2056834d2396626fa5f48a4"
 }

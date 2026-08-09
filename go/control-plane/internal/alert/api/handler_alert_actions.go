@@ -351,6 +351,16 @@ func (h *Handler) publishResponseOutboxItem(ctx context.Context, workerID string
 	}
 	alertID, _ := item.Payload["alert_id"].(string)
 	eventID, _ := item.Payload["event_id"].(string)
+	actionID, _ := item.Payload["action_id"].(string)
+	traceID, _ := item.Payload["trace_id"].(string)
+	for field, value := range map[string]string{
+		"event_id": eventID, "tenant_id": item.TenantID, "job_id": item.JobID,
+		"alert_id": alertID, "action_id": actionID, "trace_id": traceID,
+	} {
+		if strings.TrimSpace(value) == "" {
+			return fmt.Errorf("alert response outbox %s is missing", field)
+		}
+	}
 	aggregateVersion := fmt.Sprint(item.Payload["aggregate_version"])
 	if aggregateVersion == "" || aggregateVersion == "<nil>" {
 		return fmt.Errorf("alert response outbox aggregate_version is missing")
@@ -362,7 +372,9 @@ func (h *Handler) publishResponseOutboxItem(ctx context.Context, workerID string
 		kafka.MessageHeader{Key: "aggregate_version", Value: aggregateVersion},
 		kafka.MessageHeader{Key: "tenant_id", Value: item.TenantID},
 		kafka.MessageHeader{Key: "alert_id", Value: alertID},
-		kafka.MessageHeader{Key: "job_id", Value: item.JobID})
+		kafka.MessageHeader{Key: "job_id", Value: item.JobID},
+		kafka.MessageHeader{Key: "action_id", Value: actionID},
+		kafka.MessageHeader{Key: "trace_id", Value: traceID})
 	if err != nil {
 		_, _ = h.actionAudit.db.ExecContext(ctx, `UPDATE alert_response_outbox SET attempts=attempts+1,last_error=$2,next_attempt_at=now()+(LEAST(300,POWER(2,LEAST(attempts+1,8)))::text || ' seconds')::interval,locked_until=NULL,locked_by='' WHERE outbox_id=$1 AND published=false AND locked_by=$3`, item.OutboxID, err.Error(), workerID)
 		return err

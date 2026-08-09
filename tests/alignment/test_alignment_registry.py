@@ -326,6 +326,11 @@ class AlignmentRegistryTest(unittest.TestCase):
         ).read_text(encoding="utf-8"))
         self.assertIn("ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED", service)
         self.assertIn("ALERT_RESPONSE_EXECUTOR_LOOKUP_URL", service)
+        self.assertIn(
+            "responseKafkaConsumer.SetDLQAcknowledgementBarrier(responseProjection.RecordDLQAcknowledgement)",
+            service,
+        )
+        self.assertIn("DLQPermanentOnly: true", service)
         migration = (
             ROOT / "deployments/postgres/migrations"
             / "202607302300_alert_response_execution_projection.sql"
@@ -340,6 +345,19 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn("effect_state", executor_migration)
         self.assertIn("receipt_sha256", executor_migration)
         self.assertIn("202608091130", executor_migration)
+        dlq_barrier = (
+            ROOT
+            / "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go"
+        ).read_text(encoding="utf-8")
+        self.assertIn("INSERT INTO alert_response_dlq_receipts", dlq_barrier)
+        self.assertIn("ALERT_RESPONSE_EVENT_QUARANTINED", dlq_barrier)
+        self.assertIn("source_offset_commit_pending", dlq_barrier)
+        dlq_migration = (
+            ROOT / "deployments/postgres/migrations"
+            / "202608091230_alert_response_dlq_receipt_v1.sql"
+        ).read_text(encoding="utf-8")
+        self.assertIn("alert_response_dlq_receipts", dlq_migration)
+        self.assertIn("202608091230", dlq_migration)
         for manifest_path in (
             ROOT / "deployments/kubernetes/applications/go-services.yaml",
             ROOT / "go/control-plane/deployments/kubernetes/alert-service.yaml",

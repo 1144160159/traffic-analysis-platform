@@ -4,13 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
 
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	_ "github.com/lib/pq"
+	segmentkafka "github.com/segmentio/kafka-go"
 )
 
 func openAlertResponseIntegrationDB(t *testing.T) *sql.DB {
@@ -221,5 +224,65 @@ func TestPostgresAlertResponseExternalExecutorIntegration(t *testing.T) {
 	}
 	if received.IdempotencyKey != "alert-response:"+eventID || received.ApprovedBy != "approver-b" || received.TraceID != traceID {
 		t.Fatalf("provider command lost immutable authority: %#v", received)
+	}
+}
+
+func TestPostgresAlertResponseDLQAcknowledgementIntegration(t *testing.T) {
+	db := openAlertResponseIntegrationDB(t)
+	projection, err := NewPostgresAlertResponseProjection(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	suffix := time.Now().UTC().Format("150405000000")
+	eventID := "44444444-4444-4444-8444-" + suffix
+	jobID := "alert-action-dlq-" + suffix
+	tenantID := "integration-response-dlq-" + suffix
+	traceID := "trace-response-dlq-" + suffix
+	headers := make([]segmentkafka.Header, 0, 8)
+	for key, value := range map[string]string{
+		"event_id": eventID, "event_type": "alert.response.requested.v1",
+		"schema_version": "1", "aggregate_version": "2", "tenant_id": tenantID,
+		"job_id": jobID, "alert_id": "AL-DLQ-1", "action_id": "alert-response-block-ip",
+		"trace_id": traceID,
+	} {
+		headers = append(headers, segmentkafka.Header{Key: key, Value: []byte(value)})
+	}
+	message := &commonkafka.ReceivedMessage{Message: segmentkafka.Message{
+		Topic: "alert.response.requested.v1", Partition: 2, Offset: time.Now().UnixNano(),
+		Key: []byte(tenantID + ":" + jobID), Value: []byte(`{"poison":true}`), Headers: headers,
+	}}
+	processingErr := commonkafka.Permanent(errors.New("unsupported alert response event contract"))
+	if err := projection.RecordDLQAcknowledgement(context.Background(), message, processingErr); err != nil {
+		t.Fatal(err)
+	}
+	if err := projection.RecordDLQAcknowledgement(context.Background(), message, processingErr); err != nil {
+		t.Fatalf("exact DLQ acknowledgement replay failed: %v", err)
+	}
+	var receipts, audits int
+	var storedTrace, storedJob, storedAlert, storedAction string
+	if err := db.QueryRow(`SELECT count(*),max(trace_id),max(job_id),max(alert_id),max(action_id)
+		FROM alert_response_dlq_receipts
+		WHERE source_topic=$1 AND source_partition=$2 AND source_offset=$3`,
+		message.Topic, message.Partition, message.Offset,
+	).Scan(&receipts, &storedTrace, &storedJob, &storedAlert, &storedAction); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`SELECT count(*) FROM audit_logs
+		WHERE action='ALERT_RESPONSE_EVENT_QUARANTINED'
+		  AND detail->>'source_topic'=$1
+		  AND (detail->>'source_partition')::integer=$2
+		  AND (detail->>'source_offset')::bigint=$3`,
+		message.Topic, message.Partition, message.Offset,
+	).Scan(&audits); err != nil {
+		t.Fatal(err)
+	}
+	if receipts != 1 || audits != 1 || storedTrace != traceID || storedJob != jobID ||
+		storedAlert != "AL-DLQ-1" || storedAction != "alert-response-block-ip" {
+		t.Fatalf("DLQ receipt/audit did not reconcile: receipt=%d audit=%d trace=%s job=%s alert=%s action=%s",
+			receipts, audits, storedTrace, storedJob, storedAlert, storedAction)
+	}
+	message.Value = []byte(`{"poison":"mutated"}`)
+	if err := projection.RecordDLQAcknowledgement(context.Background(), message, processingErr); err == nil {
+		t.Fatal("source tuple payload collision was accepted")
 	}
 }
