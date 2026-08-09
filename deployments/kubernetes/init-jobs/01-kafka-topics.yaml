@@ -63,6 +63,7 @@ spec:
             "alerts.v1:8:259200000:268435456" \
             "alert.feedback.v1:3:259200000:268435456" \
             "alert.response.requested.v1:3:259200000:268435456" \
+            "alert.assignment.events.v1:6:604800000:134217728" \
             "alert.saved-view.events.v1:3:604800000:134217728" \
             "whitelist.events.v2:3:604800000:134217728" \
             "notification.governance.events.v1:3:604800000:134217728" \

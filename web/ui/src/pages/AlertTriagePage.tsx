@@ -40,7 +40,7 @@ import { batchUpdateAlertStatus } from '@/services/alertBatchApi';
 import { submitAlertFeedback } from '@/services/alertDetailApi';
 import { submitAlertTriageAction } from '@/services/alertTriageApi';
 import { fetchAlertSavedViews } from '@/services/alertTriageApi';
-import { batchAssignAlerts, createDurableAlertBatchAssignment, exportAlertQueueCsv } from '@/services/alertQueueActionsApi';
+import { batchAssignAlerts, createDurableAlertBatchAssignment, exportAlertQueueCsv, waitForDurableAlertBatchAssignment } from '@/services/alertQueueActionsApi';
 import { alertAllowedNextStatuses, alertStatusLabel, alertStatusOptions, canTransitionAlertStatus, type AlertStatusCode } from '@/services/alertStatus';
 import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
 import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
@@ -183,22 +183,35 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
     mutationFn: async () => {
       if (!appConfig.enableAlertBatchAssignmentV1) {
         const legacy = await batchAssignAlerts(selectedRows.map(alertIdFromRow), batchAssignee);
-        return { batchId: '', status: 'completed', total: legacy.total, accepted: legacy.success, replayed: false };
+        return { batchId: '', status: 'completed', total: legacy.total, accepted: legacy.success, applied: legacy.success, conflicted: 0, forbidden: 0, failed: 0, replayed: false, items: [] };
       }
       if (!batchAssignmentAttemptRef.current) {
         batchAssignmentAttemptRef.current = `alert-batch:${crypto.randomUUID()}`;
       }
-      return createDurableAlertBatchAssignment(
+      const accepted = await createDurableAlertBatchAssignment(
         selectedRows.map((row) => ({ alertId: alertIdFromRow(row), stateVersion: stateVersionFromRow(row) })),
         batchAssignee,
         batchAssignmentReason,
         data?.snapshot?.snapshotId ?? '',
         batchAssignmentAttemptRef.current,
       );
+      try {
+        return await waitForDurableAlertBatchAssignment(accepted.batchId);
+      } catch {
+        return { ...accepted, applied: 0, conflicted: 0, forbidden: 0, failed: 0, items: [] };
+      }
     },
     onSuccess: async (result) => {
       if (result.batchId) {
-        message.success(`批量指派已受理 ${result.accepted}/${result.total} 条，任务 ${result.batchId}`);
+        if (result.status === 'completed') {
+          message.success(`批量指派完成 ${result.applied}/${result.total} 条，任务 ${result.batchId}`);
+        } else if (result.status === 'partial') {
+          message.warning(`批量指派部分完成：成功 ${result.applied}、冲突 ${result.conflicted}、无权限 ${result.forbidden}、失败 ${result.failed}，任务 ${result.batchId}`);
+        } else if (result.status === 'failed' || result.status === 'cancelled') {
+          message.error(`批量指派${result.status === 'cancelled' ? '已取消' : '失败'}：冲突 ${result.conflicted}、无权限 ${result.forbidden}、失败 ${result.failed}，任务 ${result.batchId}`);
+        } else {
+          message.info(`批量指派仍在${result.status === 'running' ? '执行' : '排队'}，任务 ${result.batchId}；可稍后刷新查看终态`);
+        }
       } else {
         message.success(`已指派 ${result.accepted} 条告警`);
       }

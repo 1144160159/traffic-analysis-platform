@@ -159,3 +159,37 @@ func TestAlertBatchAssignmentPostgresIntegration(t *testing.T) {
 
 	t.Logf("alert_batch_assignment_postgres=pass batch_id=%s event_id=%s selection_sha256=%s", receipt.BatchID, receipt.EventID, receipt.SelectionSHA256)
 }
+
+func TestAlertBatchAssignmentTerminalQueryPostgresIntegration(t *testing.T) {
+	dsn := os.Getenv("ALERT_BATCH_ASSIGNMENT_EXECUTION_INTEGRATION_DSN")
+	if dsn == "" {
+		t.Skip("ALERT_BATCH_ASSIGNMENT_EXECUTION_INTEGRATION_DSN is not configured")
+	}
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	var batchID string
+	if err := db.QueryRowContext(ctx, `SELECT batch_id::text FROM alert_assignment_batches
+		WHERE tenant_id='tenant-batch-a' AND status='completed' ORDER BY completed_at DESC LIMIT 1`).Scan(&batchID); err != nil {
+		t.Fatalf("completed pipeline batch prerequisite missing: %v", err)
+	}
+	handler := NewAlertBatchAssignmentHandler(db, nil, true, alertBatchTestSigningSecret)
+	job, err := handler.getAssignment(ctx, "tenant-batch-a", batchID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.Status != "completed" || job.Revision != 3 || job.TotalCount != 2 || job.AcceptedCount != 0 || job.AppliedCount != 2 ||
+		job.ConflictedCount != 0 || job.ForbiddenCount != 0 || job.FailedCount != 0 || job.OutboxStatus != "published" || len(job.Items) != 2 {
+		t.Fatalf("terminal query receipt mismatch: %+v", job)
+	}
+	for _, item := range job.Items {
+		if item.Status != "applied" || item.ItemRevision != 3 || item.ResultingStateVersion <= item.ExpectedStateVersion {
+			t.Fatalf("terminal item receipt mismatch: %+v", item)
+		}
+	}
+	t.Logf("alert_batch_assignment_terminal_query_postgres=pass batch_id=%s event_id=%s", job.BatchID, job.EventID)
+}

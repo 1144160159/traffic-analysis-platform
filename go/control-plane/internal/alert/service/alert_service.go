@@ -585,6 +585,64 @@ type BatchUpdateResult struct {
 	StateVersions map[string]uint64 `json:"state_versions,omitempty"`
 }
 
+// AlertAssignmentProjectionResult is the deterministic effect identity used by
+// the batch-assignment consumer. It deliberately exposes only the resulting
+// business state required for a durable projection receipt.
+type AlertAssignmentProjectionResult struct {
+	AlertID               string
+	Assignee              string
+	ResultingStateVersion uint64
+}
+
+// ProjectAlertAssignment rechecks the current alert state and projects one
+// assignment at an exact target version. An exact target replay succeeds;
+// competing versions fail with a conflict and are never overwritten.
+func (s *AlertService) ProjectAlertAssignment(
+	ctx context.Context,
+	tenantID, alertID, assignee, requestedBy string,
+	expectedVersion, resultingVersion uint64,
+) (*AlertAssignmentProjectionResult, error) {
+	ctx, span := otel.StartSpan(ctx, "alert_service.project_alert_assignment")
+	defer span.End()
+	if expectedVersion == 0 || resultingVersion <= expectedVersion {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid assignment projection versions")
+	}
+	alert, err := s.chRepo.GetByID(ctx, tenantID, alertID)
+	if err != nil {
+		return nil, err
+	}
+	currentVersion := stateVersionMillis(alert.UpdatedTs)
+	if currentVersion == resultingVersion && alert.Assignee == assignee && alert.Status == state.StatusAssigned.String() {
+		return &AlertAssignmentProjectionResult{AlertID: alertID, Assignee: assignee, ResultingStateVersion: resultingVersion}, nil
+	}
+	if currentVersion != expectedVersion {
+		return nil, errors.Newf(errors.ErrCodeVersionConflict,
+			"alert assignment changed: expected %d, actual %d", expectedVersion, currentVersion)
+	}
+	currentStatus, err := state.ParseStatus(alert.Status)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeInvalidStateTransition, "invalid current alert status")
+	}
+	if currentStatus != state.StatusAssigned {
+		if err := state.Transition(currentStatus, state.StatusAssigned); err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeInvalidStateTransition, "alert cannot be assigned")
+		}
+	}
+	if err := s.chRepo.ProjectAssigneeWithVersions(
+		ctx, tenantID, alertID, assignee, int64(expectedVersion), int64(resultingVersion),
+	); err != nil {
+		return nil, err
+	}
+	if s.logger != nil {
+		s.logger.Info("Alert assignment projection applied",
+			zap.String("tenant_id", tenantID), zap.String("alert_id", alertID),
+			zap.String("assignee", assignee), zap.String("requested_by", requestedBy),
+			zap.Uint64("expected_state_version", expectedVersion),
+			zap.Uint64("resulting_state_version", resultingVersion))
+	}
+	return &AlertAssignmentProjectionResult{AlertID: alertID, Assignee: assignee, ResultingStateVersion: resultingVersion}, nil
+}
+
 // AssignAlert 分配告警
 func (s *AlertService) AssignAlert(ctx context.Context, tenantID, alertID, assignee, userID string) error {
 	ctx, span := otel.StartSpan(ctx, "alert_service.assign_alert")

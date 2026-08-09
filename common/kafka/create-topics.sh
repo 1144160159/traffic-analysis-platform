@@ -19,6 +19,7 @@ for entry in \
   "alerts.v1:8:259200000:268435456:tenant_id+community_id:Alert" \
   "alert.feedback.v1:3:259200000:268435456:tenant_id+alert_id:AlertFeedbackExtendedV1Json" \
   "alert.response.requested.v1:3:259200000:268435456:tenant_id+job_id:AlertResponseRequestedV1Json" \
+  "alert.assignment.events.v1:6:604800000:134217728:tenant_id+batch_id:AlertBatchAssignmentLifecycleV1Json" \
   "alert.saved-view.events.v1:3:604800000:134217728:tenant_id+view_id:AlertSavedViewSavedV1Json" \
   "whitelist.events.v2:3:604800000:134217728:tenant_id+entry_id:WhitelistLifecycleV2Json" \
   "notification.governance.events.v1:3:604800000:134217728:tenant_id+rule_id:NotificationRuleLifecycleV1Json" \

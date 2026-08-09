@@ -120,6 +120,75 @@
 	  ],
       "additionalProperties": false
     },
+    "AlertBatchAssignmentLifecycleV1Json": {
+      "type": "object",
+      "required": [
+        "event_id", "event_type", "schema_version", "aggregate_type",
+        "aggregate_id", "aggregate_version", "partition_key", "tenant_id",
+        "batch_id", "assignee", "requested_by", "reason", "status",
+        "total_count", "trace_id", "occurred_at"
+      ],
+      "properties": {
+        "event_id": {"type": "string", "format": "uuid"},
+        "event_type": {"enum": ["alert.batch-assignment.requested.v1", "alert.assignment.changed.v1"]},
+        "schema_version": {"const": 1},
+        "aggregate_type": {"const": "alert_assignment_batch"},
+        "aggregate_id": {"type": "string", "format": "uuid"},
+        "aggregate_version": {"enum": [1, 2]},
+        "partition_key": {"type": "string", "minLength": 3},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "batch_id": {"type": "string", "format": "uuid"},
+        "selection_id": {"type": "string", "format": "uuid"},
+        "selection_snapshot_id": {"type": "string", "minLength": 8, "maxLength": 256},
+        "selection_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "assignee": {"type": "string", "minLength": 1, "maxLength": 128},
+        "requested_by": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 4, "maxLength": 1000},
+        "status": {"enum": ["accepted", "running"]},
+        "total_count": {"type": "integer", "minimum": 1, "maximum": 100},
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "required": [
+              "alert_id", "position", "expected_state_version", "resulting_state_version",
+              "previous_assignee", "resulting_assignee"
+            ],
+            "properties": {
+              "alert_id": {"type": "string", "minLength": 1},
+              "position": {"type": "integer", "minimum": 0, "maximum": 99},
+              "expected_state_version": {"type": "integer", "minimum": 1},
+              "resulting_state_version": {"type": "integer", "minimum": 2},
+              "previous_assignee": {"type": "string"},
+              "resulting_assignee": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        },
+        "trace_id": {"type": "string", "minLength": 1},
+        "occurred_at": {"type": "string", "format": "date-time"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"event_type": {"const": "alert.batch-assignment.requested.v1"}}, "required": ["event_type"]},
+          "then": {
+            "properties": {"aggregate_version": {"const": 1}, "status": {"const": "accepted"}},
+            "required": ["selection_id", "selection_snapshot_id", "selection_sha256"]
+          }
+        },
+        {
+          "if": {"properties": {"event_type": {"const": "alert.assignment.changed.v1"}}, "required": ["event_type"]},
+          "then": {
+            "properties": {"aggregate_version": {"const": 2}, "status": {"const": "running"}},
+            "required": ["items"]
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
     "AlertSavedViewSavedV1Json": {
       "type": "object",
       "required": [

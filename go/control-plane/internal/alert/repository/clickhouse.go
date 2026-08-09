@@ -433,7 +433,7 @@ func (r *AlertRepository) UpdateAssigneeWithVersion(ctx context.Context, tenantI
 		return err
 	}
 	// 检查版本号（乐观锁）
-	if !alert.UpdatedTs.Equal(expectedVersion) {
+	if alert.UpdatedTs.UnixMilli() != expectedVersion.UnixMilli() {
 		return errors.Newf(errors.ErrCodeVersionConflict,
 			"alert has been modified by another process")
 	}
@@ -443,6 +443,41 @@ func (r *AlertRepository) UpdateAssigneeWithVersion(ctx context.Context, tenantI
 	alert.UpdatedTs = time.Now()
 	// 插入新版本
 	return r.upsertAlert(ctx, alert)
+}
+
+// ProjectAssigneeWithVersions applies an assignment projection with a fixed
+// source and target version. The fixed target version makes a Kafka redelivery
+// after an ambiguous acknowledgement idempotent: an exact target row is a
+// replay, while every other version is a conflict. Both versions use the
+// public unix-millisecond state_version contract.
+func (r *AlertRepository) ProjectAssigneeWithVersions(
+	ctx context.Context,
+	tenantID, alertID, assignee string,
+	expectedVersionMillis, resultingVersionMillis int64,
+) error {
+	ctx, span := otel.StartSpan(ctx, "alert_repository.project_assignee_with_versions")
+	defer span.End()
+	if expectedVersionMillis <= 0 || resultingVersionMillis <= expectedVersionMillis {
+		return errors.New(errors.ErrCodeInvalidParameter, "invalid assignment projection versions")
+	}
+	alert, err := r.GetByID(ctx, tenantID, alertID)
+	if err != nil {
+		return err
+	}
+	currentVersion := alert.UpdatedTs.UnixMilli()
+	if currentVersion == resultingVersionMillis && alert.Assignee == assignee && alert.Status == "assigned" {
+		return nil
+	}
+	if currentVersion != expectedVersionMillis {
+		return errors.Newf(errors.ErrCodeVersionConflict,
+			"alert assignment projection version mismatch: expected %d, actual %d",
+			expectedVersionMillis, currentVersion)
+	}
+	previousVersion := alert.UpdatedTs
+	alert.Assignee = assignee
+	alert.Status = "assigned"
+	alert.UpdatedTs = time.UnixMilli(resultingVersionMillis).UTC()
+	return r.upsertAlertWithVersionCheck(ctx, alert, previousVersion)
 }
 
 // updateWithOptimisticLock 带乐观锁的更新辅助方法（带重试）

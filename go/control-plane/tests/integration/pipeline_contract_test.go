@@ -53,7 +53,7 @@ func loadKafkaTopicCatalog(t *testing.T) (string, kafkaTopicCatalog) {
 func TestPipelineContractCompleteMapping(t *testing.T) {
 	root, catalog := loadKafkaTopicCatalog(t)
 	require.Equal(t, 1, catalog.SchemaVersion)
-	require.Len(t, catalog.Topics, 35)
+	require.Len(t, catalog.Topics, 36)
 
 	seen := map[string]struct{}{}
 	for _, topic := range catalog.Topics {
@@ -97,5 +97,5 @@ func TestPipelineContractSchemaKindsRemainExplicit(t *testing.T) {
 			require.Empty(t, topic.Schema.Message, topic.Name)
 		}
 	}
-	require.Equal(t, map[string]int{"json-schema": 25, "protobuf": 10}, counts)
+	require.Equal(t, map[string]int{"json-schema": 26, "protobuf": 10}, counts)
 }

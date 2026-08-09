@@ -12,12 +12,12 @@
     {
       "domain": "kafka_principal_acl",
       "path": "contracts/events/kafka-acl-catalog.v1.json",
-      "sha256": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f"
+      "sha256": "2816db4026778ef92d478169513561ab51f1d93eefb06e053197a3cdd5731c57"
     },
     {
       "domain": "configuration_and_secret_binding",
       "path": "contracts/configuration/configuration-catalog.v1.json",
-      "sha256": "59e5fb2be2318390d3d505fa41c2758153189634f009dfe7cff72768ecfda2df"
+      "sha256": "f31930ee034316b72af8368d6625e002faa193b331f6c47c23bf21bb06e332d7"
     },
     {
       "domain": "iam_scopes",
@@ -1944,5 +1944,5 @@
       "wildcard_or_shared_kafka_principal"
     ]
   },
-  "catalog_sha256": "5d68c863ceac947e7219f9b0e0e9082420d7b978277d9c6b8bf83a6aa2d80d98"
+  "catalog_sha256": "62cdfaa3b54bea5fa150fa455394df58cdbaf7b9c117acdba1b44e468a03bf67"
 }

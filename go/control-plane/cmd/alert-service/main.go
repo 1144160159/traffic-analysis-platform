@@ -1130,6 +1130,10 @@ func main() {
 	// 注册 API 路由
 	apiHandler.RegisterRoutes(apiRouter)
 	alertBatchAssignmentEnabled := getBoolEnv("ALERT_BATCH_ASSIGNMENT_V1_ENABLED", false) && !readOnlyVerificationMode
+	alertBatchAssignmentPipelineEnabled := getBoolEnv("ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED", false) && !readOnlyVerificationMode
+	if alertBatchAssignmentPipelineEnabled && !alertBatchAssignmentEnabled {
+		logger.Fatal("Alert batch assignment execution pipeline requires ALERT_BATCH_ASSIGNMENT_V1_ENABLED")
+	}
 	if alertBatchAssignmentEnabled && db == nil {
 		logger.Fatal("Alert batch assignment requires PostgreSQL")
 	}
@@ -1147,6 +1151,59 @@ func main() {
 		}
 	}
 	alertBatchAssignmentHandler.RegisterRoutes(apiRouter)
+	if alertBatchAssignmentPipelineEnabled {
+		topic := strings.TrimSpace(getEnv("ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC", consumer.AlertAssignmentEventTopic))
+		groupID := strings.TrimSpace(getEnv("ALERT_BATCH_ASSIGNMENT_EVENT_GROUP", "alert-service-batch-assignment-execution-v1"))
+		if groupID == "" {
+			logger.Fatal("ALERT_BATCH_ASSIGNMENT_EVENT_GROUP must not be empty")
+		}
+		producer, producerErr := kafka.NewProducer(kafka.ProducerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: topic, BatchSize: 100,
+			RequiredAcks: "all", Compression: "lz4", Async: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if producerErr != nil {
+			logger.Fatal("Failed to create alert batch assignment event producer", zap.Error(producerErr))
+		}
+		defer producer.Close()
+		pipeline, pipelineErr := consumer.NewAlertBatchAssignmentPipeline(db, alertService, producer.Send, topic, logger)
+		if pipelineErr != nil {
+			logger.Fatal("Failed to initialize alert batch assignment pipeline", zap.Error(pipelineErr))
+		}
+		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		pipelineErr = pipeline.VerifySchema(verifyCtx)
+		cancelVerify()
+		if pipelineErr != nil {
+			logger.Fatal("Alert batch assignment execution schema is unavailable", zap.Error(pipelineErr))
+		}
+		if workerErr := pipeline.StartOutboxWorker(ctx, 2*time.Second); workerErr != nil {
+			logger.Fatal("Failed to start alert batch assignment outbox worker", zap.Error(workerErr))
+		}
+		kafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: topic, GroupID: groupID,
+			MinBytes: 1, MaxWait: 500 * time.Millisecond, MaxRetries: 3, RetryBackoff: time.Second,
+			EnableDLQ: true, DLQTopic: "dlq.v1", CommitOnDLQSuccess: true,
+			CommitOnHandlerError: false, DLQPermanentOnly: true, Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create alert batch assignment event consumer", zap.Error(consumerErr))
+		}
+		kafkaConsumer.SetDLQAcknowledgementBarrier(pipeline.RecordDLQAcknowledgement)
+		eventConsumer, consumerErr := consumer.NewAlertBatchAssignmentEventConsumer(kafkaConsumer, pipeline)
+		if consumerErr != nil {
+			_ = kafkaConsumer.Close()
+			logger.Fatal("Failed to initialize alert batch assignment event consumer", zap.Error(consumerErr))
+		}
+		defer eventConsumer.Close()
+		go func() {
+			logger.Info("Starting alert batch assignment event consumer", zap.String("topic", topic), zap.String("group_id", groupID))
+			if startErr := eventConsumer.Start(ctx); startErr != nil && startErr != context.Canceled {
+				logger.Error("Alert batch assignment event consumer stopped", zap.Error(startErr))
+			}
+		}()
+		logger.Info("Alert batch assignment execution pipeline started", zap.String("topic", topic), zap.String("group_id", groupID))
+	} else {
+		logger.Info("Alert batch assignment execution pipeline is disabled")
+	}
 
 	// Dashboard API — 实时统计 (Web UI 大屏)
 	dashboardHandler := api.NewDashboardHandler(chClient, logger)

@@ -24,11 +24,11 @@ class AlignmentRegistryTest(unittest.TestCase):
     def test_kafka_topic_schema_and_implementation_catalog_is_complete(self) -> None:
         result = validate_event_catalog()
         self.assertEqual("pass", result["result"], result)
-        self.assertEqual(35, result["counts"]["canonical_topics"])
+        self.assertEqual(36, result["counts"]["canonical_topics"])
         self.assertEqual(7, result["counts"]["kubernetes_additional_topics"])
         self.assertEqual(6, result["counts"]["observed_additional_topics"])
         self.assertEqual(
-            {"json-schema": 25, "protobuf": 10},
+            {"json-schema": 26, "protobuf": 10},
             result["counts"]["schema_kinds"],
         )
 

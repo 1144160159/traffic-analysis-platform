@@ -134,6 +134,22 @@
       "known_gap": "Dry-run requests receive deterministic simulated receipts. Approved real events can use the default-off provider executor with stable idempotency, mandatory authority lookup and atomic PostgreSQL receipt/action/audit commit. Permanent poison events have a repository-owned PostgreSQL DLQ receipt/audit barrier after canonical DLQ acknowledgement and before source-offset commit. Approved-candidate rollout, real Kafka/source-offset fault evidence, asynchronous authority recheck and external compensation execution remain open."
     },
     {
+      "name": "alert.assignment.events.v1",
+      "partitions": 6,
+      "retention_ms": 604800000,
+      "retention_bytes": 134217728,
+      "key_contract": "tenant_id+batch_id",
+      "message_type": "AlertBatchAssignmentLifecycleV1Json",
+      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AlertBatchAssignmentLifecycleV1Json"},
+      "readiness": "active",
+      "producers": [
+        "go/control-plane/internal/alert/api/alert_batch_assignment_v1.go",
+        "go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go"
+      ],
+      "consumers": ["go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go"],
+      "known_gap": "The default-off pipeline has deterministic PostgreSQL intent, a strict independently idempotent consumer, ClickHouse projection receipts and a post-DLQ-ack source-tuple barrier. Release-candidate Kafka/ClickHouse reconciliation, compensation and G2-G6 evidence remain open."
+    },
+    {
       "name": "alert.saved-view.events.v1",
       "partitions": 3,
       "retention_ms": 604800000,

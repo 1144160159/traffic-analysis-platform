@@ -505,7 +505,7 @@ func (h *AlertBatchAssignmentHandler) createAssignment(ctx context.Context, comm
 		VALUES ($1,$2,$3,1,'alert-batch-assignment-create','','accepted',$4,$5,$6,$7::jsonb,$8)`, eventID, command.TenantID, batchID, command.ActorID, request.Reason, command.TraceID, string(snapshotJSON), now); err != nil {
 		return nil, err
 	}
-	outboxPayload, _ := json.Marshal(map[string]interface{}{"event_id": eventID, "event_type": "alert.batch-assignment.requested.v1", "schema_version": 1, "aggregate_type": "alert_assignment_batch", "aggregate_id": batchID, "aggregate_version": 1, "partition_key": command.TenantID + ":" + batchID, "tenant_id": command.TenantID, "batch_id": batchID, "selection_id": selectionID, "selection_snapshot_id": snapshotID, "selection_sha256": selectionSHA, "assignee": request.Assignee, "status": "accepted", "trace_id": command.TraceID, "occurred_at": now.Format(time.RFC3339Nano)})
+	outboxPayload, _ := json.Marshal(map[string]interface{}{"event_id": eventID, "event_type": "alert.batch-assignment.requested.v1", "schema_version": 1, "aggregate_type": "alert_assignment_batch", "aggregate_id": batchID, "aggregate_version": 1, "partition_key": command.TenantID + ":" + batchID, "tenant_id": command.TenantID, "batch_id": batchID, "selection_id": selectionID, "selection_snapshot_id": snapshotID, "selection_sha256": selectionSHA, "assignee": request.Assignee, "requested_by": command.ActorID, "reason": request.Reason, "status": "accepted", "total_count": itemCount, "trace_id": command.TraceID, "occurred_at": now.Format(time.RFC3339Nano)})
 	if _, err := tx.ExecContext(ctx, `INSERT INTO alert_assignment_batch_outbox
 		(event_id,tenant_id,batch_id,aggregate_version,event_type,schema_version,partition_key,payload,trace_id,status,occurred_at)
 		VALUES ($1,$2,$3,1,'alert.batch-assignment.requested.v1',1,$4,$5::jsonb,$6,'pending',$7)`, eventID, command.TenantID, batchID, command.TenantID+":"+batchID, string(outboxPayload), command.TraceID, now); err != nil {
@@ -559,7 +559,8 @@ func (h *AlertBatchAssignmentHandler) getAssignment(ctx context.Context, tenantI
 	}
 	var outboxStatus string
 	var eventID string
-	if err := h.db.QueryRowContext(ctx, `SELECT event_id::text,status FROM alert_assignment_batch_outbox WHERE tenant_id=$1 AND batch_id=$2 AND aggregate_version=$3`, tenantID, batchID, job.Revision).Scan(&eventID, &outboxStatus); err != nil {
+	if err := h.db.QueryRowContext(ctx, `SELECT event_id::text,status FROM alert_assignment_batch_outbox
+		WHERE tenant_id=$1 AND batch_id=$2 ORDER BY aggregate_version DESC,outbox_id DESC LIMIT 1`, tenantID, batchID).Scan(&eventID, &outboxStatus); err != nil {
 		return nil, h.schemaError(err)
 	}
 	job.EventID = eventID
@@ -622,7 +623,7 @@ func alertBatchContractMeta(ctx context.Context, snapshotID, fallbackTraceID str
 	if traceID == "" {
 		traceID = fallbackTraceID
 	}
-	return httpx.ContractMeta{ContractVersion: alertBatchAssignmentContractVersion, SnapshotID: snapshotID, AsOf: time.Now().UTC().Format(time.RFC3339Nano), TraceID: traceID, Partial: partial, MissingSections: missing, SourceWatermarks: map[string]string{"postgresql.alert_assignment_batches.revision": fmt.Sprintf("%d", revision)}}
+	return httpx.ContractMeta{ContractVersion: alertBatchAssignmentContractVersion, SnapshotID: snapshotID, AsOf: time.Now().UTC().Format(time.RFC3339Nano), TraceID: traceID, Partial: partial, MissingSections: missing, SourceWatermarks: map[string]string{"postgresql.alert_assignment_batches.revision": fmt.Sprintf("%d", revision), "postgresql.alert_assignment_projection_receipts": fmt.Sprintf("batch_revision:%d", revision)}}
 }
 
 func (h *AlertBatchAssignmentHandler) writeSelectionCreated(w http.ResponseWriter, ctx context.Context, receipt *AlertBatchSelectionReceipt) {
@@ -634,7 +635,9 @@ func (h *AlertBatchAssignmentHandler) writeAssignmentAccepted(w http.ResponseWri
 }
 
 func (h *AlertBatchAssignmentHandler) writeAssignmentSuccess(w http.ResponseWriter, ctx context.Context, job *AlertBatchAssignmentJob) {
-	partial := job.Status == "accepted" || job.Status == "running" || job.Status == "partial"
+	// meta.partial describes response/source completeness. A terminal business
+	// outcome named "partial" still has a complete per-item receipt set.
+	partial := job.Status == "accepted" || job.Status == "running"
 	missing := []string{}
 	if partial {
 		missing = []string{"alert.assignment.changed.v1 consumer receipt"}

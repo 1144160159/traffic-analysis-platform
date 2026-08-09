@@ -23,6 +23,8 @@ DATA_TMPFS = "/var/lib/postgresql/data:rw,nosuid,nodev,size=384m"
 SENTINEL_TABLE = "codex_ephemeral_alert_batch_sentinel"
 SENTINEL_VALUE = "ephemeral-only"
 PASS_MARKER = "alert_batch_assignment_postgres=pass"
+EXECUTION_PASS_MARKER = "alert_batch_assignment_execution_postgres=pass"
+TERMINAL_QUERY_PASS_MARKER = "alert_batch_assignment_terminal_query_postgres=pass"
 
 
 def run(command: list[str], *, input_bytes: bytes | None = None, env: dict[str, str] | None = None, check: bool = True) -> subprocess.CompletedProcess[bytes]:
@@ -83,7 +85,7 @@ def main() -> int:
         "schema_version": 1,
         "run_id": args.run_id,
         "status": "FAIL",
-        "coverage_status": "OWNED_REAL_POSTGRES_FROZEN_ALERT_BATCH_ASSIGNMENT_G1",
+        "coverage_status": "OWNED_REAL_POSTGRES_ASSIGNMENT_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
         "production_applied": False,
         "shared_environment_touched": False,
         "loopback_only": True,
@@ -104,6 +106,8 @@ def main() -> int:
             "go/control-plane/deployments/docker/init/postgres_merged.sql",
             "deployments/postgres/migrations/202608091900_alert_batch_assignment_v1.sql",
             "common/sql/pg/19-alert-batch-assignment-v1.sql",
+            "deployments/postgres/migrations/202608092130_alert_batch_assignment_execution_v1.sql",
+            "common/sql/pg/20-alert-batch-assignment-execution-v1.sql",
         ],
         "schema_replay_count": 0,
         "test_output": "",
@@ -121,6 +125,13 @@ def main() -> int:
             "history_outbox_request_audit_same_trace": False,
             "audit_failure_full_rollback": False,
             "accepted_state_explicitly_non_final": False,
+            "requested_and_changed_events_consumed_independently": False,
+            "assignee_permission_and_item_revision_rechecked": False,
+            "deterministic_projection_intents_and_receipts_persisted": False,
+            "terminal_batch_and_item_accounting_complete": False,
+            "terminal_status_query_returns_latest_outbox_and_item_receipts": False,
+            "exact_kafka_redelivery_does_not_repeat_projection": False,
+            "dlq_ack_source_tuple_barrier_idempotent": False,
             "all_data_mounts_tmpfs": False,
             "no_persistent_volume": False,
         },
@@ -175,11 +186,19 @@ def main() -> int:
 
         test_env = os.environ.copy()
         test_env["GOSUMDB"] = test_env.get("TRAFFIC_GO_SUMDB") or "sum.golang.org"
-        test_env["ALERT_BATCH_ASSIGNMENT_INTEGRATION_DSN"] = f"postgres://postgres:{PASSWORD}@127.0.0.1:{port}/traffic_platform?sslmode=disable"
-        completed = run(["go", "-C", "go/control-plane", "test", "./internal/alert/api", "-run", "^TestAlertBatchAssignmentPostgresIntegration$", "-count=1", "-v"], env=test_env, check=False)
-        result["test_output"] = completed.stdout.decode(errors="replace").strip()
-        if completed.returncode != 0 or PASS_MARKER not in result["test_output"]:
-            raise RuntimeError(f"alert batch PostgreSQL integration exited {completed.returncode}")
+        dsn = f"postgres://postgres:{PASSWORD}@127.0.0.1:{port}/traffic_platform?sslmode=disable"
+        test_env["ALERT_BATCH_ASSIGNMENT_INTEGRATION_DSN"] = dsn
+        test_env["ALERT_BATCH_ASSIGNMENT_EXECUTION_INTEGRATION_DSN"] = dsn
+        acceptance = run(["go", "-C", "go/control-plane", "test", "./internal/alert/api", "-run", "^TestAlertBatchAssignmentPostgresIntegration$", "-count=1", "-v"], env=test_env, check=False)
+        execution = run(["go", "-C", "go/control-plane", "test", "./internal/alert/consumer", "-run", "^TestAlertBatchAssignmentPipelinePostgresIntegration$", "-count=1", "-v"], env=test_env, check=False)
+        terminal_query = run(["go", "-C", "go/control-plane", "test", "./internal/alert/api", "-run", "^TestAlertBatchAssignmentTerminalQueryPostgresIntegration$", "-count=1", "-v"], env=test_env, check=False)
+        result["test_output"] = (acceptance.stdout + b"\n" + execution.stdout + b"\n" + terminal_query.stdout).decode(errors="replace").strip()
+        if acceptance.returncode != 0 or PASS_MARKER not in result["test_output"]:
+            raise RuntimeError(f"alert batch PostgreSQL acceptance integration exited {acceptance.returncode}")
+        if execution.returncode != 0 or EXECUTION_PASS_MARKER not in result["test_output"]:
+            raise RuntimeError(f"alert batch PostgreSQL execution integration exited {execution.returncode}")
+        if terminal_query.returncode != 0 or TERMINAL_QUERY_PASS_MARKER not in result["test_output"]:
+            raise RuntimeError(f"alert batch PostgreSQL terminal-query integration exited {terminal_query.returncode}")
         result["asserted_facts"] = {key: True for key in result["asserted_facts"]}
         result["status"] = "PASS"
     except Exception as exc:

@@ -44,6 +44,7 @@
     {"topic":"alerts.v1","producers":["flink-alert-generator-job"],"consumers":[{"principal":"flink-cep-job","groups":["flink-cep-job"]}]},
     {"topic":"alert.feedback.v1","producers":["alert-service"],"consumers":[{"principal":"rule-manager","groups":["rule-manager-alert-feedback-projection-v1"]}]},
     {"topic":"alert.response.requested.v1","producers":["alert-service"],"consumers":[{"principal":"alert-service","groups":["alert-service-response-execution-v1"]}]},
+    {"topic":"alert.assignment.events.v1","producers":["alert-service"],"consumers":[{"principal":"alert-service","groups":["alert-service-batch-assignment-execution-v1"]}]},
     {"topic":"alert.saved-view.events.v1","producers":["alert-service"],"consumers":[]},
     {"topic":"whitelist.events.v2","producers":["alert-service"],"consumers":[{"principal":"rule-manager","groups":["rule-manager-whitelist-rule-effect-v2"]}]},
     {"topic":"notification.governance.events.v1","producers":["alert-service"],"consumers":[]},

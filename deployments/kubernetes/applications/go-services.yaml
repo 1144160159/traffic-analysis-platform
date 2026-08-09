@@ -219,6 +219,9 @@ spec:
         - {name: KAFKA_SAVED_VIEW_EVENT_TOPIC, value: "alert.saved-view.events.v1"}
         - {name: ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED, value: "false"}
         - {name: ALERT_BATCH_ASSIGNMENT_V1_ENABLED, value: "false"}
+        - {name: ALERT_BATCH_ASSIGNMENT_PIPELINE_V1_ENABLED, value: "false"}
+        - {name: ALERT_BATCH_ASSIGNMENT_EVENT_TOPIC, value: "alert.assignment.events.v1"}
+        - {name: ALERT_BATCH_ASSIGNMENT_EVENT_GROUP, value: "alert-service-batch-assignment-execution-v1"}
         - {name: ALERT_BATCH_SELECTION_SIGNING_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: ALERT_BATCH_SELECTION_SIGNING_SECRET, optional: true}}}
         - {name: ALERT_EVIDENCE_CHAIN_V1_ENABLED, value: "false"}
         - {name: ALERT_EVIDENCE_DOWNLOAD_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: ALERT_EVIDENCE_DOWNLOAD_SECRET, optional: true}}}
