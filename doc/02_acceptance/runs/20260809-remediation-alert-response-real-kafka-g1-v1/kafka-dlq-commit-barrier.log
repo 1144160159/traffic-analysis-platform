@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-kafka-dlq-commit-barrier-v1",
+  "remediation_id": "T-KAFKA-003",
+  "status": "PASS",
+  "coverage_status": "PARTIAL_SHARED_GO_CONSUMER_WITH_DASHBOARD_AND_ALERT_RESPONSE_OWNED_SINGLE_BROKER_G1",
+  "guarantees": 8,
+  "source_assertions": [
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/dlq.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer_dlq_acknowledgement_barrier_test.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer_batch_commit_test.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/dlq_test.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_real_kafka_integration_test.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    },
+    {
+      "source": "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failures": []
+    }
+  ],
+  "errors": [],
+  "remaining_gates": [
+    "repeat dashboard and alert-response poison-message DLQ acknowledgement failure on the approved replicated release-candidate broker; both owned single-broker G1 runs are not G2 or HA evidence",
+    "reconcile the alert-response source offset DLQ target offset PostgreSQL receipt quarantine audit and provider ledger on the approved release candidate",
+    "materialize and audit source-offset DLQ receipts for remaining non-dashboard and non-alert-response consumer domains",
+    "consumer restart rebalance lag and duplicate convergence evidence",
+    "approved canary rollback T+0 T+1 T+3 T+7 observation and independent sign-off",
+    "inventory and migrate non-Go and dedicated consumer paths"
+  ]
+}
