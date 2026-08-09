@@ -43,6 +43,7 @@ func TestPostgresAlertResponseProjectionIntegration(t *testing.T) {
 	}
 
 	suffix := time.Now().UTC().Format("150405000000")
+	baseOffset := time.Now().UnixNano()
 	tenantID := "integration-response-projection-" + suffix
 	jobID := "alert-action-" + suffix
 	eventID := "11111111-1111-4111-8111-" + suffix
@@ -64,7 +65,7 @@ func TestPostgresAlertResponseProjectionIntegration(t *testing.T) {
 		Action: "block_ip", Target: "198.51.100.10",
 		Reason: "confirmed malicious source", RequestedBy: "operator-a",
 		ApprovedBy: "approver-b", ApprovalReason: "independent integration approval", TraceID: "trace-integration",
-		DryRun: false, AggregateVersion: 2, KafkaPartition: 1, KafkaOffset: 10,
+		DryRun: false, AggregateVersion: 2, KafkaPartition: 1, KafkaOffset: baseOffset,
 	}
 	if err := projection.ApplyAlertResponseProjection(context.Background(), input); err != nil {
 		t.Fatal(err)
@@ -89,7 +90,7 @@ func TestPostgresAlertResponseProjectionIntegration(t *testing.T) {
 	// Kafka may replay the stable event at a different offset. Its immutable
 	// business identity remains idempotent and must not bump the action again.
 	input.KafkaPartition = 2
-	input.KafkaOffset = 99
+	input.KafkaOffset = baseOffset + 1
 	if err := projection.ApplyAlertResponseProjection(context.Background(), input); err != nil {
 		t.Fatalf("stable replay at a new offset failed: %v", err)
 	}
@@ -104,7 +105,7 @@ func TestPostgresAlertResponseProjectionIntegration(t *testing.T) {
 
 	// Reusing the event identity with another aggregate version is a collision.
 	input.AggregateVersion = 3
-	input.KafkaOffset = 100
+	input.KafkaOffset = baseOffset + 2
 	if err := projection.ApplyAlertResponseProjection(context.Background(), input); err == nil {
 		t.Fatal("aggregate-version collision was accepted")
 	}
@@ -129,7 +130,7 @@ func TestPostgresAlertResponseProjectionIntegration(t *testing.T) {
 	cancelledInput.AlertID = "AL-PROJECTION-2"
 	cancelledInput.Target = "198.51.100.11"
 	cancelledInput.AggregateVersion = 2
-	cancelledInput.KafkaOffset = 101
+	cancelledInput.KafkaOffset = baseOffset + 3
 	if err := projection.ApplyAlertResponseProjection(context.Background(), cancelledInput); err == nil {
 		t.Fatal("cancelled terminal action accepted a late execution receipt")
 	}
