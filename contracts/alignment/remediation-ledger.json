@@ -5,7 +5,7 @@
     "contracts/alignment/work-packages.json",
     "contracts/alignment/progress-overrides.json"
   ],
-  "as_of": "2026-08-09T04:57:17Z",
+  "as_of": "2026-08-09T05:55:46Z",
   "g7_status": "OPEN",
   "g8_status": "BLOCKED",
   "g8_blockers": [
@@ -19,9 +19,9 @@
     "total": 102,
     "by_status": {
       "BLOCKED": 3,
-      "IMPLEMENTING": 38,
+      "IMPLEMENTING": 39,
       "OBSERVING": 1,
-      "OPEN": 34,
+      "OPEN": 33,
       "VERIFYING": 26
     }
   },
@@ -376,10 +376,36 @@
       "work_package": "WP-07-ALERT",
       "planned_wave": "W3",
       "owner": "alert-domain-owner",
-      "status": "OPEN",
-      "evidence": [],
-      "blocker": null,
-      "note": ""
+      "status": "IMPLEMENTING",
+      "evidence": [
+        "contracts/alignment/features/F-ALERT-006.json",
+        "contracts/openapi/alignment-v1.openapi.json",
+        "contracts/postgres/transaction-outbox.v1.json",
+        "contracts/postgres/mutable-command-inventory.v1.json",
+        "contracts/configuration/configuration-catalog.v1.json",
+        "go/control-plane/internal/alert/api/handler_alert_actions.go",
+        "go/control-plane/internal/alert/api/handler_alert_saved_view_transaction_test.go",
+        "go/control-plane/internal/alert/api/handler_alert_saved_view_postgres_integration_test.go",
+        "go/control-plane/internal/alert/api/handler_alert_saved_view_outbox.go",
+        "go/control-plane/internal/alert/api/handler_alert_saved_view_outbox_test.go",
+        "go/control-plane/internal/alert/config/config.go",
+        "go/control-plane/cmd/alert-service/main.go",
+        "deployments/kubernetes/applications/go-services.yaml",
+        "go/control-plane/deployments/kubernetes/alert-service.yaml",
+        "web/ui/src/pages/AlertTriagePage.tsx",
+        "web/ui/src/services/alertTriageApi.ts",
+        "web/ui/src/services/alertTriageApi.test.ts",
+        "scripts/alignment/verify_alert_saved_view_ephemeral.py",
+        "scripts/alignment/capture_alert_saved_view.py",
+        "tests/alignment/test_alert_saved_view_ephemeral_guard.py",
+        "doc/07_alignment/runbooks/T-PG-002-saved-view-transaction-outbox.md",
+        "doc/07_alignment/runbooks/F-ALERT-006-rollback.md",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v219/manifest.json#sha256=61eca22a1b5dfa4a3bb0da4c731709cbb6f26d5b43d6253d2787f90507b436f9",
+        "doc/02_acceptance/runs/20260809-remediation-alert-saved-view-g1-v1/manifest.json#sha256=1dfe299557cedb860262d65b06fc714e20c0ad83ac2de9fb8ecfafddb5ea1e78",
+        "doc/02_acceptance/runs/20260809-remediation-alert-saved-view-g1-v1/owned-postgres-result.json#sha256=d375d8640303a4bf5c2eaf15432c6ee4c637d6dbb7188eb985c28d0d2704c1e5"
+      ],
+      "blocker": "自有固定摘要PostgreSQL G1已覆盖revision、幂等、租户隔离、审计故障回滚和同trace原子事实，但alert.saved-view.events.v1仍为producer_only，尚无独立幂等真实consumer。批准候选PG/Kafka、G2/G3、并发锁竞争与性能预算、指定Windows Chrome跨会话恢复、canary、回滚及T+0/T+1/T+3/T+7观察均未完成；不得进入VERIFYING或CLOSED。",
+      "note": "G0 v219三道门分别PASS并绑定源码SHA 7259275ef2765937146128c0b1bb6cdd61ada8d196b7625d87fb09333550ebf8。严格客户端创建发送expected_revision=0、更新发送当前revision，陈旧写在任何事实变更前冲突；旧客户端省略revision时保留旧摘要兼容。真实tmpfs PostgreSQL验证精确重放、payload碰撞、跨租户同名隔离、审计失败全回滚以及history/outbox/audit同trace；容器经ID、镜像和哨兵核验后删除。dispatcher开关默认关闭且只停止发布，不禁止权威PG事务，production_applied=false，因此F-ALERT-006仅提升为IMPLEMENTING。"
     },
     {
       "id": "F-ASSET-001",
@@ -1639,10 +1665,17 @@
         "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v218/manifest.json#sha256=5de624d54c5f19a9749283d52fdb21ca3b4619e880f10d218ff15eae578083c4",
         "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v2/manifest.json#sha256=8264b77a34b7159b4b53abbbc179f95c778589a0e2b867b5aec1bf285e20d7ff",
-        "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v2/owned-real-kafka-result.json#sha256=bb603b650ba3f8934de471d2a7cae618d480c1ec364c9594cd8d5f3dacf3bfc3"
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v2/owned-real-kafka-result.json#sha256=bb603b650ba3f8934de471d2a7cae618d480c1ec364c9594cd8d5f3dacf3bfc3",
+        "go/control-plane/internal/alert/api/handler_alert_saved_view_postgres_integration_test.go",
+        "scripts/alignment/verify_alert_saved_view_ephemeral.py",
+        "scripts/alignment/capture_alert_saved_view.py",
+        "doc/07_alignment/runbooks/F-ALERT-006-rollback.md",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v219/manifest.json#sha256=61eca22a1b5dfa4a3bb0da4c731709cbb6f26d5b43d6253d2787f90507b436f9",
+        "doc/02_acceptance/runs/20260809-remediation-alert-saved-view-g1-v1/manifest.json#sha256=1dfe299557cedb860262d65b06fc714e20c0ad83ac2de9fb8ecfafddb5ea1e78",
+        "doc/02_acceptance/runs/20260809-remediation-alert-saved-view-g1-v1/owned-postgres-result.json#sha256=d375d8640303a4bf5c2eaf15432c6ee4c637d6dbb7188eb985c28d0d2704c1e5"
       ],
-      "blocker": "全仓Go SQL清单仍有29个源文件需逐命令边界审查（19个P1_REVIEW、10个P2_REVIEW，P0_REVIEW与未分类均为0）；forensics、saved-view、notification治理、asset.discovery、probe registration及data-quality等其他outbox/consumer缺口仍按各自事实保留。dashboard poison屏障与alert response provider receipt/action/audit、authority recheck和compensation queue原子边界均已在自有G1通过，但批准候选PG、复制broker故障、其余consumer域和跨存储对账尚未完成。其余生产migration/topic/ACL/候选镜像、锁竞争、outbox lag/dead告警、回滚及T+0/T+1/T+3/T+7观察仍未完成。",
-      "note": "现有原子命令边界继续保留。版本化清单已同步到104个源文件/678条SQL变更（PG 662、CH 16、review queue 29、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 10、未分类0）。alert response的provider回执/action/audit、unknown effect有界权威复核、补偿request/attempt/action/audit、生产consumer到单次provider副作用的同trace对账，以及Redpanda ACK后的source tuple receipt/quarantine audit已在同一候选自有G1验证；三套PG入口双重回放SHA均为04f1a3995802c1efb08a60dfa3112d62eb1d3bb8efd005f8a6a8b6f0754026dc。该切片仍为单broker自有G1且production_applied=false，因此T-PG-002继续IMPLEMENTING。"
+      "blocker": "全仓Go SQL清单仍有29个源文件需逐命令边界审查（19个P1_REVIEW、10个P2_REVIEW，P0_REVIEW与未分类均为0）；forensics、notification治理、asset.discovery、probe registration及data-quality等其他outbox/consumer缺口仍按各自事实保留。saved-view权威PG事务已通过自有G1，但其topic仍为producer_only，尚无独立幂等consumer。dashboard与alert response自有G1也不能替代批准候选PG、复制broker故障、其余consumer域和跨存储对账。生产migration/topic/ACL/候选镜像、锁竞争、outbox lag/dead告警、回滚及T+0/T+1/T+3/T+7观察仍未完成。",
+      "note": "现有原子命令边界继续保留。版本化清单在G0 v219同一源码SHA 7259275ef2765937146128c0b1bb6cdd61ada8d196b7625d87fb09333550ebf8上仍为104个源文件/678条SQL变更（PG 662、CH 16、review queue 29、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 10、未分类0）。除既有alert response证据外，saved-view真实tmpfs PostgreSQL新增验证strict/legacy revision兼容、精确重放、跨租户、审计失败全回滚和history/outbox/audit同trace；dispatcher保持默认关闭，容器已身份核验并删除。production_applied=false，T-PG-002继续IMPLEMENTING。"
     },
     {
       "id": "T-PG-003",
