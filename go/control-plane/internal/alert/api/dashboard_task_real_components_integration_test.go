@@ -23,7 +23,11 @@ import (
 	"go.uber.org/zap"
 )
 
-const dashboardRealProviderToken = "dashboard-real-components-ephemeral-token"
+const (
+	dashboardRealProviderToken   = "dashboard-real-components-ephemeral-token"
+	dashboardRealDLQTopic        = "dlq.v1"
+	dashboardRealInvalidDLQTopic = "invalid dashboard dlq topic"
+)
 
 // TestDashboardTaskRealComponents exercises the production PostgreSQL, Kafka
 // and HTTP-provider boundaries. The Python runner supplies owned, sentinel
@@ -93,7 +97,8 @@ func TestDashboardTaskRealComponents(t *testing.T) {
 	var committedMessages atomic.Int64
 	var maximumCommittedOffset atomic.Int64
 	maximumCommittedOffset.Store(-1)
-	stopConsumer := startDashboardRealConsumer(t, broker, groupID, pipeline, &committedMessages, &maximumCommittedOffset)
+	_, stopConsumer := startDashboardRealConsumer(t, broker, groupID, pipeline, dashboardRealDLQTopic,
+		&committedMessages, &maximumCommittedOffset)
 	defer func() { stopConsumer() }()
 
 	completedReceipt, completedTask := runDashboardRealExecution(t, ctx, handler, pipeline, db, tenantID,
@@ -108,7 +113,8 @@ func TestDashboardTaskRealComponents(t *testing.T) {
 	// Restart the real consumer group, republish the exact request event at a
 	// new broker offset, and prove the durable inbox suppresses a second effect.
 	stopConsumer()
-	stopConsumer = startDashboardRealConsumer(t, broker, groupID, pipeline, &committedMessages, &maximumCommittedOffset)
+	_, stopConsumer = startDashboardRealConsumer(t, broker, groupID, pipeline, dashboardRealDLQTopic,
+		&committedMessages, &maximumCommittedOffset)
 	commitsBeforeReplay := committedMessages.Load()
 	republishDashboardRealOutboxEvent(t, ctx, db, pipeline, completedReceipt.EventID)
 	waitDashboardReal(t, "exact request replay committed", func() (bool, string) {
@@ -194,6 +200,8 @@ func TestDashboardTaskRealComponents(t *testing.T) {
 		return committedMessages.Load() >= 12 && maximumCommittedOffset.Load() >= 11,
 			fmt.Sprintf("committed=%d max_offset=%d", committedMessages.Load(), maximumCommittedOffset.Load())
 	})
+	dlqReceipt := runDashboardRealPoisonDLQ(t, ctx, broker, groupID, tenantID, pipeline, producer,
+		&committedMessages, &maximumCommittedOffset, db)
 
 	var tasks, history, outbox, publishedOutbox, inbox, executionAttempts, executionReceipts int
 	var compensationRequests, compensationAttempts, compensationReceipts, audits int
@@ -262,11 +270,11 @@ func TestDashboardTaskRealComponents(t *testing.T) {
 			provider.executionCallCount(), provider.executionUniqueCount(),
 			provider.compensationCallCount(), provider.compensationUniqueCount())
 	}
-	t.Logf("dashboard_real_components=pass group=%s committed_messages=%d max_offset=%d tasks=%d inbox=%d execution_trace=%s compensation_trace=%s execution_calls=%d execution_effects=%d compensation_calls=%d compensation_effects=%d",
+	t.Logf("dashboard_real_components=pass group=%s committed_messages=%d max_offset=%d tasks=%d inbox=%d execution_trace=%s compensation_trace=%s execution_calls=%d execution_effects=%d compensation_calls=%d compensation_effects=%d poison_dlq_offset=%d",
 		groupID, committedMessages.Load(), maximumCommittedOffset.Load(), tasks, inbox,
 		reconciledExecutionTrace, reconciledCompensationTrace,
 		provider.executionCallCount(), provider.executionUniqueCount(),
-		provider.compensationCallCount(), provider.compensationUniqueCount())
+		provider.compensationCallCount(), provider.compensationUniqueCount(), dlqReceipt.OriginalOffset)
 }
 
 func runDashboardRealExecution(t *testing.T, ctx context.Context, handler *DashboardTaskHandler,
@@ -378,14 +386,16 @@ func runDashboardRealCompensation(t *testing.T, ctx context.Context, handler *Da
 }
 
 func startDashboardRealConsumer(t *testing.T, broker, groupID string, pipeline *DashboardTaskPipeline,
+	dlqTopic string,
 	committedMessages, maximumCommittedOffset *atomic.Int64,
-) func() {
+) (*commonkafka.Consumer, func()) {
 	t.Helper()
 	consumer, err := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
 		Brokers: []string{broker}, Topic: dashboardTaskKafkaTopic, GroupID: groupID,
 		MinBytes: 1, MaxBytes: 1 << 20, MaxWait: 100 * time.Millisecond,
 		StartOffset: segmentkafka.FirstOffset, MaxRetries: 1, RetryBackoff: 50 * time.Millisecond,
-		CommitOnHandlerError: false, EnableDLQ: false,
+		CommitOnHandlerError: false, EnableDLQ: true, DLQTopic: dlqTopic,
+		CommitOnDLQSuccess: true, DLQPermanentOnly: true,
 	}, zap.NewNop())
 	if err != nil {
 		t.Fatal(err)
@@ -401,6 +411,7 @@ func startDashboardRealConsumer(t *testing.T, broker, groupID string, pipeline *
 			}
 		}
 	})
+	consumer.SetDLQAcknowledgementBarrier(pipeline.RecordDLQAcknowledgement)
 	eventConsumer, err := NewDashboardTaskEventConsumer(consumer, pipeline)
 	if err != nil {
 		t.Fatal(err)
@@ -409,7 +420,7 @@ func startDashboardRealConsumer(t *testing.T, broker, groupID string, pipeline *
 	done := make(chan error, 1)
 	go func() { done <- eventConsumer.Start(consumerContext) }()
 	var once sync.Once
-	return func() {
+	return consumer, func() {
 		once.Do(func() {
 			cancel()
 			_ = eventConsumer.Close()
@@ -420,6 +431,115 @@ func startDashboardRealConsumer(t *testing.T, broker, groupID string, pipeline *
 			}
 		})
 	}
+}
+
+func runDashboardRealPoisonDLQ(t *testing.T, ctx context.Context, broker, groupID, tenantID string,
+	pipeline *DashboardTaskPipeline, producer *commonkafka.Producer,
+	committedMessages, maximumCommittedOffset *atomic.Int64, db *sql.DB,
+) *commonkafka.DLQMessage {
+	t.Helper()
+	poisonEventID := uuid.NewString()
+	poisonTaskID := uuid.NewString()
+	poisonTraceID := "trace-dashboard-poison-" + uuid.NewString()
+	poisonKey := tenantID + ":" + poisonTaskID
+	poisonValue := []byte(`{"event_id":`)
+	expectedOffset := maximumCommittedOffset.Load() + 1
+	commitsBefore := committedMessages.Load()
+	if err := producer.Send(ctx, poisonKey, poisonValue,
+		commonkafka.MessageHeader{Key: "event_id", Value: poisonEventID},
+		commonkafka.MessageHeader{Key: "event_type", Value: dashboardTaskRequestedEvent},
+		commonkafka.MessageHeader{Key: "tenant_id", Value: tenantID},
+		commonkafka.MessageHeader{Key: "task_id", Value: poisonTaskID},
+		commonkafka.MessageHeader{Key: "aggregate_version", Value: "1"},
+		commonkafka.MessageHeader{Key: "schema_version", Value: "1"},
+		commonkafka.MessageHeader{Key: "trace_id", Value: poisonTraceID},
+		commonkafka.MessageHeader{Key: "content_type", Value: "application/json"},
+		commonkafka.MessageHeader{Key: "target_topic", Value: dashboardTaskKafkaTopic},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	failedConsumer, stopFailed := startDashboardRealConsumer(t, broker, groupID, pipeline,
+		dashboardRealInvalidDLQTopic, committedMessages, maximumCommittedOffset)
+	waitDashboardReal(t, "DLQ acknowledgement failure retains source offset", func() (bool, string) {
+		metrics := failedConsumer.GetMetrics()
+		return metrics.MessagesFailed > 0 && metrics.ConsecutiveProcessingFailures > 0,
+			fmt.Sprintf("failed=%d processing_failures=%d", metrics.MessagesFailed, metrics.ConsecutiveProcessingFailures)
+	})
+	if committedMessages.Load() != commitsBefore || maximumCommittedOffset.Load() >= expectedOffset {
+		t.Fatalf("source offset advanced without DLQ acknowledgement committed=%d before=%d max=%d expected=%d",
+			committedMessages.Load(), commitsBefore, maximumCommittedOffset.Load(), expectedOffset)
+	}
+	var prematureReceipts int
+	if err := db.QueryRowContext(ctx, `SELECT count(*) FROM dashboard_task_dlq_receipts
+		WHERE source_topic=$1 AND source_partition=0 AND source_offset=$2`, dashboardTaskKafkaTopic,
+		expectedOffset).Scan(&prematureReceipts); err != nil || prematureReceipts != 0 {
+		t.Fatalf("DLQ receipt persisted before broker acknowledgement count=%d err=%v", prematureReceipts, err)
+	}
+	stopFailed()
+
+	recoveryConsumer, stopRecovery := startDashboardRealConsumer(t, broker, groupID, pipeline,
+		dashboardRealDLQTopic, committedMessages, maximumCommittedOffset)
+	waitDashboardReal(t, "poison event redelivered and committed after DLQ acknowledgement", func() (bool, string) {
+		metrics := recoveryConsumer.GetMetrics()
+		return committedMessages.Load() > commitsBefore && maximumCommittedOffset.Load() == expectedOffset && metrics.MessagesDLQ > 0,
+			fmt.Sprintf("committed=%d max=%d dlq=%d", committedMessages.Load(), maximumCommittedOffset.Load(), metrics.MessagesDLQ)
+	})
+	stopRecovery()
+
+	var receiptCount, auditCount int
+	var payloadSHA, headerSHA, storedTenantID, storedEventID, storedTaskID, storedTraceID string
+	var storedAggregateVersion int64
+	if err := db.QueryRowContext(ctx, `SELECT count(*),min(payload_sha256),min(headers_sha256),min(tenant_id),
+		min(event_id),min(task_id),min(trace_id),min(aggregate_version)
+		FROM dashboard_task_dlq_receipts WHERE source_topic=$1 AND source_partition=0 AND source_offset=$2`,
+		dashboardTaskKafkaTopic, expectedOffset).Scan(&receiptCount, &payloadSHA, &headerSHA, &storedTenantID,
+		&storedEventID, &storedTaskID, &storedTraceID, &storedAggregateVersion); err != nil {
+		t.Fatal(err)
+	}
+	expectedPayloadDigest := sha256.Sum256(poisonValue)
+	if receiptCount != 1 || payloadSHA != hex.EncodeToString(expectedPayloadDigest[:]) || len(headerSHA) != 64 ||
+		storedTenantID != tenantID || storedEventID != poisonEventID || storedTaskID != poisonTaskID ||
+		storedTraceID != poisonTraceID || storedAggregateVersion != 1 {
+		t.Fatalf("invalid PostgreSQL DLQ receipt count=%d payload=%s headers=%s tenant=%s event=%s task=%s trace=%s revision=%d",
+			receiptCount, payloadSHA, headerSHA, storedTenantID, storedEventID, storedTaskID, storedTraceID, storedAggregateVersion)
+	}
+	if err := db.QueryRowContext(ctx, `SELECT count(*) FROM audit_logs WHERE tenant_id=$1
+		AND action='DASHBOARD_TASK_EVENT_QUARANTINED' AND detail->>'source_topic'=$2
+		AND (detail->>'source_offset')::bigint=$3 AND detail->>'dlq_acknowledged'='true'`,
+		tenantID, dashboardTaskKafkaTopic, expectedOffset).Scan(&auditCount); err != nil || auditCount != 1 {
+		t.Fatalf("dashboard poison DLQ audit count=%d err=%v", auditCount, err)
+	}
+
+	reader := segmentkafka.NewReader(segmentkafka.ReaderConfig{
+		Brokers: []string{broker}, Topic: dashboardRealDLQTopic, Partition: 0,
+		StartOffset: segmentkafka.FirstOffset, MinBytes: 1, MaxBytes: 1 << 20, MaxWait: 100 * time.Millisecond,
+	})
+	defer reader.Close()
+	readContext, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	dlqKafkaMessage, err := reader.ReadMessage(readContext)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dlqReceipt, err := commonkafka.DecodeDLQMessage(dlqKafkaMessage.Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	originalValue, err := dlqReceipt.GetOriginalValue()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dlqReceipt.OriginalTopic != dashboardTaskKafkaTopic || dlqReceipt.OriginalPartition != 0 ||
+		dlqReceipt.OriginalOffset != expectedOffset || dlqReceipt.OriginalKey != poisonKey ||
+		string(originalValue) != string(poisonValue) || dlqReceipt.TenantID != tenantID ||
+		dlqReceipt.EventID != poisonEventID || dlqReceipt.TraceID != poisonTraceID ||
+		dlqReceipt.ErrorCode != "PROCESSING_FAILED" ||
+		dlqReceipt.ServiceName != "consumer-"+dashboardTaskKafkaTopic ||
+		!strings.Contains(dlqReceipt.ErrorMessage, "decode dashboard task event") {
+		t.Fatalf("canonical poison DLQ payload mismatch: %+v", dlqReceipt)
+	}
+	return dlqReceipt
 }
 
 func republishDashboardRealOutboxEvent(t *testing.T, ctx context.Context, db *sql.DB,

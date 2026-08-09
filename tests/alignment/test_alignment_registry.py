@@ -1512,7 +1512,7 @@ class AlignmentRegistryTest(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual(3, contract["contract_version"])
+        self.assertEqual(4, contract["contract_version"])
         self.assertEqual("authenticated_identity", contract["permissions"]["tenant_source"])
         self.assertEqual(
             {
@@ -1586,6 +1586,9 @@ class AlignmentRegistryTest(unittest.TestCase):
         service = (ROOT / "go/control-plane/cmd/alert-service/main.go").read_text(
             encoding="utf-8"
         )
+        common_consumer = (
+            ROOT / "go/control-plane/internal/common/kafka/consumer.go"
+        ).read_text(encoding="utf-8")
         for fragment in (
             "dashboard.task.events.v1",
             "dashboard_task_event_inbox",
@@ -1593,6 +1596,7 @@ class AlignmentRegistryTest(unittest.TestCase):
             "dashboard_task_execution_receipts",
             "dashboard_task_compensation_attempts",
             "dashboard_task_compensation_receipts",
+            "dashboard_task_dlq_receipts",
             "CommitOnHandlerError: false",
             "DLQPermanentOnly: true",
             'RequiredAcks: "all"',
@@ -1607,6 +1611,9 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn(
             "DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED", service
         )
+        self.assertIn("SetDLQAcknowledgementBarrier", service)
+        self.assertIn("runDLQAcknowledgementBarrier", common_consumer)
+        self.assertIn("source_offset_commit_pending", pipeline)
         self.assertIn("dashboard_task_compensation_requests", compensation)
         self.assertIn("DASHBOARD_TASK_COMPENSATION_REQUESTED", compensation)
         self.assertIn("CompensateDashboardTask", provider)
@@ -1616,6 +1623,10 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertFalse(contract["rollout"]["default"])
         self.assertIn(
             "completed requires effect_state=confirmed and one or more stable effect_ids",
+            contract["domain"]["invariants"],
+        )
+        self.assertIn(
+            "a permanent poison event advances its source offset only after the canonical DLQ record is broker acknowledged and the source tuple is atomically materialized with an audit receipt in PostgreSQL",
             contract["domain"]["invariants"],
         )
 
@@ -1664,6 +1675,21 @@ class AlignmentRegistryTest(unittest.TestCase):
             "dashboard_task_compensation_receipts",
         ):
             self.assertIn(table, compensation_schema)
+        dlq_schema = (
+            ROOT
+            / "deployments/postgres/migrations"
+            / "202608090945_dashboard_task_dlq_receipt_v1.sql"
+        ).read_text(encoding="utf-8")
+        self.assertIn("dashboard_task_dlq_receipts", dlq_schema)
+        self.assertIn("PRIMARY KEY (source_topic,source_partition,source_offset)", dlq_schema)
+        for schema_path in (
+            ROOT / "common/sql/pg/14-dashboard-task-dlq-receipt-v1.sql",
+            ROOT / "go/control-plane/deployments/docker/init/postgres_merged.sql",
+            ROOT / "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        ):
+            schema = schema_path.read_text(encoding="utf-8")
+            self.assertIn("dashboard_task_dlq_receipts", schema)
+            self.assertIn("202608090945", schema)
 
         for manifest_path in (
             ROOT / "deployments/kubernetes/applications/go-services.yaml",
@@ -1700,6 +1726,8 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn("dashboard_task_execution_receipts", rollback)
         self.assertIn("receipt_found", rollback)
         self.assertIn("DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED", rollback)
+        self.assertIn("dashboard_task_dlq_receipts", rollback)
+        self.assertIn("DASHBOARD_TASK_EVENT_QUARANTINED", rollback)
 
     def test_dashboard_snapshot_is_one_tenant_bound_partial_aware_query(self) -> None:
         feature = json.loads(

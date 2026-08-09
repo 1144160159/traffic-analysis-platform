@@ -27,23 +27,29 @@ SOURCE_ARTIFACTS = (
     "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
     "go/control-plane/internal/alert/api/dashboard_task_http_provider.go",
     "go/control-plane/internal/alert/api/dashboard_task_http_provider_test.go",
+    "go/control-plane/internal/common/kafka/consumer.go",
+    "go/control-plane/internal/common/kafka/consumer_dlq_acknowledgement_barrier_test.go",
     "go/control-plane/cmd/alert-service/main.go",
     "contracts/alignment/features/F-DASHBOARD-002.json",
     "contracts/alignment/feature-contract-registry.v1.json",
     "contracts/configuration/configuration-catalog.v1.json",
     "contracts/postgres/mutable-command-inventory.v1.json",
+    "contracts/postgres/transaction-outbox.v1.json",
     "contracts/security/service-identity-catalog.v1.json",
     "contracts/security/pki-catalog.v1.json",
     "contracts/events/kafka-json-events-v1.schema.json",
     "contracts/events/kafka-topic-catalog.v1.json",
     "contracts/events/kafka-acl-catalog.v1.json",
+    "contracts/kafka/dlq-commit-barrier.v1.json",
     "contracts/openapi/alignment-v1.openapi.json",
     "deployments/postgres/migrations/202608031620_dashboard_task_v2.sql",
     "deployments/postgres/migrations/202608041930_dashboard_task_execution_pipeline_v1.sql",
     "deployments/postgres/migrations/202608082100_dashboard_task_compensation_v1.sql",
+    "deployments/postgres/migrations/202608090945_dashboard_task_dlq_receipt_v1.sql",
     "common/sql/pg/11-dashboard-task-v2.sql",
     "common/sql/pg/12-dashboard-task-execution-pipeline-v1.sql",
     "common/sql/pg/13-dashboard-task-compensation-v1.sql",
+    "common/sql/pg/14-dashboard-task-dlq-receipt-v1.sql",
     "common/kafka/create-topics.sh",
     "deployments/kubernetes/init-jobs/00-kafka-acl-plan.yaml",
     "deployments/kubernetes/init-jobs/01-kafka-topics.yaml",
@@ -53,8 +59,14 @@ SOURCE_ARTIFACTS = (
     "go/control-plane/deployments/docker/init/postgres_merged.sql",
     "doc/07_alignment/runbooks/F-DASHBOARD-002-rollback.md",
     "scripts/alignment/verify_dashboard_task_real_components_ephemeral.py",
+    "scripts/alignment/verify_pg_schema_entrypoints_ephemeral.py",
+    "scripts/alignment/verify_playbook_schema_entrypoints.py",
+    "scripts/alignment/verify_pg_transaction_outbox.py",
+    "scripts/alignment/verify_kafka_dlq_commit_barrier.py",
     "tests/alignment/test_alignment_registry.py",
     "tests/alignment/test_dashboard_task_real_components_ephemeral_guard.py",
+    "tests/alignment/test_pg_transaction_outbox.py",
+    "tests/alignment/test_kafka_dlq_commit_barrier.py",
 )
 
 
@@ -130,7 +142,23 @@ def main() -> int:
             "dashboard-pipeline-go",
             [
                 "go", "-C", "go/control-plane", "test",
-                "./internal/alert/api", "./cmd/alert-service", "-count=1",
+                "./internal/common/kafka", "./internal/alert/api", "./cmd/alert-service", "-count=1",
+            ],
+        ),
+        (
+            "postgres-transaction-contract",
+            ["python3", "scripts/alignment/verify_pg_transaction_outbox.py"],
+        ),
+        (
+            "kafka-dlq-contract",
+            ["python3", "scripts/alignment/verify_kafka_dlq_commit_barrier.py"],
+        ),
+        (
+            "poison-dlq-static-guards",
+            [
+                "python3", "-m", "unittest",
+                "tests.alignment.test_dashboard_task_real_components_ephemeral_guard",
+                "tests.alignment.test_kafka_dlq_commit_barrier", "-v",
             ],
         ),
         (
@@ -215,6 +243,22 @@ def main() -> int:
         else None
     )
     scoped_pass = scoped_pass and bounded_profile is not None and bounded_profile.get("status") == "PASS"
+    real_components_path = output / "real-components-result.json"
+    real_components = (
+        json.loads(real_components_path.read_text(encoding="utf-8"))
+        if real_components_path.is_file()
+        else None
+    )
+    required_real_component_facts = (
+        "poison_message_dlq_ack_verified",
+        "dlq_ack_failure_offset_retention_verified",
+        "poison_redelivery_verified",
+        "canonical_dlq_payload_verified",
+        "source_offset_dlq_postgres_audit_verified",
+    )
+    scoped_pass = scoped_pass and real_components is not None and all(
+        real_components.get(field) is True for field in required_real_component_facts
+    )
 
     artifacts = []
     for relative in SOURCE_ARTIFACTS:
@@ -230,9 +274,9 @@ def main() -> int:
         "run_id": args.run_id,
         "captured_at": datetime.now(timezone.utc).isoformat(),
         "feature_id": "F-DASHBOARD-002",
-        "related_ids": ["T-PG-002", "T-KAFKA-001", "T-SCHEMA-001"],
+        "related_ids": ["T-PG-002", "T-KAFKA-001", "T-KAFKA-003", "T-SCHEMA-001"],
         "status": "PARTIAL" if scoped_pass else "FAIL",
-        "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_REDPANDA_LOOPBACK_HTTP_PROVIDER_AUTHORITY_LOOKUP_G1",
+        "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_REDPANDA_HTTP_PROVIDER_AUTHORITY_LOOKUP_AND_POISON_DLQ_PG_AUDIT_G1",
         "scoped_evidence_status": "PASS" if scoped_pass else "FAIL",
         "candidate_source": candidate_before,
         "candidate_source_stable": candidate_stable,
@@ -245,7 +289,7 @@ def main() -> int:
         },
         "gate_status": {
             "G0": "PASS" if scoped_pass else "FAIL",
-            "G1": "PASS_FOR_REPOSITORY_COMPONENTS_AND_OWNED_REAL_POSTGRES_REDPANDA_HTTP_PROVIDER_AUTHORITY_LOOKUP_LIFECYCLE",
+            "G1": "PASS_FOR_OWNED_REAL_POSTGRES_REDPANDA_HTTP_PROVIDER_AUTHORITY_LOOKUP_AND_POISON_DLQ_PG_AUDIT_LIFECYCLE",
             "G2": "OPEN_FOR_APPROVED_RELEASE_CANDIDATE_POSTGRESQL_KAFKA_AND_PROVIDER",
             "G3": "OPEN_FOR_SAME_TRACE_TASK_EVENT_RECEIPT_AUDIT_AND_PROVIDER_EFFECT_RECONCILIATION",
             "G4": "PREFLIGHT_PASS_OWNED_BOUNDED_POSTGRES_REDPANDA_HTTP_NOT_APPROVED_G4",
@@ -258,6 +302,7 @@ def main() -> int:
         "commands": results,
         "source_artifacts": artifacts,
         "result_artifacts": result_artifacts,
+        "owned_real_components": real_components,
         "owned_bounded_profile": bounded_profile,
         "proven": [
             "task acceptance atomically commits task history audit outbox and exact idempotency receipt in PostgreSQL",
@@ -274,6 +319,9 @@ def main() -> int:
             "a real loopback HTTP provider validates execution and compensation metadata stable idempotency keys durable confirmed receipts and exact-identity lost-response lookup recovery",
             "authority lookup outcome is committed atomically into task result history and audit without changing the provider receipt hash or the version-one Kafka envelope",
             "consumer group restart plus exact broker replay commits a new offset without duplicating execution or compensation provider effects",
+            "a permanent poison event against an invalid DLQ target proves the canonical DLQ acknowledgement failure retains the source offset and creates no PostgreSQL receipt",
+            "the same consumer group redelivers the poison event after restart and commits the source offset only after dlq.v1 acknowledgement plus one idempotent PostgreSQL source-tuple receipt and audit",
+            "the broker record decodes as canonical DLQMessageV1Json and preserves original topic partition offset key payload headers tenant event trace error and processing service identity",
             "an out-of-order result that lacks terminal PostgreSQL authority is rejected and leaves no inbox fact",
             "common Docker and Kubernetes schema entrypoints replay twice to the same hash and include queue receipt and inbox tables",
             "the new topic JSON schema ACL workload identity and Kubernetes topic bootstrap catalogs are synchronized",
@@ -285,6 +333,7 @@ def main() -> int:
         "open": [
             "run the exact release candidate against approved PostgreSQL Kafka and execution and compensation provider services",
             "repeat duplicate outbox publish consumer restart Kafka replay and provider retry against the approved release-candidate services",
+            "repeat poison-event DLQ acknowledgement failure and PostgreSQL receipt recovery against the approved replicated Kafka candidate and reconcile the DLQ target partition and offset when the broker client exposes them",
             "repeat execution and compensation lost-response authority lookup against the approved provider and prove its provider ledger is the source returned for the exact idempotency identity",
             "reconcile each approved create-execution and compensation operation across task history audit events inbox offsets provider receipt and authoritative provider effect by its own trace",
             "recalibrate queue lag retry executor timeout P50 P95 P99 throughput and resource budgets on the approved release candidate and run at least three fixed-scale rounds with variance",

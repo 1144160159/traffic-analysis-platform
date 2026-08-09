@@ -187,7 +187,8 @@ func TestDashboardTaskBoundedPerformanceProfile(t *testing.T) {
 	var committedMessages atomic.Int64
 	var maximumCommittedOffset atomic.Int64
 	maximumCommittedOffset.Store(-1)
-	stopConsumer := startDashboardRealConsumer(t, broker, groupID, pipeline, &committedMessages, &maximumCommittedOffset)
+	_, stopConsumer := startDashboardRealConsumer(t, broker, groupID, pipeline, dashboardRealDLQTopic,
+		&committedMessages, &maximumCommittedOffset)
 	defer stopConsumer()
 	consumerColdStarted := time.Now()
 	warmup := performDashboardTaskCreate(t, handler, warmupTenantID, []string{authmodel.ScopeDashboardWrite},

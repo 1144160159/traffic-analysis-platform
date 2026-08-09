@@ -237,7 +237,7 @@
       "readiness": "active",
       "producers": ["go/control-plane/internal/alert/api/dashboard_task_pipeline.go"],
       "consumers": ["go/control-plane/internal/alert/api/dashboard_task_pipeline.go"],
-      "known_gap": "The pipeline is default-off until PostgreSQL migration 202608041930, the strict provider adapter and the dedicated Kafka service identity are deployed; live broker offsets and provider-effect reconciliation remain G2/G3 evidence gates."
+      "known_gap": "The default-off owned G1 now covers execution and compensation authority lookup plus poison-message DLQ acknowledgement failure, source-offset retention, restart redelivery and PostgreSQL/audit materialization. Approved replicated Kafka, release-candidate provider effects and G2/G3 reconciliation remain open."
     },
     {
       "name": "probe.control.v2",
@@ -491,7 +491,7 @@
         "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java"
       ],
       "consumers": ["go/control-plane/internal/alert/api/handler_advanced.go"],
-      "known_gap": "Some legacy Flink jobs still emit noncanonical DLQ payloads; payload unification and replay fault evidence remain open."
+      "known_gap": "The dashboard owned G1 emits and decodes the canonical payload and persists its source tuple after DLQ acknowledgement; remaining non-dashboard and legacy Flink payload unification, approved replicated-broker failure injection and replay evidence remain open."
     }
   ]
 }

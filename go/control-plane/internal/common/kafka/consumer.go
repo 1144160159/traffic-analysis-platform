@@ -57,6 +57,7 @@ type Consumer struct {
 	lastProcessingErr  string
 	lastProcessingAt   time.Time
 	commitObserver     func([]kafka.Message)
+	dlqAckBarrier      DLQAcknowledgementBarrier
 	commitFunc         func(context.Context, ...kafka.Message) error
 }
 
@@ -253,6 +254,39 @@ func (c *Consumer) SetCommitObserver(observer func([]kafka.Message)) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.commitObserver = observer
+}
+
+// DLQAcknowledgementBarrier persists a domain receipt after Kafka has
+// acknowledged the DLQ record and before the source offset is committed. A
+// failure keeps the source offset replayable. Implementations must be
+// idempotent by source topic, partition and offset because a failed barrier is
+// retried after another durable DLQ write.
+type DLQAcknowledgementBarrier func(context.Context, *ReceivedMessage, error) error
+
+// SetDLQAcknowledgementBarrier installs an optional domain durability barrier.
+// It must be configured before Consume or BatchConsume starts.
+func (c *Consumer) SetDLQAcknowledgementBarrier(barrier DLQAcknowledgementBarrier) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.dlqAckBarrier = barrier
+}
+
+func (c *Consumer) runDLQAcknowledgementBarrier(ctx context.Context, message *ReceivedMessage, processingErr error) (err error) {
+	c.mu.RLock()
+	barrier := c.dlqAckBarrier
+	c.mu.RUnlock()
+	if barrier == nil {
+		return nil
+	}
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("DLQ acknowledgement persistence barrier panicked: %v", recovered)
+		}
+	}()
+	if err := barrier(ctx, message, processingErr); err != nil {
+		return fmt.Errorf("DLQ acknowledgement persistence barrier failed: %w", err)
+	}
+	return nil
 }
 
 func (c *Consumer) notifyCommitObserver(messages []kafka.Message) {
@@ -468,12 +502,18 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 					c.recordProcessingFailure(dlqErr)
 				} else {
 					atomic.AddInt64(&c.metrics.MessagesDLQ, 1)
-
-					shouldCommit = c.config.CommitOnDLQSuccess
-					if shouldCommit {
-						c.recordProcessingSuccess()
+					if barrierErr := c.runDLQAcknowledgementBarrier(messageContext, receivedMsg, err); barrierErr != nil {
+						shouldCommit = false
+						c.recordProcessingFailure(barrierErr)
+						c.logger.Error("DLQ acknowledgement persistence barrier failed",
+							zap.Error(barrierErr), zap.String("event_id", receivedMsg.EventID()))
 					} else {
-						c.recordProcessingFailure(err)
+						shouldCommit = c.config.CommitOnDLQSuccess
+						if shouldCommit {
+							c.recordProcessingSuccess()
+						} else {
+							c.recordProcessingFailure(err)
+						}
 					}
 					c.logger.Info("Message sent to DLQ",
 						zap.String("event_id", receivedMsg.EventID()),
@@ -632,6 +672,12 @@ func (c *Consumer) handleAndCommitBatch(ctx context.Context, batch []*ReceivedMe
 				return fmt.Errorf("batch handler failed and DLQ durability barrier failed: %v: %w", handlerErr, dlqErr)
 			}
 			atomic.AddInt64(&c.metrics.MessagesDLQ, int64(len(batch)))
+			for _, failed := range failedMessages {
+				if barrierErr := c.runDLQAcknowledgementBarrier(ctx, failed.Msg, failed.Err); barrierErr != nil {
+					c.recordProcessingFailure(barrierErr)
+					return fmt.Errorf("batch DLQ acknowledgement persistence barrier failed: %w", barrierErr)
+				}
+			}
 			shouldCommit = c.config.CommitOnDLQSuccess
 			c.logger.Info("Batch sent to DLQ",
 				zap.Int("count", len(batch)),

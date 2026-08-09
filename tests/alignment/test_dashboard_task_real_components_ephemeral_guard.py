@@ -57,6 +57,11 @@ class DashboardTaskRealComponentsGuardTests(unittest.TestCase):
         self.assertIn("ConfigureAuthorityLookup", self.go_test)
         self.assertIn('"receipt_found"', self.go_test)
         self.assertIn("authority lookup was not atomically audited", self.go_test)
+        self.assertIn("DLQ acknowledgement failure retains source offset", self.go_test)
+        self.assertIn("dashboard_task_dlq_receipts", self.go_test)
+        self.assertIn("DASHBOARD_TASK_EVENT_QUARANTINED", self.go_test)
+        self.assertIn("DecodeDLQMessage", self.go_test)
+        self.assertIn("SetDLQAcknowledgementBarrier", self.go_test)
 
     def test_runner_records_the_exact_test_and_non_secret_sumdb_override(self):
         self.assertIn('test_name = "TestDashboardTaskRealComponents"', self.script)
@@ -65,6 +70,9 @@ class DashboardTaskRealComponentsGuardTests(unittest.TestCase):
         self.assertIn('test_env["GOSUMDB"]', self.script)
         self.assertIn('"secrets_captured": False', self.script)
         self.assertNotIn("DASHBOARD_TASK_PROVIDER_TOKEN", self.script)
+        self.assertEqual("dlq.v1", self.module.DLQ_TOPIC)
+        self.assertIn('"poison_message_dlq_ack_verified": False', self.script)
+        self.assertIn('"source_offset_dlq_postgres_audit_verified": False', self.script)
 
     def test_bounded_profile_is_sentinel_guarded_and_not_a_production_slo(self):
         self.assertIn("DASHBOARD_TASK_REAL_COMPONENTS_EPHEMERAL_SENTINEL", self.profile_go_test)

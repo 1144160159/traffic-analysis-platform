@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 POSTGRES_IMAGE = "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20"
 KAFKA_IMAGE = "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d"
 TOPIC = "dashboard.task.events.v1"
+DLQ_TOPIC = "dlq.v1"
 SENTINEL_TABLE = "codex_ephemeral_dashboard_task_real_components_sentinel"
 SENTINEL_VALUE = "dashboard-real-components-ephemeral-only"
 PASSWORD = "codex-dashboard-real-components-ephemeral-only"
@@ -111,7 +112,7 @@ def main() -> int:
         "coverage_status": (
             "OWNED_BOUNDED_POSTGRES_REDPANDA_HTTP_G4_PREFLIGHT_NOT_APPROVED_G4"
             if args.mode == "bounded-profile"
-            else "OWNED_REAL_POSTGRES_REDPANDA_LOOPBACK_HTTP_PROVIDER_AUTHORITY_LOOKUP_G1"
+            else "OWNED_REAL_POSTGRES_REDPANDA_LOOPBACK_HTTP_PROVIDER_AUTHORITY_LOOKUP_POISON_DLQ_PG_AUDIT_G1"
         ),
         "postgres_container": postgres_container,
         "kafka_container": kafka_container,
@@ -121,6 +122,8 @@ def main() -> int:
         "kafka_image_id": None,
         "topic": TOPIC,
         "topic_partitions": 0,
+        "dlq_topic": DLQ_TOPIC,
+        "dlq_topic_partitions": 0,
         "schema_files": 0,
         "postgres_sentinel_verified": False,
         "kafka_sentinel_verified": False,
@@ -136,6 +139,11 @@ def main() -> int:
         "execution_authority_lookup_recovery_verified": False,
         "compensation_authority_lookup_recovery_verified": False,
         "authority_lookup_atomic_audit_verified": False,
+        "poison_message_dlq_ack_verified": False,
+        "dlq_ack_failure_offset_retention_verified": False,
+        "poison_redelivery_verified": False,
+        "canonical_dlq_payload_verified": False,
+        "source_offset_dlq_postgres_audit_verified": False,
         "tenant_isolation_verified": False,
         "same_trace_reconciliation_verified": False,
         "bounded_profile_verified": False,
@@ -205,6 +213,13 @@ def main() -> int:
                 "-c", "cleanup.policy=delete", "-c", "retention.ms=3600000",
             ]
         )
+        run(
+            [
+                "docker", "exec", kafka_container, "rpk", "topic", "create", DLQ_TOPIC,
+                "--brokers", "127.0.0.1:9092", "--partitions", "1", "--replicas", "1",
+                "-c", "cleanup.policy=delete", "-c", "retention.ms=3600000",
+            ]
+        )
         topic_listing = run(
             [
                 "docker", "exec", kafka_container, "rpk", "topic", "list",
@@ -217,9 +232,16 @@ def main() -> int:
                 "--brokers", "127.0.0.1:9092", "-p",
             ]
         ).stdout.decode()
-        if TOPIC not in topic_listing or "0" not in topic_description:
+        dlq_description = run(
+            [
+                "docker", "exec", kafka_container, "rpk", "topic", "describe", DLQ_TOPIC,
+                "--brokers", "127.0.0.1:9092", "-p",
+            ]
+        ).stdout.decode()
+        if TOPIC not in topic_listing or DLQ_TOPIC not in topic_listing or "0" not in topic_description or "0" not in dlq_description:
             raise RuntimeError("ephemeral Kafka topic description is incomplete")
         result["topic_partitions"] = 1
+        result["dlq_topic_partitions"] = 1
         result["kafka_sentinel_verified"] = True
 
         run(
@@ -323,6 +345,11 @@ def main() -> int:
                 "execution_authority_lookup_recovery_verified",
                 "compensation_authority_lookup_recovery_verified",
                 "authority_lookup_atomic_audit_verified",
+                "poison_message_dlq_ack_verified",
+                "dlq_ack_failure_offset_retention_verified",
+                "poison_redelivery_verified",
+                "canonical_dlq_payload_verified",
+                "source_offset_dlq_postgres_audit_verified",
                 "tenant_isolation_verified",
                 "same_trace_reconciliation_verified",
             ):

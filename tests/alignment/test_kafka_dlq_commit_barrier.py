@@ -22,7 +22,10 @@ class KafkaDLQCommitBarrierTest(unittest.TestCase):
     def test_repository_barrier_passes_without_live_or_closure_claim(self) -> None:
         result = verify(self.contract)
         self.assertEqual("PASS", result["status"], result)
-        self.assertEqual("PARTIAL_SHARED_GO_CONSUMER", result["coverage_status"])
+        self.assertEqual(
+            "PARTIAL_SHARED_GO_CONSUMER_WITH_DASHBOARD_OWNED_G1",
+            result["coverage_status"],
+        )
         self.assertGreater(len(result["remaining_gates"]), 0)
 
     def test_missing_ack_barrier_token_is_rejected(self) -> None:

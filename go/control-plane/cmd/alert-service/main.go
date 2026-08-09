@@ -1115,6 +1115,7 @@ func main() {
 		if consumerErr != nil {
 			logger.Fatal("Failed to create dashboard task event consumer", zap.Error(consumerErr))
 		}
+		kafkaConsumer.SetDLQAcknowledgementBarrier(pipeline.RecordDLQAcknowledgement)
 		eventConsumer, consumerErr := api.NewDashboardTaskEventConsumer(kafkaConsumer, pipeline)
 		if consumerErr != nil {
 			_ = kafkaConsumer.Close()
