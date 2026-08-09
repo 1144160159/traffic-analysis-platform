@@ -2,13 +2,25 @@
 //! 覆盖 AF_PACKET / XDP 实时网卡采集链路
 
 use probe_agent::aggregator::{PacketProcessor, PartitionedFlowTable};
-use probe_agent::capture::{AfPacketCapture, Capturer, XdpCapture};
+use probe_agent::capture::{AfPacketCapture, Capturer};
 use probe_agent::config::{CaptureConfig, CaptureMode};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::{Duration, Instant};
 
 fn test_iface() -> String {
     std::env::var("TEST_INTERFACE").unwrap_or_else(|_| "lo".to_string())
+}
+
+// These tests share one real kernel interface. Cargo runs tests in parallel,
+// while an XDP attachment or AF_PACKET fallback can temporarily consume the
+// same loopback traffic another test is asserting on. Serialize only the live
+// capture cases so each assertion still proves its own socket-to-parser path.
+fn capture_test_guard() -> MutexGuard<'static, ()> {
+    static CAPTURE_TEST_MUTEX: OnceLock<Mutex<()>> = OnceLock::new();
+    CAPTURE_TEST_MUTEX
+        .get_or_init(|| Mutex::new(()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 fn make_config(mode: CaptureMode) -> CaptureConfig {
@@ -26,6 +38,7 @@ fn make_config(mode: CaptureMode) -> CaptureConfig {
 
 #[test]
 fn test_afpacket_create() {
+    let _capture_guard = capture_test_guard();
     let cfg = make_config(CaptureMode::AfPacket);
     let capturer = AfPacketCapture::new(&cfg);
     assert!(
@@ -37,6 +50,7 @@ fn test_afpacket_create() {
 
 #[test]
 fn test_afpacket_start_stop() {
+    let _capture_guard = capture_test_guard();
     let cfg = make_config(CaptureMode::AfPacket);
     let mut capturer = AfPacketCapture::new(&cfg).expect("create");
     let rt = tokio::runtime::Runtime::new().unwrap();
@@ -48,6 +62,7 @@ fn test_afpacket_start_stop() {
 
 #[test]
 fn test_afpacket_capture_packets() {
+    let _capture_guard = capture_test_guard();
     let cfg = make_config(CaptureMode::AfPacket);
     let mut capturer = AfPacketCapture::new(&cfg).expect("create");
 
@@ -97,6 +112,7 @@ fn test_afpacket_capture_packets() {
 
 #[test]
 fn test_afpacket_pipeline() {
+    let _capture_guard = capture_test_guard();
     let cfg = make_config(CaptureMode::AfPacket);
     let mut capturer = AfPacketCapture::new(&cfg).expect("create");
 
@@ -158,6 +174,7 @@ fn test_afpacket_pipeline() {
 
 #[test]
 fn test_xdp_create_fallback() {
+    let _capture_guard = capture_test_guard();
     let cfg = make_config(CaptureMode::XdpSkb);
     // XDP on lo typically fails, but create_capturer should fallback to AF_PACKET
     let rt = tokio::runtime::Runtime::new().unwrap();
@@ -179,11 +196,12 @@ fn test_xdp_create_fallback() {
 
 #[test]
 fn test_xdp_capture_packets() {
+    let _capture_guard = capture_test_guard();
     let cfg = make_config(CaptureMode::XdpSkb);
     let rt = tokio::runtime::Runtime::new().unwrap();
     let capturer_result = rt.block_on(async { probe_agent::capture::create_capturer(&cfg).await });
 
-    let mut capturer = match capturer_result {
+    let capturer = match capturer_result {
         Ok(c) => c,
         Err(e) => {
             println!("XDP unavailable on {}: {e}", test_iface());
@@ -255,6 +273,7 @@ fn test_xdp_capture_packets() {
 
 #[test]
 fn test_create_all_modes() {
+    let _capture_guard = capture_test_guard();
     let modes = vec![
         ("AF_PACKET", CaptureMode::AfPacket),
         ("XDP_SKB", CaptureMode::XdpSkb),
