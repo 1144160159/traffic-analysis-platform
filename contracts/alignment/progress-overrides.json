@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T03:04:22Z",
+  "updated_at": "2026-08-09T04:33:00Z",
   "overrides": {
     "F-COMMON-001": {
       "status": "IMPLEMENTING",
@@ -750,12 +750,18 @@
         "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
         "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
         "go/control-plane/internal/alert/consumer/alert_response_http_executor_test.go",
+        "go/control-plane/internal/alert/consumer/alert_response_recovery_worker.go",
+        "go/control-plane/internal/alert/consumer/alert_response_recovery_worker_integration_test.go",
         "go/control-plane/internal/alert/consumer/alert_response_event_consumer_integration_test.go",
+        "go/control-plane/internal/alert/api/handler_alert_response_workflow.go",
+        "go/control-plane/internal/alert/api/handler_alert_response_workflow_integration_test.go",
         "go/control-plane/cmd/alert-service/main.go",
         "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
         "deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
+        "deployments/postgres/migrations/202608091500_alert_response_reconciliation_compensation_v1.sql",
         "common/sql/pg/15-alert-response-external-executor-v1.sql",
         "common/sql/pg/16-alert-response-dlq-receipt-v1.sql",
+        "common/sql/pg/17-alert-response-reconciliation-compensation-v1.sql",
         "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
         "deployments/kubernetes/applications/go-services.yaml",
         "go/control-plane/deployments/kubernetes/alert-service.yaml",
@@ -768,10 +774,12 @@
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v213/manifest.json#sha256=6971fab8fbb1f6e9c994a54e86fa8e476bc298d1d87dd688140eb3b0be91574d",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v214/manifest.json#sha256=51c7bdd265a27aef47be3b9b6220e2b1e4fe0f2ff7c471b7e2e353956b35b248",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v215/manifest.json#sha256=713afb54f617ee9ac5f831a462a72a41c7339a727b0b2276dc55d67735b087af",
-        "doc/02_acceptance/runs/20260809-remediation-alert-response-dlq-g1-v1/manifest.json#sha256=ee8708139cd90b3a4cc3fda35de673f61fc2731f918db981a7299c0fb30ce4fd"
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-dlq-g1-v1/manifest.json#sha256=ee8708139cd90b3a4cc3fda35de673f61fc2731f918db981a7299c0fb30ce4fd",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v216/manifest.json#sha256=38f9a41bb43e24af69df42dcf19607707071f855d530453421f369aafb8c7d2c",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-recovery-compensation-g1-v1/manifest.json#sha256=c4da91361123b100e6dcb286db930668306b4eda97271b9bb9d7b59e685fb301"
       ],
-      "blocker": "当前只完成默认关闭的告警响应外部执行器和告警域PostgreSQL DLQ收据/审计屏障G1：生产发布者与真实Kafka consumer group/source offset故障复证、外部补偿执行器、unknown effect周期权威复核、批准provider ledger、同trace跨服务对账、批准性能/故障恢复、候选部署、Windows Chrome、canary、回滚和T+0/T+1/T+3/T+7观察均未完成；因此不得进入VERIFYING或CLOSED。",
-      "note": "G0 v215三道门分别PASS并绑定源码SHA 111e902fac1753f90896f69ff2a9c03a5ef23167090cb72f286c1fa92f5ad414。G1告警响应专项十一项检查全部PASS：保留外部执行器的独立审批、稳定provider幂等、耐久回执、精确身份权威恢复、unknown effect失败关闭和回执/action/audit原子事务；新增永久错误分类、DLQ broker ACK后/source offset提交前的领域屏障，以及按source topic/partition/offset幂等的PG收据和quarantine audit原子事务，同tuple负载漂移被拒绝。自有PostgreSQL与loopback HTTP provider通过，common、Docker merged、Kubernetes三套PG入口双重回放SHA均为f95bb398…1cfb0a。G0 v213的mutation行号漂移和v214的覆盖字符串断言失败均不可变保留并由v215复证。未运行真实告警Kafka、批准provider或G2—G6，所有开关默认关闭，production_applied=false，F-ALERT-003保持IMPLEMENTING。"
+      "blocker": "当前已完成默认关闭的告警响应外部执行器、告警域PostgreSQL DLQ收据/审计屏障、unknown effect周期权威复核与外部补偿执行器G1；生产发布者与真实Kafka consumer group/source offset故障复证、批准provider ledger、同trace跨服务对账、批准性能/故障恢复、候选部署、Windows Chrome、canary、回滚和T+0/T+1/T+3/T+7观察仍未完成；因此不得进入VERIFYING或CLOSED。",
+      "note": "G0 v216三道门分别PASS并绑定源码SHA a559dc6cbebe34ef4784439fb0ef554c4a5bd2816c27d5b6c0402bdd834bb6b1。G1告警响应恢复与补偿专项十二项检查全部PASS：unknown effect进入有界PG权威复核队列，恢复worker只暴露精确身份authority lookup而不能重调原执行；补偿请求、attempt、action revision与audit原子提交，首次逆操作传输不确定后所有租约只做authority lookup，实测逆操作调用数保持1。既有独立审批、provider幂等、耐久回执、DLQ source tuple收据/quarantine audit和内容漂移拒绝继续通过。自有PostgreSQL与loopback HTTP provider通过，common、Docker merged、Kubernetes三套PG入口双重回放SHA均为04f1a399…026dc，migration ledger含202608091500。未运行真实告警Kafka、批准provider或G2—G6，所有开关默认关闭，production_applied=false，F-ALERT-003保持IMPLEMENTING。"
     },
     "F-PLAYBOOK-001": {
       "status": "VERIFYING",
@@ -1313,10 +1321,18 @@
         "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
         "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v212/manifest.json#sha256=200cd1a07c586363ced21ff47d117c0ac05d18806042cd6ca485af24463a7618",
-        "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v2/manifest.json#sha256=20d1cdb490067a4a971a8408223ce6119cf2ca66106a1a92cf8d4a0599f3a019"
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v2/manifest.json#sha256=20d1cdb490067a4a971a8408223ce6119cf2ca66106a1a92cf8d4a0599f3a019",
+        "deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
+        "deployments/postgres/migrations/202608091500_alert_response_reconciliation_compensation_v1.sql",
+        "common/sql/pg/16-alert-response-dlq-receipt-v1.sql",
+        "common/sql/pg/17-alert-response-reconciliation-compensation-v1.sql",
+        "go/control-plane/internal/alert/consumer/alert_response_recovery_worker.go",
+        "go/control-plane/internal/alert/consumer/alert_response_recovery_worker_integration_test.go",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v216/manifest.json#sha256=38f9a41bb43e24af69df42dcf19607707071f855d530453421f369aafb8c7d2c",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-recovery-compensation-g1-v1/manifest.json#sha256=c4da91361123b100e6dcb286db930668306b4eda97271b9bb9d7b59e685fb301"
       ],
-      "blocker": "全仓Go SQL清单仍有27个源文件需逐命令边界审查（19个P1_REVIEW、8个P2_REVIEW，P0_REVIEW与未分类均为0）；forensics、saved-view、notification治理、asset.discovery、probe registration及data-quality等其他outbox/consumer缺口仍按各自事实保留。dashboard poison屏障与alert response provider receipt/action/audit原子提交均已在自有G1通过，但批准候选PG、复制broker故障、unknown effect周期复核、其余consumer域和跨存储对账尚未完成。其余生产migration/topic/ACL/候选镜像、锁竞争、outbox lag/dead告警、回滚及T+0/T+1/T+3/T+7观察仍未完成。",
-      "note": "现有原子命令边界继续保留。版本化清单已同步到102个源文件/656条SQL变更（PG 640、CH 16、review queue 27、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 8、未分类0）。alert response的provider回执、action终态和audit已在同一PG事务提交；common、Docker merged与Kubernetes ConfigMap三个入口双重回放SHA均为ab0af05187ed38164dd7f36ae1787e055da96dd95bc534272acdea81e96649a2。该切片仍为自有G1且production_applied=false，因此T-PG-002继续IMPLEMENTING。"
+      "blocker": "全仓Go SQL清单仍有29个源文件需逐命令边界审查（19个P1_REVIEW、10个P2_REVIEW，P0_REVIEW与未分类均为0）；forensics、saved-view、notification治理、asset.discovery、probe registration及data-quality等其他outbox/consumer缺口仍按各自事实保留。dashboard poison屏障与alert response provider receipt/action/audit、authority recheck和compensation queue原子边界均已在自有G1通过，但批准候选PG、复制broker故障、其余consumer域和跨存储对账尚未完成。其余生产migration/topic/ACL/候选镜像、锁竞争、outbox lag/dead告警、回滚及T+0/T+1/T+3/T+7观察仍未完成。",
+      "note": "现有原子命令边界继续保留。版本化清单已同步到104个源文件/678条SQL变更（PG 662、CH 16、review queue 29、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 10、未分类0）。alert response的provider回执/action/audit、unknown effect有界权威复核以及补偿request/attempt/action/audit已在同一候选的自有PG G1验证；common、Docker merged与Kubernetes ConfigMap三个入口双重回放SHA均为04f1a3995802c1efb08a60dfa3112d62eb1d3bb8efd005f8a6a8b6f0754026dc。该切片仍为自有G1且production_applied=false，因此T-PG-002继续IMPLEMENTING。"
     },
     "F-WHITELIST-001": {
       "status": "IMPLEMENTING",
