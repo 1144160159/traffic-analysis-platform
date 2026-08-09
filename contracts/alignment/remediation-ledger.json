@@ -5,7 +5,7 @@
     "contracts/alignment/work-packages.json",
     "contracts/alignment/progress-overrides.json"
   ],
-  "as_of": "2026-08-09T04:33:00Z",
+  "as_of": "2026-08-09T04:57:17Z",
   "g7_status": "OPEN",
   "g8_status": "BLOCKED",
   "g8_blockers": [
@@ -314,6 +314,7 @@
         "go/control-plane/internal/alert/consumer/alert_response_http_executor_test.go",
         "go/control-plane/internal/alert/consumer/alert_response_recovery_worker.go",
         "go/control-plane/internal/alert/consumer/alert_response_recovery_worker_integration_test.go",
+        "go/control-plane/internal/alert/consumer/alert_response_real_kafka_integration_test.go",
         "go/control-plane/internal/alert/consumer/alert_response_event_consumer_integration_test.go",
         "go/control-plane/internal/alert/api/handler_alert_response_workflow.go",
         "go/control-plane/internal/alert/api/handler_alert_response_workflow_integration_test.go",
@@ -328,6 +329,7 @@
         "deployments/kubernetes/applications/go-services.yaml",
         "go/control-plane/deployments/kubernetes/alert-service.yaml",
         "scripts/alignment/capture_alert_response_executor.py",
+        "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py",
         "doc/07_alignment/runbooks/F-ALERT-003-rollback.md",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v211/manifest.json#sha256=3c9dca437ce041efc036ea4bae736f69c2dd1ec67830e05fdf73aedd18fd26be",
         "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v1/manifest.json#sha256=2a2a55a76f12aff682c16b76059001a109b8ea7567d3caf5741fae1d1e9a8512",
@@ -338,10 +340,13 @@
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v215/manifest.json#sha256=713afb54f617ee9ac5f831a462a72a41c7339a727b0b2276dc55d67735b087af",
         "doc/02_acceptance/runs/20260809-remediation-alert-response-dlq-g1-v1/manifest.json#sha256=ee8708139cd90b3a4cc3fda35de673f61fc2731f918db981a7299c0fb30ce4fd",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v216/manifest.json#sha256=38f9a41bb43e24af69df42dcf19607707071f855d530453421f369aafb8c7d2c",
-        "doc/02_acceptance/runs/20260809-remediation-alert-response-recovery-compensation-g1-v1/manifest.json#sha256=c4da91361123b100e6dcb286db930668306b4eda97271b9bb9d7b59e685fb301"
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-recovery-compensation-g1-v1/manifest.json#sha256=c4da91361123b100e6dcb286db930668306b4eda97271b9bb9d7b59e685fb301",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v217/manifest.json#sha256=0589b0d25203d47b6e2ad0a9f2cc2b5c91c73ba849e0b0ea6195178e985b0096",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/manifest.json#sha256=f974c8777639703bd35aa40c45542c90213a2b4c86bafdbdf06416da4d607114",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/owned-real-kafka-result.json#sha256=6de747c3adc8cc68ae6696005848a1847dcb4541a3ea3c05790d721af4a19eb0"
       ],
-      "blocker": "当前已完成默认关闭的告警响应外部执行器、告警域PostgreSQL DLQ收据/审计屏障、unknown effect周期权威复核与外部补偿执行器G1；生产发布者与真实Kafka consumer group/source offset故障复证、批准provider ledger、同trace跨服务对账、批准性能/故障恢复、候选部署、Windows Chrome、canary、回滚和T+0/T+1/T+3/T+7观察仍未完成；因此不得进入VERIFYING或CLOSED。",
-      "note": "G0 v216三道门分别PASS并绑定源码SHA a559dc6cbebe34ef4784439fb0ef554c4a5bd2816c27d5b6c0402bdd834bb6b1。G1告警响应恢复与补偿专项十二项检查全部PASS：unknown effect进入有界PG权威复核队列，恢复worker只暴露精确身份authority lookup而不能重调原执行；补偿请求、attempt、action revision与audit原子提交，首次逆操作传输不确定后所有租约只做authority lookup，实测逆操作调用数保持1。既有独立审批、provider幂等、耐久回执、DLQ source tuple收据/quarantine audit和内容漂移拒绝继续通过。自有PostgreSQL与loopback HTTP provider通过，common、Docker merged、Kubernetes三套PG入口双重回放SHA均为04f1a399…026dc，migration ledger含202608091500。未运行真实告警Kafka、批准provider或G2—G6，所有开关默认关闭，production_applied=false，F-ALERT-003保持IMPLEMENTING。"
+      "blocker": "当前已完成默认关闭的告警响应外部执行器、告警域PostgreSQL DLQ收据/审计屏障、unknown effect周期权威复核、外部补偿执行器以及自有单broker Redpanda source-offset precommit G1；批准的多副本Kafka/source offset故障复证、批准provider ledger、同trace跨服务对账、批准性能/故障恢复、候选部署、Windows Chrome、canary、回滚和T+0/T+1/T+3/T+7观察仍未完成；因此不得进入VERIFYING或CLOSED。",
+      "note": "G0 v217三道门分别PASS并绑定源码SHA b4da942487a39d1b726b181ae7d3fb018a1e227a3dc8f32079ccf52915eb3d04。G1告警响应专项十三项检查全部PASS：除unknown effect有界权威复核和补偿仅查询恢复外，固定摘要自有Redpanda/PG验证错误DLQ目标时源offset=0不提交且receipt=0；同组切换canonical dlq.v1后毒消息重投，PG source tuple receipt与quarantine audit各1，group current/log-end=1且lag=0。自有PG、Redpanda与loopback provider容器均身份核验并删除。该单broker运行不是批准Kafka、G2或HA证据；所有开关默认关闭，production_applied=false，F-ALERT-003保持IMPLEMENTING。"
     },
     {
       "id": "F-ALERT-004",
@@ -1629,10 +1634,15 @@
         "go/control-plane/internal/alert/consumer/alert_response_recovery_worker.go",
         "go/control-plane/internal/alert/consumer/alert_response_recovery_worker_integration_test.go",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v216/manifest.json#sha256=38f9a41bb43e24af69df42dcf19607707071f855d530453421f369aafb8c7d2c",
-        "doc/02_acceptance/runs/20260809-remediation-alert-response-recovery-compensation-g1-v1/manifest.json#sha256=c4da91361123b100e6dcb286db930668306b4eda97271b9bb9d7b59e685fb301"
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-recovery-compensation-g1-v1/manifest.json#sha256=c4da91361123b100e6dcb286db930668306b4eda97271b9bb9d7b59e685fb301",
+        "go/control-plane/internal/alert/consumer/alert_response_real_kafka_integration_test.go",
+        "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v217/manifest.json#sha256=0589b0d25203d47b6e2ad0a9f2cc2b5c91c73ba849e0b0ea6195178e985b0096",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/manifest.json#sha256=f974c8777639703bd35aa40c45542c90213a2b4c86bafdbdf06416da4d607114",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/owned-real-kafka-result.json#sha256=6de747c3adc8cc68ae6696005848a1847dcb4541a3ea3c05790d721af4a19eb0"
       ],
       "blocker": "全仓Go SQL清单仍有29个源文件需逐命令边界审查（19个P1_REVIEW、10个P2_REVIEW，P0_REVIEW与未分类均为0）；forensics、saved-view、notification治理、asset.discovery、probe registration及data-quality等其他outbox/consumer缺口仍按各自事实保留。dashboard poison屏障与alert response provider receipt/action/audit、authority recheck和compensation queue原子边界均已在自有G1通过，但批准候选PG、复制broker故障、其余consumer域和跨存储对账尚未完成。其余生产migration/topic/ACL/候选镜像、锁竞争、outbox lag/dead告警、回滚及T+0/T+1/T+3/T+7观察仍未完成。",
-      "note": "现有原子命令边界继续保留。版本化清单已同步到104个源文件/678条SQL变更（PG 662、CH 16、review queue 29、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 10、未分类0）。alert response的provider回执/action/audit、unknown effect有界权威复核以及补偿request/attempt/action/audit已在同一候选的自有PG G1验证；common、Docker merged与Kubernetes ConfigMap三个入口双重回放SHA均为04f1a3995802c1efb08a60dfa3112d62eb1d3bb8efd005f8a6a8b6f0754026dc。该切片仍为自有G1且production_applied=false，因此T-PG-002继续IMPLEMENTING。"
+      "note": "现有原子命令边界继续保留。版本化清单已同步到104个源文件/678条SQL变更（PG 662、CH 16、review queue 29、P0_REVIEW 0、P1_REVIEW 19、P2_REVIEW 10、未分类0）。alert response的provider回执/action/audit、unknown effect有界权威复核、补偿request/attempt/action/audit及Redpanda ACK后的source tuple receipt/quarantine audit已在同一候选自有G1验证；三套PG入口双重回放SHA均为04f1a3995802c1efb08a60dfa3112d62eb1d3bb8efd005f8a6a8b6f0754026dc。该切片仍为单broker自有G1且production_applied=false，因此T-PG-002继续IMPLEMENTING。"
     },
     {
       "id": "T-PG-003",
@@ -2264,10 +2274,15 @@
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v178/manifest.json#sha256=6c769f977d9ae1a4ddfa6bb40da7a0eea4344249dc3519c526422ac615d7ea8f",
         "doc/02_acceptance/runs/20260807-remediation-asset-projection-kafka-g1-v1/manifest.json#sha256=f99a71e3fa6d82365240d1e6acbf1da08d8d58d7a66712ef384b1f3d23b40909",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v209/manifest.json#sha256=d9cde1732bf4da52f44a5d5d6d50c9882f9fc32f7b4e8cf5600d08de0932ced7",
-        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-poison-dlq-g1-v1/manifest.json#sha256=9682ab7ea526500664851fd069833e85039a109911d5d9c04ed89061e289b918"
+        "doc/02_acceptance/runs/20260809-remediation-dashboard-task-poison-dlq-g1-v1/manifest.json#sha256=9682ab7ea526500664851fd069833e85039a109911d5d9c04ed89061e289b918",
+        "go/control-plane/internal/alert/consumer/alert_response_real_kafka_integration_test.go",
+        "scripts/alignment/verify_alert_response_real_kafka_ephemeral.py",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v217/manifest.json#sha256=0589b0d25203d47b6e2ad0a9f2cc2b5c91c73ba849e0b0ea6195178e985b0096",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/manifest.json#sha256=f974c8777639703bd35aa40c45542c90213a2b4c86bafdbdf06416da4d607114",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-real-kafka-g1-v1/owned-real-kafka-result.json#sha256=6de747c3adc8cc68ae6696005848a1847dcb4541a3ea3c05790d721af4a19eb0"
       ],
       "blocker": null,
-      "note": "共享Go consumer现支持可选的DLQ ACK后、源offset提交前领域持久化屏障，屏障错误或panic均失败关闭。v209自有真实Redpanda/PG证明错误DLQ目标不提交offset且不写receipt；同组重启后毒消息重投，canonical dlq.v1记录ACK、PG source tuple receipt与audit完成后才提交，精确重试保持PG事实幂等。该证据仍不覆盖批准多副本broker、PG中断、rebalance、剩余consumer域、非Go路径或生产ACL/性能/观察窗，故T-KAFKA-003保持VERIFYING。"
+      "note": "共享Go consumer现支持可选的DLQ ACK后、源offset提交前领域持久化屏障，屏障错误或panic均失败关闭。dashboard与alert-response均有自有单broker Redpanda/PG G1；alert-response实测错误DLQ目标时source offset保持0且receipt=0，同组重启后毒消息重投，canonical dlq.v1 ACK、PG source tuple receipt与quarantine audit完成后group current/log-end=1、lag=0。该证据仍不覆盖批准多副本broker、PG中断、rebalance、剩余consumer域、非Go路径或生产ACL/性能/观察窗，故T-KAFKA-003保持VERIFYING。"
     },
     {
       "id": "T-KAFKA-004",
