@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -38,6 +39,8 @@ type Handler struct {
 	reportBuilder                   AlertReportBuilder
 	reportObjects                   AlertReportObjectStore
 	evidenceObjects                 alertEvidenceObjectStore
+	evidenceManifests               AlertEvidenceManifestStore
+	alertEvidenceChainEnabled       bool
 	alertReportEnabled              bool
 	campaignLinkEnabled             bool
 	campaignAggregateV2             bool
@@ -161,6 +164,19 @@ func (h *Handler) SetAlertReportBuilder(builder AlertReportBuilder) {
 
 func (h *Handler) SetAlertReportObjectStore(store AlertReportObjectStore) {
 	h.reportObjects = store
+}
+
+// SetAlertEvidenceManifestStore installs the tenant-bound PostgreSQL manifest
+// authority. The ClickHouse evidence rows remain a read model and cannot grant
+// object access by themselves.
+func (h *Handler) SetAlertEvidenceManifestStore(store AlertEvidenceManifestStore) {
+	h.evidenceManifests = store
+}
+
+// SetAlertEvidenceChainEnabled controls the additive strict-read path. It is
+// default-off until the manifest migration has been expanded and reconciled.
+func (h *Handler) SetAlertEvidenceChainEnabled(enabled bool) {
+	h.alertEvidenceChainEnabled = enabled
 }
 
 // SetAlignmentFeatureFlags provides a reversible cutover without restoring the
@@ -645,20 +661,45 @@ func (h *Handler) GetAlertEvidence(w http.ResponseWriter, r *http.Request) {
 		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	responseEvidences := interface{}(evidences)
+	partial := false
+	missingSections := []string{}
+	snapshotID := alertID + ":" + httpx.GetTraceID(ctx)
+	sourceWatermarks := map[string]string{
+		"clickhouse.evidence.count": strconv.Itoa(len(evidences)),
+	}
+	if h.alertEvidenceChainEnabled {
+		if h.evidenceManifests == nil {
+			httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "EVIDENCE_MANIFEST_UNAVAILABLE", "evidence manifest storage is unavailable")
+			return
+		}
+		manifests, manifestErr := h.evidenceManifests.List(ctx, tenantID, alertID)
+		if manifestErr != nil {
+			logger.Error("Failed to get evidence manifests", zap.Error(manifestErr))
+			httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "EVIDENCE_MANIFEST_UNAVAILABLE", "evidence manifest storage is unavailable")
+			return
+		}
+		items, manifestPartial, manifestMissing, manifestWatermarks := reconcileAlertEvidenceManifests(evidences, manifests, time.Now().UTC())
+		responseEvidences = items
+		partial = manifestPartial
+		missingSections = manifestMissing
+		for key, value := range manifestWatermarks {
+			sourceWatermarks[key] = value
+		}
+		snapshotID = fmt.Sprintf("%s:manifest-revision:%s", alertID, manifestWatermarks["postgresql.alert_evidence_manifests.max_revision"])
+	}
 	httpx.JSONContractSuccess(w, ctx, map[string]interface{}{
 		"alert_id":  alertID,
-		"evidences": evidences,
+		"evidences": responseEvidences,
 		"count":     len(evidences),
 	}, httpx.ContractMeta{
-		ContractVersion: 1,
-		SnapshotID:      alertID + ":" + httpx.GetTraceID(ctx),
-		OperationID:     "getAlertEvidence",
-		TenantID:        tenantID,
-		Partial:         false,
-		MissingSections: []string{},
-		SourceWatermarks: map[string]string{
-			"alert.evidence.count": strconv.Itoa(len(evidences)),
-		},
+		ContractVersion:  1,
+		SnapshotID:       snapshotID,
+		OperationID:      "getAlertEvidence",
+		TenantID:         tenantID,
+		Partial:          partial,
+		MissingSections:  missingSections,
+		SourceWatermarks: sourceWatermarks,
 	})
 }
 

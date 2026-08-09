@@ -389,6 +389,21 @@ func main() {
 	// temporarily unavailable producer leaves committed outbox rows pending.
 	apiHandler := api.NewHandlerWithFeedback(alertService, feedbackProducer, alertAuditLogger, logger)
 	apiHandler.SetActionAuditWriter(api.NewAlertActionAuditWriter(db, logger))
+	alertEvidenceChainEnabled := getBoolEnv("ALERT_EVIDENCE_CHAIN_V1_ENABLED", false)
+	if alertEvidenceChainEnabled && strings.TrimSpace(os.Getenv("ALERT_EVIDENCE_DOWNLOAD_SECRET")) == "" {
+		logger.Fatal("ALERT_EVIDENCE_DOWNLOAD_SECRET is required when strict evidence access is enabled")
+	}
+	alertEvidenceManifests := api.NewPostgresAlertEvidenceManifestStore(db)
+	if alertEvidenceChainEnabled {
+		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		err = alertEvidenceManifests.VerifySchema(verifyCtx)
+		cancelVerify()
+		if err != nil {
+			logger.Fatal("Alert evidence manifest schema is unavailable", zap.Error(err))
+		}
+	}
+	apiHandler.SetAlertEvidenceManifestStore(alertEvidenceManifests)
+	apiHandler.SetAlertEvidenceChainEnabled(alertEvidenceChainEnabled)
 	feedbackTransactionalOutboxEnabled := getBoolEnv("ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED", true) && !readOnlyVerificationMode
 	apiHandler.SetFeedbackTransactionalOutboxEnabled(feedbackTransactionalOutboxEnabled)
 	apiHandler.SetResponseActionProducer(responseActionProducer)

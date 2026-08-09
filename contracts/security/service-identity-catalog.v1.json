@@ -17,7 +17,7 @@
     {
       "domain": "configuration_and_secret_binding",
       "path": "contracts/configuration/configuration-catalog.v1.json",
-      "sha256": "76c799e99f7b5f4880130c555bc6cf2ad0fa0812e2888d4a33af7a6fe7a715d7"
+      "sha256": "a429e2a8289d2c15cc5b920979fe39e404e4028c47fc36362654898d5dfae920"
     },
     {
       "domain": "iam_scopes",
@@ -299,6 +299,17 @@
           "consumer": "alert-service",
           "binding": "env:S3_SECRET_KEY",
           "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "traffic-credentials",
+          "key": "ALERT_EVIDENCE_DOWNLOAD_SECRET",
+          "consumer": "alert-service",
+          "binding": "env:ALERT_EVIDENCE_DOWNLOAD_SECRET",
+          "optional": true,
           "external_secret_registered": true,
           "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
           "rotation_refresh_interval": "1h"
@@ -1741,13 +1752,13 @@
       },
       {
         "path": "go/control-plane/internal/alert/api/handler.go",
-        "line": 1650,
+        "line": 1691,
         "kind": "request_header",
         "line_sha256": "1ff5d9fad7a5781e5b9afcf2b3687fb13ef8d8b2b2bed9d87f4efb236c47b54b"
       },
       {
         "path": "go/control-plane/internal/alert/api/handler.go",
-        "line": 1653,
+        "line": 1694,
         "kind": "query_parameter",
         "line_sha256": "ed36c0ae6054d246976bc41c7bf69588afbde0f33b0179b10cbed4d8b83085d2"
       },
@@ -1894,7 +1905,7 @@
     "approved_token_automount_exceptions": 1,
     "hardened_or_approved_exception_containers": 9,
     "containers": 11,
-    "secret_references": 66,
+    "secret_references": 67,
     "literal_secret_findings": 0,
     "unregistered_secret_references": 2,
     "kafka_principals": 20,
@@ -1922,5 +1933,5 @@
       "wildcard_or_shared_kafka_principal"
     ]
   },
-  "catalog_sha256": "dcf1c83339921b529aeba6668dd9a1ca9dbfb8ddf4b606dd374d3a2777c12995"
+  "catalog_sha256": "31f1529d3685832342877e17954a21d8e1492dad3ed52d5d85373debcb05adf4"
 }

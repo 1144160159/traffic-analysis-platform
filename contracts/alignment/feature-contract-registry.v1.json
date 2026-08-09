@@ -32,7 +32,7 @@
     {
       "domain": "rest_contract_authority",
       "path": "contracts/openapi/alignment-v1.openapi.json",
-      "sha256": "457f6fad947420dc36dd7b65f578e1751f9f97f69871cbf39b879974f6e2e404"
+      "sha256": "5b51f5404da6644931959e75230654e55225dae486d6a6edef99694cd7ed5506"
     },
     {
       "domain": "route_action_api_scope_inventory",
@@ -655,7 +655,7 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-ALERT-005.json",
-        "sha256": "f2de94db57cde740c3dfbe2bc28bd422bfe1e10ccddf5eba412279346fca897a",
+        "sha256": "31e2d6789a2415f48bcc4d56c60e51b0fee8e23e96d693e2e5e54c3b06020806",
         "contract_version": 1,
         "status": "verifying",
         "operation_id": "getAlertEvidence",
@@ -1898,5 +1898,5 @@
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "52223144e51e9986e76101975aab249188360239957a0752a1412bc590130d6b"
+  "catalog_sha256": "8f7ccd59dbf62fd984600309430b7b4aa526396569e16c4a8b48ce1b34df7965"
 }

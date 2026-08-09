@@ -31,9 +31,9 @@
   "data": {
     "authoritative_store": "postgresql",
     "read_models": ["postgresql", "clickhouse", "opensearch", "minio"],
-    "migration": "deployments/postgres/migrations/202607302045_alert_schema_runtime_ddl_exit.sql",
+    "migration": "deployments/postgres/migrations/202608091700_alert_evidence_manifest_v1.sql",
     "event_types": ["traffic.alert.v2.AlertCreated", "traffic.alert.v2.AlertEvidenceLinked"],
-    "source_watermarks": ["postgresql.alerts.revision", "clickhouse.detection_events.watermark", "opensearch.alerts.projection_version", "minio.evidence_manifest.sha256"]
+    "source_watermarks": ["postgresql.alert_evidence_manifests.revision", "clickhouse.evidence.count", "opensearch.alerts.projection_version", "minio.object.version_id", "minio.object.sha256"]
   },
   "permissions": {
     "tenant_source": "authenticated_identity",

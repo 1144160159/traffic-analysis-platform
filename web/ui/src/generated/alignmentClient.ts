@@ -166,6 +166,13 @@ export async function compensatePlaybookExecution(request: AlignmentRequest = {}
   return response.data;
 }
 
+export async function createAlertEvidenceAccess(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/{id}/evidence/access', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function createAlertReport(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/{id}/reports/export', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -296,6 +303,13 @@ export async function decidePlaybookExecution(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/playbooks/executions/{execution_id}/approval', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function downloadAlertEvidence(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/{id}/evidence/{evidence_id}/download', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
   return response.data;
 }
 

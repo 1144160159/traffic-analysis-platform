@@ -765,6 +765,61 @@
         }
       }
     },
+    "/v1/alerts/{id}/evidence/access": {
+      "post": {
+        "operationId": "createAlertEvidenceAccess",
+        "x-required-scope": "alert:read",
+        "x-feature-id": "F-ALERT-005",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["target", "reason"],
+                "properties": {
+                  "target": {"type": "string", "minLength": 1},
+                  "reason": {"type": "string", "minLength": 4, "maxLength": 1000},
+                  "detail": {"type": "object"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Tenant-bound, audited short-lived access grant bound to manifest revision and object SHA-256", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "alert:read scope required"},
+          "404": {"description": "Alert, evidence manifest or immutable object is absent"},
+          "409": {"description": "Object size, version or SHA-256 does not match the manifest"},
+          "410": {"description": "Evidence manifest expired"},
+          "422": {"description": "Evidence has no authoritative downloadable object manifest"},
+          "503": {"description": "Manifest, signing or object storage is unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/{id}/evidence/{evidence_id}/download": {
+      "get": {
+        "operationId": "downloadAlertEvidence",
+        "x-required-scope": "alert:read",
+        "x-feature-id": "F-ALERT-005",
+        "parameters": [
+          {"$ref": "#/components/parameters/ResourceId"},
+          {"name": "evidence_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "expires", "in": "query", "required": true, "schema": {"type": "integer", "format": "int64"}},
+          {"name": "manifest_revision", "in": "query", "required": false, "schema": {"type": "integer", "format": "int64", "minimum": 1}, "description": "Required while ALERT_EVIDENCE_CHAIN_V1_ENABLED is active."},
+          {"name": "object_sha256", "in": "query", "required": false, "schema": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "description": "Required while ALERT_EVIDENCE_CHAIN_V1_ENABLED is active."},
+          {"name": "signature", "in": "query", "required": true, "schema": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+        ],
+        "responses": {
+          "200": {"description": "Checksum-validated immutable evidence bytes", "content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}}},
+          "403": {"description": "Expired or invalid tenant-bound signature"},
+          "404": {"description": "Evidence or object is absent"},
+          "409": {"description": "Manifest changed or object integrity validation failed"},
+          "503": {"description": "Manifest or object storage is unavailable"}
+        }
+      }
+    },
     "/v1/alerts/views": {
       "get": {
         "operationId": "listAlertViews",

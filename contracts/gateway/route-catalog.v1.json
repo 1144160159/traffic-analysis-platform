@@ -8,7 +8,7 @@
     "route_source_sha256": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79",
     "rendered_apisix_sha256": "bc1729d4bacca6ac81719f23dc22d1ce428a9d0ca7dfd895de7b2a7de70753fe",
     "openapi_source": "contracts/openapi/alignment-v1.openapi.json",
-    "openapi_sha256": "457f6fad947420dc36dd7b65f578e1751f9f97f69871cbf39b879974f6e2e404"
+    "openapi_sha256": "5b51f5404da6644931959e75230654e55225dae486d6a6edef99694cd7ed5506"
   },
   "trust_zones": {
     "public_web_ui": "static application shell only; no business API authorization",
@@ -719,6 +719,22 @@
           "operation_id": "getAlertEvidence",
           "method": "GET",
           "path": "/api/v1/alerts/{id}/evidence",
+          "feature_id": "F-ALERT-005",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createAlertEvidenceAccess",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/evidence/access",
+          "feature_id": "F-ALERT-005",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "downloadAlertEvidence",
+          "method": "GET",
+          "path": "/api/v1/alerts/{id}/evidence/{evidence_id}/download",
           "feature_id": "F-ALERT-005",
           "required_scope": "alert:read",
           "compatibility_scopes": []
@@ -4728,7 +4744,7 @@
     }
   ],
   "openapi_coverage": {
-    "operations": 99,
+    "operations": 101,
     "uncovered_operation_ids": [],
     "overlapping_operation_routes": {
       "acknowledgeProbeOperation": [
@@ -4775,5 +4791,5 @@
       "admin_api_external_exposure"
     ]
   },
-  "catalog_sha256": "cee274ad02ea55d2b2bba3bd214ca72f748196f21c5895ac24eee9dc4a54ae22"
+  "catalog_sha256": "8282048af82718fd9f487b37864cd53018a79dd902d209c76f98db885d306792"
 }
