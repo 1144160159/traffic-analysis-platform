@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "run_id": "20260809-remediation-alert-batch-assignment-g1-v1-owned",
+  "status": "PASS",
+  "coverage_status": "OWNED_REAL_POSTGRES_FROZEN_ALERT_BATCH_ASSIGNMENT_G1",
+  "production_applied": false,
+  "shared_environment_touched": false,
+  "loopback_only": true,
+  "container_resource_limits": {
+    "memory": "512m",
+    "cpus": "1"
+  },
+  "container": {
+    "name": "codex-alert-batch-pg-28d1b3149516",
+    "container_id": "afb3990267fb84b856eb6df3700806aee1aea9c15017fcf4a5fdc2111f9e3616",
+    "image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+    "identity_verified": true,
+    "cleanup_sentinel_verified": true,
+    "data_mount_type": "tmpfs",
+    "persistent_volume_attached": false,
+    "resource_snapshot": {
+      "cpu_percent": "0.01%",
+      "memory_usage": "102.9MiB / 512MiB",
+      "memory_percent": "20.10%",
+      "block_io": "0B / 16.4kB",
+      "pids": "6",
+      "measurement": "post_workload_single_snapshot_not_performance_evidence"
+    },
+    "removed": true
+  },
+  "schema_entrypoints": [
+    "go/control-plane/deployments/docker/init/postgres_merged.sql",
+    "deployments/postgres/migrations/202608091900_alert_batch_assignment_v1.sql",
+    "common/sql/pg/19-alert-batch-assignment-v1.sql"
+  ],
+  "schema_replay_count": 5,
+  "test_output": "=== RUN   TestAlertBatchAssignmentPostgresIntegration\n    alert_batch_assignment_postgres_integration_test.go:160: alert_batch_assignment_postgres=pass batch_id=17ea6add-dfe1-421c-8eb7-e53268e37fe0 event_id=ea66aa0d-d650-4e7e-9224-7c125e1c47b1 selection_sha256=dd83b1e0ac7f9919f958d889c344f7c9573794da72017eee8f98aa9eeb5c162d\n--- PASS: TestAlertBatchAssignmentPostgresIntegration (0.03s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api\t0.046s",
+  "asserted_facts": {
+    "server_side_selection_frozen": true,
+    "selection_exact_idempotent_replay": true,
+    "selection_token_plaintext_not_persisted": true,
+    "changed_selection_payload_conflict": true,
+    "cross_tenant_selection_rejected": true,
+    "expired_selection_rejected": true,
+    "consumed_selection_not_dispatched_twice": true,
+    "assignment_exact_idempotent_replay": true,
+    "changed_assignment_payload_conflict": true,
+    "ordered_per_item_results_complete": true,
+    "history_outbox_request_audit_same_trace": true,
+    "audit_failure_full_rollback": true,
+    "accepted_state_explicitly_non_final": true,
+    "all_data_mounts_tmpfs": true,
+    "no_persistent_volume": true
+  },
+  "errors": [],
+  "secrets_captured": false
+}
