@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T06:45:00Z",
+  "updated_at": "2026-08-09T07:35:00Z",
   "overrides": {
     "F-COMMON-001": {
       "status": "IMPLEMENTING",
@@ -785,6 +785,39 @@
       ],
       "blocker": "当前已完成默认关闭的告警响应外部执行器、告警域PostgreSQL DLQ收据/审计屏障、unknown effect周期权威复核、外部补偿执行器以及自有单broker Redpanda source-offset precommit G1；批准的多副本Kafka/source offset故障复证、批准provider ledger、同trace跨服务对账、批准性能/故障恢复、候选部署、Windows Chrome、canary、回滚和T+0/T+1/T+3/T+7观察仍未完成；因此不得进入VERIFYING或CLOSED。",
       "note": "G0 v218三道门分别PASS并绑定源码SHA 50c0e124119548fcfdfc485eb2e024a5940bff4ce4fe97ab81f885abdec1cdcf。G1告警响应专项十三项检查全部PASS：除unknown effect有界权威复核和补偿仅查询恢复外，固定摘要自有Redpanda/PG先以生产consumer处理offset 0有效事件，loopback provider恰好产生一次副作用，PG receipt/action/audit与provider command使用同一trace；随后错误DLQ目标使offset 1毒消息不提交且receipt=0，同组切换canonical dlq.v1后重投，PG source tuple receipt与quarantine audit各1，group current/log-end=2且lag=0。自有PG、Redpanda与loopback provider容器均身份核验并删除。该单broker运行不是批准Kafka、G2或HA证据；所有开关默认关闭，production_applied=false，F-ALERT-003保持IMPLEMENTING。"
+    },
+    "F-ALERT-004": {
+      "status": "IMPLEMENTING",
+      "evidence": [
+        "contracts/alignment/features/F-ALERT-004.json",
+        "contracts/openapi/alignment-v1.openapi.json",
+        "contracts/postgres/mutable-command-inventory.v1.json",
+        "contracts/configuration/configuration-catalog.v1.json",
+        "go/control-plane/internal/alert/api/alert_batch_assignment_v1.go",
+        "go/control-plane/internal/alert/api/alert_batch_assignment_v1_test.go",
+        "go/control-plane/internal/alert/api/alert_batch_assignment_postgres_integration_test.go",
+        "go/control-plane/cmd/alert-service/main.go",
+        "deployments/postgres/migrations/202608091900_alert_batch_assignment_v1.sql",
+        "common/sql/pg/19-alert-batch-assignment-v1.sql",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "deployments/kubernetes/applications/go-services.yaml",
+        "go/control-plane/deployments/kubernetes/alert-service.yaml",
+        "web/ui/src/config/runtime.ts",
+        "web/ui/src/pages/AlertTriagePage.tsx",
+        "web/ui/src/services/alertQueueActionsApi.ts",
+        "web/ui/src/services/alertQueueActionsApi.test.ts",
+        "scripts/alignment/verify_alert_batch_assignment_ephemeral.py",
+        "scripts/alignment/capture_alert_batch_assignment.py",
+        "tests/alignment/test_alert_batch_assignment_ephemeral_guard.py",
+        "doc/07_alignment/runbooks/F-ALERT-004-rollback.md",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v221/manifest.json#sha256=d8f63c4de1fe32c8b0cfef75b0c08ace0b08f5271064ce9f0ee0d08365354805",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v222/manifest.json#sha256=9404cd4a8d33b5baf0d13ed59bbc158fcbb55ea6750c4d3d523b6c9b971bdf99",
+        "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-g1-v1/manifest.json#sha256=79cd4039466ef0cf13b6522a389a560a90979c7ee566fb170e909d29a14849a5",
+        "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-g1-v1/owned-postgres-result.json#sha256=2251c274bc602db8a4a56b64bc329b9b4c97a5ca0c8aa875febad0785205f8cd"
+      ],
+      "blocker": "自有固定摘要PostgreSQL G1已证明服务端冻结选择、租户绑定和限时令牌、选择与指派精确幂等、变化载荷冲突、一次消费、逐项有序受理结果，以及batch/items/history/outbox/request/audit同一serializable事务；但尚无独立幂等consumer，未验证受让人授权重检、逐项陈旧revision的最终回执和补偿。批准候选PG/Kafka/CH/OS与审计的G2/G3、G4性能和故障预算、指定Windows Chrome G5、canary/回滚及T+0/T+1/T+3/T+7观察均未完成；不得进入VERIFYING或CLOSED。",
+      "note": "G0 v221因Kubernetes migration runner负向测试仍匹配历史32号结尾而如实失败，失败manifest保留；修正精确负向变异且不放宽verifier后，G0 v222三道门分别PASS并绑定源码SHA 14c07054ba401e99193a0a6012d5ded5bf6e97411f9a08c6703b513e2592afd5。批量选择令牌使用独立secret确定性HMAC派生，PostgreSQL只保存其SHA-256；真实tmpfs PG连续回放schema并验证原子事实，容器经身份和哨兵核验后删除。所有开关默认关闭，HTTP 202明确为非最终态，production_applied=false，因此F-ALERT-004仅从OPEN提升为IMPLEMENTING。"
     },
     "F-ALERT-005": {
       "status": "IMPLEMENTING",
