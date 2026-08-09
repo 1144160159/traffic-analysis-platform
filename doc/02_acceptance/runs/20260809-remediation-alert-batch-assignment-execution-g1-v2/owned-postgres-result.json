@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "run_id": "20260809-remediation-alert-batch-assignment-execution-g1-v2-owned",
+  "status": "PASS",
+  "coverage_status": "OWNED_REAL_POSTGRES_ASSIGNMENT_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
+  "production_applied": false,
+  "shared_environment_touched": false,
+  "loopback_only": true,
+  "container_resource_limits": {
+    "memory": "512m",
+    "cpus": "1"
+  },
+  "container": {
+    "name": "codex-alert-batch-pg-79bcce678d32",
+    "container_id": "66feee8f534858f422839b88d1bb6b012651ab445c4074b8d262d8f1cb2ab567",
+    "image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+    "identity_verified": true,
+    "cleanup_sentinel_verified": true,
+    "data_mount_type": "tmpfs",
+    "persistent_volume_attached": false,
+    "resource_snapshot": {
+      "cpu_percent": "0.01%",
+      "memory_usage": "103.8MiB / 512MiB",
+      "memory_percent": "20.28%",
+      "block_io": "0B / 16.4kB",
+      "pids": "6",
+      "measurement": "post_workload_single_snapshot_not_performance_evidence"
+    },
+    "removed": true
+  },
+  "schema_entrypoints": [
+    "go/control-plane/deployments/docker/init/postgres_merged.sql",
+    "deployments/postgres/migrations/202608091900_alert_batch_assignment_v1.sql",
+    "common/sql/pg/19-alert-batch-assignment-v1.sql",
+    "deployments/postgres/migrations/202608092130_alert_batch_assignment_execution_v1.sql",
+    "common/sql/pg/20-alert-batch-assignment-execution-v1.sql"
+  ],
+  "schema_replay_count": 9,
+  "test_output": "=== RUN   TestAlertBatchAssignmentPostgresIntegration\n    alert_batch_assignment_postgres_integration_test.go:160: alert_batch_assignment_postgres=pass batch_id=b54a1d9c-19aa-40aa-bc88-1bf6eab34d4c event_id=81b99ddb-50cc-458f-b252-327718b1a2d0 selection_sha256=dd83b1e0ac7f9919f958d889c344f7c9573794da72017eee8f98aa9eeb5c162d\n--- PASS: TestAlertBatchAssignmentPostgresIntegration (0.03s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api\t0.043s\n\n=== RUN   TestAlertBatchAssignmentPipelinePostgresIntegration\n    alert_batch_assignment_pipeline_postgres_integration_test.go:183: alert_batch_assignment_execution_postgres=pass batch_id=b54a1d9c-19aa-40aa-bc88-1bf6eab34d4c projected=2 inbox=2 receipts=2 dlq_receipts=1\n--- PASS: TestAlertBatchAssignmentPipelinePostgresIntegration (0.03s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/consumer\t0.042s\n\n=== RUN   TestAlertBatchAssignmentTerminalQueryPostgresIntegration\n    alert_batch_assignment_postgres_integration_test.go:194: alert_batch_assignment_terminal_query_postgres=pass batch_id=b54a1d9c-19aa-40aa-bc88-1bf6eab34d4c event_id=3533f131-34fe-50c7-bf9c-2b2d2dd2a977\n--- PASS: TestAlertBatchAssignmentTerminalQueryPostgresIntegration (0.01s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api\t0.018s",
+  "asserted_facts": {
+    "server_side_selection_frozen": true,
+    "selection_exact_idempotent_replay": true,
+    "selection_token_plaintext_not_persisted": true,
+    "changed_selection_payload_conflict": true,
+    "cross_tenant_selection_rejected": true,
+    "expired_selection_rejected": true,
+    "consumed_selection_not_dispatched_twice": true,
+    "assignment_exact_idempotent_replay": true,
+    "changed_assignment_payload_conflict": true,
+    "ordered_per_item_results_complete": true,
+    "history_outbox_request_audit_same_trace": true,
+    "audit_failure_full_rollback": true,
+    "accepted_state_explicitly_non_final": true,
+    "requested_and_changed_events_consumed_independently": true,
+    "assignee_permission_and_item_revision_rechecked": true,
+    "deterministic_projection_intents_and_receipts_persisted": true,
+    "terminal_batch_and_item_accounting_complete": true,
+    "terminal_status_query_returns_latest_outbox_and_item_receipts": true,
+    "exact_kafka_redelivery_does_not_repeat_projection": true,
+    "dlq_ack_source_tuple_barrier_idempotent": true,
+    "all_data_mounts_tmpfs": true,
+    "no_persistent_volume": true
+  },
+  "errors": [],
+  "secrets_captured": false
+}

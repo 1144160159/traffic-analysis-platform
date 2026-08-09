@@ -832,10 +832,13 @@
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v225/manifest.json#sha256=bb58ecc0dd91d15dc8a8d711c822ab3789b45b87c9f1ad24a3623cafb6b14f97",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v226/manifest.json#sha256=300cd4b697179eb065667f379d0ae8c882abbcfaac7f9f043086970251002e17",
         "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v1/manifest.json#sha256=e06396a4a88f8b6c858cd69e1fe3ae912da42d9dda8449dcf5e4dad4c701d21d",
-        "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v1/owned-postgres-result.json#sha256=477c7aac54ddef4ed2deb19e34a2d9c1d05cc6c17a583f24d09d7aa14c4f756e"
+        "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v1/owned-postgres-result.json#sha256=477c7aac54ddef4ed2deb19e34a2d9c1d05cc6c17a583f24d09d7aa14c4f756e",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v227/manifest.json#sha256=4309ff18a48a78abe08216037aa5c8df72ad0907db9b213d4bb05b64e0b7f307",
+        "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v2/manifest.json#sha256=c9608ac63ffd028aec7ebe51b3b05826ed1c64256b6b68a64a915ee37c935320",
+        "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v2/owned-postgres-result.json#sha256=f5288f3995f9a0003080b16e01a7da68fc5472641c1c4974c2e748d893e693c7"
       ],
       "blocker": "自有固定摘要PostgreSQL G1现已证明冻结选择和原子受理，并新增严格requested/changed生命周期consumer、canonical outbox载荷权威校验、受让人权限与逐项revision重检、确定性投影意图、终态逐项receipt/批次核算/查询、精确inbox重放以及canonical DLQ ACK后的PG source-tuple与审计屏障；但该G1使用fake ClickHouse authority，没有运行真实Kafka、ClickHouse或OpenSearch，尚无跨存储G2/G3、补偿、G4性能与故障预算、指定Windows Chrome G5、canary/回滚及T+0/T+1/T+3/T+7观察；不得进入VERIFYING或CLOSED。",
-      "note": "G0 v223和v224因适配风险、服务身份等生成目录漂移在alignment阶段如实失败，v225在full阶段暴露新增topic后35/25硬编码期望漂移；失败manifest全部保留。同步生成目录并将精确期望更新为36个canonical topic、26个JSON Schema topic后，G0 v226三道门分别PASS，绑定2441个候选文件和源码SHA 4015c51e9b52cf9b9df24cd30c6dc2a4291ed2c590fa240aa917e1dc570fe2a3。专项G1范围PASS但总状态PARTIAL，tmpfs PG容器经身份和哨兵核验后删除，production_applied=false；F-ALERT-004保持IMPLEMENTING。"
+      "note": "G0 v223和v224因适配风险、服务身份等生成目录漂移在alignment阶段如实失败，v225在full阶段暴露新增topic后35/25硬编码期望漂移；失败manifest全部保留。同步生成目录并将精确期望更新为36个canonical topic、26个JSON Schema topic后，v226三门先在稳定未提交源码通过；形成实现与证据提交后，干净G0 v227三道门再次PASS，HEAD前后均为45b782649且状态为空，仍绑定2441个候选文件和源码SHA 4015c51e9b52cf9b9df24cd30c6dc2a4291ed2c590fa240aa917e1dc570fe2a3。v227同哈希专项G1 v2范围PASS但总状态PARTIAL，tmpfs PG容器经身份和哨兵核验后删除，production_applied=false；F-ALERT-004保持IMPLEMENTING。"
     },
     "F-ALERT-005": {
       "status": "IMPLEMENTING",

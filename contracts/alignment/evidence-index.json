@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T08:44:02Z",
+  "updated_at": "2026-08-09T09:00:26Z",
   "latest_g0": {
-    "run_id": "20260809-remediation-g0-full-v226",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v226/manifest.json",
-    "manifest_sha256": "300cd4b697179eb065667f379d0ae8c882abbcfaac7f9f043086970251002e17",
+    "run_id": "20260809-remediation-g0-full-v227",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v227/manifest.json",
+    "manifest_sha256": "4309ff18a48a78abe08216037aa5c8df72ad0907db9b213d4bb05b64e0b7f307",
     "candidate_source_sha256": "4015c51e9b52cf9b9df24cd30c6dc2a4291ed2c590fa240aa917e1dc570fe2a3",
     "status": "PASS",
     "scope": [
@@ -54,17 +54,17 @@
       "T-CONFIG-001",
       "T-SCHEMA-001"
     ],
-    "run_id": "20260809-remediation-alert-batch-assignment-execution-g1-v1",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v1/manifest.json",
-    "manifest_sha256": "e06396a4a88f8b6c858cd69e1fe3ae912da42d9dda8449dcf5e4dad4c701d21d",
-    "result": "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v1/owned-postgres-result.json",
-    "result_sha256": "477c7aac54ddef4ed2deb19e34a2d9c1d05cc6c17a583f24d09d7aa14c4f756e",
+    "run_id": "20260809-remediation-alert-batch-assignment-execution-g1-v2",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v2/manifest.json",
+    "manifest_sha256": "c9608ac63ffd028aec7ebe51b3b05826ed1c64256b6b68a64a915ee37c935320",
+    "result": "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v2/owned-postgres-result.json",
+    "result_sha256": "f5288f3995f9a0003080b16e01a7da68fc5472641c1c4974c2e748d893e693c7",
     "candidate_source_sha256": "4015c51e9b52cf9b9df24cd30c6dc2a4291ed2c590fa240aa917e1dc570fe2a3",
     "status": "PARTIAL",
     "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_ASSIGNMENT_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
     "scoped_evidence_status": "PASS",
-    "g0_run_id": "20260809-remediation-g0-full-v226",
-    "g0_manifest_sha256": "300cd4b697179eb065667f379d0ae8c882abbcfaac7f9f043086970251002e17",
+    "g0_run_id": "20260809-remediation-g0-full-v227",
+    "g0_manifest_sha256": "4309ff18a48a78abe08216037aa5c8df72ad0907db9b213d4bb05b64e0b7f307",
     "candidate_source_stable": true,
     "production_applied": false,
     "server_side_selection_frozen_verified": true,
@@ -103,7 +103,7 @@
       "G7": "OPEN",
       "G8": "BLOCKED"
     },
-    "note": "The G0 v226-bound owned PostgreSQL G1 keeps the frozen-selection and atomic-acceptance facts and adds a strict requested/changed lifecycle consumer, canonical outbox-payload authority, assignee permission and alert revision rechecks, deterministic per-item projection intents, terminal receipts/accounting/query results, exact inbox replay and a PostgreSQL source-tuple plus audit barrier after canonical DLQ acknowledgement. ClickHouse is a fake authority in this owned G1; no real Kafka, ClickHouse or OpenSearch service was used, production_applied remains false, compensation and approved G2-G6 remain open, and F-ALERT-004 remains IMPLEMENTING."
+    "note": "The clean G0 v227-bound owned PostgreSQL G1 keeps the frozen-selection and atomic-acceptance facts and adds a strict requested/changed lifecycle consumer, canonical outbox-payload authority, assignee permission and alert revision rechecks, deterministic per-item projection intents, terminal receipts/accounting/query results, exact inbox replay and a PostgreSQL source-tuple plus audit barrier after canonical DLQ acknowledgement. ClickHouse is a fake authority in this owned G1; no real Kafka, ClickHouse or OpenSearch service was used, production_applied remains false, compensation and approved G2-G6 remain open, and F-ALERT-004 remains IMPLEMENTING."
   },
   "latest_alert_response_executor_g1": {
     "canonical_ids": [
