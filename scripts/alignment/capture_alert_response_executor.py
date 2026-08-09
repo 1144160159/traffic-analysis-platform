@@ -38,6 +38,8 @@ SOURCE_ARTIFACTS = (
     "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
     "go/control-plane/internal/alert/consumer/alert_response_http_executor_test.go",
     "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
+    "go/control-plane/internal/alert/consumer/alert_response_recovery_worker.go",
+    "go/control-plane/internal/alert/consumer/alert_response_recovery_worker_integration_test.go",
     "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
     "go/control-plane/internal/alert/consumer/alert_response_event_consumer_test.go",
     "go/control-plane/internal/alert/consumer/alert_response_event_consumer_integration_test.go",
@@ -45,6 +47,7 @@ SOURCE_ARTIFACTS = (
     "go/control-plane/internal/common/kafka/consumer_dlq_acknowledgement_barrier_test.go",
     "go/control-plane/internal/alert/api/handler_alert_actions.go",
     "go/control-plane/internal/alert/api/handler_alert_response_workflow.go",
+    "go/control-plane/internal/alert/api/handler_alert_response_workflow_integration_test.go",
     "go/control-plane/internal/alert/config/config.go",
     "go/control-plane/cmd/alert-service/main.go",
     "contracts/alignment/features/F-ALERT-003.json",
@@ -60,8 +63,10 @@ SOURCE_ARTIFACTS = (
     "deployments/postgres/migrations/202607302300_alert_response_execution_projection.sql",
     "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
     "deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
+    "deployments/postgres/migrations/202608091500_alert_response_reconciliation_compensation_v1.sql",
     "common/sql/pg/15-alert-response-external-executor-v1.sql",
     "common/sql/pg/16-alert-response-dlq-receipt-v1.sql",
+    "common/sql/pg/17-alert-response-reconciliation-compensation-v1.sql",
     "go/control-plane/deployments/docker/init/postgres_merged.sql",
     "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
     "deployments/kubernetes/applications/go-services.yaml",
@@ -267,7 +272,18 @@ def main() -> int:
             [
                 "go", "-C", "go/control-plane", "test",
                 "./internal/alert/consumer",
-                "-run", "^TestPostgresAlertResponse(Projection|ExternalExecutor|DLQAcknowledgement)Integration$",
+                "-run", "^(TestPostgresAlertResponse(Projection|ExternalExecutor|DLQAcknowledgement)Integration|TestAlertResponseRecoveryWorker.*)$",
+                "-count=1", "-v",
+            ],
+            integration_environment,
+            True,
+        ),
+        (
+            "owned-postgres-compensation-queue",
+            [
+                "go", "-C", "go/control-plane", "test",
+                "./internal/alert/api",
+                "-run", "^TestAlertResponseCompensationQueuePostgresIntegration$",
                 "-count=1", "-v",
             ],
             integration_environment,
@@ -316,7 +332,25 @@ def main() -> int:
             "--- PASS: TestPostgresAlertResponseDLQAcknowledgementIntegration"
             in integration_text
         ),
+        "unknown_effect_periodic_authority_recheck_passed": (
+            "--- PASS: TestAlertResponseRecoveryWorkerResolvesUnknownExecutionByAuthorityOnly"
+            in integration_text
+        ),
+        "ambiguous_compensation_lookup_only_recovery_passed": (
+            "--- PASS: TestAlertResponseRecoveryWorkerNeverBlindRetriesAmbiguousCompensation"
+            in integration_text
+        ),
     }
+    compensation_log = output / "owned-postgres-compensation-queue.log"
+    compensation_text = (
+        compensation_log.read_text(encoding="utf-8", errors="replace")
+        if compensation_log.is_file()
+        else ""
+    )
+    integration_facts["postgres_compensation_queue_atomicity_passed"] = (
+        "--- PASS: TestAlertResponseCompensationQueuePostgresIntegration"
+        in compensation_text
+    )
     schema_log = output / "schema-entrypoints.log"
     schema_result: dict[str, Any] | None = None
     if schema_log.is_file():
@@ -362,7 +396,7 @@ def main() -> int:
         "feature_id": "F-ALERT-003",
         "related_ids": ["T-PG-002", "T-KAFKA-001", "T-KAFKA-003", "T-SCHEMA-001"],
         "status": "PARTIAL" if scoped_pass else "FAIL",
-        "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_AND_DLQ_RECEIPT_G1",
+        "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_DLQ_AUTHORITY_RECHECK_AND_COMPENSATION_G1",
         "scoped_evidence_status": "PASS" if scoped_pass else "FAIL",
         "candidate_source": candidate_before,
         "candidate_source_stable": candidate_stable,
@@ -375,7 +409,7 @@ def main() -> int:
         },
         "gate_status": {
             "G0": "PASS" if scoped_pass else "FAIL",
-            "G1": "PASS_FOR_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_AND_DLQ_RECEIPT",
+            "G1": "PASS_FOR_OWNED_REAL_POSTGRES_LOOPBACK_HTTP_PROVIDER_DLQ_AUTHORITY_RECHECK_AND_COMPENSATION",
             "G2": "OPEN_FOR_APPROVED_RELEASE_CANDIDATE_POSTGRESQL_KAFKA_AND_PROVIDER",
             "G3": "OPEN_FOR_SAME_TRACE_EVENT_OFFSET_RECEIPT_AUDIT_AND_PROVIDER_EFFECT_RECONCILIATION",
             "G4": "OPEN_FOR_APPROVED_PERFORMANCE_FAULT_AND_RECOVERY_BUDGET",
@@ -397,13 +431,13 @@ def main() -> int:
             "stable event replay at a different Kafka offset is idempotent and a mismatched aggregate version is rejected",
             "an owned sentinel-protected PostgreSQL 16 database and loopback HTTP provider exercise blocked-no-executor and confirmed-external-effect paths",
             "the alert-domain poison receipt and quarantine audit commit atomically by immutable source topic partition and offset after a permanent processing failure",
-            "common Docker-merged and Kubernetes PostgreSQL schema entrypoints replay twice to one structural digest and register migrations 202608091130 and 202608091230",
-            "execution and external executor feature flags remain default-off and the rollback runbook preserves receipts and unknown effects",
+            "partial unknown execution effects enter a bounded PostgreSQL queue whose worker only calls exact provider authority lookup and atomically reconciles receipt action audit and immutable attempt history",
+            "a catalogued compensation request commits control request queue action revision and audit atomically; a transport-ambiguous inverse is submitted once and every later lease uses authority lookup only",
+            "common Docker-merged and Kubernetes PostgreSQL schema entrypoints replay twice to one structural digest and register migrations 202608091130 202608091230 and 202608091500",
+            "execution authority-recheck and compensation feature flags remain default-off and the rollback runbook preserves receipts queues and unknown effects",
         ],
         "open": [
-            "implement and prove an external compensation executor with durable receipt and exact-identity authority lookup",
             "prove DLQ acknowledgement failure source-offset retention redelivery and the alert-domain PostgreSQL receipt barrier against owned and approved Kafka",
-            "add a bounded periodic authority reconciliation worker for partial unknown effects without blind execution retry",
             "exercise the production producer consumer group source offsets replay and DLQ boundaries on owned real Redpanda or Kafka",
             "run the exact release candidate against approved PostgreSQL Kafka and response provider services",
             "reconcile the same tenant trace event aggregate revision source offset receipt effect identity and audit across approved services",

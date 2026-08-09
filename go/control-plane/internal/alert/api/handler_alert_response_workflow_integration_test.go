@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -163,6 +164,93 @@ func TestAlertResponseWorkflowPostgresIntegration(t *testing.T) {
 	}
 	if approvals != 1 || controls != 1 || audits != 3 {
 		t.Fatalf("unexpected transactional evidence counts: approvals=%d controls=%d audits=%d", approvals, controls, audits)
+	}
+}
+
+func TestAlertResponseCompensationQueuePostgresIntegration(t *testing.T) {
+	dsn := os.Getenv("ALERT_RESPONSE_EPHEMERAL_PG_DSN")
+	if dsn == "" {
+		t.Skip("ALERT_RESPONSE_EPHEMERAL_PG_DSN is not set")
+	}
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var guard string
+	if err := db.QueryRow(`SELECT guard_value FROM remediation_ephemeral_guard WHERE guard_value='alert-response-integration-v1'`).Scan(&guard); err != nil {
+		t.Fatalf("refusing to run without ephemeral database guard: %v", err)
+	}
+
+	suffix := time.Now().UTC().Format("150405000000")
+	tenantID := "integration-alert-compensation-" + suffix
+	alertID := "AL-COMPENSATION-1"
+	jobID := "alert-action-compensation-" + suffix
+	eventID := "55555555-5555-4555-8555-" + suffix
+	traceID := "trace-alert-compensation-" + suffix
+	if _, err := db.Exec(`INSERT INTO alert_response_actions
+		(job_id,event_id,tenant_id,alert_id,action_id,action,target,reason,dry_run,
+		 status,approval_status,revision,trace_id,idempotency_key,expected_revision,
+		 detail,requested_by,approved_by,approved_at,result,error)
+		VALUES ($1,$2::uuid,$3,$4,'alert-response-block-ip','block_ip','198.51.100.40',
+		 'confirmed malicious source',false,'completed','approved',3,$5,$6,0,
+		 '{}'::jsonb,'operator-a','approver-b',now(),'{}'::jsonb,'')`,
+		jobID, eventID, tenantID, alertID, traceID, "compensation-source-"+suffix,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO alert_response_execution_receipts
+		(event_id,job_id,tenant_id,alert_id,action_id,state,simulated,external_effect,
+		 aggregate_version,result,error,kafka_partition,kafka_offset,provider,
+		 provider_receipt_id,effect_state,effect_ids,trace_id,receipt_sha256,
+		 authority_lookup,executed_at)
+		VALUES ($1::uuid,$2,$3,$4,'alert-response-block-ip','completed',false,true,2,
+		 '{}'::jsonb,'',7,$5,'ephemeral-firewall',$6,'confirmed',$7::jsonb,$8,
+		 repeat('a',64),'{}'::jsonb,now())`,
+		eventID, jobID, tenantID, alertID, time.Now().UnixNano(),
+		"execution-receipt-"+suffix, `["rule-`+suffix+`"]`, traceID,
+	); err != nil {
+		t.Fatal(err)
+	}
+	handler := NewHandler(nil, nil, zap.NewNop())
+	handler.SetActionAuditWriter(NewAlertActionAuditWriter(db, zap.NewNop()))
+	handler.SetResponseCompensationEnabled(true)
+	handler.SetResponseCompensationMaxAttempts(5)
+	body := `{"expected_revision":3,"reason":"restore approved network access"}`
+	request := runAlertResponseIntegrationRequest(t, handler.RequestAlertResponseCompensation,
+		http.MethodPost, "/api/v1/alerts/"+alertID+"/response-actions/"+jobID+"/compensations",
+		body, tenantID, alertID, jobID, "security-approver-c", "integration-compensation-key-0001",
+		[]string{authmodel.ScopePlaybookApprove})
+	if request.Code != http.StatusAccepted {
+		t.Fatalf("compensation queue status=%d body=%s", request.Code, request.Body.String())
+	}
+	replay := runAlertResponseIntegrationRequest(t, handler.RequestAlertResponseCompensation,
+		http.MethodPost, "/api/v1/alerts/"+alertID+"/response-actions/"+jobID+"/compensations",
+		body, tenantID, alertID, jobID, "security-approver-c", "integration-compensation-key-0001",
+		[]string{authmodel.ScopePlaybookApprove})
+	if replay.Code != http.StatusAccepted || !responseBooleanFromEnvelope(t, replay, "idempotent_reuse") {
+		t.Fatalf("compensation queue replay failed: status=%d body=%s", replay.Code, replay.Body.String())
+	}
+	var status, attemptStatus, providerKey string
+	var revision int64
+	var controls, attempts, audits, maxAttempts int
+	if err := db.QueryRow(`SELECT a.status,a.revision,c.status,c.provider_idempotency_key,
+		(SELECT count(*) FROM alert_response_control_requests WHERE tenant_id=$1 AND job_id=$2),
+		(SELECT count(*) FROM alert_response_compensation_attempts WHERE tenant_id=$1 AND job_id=$2),
+		(SELECT count(*) FROM audit_logs WHERE tenant_id=$1 AND object_id=$2 AND action='ALERT_RESPONSE_COMPENSATION_QUEUED'),
+		c.max_attempts
+		FROM alert_response_actions a
+		JOIN alert_response_compensation_attempts c ON c.job_id=a.job_id
+		WHERE a.tenant_id=$1 AND a.job_id=$2`, tenantID, jobID).Scan(
+		&status, &revision, &attemptStatus, &providerKey, &controls, &attempts, &audits, &maxAttempts,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if status != "compensation_queued" || revision != 4 || attemptStatus != "pending" ||
+		!strings.HasPrefix(providerKey, "alert-response-compensation:") || controls != 1 ||
+		attempts != 1 || audits != 1 || maxAttempts != 5 {
+		t.Fatalf("queued compensation facts diverged: status=%s revision=%d attempt=%s key=%s controls=%d attempts=%d audits=%d max=%d",
+			status, revision, attemptStatus, providerKey, controls, attempts, audits, maxAttempts)
 	}
 }
 

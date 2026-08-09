@@ -411,10 +411,14 @@
         "alert_response_approvals",
         "alert_response_execution_receipts",
         "alert_response_dlq_receipts",
+        "alert_response_execution_authority_rechecks",
+        "alert_response_compensation_attempts",
+        "alert_response_compensation_receipts",
+        "alert_response_authority_check_history",
         "audit_logs"
       ],
-      "isolation": "stable_event_identity_with_provider_idempotency_and_atomic_postgres_terminal_receipt",
-      "idempotency_lock": "event_id_and_provider_receipt_unique_constraints",
+      "isolation": "stable_event_identity_with_provider_idempotency_atomic_postgres_receipts_and_leased_authority_only_recovery",
+      "idempotency_lock": "event_id_provider_receipt_control_request_and_provider_compensation_identities",
       "event_types": [
         "alert.response.requested.v1"
       ],
@@ -449,7 +453,47 @@
         "provider_receipt_id",
         "effect_state",
         "LookupAlertResponseExecution",
+        "CompensateAlertResponse",
+        "LookupAlertResponseCompensation",
+        "OriginalEffectIDs",
         "receipt_found"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/handler_alert_response_workflow.go",
+      "operation_start": "func (h *Handler) compensateLockedAlertResponseAction",
+      "operation_end": "func (h *Handler) insertAlertResponseControl",
+      "required": [
+        "responseCompensationEnabled",
+        "INCOMPLETE_EFFECT_AUTHORITY",
+        "INSERT INTO alert_response_compensation_attempts",
+        "provider_idempotency_key",
+        "compensation_queued",
+        "ALERT_RESPONSE_COMPENSATION_QUEUED",
+        "tx.Commit()"
+      ],
+      "ordered": [
+        "insertAlertResponseControl",
+        "INSERT INTO alert_response_compensation_attempts",
+        "UPDATE alert_response_actions",
+        "ALERT_RESPONSE_COMPENSATION_QUEUED",
+        "tx.Commit()"
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/alert/consumer/alert_response_recovery_worker.go",
+      "required": [
+        "LookupAlertResponseExecution",
+        "LookupAlertResponseCompensation",
+        "alert_response_authority_check_history",
+        "alert_response_compensation_receipts",
+        "authority_pending",
+        "exhausted_unknown",
+        "FOR UPDATE SKIP LOCKED",
+        "tx.Commit()"
+      ],
+      "forbidden": [
+        ".ExecuteAlertResponse("
       ]
     },
     {
@@ -1706,6 +1750,25 @@
       "sources": [
         "deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
         "common/sql/pg/16-alert-response-dlq-receipt-v1.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql"
+      ]
+    },
+    {
+      "name": "alert_response_reconciliation_compensation_v1",
+      "tokens": [
+        "202608091500",
+        "alert_response_execution_authority_rechecks",
+        "alert_response_compensation_attempts",
+        "alert_response_compensation_receipts",
+        "alert_response_authority_check_history",
+        "uq_alert_response_actions_tenant_idempotency",
+        "idx_alert_response_execution_rechecks_due",
+        "idx_alert_response_compensation_due"
+      ],
+      "sources": [
+        "deployments/postgres/migrations/202608091500_alert_response_reconciliation_compensation_v1.sql",
+        "common/sql/pg/17-alert-response-reconciliation-compensation-v1.sql",
         "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
         "go/control-plane/deployments/docker/init/postgres_merged.sql"
       ]

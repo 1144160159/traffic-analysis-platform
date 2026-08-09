@@ -378,8 +378,8 @@ func (h *Handler) cancelLockedAlertResponseAction(
 		return
 	}
 	newRevision := action.Revision + 1
-	if !h.insertAlertResponseControl(w, r, tx, action, actor, idempotencyKey,
-		"cancel", "cancelled", newRevision, "cancelled", request) {
+	if _, ok := h.insertAlertResponseControl(w, r, tx, action, actor, idempotencyKey,
+		"cancel", "cancelled", newRevision, "cancelled", request); !ok {
 		return
 	}
 	result, err := tx.ExecContext(ctx, `UPDATE alert_response_actions
@@ -440,15 +440,15 @@ func (h *Handler) compensateLockedAlertResponseAction(
 		httpx.JSONError(w, ctx, http.StatusForbidden, "INDEPENDENT_APPROVER_REQUIRED", "the original requester cannot authorize compensation")
 		return
 	}
-	var receiptState string
+	var receiptState, provider, providerReceiptID, effectIDsText, receiptTraceID string
 	var externalEffect bool
-	err := tx.QueryRowContext(ctx, `SELECT state,external_effect
+	err := tx.QueryRowContext(ctx, `SELECT state,external_effect,provider,provider_receipt_id,effect_ids::text,trace_id
 		FROM alert_response_execution_receipts
 		WHERE job_id=$1 AND tenant_id=$2 AND alert_id=$3
 		FOR SHARE`,
 		action.JobID, action.TenantID, action.AlertID,
-	).Scan(&receiptState, &externalEffect)
-	if err == sql.ErrNoRows || !externalEffect {
+	).Scan(&receiptState, &externalEffect, &provider, &providerReceiptID, &effectIDsText, &receiptTraceID)
+	if err == sql.ErrNoRows {
 		httpx.JSONError(w, ctx, http.StatusConflict, "NO_EXTERNAL_EFFECT", "no confirmed external effect exists to compensate")
 		return
 	}
@@ -456,18 +456,108 @@ func (h *Handler) compensateLockedAlertResponseAction(
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to inspect execution receipt")
 		return
 	}
+	if !externalEffect {
+		httpx.JSONError(w, ctx, http.StatusConflict, "NO_EXTERNAL_EFFECT", "no confirmed external effect exists to compensate")
+		return
+	}
 	if action.Status != "completed" && action.Status != "partial" {
 		httpx.JSONError(w, ctx, http.StatusConflict, "TERMINAL_STATE", "only a completed or partial external effect can be compensated")
 		return
 	}
+	var effectIDs []string
+	if err := json.Unmarshal([]byte(effectIDsText), &effectIDs); err != nil ||
+		strings.TrimSpace(provider) == "" || strings.TrimSpace(providerReceiptID) == "" ||
+		strings.TrimSpace(receiptTraceID) == "" || receiptState != action.Status || len(effectIDs) == 0 {
+		httpx.JSONError(w, ctx, http.StatusConflict, "INCOMPLETE_EFFECT_AUTHORITY", "the execution receipt lacks durable provider effect authority")
+		return
+	}
+	seenEffectIDs := make(map[string]struct{}, len(effectIDs))
+	for index := range effectIDs {
+		effectIDs[index] = strings.TrimSpace(effectIDs[index])
+		if effectIDs[index] == "" {
+			httpx.JSONError(w, ctx, http.StatusConflict, "INCOMPLETE_EFFECT_AUTHORITY", "the execution receipt contains an empty effect identity")
+			return
+		}
+		if _, duplicate := seenEffectIDs[effectIDs[index]]; duplicate {
+			httpx.JSONError(w, ctx, http.StatusConflict, "INCOMPLETE_EFFECT_AUTHORITY", "the execution receipt contains duplicate effect identities")
+			return
+		}
+		seenEffectIDs[effectIDs[index]] = struct{}{}
+	}
 
-	// No external compensation adapter is currently wired. Persist the request
-	// and its blocked state so an operator sees the truth and no success can be
-	// inferred from HTTP acceptance.
 	newRevision := action.Revision + 1
+	if h.responseCompensationEnabled {
+		requestID, ok := h.insertAlertResponseControl(w, r, tx, action, actor, idempotencyKey,
+			"compensate", "queued", newRevision, "compensation_queued", request)
+		if !ok {
+			return
+		}
+		effectIDsJSON, marshalErr := json.Marshal(effectIDs)
+		if marshalErr != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to encode compensation effect authority")
+			return
+		}
+		providerIdempotencyKey := "alert-response-compensation:" + requestID
+		maxAttempts := h.responseCompensationMaxAttempts
+		if maxAttempts < 1 || maxAttempts > 100 {
+			maxAttempts = 8
+		}
+		if _, err = tx.ExecContext(ctx, `INSERT INTO alert_response_compensation_attempts
+			(request_id,event_id,job_id,tenant_id,alert_id,original_action_id,
+			 compensation_action_id,original_provider,original_provider_receipt_id,
+			 original_effect_ids,requested_by,reason,trace_id,aggregate_version,
+			 provider_idempotency_key,status,max_attempts,next_attempt_at)
+			VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,'pending',$16,now())`,
+			requestID, action.EventID, action.JobID, action.TenantID, action.AlertID,
+			action.ActionID, compensationActionID, provider, providerReceiptID,
+			string(effectIDsJSON), actor, request.Reason, receiptTraceID, newRevision,
+			providerIdempotencyKey, maxAttempts,
+		); err != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to enqueue alert response compensation")
+			return
+		}
+		result, updateErr := tx.ExecContext(ctx, `UPDATE alert_response_actions
+			SET status='compensation_queued',error='',revision=$1,updated_at=now()
+			WHERE tenant_id=$2 AND alert_id=$3 AND job_id=$4 AND revision=$5 AND status=$6`,
+			newRevision, action.TenantID, action.AlertID, action.JobID, action.Revision, action.Status,
+		)
+		if updateErr != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to persist queued compensation request")
+			return
+		}
+		if affected, rowsErr := result.RowsAffected(); rowsErr != nil || affected != 1 {
+			httpx.JSONError(w, ctx, http.StatusConflict, "REVISION_CONFLICT", "alert response action changed while compensation was being queued")
+			return
+		}
+		if err = h.actionAudit.recordWithExecutor(ctx, tx, r, AlertActionAuditRecord{
+			Action: "ALERT_RESPONSE_COMPENSATION_QUEUED", ObjectType: "alert_response_action", ObjectID: action.JobID,
+			TenantID: action.TenantID, UserID: actor, AlertID: action.AlertID,
+			Reason: request.Reason, Result: "compensation_queued", Detail: map[string]interface{}{
+				"request_id": requestID, "event_id": action.EventID,
+				"action_id": action.ActionID, "compensation_action_id": compensationActionID,
+				"provider": provider, "provider_receipt_id": providerReceiptID,
+				"effect_ids": effectIDs, "expected_revision": action.Revision,
+				"revision": newRevision, "provider_idempotency_key_sha256": opaqueKeyDigest(providerIdempotencyKey),
+				"idempotency_key_sha256": opaqueKeyDigest(idempotencyKey),
+			},
+		}); err != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to audit queued compensation request")
+			return
+		}
+		if err = tx.Commit(); err != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to commit queued compensation request")
+			return
+		}
+		writeAlertResponseWorkflowAccepted(w, ctx, action.JobID, "compensation_queued",
+			action.ApprovalStatus, newRevision, false, "pending_retry")
+		return
+	}
+
+	// Disabled mode persists an explicit blocked state so HTTP acceptance can
+	// never be mistaken for a successful external inverse operation.
 	blockedStatus := "compensation_blocked_external_executor"
-	if !h.insertAlertResponseControl(w, r, tx, action, actor, idempotencyKey,
-		"compensate", "blocked_external_executor", newRevision, blockedStatus, request) {
+	if _, ok := h.insertAlertResponseControl(w, r, tx, action, actor, idempotencyKey,
+		"compensate", "blocked_external_executor", newRevision, blockedStatus, request); !ok {
 		return
 	}
 	result, err := tx.ExecContext(ctx, `UPDATE alert_response_actions
@@ -514,26 +604,27 @@ func (h *Handler) insertAlertResponseControl(
 	newRevision int64,
 	resultingStatus string,
 	request alertResponseControlRequest,
-) bool {
+) (string, bool) {
+	requestID := uuid.NewString()
 	result, err := tx.ExecContext(r.Context(), `INSERT INTO alert_response_control_requests
 		(request_id,job_id,tenant_id,alert_id,operation,expected_revision,idempotency_key,
 		 reason,requested_by,state,resulting_revision,resulting_status)
 		VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
 		ON CONFLICT (tenant_id,idempotency_key) DO NOTHING`,
-		uuid.NewString(), action.JobID, action.TenantID, action.AlertID, operation,
+		requestID, action.JobID, action.TenantID, action.AlertID, operation,
 		*request.ExpectedRevision, idempotencyKey, request.Reason, actor, state,
 		newRevision, resultingStatus,
 	)
 	if err != nil {
 		httpx.JSONError(w, r.Context(), http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to persist alert response control request")
-		return false
+		return "", false
 	}
 	affected, err := result.RowsAffected()
 	if err != nil || affected != 1 {
 		httpx.JSONError(w, r.Context(), http.StatusConflict, "IDEMPOTENCY_KEY_CONFLICT", "response control idempotency collision")
-		return false
+		return "", false
 	}
-	return true
+	return requestID, true
 }
 
 func (h *Handler) alertResponseWorkflowIdentity(

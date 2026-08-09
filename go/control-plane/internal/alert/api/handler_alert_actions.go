@@ -243,7 +243,7 @@ func responseActionOutboxStatus(status string, dryRun bool) string {
 		status == "completed" || status == "partial" || status == "failed" {
 		return "published"
 	}
-	if dryRun || status == "approved_awaiting_executor" || status == "accepted" {
+	if dryRun || status == "approved_awaiting_executor" || status == "accepted" || status == "compensation_queued" {
 		return "pending_retry"
 	}
 	return "not_required"

@@ -158,8 +158,11 @@ func (consumer *AlertResponseEventConsumer) handle(
 }
 
 type PostgresAlertResponseProjection struct {
-	db       *sql.DB
-	executor AlertResponseExecutor
+	db                         *sql.DB
+	executor                   AlertResponseExecutor
+	unknownRecheckEnabled      bool
+	unknownRecheckMaxAttempts  int
+	unknownRecheckInitialDelay time.Duration
 }
 
 func (projection *PostgresAlertResponseProjection) ConfigureExecutor(executor AlertResponseExecutor) error {
@@ -167,6 +170,25 @@ func (projection *PostgresAlertResponseProjection) ConfigureExecutor(executor Al
 		return fmt.Errorf("alert response external executor is required")
 	}
 	projection.executor = executor
+	return nil
+}
+
+// ConfigureUnknownEffectReconciliation enables creation of a durable,
+// bounded authority-only recheck. The recovery worker never re-executes the
+// original external effect after the provider transport becomes ambiguous.
+func (projection *PostgresAlertResponseProjection) ConfigureUnknownEffectReconciliation(
+	maxAttempts int,
+	initialDelay time.Duration,
+) error {
+	if maxAttempts < 1 || maxAttempts > 100 {
+		return fmt.Errorf("alert response authority recheck max attempts must be between 1 and 100")
+	}
+	if initialDelay < 0 || initialDelay > 24*time.Hour {
+		return fmt.Errorf("alert response authority recheck initial delay must be between 0 and 24h")
+	}
+	projection.unknownRecheckEnabled = true
+	projection.unknownRecheckMaxAttempts = maxAttempts
+	projection.unknownRecheckInitialDelay = initialDelay
 	return nil
 }
 
@@ -194,12 +216,17 @@ func (projection *PostgresAlertResponseProjection) VerifySchema(ctx context.Cont
 			      ('source_topic','source_partition','source_offset','dlq_topic','event_id','tenant_id','job_id',
 			       'alert_id','action_id','aggregate_version','trace_id','error_code','error_message',
 			       'payload_sha256','headers_sha256','headers','acknowledged_at'))
+			    OR
+			    (table_name='alert_response_execution_authority_rechecks' AND column_name IN
+			      ('recheck_id','event_id','job_id','tenant_id','trace_id','status','attempts',
+			       'max_attempts','next_attempt_at','locked_until','locked_by','last_authority_state',
+			       'last_error','resolved_at'))
 		  )`,
 	).Scan(&columns); err != nil {
 		return fmt.Errorf("verify alert response projection schema: %w", err)
 	}
-	if columns != 40 {
-		return fmt.Errorf("alert response projection schema is incomplete: columns=%d want=40", columns)
+	if columns != 54 {
+		return fmt.Errorf("alert response projection schema is incomplete: columns=%d want=54", columns)
 	}
 	return nil
 }
@@ -335,6 +362,31 @@ func (projection *PostgresAlertResponseProjection) ApplyAlertResponseProjection(
 	}
 	if affected != 1 {
 		return fmt.Errorf("alert response authoritative action is missing or mismatched")
+	}
+	if projection.unknownRecheckEnabled && outcome.State == "partial" && outcome.EffectState == "unknown" {
+		recheckID := uuid.NewSHA1(uuid.NameSpaceOID, []byte("alert-response-authority-recheck:"+input.EventID)).String()
+		if _, err := tx.ExecContext(ctx, `INSERT INTO alert_response_execution_authority_rechecks
+			(recheck_id,event_id,job_id,tenant_id,trace_id,status,attempts,max_attempts,next_attempt_at)
+			VALUES ($1::uuid,$2::uuid,$3,$4,$5,'pending',0,$6,$7)
+			ON CONFLICT (event_id) DO NOTHING`,
+			recheckID, input.EventID, input.JobID, input.TenantID, input.TraceID,
+			projection.unknownRecheckMaxAttempts, outcome.ExecutedAt.Add(projection.unknownRecheckInitialDelay),
+		); err != nil {
+			return fmt.Errorf("enqueue alert response authority recheck: %w", err)
+		}
+		var exact bool
+		if err := tx.QueryRowContext(ctx, `SELECT EXISTS(
+			SELECT 1 FROM alert_response_execution_authority_rechecks
+			WHERE recheck_id=$1::uuid AND event_id=$2::uuid AND job_id=$3 AND tenant_id=$4
+			  AND trace_id=$5 AND max_attempts=$6)`,
+			recheckID, input.EventID, input.JobID, input.TenantID, input.TraceID,
+			projection.unknownRecheckMaxAttempts,
+		).Scan(&exact); err != nil {
+			return fmt.Errorf("verify alert response authority recheck: %w", err)
+		}
+		if !exact {
+			return fmt.Errorf("alert response authority recheck identity collision")
+		}
 	}
 	if outcome.AuditRequired {
 		auditDetail, marshalErr := json.Marshal(map[string]interface{}{

@@ -22,7 +22,7 @@
       {"control_id": "alert-response-cancel", "action_id": "alert-response-cancel"},
       {"control_id": "alert-response-compensate", "action_id": "alert-response-compensate"}
     ],
-    "states": ["loading", "accepted", "running", "success", "partial", "failed", "cancelled", "compensating"]
+    "states": ["loading", "accepted", "running", "success", "partial", "failed", "cancelled", "compensating", "compensated", "compensation_partial", "compensation_failed"]
   },
   "api": {
     "operation_id": "createAlertResponseAction",
@@ -38,17 +38,20 @@
     "invariants": [
       "HTTP 202 means durably accepted and never means the external response effect completed",
       "job status survives page refresh and exposes approval, outbox, execution receipt, failure and compensation boundaries",
-      "terminal receipts are monotonic and stale or reordered callbacks cannot overwrite a newer revision"
+      "terminal receipts are monotonic and stale or reordered callbacks cannot overwrite a newer revision",
+      "partial effect_state=unknown creates a bounded authority-only recheck and never re-executes the original effect",
+      "an ambiguous compensation transport calls the inverse operation at most once and all later attempts query the exact provider authority identity"
     ],
-    "states": ["accepted", "approval_required", "approved", "running", "completed", "failed", "cancelled", "compensation_blocked"],
-    "compensation": "execute only a catalogued inverse after a terminal receipt proves external_effect=true; otherwise remain explicitly blocked"
+    "states": ["accepted", "approval_required", "approved", "running", "completed", "partial", "failed", "cancelled", "compensation_blocked", "compensation_queued", "compensated", "compensation_partial", "compensation_failed"],
+    "compensation": "when the default-off adapter is enabled, atomically enqueue one catalogued inverse only after a durable execution receipt proves exact external effect identities; otherwise remain explicitly blocked"
   },
   "data": {
     "authoritative_store": "postgresql",
     "read_models": ["postgresql", "redis"],
-    "migration": "deployments/postgres/migrations/202607302300_alert_response_execution_projection.sql + deployments/postgres/migrations/202607310000_alert_response_approval_control.sql + deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql + deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
-    "event_types": ["alert.response.requested.v1", "alert.response.approved.v1", "alert.response.cancelled.v1", "alert.response.compensation.requested.v1"],
-    "source_watermarks": ["postgresql.alert_response_actions.revision", "postgresql.alert_response_outbox.outbox_id", "postgresql.alert_response_execution_receipts.kafka_offset", "postgresql.alert_response_execution_receipts.receipt_sha256", "postgresql.alert_response_dlq_receipts.source_topic_partition_offset"]
+    "migration": "deployments/postgres/migrations/202607302300_alert_response_execution_projection.sql + deployments/postgres/migrations/202607310000_alert_response_approval_control.sql + deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql + deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql + deployments/postgres/migrations/202608091500_alert_response_reconciliation_compensation_v1.sql",
+    "event_types": ["alert.response.requested.v1"],
+    "durable_internal_queues": ["postgresql.alert_response_execution_authority_rechecks", "postgresql.alert_response_compensation_attempts"],
+    "source_watermarks": ["postgresql.alert_response_actions.revision", "postgresql.alert_response_outbox.outbox_id", "postgresql.alert_response_execution_receipts.kafka_offset", "postgresql.alert_response_execution_receipts.receipt_sha256", "postgresql.alert_response_dlq_receipts.source_topic_partition_offset", "postgresql.alert_response_execution_authority_rechecks.attempts", "postgresql.alert_response_compensation_attempts.attempts", "postgresql.alert_response_authority_check_history.attempt"]
   },
   "permissions": {
     "tenant_source": "authenticated_identity",

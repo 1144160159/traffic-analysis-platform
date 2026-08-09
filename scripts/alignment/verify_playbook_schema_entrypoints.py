@@ -59,12 +59,17 @@ K8S_FILES = (
     "29-dashboard-task-dlq-receipt-v1.sql",
     "30-alert-response-external-executor-v1.sql",
     "31-alert-response-dlq-receipt-v1.sql",
+    "32-alert-response-reconciliation-compensation-v1.sql",
 )
 PLAYBOOK_TABLES = (
     "alert_response_actions",
     "alert_response_outbox",
     "alert_response_execution_receipts",
     "alert_response_dlq_receipts",
+    "alert_response_execution_authority_rechecks",
+    "alert_response_compensation_attempts",
+    "alert_response_compensation_receipts",
+    "alert_response_authority_check_history",
     "alert_response_approvals",
     "alert_response_control_requests",
     "alert_playbook_executions",
@@ -321,6 +326,7 @@ def main() -> int:
             "202608090945_dashboard_task_dlq_receipt_v1.sql",
             "202608091130_alert_response_external_executor_v1.sql",
             "202608091230_alert_response_dlq_receipt_v1.sql",
+            "202608091500_alert_response_reconciliation_compensation_v1.sql",
         )
     )
 
@@ -401,10 +407,10 @@ def main() -> int:
             SENTINEL_DATABASE,
             sql=(
                 "SELECT version FROM alignment_schema_migrations "
-                "WHERE version IN ('202608021000','202608021030','202608031500','202608031540','202608031550','202608031600','202608031610','202608031620','202608041100','202608041400','202608041500','202608041600','202608041700','202608041800','202608041900','202608041930','202608082100','202608090945','202608091130','202608091230') ORDER BY version"
+                "WHERE version IN ('202608021000','202608021030','202608031500','202608031540','202608031550','202608031600','202608031610','202608031620','202608041100','202608041400','202608041500','202608041600','202608041700','202608041800','202608041900','202608041930','202608082100','202608090945','202608091130','202608091230','202608091500') ORDER BY version"
             ),
         ).decode().splitlines()
-        if migration_versions != ["202608021000", "202608021030", "202608031500", "202608031540", "202608031550", "202608031600", "202608031610", "202608031620", "202608041100", "202608041400", "202608041500", "202608041600", "202608041700", "202608041800", "202608041900", "202608041930", "202608082100", "202608090945", "202608091130", "202608091230"]:
+        if migration_versions != ["202608021000", "202608021030", "202608031500", "202608031540", "202608031550", "202608031600", "202608031610", "202608031620", "202608041100", "202608041400", "202608041500", "202608041600", "202608041700", "202608041800", "202608041900", "202608041930", "202608082100", "202608090945", "202608091130", "202608091230", "202608091500"]:
             raise RuntimeError("versioned transaction migrations were not registered")
         print(
             json.dumps(

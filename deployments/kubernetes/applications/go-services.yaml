@@ -319,6 +319,18 @@ spec:
         - {name: ALERT_RESPONSE_EXECUTOR_LOOKUP_URL, value: ""}
         - {name: ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
         - {name: ALERT_RESPONSE_EXECUTOR_TOKEN, valueFrom: {secretKeyRef: {name: traffic-credentials, key: ALERT_RESPONSE_EXECUTOR_TOKEN, optional: true}}}
+        - {name: ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS, value: "8"}
+        - {name: ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS, value: "15"}
+        - {name: ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED, value: "false"}
+        - {name: ALERT_RESPONSE_COMPENSATION_URL, value: ""}
+        - {name: ALERT_RESPONSE_COMPENSATION_LOOKUP_URL, value: ""}
+        - {name: ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS, value: "8"}
+        - {name: ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS, value: "5"}
+        - {name: ALERT_RESPONSE_RECOVERY_LEASE_SECONDS, value: "45"}
+        - {name: ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS, value: "30"}
+        - {name: ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS, value: "15"}
+        - {name: ALERT_RESPONSE_RECOVERY_BATCH_SIZE, value: "25"}
         - {name: AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED, value: "false"}
         - {name: TOPIC_SNAPSHOT_V1_ENABLED, value: "true"}
         - {name: TOPIC_EXECUTOR_V2_ENABLED, value: "true"}

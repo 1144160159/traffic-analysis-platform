@@ -352,9 +352,9 @@ func TestCompensationRejectsReceiptWithoutExternalEffect(t *testing.T) {
 	expectNoControlRequest(mock)
 	expectLockedResponseAction(mock, "operator-a", "completed", "approved", false, 3)
 	expectNoControlRequest(mock)
-	mock.ExpectQuery("SELECT state,external_effect").
-		WillReturnRows(sqlmock.NewRows([]string{"state", "external_effect"}).
-			AddRow("completed", false))
+	mock.ExpectQuery("SELECT state,external_effect,provider,provider_receipt_id,effect_ids::text,trace_id").
+		WillReturnRows(sqlmock.NewRows([]string{"state", "external_effect", "provider", "provider_receipt_id", "effect_ids", "trace_id"}).
+			AddRow("completed", false, "ephemeral-firewall", "receipt-1", `["rule-1"]`, "trace-1"))
 	mock.ExpectRollback()
 
 	handler := NewHandler(nil, nil, zap.NewNop())

@@ -389,6 +389,17 @@ func main() {
 	feedbackTransactionalOutboxEnabled := getBoolEnv("ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED", true) && !readOnlyVerificationMode
 	apiHandler.SetFeedbackTransactionalOutboxEnabled(feedbackTransactionalOutboxEnabled)
 	apiHandler.SetResponseActionProducer(responseActionProducer)
+	responseUnknownReconciliationEnabled := getBoolEnv("ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED", false) && !readOnlyVerificationMode
+	responseCompensationEnabled := getBoolEnv("ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED", false) && !readOnlyVerificationMode
+	responseCompensationMaxAttempts := getIntEnv("ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS", 8)
+	if (responseUnknownReconciliationEnabled || responseCompensationEnabled) && !cfg.Kafka.ResponseActionEnabled {
+		logger.Fatal("Alert response recovery requires ALERT_RESPONSE_EXECUTION_V1_ENABLED")
+	}
+	if responseCompensationEnabled && (responseCompensationMaxAttempts < 1 || responseCompensationMaxAttempts > 100) {
+		logger.Fatal("ALERT_RESPONSE_COMPENSATION_MAX_ATTEMPTS must be between 1 and 100")
+	}
+	apiHandler.SetResponseCompensationEnabled(responseCompensationEnabled)
+	apiHandler.SetResponseCompensationMaxAttempts(responseCompensationMaxAttempts)
 	apiHandler.SetSavedViewEventProducer(savedViewEventProducer)
 	alertReportFeatureEnabled := getBoolEnv("ALERT_REPORT_JOBS_V1_ENABLED", true) && !readOnlyVerificationMode
 	campaignLinkFeatureEnabled := getBoolEnv("CAMPAIGN_ALERT_LINKS_V1_ENABLED", true)
@@ -415,6 +426,10 @@ func main() {
 		}
 	}
 	if cfg.Kafka.ResponseActionEnabled && !readOnlyVerificationMode {
+		responseExternalExecutorEnabled := getBoolEnv("ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED", false)
+		if (responseUnknownReconciliationEnabled || responseCompensationEnabled) && !responseExternalExecutorEnabled {
+			logger.Fatal("Alert response recovery requires the external executor and authority gate")
+		}
 		responseProjection, projectionErr := consumer.NewPostgresAlertResponseProjection(db)
 		if projectionErr != nil {
 			logger.Fatal("Failed to initialize alert response execution projection", zap.Error(projectionErr))
@@ -425,26 +440,78 @@ func main() {
 		if projectionErr != nil {
 			logger.Fatal("Alert response execution projection schema is unavailable", zap.Error(projectionErr))
 		}
-		if getBoolEnv("ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED", false) {
+		var responseExecutor *consumer.HTTPAlertResponseExecutor
+		if responseExternalExecutorEnabled {
 			executorURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_EXECUTOR_URL", ""))
 			lookupURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_EXECUTOR_LOOKUP_URL", ""))
 			if executorURL == "" || lookupURL == "" {
 				logger.Fatal("Alert response external execution requires executor and authority lookup URLs")
 			}
-			executor, executorErr := consumer.NewHTTPAlertResponseExecutor(
+			responseExecutor, projectionErr = consumer.NewHTTPAlertResponseExecutor(
 				executorURL, getEnv("ALERT_RESPONSE_EXECUTOR_TOKEN", ""),
 				time.Duration(getIntEnv("ALERT_RESPONSE_EXECUTOR_TIMEOUT_SECONDS", 30))*time.Second,
 			)
-			if executorErr != nil {
-				logger.Fatal("Invalid alert response executor configuration", zap.Error(executorErr))
+			if projectionErr != nil {
+				logger.Fatal("Invalid alert response executor configuration", zap.Error(projectionErr))
 			}
-			if executorErr = executor.ConfigureAuthorityLookup(lookupURL); executorErr != nil {
-				logger.Fatal("Invalid alert response authority lookup configuration", zap.Error(executorErr))
+			if projectionErr = responseExecutor.ConfigureAuthorityLookup(lookupURL); projectionErr != nil {
+				logger.Fatal("Invalid alert response authority lookup configuration", zap.Error(projectionErr))
 			}
-			if executorErr = responseProjection.ConfigureExecutor(executor); executorErr != nil {
-				logger.Fatal("Failed to enable alert response external executor", zap.Error(executorErr))
+			if responseCompensationEnabled {
+				compensationURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_COMPENSATION_URL", ""))
+				compensationLookupURL := strings.TrimSpace(getEnv("ALERT_RESPONSE_COMPENSATION_LOOKUP_URL", ""))
+				if compensationURL == "" || compensationLookupURL == "" {
+					logger.Fatal("Alert response compensation requires executor and authority lookup URLs")
+				}
+				if projectionErr = responseExecutor.ConfigureCompensation(compensationURL, compensationLookupURL); projectionErr != nil {
+					logger.Fatal("Invalid alert response compensation configuration", zap.Error(projectionErr))
+				}
+			}
+			if projectionErr = responseProjection.ConfigureExecutor(responseExecutor); projectionErr != nil {
+				logger.Fatal("Failed to enable alert response external executor", zap.Error(projectionErr))
 			}
 			logger.Info("Alert response external executor enabled with mandatory authority lookup")
+		}
+		if responseUnknownReconciliationEnabled {
+			projectionErr = responseProjection.ConfigureUnknownEffectReconciliation(
+				getIntEnv("ALERT_RESPONSE_UNKNOWN_EFFECT_MAX_ATTEMPTS", 8),
+				time.Duration(getIntEnv("ALERT_RESPONSE_UNKNOWN_EFFECT_INITIAL_DELAY_SECONDS", 15))*time.Second,
+			)
+			if projectionErr != nil {
+				logger.Fatal("Invalid alert response unknown-effect reconciliation configuration", zap.Error(projectionErr))
+			}
+		}
+		if responseUnknownReconciliationEnabled || responseCompensationEnabled {
+			recoveryWorker, recoveryErr := consumer.NewAlertResponseRecoveryWorker(
+				db, responseExecutor, responseExecutor, responseExecutor,
+				consumer.AlertResponseRecoveryConfig{
+					ExecutionEnabled: responseUnknownReconciliationEnabled, CompensationEnabled: responseCompensationEnabled,
+					Interval:       time.Duration(getIntEnv("ALERT_RESPONSE_RECOVERY_INTERVAL_SECONDS", 5)) * time.Second,
+					Lease:          time.Duration(getIntEnv("ALERT_RESPONSE_RECOVERY_LEASE_SECONDS", 45)) * time.Second,
+					RequestTimeout: time.Duration(getIntEnv("ALERT_RESPONSE_RECOVERY_REQUEST_TIMEOUT_SECONDS", 30)) * time.Second,
+					RetryBase:      time.Duration(getIntEnv("ALERT_RESPONSE_RECOVERY_RETRY_BASE_SECONDS", 15)) * time.Second,
+					BatchSize:      getIntEnv("ALERT_RESPONSE_RECOVERY_BATCH_SIZE", 25),
+				}, logger,
+			)
+			if recoveryErr != nil {
+				logger.Fatal("Failed to initialize alert response recovery worker", zap.Error(recoveryErr))
+			}
+			verifyCtx, cancelVerify = context.WithTimeout(context.Background(), 10*time.Second)
+			recoveryErr = recoveryWorker.VerifySchema(verifyCtx)
+			cancelVerify()
+			if recoveryErr != nil {
+				logger.Fatal("Alert response recovery schema is unavailable", zap.Error(recoveryErr))
+			}
+			recoveryCtx, cancelRecovery := context.WithCancel(context.Background())
+			defer cancelRecovery()
+			go func() {
+				if err := recoveryWorker.Start(recoveryCtx); err != nil && err != context.Canceled {
+					logger.Error("Alert response recovery worker stopped", zap.Error(err))
+				}
+			}()
+			logger.Info("Alert response recovery worker started",
+				zap.Bool("execution_authority_recheck", responseUnknownReconciliationEnabled),
+				zap.Bool("external_compensation", responseCompensationEnabled))
 		}
 		responseKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
 			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.ResponseActionTopic,

@@ -30,22 +30,24 @@ import (
 
 // Handler Alert API处理器
 type Handler struct {
-	alertService        *service.AlertService
-	feedbackHandler     *FeedbackHandler
-	auditLogger         *audit.AlertAuditLogger
-	actionAudit         *AlertActionAuditWriter
-	campaignLookup      AlertCampaignLookup
-	reportBuilder       AlertReportBuilder
-	reportObjects       AlertReportObjectStore
-	evidenceObjects     alertEvidenceObjectStore
-	alertReportEnabled  bool
-	campaignLinkEnabled bool
-	campaignAggregateV2 bool
-	responseProducer    *kafka.Producer
-	savedViewProducer   savedViewEventProducer
-	consumerHealth      func(context.Context) error
-	readinessChecks     []namedReadinessCheck
-	logger              *zap.Logger
+	alertService                    *service.AlertService
+	feedbackHandler                 *FeedbackHandler
+	auditLogger                     *audit.AlertAuditLogger
+	actionAudit                     *AlertActionAuditWriter
+	campaignLookup                  AlertCampaignLookup
+	reportBuilder                   AlertReportBuilder
+	reportObjects                   AlertReportObjectStore
+	evidenceObjects                 alertEvidenceObjectStore
+	alertReportEnabled              bool
+	campaignLinkEnabled             bool
+	campaignAggregateV2             bool
+	responseCompensationEnabled     bool
+	responseCompensationMaxAttempts int
+	responseProducer                *kafka.Producer
+	savedViewProducer               savedViewEventProducer
+	consumerHealth                  func(context.Context) error
+	readinessChecks                 []namedReadinessCheck
+	logger                          *zap.Logger
 }
 
 type namedReadinessCheck struct {
@@ -123,6 +125,20 @@ func (h *Handler) SetActionAuditWriter(writer *AlertActionAuditWriter) {
 // only hands the request to the downstream approval/automation workflow.
 func (h *Handler) SetResponseActionProducer(producer *kafka.Producer) {
 	h.responseProducer = producer
+}
+
+// SetResponseCompensationEnabled controls only creation of the durable
+// compensation queue. Disabled mode preserves the truthful blocked state and
+// never performs an external inverse operation in the request handler.
+func (h *Handler) SetResponseCompensationEnabled(enabled bool) {
+	h.responseCompensationEnabled = enabled
+}
+
+func (h *Handler) SetResponseCompensationMaxAttempts(maxAttempts int) {
+	if maxAttempts < 1 || maxAttempts > 100 {
+		maxAttempts = 8
+	}
+	h.responseCompensationMaxAttempts = maxAttempts
 }
 
 // SetSavedViewEventProducer enables post-commit delivery of saved-view domain
