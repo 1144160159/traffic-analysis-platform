@@ -45,13 +45,13 @@ export async function submitAlertTriageAction(input: AlertTriageActionInput): Pr
     target: input.target,
     reason: input.reason,
     dry_run: dryRun,
-    ...(input.kind === 'response-action' ? { expected_revision: expectedRevision } : {}),
+    ...(input.kind === 'response-action' || input.kind === 'saved-view' ? { expected_revision: expectedRevision } : {}),
     detail: input.detail,
   };
   const requestConfig = input.kind === 'response-action'
     ? { headers: { 'Idempotency-Key': input.idempotencyKey ?? responseActionIdempotencyKey(input, dryRun, expectedRevision) } }
     : input.kind === 'saved-view'
-      ? { headers: { 'Idempotency-Key': input.idempotencyKey ?? savedViewIdempotencyKey(input) } }
+      ? { headers: { 'Idempotency-Key': input.idempotencyKey ?? savedViewIdempotencyKey(input, expectedRevision) } }
       : undefined;
   const response = await api.post<{ data?: AlertTriageActionResult } & Partial<AlertTriageActionResult>>(endpoint, requestBody, requestConfig);
   const payload = response.data.data ?? response.data;
@@ -123,13 +123,13 @@ function responseActionIdempotencyKey(input: AlertTriageActionInput, dryRun: boo
   return key;
 }
 
-function savedViewIdempotencyKey(input: AlertTriageActionInput): string {
+function savedViewIdempotencyKey(input: AlertTriageActionInput, expectedRevision: number): string {
   const now = Date.now();
   for (const [fingerprint, entry] of responseIdempotencyKeys) {
     if (entry.expiresAt <= now) responseIdempotencyKeys.delete(fingerprint);
   }
   const fingerprint = `saved-view:${JSON.stringify([
-    input.actionId, input.target, input.reason, input.detail ?? {},
+    input.actionId, input.target, input.reason, expectedRevision, input.detail ?? {},
   ])}`;
   const existing = responseIdempotencyKeys.get(fingerprint);
   if (existing) return existing.key;

@@ -7,6 +7,7 @@
 ## 2. 权威状态与事件
 
 - `alert_saved_views` 是当前业务状态，`revision` 每次同名 upsert 单调增加。
+- 新客户端创建时发送 `expected_revision=0`，更新时发送最近一次读取的 revision；陈旧 revision 在任何业务、history、outbox、审计或幂等收据写入前返回冲突。为兼容升级中的旧客户端，暂时允许省略该字段，并保持旧请求摘要算法不变。
 - `alert_saved_view_history` 按 `(tenant_id, view_id, revision)` 唯一，保存不可变变更事实。
 - `audit_logs` 的最小审计索引与上述两者、outbox、`alert_saved_view_requests` 在同一 serializable 事务中写入。
 - `alert_saved_view_requests` 用 `(tenant_id, idempotency_key)` 防止重复副作用；相同键不同 payload 返回冲突。
@@ -22,8 +23,8 @@ worker 只领取 `pending/processing`、已到重试时间且租约为空或过�
 ## 4. 扩展、灰度与观测
 
 1. 先执行 `202608031100_alert_saved_view_transaction_v2.sql`，核对四个 schema 入口一致。
-2. 创建主题并应用生成的 literal ACL；确认 `traffic-alert-service` 仅获得该主题的 `Describe/Write`。
-3. 发布候选镜像但先只开放内部 tenant，持续观测：
+2. 保持 `ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED=false`，创建主题并应用生成的 literal ACL；确认 `traffic-alert-service` 仅获得该主题的 `Describe/Write`。该开关控制 dispatcher，关闭时已提交 outbox 保持 pending，不丢弃、不伪装已发布。
+3. 发布候选镜像但先只开放内部 tenant；完成 pending 基线后按审批打开 dispatcher，持续观测：
 
 ```sql
 SELECT status,count(*) AS rows,min(occurred_at) AS oldest,max(publish_attempts) AS max_attempts
@@ -41,6 +42,6 @@ ORDER BY occurred_at LIMIT 100;
 
 ## 5. 停止与回滚
 
-出现跨租户、业务/history/audit/outbox 任一缺失、pending 持续增长、processing 租约不回收、dead 新增或 Kafka/schema 不兼容时立即停止扩大。回滚应用镜像不会删除新表或字段；旧路径不得恢复为请求内直接发 Kafka。保留 outbox，由兼容 worker 恢复发布。任何人工重放必须保留原 `event_id`，禁止复制成新业务事件。
+出现跨租户、revision 冲突仍发生写入、业务/history/audit/outbox 任一缺失、pending 持续增长、processing 租约不回收、dead 新增或 Kafka/schema 不兼容时立即将 `ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED=false` 并停止扩大。回滚应用镜像不会删除新表或字段；旧路径不得恢复为请求内直接发 Kafka。保留 outbox，由兼容 worker 恢复发布。任何人工重放必须保留原 `event_id`，禁止复制成新业务事件。
 
 仓库侧合同和故障边界测试通过后，本项仅可置为 `IMPLEMENTING`。生产 migration、候选 Kafka、真实消费者幂等、故障、性能、回滚和 T+0/T+1/T+3/T+7 观察证据齐全后，才能申请后续门禁。

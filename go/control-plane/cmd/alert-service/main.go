@@ -343,6 +343,7 @@ func main() {
 	var feedbackProducer *kafka.Producer
 	var responseActionProducer *kafka.Producer
 	var savedViewEventProducer *kafka.Producer
+	savedViewTransactionEnabled := cfg.Kafka.SavedViewTransactionEnabled && !readOnlyVerificationMode
 	if !readOnlyVerificationMode {
 		feedbackProducerCfg := kafka.ProducerConfig{
 			Brokers:      cfg.Kafka.Brokers,
@@ -369,15 +370,17 @@ func main() {
 		} else {
 			defer responseActionProducer.Close()
 		}
-		savedViewEventProducer, err = kafka.NewProducer(kafka.ProducerConfig{
-			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.SavedViewEventTopic, BatchSize: 100,
-			RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
-		}, logger)
-		if err != nil {
-			logger.Warn("Failed to create saved-view Kafka producer; committed outbox events will remain pending", zap.Error(err))
-			savedViewEventProducer = nil
-		} else {
-			defer savedViewEventProducer.Close()
+		if savedViewTransactionEnabled {
+			savedViewEventProducer, err = kafka.NewProducer(kafka.ProducerConfig{
+				Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.SavedViewEventTopic, BatchSize: 100,
+				RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
+			}, logger)
+			if err != nil {
+				logger.Warn("Failed to create saved-view Kafka producer; committed outbox events will remain pending", zap.Error(err))
+				savedViewEventProducer = nil
+			} else {
+				defer savedViewEventProducer.Close()
+			}
 		}
 	}
 
@@ -418,12 +421,14 @@ func main() {
 	} else if !cfg.Kafka.ResponseActionEnabled {
 		logger.Warn("Response-action outbox worker is disabled; durable requests remain pending")
 	}
-	if savedViewEventProducer != nil {
+	if savedViewTransactionEnabled && savedViewEventProducer != nil {
 		if err := apiHandler.StartSavedViewOutboxWorker(ctx, 2*time.Second); err != nil {
 			logger.Warn("Failed to start saved-view outbox worker", zap.Error(err))
 		} else {
 			logger.Info("Saved-view outbox worker started", zap.String("topic", cfg.Kafka.SavedViewEventTopic))
 		}
+	} else if !savedViewTransactionEnabled {
+		logger.Warn("Saved-view transaction dispatcher is disabled; durable events remain pending")
 	}
 	if cfg.Kafka.ResponseActionEnabled && !readOnlyVerificationMode {
 		responseExternalExecutorEnabled := getBoolEnv("ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED", false)

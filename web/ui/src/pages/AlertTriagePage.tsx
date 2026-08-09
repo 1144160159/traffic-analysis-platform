@@ -212,6 +212,9 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
         target: action.targetValue,
         reason: actionReason,
         dryRun: action.kind === 'response-action',
+        expectedRevision: action.kind === 'saved-view'
+          ? savedViews.find((saved) => saved.name === action.targetValue)?.revision ?? 0
+          : undefined,
         detail: { filter_notice: filterNotice, view, filters: appliedFilters, time_window: appliedTimeWindow },
       });
     },

@@ -1973,8 +1973,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 536,
-          "mutation_id": "sql-7e251224fc89d42b",
+          "line": 575,
+          "mutation_id": "sql-2d63e5491a211a7b",
           "resolved_tables": [
             "alert_saved_views"
           ],
@@ -1985,8 +1985,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 555,
-          "mutation_id": "sql-79f17a6c458f966b",
+          "line": 600,
+          "mutation_id": "sql-3825e0f606d283d0",
           "resolved_tables": [
             "alert_saved_view_history"
           ],
@@ -1997,8 +1997,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 562,
-          "mutation_id": "sql-3161720943505e54",
+          "line": 607,
+          "mutation_id": "sql-4c17b3e5aae9df32",
           "resolved_tables": [
             "alert_saved_view_outbox"
           ],
@@ -2009,8 +2009,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 573,
-          "mutation_id": "sql-d14a26bc27c5cfdd",
+          "line": 618,
+          "mutation_id": "sql-82fb65d4c73e15af",
           "resolved_tables": [
             "alert_saved_view_requests"
           ],

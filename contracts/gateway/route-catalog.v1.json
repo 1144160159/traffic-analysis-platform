@@ -8,7 +8,7 @@
     "route_source_sha256": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79",
     "rendered_apisix_sha256": "bc1729d4bacca6ac81719f23dc22d1ce428a9d0ca7dfd895de7b2a7de70753fe",
     "openapi_source": "contracts/openapi/alignment-v1.openapi.json",
-    "openapi_sha256": "8028e879fed4f0306938da8a08c88b26dcfb3dea13e4d00ffb2172ee67d88adb"
+    "openapi_sha256": "457f6fad947420dc36dd7b65f578e1751f9f97f69871cbf39b879974f6e2e404"
   },
   "trust_zones": {
     "public_web_ui": "static application shell only; no business API authorization",
@@ -4775,5 +4775,5 @@
       "admin_api_external_exposure"
     ]
   },
-  "catalog_sha256": "a012c4e3388c0579da2d0bc0f08cf3738efb536ab022d90c7123989cb084b073"
+  "catalog_sha256": "cee274ad02ea55d2b2bba3bd214ca72f748196f21c5895ac24eee9dc4a54ae22"
 }

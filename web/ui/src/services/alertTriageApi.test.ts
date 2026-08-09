@@ -66,6 +66,7 @@ describe('alert response action contract', () => {
     expect(post).toHaveBeenCalledWith('/v1/alerts/views', expect.objectContaining({
       action_id: 'alert-view-save',
       target: 'critical-alerts',
+      expected_revision: 0,
     }), {
       headers: { 'Idempotency-Key': 'alert-saved-view-key-0001' },
     });

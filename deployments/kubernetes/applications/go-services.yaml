@@ -217,6 +217,7 @@ spec:
         - {name: KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC, value: "playbook.execution.events.v2"}
         - {name: KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP, value: "alert-service-playbook-execution-projection-v2"}
         - {name: KAFKA_SAVED_VIEW_EVENT_TOPIC, value: "alert.saved-view.events.v1"}
+        - {name: ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED, value: "false"}
         - {name: KAFKA_WHITELIST_EVENT_TOPIC, value: "whitelist.events.v2"}
         - {name: KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC, value: "notification.governance.events.v1"}
         - {name: KAFKA_THREAT_INTEL_EVENT_TOPIC, value: "threat.intel.v1"}

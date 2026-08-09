@@ -112,7 +112,7 @@
     "contracts/events/kafka-acl-catalog.v1.json": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f",
     "contracts/events/kafka-topic-catalog.v1.json": "593f1baec4682266c8a6c3d172360208ec6e00b0ea559b15c4a9e36e2e51cbf4",
     "contracts/flink/job-registry.v1.json": "e1cfdb658c0cad53aeaa0aec55151fdc928169bb3bba8ac84a7db80009797c3c",
-    "deployments/kubernetes/applications/go-services.yaml": "3fa640d7d82cc900038803daad6a2fe1d8712e2a54d3685ac29d1988708ea7e7",
+    "deployments/kubernetes/applications/go-services.yaml": "4252ce1ecf4a6875555cd4343a2511c0c7a5a109993fd96e2d7153394420c8c5",
     "deployments/kubernetes/applications/probe-agent.yaml": "b7969b9001297d381f09a09c9a3b71bd8bd3ccfc8bfca0a599f9a04afff865f3",
     "deployments/kubernetes/applications/web-ui.yaml": "8abbdbbef2621b300541a6cad56678cfe4115350c5c071304a9bc19f353a981f",
     "deployments/kubernetes/configmaps/apisix-routes.yaml": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79",
@@ -136,13 +136,13 @@
     "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml": "d38d6008931e4442e7de6f28fb08ac3a6a59a28629bf39d190242743ed17922c",
     "deployments/kubernetes/init-jobs/06-nebula-workbench-seed.yaml": "74efd6ebe9c7689b95f6fd6a864f67982cf0d7ec059f763c5b82ce4e2c3e76b5",
     "deployments/kubernetes/init-jobs/07-fusion-acceptance-fixture.yaml": "c948d74059758ffab63249324f2a7638488fd37e3ec82a8e91996e7cc72b47a0",
-    "go/control-plane/deployments/kubernetes/alert-service.yaml": "34bd898b356dc8fb6f9fc2532a1235dbfe204e27bc8683a2035d440a112ebd05",
+    "go/control-plane/deployments/kubernetes/alert-service.yaml": "293ced573566148dcb55a03d4959b966ba9e22cde7e9c1d30705614a7be6ba21",
     "go/control-plane/deployments/kubernetes/asset-service.yaml": "1f0ed4273cb4b6f16faeb52581cb6acef1d61091ab899c8dbadb5ae6291122a7",
     "go/control-plane/deployments/kubernetes/forensics-service.yaml": "2f51466bb01a7b306c0b624ef27426549015226eec663b563db899ee3181962d",
     "go/control-plane/deployments/kubernetes/ingest-gateway.yaml": "08f17aae3b4a0e6e10a2a25b933fd8fe399b5a60e22f3814549522044cebcf61",
     "go/control-plane/deployments/kubernetes/rule-manager.yaml": "4b050763d1c785a71c80e8825f390caa0bad6f5320b75cb154b70bceb9174261",
     "go/control-plane/internal/alert/arkime/link_generator.go": "9ba0ad8d98e6baf5b8fda9022ab6cd25a7d476ff9f19adf1c1788303fb03dc82",
-    "go/control-plane/internal/alert/config/config.go": "0a324efa3c1ee2a0cad19eb61d7cc718fbac08d22cd3dae7168804dd3c1a68be",
+    "go/control-plane/internal/alert/config/config.go": "dce22297f27b7bf9aff73c9f257f068bdd869cedc7c4ce198140915ed5a3deee",
     "go/control-plane/internal/alert/notification/notification_service.go": "483cf30cb08478a3b44045abc0efc7ad8688930433550f6229c8d44eb4c98e29",
     "go/control-plane/internal/asset/config/config.go": "ebab4be9914de13654e3efd514a0753fcee72236d9ee03a6ad1cf0f0cb890079",
     "go/control-plane/internal/auth/config/config.go": "07e415bd74eef84dd2dbf2d2e10de9b27b756c12255411bb77debaf21c97176d",
@@ -266,6 +266,10 @@
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
     ],
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:API_LISTEN_ADDR": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:API_LISTEN_ADDR:deployments/kubernetes/applications/go-services.yaml",
@@ -894,10 +898,10 @@
   },
   "conflicting_runtime_bindings": [],
   "counts": {
-    "entries": 1935,
-    "go_env_consumers": 926,
+    "entries": 1938,
+    "go_env_consumers": 927,
     "flink_properties": 261,
-    "kubernetes_env_bindings": 748,
+    "kubernetes_env_bindings": 750,
     "secret_entries": 186,
     "source_files": 76
   },
@@ -9374,8 +9378,8 @@
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:104:DSN:CLICKHOUSE_DSN",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:104:DSN:CLICKHOUSE_DSN",
+      "id": "go:go/control-plane/internal/alert/config/config.go:105:DSN:CLICKHOUSE_DSN",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:105:DSN:CLICKHOUSE_DSN",
       "key": "CLICKHOUSE_DSN",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9400,15 +9404,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 104,
+          "line": 105,
           "field": "DSN"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:105:Hosts:CLICKHOUSE_HOSTS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:105:Hosts:CLICKHOUSE_HOSTS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:106:Hosts:CLICKHOUSE_HOSTS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:106:Hosts:CLICKHOUSE_HOSTS",
       "key": "CLICKHOUSE_HOSTS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9433,15 +9437,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 105,
+          "line": 106,
           "field": "Hosts"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:106:Database:CLICKHOUSE_DATABASE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:106:Database:CLICKHOUSE_DATABASE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:107:Database:CLICKHOUSE_DATABASE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:107:Database:CLICKHOUSE_DATABASE",
       "key": "CLICKHOUSE_DATABASE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9466,15 +9470,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 106,
+          "line": 107,
           "field": "Database"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:107:Username:CLICKHOUSE_USERNAME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:107:Username:CLICKHOUSE_USERNAME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:108:Username:CLICKHOUSE_USERNAME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:108:Username:CLICKHOUSE_USERNAME",
       "key": "CLICKHOUSE_USERNAME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9499,15 +9503,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 107,
+          "line": 108,
           "field": "Username"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:108:Password:CLICKHOUSE_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:108:Password:CLICKHOUSE_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:109:Password:CLICKHOUSE_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:109:Password:CLICKHOUSE_PASSWORD",
       "key": "CLICKHOUSE_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9532,15 +9536,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 108,
+          "line": 109,
           "field": "Password"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:109:MaxOpenConns:CLICKHOUSE_MAX_OPEN_CONNS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:109:MaxOpenConns:CLICKHOUSE_MAX_OPEN_CONNS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:110:MaxOpenConns:CLICKHOUSE_MAX_OPEN_CONNS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:110:MaxOpenConns:CLICKHOUSE_MAX_OPEN_CONNS",
       "key": "CLICKHOUSE_MAX_OPEN_CONNS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9565,15 +9569,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 109,
+          "line": 110,
           "field": "MaxOpenConns"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:110:MaxIdleConns:CLICKHOUSE_MAX_IDLE_CONNS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:110:MaxIdleConns:CLICKHOUSE_MAX_IDLE_CONNS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:111:MaxIdleConns:CLICKHOUSE_MAX_IDLE_CONNS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:111:MaxIdleConns:CLICKHOUSE_MAX_IDLE_CONNS",
       "key": "CLICKHOUSE_MAX_IDLE_CONNS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9598,15 +9602,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 110,
+          "line": 111,
           "field": "MaxIdleConns"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:258:Addresses:OPENSEARCH_ADDRS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:258:Addresses:OPENSEARCH_ADDRS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:259:Addresses:OPENSEARCH_ADDRS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:259:Addresses:OPENSEARCH_ADDRS",
       "key": "OPENSEARCH_ADDRS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9631,15 +9635,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 258,
+          "line": 259,
           "field": "Addresses"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:259:Username:OPENSEARCH_USERNAME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:259:Username:OPENSEARCH_USERNAME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:260:Username:OPENSEARCH_USERNAME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:260:Username:OPENSEARCH_USERNAME",
       "key": "OPENSEARCH_USERNAME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9664,15 +9668,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 259,
+          "line": 260,
           "field": "Username"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:260:Password:OPENSEARCH_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:260:Password:OPENSEARCH_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:261:Password:OPENSEARCH_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:261:Password:OPENSEARCH_PASSWORD",
       "key": "OPENSEARCH_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9697,15 +9701,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 260,
+          "line": 261,
           "field": "Password"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:261:Index:OPENSEARCH_INDEX",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:261:Index:OPENSEARCH_INDEX",
+      "id": "go:go/control-plane/internal/alert/config/config.go:262:Index:OPENSEARCH_INDEX",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:262:Index:OPENSEARCH_INDEX",
       "key": "OPENSEARCH_INDEX",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9730,15 +9734,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 261,
+          "line": 262,
           "field": "Index"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:262:LegacyReadTarget:OPENSEARCH_LEGACY_READ_TARGET",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:262:LegacyReadTarget:OPENSEARCH_LEGACY_READ_TARGET",
+      "id": "go:go/control-plane/internal/alert/config/config.go:263:LegacyReadTarget:OPENSEARCH_LEGACY_READ_TARGET",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:263:LegacyReadTarget:OPENSEARCH_LEGACY_READ_TARGET",
       "key": "OPENSEARCH_LEGACY_READ_TARGET",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9763,15 +9767,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 262,
+          "line": 263,
           "field": "LegacyReadTarget"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:263:V2Enabled:OPENSEARCH_ALERTS_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:263:V2Enabled:OPENSEARCH_ALERTS_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:264:V2Enabled:OPENSEARCH_ALERTS_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:264:V2Enabled:OPENSEARCH_ALERTS_V2_ENABLED",
       "key": "OPENSEARCH_ALERTS_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9796,15 +9800,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 263,
+          "line": 264,
           "field": "V2Enabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:264:ReadAlias:OPENSEARCH_ALERTS_READ_ALIAS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:264:ReadAlias:OPENSEARCH_ALERTS_READ_ALIAS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:265:ReadAlias:OPENSEARCH_ALERTS_READ_ALIAS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:265:ReadAlias:OPENSEARCH_ALERTS_READ_ALIAS",
       "key": "OPENSEARCH_ALERTS_READ_ALIAS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9829,15 +9833,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 264,
+          "line": 265,
           "field": "ReadAlias"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:265:WriteAlias:OPENSEARCH_ALERTS_WRITE_ALIAS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:265:WriteAlias:OPENSEARCH_ALERTS_WRITE_ALIAS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:266:WriteAlias:OPENSEARCH_ALERTS_WRITE_ALIAS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:266:WriteAlias:OPENSEARCH_ALERTS_WRITE_ALIAS",
       "key": "OPENSEARCH_ALERTS_WRITE_ALIAS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9862,15 +9866,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 265,
+          "line": 266,
           "field": "WriteAlias"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:266:SearchCursorEnabled:OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:266:SearchCursorEnabled:OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:267:SearchCursorEnabled:OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:267:SearchCursorEnabled:OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
       "key": "OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9895,15 +9899,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 266,
+          "line": 267,
           "field": "SearchCursorEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:267:SearchShallowLimit:OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:267:SearchShallowLimit:OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:268:SearchShallowLimit:OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:268:SearchShallowLimit:OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
       "key": "OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9928,15 +9932,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 267,
+          "line": 268,
           "field": "SearchShallowLimit"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:268:SearchMaxPageSize:OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:268:SearchMaxPageSize:OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:269:SearchMaxPageSize:OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:269:SearchMaxPageSize:OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
       "key": "OPENSEARCH_SEARCH_MAX_PAGE_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9961,15 +9965,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 268,
+          "line": 269,
           "field": "SearchMaxPageSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:269:SearchQueryTimeout:OPENSEARCH_SEARCH_QUERY_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:269:SearchQueryTimeout:OPENSEARCH_SEARCH_QUERY_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:270:SearchQueryTimeout:OPENSEARCH_SEARCH_QUERY_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:270:SearchQueryTimeout:OPENSEARCH_SEARCH_QUERY_TIMEOUT",
       "key": "OPENSEARCH_SEARCH_QUERY_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -9994,15 +9998,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 269,
+          "line": 270,
           "field": "SearchQueryTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:270:SearchCursorTTL:OPENSEARCH_SEARCH_CURSOR_TTL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:270:SearchCursorTTL:OPENSEARCH_SEARCH_CURSOR_TTL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:271:SearchCursorTTL:OPENSEARCH_SEARCH_CURSOR_TTL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:271:SearchCursorTTL:OPENSEARCH_SEARCH_CURSOR_TTL",
       "key": "OPENSEARCH_SEARCH_CURSOR_TTL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10027,15 +10031,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 270,
+          "line": 271,
           "field": "SearchCursorTTL"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:271:SearchTrackTotal:OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:271:SearchTrackTotal:OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
+      "id": "go:go/control-plane/internal/alert/config/config.go:272:SearchTrackTotal:OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:272:SearchTrackTotal:OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
       "key": "OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10060,15 +10064,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 271,
+          "line": 272,
           "field": "SearchTrackTotal"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:278:ReconcileEnabled:OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:278:ReconcileEnabled:OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:279:ReconcileEnabled:OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:279:ReconcileEnabled:OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10093,15 +10097,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 278,
+          "line": 279,
           "field": "ReconcileEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:279:Interval:OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:279:Interval:OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:280:Interval:OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:280:Interval:OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10126,15 +10130,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 279,
+          "line": 280,
           "field": "Interval"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:280:Lease:OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:280:Lease:OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:281:Lease:OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:281:Lease:OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10159,15 +10163,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 280,
+          "line": 281,
           "field": "Lease"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:281:BatchSize:OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:281:BatchSize:OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:282:BatchSize:OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:282:BatchSize:OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10192,15 +10196,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 281,
+          "line": 282,
           "field": "BatchSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:282:MaxAttempts:OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:282:MaxAttempts:OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:283:MaxAttempts:OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:283:MaxAttempts:OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
       "key": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10225,15 +10229,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 282,
+          "line": 283,
           "field": "MaxAttempts"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:283:MaxDocuments:OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:283:MaxDocuments:OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:284:MaxDocuments:OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:284:MaxDocuments:OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
       "key": "OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10258,15 +10262,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 283,
+          "line": 284,
           "field": "MaxDocuments"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:284:StopErrorCount:OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:284:StopErrorCount:OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:285:StopErrorCount:OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:285:StopErrorCount:OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
       "key": "OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10291,15 +10295,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 284,
+          "line": 285,
           "field": "StopErrorCount"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:285:RepairPerSecond:OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:285:RepairPerSecond:OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
+      "id": "go:go/control-plane/internal/alert/config/config.go:286:RepairPerSecond:OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:286:RepairPerSecond:OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
       "key": "OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10324,15 +10328,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 285,
+          "line": 286,
           "field": "RepairPerSecond"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:314:Enabled:CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:314:Enabled:CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:315:Enabled:CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:315:Enabled:CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
       "key": "CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10357,15 +10361,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 314,
+          "line": 315,
           "field": "Enabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:315:Interval:CAMPAIGN_TARGET_PROJECTION_INTERVAL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:315:Interval:CAMPAIGN_TARGET_PROJECTION_INTERVAL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:316:Interval:CAMPAIGN_TARGET_PROJECTION_INTERVAL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:316:Interval:CAMPAIGN_TARGET_PROJECTION_INTERVAL",
       "key": "CAMPAIGN_TARGET_PROJECTION_INTERVAL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10390,15 +10394,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 315,
+          "line": 316,
           "field": "Interval"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:316:Lease:CAMPAIGN_TARGET_PROJECTION_LEASE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:316:Lease:CAMPAIGN_TARGET_PROJECTION_LEASE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:317:Lease:CAMPAIGN_TARGET_PROJECTION_LEASE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:317:Lease:CAMPAIGN_TARGET_PROJECTION_LEASE",
       "key": "CAMPAIGN_TARGET_PROJECTION_LEASE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10423,15 +10427,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 316,
+          "line": 317,
           "field": "Lease"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:317:MaxAttempts:CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:317:MaxAttempts:CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:318:MaxAttempts:CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:318:MaxAttempts:CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
       "key": "CAMPAIGN_TARGET_PROJECTION_MAX_ATTEMPTS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10456,15 +10460,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 317,
+          "line": 318,
           "field": "MaxAttempts"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:318:ClickHouseTable:CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:318:ClickHouseTable:CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:319:ClickHouseTable:CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:319:ClickHouseTable:CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
       "key": "CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10489,15 +10493,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 318,
+          "line": 319,
           "field": "ClickHouseTable"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:319:OpenSearchWriteAlias:CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:319:OpenSearchWriteAlias:CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:320:OpenSearchWriteAlias:CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:320:OpenSearchWriteAlias:CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
       "key": "CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10522,15 +10526,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 319,
+          "line": 320,
           "field": "OpenSearchWriteAlias"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:324:Addresses:CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:324:Addresses:CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
+      "id": "go:go/control-plane/internal/alert/config/config.go:325:Addresses:CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:325:Addresses:CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10555,15 +10559,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 324,
+          "line": 325,
           "field": "Addresses"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:325:Username:CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:325:Username:CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:326:Username:CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:326:Username:CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10588,15 +10592,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 325,
+          "line": 326,
           "field": "Username"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:326:Password:CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:326:Password:CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:327:Password:CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:327:Password:CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10621,15 +10625,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 326,
+          "line": 327,
           "field": "Password"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:327:Space:CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:327:Space:CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:328:Space:CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:328:Space:CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10654,15 +10658,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 327,
+          "line": 328,
           "field": "Space"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:328:Timeout:CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:328:Timeout:CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:329:Timeout:CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:329:Timeout:CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10687,15 +10691,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 328,
+          "line": 329,
           "field": "Timeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:329:IdleTime:CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:329:IdleTime:CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:330:IdleTime:CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:330:IdleTime:CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_IDLE_TIME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10720,15 +10724,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 329,
+          "line": 330,
           "field": "IdleTime"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:330:MaxPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:330:MaxPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:331:MaxPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:331:MaxPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_MAX_POOL_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10753,15 +10757,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 330,
+          "line": 331,
           "field": "MaxPoolSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:331:MinPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:331:MinPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:332:MinPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:332:MinPoolSize:CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
       "key": "CAMPAIGN_TARGET_PROJECTION_NEBULA_MIN_POOL_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10786,15 +10790,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 331,
+          "line": 332,
           "field": "MinPoolSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:336:TimeBucketMinutes:DEDUP_TIME_BUCKET",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:336:TimeBucketMinutes:DEDUP_TIME_BUCKET",
+      "id": "go:go/control-plane/internal/alert/config/config.go:337:TimeBucketMinutes:DEDUP_TIME_BUCKET",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:337:TimeBucketMinutes:DEDUP_TIME_BUCKET",
       "key": "DEDUP_TIME_BUCKET",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10819,15 +10823,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 336,
+          "line": 337,
           "field": "TimeBucketMinutes"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:337:TTL:DEDUP_TTL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:337:TTL:DEDUP_TTL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:338:TTL:DEDUP_TTL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:338:TTL:DEDUP_TTL",
       "key": "DEDUP_TTL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10852,15 +10856,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 337,
+          "line": 338,
           "field": "TTL"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:342:ListenAddr:API_LISTEN_ADDR",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:342:ListenAddr:API_LISTEN_ADDR",
+      "id": "go:go/control-plane/internal/alert/config/config.go:343:ListenAddr:API_LISTEN_ADDR",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:343:ListenAddr:API_LISTEN_ADDR",
       "key": "API_LISTEN_ADDR",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10885,15 +10889,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 342,
+          "line": 343,
           "field": "ListenAddr"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:343:ReadTimeout:API_READ_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:343:ReadTimeout:API_READ_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:344:ReadTimeout:API_READ_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:344:ReadTimeout:API_READ_TIMEOUT",
       "key": "API_READ_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10918,15 +10922,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 343,
+          "line": 344,
           "field": "ReadTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:344:WriteTimeout:API_WRITE_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:344:WriteTimeout:API_WRITE_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:345:WriteTimeout:API_WRITE_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:345:WriteTimeout:API_WRITE_TIMEOUT",
       "key": "API_WRITE_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10951,15 +10955,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 344,
+          "line": 345,
           "field": "WriteTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:345:IdleTimeout:API_IDLE_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:345:IdleTimeout:API_IDLE_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:346:IdleTimeout:API_IDLE_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:346:IdleTimeout:API_IDLE_TIMEOUT",
       "key": "API_IDLE_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -10984,15 +10988,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 345,
+          "line": 346,
           "field": "IdleTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:346:AllowedOrigins:API_ALLOWED_ORIGINS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:346:AllowedOrigins:API_ALLOWED_ORIGINS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:347:AllowedOrigins:API_ALLOWED_ORIGINS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:347:AllowedOrigins:API_ALLOWED_ORIGINS",
       "key": "API_ALLOWED_ORIGINS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11017,15 +11021,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 346,
+          "line": 347,
           "field": "AllowedOrigins"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:351:Enabled:AUTH_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:351:Enabled:AUTH_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:352:Enabled:AUTH_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:352:Enabled:AUTH_ENABLED",
       "key": "AUTH_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11050,15 +11054,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 351,
+          "line": 352,
           "field": "Enabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:352:PostgresDSN:AUTH_POSTGRES_DSN",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:352:PostgresDSN:AUTH_POSTGRES_DSN",
+      "id": "go:go/control-plane/internal/alert/config/config.go:353:PostgresDSN:AUTH_POSTGRES_DSN",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:353:PostgresDSN:AUTH_POSTGRES_DSN",
       "key": "AUTH_POSTGRES_DSN",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11083,15 +11087,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 352,
+          "line": 353,
           "field": "PostgresDSN"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:353:PostgresHost:AUTH_POSTGRES_HOST",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:353:PostgresHost:AUTH_POSTGRES_HOST",
+      "id": "go:go/control-plane/internal/alert/config/config.go:354:PostgresHost:AUTH_POSTGRES_HOST",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:354:PostgresHost:AUTH_POSTGRES_HOST",
       "key": "AUTH_POSTGRES_HOST",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11116,15 +11120,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 353,
+          "line": 354,
           "field": "PostgresHost"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:354:PostgresPort:AUTH_POSTGRES_PORT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:354:PostgresPort:AUTH_POSTGRES_PORT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:355:PostgresPort:AUTH_POSTGRES_PORT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:355:PostgresPort:AUTH_POSTGRES_PORT",
       "key": "AUTH_POSTGRES_PORT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11149,15 +11153,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 354,
+          "line": 355,
           "field": "PostgresPort"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:355:PostgresDatabase:AUTH_POSTGRES_DATABASE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:355:PostgresDatabase:AUTH_POSTGRES_DATABASE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:356:PostgresDatabase:AUTH_POSTGRES_DATABASE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:356:PostgresDatabase:AUTH_POSTGRES_DATABASE",
       "key": "AUTH_POSTGRES_DATABASE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11182,15 +11186,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 355,
+          "line": 356,
           "field": "PostgresDatabase"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:356:PostgresUsername:AUTH_POSTGRES_USERNAME",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:356:PostgresUsername:AUTH_POSTGRES_USERNAME",
+      "id": "go:go/control-plane/internal/alert/config/config.go:357:PostgresUsername:AUTH_POSTGRES_USERNAME",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:357:PostgresUsername:AUTH_POSTGRES_USERNAME",
       "key": "AUTH_POSTGRES_USERNAME",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11215,15 +11219,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 356,
+          "line": 357,
           "field": "PostgresUsername"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:357:PostgresPassword:AUTH_POSTGRES_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:357:PostgresPassword:AUTH_POSTGRES_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:358:PostgresPassword:AUTH_POSTGRES_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:358:PostgresPassword:AUTH_POSTGRES_PASSWORD",
       "key": "AUTH_POSTGRES_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11248,15 +11252,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 357,
+          "line": 358,
           "field": "PostgresPassword"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:358:PostgresSSLMode:AUTH_POSTGRES_SSL_MODE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:358:PostgresSSLMode:AUTH_POSTGRES_SSL_MODE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:359:PostgresSSLMode:AUTH_POSTGRES_SSL_MODE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:359:PostgresSSLMode:AUTH_POSTGRES_SSL_MODE",
       "key": "AUTH_POSTGRES_SSL_MODE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11281,15 +11285,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 358,
+          "line": 359,
           "field": "PostgresSSLMode"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:359:PostgresConnectTimeout:AUTH_POSTGRES_CONNECT_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:359:PostgresConnectTimeout:AUTH_POSTGRES_CONNECT_TIMEOUT",
+      "id": "go:go/control-plane/internal/alert/config/config.go:360:PostgresConnectTimeout:AUTH_POSTGRES_CONNECT_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:360:PostgresConnectTimeout:AUTH_POSTGRES_CONNECT_TIMEOUT",
       "key": "AUTH_POSTGRES_CONNECT_TIMEOUT",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11314,15 +11318,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 359,
+          "line": 360,
           "field": "PostgresConnectTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:360:JWTSecretKey:JWT_SECRET_KEY",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:360:JWTSecretKey:JWT_SECRET_KEY",
+      "id": "go:go/control-plane/internal/alert/config/config.go:361:JWTSecretKey:JWT_SECRET_KEY",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:361:JWTSecretKey:JWT_SECRET_KEY",
       "key": "JWT_SECRET_KEY",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -11347,7 +11351,7 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 360,
+          "line": 361,
           "field": "JWTSecretKey"
         }
       ],
@@ -12476,8 +12480,41 @@
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:76:WhitelistEventTopic:KAFKA_WHITELIST_EVENT_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:76:WhitelistEventTopic:KAFKA_WHITELIST_EVENT_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:76:SavedViewTransactionEnabled:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:76:SavedViewTransactionEnabled:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "key": "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "consumer": "go:alert",
+      "owner": "alert-domain-owner",
+      "type": "boolean",
+      "default": "false",
+      "default_present": true,
+      "secret_default_nonempty": false,
+      "required": false,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": true,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "go_env_tag",
+          "path": "go/control-plane/internal/alert/config/config.go",
+          "line": 76,
+          "field": "SavedViewTransactionEnabled"
+        }
+      ],
+      "separator": null
+    },
+    {
+      "id": "go:go/control-plane/internal/alert/config/config.go:77:WhitelistEventTopic:KAFKA_WHITELIST_EVENT_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:77:WhitelistEventTopic:KAFKA_WHITELIST_EVENT_TOPIC",
       "key": "KAFKA_WHITELIST_EVENT_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12502,15 +12539,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 76,
+          "line": 77,
           "field": "WhitelistEventTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:77:WhitelistEventPipelineEnabled:WHITELIST_EVENT_PIPELINE_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:77:WhitelistEventPipelineEnabled:WHITELIST_EVENT_PIPELINE_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:78:WhitelistEventPipelineEnabled:WHITELIST_EVENT_PIPELINE_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:78:WhitelistEventPipelineEnabled:WHITELIST_EVENT_PIPELINE_V2_ENABLED",
       "key": "WHITELIST_EVENT_PIPELINE_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12535,15 +12572,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 77,
+          "line": 78,
           "field": "WhitelistEventPipelineEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:78:NotificationGovernanceEventTopic:KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:78:NotificationGovernanceEventTopic:KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:79:NotificationGovernanceEventTopic:KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:79:NotificationGovernanceEventTopic:KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
       "key": "KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12568,15 +12605,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 78,
+          "line": 79,
           "field": "NotificationGovernanceEventTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:79:CampaignEventTopic:KAFKA_CAMPAIGN_EVENT_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:79:CampaignEventTopic:KAFKA_CAMPAIGN_EVENT_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:80:CampaignEventTopic:KAFKA_CAMPAIGN_EVENT_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:80:CampaignEventTopic:KAFKA_CAMPAIGN_EVENT_TOPIC",
       "key": "KAFKA_CAMPAIGN_EVENT_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12601,15 +12638,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 79,
+          "line": 80,
           "field": "CampaignEventTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:80:CampaignEventGroup:KAFKA_CAMPAIGN_EVENT_GROUP",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:80:CampaignEventGroup:KAFKA_CAMPAIGN_EVENT_GROUP",
+      "id": "go:go/control-plane/internal/alert/config/config.go:81:CampaignEventGroup:KAFKA_CAMPAIGN_EVENT_GROUP",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:81:CampaignEventGroup:KAFKA_CAMPAIGN_EVENT_GROUP",
       "key": "KAFKA_CAMPAIGN_EVENT_GROUP",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12634,15 +12671,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 80,
+          "line": 81,
           "field": "CampaignEventGroup"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:81:CampaignMemberTopic:KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:81:CampaignMemberTopic:KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:82:CampaignMemberTopic:KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:82:CampaignMemberTopic:KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
       "key": "KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12667,15 +12704,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 81,
+          "line": 82,
           "field": "CampaignMemberTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:82:CampaignMemberGroup:KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:82:CampaignMemberGroup:KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
+      "id": "go:go/control-plane/internal/alert/config/config.go:83:CampaignMemberGroup:KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:83:CampaignMemberGroup:KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
       "key": "KAFKA_CAMPAIGN_MEMBERSHIP_GROUP",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12700,15 +12737,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 82,
+          "line": 83,
           "field": "CampaignMemberGroup"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:83:CampaignEventEnabled:CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:83:CampaignEventEnabled:CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:84:CampaignEventEnabled:CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:84:CampaignEventEnabled:CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
       "key": "CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12733,15 +12770,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 83,
+          "line": 84,
           "field": "CampaignEventEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:84:PlaybookEventTopic:KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:84:PlaybookEventTopic:KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
+      "id": "go:go/control-plane/internal/alert/config/config.go:85:PlaybookEventTopic:KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:85:PlaybookEventTopic:KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
       "key": "KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12766,15 +12803,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 84,
+          "line": 85,
           "field": "PlaybookEventTopic"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:85:PlaybookEventGroup:KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:85:PlaybookEventGroup:KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
+      "id": "go:go/control-plane/internal/alert/config/config.go:86:PlaybookEventGroup:KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:86:PlaybookEventGroup:KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
       "key": "KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12799,15 +12836,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 85,
+          "line": 86,
           "field": "PlaybookEventGroup"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:86:PlaybookEventEnabled:PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:86:PlaybookEventEnabled:PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
+      "id": "go:go/control-plane/internal/alert/config/config.go:87:PlaybookEventEnabled:PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:87:PlaybookEventEnabled:PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
       "key": "PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12832,15 +12869,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 86,
+          "line": 87,
           "field": "PlaybookEventEnabled"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:92:Addrs:REDIS_ADDRS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:92:Addrs:REDIS_ADDRS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:93:Addrs:REDIS_ADDRS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:93:Addrs:REDIS_ADDRS",
       "key": "REDIS_ADDRS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12865,15 +12902,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 92,
+          "line": 93,
           "field": "Addrs"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:93:Password:REDIS_PASSWORD",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:93:Password:REDIS_PASSWORD",
+      "id": "go:go/control-plane/internal/alert/config/config.go:94:Password:REDIS_PASSWORD",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:94:Password:REDIS_PASSWORD",
       "key": "REDIS_PASSWORD",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12898,15 +12935,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 93,
+          "line": 94,
           "field": "Password"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:94:DB:REDIS_DB",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:94:DB:REDIS_DB",
+      "id": "go:go/control-plane/internal/alert/config/config.go:95:DB:REDIS_DB",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:95:DB:REDIS_DB",
       "key": "REDIS_DB",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12931,15 +12968,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 94,
+          "line": 95,
           "field": "DB"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:95:SentinelAddrs:REDIS_SENTINEL_ADDRS",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:95:SentinelAddrs:REDIS_SENTINEL_ADDRS",
+      "id": "go:go/control-plane/internal/alert/config/config.go:96:SentinelAddrs:REDIS_SENTINEL_ADDRS",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:96:SentinelAddrs:REDIS_SENTINEL_ADDRS",
       "key": "REDIS_SENTINEL_ADDRS",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12964,15 +13001,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 95,
+          "line": 96,
           "field": "SentinelAddrs"
         }
       ],
       "separator": ","
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:96:SentinelMaster:REDIS_SENTINEL_MASTER",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:96:SentinelMaster:REDIS_SENTINEL_MASTER",
+      "id": "go:go/control-plane/internal/alert/config/config.go:97:SentinelMaster:REDIS_SENTINEL_MASTER",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:97:SentinelMaster:REDIS_SENTINEL_MASTER",
       "key": "REDIS_SENTINEL_MASTER",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -12997,15 +13034,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 96,
+          "line": 97,
           "field": "SentinelMaster"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:97:PoolSize:REDIS_POOL_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:97:PoolSize:REDIS_POOL_SIZE",
+      "id": "go:go/control-plane/internal/alert/config/config.go:98:PoolSize:REDIS_POOL_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:98:PoolSize:REDIS_POOL_SIZE",
       "key": "REDIS_POOL_SIZE",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -13030,15 +13067,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 97,
+          "line": 98,
           "field": "PoolSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/alert/config/config.go:98:TTL:REDIS_TTL",
-      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:98:TTL:REDIS_TTL",
+      "id": "go:go/control-plane/internal/alert/config/config.go:99:TTL:REDIS_TTL",
+      "runtime_binding_id": "go:go/control-plane/internal/alert/config/config.go:99:TTL:REDIS_TTL",
       "key": "REDIS_TTL",
       "consumer": "go:alert",
       "owner": "alert-domain-owner",
@@ -13063,7 +13100,7 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/alert/config/config.go",
-          "line": 98,
+          "line": 99,
           "field": "TTL"
         }
       ],
@@ -46146,6 +46183,74 @@
       ]
     },
     {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "key": "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "key": "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
       "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:API_LISTEN_ADDR:deployments/kubernetes/applications/go-services.yaml",
       "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:API_LISTEN_ADDR",
       "key": "API_LISTEN_ADDR",
@@ -65389,5 +65494,5 @@
       ]
     }
   ],
-  "catalog_sha256": "5a7dd58c11bc96f208d199b6653dc6825297a2430fbcd3942c76a2cb184a62ff"
+  "catalog_sha256": "73cd9da511674467d00e5eeff9923917c4c8a479c41f2a7cadbe2a5472c141e0"
 }

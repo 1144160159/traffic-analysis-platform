@@ -488,9 +488,23 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		filters["time_window"] = timeWindow
 	}
 	filtersJSON, _ := json.Marshal(filters)
-	payloadHash := opaqueKeyDigest(strings.Join([]string{
+	payloadIdentity := []string{
 		tenantID, actor, request.ActionID, request.Target, request.Reason, string(filtersJSON),
-	}, "\x00"))
+	}
+	// Preserve the legacy request digest when expected_revision is omitted so
+	// that in-flight pre-rollout idempotency receipts remain replayable. Strict
+	// clients bind the expected revision into the command identity.
+	if request.ExpectedRevision != nil {
+		if *request.ExpectedRevision < 0 {
+			httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REVISION", "expected_revision must be zero for create or the current revision for update")
+			return
+		}
+		payloadIdentity = append(payloadIdentity, fmt.Sprint(*request.ExpectedRevision))
+	}
+	// The receipt schema stores the canonical 64-character hexadecimal digest;
+	// opaqueKeyDigest includes an audit-display prefix that is intentionally not
+	// part of the persisted value.
+	payloadHash := strings.TrimPrefix(opaqueKeyDigest(strings.Join(payloadIdentity, "\x00")), "sha256:")
 	eventID := uuid.NewSHA1(uuid.NameSpaceOID, []byte("alert.saved-view.v2:"+tenantID+":"+idempotencyKey)).String()
 	tx, err := h.actionAudit.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -533,15 +547,45 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to resolve alert view idempotency")
 		return
 	}
+	// A name-scoped advisory lock closes the absent-row race for two new
+	// idempotency keys targeting the same view. The SQL update predicate below
+	// remains the final guard during mixed-version rollout.
+	if _, err = tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, tenantID+":alert-saved-view:"+request.Target); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to lock alert view revision")
+		return
+	}
+	var currentRevision int64
+	err = tx.QueryRowContext(ctx, `SELECT revision FROM alert_saved_views
+		WHERE tenant_id=$1 AND name=$2 FOR UPDATE`, tenantID, request.Target).Scan(&currentRevision)
+	switch {
+	case err == nil && request.ExpectedRevision != nil && currentRevision != *request.ExpectedRevision:
+		httpx.JSONError(w, ctx, http.StatusConflict, "REVISION_CONFLICT", "alert view revision changed; refresh before saving")
+		return
+	case err == sql.ErrNoRows && request.ExpectedRevision != nil && *request.ExpectedRevision != 0:
+		httpx.JSONError(w, ctx, http.StatusConflict, "REVISION_CONFLICT", "alert view does not exist at the expected revision")
+		return
+	case err != nil && err != sql.ErrNoRows:
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to resolve alert view revision")
+		return
+	}
+	var expectedRevision interface{}
+	if request.ExpectedRevision != nil {
+		expectedRevision = *request.ExpectedRevision
+	}
 	err = tx.QueryRowContext(ctx, `INSERT INTO alert_saved_views
 		(tenant_id,name,filters,created_by,updated_by,trace_id,revision)
 		VALUES ($1,$2,$3::jsonb,$4,$4,$5,1)
 		ON CONFLICT (tenant_id,name) DO UPDATE SET
 		filters=EXCLUDED.filters,updated_by=EXCLUDED.updated_by,trace_id=EXCLUDED.trace_id,
 		revision=alert_saved_views.revision+1,updated_at=now()
+		WHERE $6::bigint IS NULL OR alert_saved_views.revision=$6
 		RETURNING view_id::text,name,revision,created_at,updated_at`,
-		tenantID, request.Target, string(filtersJSON), actor, httpx.GetTraceID(ctx)).Scan(
+		tenantID, request.Target, string(filtersJSON), actor, httpx.GetTraceID(ctx), expectedRevision).Scan(
 		&view.ViewID, &view.Name, &view.Revision, &view.CreatedAt, &view.UpdatedAt)
+	if err == sql.ErrNoRows {
+		httpx.JSONError(w, ctx, http.StatusConflict, "REVISION_CONFLICT", "alert view revision changed; refresh before saving")
+		return
+	}
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to persist alert view")
 		return
@@ -550,7 +594,8 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		"event_id": eventID, "event_type": "alert.saved-view.saved.v1", "schema_version": 1,
 		"aggregate_type": "alert_saved_view", "aggregate_id": view.ViewID,
 		"aggregate_version": view.Revision, "tenant_id": tenantID, "view_id": view.ViewID,
-		"name": view.Name, "filters": filters, "changed_by": actor, "trace_id": httpx.GetTraceID(ctx),
+		"name": view.Name, "filters": filters, "expected_revision": request.ExpectedRevision,
+		"changed_by": actor, "trace_id": httpx.GetTraceID(ctx),
 	})
 	if _, err = tx.ExecContext(ctx, `INSERT INTO alert_saved_view_history
 		(event_id,tenant_id,view_id,revision,name,filters,action,changed_by,trace_id)
@@ -566,7 +611,7 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to enqueue alert view event")
 		return
 	}
-	if err = h.actionAudit.recordWithExecutor(ctx, tx, r, AlertActionAuditRecord{Action: "ALERT_VIEW_SAVED", ObjectType: "alert_saved_view", ObjectID: view.ViewID, TenantID: tenantID, UserID: actor, Reason: request.Reason, Result: "saved", StateVersion: uint64(view.Revision), Detail: map[string]interface{}{"event_id": eventID, "action_id": request.ActionID, "view_id": view.ViewID, "name": view.Name, "filters": filters}}); err != nil {
+	if err = h.actionAudit.recordWithExecutor(ctx, tx, r, AlertActionAuditRecord{Action: "ALERT_VIEW_SAVED", ObjectType: "alert_saved_view", ObjectID: view.ViewID, TenantID: tenantID, UserID: actor, Reason: request.Reason, Result: "saved", StateVersion: uint64(view.Revision), Detail: map[string]interface{}{"event_id": eventID, "action_id": request.ActionID, "view_id": view.ViewID, "name": view.Name, "filters": filters, "expected_revision": request.ExpectedRevision}}); err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to audit alert view")
 		return
 	}

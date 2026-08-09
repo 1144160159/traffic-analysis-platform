@@ -32,7 +32,7 @@
     {
       "domain": "rest_contract_authority",
       "path": "contracts/openapi/alignment-v1.openapi.json",
-      "sha256": "8028e879fed4f0306938da8a08c88b26dcfb3dea13e4d00ffb2172ee67d88adb"
+      "sha256": "457f6fad947420dc36dd7b65f578e1751f9f97f69871cbf39b879974f6e2e404"
     },
     {
       "domain": "route_action_api_scope_inventory",
@@ -1898,5 +1898,5 @@
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "409ff6cdda131f28d76e264276c27e369b5b47f94997a35d1fa0ebd641a5030a"
+  "catalog_sha256": "52223144e51e9986e76101975aab249188360239957a0752a1412bc590130d6b"
 }

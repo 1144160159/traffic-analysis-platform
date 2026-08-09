@@ -29,7 +29,9 @@
     ],
     "isolation": "serializable",
     "idempotency_lock": "pg_advisory_xact_lock",
+    "revision_guard": "strict clients send expected_revision while omission preserves legacy request digests during migration",
     "event_type": "alert.saved-view.saved.v1",
+    "feature_flag": "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED=false controls the dispatcher rollout",
     "publisher_status": "IMPLEMENTED_REPOSITORY"
   },
   "additional_slices": [
@@ -520,6 +522,9 @@
         "sql.LevelSerializable",
         "SELECT pg_advisory_xact_lock",
         "FROM alert_saved_view_requests r",
+        "SELECT revision FROM alert_saved_views",
+        "WHERE $6::bigint IS NULL OR alert_saved_views.revision=$6",
+        "REVISION_CONFLICT",
         "INSERT INTO alert_saved_views",
         "INSERT INTO alert_saved_view_history",
         "INSERT INTO alert_saved_view_outbox",
@@ -543,8 +548,36 @@
       "source": "web/ui/src/services/alertTriageApi.ts",
       "required": [
         "input.kind === 'saved-view'",
-        "savedViewIdempotencyKey(input)",
+        "savedViewIdempotencyKey(input, expectedRevision)",
+        "expected_revision: expectedRevision",
         "'Idempotency-Key'"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "required": [
+        "SavedViewTransactionEnabled",
+        "cfg.Kafka.SavedViewTransactionEnabled && !readOnlyVerificationMode",
+        "if savedViewTransactionEnabled",
+        "StartSavedViewOutboxWorker"
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "deployments/kubernetes/applications/go-services.yaml",
+      "required": [
+        "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED, value: \"false\""
+      ],
+      "forbidden_in_operation": [],
+      "ordered": []
+    },
+    {
+      "source": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "required": [
+        "ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED, value: \"false\""
       ],
       "forbidden_in_operation": [],
       "ordered": []
