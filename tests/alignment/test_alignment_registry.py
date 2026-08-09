@@ -1512,7 +1512,7 @@ class AlignmentRegistryTest(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual(2, contract["contract_version"])
+        self.assertEqual(3, contract["contract_version"])
         self.assertEqual("authenticated_identity", contract["permissions"]["tenant_source"])
         self.assertEqual(
             {
@@ -1524,6 +1524,14 @@ class AlignmentRegistryTest(unittest.TestCase):
                 "dashboard-compliance-task-create",
             },
             {item["action_id"] for item in contract["ui"]["controls"]},
+        )
+        self.assertEqual(
+            "dashboard_task_provider_authority_lookup_v1",
+            contract["rollout"]["provider_authority_lookup_flag"],
+        )
+        self.assertIn(
+            "only a receipt_found response",
+            contract["api"]["provider_authority_lookup"]["recovery_rule"],
         )
 
         openapi = json.loads(
@@ -1592,6 +1600,13 @@ class AlignmentRegistryTest(unittest.TestCase):
             self.assertIn(fragment, pipeline + service)
         self.assertIn("Idempotency-Key", provider)
         self.assertIn("dashboard task executor response exceeds", provider)
+        self.assertIn("LookupDashboardTaskExecution", provider)
+        self.assertIn("LookupDashboardTaskCompensation", provider)
+        self.assertIn('lookup.State != "receipt_found"', pipeline)
+        self.assertIn('terminalResult["authority_lookup"]', pipeline)
+        self.assertIn(
+            "DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED", service
+        )
         self.assertIn("dashboard_task_compensation_requests", compensation)
         self.assertIn("DASHBOARD_TASK_COMPENSATION_REQUESTED", compensation)
         self.assertIn("CompensateDashboardTask", provider)
@@ -1667,6 +1682,12 @@ class AlignmentRegistryTest(unittest.TestCase):
                 '{name: DASHBOARD_TASK_COMPENSATION_V1_ENABLED, value: "false"}',
                 manifest,
             )
+            self.assertIn(
+                '{name: DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED, value: "false"}',
+                manifest,
+            )
+            self.assertIn("DASHBOARD_TASK_EXECUTOR_LOOKUP_URL", manifest)
+            self.assertIn("DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL", manifest)
             self.assertIn("dashboard.task.events.v1", manifest)
 
         rollback = (
@@ -1677,6 +1698,8 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn("不允许用直接SQL伪造completed状态", rollback)
         self.assertIn("DASHBOARD_TASK_PIPELINE_V1_ENABLED", rollback)
         self.assertIn("dashboard_task_execution_receipts", rollback)
+        self.assertIn("receipt_found", rollback)
+        self.assertIn("DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED", rollback)
 
     def test_dashboard_snapshot_is_one_tenant_bound_partial_aware_query(self) -> None:
         feature = json.loads(

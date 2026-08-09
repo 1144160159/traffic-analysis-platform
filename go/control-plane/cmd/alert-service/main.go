@@ -1030,6 +1030,7 @@ func main() {
 	dashboardTaskHandler := api.NewDashboardTaskHandler(db, logger, getBoolEnv("DASHBOARD_TASK_V2_ENABLED", true))
 	dashboardTaskPipelineEnabled := getBoolEnv("DASHBOARD_TASK_PIPELINE_V1_ENABLED", false) && !readOnlyVerificationMode
 	dashboardTaskCompensationEnabled := getBoolEnv("DASHBOARD_TASK_COMPENSATION_V1_ENABLED", false) && dashboardTaskPipelineEnabled
+	dashboardTaskProviderAuthorityLookupEnabled := getBoolEnv("DASHBOARD_TASK_PROVIDER_AUTHORITY_LOOKUP_V1_ENABLED", false) && dashboardTaskPipelineEnabled
 	dashboardTaskHandler.EnableCompensation(dashboardTaskCompensationEnabled)
 	dashboardTaskHandler.RegisterRoutes(apiRouter)
 	if dashboardTaskPipelineEnabled {
@@ -1047,6 +1048,15 @@ func main() {
 		)
 		if executorErr != nil {
 			logger.Fatal("Invalid dashboard task executor configuration", zap.Error(executorErr))
+		}
+		if dashboardTaskProviderAuthorityLookupEnabled {
+			executorLookupURL := strings.TrimSpace(getEnv("DASHBOARD_TASK_EXECUTOR_LOOKUP_URL", ""))
+			if executorLookupURL == "" {
+				logger.Fatal("Dashboard task provider authority lookup requires DASHBOARD_TASK_EXECUTOR_LOOKUP_URL")
+			}
+			if lookupErr := executor.ConfigureAuthorityLookup(executorLookupURL); lookupErr != nil {
+				logger.Fatal("Invalid dashboard task executor authority lookup configuration", zap.Error(lookupErr))
+			}
 		}
 		topic := strings.TrimSpace(getEnv("DASHBOARD_TASK_EVENT_TOPIC", "dashboard.task.events.v1"))
 		producer, producerErr := kafka.NewProducer(kafka.ProducerConfig{
@@ -1078,6 +1088,15 @@ func main() {
 			)
 			if compensatorErr != nil {
 				logger.Fatal("Invalid dashboard task compensator configuration", zap.Error(compensatorErr))
+			}
+			if dashboardTaskProviderAuthorityLookupEnabled {
+				compensatorLookupURL := strings.TrimSpace(getEnv("DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL", ""))
+				if compensatorLookupURL == "" {
+					logger.Fatal("Dashboard task provider authority lookup requires DASHBOARD_TASK_COMPENSATOR_LOOKUP_URL when compensation is enabled")
+				}
+				if lookupErr := compensator.ConfigureAuthorityLookup(compensatorLookupURL); lookupErr != nil {
+					logger.Fatal("Invalid dashboard task compensator authority lookup configuration", zap.Error(lookupErr))
+				}
 			}
 			if enableErr := pipeline.EnableCompensation(compensator); enableErr != nil {
 				logger.Fatal("Failed to enable dashboard task compensation", zap.Error(enableErr))

@@ -60,8 +60,14 @@ func TestDashboardTaskRealComponents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := executor.ConfigureAuthorityLookup(providerServer.URL + "/execute/status"); err != nil {
+		t.Fatal(err)
+	}
 	compensator, err := NewHTTPDashboardTaskCompensator(providerServer.URL+"/compensate", dashboardRealProviderToken, 3*time.Second)
 	if err != nil {
+		t.Fatal(err)
+	}
+	if err := compensator.ConfigureAuthorityLookup(providerServer.URL + "/compensate/status"); err != nil {
 		t.Fatal(err)
 	}
 	producer, err := commonkafka.NewProducer(commonkafka.ProducerConfig{
@@ -137,15 +143,17 @@ func TestDashboardTaskRealComponents(t *testing.T) {
 	}
 
 	_, ambiguousExecution := runDashboardRealExecution(t, ctx, handler, pipeline, db, tenantID,
-		"dashboard-real-execution-ambiguous", "transport-ambiguous", false, "partial")
-	if ambiguousExecution.ErrorCode != "EXECUTOR_TRANSPORT_UNKNOWN" || ambiguousExecution.Result["effect_state"] != "unknown" {
-		t.Fatalf("execution transport ambiguity was not preserved: %+v", ambiguousExecution)
+		"dashboard-real-execution-ambiguous", "transport-ambiguous", false, "completed")
+	executionAuthority, ok := ambiguousExecution.Result["authority_lookup"].(map[string]interface{})
+	if !ok || executionAuthority["state"] != "receipt_found" || executionAuthority["recovered_receipt"] != true ||
+		ambiguousExecution.Result["effect_state"] != "confirmed" {
+		t.Fatalf("execution lost response was not recovered from provider authority: %+v", ambiguousExecution)
 	}
 
 	_, compensationSource := runDashboardRealExecution(t, ctx, handler, pipeline, db, tenantID,
 		"dashboard-real-compensation-source", "provider-compensation-source", true, "completed")
 	ambiguousCompensation := runDashboardRealCompensation(t, ctx, handler, pipeline, db, tenantID, compensationSource,
-		"dashboard-real-compensation-ambiguous", "transport-ambiguous compensation response", "compensation_partial")
+		"dashboard-real-compensation-ambiguous", "transport-ambiguous compensation response", "compensated")
 	if ambiguousCompensation.Status != "compensating" {
 		t.Fatalf("accepted compensation receipt changed unexpectedly: %+v", ambiguousCompensation)
 	}
@@ -153,8 +161,32 @@ func TestDashboardTaskRealComponents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if compensationPartial.ErrorCode != "COMPENSATOR_TRANSPORT_UNKNOWN" || compensationPartial.Result["compensation"] == nil {
-		t.Fatalf("compensation transport ambiguity was not preserved: %+v", compensationPartial)
+	compensationResult, ok := compensationPartial.Result["compensation"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("compensation result missing: %+v", compensationPartial)
+	}
+	compensationAuthority, ok := compensationResult["authority_lookup"].(map[string]interface{})
+	if compensationPartial.Status != "compensated" || !ok || compensationAuthority["state"] != "receipt_found" ||
+		compensationAuthority["recovered_receipt"] != true || compensationResult["effect_state"] != "confirmed" {
+		t.Fatalf("compensation lost response was not recovered from provider authority: %+v", compensationPartial)
+	}
+	if provider.executionLookupCallCount() != 1 || provider.compensationLookupCallCount() != 1 {
+		t.Fatalf("authority lookup calls execution=%d compensation=%d",
+			provider.executionLookupCallCount(), provider.compensationLookupCallCount())
+	}
+	var authorityHistory, authorityAudits int
+	if err := db.QueryRowContext(ctx, `SELECT
+		(SELECT count(*) FROM dashboard_task_history WHERE tenant_id=$1 AND task_id IN ($2,$3)
+			AND snapshot->'authority_lookup'->>'state'='receipt_found'
+			AND snapshot->'authority_lookup'->>'recovered_receipt'='true'),
+		(SELECT count(*) FROM audit_logs WHERE tenant_id=$1 AND object_type='dashboard_task'
+			AND object_id IN ($2::text,$3::text) AND detail->'authority_lookup'->>'state'='receipt_found'
+			AND detail->'authority_lookup'->>'recovered_receipt'='true')`, tenantID,
+		ambiguousExecution.TaskID, compensationSource.TaskID).Scan(&authorityHistory, &authorityAudits); err != nil {
+		t.Fatal(err)
+	}
+	if authorityHistory != 2 || authorityAudits != 2 {
+		t.Fatalf("authority lookup was not atomically audited history=%d audits=%d", authorityHistory, authorityAudits)
 	}
 
 	stopConsumer()
@@ -436,13 +468,19 @@ type dashboardRealProviderHarness struct {
 	mu                   sync.Mutex
 	executionCalls       int
 	compensationCalls    int
+	executionLookupCalls int
+	compensationLookups  int
 	executionCommands    map[string]string
 	compensationCommands map[string]string
+	executionReceipts    map[string]DashboardTaskExecutionReceipt
+	compensationReceipts map[string]DashboardTaskCompensationReceipt
 }
 
 func newDashboardRealProviderHarness() *dashboardRealProviderHarness {
 	return &dashboardRealProviderHarness{
 		executionCommands: make(map[string]string), compensationCommands: make(map[string]string),
+		executionReceipts:    make(map[string]DashboardTaskExecutionReceipt),
+		compensationReceipts: make(map[string]DashboardTaskCompensationReceipt),
 	}
 }
 
@@ -456,6 +494,10 @@ func (provider *dashboardRealProviderHarness) ServeHTTP(writer http.ResponseWrit
 		provider.serveExecution(writer, request)
 	case "/compensate":
 		provider.serveCompensation(writer, request)
+	case "/execute/status":
+		provider.serveExecutionAuthorityLookup(writer, request)
+	case "/compensate/status":
+		provider.serveCompensationAuthorityLookup(writer, request)
 	default:
 		http.NotFound(writer, request)
 	}
@@ -478,7 +520,15 @@ func (provider *dashboardRealProviderHarness) serveExecution(writer http.Respons
 		http.Error(writer, "execution metadata mismatch", http.StatusBadRequest)
 		return
 	}
-	if !provider.recordExecution(command.IdempotencyKey, command) {
+	receipt := DashboardTaskExecutionReceipt{
+		Status: "completed", Provider: "real-loopback-provider",
+		ProviderReceiptID: "execution-receipt-" + command.RequestEventID,
+		EffectState:       "confirmed", EffectIDs: []string{"effect-" + command.TaskID},
+		Result:     map[string]interface{}{"task_id": command.TaskID, "durable": true},
+		ExecutedAt: time.Now().UTC(),
+	}
+	receipt, valid := provider.recordExecution(command.IdempotencyKey, command, receipt)
+	if !valid {
 		http.Error(writer, "execution idempotency collision", http.StatusConflict)
 		return
 	}
@@ -487,13 +537,7 @@ func (provider *dashboardRealProviderHarness) serveExecution(writer http.Respons
 		return
 	}
 	writer.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(writer).Encode(DashboardTaskExecutionReceipt{
-		Status: "completed", Provider: "real-loopback-provider",
-		ProviderReceiptID: "execution-receipt-" + command.RequestEventID,
-		EffectState:       "confirmed", EffectIDs: []string{"effect-" + command.TaskID},
-		Result:     map[string]interface{}{"task_id": command.TaskID, "durable": true},
-		ExecutedAt: time.Now().UTC(),
-	})
+	_ = json.NewEncoder(writer).Encode(receipt)
 }
 
 func (provider *dashboardRealProviderHarness) serveCompensation(writer http.ResponseWriter, request *http.Request) {
@@ -514,7 +558,15 @@ func (provider *dashboardRealProviderHarness) serveCompensation(writer http.Resp
 		http.Error(writer, "compensation metadata mismatch", http.StatusBadRequest)
 		return
 	}
-	if !provider.recordCompensation(command.CompensationIdempotency, command) {
+	receipt := DashboardTaskCompensationReceipt{
+		Status: "compensated", Provider: "real-loopback-provider",
+		ProviderReceiptID: "compensation-receipt-" + command.RequestEventID,
+		EffectState:       "confirmed", CompensatedEffectIDs: append([]string(nil), command.OriginalEffectIDs...),
+		Result:        map[string]interface{}{"task_id": command.TaskID, "removed": true},
+		CompensatedAt: time.Now().UTC(),
+	}
+	receipt, valid := provider.recordCompensation(command.CompensationIdempotency, command, receipt)
+	if !valid {
 		http.Error(writer, "compensation idempotency collision", http.StatusConflict)
 		return
 	}
@@ -523,37 +575,105 @@ func (provider *dashboardRealProviderHarness) serveCompensation(writer http.Resp
 		return
 	}
 	writer.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(writer).Encode(DashboardTaskCompensationReceipt{
-		Status: "compensated", Provider: "real-loopback-provider",
-		ProviderReceiptID: "compensation-receipt-" + command.RequestEventID,
-		EffectState:       "confirmed", CompensatedEffectIDs: append([]string(nil), command.OriginalEffectIDs...),
-		Result:        map[string]interface{}{"task_id": command.TaskID, "removed": true},
-		CompensatedAt: time.Now().UTC(),
+	_ = json.NewEncoder(writer).Encode(receipt)
+}
+
+type dashboardRealAuthorityLookupEnvelope struct {
+	SchemaVersion int `json:"schema_version"`
+	Lookup        struct {
+		RequestEventID string `json:"request_event_id"`
+		TenantID       string `json:"tenant_id"`
+		TaskID         string `json:"task_id"`
+		IdempotencyKey string `json:"idempotency_key"`
+		TraceID        string `json:"trace_id"`
+	} `json:"lookup"`
+}
+
+func decodeDashboardRealAuthorityLookup(writer http.ResponseWriter, request *http.Request) (dashboardRealAuthorityLookupEnvelope, bool) {
+	var envelope dashboardRealAuthorityLookupEnvelope
+	decoder := json.NewDecoder(request.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&envelope); err != nil || envelope.SchemaVersion != 1 ||
+		envelope.Lookup.RequestEventID == "" || envelope.Lookup.IdempotencyKey == "" ||
+		request.Header.Get("Idempotency-Key") != envelope.Lookup.IdempotencyKey ||
+		request.Header.Get("X-Tenant-ID") != envelope.Lookup.TenantID ||
+		request.Header.Get("X-Trace-ID") != envelope.Lookup.TraceID {
+		http.Error(writer, "authority lookup metadata mismatch", http.StatusBadRequest)
+		return envelope, false
+	}
+	return envelope, true
+}
+
+func (provider *dashboardRealProviderHarness) serveExecutionAuthorityLookup(writer http.ResponseWriter, request *http.Request) {
+	envelope, valid := decodeDashboardRealAuthorityLookup(writer, request)
+	if !valid {
+		return
+	}
+	provider.mu.Lock()
+	provider.executionLookupCalls++
+	receipt, found := provider.executionReceipts[envelope.Lookup.IdempotencyKey]
+	provider.mu.Unlock()
+	state := "absent"
+	var receiptPointer *DashboardTaskExecutionReceipt
+	if found {
+		state = "receipt_found"
+		receiptPointer = &receipt
+	}
+	writer.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(writer).Encode(DashboardTaskExecutionAuthorityLookup{
+		RequestEventID: envelope.Lookup.RequestEventID, TenantID: envelope.Lookup.TenantID, TaskID: envelope.Lookup.TaskID,
+		IdempotencyKey: envelope.Lookup.IdempotencyKey, TraceID: envelope.Lookup.TraceID,
+		State: state, Provider: "real-loopback-provider", CheckedAt: time.Now().UTC(), Receipt: receiptPointer,
 	})
 }
 
-func (provider *dashboardRealProviderHarness) recordExecution(key string, command DashboardTaskExecutionRequest) bool {
+func (provider *dashboardRealProviderHarness) serveCompensationAuthorityLookup(writer http.ResponseWriter, request *http.Request) {
+	envelope, valid := decodeDashboardRealAuthorityLookup(writer, request)
+	if !valid {
+		return
+	}
+	provider.mu.Lock()
+	provider.compensationLookups++
+	receipt, found := provider.compensationReceipts[envelope.Lookup.IdempotencyKey]
+	provider.mu.Unlock()
+	state := "absent"
+	var receiptPointer *DashboardTaskCompensationReceipt
+	if found {
+		state = "receipt_found"
+		receiptPointer = &receipt
+	}
+	writer.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(writer).Encode(DashboardTaskCompensationAuthorityLookup{
+		RequestEventID: envelope.Lookup.RequestEventID, TenantID: envelope.Lookup.TenantID, TaskID: envelope.Lookup.TaskID,
+		IdempotencyKey: envelope.Lookup.IdempotencyKey, TraceID: envelope.Lookup.TraceID,
+		State: state, Provider: "real-loopback-provider", CheckedAt: time.Now().UTC(), Receipt: receiptPointer,
+	})
+}
+
+func (provider *dashboardRealProviderHarness) recordExecution(key string, command DashboardTaskExecutionRequest, receipt DashboardTaskExecutionReceipt) (DashboardTaskExecutionReceipt, bool) {
 	provider.mu.Lock()
 	defer provider.mu.Unlock()
 	provider.executionCalls++
 	digest := dashboardRealDigest(command)
 	if previous, exists := provider.executionCommands[key]; exists {
-		return previous == digest
+		return provider.executionReceipts[key], previous == digest
 	}
 	provider.executionCommands[key] = digest
-	return true
+	provider.executionReceipts[key] = receipt
+	return receipt, true
 }
 
-func (provider *dashboardRealProviderHarness) recordCompensation(key string, command DashboardTaskCompensationRequest) bool {
+func (provider *dashboardRealProviderHarness) recordCompensation(key string, command DashboardTaskCompensationRequest, receipt DashboardTaskCompensationReceipt) (DashboardTaskCompensationReceipt, bool) {
 	provider.mu.Lock()
 	defer provider.mu.Unlock()
 	provider.compensationCalls++
 	digest := dashboardRealDigest(command)
 	if previous, exists := provider.compensationCommands[key]; exists {
-		return previous == digest
+		return provider.compensationReceipts[key], previous == digest
 	}
 	provider.compensationCommands[key] = digest
-	return true
+	provider.compensationReceipts[key] = receipt
+	return receipt, true
 }
 
 func dashboardRealDigest(value interface{}) string {
@@ -596,4 +716,16 @@ func (provider *dashboardRealProviderHarness) compensationUniqueCount() int {
 	provider.mu.Lock()
 	defer provider.mu.Unlock()
 	return len(provider.compensationCommands)
+}
+
+func (provider *dashboardRealProviderHarness) executionLookupCallCount() int {
+	provider.mu.Lock()
+	defer provider.mu.Unlock()
+	return provider.executionLookupCalls
+}
+
+func (provider *dashboardRealProviderHarness) compensationLookupCallCount() int {
+	provider.mu.Lock()
+	defer provider.mu.Unlock()
+	return provider.compensationLookups
 }

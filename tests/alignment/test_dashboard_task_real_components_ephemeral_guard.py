@@ -54,7 +54,9 @@ class DashboardTaskRealComponentsGuardTests(unittest.TestCase):
         self.assertIn("NewHTTPDashboardTaskCompensator", self.go_test)
         self.assertIn("not backed by terminal PostgreSQL authority", self.go_test)
         self.assertIn("restart the real consumer group", self.go_test.lower())
-        self.assertIn("COMPENSATOR_TRANSPORT_UNKNOWN", self.go_test)
+        self.assertIn("ConfigureAuthorityLookup", self.go_test)
+        self.assertIn('"receipt_found"', self.go_test)
+        self.assertIn("authority lookup was not atomically audited", self.go_test)
 
     def test_runner_records_the_exact_test_and_non_secret_sumdb_override(self):
         self.assertIn('test_name = "TestDashboardTaskRealComponents"', self.script)

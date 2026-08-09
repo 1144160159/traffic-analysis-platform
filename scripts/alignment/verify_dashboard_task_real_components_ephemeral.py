@@ -111,7 +111,7 @@ def main() -> int:
         "coverage_status": (
             "OWNED_BOUNDED_POSTGRES_REDPANDA_HTTP_G4_PREFLIGHT_NOT_APPROVED_G4"
             if args.mode == "bounded-profile"
-            else "OWNED_REAL_POSTGRES_REDPANDA_AND_LOOPBACK_HTTP_PROVIDER_G1"
+            else "OWNED_REAL_POSTGRES_REDPANDA_LOOPBACK_HTTP_PROVIDER_AUTHORITY_LOOKUP_G1"
         ),
         "postgres_container": postgres_container,
         "kafka_container": kafka_container,
@@ -133,6 +133,9 @@ def main() -> int:
         "provider_idempotency_verified": False,
         "execution_transport_ambiguity_verified": False,
         "compensation_transport_ambiguity_verified": False,
+        "execution_authority_lookup_recovery_verified": False,
+        "compensation_authority_lookup_recovery_verified": False,
+        "authority_lookup_atomic_audit_verified": False,
         "tenant_isolation_verified": False,
         "same_trace_reconciliation_verified": False,
         "bounded_profile_verified": False,
@@ -317,6 +320,9 @@ def main() -> int:
                 "provider_idempotency_verified",
                 "execution_transport_ambiguity_verified",
                 "compensation_transport_ambiguity_verified",
+                "execution_authority_lookup_recovery_verified",
+                "compensation_authority_lookup_recovery_verified",
+                "authority_lookup_atomic_audit_verified",
                 "tenant_isolation_verified",
                 "same_trace_reconciliation_verified",
             ):

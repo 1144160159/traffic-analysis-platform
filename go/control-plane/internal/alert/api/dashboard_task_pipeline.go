@@ -439,6 +439,15 @@ type dashboardExecutionAttempt struct {
 	IdempotencyKey string
 }
 
+type dashboardTaskProviderAuthorityResolution struct {
+	Attempted        bool   `json:"attempted"`
+	State            string `json:"state"`
+	Provider         string `json:"provider,omitempty"`
+	CheckedAt        string `json:"checked_at,omitempty"`
+	RecoveredReceipt bool   `json:"recovered_receipt"`
+	ErrorCode        string `json:"error_code,omitempty"`
+}
+
 func (pipeline *DashboardTaskPipeline) DrainExecutions(ctx context.Context, workerID string, limit int) (int, error) {
 	if limit <= 0 || limit > 50 {
 		limit = 20
@@ -476,22 +485,55 @@ func (pipeline *DashboardTaskPipeline) DrainExecutions(ctx context.Context, work
 			continue
 		}
 		receipt, executeErr := pipeline.executor.ExecuteDashboardTask(ctx, command)
+		var authorityResolution *dashboardTaskProviderAuthorityResolution
 		if executeErr != nil {
-			receipt = DashboardTaskExecutionReceipt{
-				Status: "partial", Provider: "dashboard-task-http-executor",
-				ProviderReceiptID: "transport-unknown-" + attempt.RequestEventID,
-				EffectState:       "unknown", EffectIDs: []string{}, Result: map[string]interface{}{},
-				ErrorCode: "EXECUTOR_TRANSPORT_UNKNOWN", ErrorMessage: truncateDashboardPipelineError(executeErr.Error()),
-				ExecutedAt: time.Now().UTC(),
+			var recovered bool
+			receipt, authorityResolution, recovered = pipeline.reconcileExecutionAuthority(ctx, command)
+			if !recovered {
+				receipt = DashboardTaskExecutionReceipt{
+					Status: "partial", Provider: "dashboard-task-http-executor",
+					ProviderReceiptID: "transport-unknown-" + attempt.RequestEventID,
+					EffectState:       "unknown", EffectIDs: []string{}, Result: map[string]interface{}{},
+					ErrorCode: "EXECUTOR_TRANSPORT_UNKNOWN", ErrorMessage: truncateDashboardPipelineError(executeErr.Error()),
+					ExecutedAt: time.Now().UTC(),
+				}
 			}
 		}
-		if err := pipeline.commitExecutionReceipt(ctx, workerID, attempt, receipt); err != nil {
+		if err := pipeline.commitExecutionReceipt(ctx, workerID, attempt, receipt, authorityResolution); err != nil {
 			pipeline.releaseExecution(ctx, workerID, attempt.RequestEventID, err.Error())
 			continue
 		}
 		completed++
 	}
 	return completed, nil
+}
+
+func (pipeline *DashboardTaskPipeline) reconcileExecutionAuthority(ctx context.Context, command DashboardTaskExecutionRequest) (DashboardTaskExecutionReceipt, *dashboardTaskProviderAuthorityResolution, bool) {
+	authority, ok := pipeline.executor.(DashboardTaskExecutionAuthority)
+	if !ok {
+		return DashboardTaskExecutionReceipt{}, nil, false
+	}
+	lookup, err := authority.LookupDashboardTaskExecution(ctx, command)
+	if errors.Is(err, errDashboardTaskAuthorityLookupNotConfigured) {
+		return DashboardTaskExecutionReceipt{}, nil, false
+	}
+	resolution := &dashboardTaskProviderAuthorityResolution{Attempted: true, State: "unknown", ErrorCode: "EXECUTOR_AUTHORITY_LOOKUP_FAILED"}
+	if err != nil {
+		return DashboardTaskExecutionReceipt{}, resolution, false
+	}
+	lookup = normalizeDashboardTaskExecutionAuthorityLookup(lookup)
+	if err := validateDashboardTaskExecutionAuthorityLookup(command, lookup); err != nil {
+		return DashboardTaskExecutionReceipt{}, resolution, false
+	}
+	resolution.State = lookup.State
+	resolution.Provider = lookup.Provider
+	resolution.CheckedAt = lookup.CheckedAt.UTC().Format(time.RFC3339Nano)
+	resolution.ErrorCode = ""
+	if lookup.State != "receipt_found" || lookup.Receipt == nil {
+		return DashboardTaskExecutionReceipt{}, resolution, false
+	}
+	resolution.RecoveredReceipt = true
+	return *lookup.Receipt, resolution, true
 }
 
 func (pipeline *DashboardTaskPipeline) loadExecutionCommand(ctx context.Context, attempt dashboardExecutionAttempt) (DashboardTaskExecutionRequest, error) {
@@ -518,7 +560,7 @@ func (pipeline *DashboardTaskPipeline) loadExecutionCommand(ctx context.Context,
 	return command, nil
 }
 
-func (pipeline *DashboardTaskPipeline) commitExecutionReceipt(ctx context.Context, workerID string, attempt dashboardExecutionAttempt, receipt DashboardTaskExecutionReceipt) error {
+func (pipeline *DashboardTaskPipeline) commitExecutionReceipt(ctx context.Context, workerID string, attempt dashboardExecutionAttempt, receipt DashboardTaskExecutionReceipt, authorityResolution *dashboardTaskProviderAuthorityResolution) error {
 	receipt = normalizeDashboardTaskExecutionReceipt(receipt)
 	if err := validateDashboardTaskExecutionReceipt(receipt); err != nil {
 		return err
@@ -576,6 +618,9 @@ func (pipeline *DashboardTaskPipeline) commitExecutionReceipt(ctx context.Contex
 		"effect_state": receipt.EffectState, "effect_ids": receipt.EffectIDs, "result": receipt.Result,
 		"receipt_sha256": receiptSHA,
 	}
+	if authorityResolution != nil {
+		terminalResult["authority_lookup"] = authorityResolution
+	}
 	terminalResultJSON, _ := json.Marshal(terminalResult)
 	result, err := tx.ExecContext(ctx, `UPDATE dashboard_tasks SET status=$3,revision=$4,result=$5::jsonb,
 		error_code=$6,error_message=$7,completed_at=$8,updated_at=$8
@@ -597,10 +642,14 @@ func (pipeline *DashboardTaskPipeline) commitExecutionReceipt(ctx context.Contex
 		receiptSHA, traceID, receipt.ExecutedAt); err != nil {
 		return err
 	}
-	historySnapshot, _ := json.Marshal(map[string]interface{}{"task_id": attempt.TaskID, "status": receipt.Status,
+	historySnapshotValue := map[string]interface{}{"task_id": attempt.TaskID, "status": receipt.Status,
 		"revision": terminalRevision, "provider": receipt.Provider, "provider_receipt_id": receipt.ProviderReceiptID,
 		"effect_state": receipt.EffectState, "effect_ids": receipt.EffectIDs, "receipt_sha256": receiptSHA,
-		"trace_id": traceID})
+		"trace_id": traceID}
+	if authorityResolution != nil {
+		historySnapshotValue["authority_lookup"] = authorityResolution
+	}
+	historySnapshot, _ := json.Marshal(historySnapshotValue)
 	if _, err := tx.ExecContext(ctx, `INSERT INTO dashboard_task_history
 		(event_id,tenant_id,task_id,revision,action_id,previous_status,resulting_status,actor_id,reason,trace_id,snapshot,occurred_at)
 		VALUES($1,$2,$3,$4,$5,'running',$6,$7,$8,$9,$10::jsonb,$11)`, resultEventID, attempt.TenantID,
@@ -715,22 +764,55 @@ func (pipeline *DashboardTaskPipeline) DrainCompensations(ctx context.Context, w
 			continue
 		}
 		receipt, compensateErr := pipeline.compensator.CompensateDashboardTask(ctx, command)
+		var authorityResolution *dashboardTaskProviderAuthorityResolution
 		if compensateErr != nil {
-			receipt = DashboardTaskCompensationReceipt{
-				Status: "compensation_partial", Provider: "dashboard-task-http-compensator",
-				ProviderReceiptID: "transport-unknown-" + attempt.RequestEventID, EffectState: "unknown",
-				CompensatedEffectIDs: []string{}, Result: map[string]interface{}{},
-				ErrorCode: "COMPENSATOR_TRANSPORT_UNKNOWN", ErrorMessage: truncateDashboardPipelineError(compensateErr.Error()),
-				CompensatedAt: time.Now().UTC(),
+			var recovered bool
+			receipt, authorityResolution, recovered = pipeline.reconcileCompensationAuthority(ctx, command)
+			if !recovered {
+				receipt = DashboardTaskCompensationReceipt{
+					Status: "compensation_partial", Provider: "dashboard-task-http-compensator",
+					ProviderReceiptID: "transport-unknown-" + attempt.RequestEventID, EffectState: "unknown",
+					CompensatedEffectIDs: []string{}, Result: map[string]interface{}{},
+					ErrorCode: "COMPENSATOR_TRANSPORT_UNKNOWN", ErrorMessage: truncateDashboardPipelineError(compensateErr.Error()),
+					CompensatedAt: time.Now().UTC(),
+				}
 			}
 		}
-		if err := pipeline.commitCompensationReceipt(ctx, workerID, attempt, receipt); err != nil {
+		if err := pipeline.commitCompensationReceipt(ctx, workerID, attempt, receipt, authorityResolution); err != nil {
 			pipeline.releaseCompensation(ctx, workerID, attempt.RequestEventID, err.Error())
 			continue
 		}
 		completed++
 	}
 	return completed, nil
+}
+
+func (pipeline *DashboardTaskPipeline) reconcileCompensationAuthority(ctx context.Context, command DashboardTaskCompensationRequest) (DashboardTaskCompensationReceipt, *dashboardTaskProviderAuthorityResolution, bool) {
+	authority, ok := pipeline.compensator.(DashboardTaskCompensationAuthority)
+	if !ok {
+		return DashboardTaskCompensationReceipt{}, nil, false
+	}
+	lookup, err := authority.LookupDashboardTaskCompensation(ctx, command)
+	if errors.Is(err, errDashboardTaskAuthorityLookupNotConfigured) {
+		return DashboardTaskCompensationReceipt{}, nil, false
+	}
+	resolution := &dashboardTaskProviderAuthorityResolution{Attempted: true, State: "unknown", ErrorCode: "COMPENSATOR_AUTHORITY_LOOKUP_FAILED"}
+	if err != nil {
+		return DashboardTaskCompensationReceipt{}, resolution, false
+	}
+	lookup = normalizeDashboardTaskCompensationAuthorityLookup(lookup)
+	if err := validateDashboardTaskCompensationAuthorityLookup(command, lookup); err != nil {
+		return DashboardTaskCompensationReceipt{}, resolution, false
+	}
+	resolution.State = lookup.State
+	resolution.Provider = lookup.Provider
+	resolution.CheckedAt = lookup.CheckedAt.UTC().Format(time.RFC3339Nano)
+	resolution.ErrorCode = ""
+	if lookup.State != "receipt_found" || lookup.Receipt == nil {
+		return DashboardTaskCompensationReceipt{}, resolution, false
+	}
+	resolution.RecoveredReceipt = true
+	return *lookup.Receipt, resolution, true
 }
 
 func (pipeline *DashboardTaskPipeline) loadCompensationCommand(ctx context.Context, attempt dashboardCompensationAttempt) (DashboardTaskCompensationRequest, error) {
@@ -765,7 +847,7 @@ func (pipeline *DashboardTaskPipeline) loadCompensationCommand(ctx context.Conte
 	return command, nil
 }
 
-func (pipeline *DashboardTaskPipeline) commitCompensationReceipt(ctx context.Context, workerID string, attempt dashboardCompensationAttempt, receipt DashboardTaskCompensationReceipt) error {
+func (pipeline *DashboardTaskPipeline) commitCompensationReceipt(ctx context.Context, workerID string, attempt dashboardCompensationAttempt, receipt DashboardTaskCompensationReceipt, authorityResolution *dashboardTaskProviderAuthorityResolution) error {
 	receipt = normalizeDashboardTaskCompensationReceipt(receipt)
 	if err := validateDashboardTaskCompensationReceipt(receipt); err != nil {
 		return err
@@ -823,11 +905,15 @@ func (pipeline *DashboardTaskPipeline) commitCompensationReceipt(ctx context.Con
 	if err := json.Unmarshal(originalResultJSON, &originalResult); err != nil {
 		return err
 	}
-	terminalResult := map[string]interface{}{"execution": originalResult, "compensation": map[string]interface{}{
+	compensationResult := map[string]interface{}{
 		"provider": receipt.Provider, "provider_receipt_id": receipt.ProviderReceiptID,
 		"effect_state": receipt.EffectState, "compensated_effect_ids": receipt.CompensatedEffectIDs,
 		"result": receipt.Result, "receipt_sha256": receiptSHA,
-	}}
+	}
+	if authorityResolution != nil {
+		compensationResult["authority_lookup"] = authorityResolution
+	}
+	terminalResult := map[string]interface{}{"execution": originalResult, "compensation": compensationResult}
 	terminalResultJSON, _ := json.Marshal(terminalResult)
 	result, err := tx.ExecContext(ctx, `UPDATE dashboard_tasks SET status=$3,revision=$4,result=$5::jsonb,
 		error_code=$6,error_message=$7,updated_at=$8,completed_at=$8,
@@ -848,10 +934,14 @@ func (pipeline *DashboardTaskPipeline) commitCompensationReceipt(ctx context.Con
 		string(effectJSON), string(resultJSON), receipt.ErrorCode, receipt.ErrorMessage, receiptSHA, traceID, receipt.CompensatedAt); err != nil {
 		return err
 	}
-	historySnapshot, _ := json.Marshal(map[string]interface{}{"task_id": attempt.TaskID, "status": receipt.Status,
+	historySnapshotValue := map[string]interface{}{"task_id": attempt.TaskID, "status": receipt.Status,
 		"revision": nextRevision, "provider": receipt.Provider, "provider_receipt_id": receipt.ProviderReceiptID,
 		"effect_state": receipt.EffectState, "compensated_effect_ids": receipt.CompensatedEffectIDs,
-		"receipt_sha256": receiptSHA, "trace_id": traceID})
+		"receipt_sha256": receiptSHA, "trace_id": traceID}
+	if authorityResolution != nil {
+		historySnapshotValue["authority_lookup"] = authorityResolution
+	}
+	historySnapshot, _ := json.Marshal(historySnapshotValue)
 	if _, err := tx.ExecContext(ctx, `INSERT INTO dashboard_task_history
 		(event_id,tenant_id,task_id,revision,action_id,previous_status,resulting_status,actor_id,reason,trace_id,snapshot,occurred_at)
 		VALUES($1,$2,$3,$4,$5,'compensating',$6,$7,$8,$9,$10::jsonb,$11)`, resultEventID, attempt.TenantID,
