@@ -742,16 +742,20 @@
         "contracts/alignment/features/F-ALERT-003.json",
         "contracts/events/kafka-json-events-v1.schema.json",
         "contracts/events/kafka-topic-catalog.v1.json",
+        "contracts/kafka/dlq-commit-barrier.v1.json",
         "contracts/postgres/transaction-outbox.v1.json",
         "contracts/postgres/mutable-command-inventory.v1.json",
         "go/control-plane/internal/alert/api/handler_alert_actions.go",
         "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go",
+        "go/control-plane/internal/alert/consumer/alert_response_dlq_barrier.go",
         "go/control-plane/internal/alert/consumer/alert_response_http_executor.go",
         "go/control-plane/internal/alert/consumer/alert_response_http_executor_test.go",
         "go/control-plane/internal/alert/consumer/alert_response_event_consumer_integration_test.go",
         "go/control-plane/cmd/alert-service/main.go",
         "deployments/postgres/migrations/202608091130_alert_response_external_executor_v1.sql",
+        "deployments/postgres/migrations/202608091230_alert_response_dlq_receipt_v1.sql",
         "common/sql/pg/15-alert-response-external-executor-v1.sql",
+        "common/sql/pg/16-alert-response-dlq-receipt-v1.sql",
         "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
         "deployments/kubernetes/applications/go-services.yaml",
         "go/control-plane/deployments/kubernetes/alert-service.yaml",
@@ -760,10 +764,14 @@
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v211/manifest.json#sha256=3c9dca437ce041efc036ea4bae736f69c2dd1ec67830e05fdf73aedd18fd26be",
         "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v1/manifest.json#sha256=2a2a55a76f12aff682c16b76059001a109b8ea7567d3caf5741fae1d1e9a8512",
         "doc/02_acceptance/runs/20260809-remediation-g0-full-v212/manifest.json#sha256=200cd1a07c586363ced21ff47d117c0ac05d18806042cd6ca485af24463a7618",
-        "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v2/manifest.json#sha256=20d1cdb490067a4a971a8408223ce6119cf2ca66106a1a92cf8d4a0599f3a019"
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-executor-g1-v2/manifest.json#sha256=20d1cdb490067a4a971a8408223ce6119cf2ca66106a1a92cf8d4a0599f3a019",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v213/manifest.json#sha256=6971fab8fbb1f6e9c994a54e86fa8e476bc298d1d87dd688140eb3b0be91574d",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v214/manifest.json#sha256=51c7bdd265a27aef47be3b9b6220e2b1e4fe0f2ff7c471b7e2e353956b35b248",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v215/manifest.json#sha256=713afb54f617ee9ac5f831a462a72a41c7339a727b0b2276dc55d67735b087af",
+        "doc/02_acceptance/runs/20260809-remediation-alert-response-dlq-g1-v1/manifest.json#sha256=ee8708139cd90b3a4cc3fda35de673f61fc2731f918db981a7299c0fb30ce4fd"
       ],
-      "blocker": "当前只完成默认关闭的告警响应外部执行器G1：生产者、真实Kafka consumer group与source offset、告警域DLQ PostgreSQL回执屏障、外部补偿执行器、unknown effect周期权威复核、批准provider ledger、同trace跨服务对账、批准性能/故障恢复、候选部署、Windows Chrome、canary、回滚和T+0/T+1/T+3/T+7观察均未完成；因此不得进入VERIFYING或CLOSED。",
-      "note": "G0 v212三道门分别PASS并绑定源码SHA b82e59532f8624a60b41b26439a4f6e8cb585e42c1b886331c3515ae9c9c5938。G1 v2十项范围检查全部PASS：真实响应事件要求稳定trace和独立审批，provider使用event派生幂等键；completed必须有确认副作用和唯一effect ID；丢响应只允许精确身份的provider authority receipt_found恢复，否则保持partial/effect_state=unknown；回执、action终态和audit在同一PG事务提交。自有PostgreSQL与loopback HTTP provider通过，三套PG入口双重回放SHA一致。v1固定offset重跑冲突失败事实保留，修复后同一集成用例连续两次通过。所有开关默认关闭，production_applied=false，F-ALERT-003仅从OPEN进入IMPLEMENTING。"
+      "blocker": "当前只完成默认关闭的告警响应外部执行器和告警域PostgreSQL DLQ收据/审计屏障G1：生产发布者与真实Kafka consumer group/source offset故障复证、外部补偿执行器、unknown effect周期权威复核、批准provider ledger、同trace跨服务对账、批准性能/故障恢复、候选部署、Windows Chrome、canary、回滚和T+0/T+1/T+3/T+7观察均未完成；因此不得进入VERIFYING或CLOSED。",
+      "note": "G0 v215三道门分别PASS并绑定源码SHA 111e902fac1753f90896f69ff2a9c03a5ef23167090cb72f286c1fa92f5ad414。G1告警响应专项十一项检查全部PASS：保留外部执行器的独立审批、稳定provider幂等、耐久回执、精确身份权威恢复、unknown effect失败关闭和回执/action/audit原子事务；新增永久错误分类、DLQ broker ACK后/source offset提交前的领域屏障，以及按source topic/partition/offset幂等的PG收据和quarantine audit原子事务，同tuple负载漂移被拒绝。自有PostgreSQL与loopback HTTP provider通过，common、Docker merged、Kubernetes三套PG入口双重回放SHA均为f95bb398…1cfb0a。G0 v213的mutation行号漂移和v214的覆盖字符串断言失败均不可变保留并由v215复证。未运行真实告警Kafka、批准provider或G2—G6，所有开关默认关闭，production_applied=false，F-ALERT-003保持IMPLEMENTING。"
     },
     "F-PLAYBOOK-001": {
       "status": "VERIFYING",
