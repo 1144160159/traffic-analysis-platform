@@ -1,0 +1,226 @@
+
+==============================================================
+     Traffic Analysis Platform - Protobuf Code Generator
+==============================================================
+
+[0;34m[INFO][0m Checking dependencies...
+[0;34m[INFO][0m buf found: /usr/local/bin/buf
+[0;34m[INFO][0m buf version: 1.28.1
+[0;34m[INFO][0m protoc found: /usr/local/bin/protoc
+[0;34m[INFO][0m protoc version: libprotoc 25.1
+[0;32m[SUCCESS][0m All dependencies satisfied
+[0;34m[INFO][0m Creating output directories...
+[0;32m[SUCCESS][0m Output directories created
+[0;34m[INFO][0m Linting proto files...
+[0;32m[SUCCESS][0m Proto lint passed
+[0;34m[INFO][0m Generating code for all languages...
+[0;34m[INFO][0m Cleaning previously generated files...
+[0;34m[INFO][0m Cleaned Rust generated files
+[0;34m[INFO][0m Cleaned Go generated files
+[0;34m[INFO][0m Cleaned Java generated files
+[0;32m[SUCCESS][0m Cleanup completed
+[0;34m[INFO][0m Creating output directories...
+[0;32m[SUCCESS][0m Output directories created
+[0;32m[SUCCESS][0m Code generation completed
+[0;34m[INFO][0m Generating Rust lib.rs...
+[0;32m[SUCCESS][0m Rust lib.rs generated
+[0;34m[INFO][0m Normalizing generated source whitespace...
+[0;32m[SUCCESS][0m Generated source whitespace normalized
+[0;34m[INFO][0m Verifying generated code...
+[0;34m[INFO][0m Verifying Rust generated files...
+[0;34m[INFO][0m   ✓ traffic.v1.rs (2168 lines)
+[0;34m[INFO][0m   ✓ lib.rs
+[0;34m[INFO][0m Verifying Go generated files...
+[0;34m[INFO][0m   ✓ Found 14 .pb.go files
+[0;34m[INFO][0m   ✓ Found 2 _grpc.pb.go files
+[0;34m[INFO][0m     - alert.pb.go (2705 lines)
+[0;34m[INFO][0m     - asset.pb.go (1289 lines)
+[0;34m[INFO][0m     - asset_grpc.pb.go (277 lines)
+[0;34m[INFO][0m     - audit.pb.go (951 lines)
+[0;34m[INFO][0m     - campaign.pb.go (387 lines)
+[0;34m[INFO][0m     - common.pb.go (1166 lines)
+[0;34m[INFO][0m     - detection.pb.go (554 lines)
+[0;34m[INFO][0m     - feature.pb.go (983 lines)
+[0;34m[INFO][0m     - flow.pb.go (591 lines)
+[0;34m[INFO][0m     - graph.pb.go (1306 lines)
+[0;34m[INFO][0m     - ingest.pb.go (2378 lines)
+[0;34m[INFO][0m     - ingest_grpc.pb.go (341 lines)
+[0;34m[INFO][0m     - pcap.pb.go (855 lines)
+[0;34m[INFO][0m     - session.pb.go (711 lines)
+[0;34m[INFO][0m Verifying Java generated files...
+[0;34m[INFO][0m   ✓ Found 196 .java files
+[0;34m[INFO][0m     - ActiveIdleStats.java
+[0;34m[INFO][0m     - ActiveIdleStatsOrBuilder.java
+[0;34m[INFO][0m     - Alert.java
+[0;34m[INFO][0m     - AlertBatch.java
+[0;34m[INFO][0m     - AlertBatchOrBuilder.java
+[0;34m[INFO][0m     - AlertCorrelationEdge.java
+[0;34m[INFO][0m     - AlertCorrelationEdgeOrBuilder.java
+[0;34m[INFO][0m     - AlertExtendedBatch.java
+[0;34m[INFO][0m     - AlertExtendedBatchOrBuilder.java
+[0;34m[INFO][0m     - AlertFeedback.java
+[0;34m[INFO][0m     ... and 186 more files
+[0;32m[SUCCESS][0m All verifications passed
+
+[0;32m[SUCCESS][0m All tasks completed in 8s
+
+==============================================================
+                   Integration Guide
+==============================================================
+
+📦 RUST (rust/probe-agent/proto-gen/Cargo.toml):
+   [dependencies]
+   proto-gen = { path = "proto-gen" }
+   prost = "0.12"
+   prost-types = "0.12"
+   tonic = "0.11"
+   pbjson-types = "0.6"
+
+📦 GO (go/control-plane/go.mod):
+   require (
+       google.golang.org/protobuf v1.32.0
+       google.golang.org/grpc v1.61.0
+   )
+   Import: "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
+
+📦 JAVA (java/flink-jobs/flink-common/pom.xml):
+   <dependency>
+       <groupId>com.google.protobuf</groupId>
+       <artifactId>protobuf-java</artifactId>
+       <version>3.25.2</version>
+   </dependency>
+   <dependency>
+       <groupId>io.grpc</groupId>
+       <artifactId>grpc-protobuf</artifactId>
+       <version>1.61.0</version>
+   </dependency>
+   Import: com.traffic.proto.traffic.v1.*
+
+==============================================================
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/alert-projection-reconcile	0.012s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/alert-projection-shadow	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/alert-service	0.011s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/asset-service	0.013s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/audit-materializer	0.013s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/auth-service	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/campaign-membership-backfill	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/forensics-service	0.016s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/graph-service	0.012s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/ingest-gateway	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/mock-ingest	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/nebula-http-gateway	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/probe-control-smoke	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/rule-manager	0.012s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/cmd/threat-intel-service	0.013s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api	0.118s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/arkime	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/audit	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/campaign	0.018s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/config	0.012s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/consumer	0.028s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/dedup	0.009s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/evidence	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/fallback	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/notification	0.017s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/opensearchbulk	0.003s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/persistence	0.019s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/playbook	0.004s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/projection	0.011s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/realtime	0.013s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/repository	0.021s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/risk	0.008s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/state	0.004s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/threatintel	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/whitelist	0.015s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/api	0.020s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/config	0.013s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/consumer	0.022s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/repository	0.020s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/service	0.016s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/api	0.017s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/config	0.016s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/health	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/jwt	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/middleware	0.019s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model	0.007s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/mtls	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/oidc	0.015s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository	0.017s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/security	0.007s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service	0.061s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit	0.020s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/dataquality	0.020s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx	0.007s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka	0.014s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/miniohttp	0.008s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/protobuf	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/utils	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/validation	0.008s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/api	0.022s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/config	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/converter	0.016s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/cutter	0.014s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/index	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/repository	0.008s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/s3client	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/task	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/api	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/cache	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/config	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/logging	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/metrics	[no test files]
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/monitoring	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/nebula	10.701s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/query	0.018s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/auth	0.018s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/config	0.011s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/control	0.012s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/dedup	0.111s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/dlq	0.018s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/metrics	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/queue	0.011s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/quota	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/server	0.019s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/api	0.019s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/config	0.011s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/consumer	0.018s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/converter	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/evaluator	0.006s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/health	[no test files]
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/model	0.004s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/publisher	0.013s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/rbac	0.005s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/repository	0.010s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/service	0.226s
+?   	github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1	[no test files]
+--- FAIL: TestPipelineContractCompleteMapping (0.00s)
+    pipeline_contract_test.go:56: 
+        	Error Trace:	/home/wangwt/phase_2/code/traffic-analysis-platform-remediation-integration/go/control-plane/tests/integration/pipeline_contract_test.go:56
+        	Error:      	"[{flow.events.v1 FlowEvent active [go/control-plane/internal/ingest/queue/producer.go] [java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/SessionJob.java] {protobuf proto/traffic/v1/flow.proto traffic.v1.FlowEvent }} {flow.projection-replay.v1 FlowEvent active [go/control-plane/internal/common/dataquality/repair_replay_driver.go] [go/control-plane/internal/common/dataquality/repair_projection_consumer.go] {protobuf proto/traffic/v1/flow.proto traffic.v1.FlowEvent }} {session.events.v1 SessionEvent active [java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java] [java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/FeatureJob.java] {protobuf proto/traffic/v1/session.proto traffic.v1.SessionEvent }} {feature.stat.v1 FeatureStat active [java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/sink/KafkaSinkFactory.java] [java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/RuleJob.java java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/BehaviorDetectionJob.java] {protobuf proto/traffic/v1/feature.proto traffic.v1.FeatureStat }} {detections.v1 DetectionBehavior active [java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/sink/KafkaDetectionSinkFactory.java] [java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/AlertGeneratorJob.java go/control-plane/internal/alert/consumer/kafka_consumer.go] {protobuf proto/traffic/v1/detection.proto traffic.v1.DetectionBehavior }} {alerts.v1 Alert active [java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/sink/KafkaAlertSinkFactory.java] [java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/CepJob.java] {protobuf proto/traffic/v1/alert.proto traffic.v1.Alert }} {alert.feedback.v1 AlertFeedbackExtendedV1Json active [go/control-plane/internal/alert/api/handler_feedback.go] [go/control-plane/internal/rules/consumer/alert_feedback_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  AlertFeedbackExtendedV1Json}} {alert.response.requested.v1 AlertResponseRequestedV1Json active [go/control-plane/internal/alert/api/handler_alert_actions.go go/control-plane/internal/alert/api/handler_alert_response_workflow.go] [go/control-plane/internal/alert/consumer/alert_response_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  AlertResponseRequestedV1Json}} {alert.assignment.events.v1 AlertBatchAssignmentLifecycleV1Json active [go/control-plane/internal/alert/api/alert_batch_assignment_v1.go go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go] [go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  AlertBatchAssignmentLifecycleV1Json}} {alert.saved-view.events.v1 AlertSavedViewSavedV1Json producer_only [go/control-plane/internal/alert/api/handler_alert_saved_view_outbox.go] [] {json-schema contracts/events/kafka-json-events-v1.schema.json  AlertSavedViewSavedV1Json}} {whitelist.events.v2 WhitelistLifecycleV2Json active [go/control-plane/internal/alert/whitelist/outbox_dispatcher.go] [go/control-plane/internal/rules/consumer/whitelist_rule_effect_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  WhitelistLifecycleV2Json}} {notification.governance.events.v1 NotificationRuleLifecycleV1Json producer_only [go/control-plane/internal/alert/api/notification_governance_outbox.go] [] {json-schema contracts/events/kafka-json-events-v1.schema.json  NotificationRuleLifecycleV1Json}} {campaign.events.v2 CampaignAggregateLifecycleV2Json active [go/control-plane/internal/alert/api/handler_campaign_outbox.go] [go/control-plane/internal/alert/consumer/campaign_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  CampaignAggregateLifecycleV2Json}} {campaign.membership.events.v2 CampaignMembershipLifecycleV2Json active [go/control-plane/internal/alert/api/handler_campaign_outbox.go] [go/control-plane/internal/alert/consumer/campaign_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  CampaignMembershipLifecycleV2Json}} {playbook.execution.events.v2 PlaybookExecutionLifecycleV2Json active [go/control-plane/internal/alert/api/playbook_execution_outbox.go] [go/control-plane/internal/alert/consumer/playbook_execution_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  PlaybookExecutionLifecycleV2Json}} {traffic.topic.action.v2 TopicActionLifecycleV2Json active [go/control-plane/internal/alert/api/handler_topic_outbox.go] [go/control-plane/internal/alert/consumer/topic_action_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  TopicActionLifecycleV2Json}} {dashboard.task.events.v1 DashboardTaskLifecycleV1Json active [go/control-plane/internal/alert/api/dashboard_task_pipeline.go] [go/control-plane/internal/alert/api/dashboard_task_pipeline.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  DashboardTaskLifecycleV1Json}} {probe.control.v2 ProbeOperationRequestedV2Json active [go/control-plane/internal/alert/api/handler_probe_outbox.go] [go/control-plane/internal/ingest/control/bridge.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  ProbeOperationRequestedV2Json}} {probe.acks.v2 ProbeOperationAgentAckV2Json active [go/control-plane/internal/ingest/control/bridge.go] [go/control-plane/internal/alert/consumer/probe_ack_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  ProbeOperationAgentAckV2Json}} {dlq.probe.acks.v2 DLQMessageV1Json dlq [go/control-plane/internal/common/kafka/dlq.go] [] {json-schema contracts/events/kafka-json-events-v1.schema.json  DLQMessageV1Json}} {probe.events.v2 ProbeOperationLifecycleV2Json active [go/control-plane/internal/alert/api/handler_probe_outbox.go] [go/control-plane/internal/alert/consumer/probe_operation_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  ProbeOperationLifecycleV2Json}} {pcap.index.v1 PcapIndexMeta active [go/control-plane/internal/ingest/queue/producer.go] [java/flink-jobs/flink-pcap-index-job/src/main/java/com/traffic/flink/pcap/PcapIndexJob.java] {protobuf proto/traffic/v1/pcap.proto traffic.v1.PcapIndexMeta }} {rule.updates RuleCommandV1Json active [go/control-plane/internal/rules/publisher/kafka_publisher.go] [java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/RuleJob.java] {json-schema contracts/events/kafka-json-events-v1.schema.json  RuleCommandV1Json}} {model-updates ModelUpdateEventV1Json active [go/control-plane/internal/rules/service/model_service.go] [java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/BehaviorDetectionJob.java] {json-schema contracts/events/kafka-json-events-v1.schema.json  ModelUpdateEventV1Json}} {model-update-applied.v1 ModelUpdateAppliedAckV1Json active [java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/BehaviorDetectionJob.java] [go/control-plane/internal/rules/service/model_service.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  ModelUpdateAppliedAckV1Json}} {model-actions.v1 ModelActionRequestedV1Json active [go/control-plane/internal/rules/publisher/kafka_publisher.go] [go/control-plane/internal/rules/consumer/model_action_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  ModelActionRequestedV1Json}} {deployment.events.v1 DeploymentEventV1Json active [go/control-plane/internal/rules/publisher/kafka_publisher.go] [go/control-plane/internal/rules/consumer/deployment_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  DeploymentEventV1Json}} {audit.logs AuditEventV1Json active [go/control-plane/internal/common/audit/logger.go] [go/control-plane/internal/common/audit/consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  AuditEventV1Json}} {asset.bindings.v1 MacIpBinding consumer_only [] [go/control-plane/internal/asset/consumer/binding_consumer.go] {protobuf proto/traffic/v1/asset.proto traffic.v1.MacIpBinding }} {asset.events.v2 AssetUpsertedV2Json active [go/control-plane/internal/asset/repository/outbox_dispatcher.go] [go/control-plane/internal/asset/consumer/asset_projection_event.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  AssetUpsertedV2Json}} {asset.discovery.events.v1 AssetDiscoveryLifecycleV1Json producer_only [go/control-plane/internal/asset/repository/discovery_outbox_dispatcher.go] [] {json-schema contracts/events/kafka-json-events-v1.schema.json  AssetDiscoveryLifecycleV1Json}} {asset.exports.v1 AssetExportLifecycleV1Json producer_only [go/control-plane/internal/asset/repository/asset_export_outbox_dispatcher.go] [] {json-schema contracts/events/kafka-json-events-v1.schema.json  AssetExportLifecycleV1Json}} {device.logs.v1 DeviceLog consumer_only [] [java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/LogJob.java] {protobuf proto/traffic/v1/audit.proto traffic.v1.DeviceLog }} {user.events.v1 UserEvent active [go/control-plane/internal/auth/repository/user_settings_outbox.go go/control-plane/internal/auth/repository/user_command_outbox.go] [java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserBehaviorJob.java] {protobuf proto/traffic/v1/audit.proto traffic.v1.UserEvent }} {threat.intel.v1 ThreatIntelV1Json active [go/control-plane/cmd/threat-intel-service/main.go] [go/control-plane/internal/alert/consumer/threat_intel_event_consumer.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  ThreatIntelV1Json}} {dlq.v1 DLQMessageV1Json dlq [go/control-plane/internal/common/kafka/dlq.go java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java] [go/control-plane/internal/alert/api/handler_advanced.go] {json-schema contracts/events/kafka-json-events-v1.schema.json  DLQMessageV1Json}}]" should have 35 item(s), but has 36
+        	Test:       	TestPipelineContractCompleteMapping
+--- FAIL: TestPipelineContractSchemaKindsRemainExplicit (0.00s)
+    pipeline_contract_test.go:100: 
+        	Error Trace:	/home/wangwt/phase_2/code/traffic-analysis-platform-remediation-integration/go/control-plane/tests/integration/pipeline_contract_test.go:100
+        	Error:      	Not equal: 
+        	            	expected: map[string]int{"json-schema":25, "protobuf":10}
+        	            	actual  : map[string]int{"json-schema":26, "protobuf":10}
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1,3 +1,3 @@
+        	            	 (map[string]int) (len=2) {
+        	            	- (string) (len=11) "json-schema": (int) 25,
+        	            	+ (string) (len=11) "json-schema": (int) 26,
+        	            	  (string) (len=8) "protobuf": (int) 10
+        	Test:       	TestPipelineContractSchemaKindsRemainExplicit
+FAIL
+FAIL	github.com/1144160159/traffic-analysis-platform/go/control-plane/tests/integration	0.021s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/tests/stress	0.060s
+ok  	github.com/1144160159/traffic-analysis-platform/go/control-plane/tests/unit	0.006s
+FAIL

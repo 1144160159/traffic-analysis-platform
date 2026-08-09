@@ -1,0 +1,11 @@
+test_api_keeps_acceptance_non_final_and_rollout_default_off (tests.alignment.test_alert_batch_assignment_ephemeral_guard.AlertBatchAssignmentEphemeralGuardTest.test_api_keeps_acceptance_non_final_and_rollout_default_off) ... ok
+test_capture_binds_same_candidate_and_keeps_later_gates_open (tests.alignment.test_alert_batch_assignment_ephemeral_guard.AlertBatchAssignmentEphemeralGuardTest.test_capture_binds_same_candidate_and_keeps_later_gates_open) ... ok
+test_execution_pipeline_preflights_authority_and_persists_dlq_barrier (tests.alignment.test_alert_batch_assignment_ephemeral_guard.AlertBatchAssignmentEphemeralGuardTest.test_execution_pipeline_preflights_authority_and_persists_dlq_barrier) ... ok
+test_owned_postgres_execution_g1_is_honest_about_clickhouse_boundary (tests.alignment.test_alert_batch_assignment_ephemeral_guard.AlertBatchAssignmentEphemeralGuardTest.test_owned_postgres_execution_g1_is_honest_about_clickhouse_boundary) ... ok
+test_postgres_integration_covers_selection_idempotency_and_atomicity (tests.alignment.test_alert_batch_assignment_ephemeral_guard.AlertBatchAssignmentEphemeralGuardTest.test_postgres_integration_covers_selection_idempotency_and_atomicity) ... ok
+test_runner_is_fixed_digest_loopback_tmpfs_and_identity_guarded (tests.alignment.test_alert_batch_assignment_ephemeral_guard.AlertBatchAssignmentEphemeralGuardTest.test_runner_is_fixed_digest_loopback_tmpfs_and_identity_guarded) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.002s
+
+OK

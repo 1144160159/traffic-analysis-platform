@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T07:35:00Z",
+  "updated_at": "2026-08-09T08:44:02Z",
   "latest_g0": {
-    "run_id": "20260809-remediation-g0-full-v222",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v222/manifest.json",
-    "manifest_sha256": "9404cd4a8d33b5baf0d13ed59bbc158fcbb55ea6750c4d3d523b6c9b971bdf99",
-    "candidate_source_sha256": "14c07054ba401e99193a0a6012d5ded5bf6e97411f9a08c6703b513e2592afd5",
+    "run_id": "20260809-remediation-g0-full-v226",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v226/manifest.json",
+    "manifest_sha256": "300cd4b697179eb065667f379d0ae8c882abbcfaac7f9f043086970251002e17",
+    "candidate_source_sha256": "4015c51e9b52cf9b9df24cd30c6dc2a4291ed2c590fa240aa917e1dc570fe2a3",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -21,17 +21,31 @@
     ]
   },
   "latest_g0_failed_predecessor": {
-    "run_id": "20260809-remediation-g0-full-v221",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v221/manifest.json",
-    "manifest_sha256": "d8f63c4de1fe32c8b0cfef75b0c08ace0b08f5271064ce9f0ee0d08365354805",
-    "candidate_source_sha256": "db8ec3117d5cb30549265491830535a6306f3346be8ec2f3c3a73ddbd1e3e463",
+    "run_id": "20260809-remediation-g0-full-v225",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v225/manifest.json",
+    "manifest_sha256": "bb58ecc0dd91d15dc8a8d711c822ab3789b45b87c9f1ad24a3623cafb6b14f97",
+    "candidate_source_sha256": "82c3f762c190a2e8211b28e3084c0d7ead9e1221972c2edcb91cc8c744f7e296",
     "status": "FAIL",
-    "failed_gate": "make alignment-test",
-    "failure": "the data-quality Kubernetes migration-runner negative test still matched the historical sequence ending at migration 32, so it did not mutate the current sequence ending at migrations 33 and 34 and incorrectly expected the verifier to fail",
-    "remediation": "update the negative test to mutate the complete current migration sequence without weakening the required-token verifier; rerun the 19 focused tests and all 433 alignment tests",
-    "earlier_failed_run_id": "20260809-remediation-g0-full-v214",
-    "earlier_failed_manifest_sha256": "51c7bdd265a27aef47be3b9b6220e2b1e4fe0f2ff7c471b7e2e353956b35b248",
-    "superseded_by_pass_run_id": "20260809-remediation-g0-full-v222"
+    "failed_gate": "tests/run_tests.sh full",
+    "failure": "the complete Go integration suite still expected 35 canonical Kafka topics and 25 JSON Schema topics after alert.assignment.events.v1 raised the catalog to 36 and 26",
+    "remediation": "update the exact catalog-count assertions without weakening topic completeness or schema-kind checks, then rerun all Go packages and the three independent G0 gates",
+    "earlier_failed_run_id": "20260809-remediation-g0-full-v224",
+    "earlier_failed_manifest_sha256": "204810ee1b18cd323e74aee981e0ce1ac501722ea90c9d77ed56db30febb2faf",
+    "earlier_failed_runs": [
+      {
+        "run_id": "20260809-remediation-g0-full-v224",
+        "manifest_sha256": "204810ee1b18cd323e74aee981e0ce1ac501722ea90c9d77ed56db30febb2faf",
+        "failed_gate": "make alignment-test",
+        "failure": "service identity catalog was stale after the additive alert-service pipeline bindings"
+      },
+      {
+        "run_id": "20260809-remediation-g0-full-v223",
+        "manifest_sha256": "e78af1b34647a45e1d333f21bfc42f143a6a0285d85978db181b10679c14b1d8",
+        "failed_gate": "make alignment-test",
+        "failure": "adapter risk catalog was stale after the durable terminal-status UI path changed"
+      }
+    ],
+    "superseded_by_pass_run_id": "20260809-remediation-g0-full-v226"
   },
   "latest_alert_batch_assignment_g1": {
     "canonical_ids": [
@@ -40,17 +54,17 @@
       "T-CONFIG-001",
       "T-SCHEMA-001"
     ],
-    "run_id": "20260809-remediation-alert-batch-assignment-g1-v1",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-g1-v1/manifest.json",
-    "manifest_sha256": "79cd4039466ef0cf13b6522a389a560a90979c7ee566fb170e909d29a14849a5",
-    "result": "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-g1-v1/owned-postgres-result.json",
-    "result_sha256": "2251c274bc602db8a4a56b64bc329b9b4c97a5ca0c8aa875febad0785205f8cd",
-    "candidate_source_sha256": "14c07054ba401e99193a0a6012d5ded5bf6e97411f9a08c6703b513e2592afd5",
+    "run_id": "20260809-remediation-alert-batch-assignment-execution-g1-v1",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v1/manifest.json",
+    "manifest_sha256": "e06396a4a88f8b6c858cd69e1fe3ae912da42d9dda8449dcf5e4dad4c701d21d",
+    "result": "doc/02_acceptance/runs/20260809-remediation-alert-batch-assignment-execution-g1-v1/owned-postgres-result.json",
+    "result_sha256": "477c7aac54ddef4ed2deb19e34a2d9c1d05cc6c17a583f24d09d7aa14c4f756e",
+    "candidate_source_sha256": "4015c51e9b52cf9b9df24cd30c6dc2a4291ed2c590fa240aa917e1dc570fe2a3",
     "status": "PARTIAL",
-    "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_FROZEN_ALERT_BATCH_ASSIGNMENT_G1",
+    "coverage_status": "PARTIAL_OWNED_REAL_POSTGRES_ASSIGNMENT_PIPELINE_WITH_FAKE_CLICKHOUSE_AUTHORITY_G1",
     "scoped_evidence_status": "PASS",
-    "g0_run_id": "20260809-remediation-g0-full-v222",
-    "g0_manifest_sha256": "9404cd4a8d33b5baf0d13ed59bbc158fcbb55ea6750c4d3d523b6c9b971bdf99",
+    "g0_run_id": "20260809-remediation-g0-full-v226",
+    "g0_manifest_sha256": "300cd4b697179eb065667f379d0ae8c882abbcfaac7f9f043086970251002e17",
     "candidate_source_stable": true,
     "production_applied": false,
     "server_side_selection_frozen_verified": true,
@@ -67,10 +81,20 @@
     "accepted_state_explicitly_non_final": true,
     "owned_postgres_tmpfs_verified": true,
     "owned_postgres_container_removed": true,
-    "independently_idempotent_consumer_verified": false,
+    "independently_idempotent_consumer_verified": true,
+    "assignee_permission_and_item_revision_rechecked": true,
+    "deterministic_projection_intents_and_receipts_persisted": true,
+    "terminal_batch_and_item_accounting_complete": true,
+    "terminal_status_query_verified": true,
+    "exact_kafka_redelivery_does_not_repeat_projection": true,
+    "dlq_ack_source_tuple_barrier_idempotent": true,
+    "real_kafka_verified": false,
+    "real_clickhouse_verified": false,
+    "real_opensearch_verified": false,
+    "compensation_verified": false,
     "gate_status": {
       "G0": "PASS",
-      "G1": "PASS_FOR_OWNED_SENTINEL_PROTECTED_POSTGRES_FROZEN_SELECTION_AND_ATOMIC_ACCEPTANCE",
+      "G1": "PASS_FOR_OWNED_SENTINEL_PROTECTED_POSTGRES_ACCEPTANCE_INDEPENDENT_CONSUMER_TERMINAL_RECEIPTS_AND_DLQ_BARRIER_WITH_FAKE_CLICKHOUSE_AUTHORITY",
       "G2": "OPEN_FOR_APPROVED_RELEASE_CANDIDATE_POSTGRES_KAFKA_CLICKHOUSE_AND_OPENSEARCH",
       "G3": "OPEN_FOR_APPROVED_BATCH_ITEM_OUTBOX_CONSUMER_PROJECTION_AND_AUDIT_RECONCILIATION",
       "G4": "OPEN_FOR_CONCURRENT_BATCH_RETRY_LOCK_OUTBOX_LAG_AND_PARTIAL_RESULT_BUDGET",
@@ -79,7 +103,7 @@
       "G7": "OPEN",
       "G8": "BLOCKED"
     },
-    "note": "The G0 v222-bound owned PostgreSQL G1 proves a tenant-bound expiring frozen selection, deterministic dedicated-secret bearer-token derivation with only its SHA-256 persisted, exact selection and assignment replay, changed-payload conflict, cross-tenant and expired-token rejection, single consumption, ordered item acceptance, and one serializable transaction across batch, items, histories, pending outbox, request receipt and audit. An injected audit failure rolls back every fact and selection consumption. The fixed-digest loopback PostgreSQL used tmpfs with no persistent volume and was removed after identity and sentinel verification. There is no independently idempotent consumer or final assignment effect; approved G2-G6, performance, Windows Chrome, compensation and observation remain open."
+    "note": "The G0 v226-bound owned PostgreSQL G1 keeps the frozen-selection and atomic-acceptance facts and adds a strict requested/changed lifecycle consumer, canonical outbox-payload authority, assignee permission and alert revision rechecks, deterministic per-item projection intents, terminal receipts/accounting/query results, exact inbox replay and a PostgreSQL source-tuple plus audit barrier after canonical DLQ acknowledgement. ClickHouse is a fake authority in this owned G1; no real Kafka, ClickHouse or OpenSearch service was used, production_applied remains false, compensation and approved G2-G6 remain open, and F-ALERT-004 remains IMPLEMENTING."
   },
   "latest_alert_response_executor_g1": {
     "canonical_ids": [
