@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T05:55:46Z",
+  "updated_at": "2026-08-09T06:45:00Z",
   "latest_g0": {
-    "run_id": "20260809-remediation-g0-full-v219",
-    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v219/manifest.json",
-    "manifest_sha256": "61eca22a1b5dfa4a3bb0da4c731709cbb6f26d5b43d6253d2787f90507b436f9",
-    "candidate_source_sha256": "7259275ef2765937146128c0b1bb6cdd61ada8d196b7625d87fb09333550ebf8",
+    "run_id": "20260809-remediation-g0-full-v220",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-g0-full-v220/manifest.json",
+    "manifest_sha256": "242ba467500956ddffb735cb0ab60370aa25d2a6ed33c425258e1dbb39516ecc",
+    "candidate_source_sha256": "a0919bcb27a4afd68daeb1fea98c8a2a33976d1da374750b77a71c34b7b303b1",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -100,6 +100,54 @@
       "G8": "BLOCKED"
     },
     "note": "The G0-bound owned G1 slice proves independent approval, stable provider idempotency, durable receipt validation, exact-identity authority recovery, fail-closed unknown effects, atomic PostgreSQL receipt/action/audit persistence, bounded periodic execution authority reconciliation, and a durable compensation queue whose inverse call is never blindly repeated after an ambiguous transport result. A fixed-digest owned single-broker Redpanda first executes one independently approved valid event through the production consumer and loopback provider exactly once, reconciling the same trace across PostgreSQL receipt, action, audit and provider command at offset zero. It then proves invalid-DLQ retention for the following poison event at offset one, same-group redelivery, canonical dlq.v1 and PostgreSQL source-tuple receipt/audit before the group converges to offset two with zero lag. It does not prove an approved replicated Kafka or provider ledger, approved candidate services, performance, Windows Chrome or G2-G6."
+  },
+  "latest_alert_evidence_g1": {
+    "canonical_ids": [
+      "F-ALERT-005",
+      "T-PG-002",
+      "T-MINIO-004",
+      "T-CONFIG-001",
+      "T-SCHEMA-001"
+    ],
+    "run_id": "20260809-remediation-alert-evidence-g1-v1",
+    "manifest": "doc/02_acceptance/runs/20260809-remediation-alert-evidence-g1-v1/manifest.json",
+    "manifest_sha256": "a83d1205242faa9605b9c8991ab43cb63f431565ec15da8f55e9d27883697254",
+    "result": "doc/02_acceptance/runs/20260809-remediation-alert-evidence-g1-v1/owned-postgres-minio-result.json",
+    "result_sha256": "3391f177d850199dd021442a763c8a18c4df510beca03c9bb201e7fb0135ca9a",
+    "candidate_source_sha256": "a0919bcb27a4afd68daeb1fea98c8a2a33976d1da374750b77a71c34b7b303b1",
+    "status": "PARTIAL",
+    "coverage_status": "OWNED_REAL_POSTGRES_MINIO_ALERT_EVIDENCE_MANIFEST_INTEGRITY_G1",
+    "scoped_evidence_status": "PASS",
+    "g0_run_id": "20260809-remediation-g0-full-v220",
+    "g0_manifest_sha256": "242ba467500956ddffb735cb0ab60370aa25d2a6ed33c425258e1dbb39516ecc",
+    "candidate_source_stable": true,
+    "production_applied": false,
+    "postgres_manifest_schema_verified": true,
+    "tenant_isolation_verified": true,
+    "monotonic_revision_verified": true,
+    "immutable_object_identity_verified": true,
+    "append_only_manifest_history_verified": true,
+    "minio_version_identity_verified": true,
+    "minio_sha256_match_verified": true,
+    "minio_sha256_mismatch_rejected": true,
+    "strict_manifest_fail_closed_verified": true,
+    "strict_audit_admission_verified": true,
+    "dedicated_download_secret_verified": true,
+    "owned_postgres_minio_tmpfs_verified": true,
+    "owned_postgres_minio_containers_removed": true,
+    "real_alert_evidence_linked_consumer_verified": false,
+    "gate_status": {
+      "G0": "PASS",
+      "G1": "PASS_FOR_OWNED_SENTINEL_PROTECTED_POSTGRES_MANIFEST_AND_VERSIONED_MINIO_INTEGRITY",
+      "G2": "OPEN_FOR_APPROVED_RELEASE_CANDIDATE_POSTGRES_CLICKHOUSE_OPENSEARCH_AND_MINIO",
+      "G3": "OPEN_FOR_APPROVED_EVENT_MANIFEST_OBJECT_PROJECTION_AND_AUDIT_RECONCILIATION",
+      "G4": "OPEN_FOR_EVIDENCE_LOOKUP_DOWNLOAD_AND_PARTIAL_SOURCE_PERFORMANCE_BUDGET",
+      "G5": "OPEN_FOR_CURRENT_CANDIDATE_WINDOWS_CHROME_MOCK_OFF_MISSING_EXPIRED_AND_INTEGRITY_STATES",
+      "G6": "HOLD_FOR_EXPAND_SHADOW_CANARY_ROLLBACK_AND_OBSERVATION",
+      "G7": "OPEN",
+      "G8": "BLOCKED"
+    },
+    "note": "The G0 v220-bound owned PostgreSQL and MinIO G1 proves tenant-bound manifests, monotonic revision, immutable object identity, append-only history, versioned object identity, exact SHA-256 acceptance and changed-digest rejection. Strict access fails closed on missing, expired, cross-tenant or inconsistent facts, binds the grant to manifest revision and object digest, requires a dedicated download secret and durable audit admission, and remains default-off. Both fixed-digest loopback containers used tmpfs with no persistent volume and were removed after identity and sentinel verification. An independently idempotent AlertEvidenceLinked consumer, approved same-trace PG/CH/OS/MinIO reconciliation, performance, Windows Chrome, canary, rollback and observation remain open."
   },
   "latest_alert_saved_view_g1": {
     "canonical_ids": [

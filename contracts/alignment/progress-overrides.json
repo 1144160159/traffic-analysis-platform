@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T05:55:46Z",
+  "updated_at": "2026-08-09T06:45:00Z",
   "overrides": {
     "F-COMMON-001": {
       "status": "IMPLEMENTING",
@@ -785,6 +785,35 @@
       ],
       "blocker": "当前已完成默认关闭的告警响应外部执行器、告警域PostgreSQL DLQ收据/审计屏障、unknown effect周期权威复核、外部补偿执行器以及自有单broker Redpanda source-offset precommit G1；批准的多副本Kafka/source offset故障复证、批准provider ledger、同trace跨服务对账、批准性能/故障恢复、候选部署、Windows Chrome、canary、回滚和T+0/T+1/T+3/T+7观察仍未完成；因此不得进入VERIFYING或CLOSED。",
       "note": "G0 v218三道门分别PASS并绑定源码SHA 50c0e124119548fcfdfc485eb2e024a5940bff4ce4fe97ab81f885abdec1cdcf。G1告警响应专项十三项检查全部PASS：除unknown effect有界权威复核和补偿仅查询恢复外，固定摘要自有Redpanda/PG先以生产consumer处理offset 0有效事件，loopback provider恰好产生一次副作用，PG receipt/action/audit与provider command使用同一trace；随后错误DLQ目标使offset 1毒消息不提交且receipt=0，同组切换canonical dlq.v1后重投，PG source tuple receipt与quarantine audit各1，group current/log-end=2且lag=0。自有PG、Redpanda与loopback provider容器均身份核验并删除。该单broker运行不是批准Kafka、G2或HA证据；所有开关默认关闭，production_applied=false，F-ALERT-003保持IMPLEMENTING。"
+    },
+    "F-ALERT-005": {
+      "status": "IMPLEMENTING",
+      "evidence": [
+        "contracts/alignment/features/F-ALERT-005.json",
+        "contracts/openapi/alignment-v1.openapi.json",
+        "contracts/configuration/configuration-catalog.v1.json",
+        "go/control-plane/internal/alert/api/alert_evidence_manifest.go",
+        "go/control-plane/internal/alert/api/alert_evidence_manifest_test.go",
+        "go/control-plane/internal/alert/api/alert_evidence_manifest_postgres_integration_test.go",
+        "go/control-plane/internal/alert/api/alert_evidence_minio_integration_test.go",
+        "go/control-plane/internal/alert/api/handler_alert_evidence_access.go",
+        "go/control-plane/internal/alert/api/handler_alert_evidence_access_test.go",
+        "go/control-plane/internal/alert/api/handler.go",
+        "go/control-plane/cmd/alert-service/main.go",
+        "deployments/postgres/migrations/202608091700_alert_evidence_manifest_v1.sql",
+        "common/sql/pg/18-alert-evidence-manifest-v1.sql",
+        "deployments/kubernetes/applications/go-services.yaml",
+        "go/control-plane/deployments/kubernetes/alert-service.yaml",
+        "scripts/alignment/verify_alert_evidence_ephemeral.py",
+        "scripts/alignment/capture_alert_evidence.py",
+        "tests/alignment/test_alert_evidence_ephemeral_guard.py",
+        "doc/07_alignment/runbooks/F-ALERT-005-rollback.md",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v220/manifest.json#sha256=242ba467500956ddffb735cb0ab60370aa25d2a6ed33c425258e1dbb39516ecc",
+        "doc/02_acceptance/runs/20260809-remediation-alert-evidence-g1-v1/manifest.json#sha256=a83d1205242faa9605b9c8991ab43cb63f431565ec15da8f55e9d27883697254",
+        "doc/02_acceptance/runs/20260809-remediation-alert-evidence-g1-v1/owned-postgres-minio-result.json#sha256=3391f177d850199dd021442a763c8a18c4df510beca03c9bb201e7fb0135ca9a"
+      ],
+      "blocker": "自有固定摘要PostgreSQL/MinIO G1已覆盖manifest租户隔离、单调revision、对象身份不可变、append-only历史、MinIO version与SHA-256匹配及篡改拒绝；但尚无独立幂等AlertEvidenceLinked consumer。批准候选PG/CH/OS/MinIO同tenant、trace、event、revision、snapshot、watermark与审计的G2/G3对账、查询/下载性能和部分源故障、指定Windows Chrome缺失/过期/完整性失败态、canary、回滚及T+0/T+1/T+3/T+7观察均未完成；不得进入VERIFYING或CLOSED。",
+      "note": "G0 v220三道门分别PASS并绑定源码SHA a0919bcb27a4afd68daeb1fea98c8a2a33976d1da374750b77a71c34b7b303b1。严格模式按PG manifest与ClickHouse evidence identity对账，缺失、过期、跨租户、对象版本或摘要不一致均失败关闭；访问签名绑定tenant/alert/evidence/expiry/manifest revision/object SHA256，下载前要求独立secret和耐久审计准入。真实tmpfs PG/MinIO验证所有manifest与对象完整性事实，容器经ID、镜像和哨兵核验后删除且无持久卷。开关默认关闭，production_applied=false，因此F-ALERT-005仅从OPEN提升为IMPLEMENTING。"
     },
     "F-ALERT-006": {
       "status": "IMPLEMENTING",

@@ -5,7 +5,7 @@
     "contracts/alignment/work-packages.json",
     "contracts/alignment/progress-overrides.json"
   ],
-  "as_of": "2026-08-09T05:55:46Z",
+  "as_of": "2026-08-09T06:45:00Z",
   "g7_status": "OPEN",
   "g8_status": "BLOCKED",
   "g8_blockers": [
@@ -19,9 +19,9 @@
     "total": 102,
     "by_status": {
       "BLOCKED": 3,
-      "IMPLEMENTING": 39,
+      "IMPLEMENTING": 40,
       "OBSERVING": 1,
-      "OPEN": 33,
+      "OPEN": 32,
       "VERIFYING": 26
     }
   },
@@ -365,10 +365,33 @@
       "work_package": "WP-07-ALERT",
       "planned_wave": "W3",
       "owner": "alert-domain-owner",
-      "status": "OPEN",
-      "evidence": [],
-      "blocker": null,
-      "note": ""
+      "status": "IMPLEMENTING",
+      "evidence": [
+        "contracts/alignment/features/F-ALERT-005.json",
+        "contracts/openapi/alignment-v1.openapi.json",
+        "contracts/configuration/configuration-catalog.v1.json",
+        "go/control-plane/internal/alert/api/alert_evidence_manifest.go",
+        "go/control-plane/internal/alert/api/alert_evidence_manifest_test.go",
+        "go/control-plane/internal/alert/api/alert_evidence_manifest_postgres_integration_test.go",
+        "go/control-plane/internal/alert/api/alert_evidence_minio_integration_test.go",
+        "go/control-plane/internal/alert/api/handler_alert_evidence_access.go",
+        "go/control-plane/internal/alert/api/handler_alert_evidence_access_test.go",
+        "go/control-plane/internal/alert/api/handler.go",
+        "go/control-plane/cmd/alert-service/main.go",
+        "deployments/postgres/migrations/202608091700_alert_evidence_manifest_v1.sql",
+        "common/sql/pg/18-alert-evidence-manifest-v1.sql",
+        "deployments/kubernetes/applications/go-services.yaml",
+        "go/control-plane/deployments/kubernetes/alert-service.yaml",
+        "scripts/alignment/verify_alert_evidence_ephemeral.py",
+        "scripts/alignment/capture_alert_evidence.py",
+        "tests/alignment/test_alert_evidence_ephemeral_guard.py",
+        "doc/07_alignment/runbooks/F-ALERT-005-rollback.md",
+        "doc/02_acceptance/runs/20260809-remediation-g0-full-v220/manifest.json#sha256=242ba467500956ddffb735cb0ab60370aa25d2a6ed33c425258e1dbb39516ecc",
+        "doc/02_acceptance/runs/20260809-remediation-alert-evidence-g1-v1/manifest.json#sha256=a83d1205242faa9605b9c8991ab43cb63f431565ec15da8f55e9d27883697254",
+        "doc/02_acceptance/runs/20260809-remediation-alert-evidence-g1-v1/owned-postgres-minio-result.json#sha256=3391f177d850199dd021442a763c8a18c4df510beca03c9bb201e7fb0135ca9a"
+      ],
+      "blocker": "自有固定摘要PostgreSQL/MinIO G1已覆盖manifest租户隔离、单调revision、对象身份不可变、append-only历史、MinIO version与SHA-256匹配及篡改拒绝；但尚无独立幂等AlertEvidenceLinked consumer。批准候选PG/CH/OS/MinIO同tenant、trace、event、revision、snapshot、watermark与审计的G2/G3对账、查询/下载性能和部分源故障、指定Windows Chrome缺失/过期/完整性失败态、canary、回滚及T+0/T+1/T+3/T+7观察均未完成；不得进入VERIFYING或CLOSED。",
+      "note": "G0 v220三道门分别PASS并绑定源码SHA a0919bcb27a4afd68daeb1fea98c8a2a33976d1da374750b77a71c34b7b303b1。严格模式按PG manifest与ClickHouse evidence identity对账，缺失、过期、跨租户、对象版本或摘要不一致均失败关闭；访问签名绑定tenant/alert/evidence/expiry/manifest revision/object SHA256，下载前要求独立secret和耐久审计准入。真实tmpfs PG/MinIO验证所有manifest与对象完整性事实，容器经ID、镜像和哨兵核验后删除且无持久卷。开关默认关闭，production_applied=false，因此F-ALERT-005仅从OPEN提升为IMPLEMENTING。"
     },
     {
       "id": "F-ALERT-006",
