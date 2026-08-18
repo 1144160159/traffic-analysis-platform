@@ -50,9 +50,11 @@ data:
 
     for entry in \
           "traffic-alert-service:KAFKA_ALERT_SERVICE_PASSWORD" \
+          "traffic-analysis-service:KAFKA_ANALYSIS_SERVICE_PASSWORD" \
           "traffic-asset-service:KAFKA_ASSET_SERVICE_PASSWORD" \
           "traffic-audit-materializer:KAFKA_AUDIT_MATERIALIZER_PASSWORD" \
           "traffic-auth-service:KAFKA_AUTH_SERVICE_PASSWORD" \
+          "traffic-device-log-collector:KAFKA_DEVICE_LOG_COLLECTOR_PASSWORD" \
           "traffic-flink-alert-generator:KAFKA_FLINK_ALERT_GENERATOR_JOB_PASSWORD" \
           "traffic-flink-behavior:KAFKA_FLINK_BEHAVIOR_JOB_PASSWORD" \
           "traffic-flink-cep:KAFKA_FLINK_CEP_JOB_PASSWORD" \

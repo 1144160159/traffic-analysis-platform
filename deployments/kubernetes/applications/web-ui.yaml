@@ -16,9 +16,9 @@ metadata:
   name: web-ui
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "F-DASHBOARD-001 truthful audit and compliance deficit metrics on the unified snapshot"
-    traffic.analysis/source-sha256: "56a48b6ac667b9b6eaa8cc2107de7a881d3982b4e48f20314a1cc4c09e4eaa5d"
-    traffic.analysis/image-manifest-digest: "sha256:416fbee917aec634b319b22a20d1f69bed0dbe210c16626a253b1b5cba33f74e"
+    kubernetes.io/change-cause: "P2 manual-selection wizard: save draft -> maker/checker approve -> trigger (AUTO_DEFAULT/MANUAL_CUSTOM contract)"
+    traffic.analysis/source-sha256: "f6072c454"
+    traffic.analysis/image-manifest-digest: "sha256:55623f10d5df2cad5a5378f19d1193f2571d27d04b23e0740c2a0ce7a9d04801"
 spec:
   replicas: 1
   selector: {matchLabels: {app: web-ui}}
@@ -26,11 +26,11 @@ spec:
     metadata:
       labels: {app: web-ui}
       annotations:
-        traffic.analysis/build-id: "remediation-ui-56a48b6ac667"
-        traffic.analysis/release: "frontend-remediation-20260805"
-        traffic.analysis/source-sha256: "56a48b6ac667b9b6eaa8cc2107de7a881d3982b4e48f20314a1cc4c09e4eaa5d"
-        traffic.analysis/image-manifest-digest: "sha256:416fbee917aec634b319b22a20d1f69bed0dbe210c16626a253b1b5cba33f74e"
-        traffic.analysis/image-id: "sha256:9391e229b521ece4fc7e826cdfd2faa7c30d8fe2a4b550059999602022169e70"
+        traffic.analysis/build-id: "p2-manual-train-f6072c454"
+        traffic.analysis/release: "analysis-p2-manual-train-20260816"
+        traffic.analysis/source-sha256: "f6072c454"
+        traffic.analysis/image-manifest-digest: "sha256:55623f10d5df2cad5a5378f19d1193f2571d27d04b23e0740c2a0ce7a9d04801"
+        traffic.analysis/image-id: "sha256:55623f10d5df2cad5a5378f19d1193f2571d27d04b23e0740c2a0ce7a9d04801"
         traffic.analysis/identity-prerequisite: "service-account-v1"
     spec:
       serviceAccountName: web-ui
@@ -38,7 +38,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: web-ui
-        image: docker.io/traffic/web-ui:remediation-ui-56a48b6ac667
+        image: docker.io/traffic/web-ui:loginfix-20260818
         imagePullPolicy: Never
         ports: [{containerPort: 80}]
         lifecycle:
@@ -56,6 +56,7 @@ spec:
         - {name: AUTH_ENABLED, value: "true"}
         - {name: USE_MOCK, value: "false"}
         - {name: ALERT_DETAIL_API_ENABLED, value: "true"}
+        - {name: ALERT_SEARCH_CURSOR_V1_ENABLED, value: "false"}
         - {name: ASSET_DETAIL_SNAPSHOT_V1_ENABLED, value: "false"}
         - {name: ASSET_GOVERNANCE_V1_ENABLED, value: "false"}
         - {name: SCREEN_ACCESS_MODE, value: "protected"}

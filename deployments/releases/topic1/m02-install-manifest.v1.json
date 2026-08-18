@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "M02_DELIVERY_ARTIFACT",
+  "artifact_role": "install-manifest",
+  "package_id": "m02-delivery-pending-candidate",
+  "body": {
+    "steps": [
+      {"order": 1, "action": "verify immutable candidate image and config digests", "failure_action": "BLOCK"},
+      {"order": 2, "action": "apply schemas topics ACLs and consumers with producers disabled", "failure_action": "ROLLBACK"},
+      {"order": 3, "action": "record candidate-bound consumer readiness receipts", "failure_action": "ROLLBACK"}
+    ],
+    "rollback_plan_path": "deployments/releases/topic1/m02-rollback-plan.v1.json",
+    "preserve_durable_data": true
+  }
+}

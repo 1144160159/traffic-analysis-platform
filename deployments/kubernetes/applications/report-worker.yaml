@@ -1,0 +1,64 @@
+---
+# 人读报告 worker(§10.3/G05):consumes analysis.report.requests.v1 →
+# 冻结机器摘要(经 analysis-service API,零 PG 凭证)→ 确定性 HTML → MinIO →
+# ApplyWorkerReceipt(VERIFYING)→ VerifyAndConfirm(AVAILABLE)。失败不回退 Run。
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: report-worker
+  namespace: traffic-analysis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: report-worker
+  namespace: traffic-analysis
+  labels: {app: report-worker}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: report-worker}
+  template:
+    metadata:
+      labels: {app: report-worker}
+    spec:
+      serviceAccountName: report-worker
+      containers:
+      - name: report-worker
+        image: docker.io/traffic/report-worker:20260817v3
+        imagePullPolicy: Never
+        env:
+        - name: KAFKA_BROKERS
+          value: kafka-bootstrap.middleware.svc:9092
+        - name: KAFKA_SECURITY_PROTOCOL
+          value: SASL_SSL
+        - name: KAFKA_SASL_MECHANISM
+          value: SCRAM-SHA-512
+        - name: KAFKA_SASL_USERNAME
+          valueFrom:
+            secretKeyRef: {name: kafka-report-worker-credentials, key: username}
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom:
+            secretKeyRef: {name: kafka-report-worker-credentials, key: password}
+        - name: KAFKA_TLS_CA_FILE
+          value: /etc/kafka/tls/ca.crt
+        - name: ANALYSIS_SERVICE_URL
+          value: http://analysis-service.traffic-analysis.svc:8090
+        - name: MINIO_ENDPOINT
+          value: minio.minio.svc:9000
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef: {name: minio-report-worker-credentials, key: accesskey}
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef: {name: minio-report-worker-credentials, key: secretkey}
+        - name: REPORT_BUCKET
+          value: analysis-reports
+        resources:
+          requests: {cpu: "100m", memory: "128Mi"}
+          limits: {cpu: "500m", memory: "512Mi"}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls, optional: false}

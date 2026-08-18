@@ -1,0 +1,55 @@
+# 审计物化器:Kafka audit.logs -> PostgreSQL audit_logs
+# 权限体系方案 ADR-5 审计闭环:规则/模型等高风险操作的拒绝与成功审计事件
+# 经 audit.logs 主题物化到审计表,供 /api/v1/audit/logs 审计页查询(销 SUB-FS-12)。
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: audit-materializer, namespace: traffic-analysis, labels: {app: audit-materializer}}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: audit-materializer}}
+  template:
+    metadata: {labels: {app: audit-materializer}}
+    spec:
+      serviceAccountName: audit-materializer
+      automountServiceAccountToken: false
+      containers:
+      - name: audit-materializer
+        securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
+        image: docker.io/traffic/audit-materializer:20260818v2
+        imagePullPolicy: Never
+        ports: [{containerPort: 8090}]
+        env:
+        - {name: HTTP_LISTEN_ADDR, value: ":8090"}
+        - {name: LOG_LEVEL, value: "info"}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-audit-materializer-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-audit-materializer-credentials, key: password}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: AUDIT_TOPIC, value: "audit.logs"}
+        - {name: AUDIT_CONSUMER_GROUP, value: "audit-consumer"}
+        - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: POSTGRES_PORT, value: "5432"}
+        - {name: POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: POSTGRES_USERNAME, value: "postgres"}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        livenessProbe:  {httpGet: {path: /health, port: 8090}, initialDelaySeconds: 10, periodSeconds: 15}
+        readinessProbe: {httpGet: {path: /readyz, port: 8090}, initialDelaySeconds: 5, periodSeconds: 10}
+        resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {cpu: 300m, memory: 256Mi}}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: audit-materializer, namespace: traffic-analysis}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: audit-materializer, namespace: traffic-analysis, labels: {app: audit-materializer}}
+spec:
+  selector: {app: audit-materializer}
+  ports: [{name: http, port: 8090, targetPort: 8090}]

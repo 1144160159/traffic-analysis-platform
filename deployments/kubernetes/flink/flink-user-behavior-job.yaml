@@ -1,0 +1,93 @@
+---
+# M06-N007 consumer-first submission. It uses an isolated group and publishes
+# only canonical DLQ and source-quality receipts; alert/ClickHouse projections
+# remain disabled until candidate reconciliation is approved.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-user-behavior-m06-consumer-ready-49258bdc
+  namespace: flink
+  labels:
+    app: flink-user-behavior-job
+    traffic.analysis/milestone: m06
+    traffic.analysis/rollout-mode: consumer-ready
+  annotations:
+    traffic.analysis/candidate-sha256: "49258bdc8e4391d8aa7488669e54b5b4fa0394b06d8ac67dccd8217932ffdc0d"
+    traffic.analysis/candidate-kind: "source-tree-sha256"
+    # production-applied is updated by the release/rollout process only.
+    # Repository default is "false"; flip to "true" after live apply +
+    # reconciliation evidence, never by hand-editing this field speculatively.
+    traffic.analysis/production-applied: "false"
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: flink-user-behavior-job
+        traffic.analysis/rollout-mode: consumer-ready
+    spec:
+      serviceAccountName: flink-user-behavior-job
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: flink-user-behavior-job
+        image: traffic/flink-user-behavior-job:m06-consumer-ready-49258bdc
+        imagePullPolicy: IfNotPresent
+        env:
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_INPUT_TOPIC, value: "user.events.v1"}
+        - {name: KAFKA_OUTPUT_TOPIC, value: "alerts.v1"}
+        - {name: KAFKA_DLQ_TOPIC, value: "dlq.v1"}
+        - {name: KAFKA_AUDIT_TOPIC, value: "audit.logs"}
+        - {name: KAFKA_GROUP_ID, value: "flink-user-behavior-job-shadow-49258bdc8e43"}
+        - {name: KAFKA_DLQ_TRANSACTIONAL_ID_PREFIX, value: "flink-user-behavior-dlq-v1-49258bdc8e43"}
+        - {name: KAFKA_QUALITY_TRANSACTIONAL_ID_PREFIX, value: "flink-user-behavior-quality-v1-49258bdc8e43"}
+        - {name: BASELINE_LIFECYCLE_ENABLED, value: "false"}
+        - {name: KAFKA_BASELINE_LIFECYCLE_TOPIC, value: "baseline.lifecycle.v1"}
+        - {name: KAFKA_BASELINE_LIFECYCLE_GROUP, value: "flink-user-behavior-baseline-v1"}
+        - {name: KAFKA_BASELINE_ACK_TOPIC, value: "baseline.activation-acks.v1"}
+        - {name: BASELINE_CONSUMER_ID, value: "flink-user-behavior-job"}
+        - {name: KAFKA_BASELINE_ACK_TRANSACTIONAL_ID_PREFIX, value: "flink-user-behavior-baseline-ack-v1-49258bdc8e43"}
+        - {name: KAFKA_TRANSACTION_TIMEOUT_MS, value: "900000"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - name: KAFKA_SASL_USERNAME
+          valueFrom: {secretKeyRef: {name: kafka-flink-user-behavior-job-credentials, key: username}}
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom: {secretKeyRef: {name: kafka-flink-user-behavior-job-credentials, key: password}}
+        - {name: KAFKA_SSL_TRUSTSTORE_LOCATION, value: "/etc/kafka/tls/kafka.truststore.p12"}
+        - {name: KAFKA_SSL_TRUSTSTORE_TYPE, value: "PKCS12"}
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        - {name: DEPLOYMENT_ACTIVATION_MODE, value: "shadow"}
+        - {name: DEPLOYMENT_CANDIDATE_SHA256, value: "49258bdc8e4391d8aa7488669e54b5b4fa0394b06d8ac67dccd8217932ffdc0d"}
+        - {name: PROJECTION_WRITES_ENABLED, value: "false"}
+        - {name: SOURCE_FACT_WRITES_ENABLED, value: "false"}
+        - {name: CLICKHOUSE_SOURCE_FACT_TABLE, value: "traffic.source_user_behavior_facts_v1"}
+        - {name: CHECKPOINT_PATH, value: "s3://flink-checkpoints/checkpoints/user-behavior-job/m06-49258bdc8e43"}
+        - {name: CHECKPOINT_INTERVAL_MS, value: "60000"}
+        - {name: CHECKPOINT_TIMEOUT_MS, value: "600000"}
+        - {name: WATERMARK_MAX_OUT_OF_ORDERNESS_SECONDS, value: "30"}
+        - {name: WATERMARK_ALLOWED_LATENESS_SECONDS, value: "120"}
+        - {name: WATERMARK_IDLENESS_MS, value: "60000"}
+        - {name: EVENT_MAX_FUTURE_SKEW_MS, value: "300000"}
+        - {name: PARALLELISM, value: "2"}
+        resources:
+          requests: {cpu: "1", memory: "1Gi"}
+          limits: {cpu: "2", memory: "2Gi"}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: flink-log, mountPath: /opt/flink/log}
+        - {name: tmp, mountPath: /tmp}
+      volumes:
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls, optional: false}
+      - {name: flink-log, emptyDir: {}}
+      - {name: tmp, emptyDir: {}}

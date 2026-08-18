@@ -1,0 +1,167 @@
+apiVersion: traffic.analysis.local/v1
+kind: SiteValues
+metadata:
+  name: traffic-analysis-site
+  contractVersion: 1
+
+global:
+  namespaces:
+    - traffic-analysis
+    - gateway
+    - middleware
+    - databases
+    - flink
+    - minio
+    - observability
+    - argo
+    - argo-events
+    - iam
+    - nacos
+    - streampark
+  imagePolicy:
+    requireDigestPinned: true
+    forbidLatestTag: true
+  releasePackage:
+    requiredPaths:
+      - deployments/kubernetes
+      - common/kafka
+      - common/sql
+      - proto/traffic/v1
+      - rules
+      - mlops/workflows
+      - tests/e2e
+      - tests/chaos
+      - web/ui/src/routes
+
+site:
+  siteId: site-cn-lab-01
+  cluster:
+    kubernetesVersion: ">=1.29"
+    minNodes: 2
+    cniProvider: flannel
+    storageClass: local-hdd
+  storage:
+    clickhouse: /home/data/clickhouse
+    kafka: /home/data/kafka
+    postgres: /home/data/postgres
+    redis: /home/data/redis
+    minio: /home/data/minio
+    flinkState: /home/k8s-data/flink
+    flinkCheckpoints: s3://flink-checkpoints/checkpoints
+    flinkSavepoints: s3://flink-checkpoints/savepoints
+  network:
+    clusterDomain: cluster.local
+    ports:
+      apisixHttp: 9080
+      apisixNodePort: 30180
+      kafkaBootstrap: 9092
+      clickhouseHttp: 8123
+      clickhouseNative: 9000
+      postgres: 5432
+      redis: 6379
+      redisSentinel: 26379
+      minioApi: 9000
+      keycloakHttps: 8443
+    caBundleSecretRef:
+      namespace: traffic-analysis
+      name: traffic-platform-ca
+      key: ca.crt
+  retention:
+    kafkaDefaultHours: 168
+    auditDays: 365
+    evidenceDays: 365
+    objectDays: 90
+  quota:
+    cpuCores: 64
+    memoryGi: 256
+    storageGi: 4096
+    ingressMbps: 100000
+  externalDependencies:
+    - id: kafka
+      dns: kafka-bootstrap.middleware.svc.cluster.local
+      port: 9092
+      tls: true
+      caSecretRef: {namespace: middleware, name: kafka-client-tls, key: ca.crt}
+    - id: clickhouse
+      dns: clickhouse-replica.middleware.svc.cluster.local
+      port: 8123
+      tls: false
+      caSecretRef: null
+    - id: postgres
+      dns: postgres-primary.databases.svc.cluster.local
+      port: 5432
+      tls: true
+      caSecretRef: {namespace: databases, name: postgres-client-tls, key: ca.crt}
+    - id: redis
+      dns: redis-master.databases.svc.cluster.local
+      port: 6379
+      tls: false
+      caSecretRef: null
+    - id: minio
+      dns: minio.minio.svc.cluster.local
+      port: 9000
+      tls: true
+      caSecretRef: {namespace: minio, name: minio-client-tls, key: ca.crt}
+    - id: opensearch
+      dns: opensearch.middleware.svc.cluster.local
+      port: 9200
+      tls: true
+      caSecretRef: {namespace: traffic-analysis, name: opensearch-client-tls, key: ca.crt}
+    - id: nebula
+      dns: nebula-graph.middleware.svc.cluster.local
+      port: 9669
+      tls: false
+      caSecretRef: null
+    - id: keycloak
+      dns: keycloak.iam.svc.cluster.local
+      port: 8443
+      tls: true
+      caSecretRef: {namespace: iam, name: keycloak-tls, key: tls.crt}
+
+tenants:
+  - tenantId: tenant-site-cn-lab-01
+    namespace: traffic-analysis
+    retention:
+      evidenceDays: 365
+      objectDays: 90
+    quota:
+      maxProbes: 1024
+      maxConcurrentExports: 8
+      maxStorageGi: 2048
+    secretRefNames:
+      - application-credentials
+      - kafka-alert-service
+      - minio-application
+
+secretRefs:
+  strategy: ExternalSecret
+  required:
+    - refName: application-credentials
+      namespace: traffic-analysis
+      name: traffic-credentials
+      keys: [PG_PASSWORD, POSTGRES_DSN, CLICKHOUSE_PASSWORD, REDIS_PASSWORD, JWT_SECRET, OIDC_CLIENT_SECRET]
+    - refName: kafka-alert-service
+      namespace: traffic-analysis
+      name: kafka-alert-service-credentials
+      keys: [username, password]
+    - refName: kafka-client-tls
+      namespace: middleware
+      name: kafka-client-tls
+      keys: [kafka.truststore.p12, ca.crt]
+    - refName: minio-application
+      namespace: traffic-analysis
+      name: minio-alert-service-credentials
+      keys: [accesskey, secretkey]
+    - refName: site-ca
+      namespace: traffic-analysis
+      name: traffic-platform-ca
+      keys: [ca.crt]
+    - refName: gateway-oidc-ca
+      namespace: gateway
+      name: traffic-platform-ca
+      keys: [ca.crt]
+
+verification:
+  rejectUnknownFields: true
+  rejectPlaintextSecrets: true
+  rejectDefaultTenant: true

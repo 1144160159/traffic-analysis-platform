@@ -1,0 +1,143 @@
+{
+  "allowed_claims": [
+    "The proposed M09 database and Kafka artifacts were inventoried with exact hashes",
+    "The N005 apply authorization was deterministically evaluated and failed closed"
+  ],
+  "apply_allowed": false,
+  "artifact_kind": "M10_APPROVED_ADDITIVE_CHANGE_PLAN",
+  "artifacts": [
+    {
+      "apply_order": 1,
+      "approval_status": "PENDING_CURRENT_CANDIDATE_RECEIPTS",
+      "destructive_findings": [
+        "DROP_STATEMENT"
+      ],
+      "exists": true,
+      "kind": "postgres_migration",
+      "path": "deployments/postgres/migrations/202608160030_m09_alert_evidence_links_v1.sql",
+      "responsible_milestone": "T1-M09-N012",
+      "safety_class": "NON_ADDITIVE_BLOCKED",
+      "sha256": "5605e84b1fb44b5d351c57fc419d8fafa44ea6c441458013619e48e4259eff98"
+    },
+    {
+      "apply_order": 2,
+      "approval_status": "PENDING_CURRENT_CANDIDATE_RECEIPTS",
+      "destructive_findings": [],
+      "exists": true,
+      "kind": "clickhouse_migration",
+      "path": "deployments/clickhouse/migrations/202608160040_m09_alert_evidence_link_projection_v1.sql",
+      "responsible_milestone": "T1-M09-N012",
+      "safety_class": "ADDITIVE_STATIC",
+      "sha256": "045ef04a14f32886175785d8f58a3c9d87d19b7f4cac1f4775010f522d113702"
+    },
+    {
+      "apply_order": 3,
+      "approval_status": "PENDING_CURRENT_CANDIDATE_RECEIPTS",
+      "destructive_findings": [],
+      "exists": true,
+      "kind": "postgres_migration",
+      "path": "deployments/postgres/migrations/202608161100_m09_whitelist_consumer_readiness_v2.sql",
+      "responsible_milestone": "T1-M09-N018",
+      "safety_class": "ADDITIVE_STATIC",
+      "sha256": "4462261034ca6b0acfb0e7ec7c60186ccdc3ea636f3bab6f83ab62a367793b9e"
+    },
+    {
+      "apply_order": 4,
+      "approval_status": "PENDING_CURRENT_CANDIDATE_RECEIPTS",
+      "destructive_findings": [],
+      "exists": true,
+      "kind": "kafka_catalog",
+      "path": "contracts/events/kafka-topic-catalog.v1.json",
+      "responsible_milestone": "T1-M09",
+      "safety_class": "ADDITIVE_STATIC",
+      "sha256": "f7202bf4666e09b5d064a4fccce2911ea7be333013ba033bd275d323c804c8ab"
+    },
+    {
+      "apply_order": 5,
+      "approval_status": "PENDING_CURRENT_CANDIDATE_RECEIPTS",
+      "destructive_findings": [],
+      "exists": true,
+      "kind": "kafka_topic_plan",
+      "path": "deployments/kubernetes/init-jobs/01-kafka-topics.yaml",
+      "responsible_milestone": "T1-M09",
+      "safety_class": "ADDITIVE_STATIC",
+      "sha256": "6d539403ef016c74a80c85d9a36e8f2055cf2e0a45d1126deda08b71d5958cf1"
+    },
+    {
+      "apply_order": 6,
+      "approval_status": "PENDING_CURRENT_CANDIDATE_RECEIPTS",
+      "destructive_findings": [],
+      "exists": true,
+      "kind": "kafka_acl_plan",
+      "path": "deployments/kubernetes/init-jobs/00-kafka-acl-plan.yaml",
+      "responsible_milestone": "T1-M09",
+      "safety_class": "ADDITIVE_STATIC",
+      "sha256": "c7573bbaeb9030652dce3bb78590373a11cd7a2e25cb4807f6a8efef05c96667"
+    }
+  ],
+  "atomic_pr_id": "T1-M10-P011-OPS-n005-s1",
+  "blocking_codes": [
+    "CURRENT_CANDIDATE_G1_RECEIPT_REQUIRED",
+    "DEPLOYABLE_CANDIDATE_REQUIRED",
+    "INDEPENDENT_RELEASE_APPROVAL_REQUIRED",
+    "N004_PREFLIGHT_G6_PASS_REQUIRED",
+    "NON_ADDITIVE_ARTIFACT_PRESENT"
+  ],
+  "candidate": {
+    "candidate_id": null,
+    "exists": true,
+    "path": "deployments/releases/topic1/m10-deployable-candidate-closure.v1.json",
+    "sha256": "910d1c22f302cb4d40b3d97e3a31cd9d3522b2c9befd2d15421eec144587a1f3",
+    "status": "BLOCKED_INCOMPLETE"
+  },
+  "candidate_id": null,
+  "compatibility_policy": {
+    "legacy_read": "PRESERVE",
+    "legacy_write": "PRESERVE",
+    "new_writers": "DEFAULT_OFF_UNTIL_POST_APPLY_VERIFICATION",
+    "rollback": "DISABLE_NEW_WRITERS_PRESERVE_FACTS_NO_DROP"
+  },
+  "default_runtime_state": "off",
+  "environment_kind": "KUBERNETES",
+  "forbidden_claims": [
+    "Any proposal artifact is approved for application",
+    "G1 or G6 passed for one deployable candidate",
+    "Shared Kubernetes, database, or Kafka infrastructure was changed"
+  ],
+  "half_failure_policy": {
+    "automatic_destructive_rollback": false,
+    "checkpoint_after_each_artifact": true,
+    "mode": "STOP_VERIFY_RESUME_FIRST_UNVERIFIED"
+  },
+  "plan_basis_sha256": "29f7a96768bcc33a89d7cd29e69c1c4df85f8c58f16b003315715560c76dcda9",
+  "preflight": {
+    "acceptance_status": "BLOCKED",
+    "exists": true,
+    "g6": "BLOCKED",
+    "path": "doc/02_acceptance/topic1/tasks/t1-m10-n004/k8s-site-preflight-latest.json",
+    "run_id": "964f34fe-420c-404a-ba29-67e24f343a7b",
+    "sha256": "82d877b3ba2c48eb97c918fade5639ca68514922fa54d2e24d73301acc9d8e58"
+  },
+  "production_applied": false,
+  "receipts": {
+    "g1": {
+      "exists": false,
+      "path": "contracts/releases/topic1/approvals/t1-m10-n005-g1-receipt.json",
+      "sha256": null
+    },
+    "release_approval": {
+      "exists": false,
+      "path": "contracts/releases/topic1/approvals/t1-m10-n005-release-approval.json",
+      "sha256": null
+    }
+  },
+  "replay_policy": {
+    "mode": "IDEMPOTENT_EXACT_HASH",
+    "on_already_applied": "VERIFY_HASH_AND_EFFECT_THEN_SKIP",
+    "on_hash_mismatch": "STOP_NO_MUTATION"
+  },
+  "schema_version": 1,
+  "shared_infrastructure_touched": false,
+  "status": "BLOCKED_UNAPPROVED",
+  "task_id": "T1-M10-N005"
+}

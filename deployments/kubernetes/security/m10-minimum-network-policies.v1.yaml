@@ -1,0 +1,851 @@
+# Generated T1-M10-N009 candidate. DO NOT APPLY until a policy-enforcing CNI is
+# verified and the recorded exceptions and release window are approved.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-default-deny
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-allow-alert-service
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector:
+    matchLabels:
+      app: alert-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 8082
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability
+      podSelector:
+        matchLabels:
+          app: victoria-metrics
+    ports:
+    - protocol: TCP
+      port: 8082
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - protocol: TCP
+      port: 9092
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: clickhouse
+    ports:
+    - protocol: TCP
+      port: 9000
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: opensearch
+    ports:
+    - protocol: TCP
+      port: 9200
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: nebula
+          component: graph
+    ports:
+    - protocol: TCP
+      port: 9669
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: postgres
+          role: primary
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: redis
+          component: sentinel
+    ports:
+    - protocol: TCP
+      port: 26379
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: minio
+      podSelector:
+        matchLabels:
+          app: minio
+    ports:
+    - protocol: TCP
+      port: 9000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-allow-asset-service
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector:
+    matchLabels:
+      app: asset-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 8083
+    - protocol: TCP
+      port: 50053
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - protocol: TCP
+      port: 9092
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: clickhouse
+    ports:
+    - protocol: TCP
+      port: 9000
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: opensearch
+    ports:
+    - protocol: TCP
+      port: 9200
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: nebula
+          component: graph
+    ports:
+    - protocol: TCP
+      port: 9669
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: postgres
+          role: primary
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: minio
+      podSelector:
+        matchLabels:
+          app: minio
+    ports:
+    - protocol: TCP
+      port: 9000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-allow-auth-service
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector:
+    matchLabels:
+      app: auth-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 8081
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability
+      podSelector:
+        matchLabels:
+          app: victoria-metrics
+    ports:
+    - protocol: TCP
+      port: 9092
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - protocol: TCP
+      port: 9092
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: postgres
+          role: primary
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: redis
+          component: sentinel
+    ports:
+    - protocol: TCP
+      port: 26379
+  - to:
+    - ipBlock:
+        cidr: 10.0.5.8/32
+    ports:
+    - protocol: TCP
+      port: 30180
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-allow-forensics-service
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector:
+    matchLabels:
+      app: forensics-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 8086
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - protocol: TCP
+      port: 9092
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: clickhouse
+    ports:
+    - protocol: TCP
+      port: 9000
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: postgres
+          role: primary
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: redis
+          component: sentinel
+    ports:
+    - protocol: TCP
+      port: 26379
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: minio
+      podSelector:
+        matchLabels:
+          app: minio
+    ports:
+    - protocol: TCP
+      port: 9000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-allow-graph-service
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector:
+    matchLabels:
+      app: graph-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 8085
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - protocol: TCP
+      port: 9092
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: clickhouse
+    ports:
+    - protocol: TCP
+      port: 9000
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: nebula
+          component: graph
+    ports:
+    - protocol: TCP
+      port: 9669
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: postgres
+          role: primary
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: redis
+          component: sentinel
+    ports:
+    - protocol: TCP
+      port: 26379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-allow-ingest-gateway
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector:
+    matchLabels:
+      app: ingest-gateway
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 8080
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traffic-analysis
+      podSelector:
+        matchLabels:
+          app: probe-agent
+    ports:
+    - protocol: TCP
+      port: 50051
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability
+      podSelector:
+        matchLabels:
+          app: victoria-metrics
+    ports:
+    - protocol: TCP
+      port: 9091
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - protocol: TCP
+      port: 9092
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: postgres
+          role: primary
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: redis
+          component: sentinel
+    ports:
+    - protocol: TCP
+      port: 26379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-allow-rule-manager
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector:
+    matchLabels:
+      app: rule-manager
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 8084
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - protocol: TCP
+      port: 9092
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: clickhouse
+    ports:
+    - protocol: TCP
+      port: 9000
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: postgres
+          role: primary
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: redis
+          component: sentinel
+    ports:
+    - protocol: TCP
+      port: 26379
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: argo
+      podSelector:
+        matchLabels:
+          app: argo-server
+    ports:
+    - protocol: TCP
+      port: 2746
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-allow-threat-intel-service
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector:
+    matchLabels:
+      app: threat-intel-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 8087
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+      podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - protocol: TCP
+      port: 9092
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+      podSelector:
+        matchLabels:
+          app: postgres
+          role: primary
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: m10-n009-allow-web-ui
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/managed-by: m10-network-policy-builder
+    traffic.analysis/task: t1-m10-n009
+  annotations:
+    traffic.analysis/candidate-default-off: 'true'
+    traffic.analysis/production-applied: 'false'
+    traffic.analysis/requires-enforcement-capable-cni: 'true'
+spec:
+  podSelector:
+    matchLabels:
+      app: web-ui
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 80
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - protocol: TCP
+      port: 9080

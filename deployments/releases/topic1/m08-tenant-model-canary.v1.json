@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "canary_id": "m08-n013-pending-internal-tenant",
+  "enabled": false,
+  "tenant_id": "pending-internal-tenant",
+  "deployment_id": "pending-candidate-deployment",
+  "rollback_deployment_id": "pending-champion-deployment",
+  "candidate_model_id": "pending-model-id",
+  "candidate_version": "pending-candidate-version",
+  "candidate_package_sha256": "5a01ace18657fdab6391f4196713876073f757185287c6b3bd57333c19dc9602",
+  "candidate_aggregate_revision": 1,
+  "champion_version": "pending-champion-version",
+  "rollout_percentage": 5,
+  "minimum_samples": 1000,
+  "maximum_samples": 100000,
+  "observation_window_seconds": 3600,
+  "maximum_clock_skew_seconds": 60,
+  "stop_thresholds": {
+    "maximum_error_rate": 0.01,
+    "maximum_timeout_rate": 0.005,
+    "maximum_decision_change_rate": 0.1,
+    "maximum_label_change_rate": 0.1,
+    "maximum_absolute_score_delta_p95": 0.15,
+    "maximum_latency_ratio_p95": 1.5,
+    "maximum_challenger_heap_delta_bytes_p95": 67108864,
+    "maximum_consecutive_non_compared": 3
+  },
+  "shadow_evidence": {
+    "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w3-champion-challenger-shadow-k8s-canary/test-result.json",
+    "sha256": "f794e5116c4742be532e0bca02ac4125a7079bd6d6626c3c60ccae8d9d82df30",
+    "required_status": "PASS",
+    "minimum_samples": 1000,
+    "minimum_window_seconds": 3600
+  }
+}

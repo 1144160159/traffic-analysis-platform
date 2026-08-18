@@ -1,0 +1,164 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: m08-n011-kafka
+  namespace: flink
+  labels: {app: m08-n011-kafka, traffic.analysis/task: n011-canary}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: m08-n011-kafka}}
+  template:
+    metadata:
+      labels: {app: m08-n011-kafka, traffic.analysis/task: n011-canary}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: kafka
+        image: docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a
+        imagePullPolicy: IfNotPresent
+        ports: [{name: kafka, containerPort: 9092}]
+        env:
+        - {name: CLUSTER_ID, value: "MkU3OEVBNTcwNTJENDM2Qk"}
+        - {name: KAFKA_NODE_ID, value: "1"}
+        - {name: KAFKA_PROCESS_ROLES, value: "broker,controller"}
+        - {name: KAFKA_LISTENERS, value: "PLAINTEXT://:9092,CONTROLLER://:9093"}
+        - {name: KAFKA_ADVERTISED_LISTENERS, value: "PLAINTEXT://m08-n011-kafka.flink.svc:9092"}
+        - {name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP, value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"}
+        - {name: KAFKA_CONTROLLER_LISTENER_NAMES, value: "CONTROLLER"}
+        - {name: KAFKA_CONTROLLER_QUORUM_VOTERS, value: "1@localhost:9093"}
+        - {name: KAFKA_INTER_BROKER_LISTENER_NAME, value: "PLAINTEXT"}
+        - {name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, value: "1"}
+        - {name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR, value: "1"}
+        - {name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR, value: "1"}
+        - {name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS, value: "0"}
+        - {name: KAFKA_NUM_PARTITIONS, value: "1"}
+        - {name: KAFKA_LOG_DIRS, value: "/var/lib/kafka/data"}
+        readinessProbe:
+          tcpSocket: {port: kafka}
+          initialDelaySeconds: 5
+          periodSeconds: 2
+        resources:
+          requests: {cpu: "250m", memory: "512Mi"}
+          limits: {cpu: "1", memory: "1Gi"}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+        volumeMounts: [{name: kafka-data, mountPath: /var/lib/kafka/data}]
+      volumes: [{name: kafka-data, emptyDir: {}}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: m08-n011-kafka
+  namespace: flink
+  labels: {app: m08-n011-kafka, traffic.analysis/task: n011-canary}
+spec:
+  selector: {app: m08-n011-kafka}
+  ports: [{name: kafka, port: 9092, targetPort: kafka}]
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: m08-n011-model-consumer-canary
+  namespace: flink
+  labels:
+    app: m08-n011-model-consumer-canary
+    traffic.analysis/task: n011-canary
+  annotations:
+    # production-applied is updated by the release/rollout process only.
+    # Repository default is "false"; flip to "true" after live apply +
+    # reconciliation evidence, never by hand-editing this field speculatively.
+    traffic.analysis/production-applied: "false"
+    traffic.analysis/shared-kafka-touched: "false"
+    traffic.analysis/shared-minio-touched: "false"
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: m08-n011-model-consumer-canary
+        traffic.analysis/task: n011-canary
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: 8-2tb
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 9999
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: {type: RuntimeDefault}
+      initContainers:
+      - name: build-signed-fixture
+        image: traffic/mlops-trainer:m08-shadow-n011-20260815-r12
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-ec"]
+        args:
+        - python3 /app/scripts/m08_governed_canary.py && chmod -R a+rX /work/fixture
+        env:
+        - {name: PYTHONPATH, value: "/app/scripts"}
+        - {name: M08_CANARY_RUN_ID, value: "2ccb053f-60ea-41d5-aa00-e7e65a7350fe"}
+        - {name: M08_CANARY_CANDIDATE_SHA256, value: "2a934e6dd0820ded3fb98c65c107accd79aa4a6468a86c02f58274e9f47a8c90"}
+        - {name: M08_CANARY_CONTRACT_DIR, value: "/contracts"}
+        - {name: M08_CANARY_PRESERVE_DIR, value: "/work/fixture"}
+        resources:
+          requests: {cpu: "1", memory: "1Gi"}
+          limits: {cpu: "2", memory: "2Gi"}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+        volumeMounts:
+        - {name: work, mountPath: /work}
+        - {name: contracts, mountPath: /contracts, readOnly: true}
+        - {name: tmp, mountPath: /tmp}
+      containers:
+      - name: flink-model-consumer-canary
+        image: traffic/flink-behavior-job:m08-model-shadow-n011-20260815-r6
+        imagePullPolicy: IfNotPresent
+        command: ["java"]
+        args:
+        - -Djava.io.tmpdir=/tmp
+        - -Dlog.file=/opt/flink/log/m08-n011-canary.log
+        - -cp
+        - /opt/flink/usrlib/flink-behavior-job.jar:/opt/flink/lib/*
+        - com.traffic.flink.behavior.GovernedModelConsumerCanaryMain
+        - --brokers
+        - m08-n011-kafka.flink.svc:9092
+        - --update-topic
+        - m08-n011-model-updates
+        - --ack-topic
+        - m08-n011-model-update-applied
+        - --event
+        - /work/fixture/shadow-load-event.json
+        - --public-key
+        - /work/fixture/signing/public.pem
+        - --cache
+        - /work/model-cache
+        - --timeout-seconds
+        - "240"
+        resources:
+          requests: {cpu: "2", memory: "3Gi"}
+          limits: {cpu: "4", memory: "6Gi"}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - {name: work, mountPath: /work}
+        - {name: flink-log, mountPath: /opt/flink/log}
+        - {name: flink-log, mountPath: /var/log/flink}
+        - {name: tmp, mountPath: /tmp}
+      volumes:
+      - {name: work, emptyDir: {}}
+      - {name: flink-log, emptyDir: {}}
+      - {name: tmp, emptyDir: {}}
+      - name: contracts
+        configMap:
+          name: m08-n011-mlops-contracts

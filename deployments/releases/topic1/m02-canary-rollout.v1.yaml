@@ -1,0 +1,99 @@
+schema_version: 1
+artifact_kind: M02_SCOPED_CANARY_ROLLOUT_PLAN
+rollout_id: m02-canary-pending-approval
+candidate_id: PENDING_CANDIDATE_BINDING
+candidate_commit: PENDING_COMMIT_BINDING
+candidate_manifest_path: doc/02_acceptance/topic1/m02/candidates/PENDING/implementation-candidate.json
+delivery_package_sha256: PENDING_DELIVERY_PACKAGE_BINDING
+profile_id: T1_M02_MILESTONE_PROFILE
+environment_id: traffic-analysis-canary
+execution_authorization:
+  status: PENDING_EXTERNAL_APPROVAL
+  external_activity_id: EXT-T1-M02-N013-CANARY
+  verifier_endpoint: null
+  policy_fingerprint: null
+  verification_requests: []
+namespace: traffic-analysis
+kafka_verification:
+  namespace: middleware
+  pod: kafka-0
+  container: kafka
+  bootstrap_server: kafka-bootstrap.middleware.svc:9092
+scope:
+  tenant_id: pending-canary-tenant
+  probe_ids:
+    - pending-canary-probe
+consumer_receipts:
+  - consumer: flink-session-job
+    path: doc/02_acceptance/topic1/m02/n013/consumer-readiness/session.json
+  - consumer: flink-pcap-index-job
+    path: doc/02_acceptance/topic1/m02/n013/consumer-readiness/pcap-index.json
+stages:
+  - order: 1
+    action: VERIFY_TOPIC_ACL
+    default_off: true
+    success_barrier: exact topics and producer-consumer ACLs verified
+  - order: 2
+    action: VERIFY_CONSUMERS_RUNNING
+    default_off: true
+    success_barrier: both candidate-bound Flink jobs report RUNNING while producers remain off
+  - order: 3
+    action: ENABLE_GATEWAY_WRITERS
+    default_off: true
+    success_barrier: Gateway rollout is available with exact tenant and probe scope
+  - order: 4
+    action: ENABLE_PROBE_PRODUCER
+    default_off: true
+    success_barrier: only the approved probe set reports admitted capture production
+  - order: 5
+    action: OBSERVE_AND_RECONCILE
+    default_off: true
+    success_barrier: all stop thresholds remain within limits for the complete observation window
+stop_thresholds:
+  - metric: consumer_not_running
+    operator: ">"
+    limit: 0
+    window_seconds: 30
+    query: 'clamp_min(2 - count(flink_jobmanager_job_uptime{job_name=~"^(?:Session Aggregation Job V2|PCAP Index (?:Carrier )?Job v2)$"} > 0), 0)'
+  - metric: checkpoint_failures
+    operator: ">"
+    limit: 0
+    window_seconds: 300
+    query: 'sum(increase(flink_jobmanager_job_numberOfFailedCheckpoints{job_name=~"^(?:Session Aggregation Job V2|PCAP Index (?:Carrier )?Job v2)$"}[5m]))'
+  - metric: kafka_produce_errors
+    operator: ">"
+    limit: 0
+    window_seconds: 300
+    query: 'sum(increase(ingest_kafka_error_total[5m]))'
+  - metric: dlq_permanent_records
+    operator: ">"
+    limit: 0
+    window_seconds: 300
+    query: 'sum(increase(flink_taskmanager_job_task_operator_numRecordsOut{job_name=~"^(?:Session Aggregation Job V2|PCAP Index (?:Carrier )?Job v2)$",operator_name=~".*DLQ.*"}[5m]))'
+  - metric: capture_unexplained_difference
+    operator: ">"
+    limit: 0
+    window_seconds: 300
+    query: 'sum(abs(max by(probe_id)(probe_status{probe_id=~"^(?:pending-canary-probe)$",metric="packets_dropped"}) - on(probe_id) max by(probe_id)(probe_status{probe_id=~"^(?:pending-canary-probe)$",metric="capture_allocation_drops"}) - on(probe_id) max by(probe_id)(probe_status{probe_id=~"^(?:pending-canary-probe)$",metric="capture_kernel_drops"})) + on(probe_id) max by(probe_id)(probe_status{probe_id=~"^(?:pending-canary-probe)$",metric="capture_errors"}))'
+  - metric: object_hash_mismatches
+    operator: ">"
+    limit: 0
+    window_seconds: 300
+    query: 'sum(increase(probe_pcap_object_hash_mismatch_total[5m]))'
+  - metric: pcap_metadata_without_object
+    operator: ">"
+    limit: 0
+    window_seconds: 300
+    query: 'sum(increase(probe_pcap_metadata_without_object_total[5m]))'
+observation:
+  minimum_seconds: 900
+  poll_seconds: 15
+  prometheus_url: http://prometheus.monitoring.svc:9090
+rollback:
+  preserve_consumers: true
+  preserve_durable_data: true
+  steps:
+    - DISABLE_PROBE_PRODUCER
+    - DISABLE_GATEWAY_WRITERS
+    - RESTORE_IMAGE_CONFIG_ROUTE
+    - RECONCILE_OFFSETS_SPOOL_OBJECTS

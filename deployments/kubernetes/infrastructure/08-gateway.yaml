@@ -45,6 +45,13 @@ spec:
             secretKeyRef:
               key: APISIX_ADMIN_KEY
               name: traffic-credentials
+        - name: APISIX_OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: OIDC_CLIENT_SECRET
+              name: traffic-credentials
+        - name: SSL_CERT_FILE
+          value: /etc/traffic-platform-ca/ca.crt
         image: docker.io/apache/apisix@sha256:d3de70b3ea6f29fc0d2d812649c0e4be20ba6c00357e839311eae57ba6bc0059
         imagePullPolicy: IfNotPresent
         name: apisix
@@ -67,6 +74,9 @@ spec:
         volumeMounts:
         - mountPath: /standalone-config
           name: apisix-config
+        - mountPath: /etc/traffic-platform-ca
+          name: traffic-platform-ca
+          readOnly: true
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -81,6 +91,12 @@ spec:
           defaultMode: 420
           name: apisix-routes
         name: apisix-config
+      - name: traffic-platform-ca
+        secret:
+          secretName: traffic-platform-ca
+          items:
+          - key: ca.crt
+            path: ca.crt
   updateStrategy:
     rollingUpdate:
       partition: 0
@@ -141,7 +157,10 @@ spec:
     whenDeleted: Retain
     whenScaled: Retain
   podManagementPolicy: OrderedReady
-  replicas: 2
+  # H2 file database does not support concurrent writers: single replica with a
+  # persistent volume. HA path: move to external PostgreSQL (KC_DB=postgres)
+  # and scale replicas back up.
+  replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
@@ -184,6 +203,10 @@ spec:
           value: /etc/keycloak/tls/tls.crt
         - name: KC_HTTPS_CERTIFICATE_KEY_FILE
           value: /etc/keycloak/tls/tls.key
+        # 角色契约:auth-service 的 OIDC 角色映射仅接受 traffic-* 前缀角色
+        # (裸 admin/analyst 等不再映射)。live realm 必须按
+        # traffic-admin/traffic-analyst/traffic-viewer/traffic-operator
+        # 命名业务角色并绑定用户,否则登录后无任何平台权限。
         image: quay.io/keycloak/keycloak@sha256:f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9
         imagePullPolicy: IfNotPresent
         name: keycloak
@@ -222,6 +245,8 @@ spec:
         - name: keycloak-tls
           mountPath: /etc/keycloak/tls
           readOnly: true
+        - name: keycloak-data
+          mountPath: /opt/keycloak/data
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -234,6 +259,19 @@ spec:
       - name: keycloak-tls
         secret:
           secretName: keycloak-tls
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: keycloak-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: local-hdd
+      volumeMode: Filesystem
   updateStrategy:
     rollingUpdate:
       partition: 0

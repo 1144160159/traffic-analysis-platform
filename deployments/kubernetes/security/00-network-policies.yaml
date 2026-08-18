@@ -316,11 +316,58 @@ spec:
     ports:
     - {protocol: TCP, port: 8080}
     - {protocol: TCP, port: 7002}
+  # Same-namespace traffic is restricted to known middleware listener ports
+  # (Kafka/ClickHouse/OpenSearch/Nebula). Keep in sync with
+  # infrastructure/0[1259]-*.yaml service/container ports.
   - from:
     - podSelector: {}
+    ports:
+    - {protocol: TCP, port: 9092}
+    - {protocol: TCP, port: 9093}
+    - {protocol: TCP, port: 8080}
+    - {protocol: TCP, port: 8123}
+    - {protocol: TCP, port: 9000}
+    - {protocol: TCP, port: 9009}
+    - {protocol: TCP, port: 9181}
+    - {protocol: TCP, port: 9444}
+    - {protocol: TCP, port: 9363}
+    - {protocol: TCP, port: 9200}
+    - {protocol: TCP, port: 9300}
+    - {protocol: TCP, port: 9600}
+    - {protocol: TCP, port: 9559}
+    - {protocol: TCP, port: 19559}
+    - {protocol: TCP, port: 9669}
+    - {protocol: TCP, port: 19669}
+    - {protocol: TCP, port: 9777}
+    - {protocol: TCP, port: 9778}
+    - {protocol: TCP, port: 19779}
+    - {protocol: TCP, port: 7001}
+    - {protocol: TCP, port: 7002}
   egress:
   - to:
     - podSelector: {}
+    ports:
+    - {protocol: TCP, port: 9092}
+    - {protocol: TCP, port: 9093}
+    - {protocol: TCP, port: 8080}
+    - {protocol: TCP, port: 8123}
+    - {protocol: TCP, port: 9000}
+    - {protocol: TCP, port: 9009}
+    - {protocol: TCP, port: 9181}
+    - {protocol: TCP, port: 9444}
+    - {protocol: TCP, port: 9363}
+    - {protocol: TCP, port: 9200}
+    - {protocol: TCP, port: 9300}
+    - {protocol: TCP, port: 9600}
+    - {protocol: TCP, port: 9559}
+    - {protocol: TCP, port: 19559}
+    - {protocol: TCP, port: 9669}
+    - {protocol: TCP, port: 19669}
+    - {protocol: TCP, port: 9777}
+    - {protocol: TCP, port: 9778}
+    - {protocol: TCP, port: 19779}
+    - {protocol: TCP, port: 7001}
+    - {protocol: TCP, port: 7002}
   - to:
     - namespaceSelector:
         matchLabels:
@@ -571,3 +618,186 @@ spec:
     ports:
     - {protocol: UDP, port: 53}
     - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: argo
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-argo-runtime-traffic
+  namespace: argo
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {}
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+    # Empty namespaceSelector matches all namespaces: workflow agent pods in
+    # other namespaces reconnect to argo-server/workflow-controller :2746.
+    - namespaceSelector: {}
+    ports:
+    - {protocol: TCP, port: 2746}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+---
+# Ingress-only default deny for namespaces that previously had no policy.
+# Egress is intentionally left open to avoid breaking live traffic; tighten
+# per-workload after live reconciliation.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: observability
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-observability-runtime-traffic
+  namespace: observability
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector: {}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+    ports:
+    - {protocol: TCP, port: 3000}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traffic-analysis
+    ports:
+    - {protocol: TCP, port: 3100}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: argo-events
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-argo-events-runtime-traffic
+  namespace: argo-events
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector: {}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: streampark
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-streampark-runtime-traffic
+  namespace: streampark
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector: {}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+    ports:
+    - {protocol: TCP, port: 8080}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: nacos
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-nacos-runtime-traffic
+  namespace: nacos
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector: {}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+    ports:
+    - {protocol: TCP, port: 8848}
+    - {protocol: TCP, port: 9848}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: external-secrets-canary
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-secrets-canary-runtime-traffic
+  namespace: external-secrets-canary
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector: {}

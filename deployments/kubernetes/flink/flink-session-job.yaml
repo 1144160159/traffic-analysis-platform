@@ -1,0 +1,129 @@
+---
+# M06 Flow consumer-first submission to the existing Kubernetes Flink session
+# cluster. Business projections are shadow-gated; canonical DLQ and quality
+# receipts remain enabled under candidate-bound group and transaction IDs.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-session-m06-consumer-ready-91526bab
+  namespace: flink
+  labels:
+    app: flink-session-job
+    traffic.analysis/milestone: m06
+    traffic.analysis/rollout-mode: consumer-ready
+  annotations:
+    traffic.analysis/candidate-sha256: "91526bab5a7e38b081c8e65e8ae5a6c1d96b4d380fb41f53e66068a9d1f2142c"
+    traffic.analysis/candidate-kind: "source-tree-sha256"
+    # production-applied is updated by the release/rollout process only.
+    # Repository default is "false"; flip to "true" after live apply +
+    # reconciliation evidence, never by hand-editing this field speculatively.
+    traffic.analysis/production-applied: "false"
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: flink-session-job
+        traffic.analysis/rollout-mode: consumer-ready
+    spec:
+      serviceAccountName: flink-session-job
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: flink-session-job
+        image: traffic/flink-session-job:m06-consumer-ready-91526bab
+        imagePullPolicy: IfNotPresent
+        args:
+        - run
+        - -d
+        - -m
+        - flink-jobmanager.flink.svc:8081
+        - -c
+        - com.traffic.flink.session.SessionJob
+        - /opt/flink/usrlib/flink-session-job.jar
+        - --session.mode
+        - process
+        - --kafka.brokers
+        - kafka-bootstrap.middleware.svc:9092
+        - --input.topic
+        - flow.events.v1
+        - --output.topic
+        - session.events.v1
+        - --input.dlq.topic
+        - dlq.v1
+        - --late.data.topic
+        - dlq.v1
+        - --ch.dlq.topic
+        - dlq.v1
+        - --os.dlq.topic
+        - dlq.v1
+        - --audit.topic
+        - audit.logs
+        - --consumer.group
+        - flink-session-job-shadow-91526bab5a7e
+        - --deployment.activation.mode
+        - shadow
+        - --deployment.candidate.sha256
+        - 91526bab5a7e38b081c8e65e8ae5a6c1d96b4d380fb41f53e66068a9d1f2142c
+        - --kafka.dlq.transactional.id.prefix
+        - flink-session-job-dlq-v1-91526bab5a7e
+        - --kafka.quality.transactional.id.prefix
+        - flink-session-job-quality-v1-91526bab5a7e
+        - --kafka.transaction.timeout.ms
+        - "900000"
+        - --checkpoint.path
+        - s3://flink-checkpoints/checkpoints/session-job/m06-91526bab5a7e
+        - --checkpoint.interval.ms
+        - "30000"
+        - --checkpoint.timeout.ms
+        - "600000"
+        - --checkpoint.min.pause.ms
+        - "5000"
+        - --watermark.delay.ms
+        - "5000"
+        - --watermark.idleness.ms
+        - "60000"
+        - --allowed.lateness.ms
+        - "0"
+        - --event.max.future.skew.ms
+        - "300000"
+        - --flow.raw.sink.enabled
+        - "false"
+        - --source.fact.sink.enabled
+        - "false"
+        - --source.fact.clickhouse.table
+        - traffic.source_flow_facts_v1
+        - --opensearch.enabled
+        - "false"
+        - --parallelism
+        - "4"
+        env:
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - name: KAFKA_SASL_USERNAME
+          valueFrom: {secretKeyRef: {name: kafka-flink-session-job-credentials, key: username}}
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom: {secretKeyRef: {name: kafka-flink-session-job-credentials, key: password}}
+        - {name: KAFKA_SSL_TRUSTSTORE_LOCATION, value: "/etc/kafka/tls/kafka.truststore.p12"}
+        - {name: KAFKA_SSL_TRUSTSTORE_TYPE, value: "PKCS12"}
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        resources:
+          requests: {cpu: "500m", memory: "1Gi"}
+          limits: {cpu: "1", memory: "2Gi"}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: flink-log, mountPath: /opt/flink/log}
+        - {name: tmp, mountPath: /tmp}
+      volumes:
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls, optional: false}
+      - {name: flink-log, emptyDir: {}}
+      - {name: tmp, emptyDir: {}}

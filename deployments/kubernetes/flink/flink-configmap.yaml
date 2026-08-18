@@ -25,7 +25,11 @@ data:
   clickhouse.hosts: "clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123"
   clickhouse.database: "traffic"
   clickhouse.user: "default"
-  clickhouse.password: ""
+  # 敏感凭证禁止放入 ConfigMap: clickhouse.password / opensearch.user+password /
+  # s3.access.key+secret.key 一律由 Flink 作业经 Secret env 注入
+  # (见 infrastructure/07-flink.yaml 与 flink/flink-*.yaml 的 env 接线,
+  #  Secret key: CLICKHOUSE_PASSWORD / OPENSEARCH_ADMIN_PASSWORD /
+  #  minio-flink-state-model-credentials.{accesskey,secretkey})。
   # 集群模式: 写入 Distributed 表 (flows_raw/sessions/alerts/...)
   # 不使用 _local 后缀
   clickhouse.cluster.mode: "true"
@@ -44,7 +48,7 @@ data:
   session.gap.ms: "5000"
   active.timeout.ms: "1800000"
   watermark.delay.ms: "5000"
-  state.ttl.ms: "1800000"
+  state.ttl.ms: "3600000"
   state.ttl.enabled: "true"
   flow.raw.sink.enabled: "true"
   flow.raw.clickhouse.table: "flows_raw"
@@ -58,11 +62,7 @@ data:
   opensearch.hosts: "opensearch.middleware.svc:9200"
   opensearch.port: "9200"
   opensearch.index: "sessions_v1"
-  opensearch.user: "admin"
-  opensearch.password: "${OPENSEARCH_ADMIN_PASSWORD}"
 
   # ====== MinIO (S3 Checkpoint) ======
   s3.endpoint: "http://minio.minio.svc:9000"
-  s3.access.key: "${MINIO_ACCESS_KEY}"
-  s3.secret.key: "${MINIO_SECRET_KEY}"
   s3.bucket.checkpoints: "flink-checkpoints"

@@ -25,6 +25,10 @@ spec:
         - --console-address
         - :9001
         - http://minio-{0...3}.minio.minio.svc.cluster.local/data
+        # API/console transport stays plaintext and is trusted only inside the
+        # cluster: minio namespace has default-deny ingress and
+        # allow-minio-runtime-traffic (00-network-policies.yaml). Do not expose
+        # via NodePort. TLS cutover plan: security/minio-tls-cutover-v1/.
         env:
         - name: MINIO_ROOT_USER
           valueFrom:

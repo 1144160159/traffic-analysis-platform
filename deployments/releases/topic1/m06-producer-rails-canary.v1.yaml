@@ -1,0 +1,103 @@
+schema_version: 1
+artifact_kind: M06_PRODUCER_RAILS_CANARY_PLAN
+rollout_id: m06-producer-rails-canary-v1
+candidate_id: PENDING_APPROVED_CANDIDATE_SHA256
+profile_id: M06_K8S_PRODUCER_RAIL_CANARY_V1
+environment_id: k8s-shared
+cluster_context: PENDING_APPROVED_KUBECONFIG_CONTEXT
+scope:
+  tenant_id: PENDING_APPROVED_TENANT
+  probe_ids: []
+  device_ip_tenant_map: {}
+phases:
+  - asset-events
+  - asset-binding-ingest
+  - asset-binding-probe
+  - device-logs
+workloads:
+  asset-events: {namespace: traffic-analysis, resource: deployment/asset-service, container: asset-service}
+  asset-binding-ingest: {namespace: traffic-analysis, resource: deployment/ingest-gateway, container: ingest-gateway}
+  asset-binding-probe: {namespace: traffic-analysis, resource: daemonset/probe-agent, container: probe-agent}
+  device-logs: {namespace: traffic-analysis, resource: statefulset/device-log-collector, container: vector}
+consumer_readiness:
+  asset-events: {path: null, sha256: null, consumer: asset-projection-v2}
+  asset-binding-ingest: {path: null, sha256: null, consumer: asset-service-bindings}
+  asset-binding-probe: {path: null, sha256: null, consumer: asset-service-bindings}
+  device-logs: {path: null, sha256: null, consumer: flink-log-job-shadow}
+consumer_observation:
+  stability_seconds: 30
+  receipt_ttl_seconds: 900
+  kafka_admin:
+    namespace: middleware
+    pod: kafka-0
+    container: kafka
+    bootstrap_server: kafka-bootstrap.middleware.svc:9092
+  consumers:
+    asset-events:
+      consumer: asset-projection-v2
+      topic: asset.events.v2
+      group_id: asset-projection-v2
+      partitions: 6
+      workload: {namespace: traffic-analysis, resource: deployment/asset-service, container: asset-service, expected_image: PENDING_APPROVED_IMAGE_DIGEST}
+      required_env: {ASSET_PROJECTION_ENABLED: "true"}
+      producer_guards:
+        - {namespace: traffic-analysis, resource: deployment/asset-service, container: asset-service, env: ASSET_EVENT_OUTBOX_ENABLED, expected: "false"}
+    asset-binding-ingest:
+      consumer: asset-service-bindings
+      topic: asset.bindings.v1
+      group_id: asset-service-bindings
+      partitions: 4
+      workload: {namespace: traffic-analysis, resource: deployment/asset-service, container: asset-service, expected_image: PENDING_APPROVED_IMAGE_DIGEST}
+      required_env: {ASSET_KAFKA_ENABLED: "true"}
+      producer_guards:
+        - {namespace: traffic-analysis, resource: deployment/ingest-gateway, container: ingest-gateway, env: M06_ASSET_BINDING_WRITER_V1_ENABLED, expected: "false"}
+        - {namespace: traffic-analysis, resource: daemonset/probe-agent, container: probe-agent, env: M06_ASSET_BINDING_UPLOAD_V1_ENABLED, expected: "false"}
+    asset-binding-probe:
+      consumer: asset-service-bindings
+      topic: asset.bindings.v1
+      group_id: asset-service-bindings
+      partitions: 4
+      workload: {namespace: traffic-analysis, resource: deployment/asset-service, container: asset-service, expected_image: PENDING_APPROVED_IMAGE_DIGEST}
+      required_env: {ASSET_KAFKA_ENABLED: "true"}
+      producer_guards:
+        - {namespace: traffic-analysis, resource: deployment/ingest-gateway, container: ingest-gateway, env: M06_ASSET_BINDING_WRITER_V1_ENABLED, expected: "false"}
+        - {namespace: traffic-analysis, resource: daemonset/probe-agent, container: probe-agent, env: M06_ASSET_BINDING_UPLOAD_V1_ENABLED, expected: "false"}
+    device-logs:
+      consumer: flink-log-job-shadow
+      topic: device.logs.v1
+      group_id: flink-log-job-shadow-b22f758384c6
+      partitions: 8
+      workload: {namespace: flink, resource: job/flink-log-job-m06-consumer-ready-b22f7583, container: flink-log-job, expected_image: PENDING_APPROVED_IMAGE_DIGEST}
+      required_env: {DEPLOYMENT_ACTIVATION_MODE: shadow, PROJECTION_WRITES_ENABLED: "false", SOURCE_FACT_WRITES_ENABLED: "false"}
+      producer_guards:
+        - {namespace: traffic-analysis, resource: statefulset/device-log-collector, replicas_at_most: 0, absent_allowed: true}
+prerequisite_acceptance:
+  asset-events: null
+  asset-binding-ingest: null
+  asset-binding-probe: null
+  device-logs: null
+observation:
+  prometheus_url: http://prometheus.monitoring.svc:9090
+  minimum_seconds: 600
+  poll_seconds: 15
+  stop_thresholds:
+    asset-events:
+      - {metric: asset_service_unavailable, limit: 0, query: 'clamp_min(1 - max(up{job="asset-service"}), 0)'}
+      - {metric: asset_projection_consumer_unavailable, limit: 0, query: 'clamp_min(1 - max(up{job="asset-projection-v2"}), 0)'}
+    asset-binding-ingest:
+      - {metric: ingest_gateway_unavailable, limit: 0, query: 'clamp_min(1 - max(up{job="ingest-gateway"}), 0)'}
+      - {metric: ingest_kafka_errors, limit: 0, query: 'sum(increase(ingest_kafka_error_total[5m]))'}
+    asset-binding-probe:
+      - {metric: ingest_kafka_errors, limit: 0, query: 'sum(increase(ingest_kafka_error_total[5m]))'}
+      - {metric: probe_binding_wal_rejected, limit: 0, query: 'sum(probe_asset_binding_wal_rejected)'}
+      - {metric: probe_binding_upload_failures, limit: 0, query: 'sum(increase(probe_asset_binding_upload_failures_total[5m]))'}
+      - {metric: probe_binding_receipt_contract_failures, limit: 0, query: 'sum(increase(probe_asset_binding_response_contract_failures_total[5m]))'}
+    device-logs:
+      - {metric: collector_unavailable, limit: 0, query: 'clamp_min(1 - max(up{job="device-log-collector"}), 0)'}
+      - {metric: vector_component_errors, limit: 0, query: 'sum(increase(vector_component_errors_total{component_id="device_logs_kafka"}[5m]))'}
+      - {metric: flink_log_job_unavailable, limit: 0, query: 'clamp_min(1 - max(flink_jobmanager_job_uptime{job_name="Device Log Processing Job V1"} > 0), 0)'}
+execution_authorization:
+  status: PENDING_EXTERNAL_APPROVAL
+  receipt_path: null
+  receipt_sha256: null
+production_applied: false

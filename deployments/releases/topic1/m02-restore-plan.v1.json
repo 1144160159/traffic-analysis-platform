@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "M02_DELIVERY_ARTIFACT",
+  "artifact_role": "restore-plan",
+  "package_id": "m02-delivery-pending-candidate",
+  "body": {
+    "steps": [
+      {"order": 1, "action": "restore checkpoint savepoint and durable PCAP journal references in an isolated target", "failure_action": "BLOCK"},
+      {"order": 2, "action": "rebuild ClickHouse projections from retained Kafka and PCAP authority", "failure_action": "BLOCK"},
+      {"order": 3, "action": "reconcile identity hash watermark count and final facts before producer admission", "failure_action": "BLOCK"}
+    ],
+    "rollback_plan_path": "deployments/releases/topic1/m02-rollback-plan.v1.json",
+    "preserve_durable_data": true
+  }
+}

@@ -487,6 +487,8 @@ ensure_probe_mtls_certs() {
     --from-file="$tmp_dir/ca-cert.pem" \
     --from-file="$tmp_dir/server-cert.pem" \
     --from-file="$tmp_dir/server-key.pem" \
+    --from-file="$tmp_dir/client-crl.pem" \
+    --from-file="$tmp_dir/generation.json" \
     -n traffic-analysis --dry-run=client -o yaml | $KUBECTL apply -f -
 
   rm -rf "$tmp_dir"

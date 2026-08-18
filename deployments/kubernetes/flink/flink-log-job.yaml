@@ -1,32 +1,95 @@
 ---
-# Flink Log Job — Syslog 解析 + 富化 + Loki/OpenSearch
+# M06 consumer-first submission. This manifest intentionally uses a
+# candidate-bound shadow group and does not enable Loki/OpenSearch projection
+# writes. Promotion must use the canonical group only after the real collector
+# producer and source/offset/DLQ reconciliation gates pass.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: flink-log-job
+  name: flink-log-job-m06-consumer-ready-b22f7583
   namespace: flink
-  labels: {app: flink-log-job}
+  labels:
+    app: flink-log-job
+    traffic.analysis/milestone: m06
+    traffic.analysis/rollout-mode: consumer-ready
+  annotations:
+    traffic.analysis/candidate-sha256: "b22f758384c6a23939926db22870aebfef9692daad427ed57a99ff4c2bc8d321"
+    traffic.analysis/candidate-kind: "source-tree-sha256"
+    # production-applied is updated by the release/rollout process only.
+    # Repository default is "false"; flip to "true" after live apply +
+    # reconciliation evidence, never by hand-editing this field speculatively.
+    traffic.analysis/production-applied: "false"
 spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
   template:
+    metadata:
+      labels:
+        app: flink-log-job
+        traffic.analysis/rollout-mode: consumer-ready
     spec:
       serviceAccountName: flink-log-job
       automountServiceAccountToken: false
       restartPolicy: OnFailure
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
       containers:
       - name: flink-log-job
-        image: traffic/flink-log-job:log-job-20260629-r1
+        image: traffic/flink-log-job:m06-consumer-ready-b22f7583
         imagePullPolicy: IfNotPresent
         env:
-        - name: KAFKA_BROKERS
-          value: "kafka-bootstrap.middleware.svc:9092"
-        - name: LOKI_URL
-          value: "http://loki.observability.svc:3100"
-        - name: OPENSEARCH_HOST
-          value: "opensearch.middleware.svc"
-        - name: OPENSEARCH_PORT
-          value: "9200"
-        - name: CHECKPOINT_PATH
-          value: "s3://flink-checkpoints/checkpoints/log-job"
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_INPUT_TOPIC, value: "device.logs.v1"}
+        - {name: KAFKA_DLQ_TOPIC, value: "dlq.v1"}
+        - {name: KAFKA_GROUP_ID, value: "flink-log-job-shadow-b22f758384c6"}
+        - {name: KAFKA_STARTING_OFFSETS, value: "committed-or-earliest"}
+        - {name: KAFKA_DLQ_TRANSACTIONAL_ID_PREFIX, value: "flink-log-job-dlq-v1-b22f758384c6"}
+        - {name: KAFKA_AUDIT_TOPIC, value: "audit.logs"}
+        - {name: KAFKA_QUALITY_TRANSACTIONAL_ID_PREFIX, value: "flink-log-job-quality-v1-b22f758384c6"}
+        - {name: KAFKA_TRANSACTION_TIMEOUT_MS, value: "600000"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - name: KAFKA_SASL_USERNAME
+          valueFrom: {secretKeyRef: {name: kafka-flink-log-job-credentials, key: username}}
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom: {secretKeyRef: {name: kafka-flink-log-job-credentials, key: password}}
+        - {name: KAFKA_SSL_TRUSTSTORE_LOCATION, value: "/etc/kafka/tls/kafka.truststore.p12"}
+        - {name: KAFKA_SSL_TRUSTSTORE_TYPE, value: "PKCS12"}
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        - {name: DEPLOYMENT_ACTIVATION_MODE, value: "shadow"}
+        - {name: DEPLOYMENT_CANDIDATE_SHA256, value: "b22f758384c6a23939926db22870aebfef9692daad427ed57a99ff4c2bc8d321"}
+        - {name: PROJECTION_WRITES_ENABLED, value: "false"}
+        - {name: SOURCE_FACT_WRITES_ENABLED, value: "false"}
+        - {name: CLICKHOUSE_SOURCE_FACT_TABLE, value: "traffic.source_device_log_facts_v1"}
+        - {name: CHECKPOINT_PATH, value: "s3://flink-checkpoints/checkpoints/log-job/m06-b22f758384c6"}
+        - {name: CHECKPOINT_INTERVAL_MS, value: "30000"}
+        - {name: CHECKPOINT_TIMEOUT_MS, value: "300000"}
+        - {name: CHECKPOINT_MIN_PAUSE_MS, value: "5000"}
+        - {name: WATERMARK_DELAY_MS, value: "10000"}
+        - {name: WATERMARK_IDLENESS_MS, value: "60000"}
+        - {name: ALLOWED_LATENESS_MS, value: "30000"}
+        - {name: EVENT_MAX_FUTURE_SKEW_MS, value: "300000"}
+        - {name: EVENT_MAX_CLOCK_ROLLBACK_MS, value: "30000"}
+        - {name: PARALLELISM, value: "4"}
+        - {name: RESTART_ATTEMPTS, value: "10"}
+        - {name: RESTART_DELAY_SECONDS, value: "30"}
+        - {name: LOKI_URL, value: "http://loki.observability.svc:3100"}
+        - {name: OPENSEARCH_HOST, value: "opensearch.middleware.svc"}
+        - {name: OPENSEARCH_PORT, value: "9200"}
         resources:
           requests: {cpu: "1", memory: "1Gi"}
-          limits:   {cpu: "2", memory: "2Gi"}
+          limits: {cpu: "2", memory: "2Gi"}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: flink-log, mountPath: /opt/flink/log}
+        - {name: tmp, mountPath: /tmp}
+      volumes:
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls, optional: false}
+      - {name: flink-log, emptyDir: {}}
+      - {name: tmp, emptyDir: {}}

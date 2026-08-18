@@ -1,0 +1,105 @@
+# 统一分析任务调度中心(analysis-service)K8s 部署
+apiVersion: v1
+kind: Service
+metadata:
+  name: analysis-service
+  namespace: traffic-analysis
+  labels: { app: analysis-service }
+spec:
+  selector: { app: analysis-service }
+  ports:
+    - name: http
+      port: 8090
+      targetPort: 8090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analysis-service
+  namespace: traffic-analysis
+  labels: { app: analysis-service }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: analysis-service } }
+  template:
+    metadata:
+      labels: { app: analysis-service }
+    spec:
+      serviceAccountName: analysis-service
+      securityContext: { runAsNonRoot: true, runAsUser: 10001, fsGroup: 10001 }
+      containers:
+        - name: analysis-service
+          image: docker.io/traffic/analysis-service:core-v62
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8090
+              name: http
+          env:
+            # PG 权威:DSN 从 Secret 分段注入,零明文
+            - { name: ANALYSIS_LISTEN_ADDR, value: ":8090" }
+            - { name: POSTGRES_HOST, value: "postgres-primary.databases.svc" }
+            - { name: POSTGRES_PORT, value: "5432" }
+            - { name: POSTGRES_DATABASE, value: "traffic_platform" }
+            - { name: POSTGRES_USERNAME, value: "postgres" }
+            - { name: POSTGRES_PASSWORD, valueFrom: { secretKeyRef: { name: traffic-credentials, key: PG_PASSWORD } } }
+            - { name: JWT_SECRET, valueFrom: { secretKeyRef: { name: traffic-credentials, key: JWT_SECRET } } }
+            # P3 采集派发(env 门控;调度中心只做协议转换,回放由探针执行)
+            - { name: REPLAY_ENABLED, value: "true" }
+            # 权威事件中继:Kafka 出站(analysis.run.events.v1 RunSubscription)
+            - { name: RELAY_ENABLED, value: "true" }
+            - { name: RECEIPTS_ENABLED, value: "true" }
+            # G4 终局循环:全阶段终态→S5 自产回执→三件套同事务+唯一终态
+            - { name: FINALIZE_ENABLED, value: "true" }
+            - { name: MATERIALIZE_ENABLED, value: "true" }
+            # Orchestrator 影子(只读+日志):与现役双 loop 对照收集等价性证据,切换前不写
+            - { name: ORCHESTRATOR_SHADOW, value: "true" }
+            # §8 报告自动化:AUTO_ASYNC 策略下终态 run 自动发起报告请求(G05 worker 生成)
+            - { name: AUTO_REPORT_ENABLED, value: "true" }
+            # 权限体系第二层防御(共享鉴权中间件):shadow=只记录拒绝;收敛后改 enforce
+            - { name: AUTHZ_MODE, value: "enforce" }
+            # P2-c/ADR-6:机器凭证(api_tokens)经同一中间件回退校验
+            - { name: AUTHZ_API_TOKEN_ENABLED, value: "true" }
+            # 零信任加固:issuer 严格校验 + 缺失 tenant_id 声明直接拒绝
+            - { name: AUTHZ_ISSUER, value: "http://10.0.5.8:30180/realms/master" }
+            - { name: AUTHZ_REQUIRE_TENANT_CLAIM, value: "true" }
+            # azp 客户端白名单:仅接受 traffic-ui 签发的令牌
+            - { name: AUTHZ_ALLOWED_AZP, value: "traffic-ui" }
+            - { name: AUTHZ_JWKS_URL, value: "http://10.0.5.8:30180/auth/realms/master/protocol/openid-connect/certs" }
+            # 契约解释器:/v1/analysis/* 35 操作逐操作判定(analysis:read/write)
+            - { name: AUTHZ_CONTRACT_MODE, value: "enforce" }
+            - { name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092" }
+            - { name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL" }
+            - { name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512" }
+            - { name: KAFKA_SASL_USERNAME, valueFrom: { secretKeyRef: { name: kafka-analysis-service-credentials, key: username } } }
+            - { name: KAFKA_SASL_PASSWORD, valueFrom: { secretKeyRef: { name: kafka-analysis-service-credentials, key: password } } }
+            - { name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt" }
+            - { name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc" }
+            # §20 运行详情"结果"页签:CH 只读(未配置则 fail-closed 503)
+            - { name: CH_READ_URL, value: "http://clickhouse-1.middleware.svc:8123" }
+            - { name: CH_READ_USER, valueFrom: { secretKeyRef: { name: ch-analysis-read-credentials, key: username } } }
+            - { name: CH_READ_PASSWORD, valueFrom: { secretKeyRef: { name: ch-analysis-read-credentials, key: password } } }
+          volumeMounts:
+            - name: kafka-client-tls
+              mountPath: /etc/kafka/tls
+              readOnly: true
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          readinessProbe:
+            httpGet: { path: /api/v1/analysis/health, port: 8090 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/v1/analysis/health, port: 8090 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+      volumes:
+        - name: kafka-client-tls
+          secret:
+            secretName: analysis-kafka-tls
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analysis-service
+  namespace: traffic-analysis

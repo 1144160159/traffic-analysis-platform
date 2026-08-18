@@ -349,6 +349,7 @@ spec:
           sed "s|__CLICKHOUSE_PASSWORD__|${CLICKHOUSE_PASSWORD}|g" /config-src/cluster.xml > /ch-config/cluster.xml
           cp /config-src/resource-limits.xml /ch-config/resource-limits.xml
           cp /config-src/prometheus.xml /ch-config/prometheus.xml
+          cp /config-src/users-governance.xml /ch-config/traffic-runtime.xml
           cat > /ch-config/docker_related_config.xml << XEOF
           <clickhouse>
             <listen_host>::</listen_host>
@@ -434,10 +435,9 @@ spec:
           name: data
         - mountPath: /etc/clickhouse-server/config.d
           name: ch-config
-        - mountPath: /etc/clickhouse-server/users.d/traffic-runtime.xml
-          name: config
+        - mountPath: /etc/clickhouse-server/users.d
+          name: ch-config
           readOnly: true
-          subPath: users-governance.xml
       dnsPolicy: ClusterFirst
       nodeSelector:
         kubernetes.io/hostname: 8-2tb
@@ -517,6 +517,7 @@ spec:
           sed "s|__CLICKHOUSE_PASSWORD__|${CLICKHOUSE_PASSWORD}|g" /config-src/cluster.xml > /ch-config/cluster.xml
           cp /config-src/resource-limits.xml /ch-config/resource-limits.xml
           cp /config-src/prometheus.xml /ch-config/prometheus.xml
+          cp /config-src/users-governance.xml /ch-config/traffic-runtime.xml
           cat > /ch-config/docker_related_config.xml << XEOF
           <clickhouse>
             <listen_host>::</listen_host>
@@ -602,10 +603,9 @@ spec:
           name: data
         - mountPath: /etc/clickhouse-server/config.d
           name: ch-config
-        - mountPath: /etc/clickhouse-server/users.d/traffic-runtime.xml
-          name: config
+        - mountPath: /etc/clickhouse-server/users.d
+          name: ch-config
           readOnly: true
-          subPath: users-governance.xml
       dnsPolicy: ClusterFirst
       nodeSelector:
         kubernetes.io/hostname: zeus-server
@@ -706,6 +706,18 @@ spec:
         app: clickhouse
         role: replica
     spec:
+      # Prefer spreading the two replica pods (different shards) across nodes;
+      # preferred (not required) because this cluster has exactly 2 nodes.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: clickhouse
+                  role: replica
+              topologyKey: kubernetes.io/hostname
       initContainers:
       - command:
         - sh
@@ -717,6 +729,7 @@ spec:
           sed "s|__CLICKHOUSE_PASSWORD__|${CLICKHOUSE_PASSWORD}|g" /config-src/cluster.xml > /ch-config/cluster.xml
           cp /config-src/resource-limits.xml /ch-config/resource-limits.xml
           cp /config-src/prometheus.xml /ch-config/prometheus.xml
+          cp /config-src/users-governance.xml /ch-config/traffic-runtime.xml
           cat > /ch-config/docker_related_config.xml << XEOF
           <clickhouse>
             <listen_host>::</listen_host>
@@ -802,10 +815,9 @@ spec:
           name: data
         - mountPath: /etc/clickhouse-server/config.d
           name: ch-config
-        - mountPath: /etc/clickhouse-server/users.d/traffic-runtime.xml
-          name: config
+        - mountPath: /etc/clickhouse-server/users.d
+          name: ch-config
           readOnly: true
-          subPath: users-governance.xml
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler

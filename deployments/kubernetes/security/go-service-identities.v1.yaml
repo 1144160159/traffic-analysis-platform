@@ -12,7 +12,23 @@ automountServiceAccountToken: false
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  name: flink-session-job
+  namespace: flink
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
   name: flink-log-job
+  namespace: flink
+  labels: {traffic.analysis/security-control: T-SEC-001}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flink-user-behavior-job
   namespace: flink
   labels: {traffic.analysis/security-control: T-SEC-001}
 automountServiceAccountToken: false

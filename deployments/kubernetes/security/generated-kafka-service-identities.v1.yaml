@@ -17,6 +17,10 @@ spec:
     remoteRef:
       key: traffic-platform-prod-credentials
       property: KAFKA_ALERT_SERVICE_PASSWORD
+  - secretKey: KAFKA_ANALYSIS_SERVICE_PASSWORD
+    remoteRef:
+      key: traffic-platform-prod-credentials
+      property: KAFKA_ANALYSIS_SERVICE_PASSWORD
   - secretKey: KAFKA_ASSET_SERVICE_PASSWORD
     remoteRef:
       key: traffic-platform-prod-credentials
@@ -29,6 +33,10 @@ spec:
     remoteRef:
       key: traffic-platform-prod-credentials
       property: KAFKA_AUTH_SERVICE_PASSWORD
+  - secretKey: KAFKA_DEVICE_LOG_COLLECTOR_PASSWORD
+    remoteRef:
+      key: traffic-platform-prod-credentials
+      property: KAFKA_DEVICE_LOG_COLLECTOR_PASSWORD
   - secretKey: KAFKA_FLINK_ALERT_GENERATOR_JOB_PASSWORD
     remoteRef:
       key: traffic-platform-prod-credentials
@@ -109,6 +117,30 @@ spec:
     remoteRef:
       key: traffic-platform-prod-credentials
       property: KAFKA_ALERT_SERVICE_PASSWORD
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: kafka-analysis-service-credentials
+  namespace: traffic-analysis
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: traffic-platform-secret-store
+    kind: ClusterSecretStore
+  target:
+    name: kafka-analysis-service-credentials
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        username: "traffic-analysis-service"
+        password: "{{ .password }}"
+  data:
+  - secretKey: password
+    remoteRef:
+      key: traffic-platform-prod-credentials
+      property: KAFKA_ANALYSIS_SERVICE_PASSWORD
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

@@ -1,0 +1,200 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: device-log-collector-config-v1
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/name: device-log-collector
+    traffic.analysis/rollout-state: default-off
+data:
+  # Empty means fail closed. A reviewed canary patch must map each socket peer IP
+  # to exactly one tenant before the StatefulSet is scaled above zero.
+  device-tenant-map.json: '{}'
+  vector.yaml: |
+    data_dir: /var/lib/vector
+    api:
+      enabled: true
+      address: 0.0.0.0:8686
+
+    sources:
+      syslog_udp:
+        type: socket
+        address: 0.0.0.0:5514
+        mode: udp
+        max_length: 1048576
+        decoding:
+          codec: bytes
+      syslog_tcp:
+        type: socket
+        address: 0.0.0.0:5514
+        mode: tcp
+        max_length: 1048576
+        decoding:
+          codec: bytes
+
+    transforms:
+      normalize_device_log:
+        type: remap
+        inputs: [syslog_udp, syslog_tcp]
+        drop_on_error: true
+        reroute_dropped: true
+        source: |
+          raw = string!(.message)
+          if length(raw) == 0 || length(raw) > 262144 {
+            abort
+          }
+
+          device_ip = string!(.host)
+          tenant_map = object!(parse_json!(get_env_var!("DEVICE_TENANT_MAP_JSON")))
+          tenant_id = string!(get!(tenant_map, [device_ip]))
+          if tenant_id == "" {
+            abort
+          }
+
+          captures = parse_regex!(raw, r'^<(?P<pri>[0-9]{1,3})>')
+          pri = to_int!(captures.pri)
+          if pri < 0 || pri > 191 {
+            abort
+          }
+          facility = to_int(floor(pri / 8))
+          severity = pri - (facility * 8)
+
+          structured = parse_syslog!(raw)
+          event_timestamp = to_unix_timestamp!(structured.timestamp, unit: "milliseconds")
+          if event_timestamp <= 0 {
+            abort
+          }
+          parsed = encode_json(structured)
+          identity = encode_json([tenant_id, device_ip, event_timestamp, raw])
+          log_id = sha2(identity, variant: "SHA-256")
+
+          . = {
+            "log_id": log_id,
+            "tenant_id": tenant_id,
+            "device_ip": device_ip,
+            "device_type": "network_device",
+            "facility": facility,
+            "severity": severity,
+            "timestamp": event_timestamp,
+            "message": raw,
+            "parsed": parsed,
+            "source": "syslog",
+            "kafka_key": tenant_id + ":" + device_ip,
+            "kafka_headers": {
+              "tenant_id": tenant_id,
+              "device_ip": device_ip,
+              "event_id": log_id,
+              "source": "syslog",
+              "schema_version": "device-log/v1",
+              "content_type": "application/x-protobuf",
+              "message_type": "traffic.v1.DeviceLog"
+            }
+          }
+
+    sinks:
+      device_logs_kafka:
+        type: kafka
+        inputs: [normalize_device_log]
+        bootstrap_servers: ${KAFKA_BOOTSTRAP_SERVERS}
+        topic: device.logs.v1
+        key_field: kafka_key
+        headers_key: kafka_headers
+        compression: zstd
+        acknowledgements:
+          enabled: true
+        healthcheck:
+          enabled: true
+        sasl:
+          enabled: true
+          mechanism: SCRAM-SHA-512
+          username: ${KAFKA_SASL_USERNAME}
+          password: ${KAFKA_SASL_PASSWORD}
+        tls:
+          enabled: true
+          ca_file: /etc/kafka/tls/ca.crt
+          server_name: kafka-bootstrap.middleware.svc
+          verify_certificate: true
+          verify_hostname: true
+        librdkafka_options:
+          acks: all
+          enable.idempotence: "true"
+          client.id: device-log-collector-v1
+        encoding:
+          codec: protobuf
+          only_fields:
+          - log_id
+          - tenant_id
+          - device_ip
+          - device_type
+          - facility
+          - severity
+          - timestamp
+          - message
+          - parsed
+          - source
+          protobuf:
+            desc_file: /etc/vector/descriptor/device-log.desc
+            message_type: traffic.v1.DeviceLog
+            use_json_names: false
+        buffer:
+          type: disk
+          max_size: 8589934592
+          when_full: block
+
+      rejected_device_logs:
+        type: file
+        inputs: [normalize_device_log.dropped]
+        path: /var/lib/vector/quarantine/device-logs-%Y-%m-%d.jsonl
+        encoding:
+          codec: json
+
+    tests:
+    - name: accepted_rfc5424_uses_peer_tenant_and_event_time
+      inputs:
+      - insert_at: normalize_device_log
+        type: log
+        log_fields:
+          host: 192.0.2.10
+          message: "<34>1 2026-08-14T06:00:00Z router-1 app 123 ID47 - link down"
+      outputs:
+      - extract_from: normalize_device_log
+        conditions:
+        - type: vrl
+          source: |
+            assert_eq!(.tenant_id, "tenant-a")
+            assert_eq!(.device_ip, "192.0.2.10")
+            assert_eq!(.facility, 4)
+            assert_eq!(.severity, 2)
+            assert_eq!(.source, "syslog")
+            assert_eq!(.kafka_key, "tenant-a:192.0.2.10")
+            assert_eq!(.kafka_headers.event_id, .log_id)
+            assert_eq!(.kafka_headers.tenant_id, .tenant_id)
+            assert_eq!(length!(.log_id), 64)
+            assert!(is_integer(.timestamp))
+            assert!(to_int!(.timestamp) > 0)
+    - name: unknown_peer_is_not_emitted
+      inputs:
+      - insert_at: normalize_device_log
+        type: log
+        log_fields:
+          host: 192.0.2.11
+          message: "<34>1 2026-08-14T06:00:00Z router-2 app 123 ID47 - link down"
+      no_outputs_from: [normalize_device_log]
+    - name: invalid_pri_is_not_emitted
+      inputs:
+      - insert_at: normalize_device_log
+        type: log
+        log_fields:
+          host: 192.0.2.10
+          message: "<999>1 2026-08-14T06:00:00Z router-1 app 123 ID47 - invalid pri"
+      no_outputs_from: [normalize_device_log]
+    - name: missing_source_timestamp_is_not_substituted
+      inputs:
+      - insert_at: normalize_device_log
+        type: log
+        log_fields:
+          host: 192.0.2.10
+          message: "<34>router-1 link down without an RFC timestamp"
+      no_outputs_from: [normalize_device_log]
+binaryData:
+  device-log.desc: Cr4MChZ0cmFmZmljL3YxL2F1ZGl0LnByb3RvEgp0cmFmZmljLnYxIqACCghBdWRpdExvZxIZCghldmVudF9pZBgBIAEoCVIHZXZlbnRJZBIbCgl0ZW5hbnRfaWQYAiABKAlSCHRlbmFudElkEhcKB3VzZXJfaWQYAyABKAlSBnVzZXJJZBIWCgZhY3Rpb24YBCABKAlSBmFjdGlvbhIfCgtvYmplY3RfdHlwZRgFIAEoCVIKb2JqZWN0VHlwZRIbCglvYmplY3RfaWQYBiABKAlSCG9iamVjdElkEhYKBmRldGFpbBgHIAEoCVIGZGV0YWlsEhcKB2lwX2FkZHIYCCABKAlSBmlwQWRkchIdCgp1c2VyX2FnZW50GAkgASgJUgl1c2VyQWdlbnQSHQoKY3JlYXRlZF9hdBgKIAEoA1IJY3JlYXRlZEF0Ir0CCglVc2VyRXZlbnQSGQoIZXZlbnRfaWQYASABKAlSB2V2ZW50SWQSGwoJdGVuYW50X2lkGAIgASgJUgh0ZW5hbnRJZBIXCgd1c2VyX2lkGAMgASgJUgZ1c2VySWQSGgoIdXNlcm5hbWUYBCABKAlSCHVzZXJuYW1lEh0KCmV2ZW50X3R5cGUYBSABKAlSCWV2ZW50VHlwZRIbCglzb3VyY2VfaXAYBiABKAlSCHNvdXJjZUlwEh0KCnVzZXJfYWdlbnQYByABKAlSCXVzZXJBZ2VudBIaCghyZXNvdXJjZRgIIAEoCVIIcmVzb3VyY2USFgoGYWN0aW9uGAkgASgJUgZhY3Rpb24SFgoGcmVzdWx0GAogASgJUgZyZXN1bHQSHAoJdGltZXN0YW1wGAsgASgDUgl0aW1lc3RhbXAinQIKCURldmljZUxvZxIVCgZsb2dfaWQYASABKAlSBWxvZ0lkEhsKCXRlbmFudF9pZBgCIAEoCVIIdGVuYW50SWQSGwoJZGV2aWNlX2lwGAMgASgJUghkZXZpY2VJcBIfCgtkZXZpY2VfdHlwZRgEIAEoCVIKZGV2aWNlVHlwZRIaCghmYWNpbGl0eRgFIAEoDVIIZmFjaWxpdHkSGgoIc2V2ZXJpdHkYBiABKA1SCHNldmVyaXR5EhwKCXRpbWVzdGFtcBgHIAEoA1IJdGltZXN0YW1wEhgKB21lc3NhZ2UYCCABKAlSB21lc3NhZ2USFgoGcGFyc2VkGAkgASgJUgZwYXJzZWQSFgoGc291cmNlGAogASgJUgZzb3VyY2UihAIKCkRlYWRMZXR0ZXISGQoIZXZlbnRfaWQYASABKAlSB2V2ZW50SWQSGwoJdGVuYW50X2lkGAIgASgJUgh0ZW5hbnRJZBIhCgxzb3VyY2VfdG9waWMYAyABKAlSC3NvdXJjZVRvcGljEh0KCnNvdXJjZV9rZXkYBCABKAlSCXNvdXJjZUtleRIbCgllcnJvcl9tc2cYBSABKAlSCGVycm9yTXNnEh8KC3Jhd19wYXlsb2FkGAYgASgJUgpyYXdQYXlsb2FkEh8KC3JldHJ5X2NvdW50GAcgASgNUgpyZXRyeUNvdW50Eh0KCmNyZWF0ZWRfYXQYCCABKANSCWNyZWF0ZWRBdCI9Cg1BdWRpdExvZ0JhdGNoEiwKBmV2ZW50cxgBIAMoCzIULnRyYWZmaWMudjEuQXVkaXRMb2dSBmV2ZW50cyI/Cg5Vc2VyRXZlbnRCYXRjaBItCgZldmVudHMYASADKAsyFS50cmFmZmljLnYxLlVzZXJFdmVudFIGZXZlbnRzIj8KDkRldmljZUxvZ0JhdGNoEi0KBmV2ZW50cxgBIAMoCzIVLnRyYWZmaWMudjEuRGV2aWNlTG9nUgZldmVudHMiQQoPRGVhZExldHRlckJhdGNoEi4KBmV2ZW50cxgBIAMoCzIWLnRyYWZmaWMudjEuRGVhZExldHRlclIGZXZlbnRzQoEBChxjb20udHJhZmZpYy5wcm90by50cmFmZmljLnYxUAFaX2dpdGh1Yi5jb20vMTE0NDE2MDE1OS90cmFmZmljLWFuYWx5c2lzLXBsYXRmb3JtL2dvL2NvbnRyb2wtcGxhbmUvcGtnL3Byb3RvL3RyYWZmaWMvdjE7dHJhZmZpY3YxYgZwcm90bzM=

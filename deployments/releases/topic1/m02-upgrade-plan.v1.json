@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "M02_DELIVERY_ARTIFACT",
+  "artifact_role": "upgrade-plan",
+  "package_id": "m02-delivery-pending-candidate",
+  "body": {
+    "steps": [
+      {"order": 1, "action": "deploy session and PCAP consumers and require completed checkpoints", "failure_action": "ROLLBACK"},
+      {"order": 2, "action": "enable Gateway writers for the approved tenant and probe set", "failure_action": "ROLLBACK"},
+      {"order": 3, "action": "enable Probe production for the approved probe set", "failure_action": "ROLLBACK"},
+      {"order": 4, "action": "observe exact zero stop thresholds for the full approved window", "failure_action": "ROLLBACK"}
+    ],
+    "rollback_plan_path": "deployments/releases/topic1/m02-rollback-plan.v1.json",
+    "preserve_durable_data": true
+  }
+}

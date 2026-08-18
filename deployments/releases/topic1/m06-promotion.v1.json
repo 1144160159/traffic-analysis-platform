@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "M06_PROMOTION_MANIFEST",
+  "candidate_id": "PENDING_FROZEN_CANDIDATE_SHA256",
+  "profile_id": "M06_K8S_PRODUCER_RAIL_CANARY_V1",
+  "environment_id": "k8s-shared",
+  "candidate_manifest": null,
+  "task_indexes": {
+    "T1-M06-N001": null,
+    "T1-M06-N002": null,
+    "T1-M06-N003": null,
+    "T1-M06-N004": null,
+    "T1-M06-N005": null,
+    "T1-M06-N006": null,
+    "T1-M06-N007": null,
+    "T1-M06-N008": null,
+    "T1-M06-N009": null,
+    "T1-M06-N010": null,
+    "T1-M06-N011": null,
+    "T1-M06-N012": null,
+    "T1-M06-N013": null,
+    "T1-M06-N016": null
+  },
+  "phase_acceptance": {
+    "asset-events": null,
+    "asset-bindings": null,
+    "device-logs": null
+  },
+  "four_source_reconciliation": null,
+  "canary_rollbacks": {
+    "asset-events": null,
+    "asset-binding-ingest": null,
+    "asset-binding-probe": null,
+    "device-logs": null
+  },
+  "allowed_claims": [
+    "four real sources independently ingest under one candidate profile and environment",
+    "canonical entity and event-time alignment is bounded to the reconciled window",
+    "source quality and target projection receipts reconcile for the bounded window"
+  ],
+  "forbidden_claims": [
+    "four-source ingress proves fusion gain",
+    "four-source ingress proves attack-chain completion",
+    "bounded canary proves production-wide readiness",
+    "fixture ephemeral or PostgreSQL seed evidence proves a real external source"
+  ],
+  "production_applied": false
+}

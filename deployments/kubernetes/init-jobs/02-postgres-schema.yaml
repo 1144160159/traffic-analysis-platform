@@ -163,8 +163,25 @@ data:
     CREATE INDEX IF NOT EXISTS idx_probe_operation_history_tenant_operation ON probe_operation_history (tenant_id,operation_id,state_revision);
     CREATE TABLE IF NOT EXISTS probe_operation_ack_receipts (ack_id UUID PRIMARY KEY, operation_id UUID NOT NULL REFERENCES probe_operations(operation_id) ON DELETE RESTRICT, tenant_id TEXT NOT NULL, probe_id TEXT NOT NULL, command_revision BIGINT NOT NULL CHECK (command_revision > 0), reported_version TEXT NOT NULL DEFAULT '', reported_hash TEXT NOT NULL, agent_version TEXT NOT NULL, applied BOOLEAN NOT NULL, error TEXT NOT NULL DEFAULT '', acknowledged_at TIMESTAMPTZ NOT NULL, accepted BOOLEAN NOT NULL, rejection_reason TEXT NOT NULL DEFAULT '', payload JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (operation_id));
     CREATE INDEX IF NOT EXISTS idx_probe_operation_ack_tenant_probe ON probe_operation_ack_receipts (tenant_id,probe_id,command_revision DESC);
-    CREATE TABLE IF NOT EXISTS probe_operation_outbox (event_id UUID PRIMARY KEY, operation_id UUID NOT NULL REFERENCES probe_operations(operation_id) ON DELETE RESTRICT, tenant_id TEXT NOT NULL, event_type TEXT NOT NULL, aggregate_version BIGINT NOT NULL CHECK (aggregate_version > 0), schema_version INTEGER NOT NULL DEFAULT 2 CHECK (schema_version > 0), partition_key TEXT NOT NULL, payload JSONB NOT NULL, published BOOLEAN NOT NULL DEFAULT false, attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0), last_error TEXT NOT NULL DEFAULT '', next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ, locked_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ, UNIQUE (operation_id,event_type));
-    CREATE INDEX IF NOT EXISTS idx_probe_operation_outbox_pending ON probe_operation_outbox (next_attempt_at,created_at) WHERE published=false;
+    CREATE TABLE IF NOT EXISTS probe_operation_outbox (event_id UUID PRIMARY KEY, operation_id UUID NOT NULL REFERENCES probe_operations(operation_id) ON DELETE RESTRICT, tenant_id TEXT NOT NULL, event_type TEXT NOT NULL, aggregate_version BIGINT NOT NULL CHECK (aggregate_version > 0), schema_version INTEGER NOT NULL DEFAULT 2 CHECK (schema_version > 0), partition_key TEXT NOT NULL, payload JSONB NOT NULL, published BOOLEAN NOT NULL DEFAULT false, attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0), last_error TEXT NOT NULL DEFAULT '', next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ, locked_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ, publish_state TEXT NOT NULL DEFAULT 'PENDING', broker_topic TEXT NOT NULL DEFAULT '', broker_partition INTEGER, broker_offset BIGINT, publish_attempt UUID, acked_at TIMESTAMPTZ, UNIQUE (operation_id,event_type));
+    ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS publish_state TEXT NOT NULL DEFAULT 'PENDING';
+    ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS broker_topic TEXT NOT NULL DEFAULT '';
+    ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS broker_partition INTEGER;
+    ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS broker_offset BIGINT;
+    ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS publish_attempt UUID;
+    ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS acked_at TIMESTAMPTZ;
+    UPDATE probe_operation_outbox SET publish_state=CASE WHEN published THEN 'KAFKA_ACKED' ELSE 'PENDING' END WHERE publish_state NOT IN ('OUTCOME_UNKNOWN','KAFKA_ACKED') OR published;
+    ALTER TABLE probe_operation_outbox DROP CONSTRAINT IF EXISTS probe_operation_outbox_publish_state_check;
+    ALTER TABLE probe_operation_outbox ADD CONSTRAINT probe_operation_outbox_publish_state_check CHECK (publish_state IN ('PENDING','OUTCOME_UNKNOWN','KAFKA_ACKED')) NOT VALID;
+    ALTER TABLE probe_operation_outbox VALIDATE CONSTRAINT probe_operation_outbox_publish_state_check;
+    ALTER TABLE probe_operation_outbox DROP CONSTRAINT IF EXISTS probe_operation_outbox_publish_compatibility_check;
+    ALTER TABLE probe_operation_outbox ADD CONSTRAINT probe_operation_outbox_publish_compatibility_check CHECK ((published AND publish_state='KAFKA_ACKED') OR (NOT published AND publish_state IN ('PENDING','OUTCOME_UNKNOWN'))) NOT VALID;
+    ALTER TABLE probe_operation_outbox VALIDATE CONSTRAINT probe_operation_outbox_publish_compatibility_check;
+    DROP INDEX IF EXISTS idx_probe_operation_outbox_pending;
+    CREATE INDEX idx_probe_operation_outbox_pending ON probe_operation_outbox (next_attempt_at,created_at) WHERE publish_state IN ('PENDING','OUTCOME_UNKNOWN');
+    CREATE TABLE IF NOT EXISTS probe_pipeline_readiness_epochs (pipeline_id TEXT NOT NULL, consumer_role TEXT NOT NULL CHECK (consumer_role IN ('COMMAND_DELIVERY','ACK_AUTHORITY','LIFECYCLE_PROJECTION')), consumer_group TEXT NOT NULL, owner_id TEXT NOT NULL, owner_epoch BIGINT NOT NULL CHECK (owner_epoch > 0), ready BOOLEAN NOT NULL, observed_at TIMESTAMPTZ NOT NULL, lease_expires_at TIMESTAMPTZ, revoked_at TIMESTAMPTZ, updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (pipeline_id,consumer_role), CHECK ((ready AND lease_expires_at IS NOT NULL AND revoked_at IS NULL) OR (NOT ready AND revoked_at IS NOT NULL)));
+    CREATE INDEX IF NOT EXISTS idx_probe_pipeline_readiness_live ON probe_pipeline_readiness_epochs (pipeline_id,lease_expires_at) WHERE ready;
+    CREATE TABLE IF NOT EXISTS kafka_dlq_acknowledgement_receipts (consumer_group TEXT NOT NULL, source_topic TEXT NOT NULL, source_partition INTEGER NOT NULL CHECK (source_partition >= 0), source_offset BIGINT NOT NULL CHECK (source_offset >= 0), source_key_sha256 TEXT NOT NULL CHECK (source_key_sha256 ~ '^[0-9a-f]{64}$'), payload_sha256 TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'), headers_sha256 TEXT NOT NULL CHECK (headers_sha256 ~ '^[0-9a-f]{64}$'), error_sha256 TEXT NOT NULL CHECK (error_sha256 ~ '^[0-9a-f]{64}$'), acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (consumer_group,source_topic,source_partition,source_offset));
     INSERT INTO tenants (tenant_id, tenant_name, name) VALUES ('default', '默认租户', '默认租户') ON CONFLICT (tenant_id) DO UPDATE SET tenant_name = COALESCE(NULLIF(tenants.tenant_name, ''), EXCLUDED.tenant_name), name = COALESCE(NULLIF(tenants.name, ''), EXCLUDED.name);
     COMMIT;
   01-assets.sql: |
@@ -219,7 +236,11 @@ data:
     CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_ready ON asset_projection_inbox(available_at,created_at) WHERE status='pending';
     CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_reclaim ON asset_projection_inbox(locked_until,created_at) WHERE status='processing';
     CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_dead ON asset_projection_inbox(updated_at) WHERE status='dead';
+    ALTER TABLE asset_projection_inbox ADD COLUMN IF NOT EXISTS kafka_topic TEXT NOT NULL DEFAULT 'asset.events.v2', ADD COLUMN IF NOT EXISTS kafka_timestamp_ms BIGINT NOT NULL DEFAULT 1 CHECK (kafka_timestamp_ms>0), ADD COLUMN IF NOT EXISTS raw_payload BYTEA, ADD COLUMN IF NOT EXISTS source_sha256 TEXT NOT NULL DEFAULT repeat('0',64) CHECK (length(source_sha256)=64), ADD COLUMN IF NOT EXISTS ch_status TEXT NOT NULL DEFAULT 'disabled' CHECK (ch_status IN ('disabled','pending','applied','dead'));
+    CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_ch_ready ON asset_projection_inbox(available_at,created_at) WHERE ch_status='pending';
     CREATE TABLE IF NOT EXISTS asset_projection_watermarks (tenant_id TEXT NOT NULL, asset_id UUID NOT NULL REFERENCES assets(asset_id) ON DELETE RESTRICT, target TEXT NOT NULL CHECK (target IN ('opensearch','nebulagraph')), aggregate_version BIGINT NOT NULL CHECK (aggregate_version>0), event_id UUID NOT NULL REFERENCES asset_projection_inbox(event_id) ON DELETE RESTRICT, projection_sha256 TEXT NOT NULL CHECK (length(projection_sha256)=64), applied_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id,asset_id,target));
+    ALTER TABLE asset_projection_watermarks DROP CONSTRAINT IF EXISTS asset_projection_watermarks_target_check;
+    ALTER TABLE asset_projection_watermarks ADD CONSTRAINT asset_projection_watermarks_target_check CHECK (target IN ('opensearch','nebulagraph','clickhouse'));
     CREATE INDEX IF NOT EXISTS idx_asset_projection_watermarks_target_version ON asset_projection_watermarks(target,aggregate_version);
     CREATE TABLE IF NOT EXISTS asset_discovery_credentials (credential_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, name TEXT NOT NULL, protocol TEXT NOT NULL, endpoint TEXT, secret_ref TEXT NOT NULL, created_by TEXT, revision BIGINT NOT NULL DEFAULT 1 CHECK(revision>0), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, name));
     CREATE TABLE IF NOT EXISTS asset_discovery_runs (run_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, mode TEXT NOT NULL, target_cidr TEXT, target_network CIDR, credential_id TEXT, action_id TEXT NOT NULL DEFAULT 'asset-active-discovery-run', status TEXT NOT NULL DEFAULT 'queued' CHECK(status IN ('queued','running','cancel_requested','cancelled','succeeded','completed','partial','failed','blocked')), revision BIGINT NOT NULL DEFAULT 1 CHECK(revision>0), requested_by TEXT, reason TEXT NOT NULL DEFAULT 'legacy-compatible', rate_limit_per_second INT NOT NULL DEFAULT 10 CHECK(rate_limit_per_second BETWEEN 1 AND 10000), security_window_start TIMESTAMPTZ, security_window_end TIMESTAMPTZ, approved_by TEXT NOT NULL DEFAULT '', idempotency_key TEXT, request_hash TEXT, trace_id TEXT NOT NULL DEFAULT '', cancel_requested BOOLEAN NOT NULL DEFAULT false, discovered_assets INT NOT NULL DEFAULT 0, discovered_links INT NOT NULL DEFAULT 0, discovered_candidates INT NOT NULL DEFAULT 0, rejected_records INT NOT NULL DEFAULT 0, result_watermark TEXT NOT NULL DEFAULT '', error_message TEXT, queued_at TIMESTAMPTZ NOT NULL DEFAULT now(), started_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ, locked_by TEXT NOT NULL DEFAULT '', locked_until TIMESTAMPTZ);
@@ -328,11 +349,37 @@ data:
     CREATE TABLE IF NOT EXISTS model_versions (model_version TEXT PRIMARY KEY, model_id UUID NOT NULL REFERENCES models(model_id) ON DELETE CASCADE, tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, feature_set_id TEXT NOT NULL REFERENCES feature_sets(feature_set_id), artifact_uri TEXT NOT NULL, metrics JSONB NOT NULL DEFAULT '{}'::jsonb, status TEXT NOT NULL DEFAULT 'registered', created_by UUID REFERENCES users(user_id), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
     ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(user_id);
     ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 1 CHECK (revision > 0);
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS artifact_manifest_uri TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS package_id TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS package_sha256 TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS artifact_manifest_sha256 TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS evaluation_sha256 TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS explanation_sha256 TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS graph_snapshot_id TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS graph_snapshot_sha256 TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS signing_key_id TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS compatibility JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS registration_idempotency_key TEXT NOT NULL DEFAULT '';
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS registration_request_sha256 TEXT NOT NULL DEFAULT '';
     UPDATE model_versions SET updated_at = created_at WHERE updated_at IS NULL;
     CREATE INDEX IF NOT EXISTS idx_models_tenant ON models(tenant_id);
     CREATE INDEX IF NOT EXISTS idx_model_versions_model ON model_versions(model_id);
     CREATE INDEX IF NOT EXISTS idx_model_versions_status ON model_versions(status);
     CREATE INDEX IF NOT EXISTS idx_model_versions_feature_set ON model_versions(feature_set_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_model_versions_registration_idempotency ON model_versions(tenant_id, registration_idempotency_key) WHERE registration_idempotency_key <> '';
+    ALTER TABLE model_versions DROP CONSTRAINT IF EXISTS model_versions_package_sha256_check;
+    ALTER TABLE model_versions ADD CONSTRAINT model_versions_package_sha256_check CHECK (package_sha256 = '' OR package_sha256 ~ '^[0-9a-f]{64}$');
+    ALTER TABLE model_versions DROP CONSTRAINT IF EXISTS model_versions_manifest_sha256_check;
+    ALTER TABLE model_versions ADD CONSTRAINT model_versions_manifest_sha256_check CHECK (artifact_manifest_sha256 = '' OR artifact_manifest_sha256 ~ '^[0-9a-f]{64}$');
+    ALTER TABLE model_versions DROP CONSTRAINT IF EXISTS model_versions_evaluation_sha256_check;
+    ALTER TABLE model_versions ADD CONSTRAINT model_versions_evaluation_sha256_check CHECK (evaluation_sha256 = '' OR evaluation_sha256 ~ '^[0-9a-f]{64}$');
+    ALTER TABLE model_versions DROP CONSTRAINT IF EXISTS model_versions_explanation_sha256_check;
+    ALTER TABLE model_versions ADD CONSTRAINT model_versions_explanation_sha256_check CHECK (explanation_sha256 = '' OR explanation_sha256 ~ '^[0-9a-f]{64}$');
+    ALTER TABLE model_versions DROP CONSTRAINT IF EXISTS model_versions_graph_sha256_check;
+    ALTER TABLE model_versions ADD CONSTRAINT model_versions_graph_sha256_check CHECK (graph_snapshot_sha256 = '' OR graph_snapshot_sha256 ~ '^[0-9a-f]{64}$');
+    ALTER TABLE model_versions DROP CONSTRAINT IF EXISTS model_versions_registration_request_sha256_check;
+    ALTER TABLE model_versions ADD CONSTRAINT model_versions_registration_request_sha256_check CHECK (registration_request_sha256 = '' OR registration_request_sha256 ~ '^[0-9a-f]{64}$');
     CREATE TABLE IF NOT EXISTS model_action_jobs (job_id TEXT PRIMARY KEY, event_id UUID NOT NULL UNIQUE, action_id TEXT NOT NULL UNIQUE, revision BIGINT NOT NULL DEFAULT 1, tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, model_id UUID NOT NULL REFERENCES models(model_id) ON DELETE CASCADE, version TEXT NOT NULL DEFAULT '', action TEXT NOT NULL, target TEXT NOT NULL, payload JSONB NOT NULL DEFAULT '{}'::jsonb, status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','running','dispatched','awaiting_executor','completed','partial','failed','cancelled')), trace_id TEXT NOT NULL DEFAULT '', result JSONB NOT NULL DEFAULT '{}'::jsonb, error TEXT NOT NULL DEFAULT '', requested_by TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
     CREATE INDEX IF NOT EXISTS idx_model_action_jobs_lookup ON model_action_jobs (tenant_id, model_id, created_at DESC);
     CREATE TABLE IF NOT EXISTS model_action_outbox (outbox_id BIGSERIAL PRIMARY KEY, event_id UUID NOT NULL UNIQUE REFERENCES model_action_jobs(event_id) ON DELETE RESTRICT, job_id TEXT NOT NULL UNIQUE REFERENCES model_action_jobs(job_id) ON DELETE RESTRICT, tenant_id TEXT NOT NULL, model_id UUID NOT NULL, partition_key TEXT NOT NULL, event_type TEXT NOT NULL DEFAULT 'model.action.requested.v1', schema_version INTEGER NOT NULL DEFAULT 1 CHECK (schema_version=1), aggregate_version BIGINT NOT NULL DEFAULT 1 CHECK (aggregate_version=1), payload JSONB NOT NULL, status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','published','dead')), attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count>=0), available_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ, locked_by TEXT NOT NULL DEFAULT '', last_error TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ);
@@ -349,6 +396,18 @@ data:
     CREATE TABLE IF NOT EXISTS model_update_applied_acks (event_id TEXT NOT NULL, tenant_id TEXT NOT NULL, model_id TEXT NOT NULL, model_version TEXT NOT NULL, subtask_index INT NOT NULL CHECK (subtask_index >= 0), parallelism INT NOT NULL CHECK (parallelism > 0 AND subtask_index < parallelism), status TEXT NOT NULL CHECK (status IN ('applied', 'failed')), artifact_uri TEXT NOT NULL, artifact_sha256 TEXT NOT NULL DEFAULT '', warmup_score DOUBLE PRECISION, error TEXT NOT NULL DEFAULT '', payload JSONB NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (event_id, subtask_index));
     CREATE INDEX IF NOT EXISTS idx_model_update_applied_acks_status ON model_update_applied_acks (event_id, status, subtask_index);
     CREATE INDEX IF NOT EXISTS idx_model_update_applied_acks_model ON model_update_applied_acks (tenant_id, model_id, applied_at DESC);
+    CREATE TABLE IF NOT EXISTS model_update_consumer_readiness (consumer_deployment_id TEXT NOT NULL, subtask_index INT NOT NULL CHECK (subtask_index >= 0), event_id TEXT NOT NULL UNIQUE, consumer_profile_sha256 TEXT NOT NULL CHECK (consumer_profile_sha256 ~ '^[0-9a-f]{64}$'), runtime_contract TEXT NOT NULL, runtime_version TEXT NOT NULL, feature_schema_version INT NOT NULL CHECK (feature_schema_version > 0), graph_schema_version INT NOT NULL CHECK (graph_schema_version > 0), supported_model_formats TEXT NOT NULL, parallelism INT NOT NULL CHECK (parallelism > 0 AND subtask_index < parallelism), status TEXT NOT NULL DEFAULT 'ready' CHECK (status='ready'), payload JSONB NOT NULL, received_at TIMESTAMPTZ NOT NULL DEFAULT now(), last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (consumer_deployment_id,subtask_index));
+    CREATE INDEX IF NOT EXISTS idx_model_update_consumer_readiness_profile ON model_update_consumer_readiness (consumer_profile_sha256,last_seen_at DESC);
+    CREATE TABLE IF NOT EXISTS model_update_consumer_ready_receipts (consumer_deployment_id TEXT PRIMARY KEY, consumer_profile_sha256 TEXT NOT NULL CHECK (consumer_profile_sha256 ~ '^[0-9a-f]{64}$'), runtime_contract TEXT NOT NULL, runtime_version TEXT NOT NULL, feature_schema_version INT NOT NULL CHECK (feature_schema_version > 0), graph_schema_version INT NOT NULL CHECK (graph_schema_version > 0), supported_model_formats TEXT NOT NULL, expected_parallelism INT NOT NULL CHECK (expected_parallelism > 0), ready_subtasks INT NOT NULL CHECK (ready_subtasks = expected_parallelism), status TEXT NOT NULL DEFAULT 'ready' CHECK (status='ready'), ready_at TIMESTAMPTZ NOT NULL DEFAULT now(), last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(), expires_at TIMESTAMPTZ NOT NULL);
+    CREATE INDEX IF NOT EXISTS idx_model_update_consumer_ready_active ON model_update_consumer_ready_receipts (expires_at,consumer_profile_sha256) WHERE status='ready';
+    CREATE TABLE IF NOT EXISTS model_shadow_activation_aggregates (tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, model_id UUID NOT NULL REFERENCES models(model_id) ON DELETE CASCADE, aggregate_revision BIGINT NOT NULL DEFAULT 0 CHECK (aggregate_revision >= 0), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id,model_id));
+    CREATE TABLE IF NOT EXISTS model_shadow_activation_requests (request_id TEXT PRIMARY KEY, event_id TEXT NOT NULL UNIQUE REFERENCES model_update_outbox(event_id) ON DELETE RESTRICT, tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, model_id UUID NOT NULL REFERENCES models(model_id) ON DELETE RESTRICT, model_version TEXT NOT NULL REFERENCES model_versions(model_version) ON DELETE RESTRICT, package_id TEXT NOT NULL, package_sha256 TEXT NOT NULL CHECK (package_sha256 ~ '^[0-9a-f]{64}$'), idempotency_key TEXT NOT NULL, request_sha256 TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'), expected_revision BIGINT NOT NULL CHECK (expected_revision >= 0), aggregate_revision BIGINT NOT NULL CHECK (aggregate_revision = expected_revision + 1), requested_by TEXT NOT NULL, approved_by TEXT NOT NULL, approval_reason TEXT NOT NULL CHECK (length(approval_reason) BETWEEN 8 AND 1000), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id,idempotency_key), UNIQUE (tenant_id,model_id,aggregate_revision), CHECK (requested_by <> approved_by));
+    CREATE INDEX IF NOT EXISTS idx_model_shadow_activation_model ON model_shadow_activation_requests (tenant_id,model_id,aggregate_revision DESC);
+    CREATE TABLE IF NOT EXISTS model_update_shadow_acks (event_id TEXT NOT NULL, tenant_id TEXT NOT NULL, model_id TEXT NOT NULL, model_version TEXT NOT NULL, package_id TEXT NOT NULL, package_sha256 TEXT NOT NULL CHECK (package_sha256 ~ '^[0-9a-f]{64}$'), aggregate_revision BIGINT NOT NULL CHECK (aggregate_revision > 0), subtask_index INT NOT NULL CHECK (subtask_index >= 0), parallelism INT NOT NULL CHECK (parallelism > 0 AND subtask_index < parallelism), status TEXT NOT NULL CHECK (status IN ('shadow_ready','stale','duplicate','failed')), error TEXT NOT NULL DEFAULT '', payload JSONB NOT NULL, received_at TIMESTAMPTZ NOT NULL DEFAULT now(), last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (event_id,subtask_index));
+    CREATE INDEX IF NOT EXISTS idx_model_update_shadow_acks_quorum ON model_update_shadow_acks (event_id,status,subtask_index);
+    CREATE INDEX IF NOT EXISTS idx_model_update_shadow_acks_model ON model_update_shadow_acks (tenant_id,model_id,aggregate_revision DESC);
+    CREATE TABLE IF NOT EXISTS model_update_shadow_ready_receipts (event_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, model_id TEXT NOT NULL, model_version TEXT NOT NULL, package_id TEXT NOT NULL, package_sha256 TEXT NOT NULL CHECK (package_sha256 ~ '^[0-9a-f]{64}$'), aggregate_revision BIGINT NOT NULL CHECK (aggregate_revision > 0), expected_parallelism INT NOT NULL CHECK (expected_parallelism > 0), ready_subtasks INT NOT NULL CHECK (ready_subtasks = expected_parallelism), status TEXT NOT NULL DEFAULT 'shadow_ready' CHECK (status='shadow_ready'), ready_at TIMESTAMPTZ NOT NULL DEFAULT now(), last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(), expires_at TIMESTAMPTZ NOT NULL, UNIQUE (tenant_id,model_id,aggregate_revision));
+    CREATE INDEX IF NOT EXISTS idx_model_update_shadow_ready_active ON model_update_shadow_ready_receipts (expires_at,tenant_id,model_id) WHERE status='shadow_ready';
     CREATE TABLE IF NOT EXISTS alert_feedback_event_projection (event_id UUID PRIMARY KEY, feedback_id UUID NOT NULL UNIQUE, tenant_id TEXT NOT NULL, alert_id TEXT NOT NULL, user_id TEXT NOT NULL DEFAULT '', label TEXT NOT NULL CHECK (label IN ('TP','FP')), reason_code TEXT NOT NULL DEFAULT '', event_timestamp_ms BIGINT NOT NULL CHECK (event_timestamp_ms > 0), payload JSONB NOT NULL, kafka_partition INTEGER NOT NULL, kafka_offset BIGINT NOT NULL, projected_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (kafka_partition,kafka_offset));
     CREATE INDEX IF NOT EXISTS idx_alert_feedback_event_tenant_alert ON alert_feedback_event_projection (tenant_id,alert_id,event_timestamp_ms);
     CREATE TABLE IF NOT EXISTS model_feedback_inbox (feedback_id UUID PRIMARY KEY, event_id UUID NOT NULL UNIQUE, tenant_id TEXT NOT NULL, alert_id TEXT NOT NULL, user_id TEXT NOT NULL DEFAULT '', label TEXT NOT NULL CHECK (label IN ('TP','FP')), reason_code TEXT NOT NULL DEFAULT '', model_version TEXT NOT NULL DEFAULT '', rule_version TEXT NOT NULL DEFAULT '', event_timestamp_ms BIGINT NOT NULL CHECK (event_timestamp_ms > 0), payload JSONB NOT NULL, status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','applied','failed','dead_letter')), attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0), last_error TEXT NOT NULL DEFAULT '', next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ, locked_by TEXT NOT NULL DEFAULT '', applied_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
@@ -3787,6 +3846,2307 @@ data:
 
     COMMIT;
   # END GENERATED F-ALERT-004 ASSIGNMENT COMPENSATION V1
+  37-rule-update-applied-ack-v1.sql: |
+    -- M04 per-subtask rule application receipts and exact aggregation state.
+    BEGIN;
+    ALTER TABLE rule_outbox
+      ADD COLUMN IF NOT EXISTS runtime_status TEXT NOT NULL DEFAULT 'pending',
+      ADD COLUMN IF NOT EXISTS runtime_applied_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS runtime_last_error TEXT NOT NULL DEFAULT '';
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname='rule_outbox_runtime_status_check'
+      ) THEN
+        ALTER TABLE rule_outbox ADD CONSTRAINT rule_outbox_runtime_status_check
+          CHECK (runtime_status IN ('pending','partial','applied','failed'));
+      END IF;
+    END $$;
+    CREATE INDEX IF NOT EXISTS idx_rule_outbox_event_id
+      ON rule_outbox((payload->>'event_id')) WHERE payload ? 'event_id';
+    CREATE TABLE IF NOT EXISTS rule_update_applied_acks (
+      event_id TEXT NOT NULL,
+      tenant_id TEXT NOT NULL,
+      rule_id TEXT NOT NULL,
+      rule_version BIGINT NOT NULL CHECK(rule_version>0),
+      action TEXT NOT NULL CHECK(action IN ('create','update','delete','enable','disable','sync')),
+      checksum TEXT NOT NULL CHECK(checksum ~ '^[0-9a-f]{32}$'),
+      subtask_index INT NOT NULL CHECK(subtask_index>=0),
+      parallelism INT NOT NULL CHECK(parallelism>0 AND subtask_index<parallelism),
+      status TEXT NOT NULL CHECK(status IN ('applied','duplicate','stale','conflict')),
+      current_version BIGINT NOT NULL CHECK(current_version>=0),
+      error TEXT NOT NULL DEFAULT '',
+      payload JSONB NOT NULL,
+      acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY(event_id,subtask_index)
+    );
+    CREATE INDEX IF NOT EXISTS idx_rule_update_applied_acks_status
+      ON rule_update_applied_acks(event_id,status,subtask_index);
+    CREATE INDEX IF NOT EXISTS idx_rule_update_applied_acks_rule
+      ON rule_update_applied_acks(tenant_id,rule_id,rule_version,acknowledged_at DESC);
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608141500','M04 per-subtask rule update application receipts and exact parallelism aggregation')
+    ON CONFLICT(version) DO NOTHING;
+    COMMIT;
+  38-rule-version-rollback-v1.sql: |
+    -- M04 checksum-verified monotonic rule rollback.
+    BEGIN;
+    ALTER TABLE rule_versions
+      ADD COLUMN IF NOT EXISTS checksum TEXT,
+      ADD COLUMN IF NOT EXISTS change_log TEXT NOT NULL DEFAULT '';
+    UPDATE rule_versions
+    SET checksum=md5(substr(content_uri,length('inline:')+1))
+    WHERE checksum IS NULL
+      AND content_uri LIKE 'inline:%'
+      AND length(content_uri)>length('inline:');
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_rule_versions_rule_id_version
+      ON rule_versions(rule_id,version);
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid='rule_versions'::regclass
+          AND conname='rule_versions_checksum_format_check'
+      ) THEN
+        ALTER TABLE rule_versions ADD CONSTRAINT rule_versions_checksum_format_check
+          CHECK (
+            checksum IS NULL OR
+            checksum ~ '^[0-9a-f]{32}$' OR
+            checksum ~ '^sha256:[0-9a-f]{64}$'
+          ) NOT VALID;
+      END IF;
+    END $$;
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608141530','M04 checksum-verified monotonic rule version rollback')
+    ON CONFLICT(version) DO NOTHING;
+    COMMIT;
+  # BEGIN GENERATED T1-M07 FUSION SNAPSHOTS V1
+  39-m07-fusion-snapshots-v1.sql: |
+    -- M07 three-level fusion snapshots, append-only resolution history and projection delivery.
+    -- Existing fusion workbench tables remain compatibility read/write surfaces.
+    BEGIN;
+
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+    CREATE TABLE IF NOT EXISTS fusion_source_snapshots (
+      snapshot_id       UUID PRIMARY KEY,
+      tenant_id         TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      source_id         TEXT NOT NULL,
+      source_kind       TEXT NOT NULL CHECK (source_kind IN ('flow','asset','device_log','user_event','threat_intel','analyst','other')),
+      source_cursor     JSONB NOT NULL,
+      as_of             TIMESTAMPTZ NOT NULL,
+      window_start      TIMESTAMPTZ NOT NULL,
+      window_end        TIMESTAMPTZ NOT NULL,
+      source_version    BIGINT NOT NULL CHECK (source_version > 0),
+      quality_status    TEXT NOT NULL CHECK (quality_status IN ('complete','partial','failed')),
+      partial_reasons   TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+      row_count         BIGINT NOT NULL CHECK (row_count >= 0),
+      canonical_sha256  TEXT NOT NULL CHECK (canonical_sha256 ~ '^[0-9a-f]{64}$'),
+      provenance        JSONB NOT NULL,
+      trace_id          TEXT NOT NULL,
+      created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,snapshot_id),
+      UNIQUE (tenant_id,source_id,source_version),
+      CHECK (jsonb_typeof(source_cursor)='object'),
+      CHECK (jsonb_typeof(provenance)='object'),
+      CHECK (window_start < window_end AND as_of >= window_end),
+      CHECK ((quality_status='complete' AND cardinality(partial_reasons)=0) OR quality_status<>'complete')
+    );
+    CREATE INDEX IF NOT EXISTS idx_fusion_source_snapshots_as_of
+      ON fusion_source_snapshots(tenant_id,source_id,window_start,window_end,as_of DESC,source_version DESC);
+
+    CREATE TABLE IF NOT EXISTS fusion_source_entity_facts (
+      tenant_id           TEXT NOT NULL,
+      source_snapshot_id  UUID NOT NULL,
+      source_entity_id    TEXT NOT NULL,
+      entity_kind         TEXT NOT NULL CHECK (entity_kind IN ('ip','asset','device','user','host','service','unknown')),
+      identifiers         JSONB NOT NULL,
+      evidence_event_ids  JSONB NOT NULL,
+      provenance          JSONB NOT NULL,
+      canonical_sha256    TEXT NOT NULL CHECK (canonical_sha256 ~ '^[0-9a-f]{64}$'),
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,source_snapshot_id,source_entity_id),
+      FOREIGN KEY (tenant_id,source_snapshot_id) REFERENCES fusion_source_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      CHECK (jsonb_typeof(identifiers)='object'),
+      CHECK (jsonb_typeof(evidence_event_ids)='array'),
+      CHECK (jsonb_typeof(provenance)='object')
+    );
+
+    CREATE TABLE IF NOT EXISTS fusion_source_relation_facts (
+      tenant_id              TEXT NOT NULL,
+      source_snapshot_id     UUID NOT NULL,
+      source_relation_id     TEXT NOT NULL,
+      source_entity_id       TEXT NOT NULL,
+      target_entity_id       TEXT NOT NULL,
+      relation_kind          TEXT NOT NULL,
+      event_time             TIMESTAMPTZ NOT NULL,
+      evidence_event_ids     JSONB NOT NULL,
+      provenance             JSONB NOT NULL,
+      canonical_sha256       TEXT NOT NULL CHECK (canonical_sha256 ~ '^[0-9a-f]{64}$'),
+      created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,source_snapshot_id,source_relation_id),
+      FOREIGN KEY (tenant_id,source_snapshot_id,source_entity_id)
+        REFERENCES fusion_source_entity_facts(tenant_id,source_snapshot_id,source_entity_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,source_snapshot_id,target_entity_id)
+        REFERENCES fusion_source_entity_facts(tenant_id,source_snapshot_id,source_entity_id) ON DELETE RESTRICT,
+      CHECK (source_entity_id <> target_entity_id),
+      CHECK (jsonb_typeof(evidence_event_ids)='array'),
+      CHECK (jsonb_typeof(provenance)='object')
+    );
+
+    CREATE TABLE IF NOT EXISTS fusion_snapshots (
+      snapshot_id          UUID PRIMARY KEY,
+      tenant_id            TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      fusion_level         TEXT NOT NULL CHECK (fusion_level IN ('data','feature','knowledge')),
+      snapshot_version     BIGINT NOT NULL CHECK (snapshot_version > 0),
+      as_of                TIMESTAMPTZ NOT NULL,
+      window_start         TIMESTAMPTZ,
+      window_end           TIMESTAMPTZ,
+      status               TEXT NOT NULL CHECK (status IN ('complete','partial','failed','withdrawn')),
+      partial_sources      TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+      entity_count         BIGINT NOT NULL CHECK (entity_count >= 0),
+      relation_count       BIGINT NOT NULL DEFAULT 0 CHECK (relation_count >= 0),
+      canonical_sha256     TEXT NOT NULL CHECK (canonical_sha256 ~ '^[0-9a-f]{64}$'),
+      quality_summary      JSONB NOT NULL,
+      provenance           JSONB NOT NULL,
+      rollback_snapshot_id UUID,
+      trace_id             TEXT NOT NULL,
+      created_by           TEXT NOT NULL,
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,snapshot_id),
+      UNIQUE (tenant_id,fusion_level,snapshot_version),
+      FOREIGN KEY (tenant_id,rollback_snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      CHECK (jsonb_typeof(quality_summary)='object'),
+      CHECK (jsonb_typeof(provenance)='object'),
+      CHECK ((window_start IS NULL AND window_end IS NULL) OR (window_start IS NOT NULL AND window_end IS NOT NULL AND window_start < window_end AND as_of >= window_end)),
+      CHECK ((status='complete' AND cardinality(partial_sources)=0) OR status<>'complete'),
+      CHECK (rollback_snapshot_id IS NULL OR rollback_snapshot_id <> snapshot_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_fusion_snapshots_level_version
+      ON fusion_snapshots(tenant_id,fusion_level,snapshot_version DESC);
+
+    CREATE TABLE IF NOT EXISTS fusion_source_sync_jobs (
+      job_id                   UUID PRIMARY KEY,
+      tenant_id                TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      source_id                TEXT NOT NULL CHECK (source_id IN ('traffic','asset','log','behavior')),
+      source_kind              TEXT NOT NULL CHECK (source_kind IN ('flow','asset','device_log','user_event')),
+      idempotency_key          TEXT NOT NULL,
+      idempotency_request_sha256 TEXT NOT NULL CHECK (idempotency_request_sha256 ~ '^[0-9a-f]{64}$'),
+      request_sha256           TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+      requested_window_start   TIMESTAMPTZ NOT NULL,
+      requested_window_end     TIMESTAMPTZ NOT NULL,
+      expected_source_version  BIGINT CHECK (expected_source_version IS NULL OR expected_source_version > 0),
+      status                   TEXT NOT NULL CHECK (status IN ('queued','running','succeeded','failed')),
+      revision                 BIGINT NOT NULL DEFAULT 1 CHECK (revision > 0),
+      reason                   TEXT NOT NULL,
+      requested_by             TEXT NOT NULL,
+      trace_id                 TEXT NOT NULL,
+      result_source_snapshot_id UUID,
+      result_data_snapshot_id  UUID,
+      result_feature_snapshot_id UUID,
+      error_code               TEXT NOT NULL DEFAULT '',
+      error_detail             TEXT NOT NULL DEFAULT '',
+      created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+      started_at               TIMESTAMPTZ,
+      completed_at             TIMESTAMPTZ,
+      UNIQUE (tenant_id,idempotency_key),
+      UNIQUE (tenant_id,job_id),
+      FOREIGN KEY (tenant_id,result_source_snapshot_id) REFERENCES fusion_source_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,result_data_snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,result_feature_snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      CHECK (requested_window_start < requested_window_end),
+      CHECK ((status='queued' AND started_at IS NULL AND completed_at IS NULL) OR status<>'queued'),
+      CHECK ((status IN ('succeeded','failed') AND completed_at IS NOT NULL) OR status NOT IN ('succeeded','failed')),
+      CHECK ((status='succeeded' AND result_source_snapshot_id IS NOT NULL AND result_data_snapshot_id IS NOT NULL AND result_feature_snapshot_id IS NOT NULL AND error_code='') OR status<>'succeeded'),
+      CHECK ((status='failed' AND error_code<>'') OR status<>'failed')
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_fusion_source_sync_jobs_ready
+      ON fusion_source_sync_jobs(created_at,job_id) WHERE status='queued';
+
+    CREATE TABLE IF NOT EXISTS fusion_projection_readiness_history (
+      receipt_id          UUID PRIMARY KEY,
+      pipeline_id         TEXT NOT NULL CHECK (pipeline_id='fusion-projection-v1'),
+      consumer_group      TEXT NOT NULL,
+      observed_topic      TEXT NOT NULL CHECK (observed_topic='fusion.commands.v1'),
+      candidate_sha256    TEXT NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      owner_id            TEXT NOT NULL,
+      owner_epoch         BIGINT NOT NULL CHECK (owner_epoch > 0),
+      generation_id       INTEGER NOT NULL CHECK (generation_id >= 0),
+      state               TEXT NOT NULL CHECK (state IN ('ASSIGNED','READY','REVOKED','STOPPED')),
+      assignments         JSONB NOT NULL,
+      observed_at         TIMESTAMPTZ NOT NULL,
+      lease_expires_at    TIMESTAMPTZ,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (pipeline_id,consumer_group,owner_id,owner_epoch,state,observed_at),
+      CHECK (jsonb_typeof(assignments)='array'),
+      CHECK ((state='READY' AND lease_expires_at>observed_at) OR (state<>'READY' AND lease_expires_at IS NULL))
+    );
+
+    CREATE TABLE IF NOT EXISTS fusion_projection_readiness_current (
+      pipeline_id         TEXT NOT NULL CHECK (pipeline_id='fusion-projection-v1'),
+      consumer_group      TEXT NOT NULL,
+      observed_topic      TEXT NOT NULL CHECK (observed_topic='fusion.commands.v1'),
+      candidate_sha256    TEXT NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      receipt_id          UUID NOT NULL REFERENCES fusion_projection_readiness_history(receipt_id) ON DELETE RESTRICT,
+      owner_id            TEXT NOT NULL,
+      owner_epoch         BIGINT NOT NULL CHECK (owner_epoch > 0),
+      generation_id       INTEGER NOT NULL CHECK (generation_id >= 0),
+      state               TEXT NOT NULL CHECK (state IN ('ASSIGNED','READY','REVOKED','STOPPED')),
+      assignments         JSONB NOT NULL,
+      observed_at         TIMESTAMPTZ NOT NULL,
+      lease_expires_at    TIMESTAMPTZ,
+      updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (pipeline_id,consumer_group),
+      CHECK (jsonb_typeof(assignments)='array'),
+      CHECK ((state='READY' AND lease_expires_at>observed_at) OR (state<>'READY' AND lease_expires_at IS NULL))
+    );
+
+    CREATE TABLE IF NOT EXISTS fusion_snapshot_entities (
+      tenant_id            TEXT NOT NULL,
+      fusion_snapshot_id   UUID NOT NULL,
+      entity_id            TEXT NOT NULL,
+      entity_kind          TEXT NOT NULL CHECK (entity_kind IN ('ip','asset','device','user','host','service','unknown')),
+      identifiers          JSONB NOT NULL,
+      source_entity_refs   JSONB NOT NULL,
+      source_count         INTEGER NOT NULL CHECK (source_count > 0),
+      confidence           DOUBLE PRECISION NOT NULL CHECK (confidence >= 0 AND confidence <= 1),
+      provenance           JSONB NOT NULL,
+      canonical_sha256     TEXT NOT NULL CHECK (canonical_sha256 ~ '^[0-9a-f]{64}$'),
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,fusion_snapshot_id,entity_id),
+      FOREIGN KEY (tenant_id,fusion_snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      CHECK (jsonb_typeof(identifiers)='object'),
+      CHECK (jsonb_typeof(source_entity_refs)='array'),
+      CHECK (jsonb_typeof(provenance)='object')
+    );
+
+    CREATE TABLE IF NOT EXISTS fusion_snapshot_relations (
+      tenant_id            TEXT NOT NULL,
+      fusion_snapshot_id   UUID NOT NULL,
+      relation_id          TEXT NOT NULL,
+      source_entity_id     TEXT NOT NULL,
+      target_entity_id     TEXT NOT NULL,
+      relation_kind        TEXT NOT NULL,
+      edge_origin          TEXT NOT NULL CHECK (edge_origin IN ('observed','derived','analyst')),
+      event_time           TIMESTAMPTZ NOT NULL,
+      confidence           DOUBLE PRECISION NOT NULL CHECK (confidence >= 0 AND confidence <= 1),
+      evidence_refs        JSONB NOT NULL,
+      provenance           JSONB NOT NULL,
+      canonical_sha256     TEXT NOT NULL CHECK (canonical_sha256 ~ '^[0-9a-f]{64}$'),
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,fusion_snapshot_id,relation_id),
+      FOREIGN KEY (tenant_id,fusion_snapshot_id,source_entity_id)
+        REFERENCES fusion_snapshot_entities(tenant_id,fusion_snapshot_id,entity_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,fusion_snapshot_id,target_entity_id)
+        REFERENCES fusion_snapshot_entities(tenant_id,fusion_snapshot_id,entity_id) ON DELETE RESTRICT,
+      CHECK (source_entity_id <> target_entity_id),
+      CHECK (jsonb_typeof(evidence_refs)='array'),
+      CHECK (jsonb_typeof(provenance)='object')
+    );
+
+    CREATE TABLE IF NOT EXISTS fusion_feature_metrics (
+      tenant_id            TEXT NOT NULL,
+      feature_snapshot_id  UUID NOT NULL,
+      metric_name          TEXT NOT NULL,
+      metric_value         DOUBLE PRECISION NOT NULL,
+      metric_unit          TEXT NOT NULL,
+      metric_semantics     TEXT NOT NULL,
+      canonical_sha256     TEXT NOT NULL CHECK (canonical_sha256 ~ '^[0-9a-f]{64}$'),
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,feature_snapshot_id,metric_name),
+      FOREIGN KEY (tenant_id,feature_snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT
+    );
+
+    CREATE TABLE IF NOT EXISTS fusion_feature_ablation_results (
+      tenant_id              TEXT NOT NULL,
+      feature_snapshot_id    UUID NOT NULL,
+      omitted_source_id      TEXT NOT NULL CHECK (omitted_source_id IN ('traffic','asset','log','behavior')),
+      status                 TEXT NOT NULL CHECK (status IN ('complete','partial','not_applicable')),
+      included_source_count  INTEGER NOT NULL CHECK (included_source_count >= 0),
+      entity_count           BIGINT NOT NULL CHECK (entity_count >= 0),
+      relation_count         BIGINT NOT NULL CHECK (relation_count >= 0),
+      entity_delta           BIGINT NOT NULL,
+      relation_delta         BIGINT NOT NULL,
+      result                 JSONB NOT NULL,
+      canonical_sha256       TEXT NOT NULL CHECK (canonical_sha256 ~ '^[0-9a-f]{64}$'),
+      created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,feature_snapshot_id,omitted_source_id),
+      FOREIGN KEY (tenant_id,feature_snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      CHECK (jsonb_typeof(result)='object')
+    );
+
+    CREATE TABLE IF NOT EXISTS fusion_snapshot_sources (
+      tenant_id          TEXT NOT NULL,
+      fusion_snapshot_id UUID NOT NULL,
+      source_snapshot_id UUID NOT NULL,
+      source_role        TEXT NOT NULL CHECK (source_role IN ('primary','supporting','ablation_control')),
+      included           BOOLEAN NOT NULL,
+      exclusion_reason   TEXT NOT NULL DEFAULT '',
+      source_order       INTEGER NOT NULL CHECK (source_order >= 0),
+      PRIMARY KEY (tenant_id,fusion_snapshot_id,source_snapshot_id),
+      UNIQUE (tenant_id,fusion_snapshot_id,source_order),
+      FOREIGN KEY (tenant_id,fusion_snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,source_snapshot_id) REFERENCES fusion_source_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      CHECK (included OR exclusion_reason <> '')
+    );
+    CREATE INDEX IF NOT EXISTS idx_fusion_snapshot_sources_source
+      ON fusion_snapshot_sources(tenant_id,source_snapshot_id,fusion_snapshot_id);
+
+    CREATE TABLE IF NOT EXISTS fusion_resolution_history (
+      resolution_id         UUID PRIMARY KEY,
+      tenant_id              TEXT NOT NULL,
+      conflict_id            TEXT NOT NULL,
+      resolution_version     BIGINT NOT NULL CHECK (resolution_version > 0),
+      conflict_state_version BIGINT NOT NULL CHECK (conflict_state_version > 0),
+      lifecycle_state        TEXT NOT NULL CHECK (lifecycle_state IN ('applied','revoked','superseded')),
+      selected_source        TEXT NOT NULL,
+      selected_value         TEXT NOT NULL,
+      strategy               TEXT NOT NULL CHECK (strategy IN ('authoritative-source','manual-repair-task','accept-primary','revoke')),
+      reason                 TEXT NOT NULL,
+      source_snapshot_id     UUID,
+      supersedes_id          UUID REFERENCES fusion_resolution_history(resolution_id) ON DELETE RESTRICT,
+      provenance             JSONB NOT NULL,
+      resolved_by            TEXT NOT NULL,
+      trace_id               TEXT NOT NULL,
+      created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,conflict_id,resolution_version),
+      FOREIGN KEY (tenant_id,conflict_id) REFERENCES fusion_conflicts(tenant_id,conflict_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,source_snapshot_id) REFERENCES fusion_source_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      CHECK (jsonb_typeof(provenance)='object'),
+      CHECK ((resolution_version=1 AND supersedes_id IS NULL) OR (resolution_version>1 AND supersedes_id IS NOT NULL))
+    );
+    CREATE INDEX IF NOT EXISTS idx_fusion_resolution_history_current
+      ON fusion_resolution_history(tenant_id,conflict_id,resolution_version DESC);
+
+    CREATE TABLE IF NOT EXISTS fusion_projection_outbox (
+      event_id         UUID PRIMARY KEY,
+      tenant_id        TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      aggregate_type   TEXT NOT NULL CHECK (aggregate_type IN ('source_sync_job','source_snapshot','fusion_snapshot','resolution')),
+      aggregate_id     UUID NOT NULL,
+      aggregate_version BIGINT NOT NULL CHECK (aggregate_version > 0),
+      event_type       TEXT NOT NULL,
+      partition_key    TEXT NOT NULL,
+      payload          JSONB NOT NULL,
+      payload_sha256   TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      publish_state    TEXT NOT NULL DEFAULT 'PENDING' CHECK (publish_state IN ('PENDING','OUTCOME_UNKNOWN','KAFKA_ACKED')),
+      broker_topic     TEXT NOT NULL DEFAULT '',
+      broker_partition INTEGER,
+      broker_offset    BIGINT,
+      attempts         INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+      next_attempt_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      claim_token      UUID,
+      claimed_at       TIMESTAMPTZ,
+      last_error       TEXT NOT NULL DEFAULT '',
+      trace_id         TEXT NOT NULL,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+      acked_at         TIMESTAMPTZ,
+      UNIQUE (tenant_id,aggregate_type,aggregate_id,aggregate_version,event_type),
+      CHECK (jsonb_typeof(payload)='object'),
+      CHECK ((publish_state='OUTCOME_UNKNOWN' AND claim_token IS NOT NULL AND claimed_at IS NOT NULL)
+          OR (publish_state<>'OUTCOME_UNKNOWN' AND claim_token IS NULL AND claimed_at IS NULL)),
+      CHECK ((publish_state='KAFKA_ACKED' AND broker_topic<>'' AND broker_partition IS NOT NULL AND broker_offset IS NOT NULL AND acked_at IS NOT NULL) OR publish_state<>'KAFKA_ACKED')
+    );
+    CREATE INDEX IF NOT EXISTS idx_fusion_projection_outbox_ready
+      ON fusion_projection_outbox(next_attempt_at,created_at) WHERE publish_state IN ('PENDING','OUTCOME_UNKNOWN');
+
+    CREATE TABLE IF NOT EXISTS fusion_projection_inbox (
+      event_id             UUID PRIMARY KEY,
+      tenant_id            TEXT NOT NULL,
+      job_id               UUID NOT NULL,
+      source_id            TEXT NOT NULL,
+      event_sha256         TEXT NOT NULL CHECK (event_sha256 ~ '^[0-9a-f]{64}$'),
+      source_topic         TEXT NOT NULL,
+      source_partition     INTEGER NOT NULL CHECK (source_partition >= 0),
+      source_offset        BIGINT NOT NULL CHECK (source_offset >= 0),
+      disposition          TEXT NOT NULL CHECK (disposition IN ('applied','failed')),
+      failure_code         TEXT NOT NULL DEFAULT '',
+      source_snapshot_id   UUID,
+      data_snapshot_id     UUID,
+      feature_snapshot_id  UUID,
+      trace_id             TEXT NOT NULL,
+      applied_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (source_topic,source_partition,source_offset),
+      UNIQUE (tenant_id,job_id),
+      FOREIGN KEY (tenant_id,job_id) REFERENCES fusion_source_sync_jobs(tenant_id,job_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,source_snapshot_id) REFERENCES fusion_source_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,data_snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,feature_snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT,
+      CHECK ((disposition='applied' AND failure_code='' AND source_snapshot_id IS NOT NULL AND data_snapshot_id IS NOT NULL AND feature_snapshot_id IS NOT NULL)
+          OR (disposition='failed' AND failure_code<>'' AND source_snapshot_id IS NULL AND data_snapshot_id IS NULL AND feature_snapshot_id IS NULL))
+    );
+
+    CREATE TABLE IF NOT EXISTS fusion_projection_watermarks (
+      tenant_id          TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      target             TEXT NOT NULL CHECK (target IN ('clickhouse','opensearch','nebulagraph')),
+      fusion_level       TEXT NOT NULL CHECK (fusion_level IN ('data','feature','knowledge')),
+      snapshot_id        UUID NOT NULL,
+      snapshot_version   BIGINT NOT NULL CHECK (snapshot_version > 0),
+      projection_sha256  TEXT NOT NULL CHECK (projection_sha256 ~ '^[0-9a-f]{64}$'),
+      row_count          BIGINT NOT NULL CHECK (row_count >= 0),
+      applied_at         TIMESTAMPTZ NOT NULL,
+      trace_id           TEXT NOT NULL,
+      PRIMARY KEY (tenant_id,target,fusion_level),
+      FOREIGN KEY (tenant_id,snapshot_id) REFERENCES fusion_snapshots(tenant_id,snapshot_id) ON DELETE RESTRICT
+    );
+
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608141700','M07 three-level fusion snapshots, append-only resolutions and projection delivery')
+    ON CONFLICT(version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M07 FUSION SNAPSHOTS V1
+  # BEGIN GENERATED T1-M07 BEHAVIOR BASELINE V1
+  40-m07-behavior-baseline-v1.sql: |
+    -- M07 static/dynamic behavior-baseline authority, immutable versions and activation receipts.
+    -- Existing behavior_baseline_* compatibility tables remain unchanged.
+    BEGIN;
+
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_definitions_v1 (
+      tenant_id               TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      baseline_id             TEXT NOT NULL,
+      baseline_kind           TEXT NOT NULL CHECK (baseline_kind IN ('static','dynamic')),
+      entity_type             TEXT NOT NULL,
+      entity_id               TEXT NOT NULL,
+      lifecycle_state         TEXT NOT NULL DEFAULT 'learning' CHECK (lifecycle_state IN ('learning','frozen','active','retired','failed')),
+      revision                BIGINT NOT NULL DEFAULT 1 CHECK (revision > 0),
+      next_version            BIGINT NOT NULL DEFAULT 1 CHECK (next_version > 0),
+      active_version          BIGINT,
+      previous_stable_version BIGINT,
+      algorithm_version       TEXT NOT NULL,
+      sample_policy           JSONB NOT NULL,
+      threshold_spec          JSONB NOT NULL,
+      expected_consumers      TEXT[] NOT NULL,
+      created_by              TEXT NOT NULL,
+      updated_by              TEXT NOT NULL,
+      created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,baseline_id),
+      CHECK (jsonb_typeof(sample_policy)='object'),
+      CHECK (jsonb_typeof(threshold_spec)='object'),
+      CHECK (cardinality(expected_consumers)>0),
+      CHECK (active_version IS NULL OR active_version>0),
+      CHECK (previous_stable_version IS NULL OR previous_stable_version>0),
+      CHECK ((lifecycle_state='active' AND active_version IS NOT NULL) OR lifecycle_state<>'active'),
+      CHECK (active_version IS NULL OR previous_stable_version IS NULL OR active_version<>previous_stable_version)
+    );
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_sample_snapshots_v1 (
+      sample_snapshot_id       UUID PRIMARY KEY,
+      tenant_id                TEXT NOT NULL,
+      baseline_id              TEXT NOT NULL,
+      window_start             TIMESTAMPTZ NOT NULL,
+      window_end               TIMESTAMPTZ NOT NULL,
+      as_of                    TIMESTAMPTZ NOT NULL,
+      max_event_time           TIMESTAMPTZ,
+      row_count                BIGINT NOT NULL CHECK (row_count>=0),
+      eligible_row_count       BIGINT NOT NULL CHECK (eligible_row_count>=0 AND eligible_row_count<=row_count),
+      minimum_eligible_rows    BIGINT NOT NULL CHECK (minimum_eligible_rows>0),
+      quality_status           TEXT NOT NULL CHECK (quality_status IN ('complete','partial','failed')),
+      partial_reasons          TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+      source_watermark         JSONB NOT NULL,
+      source_query_sha256      TEXT NOT NULL CHECK (source_query_sha256 ~ '^[0-9a-f]{64}$'),
+      canonical_sha256         TEXT NOT NULL CHECK (canonical_sha256 ~ '^[0-9a-f]{64}$'),
+      sample_object_uri        TEXT NOT NULL DEFAULT '',
+      sample_object_sha256     TEXT NOT NULL DEFAULT '' CHECK (sample_object_sha256='' OR sample_object_sha256 ~ '^[0-9a-f]{64}$'),
+      provenance               JSONB NOT NULL,
+      created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,baseline_id,sample_snapshot_id),
+      FOREIGN KEY (tenant_id,baseline_id) REFERENCES behavior_baseline_definitions_v1(tenant_id,baseline_id) ON DELETE RESTRICT,
+      CHECK (window_start<window_end AND as_of>=window_end),
+      CHECK (max_event_time IS NULL OR max_event_time<=window_end),
+      CHECK (jsonb_typeof(source_watermark)='object'),
+      CHECK (jsonb_typeof(provenance)='object'),
+      CHECK ((quality_status='complete' AND cardinality(partial_reasons)=0 AND eligible_row_count>=minimum_eligible_rows)
+          OR quality_status<>'complete'),
+      CHECK ((sample_object_uri='' AND sample_object_sha256='') OR (sample_object_uri<>'' AND sample_object_sha256<>''))
+    );
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_versions_v1 (
+      version_id             UUID PRIMARY KEY,
+      tenant_id              TEXT NOT NULL,
+      baseline_id            TEXT NOT NULL,
+      baseline_version       BIGINT NOT NULL CHECK (baseline_version>0),
+      baseline_kind          TEXT NOT NULL CHECK (baseline_kind IN ('static','dynamic')),
+      definition_revision    BIGINT NOT NULL CHECK (definition_revision>0),
+      lifecycle_state        TEXT NOT NULL CHECK (lifecycle_state IN ('learning','frozen','active','retired','failed')),
+      sample_snapshot_id     UUID,
+      window_start           TIMESTAMPTZ,
+      window_end             TIMESTAMPTZ,
+      algorithm_version      TEXT NOT NULL,
+      threshold_spec         JSONB NOT NULL,
+      statistics             JSONB NOT NULL,
+      quality_status         TEXT NOT NULL CHECK (quality_status IN ('complete','partial','failed')),
+      snapshot_sha256        TEXT NOT NULL CHECK (snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+      candidate_sha256       TEXT NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      rollback_of_version    BIGINT,
+      created_by             TEXT NOT NULL,
+      created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+      frozen_at              TIMESTAMPTZ,
+      activated_at           TIMESTAMPTZ,
+      retired_at             TIMESTAMPTZ,
+      UNIQUE (tenant_id,baseline_id,baseline_version),
+      UNIQUE (tenant_id,baseline_id,version_id),
+      FOREIGN KEY (tenant_id,baseline_id) REFERENCES behavior_baseline_definitions_v1(tenant_id,baseline_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,baseline_id,sample_snapshot_id) REFERENCES behavior_baseline_sample_snapshots_v1(tenant_id,baseline_id,sample_snapshot_id) ON DELETE RESTRICT,
+      CHECK (jsonb_typeof(threshold_spec)='object'),
+      CHECK (jsonb_typeof(statistics)='object'),
+      CHECK ((window_start IS NULL AND window_end IS NULL) OR (window_start IS NOT NULL AND window_end IS NOT NULL AND window_start<window_end)),
+      CHECK ((baseline_kind='dynamic' AND sample_snapshot_id IS NOT NULL AND window_start IS NOT NULL)
+          OR (baseline_kind='static' AND sample_snapshot_id IS NULL)),
+      CHECK ((lifecycle_state='learning' AND frozen_at IS NULL AND activated_at IS NULL AND retired_at IS NULL)
+          OR (lifecycle_state='frozen' AND frozen_at IS NOT NULL AND activated_at IS NULL AND retired_at IS NULL)
+          OR (lifecycle_state='active' AND frozen_at IS NOT NULL AND activated_at IS NOT NULL AND retired_at IS NULL)
+          OR (lifecycle_state='retired' AND frozen_at IS NOT NULL AND retired_at IS NOT NULL)
+          OR lifecycle_state='failed'),
+      CHECK (lifecycle_state NOT IN ('frozen','active') OR quality_status='complete'),
+      CHECK (rollback_of_version IS NULL OR (rollback_of_version>0 AND rollback_of_version<>baseline_version))
+    );
+    CREATE INDEX IF NOT EXISTS idx_behavior_baseline_versions_v1_state
+      ON behavior_baseline_versions_v1(tenant_id,baseline_id,lifecycle_state,baseline_version DESC);
+
+    CREATE OR REPLACE FUNCTION protect_behavior_baseline_version_v1()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      IF ROW(NEW.version_id,NEW.tenant_id,NEW.baseline_id,NEW.baseline_version,NEW.baseline_kind,
+             NEW.definition_revision,NEW.sample_snapshot_id,NEW.window_start,NEW.window_end,
+             NEW.algorithm_version,NEW.threshold_spec,NEW.statistics,NEW.quality_status,
+             NEW.snapshot_sha256,NEW.candidate_sha256,NEW.rollback_of_version,NEW.created_by,NEW.created_at)
+         IS DISTINCT FROM
+         ROW(OLD.version_id,OLD.tenant_id,OLD.baseline_id,OLD.baseline_version,OLD.baseline_kind,
+             OLD.definition_revision,OLD.sample_snapshot_id,OLD.window_start,OLD.window_end,
+             OLD.algorithm_version,OLD.threshold_spec,OLD.statistics,OLD.quality_status,
+             OLD.snapshot_sha256,OLD.candidate_sha256,OLD.rollback_of_version,OLD.created_by,OLD.created_at) THEN
+        RAISE EXCEPTION 'behavior baseline immutable version fields cannot change';
+      END IF;
+      IF OLD.lifecycle_state='retired' AND NEW IS DISTINCT FROM OLD THEN
+        RAISE EXCEPTION 'retired behavior baseline version is immutable';
+      END IF;
+      IF NEW.lifecycle_state<>OLD.lifecycle_state AND NOT (
+           (OLD.lifecycle_state='learning' AND NEW.lifecycle_state IN ('frozen','failed'))
+        OR (OLD.lifecycle_state='frozen' AND NEW.lifecycle_state IN ('active','failed'))
+        OR (OLD.lifecycle_state='active' AND NEW.lifecycle_state='retired')
+      ) THEN
+        RAISE EXCEPTION 'invalid behavior baseline version state transition: % -> %', OLD.lifecycle_state, NEW.lifecycle_state;
+      END IF;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger
+        WHERE tgname='trg_protect_behavior_baseline_version_v1'
+          AND tgrelid='behavior_baseline_versions_v1'::regclass
+      ) THEN
+        EXECUTE 'CREATE TRIGGER trg_protect_behavior_baseline_version_v1
+          BEFORE UPDATE ON behavior_baseline_versions_v1
+          FOR EACH ROW EXECUTE FUNCTION protect_behavior_baseline_version_v1()';
+      END IF;
+    END;
+    $$;
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_build_jobs_v1 (
+      job_id                    UUID PRIMARY KEY,
+      tenant_id                 TEXT NOT NULL,
+      baseline_id               TEXT NOT NULL,
+      baseline_kind             TEXT NOT NULL CHECK (baseline_kind IN ('static','dynamic')),
+      definition_revision       BIGINT NOT NULL CHECK (definition_revision>0),
+      target_version            BIGINT NOT NULL CHECK (target_version>0),
+      idempotency_key           TEXT NOT NULL,
+      request_sha256            TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+      candidate_sha256          TEXT NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      requested_window_start    TIMESTAMPTZ,
+      requested_window_end      TIMESTAMPTZ,
+      status                    TEXT NOT NULL CHECK (status IN ('queued','running','succeeded','failed','cancelled')),
+      result_sample_snapshot_id UUID,
+      result_version_id         UUID,
+      error_code                TEXT NOT NULL DEFAULT '',
+      error_detail              TEXT NOT NULL DEFAULT '',
+      requested_by              TEXT NOT NULL,
+      reason                    TEXT NOT NULL,
+      trace_id                  TEXT NOT NULL,
+      created_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
+      started_at                TIMESTAMPTZ,
+      completed_at              TIMESTAMPTZ,
+      UNIQUE (tenant_id,baseline_id,idempotency_key),
+      UNIQUE (tenant_id,baseline_id,target_version),
+      UNIQUE (tenant_id,baseline_id,job_id),
+      FOREIGN KEY (tenant_id,baseline_id) REFERENCES behavior_baseline_definitions_v1(tenant_id,baseline_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,baseline_id,result_sample_snapshot_id) REFERENCES behavior_baseline_sample_snapshots_v1(tenant_id,baseline_id,sample_snapshot_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,baseline_id,result_version_id) REFERENCES behavior_baseline_versions_v1(tenant_id,baseline_id,version_id) ON DELETE RESTRICT,
+      CHECK ((requested_window_start IS NULL AND requested_window_end IS NULL)
+          OR (requested_window_start IS NOT NULL AND requested_window_end IS NOT NULL AND requested_window_start<requested_window_end)),
+      CHECK ((baseline_kind='dynamic' AND requested_window_start IS NOT NULL) OR baseline_kind='static'),
+      CHECK ((status IN ('succeeded','failed','cancelled') AND completed_at IS NOT NULL) OR status NOT IN ('succeeded','failed','cancelled')),
+      CHECK ((status='succeeded' AND result_version_id IS NOT NULL AND error_code=''
+          AND ((baseline_kind='dynamic' AND result_sample_snapshot_id IS NOT NULL) OR baseline_kind='static')) OR status<>'succeeded'),
+      CHECK ((status='failed' AND error_code<>'') OR status<>'failed')
+    );
+    CREATE INDEX IF NOT EXISTS idx_behavior_baseline_build_jobs_v1_ready
+      ON behavior_baseline_build_jobs_v1(created_at,job_id) WHERE status='queued';
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_approval_requests_v1 (
+      approval_id          UUID PRIMARY KEY,
+      tenant_id            TEXT NOT NULL,
+      baseline_id          TEXT NOT NULL,
+      baseline_version     BIGINT NOT NULL,
+      definition_revision  BIGINT NOT NULL CHECK (definition_revision>0),
+      snapshot_sha256      TEXT NOT NULL CHECK (snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+      candidate_sha256     TEXT NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      status               TEXT NOT NULL CHECK (status IN ('pending','approved','rejected','expired','consumed','revoked')),
+      requested_by         TEXT NOT NULL,
+      decided_by           TEXT,
+      reason               TEXT NOT NULL,
+      requested_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+      expires_at           TIMESTAMPTZ NOT NULL,
+      decided_at           TIMESTAMPTZ,
+      consumed_at          TIMESTAMPTZ,
+      UNIQUE (tenant_id,baseline_id,baseline_version,approval_id),
+      FOREIGN KEY (tenant_id,baseline_id,baseline_version) REFERENCES behavior_baseline_versions_v1(tenant_id,baseline_id,baseline_version) ON DELETE RESTRICT,
+      CHECK (expires_at>requested_at),
+      CHECK ((status='pending' AND decided_by IS NULL AND decided_at IS NULL AND consumed_at IS NULL)
+          OR (status IN ('approved','rejected','revoked') AND decided_by IS NOT NULL AND decided_at IS NOT NULL AND consumed_at IS NULL)
+          OR (status='consumed' AND decided_by IS NOT NULL AND decided_at IS NOT NULL AND consumed_at IS NOT NULL)
+          OR status='expired'),
+      CHECK (decided_by IS NULL OR decided_by<>requested_by)
+    );
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_activation_targets_v1 (
+      tenant_id           TEXT NOT NULL,
+      baseline_id         TEXT NOT NULL,
+      baseline_version    BIGINT NOT NULL,
+      consumer_id         TEXT NOT NULL,
+      required            BOOLEAN NOT NULL DEFAULT true,
+      status              TEXT NOT NULL CHECK (status IN ('pending','acked','failed','revoked')),
+      candidate_sha256    TEXT NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      ack_event_id        UUID UNIQUE,
+      ack_sha256          TEXT NOT NULL DEFAULT '' CHECK (ack_sha256='' OR ack_sha256 ~ '^[0-9a-f]{64}$'),
+      error_detail        TEXT NOT NULL DEFAULT '',
+      acknowledged_at     TIMESTAMPTZ,
+      updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,baseline_id,baseline_version,consumer_id),
+      FOREIGN KEY (tenant_id,baseline_id,baseline_version) REFERENCES behavior_baseline_versions_v1(tenant_id,baseline_id,baseline_version) ON DELETE RESTRICT,
+      CHECK ((status='acked' AND ack_event_id IS NOT NULL AND ack_sha256<>'' AND acknowledged_at IS NOT NULL AND error_detail='')
+          OR (status='failed' AND ack_event_id IS NOT NULL AND error_detail<>'' AND acknowledged_at IS NOT NULL)
+          OR status IN ('pending','revoked'))
+    );
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_ack_readiness_history_v1 (
+      receipt_id       UUID PRIMARY KEY,
+      pipeline_id      TEXT NOT NULL CHECK (pipeline_id='baseline-activation-ack-v1'),
+      consumer_group   TEXT NOT NULL CHECK (consumer_group='alert-service-baseline-activation-acks-v1'),
+      observed_topic   TEXT NOT NULL CHECK (observed_topic='baseline.activation-acks.v1'),
+      candidate_sha256 TEXT NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      owner_id         TEXT NOT NULL,
+      owner_epoch      BIGINT NOT NULL CHECK (owner_epoch>0),
+      generation_id    INTEGER NOT NULL CHECK (generation_id>=0),
+      state            TEXT NOT NULL CHECK (state IN ('ASSIGNED','READY','REVOKED','STOPPED')),
+      assignments      JSONB NOT NULL,
+      observed_at      TIMESTAMPTZ NOT NULL,
+      lease_expires_at TIMESTAMPTZ,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+      CHECK (jsonb_typeof(assignments)='array'),
+      CHECK ((state='READY' AND lease_expires_at>observed_at) OR (state<>'READY' AND lease_expires_at IS NULL))
+    );
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_ack_readiness_current_v1 (
+      pipeline_id      TEXT NOT NULL CHECK (pipeline_id='baseline-activation-ack-v1'),
+      consumer_group   TEXT NOT NULL CHECK (consumer_group='alert-service-baseline-activation-acks-v1'),
+      observed_topic   TEXT NOT NULL CHECK (observed_topic='baseline.activation-acks.v1'),
+      candidate_sha256 TEXT NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      receipt_id       UUID NOT NULL REFERENCES behavior_baseline_ack_readiness_history_v1(receipt_id) ON DELETE RESTRICT,
+      owner_id         TEXT NOT NULL,
+      owner_epoch      BIGINT NOT NULL CHECK (owner_epoch>0),
+      generation_id    INTEGER NOT NULL CHECK (generation_id>=0),
+      state            TEXT NOT NULL CHECK (state IN ('ASSIGNED','READY','REVOKED','STOPPED')),
+      assignments      JSONB NOT NULL,
+      observed_at      TIMESTAMPTZ NOT NULL,
+      lease_expires_at TIMESTAMPTZ,
+      updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (pipeline_id,consumer_group),
+      CHECK (jsonb_typeof(assignments)='array'),
+      CHECK ((state='READY' AND lease_expires_at>observed_at) OR (state<>'READY' AND lease_expires_at IS NULL))
+    );
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_lifecycle_history_v1 (
+      history_id          UUID PRIMARY KEY,
+      tenant_id           TEXT NOT NULL,
+      baseline_id         TEXT NOT NULL,
+      definition_revision BIGINT NOT NULL CHECK (definition_revision>0),
+      baseline_version    BIGINT,
+      from_state          TEXT,
+      to_state            TEXT NOT NULL CHECK (to_state IN ('learning','frozen','active','retired','failed')),
+      event_type          TEXT NOT NULL,
+      reason              TEXT NOT NULL,
+      actor_id             TEXT NOT NULL,
+      trace_id             TEXT NOT NULL,
+      metadata             JSONB NOT NULL,
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      FOREIGN KEY (tenant_id,baseline_id) REFERENCES behavior_baseline_definitions_v1(tenant_id,baseline_id) ON DELETE RESTRICT,
+      CHECK (jsonb_typeof(metadata)='object'),
+      CHECK (from_state IS NULL OR from_state IN ('learning','frozen','active','retired','failed'))
+    );
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_lifecycle_outbox_v1 (
+      outbox_sequence   BIGSERIAL NOT NULL UNIQUE,
+      event_id          UUID PRIMARY KEY,
+      tenant_id         TEXT NOT NULL,
+      baseline_id       TEXT NOT NULL,
+      aggregate_type    TEXT NOT NULL CHECK (aggregate_type IN ('baseline_build_job','baseline_version')),
+      aggregate_id      TEXT NOT NULL,
+      aggregate_version BIGINT NOT NULL CHECK (aggregate_version>0),
+      event_type        TEXT NOT NULL,
+      partition_key     TEXT NOT NULL,
+      payload           JSONB NOT NULL,
+      payload_sha256    TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      publish_state     TEXT NOT NULL DEFAULT 'PENDING' CHECK (publish_state IN ('PENDING','OUTCOME_UNKNOWN','KAFKA_ACKED')),
+      broker_topic      TEXT NOT NULL DEFAULT '',
+      broker_partition  INTEGER,
+      broker_offset     BIGINT,
+      attempts          INTEGER NOT NULL DEFAULT 0 CHECK (attempts>=0),
+      next_attempt_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      claim_token       UUID,
+      claimed_at        TIMESTAMPTZ,
+      last_error        TEXT NOT NULL DEFAULT '',
+      trace_id          TEXT NOT NULL,
+      created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+      acked_at          TIMESTAMPTZ,
+      UNIQUE (tenant_id,aggregate_type,aggregate_id,aggregate_version,event_type),
+      FOREIGN KEY (tenant_id,baseline_id) REFERENCES behavior_baseline_definitions_v1(tenant_id,baseline_id) ON DELETE RESTRICT,
+      CHECK (jsonb_typeof(payload)='object'),
+      CHECK ((publish_state='OUTCOME_UNKNOWN' AND claim_token IS NOT NULL AND claimed_at IS NOT NULL)
+          OR (publish_state<>'OUTCOME_UNKNOWN' AND claim_token IS NULL AND claimed_at IS NULL)),
+      CHECK ((publish_state='KAFKA_ACKED' AND broker_topic<>'' AND broker_partition IS NOT NULL AND broker_offset IS NOT NULL AND acked_at IS NOT NULL)
+          OR publish_state<>'KAFKA_ACKED')
+    );
+    CREATE INDEX IF NOT EXISTS idx_behavior_baseline_lifecycle_outbox_v1_ready
+      ON behavior_baseline_lifecycle_outbox_v1(next_attempt_at,outbox_sequence) WHERE publish_state IN ('PENDING','OUTCOME_UNKNOWN');
+    CREATE INDEX IF NOT EXISTS idx_behavior_baseline_lifecycle_outbox_v1_partition_order
+      ON behavior_baseline_lifecycle_outbox_v1(partition_key,outbox_sequence) WHERE publish_state<>'KAFKA_ACKED';
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_command_receipts_v1 (
+      tenant_id          TEXT NOT NULL,
+      idempotency_key    TEXT NOT NULL,
+      command_type       TEXT NOT NULL,
+      request_sha256     TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+      response_status    INTEGER NOT NULL CHECK (response_status BETWEEN 200 AND 299),
+      response_body      JSONB NOT NULL,
+      created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,idempotency_key),
+      CHECK (jsonb_typeof(response_body)='object')
+    );
+
+    CREATE TABLE IF NOT EXISTS behavior_baseline_drift_evaluations_v1 (
+      evaluation_id       UUID PRIMARY KEY,
+      tenant_id           TEXT NOT NULL,
+      baseline_id         TEXT NOT NULL,
+      baseline_version    BIGINT,
+      snapshot_sha256     TEXT NOT NULL DEFAULT '' CHECK (snapshot_sha256='' OR snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+      metric_name         TEXT NOT NULL,
+      observed_value      DOUBLE PRECISION NOT NULL,
+      observed_at         TIMESTAMPTZ NOT NULL,
+      window_start        TIMESTAMPTZ,
+      window_end          TIMESTAMPTZ,
+      mean_value          DOUBLE PRECISION,
+      stddev_value        DOUBLE PRECISION,
+      deviation_score     DOUBLE PRECISION,
+      warning_threshold   DOUBLE PRECISION,
+      alert_threshold     DOUBLE PRECISION,
+      disposition         TEXT NOT NULL CHECK (disposition IN ('normal','warning','alert','missing','partial','stale','failed')),
+      quality_status      TEXT NOT NULL CHECK (quality_status IN ('complete','partial','failed','unavailable','stale')),
+      failure_code        TEXT NOT NULL DEFAULT '',
+      evidence_refs       JSONB NOT NULL,
+      provenance          JSONB NOT NULL,
+      trace_id            TEXT NOT NULL,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      FOREIGN KEY (tenant_id,baseline_id) REFERENCES behavior_baseline_definitions_v1(tenant_id,baseline_id) ON DELETE RESTRICT,
+      FOREIGN KEY (tenant_id,baseline_id,baseline_version) REFERENCES behavior_baseline_versions_v1(tenant_id,baseline_id,baseline_version) ON DELETE RESTRICT,
+      CHECK ((window_start IS NULL AND window_end IS NULL) OR (window_start IS NOT NULL AND window_end IS NOT NULL AND window_start<window_end)),
+      CHECK (jsonb_typeof(evidence_refs)='array'),
+      CHECK (jsonb_typeof(provenance)='object'),
+      CHECK ((disposition IN ('normal','warning','alert') AND baseline_version IS NOT NULL AND snapshot_sha256<>''
+          AND deviation_score IS NOT NULL AND quality_status='complete' AND failure_code='')
+          OR disposition NOT IN ('normal','warning','alert')),
+      CHECK ((disposition IN ('missing','partial','stale','failed') AND failure_code<>'') OR disposition NOT IN ('missing','partial','stale','failed'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_behavior_baseline_drift_evaluations_v1_time
+      ON behavior_baseline_drift_evaluations_v1(tenant_id,baseline_id,observed_at DESC);
+
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608141800','M07 static and dynamic behavior baseline authority')
+    ON CONFLICT(version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M07 BEHAVIOR BASELINE V1
+  # BEGIN GENERATED T1-M07 GRAPH PROJECTION V1
+  41-m07-graph-projection-v1.sql: |
+    -- M07 durable graph projection inbox, monotonic identity state and watermarks.
+    -- NebulaGraph remains a rebuildable read model; PostgreSQL owns delivery state.
+    BEGIN;
+
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+    CREATE TABLE IF NOT EXISTS graph_projection_inbox_v1 (
+      inbox_sequence      BIGSERIAL NOT NULL UNIQUE,
+      event_id            TEXT PRIMARY KEY,
+      tenant_id           TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      event_type          TEXT NOT NULL CHECK (event_type IN (
+                            'graph.entity.upserted.v1',
+                            'graph.relation.upserted.v1',
+                            'graph.relation.revoked.v1')),
+      schema_version      TEXT NOT NULL CHECK (schema_version='1'),
+      projection_kind     TEXT NOT NULL CHECK (projection_kind IN ('entity','relation')),
+      projection_id       TEXT NOT NULL,
+      partition_key       TEXT NOT NULL,
+      aggregate_type      TEXT NOT NULL,
+      aggregate_id        TEXT NOT NULL,
+      aggregate_version   BIGINT NOT NULL CHECK (aggregate_version>0),
+      source_event_id     TEXT NOT NULL,
+      source_system       TEXT NOT NULL,
+      source_sha256       TEXT NOT NULL CHECK (source_sha256 ~ '^[0-9a-f]{64}$'),
+      projection_sha256   TEXT NOT NULL CHECK (projection_sha256 ~ '^[0-9a-f]{64}$'),
+      revoked             BOOLEAN NOT NULL,
+      source_topic        TEXT NOT NULL CHECK (source_topic='graph.projections.v1'),
+      source_partition    INTEGER NOT NULL CHECK (source_partition>=0),
+      source_offset       BIGINT NOT NULL CHECK (source_offset>=0),
+      source_timestamp_ms BIGINT NOT NULL CHECK (source_timestamp_ms>0),
+      raw_payload         BYTEA NOT NULL,
+      payload_sha256      TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      projection_state    TEXT NOT NULL DEFAULT 'PENDING' CHECK (projection_state IN ('PENDING','APPLIED','DEAD')),
+      attempts            INTEGER NOT NULL DEFAULT 0 CHECK (attempts>=0),
+      next_attempt_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+      claim_token         UUID,
+      claimed_at          TIMESTAMPTZ,
+      claimed_by          TEXT NOT NULL DEFAULT '',
+      last_error_code     TEXT NOT NULL DEFAULT '',
+      last_error_detail   TEXT NOT NULL DEFAULT '',
+      trace_id            TEXT NOT NULL,
+      occurred_at_ms      BIGINT NOT NULL CHECK (occurred_at_ms>0),
+      received_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+      applied_at          TIMESTAMPTZ,
+      UNIQUE (source_topic,source_partition,source_offset),
+      UNIQUE (tenant_id,projection_kind,projection_id,aggregate_version),
+      CHECK (octet_length(raw_payload)>0),
+      CHECK ((claim_token IS NULL AND claimed_at IS NULL AND claimed_by='')
+          OR (claim_token IS NOT NULL AND claimed_at IS NOT NULL AND claimed_by<>'')),
+      CHECK ((projection_state='APPLIED' AND applied_at IS NOT NULL AND claim_token IS NULL AND last_error_code='')
+          OR projection_state<>'APPLIED'),
+      CHECK ((projection_kind='entity' AND event_type='graph.entity.upserted.v1') OR projection_kind='relation'),
+      CHECK ((event_type='graph.relation.revoked.v1')=(projection_kind='relation' AND revoked))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_graph_projection_inbox_v1_ready
+      ON graph_projection_inbox_v1(next_attempt_at,inbox_sequence)
+      WHERE projection_state='PENDING';
+    CREATE INDEX IF NOT EXISTS idx_graph_projection_inbox_v1_partition_order
+      ON graph_projection_inbox_v1(source_topic,source_partition,source_offset)
+      WHERE projection_state<>'APPLIED';
+
+    CREATE TABLE IF NOT EXISTS graph_projection_current_v1 (
+      tenant_id           TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      projection_kind     TEXT NOT NULL CHECK (projection_kind IN ('entity','relation')),
+      projection_id       TEXT NOT NULL,
+      aggregate_type      TEXT NOT NULL,
+      aggregate_id        TEXT NOT NULL,
+      aggregate_version   BIGINT NOT NULL CHECK (aggregate_version>0),
+      event_id            TEXT NOT NULL REFERENCES graph_projection_inbox_v1(event_id) ON DELETE RESTRICT,
+      source_event_id     TEXT NOT NULL,
+      source_sha256       TEXT NOT NULL CHECK (source_sha256 ~ '^[0-9a-f]{64}$'),
+      projection_sha256   TEXT NOT NULL CHECK (projection_sha256 ~ '^[0-9a-f]{64}$'),
+      revoked             BOOLEAN NOT NULL,
+      valid_from_ms       BIGINT NOT NULL CHECK (valid_from_ms>0),
+      valid_to_ms         BIGINT NOT NULL DEFAULT 0 CHECK (valid_to_ms=0 OR valid_to_ms>=valid_from_ms),
+      nebula_acknowledged BOOLEAN NOT NULL DEFAULT false,
+      updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,projection_kind,projection_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS graph_projection_watermarks_v1 (
+      source_topic        TEXT NOT NULL CHECK (source_topic='graph.projections.v1'),
+      source_partition    INTEGER NOT NULL CHECK (source_partition>=0),
+      source_offset       BIGINT NOT NULL CHECK (source_offset>=0),
+      event_id            TEXT NOT NULL REFERENCES graph_projection_inbox_v1(event_id) ON DELETE RESTRICT,
+      tenant_id           TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      projection_sha256   TEXT NOT NULL CHECK (projection_sha256 ~ '^[0-9a-f]{64}$'),
+      source_timestamp_ms BIGINT NOT NULL CHECK (source_timestamp_ms>0),
+      projected_at        TIMESTAMPTZ NOT NULL,
+      updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,source_topic,source_partition)
+    );
+
+    CREATE TABLE IF NOT EXISTS graph_projection_dead_letters_v1 (
+      dead_letter_id      UUID PRIMARY KEY,
+      event_id            TEXT NOT NULL UNIQUE REFERENCES graph_projection_inbox_v1(event_id) ON DELETE RESTRICT,
+      tenant_id           TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      source_topic        TEXT NOT NULL,
+      source_partition    INTEGER NOT NULL CHECK (source_partition>=0),
+      source_offset       BIGINT NOT NULL CHECK (source_offset>=0),
+      payload_sha256      TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      error_code          TEXT NOT NULL,
+      error_detail        TEXT NOT NULL,
+      replay_authorized   BOOLEAN NOT NULL DEFAULT false,
+      replay_authorized_by TEXT,
+      replay_authorized_at TIMESTAMPTZ,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      CHECK ((replay_authorized AND replay_authorized_by IS NOT NULL AND replay_authorized_at IS NOT NULL)
+          OR (NOT replay_authorized AND replay_authorized_by IS NULL AND replay_authorized_at IS NULL))
+    );
+
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608141900','M07 durable graph projection inbox and watermarks')
+    ON CONFLICT(version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M07 GRAPH PROJECTION V1
+  # BEGIN GENERATED T1-M07 GRAPH RECONCILE V1
+  42-m07-graph-reconcile-v1.sql: |
+    -- M07 closed-window graph reconcile manifests and bounded repair authorization.
+    -- The PostgreSQL authority and NebulaGraph target are compared; target-only
+    -- extras are evidence, never implicit delete instructions.
+    BEGIN;
+
+    CREATE TABLE IF NOT EXISTS graph_projection_reconcile_runs_v1 (
+      run_id                    UUID PRIMARY KEY,
+      tenant_id                 TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      window_from               TIMESTAMPTZ NOT NULL,
+      window_through            TIMESTAMPTZ NOT NULL,
+      max_facts                 INTEGER NOT NULL CHECK (max_facts BETWEEN 1 AND 100000),
+      max_duration_ms           BIGINT NOT NULL CHECK (max_duration_ms BETWEEN 1000 AND 300000),
+      state                     TEXT NOT NULL CHECK (state IN ('compared','repairing','exact','extra_preserved','not_converged')),
+      requested_by              TEXT,
+      approved_by               TEXT,
+      approved_at               TIMESTAMPTZ,
+      repair_max_items          INTEGER CHECK (repair_max_items BETWEEN 1 AND 100000),
+      before_authority_sha256   TEXT NOT NULL CHECK (before_authority_sha256 ~ '^[0-9a-f]{64}$'),
+      before_target_sha256      TEXT NOT NULL CHECK (before_target_sha256 ~ '^[0-9a-f]{64}$'),
+      before_manifest_sha256    TEXT NOT NULL CHECK (before_manifest_sha256 ~ '^[0-9a-f]{64}$'),
+      after_authority_sha256    TEXT CHECK (after_authority_sha256 ~ '^[0-9a-f]{64}$'),
+      after_target_sha256       TEXT CHECK (after_target_sha256 ~ '^[0-9a-f]{64}$'),
+      after_manifest_sha256     TEXT CHECK (after_manifest_sha256 ~ '^[0-9a-f]{64}$'),
+      before_missing_count      INTEGER NOT NULL CHECK (before_missing_count>=0),
+      before_stale_count        INTEGER NOT NULL CHECK (before_stale_count>=0),
+      before_extra_count        INTEGER NOT NULL CHECK (before_extra_count>=0),
+      after_missing_count       INTEGER CHECK (after_missing_count>=0),
+      after_stale_count         INTEGER CHECK (after_stale_count>=0),
+      after_extra_count         INTEGER CHECK (after_extra_count>=0),
+      before_profile_json       JSONB NOT NULL,
+      after_profile_json        JSONB,
+      started_at                TIMESTAMPTZ NOT NULL,
+      completed_at              TIMESTAMPTZ,
+      created_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
+      CHECK (window_from<window_through),
+      CHECK ((requested_by IS NULL AND approved_by IS NULL AND approved_at IS NULL AND repair_max_items IS NULL)
+          OR (requested_by IS NOT NULL AND approved_by IS NOT NULL AND requested_by<>approved_by
+              AND approved_at IS NOT NULL AND repair_max_items IS NOT NULL)),
+      CHECK ((state IN ('exact','extra_preserved','not_converged'))=(completed_at IS NOT NULL)),
+      CHECK ((after_manifest_sha256 IS NULL AND after_authority_sha256 IS NULL AND after_target_sha256 IS NULL
+              AND after_missing_count IS NULL AND after_stale_count IS NULL AND after_extra_count IS NULL
+              AND after_profile_json IS NULL)
+          OR (after_manifest_sha256 IS NOT NULL AND after_authority_sha256 IS NOT NULL AND after_target_sha256 IS NOT NULL
+              AND after_missing_count IS NOT NULL AND after_stale_count IS NOT NULL AND after_extra_count IS NOT NULL
+              AND after_profile_json IS NOT NULL))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_graph_projection_reconcile_runs_v1_tenant_window
+      ON graph_projection_reconcile_runs_v1(tenant_id,window_through DESC,created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS graph_projection_reconcile_items_v1 (
+      run_id                    UUID NOT NULL REFERENCES graph_projection_reconcile_runs_v1(run_id) ON DELETE RESTRICT,
+      phase                     TEXT NOT NULL CHECK (phase IN ('before','after')),
+      difference_class          TEXT NOT NULL CHECK (difference_class IN ('missing','stale','extra')),
+      projection_kind          TEXT NOT NULL CHECK (projection_kind IN ('entity','relation')),
+      projection_id            TEXT NOT NULL,
+      authority_version        BIGINT CHECK (authority_version>0),
+      authority_sha256         TEXT CHECK (authority_sha256 ~ '^[0-9a-f]{64}$'),
+      authority_revoked        BOOLEAN,
+      target_version           BIGINT CHECK (target_version>0),
+      target_sha256            TEXT CHECK (target_sha256 ~ '^[0-9a-f]{64}$'),
+      target_revoked           BOOLEAN,
+      repair_eligible          BOOLEAN NOT NULL,
+      created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (run_id,phase,projection_kind,projection_id),
+      CHECK ((difference_class='missing' AND authority_version IS NOT NULL AND target_version IS NULL AND repair_eligible)
+          OR (difference_class='stale' AND authority_version IS NOT NULL AND target_version IS NOT NULL AND repair_eligible)
+          OR (difference_class='extra' AND authority_version IS NULL AND target_version IS NOT NULL AND NOT repair_eligible))
+    );
+
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608142000','M07 graph closed-window reconcile manifests')
+    ON CONFLICT(version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M07 GRAPH RECONCILE V1
+  # BEGIN GENERATED T1-M07 ATTACK CHAIN SNAPSHOT V1
+  43-m07-attack-chain-snapshot-v1.sql: |
+    -- M07 immutable attack-chain and GNN graph snapshots.
+    BEGIN;
+
+    CREATE TABLE IF NOT EXISTS gnn_graph_snapshots_v1 (
+      graph_snapshot_id       TEXT PRIMARY KEY,
+      tenant_id               TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      chain_id                TEXT NOT NULL,
+      attack_chain_version    BIGINT NOT NULL CHECK (attack_chain_version>0),
+      schema_version          TEXT NOT NULL CHECK (schema_version='gnn-graph/v1'),
+      as_of                   TIMESTAMPTZ NOT NULL,
+      node_count              INTEGER NOT NULL CHECK (node_count>=0),
+      edge_count              INTEGER NOT NULL CHECK (edge_count>=0),
+      node_sha256             TEXT NOT NULL CHECK (node_sha256 ~ '^[0-9a-f]{64}$'),
+      edge_sha256             TEXT NOT NULL CHECK (edge_sha256 ~ '^[0-9a-f]{64}$'),
+      graph_snapshot_sha256   TEXT NOT NULL CHECK (graph_snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+      nodes_json              JSONB NOT NULL,
+      edge_ids_json           JSONB NOT NULL,
+      label_refs_json         JSONB NOT NULL,
+      evidence_refs_json      JSONB NOT NULL,
+      source_watermarks_json  JSONB NOT NULL,
+      created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,chain_id,attack_chain_version),
+      UNIQUE (tenant_id,graph_snapshot_sha256),
+      CHECK (jsonb_typeof(nodes_json)='array' AND jsonb_array_length(nodes_json)=node_count),
+      CHECK (jsonb_typeof(edge_ids_json)='array' AND jsonb_array_length(edge_ids_json)=edge_count),
+      CHECK (jsonb_typeof(label_refs_json)='object'),
+      CHECK (jsonb_typeof(evidence_refs_json)='array'),
+      CHECK (jsonb_typeof(source_watermarks_json)='object')
+    );
+
+    CREATE TABLE IF NOT EXISTS attack_chain_snapshots_v1 (
+      snapshot_id              TEXT PRIMARY KEY,
+      tenant_id                TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      chain_id                 TEXT NOT NULL,
+      snapshot_version         BIGINT NOT NULL CHECK (snapshot_version>0),
+      as_of                    TIMESTAMPTZ NOT NULL,
+      source_vertex_id         TEXT NOT NULL CHECK (source_vertex_id ~ '^[0-9a-f]{32}$'),
+      target_vertex_id         TEXT NOT NULL CHECK (target_vertex_id ~ '^[0-9a-f]{32}$'),
+      candidate_path_sha256    TEXT NOT NULL CHECK (candidate_path_sha256 ~ '^[0-9a-f]{64}$'),
+      alternative_path_count  INTEGER NOT NULL CHECK (alternative_path_count>=0),
+      graph_snapshot_id        TEXT NOT NULL REFERENCES gnn_graph_snapshots_v1(graph_snapshot_id) ON DELETE RESTRICT,
+      graph_snapshot_sha256    TEXT NOT NULL CHECK (graph_snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+      snapshot_sha256          TEXT NOT NULL CHECK (snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+      partial                  BOOLEAN NOT NULL,
+      partial_reasons          TEXT[] NOT NULL DEFAULT '{}',
+      truncated                BOOLEAN NOT NULL,
+      truncation_reason        TEXT NOT NULL DEFAULT '',
+      continuation_boundary    TEXT NOT NULL DEFAULT '',
+      state                    TEXT NOT NULL CHECK (state IN ('active','withdrawn')),
+      payload_json             JSONB NOT NULL,
+      assembled_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+      withdrawn_at             TIMESTAMPTZ,
+      withdrawn_by             TEXT,
+      withdrawal_reason        TEXT,
+      UNIQUE (tenant_id,chain_id,snapshot_version),
+      UNIQUE (tenant_id,snapshot_sha256),
+      CHECK (jsonb_typeof(payload_json)='object'),
+      CHECK ((truncated AND truncation_reason<>'' AND continuation_boundary<>'')
+          OR (NOT truncated AND truncation_reason='' AND continuation_boundary='')),
+      CHECK ((state='withdrawn' AND withdrawn_at IS NOT NULL AND withdrawn_by IS NOT NULL AND withdrawal_reason IS NOT NULL)
+          OR (state='active' AND withdrawn_at IS NULL AND withdrawn_by IS NULL AND withdrawal_reason IS NULL))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_attack_chain_snapshots_v1_tenant_as_of
+      ON attack_chain_snapshots_v1(tenant_id,as_of DESC,snapshot_id)
+      WHERE state='active';
+
+    CREATE TABLE IF NOT EXISTS attack_chain_snapshot_current_v1 (
+      tenant_id               TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      chain_id                TEXT NOT NULL,
+      snapshot_id             TEXT NOT NULL UNIQUE REFERENCES attack_chain_snapshots_v1(snapshot_id) ON DELETE RESTRICT,
+      snapshot_version        BIGINT NOT NULL CHECK (snapshot_version>0),
+      snapshot_sha256         TEXT NOT NULL CHECK (snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+      updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,chain_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS attack_chain_evidence_manifest_v1 (
+      snapshot_id             TEXT NOT NULL REFERENCES attack_chain_snapshots_v1(snapshot_id) ON DELETE RESTRICT,
+      tenant_id               TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      evidence_id             TEXT NOT NULL,
+      evidence_kind           TEXT NOT NULL CHECK (evidence_kind IN ('event','rule','model','analyst_conclusion')),
+      immutable_uri           TEXT NOT NULL,
+      evidence_sha256         TEXT NOT NULL CHECK (evidence_sha256 ~ '^[0-9a-f]{64}$'),
+      source_event_id         TEXT NOT NULL,
+      occurred_at_ms          BIGINT NOT NULL CHECK (occurred_at_ms>0),
+      available               BOOLEAN NOT NULL,
+      created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (snapshot_id,evidence_id)
+    );
+
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608142100','M07 immutable attack-chain and GNN graph snapshots')
+    ON CONFLICT(version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M07 ATTACK CHAIN SNAPSHOT V1
+  # BEGIN GENERATED T1-M07 CAMPAIGN RAIL CORRELATION V1
+  44-m07-campaign-rail-correlation-v1.sql: |
+    -- T1-M07-N018: dual-rail campaign projection and correlation foundations.
+    -- Additive only. Neither rail is enabled by this migration.
+
+    BEGIN;
+
+    CREATE TABLE IF NOT EXISTS campaign_proto_projection_inbox_v1 (
+      event_id                 UUID PRIMARY KEY,
+      tenant_id                TEXT NOT NULL CHECK (btrim(tenant_id) <> '' AND lower(btrim(tenant_id)) <> 'unknown'),
+      campaign_id              TEXT NOT NULL CHECK (btrim(campaign_id) <> ''),
+      campaign_type            TEXT NOT NULL CHECK (btrim(campaign_type) <> ''),
+      event_time_start_ms      BIGINT NOT NULL CHECK (event_time_start_ms > 0),
+      event_time_end_ms        BIGINT NOT NULL CHECK (event_time_end_ms >= event_time_start_ms),
+      payload_sha256           TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      payload_protobuf         BYTEA NOT NULL,
+      source_topic             TEXT NOT NULL CHECK (source_topic = 'campaigns.v1'),
+      source_partition         INTEGER NOT NULL CHECK (source_partition >= 0),
+      source_offset            BIGINT NOT NULL CHECK (source_offset >= 0),
+      received_at              TIMESTAMPTZ NOT NULL,
+      state                    TEXT NOT NULL CHECK (state IN ('received','applied')),
+      applied_at               TIMESTAMPTZ,
+      created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (source_topic,source_partition,source_offset),
+      CHECK ((state='received' AND applied_at IS NULL) OR (state='applied' AND applied_at IS NOT NULL))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_campaign_proto_projection_inbox_v1_tenant_time
+      ON campaign_proto_projection_inbox_v1(tenant_id,event_time_end_ms DESC,event_id);
+
+    CREATE TABLE IF NOT EXISTS campaign_proto_projection_current_v1 (
+      tenant_id                TEXT NOT NULL,
+      campaign_id              TEXT NOT NULL,
+      event_id                 UUID NOT NULL UNIQUE REFERENCES campaign_proto_projection_inbox_v1(event_id) ON DELETE RESTRICT,
+      payload_sha256           TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      event_time_start_ms      BIGINT NOT NULL,
+      event_time_end_ms        BIGINT NOT NULL,
+      campaign_type            TEXT NOT NULL,
+      score                    DOUBLE PRECISION NOT NULL CHECK (score >= 0 AND score <= 1),
+      source_topic             TEXT NOT NULL,
+      source_partition         INTEGER NOT NULL,
+      source_offset            BIGINT NOT NULL,
+      updated_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,campaign_id),
+      CHECK (event_time_start_ms > 0 AND event_time_end_ms >= event_time_start_ms)
+    );
+
+    CREATE TABLE IF NOT EXISTS campaign_consumer_readiness_v1 (
+      rail_id                  TEXT NOT NULL CHECK (rail_id IN ('cep_protobuf','aggregate_json_v2','membership_json_v2')),
+      candidate_sha256         TEXT NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      source_topic             TEXT NOT NULL,
+      consumer_group           TEXT NOT NULL,
+      state                    TEXT NOT NULL CHECK (state IN ('ready','stopped')),
+      last_event_id            UUID,
+      last_source_partition    INTEGER CHECK (last_source_partition IS NULL OR last_source_partition >= 0),
+      last_source_offset       BIGINT CHECK (last_source_offset IS NULL OR last_source_offset >= 0),
+      observed_at              TIMESTAMPTZ NOT NULL,
+      updated_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (rail_id,candidate_sha256,source_topic,consumer_group),
+      CHECK ((state='ready' AND last_event_id IS NOT NULL AND last_source_partition IS NOT NULL AND last_source_offset IS NOT NULL)
+          OR state='stopped')
+    );
+
+    CREATE TABLE IF NOT EXISTS campaign_rail_correlation_v1 (
+      tenant_id                TEXT NOT NULL,
+      correlation_id           UUID NOT NULL,
+      cep_campaign_id          TEXT NOT NULL,
+      cep_event_id             UUID NOT NULL REFERENCES campaign_proto_projection_inbox_v1(event_id) ON DELETE RESTRICT,
+      aggregate_campaign_id    TEXT,
+      aggregate_event_id       UUID,
+      relation_ids             UUID[] NOT NULL DEFAULT ARRAY[]::UUID[],
+      membership_event_ids     UUID[] NOT NULL DEFAULT ARRAY[]::UUID[],
+      relation_revision        BIGINT NOT NULL DEFAULT 0 CHECK (relation_revision >= 0),
+      state                    TEXT NOT NULL CHECK (state IN ('cep_only','correlated','conflict','revoked')),
+      correlation_version      BIGINT NOT NULL CHECK (correlation_version > 0),
+      correlation_sha256       TEXT NOT NULL CHECK (correlation_sha256 ~ '^[0-9a-f]{64}$'),
+      correlation_key_sha256   TEXT NOT NULL CHECK (correlation_key_sha256 ~ '^[0-9a-f]{64}$'),
+      as_of                    TIMESTAMPTZ NOT NULL,
+      confidence               DOUBLE PRECISION NOT NULL CHECK (confidence >= 0 AND confidence <= 1),
+      source_watermarks        JSONB NOT NULL CHECK (jsonb_typeof(source_watermarks)='object'),
+      partial_reasons          TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+      first_seen_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (tenant_id,correlation_id),
+      UNIQUE (tenant_id,cep_campaign_id,correlation_version),
+      CHECK ((state='correlated' AND aggregate_campaign_id IS NOT NULL AND aggregate_event_id IS NOT NULL
+              AND cardinality(relation_ids)>0 AND cardinality(membership_event_ids)>0 AND relation_revision>0)
+          OR (state<>'correlated' AND aggregate_campaign_id IS NULL AND aggregate_event_id IS NULL))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_campaign_rail_correlation_v1_lookup
+      ON campaign_rail_correlation_v1(tenant_id,cep_campaign_id,correlation_version DESC);
+
+    CREATE TABLE IF NOT EXISTS campaign_rail_reconcile_runs_v1 (
+      run_id                    UUID PRIMARY KEY,
+      tenant_id                 TEXT NOT NULL CHECK (btrim(tenant_id) <> ''),
+      window_from               TIMESTAMPTZ NOT NULL,
+      window_through            TIMESTAMPTZ NOT NULL,
+      as_of                     TIMESTAMPTZ NOT NULL,
+      max_items                 INTEGER NOT NULL CHECK (max_items BETWEEN 1 AND 100000),
+      cep_count                 BIGINT NOT NULL CHECK (cep_count >= 0),
+      aggregate_count           BIGINT NOT NULL CHECK (aggregate_count >= 0),
+      correlated_count          BIGINT NOT NULL CHECK (correlated_count >= 0),
+      missing_count             BIGINT NOT NULL CHECK (missing_count >= 0),
+      conflict_count            BIGINT NOT NULL CHECK (conflict_count >= 0),
+      extra_count               BIGINT NOT NULL CHECK (extra_count >= 0),
+      manifest_sha256           TEXT NOT NULL CHECK (manifest_sha256 ~ '^[0-9a-f]{64}$'),
+      state                     TEXT NOT NULL CHECK (state IN ('exact','diff','budget_exceeded')),
+      created_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
+      CHECK (window_from < window_through AND window_through <= as_of)
+    );
+
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608101030','M07 campaign protobuf/JSON dual-rail correlation')
+    ON CONFLICT (version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M07 CAMPAIGN RAIL CORRELATION V1
+  # BEGIN GENERATED T1-M08 MODEL FEEDBACK REVISION INBOX V1
+  45-m08-model-feedback-revision-inbox-v1.sql: |
+    -- F-MODEL-001 / F-MLOPS-001 / T1-M08-N014
+    -- Expand-only consumer-first storage for versioned, adjudicated model feedback.
+    -- No producer or training trigger is enabled by this migration.
+    -- Rollback: disable MODEL_FEEDBACK_REVISION_CONSUMER_V1_ENABLED and retain all
+    -- four tables as audit evidence. Destructive rollback requires data-owner
+    -- approval after M09-N017 has been proven absent.
+
+    BEGIN;
+
+    CREATE TABLE IF NOT EXISTS model_feedback_revision_head (
+      feedback_id          UUID PRIMARY KEY,
+      tenant_id            TEXT NOT NULL,
+      prediction_id        TEXT NOT NULL,
+      alert_id             TEXT NOT NULL,
+      model_version        TEXT NOT NULL,
+      rule_version         TEXT NOT NULL,
+      label                TEXT NOT NULL CHECK (label IN ('TP','FP')),
+      label_revision       BIGINT NOT NULL CHECK (label_revision >= 1),
+      adjudication_state   TEXT NOT NULL CHECK (adjudication_state IN ('PROPOSED','ADJUDICATED','RETRACTED')),
+      last_event_id        UUID NOT NULL,
+      payload_sha256       CHAR(64) NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      occurred_at_ms       BIGINT NOT NULL CHECK (occurred_at_ms > 0),
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,prediction_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS model_feedback_revision_inbox (
+      event_id             UUID PRIMARY KEY,
+      feedback_id          UUID NOT NULL,
+      tenant_id            TEXT NOT NULL,
+      prediction_id        TEXT NOT NULL,
+      alert_id             TEXT NOT NULL,
+      label                TEXT NOT NULL CHECK (label IN ('TP','FP')),
+      label_revision       BIGINT NOT NULL CHECK (label_revision >= 1),
+      adjudication_state   TEXT NOT NULL CHECK (adjudication_state IN ('PROPOSED','ADJUDICATED','RETRACTED')),
+      reason_code          TEXT NOT NULL DEFAULT '',
+      model_version        TEXT NOT NULL,
+      rule_version         TEXT NOT NULL,
+      adjudicated_by       TEXT NOT NULL,
+      previous_event_id    UUID,
+      occurred_at_ms       BIGINT NOT NULL CHECK (occurred_at_ms > 0),
+      trace_id             TEXT NOT NULL DEFAULT '',
+      payload              JSONB NOT NULL,
+      payload_sha256       CHAR(64) NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      kafka_topic          TEXT NOT NULL CHECK (kafka_topic='model.feedback.v1'),
+      kafka_partition      INTEGER NOT NULL CHECK (kafka_partition >= 0),
+      kafka_offset         BIGINT NOT NULL CHECK (kafka_offset >= 0),
+      status               TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','applied','failed','dead_letter','retracted')),
+      attempts             INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+      last_error           TEXT NOT NULL DEFAULT '',
+      next_attempt_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+      locked_until         TIMESTAMPTZ,
+      locked_by            TEXT NOT NULL DEFAULT '',
+      applied_at           TIMESTAMPTZ,
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (feedback_id,label_revision),
+      UNIQUE (kafka_topic,kafka_partition,kafka_offset),
+      CHECK ((label_revision=1 AND previous_event_id IS NULL) OR
+             (label_revision>1 AND previous_event_id IS NOT NULL))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_model_feedback_revision_inbox_pending
+      ON model_feedback_revision_inbox (next_attempt_at,created_at,event_id)
+      WHERE status IN ('pending','failed');
+    CREATE INDEX IF NOT EXISTS idx_model_feedback_revision_inbox_prediction
+      ON model_feedback_revision_inbox (tenant_id,prediction_id,label_revision DESC);
+
+    CREATE TABLE IF NOT EXISTS model_feedback_revision_receipt (
+      event_id             UUID PRIMARY KEY REFERENCES model_feedback_revision_inbox(event_id) ON DELETE RESTRICT,
+      feedback_id          UUID NOT NULL,
+      tenant_id            TEXT NOT NULL,
+      label_revision       BIGINT NOT NULL CHECK (label_revision >= 1),
+      outcome              TEXT NOT NULL CHECK (outcome IN ('ACCEPTED')),
+      payload_sha256       CHAR(64) NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      kafka_topic          TEXT NOT NULL CHECK (kafka_topic='model.feedback.v1'),
+      kafka_partition      INTEGER NOT NULL CHECK (kafka_partition >= 0),
+      kafka_offset         BIGINT NOT NULL CHECK (kafka_offset >= 0),
+      recorded_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (feedback_id,label_revision),
+      UNIQUE (kafka_topic,kafka_partition,kafka_offset)
+    );
+
+    CREATE TABLE IF NOT EXISTS model_feedback_consumer_readiness_receipt (
+      consumer_group       TEXT NOT NULL,
+      candidate_sha256     CHAR(64) NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      contract_sha256      CHAR(64) NOT NULL CHECK (contract_sha256 ~ '^[0-9a-f]{64}$'),
+      kafka_topic          TEXT NOT NULL CHECK (kafka_topic='model.feedback.v1'),
+      state                TEXT NOT NULL CHECK (state IN ('READY','STOPPED')),
+      event_id             UUID,
+      kafka_partition      INTEGER CHECK (kafka_partition IS NULL OR kafka_partition >= 0),
+      kafka_offset         BIGINT CHECK (kafka_offset IS NULL OR kafka_offset >= 0),
+      observed_at          TIMESTAMPTZ NOT NULL,
+      updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (consumer_group,candidate_sha256),
+      UNIQUE (kafka_topic,consumer_group,candidate_sha256),
+      CHECK ((state='READY' AND event_id IS NOT NULL AND kafka_partition IS NOT NULL AND kafka_offset IS NOT NULL)
+          OR (state='STOPPED' AND event_id IS NULL AND kafka_partition IS NULL AND kafka_offset IS NULL))
+    );
+
+    CREATE TABLE IF NOT EXISTS alignment_schema_migrations (
+      version      TEXT PRIMARY KEY,
+      description  TEXT NOT NULL,
+      applied_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      applied_by   TEXT NOT NULL DEFAULT current_user
+    );
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608151430','M08 consumer-first model feedback revision inbox and receipt')
+    ON CONFLICT (version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M08 MODEL FEEDBACK REVISION INBOX V1
+  # BEGIN GENERATED T1-M08 MODEL DRIFT CANDIDATE V1
+  46-m08-model-drift-candidate-v1.sql: |
+    -- F-MODEL-001 / F-MLOPS-001 / T1-M08-N015
+    -- Evidence-bound drift decisions may request candidate training only.  Serving
+    -- activation remains owned by the independent model activation authority.
+    -- Rollback: set MLOPS_AUTOMATIC_CANDIDATE_V1_ENABLED=false and retain both
+    -- append-only receipt tables.  Do not delete governance evidence.
+
+    BEGIN;
+
+    CREATE TABLE IF NOT EXISTS model_drift_evaluation_receipt (
+      evaluation_id          UUID PRIMARY KEY,
+      tenant_id              TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      model_id               UUID NOT NULL REFERENCES models(model_id) ON DELETE RESTRICT,
+      model_version          TEXT NOT NULL REFERENCES model_versions(model_version) ON DELETE RESTRICT,
+      feature_set_id         TEXT NOT NULL REFERENCES feature_sets(feature_set_id) ON DELETE RESTRICT,
+      policy_sha256          CHAR(64) NOT NULL CHECK (policy_sha256 ~ '^[0-9a-f]{64}$'),
+      signal_sha256          CHAR(64) NOT NULL CHECK (signal_sha256 ~ '^[0-9a-f]{64}$'),
+      decision_state         TEXT NOT NULL CHECK (decision_state IN ('BLOCKED','NO_ACTION','CANDIDATE')),
+      reasons                JSONB NOT NULL CHECK (jsonb_typeof(reasons)='array'),
+      psi                    JSONB NOT NULL CHECK (jsonb_typeof(psi)='object'),
+      max_observed_psi       DOUBLE PRECISION NOT NULL CHECK (max_observed_psi >= 0),
+      false_positive_rate    DOUBLE PRECISION NOT NULL CHECK (false_positive_rate BETWEEN 0 AND 1),
+      signal_snapshot        JSONB NOT NULL CHECK (jsonb_typeof(signal_snapshot)='object'),
+      feature_watermark      TIMESTAMPTZ,
+      feedback_watermark     TIMESTAMPTZ,
+      baseline_window_start  TIMESTAMPTZ NOT NULL,
+      baseline_window_end    TIMESTAMPTZ NOT NULL,
+      current_window_start   TIMESTAMPTZ NOT NULL,
+      current_window_end     TIMESTAMPTZ NOT NULL,
+      evaluated_at           TIMESTAMPTZ NOT NULL,
+      activation_authorized  BOOLEAN NOT NULL DEFAULT false CHECK (activation_authorized=false),
+      created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (policy_sha256,signal_sha256),
+      CHECK (baseline_window_start < baseline_window_end),
+      CHECK (baseline_window_end = current_window_start),
+      CHECK (current_window_start < current_window_end),
+      CHECK (current_window_end <= evaluated_at),
+      CHECK ((decision_state='CANDIDATE' AND jsonb_array_length(reasons)>0)
+          OR decision_state<>'CANDIDATE')
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_model_drift_evaluation_receipt_scope
+      ON model_drift_evaluation_receipt (tenant_id,model_id,evaluated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS model_retrain_candidate_request (
+      candidate_id            UUID PRIMARY KEY,
+      evaluation_id           UUID NOT NULL UNIQUE REFERENCES model_drift_evaluation_receipt(evaluation_id) ON DELETE RESTRICT,
+      tenant_id               TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+      model_id                UUID NOT NULL REFERENCES models(model_id) ON DELETE RESTRICT,
+      baseline_model_version  TEXT NOT NULL REFERENCES model_versions(model_version) ON DELETE RESTRICT,
+      feature_set_id          TEXT NOT NULL REFERENCES feature_sets(feature_set_id) ON DELETE RESTRICT,
+      workflow_name           TEXT NOT NULL UNIQUE CHECK (workflow_name ~ '^mlops-drift-[0-9a-f]{20}$'),
+      candidate_state         TEXT NOT NULL CHECK (candidate_state IN ('PENDING_WORKFLOW','WORKFLOW_SUBMITTED','WORKFLOW_FAILED')),
+      argo_namespace          TEXT NOT NULL,
+      workflow_template       TEXT NOT NULL,
+      approval_state          TEXT NOT NULL DEFAULT 'NOT_REQUESTED' CHECK (approval_state='NOT_REQUESTED'),
+      activation_authorized   BOOLEAN NOT NULL DEFAULT false CHECK (activation_authorized=false),
+      dispatch_attempts       INTEGER NOT NULL DEFAULT 0 CHECK (dispatch_attempts >= 0),
+      last_error              TEXT NOT NULL DEFAULT '',
+      workflow_submitted_at   TIMESTAMPTZ,
+      created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,model_id,baseline_model_version),
+      CHECK ((candidate_state='WORKFLOW_SUBMITTED' AND workflow_submitted_at IS NOT NULL AND last_error='')
+          OR candidate_state<>'WORKFLOW_SUBMITTED')
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_model_retrain_candidate_request_pending
+      ON model_retrain_candidate_request (updated_at,candidate_id)
+      WHERE candidate_state IN ('PENDING_WORKFLOW','WORKFLOW_FAILED');
+
+    CREATE OR REPLACE FUNCTION enforce_model_drift_evaluation_append_only()
+    RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      RAISE EXCEPTION 'model drift evaluation receipts are append-only';
+    END;
+    $$;
+    DROP TRIGGER IF EXISTS model_drift_evaluation_append_only
+      ON model_drift_evaluation_receipt;
+    CREATE TRIGGER model_drift_evaluation_append_only
+    BEFORE UPDATE OR DELETE ON model_drift_evaluation_receipt
+    FOR EACH ROW EXECUTE FUNCTION enforce_model_drift_evaluation_append_only();
+
+    CREATE OR REPLACE FUNCTION enforce_model_retrain_candidate_guard()
+    RETURNS trigger LANGUAGE plpgsql AS $$
+    DECLARE
+      evaluation model_drift_evaluation_receipt%ROWTYPE;
+    BEGIN
+      IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION 'model retrain candidate requests are append-only';
+      END IF;
+      IF TG_OP = 'UPDATE' THEN
+        IF NEW.candidate_id<>OLD.candidate_id OR NEW.evaluation_id<>OLD.evaluation_id
+           OR NEW.tenant_id<>OLD.tenant_id OR NEW.model_id<>OLD.model_id
+           OR NEW.baseline_model_version<>OLD.baseline_model_version
+           OR NEW.feature_set_id<>OLD.feature_set_id OR NEW.workflow_name<>OLD.workflow_name
+           OR NEW.argo_namespace<>OLD.argo_namespace OR NEW.workflow_template<>OLD.workflow_template
+           OR NEW.approval_state<>OLD.approval_state OR NEW.activation_authorized<>OLD.activation_authorized
+           OR NEW.created_at<>OLD.created_at THEN
+          RAISE EXCEPTION 'model retrain candidate immutable identity changed';
+        END IF;
+        IF NOT ((OLD.candidate_state='PENDING_WORKFLOW' AND NEW.candidate_state IN ('PENDING_WORKFLOW','WORKFLOW_SUBMITTED','WORKFLOW_FAILED'))
+             OR (OLD.candidate_state='WORKFLOW_FAILED' AND NEW.candidate_state IN ('WORKFLOW_FAILED','WORKFLOW_SUBMITTED'))
+             OR (OLD.candidate_state='WORKFLOW_SUBMITTED' AND NEW.candidate_state='WORKFLOW_SUBMITTED')) THEN
+          RAISE EXCEPTION 'invalid model retrain candidate state transition % -> %', OLD.candidate_state, NEW.candidate_state;
+        END IF;
+      END IF;
+
+      SELECT * INTO evaluation FROM model_drift_evaluation_receipt
+      WHERE evaluation_id=NEW.evaluation_id;
+      IF NOT FOUND OR evaluation.decision_state<>'CANDIDATE' THEN
+        RAISE EXCEPTION 'model retrain candidate requires a CANDIDATE evaluation';
+      END IF;
+      IF evaluation.tenant_id<>NEW.tenant_id OR evaluation.model_id<>NEW.model_id
+         OR evaluation.model_version<>NEW.baseline_model_version
+         OR evaluation.feature_set_id<>NEW.feature_set_id
+         OR evaluation.activation_authorized OR NEW.activation_authorized
+         OR NEW.approval_state<>'NOT_REQUESTED' THEN
+        RAISE EXCEPTION 'model retrain candidate evaluation identity mismatch';
+      END IF;
+      IF TG_OP='INSERT' AND NOT EXISTS (
+        SELECT 1 FROM model_versions active
+        WHERE active.model_version=NEW.baseline_model_version
+          AND active.tenant_id=NEW.tenant_id AND active.model_id=NEW.model_id
+          AND active.status='active'
+      ) THEN
+        RAISE EXCEPTION 'model retrain candidate baseline is not the active model version';
+      END IF;
+      RETURN NEW;
+    END;
+    $$;
+    DROP TRIGGER IF EXISTS model_retrain_candidate_guard
+      ON model_retrain_candidate_request;
+    CREATE TRIGGER model_retrain_candidate_guard
+    BEFORE INSERT OR UPDATE OR DELETE ON model_retrain_candidate_request
+    FOR EACH ROW EXECUTE FUNCTION enforce_model_retrain_candidate_guard();
+
+    CREATE TABLE IF NOT EXISTS alignment_schema_migrations (
+      version      TEXT PRIMARY KEY,
+      description  TEXT NOT NULL,
+      applied_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      applied_by   TEXT NOT NULL DEFAULT current_user
+    );
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608151700','M08 governed model drift evaluation and candidate-only retrain request')
+    ON CONFLICT (version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M08 MODEL DRIFT CANDIDATE V1
+  # BEGIN GENERATED T1-M08 MODEL ROLLBACK V2
+  47-m08-model-rollback-v2.sql: |
+    -- T1-M08-N016 governed model rollback v2.
+    --
+    -- Expand only.  The writer is separately guarded by
+    -- MODEL_ROLLBACK_V2_ENABLED=false.  A rollback request records the exact
+    -- currently-serving and target immutable packages.  The serving pointer may
+    -- move only after the exact Flink subtask set acknowledges the target.  A
+    -- failed/expired attempt is compensated back to the recorded source package;
+    -- partial compensation is never represented as recovered.
+
+    BEGIN;
+
+    CREATE TABLE IF NOT EXISTS model_rollback_requests (
+        rollback_id                    UUID PRIMARY KEY,
+        action_job_id                  TEXT NOT NULL UNIQUE
+                                          REFERENCES model_action_jobs(job_id) ON DELETE RESTRICT,
+        rollback_event_id              TEXT NOT NULL UNIQUE
+                                          REFERENCES model_update_outbox(event_id) ON DELETE RESTRICT,
+        compensation_event_id          TEXT UNIQUE
+                                          REFERENCES model_update_outbox(event_id) ON DELETE RESTRICT,
+        tenant_id                      TEXT NOT NULL
+                                          REFERENCES tenants(tenant_id) ON DELETE RESTRICT,
+        model_id                       UUID NOT NULL
+                                          REFERENCES models(model_id) ON DELETE RESTRICT,
+        from_model_version             TEXT NOT NULL
+                                          REFERENCES model_versions(model_version) ON DELETE RESTRICT,
+        from_revision                  BIGINT NOT NULL CHECK (from_revision > 0),
+        from_package_sha256            TEXT NOT NULL CHECK (from_package_sha256 ~ '^[0-9a-f]{64}$'),
+        target_model_version           TEXT NOT NULL
+                                          REFERENCES model_versions(model_version) ON DELETE RESTRICT,
+        target_revision                BIGINT NOT NULL CHECK (target_revision > 0),
+        target_package_sha256          TEXT NOT NULL CHECK (target_package_sha256 ~ '^[0-9a-f]{64}$'),
+        consumer_deployment_id         TEXT NOT NULL,
+        consumer_profile_sha256        TEXT NOT NULL CHECK (consumer_profile_sha256 ~ '^[0-9a-f]{64}$'),
+        expected_parallelism           INTEGER NOT NULL CHECK (expected_parallelism > 0),
+        request_sha256                 TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+        reason                         TEXT NOT NULL CHECK (length(reason) BETWEEN 8 AND 1000),
+        requested_by                   TEXT NOT NULL,
+        state                          TEXT NOT NULL DEFAULT 'PENDING_ACK' CHECK (
+                                          state IN (
+                                            'PENDING_ACK','PARTIAL','COMPENSATING','RECOVERED',
+                                            'FAILED_UNPUBLISHED','FAILED_RESTORED','COMPENSATION_FAILED'
+                                          )
+                                        ),
+        applied_subtasks               INTEGER NOT NULL DEFAULT 0 CHECK (
+                                          applied_subtasks BETWEEN 0 AND expected_parallelism
+                                        ),
+        compensation_applied_subtasks  INTEGER NOT NULL DEFAULT 0 CHECK (
+                                          compensation_applied_subtasks BETWEEN 0 AND expected_parallelism
+                                        ),
+        active_switched                BOOLEAN NOT NULL DEFAULT false,
+        failure_reason                 TEXT NOT NULL DEFAULT '',
+        created_at                     TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at                     TIMESTAMPTZ NOT NULL DEFAULT now(),
+        recovered_at                   TIMESTAMPTZ,
+        CHECK (from_model_version <> target_model_version),
+        CHECK (active_switched = (state = 'RECOVERED')),
+        CHECK (state <> 'RECOVERED' OR applied_subtasks = expected_parallelism),
+        CHECK (state <> 'FAILED_RESTORED' OR compensation_applied_subtasks = expected_parallelism),
+        CHECK (compensation_event_id IS NOT NULL OR state NOT IN (
+          'COMPENSATING','FAILED_RESTORED','COMPENSATION_FAILED'
+        ))
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_model_rollback_inflight
+        ON model_rollback_requests (tenant_id,model_id)
+        WHERE state IN ('PENDING_ACK','PARTIAL','COMPENSATING');
+
+    CREATE INDEX IF NOT EXISTS idx_model_rollback_status
+        ON model_rollback_requests (tenant_id,model_id,created_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_model_rollback_deadline
+        ON model_rollback_requests (updated_at,rollback_id)
+        WHERE state IN ('PENDING_ACK','PARTIAL');
+
+    CREATE OR REPLACE FUNCTION enforce_model_rollback_state_v2()
+    RETURNS TRIGGER LANGUAGE plpgsql AS $$
+    DECLARE
+      transition_key TEXT;
+    BEGIN
+      IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION 'model rollback receipts are append-only';
+      END IF;
+
+      IF OLD.rollback_id IS DISTINCT FROM NEW.rollback_id
+         OR OLD.action_job_id IS DISTINCT FROM NEW.action_job_id
+         OR OLD.rollback_event_id IS DISTINCT FROM NEW.rollback_event_id
+         OR OLD.tenant_id IS DISTINCT FROM NEW.tenant_id
+         OR OLD.model_id IS DISTINCT FROM NEW.model_id
+         OR OLD.from_model_version IS DISTINCT FROM NEW.from_model_version
+         OR OLD.from_revision IS DISTINCT FROM NEW.from_revision
+         OR OLD.from_package_sha256 IS DISTINCT FROM NEW.from_package_sha256
+         OR OLD.target_model_version IS DISTINCT FROM NEW.target_model_version
+         OR OLD.target_revision IS DISTINCT FROM NEW.target_revision
+         OR OLD.target_package_sha256 IS DISTINCT FROM NEW.target_package_sha256
+         OR OLD.consumer_deployment_id IS DISTINCT FROM NEW.consumer_deployment_id
+         OR OLD.consumer_profile_sha256 IS DISTINCT FROM NEW.consumer_profile_sha256
+         OR OLD.expected_parallelism IS DISTINCT FROM NEW.expected_parallelism
+         OR OLD.request_sha256 IS DISTINCT FROM NEW.request_sha256
+         OR OLD.reason IS DISTINCT FROM NEW.reason
+         OR OLD.requested_by IS DISTINCT FROM NEW.requested_by
+         OR OLD.created_at IS DISTINCT FROM NEW.created_at THEN
+        RAISE EXCEPTION 'model rollback immutable identity changed';
+      END IF;
+
+      transition_key := OLD.state || '->' || NEW.state;
+      IF transition_key NOT IN (
+          'PENDING_ACK->PENDING_ACK','PENDING_ACK->PARTIAL',
+          'PENDING_ACK->COMPENSATING','PENDING_ACK->RECOVERED',
+          'PENDING_ACK->FAILED_UNPUBLISHED',
+          'PARTIAL->PARTIAL','PARTIAL->COMPENSATING','PARTIAL->RECOVERED',
+          'COMPENSATING->COMPENSATING','COMPENSATING->FAILED_RESTORED',
+          'COMPENSATING->COMPENSATION_FAILED',
+          'RECOVERED->RECOVERED','FAILED_UNPUBLISHED->FAILED_UNPUBLISHED',
+          'FAILED_RESTORED->FAILED_RESTORED',
+          'COMPENSATION_FAILED->COMPENSATION_FAILED'
+      ) THEN
+        RAISE EXCEPTION 'invalid model rollback state transition %', transition_key;
+      END IF;
+
+      IF NEW.applied_subtasks < OLD.applied_subtasks
+         OR NEW.compensation_applied_subtasks < OLD.compensation_applied_subtasks THEN
+        RAISE EXCEPTION 'model rollback acknowledgement counts cannot decrease';
+      END IF;
+      IF OLD.compensation_event_id IS NOT NULL
+         AND OLD.compensation_event_id IS DISTINCT FROM NEW.compensation_event_id THEN
+        RAISE EXCEPTION 'model rollback compensation identity changed';
+      END IF;
+      RETURN NEW;
+    END;
+    $$;
+
+    DROP TRIGGER IF EXISTS model_rollback_state_v2 ON model_rollback_requests;
+    CREATE TRIGGER model_rollback_state_v2
+    BEFORE UPDATE OR DELETE ON model_rollback_requests
+    FOR EACH ROW EXECUTE FUNCTION enforce_model_rollback_state_v2();
+
+    CREATE TABLE IF NOT EXISTS alignment_schema_migrations (
+        version TEXT PRIMARY KEY,
+        description TEXT NOT NULL,
+        applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        applied_by TEXT NOT NULL DEFAULT current_user
+    );
+    INSERT INTO alignment_schema_migrations(version, description)
+    VALUES ('202608151900', 'M08 two-phase exact-quorum model rollback v2')
+    ON CONFLICT (version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M08 MODEL ROLLBACK V2
+  # BEGIN GENERATED T1-M09 ALERT EVIDENCE LINKS V1
+  48-m09-alert-evidence-links-v1.sql: |
+    -- T1-M09-N012 / P026-P028
+    -- Additive alert/evidence relationship authority.  Evidence object identity is
+    -- copied from the immutable manifest and cannot be rewritten by a later link.
+    -- Rollback is flag-only: stop intake/dispatch and retain relation, command,
+    -- history, audit and outbox facts.  No evidence object is deleted here.
+
+    BEGIN;
+    SET LOCAL lock_timeout='5s';
+    SET LOCAL statement_timeout='2min';
+
+    CREATE TABLE IF NOT EXISTS alert_evidence_links (
+      relation_id       UUID PRIMARY KEY,
+      tenant_id         TEXT NOT NULL CHECK (tenant_id<>''),
+      alert_id          TEXT NOT NULL CHECK (alert_id<>''),
+      evidence_id       TEXT NOT NULL CHECK (evidence_id<>''),
+      evidence_type     TEXT NOT NULL CHECK (evidence_type<>''),
+      source_store      TEXT NOT NULL CHECK (source_store IN ('postgresql','clickhouse','opensearch','minio','arkime')),
+      object_bucket     TEXT NOT NULL DEFAULT '',
+      object_key        TEXT NOT NULL DEFAULT '',
+      object_version    TEXT NOT NULL DEFAULT '',
+      object_sha256     TEXT NOT NULL DEFAULT '',
+      size_bytes        BIGINT NOT NULL DEFAULT 0 CHECK (size_bytes>=0),
+      content_type      TEXT NOT NULL DEFAULT '',
+      status            TEXT NOT NULL CHECK (status IN ('linked','unlinked')),
+      revision          BIGINT NOT NULL CHECK (revision>0),
+      last_event_id     UUID NOT NULL,
+      reason            TEXT NOT NULL CHECK (char_length(reason) BETWEEN 4 AND 1000),
+      created_by        TEXT NOT NULL DEFAULT '',
+      updated_by        TEXT NOT NULL DEFAULT '',
+      created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,alert_id,evidence_id),
+      FOREIGN KEY (tenant_id,alert_id,evidence_id)
+        REFERENCES alert_evidence_manifests(tenant_id,alert_id,evidence_id) ON DELETE RESTRICT,
+      CHECK (source_store<>'minio' OR (
+        object_bucket<>'' AND object_key LIKE ('tenants/'||tenant_id||'/%') AND
+        object_key NOT LIKE '%..%' AND object_version<>'' AND object_sha256 ~ '^[0-9a-f]{64}$'
+      ))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_alert_evidence_links_active
+      ON alert_evidence_links(tenant_id,alert_id,updated_at DESC,evidence_id)
+      WHERE status='linked';
+
+    CREATE TABLE IF NOT EXISTS alert_evidence_link_history (
+      event_id           UUID PRIMARY KEY,
+      relation_id        UUID NOT NULL REFERENCES alert_evidence_links(relation_id) ON DELETE RESTRICT,
+      tenant_id          TEXT NOT NULL,
+      alert_id           TEXT NOT NULL,
+      evidence_id        TEXT NOT NULL,
+      event_type         TEXT NOT NULL CHECK (event_type IN ('linked','unlinked')),
+      relation_revision  BIGINT NOT NULL CHECK (relation_revision>0),
+      source_store       TEXT NOT NULL,
+      object_bucket      TEXT NOT NULL DEFAULT '',
+      object_key         TEXT NOT NULL DEFAULT '',
+      object_version     TEXT NOT NULL DEFAULT '',
+      object_sha256      TEXT NOT NULL DEFAULT '',
+      request_sha256     TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+      payload            JSONB NOT NULL CHECK (jsonb_typeof(payload)='object'),
+      reason             TEXT NOT NULL,
+      created_by         TEXT NOT NULL DEFAULT '',
+      created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (relation_id,relation_revision)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_alert_evidence_link_history_lookup
+      ON alert_evidence_link_history(tenant_id,alert_id,evidence_id,relation_revision DESC);
+
+    CREATE TABLE IF NOT EXISTS alert_evidence_link_commands (
+      command_id          UUID PRIMARY KEY,
+      tenant_id           TEXT NOT NULL,
+      relation_id         UUID NOT NULL REFERENCES alert_evidence_links(relation_id) ON DELETE RESTRICT,
+      alert_id            TEXT NOT NULL,
+      evidence_id         TEXT NOT NULL,
+      operation           TEXT NOT NULL CHECK (operation IN ('link','unlink')),
+      idempotency_key     TEXT NOT NULL CHECK (char_length(idempotency_key) BETWEEN 16 AND 200),
+      request_sha256      TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+      expected_revision   BIGINT NOT NULL CHECK (expected_revision>=0),
+      relation_revision   BIGINT NOT NULL CHECK (relation_revision>0),
+      result              JSONB NOT NULL CHECK (jsonb_typeof(result)='object'),
+      created_by          TEXT NOT NULL DEFAULT '',
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id,idempotency_key)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_alert_evidence_link_commands_relation
+      ON alert_evidence_link_commands(tenant_id,relation_id,created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS alert_evidence_link_outbox (
+      event_id             UUID PRIMARY KEY REFERENCES alert_evidence_link_history(event_id) ON DELETE RESTRICT,
+      tenant_id            TEXT NOT NULL,
+      aggregate_id         UUID NOT NULL REFERENCES alert_evidence_links(relation_id) ON DELETE RESTRICT,
+      aggregate_version    BIGINT NOT NULL CHECK (aggregate_version>0),
+      event_type           TEXT NOT NULL CHECK (event_type IN ('traffic.alert-evidence.v1.Linked','traffic.alert-evidence.v1.Unlinked')),
+      schema_version       INTEGER NOT NULL DEFAULT 1 CHECK (schema_version=1),
+      partition_key        TEXT NOT NULL CHECK (partition_key<>''),
+      payload              JSONB NOT NULL CHECK (jsonb_typeof(payload)='object'),
+      status               TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','published','dead')),
+      attempts             INTEGER NOT NULL DEFAULT 0 CHECK (attempts>=0),
+      next_attempt_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+      last_attempt_at      TIMESTAMPTZ,
+      locked_until         TIMESTAMPTZ,
+      locked_by            TEXT NOT NULL DEFAULT '',
+      last_error           TEXT NOT NULL DEFAULT '',
+      broker_partition     INTEGER,
+      broker_offset        BIGINT,
+      broker_acknowledged_at TIMESTAMPTZ,
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      published_at         TIMESTAMPTZ,
+      dead_at              TIMESTAMPTZ,
+      UNIQUE (aggregate_id,aggregate_version),
+      CHECK ((status='published' AND published_at IS NOT NULL AND broker_partition IS NOT NULL AND broker_offset IS NOT NULL AND broker_acknowledged_at IS NOT NULL)
+          OR status<>'published')
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_alert_evidence_link_outbox_delivery
+      ON alert_evidence_link_outbox(next_attempt_at,created_at,event_id)
+      WHERE status IN ('pending','processing');
+
+    CREATE TABLE IF NOT EXISTS alert_evidence_link_projection_inbox (
+      event_id              UUID PRIMARY KEY,
+      tenant_id             TEXT NOT NULL,
+      aggregate_id          UUID NOT NULL,
+      aggregate_version     BIGINT NOT NULL CHECK (aggregate_version>0),
+      event_type            TEXT NOT NULL,
+      partition_key         TEXT NOT NULL,
+      payload_sha256        TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+      payload               JSONB NOT NULL CHECK (jsonb_typeof(payload)='object'),
+      first_kafka_topic     TEXT NOT NULL,
+      first_kafka_partition INTEGER NOT NULL,
+      first_kafka_offset    BIGINT NOT NULL,
+      projection_status     TEXT NOT NULL DEFAULT 'pending' CHECK (projection_status IN ('pending','projected')),
+      projection_attempts   INTEGER NOT NULL DEFAULT 0 CHECK (projection_attempts>=0),
+      last_error            TEXT NOT NULL DEFAULT '',
+      received_at           TIMESTAMPTZ NOT NULL,
+      projected_at          TIMESTAMPTZ,
+      UNIQUE (tenant_id,aggregate_id,aggregate_version)
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_evidence_link_projection_deliveries (
+      kafka_topic      TEXT NOT NULL,
+      kafka_partition  INTEGER NOT NULL,
+      kafka_offset     BIGINT NOT NULL,
+      event_id         UUID NOT NULL REFERENCES alert_evidence_link_projection_inbox(event_id) ON DELETE RESTRICT,
+      received_at      TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (kafka_topic,kafka_partition,kafka_offset)
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_evidence_link_projection_watermarks (
+      kafka_topic      TEXT NOT NULL,
+      kafka_partition  INTEGER NOT NULL,
+      last_offset      BIGINT NOT NULL,
+      last_event_id    UUID NOT NULL,
+      updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (kafka_topic,kafka_partition)
+    );
+
+    CREATE OR REPLACE FUNCTION enforce_alert_evidence_link_identity()
+    RETURNS trigger LANGUAGE plpgsql AS $body$
+    BEGIN
+      IF TG_OP='UPDATE' THEN
+        IF NEW.revision<=OLD.revision THEN
+          RAISE EXCEPTION 'alert evidence link revision must increase';
+        END IF;
+        IF (NEW.relation_id,NEW.tenant_id,NEW.alert_id,NEW.evidence_id,NEW.evidence_type,
+            NEW.source_store,NEW.object_bucket,NEW.object_key,NEW.object_version,
+            NEW.object_sha256,NEW.size_bytes,NEW.content_type,NEW.created_by,NEW.created_at)
+           IS DISTINCT FROM
+           (OLD.relation_id,OLD.tenant_id,OLD.alert_id,OLD.evidence_id,OLD.evidence_type,
+            OLD.source_store,OLD.object_bucket,OLD.object_key,OLD.object_version,
+            OLD.object_sha256,OLD.size_bytes,OLD.content_type,OLD.created_by,OLD.created_at) THEN
+          RAISE EXCEPTION 'immutable alert evidence link identity or object reference changed';
+        END IF;
+        NEW.updated_at=now();
+      END IF;
+      RETURN NEW;
+    END
+    $body$;
+
+    DROP TRIGGER IF EXISTS trg_alert_evidence_link_identity ON alert_evidence_links;
+    CREATE TRIGGER trg_alert_evidence_link_identity
+    BEFORE UPDATE ON alert_evidence_links
+    FOR EACH ROW EXECUTE FUNCTION enforce_alert_evidence_link_identity();
+
+    CREATE TABLE IF NOT EXISTS alignment_schema_migrations (
+      version TEXT PRIMARY KEY,
+      description TEXT NOT NULL,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      applied_by TEXT NOT NULL DEFAULT current_user
+    );
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608160030','M09 alert evidence link command history outbox v1')
+    ON CONFLICT (version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M09 ALERT EVIDENCE LINKS V1
+  # BEGIN GENERATED T1-M09 WHITELIST CONSUMER READINESS V2
+  49-m09-whitelist-consumer-readiness-v2.sql: |
+    -- F-WHITELIST-001 / T1-M09-N018
+    -- Consumer-first admission receipt for whitelist.events.v2. This migration is
+    -- expand-only and does not enable the producer, matcher or any network action.
+
+    BEGIN;
+
+    CREATE TABLE IF NOT EXISTS whitelist_consumer_readiness_receipt (
+      consumer_group    TEXT NOT NULL,
+      candidate_sha256  CHAR(64) NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+      contract_sha256   CHAR(64) NOT NULL CHECK (contract_sha256 ~ '^[0-9a-f]{64}$'),
+      kafka_topic       TEXT NOT NULL CHECK (kafka_topic='whitelist.events.v2'),
+      state             TEXT NOT NULL CHECK (state IN ('READY','STOPPED')),
+      event_id          UUID,
+      kafka_partition   INTEGER CHECK (kafka_partition IS NULL OR kafka_partition >= 0),
+      kafka_offset      BIGINT CHECK (kafka_offset IS NULL OR kafka_offset >= 0),
+      observed_at       TIMESTAMPTZ NOT NULL,
+      updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (consumer_group,candidate_sha256),
+      UNIQUE (kafka_topic,consumer_group,candidate_sha256),
+      CHECK ((state='READY' AND event_id IS NOT NULL AND kafka_partition IS NOT NULL AND kafka_offset IS NOT NULL)
+          OR (state='STOPPED' AND event_id IS NULL AND kafka_partition IS NULL AND kafka_offset IS NULL))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_whitelist_consumer_readiness_lookup
+      ON whitelist_consumer_readiness_receipt
+      (kafka_topic,consumer_group,candidate_sha256,contract_sha256,state);
+
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608161100','M09 whitelist consumer broker projection readiness receipt')
+    ON CONFLICT (version) DO NOTHING;
+
+    COMMIT;
+  # END GENERATED T1-M09 WHITELIST CONSUMER READINESS V2
+  50-m10-dlq-replay-approval-v1.sql: |
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS dlq_replay_approvals (
+        id BIGSERIAL PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        approval_id TEXT NOT NULL,
+        requested_by TEXT NOT NULL,
+        approved_by TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'approved',
+        reason TEXT NOT NULL DEFAULT '',
+        request_hash TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_dlq_replay_approvals_approval UNIQUE (tenant_id, approval_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_dlq_replay_approvals_tenant
+        ON dlq_replay_approvals (tenant_id);
+    CREATE TABLE IF NOT EXISTS dlq_replay_approval_history (
+        id BIGSERIAL PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        approval_id TEXT NOT NULL,
+        action TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_dlq_replay_approval_history_lookup
+        ON dlq_replay_approval_history (tenant_id, approval_id, created_at);
+    CREATE TABLE IF NOT EXISTS dlq_replay_approval_receipts (
+        id BIGSERIAL PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        approval_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        accepted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_dlq_replay_approval_receipts_approval UNIQUE (tenant_id, approval_id)
+    );
+    INSERT INTO alignment_schema_migrations(version, description)
+    VALUES ('202608170001', 'M10 DLQ replay approval authority (state+history+receipt)')
+    ON CONFLICT (version) DO NOTHING;
+    COMMIT;
+  # END GENERATED T1-M10 DLQ REPLAY APPROVAL AUTHORITY
+  51-m10-analysis-scheduler-v1.sql: |
+    -- =============================================================================
+    -- 统一分析任务调度中心权威 schema(T1-M10 核心主链,P0 合同冻结)
+    -- 权威约束:ENG-ARCH-002/ENG-CMD-001 —— 命令受理=PG 同事务 state+history+audit+
+    -- outbox+receipt;Redis 只承担幂等辅助。全部 IF NOT EXISTS,幂等可重复执行。
+    -- =============================================================================
+    
+    BEGIN;
+    
+    -- 任务定义
+    CREATE TABLE IF NOT EXISTS analysis_task_definitions (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'DRAFT',          -- DRAFT|VALIDATED|ACTIVE|SUSPENDED|RETIRED
+        owner TEXT NOT NULL DEFAULT '',
+        active_plan_revision BIGINT,
+        active_schedule_revision BIGINT,
+        default_scheduling_class TEXT NOT NULL DEFAULT 'BASELINE',
+        report_policy_revision BIGINT,
+        revision BIGINT NOT NULL DEFAULT 1,
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_analysis_task_definitions_name UNIQUE (tenant_id, name),
+        CONSTRAINT chk_analysis_task_definitions_rev CHECK (revision > 0)
+    );
+    
+    -- 不可变计划修订(spec 只 INSERT;治理状态由 governance head CAS 推进)
+    CREATE TABLE IF NOT EXISTS analysis_plan_revisions (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        task_definition_id UUID NOT NULL REFERENCES analysis_task_definitions(id),
+        plan_revision BIGINT NOT NULL,
+        plan_source TEXT NOT NULL,                    -- AUTO_DEFAULT|MANUAL_CUSTOM
+        source_kind TEXT NOT NULL,
+        source_spec JSONB NOT NULL,
+        selected_feature_ids JSONB NOT NULL,
+        feature_set_id TEXT NOT NULL,
+        encrypted_recognition_model_ref TEXT NOT NULL DEFAULT '',
+        threat_detector_refs JSONB NOT NULL,
+        rule_refs JSONB NOT NULL,
+        machine_summary_schema_ref TEXT NOT NULL DEFAULT '',
+        stage_dag JSONB NOT NULL,
+        completion_policy JSONB NOT NULL,
+        resource_budget JSONB NOT NULL,
+        catalog_revision BIGINT NOT NULL,
+        selection_origins JSONB NOT NULL DEFAULT '[]'::jsonb,
+        canonicalization_version TEXT NOT NULL DEFAULT 'v1',
+        execution_spec_sha256 TEXT NOT NULL,
+        plan_revision_sha256 TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_analysis_plan_revisions UNIQUE (tenant_id, task_definition_id, plan_revision)
+    );
+    CREATE INDEX IF NOT EXISTS idx_analysis_plan_revisions_spec
+        ON analysis_plan_revisions (tenant_id, execution_spec_sha256);
+    
+    -- 计划治理头(CAS 单行)
+    CREATE TABLE IF NOT EXISTS analysis_plan_governance_heads (
+        tenant_id TEXT NOT NULL,
+        plan_id UUID PRIMARY KEY REFERENCES analysis_plan_revisions(id),
+        state TEXT NOT NULL DEFAULT 'DRAFT',          -- DRAFT|VALIDATED|APPROVED|ACTIVE|RETIRED
+        authority_revision BIGINT NOT NULL DEFAULT 0,
+        approved_by TEXT,
+        approved_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    
+    -- 不可变调度修订
+    CREATE TABLE IF NOT EXISTS analysis_schedule_revisions (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        task_definition_id UUID NOT NULL REFERENCES analysis_task_definitions(id),
+        revision BIGINT NOT NULL,
+        approved_plan_revision BIGINT NOT NULL,
+        execution_spec_sha256 TEXT NOT NULL,
+        trigger_kind TEXT NOT NULL,
+        timezone TEXT NOT NULL DEFAULT 'UTC',
+        window_or_cron JSONB NOT NULL,
+        prepare_lead_time_ms BIGINT NOT NULL DEFAULT 300000,
+        misfire_policy TEXT NOT NULL DEFAULT 'MISFIRE_FAIL',
+        concurrency_policy TEXT NOT NULL DEFAULT 'FORBID_OVERLAP',
+        scheduling_class TEXT NOT NULL DEFAULT 'BASELINE',
+        resource_restrictions JSONB NOT NULL DEFAULT '{}'::jsonb,
+        schedule_sha256 TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_analysis_schedule_revisions UNIQUE (tenant_id, task_definition_id, revision)
+    );
+    
+    -- 调度激活头(CAS 单行)
+    CREATE TABLE IF NOT EXISTS analysis_schedule_activation_heads (
+        tenant_id TEXT NOT NULL,
+        schedule_id UUID PRIMARY KEY REFERENCES analysis_schedule_revisions(id),
+        state TEXT NOT NULL DEFAULT 'DRAFT',          -- DRAFT|ACTIVE|PAUSED|RETIRED
+        authority_revision BIGINT NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    
+    -- 触发实例(物化后与 Task 一一对应)
+    CREATE TABLE IF NOT EXISTS analysis_trigger_instances (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        identity_kind TEXT NOT NULL,                  -- actor|schedule|event
+        canonical_identity_hash TEXT NOT NULL,
+        request_sha256 TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'PENDING_MATERIALIZATION',
+        materialized_task_id UUID,
+        trigger_kind TEXT NOT NULL,
+        window_id TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_analysis_trigger_identity UNIQUE (tenant_id, identity_kind, canonical_identity_hash)
+    );
+    
+    -- 物化幂等台账
+    CREATE TABLE IF NOT EXISTS analysis_materialization_ledger (
+        identity_hash TEXT PRIMARY KEY,
+        request_sha256 TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    
+    -- 业务请求
+    CREATE TABLE IF NOT EXISTS analysis_tasks (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        task_definition_id UUID NOT NULL REFERENCES analysis_task_definitions(id),
+        plan_revision BIGINT NOT NULL,
+        execution_spec_sha256 TEXT NOT NULL,
+        schedule_revision BIGINT,
+        trigger_instance_id UUID NOT NULL REFERENCES analysis_trigger_instances(id),
+        effective_class TEXT NOT NULL,
+        effective_policy_sha256 TEXT NOT NULL,
+        current_run_id UUID,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    
+    -- 有界执行尝试
+    CREATE TABLE IF NOT EXISTS analysis_runs (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        task_id UUID NOT NULL REFERENCES analysis_tasks(id),
+        execution_spec_sha256 TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'ACCEPTED',
+        completeness TEXT NOT NULL DEFAULT 'UNKNOWN',
+        integrity_state TEXT NOT NULL DEFAULT 'UNVERIFIED',
+        finding_conclusion TEXT NOT NULL DEFAULT 'NOT_EVALUATED',
+        risk_severity TEXT NOT NULL DEFAULT 'UNKNOWN',
+        window_start TIMESTAMPTZ,
+        window_end TIMESTAMPTZ,
+        revision BIGINT NOT NULL DEFAULT 1,
+        cancel_manifest_sha256 TEXT,
+        started_at TIMESTAMPTZ,
+        finalized_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT chk_analysis_runs_rev CHECK (revision > 0)
+    );
+    CREATE INDEX IF NOT EXISTS idx_analysis_runs_task ON analysis_runs (task_id, created_at);
+    
+    -- 执行节点 attempt
+    CREATE TABLE IF NOT EXISTS analysis_stage_attempts (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        run_id UUID NOT NULL REFERENCES analysis_runs(id),
+        business_phase_id TEXT NOT NULL,              -- S1..S5
+        execution_node_id TEXT NOT NULL,
+        attempt INT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'PENDING',
+        provider_mode TEXT NOT NULL,
+        activation_mode TEXT NOT NULL,
+        fencing_token TEXT,
+        lease_expires_at TIMESTAMPTZ,
+        skip_reason TEXT,
+        started_at TIMESTAMPTZ,
+        finished_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_analysis_stage_attempts UNIQUE (run_id, execution_node_id, attempt)
+    );
+    
+    -- 业务阶段投影(UI 固定五段;真实权威仍为 StageAttempt)
+    CREATE TABLE IF NOT EXISTS analysis_business_phase_projections (
+        run_id UUID NOT NULL REFERENCES analysis_runs(id),
+        phase_id TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'PENDING',
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (run_id, phase_id)
+    );
+    
+    -- 执行器回执(不可变)
+    CREATE TABLE IF NOT EXISTS analysis_stage_receipts (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        run_id UUID NOT NULL REFERENCES analysis_runs(id),
+        execution_node_id TEXT NOT NULL,
+        attempt INT NOT NULL,
+        fencing_token TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        input_count BIGINT NOT NULL DEFAULT 0,
+        output_count BIGINT NOT NULL DEFAULT 0,
+        error_count BIGINT NOT NULL DEFAULT 0,
+        reject_count BIGINT NOT NULL DEFAULT 0,
+        watermark TIMESTAMPTZ,
+        fence JSONB NOT NULL,
+        payload_hash TEXT NOT NULL,
+        received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_analysis_stage_receipts UNIQUE (run_id, execution_node_id, attempt, payload_hash)
+    );
+    
+    -- 每输入×detector 结果
+    CREATE TABLE IF NOT EXISTS analysis_results (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        run_id UUID NOT NULL REFERENCES analysis_runs(id),
+        input_identity TEXT NOT NULL,
+        detector_id TEXT NOT NULL,
+        disposition TEXT NOT NULL,
+        score DOUBLE PRECISION,
+        labels JSONB NOT NULL DEFAULT '[]'::jsonb,
+        evidence_refs JSONB NOT NULL DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_analysis_results UNIQUE (run_id, input_identity, detector_id)
+    );
+    
+    -- 机器摘要/证据 manifest/闭包 manifest(与终态同事务)
+    CREATE TABLE IF NOT EXISTS analysis_machine_summaries (
+        tenant_id TEXT NOT NULL,
+        run_id UUID PRIMARY KEY REFERENCES analysis_runs(id),
+        finding_conclusion TEXT NOT NULL,
+        risk_severity TEXT NOT NULL,
+        completeness TEXT NOT NULL,
+        integrity_state TEXT NOT NULL,
+        scope JSONB NOT NULL,
+        key_findings JSONB NOT NULL,
+        limitations JSONB NOT NULL,
+        evidence_manifest_hash TEXT NOT NULL,
+        closure_manifest_hash TEXT NOT NULL,
+        canonical_sha256 TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    
+    CREATE TABLE IF NOT EXISTS analysis_evidence_manifests (
+        tenant_id TEXT NOT NULL,
+        run_id UUID PRIMARY KEY REFERENCES analysis_runs(id),
+        entries JSONB NOT NULL,
+        sha256 TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    
+    CREATE TABLE IF NOT EXISTS analysis_run_closure_manifests (
+        tenant_id TEXT NOT NULL,
+        run_id UUID PRIMARY KEY REFERENCES analysis_runs(id),
+        decision_inputs JSONB NOT NULL,
+        priority INT NOT NULL,
+        node_exact_set JSONB NOT NULL,
+        differences JSONB NOT NULL,
+        sha256 TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    
+    -- 人读报告(独立状态,失败不回退 Run)
+    CREATE TABLE IF NOT EXISTS analysis_human_reports (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        run_id UUID NOT NULL REFERENCES analysis_runs(id),
+        summary_sha256 TEXT NOT NULL,
+        template_revision TEXT NOT NULL,
+        locale TEXT NOT NULL DEFAULT 'zh-CN',
+        state TEXT NOT NULL DEFAULT 'QUEUED',
+        object_key TEXT,
+        object_sha256 TEXT,
+        object_size BIGINT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_analysis_human_reports UNIQUE (run_id, summary_sha256, template_revision, locale)
+    );
+    
+    -- 容量准入预留
+    CREATE TABLE IF NOT EXISTS analysis_admission_reservations (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        run_id UUID NOT NULL REFERENCES analysis_runs(id),
+        resource_pool TEXT NOT NULL,
+        resource_vector JSONB NOT NULL,
+        policy_sha256 TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'RESERVED',       -- RESERVED|CONSUMED|RELEASED|EXPIRED
+        epoch BIGINT NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        authority_revision BIGINT NOT NULL DEFAULT 0,
+        CONSTRAINT uq_analysis_admission UNIQUE (run_id, resource_pool)
+    );
+    
+    -- 审批台账(maker/checker;人工选择覆盖审批字段的主业务链执行环节)
+    CREATE TABLE IF NOT EXISTS analysis_plan_approvals (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        plan_id UUID NOT NULL REFERENCES analysis_plan_revisions(id),
+        requested_by TEXT NOT NULL,
+        approved_by TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'PENDING',        -- PENDING|APPROVED|REJECTED
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        decided_at TIMESTAMPTZ,
+        CONSTRAINT uq_analysis_plan_approvals UNIQUE (plan_id, requested_by)
+    );
+    
+    -- inbox/outbox/history
+    CREATE TABLE IF NOT EXISTS analysis_inbox (
+        event_id TEXT PRIMARY KEY,
+        tuple_hash TEXT NOT NULL,
+        outcome TEXT NOT NULL,
+        received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    
+    CREATE TABLE IF NOT EXISTS analysis_outbox (
+        id BIGSERIAL PRIMARY KEY,
+        event_id TEXT NOT NULL UNIQUE,
+        topic TEXT NOT NULL,
+        key TEXT NOT NULL,
+        payload JSONB NOT NULL,
+        state TEXT NOT NULL DEFAULT 'PENDING',        -- PENDING|PUBLISHED|DEAD
+        attempts INT NOT NULL DEFAULT 0,
+        next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    
+    CREATE TABLE IF NOT EXISTS analysis_history (
+        id BIGSERIAL PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        entity TEXT NOT NULL,
+        entity_id UUID NOT NULL,
+        action TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_analysis_history_lookup
+        ON analysis_history (tenant_id, entity, entity_id, created_at);
+    
+    -- 命令回执
+    CREATE TABLE IF NOT EXISTS analysis_receipts (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        operation_id TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        idempotency_key TEXT NOT NULL,
+        request_hash TEXT NOT NULL,
+        state TEXT NOT NULL,                          -- accepted|running|succeeded|failed|cancelled
+        revision BIGINT NOT NULL DEFAULT 1,
+        result JSONB,
+        error_code TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT uq_analysis_receipts UNIQUE (tenant_id, operation_id)
+    );
+    
+    ALTER TABLE analysis_trigger_instances ADD COLUMN IF NOT EXISTS task_definition_id TEXT;
+    ALTER TABLE analysis_trigger_instances ADD COLUMN IF NOT EXISTS plan_revision BIGINT;
+    ALTER TABLE analysis_trigger_instances ADD COLUMN IF NOT EXISTS actor TEXT;
+    INSERT INTO alignment_schema_migrations(version, description)
+    VALUES ('202608170100', 'M10 unified analysis scheduler authority schema')
+    ON CONFLICT (version) DO NOTHING;
+    
+    COMMIT;
+  # END GENERATED T1-M10 ANALYSIS SCHEDULER AUTHORITY
 ---
 apiVersion: batch/v1
 kind: Job
@@ -3808,12 +6168,31 @@ spec:
             secretKeyRef:
               name: traffic-credentials
               key: PG_PASSWORD
+        - name: PG_REPLICATION_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PG_REPLICATION_PASSWORD
         args:
         - |
           set -euo pipefail
+          echo "Ensuring replicator role exists (pg_basebackup dependency)..."
+          psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d postgres \
+            -v pass="$PG_REPLICATION_PASSWORD" <<'SQL'
+          DO $$
+          BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'replicator') THEN
+              CREATE ROLE replicator LOGIN REPLICATION PASSWORD :'pass';
+            ELSE
+              ALTER ROLE replicator WITH LOGIN REPLICATION PASSWORD :'pass';
+            END IF;
+          END
+          $$;
+          SQL
+          echo "Replicator role ready."
           echo "Initializing PostgreSQL schema..."
           cd /sql
-          for f in 00-init.sql 01-assets.sql 02-features-rules.sql 03-models-deploy.sql 04-tasks-audit.sql 05-default-data.sql 06-graph.sql 07-campaign-impact-assets.sql 08-alert-campaign-links.sql 09-alert-report-jobs.sql 10-campaign-event-projection-v2.sql 11-campaign-soar-workflow.sql 12-playbook-execution-v2.sql 13-playbook-event-pipeline-v2.sql 14-alert-saved-view-transaction-v2.sql 15-notification-rule-transaction-v2.sql 16-probe-registry-atomic.sql 17-threat-intel-command-atomic.sql 18-forensics-task-atomic.sql 19-whitelist-governance-v2.sql 20-dashboard-task-v2.sql 21-alert-opensearch-projection-reconcile-v1.sql 22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql 32-alert-response-reconciliation-compensation-v1.sql 33-alert-evidence-manifest-v1.sql 34-alert-batch-assignment-v1.sql 35-alert-batch-assignment-execution-v1.sql 36-alert-batch-assignment-compensation-v1.sql; do
+          for f in 00-init.sql 01-assets.sql 02-features-rules.sql 03-models-deploy.sql 04-tasks-audit.sql 05-default-data.sql 06-graph.sql 07-campaign-impact-assets.sql 08-alert-campaign-links.sql 09-alert-report-jobs.sql 10-campaign-event-projection-v2.sql 11-campaign-soar-workflow.sql 12-playbook-execution-v2.sql 13-playbook-event-pipeline-v2.sql 14-alert-saved-view-transaction-v2.sql 15-notification-rule-transaction-v2.sql 16-probe-registry-atomic.sql 17-threat-intel-command-atomic.sql 18-forensics-task-atomic.sql 19-whitelist-governance-v2.sql 20-dashboard-task-v2.sql 21-alert-opensearch-projection-reconcile-v1.sql 22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql 32-alert-response-reconciliation-compensation-v1.sql 33-alert-evidence-manifest-v1.sql 34-alert-batch-assignment-v1.sql 35-alert-batch-assignment-execution-v1.sql 36-alert-batch-assignment-compensation-v1.sql 37-rule-update-applied-ack-v1.sql 38-rule-version-rollback-v1.sql 39-m07-fusion-snapshots-v1.sql 40-m07-behavior-baseline-v1.sql 41-m07-graph-projection-v1.sql 42-m07-graph-reconcile-v1.sql 43-m07-attack-chain-snapshot-v1.sql 44-m07-campaign-rail-correlation-v1.sql 45-m08-model-feedback-revision-inbox-v1.sql 46-m08-model-drift-candidate-v1.sql 47-m08-model-rollback-v2.sql 48-m09-alert-evidence-links-v1.sql 49-m09-whitelist-consumer-readiness-v2.sql; do
             echo "  Running $f..."
             psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -f "/sql/$f"
           done

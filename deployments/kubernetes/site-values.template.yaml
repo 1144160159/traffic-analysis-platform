@@ -55,6 +55,12 @@ network:
     mode: vpn-or-bastion
     note: Management NodePorts must not be exposed as public business entry points.
   expectedNodePorts:
+    # Repository truth: the only NodePort declared in repo Services is APISIX
+    # 30180 (infrastructure/08-gateway.yaml). All other entries below are
+    # site-deployment expectations; the repo Services are ClusterIP and do not
+    # declare them. If a live cluster exposes any of these, that is a live
+    # divergence to reconcile against agent.md's NodePort table; the repo
+    # manifest is the source of truth for what this template declares.
     apisixHttp: 30180
     kafkaBootstrap: 30092
     clickhouseHttp: 30023
@@ -173,6 +179,7 @@ secrets:
       name: traffic-credentials
       keys:
         - APISIX_ADMIN_KEY
+        - OIDC_CLIENT_SECRET
     - namespace: flink
       name: traffic-credentials
       keys:

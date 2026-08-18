@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "M02_DELIVERY_ARTIFACT",
+  "artifact_role": "rollback-plan",
+  "package_id": "m02-delivery-pending-candidate",
+  "body": {
+    "steps": [
+      {"order": 1, "action": "disable Probe production before any downstream change", "failure_action": "BLOCK"},
+      {"order": 2, "action": "disable Gateway flow and PCAP writers", "failure_action": "BLOCK"},
+      {"order": 3, "action": "restore previous immutable image config and route", "failure_action": "BLOCK"},
+      {"order": 4, "action": "retain consumers and reconcile offsets spool objects and indexes", "failure_action": "BLOCK"}
+    ],
+    "rollback_plan_path": "deployments/releases/topic1/m02-rollback-plan.v1.json",
+    "preserve_durable_data": true
+  }
+}

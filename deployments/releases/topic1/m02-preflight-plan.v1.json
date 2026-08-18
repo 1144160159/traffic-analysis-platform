@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "M02_DELIVERY_ARTIFACT",
+  "artifact_role": "preflight-plan",
+  "package_id": "m02-delivery-pending-candidate",
+  "body": {
+    "steps": [
+      {"order": 1, "action": "verify N001 through N012 and N014 current indexes for one candidate", "failure_action": "BLOCK"},
+      {"order": 2, "action": "verify exact topics ACLs secrets storage and trusted authorization dependencies", "failure_action": "BLOCK"},
+      {"order": 3, "action": "verify Gateway and Probe production switches are disabled", "failure_action": "BLOCK"}
+    ],
+    "rollback_plan_path": "deployments/releases/topic1/m02-rollback-plan.v1.json",
+    "preserve_durable_data": true
+  }
+}

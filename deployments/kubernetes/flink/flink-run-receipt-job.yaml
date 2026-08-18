@@ -1,0 +1,60 @@
+# RunReceiptJob 一次性提交(run-scoped S2 回执):analysis.envelopes.v1 → 聚合 → analysis.receipts.v1。
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-run-receipt-submit-9a05
+  namespace: flink
+  labels:
+    app: flink-run-receipt-job
+    traffic.analysis/milestone: p3-run-receipt
+    traffic.analysis/rollout-mode: consumer-ready
+  annotations:
+    traffic.analysis/candidate-sha256: "9a05-run-receipt"
+    traffic.analysis/production-applied: "false"
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: flink-run-receipt-job
+    spec:
+      serviceAccountName: flink-log-job
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: flink-run-receipt
+        image: docker.io/traffic/flink-feature-job:run-receipt-9a05
+        imagePullPolicy: Never
+        command: ["/opt/flink/bin/flink"]
+        args:
+        - run
+        - -d
+        - -m
+        - flink-jobmanager.flink.svc:8081
+        - -c
+        - com.traffic.flink.feature.receipt.RunReceiptJob
+        - /opt/flink/usrlib/flink-feature-job.jar
+        env:
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: RUN_RECEIPT_ENVELOPE_TOPIC, value: "analysis.envelopes.v1"}
+        - {name: RUN_RECEIPT_TOPIC, value: "analysis.receipts.v1"}
+        - {name: RUN_RECEIPT_GROUP, value: "run-receipt-v1"}
+        - {name: RUN_RECEIPT_GRACE_MS, value: "30000"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - name: KAFKA_SASL_USERNAME
+          valueFrom: {secretKeyRef: {name: kafka-flink-feature-job-credentials, key: username}}
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom: {secretKeyRef: {name: kafka-flink-feature-job-credentials, key: password}}
+        - {name: KAFKA_SSL_TRUSTSTORE_LOCATION, value: "/etc/kafka/tls/kafka.truststore.p12"}
+        - {name: KAFKA_SSL_TRUSTSTORE_TYPE, value: "PKCS12"}
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls}

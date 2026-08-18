@@ -43,6 +43,7 @@ data:
     capture:
       interface: "ens9f0"
       mode: "af_packet"
+      producer_enabled: false
       queue_id: 0
       buffer_size: 65536
       frame_size: 65536
@@ -50,6 +51,8 @@ data:
       promiscuous_mode: true
       cpu_cores: [0, 1]
       numa_aware: true
+      # wire 回放(测试阶段虚拟网卡注入)allowlist:生产探针保持空 = 全部拒绝。
+      wire_replay_interfaces: []
     aggregator:
       flow_capacity: 250000
       idle_timeout_sec: 5
@@ -59,6 +62,8 @@ data:
       enable_dscp_tracking: true
     archiver:
       enabled: true
+      durable_spool_enabled: true
+      cache_path: "/var/lib/probe-agent/cache"
       buffer_size_mb: 64
       rotation_interval_sec: 30
       zstd_level: 3
@@ -80,6 +85,9 @@ data:
       tls_client_key: "/etc/probe-agent/certs/client-key.pem"
       cache_path: "/var/lib/probe-agent/cache"
       cache_max_size: 250000
+      asset_binding_upload_enabled: false
+      asset_binding_canary_tenant_id: ""
+      asset_binding_canary_probe_ids: []
     metrics:
       enabled: true
       listen_addr: "0.0.0.0:9091"
@@ -98,25 +106,47 @@ spec:
       annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9091"}
     spec:
       serviceAccountName: probe-agent
+      terminationGracePeriodSeconds: 90
       hostNetwork: true
-      hostPID: true
+      # hostPID disabled: the probe does not need to observe host processes.
+      # Re-enable only with a documented, reviewed requirement.
+      hostPID: false
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: probe-agent
-        image: docker.io/traffic/probe-agent@sha256:1760b0cfd6ff0666e221bb055d5a6abb7df69b2c7dbb0e856517d6be1adbcec7
+        image: docker.io/traffic/probe-agent:capture-window-20260817v1
         imagePullPolicy: IfNotPresent
         args: ["/etc/probe-agent/config.yaml"]
         securityContext:
-          privileged: true
+          # Privileged mode removed; AF_PACKET/AF_XDP capture needs only the
+          # capabilities below. If a target NIC requires extra capabilities
+          # (e.g. AF_XDP with huge pages), add the minimal set here — never
+          # restore privileged:true.
+          privileged: false
           runAsUser: 0
           runAsGroup: 0
           capabilities:
-            add: ["NET_ADMIN", "NET_RAW", "SYS_ADMIN", "SYS_NICE"]
+            add: ["NET_ADMIN", "NET_RAW", "SYS_NICE"]
         env:
         - name: NODE_NAME
           valueFrom: {fieldRef: {fieldPath: spec.nodeName}}
         - name: RUST_LOG
           value: "probe_agent=info"
+        # 实时采集数据面(人工选择实时采集):生产开关 + 精确探针 allow-list
+        # 一起打开;只对 probe-8-2tb 放行,其余探针保持 producer off。
+        - name: M02_CAPTURE_PRODUCER_V1_ENABLED
+          value: "true"
+        - name: M02_CAPTURE_CANARY_PROBE_IDS
+          value: "probe-8-2tb"
+        # M06 passive bindings use the existing authenticated gRPC channel and
+        # a durable local WAL. All three values must be patched together for an
+        # exact tenant/probe canary; the probe never receives Kafka credentials.
+        - name: M06_ASSET_BINDING_UPLOAD_V1_ENABLED
+          value: "false"
+        - name: M06_ASSET_BINDING_CANARY_TENANT_ID
+          value: ""
+        - name: M06_ASSET_BINDING_CANARY_PROBE_IDS
+          value: ""
         - name: AUTH_TOKEN
           valueFrom:
             secretKeyRef:
@@ -155,7 +185,7 @@ spec:
         - {name: certs, mountPath: /etc/probe-agent/certs, readOnly: true}
       volumes:
       - {name: config, configMap: {name: probe-agent-config}}
-      - {name: cache, hostPath: {path: /home/data/probe-agent, type: DirectoryOrCreate}}
+      - {name: cache, hostPath: {path: /home/data/probe-agent-v2, type: DirectoryOrCreate}}
       - {name: certs, secret: {secretName: probe-agent-certs, optional: false}}
       tolerations:
       - operator: Exists

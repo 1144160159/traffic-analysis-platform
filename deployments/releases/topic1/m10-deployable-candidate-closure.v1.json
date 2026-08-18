@@ -1,0 +1,274 @@
+{
+  "allowed_claims": [
+    "The eight deployable-candidate dimensions were inventoried with exact hashes",
+    "The current closure basis is deterministic and fail-closed"
+  ],
+  "artifact_kind": "M10_DEPLOYABLE_CANDIDATE_CLOSURE",
+  "atomic_pr_id": "T1-M10-P001-CTR-n001-s1",
+  "blocking_codes": [
+    "APPROVED_MODEL_MANIFEST_REQUIRED",
+    "APPROVED_THRESHOLD_SET_REQUIRED",
+    "CANDIDATE_RUNBOOK_SET_REQUIRED",
+    "CLEAN_SOURCE_COMMIT_REQUIRED",
+    "SCHEMA_MIGRATION_SET_BINDING_REQUIRED",
+    "SINGLE_CANDIDATE_IMAGE_SET_REQUIRED",
+    "SITE_VALUES_BINDING_REQUIRED",
+    "TOPIC_CATALOG_BINDING_REQUIRED",
+    "UPSTREAM_M01_RELEASE_POINTER_REQUIRED",
+    "UPSTREAM_M09_SAME_CANDIDATE_REQUIRED"
+  ],
+  "candidate_id": null,
+  "closure": {
+    "all_dimensions_bound": false,
+    "bound_dimension_count": 0,
+    "fail_closed": true,
+    "required_dimension_count": 8
+  },
+  "closure_basis_sha256": "a0e20a61390cf97993ec20259872bad563d97f1b3d0199ce6f7ed86153217a79",
+  "dimensions": [
+    {
+      "blocking_codes": [
+        "CLEAN_SOURCE_COMMIT_REQUIRED"
+      ],
+      "detail": {
+        "algorithm": "sha256(path NUL sha256 NUL size LF)",
+        "content_sha256": "af7aa44fd20113f771d0535972ec30054ef0423686297f8b7e693430c9a854d8",
+        "file_count": 3489,
+        "git": {
+          "branch": "main",
+          "dirty_count": 2263,
+          "head": "f6072c4540b6198677b345e3df4bf876df5c7410",
+          "status_sha256": "915eb74d810901f0224d27b3d5ab036548a0378ef1984d42978bb33db3dabf46"
+        }
+      },
+      "name": "source_tree",
+      "refs": [
+        {
+          "exists": true,
+          "path": "scripts/alignment/candidate_snapshot.py",
+          "sha256": "0fe68cfadc598a5d87a24dddf9985607c2606b8287e95581a98fc87d613e1d43"
+        },
+        {
+          "exists": true,
+          "path": "contracts/alignment/task-registry.v1.json",
+          "sha256": "14ccf5d37c4c7a8580c1335cec95e2cb4a14b1f9be56f347318075a8d51570bd"
+        }
+      ],
+      "status": "PRESENT_UNBOUND"
+    },
+    {
+      "blocking_codes": [
+        "SINGLE_CANDIDATE_IMAGE_SET_REQUIRED"
+      ],
+      "detail": {
+        "entry_count": 54,
+        "mutable_count": 6,
+        "pullable_digest_count": 53
+      },
+      "name": "image_digests",
+      "refs": [
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/image-digests.lock.json",
+          "sha256": "e75e44db1a8285f4849e4a77820441616fce1ac1b07c11b54be56094db5c6ced"
+        }
+      ],
+      "status": "PRESENT_UNBOUND"
+    },
+    {
+      "blocking_codes": [
+        "SITE_VALUES_BINDING_REQUIRED"
+      ],
+      "detail": {},
+      "name": "config",
+      "refs": [
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/site-values.template.yaml",
+          "sha256": "b47b9e1f72419b3ea6e411d6cf7728cda8b6dfef32801d165c043d8c4e633f37"
+        },
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/site-values.v1.template.yaml",
+          "sha256": "81d9f44967794a34a09b933d2e77503e17dc1625efb085828989631674a99e0b"
+        },
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "sha256": "62502c80b03271589f877e16c79aa3923bd40fa10fab62132c792c4689e5e204"
+        },
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/applications/probe-agent.yaml",
+          "sha256": "031450cb23fab853a9af25bef6b1f22409b1cbf5a3a0713692fca792c62ccae1"
+        },
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/applications/web-ui.yaml",
+          "sha256": "ab956d2286aab8c5dc14d385e5d0989e74e973cd6e2f592e0a02d20dc37bf6e1"
+        }
+      ],
+      "status": "PRESENT_UNBOUND"
+    },
+    {
+      "blocking_codes": [
+        "SCHEMA_MIGRATION_SET_BINDING_REQUIRED"
+      ],
+      "detail": {},
+      "name": "schema",
+      "refs": [
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "sha256": "73923240b703552beb5133ee86c1636b926cc45fcfad6b79b1d48b92fd49def0"
+        },
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/init-jobs/03a-clickhouse-authoritative-migrations.yaml",
+          "sha256": "cec97ee0700c5159033f1d97aed9c3ec58beaa1ae8b8b726b1bc209c580e2ee2"
+        },
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml",
+          "sha256": "6d4fe42c60dd9f14fe27e65e924ea75bfcce2029989448f4e09f55d44fb5a44f"
+        },
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/init-jobs/05-nebula-schema.yaml",
+          "sha256": "11ae547c72e81ad63f0e6b483962e93047dd05fc076b96c5b9c37ea4f721febf"
+        }
+      ],
+      "status": "PRESENT_UNBOUND"
+    },
+    {
+      "blocking_codes": [
+        "TOPIC_CATALOG_BINDING_REQUIRED"
+      ],
+      "detail": {},
+      "name": "topics",
+      "refs": [
+        {
+          "exists": true,
+          "path": "contracts/events/kafka-topic-catalog.v1.json",
+          "sha256": "f7202bf4666e09b5d064a4fccce2911ea7be333013ba033bd275d323c804c8ab"
+        },
+        {
+          "exists": true,
+          "path": "common/kafka/create-topics.sh",
+          "sha256": "954f5b45730df726c2cf4d7916cafcb557ff9f3ae932341f5406e3482b1f03d4"
+        },
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/init-jobs/01-kafka-topics.yaml",
+          "sha256": "6d539403ef016c74a80c85d9a36e8f2055cf2e0a45d1126deda08b71d5958cf1"
+        }
+      ],
+      "status": "PRESENT_UNBOUND"
+    },
+    {
+      "blocking_codes": [
+        "APPROVED_MODEL_MANIFEST_REQUIRED"
+      ],
+      "detail": {},
+      "name": "models",
+      "refs": [
+        {
+          "exists": true,
+          "path": "contracts/mlops/model-artifact-manifest.schema.json",
+          "sha256": "9815d1b2395a11bb68eb412305ad61ce2bbb5628332c50de3c956c6be302f8d6"
+        },
+        {
+          "exists": true,
+          "path": "contracts/mlops/model-consumer-profile.v1.json",
+          "sha256": "a4c87af1923426a76a0ba9e81ff7dab7a281bc6805cefb9627a221f4c87e77ef"
+        }
+      ],
+      "status": "PRESENT_UNBOUND"
+    },
+    {
+      "blocking_codes": [
+        "APPROVED_THRESHOLD_SET_REQUIRED"
+      ],
+      "detail": {},
+      "name": "thresholds",
+      "refs": [
+        {
+          "exists": true,
+          "path": "contracts/mlops/m08-model-inference-parity-internal.v1.json",
+          "sha256": "7a2416d0748aa0c95946e92bb6d71d896080af160f632774e88c899ad0cf396e"
+        },
+        {
+          "exists": true,
+          "path": "contracts/mlops/tenant-model-canary-policy.schema.json",
+          "sha256": "61936e97aa3f5536b163aca24294b83fcea3d04e3dbfef92873db1f443899c0e"
+        }
+      ],
+      "status": "PRESENT_UNBOUND"
+    },
+    {
+      "blocking_codes": [
+        "CANDIDATE_RUNBOOK_SET_REQUIRED"
+      ],
+      "detail": {},
+      "name": "runbooks",
+      "refs": [
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/deploy.sh",
+          "sha256": "bf4dc04e6a9945981ee924fa458727e4f984659c17c3196d281d8f1a291ede78"
+        },
+        {
+          "exists": true,
+          "path": "deployments/kubernetes/security/README.md",
+          "sha256": "f6d409eabf6030ec20a98ffafa588f149e5867d22c4b631c095b4c133ee659e7"
+        },
+        {
+          "exists": true,
+          "path": "doc/07_alignment/runbooks/T1-M09-N024-integrated-bom-no-go.md",
+          "sha256": "0a3df6beeba61db8f1dadbd630e3289f6a52417edc6e6698fedebdb576b95500"
+        }
+      ],
+      "status": "PRESENT_UNBOUND"
+    }
+  ],
+  "environment_kind": "KUBERNETES",
+  "forbidden_claims": [
+    "A clean implementation candidate is frozen",
+    "The indexed images and configuration form one deployable candidate",
+    "M10 deployment, canary, site acceptance, or production promotion is authorized"
+  ],
+  "production_applied": false,
+  "schema_version": 1,
+  "source_tree": {
+    "algorithm": "sha256(path NUL sha256 NUL size LF)",
+    "content_sha256": "af7aa44fd20113f771d0535972ec30054ef0423686297f8b7e693430c9a854d8",
+    "file_count": 3489,
+    "git": {
+      "branch": "main",
+      "dirty_count": 2263,
+      "head": "f6072c4540b6198677b345e3df4bf876df5c7410",
+      "status_sha256": "915eb74d810901f0224d27b3d5ab036548a0378ef1984d42978bb33db3dabf46"
+    }
+  },
+  "status": "BLOCKED_INCOMPLETE",
+  "task_id": "T1-M10-N001",
+  "upstream": {
+    "m01_release_pointer": {
+      "exists": false,
+      "path": "contracts/releases/topic1/t1-m01-release-pointer.json",
+      "sha256": null
+    },
+    "m09_integrated_bom": {
+      "exists": true,
+      "path": "contracts/alignment/m09-integrated-bom.v1.json",
+      "sha256": "91bac6e61e436276b0108764e49827670061340731b8bfa01cbd9cc57e058e2b"
+    },
+    "m09_release_pointer": {
+      "candidate_id": null,
+      "exists": true,
+      "path": "contracts/releases/topic1/t1-m09-release-pointer.json",
+      "sha256": "a37507857c72687b8c97d70f4f145df4ebcceed08ab879531664519cf4ed32b9",
+      "status": "NO_GO"
+    }
+  }
+}

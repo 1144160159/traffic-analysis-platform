@@ -30,15 +30,16 @@ spec:
     spec:
       containers:
       - args:
-        - redis-server
-        - --appendonly
-        - 'yes'
-        - --maxmemory
-        - 4gb
-        - --maxmemory-policy
-        - noeviction
-        - --bind
-        - 0.0.0.0
+        - -c
+        - 'exec redis-server --appendonly yes --maxmemory 4gb --maxmemory-policy noeviction --bind 0.0.0.0 --requirepass "$REDIS_PASSWORD" --masterauth "$REDIS_PASSWORD"'
+        command:
+        - /bin/sh
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: REDIS_PASSWORD
         image: docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -58,8 +59,11 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 5
           successThreshold: 1
-          tcpSocket:
-            port: 6379
+          exec:
+            command:
+            - /bin/sh
+            - -ec
+            - REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --no-auth-warning -h 127.0.0.1 PING | grep -q PONG
           timeoutSeconds: 1
         resources:
           limits:
@@ -137,18 +141,16 @@ spec:
     spec:
       containers:
       - args:
-        - redis-server
-        - --appendonly
-        - 'yes'
-        - --maxmemory
-        - 4gb
-        - --maxmemory-policy
-        - noeviction
-        - --replicaof
-        - redis-master.databases.svc.cluster.local
-        - '6379'
-        - --bind
-        - 0.0.0.0
+        - -c
+        - 'exec redis-server --appendonly yes --maxmemory 4gb --maxmemory-policy noeviction --replicaof redis-master.databases.svc.cluster.local 6379 --bind 0.0.0.0 --requirepass "$REDIS_PASSWORD" --masterauth "$REDIS_PASSWORD"'
+        command:
+        - /bin/sh
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: REDIS_PASSWORD
         image: docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -168,8 +170,11 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 5
           successThreshold: 1
-          tcpSocket:
-            port: 6379
+          exec:
+            command:
+            - /bin/sh
+            - -ec
+            - REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --no-auth-warning -h 127.0.0.1 PING | grep -q PONG
           timeoutSeconds: 1
         resources:
           limits:
@@ -238,28 +243,27 @@ spec:
         image: docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
         imagePullPolicy: IfNotPresent
         args:
-        - redis-server
-        - --save
-        - ""
-        - --appendonly
-        - "no"
-        - --maxmemory
-        - 512mb
-        - --maxmemory-policy
-        - allkeys-lru
-        - --bind
-        - 0.0.0.0
+        - -c
+        - 'exec redis-server --save "" --appendonly no --maxmemory 512mb --maxmemory-policy allkeys-lru --bind 0.0.0.0 --requirepass "$REDIS_PASSWORD"'
+        command:
+        - /bin/sh
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: REDIS_PASSWORD
         ports:
         - {containerPort: 6379, protocol: TCP}
         readinessProbe:
           exec:
-            command: ["redis-cli", "PING"]
+            command: ["/bin/sh", "-ec", 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --no-auth-warning -h 127.0.0.1 PING | grep -q PONG']
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 2
         livenessProbe:
           exec:
-            command: ["redis-cli", "PING"]
+            command: ["/bin/sh", "-ec", 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --no-auth-warning -h 127.0.0.1 PING | grep -q PONG']
           initialDelaySeconds: 15
           periodSeconds: 10
           timeoutSeconds: 2
@@ -309,10 +313,17 @@ spec:
             weight: 100
       containers:
       - args:
-        - cp /conf/sentinel.conf /tmp/sentinel.conf && exec redis-sentinel /tmp/sentinel.conf
+        - -c
+        - 'sed "s|__REDIS_PASSWORD__|$REDIS_PASSWORD|g" /conf/sentinel.conf > /tmp/sentinel.conf && exec redis-sentinel /tmp/sentinel.conf'
         command:
         - sh
         - -c
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: REDIS_PASSWORD
         image: docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
         imagePullPolicy: IfNotPresent
         name: sentinel
@@ -463,6 +474,8 @@ data:
     port 26379
 
     sentinel monitor mymaster redis-master 6379 2
+
+    sentinel auth-pass mymaster __REDIS_PASSWORD__
 
     sentinel down-after-milliseconds mymaster 5000
 

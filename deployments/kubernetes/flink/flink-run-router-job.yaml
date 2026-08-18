@@ -1,0 +1,59 @@
+# RunScopeRouter 派生作业(analysis.run.events.v1 × flow.events.v1 → analysis.envelopes.v1)。
+# 一次性提交到既有 Flink session 集群(flink run -d);镜像不可变。
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-run-router-submit-9a05c
+  namespace: flink
+  labels:
+    app: flink-run-router-job
+    traffic.analysis/milestone: p3-run-router
+    traffic.analysis/rollout-mode: consumer-ready
+  annotations:
+    traffic.analysis/candidate-sha256: "9a05-run-router"
+    traffic.analysis/production-applied: "false"
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: flink-run-router-job
+    spec:
+      serviceAccountName: flink-log-job
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: flink-run-router
+        image: docker.io/traffic/flink-alert-generator-job:run-router-9a05c
+        imagePullPolicy: Never
+        command: ["/opt/flink/bin/flink"]
+        args:
+        - run
+        - -d
+        - -m
+        - flink-jobmanager.flink.svc:8081
+        - -c
+        - com.traffic.flink.alert.router.RunRouterJob
+        - /opt/flink/usrlib/flink-alert-generator-job.jar
+        env:
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: RUN_ROUTER_FLOW_GROUP, value: "run-router-flow-v1"}
+        - {name: RUN_ROUTER_SUBSCRIPTION_GROUP, value: "run-router-subscription-v1"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - name: KAFKA_SASL_USERNAME
+          valueFrom: {secretKeyRef: {name: kafka-flink-alert-generator-job-credentials, key: username}}
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom: {secretKeyRef: {name: kafka-flink-alert-generator-job-credentials, key: password}}
+        - {name: KAFKA_SSL_TRUSTSTORE_LOCATION, value: "/etc/kafka/tls/kafka.truststore.p12"}
+        - {name: KAFKA_SSL_TRUSTSTORE_TYPE, value: "PKCS12"}
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls}

@@ -5,7 +5,7 @@ metadata:
   name: kafka-acl-plan-v1
   namespace: middleware
   annotations:
-    traffic.openai.com/source-sha256: "eb678f8533e935398a5777846d212c629bce23a337b446ac8c14bb8f03b301b6"
+    traffic.openai.com/source-sha256: "2abd83d029e93908b9d1afe32f3b81a0c77f0f0f8e28bec7d702ab1dd8220ed3"
 data:
   apply.sh: |
     #!/usr/bin/env bash
@@ -15,236 +15,366 @@ data:
     CLIENT_CONFIG=${2:?client properties required}
     ACL_BIN=${3:?kafka-acls.sh path required}
 
-    apply_acl() {
+    apply_literal_acl() {
       "$ACL_BIN" --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
         --add --resource-pattern-type literal "$@"
     }
 
+    apply_prefixed_acl() {
+      "$ACL_BIN" --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG"     --add --resource-pattern-type prefixed "$@"
+    }
+
     # Generated from contracts/events/kafka-acl-catalog.v1.json. Do not edit.
-    apply_acl --allow-principal User:traffic-alert-service --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-batch-assignment-execution-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-batch-assignment-execution-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-campaign-event-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-campaign-event-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-campaign-membership-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-campaign-membership-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-dashboard-task-execution-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-dashboard-task-execution-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-dlq-governance-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-dlq-governance-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-flow-replay-projection-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-flow-replay-projection-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-playbook-execution-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-playbook-execution-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-probe-acks-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-probe-acks-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-probe-event-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-probe-event-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-response-execution-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-response-execution-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-threat-intel-projection-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-threat-intel-projection-v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-topic-action-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-topic-action-projection-v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.assignment.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic alert.assignment.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.assignment.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.feedback.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.feedback.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.response.requested.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic alert.response.requested.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.response.requested.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.saved-view.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.saved-view.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic audit.logs
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic audit.logs
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic campaign.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic campaign.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic campaign.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic campaign.membership.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic campaign.membership.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic campaign.membership.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic dashboard.task.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic dashboard.task.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic dashboard.task.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic detections.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic detections.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic dlq.probe.acks.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic dlq.probe.acks.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic dlq.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic dlq.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic dlq.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic flow.projection-replay.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic flow.projection-replay.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic flow.projection-replay.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic notification.governance.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic notification.governance.events.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic playbook.execution.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic playbook.execution.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic playbook.execution.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic probe.acks.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic probe.acks.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic probe.control.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic probe.control.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic probe.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic probe.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic probe.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic threat.intel.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic threat.intel.v1
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic traffic.topic.action.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Read --topic traffic.topic.action.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic traffic.topic.action.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Describe --topic whitelist.events.v2
-    apply_acl --allow-principal User:traffic-alert-service --operation Write --topic whitelist.events.v2
-    apply_acl --allow-principal User:traffic-asset-service --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-asset-service --operation Describe --group asset-projection-v2
-    apply_acl --allow-principal User:traffic-asset-service --operation Read --group asset-projection-v2
-    apply_acl --allow-principal User:traffic-asset-service --operation Describe --group asset-service-bindings
-    apply_acl --allow-principal User:traffic-asset-service --operation Read --group asset-service-bindings
-    apply_acl --allow-principal User:traffic-asset-service --operation Describe --topic asset.bindings.v1
-    apply_acl --allow-principal User:traffic-asset-service --operation Read --topic asset.bindings.v1
-    apply_acl --allow-principal User:traffic-asset-service --operation Describe --topic asset.discovery.events.v1
-    apply_acl --allow-principal User:traffic-asset-service --operation Write --topic asset.discovery.events.v1
-    apply_acl --allow-principal User:traffic-asset-service --operation Describe --topic asset.events.v2
-    apply_acl --allow-principal User:traffic-asset-service --operation Read --topic asset.events.v2
-    apply_acl --allow-principal User:traffic-asset-service --operation Write --topic asset.events.v2
-    apply_acl --allow-principal User:traffic-asset-service --operation Describe --topic asset.exports.v1
-    apply_acl --allow-principal User:traffic-asset-service --operation Write --topic asset.exports.v1
-    apply_acl --allow-principal User:traffic-asset-service --operation Describe --topic audit.logs
-    apply_acl --allow-principal User:traffic-asset-service --operation Write --topic audit.logs
-    apply_acl --allow-principal User:traffic-asset-service --operation Describe --topic dlq.v1
-    apply_acl --allow-principal User:traffic-asset-service --operation Write --topic dlq.v1
-    apply_acl --allow-principal User:traffic-audit-materializer --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-audit-materializer --operation Describe --group audit-consumer
-    apply_acl --allow-principal User:traffic-audit-materializer --operation Read --group audit-consumer
-    apply_acl --allow-principal User:traffic-audit-materializer --operation Describe --topic audit.logs
-    apply_acl --allow-principal User:traffic-audit-materializer --operation Read --topic audit.logs
-    apply_acl --allow-principal User:traffic-audit-materializer --operation Describe --topic dlq.v1
-    apply_acl --allow-principal User:traffic-audit-materializer --operation Write --topic dlq.v1
-    apply_acl --allow-principal User:traffic-auth-service --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-auth-service --operation Describe --topic audit.logs
-    apply_acl --allow-principal User:traffic-auth-service --operation Write --topic audit.logs
-    apply_acl --allow-principal User:traffic-auth-service --operation Describe --topic user.events.v1
-    apply_acl --allow-principal User:traffic-auth-service --operation Write --topic user.events.v1
-    apply_acl --allow-principal User:traffic-flink-alert-generator --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --group flink-alert-generator-job
-    apply_acl --allow-principal User:traffic-flink-alert-generator --operation Read --group flink-alert-generator-job
-    apply_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --topic alerts.v1
-    apply_acl --allow-principal User:traffic-flink-alert-generator --operation Write --topic alerts.v1
-    apply_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --topic detections.v1
-    apply_acl --allow-principal User:traffic-flink-alert-generator --operation Read --topic detections.v1
-    apply_acl --allow-principal User:traffic-flink-behavior --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Describe --group flink-behavior-job
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Read --group flink-behavior-job
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Describe --group flink-behavior-job-model-updates
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Read --group flink-behavior-job-model-updates
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Describe --topic feature.stat.v1
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Read --topic feature.stat.v1
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Describe --topic model-update-applied.v1
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Write --topic model-update-applied.v1
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Describe --topic model-updates
-    apply_acl --allow-principal User:traffic-flink-behavior --operation Read --topic model-updates
-    apply_acl --allow-principal User:traffic-flink-cep --operation Describe --group flink-cep-job
-    apply_acl --allow-principal User:traffic-flink-cep --operation Read --group flink-cep-job
-    apply_acl --allow-principal User:traffic-flink-cep --operation Describe --topic alerts.v1
-    apply_acl --allow-principal User:traffic-flink-cep --operation Read --topic alerts.v1
-    apply_acl --allow-principal User:traffic-flink-feature --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-flink-feature --operation Describe --group flink-feature-job
-    apply_acl --allow-principal User:traffic-flink-feature --operation Read --group flink-feature-job
-    apply_acl --allow-principal User:traffic-flink-feature --operation Describe --topic feature.stat.v1
-    apply_acl --allow-principal User:traffic-flink-feature --operation Write --topic feature.stat.v1
-    apply_acl --allow-principal User:traffic-flink-feature --operation Describe --topic session.events.v1
-    apply_acl --allow-principal User:traffic-flink-feature --operation Read --topic session.events.v1
-    apply_acl --allow-principal User:traffic-flink-log --operation Describe --group flink-log-job
-    apply_acl --allow-principal User:traffic-flink-log --operation Read --group flink-log-job
-    apply_acl --allow-principal User:traffic-flink-log --operation Describe --topic device.logs.v1
-    apply_acl --allow-principal User:traffic-flink-log --operation Read --topic device.logs.v1
-    apply_acl --allow-principal User:traffic-flink-pcap-index --operation Describe --group flink-pcap-index-job
-    apply_acl --allow-principal User:traffic-flink-pcap-index --operation Read --group flink-pcap-index-job
-    apply_acl --allow-principal User:traffic-flink-pcap-index --operation Describe --topic pcap.index.v1
-    apply_acl --allow-principal User:traffic-flink-pcap-index --operation Read --topic pcap.index.v1
-    apply_acl --allow-principal User:traffic-flink-rule --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-flink-rule --operation Describe --group flink-rule-job
-    apply_acl --allow-principal User:traffic-flink-rule --operation Read --group flink-rule-job
-    apply_acl --allow-principal User:traffic-flink-rule --operation Describe --group flink-rule-job-rule
-    apply_acl --allow-principal User:traffic-flink-rule --operation Read --group flink-rule-job-rule
-    apply_acl --allow-principal User:traffic-flink-rule --operation Describe --topic detections.v1
-    apply_acl --allow-principal User:traffic-flink-rule --operation Write --topic detections.v1
-    apply_acl --allow-principal User:traffic-flink-rule --operation Describe --topic feature.stat.v1
-    apply_acl --allow-principal User:traffic-flink-rule --operation Read --topic feature.stat.v1
-    apply_acl --allow-principal User:traffic-flink-rule --operation Describe --topic rule.updates
-    apply_acl --allow-principal User:traffic-flink-rule --operation Read --topic rule.updates
-    apply_acl --allow-principal User:traffic-flink-session --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-flink-session --operation Describe --group flink-session-job
-    apply_acl --allow-principal User:traffic-flink-session --operation Read --group flink-session-job
-    apply_acl --allow-principal User:traffic-flink-session --operation Describe --topic dlq.v1
-    apply_acl --allow-principal User:traffic-flink-session --operation Write --topic dlq.v1
-    apply_acl --allow-principal User:traffic-flink-session --operation Describe --topic flow.events.v1
-    apply_acl --allow-principal User:traffic-flink-session --operation Read --topic flow.events.v1
-    apply_acl --allow-principal User:traffic-flink-session --operation Describe --topic session.events.v1
-    apply_acl --allow-principal User:traffic-flink-session --operation Write --topic session.events.v1
-    apply_acl --allow-principal User:traffic-flink-user-behavior --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --group flink-user-behavior-job
-    apply_acl --allow-principal User:traffic-flink-user-behavior --operation Read --group flink-user-behavior-job
-    apply_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --topic dlq.v1
-    apply_acl --allow-principal User:traffic-flink-user-behavior --operation Write --topic dlq.v1
-    apply_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --topic user.events.v1
-    apply_acl --allow-principal User:traffic-flink-user-behavior --operation Read --topic user.events.v1
-    apply_acl --allow-principal User:traffic-forensics-service --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-forensics-service --operation Describe --topic audit.logs
-    apply_acl --allow-principal User:traffic-forensics-service --operation Write --topic audit.logs
-    apply_acl --allow-principal User:traffic-graph-service --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-graph-service --operation Describe --topic audit.logs
-    apply_acl --allow-principal User:traffic-graph-service --operation Write --topic audit.logs
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Describe --group ingest-gateway-probe-control-v2
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Read --group ingest-gateway-probe-control-v2
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic audit.logs
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic audit.logs
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic dlq.v1
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic dlq.v1
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic flow.events.v1
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic flow.events.v1
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic pcap.index.v1
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic pcap.index.v1
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic probe.acks.v2
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic probe.acks.v2
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic probe.control.v2
-    apply_acl --allow-principal User:traffic-ingest-gateway --operation Read --topic probe.control.v2
-    apply_acl --allow-principal User:traffic-rule-manager --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-alert-feedback-projection-v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-alert-feedback-projection-v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-deployment-projection-v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-deployment-projection-v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-model-action-execution-v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-model-action-execution-v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-model-applied-v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-model-applied-v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-whitelist-rule-effect-v2
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-whitelist-rule-effect-v2
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --topic alert.feedback.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --topic alert.feedback.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --topic audit.logs
-    apply_acl --allow-principal User:traffic-rule-manager --operation Write --topic audit.logs
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --topic deployment.events.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --topic deployment.events.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Write --topic deployment.events.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --topic dlq.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Write --topic dlq.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --topic model-actions.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --topic model-actions.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Write --topic model-actions.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --topic model-update-applied.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --topic model-update-applied.v1
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --topic model-updates
-    apply_acl --allow-principal User:traffic-rule-manager --operation Write --topic model-updates
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --topic rule.updates
-    apply_acl --allow-principal User:traffic-rule-manager --operation Write --topic rule.updates
-    apply_acl --allow-principal User:traffic-rule-manager --operation Describe --topic whitelist.events.v2
-    apply_acl --allow-principal User:traffic-rule-manager --operation Read --topic whitelist.events.v2
-    apply_acl --allow-principal User:traffic-threat-intel-service --operation IdempotentWrite --cluster
-    apply_acl --allow-principal User:traffic-threat-intel-service --operation Describe --topic threat.intel.v1
-    apply_acl --allow-principal User:traffic-threat-intel-service --operation Write --topic threat.intel.v1
-    echo "Applied 226 literal least-privilege Kafka ACL grants."
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-baseline-activation-acks-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-baseline-activation-acks-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-batch-assignment-execution-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-batch-assignment-execution-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-campaign-event-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-campaign-event-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-campaign-membership-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-campaign-membership-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-campaigns-proto-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-campaigns-proto-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-dashboard-task-execution-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-dashboard-task-execution-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-dlq-governance-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-dlq-governance-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-evidence-link-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-evidence-link-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-flow-replay-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-flow-replay-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-fusion-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-fusion-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-playbook-execution-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-playbook-execution-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-probe-acks-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-probe-acks-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-probe-event-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-probe-event-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-probe-group-readiness-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-probe-group-readiness-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-response-execution-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-response-execution-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-threat-intel-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-threat-intel-projection-v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service-topic-action-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --group alert-service-topic-action-projection-v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.assignment.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic alert.assignment.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.assignment.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.evidence-links.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic alert.evidence-links.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.evidence-links.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.feedback.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.feedback.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.response.requested.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic alert.response.requested.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.response.requested.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic alert.saved-view.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic alert.saved-view.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic baseline.activation-acks.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic baseline.activation-acks.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic baseline.lifecycle.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic baseline.lifecycle.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic campaign.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic campaign.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic campaign.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic campaign.membership.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic campaign.membership.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic campaign.membership.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic campaigns.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic campaigns.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic dashboard.task.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic dashboard.task.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic dashboard.task.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic detections.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic detections.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic dlq.probe.acks.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic dlq.probe.acks.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic flow.projection-replay.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic flow.projection-replay.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic flow.projection-replay.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic fusion.commands.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic fusion.commands.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic fusion.commands.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic model.feedback.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic model.feedback.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic notification.governance.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic notification.governance.events.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic playbook.execution.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic playbook.execution.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic playbook.execution.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic probe.acks.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic probe.acks.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic probe.control.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic probe.control.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic probe.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic probe.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic probe.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic probe.group-readiness.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic probe.group-readiness.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic threat.intel.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic threat.intel.v1
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic traffic.topic.action.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Read --topic traffic.topic.action.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic traffic.topic.action.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Describe --topic whitelist.events.v2
+    apply_literal_acl --allow-principal User:traffic-alert-service --operation Write --topic whitelist.events.v2
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Describe --group analysis-receipts-v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Read --group analysis-receipts-v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Describe --topic analysis.plan.events.v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Write --topic analysis.plan.events.v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Describe --topic analysis.receipts.v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Read --topic analysis.receipts.v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Describe --topic analysis.report.requests.v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Write --topic analysis.report.requests.v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Describe --topic analysis.run.events.v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Write --topic analysis.run.events.v1
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Describe --topic probe.control.v2
+    apply_literal_acl --allow-principal User:traffic-analysis-service --operation Write --topic probe.control.v2
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Describe --group asset-projection-v2
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Read --group asset-projection-v2
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Describe --group asset-service-bindings
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Read --group asset-service-bindings
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Describe --topic asset.bindings.v1
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Read --topic asset.bindings.v1
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Describe --topic asset.discovery.events.v1
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Write --topic asset.discovery.events.v1
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Describe --topic asset.events.v2
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Read --topic asset.events.v2
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Write --topic asset.events.v2
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Describe --topic asset.exports.v1
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Write --topic asset.exports.v1
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-asset-service --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-audit-materializer --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-audit-materializer --operation Describe --group audit-consumer
+    apply_literal_acl --allow-principal User:traffic-audit-materializer --operation Read --group audit-consumer
+    apply_literal_acl --allow-principal User:traffic-audit-materializer --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-audit-materializer --operation Read --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-audit-materializer --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-audit-materializer --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-auth-service --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-auth-service --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-auth-service --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-auth-service --operation Describe --topic user.events.v1
+    apply_literal_acl --allow-principal User:traffic-auth-service --operation Write --topic user.events.v1
+    apply_literal_acl --allow-principal User:traffic-device-log-collector --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-device-log-collector --operation Describe --topic device.logs.v1
+    apply_literal_acl --allow-principal User:traffic-device-log-collector --operation Write --topic device.logs.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --group flink-alert-generator-job
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Read --group flink-alert-generator-job
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --group run-router-flow-v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Read --group run-router-flow-v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --group run-router-subscription-v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Read --group run-router-subscription-v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --topic alerts.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Write --topic alerts.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --topic analysis.envelopes.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Write --topic analysis.envelopes.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --topic analysis.run.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Read --topic analysis.run.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --topic detections.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Read --topic detections.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Describe --topic flow.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-alert-generator --operation Read --topic flow.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --group flink-behavior-job
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Read --group flink-behavior-job
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --group flink-behavior-job-champion-challenger-features
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Read --group flink-behavior-job-champion-challenger-features
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --group flink-behavior-job-champion-challenger-model-updates
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Read --group flink-behavior-job-champion-challenger-model-updates
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --group flink-behavior-job-model-updates
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Read --group flink-behavior-job-model-updates
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --topic detections.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Write --topic detections.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --topic feature.stat.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Read --topic feature.stat.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --topic model-shadow-observations.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Write --topic model-shadow-observations.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --topic model-update-applied.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Write --topic model-update-applied.v1
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Describe --topic model-updates
+    apply_literal_acl --allow-principal User:traffic-flink-behavior --operation Read --topic model-updates
+    apply_literal_acl --allow-principal User:traffic-flink-cep --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-flink-cep --operation Describe --group flink-cep-job
+    apply_literal_acl --allow-principal User:traffic-flink-cep --operation Read --group flink-cep-job
+    apply_literal_acl --allow-principal User:traffic-flink-cep --operation Describe --topic alerts.v1
+    apply_literal_acl --allow-principal User:traffic-flink-cep --operation Read --topic alerts.v1
+    apply_literal_acl --allow-principal User:traffic-flink-cep --operation Describe --topic campaigns.v1
+    apply_literal_acl --allow-principal User:traffic-flink-cep --operation Write --topic campaigns.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Describe --group flink-feature-job
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Read --group flink-feature-job
+    apply_prefixed_acl --allow-principal User:traffic-flink-feature --operation Describe --group flink-feature-job-shadow-
+    apply_prefixed_acl --allow-principal User:traffic-flink-feature --operation Read --group flink-feature-job-shadow-
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Describe --group run-receipt-v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Read --group run-receipt-v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Describe --topic analysis.envelopes.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Read --topic analysis.envelopes.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Describe --topic analysis.receipts.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Write --topic analysis.receipts.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Describe --topic feature.stat.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Write --topic feature.stat.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Describe --topic session.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-feature --operation Read --topic session.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-log --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-flink-log --operation Describe --group flink-log-job
+    apply_literal_acl --allow-principal User:traffic-flink-log --operation Read --group flink-log-job
+    apply_prefixed_acl --allow-principal User:traffic-flink-log --operation Describe --group flink-log-job-shadow-
+    apply_prefixed_acl --allow-principal User:traffic-flink-log --operation Read --group flink-log-job-shadow-
+    apply_literal_acl --allow-principal User:traffic-flink-log --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-flink-log --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-flink-log --operation Describe --topic device.logs.v1
+    apply_literal_acl --allow-principal User:traffic-flink-log --operation Read --topic device.logs.v1
+    apply_literal_acl --allow-principal User:traffic-flink-log --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-log --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-pcap-index --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-flink-pcap-index --operation Describe --group flink-pcap-index-job
+    apply_literal_acl --allow-principal User:traffic-flink-pcap-index --operation Read --group flink-pcap-index-job
+    apply_literal_acl --allow-principal User:traffic-flink-pcap-index --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-pcap-index --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-pcap-index --operation Describe --topic pcap.index.v1
+    apply_literal_acl --allow-principal User:traffic-flink-pcap-index --operation Read --topic pcap.index.v1
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Describe --group flink-rule-job
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Read --group flink-rule-job
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Describe --group flink-rule-job-rule
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Read --group flink-rule-job-rule
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Describe --topic detections.v1
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Write --topic detections.v1
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Describe --topic feature.stat.v1
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Read --topic feature.stat.v1
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Describe --topic rule-update-applied.v1
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Write --topic rule-update-applied.v1
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Describe --topic rule.updates
+    apply_literal_acl --allow-principal User:traffic-flink-rule --operation Read --topic rule.updates
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Describe --group flink-session-job
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Read --group flink-session-job
+    apply_prefixed_acl --allow-principal User:traffic-flink-session --operation Describe --group flink-session-job-shadow-
+    apply_prefixed_acl --allow-principal User:traffic-flink-session --operation Read --group flink-session-job-shadow-
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Describe --topic flow.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Read --topic flow.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Describe --topic session.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-session --operation Write --topic session.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --group flink-user-behavior-baseline-v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Read --group flink-user-behavior-baseline-v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --group flink-user-behavior-job
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Read --group flink-user-behavior-job
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --topic baseline.activation-acks.v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Write --topic baseline.activation-acks.v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --topic baseline.lifecycle.v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Read --topic baseline.lifecycle.v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Describe --topic user.events.v1
+    apply_literal_acl --allow-principal User:traffic-flink-user-behavior --operation Read --topic user.events.v1
+    apply_literal_acl --allow-principal User:traffic-forensics-service --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-forensics-service --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-forensics-service --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-graph-service --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-graph-service --operation Describe --group graph-service-projection-v1
+    apply_literal_acl --allow-principal User:traffic-graph-service --operation Read --group graph-service-projection-v1
+    apply_literal_acl --allow-principal User:traffic-graph-service --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-graph-service --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-graph-service --operation Describe --topic graph.projections.v1
+    apply_literal_acl --allow-principal User:traffic-graph-service --operation Read --topic graph.projections.v1
+    apply_literal_acl --allow-principal User:traffic-graph-service --operation Write --topic graph.projections.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --group ingest-gateway-probe-control-v2
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Read --group ingest-gateway-probe-control-v2
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic analysis.receipts.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic analysis.receipts.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic asset.bindings.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic asset.bindings.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic flow.events.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic flow.events.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic pcap.index.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic pcap.index.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic probe.acks.v2
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic probe.acks.v2
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic probe.control.v2
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Read --topic probe.control.v2
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Describe --topic probe.group-readiness.v1
+    apply_literal_acl --allow-principal User:traffic-ingest-gateway --operation Write --topic probe.group-readiness.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-alert-feedback-projection-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-alert-feedback-projection-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-deployment-projection-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-deployment-projection-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-model-action-execution-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-model-action-execution-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-model-applied-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-model-applied-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-model-feedback-revision-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-model-feedback-revision-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-model-tenant-canary-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-model-tenant-canary-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-rule-applied-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-rule-applied-v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --group rule-manager-whitelist-rule-effect-v2
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --group rule-manager-whitelist-rule-effect-v2
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic alert.feedback.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --topic alert.feedback.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Write --topic audit.logs
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic deployment.events.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --topic deployment.events.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Write --topic deployment.events.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Write --topic dlq.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic model-actions.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --topic model-actions.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Write --topic model-actions.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic model-shadow-observations.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --topic model-shadow-observations.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic model-update-applied.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --topic model-update-applied.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic model-updates
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Write --topic model-updates
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic model.feedback.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --topic model.feedback.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic rule-update-applied.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --topic rule-update-applied.v1
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic rule.updates
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Write --topic rule.updates
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Describe --topic whitelist.events.v2
+    apply_literal_acl --allow-principal User:traffic-rule-manager --operation Read --topic whitelist.events.v2
+    apply_literal_acl --allow-principal User:traffic-threat-intel-service --operation IdempotentWrite --cluster
+    apply_literal_acl --allow-principal User:traffic-threat-intel-service --operation Describe --topic threat.intel.v1
+    apply_literal_acl --allow-principal User:traffic-threat-intel-service --operation Write --topic threat.intel.v1
+    echo "Applied 352 literal/prefixed least-privilege Kafka ACL grants."

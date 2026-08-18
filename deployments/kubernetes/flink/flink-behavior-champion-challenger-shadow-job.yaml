@@ -1,0 +1,147 @@
+---
+# M08/N012 online comparison submission. The Kubernetes Job is suspended by
+# default and submits an observation-only Flink job to the existing session
+# cluster. It cannot emit detections, mutate ClickHouse, publish model ACKs or
+# compete with the serving feature/model consumer groups.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-behavior-champion-challenger-n012
+  namespace: flink
+  labels:
+    app: flink-behavior-job
+    traffic.analysis/milestone: m08
+    traffic.analysis/task: n012
+    traffic.analysis/rollout-mode: champion-challenger-shadow
+  annotations:
+    traffic.analysis/entry-class: com.traffic.flink.behavior.BehaviorDetectionJob
+    traffic.analysis/observer-only: "true"
+    traffic.analysis/serving-outputs-enabled: "false"
+    traffic.analysis/model-ack-enabled: "false"
+    traffic.analysis/challenger-can-serve: "false"
+    # production-applied is updated by the release/rollout process only.
+    # Repository default is "false"; flip to "true" after live apply +
+    # reconciliation evidence, never by hand-editing this field speculatively.
+    traffic.analysis/production-applied: "false"
+    traffic.analysis/image-digest-required-before-unsuspend: "true"
+    traffic.analysis/rollback: suspend-submission-and-cancel-flink-job-with-savepoint
+spec:
+  suspend: true
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: flink-behavior-job
+        traffic.analysis/task: n012
+        traffic.analysis/rollout-mode: champion-challenger-shadow
+    spec:
+      serviceAccountName: flink
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: submit-champion-challenger-shadow
+        image: traffic/flink-behavior-job:m08-champion-challenger-n012-20260815-r2
+        imagePullPolicy: IfNotPresent
+        command: ["/opt/flink/bin/flink"]
+        args:
+        - run
+        - -d
+        - -m
+        - flink-jobmanager.flink.svc:8081
+        - -c
+        - com.traffic.flink.behavior.BehaviorDetectionJob
+        - /opt/flink/usrlib/flink-behavior-job.jar
+        - --detection.mode
+        - known_frozen
+        - --model.hot.update.enabled
+        - "false"
+        - --model.reload.interval.ms
+        - "0"
+        - --model.update.consumer.v1.enabled
+        - "true"
+        - --model.shadow.evaluation.v1.enabled
+        - "true"
+        - --model.shadow.observation.only
+        - "true"
+        - --model.shadow.sample.rate
+        - "0.05"
+        - --model.shadow.challenger.timeout.ms
+        - "250"
+        - --model.shadow.package.load.timeout.ms
+        - "120000"
+        - --model.shadow.challenger.threads
+        - "2"
+        - --model.shadow.challenger.queue.capacity
+        - "64"
+        - --model.shadow.feature.consumer.group.id
+        - flink-behavior-job-champion-challenger-features
+        - --model.shadow.update.consumer.group.id
+        - flink-behavior-job-champion-challenger-model-updates
+        - --kafka.brokers
+        - kafka-bootstrap.middleware.svc:9092
+        - --kafka.input.topic
+        - feature.stat.v1
+        - --kafka.model.update.topic
+        - model-updates
+        - --kafka.model.shadow.observation.topic
+        - model-shadow-observations.v1
+        - --model.runtime.contract
+        - traffic.behavior.inference.v1
+        - --model.runtime.version
+        - "1.0.0"
+        - --model.feature.schema.version
+        - "1"
+        - --model.graph.schema.version
+        - "1"
+        - --model.path
+        - /tmp/model-shadow-cache
+        - --model.cache.size
+        - "8"
+        - --checkpoint.path
+        - s3://flink-checkpoints/checkpoints/behavior-champion-challenger-n012
+        - --checkpoint.interval.ms
+        - "30000"
+        - --checkpoint.timeout.ms
+        - "300000"
+        - --checkpoint.min.pause.ms
+        - "5000"
+        - --parallelism
+        - "4"
+        - --max.parallelism
+        - "128"
+        env:
+        - name: MODEL_CONSUMER_DEPLOYMENT_ID
+          valueFrom: {secretKeyRef: {name: model-shadow-consumer-profile-v1, key: deployment-id}}
+        - name: MODEL_CONSUMER_PROFILE_SHA256
+          valueFrom: {secretKeyRef: {name: model-shadow-consumer-profile-v1, key: profile-sha256}}
+        - name: MODEL_SIGNING_PUBLIC_KEY_PEM_BASE64
+          valueFrom: {secretKeyRef: {name: model-shadow-consumer-profile-v1, key: public-key-pem-base64}}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - name: KAFKA_SASL_USERNAME
+          valueFrom: {secretKeyRef: {name: kafka-flink-behavior-job-credentials, key: username}}
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom: {secretKeyRef: {name: kafka-flink-behavior-job-credentials, key: password}}
+        - {name: KAFKA_SSL_TRUSTSTORE_LOCATION, value: "/etc/kafka/tls/kafka.truststore.p12"}
+        - {name: KAFKA_SSL_TRUSTSTORE_TYPE, value: "PKCS12"}
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        resources:
+          requests: {cpu: "250m", memory: "512Mi"}
+          limits: {cpu: "1", memory: "1Gi"}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: flink-log, mountPath: /opt/flink/log}
+        - {name: tmp, mountPath: /tmp}
+      volumes:
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls, optional: false}
+      - {name: flink-log, emptyDir: {}}
+      - {name: tmp, emptyDir: {}}

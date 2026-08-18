@@ -1,0 +1,185 @@
+---
+# Probe Agent (veth 测试探针) DaemonSet — 测试阶段虚拟网卡实时采集数据集生成。
+# 拓扑:宿主 8-2tb 上的 veth 对 ta-veth-in <-> ta-veth-out;
+#  - wire 回放(pcap_replay 命令携带 interface=ta-veth-in):本探针经 AF_PACKET
+#    向输入端注入真实流量(时间线压缩),allowlist 见 capture.wire_replay_interfaces;
+#  - 实时采集:本探针常驻采集 ta-veth-out(输出端),窗口内流量经共享分支归属 run。
+# 生产探针(probe-agent)不挂 wire allowlist,对 wire 回放 fail-closed。
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: probe-agent-veth
+  namespace: traffic-analysis
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: probe-agent-veth
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: probe-agent-veth
+subjects:
+- kind: ServiceAccount
+  name: probe-agent-veth
+  namespace: traffic-analysis
+roleRef:
+  kind: ClusterRole
+  name: probe-agent-veth
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-agent-veth-config
+  namespace: traffic-analysis
+data:
+  config.yaml: |
+    tenant_id: "default"
+    probe_id: "probe-8-2tb-veth"
+    run_id: "realtime-veth"
+    capture:
+      interface: "ta-veth-out"
+      mode: "af_packet"
+      producer_enabled: false
+      queue_id: 0
+      buffer_size: 65536
+      frame_size: 65536
+      frame_count: 4096
+      promiscuous_mode: true
+      cpu_cores: [2, 3]
+      numa_aware: false
+      # 测试阶段 wire 回放接口 allowlist(veth 对输入端);生产探针保持空列表。
+      wire_replay_interfaces: ["ta-veth-in"]
+    aggregator:
+      flow_capacity: 250000
+      idle_timeout_sec: 5
+      active_timeout_sec: 1800
+      scan_interval_sec: 1
+      tos_update_policy: "highest_dscp"
+      enable_dscp_tracking: true
+    archiver:
+      enabled: true
+      durable_spool_enabled: true
+      cache_path: "/var/lib/probe-agent/cache"
+      buffer_size_mb: 64
+      rotation_interval_sec: 30
+      zstd_level: 3
+      s3_endpoint: "http://minio.minio.svc:9000"
+      s3_bucket: "pcap-archive"
+      s3_region: "us-east-1"
+      s3_access_key: "${PROBE_S3_ACCESS_KEY}"
+      s3_secret_key: "${PROBE_S3_SECRET_KEY}"
+      max_concurrent_uploads: 2
+    sender:
+      gateway_addr: "https://ingest-gateway.traffic-analysis.svc:50051"
+      tenant_id: "default"
+      probe_id: "probe-8-2tb-veth"
+      batch_size: 100
+      batch_timeout_ms: 100
+      max_retries: 3
+      tls_ca_cert: "/etc/probe-agent/certs/ca-cert.pem"
+      tls_client_cert: "/etc/probe-agent/certs/client-cert.pem"
+      tls_client_key: "/etc/probe-agent/certs/client-key.pem"
+      cache_path: "/var/lib/probe-agent/cache"
+      cache_max_size: 250000
+      asset_binding_upload_enabled: false
+      asset_binding_canary_tenant_id: ""
+      asset_binding_canary_probe_ids: []
+    metrics:
+      enabled: true
+      listen_addr: "0.0.0.0:9092"
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: probe-agent-veth
+  namespace: traffic-analysis
+spec:
+  selector:
+    matchLabels: {app: probe-agent-veth}
+  template:
+    metadata:
+      labels: {app: probe-agent-veth}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9092"}
+    spec:
+      serviceAccountName: probe-agent-veth
+      terminationGracePeriodSeconds: 90
+      hostNetwork: true
+      hostPID: false
+      dnsPolicy: ClusterFirstWithHostNet
+      nodeSelector:
+        kubernetes.io/hostname: "8-2tb"
+      containers:
+      - name: probe-agent
+        image: docker.io/traffic/probe-agent:wire-replay-20260817v1
+        imagePullPolicy: Never
+        args: ["/etc/probe-agent/config.yaml"]
+        securityContext:
+          privileged: false
+          runAsUser: 0
+          runAsGroup: 0
+          capabilities:
+            add: ["NET_ADMIN", "NET_RAW", "SYS_NICE"]
+        env:
+        - name: RUST_LOG
+          value: "probe_agent=info"
+        # 实时采集数据面(测试阶段):仅对 veth 测试探针放行。
+        - name: M02_CAPTURE_PRODUCER_V1_ENABLED
+          value: "true"
+        - name: M02_CAPTURE_CANARY_PROBE_IDS
+          value: "probe-8-2tb-veth"
+        - name: M06_ASSET_BINDING_UPLOAD_V1_ENABLED
+          value: "false"
+        - name: M06_ASSET_BINDING_CANARY_TENANT_ID
+          value: ""
+        - name: M06_ASSET_BINDING_CANARY_PROBE_IDS
+          value: ""
+        - name: AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PROBE_AUTH_TOKEN
+        - name: PROBE_S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-probe-agent-credentials
+              key: accesskey
+        - name: PROBE_S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-probe-agent-credentials
+              key: secretkey
+        ports:
+        - {containerPort: 9092, name: metrics}
+        livenessProbe:
+          httpGet: {path: /metrics, port: 9092}
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 3
+          failureThreshold: 4
+        readinessProbe:
+          httpGet: {path: /metrics, port: 9092}
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests: {cpu: "1", memory: "2Gi"}
+          limits:   {cpu: "2", memory: "4Gi"}
+        volumeMounts:
+        - {name: config, mountPath: /etc/probe-agent}
+        - {name: cache, mountPath: /var/lib/probe-agent}
+        - {name: certs, mountPath: /etc/probe-agent/certs, readOnly: true}
+      volumes:
+      - {name: config, configMap: {name: probe-agent-veth-config}}
+      - {name: cache, hostPath: {path: /home/data/probe-agent-veth, type: DirectoryOrCreate}}
+      - {name: certs, secret: {secretName: probe-agent-certs, optional: false}}
+      tolerations:
+      - operator: Exists

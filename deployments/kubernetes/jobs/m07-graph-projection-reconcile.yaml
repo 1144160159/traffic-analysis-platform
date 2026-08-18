@@ -1,0 +1,77 @@
+# Candidate-only M07 graph projection reconciliation template.
+# It is both suspended and execution-gated. Promotion must pin the candidate
+# image digest and supply an already closed tenant/time window.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: m07-graph-projection-reconcile
+  namespace: traffic-analysis
+  labels:
+    app: graph-projection-reconcile
+    traffic.analysis/milestone: m07-n015
+spec:
+  suspend: true
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: graph-projection-reconcile
+        traffic.analysis/milestone: m07-n015
+    spec:
+      serviceAccountName: graph-service
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: reconcile
+        image: docker.io/traffic/graph-service:m07-graph-projection-candidate
+        imagePullPolicy: Never
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: ["ALL"]}
+          seccompProfile: {type: RuntimeDefault}
+        command: ["/bin/sh", "-ec"]
+        args:
+        - |
+          test "${GRAPH_RECONCILE_EXECUTION_ENABLED}" = "true"
+          exec /app/graph-projection-reconcile \
+            --mode compare \
+            --run-id "${GRAPH_RECONCILE_RUN_ID}" \
+            --tenant "${GRAPH_RECONCILE_TENANT_ID}" \
+            --window-from "${GRAPH_RECONCILE_WINDOW_FROM}" \
+            --window-through "${GRAPH_RECONCILE_WINDOW_THROUGH}" \
+            --max-facts "${GRAPH_RECONCILE_MAX_FACTS}" \
+            --max-duration "${GRAPH_RECONCILE_MAX_DURATION}"
+        env:
+        - {name: GRAPH_RECONCILE_EXECUTION_ENABLED, value: "false"}
+        - {name: GRAPH_RECONCILE_RUN_ID, value: "00000000-0000-4000-8000-000000000000"}
+        - {name: GRAPH_RECONCILE_TENANT_ID, value: "REPLACE_WITH_CANARY_TENANT"}
+        - {name: GRAPH_RECONCILE_WINDOW_FROM, value: "1970-01-01T00:00:00Z"}
+        - {name: GRAPH_RECONCILE_WINDOW_THROUGH, value: "1970-01-01T00:00:01Z"}
+        - {name: GRAPH_RECONCILE_MAX_FACTS, value: "10000"}
+        - {name: GRAPH_RECONCILE_MAX_DURATION, value: "30s"}
+        - {name: POSTGRES_DSN, valueFrom: {secretKeyRef: {name: traffic-credentials, key: POSTGRES_DSN}}}
+        - {name: NEBULA_ENABLED, value: "true"}
+        - {name: NEBULA_ADDRESSES, value: "nebula-graph.middleware.svc:9669"}
+        - {name: NEBULA_USERNAME, value: "traffic_graph"}
+        - {name: NEBULA_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: NEBULA_SERVICE_PASSWORD}}}
+        - {name: NEBULA_SPACE, value: "traffic_graph"}
+        - {name: NEBULA_TIMEOUT, value: "10s"}
+        - {name: NEBULA_MIN_POOL_SIZE, value: "1"}
+        - {name: NEBULA_MAX_POOL_SIZE, value: "4"}
+        - {name: GRAPH_PROJECTION_CONSUMER_ENABLED, value: "false"}
+        - {name: GRAPH_PROJECTION_WORKER_ENABLED, value: "false"}
+        - {name: GRAPH_CONTINUOUS_PROJECTION_V1_ENABLED, value: "false"}
+        - {name: OTEL_ENABLED, value: "false"}
+        - {name: REDIS_ENABLED, value: "false"}
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: 500m, memory: 512Mi}

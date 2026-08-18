@@ -1,0 +1,144 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-m04-rule-update-applied-sql
+  namespace: databases
+  labels:
+    traffic.platform/change-phase: expand
+    traffic.platform/contract: traffic.rule-update-applied.v1
+data:
+  38-m04-rule-update-applied.sql: |
+    -- T1-M04 rule update application receipts. Runtime services never execute DDL.
+    BEGIN;
+    ALTER TABLE rule_outbox
+      ADD COLUMN IF NOT EXISTS runtime_status TEXT NOT NULL DEFAULT 'pending',
+      ADD COLUMN IF NOT EXISTS runtime_applied_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS runtime_last_error TEXT NOT NULL DEFAULT '';
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'rule_outbox_runtime_status_check'
+      ) THEN
+        ALTER TABLE rule_outbox ADD CONSTRAINT rule_outbox_runtime_status_check
+          CHECK (runtime_status IN ('pending','partial','applied','failed'));
+      END IF;
+    END $$;
+
+    CREATE INDEX IF NOT EXISTS idx_rule_outbox_event_id
+      ON rule_outbox ((payload->>'event_id'))
+      WHERE payload ? 'event_id';
+
+    CREATE TABLE IF NOT EXISTS rule_update_applied_acks (
+      event_id TEXT NOT NULL,
+      tenant_id TEXT NOT NULL,
+      rule_id TEXT NOT NULL,
+      rule_version BIGINT NOT NULL CHECK (rule_version > 0),
+      action TEXT NOT NULL CHECK (action IN ('create','update','delete','enable','disable','sync')),
+      checksum TEXT NOT NULL CHECK (checksum ~ '^[0-9a-f]{32}$'),
+      subtask_index INT NOT NULL CHECK (subtask_index >= 0),
+      parallelism INT NOT NULL CHECK (parallelism > 0 AND subtask_index < parallelism),
+      status TEXT NOT NULL CHECK (status IN ('applied','duplicate','stale','conflict')),
+      current_version BIGINT NOT NULL CHECK (current_version >= 0),
+      error TEXT NOT NULL DEFAULT '',
+      payload JSONB NOT NULL,
+      acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (event_id,subtask_index)
+    );
+    CREATE INDEX IF NOT EXISTS idx_rule_update_applied_acks_status
+      ON rule_update_applied_acks(event_id,status,subtask_index);
+    CREATE INDEX IF NOT EXISTS idx_rule_update_applied_acks_rule
+      ON rule_update_applied_acks(tenant_id,rule_id,rule_version,acknowledged_at DESC);
+
+    CREATE TABLE IF NOT EXISTS alignment_schema_migrations (
+      version TEXT PRIMARY KEY, description TEXT NOT NULL,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT now(), applied_by TEXT NOT NULL DEFAULT current_user
+    );
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608141500','M04 per-subtask rule update application receipts and exact parallelism aggregation')
+    ON CONFLICT (version) DO NOTHING;
+    COMMIT;
+  39-m04-rule-version-rollback.sql: |
+    -- M04 checksum-verified monotonic rule rollback. Runtime services never execute DDL.
+    BEGIN;
+    ALTER TABLE rule_versions
+      ADD COLUMN IF NOT EXISTS checksum TEXT,
+      ADD COLUMN IF NOT EXISTS change_log TEXT NOT NULL DEFAULT '';
+
+    UPDATE rule_versions
+    SET checksum=md5(substr(content_uri,length('inline:')+1))
+    WHERE checksum IS NULL
+      AND content_uri LIKE 'inline:%'
+      AND length(content_uri)>length('inline:');
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_rule_versions_rule_id_version
+      ON rule_versions(rule_id,version);
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid='rule_versions'::regclass
+          AND conname='rule_versions_checksum_format_check'
+      ) THEN
+        ALTER TABLE rule_versions ADD CONSTRAINT rule_versions_checksum_format_check
+          CHECK (
+            checksum IS NULL OR
+            checksum ~ '^[0-9a-f]{32}$' OR
+            checksum ~ '^sha256:[0-9a-f]{64}$'
+          ) NOT VALID;
+      END IF;
+    END $$;
+
+    INSERT INTO alignment_schema_migrations(version,description)
+    VALUES ('202608141530','M04 checksum-verified monotonic rule version rollback')
+    ON CONFLICT (version) DO NOTHING;
+    COMMIT;
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: expand-postgres-m04-rule-update-applied
+  namespace: databases
+  labels:
+    traffic.platform/change-phase: expand
+    traffic.platform/contract: traffic.rule-update-applied.v1
+  annotations:
+    traffic.platform/approval-required: "true"
+    traffic.platform/production-applied: "false"
+spec:
+  suspend: true
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+      - name: expand-authority
+        image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+          readOnlyRootFilesystem: true
+        env:
+        - name: PGPASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}
+        command: ["bash", "-ceu"]
+        args:
+        - |
+          psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -f /sql/38-m04-rule-update-applied.sql
+          psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -f /sql/39-m04-rule-version-rollback.sql
+          test "$(psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -Atqc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name='rule_update_applied_acks'")" = "1"
+          test "$(psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -Atqc "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='rule_outbox' AND column_name IN ('runtime_status','runtime_applied_at','runtime_last_error')")" = "3"
+          test "$(psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -Atqc "SELECT count(*) FROM alignment_schema_migrations WHERE version='202608141500'")" = "1"
+          test "$(psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -Atqc "SELECT count(*) FROM pg_indexes WHERE schemaname='public' AND tablename='rule_versions' AND indexname='idx_rule_versions_rule_id_version'")" = "1"
+          test "$(psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -Atqc "SELECT count(*) FROM pg_constraint WHERE conrelid='rule_versions'::regclass AND conname='rule_versions_checksum_format_check'")" = "1"
+          test "$(psql -v ON_ERROR_STOP=1 -h postgres-primary.databases.svc -U postgres -d traffic_platform -Atqc "SELECT count(*) FROM alignment_schema_migrations WHERE version='202608141530'")" = "1"
+        volumeMounts:
+        - {name: sql, mountPath: /sql, readOnly: true}
+        - {name: tmp, mountPath: /tmp}
+      volumes:
+      - {name: sql, configMap: {name: postgres-m04-rule-update-applied-sql}}
+      - {name: tmp, emptyDir: {}}

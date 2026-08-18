@@ -8,6 +8,15 @@ spec:
     whenDeleted: Retain
     whenScaled: Retain
   podManagementPolicy: OrderedReady
+  # Two JobManager replicas run Kubernetes HA (high-availability.type:
+  # kubernetes, leader election via ConfigMap + s3 storageDir). The single
+  # flink-jobmanager Service below load-balances ALL replicas: rpc/blob
+  # (6123/6124) work for every replica, but the REST/UI port 8081 is only
+  # served by the elected leader (initial leader = jobmanager-0 due to
+  # OrderedReady). Jobs must submit via the leader: use
+  # flink-jobmanager-0.flink-jobmanager.flink.svc:8081 or a dedicated
+  # jobmanager-rest Service pointing at the leader (add as separate PR if
+  # needed).
   replicas: 2
   revisionHistoryLimit: 10
   selector:
@@ -37,11 +46,27 @@ spec:
         env:
         - name: ENABLE_BUILT_IN_PLUGINS
           value: flink-s3-fs-presto-1.18.1.jar
+        # alert-generator 作业 fail-fast 凭证契约:缺失即拒绝启动(禁止默认口令直连)。
+        - name: CLICKHOUSE_USER
+          value: default
         - name: CLICKHOUSE_PASSWORD
           valueFrom:
             secretKeyRef:
               name: traffic-credentials
               key: CLICKHOUSE_PASSWORD
+              optional: true
+        # 专用告警投影用户(非 admin):live 需在 OpenSearch 创建并注入 Secret。
+        - name: OPENSEARCH_USER
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: OPENSEARCH_USER
+              optional: true
+        - name: OPENSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: OPENSEARCH_PASSWORD
               optional: true
         - name: MINIO_ACCESS_KEY
           valueFrom:
@@ -244,11 +269,27 @@ spec:
         env:
         - name: ENABLE_BUILT_IN_PLUGINS
           value: flink-s3-fs-presto-1.18.1.jar
+        # alert-generator 作业 fail-fast 凭证契约:缺失即拒绝启动(禁止默认口令直连)。
+        - name: CLICKHOUSE_USER
+          value: default
         - name: CLICKHOUSE_PASSWORD
           valueFrom:
             secretKeyRef:
               name: traffic-credentials
               key: CLICKHOUSE_PASSWORD
+              optional: true
+        # 专用告警投影用户(非 admin):live 需在 OpenSearch 创建并注入 Secret。
+        - name: OPENSEARCH_USER
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: OPENSEARCH_USER
+              optional: true
+        - name: OPENSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: OPENSEARCH_PASSWORD
               optional: true
         - name: MINIO_ACCESS_KEY
           valueFrom:
@@ -412,48 +453,9 @@ spec:
   type: ClusterIP
 
 ---
-apiVersion: v1
-data:
-  active.timeout.ms: '1800000'
-  checkpoint.interval.ms: '30000'
-  checkpoint.path: s3://flink-checkpoints/checkpoints/flink-traffic
-  checkpoint.timeout.ms: '600000'
-  clickhouse.batch.interval.ms: '2000'
-  clickhouse.batch.size: '5000'
-  clickhouse.cluster.mode: 'true'
-  clickhouse.connection.timeout: '30000'
-  clickhouse.database: traffic
-  clickhouse.host: clickhouse-1.middleware.svc
-  clickhouse.hosts: clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123
-  clickhouse.jdbc.url: jdbc:clickhouse://clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123/traffic
-  clickhouse.password: ''
-  clickhouse.port: '8123'
-  clickhouse.socket.timeout: '300000'
-  clickhouse.user: default
-  kafka.brokers: kafka-bootstrap.middleware.svc:9092
-  kafka.security.protocol: SASL_SSL
-  kafka.sasl.mechanism: SCRAM-SHA-512
-  kafka.ssl.truststore.location: /etc/kafka/tls/kafka.truststore.p12
-  kafka.ssl.truststore.type: PKCS12
-  max.parallelism: '128'
-  opensearch.enabled: 'false'
-  opensearch.hosts: opensearch.middleware.svc:9200
-  opensearch.index: sessions_v1
-  opensearch.password: ${OPENSEARCH_ADMIN_PASSWORD}
-  opensearch.port: '9200'
-  opensearch.user: admin
-  parallelism: '4'
-  s3.access.key: ${MINIO_ACCESS_KEY}
-  s3.bucket.checkpoints: flink-checkpoints
-  s3.endpoint: http://minio.minio.svc:9000
-  s3.secret.key: ${MINIO_SECRET_KEY}
-  flow.raw.clickhouse.table: flows_raw
-  flow.raw.sink.enabled: 'true'
-  session.gap.ms: '5000'
-  state.ttl.enabled: 'true'
-  state.ttl.ms: '1800000'
-  watermark.delay.ms: '5000'
-kind: ConfigMap
-metadata:
-  name: flink-job-config
-  namespace: flink
+# NOTE: the flink-job-config ConfigMap (previously defined at the end of this
+# file) was duplicated with flink/flink-configmap.yaml under the same name.
+# The single source of truth is flink/flink-configmap.yaml; this file no
+# longer defines it to avoid apply-time conflicts and credential placeholders
+# (empty clickhouse.password / ${OPENSEARCH_ADMIN_PASSWORD} / ${MINIO_*}).
+# Flink jobs inject credentials via Secret env (see containers above).

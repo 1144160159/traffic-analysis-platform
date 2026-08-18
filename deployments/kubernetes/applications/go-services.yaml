@@ -42,7 +42,7 @@ spec:
       containers:
       - name: ingest-gateway
         securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
-        image: docker.io/traffic/ingest-gateway@sha256:7e5895b2402581820859acbf48c5a0a532237ab2352826cfcf199d0c2a1f5d0a
+        image: docker.io/traffic/ingest-gateway:receipt-bridge-20260817v6
         imagePullPolicy: Never
         ports: [{containerPort: 50051}, {containerPort: 8080}, {containerPort: 9091}]
         env:
@@ -60,10 +60,31 @@ spec:
         - {name: KAFKA_PROBE_CONTROL_TOPIC, value: "probe.control.v2"}
         - {name: KAFKA_PROBE_ACK_TOPIC, value: "probe.acks.v2"}
         - {name: KAFKA_PROBE_CONTROL_GROUP, value: "ingest-gateway-probe-control-v2"}
+        - {name: KAFKA_PROBE_GROUP_READINESS_TOPIC, value: "probe.group-readiness.v1"}
+        - {name: KAFKA_ASSET_BINDING_TOPIC, value: "asset.bindings.v1"}
+        # 目录契约:ingest-gateway 的 DLQ 目标是 dlq.v1(ACL 已授权生产者);
+        # 代码默认值 dlq.ingest-gateway 无主题也无 ACL,会导致永久错误消息
+        # 无法入 DLQ 而卡死消费分区。
+        - {name: KAFKA_DLQ_TOPIC, value: "dlq.v1"}
+        # M02 data writers are independently default-off. Enabling either writer
+        # without an exact tenant/probe scope fails configuration validation.
+        # The flow writer is enabled for the replay data plane only: replay runs
+        # target probe-8-2tb and their flow events must reach flow.events.v1 for
+        # S2 run-scoped sessionization (RunScopeRouter -> RunReceiptJob).
+        - {name: M02_FLOW_WRITER_V1_ENABLED, value: "true"}
+        - {name: M02_PCAP_WRITER_V1_ENABLED, value: "false"}
+        - {name: M06_ASSET_BINDING_WRITER_V1_ENABLED, value: "false"}
+        - {name: M02_CANARY_TENANT_ID, value: "default"}
+        - {name: M02_CANARY_PROBE_IDS, value: "probe-8-2tb"}
+        - {name: PROBE_READINESS_PUBLISHER_V1_ENABLED, value: "false"}
+        - {name: PROBE_COMMAND_CONSUMER_V2_ENABLED, value: "true"}
+        - {name: PROBE_HEARTBEAT_DELIVERY_V2_ENABLED, value: "true"}
+        - {name: PROBE_ACK_PUBLISHER_V2_ENABLED, value: "true"}
         - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
         - {name: REDIS_DB, value: "0"}
         - {name: REDIS_RELIABILITY_DOMAIN, value: "coordination"}
+        - {name: REDIS_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: REDIS_PASSWORD}}}
         - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
         - {name: POSTGRES_PORT, value: "5432"}
         - {name: POSTGRES_DATABASE, value: "traffic_platform"}
@@ -75,6 +96,15 @@ spec:
         - {name: TLS_CA_FILE, value: "/etc/ingest-gateway/certs/ca-cert.pem"}
         - {name: TLS_CERT_FILE, value: "/etc/ingest-gateway/certs/server-cert.pem"}
         - {name: TLS_KEY_FILE, value: "/etc/ingest-gateway/certs/server-key.pem"}
+        # N008 remains default-off until an approved issuer projects one atomic
+        # generation containing the certificate, dual trust bundle, CRL, and manifest.
+        - {name: TLS_ROTATION_V1_ENABLED, value: "false"}
+        - {name: TLS_GENERATION_MANIFEST_FILE, value: "/etc/ingest-gateway/certs/generation.json"}
+        - {name: TLS_CRL_FILE, value: "/etc/ingest-gateway/certs/client-crl.pem"}
+        - {name: TLS_SERVER_DNS_NAMES, value: "ingest-gateway,ingest-gateway.traffic-analysis.svc,ingest-gateway.traffic-analysis.svc.cluster.local"}
+        - {name: TLS_CLIENT_DNS_NAMES, value: "probe-agent"}
+        - {name: TLS_RELOAD_INTERVAL, value: "30s"}
+        - {name: TLS_MINIMUM_REMAINING, value: "720h"}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: "1", memory: 512Mi}, limits: {cpu: "2", memory: 1Gi}}
         livenessProbe:  {httpGet: {path: /health, port: 8080}, initialDelaySeconds: 10, periodSeconds: 15}
@@ -120,11 +150,12 @@ spec:
       containers:
       - name: auth-service
         securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
-        image: docker.io/traffic/auth-service@sha256:d02bbf843802240955626a728781b220f89e90c92762639196d98c3165c383b6
+        image: docker.io/traffic/auth-service:authz-p2-loginfix-20260818
         imagePullPolicy: Never
         ports: [{containerPort: 8081}, {containerPort: 9092}]
         env:
         - {name: SERVER_LISTEN_ADDR, value: ":8081"}
+        - {name: OIDC_SCOPES, value: "openid,profile,email,roles"}
         - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
         - {name: POSTGRES_PORT, value: "5432"}
         - {name: POSTGRES_DATABASE, value: "traffic_platform"}
@@ -135,6 +166,7 @@ spec:
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
         - {name: REDIS_DB, value: "1"}
         - {name: REDIS_RELIABILITY_DOMAIN, value: "session"}
+        - {name: REDIS_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: REDIS_PASSWORD}}}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_USER_EVENT_TOPIC, value: "user.events.v1"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
@@ -148,6 +180,16 @@ spec:
         - {name: OIDC_CLIENT_ID, value: "traffic-ui"}
         - {name: OIDC_CLIENT_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OIDC_CLIENT_SECRET}}}
         - {name: OIDC_REDIRECT_URL, value: "http://10.0.5.8:30180/api/v1/auth/oidc/callback"}
+        # azp 客户端白名单:仅接受 traffic-ui 签发的访问令牌
+        - {name: OIDC_ALLOWED_AZP, value: "traffic-ui"}
+        # P2 契约解释器:对命中 m10 契约的 /v1/auth/* 操作逐操作判定 required_scope
+        - {name: AUTHZ_CONTRACT_MODE, value: "enforce"}
+        # OIDC 租户白名单(fail-closed):未配置时仅允许 default 租户;多租户按逗号分隔。
+        - {name: ALLOWED_TENANTS, value: "default"}
+        # 会话撤销后端故障时 fail-secure(默认 false=拒绝);生产显式开启前需评审。
+        - {name: SESSION_REVOCATION_FAIL_OPEN, value: "false"}
+        # CORS 来源白名单:禁止通配 *;按站点入口域名显式配置(逗号分隔)。
+        - {name: ALLOWED_ORIGINS, value: "http://10.0.5.8:30180"}
         - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 200m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
@@ -192,11 +234,13 @@ spec:
       containers:
       - name: alert-service
         securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
-        image: docker.io/traffic/alert-service:remediation-dashboard-159fca0eb395
+        image: docker.io/traffic/alert-service:contract4-20260818
         imagePullPolicy: Never
         ports: [{containerPort: 8082}]
         env:
         - {name: API_LISTEN_ADDR, value: ":8082"}
+        # P2 契约解释器:/v1/alerts|whitelist|dashboard 等契约操作逐操作判定
+        - {name: AUTHZ_CONTRACT_MODE, value: "enforce"}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
@@ -208,6 +252,15 @@ spec:
         - {name: KAFKA_PROBE_ACK_GROUP, value: "alert-service-probe-acks-v2"}
         - {name: KAFKA_PROBE_EVENT_TOPIC, value: "probe.events.v2"}
         - {name: KAFKA_PROBE_EVENT_GROUP, value: "alert-service-probe-event-projection-v2"}
+        - {name: KAFKA_PROBE_GROUP_READINESS_TOPIC, value: "probe.group-readiness.v1"}
+        - {name: KAFKA_PROBE_GROUP_READINESS_GROUP, value: "alert-service-probe-group-readiness-v1"}
+        - {name: PROBE_READINESS_CONSUMER_V1_ENABLED, value: "false"}
+        - {name: PROBE_ACK_CONSUMER_V2_ENABLED, value: "false"}
+        - {name: PROBE_LIFECYCLE_CONSUMER_V2_ENABLED, value: "false"}
+        - {name: PROBE_DESIRED_WRITER_V2_ENABLED, value: "false"}
+        - {name: PROBE_CONTROL_PUBLISHER_V2_ENABLED, value: "false"}
+        - {name: PROBE_LIFECYCLE_PUBLISHER_V2_ENABLED, value: "false"}
+        - {name: PROBE_DISPATCHER_V2_ENABLED, value: "false"}
         - {name: KAFKA_TOPIC_ACTION_EVENT_TOPIC, value: "traffic.topic.action.v2"}
         - {name: KAFKA_TOPIC_ACTION_EVENT_GROUP, value: "alert-service-topic-action-projection-v2"}
         - {name: KAFKA_CAMPAIGN_EVENT_TOPIC, value: "campaign.events.v2"}
@@ -226,6 +279,12 @@ spec:
         - {name: ALERT_BATCH_SELECTION_SIGNING_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: ALERT_BATCH_SELECTION_SIGNING_SECRET, optional: true}}}
         - {name: ALERT_EVIDENCE_CHAIN_V1_ENABLED, value: "false"}
         - {name: ALERT_EVIDENCE_DOWNLOAD_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: ALERT_EVIDENCE_DOWNLOAD_SECRET, optional: true}}}
+        - {name: KAFKA_ALERT_EVIDENCE_LINK_TOPIC, value: "alert.evidence-links.v1"}
+        - {name: KAFKA_ALERT_EVIDENCE_LINK_GROUP, value: "alert-service-evidence-link-projection-v1"}
+        - {name: ALERT_EVIDENCE_LINK_CONSUMER_V1_ENABLED, value: "false"}
+        - {name: ALERT_EVIDENCE_LINK_DISPATCHER_V1_ENABLED, value: "false"}
+        - {name: ALERT_EVIDENCE_LINK_WRITER_V1_ENABLED, value: "false"}
+        - {name: ALERT_EVIDENCE_LINK_CANDIDATE_SHA256, value: ""}
         - {name: KAFKA_WHITELIST_EVENT_TOPIC, value: "whitelist.events.v2"}
         - {name: KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC, value: "notification.governance.events.v1"}
         - {name: KAFKA_THREAT_INTEL_EVENT_TOPIC, value: "threat.intel.v1"}
@@ -258,6 +317,7 @@ spec:
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
         - {name: REDIS_DB, value: "0"}
         - {name: REDIS_RELIABILITY_DOMAIN, value: "coordination"}
+        - {name: REDIS_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: REDIS_PASSWORD}}}
         - {name: AUTH_POSTGRES_HOST, value: "postgres-primary.databases.svc"}
         - {name: AUTH_POSTGRES_PORT, value: "5432"}
         - {name: AUTH_POSTGRES_DATABASE, value: "traffic_platform"}
@@ -284,16 +344,56 @@ spec:
         - {name: OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS, value: "10000"}
         - {name: OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT, value: "25"}
         - {name: OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND, value: "100"}
+        - {name: OIDC_ENABLED, value: "true"}
+        - {name: OIDC_ISSUER_URL, value: "http://10.0.5.8:30180/realms/master"}
+        - {name: OIDC_CLIENT_ID, value: "traffic-ui"}
+        - {name: OIDC_CLIENT_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OIDC_CLIENT_SECRET}}}
+        - {name: OIDC_REDIRECT_URL, value: "http://10.0.5.8:30180/api/v1/auth/oidc/callback"}
+        # azp 客户端白名单:仅接受 traffic-ui 签发的访问令牌
+        - {name: OIDC_ALLOWED_AZP, value: "traffic-ui"}
         - {name: S3_ENDPOINT, value: "minio.minio.svc:9000"}
         - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: minio-alert-service-credentials, key: accesskey}}}
         - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: minio-alert-service-credentials, key: secretkey}}}
         - {name: S3_USE_SSL, value: "false"}
         - {name: ALERT_REPORT_BUCKET, value: "report-artifacts"}
-        - {name: ALERT_REPORT_JOBS_V1_ENABLED, value: "true"}
+        - {name: ALERT_REPORT_JOBS_V1_ENABLED, value: "false"}
+        - {name: ALERT_REPORT_ARTIFACT_TTL, value: "24h"}
         - {name: CAMPAIGN_ALERT_LINKS_V1_ENABLED, value: "true"}
         - {name: CAMPAIGN_AGGREGATE_V2_ENABLED, value: "false"}
+        - {name: FUSION_V1_ENABLED, value: "false"}
+        - {name: FUSION_PROJECTION_CONSUMER_V1_ENABLED, value: "false"}
+        - {name: FUSION_CANDIDATE_SHA256, value: ""}
+        - {name: BEHAVIOR_BASELINE_V1_ENABLED, value: "false"}
+        - {name: BEHAVIOR_BASELINE_BUILD_WORKER_V1_ENABLED, value: "false"}
+        - {name: BEHAVIOR_BASELINE_ACK_CONSUMER_V1_ENABLED, value: "false"}
+        - {name: BEHAVIOR_BASELINE_LIFECYCLE_DISPATCHER_V1_ENABLED, value: "false"}
+        - {name: BEHAVIOR_BASELINE_CANDIDATE_SHA256, value: ""}
+        - {name: ATTACK_CHAIN_V1_ENABLED, value: "false"}
+        - {name: CAMPAIGNS_PROTO_CONSUMER_V1_ENABLED, value: "false"}
+        - {name: CAMPAIGNS_PROTO_CANDIDATE_SHA256, value: "3ce53eb67ab8a0ba34a116ebc3a9751c89104acfbf2ed1abbcb5aa43cfd7fe8c"}
+        - {name: KAFKA_CAMPAIGNS_PROTO_TOPIC, value: "campaigns.v1"}
+        - {name: KAFKA_CAMPAIGNS_PROTO_GROUP, value: "alert-service-campaigns-proto-projection-v1"}
+        - {name: KAFKA_BASELINE_LIFECYCLE_TOPIC, value: "baseline.lifecycle.v1"}
+        - {name: KAFKA_BASELINE_ACTIVATION_ACK_TOPIC, value: "baseline.activation-acks.v1"}
+        - {name: KAFKA_BASELINE_ACTIVATION_ACK_GROUP, value: "alert-service-baseline-activation-acks-v1"}
+        - {name: KAFKA_FUSION_COMMAND_TOPIC, value: "fusion.commands.v1"}
+        - {name: KAFKA_FUSION_PROJECTION_GROUP, value: "alert-service-fusion-projection-v1"}
         - {name: CAMPAIGN_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: CAMPAIGN_EVENT_CONSUMER_V2_ENABLED, value: "false"}
+        - {name: CAMPAIGN_EVENT_DISPATCHER_V2_ENABLED, value: "false"}
+        - {name: CAMPAIGN_JSON_V2_CANDIDATE_SHA256, value: "b11287ed54a1a4e347d705c23b7e5e62304f81b9c3f55fc3214624cb9edf0c19"}
+        - {name: CAMPAIGN_RAIL_CORRELATION_V1_ENABLED, value: "false"}
+        - {name: CAMPAIGN_RAIL_CORRELATION_CONTRACT_SHA256, value: "f4f564d6d22084c1202634af99fabe29067bd51f5748dfd30b9fd48f0541980b"}
+        - {name: CAMPAIGN_RAIL_CORRELATION_INTERVAL_SECONDS, value: "60"}
+        - {name: CAMPAIGN_RAIL_CORRELATION_WINDOW_SECONDS, value: "300"}
+        - {name: CAMPAIGN_RAIL_CORRELATION_CLOSE_LAG_SECONDS, value: "60"}
+        - {name: CAMPAIGN_RAIL_CORRELATION_MAX_CAMPAIGNS, value: "1000"}
         - {name: WHITELIST_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: WHITELIST_EVENT_PRODUCER_V2_ENABLED, value: "false"}
+        - {name: WHITELIST_DETECTION_MATCHER_V2_ENABLED, value: "false"}
+        - {name: KAFKA_WHITELIST_EVENT_GROUP, value: "rule-manager-whitelist-rule-effect-v2"}
+        - {name: WHITELIST_CONSUMER_CANDIDATE_SHA256, value: "0000000000000000000000000000000000000000000000000000000000000000"}
+        - {name: WHITELIST_EVENT_CONTRACT_SHA256, value: "d87787272d140c8529686ce45eef30f2a6345fb7f2e918a450399c8f698aad49"}
         - {name: CAMPAIGN_TARGET_PROJECTION_V2_ENABLED, value: "false"}
         - {name: CAMPAIGN_SOAR_EXECUTOR_URL, value: ""}
         - {name: CAMPAIGN_SOAR_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
@@ -320,6 +420,12 @@ spec:
         - {name: CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: NEBULA_SERVICE_PASSWORD}}}
         - {name: CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE, value: "traffic_graph"}
         - {name: ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED, value: "true"}
+        - {name: MODEL_FEEDBACK_REVISION_AUTHORITY_V1_ENABLED, value: "false"}
+        - {name: MODEL_FEEDBACK_REVISION_PRODUCER_V1_ENABLED, value: "false"}
+        - {name: KAFKA_MODEL_FEEDBACK_TOPIC, value: "model.feedback.v1"}
+        - {name: KAFKA_MODEL_FEEDBACK_CONSUMER_GROUP, value: "rule-manager-model-feedback-revision-v1"}
+        - {name: MODEL_FEEDBACK_CONSUMER_CANDIDATE_SHA256, value: "0000000000000000000000000000000000000000000000000000000000000000"}
+        - {name: MODEL_FEEDBACK_CONTRACT_SHA256, value: "c60bdb3ed674853da641d2c613530195a1ed9db62ce48606c402870ab283c7d9"}
         - {name: KAFKA_RESPONSE_ACTION_TOPIC, value: "alert.response.requested.v1"}
         - {name: KAFKA_RESPONSE_ACTION_GROUP, value: "alert-service-response-execution-v1"}
         - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "false"}
@@ -343,7 +449,9 @@ spec:
         - {name: AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED, value: "false"}
         - {name: TOPIC_SNAPSHOT_V1_ENABLED, value: "true"}
         - {name: TOPIC_EXECUTOR_V2_ENABLED, value: "true"}
-        - {name: PROBE_OPERATION_ACK_V2_ENABLED, value: "true"}
+        - {name: PROBE_OPERATION_ACK_V2_ENABLED, value: "false"}
+        # CORS 来源白名单:禁止通配 *;按站点入口域名显式配置(逗号分隔)。
+        - {name: API_ALLOWED_ORIGINS, value: "http://10.0.5.8:30180"}
         - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 500m, memory: 512Mi, ephemeral-storage: 128Mi}, limits: {cpu: "1", memory: 1Gi, ephemeral-storage: 512Mi}}
@@ -382,7 +490,7 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8083"
-        traffic.analysis/build-id: "remediation-asset-audit-d6546314264d"
+        traffic.analysis/build-id: "asset-authz-20260818"
         traffic.analysis/source-sha256: "d6546314264d218cbff8eeeec7ba3237f1ff123280682cc067c0edb1b7d8b7c5"
         traffic.analysis/image-manifest-digest: "sha256:c910403b1fa076eff9f2164f48371c262ba986b15ecac25588cf769de77980d1"
     spec:
@@ -391,17 +499,27 @@ spec:
       containers:
       - name: asset-service
         securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
-        image: docker.io/traffic/asset-service:remediation-asset-audit-d6546314264d
+        image: docker.io/traffic/asset-service:asset-authz-20260818
         imagePullPolicy: Never
         ports: [{containerPort: 50053}, {containerPort: 8083}]
         env:
         - {name: ASSET_GRPC_PORT, value: "50053"}
         - {name: ASSET_HTTP_PORT, value: "8083"}
+        # 权限体系:共享鉴权中间件 + 契约解释器 + API token 回退
+        - {name: AUTHZ_MODE, value: "enforce"}
+        - {name: AUTHZ_CONTRACT_MODE, value: "enforce"}
+        - {name: AUTHZ_API_TOKEN_ENABLED, value: "true"}
+        # 零信任加固:issuer 严格校验 + 缺失 tenant_id 声明直接拒绝
+        - {name: AUTHZ_ISSUER, value: "http://10.0.5.8:30180/realms/master"}
+        - {name: AUTHZ_REQUIRE_TENANT_CLAIM, value: "true"}
+        # azp 客户端白名单:仅接受 traffic-ui 签发的令牌
+        - {name: AUTHZ_ALLOWED_AZP, value: "traffic-ui"}
+        - {name: AUTHZ_JWKS_URL, value: "http://10.0.5.8:30180/auth/realms/master/protocol/openid-connect/certs"}
         - {name: ASSET_PG_HOST, value: "postgres-primary.databases.svc"}
         - {name: ASSET_PG_USER, value: "postgres"}
         - {name: ASSET_PG_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
         - {name: ASSET_PG_DB, value: "traffic_platform"}
-        - {name: ASSET_KAFKA_ENABLED, value: "true"}
+        - {name: ASSET_KAFKA_ENABLED, value: "false"}
         - {name: ASSET_KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
@@ -411,7 +529,10 @@ spec:
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: ASSET_KAFKA_TOPIC, value: "asset.bindings.v1"}
         - {name: ASSET_KAFKA_GROUP_ID, value: "asset-service-bindings"}
+        - {name: ASSET_BINDING_DLQ_TOPIC, value: "dlq.v1"}
+        - {name: ASSET_BINDING_MAX_ATTEMPTS, value: "8"}
         - {name: ASSET_EVENT_OUTBOX_ENABLED, value: "false"}
+        - {name: ASSET_EVENT_OUTBOX_TENANT_ID, value: ""}
         - {name: ASSET_EVENT_TOPIC, value: "asset.events.v2"}
         - {name: ASSET_DISCOVERY_OUTBOX_ENABLED, value: "false"}
         - {name: ASSET_DISCOVERY_EVENT_TOPIC, value: "asset.discovery.events.v1"}
@@ -432,6 +553,7 @@ spec:
         - {name: ASSET_GOVERNANCE_V1_ENABLED, value: "false"}
         - {name: ASSET_PROJECTION_ENABLED, value: "false"}
         - {name: ASSET_PROJECTION_GROUP_ID, value: "asset-projection-v2"}
+        - {name: ASSET_PROJECTION_DLQ_TOPIC, value: "dlq.v1"}
         - {name: ASSET_PROJECTION_OS_ADDRESSES, value: "http://opensearch.middleware.svc:9200"}
         - {name: ASSET_PROJECTION_OS_USERNAME, value: "admin"}
         - {name: ASSET_PROJECTION_OS_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OPENSEARCH_ADMIN_PASSWORD}}}
@@ -440,6 +562,11 @@ spec:
         - {name: ASSET_PROJECTION_NEBULA_USERNAME, value: "traffic_graph"}
         - {name: ASSET_PROJECTION_NEBULA_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: NEBULA_SERVICE_PASSWORD}}}
         - {name: ASSET_PROJECTION_NEBULA_SPACE, value: "traffic_graph"}
+        - {name: ASSET_PROJECTION_CLICKHOUSE_ENABLED, value: "false"}
+        - {name: ASSET_PROJECTION_CLICKHOUSE_HOSTS, value: "clickhouse-1.middleware.svc:9000,clickhouse-2.middleware.svc:9000"}
+        - {name: ASSET_PROJECTION_CLICKHOUSE_DATABASE, value: "traffic"}
+        - {name: ASSET_PROJECTION_CLICKHOUSE_USERNAME, value: "default"}
+        - {name: ASSET_PROJECTION_CLICKHOUSE_TABLE, value: "traffic.source_asset_facts_v1"}
         - {name: ASSET_DISCOVERY_SCHEDULER_ENABLED, value: "false"}
         - {name: ASSET_DISCOVERY_JOBS_V2_ENABLED, value: "false"}
         - {name: ASSET_DISCOVERY_WORKER_ENABLED, value: "false"}
@@ -458,6 +585,8 @@ spec:
         - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: minio-asset-service-credentials, key: accesskey}}}
         - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: minio-asset-service-credentials, key: secretkey}}}
         - {name: S3_USE_SSL, value: "false"}
+        # gRPC reflection 默认关闭(fail-closed);仅调试窗口临时开启。
+        - {name: ASSET_GRPC_ENABLE_REFLECTION, value: "false"}
         - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {cpu: 500m, memory: 512Mi}}
@@ -497,7 +626,7 @@ spec:
       containers:
       - name: rule-manager
         securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
-        image: docker.io/traffic/rule-manager@sha256:27f53d3029d9bc6d2d304c7e6b0e0c7f8428910638e01f47e78f1a4177bc818d
+        image: docker.io/traffic/rule-manager:rule-oidc5-20260818
         imagePullPolicy: Never
         ports: [{containerPort: 8084}]
         env:
@@ -514,6 +643,7 @@ spec:
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
         - {name: REDIS_DB, value: "0"}
         - {name: REDIS_RELIABILITY_DOMAIN, value: "coordination"}
+        - {name: REDIS_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: REDIS_PASSWORD}}}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
@@ -522,22 +652,39 @@ spec:
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: KAFKA_RULE_TOPIC, value: "rule.updates"}
+        - {name: KAFKA_RULE_APPLIED_TOPIC, value: "rule-update-applied.v1"}
+        - {name: RULE_APPLIED_ACK_EXPECTED_PARALLELISM, value: "4"}
+        - {name: RULE_APPLIED_ACK_TIMEOUT, value: "2m"}
+        - {name: RULE_APPLIED_ACK_SWEEP_INTERVAL, value: "15s"}
         - {name: KAFKA_MODEL_TOPIC, value: "model-updates"}
         - {name: KAFKA_MODEL_ACTION_TOPIC, value: "model-actions.v1"}
         - {name: KAFKA_MODEL_ACTION_EVENT_GROUP, value: "rule-manager-model-action-execution-v1"}
         - {name: MODEL_ACTION_OUTBOX_V1_ENABLED, value: "true"}
+        - {name: MODEL_SHADOW_ACTIVATION_V1_ENABLED, value: "false"}
+        - {name: MODEL_SHADOW_PUBLISHER_V1_ENABLED, value: "false"}
+        - {name: MODEL_ROLLBACK_V2_ENABLED, value: "false"}
+        - {name: MODEL_ROLLBACK_ACK_TIMEOUT, value: "2m"}
         - {name: MODEL_ACTION_INBOX_V1_ENABLED, value: "true"}
         - {name: KAFKA_MODEL_APPLIED_TOPIC, value: "model-update-applied.v1"}
         - {name: MODEL_APPLIED_ACK_EXPECTED_PARALLELISM, value: "4"}
         - {name: KAFKA_DEPLOYMENT_TOPIC, value: "deployment.events.v1"}
         - {name: KAFKA_DEPLOYMENT_EVENT_GROUP, value: "rule-manager-deployment-projection-v1"}
         - {name: DEPLOYMENT_EVENT_PROJECTION_V1_ENABLED, value: "true"}
+        - {name: DEPLOYMENT_RUNTIME_ACK_GATE_V1_ENABLED, value: "false"}
         - {name: KAFKA_ALERT_FEEDBACK_TOPIC, value: "alert.feedback.v1"}
         - {name: KAFKA_ALERT_FEEDBACK_EVENT_GROUP, value: "rule-manager-alert-feedback-projection-v1"}
         - {name: ALERT_FEEDBACK_PROJECTION_V1_ENABLED, value: "true"}
+        - {name: KAFKA_MODEL_FEEDBACK_REVISION_TOPIC, value: "model.feedback.v1"}
+        - {name: KAFKA_MODEL_FEEDBACK_REVISION_EVENT_GROUP, value: "rule-manager-model-feedback-revision-v1"}
+        - {name: MODEL_FEEDBACK_REVISION_CONSUMER_V1_ENABLED, value: "false"}
+        - {name: MODEL_FEEDBACK_REVISION_CANDIDATE_SHA256, value: "0000000000000000000000000000000000000000000000000000000000000000"}
+        - {name: MODEL_FEEDBACK_REVISION_CONTRACT_SHA256, value: "c60bdb3ed674853da641d2c613530195a1ed9db62ce48606c402870ab283c7d9"}
         - {name: KAFKA_WHITELIST_EVENT_TOPIC, value: "whitelist.events.v2"}
         - {name: KAFKA_WHITELIST_EVENT_GROUP, value: "rule-manager-whitelist-rule-effect-v2"}
         - {name: WHITELIST_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: WHITELIST_EVENT_CONSUMER_V2_ENABLED, value: "false"}
+        - {name: WHITELIST_CONSUMER_CANDIDATE_SHA256, value: "0000000000000000000000000000000000000000000000000000000000000000"}
+        - {name: WHITELIST_EVENT_CONTRACT_SHA256, value: "d87787272d140c8529686ce45eef30f2a6345fb7f2e918a450399c8f698aad49"}
         - {name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V1_ENABLED, value: "true"}
         - {name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V2_ENABLED, value: "false"}
         - {name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V2_TABLE, value: "traffic.alert_feedback_v2"}
@@ -547,9 +694,29 @@ spec:
         - {name: MLOPS_ARGO_NAMESPACE, value: "argo"}
         - {name: MLOPS_ARGO_SERVER_URL, value: "http://argo-server.argo.svc:2746"}
         - {name: MLOPS_WORKFLOW_TEMPLATE, value: "mlops-training-template"}
+        - {name: MLOPS_AUTOMATIC_CANDIDATE_V1_ENABLED, value: "false"}
         - {name: MLOPS_AUTOMATED_TENANT_ID, value: "default"}
         - {name: MLOPS_AUTOMATED_MODEL_NAME, value: "behavior-classifier"}
+        - {name: MLOPS_MAX_PSI, value: "0.25"}
+        - {name: MLOPS_MAX_FP_RATE, value: "0.15"}
+        - {name: MLOPS_MAX_FEATURE_PARTIAL_RATE, value: "0.01"}
+        - {name: MLOPS_MIN_FEATURE_SAMPLES, value: "1000"}
+        - {name: MLOPS_MIN_FEEDBACK_SAMPLES, value: "100"}
+        - {name: MLOPS_DRIFT_BASELINE_HOURS, value: "168"}
+        - {name: MLOPS_DRIFT_CURRENT_HOURS, value: "24"}
+        - {name: MLOPS_MAX_FEATURE_SIGNAL_AGE, value: "2h"}
+        - {name: MLOPS_MAX_FEEDBACK_SIGNAL_AGE, value: "48h"}
         - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        # 统一令牌模型 P1:OIDC provider 接线(Keycloak 访问令牌 JWKS 回退)
+        - {name: OIDC_ENABLED, value: "true"}
+        - {name: OIDC_ISSUER_URL, value: "http://10.0.5.8:30180/realms/master"}
+        - {name: OIDC_CLIENT_ID, value: "traffic-ui"}
+        - {name: OIDC_CLIENT_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OIDC_CLIENT_SECRET}}}
+        - {name: OIDC_REDIRECT_URL, value: "http://10.0.5.8:30180/api/v1/auth/oidc/callback"}
+        # azp 客户端白名单:仅接受 traffic-ui 签发的访问令牌
+        - {name: OIDC_ALLOWED_AZP, value: "traffic-ui"}
+        # P2 契约解释器:/v1/models/* 3 操作逐操作判定
+        - {name: AUTHZ_CONTRACT_MODE, value: "enforce"}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 200m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
         volumeMounts:
@@ -594,7 +761,7 @@ spec:
       containers:
       - name: graph-service
         securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
-        image: docker.io/traffic/graph-service@sha256:c2af7b2361d1bb606d10e24e5251ab59a8200d6424752b4964ec5dade7b6db6c
+        image: docker.io/traffic/graph-service:contract4-20260818
         imagePullPolicy: Never
         ports: [{containerPort: 8085}]
         env:
@@ -616,6 +783,16 @@ spec:
         - {name: QUERY_TIMEOUT, value: "12s"}
         - {name: AUTH_ENABLED, value: "true"}
         - {name: AUTH_REQUIRE_AUTH, value: "true"}
+        # 统一令牌模型 P1:OIDC provider 接线(Keycloak 访问令牌 JWKS 回退)
+        - {name: OIDC_ENABLED, value: "true"}
+        - {name: OIDC_ISSUER_URL, value: "http://10.0.5.8:30180/realms/master"}
+        - {name: OIDC_CLIENT_ID, value: "traffic-ui"}
+        - {name: OIDC_CLIENT_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OIDC_CLIENT_SECRET}}}
+        - {name: OIDC_REDIRECT_URL, value: "http://10.0.5.8:30180/api/v1/auth/oidc/callback"}
+        # azp 客户端白名单:仅接受 traffic-ui 签发的访问令牌
+        - {name: OIDC_ALLOWED_AZP, value: "traffic-ui"}
+        # P2 契约解释器:/v1/graph/* 4 操作逐操作判定 required_scope
+        - {name: AUTHZ_CONTRACT_MODE, value: "enforce"}
         - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
         - {name: POSTGRES_PORT, value: "5432"}
@@ -628,6 +805,7 @@ spec:
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
         - {name: REDIS_DB, value: "0"}
         - {name: REDIS_RELIABILITY_DOMAIN, value: "coordination"}
+        - {name: REDIS_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: REDIS_PASSWORD}}}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
@@ -635,6 +813,20 @@ spec:
         - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-graph-service-credentials, key: password}}}
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: GRAPH_PROJECTION_CONSUMER_ENABLED, value: "false"}
+        - {name: GRAPH_PROJECTION_WORKER_ENABLED, value: "false"}
+        - {name: GRAPH_CONTINUOUS_PROJECTION_V1_ENABLED, value: "false"}
+        - {name: GRAPH_PROJECTION_TOPIC, value: "graph.projections.v1"}
+        - {name: GRAPH_PROJECTION_GROUP_ID, value: "graph-service-projection-v1"}
+        - {name: GRAPH_PROJECTION_DLQ_TOPIC, value: "dlq.v1"}
+        - {name: GRAPH_PROJECTION_LEASE, value: "30s"}
+        - {name: GRAPH_PROJECTION_INTERVAL, value: "500ms"}
+        - {name: GRAPH_PROJECTION_MAX_ATTEMPTS, value: "8"}
+        - {name: GRAPH_WORKBENCH_V2_ENABLED, value: "false"}
+        - {name: GRAPH_WORKBENCH_PAGE_NODES, value: "100"}
+        - {name: GRAPH_WORKBENCH_MAX_EDGES, value: "1000"}
+        - {name: GRAPH_WORKBENCH_CONTINUATION_TTL, value: "15m"}
+        - {name: GRAPH_WORKBENCH_CONTINUATION_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: GRAPH_WORKBENCH_CONTINUATION_SECRET, optional: true}}}
         - {name: OTEL_ENABLED, value: "false"}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 500m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
@@ -670,7 +862,7 @@ spec:
       containers:
       - name: threat-intel-service
         securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
-        image: docker.io/traffic/threat-intel-service@sha256:d87ccc7066dbd2d04aa55db16c1e2ca271e0d5274373ba0ca5159b513c0c629c
+        image: docker.io/traffic/threat-intel-service:ti-oidc3-20260818
         imagePullPolicy: Never
         ports: [{containerPort: 8087}]
         env:
@@ -692,6 +884,14 @@ spec:
         - {name: THREAT_INTEL_FEED_SCHEDULER_ENABLED, value: "true"}
         - {name: THREAT_INTEL_FEED_SCHEDULER_TICK_SECONDS, value: "2"}
         - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        # 统一令牌模型 P1:OIDC provider 接线(Keycloak 访问令牌 JWKS 回退)
+        - {name: OIDC_ENABLED, value: "true"}
+        - {name: OIDC_ISSUER_URL, value: "http://10.0.5.8:30180/realms/master"}
+        - {name: OIDC_CLIENT_ID, value: "traffic-ui"}
+        - {name: OIDC_CLIENT_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OIDC_CLIENT_SECRET}}}
+        - {name: OIDC_REDIRECT_URL, value: "http://10.0.5.8:30180/api/v1/auth/oidc/callback"}
+        # azp 客户端白名单:仅接受 traffic-ui 签发的访问令牌
+        - {name: OIDC_ALLOWED_AZP, value: "traffic-ui"}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {cpu: 500m, memory: 512Mi}}
         livenessProbe:  {httpGet: {path: /health, port: 8087}, initialDelaySeconds: 10, periodSeconds: 15}
@@ -733,10 +933,11 @@ spec:
     spec:
       serviceAccountName: forensics-service
       automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 330
       containers:
       - name: forensics-service
         securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
-        image: docker.io/traffic/forensics-service:remediation-forensics-7d3aba0ae1b7
+        image: docker.io/traffic/forensics-service:forensics-contract4-20260818
         imagePullPolicy: Never
         ports: [{containerPort: 8086}]
         env:
@@ -752,11 +953,34 @@ spec:
         - {name: S3_ENDPOINT, value: "minio.minio.svc:9000"}
         - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: minio-forensics-service-credentials, key: accesskey}}}
         - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: minio-forensics-service-credentials, key: secretkey}}}
+        - {name: RESTORATION_ENABLED, value: "false"}
+        - {name: FORENSICS_PIPELINE_V1_ENABLED, value: "false"}
+        - {name: FORENSICS_WORKER_COMPATIBLE_READY, value: "false"}
+        - {name: FORENSICS_WORKER_ENABLED, value: "false"}
+        - name: FORENSICS_WORKER_ID
+          valueFrom: {fieldRef: {fieldPath: metadata.uid}}
+        - {name: FORENSICS_WORKER_EXECUTION_LEASE, value: "31m"}
+        - {name: FORENSICS_SOURCE_RETENTION, value: "2160h"}
+        - {name: RESTORATION_QUARANTINE_BUCKET, value: "forensics-quarantine"}
+        - {name: RESTORATION_ORPHAN_INTERVAL, value: "1m"}
+        - {name: RESTORATION_ORPHAN_GRACE_PERIOD, value: "15m"}
+        - {name: RESTORATION_ORPHAN_BATCH_SIZE, value: "100"}
         - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
         - {name: REDIS_DB, value: "1"}
         - {name: REDIS_RELIABILITY_DOMAIN, value: "session"}
+        - {name: REDIS_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: REDIS_PASSWORD}}}
         - {name: AUTH_ENABLED, value: "true"}
+        # P2 契约解释器:/v1/pcap/* 8 操作逐操作判定 required_scope
+        - {name: AUTHZ_CONTRACT_MODE, value: "enforce"}
+        # 统一令牌模型 P1:OIDC provider 接线(Keycloak 访问令牌 JWKS 回退)
+        - {name: OIDC_ENABLED, value: "true"}
+        - {name: OIDC_ISSUER_URL, value: "http://10.0.5.8:30180/realms/master"}
+        - {name: OIDC_CLIENT_ID, value: "traffic-ui"}
+        - {name: OIDC_CLIENT_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OIDC_CLIENT_SECRET}}}
+        - {name: OIDC_REDIRECT_URL, value: "http://10.0.5.8:30180/api/v1/auth/oidc/callback"}
+        # azp 客户端白名单:仅接受 traffic-ui 签发的访问令牌
+        - {name: OIDC_ALLOWED_AZP, value: "traffic-ui"}
         - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: JWT_ISSUER, value: "traffic-auth-service"}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}

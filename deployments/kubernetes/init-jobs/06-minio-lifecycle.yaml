@@ -67,6 +67,11 @@ spec:
           set -eu
           mc alias set local http://minio.minio.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
           mc mb --ignore-existing local/pcap-archive
+          mc version enable local/pcap-archive
+          # Restoration evidence is isolated from legacy PCAP-cut results. Object
+          # lock is fixed at bucket creation and cannot be delegated to runtime.
+          mc mb --ignore-existing --with-lock local/forensics-quarantine
+          mc version enable local/forensics-quarantine
           mc mb --ignore-existing local/report-artifacts
           # Flink owns checkpoint cleanup; do not attach the PCAP expiry policy.
           mc mb --ignore-existing local/flink-checkpoints
@@ -79,6 +84,10 @@ spec:
           mc ilm rule ls local/pcap-archive
           mc ilm rule ls local/report-artifacts
           mc stat local/pcap-archive
+          mc stat local/forensics-quarantine
+          mc version info local/pcap-archive
+          mc version info local/forensics-quarantine
+          mc retention info local/forensics-quarantine
           mc stat local/report-artifacts
           mc stat local/flink-checkpoints
           mc stat local/traffic-models
@@ -136,6 +145,7 @@ spec:
               set -eu
               mc alias set local http://minio.minio.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
               mc rm --incomplete --recursive --force --older-than 24h local/pcap-archive/
+              mc rm --incomplete --recursive --force --older-than 24h local/forensics-quarantine/
               mc rm --incomplete --recursive --force --older-than 24h local/report-artifacts/
             resources:
               requests:

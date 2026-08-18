@@ -1,0 +1,124 @@
+---
+# N011 consumer-first submission contract.  This Job is intentionally
+# suspended: the image digest, shared profile Secret and matching rule-manager
+# expected profile must be frozen before an operator may unsuspend it.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-behavior-model-shadow-n011
+  namespace: flink
+  labels:
+    app: flink-behavior-job
+    traffic.analysis/milestone: m08
+    traffic.analysis/rollout-mode: model-consumer-first
+  annotations:
+    traffic.analysis/entry-class: com.traffic.flink.behavior.ModelUpdateConsumerJob
+    traffic.analysis/profile-contract: contracts/mlops/model-consumer-profile.v1.json
+    traffic.analysis/activation-enabled: "false"
+    traffic.analysis/serving-outputs-enabled: "false"
+    # production-applied is updated by the release/rollout process only.
+    # Repository default is "false"; flip to "true" after live apply +
+    # reconciliation evidence, never by hand-editing this field speculatively.
+    traffic.analysis/production-applied: "false"
+    traffic.analysis/image-digest-required-before-unsuspend: "true"
+    traffic.analysis/candidate-image-config-sha256: "2a934e6dd0820ded3fb98c65c107accd79aa4a6468a86c02f58274e9f47a8c90"
+    traffic.analysis/candidate-containerd-manifest-sha256: "9c4df0b047534f25316432f26da3a84cf24101361da83aca90683110b4420bbe"
+spec:
+  suspend: true
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: flink-behavior-job
+        traffic.analysis/rollout-mode: model-consumer-first
+    spec:
+      serviceAccountName: flink
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: submit-model-shadow-consumer
+        image: traffic/flink-behavior-job:m08-model-shadow-n011-20260815-r6
+        imagePullPolicy: IfNotPresent
+        command: ["/opt/flink/bin/flink"]
+        args:
+        - run
+        - -d
+        - -m
+        - flink-jobmanager.flink.svc:8081
+        - -c
+        - com.traffic.flink.behavior.ModelUpdateConsumerJob
+        - /opt/flink/usrlib/flink-behavior-job.jar
+        - --detection.mode
+        - "off"
+        - --model.update.consumer.v1.enabled
+        - "true"
+        - --model.hot.update.enabled
+        - "false"
+        - --kafka.brokers
+        - kafka-bootstrap.middleware.svc:9092
+        - --kafka.model.update.topic
+        - model-updates
+        - --kafka.model.applied.topic
+        - model-update-applied.v1
+        - --kafka.group.id
+        - flink-behavior-job
+        - --model.runtime.contract
+        - traffic.behavior.inference.v1
+        - --model.runtime.version
+        - "1.0.0"
+        - --model.feature.schema.version
+        - "1"
+        - --model.graph.schema.version
+        - "1"
+        - --model.path
+        - /tmp/model-shadow-cache
+        - --model.cache.size
+        - "8"
+        - --checkpoint.path
+        - s3://flink-checkpoints/checkpoints/behavior-model-shadow-n011
+        - --checkpoint.interval.ms
+        - "30000"
+        - --checkpoint.timeout.ms
+        - "300000"
+        - --checkpoint.min.pause.ms
+        - "5000"
+        - --parallelism
+        - "4"
+        - --max.parallelism
+        - "128"
+        env:
+        - name: MODEL_CONSUMER_DEPLOYMENT_ID
+          valueFrom: {secretKeyRef: {name: model-shadow-consumer-profile-v1, key: deployment-id}}
+        - name: MODEL_CONSUMER_PROFILE_SHA256
+          valueFrom: {secretKeyRef: {name: model-shadow-consumer-profile-v1, key: profile-sha256}}
+        - name: MODEL_SIGNING_PUBLIC_KEY_PEM_BASE64
+          valueFrom: {secretKeyRef: {name: model-shadow-consumer-profile-v1, key: public-key-pem-base64}}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - name: KAFKA_SASL_USERNAME
+          valueFrom: {secretKeyRef: {name: kafka-flink-behavior-job-credentials, key: username}}
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom: {secretKeyRef: {name: kafka-flink-behavior-job-credentials, key: password}}
+        - {name: KAFKA_SSL_TRUSTSTORE_LOCATION, value: "/etc/kafka/tls/kafka.truststore.p12"}
+        - {name: KAFKA_SSL_TRUSTSTORE_TYPE, value: "PKCS12"}
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        resources:
+          requests: {cpu: "250m", memory: "512Mi"}
+          limits: {cpu: "1", memory: "1Gi"}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: flink-log, mountPath: /opt/flink/log}
+        - {name: tmp, mountPath: /tmp}
+      volumes:
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls, optional: false}
+      - {name: flink-log, emptyDir: {}}
+      - {name: tmp, emptyDir: {}}

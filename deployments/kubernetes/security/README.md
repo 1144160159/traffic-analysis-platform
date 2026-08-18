@@ -25,10 +25,20 @@ It models the required direction for GATE-P0-07 and GATE-P0-10:
   acceptance evidence; this profile still does not prove NetworkPolicy
   enforcement until the cluster CNI supports it.
 
+`m10-minimum-network-policies.v1.yaml` is the stricter T1-M10-N009 candidate.
+It is generated from `contracts/security/m10-minimum-network-policy.v1.json`
+and contains one namespace default-deny plus explicit ingress and egress for
+the nine application workloads. It is deliberately annotated default-off and
+must not be applied on the current Flannel-only cluster. The auth-service OIDC
+NodePort path is an unapproved, bounded exception in the contract, not a
+production authorization.
+
 Validate before applying:
 
 ```bash
 kubectl apply --dry-run=client -f deployments/kubernetes/security/00-network-policies.yaml
+python3 scripts/alignment/build_m10_minimum_network_policy.py --check
+python3 scripts/alignment/verify_m10_minimum_network_policy.py
 ALLOW_BLOCKERS=true tests/e2e/live_network_policy_enforcement_preflight.sh
 ALLOW_BLOCKERS=true tests/e2e/live_production_security_preflight.sh
 ```

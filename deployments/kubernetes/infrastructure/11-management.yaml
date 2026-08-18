@@ -30,7 +30,10 @@ spec:
       containers:
       - args:
         - server
-        - --auth-mode=server
+        # auth-mode=client requires a valid Kubernetes bearer token on every
+        # request (vs auth-mode=server which is fully anonymous). SSO upgrade
+        # path: --auth-mode=sso + --sso-client-id/secret with a Keycloak client.
+        - --auth-mode=client
         - --basehref=/argo/
         env:
         - name: ARGO_NAMESPACE
@@ -183,6 +186,27 @@ spec:
           value: standalone
         - name: PREFER_HOST_MODE
           value: hostname
+        # Nacos auth enabled: token/identity come from traffic-credentials.
+        # Rollout requires the three NACOS_AUTH_* keys present in the Secret
+        # (see configmaps/credentials-secret.yaml), otherwise Nacos will not
+        # start (fail-closed).
+        - name: NACOS_AUTH_ENABLE
+          value: "true"
+        - name: NACOS_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: NACOS_AUTH_TOKEN
+        - name: NACOS_AUTH_IDENTITY_KEY
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: NACOS_AUTH_IDENTITY_KEY
+        - name: NACOS_AUTH_IDENTITY_VALUE
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: NACOS_AUTH_IDENTITY_VALUE
         image: docker.io/nacos/nacos-server@sha256:d70b20546fe59aeb86add0754db1dbc3a3067363e18599329c5163d0d8cd9cd8
         imagePullPolicy: IfNotPresent
         name: nacos
@@ -307,6 +331,10 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
+        # Single-file ConfigMap mount (streampark-config contains only
+        # application.yml today); startup-time read only, no inotify
+        # requirement. If the ConfigMap gains more keys, switch to directory
+        # mount + entrypoint copy instead of subPath.
         - mountPath: /streampark/conf/application.yml
           name: config
           subPath: application.yml

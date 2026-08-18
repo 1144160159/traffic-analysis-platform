@@ -37,6 +37,12 @@ spec:
             secretKeyRef:
               name: traffic-credentials
               key: OPENSEARCH_ADMIN_PASSWORD
+        # HTTP transport stays plaintext and is trusted only inside the
+        # cluster: egress is restricted by 00-network-policies.yaml
+        # (middleware default-deny; only traffic-analysis/flink/gateway and
+        # same-namespace pods on :9200/9300). Do not expose this Service via
+        # NodePort. TLS cutover plan: security/opensearch-ha-v1/
+        # (statefulset-ha-security.patch.yaml + external-secrets.template.yaml).
         - name: plugins.security.ssl.http.enabled
           value: 'false'
         - name: network.host

@@ -53,7 +53,7 @@ spec:
             command:
             - /bin/sh
             - -ec
-            - test "$(psql -h 127.0.0.1 -U postgres -d traffic_platform -Atqc 'SELECT NOT pg_is_in_recovery()')" = t
+            - test "$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U postgres -d traffic_platform -Atqc 'SELECT NOT pg_is_in_recovery()')" = t
           timeoutSeconds: 3
         resources:
           limits:
@@ -154,7 +154,7 @@ spec:
             command:
             - /bin/sh
             - -ec
-            - test "$(psql -h 127.0.0.1 -U postgres -Atqc 'SELECT pg_is_in_recovery()')" = t
+            - test "$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U postgres -Atqc 'SELECT pg_is_in_recovery()')" = t
           timeoutSeconds: 3
         resources:
           limits:
