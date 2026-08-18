@@ -108,4 +108,29 @@ describe('unadapted page snapshot safety', () => {
       },
     });
   });
+
+  it('preserves governed graph continuation, budgets and redaction metadata', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({
+      data: { data: {
+        graph: { center_id: 'host:a', nodes: [], edges: [], truncated: true, truncation_reason: 'node_budget' },
+        meta: {
+          source: 'nebula_graph', node_count: 100, edge_count: 99, depth: 2, entity_type: 'all', site: 'main', time_range: '24h',
+          query_duration_ms: 4, node_limit: 500, response_node_limit: 100, edge_limit: 1000, neighbors_per_hop_limit: 50,
+          truncated: true, truncation_reason: 'node_budget', next_continuation: 'opaque-token', continuation_mode: 'replace_accumulated',
+          redacted_fields: ['edge.evidence_id'], query_fingerprint: 'fingerprint', as_of_ms: 1234,
+          cache_hit_rate: 'N/A', cache_applicable: false, data_origin: 'nebula_graph_persisted_projection', slow_query: false,
+        },
+      } },
+    } as never);
+
+    const result = await fetchEntityGraphWorkbench('host:a', {
+      timeRange: '24h', site: 'main', entityType: 'all', depth: 2, continuation: 'prior-token',
+    });
+
+    expect(get).toHaveBeenCalledWith('/v1/graph/workbench', { params: expect.objectContaining({ continuation: 'prior-token' }) });
+    expect(result.meta).toMatchObject({
+      truncated: true, truncation_reason: 'node_budget', next_continuation: 'opaque-token',
+      continuation_mode: 'replace_accumulated', redacted_fields: ['edge.evidence_id'], as_of_ms: 1234,
+    });
+  });
 });

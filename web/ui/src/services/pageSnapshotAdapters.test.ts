@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { findRouteById } from '@/routes/routeManifest';
 import { adaptKnownPageSnapshot } from '@/services/pageSnapshotAdapters';
 
@@ -1302,6 +1302,20 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.evidence.map((item) => item.label)).toContain('下载审计');
   });
 
+  it('keeps a partial forensics terminal state distinct from completed', () => {
+    const route = findRouteById('forensics');
+    expect(route).toBeTruthy();
+    const snapshot = adaptKnownPageSnapshot(
+      route!.page,
+      { data: [{ job_id: 'job-partial', status: 'partial', progress: 100, created_at: 1784100000000, updated_at: 1784100060000 }], pagination: { total: 1 } },
+      [{ data: { task_stats: { partial: 1, completed: 0 } } }],
+    );
+
+    expect(snapshot?.rows[0].状态).toBe('部分完成');
+    expect(snapshot?.visuals?.forensics?.stateCounts).toContainEqual({ label: '部分完成', value: 1, status: 'warn' });
+    expect(snapshot?.visuals?.forensics?.stateCounts).toContainEqual({ label: '完成', value: 0, status: 'info' });
+  });
+
   it('maps rule manager payload into rule lifecycle workbench rows and gates', () => {
     const route = findRouteById('rules');
     expect(route).toBeTruthy();
@@ -1650,6 +1664,8 @@ describe('pageSnapshotAdapters', () => {
   });
 
   it('maps whitelist entries into governance rows and evidence', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-21T12:00:00Z'));
     const route = findRouteById('whitelist');
     expect(route).toBeTruthy();
 
@@ -1696,6 +1712,7 @@ describe('pageSnapshotAdapters', () => {
       },
       [],
     );
+    vi.useRealTimers();
 
     expect(snapshot?.metrics.find((item) => item.label === '生效白名单')?.value).toBe('2 个');
     expect(snapshot?.metrics.find((item) => item.label === '待审批')?.value).toBe('1 个');

@@ -21,19 +21,46 @@ export type AlertDetailActionInput = {
   detail?: Record<string, unknown>;
 };
 
+export type AlertResponseExecutionReceipt = {
+  eventId: string;
+  state: 'simulated_completed' | 'blocked_external_executor' | 'completed' | 'partial' | 'failed';
+  simulated: boolean;
+  externalEffect: boolean;
+  aggregateVersion: number;
+  result: Record<string, unknown>;
+  error: string;
+  kafkaPartition: number;
+  kafkaOffset: number;
+  provider: string;
+  providerReceiptId: string;
+  effectState: 'confirmed' | 'none' | 'unknown';
+  effectIds: string[];
+  traceId: string;
+  receiptSHA256: string;
+  authorityLookup: Record<string, unknown>;
+  executedAt: string;
+};
+
 export type AlertDetailActionResult = {
   actionId: AlertDetailActionId;
   action: string;
   apiContract: string;
   auditEvent: string;
   jobId: string;
-  status: 'recorded' | 'pending_approval' | 'approved_awaiting_executor' | 'blocked_external_executor' | 'compensation_blocked_external_executor' | 'linked' | 'unlinked' | 'accepted' | 'running' | 'cancel_requested' | 'completed' | 'partial' | 'failed' | 'cancelled' | 'compensating' | 'compensated' | 'compensation_failed';
+  status: 'recorded' | 'pending_approval' | 'approved_awaiting_executor' | 'simulated_completed' | 'blocked_external_executor' | 'compensation_queued' | 'compensation_blocked_external_executor' | 'linked' | 'unlinked' | 'accepted' | 'running' | 'cancel_requested' | 'completed' | 'partial' | 'failed' | 'cancelled' | 'compensating' | 'compensated' | 'compensation_failed';
   target: string;
   mode: 'live';
   downloadUrl?: string;
   fileName?: string;
   expiresAt?: string;
+  artifactExpired?: boolean;
+  manifestVersion?: number;
+  objectFormatVersion?: number;
+  snapshotSHA256?: string;
+  artifactSHA256?: string;
   revision?: number;
+  receiptAvailable?: boolean;
+  executionReceipt?: AlertResponseExecutionReceipt;
 };
 
 export function alertDetailActionErrorCode(error: unknown): string {
@@ -52,6 +79,49 @@ const reportStatuses: AlertDetailActionResult['status'][] = ['accepted', 'runnin
 function normalizeReportStatus(value: unknown): AlertDetailActionResult['status'] {
   const status = String(value || 'accepted') as AlertDetailActionResult['status'];
   return reportStatuses.includes(status) ? status : 'accepted';
+}
+
+const responseStatuses: AlertDetailActionResult['status'][] = [
+  'pending_approval', 'approved_awaiting_executor', 'simulated_completed',
+  'blocked_external_executor', 'compensation_queued', 'compensation_blocked_external_executor',
+  'completed', 'partial', 'failed', 'cancelled', 'compensated', 'compensation_failed',
+];
+
+function normalizeResponseStatus(value: unknown): AlertDetailActionResult['status'] {
+  const status = String(value || 'recorded') as AlertDetailActionResult['status'];
+  return responseStatuses.includes(status) ? status : 'recorded';
+}
+
+function recordValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function normalizeAlertResponseReceipt(value: unknown): AlertResponseExecutionReceipt | undefined {
+  const receipt = recordValue(value);
+  if (!String(receipt.event_id || '').trim()) return undefined;
+  const state = String(receipt.state || 'failed') as AlertResponseExecutionReceipt['state'];
+  const effectState = String(receipt.effect_state || 'unknown') as AlertResponseExecutionReceipt['effectState'];
+  return {
+    eventId: String(receipt.event_id || ''),
+    state: ['simulated_completed', 'blocked_external_executor', 'completed', 'partial', 'failed'].includes(state) ? state : 'failed',
+    simulated: Boolean(receipt.simulated),
+    externalEffect: Boolean(receipt.external_effect),
+    aggregateVersion: Number(receipt.aggregate_version || 0),
+    result: recordValue(receipt.result),
+    error: String(receipt.error || ''),
+    kafkaPartition: Number(receipt.kafka_partition || 0),
+    kafkaOffset: Number(receipt.kafka_offset || 0),
+    provider: String(receipt.provider || ''),
+    providerReceiptId: String(receipt.provider_receipt_id || ''),
+    effectState: ['confirmed', 'none', 'unknown'].includes(effectState) ? effectState : 'unknown',
+    effectIds: Array.isArray(receipt.effect_ids) ? receipt.effect_ids.map(String) : [],
+    traceId: String(receipt.trace_id || ''),
+    receiptSHA256: String(receipt.receipt_sha256 || ''),
+    authorityLookup: recordValue(receipt.authority_lookup),
+    executedAt: String(receipt.executed_at || ''),
+  };
 }
 
 export async function submitAlertDetailAction({
@@ -141,6 +211,12 @@ export async function submitAlertDetailAction({
       mode: 'live',
       downloadUrl: String(payload?.download_url || ''),
       fileName: `alert-${alertId}.${format}`,
+      expiresAt: String(payload?.artifact_expires_at || ''),
+      artifactExpired: Boolean(payload?.artifact_expired),
+      manifestVersion: Number(payload?.manifest?.manifest_version || 0),
+      objectFormatVersion: Number(payload?.manifest?.object_format_version || 0),
+      snapshotSHA256: String(payload?.manifest?.snapshot_sha256 || payload?.snapshot_sha256 || ''),
+      artifactSHA256: String(payload?.manifest?.artifact_sha256 || payload?.artifact_sha256 || ''),
       revision: Number(payload?.revision || 0),
     };
   }
@@ -331,7 +407,35 @@ export async function fetchAlertReportJob(alertId: string, jobId: string): Promi
     mode: 'live',
     downloadUrl: String(payload?.download_url || ''),
     fileName: `alert-${alertId}.${format}`,
+    expiresAt: String(payload?.artifact_expires_at || ''),
+    artifactExpired: Boolean(payload?.artifact_expired),
+    manifestVersion: Number(payload?.manifest?.manifest_version || 0),
+    objectFormatVersion: Number(payload?.manifest?.object_format_version || 0),
+    snapshotSHA256: String(payload?.manifest?.snapshot_sha256 || payload?.snapshot_sha256 || ''),
+    artifactSHA256: String(payload?.manifest?.artifact_sha256 || payload?.artifact_sha256 || ''),
     revision: Number(payload?.revision || 0),
+  };
+}
+
+export async function fetchAlertResponseAction(alertId: string, jobId: string): Promise<AlertDetailActionResult> {
+  const endpoint = `/v1/alerts/${encodeURIComponent(alertId)}/response-actions/${encodeURIComponent(jobId)}`;
+  const response = await api.get(endpoint);
+  const payload = response.data?.data ?? response.data;
+  const executionReceipt = normalizeAlertResponseReceipt(payload?.execution_receipt);
+  return {
+    actionId: 'alert-response-request',
+    action: String(payload?.action || 'Response recommendation'),
+    apiContract: endpoint,
+    auditEvent: executionReceipt
+      ? `ALERT_RESPONSE_EXECUTION_${executionReceipt.state.toUpperCase()}`
+      : 'ALERT_RESPONSE_ACTION_REQUESTED',
+    jobId: String(payload?.job_id || jobId),
+    status: normalizeResponseStatus(payload?.status),
+    target: String(payload?.target || alertId),
+    mode: 'live',
+    revision: Number(payload?.revision || 0),
+    receiptAvailable: Boolean(payload?.receipt_available && executionReceipt),
+    executionReceipt,
   };
 }
 

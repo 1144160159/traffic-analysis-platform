@@ -1,0 +1,174 @@
+/* T1-M09-N022: route-scoped styles for the active alert response journey. */
+.taf-alert-detail-page {
+  --alert-detail-action-surface: rgba(3, 17, 28, 0.5);
+  --alert-detail-action-border: rgba(56, 151, 201, 0.2);
+  --alert-detail-action-radius: 4px;
+  --alert-detail-action-risk: #ffb3b3;
+  --alert-detail-action-risk-border: rgba(255, 77, 79, 0.5);
+  --alert-detail-action-warn: #ffd88a;
+  --alert-detail-action-warn-border: rgba(250, 173, 20, 0.45);
+  --alert-detail-action-info: #9edcff;
+  --alert-detail-action-info-border: rgba(24, 168, 255, 0.34);
+}
+
+.taf-alert-detail-response {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.taf-alert-detail-response button {
+  min-height: 58px;
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  padding: 6px;
+  color: var(--ui-text-secondary);
+  background: var(--alert-detail-action-surface);
+  border: 1px solid var(--alert-detail-action-border);
+  border-radius: var(--alert-detail-action-radius);
+  cursor: pointer;
+}
+
+.taf-alert-detail-response button.is-risk {
+  color: var(--alert-detail-action-risk);
+  border-color: var(--alert-detail-action-risk-border);
+}
+
+.taf-alert-detail-response button.is-warn {
+  color: var(--alert-detail-action-warn);
+  border-color: var(--alert-detail-action-warn-border);
+}
+
+.taf-alert-detail-response button.is-info {
+  color: var(--alert-detail-action-info);
+  border-color: var(--alert-detail-action-info-border);
+}
+
+.taf-alert-detail-response span {
+  color: var(--ui-text-primary);
+  font-size: 12px;
+}
+
+.taf-alert-detail-response em {
+  font-size: 11px;
+  font-style: normal;
+}
+
+.taf-alert-detail-response p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-size: 12px;
+}
+
+.taf-alert-detail-feedback {
+  display: grid;
+  gap: 5px;
+}
+
+.taf-alert-detail-feedback > label {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+
+.taf-alert-detail-feedback > label > span {
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+}
+
+.taf-alert-detail-feedback .ant-radio-wrapper {
+  margin-inline-end: 0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.taf-alert-detail-feedback .ant-radio-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.taf-alert-detail-feedback-inline {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 8px;
+  align-items: center;
+}
+
+.taf-alert-detail-feedback-check .ant-checkbox-wrapper,
+.taf-alert-detail-feedback-inline .ant-checkbox-wrapper {
+  min-width: 0;
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.taf-alert-detail-feedback-comment {
+  align-items: start;
+}
+
+.taf-alert-detail-feedback textarea.ant-input {
+  height: 54px;
+  min-height: 54px;
+  resize: none;
+}
+
+.taf-alert-detail-feedback-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.taf-alert-detail-feedback-pending-hint {
+  align-self: center;
+  color: var(--color-warning, #f5b942);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.taf-alert-detail-feedback-actions .ant-btn {
+  min-width: 128px;
+}
+
+.taf-alert-detail-page.is-visual-target .taf-alert-detail-response button {
+  min-height: 60px;
+}
+
+.taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback {
+  gap: 9px;
+}
+
+.taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback .ant-radio-group {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+.taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback .ant-radio-wrapper {
+  margin-inline-end: 0;
+  white-space: nowrap;
+}
+
+.taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback textarea.ant-input {
+  min-height: 62px;
+}
+
+@media (max-width: 1440px) {
+  .taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback-panel {
+    min-height: 286px;
+  }
+
+  .taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback {
+    gap: 5px;
+  }
+
+  .taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback textarea.ant-input {
+    height: 50px;
+    min-height: 50px;
+  }
+}

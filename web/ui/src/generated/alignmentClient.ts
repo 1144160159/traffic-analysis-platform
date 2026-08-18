@@ -68,6 +68,13 @@ export async function activateDataQualityBaseline(request: AlignmentRequest = {}
   return response.data;
 }
 
+export async function adjudicateAlertFeedback(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/{id}/feedback', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function applyAssetGovernanceAction(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/assets/governance/work-orders/{work_order_id}/actions', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -105,6 +112,13 @@ export async function cancelAssetDiscoveryJob(request: AlignmentRequest = {}) {
 
 export async function cancelCampaignSOARJob(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/campaigns/{id}/soar-jobs/{job_id}/cancel', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function cancelPcapForensicsJob(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/pcap/jobs/{id}/cancel', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -292,6 +306,13 @@ export async function createDataQualityRuleDraft(request: AlignmentRequest = {})
   return response.data;
 }
 
+export async function createPcapForensicsJob(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/pcap/jobs', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function createTopicActionJob(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/topics/{topic}/actions', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -308,6 +329,13 @@ export async function createWhitelistEntry(request: AlignmentRequest = {}) {
 
 export async function decideAlertResponseAction(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/{id}/response-actions/{job_id}/approval', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function decideBehaviorBaselineApprovalV1(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/baselines/{id}/approvals/{approval_id}/decision', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -355,8 +383,29 @@ export async function downloadCampaignReport(request: AlignmentRequest = {}) {
   return response.data;
 }
 
+export async function downloadPcapForensicsResult(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/pcap/download/{key}', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function evaluateBehaviorBaselineV1(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/baselines/{id}/evaluations', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function exploreBoundedGraph(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/graph/explore', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getActiveModelVersion(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/models/{id}/versions/active', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -378,6 +427,13 @@ export async function getAlertBatchAssignmentCompensation(request: AlignmentRequ
 
 export async function getAlertEvidence(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/{id}/evidence', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getAlertFeedbackHistory(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/{id}/feedback', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -455,6 +511,20 @@ export async function getAssetLegacyCompatible(request: AlignmentRequest = {}) {
 
 export async function getAssetTopologyLegacyCompatible(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/assets/{id}/topology', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getAttackChainSnapshot(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/attack-chains/{id}', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getAttackChainSnapshotPhases(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/attack-chains/{id}/phases', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -544,6 +614,76 @@ export async function getDataQualityControlPlaneSnapshot(request: AlignmentReque
   return response.data;
 }
 
+export async function getEncryptedExfiltrationAnalytics(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/encrypted-traffic/exfiltration', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getEncryptedTrafficEvidence(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/encrypted-traffic/evidence', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getEncryptedTrafficSnapshot(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/encrypted-traffic/snapshot', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getEncryptedTrafficStats(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/encrypted-traffic/stats', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getEncryptedTunnelAnalytics(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/encrypted-traffic/tunnels', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getGovernedGraphWorkbench(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/graph/workbench', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getGovernedGraphWorkbenchPath(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/graph/workbench/path', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getGovernedModelRollbackReceiptV2(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/models/{id}/rollbacks/{job_id}', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getGraphProjectionStatus(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/graph/projections/status', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function getPcapForensicsJob(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/pcap/jobs/{id}', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function getPlaybookExecution(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/playbooks/executions/{execution_id}', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -583,6 +723,13 @@ export async function ingestAuditLogBatch(request: AlignmentRequest = {}) {
   const path = resolvePath('/internal/v1/audit/batches', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function linkAlertEvidence(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/{id}/evidence-links/{evidence_id}', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'PUT', url: path, params: request.query, data: request.body, headers });
   return response.data;
 }
 
@@ -649,6 +796,27 @@ export async function listAssetsV2(request: AlignmentRequest = {}) {
   return response.data;
 }
 
+export async function listAttackChainSnapshotEvidence(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/attack-chains/{id}/evidence', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function listAttackChainSnapshotPaths(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/attack-chains/{id}/paths', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function listAttackChains(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/attack-chains', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function listCampaignMembers(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/campaigns/{id}/members', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -677,6 +845,27 @@ export async function listDataQualityRules(request: AlignmentRequest = {}) {
   return response.data;
 }
 
+export async function listEncryptedTrafficJA3(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/encrypted-traffic/ja3', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function listEncryptedTrafficSessions(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/encrypted-traffic/sessions', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function listPcapForensicsJobs(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/pcap/jobs', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function listWhitelistEntries(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/whitelist', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -686,6 +875,13 @@ export async function listWhitelistEntries(request: AlignmentRequest = {}) {
 
 export async function mergeAssetDiscoveryCandidate(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/assets/discovery/runs/{run_id}/candidates/{candidate_id}/merge', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function presignPcapForensicsResult(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/pcap/presign', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -705,8 +901,43 @@ export async function requestAlertResponseCompensation(request: AlignmentRequest
   return response.data;
 }
 
+export async function requestBehaviorBaselineApprovalV1(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/baselines/{id}/versions/{version}/approvals', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function requestBehaviorBaselineBuildV1(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/baselines/{id}/builds', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function requestBehaviorBaselineRollbackV1(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/baselines/{id}/rollbacks', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function requestGovernedModelRollbackV2(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/models/{id}/versions/{version}/rollback', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function requestPlaybookExecution(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/playbooks/{name}/execute', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function retryPcapForensicsJob(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/pcap/jobs/{id}/retry', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
   return response.data;
@@ -733,6 +964,20 @@ export async function submitCampaignCommand(request: AlignmentRequest = {}) {
   return response.data;
 }
 
+export async function submitEncryptedTrafficEgressAction(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/encrypted-traffic/egress-actions', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function submitEncryptedTrafficEvidenceAction(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/encrypted-traffic/evidence-actions', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function transitionDataQualityRepair(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/data-quality/repairs/{repair_id}/transitions', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
@@ -751,6 +996,13 @@ export async function transitionWhitelistEntry(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/whitelist/{id}', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'PATCH', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function unlinkAlertEvidence(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/alerts/{id}/evidence-links/{evidence_id}', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'DELETE', url: path, params: request.query, data: request.body, headers });
   return response.data;
 }
 
@@ -793,5 +1045,12 @@ export async function upsertDataQualityDataset(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/data-quality/datasets/{dataset_id}', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
   const response = await api.request({ method: 'PUT', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
+export async function verifyPcapForensicsResult(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/pcap/verify', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
   return response.data;
 }

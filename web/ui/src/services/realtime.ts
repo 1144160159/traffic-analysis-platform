@@ -47,6 +47,8 @@ export const normalizeWsUrl = (wsUrl: string, baseHref = window.location.href) =
 
 export const buildRealtimeUrl = ({ wsUrl, token, tenantId, baseHref }: RealtimeUrlOptions) => {
   const url = normalizeWsUrl(wsUrl, baseHref);
+  // 已知约束:后端 /ws/events 当前只支持 query 令牌鉴权(进入网关访问日志)。
+  // 后端支持 Sec-WebSocket-Protocol/一次性 ticket 后应迁移,禁止在此追加明文日志。
   if (token) url.searchParams.set('token', token);
   if (tenantId) url.searchParams.set('tenant_id', tenantId);
   return url.toString();

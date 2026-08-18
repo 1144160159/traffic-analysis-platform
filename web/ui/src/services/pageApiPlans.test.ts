@@ -332,12 +332,16 @@ describe("pageApiPlans", () => {
     expect(isCoveredByApisix("/v1/playbooks/block-scanner")).toBe(true);
   });
 
-  it("binds forensics cancel to the PCAP task state-machine API", () => {
+  it("binds forensics cancel, retry and versioned evidence access to the PCAP task state-machine API", () => {
     const endpoints = getPlanEndpoints(getPageApiPlan("forensics"));
     const cancelAction = getPageActionPlan("forensics", "forensics-cancel-job");
+    const retryAction = getPageActionPlan("forensics", "forensics-retry-job");
+    const verifyAction = getPageActionPlan("forensics", "forensics-verify-pcap");
+    const presignAction = getPageActionPlan("forensics", "forensics-presign-pcap");
 
     expect(endpoints).toContain("/v1/pcap/jobs");
     expect(endpoints).toContain("/v1/pcap/jobs/{id}/cancel");
+    expect(endpoints).toContain("/v1/pcap/jobs/{id}/retry");
     expect(cancelAction?.method).toBe("POST");
     expect(cancelAction?.requiredScopes).toContain("pcap:write");
     expect(cancelAction?.auditEvent).toBe("PCAP_CANCEL");
@@ -347,7 +351,17 @@ describe("pageApiPlans", () => {
     expect(cancelAction?.guardrails).toContain(
       "successful cancels must be persisted in tasks and audit_logs",
     );
+    expect(retryAction?.guardrails).toContain(
+      "retry preserves the original frozen request and task identity",
+    );
+    expect(verifyAction?.guardrails).toContain(
+      "versioned results must be verified against the exact manifest bucket, key and object version",
+    );
+    expect(presignAction?.guardrails).toContain(
+      "the signed URL must remain bound to the exact manifest object version",
+    );
     expect(isCoveredByApisix("/v1/pcap/jobs/pcap-job-001/cancel")).toBe(true);
+    expect(isCoveredByApisix("/v1/pcap/jobs/pcap-job-001/retry")).toBe(true);
   });
 
   it("binds asset discovery to SNMP/LLDP credential and run APIs", () => {
@@ -437,20 +451,27 @@ describe("pageApiPlans", () => {
     ).toBe(true);
   });
 
-  it("binds rules enable and disable to the rule state-machine APIs", () => {
+  it("binds rule state changes and rollback to authoritative APIs", () => {
     const endpoints = getPlanEndpoints(getPageApiPlan("rules"));
     const enableAction = getPageActionPlan("rules", "rule-enable");
     const disableAction = getPageActionPlan("rules", "rule-disable");
+    const rollbackAction = getPageActionPlan("rules", "rule-rollback");
 
     expect(endpoints).toContain("/v1/rules");
     expect(endpoints).toContain("/v1/rules/{id}/enable");
     expect(endpoints).toContain("/v1/rules/{id}/disable");
+    expect(endpoints).toContain("/v1/rules/{id}/rollback");
+    expect(endpoints).toContain("/v1/rules/{id}/operations/{event_id}");
     expect(enableAction?.method).toBe("POST");
     expect(disableAction?.method).toBe("POST");
     expect(enableAction?.requiredScopes).toContain("rule:enable");
     expect(disableAction?.requiredScopes).toContain("rule:enable");
     expect(enableAction?.auditEvent).toBe("RULE_ENABLE");
     expect(disableAction?.auditEvent).toBe("RULE_DISABLE");
+    expect(rollbackAction?.auditEvent).toBe("RULE_ROLLBACK");
+    expect(rollbackAction?.guardrails).toContain(
+      "the CAS update, rollback snapshot and update outbox event must commit in one PostgreSQL transaction",
+    );
     expect(enableAction?.guardrails).toContain(
       "successful enables must write rule_outbox and audit_logs",
     );
@@ -459,6 +480,8 @@ describe("pageApiPlans", () => {
     );
     expect(isCoveredByApisix("/v1/rules/rule-001/enable")).toBe(true);
     expect(isCoveredByApisix("/v1/rules/rule-001/disable")).toBe(true);
+    expect(isCoveredByApisix("/v1/rules/rule-001/rollback")).toBe(true);
+    expect(isCoveredByApisix("/v1/rules/rule-001/operations/event-001")).toBe(true);
   });
 
   it("binds deployment actions to the deployment state-machine APIs", () => {

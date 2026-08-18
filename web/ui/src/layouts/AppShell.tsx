@@ -161,11 +161,11 @@ export function AppShell({ children, currentUser }: AppShellProps) {
             />
           </div>
           <TopMetric label="时间" value={visualBreakdownMode ? '2026-06-20 03:45:00' : dayjs().format('YYYY-MM-DD HH:mm:ss')} />
-          <TopMetric label="风险态势" value="高风险 87/100" tone="danger" icon={<SafetyOutlined />} />
-          <TopMetric label="告警总数" value="128 / 24h" tone="warn" icon={<BellOutlined />} />
-          <TopMetric label="关键告警" value="9 / 24h" tone="danger" icon={<RadarChartOutlined />} />
-          <TopMetric label="采集健康度" value="98.6% 在线探针 24/25" tone="ok" />
-          <TopMetric label="数据质量" value="99.1% 合格率" tone="ok" />
+          <TopMetric label="风险态势" value={visualBreakdownMode ? '高风险 87/100' : '—'} tone={visualBreakdownMode ? 'danger' : undefined} icon={<SafetyOutlined />} />
+          <TopMetric label="告警总数" value={visualBreakdownMode ? '128 / 24h' : '—'} tone={visualBreakdownMode ? 'warn' : undefined} icon={<BellOutlined />} />
+          <TopMetric label="关键告警" value={visualBreakdownMode ? '9 / 24h' : '—'} tone={visualBreakdownMode ? 'danger' : undefined} icon={<RadarChartOutlined />} />
+          <TopMetric label="采集健康度" value={visualBreakdownMode ? '98.6% 在线探针 24/25' : '—'} tone={visualBreakdownMode ? 'ok' : undefined} />
+          <TopMetric label="数据质量" value={visualBreakdownMode ? '99.1% 合格率' : '—'} tone={visualBreakdownMode ? 'ok' : undefined} />
         </div>
         <div className="taf-topbar__actions">
           {quickEntries.map((entry) => (
@@ -267,13 +267,13 @@ export function AppShell({ children, currentUser }: AppShellProps) {
       <main className="taf-main">{children}</main>
 
       <footer className="taf-bottombar">
-        <BottomMetric label="数据延迟" value="1.23 s" icon={<CheckCircleOutlined />} />
-        <BottomMetric label="系统运行" value="23 天 14 小时" icon={<ThunderboltOutlined />} />
-        <BottomMetric label="告警处理SLA" value="98.2%" icon={<SafetyOutlined />} />
-        <BottomMetric label="数据质量合格率" value="99.1%" icon={<RadarChartOutlined />} />
-        <BottomMetric label="存储使用" value="68.7 / 120 TB (57%)" icon={<HddOutlined />} />
-        <BottomMetric label="带宽使用" value="42.7 / 100 Gbps (43%)" icon={<GlobalOutlined />} />
-        <BottomMetric label="日志吞吐" value="12.6 K EPS" icon={<DotChartOutlined />} />
+        <BottomMetric label="数据延迟" value={visualBreakdownMode ? '1.23 s' : '—'} icon={<CheckCircleOutlined />} />
+        <BottomMetric label="系统运行" value={visualBreakdownMode ? '23 天 14 小时' : '—'} icon={<ThunderboltOutlined />} />
+        <BottomMetric label="告警处理SLA" value={visualBreakdownMode ? '98.2%' : '—'} icon={<SafetyOutlined />} />
+        <BottomMetric label="数据质量合格率" value={visualBreakdownMode ? '99.1%' : '—'} icon={<RadarChartOutlined />} />
+        <BottomMetric label="存储使用" value={visualBreakdownMode ? '68.7 / 120 TB (57%)' : '—'} icon={<HddOutlined />} />
+        <BottomMetric label="带宽使用" value={visualBreakdownMode ? '42.7 / 100 Gbps (43%)' : '—'} icon={<GlobalOutlined />} />
+        <BottomMetric label="日志吞吐" value={visualBreakdownMode ? '12.6 K EPS' : '—'} icon={<DotChartOutlined />} />
         {!visualBreakdownMode && appConfig.enableRealtime && (
           <span
             className={`taf-bottombar__realtime taf-tone-${
@@ -290,7 +290,7 @@ export function AppShell({ children, currentUser }: AppShellProps) {
           </span>
         )}
         <span className="taf-bottombar__icons">
-          <Badge count={9}>
+          <Badge count={visualBreakdownMode ? 9 : 0}>
             <BellOutlined />
           </Badge>
           <SettingOutlined />

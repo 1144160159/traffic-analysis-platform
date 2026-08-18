@@ -7,6 +7,8 @@ import {
   compensateAlertReport,
   downloadAlertEvidenceFile,
   fetchAlertCampaignLinks,
+  fetchAlertReportJob,
+  fetchAlertResponseAction,
   submitAlertDetailAction,
   submitAlertReportWithSnapshotRetry,
 } from './alertDetailActionApi';
@@ -71,6 +73,87 @@ describe('submitAlertDetailAction', () => {
       },
     );
     expect(submitAlertTriageActionMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps an expired report queryable without exposing a download URL', async () => {
+    apiGetMock.mockResolvedValueOnce({
+      data: {
+        data: {
+          job_id: 'alert-report-expired-1',
+          alert_id: 'AL-20260620-000123',
+          format: 'pdf',
+          status: 'completed',
+          revision: 3,
+          artifact_expired: true,
+          artifact_expires_at: '2026-08-16T00:00:00Z',
+          manifest: {
+            manifest_version: 1,
+            object_format_version: 1,
+            status: 'expired',
+            snapshot_sha256: 'sha256:frozen',
+            artifact_sha256: 'sha256:artifact',
+          },
+        },
+      },
+    });
+
+    const result = await fetchAlertReportJob('AL-20260620-000123', 'alert-report-expired-1');
+
+    expect(result.status).toBe('completed');
+    expect(result.artifactExpired).toBe(true);
+    expect(result.downloadUrl).toBe('');
+    expect(result.expiresAt).toBe('2026-08-16T00:00:00Z');
+    expect(result.manifestVersion).toBe(1);
+    expect(result.objectFormatVersion).toBe(1);
+    expect(result.snapshotSHA256).toBe('sha256:frozen');
+    expect(result.artifactSHA256).toBe('sha256:artifact');
+  });
+
+  it('loads the authoritative provider receipt for an alert response action', async () => {
+    apiGetMock.mockResolvedValueOnce({
+      data: {
+        data: {
+          job_id: 'response-job-1',
+          action: 'block_ip',
+          target: '185.22.14.9',
+          status: 'completed',
+          revision: 3,
+          receipt_available: true,
+          execution_receipt: {
+            event_id: '11111111-1111-4111-8111-111111111111',
+            state: 'completed',
+            simulated: false,
+            external_effect: true,
+            aggregate_version: 3,
+            result: { policy_id: 'rule-42' },
+            error: '',
+            kafka_partition: 2,
+            kafka_offset: 19,
+            provider: 'edge-fw',
+            provider_receipt_id: 'receipt-9001',
+            effect_state: 'confirmed',
+            effect_ids: ['rule-42'],
+            trace_id: 'trace-1',
+            receipt_sha256: 'a'.repeat(64),
+            authority_lookup: { approval_status: 'approved' },
+            executed_at: '2026-08-16T08:00:00Z',
+          },
+        },
+      },
+    });
+
+    const result = await fetchAlertResponseAction('AL-20260620-000123', 'response-job-1');
+
+    expect(apiGetMock).toHaveBeenCalledWith('/v1/alerts/AL-20260620-000123/response-actions/response-job-1');
+    expect(result.status).toBe('completed');
+    expect(result.receiptAvailable).toBe(true);
+    expect(result.executionReceipt).toMatchObject({
+      provider: 'edge-fw',
+      providerReceiptId: 'receipt-9001',
+      externalEffect: true,
+      effectState: 'confirmed',
+      effectIds: ['rule-42'],
+    });
   });
 
   it('refreshes the authoritative snapshot and retries only a bounded snapshot conflict', async () => {

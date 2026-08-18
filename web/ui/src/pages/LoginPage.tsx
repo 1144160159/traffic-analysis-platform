@@ -88,6 +88,7 @@ export function LoginPage() {
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('password');
   const [submitting, setSubmitting] = useState(false);
   const [ssoSubmitting, setSsoSubmitting] = useState(false);
+  const [rememberLogin, setRememberLogin] = useState(true);
   const visualShieldMode =
     import.meta.env.DEV &&
     typeof window !== 'undefined' &&
@@ -135,7 +136,7 @@ export function LoginPage() {
         captcha_id: captcha?.captchaId,
         captcha_code: values.captchaCode,
       });
-      setAuthTokens(result.token, result.refreshToken);
+      setAuthTokens(result.token, result.refreshToken, rememberLogin);
       queryClient.setQueryData(['current-user'], result.user);
       message.success(`欢迎回来，${result.username}`);
       navigate('/dashboard', { replace: true });
@@ -289,11 +290,11 @@ export function LoginPage() {
                 </div>
               )}
               <div className="taf-login__options">
-                <Checkbox defaultChecked>记住登录</Checkbox>
+                <Checkbox checked={rememberLogin} onChange={(e) => setRememberLogin(e.target.checked)}>记住登录</Checkbox>
                 <nav aria-label="登录帮助">
-                  <a>忘记密码</a>
-                  <a>帮助中心</a>
-                  <a>隐私声明</a>
+                  <a href="#" onClick={(e) => e.preventDefault()}>忘记密码</a>
+                  <a href="#" onClick={(e) => e.preventDefault()}>帮助中心</a>
+                  <a href="#" onClick={(e) => e.preventDefault()}>隐私声明</a>
                 </nav>
               </div>
               <Button className="taf-login__submit" type="primary" htmlType="submit" loading={submitting} block>

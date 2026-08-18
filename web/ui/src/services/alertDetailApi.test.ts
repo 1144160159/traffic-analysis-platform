@@ -187,6 +187,8 @@ describe('alertDetailApi', () => {
       reason_code: 'FALSE_ALARM',
       comment: 'business scanner',
       add_to_whitelist: true,
+      adjudication_state: 'ADJUDICATED',
+      expected_label_revision: 0,
     });
     expect(
       buildAlertFeedbackRequest({
@@ -199,6 +201,8 @@ describe('alertDetailApi', () => {
       reason_code: '',
       comment: '',
       add_to_whitelist: false,
+      adjudication_state: 'ADJUDICATED',
+      expected_label_revision: 0,
     });
   });
 
@@ -214,6 +218,11 @@ describe('alertDetailApi', () => {
       {
         data: {
           feedback_id: 'FB-1',
+          event_id: 'EV-2',
+          prediction_id: 'PR-1',
+          label_revision: 2,
+          adjudication_state: 'ADJUDICATED',
+          previous_event_id: 'EV-1',
           alert_id: 'AL-20260629-0001',
           label: 'FP',
           reason_code: 'FALSE_ALARM',
@@ -240,6 +249,10 @@ describe('alertDetailApi', () => {
       status: 'draft',
       sourceAlertId: 'AL-20260629-0001',
       url: '/whitelist?source_alert=AL-20260629-0001&draft_id=WL-1',
+    });
+    expect(result).toMatchObject({
+      eventId: 'EV-2', predictionId: 'PR-1', labelRevision: 2,
+      adjudicationState: 'ADJUDICATED', previousEventId: 'EV-1',
     });
   });
 });

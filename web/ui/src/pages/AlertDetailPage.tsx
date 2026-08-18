@@ -33,6 +33,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { RiskScoreRingChart } from '@/components/charts';
+import { PageStateBoundary } from '@/components/PageStateBoundary';
+import { resolvePageState } from '@/components/pageState';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import { ALERT_DETAIL_EVIDENCE_PAGE_SIZE, evidenceFocusRoute, evidenceFocusView, evidenceViewRoute } from '@/pages/alertDetailLogic';
@@ -51,6 +53,7 @@ import {
   downloadAlertEvidenceFile,
   fetchAlertCampaignLinks,
   fetchAlertReportJob,
+  fetchAlertResponseAction,
   submitAlertDetailAction,
   submitAlertReportWithSnapshotRetry,
   type AlertCampaignLink,
@@ -124,7 +127,9 @@ const alertActionStatusLabels: Record<AlertDetailActionResult['status'], string>
   recorded: '已记录',
   pending_approval: '待审批',
   approved_awaiting_executor: '已审批，等待执行器',
+  simulated_completed: 'Dry-run 已完成',
   blocked_external_executor: '外部执行器未配置',
+  compensation_queued: '补偿已排队',
   compensation_blocked_external_executor: '补偿执行器未配置',
   linked: '已关联',
   unlinked: '已解除关联',
@@ -343,7 +348,13 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
   const evidenceLogsFocusMode = visualPageId === 'alert-detail-evidence-logs' || evidenceView === 'logs' || evidenceView === 'log';
   const evidenceGraphPathFocusMode =
     visualPageId === 'alert-detail-evidence-graph-path' || evidenceView === 'graph-path' || evidenceView === 'graph';
-  const alertId = params.alertId ?? 'AL-20260620-000123';
+  const alertId = params.alertId ?? '';
+  useEffect(() => {
+    // 非法路由不得伪装成正常告警：缺少 alertId 时回退到告警列表。
+    if (!params.alertId) {
+      navigate('/alerts', { replace: true });
+    }
+  }, [params.alertId, navigate]);
   const [targetStatus, setTargetStatus] = useState<AlertStatusCode>();
   const [statusReason, setStatusReason] = useState('');
   const [feedbackResult, setFeedbackResult] = useState<FeedbackChoice>('tp');
@@ -359,8 +370,9 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['alert-detail', alertId],
     queryFn: () => fetchAlertDetailSnapshot(alertId),
+    enabled: Boolean(alertId),
     refetchInterval: visualBreakdownMode ? false : 30_000,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
   });
   const statusMutation = useMutation({
     mutationFn: () => {
@@ -405,6 +417,8 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
         reasonCode: feedbackResult === 'fp' ? feedbackReason : undefined,
         comment: feedbackComment,
         addToWhitelist: feedbackResult === 'fp' && feedbackAddToWhitelist,
+        adjudicationState: 'ADJUDICATED',
+        expectedLabelRevision: snapshot.feedback.labelRevision,
       }),
     onSuccess: async (result) => {
       const draftUrl = result.whitelistDraft?.url ?? '';
@@ -475,7 +489,16 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
       return status && ['completed', 'partial', 'failed', 'cancelled', 'compensated', 'compensation_failed'].includes(status) ? false : 1_500;
     },
   });
-  const activeBusinessActionResult = reportJobQuery.data ?? businessActionResult;
+  const responseActionQuery = useQuery({
+    queryKey: ['alert-response-action', alertId, businessActionResult?.jobId],
+    queryFn: () => fetchAlertResponseAction(alertId, businessActionResult?.jobId ?? ''),
+    enabled: businessActionResult?.actionId === 'alert-response-request' && Boolean(businessActionResult.jobId),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status && ['simulated_completed', 'blocked_external_executor', 'compensation_blocked_external_executor', 'completed', 'partial', 'failed', 'cancelled', 'compensated', 'compensation_failed'].includes(status) ? false : 1_500;
+    },
+  });
+  const activeBusinessActionResult = responseActionQuery.data ?? reportJobQuery.data ?? businessActionResult;
   const reportCancelMutation = useMutation({
     mutationFn: () => {
       if (!activeBusinessActionResult?.jobId || !activeBusinessActionResult.revision) {
@@ -601,12 +624,22 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
     viewEvidence,
     evidenceDownloadMutation.isPending,
   );
+  const detailMissingSections = [
+    data?.evidenceApiError ? 'alert.evidence' : '',
+    data?.feedbackApiError ? 'alert.feedback' : '',
+  ].filter(Boolean);
+  const detailPageState = resolvePageState({
+    isLoading,
+    data,
+    error: isError ? error : undefined,
+    partial: detailMissingSections.length > 0,
+  });
 
   return (
     <div className="taf-page taf-alert-detail-page is-visual-target" data-route-id={route.id}>
       <header className="taf-alert-detail-titlebar">
         <div className="taf-alert-detail-titlebar__context">
-          <h1>告警详情</h1>
+          <h1 id="alert-detail-page-title">告警详情</h1>
         </div>
         <Space size={visualBreakdownMode ? 12 : 8} wrap>
           <Button
@@ -638,16 +671,17 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
         </Space>
       </header>
 
-      {isError && (
-        <Alert
-          type="error"
-          showIcon
-          message="真实 API 数据加载失败"
-          description={error instanceof Error ? error.message : '请检查 /v1/alerts/{id}、/v1/alerts/{id}/evidence、APISIX 路由或 alert-service。'}
-          action={<Button size="small" danger onClick={() => void refetch()}>重试</Button>}
-        />
-      )}
-
+      <PageStateBoundary
+        state={detailPageState}
+        title={detailPageState === 'unavailable' ? '真实 API 数据加载失败' : undefined}
+        description={detailPageState === 'unavailable'
+          ? error instanceof Error ? error.message : '请检查 /v1/alerts/{id}、/v1/alerts/{id}/evidence、APISIX 路由或 alert-service。'
+          : undefined}
+        missingSections={detailMissingSections}
+        onRetry={() => void refetch()}
+        retrying={isLoading}
+        labelledBy="alert-detail-page-title"
+      >
       <div className="taf-alert-detail-grid">
         <main className="taf-alert-detail-main">
           <WorkPanel title="研判摘要" className="taf-alert-detail-summary-panel" extra={<Button type="link" size="small" data-action-id="alert-label-update" onClick={() => openBusinessAction('alert-label-update', '编辑标签')}>编辑标签</Button>}>
@@ -844,10 +878,10 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
 
           <WorkPanel title="影响范围" extra={<Link to="/assets">查看资产图谱</Link>}>
             <div className="taf-alert-detail-impact">
-              <div><strong>影响主机</strong><span>2</span></div>
-              <div><strong>关联账户</strong><span>1</span></div>
-              <div><strong>业务系统</strong><span>1</span></div>
-              <div><strong>脆弱资产</strong><span>0</span></div>
+              <div><strong>影响主机</strong><span>{snapshot.assets.length > 0 ? snapshot.assets.length : '暂不可用'}</span></div>
+              <div><strong>关联账户</strong><span>暂不可用</span></div>
+              <div><strong>业务系统</strong><span>暂不可用</span></div>
+              <div><strong>脆弱资产</strong><span>暂不可用</span></div>
               <div className="taf-alert-detail-path">
                 <span className="taf-alert-detail-path-node is-risk">
                   <span className="taf-alert-detail-path-icon"><StopOutlined /></span>
@@ -858,13 +892,13 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
                 <span className="taf-alert-detail-path-node">
                   <span className="taf-alert-detail-path-icon"><DatabaseOutlined /></span>
                   <strong>核心区</strong>
-                  <em>{sourceAsset?.business ?? '办公区'}</em>
+                  <em>{sourceAsset?.business ?? '暂不可用'}</em>
                 </span>
                 <i />
                 <span className="taf-alert-detail-path-node is-ok">
                   <span className="taf-alert-detail-path-icon"><SafetyCertificateOutlined /></span>
                   <strong>目的端</strong>
-                  <em>{destinationAsset?.ip ?? '185.22.14.9'}</em>
+                  <em>{destinationAsset?.ip ?? '暂不可用'}</em>
                 </span>
               </div>
             </div>
@@ -969,6 +1003,12 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
                   {snapshot.feedback.sampleReturn}
                 </Checkbox>
               </label>
+              {snapshot.feedback.labelRevision > 0 && (
+                <div className="taf-alert-detail-feedback-revision">
+                  当前仲裁版本 v{snapshot.feedback.labelRevision} · {snapshot.feedback.adjudicationState || 'ADJUDICATED'}
+                  {snapshot.feedback.eventId ? ` · event ${snapshot.feedback.eventId}` : ''}
+                </div>
+              )}
               <label className="taf-alert-detail-feedback-comment">
                 <span>备注</span>
                 <Input.TextArea value={feedbackComment} placeholder="请输入分析备注..." rows={2} onChange={(event) => setFeedbackComment(event.target.value)} />
@@ -997,6 +1037,7 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
 
         </aside>
       </div>
+      </PageStateBoundary>
       <Modal
         className="taf-alert-detail-action-drawer"
         title={businessAction ? `${businessAction.label}确认` : '告警业务操作'}
@@ -1078,6 +1119,44 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
               showIcon
               message={`任务 ${activeBusinessActionResult.jobId}：${alertActionStatusLabels[activeBusinessActionResult.status]}`}
               description={`${activeBusinessActionResult.auditEvent}；${activeBusinessActionResult.apiContract}`}
+            />
+          )}
+          {activeBusinessActionResult?.actionId === 'alert-report-export' && activeBusinessActionResult.manifestVersion ? (
+            <dl className="detail-list compact-list">
+              <dt>Manifest 版本</dt><dd>v{activeBusinessActionResult.manifestVersion}</dd>
+              <dt>对象格式版本</dt><dd>v{activeBusinessActionResult.objectFormatVersion || 1}</dd>
+              <dt>快照摘要</dt><dd>{activeBusinessActionResult.snapshotSHA256 || '等待冻结快照'}</dd>
+              <dt>对象摘要</dt><dd>{activeBusinessActionResult.artifactSHA256 || '等待异步生成'}</dd>
+              <dt>下载权限到期</dt><dd>{activeBusinessActionResult.expiresAt || '对象尚未完成'}</dd>
+            </dl>
+          ) : null}
+          {activeBusinessActionResult?.actionId === 'alert-response-request' ? (
+            activeBusinessActionResult.executionReceipt ? (
+              <dl className="detail-list compact-list" data-testid="alert-response-provider-receipt">
+                <dt>执行模式</dt><dd>{activeBusinessActionResult.executionReceipt.simulated ? 'Dry-run 模拟' : '外部执行'}</dd>
+                <dt>Provider</dt><dd>{activeBusinessActionResult.executionReceipt.provider}</dd>
+                <dt>Provider 回执</dt><dd>{activeBusinessActionResult.executionReceipt.providerReceiptId}</dd>
+                <dt>外部效果</dt><dd>{activeBusinessActionResult.executionReceipt.effectState}</dd>
+                <dt>效果标识</dt><dd>{activeBusinessActionResult.executionReceipt.effectIds.join('，') || '无外部效果'}</dd>
+                <dt>Kafka 水位</dt><dd>{activeBusinessActionResult.executionReceipt.kafkaPartition}:{activeBusinessActionResult.executionReceipt.kafkaOffset}</dd>
+                <dt>回执摘要</dt><dd>{activeBusinessActionResult.executionReceipt.receiptSHA256}</dd>
+                <dt>执行时间</dt><dd>{activeBusinessActionResult.executionReceipt.executedAt}</dd>
+              </dl>
+            ) : (
+              <Alert
+                type="info"
+                showIcon
+                message="等待执行回执"
+                description="任务已持久化；在 provider 或 dry-run consumer 写入权威回执前，不显示执行成功。"
+              />
+            )
+          ) : null}
+          {activeBusinessActionResult?.artifactExpired && (
+            <Alert
+              type="warning"
+              showIcon
+              message="报告对象下载权限已过期"
+              description="任务、冻结快照、水位和 manifest 仍可查询；服务端不会返回已过期对象的下载地址。"
             />
           )}
           {activeBusinessActionResult?.status === 'completed' && activeBusinessActionResult.downloadUrl && (
@@ -1168,12 +1247,16 @@ function EvidenceTabsHeader({
 function AlertEvidenceFilesFocusView({ snapshot, isLoading }: { snapshot: AlertDetailSnapshot; isLoading: boolean }) {
   const counts = evidenceBucketCounts(snapshot.evidenceRows);
   const fileRow = snapshot.evidenceRows.find((row) => isFileEvidence(row)) ?? snapshot.evidenceRows[snapshot.evidenceRows.length - 1];
-  const filename = fileRow?.文件记录 || 'hash-1a2b3c4d5bef79a8h9i0j.txt';
-  const hashValue = fileRow?.hashValue || 'SHA256: 1a2b3c4d5bef79a8h9i0j...';
-  const signedUrl = fileRow?.signedUrl || `https://evidence.campus.local/signed/${snapshot.alertId}`;
-  const generatedAt = compactDateTime(fileRow?.生成时间) || '06-20 03:43:04';
-  const tags = fileRow?.fileTags?.length ? fileRow.fileTags : ['报告附件', '导出脚本', 'hash 校验', '下载审计 sec_analyst 03:45'];
+  const filename = fileRow?.文件记录 || '暂不可用';
+  const hashValue = fileRow?.hashValue || 'SHA256: 暂不可用';
+  const signedUrl = fileRow?.signedUrl || '';
+  const generatedAt = compactDateTime(fileRow?.生成时间) || '暂不可用';
+  const tags = fileRow?.fileTags?.length ? fileRow.fileTags : ['暂不可用'];
   const copySignedUrl = async () => {
+    if (!signedUrl) {
+      message.warning('签名 URL 暂不可用');
+      return;
+    }
     try {
       if (!navigator.clipboard?.writeText) throw new Error('clipboard api unavailable');
       await navigator.clipboard.writeText(signedUrl);
@@ -1243,7 +1326,7 @@ function AlertEvidenceFilesFocusView({ snapshot, isLoading }: { snapshot: AlertD
               onClick={copySignedUrl}
             >
               <b>签名 URL 预览</b>
-              <span>{signedUrl}</span>
+              <span>{signedUrl || '暂不可用'}</span>
               <CopyOutlined />
             </button>
           </div>
@@ -1414,7 +1497,7 @@ function AlertEvidenceLogsFocusView({ snapshot, isLoading }: { snapshot: AlertDe
   const counts = evidenceBucketCounts(snapshot.evidenceRows);
   const logRow = snapshot.evidenceRows.find((row) => isLogEvidence(row)) ?? snapshot.evidenceRows.find((row) => row.logEvidence);
   const log = logRow?.logEvidence ?? unavailableLogEvidence();
-  const generatedAt = compactDateTime(log.generatedAt || logRow?.生成时间) || '06-20 03:43:05';
+  const generatedAt = compactDateTime(log.generatedAt || logRow?.生成时间) || '暂不可用';
   const hitFieldText = log.hitFields.join('\n');
 
   return (
@@ -1791,7 +1874,10 @@ function emptySnapshot(alertId: string): AlertDetailSnapshot {
     timeline: [],
     evidenceRows: [],
     responseActions: [],
-    feedback: { defaultResult: 'pending', reason: '', whitelistDraft: '', sampleReturn: '' },
+    feedback: {
+      defaultResult: 'pending', reason: '', whitelistDraft: '', sampleReturn: '',
+      labelRevision: 0, adjudicationState: '', eventId: '', predictionId: '',
+    },
     evidence: [],
     evidenceApiError: '',
     feedbackApiError: '',

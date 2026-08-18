@@ -5,7 +5,7 @@ import { findRouteById, navGroups } from '@/routes/routeManifest';
 describe('route access', () => {
   it('allows wildcard principals to see every route', () => {
     const groups = visibleNavGroups(navGroups, { username: 'admin', permissions: ['*'] });
-    expect(groups.flatMap((group) => group.children)).toHaveLength(24);
+    expect(groups.flatMap((group) => group.children)).toHaveLength(30);
   });
 
   it('keeps viewer users out of admin and deployment routes', () => {

@@ -35,6 +35,11 @@ export type WhitelistEntry = {
   rule_effect_status?: 'pending' | 'applied' | 'failed';
   rule_desired_state?: 'effective' | 'revoked';
   rule_revision?: string;
+  rule_ack_event_id?: string;
+  rule_acknowledged_at?: string;
+  rule_last_error?: string;
+  rule_kafka_partition?: number;
+  rule_kafka_offset?: number;
 };
 
 type Envelope<T> = { success: boolean; data: T };
@@ -85,16 +90,16 @@ export async function transitionWhitelistEntry({
 }): Promise<WhitelistEntry> {
   const common = { expected_revision: entry.version };
   const body = action === 'submit'
-    ? { ...common, status: 'pending', approval_status: 'pending', reason: reason || '提交独立审批' }
+    ? { ...common, status: 'pending', approval_status: 'pending', command_reason: reason || '提交独立审批' }
     : action === 'approve'
-      ? { ...common, status: 'active', approval_status: 'approved', reason: reason || entry.reason }
+      ? { ...common, status: 'active', approval_status: 'approved', command_reason: reason || '独立审批通过' }
       : action === 'reject'
-        ? { ...common, status: 'disabled', approval_status: 'rejected', reason: reason || '审批驳回' }
+        ? { ...common, status: 'disabled', approval_status: 'rejected', command_reason: reason || '审批驳回' }
         : action === 'extend'
-          ? { ...common, expires_at: expiresAt, reason: reason || entry.reason }
+          ? { ...common, expires_at: expiresAt, command_reason: reason || '调整到期时间并安排复审' }
           : action === 'assign'
             ? { ...common, owner_role: ownerRole }
-            : { ...common, status: 'disabled', reason: reason || entry.reason };
+            : { ...common, status: 'disabled', command_reason: reason || '停用并保留历史证据' };
   const response = await api.patch<Envelope<WhitelistEntry>>(
     `/v1/whitelist/${encodeURIComponent(entry.id)}`,
     body,

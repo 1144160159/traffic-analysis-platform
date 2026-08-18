@@ -17,7 +17,7 @@ import { Alert, Button, DatePicker, Drawer, Input, Modal, Radio, Select, Space, 
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { Key, ReactNode } from 'react';
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RiskScoreRingChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
@@ -38,6 +38,7 @@ import type { NavRoute } from '@/routes/routeManifest';
 import { fetchPageSnapshot } from '@/services/api';
 import { batchUpdateAlertStatus } from '@/services/alertBatchApi';
 import { submitAlertFeedback } from '@/services/alertDetailApi';
+import { closeAlertSearchCursor, fetchAlertSearchCursorSnapshot } from '@/services/alertSearchCursorApi';
 import { submitAlertTriageAction } from '@/services/alertTriageApi';
 import { fetchAlertSavedViews } from '@/services/alertTriageApi';
 import { batchAssignAlerts, createDurableAlertBatchAssignment, exportAlertQueueCsv, waitForDurableAlertBatchAssignment } from '@/services/alertQueueActionsApi';
@@ -77,27 +78,99 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
   const batchAssignmentAttemptRef = useRef('');
   const [alertTableScrollY, setAlertTableScrollY] = useState<number>();
   const visualBreakdownMode = import.meta.env.DEV && isVisualBreakdownMode();
+  const cursorSearchEnabled = appConfig.enableAlertSearchCursorV1 && !appConfig.useMock;
+  const [cursorByPage, setCursorByPage] = useState<Record<number, string>>({ 1: '' });
+  const [searchEpoch, setSearchEpoch] = useState(0);
+  const latestCursorRef = useRef('');
+  const furthestCursorPageRef = useRef(0);
+  const pageCursor = cursorByPage[listPage];
   const { data, error, isError, isLoading, refetch } = useQuery({
-    queryKey: ['page-snapshot', route.id, sourceEntity, listPage, pageSize, appliedFilters, appliedTimeWindow],
-    queryFn: () => fetchPageSnapshot(route.id, {
-      sourceEntity,
-      page: listPage,
-      pageSize,
-      alertFilters: {
-        status: appliedFilters.status === '全部状态' ? undefined : appliedFilters.status,
-		srcIp: appliedFilters.source.trim() || undefined,
-        dstIp: appliedFilters.destination.trim() || undefined,
-        assetIp: appliedFilters.asset === '全部资产' ? undefined : appliedFilters.asset.trim(),
-        ruleVersion: appliedFilters.rule === '全部规则' ? undefined : appliedFilters.rule,
-        modelVersion: appliedFilters.model === '全部模型' ? undefined : appliedFilters.model,
-        attackPhase: appliedFilters.phase === '全部阶段' ? undefined : appliedFilters.phase,
-        minScore: appliedFilters.confidence === '>=0.9' ? 0.9 : appliedFilters.confidence === '>=0.7' ? 0.7 : undefined,
-        startTime: appliedTimeWindow[0],
-        endTime: appliedTimeWindow[1],
-      },
-    }),
-    refetchInterval: visualBreakdownMode ? false : 15_000,
+    queryKey: ['page-snapshot', route.id, sourceEntity, listPage, pageSize, appliedFilters, appliedTimeWindow, cursorSearchEnabled, pageCursor, searchEpoch],
+    queryFn: () => cursorSearchEnabled
+      ? fetchAlertSearchCursorSnapshot({
+          page: route.page,
+          size: pageSize,
+          cursor: pageCursor,
+          filters: {
+            status: appliedFilters.status === '全部状态' ? undefined : appliedFilters.status,
+            srcIp: appliedFilters.source.trim() || undefined,
+            dstIp: appliedFilters.destination.trim() || undefined,
+            assetIp: appliedFilters.asset === '全部资产' ? undefined : appliedFilters.asset.trim(),
+            ruleVersion: appliedFilters.rule === '全部规则' ? undefined : appliedFilters.rule,
+            modelVersion: appliedFilters.model === '全部模型' ? undefined : appliedFilters.model,
+            attackPhase: appliedFilters.phase === '全部阶段' ? undefined : appliedFilters.phase,
+            minScore: appliedFilters.confidence === '>=0.9' ? 0.9 : appliedFilters.confidence === '>=0.7' ? 0.7 : undefined,
+            startTime: appliedTimeWindow[0],
+            endTime: appliedTimeWindow[1],
+          },
+        })
+      : fetchPageSnapshot(route.id, {
+          sourceEntity,
+          page: listPage,
+          pageSize,
+          alertFilters: {
+            status: appliedFilters.status === '全部状态' ? undefined : appliedFilters.status,
+            srcIp: appliedFilters.source.trim() || undefined,
+            dstIp: appliedFilters.destination.trim() || undefined,
+            assetIp: appliedFilters.asset === '全部资产' ? undefined : appliedFilters.asset.trim(),
+            ruleVersion: appliedFilters.rule === '全部规则' ? undefined : appliedFilters.rule,
+            modelVersion: appliedFilters.model === '全部模型' ? undefined : appliedFilters.model,
+            attackPhase: appliedFilters.phase === '全部阶段' ? undefined : appliedFilters.phase,
+            minScore: appliedFilters.confidence === '>=0.9' ? 0.9 : appliedFilters.confidence === '>=0.7' ? 0.7 : undefined,
+            startTime: appliedTimeWindow[0],
+            endTime: appliedTimeWindow[1],
+          },
+        }),
+    enabled: !cursorSearchEnabled || pageCursor !== undefined,
+    refetchInterval: cursorSearchEnabled || visualBreakdownMode ? false : 15_000,
+    staleTime: cursorSearchEnabled ? Number.POSITIVE_INFINITY : 0,
+    refetchOnWindowFocus: !cursorSearchEnabled,
   });
+
+  const abandonCursorTraversal = (notifyFailure = true) => {
+    const cursor = latestCursorRef.current;
+    latestCursorRef.current = '';
+    furthestCursorPageRef.current = 0;
+    setCursorByPage({ 1: '' });
+    if (cursor) {
+      void closeAlertSearchCursor(cursor).catch((closeError: unknown) => {
+        if (notifyFailure) message.warning(closeError instanceof Error ? closeError.message : 'PIT 关闭失败，将等待短 TTL 自动释放');
+      });
+    }
+  };
+  const restartSearchTraversal = () => {
+    if (cursorSearchEnabled) abandonCursorTraversal();
+    setListPage(1);
+    setSearchEpoch((current) => current + 1);
+  };
+  const refreshSearch = async () => {
+    if (cursorSearchEnabled) {
+      restartSearchTraversal();
+      return;
+    }
+    await refetch();
+  };
+
+  useEffect(() => {
+    if (!cursorSearchEnabled || !data?.cursorSearch || listPage < furthestCursorPageRef.current) return;
+    furthestCursorPageRef.current = listPage;
+    if (data.cursorSearch.hasMore) {
+      latestCursorRef.current = data.cursorSearch.nextCursor;
+      setCursorByPage((current) => current[listPage + 1] === data.cursorSearch?.nextCursor
+        ? current
+        : { ...current, [listPage + 1]: data.cursorSearch?.nextCursor ?? '' });
+    } else {
+      latestCursorRef.current = '';
+    }
+  }, [cursorSearchEnabled, data, listPage]);
+
+  useEffect(() => () => {
+    if (cursorSearchEnabled) {
+      const cursor = latestCursorRef.current;
+      latestCursorRef.current = '';
+      if (cursor) void closeAlertSearchCursor(cursor).catch(() => undefined);
+    }
+  }, [cursorSearchEnabled]);
   const { data: savedViews = [], refetch: refetchSavedViews } = useQuery({ queryKey: ['alert-saved-views'], queryFn: fetchAlertSavedViews });
 
   const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
@@ -173,7 +246,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
         message.success(`批量状态变更已提交：${alertStatusLabel(effectiveBatchTargetStatus ?? '')}`);
         setBatchDialog(undefined);
       }
-      await refetch();
+      await refreshSearch();
     },
     onError: (mutationError) => {
       message.error(mutationError instanceof Error ? mutationError.message : '批量状态变更提交失败');
@@ -217,7 +290,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
       }
       batchAssignmentAttemptRef.current = '';
       setBatchDialog(undefined);
-      await refetch();
+      await refreshSearch();
     },
     onError: (mutationError) => message.error(mutationError instanceof Error ? mutationError.message : '批量指派失败'),
   });
@@ -281,7 +354,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
     },
     onSuccess: async () => {
       message.success('告警反馈已持久化并进入反馈闭环');
-      await refetch();
+      await refreshSearch();
     },
     onError: (mutationError) => message.error(mutationError instanceof Error ? mutationError.message : '告警反馈提交失败'),
   });
@@ -314,10 +387,10 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
     setAction(createAlertAction(control, resolvedTarget, selectedAlertID));
   }
   const applyFilters = () => {
-    setListPage(1);
     setAppliedFilters(filters);
     setAppliedTimeWindow(timeWindow);
     setFilterNotice(`${filters.asset} / ${filters.status} / ${filters.confidence}`);
+    restartSearchTraversal();
   };
   const resetFilters = () => {
     const nextFilters = { source: '', asset: sourceEntity || '全部资产', destination: '', rule: '全部规则', model: '全部模型', phase: '全部阶段', status: '全部状态', confidence: '全部' };
@@ -327,7 +400,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
     setTimeWindow(nextWindow);
     setAppliedTimeWindow(nextWindow);
     setFilterNotice('当前队列');
-    setListPage(1);
+    restartSearchTraversal();
   };
   const loadSavedView = (name: string) => {
     setView(name);
@@ -345,7 +418,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
         setAppliedTimeWindow(restoredWindow);
       }
       setFilterNotice(`已加载视图：${name}`);
-      setListPage(1);
+      restartSearchTraversal();
     }
   };
   const applyClusterFilter = (label: string) => {
@@ -374,7 +447,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
     setFilters(next);
     setAppliedFilters(next);
     setFilterNotice(`关联簇：${label}`);
-    setListPage(1);
+    restartSearchTraversal();
     message.success(`已按“${label}”收敛告警队列`);
   };
 
@@ -391,7 +464,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
               <Select size="small" value={view} options={Array.from(new Set(['自定义视图', ...savedViews.map((saved) => saved.name)])).map((value) => ({ value }))} onChange={loadSavedView} />
               <Button size="small" onClick={() => openAction(ALERT_SAVE_VIEW_CONTROL, view)}>保存视图</Button>
               <Tooltip title="刷新告警队列">
-                <Button icon={<ReloadOutlined />} size="small" onClick={() => void refetch()} />
+                <Button icon={<ReloadOutlined />} size="small" onClick={() => void refreshSearch()} />
               </Tooltip>
             </Space>
           </header>
@@ -403,10 +476,19 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
               message="真实 API 数据加载失败"
               description={error instanceof Error ? error.message : '请检查 APISIX 路由、后端服务、鉴权或网络连通性。'}
               action={
-                <Button size="small" danger onClick={() => void refetch()}>
+                <Button size="small" danger onClick={() => void refreshSearch()}>
                   重试
                 </Button>
               }
+            />
+          )}
+
+          {cursorSearchEnabled && data?.cursorSearch && data.snapshot && (
+            <Alert
+              type={data.snapshot.partial ? 'warning' : 'info'}
+              showIcon
+              message={`PIT 一致性分页 · ${data.cursorSearch.totalRelation === 'gte' ? '命中数为下界' : '命中数精确'}`}
+              description={`快照 ${data.snapshot.snapshotId}；水位 ${data.snapshot.asOf}；索引目标 ${data.cursorSearch.targetSHA256.slice(0, 12)}…。OpenSearch 或权威事实不可用时页面会直接失败，不回退伪数据。`}
             />
           )}
 
@@ -507,10 +589,22 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
                   pageSize,
                   total: totalRows,
                   size: 'small',
+                  simple: cursorSearchEnabled,
                   showSizeChanger: true,
-                  showQuickJumper: true,
+                  showQuickJumper: !cursorSearchEnabled,
                   pageSizeOptions: ['10', '20', '50'],
-                  onChange: (nextPage, nextPageSize) => { setListPage(nextPage); setPageSize(nextPageSize); },
+                  onChange: (nextPage, nextPageSize) => {
+                    if (nextPageSize !== pageSize) {
+                      setPageSize(nextPageSize);
+                      restartSearchTraversal();
+                      return;
+                    }
+                    if (cursorSearchEnabled && cursorByPage[nextPage] === undefined) {
+                      message.info('PIT 只允许按已签发游标逐页遍历');
+                      return;
+                    }
+                    setListPage(nextPage);
+                  },
                 }}
                 rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
                 onRow={(record) => ({
@@ -863,7 +957,7 @@ const alertColumnWidth = (column: string) => {
   return widths[column] ?? 96;
 };
 
-const rowKey = (record: SnapshotRow) => String(record['告警 ID'] ?? record['事件 ID'] ?? JSON.stringify(record));
+const rowKey = (record: SnapshotRow) => String(record['告警 ID'] ?? record['事件 ID'] ?? record['__alertId'] ?? record['生成时间'] ?? 'unknown');
 
 const alertIdFromRow = (row: SnapshotRow | undefined) => text(row, '__alertId', text(row, '告警 ID', ''));
 

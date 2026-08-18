@@ -39,6 +39,7 @@ import {
   type AttackChainDetail,
   type AttackChainEvidenceType,
   type AttackChainPhase,
+  type AttackChainSnapshotPath,
   type AttackChainRecommendationCategory,
 } from '@/services/attackChainApi';
 import { submitCampaignAction, type CampaignActionId } from '@/services/campaignActionApi';
@@ -255,10 +256,10 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
     return pathQuery.data?.items.map((item) => ({
       阶段: attackPhaseLabel(item.phase),
       实体: item.entity,
-      告警: item.alert,
+      告警: item.uncertainty ? `${item.alert} / 不确定性：${item.uncertainty}` : item.alert,
       证据: evidenceDisplayName(item.evidence_id),
       处置建议: item.action,
-      状态: item.status === 'confirmed' ? '已确认' : item.status,
+      状态: `${item.status === 'confirmed' ? '已确认' : item.status}${item.provenance?.length ? ` / ${item.provenance.join('+')}` : ''}`,
     })) ?? [];
   }, [pathPage, pathQuery.data?.items, rows, visualBreakdownMode]);
   const responseRows = useMemo(
@@ -375,6 +376,20 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
             message="真实 API 数据加载失败"
             description={activeError instanceof Error ? activeError.message : '请检查 /v1/attack-chains、ClickHouse campaigns 或后端服务。'}
             action={<Button size="small" danger onClick={() => void refreshAttackChain()}>重试</Button>}
+          />
+        )}
+
+        {selectedChain?.snapshot_id && (
+          <AttackChainSnapshotTruth
+            chain={selectedChain}
+            onInspectEvidence={(evidenceId) => {
+              const params = new URLSearchParams({
+                evidence_id: evidenceId,
+                attack_chain_id: selectedChain.chain_id,
+                snapshot_id: selectedChain.snapshot_id ?? '',
+              });
+              navigate(`/forensics?${params.toString()}`);
+            }}
           />
         )}
 
@@ -518,6 +533,104 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
         />
       </Drawer>
     </div>
+  );
+}
+
+function AttackChainSnapshotTruth({
+  chain,
+  onInspectEvidence,
+}: {
+  chain: AttackChainDetail;
+  onInspectEvidence: (evidenceId: string) => void;
+}) {
+  const paths: AttackChainSnapshotPath[] = [
+    ...(chain.candidate_path ? [chain.candidate_path] : []),
+    ...(chain.alternative_paths ?? []),
+  ];
+  const analystConclusions = paths.flatMap((path) => path.edges.flatMap((edge) => edge.evidence
+    .filter((evidence) => evidence.kind === 'analyst_conclusion')
+    .map((evidence) => ({ pathId: path.path_id, edgeId: edge.edge_id, evidence }))));
+  const provenanceCounts = paths.flatMap((path) => path.edges).reduce<Record<string, number>>((counts, edge) => ({
+    ...counts,
+    [edge.provenance]: (counts[edge.provenance] ?? 0) + 1,
+  }), {});
+  const watermarks = chain.contract_meta?.source_watermarks ?? chain.graph_snapshot?.source_watermarks ?? {};
+  return (
+    <section className="taf-attack-snapshot-truth" aria-label="M07 攻击链快照事实边界">
+      <header>
+        <div>
+          <h2>M07 快照事实边界</h2>
+          <p>{chain.snapshot_id} / revision {chain.snapshot_version} / as-of {chain.as_of ?? chain.contract_meta?.as_of ?? '未提供'}</p>
+        </div>
+        <Space wrap>
+          <StatusTag value={chain.partial ? 'partial' : 'complete'} />
+          <StatusTag value={chain.truncated ? 'truncated' : 'bounded'} />
+          <span>observed {provenanceCounts.observed ?? 0}</span>
+          <span>derived {provenanceCounts.derived ?? 0}</span>
+          <span>analyst {provenanceCounts.analyst ?? 0}</span>
+        </Space>
+      </header>
+      <div className="taf-attack-snapshot-endpoints">
+        <span><b>source</b><strong>{chain.source?.canonical_id ?? '未提供'}</strong><small>{chain.source?.entity_type} / {chain.source?.vertex_id}</small></span>
+        <ArrowRightOutlined aria-hidden="true" />
+        <span><b>target</b><strong>{chain.target?.canonical_id ?? '未提供'}</strong><small>{chain.target?.entity_type} / {chain.target?.vertex_id}</small></span>
+        <span><b>graph snapshot</b><strong>{chain.graph_snapshot?.snapshot_id ?? '未提供'}</strong><small>sha256 {chain.graph_snapshot?.snapshot_sha256 ?? '未提供'}</small></span>
+      </div>
+      {(chain.partial || chain.truncated) && (
+        <Alert
+          type="warning"
+          showIcon
+          message={chain.truncated ? '路径结果已按预算截断，页面不会补线' : '快照包含缺失事实，页面保持 partial'}
+          description={[
+            ...(chain.partial_reasons ?? []),
+            ...(chain.truncation_reason ? [`truncation:${chain.truncation_reason}`] : []),
+            ...(chain.continuation_boundary ? [`continuation:${chain.continuation_boundary}`] : []),
+          ].join('；') || '服务端未提供更多原因'}
+        />
+      )}
+      <div className="taf-attack-snapshot-paths">
+        {paths.map((path) => (
+          <article key={path.path_id} className={`is-${path.kind}`}>
+            <header>
+              <div><b>{path.kind === 'candidate' ? '候选路径' : '替代路径'}</b><strong>{path.path_id}</strong></div>
+              <div><span>置信度 {Math.round(path.confidence * 100)}%</span><span>{path.uncertainty || '无额外不确定性说明'}</span></div>
+            </header>
+            {path.contradicts_path_ids.length > 0 && <p>冲突路径：{path.contradicts_path_ids.join('、')}</p>}
+            {path.edges.map((edge) => (
+              <div key={edge.edge_id} className="taf-attack-snapshot-edge">
+                <div>
+                  <StatusTag value={edge.provenance} />
+                  <b>{edge.stage}</b>
+                  <strong>{edge.source.canonical_id} → {edge.target.canonical_id}</strong>
+                  <span>{edge.relation_type}</span>
+                  <em>置信度 {Math.round(edge.confidence * 100)}%</em>
+                  <small>{edge.uncertainty || '无额外不确定性说明'}</small>
+                </div>
+                <div className="taf-attack-snapshot-evidence-links">
+                  {edge.evidence.map((evidence) => (
+                    <button
+                      key={evidence.evidence_id}
+                      type="button"
+                      disabled={!evidence.available}
+                      title={`${evidence.kind} / ${evidence.sha256}`}
+                      onClick={() => onInspectEvidence(evidence.evidence_id)}
+                    >
+                      {evidence.kind} · {evidence.evidence_id} {evidence.available ? '下钻' : '不可用'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </article>
+        ))}
+      </div>
+      <footer>
+        <div><b>溯源结论</b>{analystConclusions.length
+          ? analystConclusions.map(({ pathId, edgeId, evidence }) => <button key={`${pathId}-${edgeId}-${evidence.evidence_id}`} type="button" onClick={() => onInspectEvidence(evidence.evidence_id)}>{pathId} / {edgeId} / {evidence.evidence_id}</button>)
+          : <span>当前快照没有 analyst_conclusion；不得从 derived 边推断人工结论。</span>}</div>
+        <div><b>来源水位</b>{Object.entries(watermarks).map(([source, watermark]) => <span key={source}>{source}: {watermark}</span>)}</div>
+      </footer>
+    </section>
   );
 }
 

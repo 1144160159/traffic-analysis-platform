@@ -149,6 +149,10 @@ export type AlertDetailSnapshot = {
     reason: string;
     whitelistDraft: string;
     sampleReturn: string;
+    labelRevision: number;
+    adjudicationState: string;
+    eventId: string;
+    predictionId: string;
   };
   evidence: AlertDetailMetric[];
   evidenceApiError?: string;
@@ -187,6 +191,8 @@ export type AlertFeedbackInput = {
   reasonCode?: string;
   comment?: string;
   addToWhitelist?: boolean;
+  adjudicationState?: 'PROPOSED' | 'ADJUDICATED' | 'RETRACTED';
+  expectedLabelRevision?: number;
 };
 
 export type AlertFeedbackResult = {
@@ -196,6 +202,11 @@ export type AlertFeedbackResult = {
   reasonCode: string;
   comment: string;
   addToWhitelist: boolean;
+  eventId?: string;
+  predictionId?: string;
+  labelRevision?: number;
+  adjudicationState?: string;
+  previousEventId?: string;
   whitelistDraft?: {
     id: string;
     type: string;
@@ -226,6 +237,8 @@ export const buildAlertFeedbackRequest = (input: AlertFeedbackInput) => ({
   reason_code: input.label === 'FP' ? (input.reasonCode ?? '').trim() : '',
   comment: (input.comment ?? '').trim(),
   add_to_whitelist: input.label === 'FP' && Boolean(input.addToWhitelist),
+  adjudication_state: input.adjudicationState ?? 'ADJUDICATED',
+  expected_label_revision: Math.max(0, Math.trunc(input.expectedLabelRevision ?? 0)),
 });
 
 type AlertFeedbackRequestPayload = ReturnType<typeof buildAlertFeedbackRequest>;
@@ -374,6 +387,7 @@ export function normalizeAlertFeedbackResult(
   request: AlertFeedbackRequestPayload,
 ): AlertFeedbackResult {
   const payload = unwrapPayload(payloadData);
+  const payloadRecord = isRecord(payload) ? payload : {};
   const draft = valueAt(payload, ['whitelist_draft', 'whitelistDraft']);
   const draftRecord = isRecord(draft) ? draft : {};
   const draftId = textFrom(draftRecord, ['id', 'whitelist_id', 'whitelistId']);
@@ -384,6 +398,11 @@ export function normalizeAlertFeedbackResult(
     reasonCode: textFrom(payload, ['reason_code', 'reasonCode']) || request.reason_code,
     comment: textFrom(payload, ['comment']) || request.comment,
     addToWhitelist: booleanFrom(valueAt(payload, ['add_to_whitelist', 'addToWhitelist'])) || request.add_to_whitelist,
+    eventId: textFrom(payload, ['event_id', 'eventId']) || undefined,
+    predictionId: textFrom(payload, ['prediction_id', 'predictionId']) || undefined,
+    labelRevision: optionalNumberAt(payloadRecord, ['label_revision', 'labelRevision']),
+    adjudicationState: textFrom(payload, ['adjudication_state', 'adjudicationState']) || undefined,
+    previousEventId: textFrom(payload, ['previous_event_id', 'previousEventId']) || undefined,
     whitelistDraft: draftId
       ? {
           id: draftId,
@@ -409,6 +428,9 @@ export function normalizeAlertDetailSnapshot(
   const alert = unwrapPayload(alertPayload);
   const evidenceRows = extractList(evidencePayload, ['evidences', 'evidence', 'items', 'data']);
   const feedback = unwrapPayload(feedbackPayload);
+  const feedbackHistory = extractList(feedback, ['feedbacks']);
+  const feedbackHead = feedbackHistory.find((item) => optionalNumberAt(item, ['label_revision', 'labelRevision']) !== undefined) ?? feedbackHistory[0];
+  const feedbackAuthority = isRecord(feedbackHead) ? feedbackHead : isRecord(feedback) ? feedback : {};
   const alertRecord = isRecord(alert) ? alert : {};
   const evidenceList = evidenceRows;
   const score = normalizeScore(optionalNumberAt(alertRecord, ['score', 'risk_score', 'riskScore']));
@@ -426,7 +448,7 @@ export function normalizeAlertDetailSnapshot(
   const firstSeen = formatDateTime(textFrom(alertRecord, ['first_seen', 'firstSeen'])) || '暂不可用';
   const evidenceAvailable = !isSecondaryError(evidencePayload) && evidenceRows.length > 0;
   const feedbackAvailable = !isSecondaryError(feedbackPayload) && Object.keys(isRecord(feedback) ? feedback : {}).length > 0;
-  const feedbackResult = textFrom(feedback, ['result', 'verdict', 'classification']);
+  const feedbackResult = textFrom(feedbackAuthority, ['label', 'result', 'verdict', 'classification']);
   const tags = stringListFrom(valueAt(alertRecord, ['labels', 'tags'])).slice(0, 4);
   const stageTrail = normalizeAlertTimeline(valueAt(alertRecord, ['stage_trail', 'stageTrail', 'attack_stages', 'attackStages']));
   const timeline = normalizeAlertTimeline(valueAt(alertRecord, ['timeline', 'events', 'history']));
@@ -500,9 +522,13 @@ export function normalizeAlertDetailSnapshot(
     responseActions,
     feedback: {
       defaultResult: feedbackResult === 'fp' || feedbackResult === 'false_positive' ? 'fp' : feedbackResult === 'pending' ? 'pending' : 'tp',
-      reason: textFrom(feedback, ['reason', 'false_positive_reason']) || '',
-      whitelistDraft: textFrom(feedback, ['whitelist_draft', 'whitelist']),
-      sampleReturn: textFrom(feedback, ['sample_return', 'mlops_sample']),
+      reason: textFrom(feedbackAuthority, ['reason_code', 'reason', 'false_positive_reason']) || '',
+      whitelistDraft: textFrom(feedbackAuthority, ['whitelist_draft', 'whitelist']),
+      sampleReturn: textFrom(feedbackAuthority, ['sample_return', 'mlops_sample']),
+      labelRevision: optionalNumberAt(feedbackAuthority, ['label_revision', 'labelRevision']) ?? 0,
+      adjudicationState: textFrom(feedbackAuthority, ['adjudication_state', 'adjudicationState']),
+      eventId: textFrom(feedbackAuthority, ['event_id', 'eventId']),
+      predictionId: textFrom(feedbackAuthority, ['prediction_id', 'predictionId']),
     },
     evidence: [
       metric('Alert Detail API', `/v1/alerts/${alertId}`, 'primary', 'ok'),

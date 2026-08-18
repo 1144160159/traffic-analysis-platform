@@ -63,6 +63,18 @@ describe('routeManifest', () => {
         ['系统设置', '/settings'],
       ],
     },
+    {
+      id: 'analysis',
+      title: '任务调度',
+      routes: [
+        ['任务管理', '/analysis/tasks'],
+        ['调度管理', '/analysis/schedules'],
+        ['任务编排', '/analysis/orchestration'],
+        ['运行监控', '/analysis/runs'],
+        ['分析报告', '/analysis/reports'],
+        ['调度资源', '/analysis/resources'],
+      ],
+    },
   ];
 
   it('keeps the documented top-level information architecture', () => {
@@ -73,6 +85,7 @@ describe('routeManifest', () => {
       '资产图谱',
       '检测运营',
       '审计配置',
+      '任务调度',
     ]);
   });
 
@@ -87,8 +100,8 @@ describe('routeManifest', () => {
   });
 
   it('registers all menu routes and detail routes', () => {
-    expect(navRoutes).toHaveLength(24);
-    expect(detailRoutes.map((route) => route.path)).toEqual(['/alerts/:alertId', '/campaigns/:campaignId']);
+    expect(navRoutes).toHaveLength(30);
+    expect(detailRoutes.map((route) => route.path)).toEqual(['/analysis/task-definitions/:taskDefinitionId', '/analysis/runs/:runId', '/alerts/:alertId', '/campaigns/:campaignId']);
     expect(allRoutes.map((route) => route.path)).toContain('/screen');
     expect(navRoutes.map((route) => route.path)).toContain('/topics');
     expect(navRoutes.map((route) => route.title)).toContain('专题面板');

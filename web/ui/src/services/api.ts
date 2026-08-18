@@ -6,7 +6,32 @@ import type { PageSpec } from '@/routes/routeManifest';
 import { getPageActionPlan, getPageApiPlan, getPageLoadSecondaryEndpoints } from '@/services/pageApiPlans';
 import { adaptKnownPageSnapshot } from '@/services/pageSnapshotAdapters';
 import { normalizeDashboardSnapshot } from '@/services/dashboardSnapshotApi';
-import { clearAuthTokens, getAuthToken } from '@/services/authStorage';
+import { clearAuthTokens, getKCRefreshToken, setAuthTokens, setKCRefreshToken, setKCToken } from '@/services/authStorage';
+import { api } from '@/services/httpClient';
+import { buildEncryptedTrafficRangeParams } from '@/services/encryptedTrafficApi';
+import type { EncryptedTrafficTimeRange } from '@/services/encryptedTrafficApi';
+
+export { api } from '@/services/httpClient';
+export {
+  fetchEncryptedTrafficSnapshot,
+  submitEncryptedTrafficEgressAction,
+  submitEncryptedTrafficEvidenceAction,
+} from '@/services/encryptedTrafficApi';
+export type {
+  EncryptedTrafficEgressActionId,
+  EncryptedTrafficEgressActionInput,
+  EncryptedTrafficEgressActionResult,
+  EncryptedTrafficEvidenceActionId,
+  EncryptedTrafficEvidenceActionInput,
+  EncryptedTrafficEvidenceActionResult,
+  EncryptedTrafficAvailability,
+  EncryptedTrafficSnapshot,
+  EncryptedTrafficSnapshotFact,
+  EncryptedTrafficSnapshotMeta,
+  EncryptedTrafficSnapshotResult,
+  EncryptedTrafficSnapshotSection,
+  EncryptedTrafficTimeRange,
+} from '@/services/encryptedTrafficApi';
 
 export type LoginPayload = {
   tenant_id?: string;
@@ -75,29 +100,6 @@ type CaptchaResponse = {
   expires_in: number;
 };
 
-export const api = axios.create({
-  baseURL: appConfig.apiBaseUrl,
-  timeout: 30_000,
-});
-
-api.interceptors.request.use((config) => {
-  const token = getAuthToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      clearAuthTokens();
-    }
-    return Promise.reject(error);
-  },
-);
-
 export const localBypassUser: CurrentUser = {
   username: 'sec_analyst',
   role: '安全分析师',
@@ -121,18 +123,51 @@ export const fetchCaptcha = async (): Promise<CaptchaChallenge> => {
   };
 };
 
-export const login = async (payload: LoginPayload): Promise<LoginResult> => {
-  if (!appConfig.authEnabled || appConfig.useMock) {
-    const user = { ...localBypassUser, username: payload.username };
-    return {
-      token: `mock-token-${payload.username}`,
-      username: user.username,
-      role: user.role,
-      user,
-    };
+export type LoginCredentials = {
+  username: string;
+  password: string;
+  tenant_id?: string;
+  captcha_id?: string;
+  captcha_code?: string;
+  remember?: boolean;
+};
+
+export type LoginResponseEnvelope = {
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  token_type?: string;
+  kc_access_token?: string;
+  kc_refresh_token?: string;
+  user?: { user_id?: string; tenant_id?: string; username?: string; email?: string; roles?: string[]; permissions?: string[] };
+};
+
+export const login = async (credentials: LoginCredentials): Promise<LoginResult> => {
+  const response = await axios.post(`${appConfig.apiBaseUrl}/v1/auth/login`, credentials);
+  const data = response.data as LoginResponseEnvelope;
+  setAuthTokens(data.access_token, data.refresh_token);
+  // 统一令牌模型:密码登录响应同样携带 KC 令牌(服务端口令兑换),前端单 KC 令牌。
+  if (data.kc_access_token) {
+    setKCToken(data.kc_access_token);
+    if (data.kc_refresh_token) setKCRefreshToken(data.kc_refresh_token);
   }
-  const response = await api.post<AuthLoginResponse>('/v1/auth/login', payload);
-  return normalizeLoginResponse(response.data);
+  const user: CurrentUser = {
+    userId: data.user?.user_id,
+    tenantId: data.user?.tenant_id,
+    username: data.user?.username ?? '',
+    email: data.user?.email,
+    role: data.user?.roles?.[0] ?? '',
+    roles: data.user?.roles ?? [],
+    permissions: data.user?.permissions ?? [],
+  };
+  return {
+    token: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresIn: data.expires_in,
+    username: user.username,
+    role: user.role,
+    user,
+  };
 };
 
 export const buildOidcLoginUrl = ({ tenantId, redirectUrl }: OidcLoginOptions) => {
@@ -156,12 +191,17 @@ export const fetchCurrentUser = async (): Promise<CurrentUser> => {
 
 export const logout = async () => {
   if (appConfig.authEnabled && !appConfig.useMock) {
-    await api.post('/v1/auth/logout');
+    // 服务端终止 KC 刷新链:携带存储的 refresh token(auth-service 调 KC logout)。
+    const refreshToken = getKCRefreshToken();
+    try {
+      await api.post('/v1/auth/logout', refreshToken ? { refresh_token: refreshToken } : undefined);
+    } catch {
+      // 登出端点失败不阻断本地清理
+    }
   }
   clearAuthTokens();
 };
 
-export type EncryptedTrafficTimeRange = '近 1 小时' | '近 24 小时' | '近 7 天';
 export type DataQualityTimeRange = '近 24 小时' | '近 7 天';
 export type CampaignSnapshotFilters = {
   risk: string;
@@ -250,6 +290,8 @@ export type EntityGraphWorkbench = {
   center_id: string;
   nodes: EntityGraphWorkbenchNode[];
   edges: EntityGraphWorkbenchEdge[];
+  truncated?: boolean;
+  truncation_reason?: string;
   meta: {
     source: string;
     node_count: number;
@@ -264,6 +306,16 @@ export type EntityGraphWorkbench = {
     cache_applicable: boolean;
     data_origin: string;
     slow_query: boolean;
+    response_node_limit: number;
+    edge_limit: number;
+    neighbors_per_hop_limit: number;
+    truncated: boolean;
+    truncation_reason: string;
+    next_continuation: string;
+    continuation_mode: 'none' | 'replace_accumulated';
+    redacted_fields: string[];
+    query_fingerprint: string;
+    as_of_ms: number;
   };
 };
 
@@ -272,6 +324,8 @@ export type EntityGraphWorkbenchFilters = {
   site: 'main' | 'all';
   entityType: 'all' | 'ip' | 'host' | 'account' | 'domain' | 'service' | 'alert' | 'evidence';
   depth: 1 | 2 | 3;
+  maxNodes?: number;
+  continuation?: string;
 };
 
 export type EntityGraphWorkbenchPath = {
@@ -283,6 +337,8 @@ export type EntityGraphWorkbenchPath = {
   length: number;
   risk_level: string;
   evidence_ids: string[];
+  truncated: boolean;
+  truncation_reason?: string;
 };
 
 export const fetchEntityGraphWorkbench = async (
@@ -300,6 +356,8 @@ export const fetchEntityGraphWorkbench = async (
       site: filters.site,
       entity_type: filters.entityType,
       depth: filters.depth,
+      ...(filters.maxNodes ? { max_nodes: filters.maxNodes } : {}),
+      ...(filters.continuation ? { continuation: filters.continuation } : {}),
     },
   });
   const graph = response.data.data?.graph ?? response.data.graph;
@@ -324,6 +382,16 @@ export const fetchEntityGraphWorkbench = async (
       cache_applicable: Boolean(meta.cache_applicable),
       data_origin: meta.data_origin,
       slow_query: Boolean(meta?.slow_query),
+      response_node_limit: Number(meta?.response_node_limit ?? meta.node_limit),
+      edge_limit: Number(meta?.edge_limit ?? 0),
+      neighbors_per_hop_limit: Number(meta?.neighbors_per_hop_limit ?? 0),
+      truncated: Boolean(meta?.truncated ?? graph.truncated),
+      truncation_reason: String(meta?.truncation_reason ?? graph.truncation_reason ?? ''),
+      next_continuation: String(meta?.next_continuation ?? ''),
+      continuation_mode: meta?.continuation_mode === 'replace_accumulated' ? 'replace_accumulated' : 'none',
+      redacted_fields: Array.isArray(meta?.redacted_fields) ? meta.redacted_fields.map(String) : [],
+      query_fingerprint: String(meta?.query_fingerprint ?? ''),
+      as_of_ms: Number(meta?.as_of_ms ?? 0),
     },
   };
 };
@@ -390,6 +458,7 @@ export type RuleVersionRecord = {
   rule_id: string;
   tenant_id: string;
   version: number;
+  checksum?: string;
   status: string;
   change_log?: string;
   created_by: string;
@@ -413,6 +482,34 @@ export type RuleActionJob = {
   status: string;
   requested_by: string;
   created_at: string;
+};
+
+export type RuleRollbackReceipt = {
+  rule: RuleRecord;
+  event_id: string;
+  runtime_status: 'pending' | 'partial' | 'applied' | 'failed';
+  expected_acks: number;
+  target_version: number;
+  previous_version: number;
+  new_version: number;
+};
+
+export type RuleApplicationStatus = {
+  event_id: string;
+  rule_id: string;
+  version: number;
+  action: string;
+  broker_published: boolean;
+  runtime_status: 'pending' | 'partial' | 'applied' | 'failed';
+  expected_acks: number;
+  received_acks: number;
+  successful_acks: number;
+  stale_acks: number;
+  conflict_acks: number;
+  consumer_parallelism: number;
+  current_version: number;
+  runtime_applied_at?: string;
+  last_error?: string;
 };
 
 export const fetchRulesPage = async ({
@@ -470,6 +567,53 @@ export const submitRuleWorkbenchAction = async ({
   return response.data.data;
 };
 
+export const rollbackRuleVersion = async ({
+  ruleId,
+  targetVersion,
+  expectedVersion,
+  reason,
+}: {
+  ruleId: string;
+  targetVersion: number;
+  expectedVersion: number;
+  reason: string;
+}): Promise<RuleRollbackReceipt> => {
+  const trimmedRuleId = ruleId.trim();
+  const trimmedReason = reason.trim();
+  if (!trimmedRuleId) throw new Error('rule id required');
+  if (!Number.isSafeInteger(targetVersion) || targetVersion <= 0) throw new Error('target version must be a positive integer');
+  if (!Number.isSafeInteger(expectedVersion) || expectedVersion <= 0) throw new Error('expected version must be a positive integer');
+  if (!trimmedReason) throw new Error('rollback reason required');
+  if (trimmedReason.length > 1000) throw new Error('rollback reason exceeds 1000 characters');
+
+  const response = await api.post<{ data: RuleRollbackReceipt }>(`/v1/rules/${encodeURIComponent(trimmedRuleId)}/rollback`, {
+    target_version: targetVersion,
+    expected_version: expectedVersion,
+    reason: trimmedReason,
+  });
+  const receipt = response.data.data;
+  if (!receipt || !receipt.rule || receipt.rule.rule_id !== trimmedRuleId ||
+      receipt.new_version <= expectedVersion || receipt.rule.version !== receipt.new_version ||
+      !receipt.event_id || receipt.runtime_status !== 'pending' || receipt.expected_acks <= 0) {
+    throw new Error('rule rollback response does not contain the expected monotonic version');
+  }
+  return receipt;
+};
+
+export const fetchRuleApplicationStatus = async (ruleId: string, eventId: string): Promise<RuleApplicationStatus> => {
+  const trimmedRuleId = ruleId.trim();
+  const trimmedEventId = eventId.trim();
+  if (!trimmedRuleId || !trimmedEventId) throw new Error('rule id and event id required');
+  const response = await api.get<{ data: RuleApplicationStatus }>(
+    `/v1/rules/${encodeURIComponent(trimmedRuleId)}/operations/${encodeURIComponent(trimmedEventId)}`,
+  );
+  const status = response.data.data;
+  if (!status || status.rule_id !== trimmedRuleId || status.event_id !== trimmedEventId) {
+    throw new Error('rule application status identity mismatch');
+  }
+  return status;
+};
+
 export type DeploymentRecord = {
   deployment_id: string;
   tenant_id: string;
@@ -514,7 +658,37 @@ export type DeploymentWorkbench = {
   deployment: DeploymentRecord;
   history: DeploymentHistoryRecord[];
   items: Record<string, Array<Record<string, unknown>>>;
+  runtime_gate?: DeploymentRuntimeGate;
   source: 'postgresql' | string;
+};
+
+export type DeploymentRuntimeReceipt = {
+  component: 'rule' | 'model' | 'deployment_projection' | string;
+  component_id: string;
+  event_id?: string;
+  status: 'missing' | 'pending' | 'partial' | 'applied' | 'failed' | string;
+  broker_published: boolean;
+  expected_acks: number;
+  received_acks: number;
+  successful_acks: number;
+  failed_acks: number;
+  consumer_parallelism: number;
+  applied_at?: string;
+  kafka_partition?: number;
+  kafka_offset?: number;
+  last_error?: string;
+};
+
+export type DeploymentRuntimeGate = {
+  enabled: boolean;
+  status: 'disabled' | 'ready' | 'blocked' | string;
+  ready: boolean;
+  expansion_allowed: boolean;
+  rule?: DeploymentRuntimeReceipt;
+  model?: DeploymentRuntimeReceipt;
+  deployment_projection?: DeploymentRuntimeReceipt;
+  checked_at: string;
+  blocking_reasons?: string[];
 };
 
 export type DeploymentEvidenceBundle = {
@@ -524,6 +698,7 @@ export type DeploymentEvidenceBundle = {
   deployment: DeploymentRecord;
   history: DeploymentHistoryRecord[];
   evidence: Array<Record<string, unknown>>;
+  runtime_gate?: DeploymentRuntimeGate;
   source: string;
   bundle_checksum: string;
   download_content: string;
@@ -1089,6 +1264,7 @@ export const submitTopicAction = async (
   label: string,
   target: string,
   context?: TopicDataContext,
+  signal?: AbortSignal,
 ): Promise<TopicActionResult> => {
   const topicKey = topicActionKey(topic);
   const actionId = topicActionCode(label);
@@ -1115,7 +1291,20 @@ export const submitTopicAction = async (
     if (!result.job_id || !['accepted', 'running'].includes(result.status)) return result;
     const jobId = result.job_id;
     for (let attempt = 0; attempt < 60; attempt += 1) {
-      await new Promise((resolve) => window.setTimeout(resolve, 500));
+      // 支持取消:组件卸载或用户离开时中止轮询,不再空转 30s。
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      await new Promise((resolve) => {
+        const timer = window.setTimeout(resolve, 500);
+        signal?.addEventListener('abort', () => {
+          window.clearTimeout(timer);
+          resolve(undefined);
+        }, { once: true });
+      });
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
       result = await fetchTopicActionJob(topicKey, jobId);
       if (!['accepted', 'running', 'compensating'].includes(result.status)) break;
     }
@@ -1316,68 +1505,6 @@ export type ApiEnvelope = {
   [key: string]: unknown;
 };
 
-type EncryptedTrafficEgressActionId = 'egress-create-alert' | 'egress-evidence-lookup' | 'egress-entity-graph' | 'egress-audit-write' | 'egress-response-request';
-
-export type EncryptedTrafficEgressActionInput = {
-  actionId: EncryptedTrafficEgressActionId;
-  target: string;
-  dataMode: 'live' | 'partial' | 'simulated' | 'unavailable';
-};
-
-export type EncryptedTrafficEgressActionResult = {
-  action_id: string;
-  action: string;
-  audit_event: string;
-  status: 'recorded';
-  target: string;
-};
-
-export const submitEncryptedTrafficEgressAction = async ({ actionId, target, dataMode }: EncryptedTrafficEgressActionInput): Promise<EncryptedTrafficEgressActionResult> => {
-  const plan = getPageActionPlan('encrypted-traffic', actionId);
-  if (!plan || plan.method !== 'POST') throw new Error(`未找到外联处置 API：${actionId}`);
-  const response = await api.post<
-    {
-      data?: EncryptedTrafficEgressActionResult;
-    } & EncryptedTrafficEgressActionResult
-  >(plan.endpoint, {
-    ...(plan.defaultBody ?? {}),
-    target,
-    data_mode: dataMode,
-  });
-  return response.data.data ?? response.data;
-};
-
-type EncryptedTrafficEvidenceActionId = 'evidence-create-task' | 'evidence-download-pcap' | 'evidence-verify-hash' | 'evidence-export-package' | 'evidence-associate-analysis' | 'evidence-preserve' | 'evidence-link-alert' | 'evidence-expert-review' | 'evidence-gap-mark' | 'evidence-submit-recommendation' | 'evidence-export-report' | 'evidence-write-audit';
-
-export type EncryptedTrafficEvidenceActionInput = {
-  actionId: EncryptedTrafficEvidenceActionId;
-  target: string;
-  dataMode: 'live' | 'partial' | 'simulated' | 'unavailable';
-};
-
-export type EncryptedTrafficEvidenceActionResult = {
-  action_id: string;
-  action: string;
-  audit_event: string;
-  status: 'recorded';
-  target: string;
-};
-
-export const submitEncryptedTrafficEvidenceAction = async ({ actionId, target, dataMode }: EncryptedTrafficEvidenceActionInput): Promise<EncryptedTrafficEvidenceActionResult> => {
-  const plan = getPageActionPlan('encrypted-traffic', actionId);
-  if (!plan || plan.method !== 'POST') throw new Error(`未找到证据中心动作 API：${actionId}`);
-  const response = await api.post<
-    {
-      data?: EncryptedTrafficEvidenceActionResult;
-    } & EncryptedTrafficEvidenceActionResult
-  >(plan.endpoint, {
-    ...(plan.defaultBody ?? {}),
-    target,
-    data_mode: dataMode,
-  });
-  return response.data.data ?? response.data;
-};
-
 export type ProbeOperationActionId = 'probe-batch-upgrade' | 'probe-batch-state' | 'probe-config-push' | 'probe-connectivity-test' | 'probe-cert-rotate' | 'probe-restart';
 
 export type ProbeOperationResult = {
@@ -1547,98 +1674,28 @@ export const downloadDataQualityDailyReport = async (timeRange: DataQualityTimeR
   return { blob: response.data, filename };
 };
 
-export type ForensicsJobInput = {
-  assetId?: string;
-  alertId?: string;
-  campaignId?: string;
-  baselineId?: string;
-  evidenceId?: string;
-  evidenceType?: string;
-  probeId?: string;
-  srcIp?: string;
-  dstIp?: string;
-  srcPort?: number;
-  dstPort?: number;
-  protocol?: number;
-  startTime: number;
-  endTime: number;
-  maxPackets?: number;
-};
-
-export type ForensicsJobActionResult = {
-  job_id: string;
-  status: string;
-  created_at?: number;
-};
-
-export type ForensicsVerifyResult = {
-  key: string;
-  tenant_id: string;
-  sha256: string;
-  expected_sha256?: string;
-  registered_sha256?: string;
-  verified: boolean;
-  size_bytes: number;
-};
-
-export type ForensicsPresignResult = {
-  key: string;
-  url: string;
-  expires_at: number;
-  sha256?: string;
-};
-
-const actionPayload = <T>(payload: { data?: T } & Partial<T>): T => (payload.data ?? payload) as T;
-
-export const createForensicsJob = async (input: ForensicsJobInput): Promise<ForensicsJobActionResult> => {
-  const plan = getPageActionPlan('forensics', 'forensics-create-job');
-  if (!plan || plan.method !== 'POST') throw new Error('未找到取证任务创建 API');
-  const response = await api.post<{ data?: ForensicsJobActionResult } & Partial<ForensicsJobActionResult>>(plan.endpoint, {
-    asset_id: input.assetId || undefined,
-    alert_id: input.alertId || undefined,
-    campaign_id: input.campaignId || undefined,
-    baseline_id: input.baselineId || undefined,
-    evidence_id: input.evidenceId || undefined,
-    evidence_type: input.evidenceType || undefined,
-    probe_id: input.probeId || undefined,
-    src_ip: input.srcIp || undefined,
-    dst_ip: input.dstIp || undefined,
-    src_port: input.srcPort || undefined,
-    dst_port: input.dstPort || undefined,
-    protocol: input.protocol || undefined,
-    start_time: input.startTime,
-    end_time: input.endTime,
-    max_packets: input.maxPackets ?? 100_000,
-  });
-  return actionPayload(response.data);
-};
-
-export const verifyForensicsPcap = async (key: string, expectedSha256?: string): Promise<ForensicsVerifyResult> => {
-  const plan = getPageActionPlan('forensics', 'forensics-verify-pcap');
-  if (!plan || plan.method !== 'POST') throw new Error('未找到 PCAP 完整性校验 API');
-  const response = await api.post<{ data?: ForensicsVerifyResult } & Partial<ForensicsVerifyResult>>(plan.endpoint, {
-    key,
-    expected_sha256: expectedSha256 || undefined,
-  });
-  return actionPayload(response.data);
-};
-
-export const presignForensicsPcap = async (key: string, expirySeconds = 3600): Promise<ForensicsPresignResult> => {
-  const plan = getPageActionPlan('forensics', 'forensics-presign-pcap');
-  if (!plan || plan.method !== 'POST') throw new Error('未找到 PCAP 签名 URL API');
-  const response = await api.post<{ data?: ForensicsPresignResult } & Partial<ForensicsPresignResult>>(plan.endpoint, {
-    key,
-    expiry_seconds: expirySeconds,
-  });
-  return actionPayload(response.data);
-};
-
-export const cancelForensicsJob = async (jobId: string): Promise<ForensicsJobActionResult> => {
-  const plan = getPageActionPlan('forensics', 'forensics-cancel-job');
-  if (!plan || plan.method !== 'POST') throw new Error('未找到取证任务取消 API');
-  const response = await api.post<{ data?: ForensicsJobActionResult } & Partial<ForensicsJobActionResult>>(plan.endpoint.replace('{id}', encodeURIComponent(jobId)));
-  return actionPayload(response.data);
-};
+export {
+  cancelForensicsJob,
+  createForensicsJob,
+  getForensicsJob,
+  listForensicsJobs,
+  makeForensicsCommandOptions,
+  presignForensicsPcap,
+  retryForensicsJob,
+  verifyForensicsPcap,
+} from './forensicsApi';
+export type {
+  ForensicsCommandOptions,
+  ForensicsCommandReceipt,
+  ForensicsJob,
+  ForensicsJobFilters,
+  ForensicsJobInput,
+  ForensicsJobListResult,
+  ForensicsJobManifest,
+  ForensicsJobStatus,
+  ForensicsPresignResult,
+  ForensicsVerifyResult,
+} from './forensicsApi';
 
 const fetchRealPageSnapshot = async (page: PageSpec, options: PageSnapshotRequestOptions): Promise<PageSnapshot> => {
   const plan = getPageApiPlan(page.id);
@@ -1676,20 +1733,6 @@ const fetchRealPageSnapshot = async (page: PageSpec, options: PageSnapshotReques
     primary.data,
     secondary.map((response) => response.data),
   );
-};
-
-const encryptedTrafficRangeMilliseconds: Record<EncryptedTrafficTimeRange, number> = {
-  '近 1 小时': 60 * 60 * 1_000,
-  '近 24 小时': 24 * 60 * 60 * 1_000,
-  '近 7 天': 7 * 24 * 60 * 60 * 1_000,
-};
-
-const buildEncryptedTrafficRangeParams = (timeRange: EncryptedTrafficTimeRange = '近 24 小时') => {
-  const endTime = Date.now();
-  return {
-    start_time: endTime - encryptedTrafficRangeMilliseconds[timeRange],
-    end_time: endTime,
-  };
 };
 
 const dataQualityRangeMilliseconds: Record<DataQualityTimeRange, number> = {

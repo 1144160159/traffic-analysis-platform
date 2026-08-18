@@ -31,7 +31,7 @@ import {
   SyncOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Alert, Button, Drawer, Select, Space, Switch, Table, Tooltip } from 'antd';
+import { Alert, Button, Drawer, Input, Select, Space, Switch, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { ReactNode } from 'react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
@@ -45,10 +45,14 @@ import { ruleLifecycleLabel } from '@/pages/ruleManagementLogic';
 import type { NavRoute } from '@/routes/routeManifest';
 import {
   fetchPageSnapshot,
+  fetchRuleApplicationStatus,
   fetchRulesPage,
   fetchRuleWorkbench,
+  rollbackRuleVersion,
   submitRuleWorkbenchAction,
+  type RuleActionJob,
   type RuleRecord,
+  type RuleRollbackReceipt,
   type RuleWorkbench,
 } from '@/services/api';
 import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
@@ -187,6 +191,10 @@ type RuleAction = {
   auditEvent: string;
 };
 
+type RuleMutationResult =
+  | { kind: 'job'; job: RuleActionJob }
+  | { kind: 'rollback'; receipt: RuleRollbackReceipt };
+
 export function RuleManagementPage({ route }: { route: NavRoute }) {
   const visualMode = import.meta.env.DEV && isVisualBreakdownMode();
   const [editorTab, setEditorTab] = useState('规则定义');
@@ -198,6 +206,8 @@ export function RuleManagementPage({ route }: { route: NavRoute }) {
   const [listPage, setListPage] = useState(1);
   const [action, setAction] = useState<RuleAction>();
   const [actionSubmitted, setActionSubmitted] = useState(false);
+  const [rollbackTargetVersion, setRollbackTargetVersion] = useState<number>();
+  const [rollbackReason, setRollbackReason] = useState('');
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id],
     queryFn: () => fetchPageSnapshot(route.id),
@@ -241,13 +251,42 @@ export function RuleManagementPage({ route }: { route: NavRoute }) {
   });
   const workbench = visualMode ? undefined : workbenchQuery.data;
   const actionMutation = useMutation({
-    mutationFn: (current: RuleAction) => submitRuleWorkbenchAction({
-      ruleId: String(selected?.['规则ID'] ?? current.target),
-      action: current.actionId,
-      target: current.target,
-      payload: { title: current.title },
-    }),
-    onSuccess: () => setActionSubmitted(true),
+    mutationFn: async (current: RuleAction): Promise<RuleMutationResult> => {
+      const ruleId = String(selected?.['规则ID'] ?? current.target);
+      if (current.actionId === 'rule-rollback') {
+        if (!workbench || rollbackTargetVersion === undefined) throw new Error('请选择具有校验和的历史版本');
+        const receipt = await rollbackRuleVersion({
+          ruleId,
+          targetVersion: rollbackTargetVersion,
+          expectedVersion: workbench.rule.version,
+          reason: rollbackReason,
+        });
+        return { kind: 'rollback', receipt };
+      }
+      const job = await submitRuleWorkbenchAction({
+        ruleId,
+        action: current.actionId,
+        target: current.target,
+        payload: { title: current.title },
+      });
+      return { kind: 'job', job };
+    },
+    onSuccess: (result) => {
+      setActionSubmitted(true);
+      if (result.kind === 'rollback') {
+        void Promise.all([ruleListQuery.refetch(), workbenchQuery.refetch()]);
+      }
+    },
+  });
+  const rollbackReceipt = actionMutation.data?.kind === 'rollback' ? actionMutation.data.receipt : undefined;
+  const rollbackStatusQuery = useQuery({
+    queryKey: ['rule-application-status', selectedRuleId, rollbackReceipt?.event_id],
+    queryFn: () => fetchRuleApplicationStatus(selectedRuleId, rollbackReceipt?.event_id ?? ''),
+    enabled: Boolean(rollbackReceipt?.event_id && selectedRuleId),
+    refetchInterval: (query) => {
+      const status = query.state.data?.runtime_status;
+      return status === 'applied' || status === 'failed' ? false : 2_000;
+    },
   });
   const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? unavailableMetric(label));
   const columns: ColumnsType<SnapshotRow> = route.page.tableColumns.map((column) => ({
@@ -267,7 +306,13 @@ export function RuleManagementPage({ route }: { route: NavRoute }) {
   function openAction(title: string, target = String(selected?.['规则ID'] ?? 'C2_Tunnel_v3')) {
     setActionSubmitted(false);
     actionMutation.reset();
-    setAction(createRuleAction(title, target));
+    const nextAction = createRuleAction(title, target);
+    if (nextAction.actionId === 'rule-rollback') {
+      const candidate = workbench?.versions.find((version) => version.version < workbench.rule.version && Boolean(version.checksum));
+      setRollbackTargetVersion(candidate?.version);
+      setRollbackReason('');
+    }
+    setAction(nextAction);
   }
   function refreshAll() {
     void Promise.all([refetch(), ruleListQuery.refetch(), workbenchQuery.refetch()]);
@@ -391,8 +436,52 @@ export function RuleManagementPage({ route }: { route: NavRoute }) {
           </div>
         </main>
       </section>
-      <Drawer className="taf-rules-action-drawer" title={action ? `${action.title}确认` : '规则操作确认'} open={Boolean(action)} width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))" onClose={() => { setAction(undefined); setActionSubmitted(false); actionMutation.reset(); }} extra={<Button size="small" type="primary" loading={actionMutation.isPending} disabled={actionSubmitted || visualMode} onClick={() => action && actionMutation.mutate(action)}>{visualMode ? '视觉模式不可提交' : actionSubmitted ? '已写入任务队列' : '确认提交'}</Button>}>
-        {action && <div className="taf-alert-detail-action-body"><p>将为规则对象创建“{action.title}”持久化任务，并保留租户、审批与审计上下文。</p><dl><dt>规则对象</dt><dd>{action.target}</dd><dt>真实接口</dt><dd>{action.endpoint}</dd><dt>审计事件</dt><dd>{action.auditEvent}</dd></dl>{actionMutation.isError && <Alert type="error" showIcon message="规则业务操作提交失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : '请稍后重试'} />}{actionSubmitted && <Alert type="success" showIcon message="规则业务操作已写入任务队列与审计日志" description={`任务 ${actionMutation.data?.job_id ?? '-'}；目标：${action.target}`} />}</div>}
+      <Drawer
+        className="taf-rules-action-drawer"
+        title={action ? `${action.title}确认` : '规则操作确认'}
+        open={Boolean(action)}
+        width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
+        onClose={() => { setAction(undefined); setActionSubmitted(false); setRollbackTargetVersion(undefined); setRollbackReason(''); actionMutation.reset(); }}
+        extra={<Button
+          size="small"
+          type="primary"
+          loading={actionMutation.isPending}
+          disabled={actionSubmitted || visualMode || (action?.actionId === 'rule-rollback' && (rollbackTargetVersion === undefined || !rollbackReason.trim()))}
+          onClick={() => action && actionMutation.mutate(action)}
+        >
+          {visualMode ? '视觉模式不可提交' : actionSubmitted ? (action?.actionId === 'rule-rollback' ? '等待运行时 ACK' : '已写入任务队列') : '确认提交'}
+        </Button>}
+      >
+        {action && action.actionId === 'rule-rollback' && <div className="taf-alert-detail-action-body">
+          <p>将校验历史快照，并以高于当前版本的新版本恢复；不会把旧版本号重新设为当前版本。</p>
+          <label><span>目标历史版本</span><Select
+            style={{ width: '100%' }}
+            value={rollbackTargetVersion}
+            placeholder="选择具有完整性校验的历史版本"
+            onChange={setRollbackTargetVersion}
+            options={(workbench?.versions ?? []).filter((version) => version.version < (workbench?.rule.version ?? 0)).map((version) => ({
+              value: version.version,
+              disabled: !version.checksum,
+              label: `v${version.version} · ${version.status}${version.checksum ? '' : ' · 缺少校验和（不可回滚）'}`,
+            }))}
+          /></label>
+          <label><span>回滚原因</span><Input.TextArea
+            value={rollbackReason}
+            maxLength={1000}
+            showCount
+            rows={4}
+            placeholder="填写审批通过的回滚原因"
+            onChange={(event) => setRollbackReason(event.target.value)}
+          /></label>
+          <dl><dt>规则对象</dt><dd>{action.target}</dd><dt>当前版本</dt><dd>v{workbench?.rule.version ?? '-'}</dd><dt>真实接口</dt><dd>/v1/rules/{'{id}'}/rollback</dd><dt>审计事件</dt><dd>RULE_ROLLBACK</dd></dl>
+          {!workbench?.versions.some((version) => version.version < (workbench?.rule.version ?? 0) && Boolean(version.checksum)) && <Alert type="warning" showIcon message="当前没有可验证的历史版本" description="先完成版本快照迁移或创建新的规则版本后再回滚。" />}
+          {actionMutation.isError && <Alert type="error" showIcon message="规则回滚失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : '请稍后重试'} />}
+          {actionSubmitted && rollbackReceipt && rollbackStatusQuery.data?.runtime_status === 'applied' && <Alert type="success" showIcon message="规则回滚已被全部 Flink 子任务应用" description={`目标 v${rollbackTargetVersion}；新版本 v${rollbackReceipt.rule.version}；ACK ${rollbackStatusQuery.data.successful_acks}/${rollbackStatusQuery.data.expected_acks}`} />}
+          {actionSubmitted && rollbackReceipt && rollbackStatusQuery.data?.runtime_status === 'failed' && <Alert type="error" showIcon message="规则回滚运行时应用失败" description={rollbackStatusQuery.data.last_error || `冲突 ACK ${rollbackStatusQuery.data.conflict_acks}，过期 ACK ${rollbackStatusQuery.data.stale_acks}`} />}
+          {actionSubmitted && rollbackReceipt && rollbackStatusQuery.data?.runtime_status !== 'applied' && rollbackStatusQuery.data?.runtime_status !== 'failed' && <Alert type="info" showIcon message="规则回滚已提交，尚未证明运行时完成" description={`事件 ${rollbackReceipt.event_id}；Broker ${rollbackStatusQuery.data?.broker_published ? '已确认' : '待确认'}；ACK ${rollbackStatusQuery.data?.successful_acks ?? 0}/${rollbackReceipt.expected_acks}`} />}
+          {rollbackStatusQuery.isError && <Alert type="warning" showIcon message="无法读取规则运行时 ACK" description={rollbackStatusQuery.error instanceof Error ? rollbackStatusQuery.error.message : '请稍后重试'} />}
+        </div>}
+        {action && action.actionId !== 'rule-rollback' && <div className="taf-alert-detail-action-body"><p>将为规则对象创建“{action.title}”持久化任务，并保留租户、审批与审计上下文。</p><dl><dt>规则对象</dt><dd>{action.target}</dd><dt>真实接口</dt><dd>{action.endpoint}</dd><dt>审计事件</dt><dd>{action.auditEvent}</dd></dl>{actionMutation.isError && <Alert type="error" showIcon message="规则业务操作提交失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : '请稍后重试'} />}{actionSubmitted && actionMutation.data?.kind === 'job' && <Alert type="success" showIcon message="规则业务操作已写入任务队列与审计日志" description={`任务 ${actionMutation.data.job.job_id ?? '-'}；目标：${action.target}`} />}</div>}
       </Drawer>
     </div>
   );
@@ -756,10 +845,20 @@ const buildVisualRuleRows = (rows: SnapshotRow[]) => {
 };
 
 const createRuleAction = (title: string, target: string): RuleAction => {
+	const actionId = ruleActionSlug(title);
+	if (actionId === 'rule-rollback') {
+		return {
+			title,
+			target,
+			actionId,
+			endpoint: '/v1/rules/{id}/rollback',
+			auditEvent: 'RULE_ROLLBACK',
+		};
+	}
   return {
     title,
     target,
-    actionId: ruleActionSlug(title),
+		actionId,
     endpoint: '/v1/rules/{id}/actions',
     auditEvent: 'RULE_WORKBENCH_ACTION',
   };

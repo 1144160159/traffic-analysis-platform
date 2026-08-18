@@ -10,15 +10,19 @@ import { pageApiPlans } from '@/services/pageApiPlans';
 describe('page design contract registry', () => {
   const pages = pageDesignContractRegistry.pages;
   const aliases = pageDesignContractRegistry.compatibility_aliases;
+  // analysis 域(任务调度)属核心卷功能页;视觉验收合同(UI_D1 八页候选)尚未实现,
+  // 不纳入 28 页视觉验收集合(不把未视觉验收的页面写成已验收)。
+  const visuallyAcceptanceNavRoutes = navRoutes.filter((route) => route.domain !== 'analysis');
+  const visuallyAcceptanceDetailRoutes = detailRoutes.filter((route) => route.domain !== 'analysis');
   const acceptanceRoutes = [
     { id: 'login', path: '/login', requiredScopes: [] as string[], authMode: 'public' },
-    ...navRoutes.map((route) => ({
+    ...visuallyAcceptanceNavRoutes.map((route) => ({
       id: route.id,
       path: route.path,
       requiredScopes: route.requiredScopes,
       authMode: route.accessMode === 'readonly' ? 'protected-readonly' : 'protected',
     })),
-    ...detailRoutes.map((route) => ({
+    ...visuallyAcceptanceDetailRoutes.map((route) => ({
       id: route.id,
       path: route.path,
       requiredScopes: route.requiredScopes,
@@ -60,9 +64,16 @@ describe('page design contract registry', () => {
   });
 
   it('keeps every API plan owned by one page contract or compatibility alias', () => {
+    // 核心卷任务调度功能页:API 计划先于视觉验收合同登记(UI_D1 八页候选 NOT_IMPLEMENTED),
+    // 此处显式声明所有权;视觉合同实现后迁移至 registry。
+    const functionalAnalysisPlanKeys = [
+      'analysis-tasks', 'analysis-task-definition-detail', 'analysis-schedules', 'analysis-orchestration', 'analysis-runs',
+      'analysis-run-detail', 'analysis-reports', 'analysis-resources',
+    ];
     const ownedPlanKeys = [
       ...pages.flatMap((page) => page.api_plan_key ? [page.api_plan_key] : []),
       ...aliases.map((alias) => alias.api_plan_key),
+      ...functionalAnalysisPlanKeys,
     ];
     expect(new Set(ownedPlanKeys).size).toBe(ownedPlanKeys.length);
     expect(ownedPlanKeys.sort()).toEqual(Object.keys(pageApiPlans).sort());

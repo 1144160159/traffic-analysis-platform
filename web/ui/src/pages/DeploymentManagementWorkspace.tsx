@@ -25,7 +25,7 @@ import { MetricTile } from '@/components/MetricTile';
 import { DataQualityKpiSparklineChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
-import { deploymentActionAvailability, deploymentStatusLabel, hasDeployScope } from '@/pages/deploymentManagementLogic';
+import { deploymentActionAvailability, deploymentRuntimeExpansionBlocked, deploymentStatusLabel, hasDeployScope } from '@/pages/deploymentManagementLogic';
 import type { NavRoute } from '@/routes/routeManifest';
 import {
   createDeployment,
@@ -39,6 +39,7 @@ import {
   type DeploymentAction as DeploymentApiAction,
   type DeploymentEvidenceBundle,
   type DeploymentRecord,
+  type DeploymentRuntimeGate,
   type DeploymentWorkflow,
   type DeploymentWorkbench,
 } from '@/services/api';
@@ -248,6 +249,7 @@ export function DeploymentManagementPage({ route }: { route: NavRoute }) {
       ? route.page.kpis.map((label) => visualQuery.data?.metrics.find((item) => item.label === label) ?? unavailableMetric(label))
     : buildDeploymentMetrics(route.page.kpis, summaryRecords, total);
   const workbench = visualMode ? visualWorkbench(visualQuery.data) : workbenchQuery.data;
+  const runtimeExpansionBlocked = deploymentRuntimeExpansionBlocked(selectedStatus, workbench?.runtime_gate);
 
   useEffect(() => {
     const candidates = workbenchItems(workbench, 'rollback_versions')
@@ -350,7 +352,7 @@ export function DeploymentManagementPage({ route }: { route: NavRoute }) {
                 <div><h1>{route.page.title}</h1><span>规则、模型、采集策略、Flink 作业和配置的发布与回滚</span></div>
                 <Space size={6} wrap>
                   <Button size="small" type="primary" icon={<CloudUploadOutlined />} disabled={!canCreate} onClick={() => openDialog({ kind: 'create', title: '新建发布' })}>新建发布</Button>
-                  <Button size="small" icon={<PlayCircleOutlined />} disabled={!selected || !canContinue} onClick={continueDeployment}>继续灰度</Button>
+                  <Tooltip title={runtimeExpansionBlocked ? '规则/模型/灰度投影 ACK 未完整，已停止扩展' : undefined}><Button size="small" icon={<PlayCircleOutlined />} disabled={!selected || !canContinue || runtimeExpansionBlocked} onClick={continueDeployment}>继续灰度</Button></Tooltip>
                   <Button size="small" danger ghost icon={<StopOutlined />} disabled={!selected || !canPause || !canActivate} onClick={() => openSelectedMutation('停止灰度', 'pause')}>停止灰度</Button>
                   <Button size="small" danger icon={<RollbackOutlined />} disabled={!selected || !canRollback} onClick={() => openSelectedMutation('快速回滚', 'rollback')}>快速回滚</Button>
                   <Button size="small" icon={<DownloadOutlined />} loading={evidenceMutation.isPending} disabled={!selected} onClick={exportEvidence}>导出证据</Button>
@@ -374,6 +376,9 @@ export function DeploymentManagementPage({ route }: { route: NavRoute }) {
               </WorkPanel>
               <WorkPanel title="发布健康" extra={<Select size="small" value={healthWindow} options={[{ value: '近 30 分钟' }, { value: '近 2 小时' }]} onChange={setHealthWindow} />}>
                 <ReleaseHealth items={workbenchItems(workbench, 'health')} grayPercent={grayPercent} healthWindow={healthWindow} />
+              </WorkPanel>
+              <WorkPanel title="规则 / 模型运行时 ACK">
+                <RuntimeAckGate gate={workbench?.runtime_gate} />
               </WorkPanel>
             </aside>
           </div>
@@ -441,7 +446,7 @@ function DeploymentCreateDialog({ selected, workbench, visualMode, configuration
       <div className="taf-deployments-modal-card"><h3>发布编排预览</h3><Steps className="taf-deployments-release-flow" size="small" current={deploymentWorkflowStep(workflowStage)} items={[[<CodeSandboxOutlined />, '创建发布单'], [<SafetyCertificateOutlined />, '预检查'], [<CloudUploadOutlined />, '灰度部署'], [<FieldTimeOutlined />, '观测窗口'], [<PlayCircleOutlined />, '全量发布'], [<DownloadOutlined />, '归档证据']].map(([icon, title]) => ({ icon, title }))} /></div>
     </section>
     <section className="taf-deployments-modal-column">
-    <div className="taf-deployments-modal-card"><h3>预检查矩阵</h3><div className="taf-deployments-precheck"><div><span>检查项</span><span>状态</span><span>说明</span></div>{(precheckRows.length ? precheckRows : visualMode ? (evidence.length ? evidence : fallbackEvidenceItems).map((item, index) => ({ label: item.label, status: index === 2 ? '警告' : item.status, evidence: index === 2 ? '部分 Flink Job 需滚动重启' : '依赖与目标环境校验通过' })) : [{ label: '预检查', status: '待运行', evidence: '保存草案后运行预检查，结果将由数据库证据生成' }]).slice(0, 7).map((item) => { const fullEvidence = `${String(item.evidence ?? '—')}${'freshness' in item && item.freshness ? ` · ${item.freshness}` : ''}`; return <div key={String(item.label)}><b>{String(item.label)}</b><StatusTag value={item.status} /><span title={fullEvidence}>{fullEvidence}</span></div>; })}</div></div>
+    <div className="taf-deployments-modal-card"><h3>预检查矩阵</h3><div className="taf-deployments-precheck"><div><span>检查项</span><span>状态</span><span>说明</span></div>{(precheckRows.length ? precheckRows : visualMode ? (evidence.length ? evidence : fallbackEvidenceItems).map((item, index) => ({ label: item.label, status: index === 2 ? '警告' : item.status, evidence: index === 2 ? '部分 Flink Job 需滚动重启' : '依赖与目标环境校验通过' })) : [{ label: '预检查', status: '待运行', evidence: '保存草案后运行预检查，结果将由数据库证据生成' }]).slice(0, 8).map((item) => { const fullEvidence = `${String(item.evidence ?? '—')}${'freshness' in item && item.freshness ? ` · ${item.freshness}` : ''}`; return <div key={String(item.label)}><b>{String(item.label)}</b><StatusTag value={item.status} /><span title={fullEvidence}>{fullEvidence}</span></div>; })}</div></div>
       <div className="taf-deployments-modal-card"><h3>影响范围（预计）</h3><div className="taf-deployments-impact-table"><div><span>部署集</span><span>资产组</span><span>Flink Job</span><span>规则数</span><span>预计新增告警/日</span></div>{[['核心数据中心','服务器/核心','24','186','↑ 320'],['办公区集群','办公网段','18','132','↑ 210'],['DMZ 区集群','DMZ 业务','8','74','↑ 95'],['容灾中心集群','容灾网段','10','68','↑ 70']].map((row) => <div key={row[0]}>{row.map((cell) => <span key={cell}>{cell}</span>)}</div>)}</div></div>
     <div className="taf-deployments-modal-split"><div className="taf-deployments-modal-card"><h3>回滚策略</h3><p>回滚版本 {version}</p><p>触发阈值 误报率 &gt; 2% 或告警突增 &gt; 50%</p><p>最长观察窗口 60 分钟 <Switch disabled size="small" defaultChecked /> 失败自动回滚（审批计划）</p></div><div className="taf-deployments-modal-card"><h3>权限与审批</h3><Steps className="taf-deployments-approval-chain is-compact" size="small" current={workflowStage === 'approved' ? 1 : 0} items={[{ title: '申请人', description: String(workflowData.requested_by ?? '待提交'), icon: <UserOutlined /> }, { title: '独立审批人', description: String(workflowData.approved_by ?? '待审批'), icon: <UserOutlined /> }]} /></div></div>
     <div className="taf-deployments-modal-card"><h3>审计留痕</h3><div className="taf-deployments-audit-grid"><span>申请人 <b><UserOutlined /> {String(workflowData.requested_by ?? '待提交')}</b></span><span>审批角色 <b>独立发布审批人（不可与申请人相同）</b></span><span>变更摘要 <b>规则包、模型包与 {grayPercent}% 灰度策略发布到 4 个部署集</b></span><span>审批快照 <b className="is-link" title={String(workflowData.approval_snapshot_hash ?? '')}>{shortHash(workflowData.approval_snapshot_hash)}</b></span></div></div>
@@ -533,6 +538,17 @@ function ReleaseHealth({ items, grayPercent, healthWindow }: { items: Array<Reco
     const values = Array.isArray(item.values) ? item.values.map(Number).filter(Number.isFinite) : buildHealthTrend(index, grayPercent);
     return <div key={String(item.label)}><span>{String(item.label)}</span><strong className={`is-${tone}`}>{String(item.value)}</strong><i className={`is-${tone}`} /><div className="taf-deployments-health-echart"><DataQualityKpiSparklineChart ariaLabel={`${String(item.label)}${healthWindow}趋势`} tone={tone === 'risk' ? 'risk' : tone === 'warn' ? 'warn' : 'ok'} values={values} /></div></div>;
   })}</div>;
+}
+
+function RuntimeAckGate({ gate }: { gate?: DeploymentRuntimeGate }) {
+  if (!gate) return <Alert type="warning" showIcon message="运行时 ACK 状态不可用" description="未返回规则、模型或灰度投影收据。" />;
+  if (!gate.enabled) return <Alert type="info" showIcon message="运行时 ACK 扩展门默认关闭" description="当前兼容链不据此宣告运行时完成；启用需绑定 Kubernetes 候选与审批。" />;
+  const receipts = [gate.rule, gate.model, gate.deployment_projection].filter(Boolean);
+  return <div className="taf-deployments-evidence" data-runtime-ack-status={gate.status}>
+    <div><span>组件</span><span>状态</span><span>ACK / 期望</span><span>事件 / 位点</span></div>
+    {receipts.map((receipt) => <div key={`${receipt?.component}-${receipt?.event_id ?? receipt?.component_id}`}><b>{receipt?.component === 'rule' ? '规则' : receipt?.component === 'model' ? '模型' : '灰度投影'}</b><StatusTag value={receipt?.status ?? 'missing'} /><span>{receipt?.successful_acks ?? 0}/{receipt?.expected_acks ?? 0}</span><span title={receipt?.event_id}>{shortHash(receipt?.event_id)}{receipt?.kafka_partition !== undefined ? ` · ${receipt.kafka_partition}:${receipt.kafka_offset ?? '-'}` : ''}</span></div>)}
+    {gate.expansion_allowed ? <Alert type="success" showIcon message="精确 ACK 集完整，可继续扩展" /> : <Alert type="error" showIcon message="ACK 不完整，已停止灰度扩展" description={(gate.blocking_reasons ?? []).join('；') || '等待所有绑定组件完成 ACK'} />}
+  </div>;
 }
 
 function VersionDiff({ selected, items }: { selected?: DeploymentRow; items: Array<Record<string, unknown>> }) {
@@ -646,7 +662,7 @@ function visualModeActionAllowed(record: DeploymentRow, statuses: string[]) {
 }
 
 function rowKey(row: DeploymentRow) {
-  return String(row.__deployment_id ?? row.发布对象 ?? row.批次 ?? JSON.stringify(row));
+  return String(row.__deployment_id ?? row.发布对象 ?? row.批次 ?? row.发布时间 ?? 'unknown');
 }
 
 function buildVisualDeploymentRows(rows: SnapshotRow[]): DeploymentRow[] {
@@ -688,10 +704,11 @@ function downloadDeploymentEvidence(bundle: DeploymentEvidenceBundle) {
   anchor.download = `${bundle.export_id}.json`;
   document.body.append(anchor);
   anchor.click();
+  // 下载已触发后尽快回收,不再持有 60s 引用;延迟 1s 保证浏览器开始下载。
   window.setTimeout(() => {
     anchor.remove();
     URL.revokeObjectURL(url);
-  }, 60_000);
+  }, 1_000);
 }
 
 function readTokenIdentity(token: string | null): { userId: string; permissions: string[] } {

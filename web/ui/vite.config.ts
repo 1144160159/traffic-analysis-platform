@@ -1,4 +1,7 @@
 import { defineConfig } from 'vite';
+// 视觉开发插件(code-inspector-plugin):浏览器点击页面元素 → 打开本地 IDE 对应源码。
+// 仅 dev 生效(hot:true 默认),生产构建不注入。
+import { codeInspectorPlugin } from 'code-inspector-plugin';
 import react from '@vitejs/plugin-react';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
@@ -58,7 +61,17 @@ const productionMockWorkerGuard = () => ({
 
 export default defineConfig({
   root: __dirname,
-  plugins: [react(), productionMockWorkerGuard()],
+  plugins: [
+    codeInspectorPlugin({
+      bundler: 'vite',
+      // Windows/Linux 默认 Alt+Shift,Mac Option+Shift;点击元素跳转 IDE
+      hotKeys: ['altKey', 'shiftKey'],
+      // 展示点击元素所在文件与行列信息(悬浮/控制台输出)
+      showSwitch: true,
+    }),
+    react(),
+    productionMockWorkerGuard(),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

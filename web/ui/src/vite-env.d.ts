@@ -9,6 +9,7 @@ interface Window {
     USE_MOCK?: string | boolean;
     ALERT_DETAIL_API_ENABLED?: string | boolean;
     ALERT_BATCH_ASSIGNMENT_V1_ENABLED?: string | boolean;
+    ALERT_SEARCH_CURSOR_V1_ENABLED?: string | boolean;
     ASSET_DETAIL_SNAPSHOT_V1_ENABLED?: string | boolean;
     ASSET_GOVERNANCE_V1_ENABLED?: string | boolean;
     ENABLE_REALTIME?: string | boolean;

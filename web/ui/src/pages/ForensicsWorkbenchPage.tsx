@@ -26,22 +26,30 @@ import type { NavRoute } from '@/routes/routeManifest';
 import { forensicsSourceLabel, resolveForensicsSourceContext } from '@/routes/forensicsRouteState';
 import { mergeRouteSearchParams } from '@/routes/pageRouteState';
 import {
+  fetchPageSnapshot,
+} from '@/services/api';
+import {
   cancelForensicsJob,
   createForensicsJob,
-  fetchPageSnapshot,
+  getForensicsJob,
+  makeForensicsCommandOptions,
   presignForensicsPcap,
+  retryForensicsJob,
   verifyForensicsPcap,
-} from '@/services/api';
+} from '@/services/forensicsApi';
+import type { ForensicsJob, ForensicsPresignResult } from '@/services/forensicsApi';
 import type { ForensicsVisuals, SnapshotRow } from '@/services/mockData';
 import { getAuthToken } from '@/services/authStorage';
 
-type ActionKind = 'view' | 'create' | 'cancel' | 'verify' | 'presign';
+type ActionKind = 'view' | 'create' | 'cancel' | 'retry' | 'verify' | 'presign';
 type ForensicsAction = {
   kind: ActionKind;
   title: string;
   target: string;
   key?: string;
   sha256?: string;
+  revision?: number;
+  purpose?: string;
   endpoint: string;
   auditEvent: string;
 };
@@ -54,6 +62,7 @@ const emptyVisuals: ForensicsVisuals = {
 export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const sourceContext = resolveForensicsSourceContext(searchParams);
+  const selectedJobId = searchParams.get('job_id')?.trim() ?? '';
   const sourceContextLabel = forensicsSourceLabel(sourceContext);
   const sourceAssetId = sourceContext.assetId;
   const [listPage, setListPage] = useState(1);
@@ -89,6 +98,12 @@ export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
       forensicsFilters: appliedFilters,
     }),
   });
+  const selectedJobQuery = useQuery({
+    queryKey: ['forensics-job', selectedJobId],
+    queryFn: () => getForensicsJob(selectedJobId),
+    enabled: Boolean(selectedJobId),
+    refetchInterval: selectedJobId ? 5_000 : false,
+  });
   const visuals = data?.visuals?.forensics ?? emptyVisuals;
   const rows = data?.rows ?? [];
   const total = data?.total ?? rows.length;
@@ -106,30 +121,44 @@ export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
       if (current.kind === 'create') {
         const endTime = Date.now();
         const firstSession = visuals.sessions[0];
+        const probeIds = Array.from(new Set(visuals.pcapIndexes.map((item) => item.probeId).filter(Boolean)));
         return createForensicsJob({
           assetId: isUuid(sourceAssetId) ? sourceAssetId : undefined,
-          alertId: sourceContext.alertId || undefined,
+          alertIds: sourceContext.alertId ? [sourceContext.alertId] : [],
           campaignId: sourceContext.campaignId || undefined,
           baselineId: sourceContext.baselineId || undefined,
           evidenceId: sourceContext.evidenceId || undefined,
           evidenceType: sourceContext.evidenceType || undefined,
+          probeIds,
           srcIp: firstSession?.source !== '-' ? firstSession?.source.split(':')[0] : undefined,
           dstIp: firstSession?.destination.split(':')[0] || undefined,
           startTime: endTime - 60 * 60 * 1_000,
           endTime,
           maxPackets: 100_000,
-        });
+          purpose: `Workbench investigation: ${sourceContextLabel}`,
+        }, makeForensicsCommandOptions('create', sourceContextLabel));
       }
-      if (current.kind === 'cancel') return cancelForensicsJob(current.target);
+      if (current.kind === 'cancel') return cancelForensicsJob(current.target, current.revision ?? 0, makeForensicsCommandOptions('cancel', current.target));
+      if (current.kind === 'retry') return retryForensicsJob(current.target, current.revision ?? 0, makeForensicsCommandOptions('retry', current.target));
       if (current.kind === 'verify') return verifyForensicsPcap(current.key || current.target, current.sha256 === '-' ? undefined : current.sha256);
-      if (current.kind === 'presign') return presignForensicsPcap(current.key || current.target, 3600);
+      if (current.kind === 'presign') return presignForensicsPcap(current.key || current.target, current.purpose || `Workbench evidence review: ${current.target}`, 900);
       return { status: 'loaded', target: current.target };
     },
-    onSuccess: () => void refetch(),
+    onSuccess: (result) => {
+      const resultJobID = isForensicsCommandResult(result) ? result.job_id : '';
+      if (resultJobID) {
+        setSearchParams((current) => mergeRouteSearchParams(current, { job_id: resultJobID }), { replace: true });
+      }
+      void refetch();
+      void selectedJobQuery.refetch();
+    },
   });
 
   function openAction(title: string, target = String(rows[0]?.['任务 ID'] ?? '-'), options: Partial<ForensicsAction> = {}) {
     actionMutation.reset();
+    if (title === '查看取证任务' && target && target !== '-') {
+      setSearchParams((current) => mergeRouteSearchParams(current, { job_id: target }), { replace: true });
+    }
     setAction(createForensicsAction(title, target, options));
   }
 
@@ -164,6 +193,16 @@ export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
 
           {isError && <Alert type="error" showIcon message="真实 API 数据加载失败" description={error instanceof Error ? error.message : '请检查取证、会话、证据和审计 API。'} action={<Button size="small" danger onClick={() => void refetch()}>重试</Button>} />}
 
+          {selectedJobId && <ForensicsJobDetail
+            job={selectedJobQuery.data}
+            loading={selectedJobQuery.isLoading || selectedJobQuery.isFetching}
+            error={selectedJobQuery.error}
+            canWrite={canWrite}
+            canDownload={canDownload}
+            onClose={() => setSearchParams((current) => mergeRouteSearchParams(current, { job_id: null }), { replace: true })}
+            onAction={openAction}
+          />}
+
           <div className="taf-forensics-filter">
             <label><span>时间窗</span><Button size="small" icon={<CalendarOutlined />} onClick={() => openAction('查看时间窗', '近 24 小时')}>近 24 小时</Button></label>
             <label><span>资产</span><Select size="small" value={asset} options={assetOptions} onChange={setAsset} /></label>
@@ -189,7 +228,14 @@ export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
       </section>
 
       <Drawer className="taf-forensics-action-drawer" title={action ? `${action.title}${action.kind === 'view' ? '' : '确认'}` : '取证操作确认'} open={Boolean(action)} width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))" onClose={closeAction} extra={action?.kind === 'view' ? <Button size="small" onClick={closeAction}>关闭</Button> : <Button size="small" type="primary" loading={actionMutation.isPending} disabled={!action || actionMutation.isSuccess} onClick={() => action && actionMutation.mutate(action)}>{actionMutation.isSuccess ? '已完成' : '确认提交'}</Button>}>
-        {action && <div className="taf-alert-detail-action-body"><p>{action.kind === 'view' ? `当前展示已由取证查询接口加载的“${action.title}”上下文。` : `将对取证对象执行“${action.title}”，并保留授权、证据与审计上下文。`}</p><dl><dt>取证对象</dt><dd>{action.target}</dd><dt>数据/操作接口</dt><dd>{action.endpoint}</dd><dt>审计事件</dt><dd>{action.auditEvent}</dd></dl>{actionMutation.isSuccess && action.kind === 'verify' && !isVerifiedResult(actionMutation.data) && <Alert type="error" showIcon message="PCAP 完整性校验不匹配" description={JSON.stringify(actionMutation.data)} />}{actionMutation.isSuccess && (action.kind !== 'verify' || isVerifiedResult(actionMutation.data)) && <Alert type="success" showIcon message="取证操作已完成" description={JSON.stringify(actionMutation.data)} />}{actionMutation.isError && <Alert type="error" showIcon message="取证操作失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : 'unknown error'} />}</div>}
+        {action && <div className="taf-alert-detail-action-body">
+          <p>{action.kind === 'view' ? `当前展示已由取证查询接口加载的“${action.title}”上下文。` : `将对取证对象执行“${action.title}”，并保留授权、证据与审计上下文。`}</p>
+          <dl><dt>取证对象</dt><dd>{action.target}</dd><dt>数据/操作接口</dt><dd>{action.endpoint}</dd><dt>审计事件</dt><dd>{action.auditEvent}</dd></dl>
+          {actionMutation.isSuccess && action.kind === 'verify' && !isVerifiedResult(actionMutation.data) && <Alert type="error" showIcon message="PCAP 完整性校验不匹配" description={JSON.stringify(actionMutation.data)} />}
+          {actionMutation.isSuccess && action.kind === 'presign' && isPresignResult(actionMutation.data) && <Alert type="success" showIcon message="受控下载已授权" description={`用途：${actionMutation.data.purpose || action.purpose}；精确对象版本：${actionMutation.data.object_version || '兼容对象'}`} action={<a href={actionMutation.data.url} target="_blank" rel="noreferrer" download>下载惰性证据</a>} />}
+          {actionMutation.isSuccess && action.kind !== 'presign' && (action.kind !== 'verify' || isVerifiedResult(actionMutation.data)) && <Alert type="success" showIcon message="取证操作已完成" description={JSON.stringify(actionMutation.data)} />}
+          {actionMutation.isError && <Alert type="error" showIcon message="取证操作失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : 'unknown error'} />}
+        </div>}
       </Drawer>
     </div>
   );
@@ -228,6 +274,81 @@ function TaskTab({ rows, total, page, pageCount, pageSize, loading, columns, vis
   );
 }
 
+function ForensicsJobDetail({ job, loading, error, canWrite, canDownload, onClose, onAction }: {
+  job?: ForensicsJob;
+  loading: boolean;
+  error: unknown;
+  canWrite: boolean;
+  canDownload: boolean;
+  onClose: () => void;
+  onAction: ActionHandler;
+}) {
+  if (error) {
+    return <Alert type="error" showIcon closable onClose={onClose} message="取证任务恢复失败" description={error instanceof Error ? error.message : '无法读取指定任务'} />;
+  }
+  if (!job) {
+    return <Alert type="info" showIcon closable onClose={onClose} message={loading ? '正在恢复取证任务…' : '未找到取证任务'} />;
+  }
+  const acceptedOnly = job.status === 'queued' || job.status === 'processing';
+  const retryable = job.status === 'failed' || job.status === 'cancelled';
+  const resultKey = job.manifest?.result_object.object_key || job.result_file_key || '';
+  const resultSHA = job.manifest?.result_object.sha256 || job.sha256 || '';
+  const version = job.manifest?.result_object.object_version || job.result_object_version || '';
+  const requestedRestorations = Array.isArray(job.params?.restorations) ? job.params.restorations.length : undefined;
+  return <section className="taf-forensics-job-detail" aria-live="polite" data-job-status={job.status}>
+    <header><div><span>已恢复任务</span><strong>{job.job_id}</strong></div><StatusTag value={job.status} /><Button size="small" type="text" onClick={onClose}>关闭</Button></header>
+    {acceptedOnly && <Alert type="info" showIcon message="任务已受理，但尚未完成" description={`当前进度 ${job.progress}%；页面会轮询权威任务，刷新后也会通过 job_id 恢复。`} />}
+    {job.status === 'partial' && <Alert type="warning" showIcon message="部分完成不等于完整证据" description="PCAP 结果可用，但至少一个 M03 会话/文件还原 receipt 不完整；不会被改写为 completed。" />}
+    <dl>
+      <dt>状态 / 进度</dt><dd>{job.status} / {job.progress}%</dd>
+      <dt>任务 revision</dt><dd>{job.revision}</dd>
+      <dt>结果对象</dt><dd>{resultKey || '未发布'}</dd>
+      <dt>对象版本</dt><dd>{version || '未发布'}</dd>
+      <dt>Manifest SHA256</dt><dd>{job.manifest_sha256 || '未发布'}</dd>
+      <dt>结果 SHA256</dt><dd>{resultSHA || '未发布'}</dd>
+      <dt>保留至</dt><dd>{job.retention_until ? new Date(job.retention_until).toLocaleString('zh-CN') : '未发布'}</dd>
+      <dt>源索引 / 文件 receipt</dt><dd>{job.manifest ? `${job.manifest.pcap_index_ids.length} / ${job.manifest.restoration_receipts.length}${requestedRestorations === undefined ? '' : ` of ${requestedRestorations}`}` : '未发布'}</dd>
+      <dt>内容安全性</dt><dd>{job.manifest?.executable === false && job.manifest?.automatic_open === false ? '惰性字节，禁止执行和自动打开' : '待 final manifest 确认'}</dd>
+    </dl>
+    {job.manifest && <div className="taf-forensics-receipts">
+      <details open>
+        <summary>源 PCAP 对象 receipt（{job.manifest.source_object_receipts.length}）</summary>
+        <div className="taf-forensics-receipt-list">{job.manifest.source_object_receipts.map((receipt) => <dl key={`${receipt.bucket}/${receipt.object_key}/${receipt.object_version}`}>
+          <dt>对象</dt><dd>{receipt.bucket}/{receipt.object_key}</dd>
+          <dt>版本</dt><dd>{receipt.object_version}</dd>
+          <dt>SHA256</dt><dd>{shortHash(receipt.sha256)}</dd>
+          <dt>保留至</dt><dd>{formatReceiptTime(receipt.retention_until)}</dd>
+        </dl>)}</div>
+      </details>
+      <details open>
+        <summary>M03 会话 / 文件还原 receipt（{job.manifest.restoration_receipts.length}{requestedRestorations === undefined ? '' : ` / ${requestedRestorations}`}）</summary>
+        <div className="taf-forensics-receipt-list">{job.manifest.restoration_receipts.length ? job.manifest.restoration_receipts.map((receipt) => <dl key={receipt.restoration_id}>
+          <dt>还原 ID</dt><dd>{receipt.restoration_id}</dd>
+          <dt>状态 / revision</dt><dd>{receipt.status} / {receipt.revision}</dd>
+          <dt>对象 SHA256</dt><dd>{shortHash(receipt.object_sha256)}</dd>
+          <dt>Event / Outbox</dt><dd>{receipt.event_id} / {receipt.outbox_status}</dd>
+        </dl>) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="未生成文件还原 receipt" />}</div>
+      </details>
+      <details>
+        <summary>证据链与发布权威</summary>
+        <dl className="taf-forensics-chain">
+          <dt>Task revision</dt><dd>{job.revision}</dd>
+          <dt>Command event</dt><dd>{job.event_id || '无'}</dd>
+          <dt>Action / Outbox</dt><dd>{job.action_id || '无'} / {job.outbox_status || '无'}</dd>
+          <dt>Manifest / Result version</dt><dd>{job.manifest_sha256} / {version}</dd>
+          <dt>发布状态</dt><dd>{job.manifest.status}; executable=false; automatic_open=false</dd>
+        </dl>
+      </details>
+    </div>}
+    <div className="taf-forensics-job-detail-actions">
+      {acceptedOnly && <Button size="small" danger disabled={!canWrite} onClick={() => onAction('取消取证任务', job.job_id, { kind: 'cancel', revision: job.revision })}>取消任务</Button>}
+      {retryable && <Button size="small" disabled={!canWrite} onClick={() => onAction('重试取证任务', job.job_id, { kind: 'retry', revision: job.revision })}>按冻结请求重试</Button>}
+      {resultKey && <Button size="small" onClick={() => onAction('校验 PCAP 完整性', job.job_id, { kind: 'verify', key: resultKey, sha256: resultSHA })}>校验精确版本</Button>}
+      {resultKey && <Button size="small" type="primary" disabled={!canDownload} onClick={() => onAction('生成受控证据下载', job.job_id, { kind: 'presign', key: resultKey, purpose: `Workbench evidence review for ${job.job_id}` })}>受控下载 / 证据导出</Button>}
+    </div>
+  </section>;
+}
+
 type ActionHandler = (title: string, target?: string, options?: Partial<ForensicsAction>) => void;
 
 function SessionRows({ rows, onAction }: { rows: ForensicsVisuals['sessions']; onAction: ActionHandler }) {
@@ -256,7 +377,7 @@ function ReturnSources({ sourceAssetId, session, onAction }: { sourceAssetId: st
 }
 
 function StateMachine({ rows }: { rows: ForensicsVisuals['stateCounts'] }) {
-  const icons = [<FileSearchOutlined key="new" />, <ClockCircleOutlined key="queued" />, <CloudDownloadOutlined key="collecting" />, <ApiOutlined key="parsing" />, <CheckCircleOutlined key="done" />, <CloseCircleOutlined key="failed" />];
+  const icons = [<FileSearchOutlined key="new" />, <ClockCircleOutlined key="queued" />, <CloudDownloadOutlined key="collecting" />, <ApiOutlined key="parsing" />, <CheckCircleOutlined key="done" />, <FileProtectOutlined key="partial" />, <CloseCircleOutlined key="failed" />];
   return <div className="taf-forensics-state">{rows.map((item, index) => <div key={item.label} className={`is-${item.status}`}><span>{icons[index]}</span><strong>{item.label}</strong><em>{item.value}</em>{index < rows.length - 1 && <i />}</div>)}</div>;
 }
 
@@ -294,18 +415,19 @@ function renderForensicCell(column: string, value: unknown, row: SnapshotRow, on
 }
 
 const createForensicsAction = (title: string, target: string, options: Partial<ForensicsAction> = {}): ForensicsAction => {
-  const kind: ActionKind = options.kind ?? ((title === '新建取证任务' || title === '新建取证') ? 'create' : title === '取消取证任务' ? 'cancel' : 'view');
-  const endpoint = kind === 'create' ? '/v1/pcap/jobs' : kind === 'cancel' ? '/v1/pcap/jobs/{id}/cancel' : kind === 'verify' ? '/v1/pcap/verify' : kind === 'presign' ? '/v1/pcap/presign' : '/v1/pcap/jobs/{id}';
-  const auditEvent = kind === 'create' ? 'PCAP_CUT' : kind === 'cancel' ? 'PCAP_CANCEL' : kind === 'verify' ? 'PCAP_INTEGRITY_VERIFY' : kind === 'presign' ? 'PCAP_DOWNLOAD' : 'READ_ONLY_DETAIL';
-  return { kind, title, target, key: options.key, sha256: options.sha256, endpoint, auditEvent };
+  const kind: ActionKind = options.kind ?? ((title === '新建取证任务' || title === '新建取证') ? 'create' : title === '取消取证任务' ? 'cancel' : title === '重试取证任务' ? 'retry' : 'view');
+  const endpoint = kind === 'create' ? '/v1/pcap/jobs' : kind === 'cancel' ? '/v1/pcap/jobs/{id}/cancel' : kind === 'retry' ? '/v1/pcap/jobs/{id}/retry' : kind === 'verify' ? '/v1/pcap/verify' : kind === 'presign' ? '/v1/pcap/presign' : '/v1/pcap/jobs/{id}';
+  const auditEvent = kind === 'create' ? 'PCAP_CUT' : kind === 'cancel' ? 'PCAP_CANCEL' : kind === 'retry' ? 'PCAP_RETRY' : kind === 'verify' ? 'PCAP_INTEGRITY_VERIFY' : kind === 'presign' ? 'PCAP_DOWNLOAD' : 'READ_ONLY_DETAIL';
+  return { kind, title, target, key: options.key, sha256: options.sha256, revision: options.revision, purpose: options.purpose, endpoint, auditEvent };
 };
 
 const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-const isValidResultKey = (value: string) => /^results\/[^/]+\/[^/]+\/.+/.test(value);
+const isValidResultKey = (value: string) => /^results\/[^/]+\/[^/]+\/.+/.test(value) || /^tenants\/[^/]+\/forensics\/jobs\/[^/]+\/pcap\/.+/.test(value);
 const countPages = (total: number, pageSize: number) => Math.max(1, Math.ceil(total / pageSize));
 const formatCount = (value: number) => value.toLocaleString('en-US');
 const pageSlice = <T,>(rows: T[], page: number, pageSize: number) => rows.slice((page - 1) * pageSize, page * pageSize);
 const shortHash = (value: string) => value && value !== '-' ? `${value.slice(0, 12)}…${value.slice(-8)}` : '-';
+const formatReceiptTime = (value: string) => value ? new Date(value).toLocaleString('zh-CN') : '-';
 const formatBytes = (value: number) => value >= 1024 ** 3 ? `${(value / 1024 ** 3).toFixed(2)} GB` : value >= 1024 ** 2 ? `${(value / 1024 ** 2).toFixed(2)} MB` : value >= 1024 ? `${(value / 1024).toFixed(1)} KB` : `${value} B`;
 const readTokenPermissions = (token: string | null): string[] => {
   if (!token) return [];
@@ -318,3 +440,5 @@ const readTokenPermissions = (token: string | null): string[] => {
 };
 const hasScope = (permissions: string[], required: string) => permissions.some((permission) => permission === '*' || permission === 'admin:*' || permission === 'pcap:*' || permission === required);
 const isVerifiedResult = (value: unknown) => typeof value === 'object' && value !== null && 'verified' in value && (value as { verified?: unknown }).verified === true;
+const isPresignResult = (value: unknown): value is ForensicsPresignResult => typeof value === 'object' && value !== null && typeof (value as ForensicsPresignResult).url === 'string';
+const isForensicsCommandResult = (value: unknown): value is { job_id: string } => typeof value === 'object' && value !== null && typeof (value as { job_id?: unknown }).job_id === 'string';

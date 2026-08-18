@@ -25,8 +25,9 @@ import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import { EncryptedJa3ScatterChart, EncryptedProtocolTrendChart, EvidenceClosureRingChart, EvidenceEntropyTrendChart, ExfilGraphChart, ExfilStackedTrendChart, HeartbeatTrendChart, PcapPacketTrendChart, WorldActivityMap } from '@/components/charts';
 import type { NavRoute } from '@/routes/routeManifest';
-import { fetchPageSnapshot, submitEncryptedTrafficEgressAction, submitEncryptedTrafficEvidenceAction } from '@/services/api';
-import type { EncryptedTrafficTimeRange } from '@/services/api';
+import { fetchEncryptedTrafficSnapshot, fetchPageSnapshot, submitEncryptedTrafficEgressAction, submitEncryptedTrafficEvidenceAction } from '@/services/api';
+import type { EncryptedTrafficSnapshotResult, EncryptedTrafficTimeRange } from '@/services/api';
+import { encryptedSnapshotSectionPresentation } from '@/services/encryptedTrafficSnapshotPresentation';
 import type { EncryptedTrafficVisuals, PageSnapshot, SnapshotRow } from '@/services/mockData';
 
 const encryptedTrafficTabs = [
@@ -170,6 +171,21 @@ const encryptedTrafficOverlays: OverlayContract[] = [
   },
 ];
 
+type EncryptedSnapshotSectionKey =
+  | 'flow_metadata'
+  | 'plaintext_visible'
+  | 'side_channel'
+  | 'raw_reference'
+  | 'randomness_statistics';
+
+const encryptedSnapshotSections: Array<{ key: EncryptedSnapshotSectionKey; label: string }> = [
+  { key: 'flow_metadata', label: '流元数据' },
+  { key: 'plaintext_visible', label: '可见明文事实' },
+  { key: 'side_channel', label: '侧信道指标' },
+  { key: 'raw_reference', label: '原始证据引用' },
+  { key: 'randomness_statistics', label: '随机性统计' },
+];
+
 export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -188,6 +204,18 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id, timeRange],
     queryFn: () => fetchPageSnapshot(route.id, { timeRange }),
+  });
+  const {
+    data: encryptedContract,
+    error: encryptedContractError,
+    isError: isEncryptedContractError,
+    isLoading: isEncryptedContractLoading,
+    isFetching: isEncryptedContractFetching,
+    refetch: refetchEncryptedContract,
+  } = useQuery({
+    queryKey: ['encrypted-traffic-snapshot-v1', timeRange],
+    queryFn: () => fetchEncryptedTrafficSnapshot(timeRange),
+    retry: false,
   });
 
   const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
@@ -245,10 +273,13 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
   };
   const openEvidenceAction = (label: string, target: string) => setEvidenceAction(createEvidenceAction(label, target));
   const refreshForTimeRange = async (successMessage?: string) => {
-    const result = await refetch();
-    if (result.isError) {
+    const [legacyResult, contractResult] = await Promise.all([refetch(), refetchEncryptedContract()]);
+    if (legacyResult.isError) {
       message.error('加密流量数据刷新失败，请检查 API 状态。');
       return false;
+    }
+    if (contractResult.isError) {
+      message.warning('解释性快照当前不可用；兼容读接口已刷新，未用替代值覆盖缺失事实。');
     }
     if (successMessage) message.success(successMessage);
     return true;
@@ -313,6 +344,15 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
             action={<Button size="small" danger onClick={() => void refetch()}>重试</Button>}
           />
         )}
+
+        <EncryptedSnapshotContractPanel
+          result={encryptedContract}
+          error={isEncryptedContractError ? encryptedContractError : undefined}
+          isLoading={isEncryptedContractLoading}
+          isFetching={isEncryptedContractFetching}
+          onRetry={() => void refetchEncryptedContract()}
+          onNavigate={navigate}
+        />
 
         <EncryptedTrafficKpis
           activeTab={activeTab}
@@ -428,6 +468,87 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
       </Modal>
     </div>
   );
+}
+
+function EncryptedSnapshotContractPanel({
+  result,
+  error,
+  isLoading,
+  isFetching,
+  onRetry,
+  onNavigate,
+}: {
+  result?: EncryptedTrafficSnapshotResult;
+  error?: unknown;
+  isLoading: boolean;
+  isFetching: boolean;
+  onRetry: () => void;
+  onNavigate: (path: string) => void;
+}) {
+  if (isLoading && !result) {
+    return <Alert type="info" showIcon message="正在读取解释性加密流量快照" description="五类事实将共享同一租户、时间窗、as_of 与 snapshot_id。" />;
+  }
+  if (error && !result) {
+    return (
+      <Alert
+        type="warning"
+        showIcon
+        message="解释性快照未启用或暂不可用"
+        description={`${error instanceof Error ? error.message : '服务端未返回版本化快照。'}；页面继续保留六个兼容读接口，缺失事实不会用模拟值填充。`}
+        action={<Button size="small" onClick={onRetry}>重试快照</Button>}
+      />
+    );
+  }
+  if (!result) {
+    return <Alert type="warning" showIcon message="解释性快照没有返回数据" description="这不是数值零；请检查功能开关、权限和来源状态。" />;
+  }
+
+  const { snapshot, meta } = result;
+  return (
+    <section className="taf-encrypted-snapshot" aria-label="解释性加密流量快照">
+      <Alert
+        type={meta.partial ? 'warning' : 'info'}
+        showIcon
+        message={meta.partial ? '解释性快照为部分结果' : '解释性快照已对齐'}
+        description={`快照 ${snapshot.snapshot_id}；截至 ${formatEncryptedSnapshotTime(snapshot.as_of)}；${meta.missing_sections.length} 个缺失项；${Object.keys(meta.source_watermarks).length} 个来源水位。加密传输本身不构成恶意判定。`}
+        action={<Button size="small" loading={isFetching} onClick={onRetry}>刷新快照</Button>}
+      />
+      <div className="taf-encrypted-snapshot__sections">
+        {encryptedSnapshotSections.map(({ key, label }) => {
+          const section = snapshot[key];
+          const presentation = encryptedSnapshotSectionPresentation(section);
+          return (
+            <article key={key} className={`is-${presentation.availability.tone}`} data-availability={section.availability}>
+              <header><span>{label}</span><strong>{presentation.availability.label}</strong></header>
+              <p>{presentation.availability.description}；样本 {section.sample_count}。</p>
+              <dl>
+                <div><dt>来源</dt><dd title={section.source}>{section.source || '未声明'}</dd></div>
+                <div><dt>水位</dt><dd title={section.source_watermark}>{compactEncryptedSnapshotWatermark(section.source_watermark)}</dd></div>
+                <div><dt>规则</dt><dd>{presentation.ruleVersions}</dd></div>
+                <div><dt>模型</dt><dd>{presentation.modelVersions}</dd></div>
+              </dl>
+              <p className="taf-encrypted-snapshot__limitations">
+                {presentation.limitations}
+              </p>
+              <Button size="small" type="link" disabled={!presentation.drilldown} onClick={() => presentation.drilldown && onNavigate(presentation.drilldown)}>
+                {presentation.drilldownLabel}
+              </Button>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function compactEncryptedSnapshotWatermark(watermark: string) {
+  if (!watermark) return '未声明';
+  return watermark.length > 42 ? `${watermark.slice(0, 39)}…` : watermark;
+}
+
+function formatEncryptedSnapshotTime(value: string) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString('zh-CN', { hour12: false });
 }
 
 function EncryptedTrafficKpis({

@@ -24,7 +24,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CampaignAttackGraphChart, DataQualityDonutChart } from '@/components/charts';
 import { MetricTile } from '@/components/MetricTile';
+import { PageStateBoundary } from '@/components/PageStateBoundary';
+import { resolvePageState } from '@/components/pageState';
 import { StatusTag } from '@/components/StatusTag';
+import { useDrawerFocusReturn } from '@/components/useDrawerFocusReturn';
 import { WorkPanel } from '@/components/WorkPanel';
 import { CampaignImpactModalContent } from '@/pages/CampaignDetailPage';
 import type { NavRoute } from '@/routes/routeManifest';
@@ -119,6 +122,7 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
   const [impactOpen, setImpactOpen] = useState(false);
   const [activeImpact, setActiveImpact] = useState('asset');
   const reportAbortRef = useRef<AbortController>();
+  const detailDrawerFocus = useDrawerFocusReturn({ initialFocusSelector: '[data-campaign-detail-initial-focus]' });
   useEffect(() => () => reportAbortRef.current?.abort(), []);
   useEffect(() => {
     setPage(1);
@@ -287,6 +291,7 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
   };
   const openDetail = async () => {
     if (!selectedCampaignId) return;
+    detailDrawerFocus.captureReturnFocus();
     await executeAction('campaign-detail-view', '查看战役详情', { showReceipt: false });
     const next = new URLSearchParams(routeSearch);
     next.set('campaign', selectedCampaignId);
@@ -555,6 +560,7 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
         open={detailOpen}
         closable={false}
         onClose={closeDetail}
+        afterOpenChange={detailDrawerFocus.afterOpenChange}
         styles={{ body: { padding: 0 } }}
       >
         <CampaignDetailDrawerContent
@@ -1163,10 +1169,18 @@ function CampaignDetailDrawerContent({
     else next.set('detailTab', tab);
     setDrawerSearch(next, { replace: true });
   };
-  if (error) {
-    return <Alert type="error" showIcon message="战役详情加载失败" description={error.message} action={<Button size="small" danger onClick={onRetry}>重试</Button>} />;
+  const pageState = resolvePageState({ isLoading: loading, data: snapshot, error, partial: snapshot?.partial });
+  if (!snapshot) {
+    return (
+      <PageStateBoundary
+        state={pageState}
+        title={pageState === 'unavailable' ? '战役详情加载失败' : undefined}
+        description={error?.message}
+        onRetry={onRetry}
+        retrying={loading}
+      />
+    );
   }
-  if (loading || !snapshot) return <div className="taf-campaign-detail-drawer__loading">正在加载战役证据与影响范围…</div>;
   const graphNodes = snapshot.phases.slice(0, 6).map((phase) => ({
     name: phase.phase,
     alertCount: phase.alertCount,
@@ -1174,9 +1188,10 @@ function CampaignDetailDrawerContent({
     tone: phase.status,
   }));
   return (
+    <PageStateBoundary state={pageState} missingSections={snapshot.missingSections}>
     <div className="taf-campaign-detail-drawer__content">
       <header className="taf-campaign-detail-drawer__header">
-        <div><h2>战役详情</h2><p>{snapshot.campaignId} / {snapshot.title} / 置信度 {snapshot.riskScore}%</p></div>
+        <div><h2 tabIndex={-1} data-campaign-detail-initial-focus>战役详情</h2><p>{snapshot.campaignId} / {snapshot.title} / 置信度 {snapshot.riskScore}%</p></div>
         <Space>
           <StatusTag value={snapshot.status} />
           <StatusTag value={snapshot.riskScore >= 80 ? '高危' : '中危'} />
@@ -1324,6 +1339,7 @@ function CampaignDetailDrawerContent({
         </Space>
       </footer>
     </div>
+    </PageStateBoundary>
   );
 }
 

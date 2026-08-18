@@ -7,9 +7,12 @@ import { fetchCurrentUser } from '@/services/api';
 import { consumeOidcCallbackTokens } from '@/services/authStorage';
 
 const safeNextPath = (value: string | null) => {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/dashboard';
-  if (value === '/login' || value.startsWith('/oidc/callback')) return '/dashboard';
-  return value;
+  if (!value) return '/dashboard';
+  // 反斜杠协议相对写法(如 /\evil.com)归一为 / 后再做前缀校验,防止绕过。
+  const normalized = value.replace(/\\/g, '/');
+  if (!normalized.startsWith('/') || normalized.startsWith('//')) return '/dashboard';
+  if (normalized === '/login' || normalized.startsWith('/oidc/callback')) return '/dashboard';
+  return normalized;
 };
 
 export function OidcCallbackPage() {

@@ -583,6 +583,13 @@ export type PageSnapshot = {
     missingSections: string[];
     sourceWatermarks: Record<string, string>;
   };
+  cursorSearch?: {
+    mode: 'live' | 'pit';
+    nextCursor: string;
+    hasMore: boolean;
+    totalRelation: 'eq' | 'gte';
+    targetSHA256: string;
+  };
   visuals?: {
     dashboard?: DashboardVisuals;
     screen?: ScreenVisuals;

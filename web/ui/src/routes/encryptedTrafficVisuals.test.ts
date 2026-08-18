@@ -7,7 +7,10 @@ const sourceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.
 const pagePath = path.join(sourceRoot, 'pages', 'EncryptedTrafficPage.tsx');
 const appShellPath = path.join(sourceRoot, 'layouts', 'AppShell.tsx');
 const adapterPath = path.join(sourceRoot, 'services', 'pageSnapshotAdapters.ts');
+const encryptedAdapterPath = path.join(sourceRoot, 'services', 'encryptedTrafficSnapshotAdapter.ts');
 const apiPlanPath = path.join(sourceRoot, 'services', 'pageApiPlans.ts');
+const encryptedPlanPath = path.join(sourceRoot, 'services', 'encryptedTrafficPagePlan.ts');
+const encryptedTrafficApiPath = path.join(sourceRoot, 'services', 'encryptedTrafficApi.ts');
 const stylesPath = path.join(sourceRoot, 'styles', 'pages.css');
 
 const read = (filePath: string) => fs.readFileSync(filePath, 'utf8');
@@ -16,7 +19,9 @@ describe('encrypted traffic visual implementation', () => {
   it('keeps encrypted traffic data-driven and free of target bitmap replay', () => {
     const page = read(pagePath);
     const adapter = read(adapterPath);
+    const encryptedAdapter = read(encryptedAdapterPath);
     const apiPlan = read(apiPlanPath);
+    const encryptedPlan = read(encryptedPlanPath);
 
     expect(page).toContain("queryKey: ['page-snapshot', route.id, timeRange]");
     expect(page).toContain('queryFn: () => fetchPageSnapshot(route.id, { timeRange })');
@@ -102,41 +107,43 @@ describe('encrypted traffic visual implementation', () => {
     expect(page).not.toContain('className="taf-encrypted-donut"');
     expect(page).not.toContain('className="taf-encrypted-trend"');
 
-    expect(adapter).toContain("if (page.id === 'encrypted-traffic') return adaptEncryptedTraffic(page, primaryPayload, secondaryPayloads);");
-    expect(adapter).toContain('const buildEncryptedTrafficVisuals');
-    expect(adapter).toContain('const generatedVisuals = buildEncryptedTrafficVisuals');
-    expect(adapter).toContain('stats.ui_reference_visuals');
-    expect(adapter).toContain('encryptedTraffic: encryptedVisuals');
-    expect(adapter).toContain('rawEgressSources: exfilSources');
-    expect(adapter).toContain('const egressAvailability = {');
-    expect(adapter).toContain('const egressMapNodes = destinationRows.map');
-    expect(adapter).not.toContain('const useSimulatedEgress');
-    expect(adapter).toContain("const exfilDestinations = extractNamedList(secondaryPayloads[3], ['top_destinations', 'destinations']);");
-    expect(adapter).toContain('const egressTrend = buildEncryptedEgressTrend(rawEgressTrend);');
-    expect(adapter).toContain('const evidenceSessions = extractNamedList(secondaryPayloads[4], [\'sessions\']);');
-    expect(adapter).toContain('const buildEncryptedEvidenceCenter');
-    expect(adapter).toContain('rawEvidencePcapIndexes: evidencePcapIndexes');
-    expect(adapter).toContain('rawEvidenceEntropyTrend: evidenceEntropyTrend');
-    expect(adapter).not.toContain('const useSimulatedEvidence');
-    expect(adapter).toContain("'unavailable'");
-    expect(adapter).toContain('未生成任何替代数据');
-    expect(adapter).toContain("'等待外传 API'");
-    expect(adapter).toContain("evidence('Encrypted Stats API', '/v1/encrypted-traffic/stats', 'ok')");
+    expect(adapter).toContain("if (page.id === 'encrypted-traffic') return adaptEncryptedTrafficSnapshot(page, primaryPayload, secondaryPayloads);");
+    expect(encryptedAdapter).toContain('const buildEncryptedTrafficVisuals');
+    expect(encryptedAdapter).toContain('const generatedVisuals = buildEncryptedTrafficVisuals');
+    expect(encryptedAdapter).toContain('stats.ui_reference_visuals');
+    expect(encryptedAdapter).toContain('encryptedTraffic: encryptedVisuals');
+    expect(encryptedAdapter).toContain('rawEgressSources: exfilSources');
+    expect(encryptedAdapter).toContain('const egressAvailability = {');
+    expect(encryptedAdapter).toContain('const egressMapNodes = destinationRows.map');
+    expect(encryptedAdapter).not.toContain('const useSimulatedEgress');
+    expect(encryptedAdapter).toContain("const exfilDestinations = extractNamedList(secondaryPayloads[3], ['top_destinations', 'destinations']);");
+    expect(encryptedAdapter).toContain('const egressTrend = buildEncryptedEgressTrend(rawEgressTrend);');
+    expect(encryptedAdapter).toContain('const evidenceSessions = extractNamedList(secondaryPayloads[4], [\'sessions\']);');
+    expect(encryptedAdapter).toContain('const buildEncryptedEvidenceCenter');
+    expect(encryptedAdapter).toContain('rawEvidencePcapIndexes: evidencePcapIndexes');
+    expect(encryptedAdapter).toContain('rawEvidenceEntropyTrend: evidenceEntropyTrend');
+    expect(encryptedAdapter).not.toContain('const useSimulatedEvidence');
+    expect(encryptedAdapter).toContain("'unavailable'");
+    expect(encryptedAdapter).toContain('未生成任何替代数据');
+    expect(encryptedAdapter).toContain("'等待外传 API'");
+    expect(encryptedAdapter).toContain("evidence('Encrypted Stats API', '/v1/encrypted-traffic/stats', 'ok')");
 
-    expect(apiPlan).toContain('primary: "/v1/encrypted-traffic/stats"');
-    expect(apiPlan).toContain('"/v1/encrypted-traffic/sessions"');
-    expect(apiPlan).toContain('"/v1/encrypted-traffic/ja3"');
-    expect(apiPlan).toContain('"/v1/encrypted-traffic/tunnels"');
-    expect(apiPlan).toContain('"/v1/encrypted-traffic/exfiltration"');
-    expect(apiPlan).toContain('"/v1/encrypted-traffic/evidence"');
-    expect(apiPlan).toContain('endpoint: "/v1/encrypted-traffic/evidence-actions"');
-    expect(apiPlan).toContain('auditEvent: "ENCRYPTED_EVIDENCE_TASK_REQUESTED"');
-    expect(apiPlan).toContain('endpoint: "/v1/encrypted-traffic/egress-actions"');
-    expect(apiPlan).toContain('auditEvent: "ENCRYPTED_EGRESS_ALERT_REQUESTED"');
-    expect(read(path.join(sourceRoot, 'services', 'api.ts'))).toContain("export type EncryptedTrafficTimeRange = '近 1 小时' | '近 24 小时' | '近 7 天';");
+    expect(apiPlan).toContain('"encrypted-traffic": encryptedTrafficPagePlan');
+    expect(encryptedPlan).toContain("primary: '/v1/encrypted-traffic/stats'");
+    expect(encryptedPlan).toContain("'/v1/encrypted-traffic/sessions'");
+    expect(encryptedPlan).toContain("'/v1/encrypted-traffic/ja3'");
+    expect(encryptedPlan).toContain("'/v1/encrypted-traffic/tunnels'");
+    expect(encryptedPlan).toContain("'/v1/encrypted-traffic/exfiltration'");
+    expect(encryptedPlan).toContain("'/v1/encrypted-traffic/evidence'");
+    expect(encryptedPlan).toContain("'/v1/encrypted-traffic/evidence-actions'");
+    expect(encryptedPlan).toContain("'ENCRYPTED_EVIDENCE_TASK_REQUESTED'");
+    expect(encryptedPlan).toContain("'/v1/encrypted-traffic/egress-actions'");
+    expect(encryptedPlan).toContain("'ENCRYPTED_EGRESS_ALERT_REQUESTED'");
+    expect(read(path.join(sourceRoot, 'services', 'api.ts'))).toContain("from '@/services/encryptedTrafficApi';");
     expect(read(path.join(sourceRoot, 'services', 'api.ts'))).toContain("if (pageId === 'encrypted-traffic') return buildEncryptedTrafficRangeParams(options.timeRange);");
-    expect(read(path.join(sourceRoot, 'services', 'api.ts'))).toContain('start_time: endTime - encryptedTrafficRangeMilliseconds[timeRange]');
-    expect(read(path.join(sourceRoot, 'services', 'api.ts'))).toContain('end_time: endTime');
+    expect(read(encryptedTrafficApiPath)).toContain("export type EncryptedTrafficTimeRange = '近 1 小时' | '近 24 小时' | '近 7 天';");
+    expect(read(encryptedTrafficApiPath)).toContain('start_time: endTime - encryptedTrafficRangeMilliseconds[timeRange]');
+    expect(read(encryptedTrafficApiPath)).toContain('end_time: endTime');
   });
 
   it('keeps the five primary tabs on one shared shell and fixed desktop tracks', () => {

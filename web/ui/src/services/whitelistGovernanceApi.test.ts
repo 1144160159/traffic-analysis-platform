@@ -29,10 +29,10 @@ describe('whitelistGovernanceApi', () => {
     const patch = vi.spyOn(api, 'patch').mockResolvedValue({ data: { success: true, data: { ...entry, version: 4 } } } as never);
     await transitionWhitelistEntry({ entry, action: 'submit' });
     expect(patch).toHaveBeenCalledWith('/v1/whitelist/wl%2F001', {
-      expected_revision: 3, status: 'pending', approval_status: 'pending', reason: '提交独立审批',
+      expected_revision: 3, status: 'pending', approval_status: 'pending', command_reason: '提交独立审批',
     }, { headers: { 'X-Action-ID': 'whitelist-submit-approval', 'Idempotency-Key': expect.stringMatching(/^whitelist:whitelist-submit-approval:/) } });
     await transitionWhitelistEntry({ entry: { ...entry, status: 'pending', approval_status: 'pending' }, action: 'approve', reason: '独立复核通过' });
-    expect(patch).toHaveBeenLastCalledWith('/v1/whitelist/wl%2F001', expect.objectContaining({ expected_revision: 3, status: 'active', approval_status: 'approved', reason: '独立复核通过' }), expect.objectContaining({ headers: expect.objectContaining({ 'X-Action-ID': 'whitelist-approve' }) }));
+    expect(patch).toHaveBeenLastCalledWith('/v1/whitelist/wl%2F001', expect.objectContaining({ expected_revision: 3, status: 'active', approval_status: 'approved', command_reason: '独立复核通过' }), expect.objectContaining({ headers: expect.objectContaining({ 'X-Action-ID': 'whitelist-approve' }) }));
   });
 
   it('preserves audit-safe disable and expiry actions', async () => {
@@ -40,6 +40,6 @@ describe('whitelistGovernanceApi', () => {
     await transitionWhitelistEntry({ entry, action: 'extend', expiresAt: '2026-09-01T00:00:00Z', reason: '复审延期' });
     expect(patch).toHaveBeenCalledWith('/v1/whitelist/wl%2F001', expect.objectContaining({ expected_revision: 3, expires_at: '2026-09-01T00:00:00Z' }), expect.objectContaining({ headers: expect.objectContaining({ 'X-Action-ID': 'whitelist-extend' }) }));
     await transitionWhitelistEntry({ entry, action: 'disable', reason: '停止抑制' });
-    expect(patch).toHaveBeenLastCalledWith('/v1/whitelist/wl%2F001', expect.objectContaining({ expected_revision: 3, status: 'disabled', reason: '停止抑制' }), expect.objectContaining({ headers: expect.objectContaining({ 'X-Action-ID': 'whitelist-disable' }) }));
+    expect(patch).toHaveBeenLastCalledWith('/v1/whitelist/wl%2F001', expect.objectContaining({ expected_revision: 3, status: 'disabled', command_reason: '停止抑制' }), expect.objectContaining({ headers: expect.objectContaining({ 'X-Action-ID': 'whitelist-disable' }) }));
   });
 });

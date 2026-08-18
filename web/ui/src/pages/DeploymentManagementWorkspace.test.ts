@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { deploymentActionAvailability, deploymentStatusLabel } from './deploymentManagementLogic';
+import { deploymentActionAvailability, deploymentRuntimeExpansionBlocked, deploymentStatusLabel } from './deploymentManagementLogic';
 
 describe('deploymentStatusLabel', () => {
   it.each([
@@ -28,5 +28,14 @@ describe('deploymentActionAvailability', () => {
 
   it('does not expose write actions to a read-only viewer', () => {
     expect(deploymentActionAvailability('gray', ['deploy:read'])).toMatchObject({ canCreate: false, canContinue: false, canEditScope: false, canPause: false, canRollback: false });
+  });
+});
+
+describe('deploymentRuntimeExpansionBlocked', () => {
+  it('stops only gray expansion when the enabled exact-ACK gate is incomplete', () => {
+    expect(deploymentRuntimeExpansionBlocked('gray', { enabled: true, expansion_allowed: false })).toBe(true);
+    expect(deploymentRuntimeExpansionBlocked('gray', { enabled: true, expansion_allowed: true })).toBe(false);
+    expect(deploymentRuntimeExpansionBlocked('gray', { enabled: false, expansion_allowed: false })).toBe(false);
+    expect(deploymentRuntimeExpansionBlocked('planned', { enabled: true, expansion_allowed: false })).toBe(false);
   });
 });

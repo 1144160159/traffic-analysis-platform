@@ -8405,57 +8405,6 @@
   background: rgba(30, 156, 255, 0.6);
 }
 
-.taf-alert-detail-response {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.taf-alert-detail-response button {
-  min-height: 58px;
-  display: grid;
-  gap: 3px;
-  justify-items: center;
-  padding: 6px;
-  color: var(--ui-text-secondary);
-  background: rgba(3, 17, 28, 0.5);
-  border: 1px solid rgba(56, 151, 201, 0.2);
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.taf-alert-detail-response button.is-risk {
-  color: #ffb3b3;
-  border-color: rgba(255, 77, 79, 0.5);
-}
-
-.taf-alert-detail-response button.is-warn {
-  color: #ffd88a;
-  border-color: rgba(250, 173, 20, 0.45);
-}
-
-.taf-alert-detail-response button.is-info {
-  color: #9edcff;
-  border-color: rgba(24, 168, 255, 0.34);
-}
-
-.taf-alert-detail-response span {
-  color: var(--ui-text-primary);
-  font-size: 12px;
-}
-
-.taf-alert-detail-response em {
-  font-size: 11px;
-  font-style: normal;
-}
-
-.taf-alert-detail-response p {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: var(--ui-text-muted);
-  font-size: 12px;
-}
-
 .taf-alert-detail-status-flow {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8524,80 +8473,6 @@
   min-width: 0;
   color: var(--ui-text-muted);
   font-size: 12px;
-}
-
-.taf-alert-detail-feedback {
-  display: grid;
-  gap: 5px;
-}
-
-.taf-alert-detail-feedback > label {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 66px minmax(0, 1fr);
-  gap: 6px;
-  align-items: center;
-}
-
-.taf-alert-detail-feedback > label > span {
-  color: var(--ui-text-secondary);
-  font-size: 12px;
-}
-
-.taf-alert-detail-feedback .ant-radio-wrapper {
-  margin-inline-end: 0;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.taf-alert-detail-feedback .ant-radio-group {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.taf-alert-detail-feedback-inline {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 104px;
-  gap: 8px;
-  align-items: center;
-}
-
-.taf-alert-detail-feedback-check .ant-checkbox-wrapper,
-.taf-alert-detail-feedback-inline .ant-checkbox-wrapper {
-  min-width: 0;
-  color: var(--ui-text-secondary);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.taf-alert-detail-feedback-comment {
-  align-items: start;
-}
-
-.taf-alert-detail-feedback textarea.ant-input {
-  height: 54px;
-  min-height: 54px;
-  resize: none;
-}
-
-.taf-alert-detail-feedback-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  min-height: 28px;
-}
-
-.taf-alert-detail-feedback-pending-hint {
-  align-self: center;
-  color: var(--color-warning, #f5b942);
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-.taf-alert-detail-feedback-actions .ant-btn {
-  min-width: 128px;
 }
 
 .taf-alert-detail-audit {
@@ -8949,28 +8824,6 @@
   border-color: rgba(91, 191, 105, 0.58);
 }
 
-.taf-alert-detail-page.is-visual-target .taf-alert-detail-response button {
-  min-height: 60px;
-}
-
-.taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback {
-  gap: 9px;
-}
-
-.taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback .ant-radio-group {
-  flex-wrap: nowrap;
-  justify-content: space-between;
-}
-
-.taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback .ant-radio-wrapper {
-  margin-inline-end: 0;
-  white-space: nowrap;
-}
-
-.taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback textarea.ant-input {
-  min-height: 62px;
-}
-
 .taf-shell--visual-breakdown .taf-main:has(.taf-alert-detail-page.is-visual-target) {
   overscroll-behavior: contain;
 }
@@ -9063,18 +8916,6 @@
     gap: 8px;
   }
 
-  .taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback-panel {
-    min-height: 286px;
-  }
-
-  .taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback {
-    gap: 5px;
-  }
-
-  .taf-alert-detail-page.is-visual-target .taf-alert-detail-feedback textarea.ant-input {
-    height: 50px;
-    min-height: 50px;
-  }
 }
 
 @media (max-width: 1180px) {
@@ -14344,6 +14185,106 @@
   justify-content: start;
 }
 
+.taf-attack-snapshot-truth {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  color: var(--ui-text-primary);
+  background: rgba(5, 28, 44, 0.78);
+  border: 1px solid rgba(49, 164, 226, 0.28);
+  border-radius: 6px;
+}
+
+.taf-attack-snapshot-truth > header,
+.taf-attack-snapshot-paths article > header,
+.taf-attack-snapshot-truth > footer,
+.taf-attack-snapshot-edge > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.taf-attack-snapshot-truth h2,
+.taf-attack-snapshot-truth p {
+  margin: 0;
+}
+
+.taf-attack-snapshot-truth h2 { font-size: 15px; }
+.taf-attack-snapshot-truth p,
+.taf-attack-snapshot-truth small,
+.taf-attack-snapshot-truth em { color: var(--ui-text-secondary); font-style: normal; }
+
+.taf-attack-snapshot-endpoints {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.taf-attack-snapshot-endpoints span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  background: rgba(18, 64, 91, 0.36);
+  border: 1px solid rgba(75, 195, 255, 0.18);
+}
+
+.taf-attack-snapshot-endpoints b { color: #6dcfff; font-size: 11px; text-transform: uppercase; }
+.taf-attack-snapshot-endpoints strong,
+.taf-attack-snapshot-endpoints small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.taf-attack-snapshot-paths {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 8px;
+}
+
+.taf-attack-snapshot-paths article {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  background: rgba(12, 43, 63, 0.56);
+  border: 1px solid rgba(116, 183, 219, 0.2);
+}
+
+.taf-attack-snapshot-paths article.is-alternative { border-style: dashed; }
+.taf-attack-snapshot-paths article > header > div { display: flex; gap: 8px; align-items: center; }
+
+.taf-attack-snapshot-edge {
+  display: grid;
+  gap: 6px;
+  padding: 7px;
+  background: rgba(4, 24, 37, 0.72);
+  border-left: 3px solid #2caeef;
+}
+
+.taf-attack-snapshot-edge > div:first-child { justify-content: flex-start; flex-wrap: wrap; }
+.taf-attack-snapshot-edge > div:first-child strong { color: #daf3ff; }
+
+.taf-attack-snapshot-evidence-links,
+.taf-attack-snapshot-truth > footer > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.taf-attack-snapshot-evidence-links button,
+.taf-attack-snapshot-truth > footer button,
+.taf-attack-snapshot-truth > footer span {
+  padding: 4px 7px;
+  color: #bce7fb;
+  background: rgba(26, 96, 130, 0.32);
+  border: 1px solid rgba(80, 184, 232, 0.28);
+  border-radius: 3px;
+}
+
+.taf-attack-snapshot-evidence-links button:disabled { color: #8b9da7; cursor: not-allowed; }
+.taf-attack-snapshot-truth > footer { align-items: flex-start; }
+.taf-attack-snapshot-truth > footer > div { min-width: 0; align-items: center; }
+.taf-attack-snapshot-truth > footer b { margin-right: 4px; color: #70d4ff; }
+
 .taf-attack-grid {
   display: grid;
   grid-template-columns: minmax(980px, 1fr) 528px;
@@ -14828,6 +14769,116 @@
 .taf-encrypted-controls label span {
   color: var(--ui-text-secondary);
   font-size: 12px;
+}
+
+.taf-encrypted-snapshot {
+  display: grid;
+  gap: 6px;
+}
+
+.taf-encrypted-snapshot .ant-alert {
+  padding: 6px 10px;
+}
+
+.taf-encrypted-snapshot__sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 6px;
+}
+
+.taf-encrypted-snapshot__sections article {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(30px, auto) auto;
+  gap: 5px;
+  padding: 8px 9px;
+  background: rgba(3, 17, 28, 0.5);
+  border: 1px solid rgba(56, 151, 201, 0.18);
+  border-radius: 5px;
+}
+
+.taf-encrypted-snapshot__sections article.is-ok {
+  border-color: rgba(101, 216, 110, 0.32);
+}
+
+.taf-encrypted-snapshot__sections article.is-warn {
+  border-color: rgba(255, 176, 32, 0.38);
+}
+
+.taf-encrypted-snapshot__sections article.is-risk {
+  border-color: rgba(255, 91, 61, 0.44);
+}
+
+.taf-encrypted-snapshot__sections header,
+.taf-encrypted-snapshot__sections dl > div {
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.taf-encrypted-snapshot__sections header span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ui-text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.taf-encrypted-snapshot__sections header strong {
+  flex: 0 0 auto;
+  color: var(--ui-info);
+  font-size: 12px;
+}
+
+.taf-encrypted-snapshot__sections article.is-warn header strong {
+  color: var(--ui-warning);
+}
+
+.taf-encrypted-snapshot__sections article.is-risk header strong {
+  color: var(--ui-danger);
+}
+
+.taf-encrypted-snapshot__sections p,
+.taf-encrypted-snapshot__sections dl {
+  margin: 0;
+}
+
+.taf-encrypted-snapshot__sections p,
+.taf-encrypted-snapshot__sections dt,
+.taf-encrypted-snapshot__sections dd {
+  color: var(--ui-text-secondary);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.taf-encrypted-snapshot__sections dl {
+  display: grid;
+  gap: 2px;
+}
+
+.taf-encrypted-snapshot__sections dt {
+  flex: 0 0 28px;
+  color: var(--ui-text-muted);
+}
+
+.taf-encrypted-snapshot__sections dd {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.taf-encrypted-snapshot__limitations {
+  overflow-wrap: anywhere;
+}
+
+.taf-encrypted-snapshot__sections .ant-btn {
+  width: max-content;
+  max-width: 100%;
+  height: 22px;
+  padding: 0;
 }
 
 .taf-encrypted-kpis {
@@ -17539,6 +17590,130 @@
 
 .taf-forensics-filter label:first-child .ant-btn {
   justify-content: start;
+}
+
+.taf-forensics-job-detail {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(7, 31, 50, 0.72);
+  border: 1px solid rgba(56, 151, 201, 0.34);
+  border-radius: 6px;
+}
+
+.taf-forensics-job-detail > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.taf-forensics-job-detail > header > div {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.taf-forensics-job-detail > header span,
+.taf-forensics-job-detail dt {
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+}
+
+.taf-forensics-job-detail > header strong,
+.taf-forensics-job-detail dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--ui-text-primary);
+}
+
+.taf-forensics-job-detail > dl {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 150px minmax(0, 1fr);
+  gap: 5px 10px;
+  margin: 0;
+}
+
+.taf-forensics-job-detail > dl dd {
+  margin: 0;
+  font-family: var(--ui-font-mono);
+  font-size: 12px;
+}
+
+.taf-forensics-job-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.taf-forensics-receipts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.taf-forensics-receipts details {
+  min-width: 0;
+  padding: 7px 9px;
+  background: rgba(4, 20, 34, 0.56);
+  border: 1px solid rgba(56, 151, 201, 0.22);
+  border-radius: 4px;
+}
+
+.taf-forensics-receipts details:last-child {
+  grid-column: 1 / -1;
+}
+
+.taf-forensics-receipts summary {
+  cursor: pointer;
+  color: var(--ui-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.taf-forensics-receipt-list {
+  max-height: 164px;
+  margin-top: 7px;
+  overflow: auto;
+}
+
+.taf-forensics-receipt-list > dl,
+.taf-forensics-chain {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 3px 8px;
+  margin: 0;
+  padding: 6px 0;
+  border-top: 1px solid rgba(56, 151, 201, 0.14);
+  font-family: var(--ui-font-mono);
+  font-size: 11px;
+}
+
+.taf-forensics-receipt-list dt,
+.taf-forensics-chain dt {
+  color: var(--ui-text-secondary);
+}
+
+.taf-forensics-receipt-list dd,
+.taf-forensics-chain dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ui-text-primary);
+}
+
+@media (max-width: 1180px) {
+  .taf-forensics-job-detail > dl,
+  .taf-forensics-receipts {
+    grid-template-columns: 132px minmax(0, 1fr);
+  }
+
+  .taf-forensics-receipts details,
+  .taf-forensics-receipts details:last-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .taf-forensics-dashboard {

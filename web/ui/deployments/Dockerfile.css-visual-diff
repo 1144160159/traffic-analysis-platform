@@ -1,0 +1,25 @@
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    HOME=/tmp \
+    XDG_CONFIG_HOME=/tmp/chromium-config \
+    XDG_CACHE_HOME=/tmp/chromium-cache
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        chromium \
+        fonts-noto-cjk \
+        nodejs \
+        npm \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 1000 visual
+
+WORKDIR /opt/traffic-visual-diff
+RUN npm install --omit=dev --no-audit --no-fund playwright-core@1.61.1
+
+COPY deployments/css-visual-diff.mjs /opt/traffic-visual-diff/css-visual-diff.mjs
+
+USER 1000:1000
+ENTRYPOINT ["node", "/opt/traffic-visual-diff/css-visual-diff.mjs"]

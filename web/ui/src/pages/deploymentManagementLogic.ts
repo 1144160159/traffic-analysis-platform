@@ -30,3 +30,10 @@ export function deploymentActionAvailability(status: string, permissions: string
     canRollback: ['gray', 'active', 'paused', 'failed'].includes(status) && canRollbackPermission,
   };
 }
+
+export function deploymentRuntimeExpansionBlocked(
+  status: string,
+  gate?: { enabled: boolean; expansion_allowed: boolean },
+) {
+  return status === 'gray' && Boolean(gate?.enabled) && !gate?.expansion_allowed;
+}

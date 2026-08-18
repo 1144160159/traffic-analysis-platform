@@ -30,6 +30,12 @@ import {
   SettingOutlined,
   ShareAltOutlined,
   ThunderboltOutlined,
+  PartitionOutlined,
+  OrderedListOutlined,
+  ScheduleOutlined,
+  ApartmentOutlined,
+  PlayCircleOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import type { ReactNode } from "react";
 
@@ -39,7 +45,8 @@ export type RouteDomain =
   | "threat-analysis"
   | "asset-graph"
   | "detection-ops"
-  | "audit-config";
+  | "audit-config"
+  | "analysis";
 
 export type PageVariant =
   | "dashboard"
@@ -96,6 +103,7 @@ const backgroundByDomain: Record<RouteDomain, string> = {
   "asset-graph": "asset",
   "detection-ops": "detection",
   "audit-config": "audit",
+  analysis: "analysis",
 };
 
 const pageOverrides: Record<string, Partial<PageSpec>> = {
@@ -1039,6 +1047,7 @@ const domainScopes: Record<RouteDomain, string[]> = {
   "asset-graph": ["graph:read"],
   "detection-ops": ["rule:read"],
   "audit-config": ["admin:*", "user:read", "token:read"],
+  analysis: ["analysis:read"],
 };
 
 const routeScopes: Record<string, string[]> = {
@@ -1053,6 +1062,9 @@ const routeScopes: Record<string, string[]> = {
   notifications: ["admin:*"],
   "alert-detail": ["alert:read"],
   "campaign-detail": ["alert:read"],
+  "analysis-run-detail": ["analysis:read"],
+  "analysis-task-definition-detail": ["analysis:read"],
+  "analysis-resources": ["analysis:read"],
 };
 
 const routeAcceptance = (id: string, title: string) => [
@@ -1141,7 +1153,7 @@ export const navGroups: NavGroup[] = [
         "/data-quality",
         <DatabaseOutlined />,
         "quality",
-        "2",
+        undefined,
       ),
     ],
   },
@@ -1157,7 +1169,7 @@ export const navGroups: NavGroup[] = [
         "/alerts",
         <BellOutlined />,
         "queue",
-        "128",
+        undefined,
       ),
       makeRoute(
         "threat-analysis",
@@ -1326,6 +1338,19 @@ export const navGroups: NavGroup[] = [
       ),
     ],
   },
+  {
+    id: "analysis",
+    title: "任务调度",
+    icon: <PartitionOutlined />,
+    children: [
+      makeRoute("analysis", "analysis-tasks", "任务管理", "/analysis/tasks", <OrderedListOutlined />, "queue"),
+      makeRoute("analysis", "analysis-schedules", "调度管理", "/analysis/schedules", <ScheduleOutlined />, "governance"),
+      makeRoute("analysis", "analysis-orchestration", "任务编排", "/analysis/orchestration", <ApartmentOutlined />, "pipeline"),
+      makeRoute("analysis", "analysis-runs", "运行监控", "/analysis/runs", <PlayCircleOutlined />, "queue"),
+      makeRoute("analysis", "analysis-reports", "分析报告", "/analysis/reports", <FileTextOutlined />, "governance"),
+      makeRoute("analysis", "analysis-resources", "调度资源", "/analysis/resources", <DatabaseOutlined />, "governance"),
+    ],
+  },
 ];
 
 export const navRoutes = navGroups.flatMap((group) => group.children);
@@ -1358,6 +1383,32 @@ export const legacyTopicRoutes: NavRoute[] = [
 ];
 
 export const detailRoutes: NavRoute[] = [
+  {
+    id: "analysis-task-definition-detail",
+    title: "任务定义详情",
+    path: "/analysis/task-definitions/:taskDefinitionId",
+    icon: <OrderedListOutlined />,
+    domain: "analysis",
+    authMode: "protected",
+    accessMode: "interactive",
+    requiredScopes: ["analysis:read"],
+    acceptance: routeAcceptance("analysis-task-definition-detail", "任务定义详情"),
+    activeNavId: "analysis-tasks",
+    page: { ...defaultSpec("analysis-task-definition-detail", "任务定义详情", "analysis", "detail"), id: "analysis-task-definition-detail", title: "任务定义详情" },
+  } as NavRoute,
+  {
+    id: "analysis-run-detail",
+    title: "运行详情",
+    path: "/analysis/runs/:runId",
+    icon: <PlayCircleOutlined />,
+    domain: "analysis",
+    authMode: "protected",
+    accessMode: "interactive",
+    requiredScopes: ["analysis:read"],
+    acceptance: routeAcceptance("analysis-run-detail", "运行详情"),
+    activeNavId: "analysis-runs",
+    page: { ...defaultSpec("analysis-run-detail", "运行详情", "analysis", "detail"), id: "analysis-run-detail", title: "运行详情" },
+  } as NavRoute,
   makeRoute(
     "threat-analysis",
     "alert-detail",

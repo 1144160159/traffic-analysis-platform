@@ -25,6 +25,17 @@ describe('entity graph authority and empty-state semantics', () => {
     expect(page).not.toContain('实体、关系与证据索引已导出。');
   });
 
+  it('uses server-governed continuation, redaction and durable saved-view commands', () => {
+    const page = read(pagePath);
+    expect(page).toContain("submitAlertTriageAction");
+    expect(page).toContain("actionId: 'alert-view-save'");
+    expect(page).toContain("page_id: 'graph-entity'");
+    expect(page).not.toContain("localStorage.setItem('traffic-graph-saved-view'");
+    expect(page).toContain('加载下一有界页');
+    expect(page).toContain('页面不会补点或补线');
+    expect(page).toContain('部分字段已脱敏');
+  });
+
   it('centers the tunnel empty state below its legend instead of overlapping it', () => {
     const css = read(stylesPath);
     const selector = '.taf-topic-tunnel-impact > .taf-topic-empty';

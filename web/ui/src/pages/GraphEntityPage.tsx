@@ -17,7 +17,7 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Alert, Button, Input, Segmented, Select, Space, Tabs, Tooltip } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -35,6 +35,7 @@ import {
   type EntityGraphWorkbenchNode,
   type EntityGraphWorkbenchPath,
 } from '@/services/api';
+import { submitAlertTriageAction } from '@/services/alertTriageApi';
 
 type GraphQueryHistoryItem = {
   id: string;
@@ -59,6 +60,7 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
   const [depth, setDepth] = useState<EntityGraphWorkbenchFilters['depth']>(2);
   const [detailOpen, setDetailOpen] = useState(true);
   const [canvasVersion, setCanvasVersion] = useState(0);
+  const [continuation, setContinuation] = useState<string>();
   const [queryHistory, setQueryHistory] = useState<GraphQueryHistoryItem[]>(() => {
     try {
       const stored = JSON.parse(localStorage.getItem('traffic-graph-query-history') || '[]');
@@ -73,7 +75,8 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
     enabled: Boolean(sourceAssetId),
   });
   const centerId = sourceAsset.data?.ip_address ? `host:${sourceAsset.data.ip_address}` : undefined;
-  const filters = useMemo<EntityGraphWorkbenchFilters>(() => ({ timeRange, site, entityType, depth }), [depth, entityType, site, timeRange]);
+  useEffect(() => setContinuation(undefined), [centerId, depth, entityType, site, timeRange]);
+  const filters = useMemo<EntityGraphWorkbenchFilters>(() => ({ timeRange, site, entityType, depth, continuation }), [continuation, depth, entityType, site, timeRange]);
   const graphQuery = useQuery({
     queryKey: ['entity-graph-workbench', centerId, filters],
     queryFn: () => fetchEntityGraphWorkbench(centerId, filters),
@@ -132,9 +135,29 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
     enabled: Boolean(pathSourceNode?.entity_id && pathTargetId && pathSourceNode?.entity_id !== pathTargetId),
   });
 
+  const saveViewMutation = useMutation({
+    mutationFn: () => submitAlertTriageAction({
+      kind: 'saved-view',
+      actionId: 'alert-view-save',
+      action: 'save_view',
+      target: `graph-${(graph?.center_id || 'landing').replace(/[^a-zA-Z0-9.-]+/g, '-')}-${Date.now()}`,
+      reason: '保存图实体与路径分析视图',
+      expectedRevision: 0,
+      detail: {
+        filters: {
+          page_id: 'graph-entity', center_id: graph?.center_id, time_range: timeRange,
+          site, entity_type: entityType, depth, query_fingerprint: graph?.meta.query_fingerprint,
+          as_of_ms: graph?.meta.as_of_ms,
+        },
+      },
+    }),
+    onSuccess: (result) => setFeedback(`图谱视图已保存到服务端，记录 ${result.view_id}。`),
+    onError: (error) => setFeedback(error instanceof Error ? `保存失败：${error.message}` : '保存失败：服务端未接受该视图。'),
+  });
+
   const saveView = () => {
-    localStorage.setItem('traffic-graph-saved-view', JSON.stringify({ center_id: graph?.center_id, search: searchValue, filters, saved_at: new Date().toISOString() }));
-    setFeedback('当前图谱视图已保存到本地工作区。');
+    if (!graph || saveViewMutation.isPending) return;
+    saveViewMutation.mutate();
   };
 
   const exportViewSnapshot = () => {
@@ -196,10 +219,20 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
             <Select size="small" value={site} onChange={setSite} options={[{ value: 'main', label: '主园区' }, { value: 'all', label: '全部园区' }]} />
             <Select size="small" value={entityType} onChange={setEntityType} options={[{ value: 'all', label: '实体类型：全部' }, { value: 'host', label: '主机' }, { value: 'ip', label: 'IP地址' }, { value: 'account', label: '账号' }, { value: 'domain', label: '域名' }, { value: 'service', label: '服务' }, { value: 'alert', label: '告警' }, { value: 'evidence', label: '证据' }]} />
             <Button size="small" type="primary" icon={<BranchesOutlined />} onClick={showPathAnalysis}>路径分析</Button>
-            <Button size="small" onClick={saveView}>保存视图</Button>
+            <Button size="small" onClick={saveView} loading={saveViewMutation.isPending} disabled={!graph}>保存视图</Button>
             <Button size="small" onClick={exportViewSnapshot} disabled={!graph}>导出视图 JSON</Button>
           </div>
           {feedback && <div className="taf-graph-inline-feedback" role="status"><SafetyCertificateOutlined />{feedback}<button type="button" onClick={() => setFeedback(undefined)}>关闭</button></div>}
+          {graph?.meta.truncated && (
+            <Alert
+              showIcon
+              type="warning"
+              message="查询结果已按服务端预算截断"
+              description={`原因：${graph.meta.truncation_reason || 'budget'}；节点上限 ${graph.meta.response_node_limit}，边上限 ${graph.meta.edge_limit}，每跳邻居上限 ${graph.meta.neighbors_per_hop_limit}。页面不会补点或补线。`}
+              action={graph.meta.next_continuation ? <Button size="small" onClick={() => setContinuation(graph.meta.next_continuation)}>加载下一有界页</Button> : undefined}
+            />
+          )}
+          {Boolean(graph?.meta.redacted_fields.length) && <Alert showIcon type="info" message="部分字段已脱敏" description={`当前权限未返回：${graph?.meta.redacted_fields.join('、')}`} />}
           <WorkPanel
             title="邻居图谱"
             extra={

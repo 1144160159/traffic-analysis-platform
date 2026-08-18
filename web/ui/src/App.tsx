@@ -10,7 +10,7 @@ import type { NavRoute } from '@/routes/routeManifest';
 import { hasRouteAccess } from '@/routes/access';
 import { fetchCurrentUser, localBypassUser } from '@/services/api';
 import { appConfig } from '@/config/runtime';
-import { consumeDesktopSmokeToken, getAuthToken } from '@/services/authStorage';
+import { consumeDesktopSmokeToken, getAuthToken, getKCToken } from '@/services/authStorage';
 import { useDocumentWindowFrameCssVars } from '@/utils/windowFrameState';
 
 const routerBasename = import.meta.env.BASE_URL === '/' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -42,6 +42,15 @@ const ComplianceAuditPage = lazy(() => import('@/pages/ComplianceAuditPage').the
 const AuditLogPage = lazy(() => import('@/pages/AuditLogPage').then((module) => ({ default: module.AuditLogPage })));
 const NotificationConfigPage = lazy(() => import('@/pages/NotificationConfigPage').then((module) => ({ default: module.NotificationConfigPage })));
 const SettingsGovernancePage = lazy(() => import('@/pages/SettingsGovernancePage').then((module) => ({ default: module.SettingsGovernancePage })));
+const AnalysisTasksPage = lazy(() => import('@/pages/AnalysisTasksPage').then((module) => ({ default: module.AnalysisTasksPage })));
+const AnalysisTaskDefinitionDetailPage = lazy(() => import('@/pages/AnalysisTaskDefinitionDetailPage').then((module) => ({ default: module.AnalysisTaskDefinitionDetailPage })));
+const AnalysisSchedulesPage = lazy(() => import('@/pages/AnalysisSchedulesPage').then((module) => ({ default: module.AnalysisSchedulesPage })));
+const AnalysisResourcesPage = lazy(() => import('@/pages/AnalysisSchedulesPage').then((module) => ({ default: module.AnalysisResourcesPage })));
+const AnalysisOrchestrationPage = lazy(() => import('@/pages/AnalysisOrchestrationPage').then((module) => ({ default: module.AnalysisOrchestrationPage })));
+const AnalysisRunsPage = lazy(() => import('@/pages/AnalysisRunsPage').then((module) => ({ default: module.AnalysisRunsPage })));
+const AnalysisReportsPage = lazy(() => import('@/pages/AnalysisReportsPage').then((module) => ({ default: module.AnalysisReportsPage })));
+const AnalysisRunDetailPage = lazy(() => import('@/pages/AnalysisRunDetailPage').then((module) => ({ default: module.AnalysisRunDetailPage })));
+
 const AlertDetailPage = lazy(() => import('@/pages/AlertDetailPage').then((module) => ({ default: module.AlertDetailPage })));
 const CampaignDetailPage = lazy(() => import('@/pages/CampaignDetailPage').then((module) => ({ default: module.CampaignDetailPage })));
 const DetailPage = lazy(() => import('@/pages/DetailPage').then((module) => ({ default: module.DetailPage })));
@@ -59,7 +68,8 @@ const queryClient = new QueryClient({
 const hasLocalSession = () => {
   if (!appConfig.authEnabled) return true;
   consumeDesktopSmokeToken(appConfig.desktopSmokeTokenEnabled);
-  return Boolean(getAuthToken());
+  // 统一令牌模型:会话凭证以 KC 令牌为准(应用令牌仅桌面 smoke 兼容)。
+  return Boolean(getKCToken() || getAuthToken());
 };
 
 const screenDemoUser = {
@@ -205,6 +215,18 @@ export default function App() {
                       <AuditLogPage route={route} />
                     ) : route.id === 'notifications' ? (
                       <NotificationConfigPage route={route} />
+                    ) : route.id === 'analysis-tasks' ? (
+                      <AnalysisTasksPage route={route} />
+                    ) : route.id === 'analysis-schedules' ? (
+                      <AnalysisSchedulesPage route={route} />
+                    ) : route.id === 'analysis-orchestration' ? (
+                      <AnalysisOrchestrationPage route={route} />
+                    ) : route.id === 'analysis-runs' ? (
+                      <AnalysisRunsPage route={route} />
+                    ) : route.id === 'analysis-reports' ? (
+                      <AnalysisReportsPage route={route} />
+                    ) : route.id === 'analysis-resources' ? (
+                      <AnalysisResourcesPage route={route} />
                     ) : route.id === 'settings' ? (
                       <SettingsGovernancePage route={route} />
                     ) : (
@@ -225,6 +247,10 @@ export default function App() {
                   <ProtectedRoute route={route}>
                     {route.id === 'alert-detail' ? (
                       <AlertDetailPage route={route} />
+                    ) : route.id === 'analysis-task-definition-detail' ? (
+                      <AnalysisTaskDefinitionDetailPage route={route} />
+                    ) : route.id === 'analysis-run-detail' ? (
+                      <AnalysisRunDetailPage route={route} />
                     ) : route.id === 'campaign-detail' ? (
                       <CampaignDetailPage route={route} />
                     ) : (
