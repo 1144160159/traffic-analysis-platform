@@ -330,6 +330,11 @@ private static final long serialVersionUID = 0L;
   public static final int ADD_TO_WHITELIST_FIELD_NUMBER = 8;
   private int addToWhitelist_ = 0;
   /**
+   * <pre>
+   * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+   * a future breaking-change migration should use `bool`.
+   * </pre>
+   *
    * <code>uint32 add_to_whitelist = 8 [json_name = "addToWhitelist"];</code>
    * @return The addToWhitelist.
    */
@@ -1663,6 +1668,11 @@ private static final long serialVersionUID = 0L;
 
     private int addToWhitelist_ ;
     /**
+     * <pre>
+     * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+     * a future breaking-change migration should use `bool`.
+     * </pre>
+     *
      * <code>uint32 add_to_whitelist = 8 [json_name = "addToWhitelist"];</code>
      * @return The addToWhitelist.
      */
@@ -1671,6 +1681,11 @@ private static final long serialVersionUID = 0L;
       return addToWhitelist_;
     }
     /**
+     * <pre>
+     * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+     * a future breaking-change migration should use `bool`.
+     * </pre>
+     *
      * <code>uint32 add_to_whitelist = 8 [json_name = "addToWhitelist"];</code>
      * @param value The addToWhitelist to set.
      * @return This builder for chaining.
@@ -1683,6 +1698,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+     * a future breaking-change migration should use `bool`.
+     * </pre>
+     *
      * <code>uint32 add_to_whitelist = 8 [json_name = "addToWhitelist"];</code>
      * @return This builder for chaining.
      */

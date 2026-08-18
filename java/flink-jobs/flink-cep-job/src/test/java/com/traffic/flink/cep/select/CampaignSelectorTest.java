@@ -164,7 +164,7 @@ class CampaignSelectorTest {
                 .assignTimestampsAndWatermarks(
                         WatermarkStrategy.<Alert>forMonotonousTimestamps()
                                 .withTimestampAssigner((a, ts) -> a.getLastSeen()));
-        KeyedStream<Alert, String> keyed = input.keyBy(Alert::getSrcIp);
+		KeyedStream<Alert, String> keyed = input.keyBy(CampaignBuilderUtils::tenantSourceKey);
         PatternStream<Alert> ps = CEP.pattern(keyed, pattern);
         DataStream<Campaign> campaigns = ps.process(selector);
 

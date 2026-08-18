@@ -138,8 +138,9 @@ public class ClickHousePcapSinkFactory {
                 ps.setLong(idx++, meta.getTsEnd());
 
                 // ==================== 4. 文件元数据 ====================
-                // PcapIndexMeta proto 当前未携带 packet_count，保留 0 并用 byte_size 填充字节计数。
-                ps.setLong(idx++, 0L);
+                // PcapIndexMeta 契约已补齐 packet_count(v1 加法式字段),直接绑定;
+                // 旧生产者缺省 0,保持 wire 兼容。
+                ps.setLong(idx++, meta.getPacketCount());
                 ps.setLong(idx++, meta.getByteSize());
 
                 List<String> communityIds = normalizeCommunityIds(meta);
@@ -165,7 +166,12 @@ public class ClickHousePcapSinkFactory {
                 ps.setLong(idx++, meta.getOffsetEnd());
 
                 // ==================== 6. 创建时间（毫秒时间戳）====================
-                long createdTs = meta.getCreatedTs() > 0 ? meta.getCreatedTs() : System.currentTimeMillis();
+                // createdTs 必须是确定性值：回放/重试时不得落回墙钟，
+                // 否则 ReplacingMergeTree(created_ts) 版本不确定、幂等不收敛。
+                // 缺失时用事件内 ts_start 作为确定性兜底。
+                long createdTs = meta.getCreatedTs() > 0
+                        ? meta.getCreatedTs()
+                        : (meta.getTsStart() > 0 ? meta.getTsStart() : 0L);
                 ps.setLong(idx++, createdTs);
 
             } catch (Exception e) {

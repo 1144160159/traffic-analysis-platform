@@ -1,5 +1,6 @@
 package com.traffic.flink.feature.sink;
 
+import com.traffic.flink.common.CanonicalDlqMessage;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
@@ -23,20 +24,24 @@ public class DLQSinkFactory {
      * 创建 DLQ Kafka Sink
      *
      * @param brokers Kafka Brokers
-     * @param topic   DLQ Topic（建议: dlq.feature-job）
+     * @param topic   canonical DLQ Topic (must be dlq.v1)
      * @return KafkaSink
      */
-    public static KafkaSink<String> createDLQSink(String brokers, String topic) {
+    public static KafkaSink<CanonicalDlqMessage> createDLQSink(String brokers, String topic) {
+        if (!"dlq.v1".equals(topic)) {
+            throw new IllegalArgumentException("Feature job failures must use canonical dlq.v1");
+        }
         LOG.info("Creating DLQ Kafka sink: {} -> {}", brokers, topic);
 
         Properties producerProps = com.traffic.flink.common.ConfigUtil.kafkaClientProperties();
-        producerProps.setProperty("acks", "1"); // DLQ 降低一致性要求
-        producerProps.setProperty("retries", "2");
+        producerProps.setProperty("acks", "all");
+        producerProps.setProperty("retries", "3");
+        producerProps.setProperty("enable.idempotence", "true");
         producerProps.setProperty("compression.type", "lz4");
         producerProps.setProperty("batch.size", "16384");
         producerProps.setProperty("linger.ms", "100");
 
-        return KafkaSink.<String>builder()
+        return KafkaSink.<CanonicalDlqMessage>builder()
                 .setBootstrapServers(brokers)
                 .setRecordSerializer(new DLQKafkaSerializer(topic))
                 .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
@@ -47,7 +52,7 @@ public class DLQSinkFactory {
     /**
      * DLQ Kafka 序列化器
      */
-    private static class DLQKafkaSerializer implements KafkaRecordSerializationSchema<String> {
+    static class DLQKafkaSerializer implements KafkaRecordSerializationSchema<CanonicalDlqMessage> {
 
         private static final long serialVersionUID = 1L;
         private final String topic;
@@ -59,18 +64,21 @@ public class DLQSinkFactory {
         @Nullable
         @Override
         public ProducerRecord<byte[], byte[]> serialize(
-                String element,
+                CanonicalDlqMessage element,
                 KafkaSinkContext context,
                 Long timestamp
         ) {
-            if (element == null || element.isEmpty()) {
+            if (element == null) {
                 return null;
             }
 
-            byte[] valueBytes = element.getBytes(StandardCharsets.UTF_8);
+            byte[] keyBytes = (element.tenantId() + ":" + element.originalTopic()
+                    + ":" + element.originalPartition() + ":" + element.originalOffset())
+                    .getBytes(StandardCharsets.UTF_8);
+            byte[] valueBytes = element.toJson().getBytes(StandardCharsets.UTF_8);
             Long recordTimestamp = timestamp != null ? timestamp : System.currentTimeMillis();
 
-            return new ProducerRecord<>(topic, null, recordTimestamp, null, valueBytes);
+            return new ProducerRecord<>(topic, null, recordTimestamp, keyBytes, valueBytes);
         }
     }
 }

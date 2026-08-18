@@ -40,6 +40,11 @@ public final class CommonProto {
   static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_ActiveIdleStats_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_TrafficFeatureObservation_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_TrafficFeatureObservation_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -79,38 +84,63 @@ public final class CommonProto {
       " \001(\002R\005stdMs\"o\n\017ActiveIdleStats\022\025\n\006min_ms" +
       "\030\001 \001(\002R\005minMs\022\027\n\007mean_ms\030\002 \001(\002R\006meanMs\022\025" +
       "\n\006max_ms\030\003 \001(\002R\005maxMs\022\025\n\006std_ms\030\004 \001(\002R\005s" +
-      "tdMs*\212\001\n\rFlowDirection\022\036\n\032FLOW_DIRECTION" +
-      "_UNSPECIFIED\020\000\022\032\n\026FLOW_DIRECTION_FORWARD" +
-      "\020\001\022\033\n\027FLOW_DIRECTION_BACKWARD\020\002\022 \n\034FLOW_" +
-      "DIRECTION_BIDIRECTIONAL\020\003*\210\001\n\010Severity\022\030" +
-      "\n\024SEVERITY_UNSPECIFIED\020\000\022\021\n\rSEVERITY_INF" +
-      "O\020\001\022\020\n\014SEVERITY_LOW\020\002\022\023\n\017SEVERITY_MEDIUM" +
-      "\020\003\022\021\n\rSEVERITY_HIGH\020\004\022\025\n\021SEVERITY_CRITIC" +
-      "AL\020\005*\350\001\n\013AlertStatus\022\034\n\030ALERT_STATUS_UNS" +
-      "PECIFIED\020\000\022\024\n\020ALERT_STATUS_NEW\020\001\022\027\n\023ALER" +
-      "T_STATUS_TRIAGE\020\002\022\031\n\025ALERT_STATUS_ASSIGN" +
-      "ED\020\003\022\034\n\030ALERT_STATUS_IN_PROGRESS\020\004\022\031\n\025AL" +
-      "ERT_STATUS_RESOLVED\020\005\022\027\n\023ALERT_STATUS_CL" +
-      "OSED\020\006\022\037\n\033ALERT_STATUS_FALSE_POSITIVE\020\007*" +
-      "\317\001\n\020DeploymentStatus\022!\n\035DEPLOYMENT_STATU" +
-      "S_UNSPECIFIED\020\000\022\035\n\031DEPLOYMENT_STATUS_PLA" +
-      "NNED\020\001\022\032\n\026DEPLOYMENT_STATUS_GRAY\020\002\022\034\n\030DE" +
-      "PLOYMENT_STATUS_ACTIVE\020\003\022\034\n\030DEPLOYMENT_S" +
-      "TATUS_PAUSED\020\004\022!\n\035DEPLOYMENT_STATUS_ROLL" +
-      "ED_BACK\020\005*|\n\010TaskType\022\031\n\025TASK_TYPE_UNSPE" +
-      "CIFIED\020\000\022\024\n\020TASK_TYPE_REPLAY\020\001\022\023\n\017TASK_T" +
-      "YPE_TRAIN\020\002\022\022\n\016TASK_TYPE_EVAL\020\003\022\026\n\022TASK_" +
-      "TYPE_PCAP_CUT\020\004*\247\001\n\nTaskStatus\022\033\n\027TASK_S" +
-      "TATUS_UNSPECIFIED\020\000\022\026\n\022TASK_STATUS_QUEUE" +
-      "D\020\001\022\027\n\023TASK_STATUS_RUNNING\020\002\022\031\n\025TASK_STA" +
-      "TUS_SUCCEEDED\020\003\022\026\n\022TASK_STATUS_FAILED\020\004\022" +
-      "\030\n\024TASK_STATUS_CANCELED\020\005B\325\001\n\034com.traffi" +
-      "c.proto.traffic.v1B\013CommonProtoP\001Z_githu" +
-      "b.com/1144160159/traffic-analysis-platfo" +
-      "rm/go/control-plane/pkg/proto/traffic/v1" +
-      ";trafficv1\242\002\003TXX\252\002\nTraffic.V1\312\002\nTraffic\\" +
-      "V1\342\002\026Traffic\\V1\\GPBMetadata\352\002\013Traffic::V" +
-      "1b\006proto3"
+      "tdMs\"\337\006\n\031TrafficFeatureObservation\022%\n\016sc" +
+      "hema_version\030\001 \001(\tR\rschemaVersion\022+\n\021alg" +
+      "orithm_version\030\002 \001(\tR\020algorithmVersion\0222" +
+      "\n\025signed_packet_lengths\030\003 \003(\021R\023signedPac" +
+      "ketLengths\022/\n\024packet_event_time_us\030\004 \003(\003" +
+      "R\021packetEventTimeUs\0222\n\025payload_nibble_co" +
+      "unts\030\005 \003(\004R\023payloadNibbleCounts\0224\n\026paylo" +
+      "ad_observed_bytes\030\006 \001(\004R\024payloadObserved" +
+      "Bytes\022-\n\022sequence_truncated\030\007 \001(\010R\021seque" +
+      "nceTruncated\022T\n\022transport_security\030\010 \001(\016" +
+      "2%.traffic.v1.TransportSecurityProtocolR" +
+      "\021transportSecurity\022\037\n\013tls_version\030\t \001(\tR" +
+      "\ntlsVersion\022\020\n\003ja3\030\n \001(\tR\003ja3\022\020\n\003ja4\030\013 \001" +
+      "(\tR\003ja4\022\020\n\003sni\030\014 \001(\tR\003sni\022\037\n\013cert_sha256" +
+      "\030\r \001(\tR\ncertSha256\022-\n\023cert_is_self_signe" +
+      "d\030\016 \001(\010R\020certIsSelfSigned\0228\n\031cert_is_sel" +
+      "f_signed_known\030\017 \001(\010R\025certIsSelfSignedKn" +
+      "own\022\035\n\npubkey_len\030\020 \001(\rR\tpubkeyLen\022(\n\020pu" +
+      "bkey_len_known\030\021 \001(\010R\016pubkeyLenKnown\022!\n\014" +
+      "quic_version\030\022 \001(\tR\013quicVersion\022&\n\017raw_t" +
+      "raffic_ref\030\023 \001(\tR\rrawTrafficRef\022%\n\016missi" +
+      "ng_fields\030\024 \003(\tR\rmissingFields*\223\001\n\031Trans" +
+      "portSecurityProtocol\022+\n\'TRANSPORT_SECURI" +
+      "TY_PROTOCOL_UNSPECIFIED\020\000\022#\n\037TRANSPORT_S" +
+      "ECURITY_PROTOCOL_TLS\020\001\022$\n TRANSPORT_SECU" +
+      "RITY_PROTOCOL_QUIC\020\002*\212\001\n\rFlowDirection\022\036" +
+      "\n\032FLOW_DIRECTION_UNSPECIFIED\020\000\022\032\n\026FLOW_D" +
+      "IRECTION_FORWARD\020\001\022\033\n\027FLOW_DIRECTION_BAC" +
+      "KWARD\020\002\022 \n\034FLOW_DIRECTION_BIDIRECTIONAL\020" +
+      "\003*\210\001\n\010Severity\022\030\n\024SEVERITY_UNSPECIFIED\020\000" +
+      "\022\021\n\rSEVERITY_INFO\020\001\022\020\n\014SEVERITY_LOW\020\002\022\023\n" +
+      "\017SEVERITY_MEDIUM\020\003\022\021\n\rSEVERITY_HIGH\020\004\022\025\n" +
+      "\021SEVERITY_CRITICAL\020\005*\350\001\n\013AlertStatus\022\034\n\030" +
+      "ALERT_STATUS_UNSPECIFIED\020\000\022\024\n\020ALERT_STAT" +
+      "US_NEW\020\001\022\027\n\023ALERT_STATUS_TRIAGE\020\002\022\031\n\025ALE" +
+      "RT_STATUS_ASSIGNED\020\003\022\034\n\030ALERT_STATUS_IN_" +
+      "PROGRESS\020\004\022\031\n\025ALERT_STATUS_RESOLVED\020\005\022\027\n" +
+      "\023ALERT_STATUS_CLOSED\020\006\022\037\n\033ALERT_STATUS_F" +
+      "ALSE_POSITIVE\020\007*\317\001\n\020DeploymentStatus\022!\n\035" +
+      "DEPLOYMENT_STATUS_UNSPECIFIED\020\000\022\035\n\031DEPLO" +
+      "YMENT_STATUS_PLANNED\020\001\022\032\n\026DEPLOYMENT_STA" +
+      "TUS_GRAY\020\002\022\034\n\030DEPLOYMENT_STATUS_ACTIVE\020\003" +
+      "\022\034\n\030DEPLOYMENT_STATUS_PAUSED\020\004\022!\n\035DEPLOY" +
+      "MENT_STATUS_ROLLED_BACK\020\005*|\n\010TaskType\022\031\n" +
+      "\025TASK_TYPE_UNSPECIFIED\020\000\022\024\n\020TASK_TYPE_RE" +
+      "PLAY\020\001\022\023\n\017TASK_TYPE_TRAIN\020\002\022\022\n\016TASK_TYPE" +
+      "_EVAL\020\003\022\026\n\022TASK_TYPE_PCAP_CUT\020\004*\247\001\n\nTask" +
+      "Status\022\033\n\027TASK_STATUS_UNSPECIFIED\020\000\022\026\n\022T" +
+      "ASK_STATUS_QUEUED\020\001\022\027\n\023TASK_STATUS_RUNNI" +
+      "NG\020\002\022\031\n\025TASK_STATUS_SUCCEEDED\020\003\022\026\n\022TASK_" +
+      "STATUS_FAILED\020\004\022\030\n\024TASK_STATUS_CANCELED\020" +
+      "\005B\325\001\n\034com.traffic.proto.traffic.v1B\013Comm" +
+      "onProtoP\001Z_github.com/1144160159/traffic" +
+      "-analysis-platform/go/control-plane/pkg/" +
+      "proto/traffic/v1;trafficv1\242\002\003TXX\252\002\nTraff" +
+      "ic.V1\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetad" +
+      "ata\352\002\013Traffic::V1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -146,6 +176,12 @@ public final class CommonProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_ActiveIdleStats_descriptor,
         new java.lang.String[] { "MinMs", "MeanMs", "MaxMs", "StdMs", });
+    internal_static_traffic_v1_TrafficFeatureObservation_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_traffic_v1_TrafficFeatureObservation_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_TrafficFeatureObservation_descriptor,
+        new java.lang.String[] { "SchemaVersion", "AlgorithmVersion", "SignedPacketLengths", "PacketEventTimeUs", "PayloadNibbleCounts", "PayloadObservedBytes", "SequenceTruncated", "TransportSecurity", "TlsVersion", "Ja3", "Ja4", "Sni", "CertSha256", "CertIsSelfSigned", "CertIsSelfSignedKnown", "PubkeyLen", "PubkeyLenKnown", "QuicVersion", "RawTrafficRef", "MissingFields", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

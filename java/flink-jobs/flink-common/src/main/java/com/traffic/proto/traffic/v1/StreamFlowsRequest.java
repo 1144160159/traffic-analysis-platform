@@ -66,6 +66,17 @@ private static final long serialVersionUID = 0L;
     return event_ == null ? com.traffic.proto.traffic.v1.FlowEvent.getDefaultInstance() : event_;
   }
 
+  public static final int ACCEPTED_RESPONSE_REVISION_FIELD_NUMBER = 2;
+  private int acceptedResponseRevision_ = 0;
+  /**
+   * <code>uint32 accepted_response_revision = 2 [json_name = "acceptedResponseRevision"];</code>
+   * @return The acceptedResponseRevision.
+   */
+  @java.lang.Override
+  public int getAcceptedResponseRevision() {
+    return acceptedResponseRevision_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -83,6 +94,9 @@ private static final long serialVersionUID = 0L;
     if (((bitField0_ & 0x00000001) != 0)) {
       output.writeMessage(1, getEvent());
     }
+    if (acceptedResponseRevision_ != 0) {
+      output.writeUInt32(2, acceptedResponseRevision_);
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -95,6 +109,10 @@ private static final long serialVersionUID = 0L;
     if (((bitField0_ & 0x00000001) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, getEvent());
+    }
+    if (acceptedResponseRevision_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(2, acceptedResponseRevision_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -116,6 +134,8 @@ private static final long serialVersionUID = 0L;
       if (!getEvent()
           .equals(other.getEvent())) return false;
     }
+    if (getAcceptedResponseRevision()
+        != other.getAcceptedResponseRevision()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -131,6 +151,8 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + EVENT_FIELD_NUMBER;
       hash = (53 * hash) + getEvent().hashCode();
     }
+    hash = (37 * hash) + ACCEPTED_RESPONSE_REVISION_FIELD_NUMBER;
+    hash = (53 * hash) + getAcceptedResponseRevision();
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -273,6 +295,7 @@ private static final long serialVersionUID = 0L;
         eventBuilder_.dispose();
         eventBuilder_ = null;
       }
+      acceptedResponseRevision_ = 0;
       return this;
     }
 
@@ -312,6 +335,9 @@ private static final long serialVersionUID = 0L;
             ? event_
             : eventBuilder_.build();
         to_bitField0_ |= 0x00000001;
+      }
+      if (((from_bitField0_ & 0x00000002) != 0)) {
+        result.acceptedResponseRevision_ = acceptedResponseRevision_;
       }
       result.bitField0_ |= to_bitField0_;
     }
@@ -363,6 +389,9 @@ private static final long serialVersionUID = 0L;
       if (other.hasEvent()) {
         mergeEvent(other.getEvent());
       }
+      if (other.getAcceptedResponseRevision() != 0) {
+        setAcceptedResponseRevision(other.getAcceptedResponseRevision());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -396,6 +425,11 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000001;
               break;
             } // case 10
+            case 16: {
+              acceptedResponseRevision_ = input.readUInt32();
+              bitField0_ |= 0x00000002;
+              break;
+            } // case 16
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -532,6 +566,38 @@ private static final long serialVersionUID = 0L;
         event_ = null;
       }
       return eventBuilder_;
+    }
+
+    private int acceptedResponseRevision_ ;
+    /**
+     * <code>uint32 accepted_response_revision = 2 [json_name = "acceptedResponseRevision"];</code>
+     * @return The acceptedResponseRevision.
+     */
+    @java.lang.Override
+    public int getAcceptedResponseRevision() {
+      return acceptedResponseRevision_;
+    }
+    /**
+     * <code>uint32 accepted_response_revision = 2 [json_name = "acceptedResponseRevision"];</code>
+     * @param value The acceptedResponseRevision to set.
+     * @return This builder for chaining.
+     */
+    public Builder setAcceptedResponseRevision(int value) {
+
+      acceptedResponseRevision_ = value;
+      bitField0_ |= 0x00000002;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint32 accepted_response_revision = 2 [json_name = "acceptedResponseRevision"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearAcceptedResponseRevision() {
+      bitField0_ = (bitField0_ & ~0x00000002);
+      acceptedResponseRevision_ = 0;
+      onChanged();
+      return this;
     }
     @java.lang.Override
     public final Builder setUnknownFields(

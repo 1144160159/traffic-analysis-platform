@@ -13,8 +13,9 @@ FEATURE_JOB_HOME=${FEATURE_JOB_HOME:-/opt/feature-job}
 export KAFKA_BROKERS=${KAFKA_BROKERS:-localhost:9092}
 export KAFKA_INPUT_TOPIC=${KAFKA_INPUT_TOPIC:-session.events.v1}
 export KAFKA_OUTPUT_TOPIC=${KAFKA_OUTPUT_TOPIC:-feature.stat.v1}
-export KAFKA_DLQ_TOPIC=${KAFKA_DLQ_TOPIC:-dlq.feature-job}
-export KAFKA_L2_TRIGGER_TOPIC=${KAFKA_L2_TRIGGER_TOPIC:-l2.trigger.v1}
+export KAFKA_DLQ_TOPIC=${KAFKA_DLQ_TOPIC:-dlq.v1}
+export L2_TRIGGER_ENABLED=${L2_TRIGGER_ENABLED:-false}
+export KAFKA_L2_TRIGGER_TOPIC=${KAFKA_L2_TRIGGER_TOPIC:-}
 export KAFKA_GROUP_ID=${KAFKA_GROUP_ID:-flink-feature-job}
 
 # PostgreSQL 配置
@@ -26,6 +27,8 @@ export POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
 export CLICKHOUSE_URL=${CLICKHOUSE_URL:-clickhouse:8123}
 export CLICKHOUSE_DATABASE=${CLICKHOUSE_DATABASE:-traffic}
 export CLICKHOUSE_TABLE=${CLICKHOUSE_TABLE:-feature_stat_local}
+export CLICKHOUSE_SEQUENCE_TABLE=${CLICKHOUSE_SEQUENCE_TABLE:-feature_seq_local}
+export CLICKHOUSE_FINGERPRINT_TABLE=${CLICKHOUSE_FINGERPRINT_TABLE:-feature_fp_local}
 export CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
 export CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
 
@@ -91,6 +94,7 @@ kafka.brokers=${KAFKA_BROKERS}
 kafka.input.topic=${KAFKA_INPUT_TOPIC}
 kafka.output.topic=${KAFKA_OUTPUT_TOPIC}
 kafka.dlq.topic=${KAFKA_DLQ_TOPIC}
+l2.trigger.enabled=${L2_TRIGGER_ENABLED}
 kafka.l2.trigger.topic=${KAFKA_L2_TRIGGER_TOPIC}
 kafka.group.id=${KAFKA_GROUP_ID}
 
@@ -103,6 +107,8 @@ postgres.password=${POSTGRES_PASSWORD}
 clickhouse.url=${CLICKHOUSE_URL}
 clickhouse.database=${CLICKHOUSE_DATABASE}
 clickhouse.table=${CLICKHOUSE_TABLE}
+clickhouse.sequence.table=${CLICKHOUSE_SEQUENCE_TABLE}
+clickhouse.fingerprint.table=${CLICKHOUSE_FINGERPRINT_TABLE}
 clickhouse.user=${CLICKHOUSE_USER}
 clickhouse.password=${CLICKHOUSE_PASSWORD}
 

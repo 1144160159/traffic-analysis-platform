@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * CampaignBuilderUtils 单元测试
@@ -128,9 +129,9 @@ class CampaignBuilderUtilsTest {
     @Test
     @DisplayName("构建 EventHeader 处理空租户")
     void testBuildEventHeaderWithNullTenant() {
-        EventHeader header = CampaignBuilderUtils.buildEventHeader(null, System.currentTimeMillis());
-
-        assertThat(header.getTenantId()).isEqualTo("unknown");
+		assertThatThrownBy(() -> CampaignBuilderUtils.buildEventHeader(null, System.currentTimeMillis()))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("tenant_id");
     }
 
     @Test
@@ -161,16 +162,29 @@ class CampaignBuilderUtilsTest {
                 Alert.newBuilder().setTenantId("tenant-2").build()
         );
 
-        String tenantId = CampaignBuilderUtils.getTenantId(alerts);
-        assertThat(tenantId).isEqualTo("tenant-1");
+		assertThatThrownBy(() -> CampaignBuilderUtils.getTenantId(alerts))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("multiple tenants");
     }
 
     @Test
     @DisplayName("获取租户 ID 处理空列表")
     void testGetTenantIdWithEmptyList() {
-        String tenantId = CampaignBuilderUtils.getTenantId(Arrays.asList());
-        assertThat(tenantId).isEqualTo("unknown");
+		assertThatThrownBy(() -> CampaignBuilderUtils.getTenantId(Arrays.asList()))
+				.isInstanceOf(IllegalArgumentException.class);
     }
+
+	@Test
+	@DisplayName("CEP key 同时编码租户和源 IP")
+	void testTenantSourceKey() {
+		Alert first = Alert.newBuilder().setTenantId("tenant-1").setSrcIp("192.0.2.1").build();
+		Alert second = Alert.newBuilder().setTenantId("tenant-2").setSrcIp("192.0.2.1").build();
+		assertThat(CampaignBuilderUtils.tenantSourceKey(first))
+				.isNotEqualTo(CampaignBuilderUtils.tenantSourceKey(second));
+		assertThatThrownBy(() -> CampaignBuilderUtils.tenantSourceKey(
+				Alert.newBuilder().setSrcIp("192.0.2.1").build()))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
 
     @Test
     @DisplayName("格式化时间跨度")

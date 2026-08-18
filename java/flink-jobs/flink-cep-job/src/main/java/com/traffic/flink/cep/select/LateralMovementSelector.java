@@ -24,21 +24,25 @@ import java.util.stream.Collectors;
  * 
  * 从 CEP 模式匹配结果构建 Campaign
  * 攻击阶段：初始访问 → 发现 → 横向移动
+ * 
+ * 输入为 {@link LateralMovementKeyedAlert}（扇出 key + 原始告警），
+ * 构建 Campaign 时使用原始告警；扇出造成的重复匹配由确定性 campaign_id
+ * + 下游 campaign 去重（CepJob 中按 campaignId keyed 去重）收敛。
  */
-public class LateralMovementSelector extends PatternProcessFunction<Alert, Campaign> {
+public class LateralMovementSelector extends PatternProcessFunction<LateralMovementKeyedAlert, Campaign> {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(LateralMovementSelector.class);
 
     @Override
     public void processMatch(
-            Map<String, List<Alert>> pattern,
+            Map<String, List<LateralMovementKeyedAlert>> pattern,
             Context ctx,
             Collector<Campaign> out
     ) throws Exception {
-        List<Alert> compromiseAlerts = pattern.get("compromise");
-        List<Alert> internalAlerts = pattern.get("internal_activity");
-        List<Alert> lateralAlerts = pattern.get("lateral");
+        List<Alert> compromiseAlerts = unwrap(pattern.get("compromise"));
+        List<Alert> internalAlerts = unwrap(pattern.get("internal_activity"));
+        List<Alert> lateralAlerts = unwrap(pattern.get("lateral"));
 
         if (compromiseAlerts == null || compromiseAlerts.isEmpty() || 
             lateralAlerts == null || lateralAlerts.isEmpty()) {
@@ -56,8 +60,21 @@ public class LateralMovementSelector extends PatternProcessFunction<Alert, Campa
                         campaign.getCampaignId(), lateralAlerts.size(), campaign.getScore());
             }
         } catch (Exception e) {
+            // 构建 Campaign 失败不允许静默吞掉（重放/扇出重复会经 campaign 去重收敛）
             LOG.error("Error creating lateral movement campaign: {}", e.getMessage(), e);
+            throw e;
         }
+    }
+
+    private static List<Alert> unwrap(List<LateralMovementKeyedAlert> keyed) {
+        if (keyed == null) {
+            return null;
+        }
+        List<Alert> alerts = new ArrayList<>(keyed.size());
+        for (LateralMovementKeyedAlert item : keyed) {
+            alerts.add(item.getAlert());
+        }
+        return alerts;
     }
 
     private Campaign buildCampaign(
@@ -110,10 +127,7 @@ public class LateralMovementSelector extends PatternProcessFunction<Alert, Campa
         String summary = buildSummary(compromiseAlerts, lateralAlerts, attackPath);
 
         // 提取租户信息
-        String tenantId = allAlerts.get(0).getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            tenantId = "unknown";
-        }
+		String tenantId = CampaignBuilderUtils.getTenantId(allAlerts);
 
         String eventId = DeterministicId.uuidFromSorted(
                 "flink-cep-campaign/v1", alertIds,

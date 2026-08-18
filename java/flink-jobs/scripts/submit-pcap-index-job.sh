@@ -21,6 +21,12 @@ PARALLELISM="${PARALLELISM:-2}"
 KAFKA_BROKERS="${KAFKA_BROKERS:-kafka-bootstrap.middleware.svc:9092}"
 CLICKHOUSE_URL="${CLICKHOUSE_URL:-clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123}"
 CHECKPOINT_PATH="${CHECKPOINT_PATH:-s3://flink-checkpoints/checkpoints/pcap-index-job}"
+FLINK_REST_URL="${FLINK_REST_URL:-http://${FLINK_MASTER}}"
+M02_CONSUMER_FIRST_MODE="${M02_CONSUMER_FIRST_MODE:-}"
+M02_READINESS_TIMEOUT_SEC="${M02_READINESS_TIMEOUT_SEC:-180}"
+M02_READINESS_RECEIPT_PATH="${M02_READINESS_RECEIPT_PATH:-}"
+M02_ROLLOUT_ID="${M02_ROLLOUT_ID:-}"
+M02_CANDIDATE_ID="${M02_CANDIDATE_ID:-}"
 resolve_clickhouse_password
 
 # 颜色
@@ -71,6 +77,15 @@ check_prerequisites() {
         exit 1
     fi
 
+	if [[ "${M02_CONSUMER_FIRST_MODE}" != "idle" ]]; then
+		log_error "M02_CONSUMER_FIRST_MODE must be exactly idle"
+		exit 64
+	fi
+	if [[ -z "${M02_READINESS_RECEIPT_PATH}" || "${M02_READINESS_RECEIPT_PATH}" != /* || -z "${M02_ROLLOUT_ID}" || -z "${M02_CANDIDATE_ID}" ]]; then
+		log_error "absolute readiness receipt path, rollout ID and candidate ID are required"
+		exit 64
+	fi
+
     log_info "Prerequisites check passed"
 }
 
@@ -83,35 +98,122 @@ submit_job() {
     log_info "  JAR: ${JOB_JAR}"
     log_info "  Parallelism: ${PARALLELISM}"
 
-    local cmd=""
+    local -a cmd
     
     if [[ "${local_mode}" == "true" ]]; then
-        cmd="java -cp ${JOB_JAR} ${MAIN_CLASS}"
+		log_error "local mode cannot produce a consumer-first cluster readiness receipt"
+		exit 64
     else
         if [[ -f "${FLINK_HOME}/bin/flink" ]]; then
-            cmd="${FLINK_HOME}/bin/flink run"
+			cmd=("${FLINK_HOME}/bin/flink" run)
         else
-            cmd="flink run"
+			cmd=(flink run)
         fi
 
         if [[ "${detached}" == "true" ]]; then
-            cmd="${cmd} -d"
+			cmd+=(-d)
+		else
+			log_error "consumer-first submission requires detached mode"
+			exit 64
         fi
 
-        cmd="${cmd} -m ${FLINK_MASTER}"
-        cmd="${cmd} -p ${PARALLELISM}"
-        cmd="${cmd} -c ${MAIN_CLASS}"
-        cmd="${cmd} ${JOB_JAR}"
+		cmd+=(-m "${FLINK_MASTER}" -p "${PARALLELISM}" -c "${MAIN_CLASS}" "${JOB_JAR}")
     fi
 
-    cmd="${cmd} \
-        --kafka.brokers ${KAFKA_BROKERS} \
-        --clickhouse.url ${CLICKHOUSE_URL} \
-        --checkpoint.path ${CHECKPOINT_PATH} \
-        --parallelism ${PARALLELISM}"
+	cmd+=(
+		--kafka.brokers "${KAFKA_BROKERS}"
+		--kafka.input.topic "pcap.index.v1"
+		--kafka.group.id "flink-pcap-index-job"
+		--kafka.starting.offsets "committed-or-earliest"
+		--pcap.carrier.enabled "true"
+		--kafka.canonical.dlq.topic "dlq.v1"
+		--pcap.kafka.dlq.acl.attested "true"
+		--pcap.kafka.idempotent.acl.attested "true"
+		--enable.auto.commit "false"
+		--commit.offsets.on.checkpoint "true"
+		--clickhouse.url "${CLICKHOUSE_URL}"
+		--clickhouse.database "traffic"
+		--clickhouse.table "pcap_index_v2"
+		--clickhouse.local.table "pcap_index_v2_local"
+		--checkpoint.path "${CHECKPOINT_PATH}"
+		--checkpoint.interval.ms "30000"
+		--checkpoint.timeout.ms "600000"
+		--checkpoint.min.pause.ms "15000"
+		--checkpoint.tolerable.failures "3"
+		--restart.attempts "10"
+		--restart.delay.seconds "30"
+		--parallelism "${PARALLELISM}"
+		--clickhouse.password "${CLICKHOUSE_PASSWORD}"
+	)
 
-    log_info "Executing: ${cmd} --clickhouse.password <redacted>"
-    eval "${cmd} --clickhouse.password \"\$CLICKHOUSE_PASSWORD\""
+	log_info "Executing Flink submission with redacted ClickHouse credential"
+	local submit_output job_id state deadline ready_observed_at checkpoint_id
+	submit_output="$("${cmd[@]}")"
+	printf '%s\n' "${submit_output}"
+	job_id="$(printf '%s\n' "${submit_output}" | sed -nE 's/.*JobID[[:space:]]+([0-9a-fA-F]{32}).*/\1/p' | tail -n 1)"
+	if [[ ! "${job_id}" =~ ^[0-9a-fA-F]{32}$ ]]; then
+		log_error "Flink submission did not return one valid JobID"
+		exit 1
+	fi
+
+	deadline=$((SECONDS + M02_READINESS_TIMEOUT_SEC))
+	state="UNKNOWN"
+	while (( SECONDS < deadline )); do
+		state="$(curl --fail --silent --show-error "${FLINK_REST_URL%/}/jobs/${job_id}" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("state", "UNKNOWN"))')" || state="REST_ERROR"
+		[[ "${state}" == "RUNNING" ]] && break
+		case "${state}" in FAILED|CANCELED|FINISHED|SUSPENDED)
+			log_error "PCAP consumer entered terminal state ${state}"
+			exit 1
+		esac
+		sleep 2
+	done
+	if [[ "${state}" != "RUNNING" ]]; then
+		"${cmd[0]}" cancel "${job_id}" >/dev/null 2>&1 || true
+		log_error "PCAP consumer readiness timed out; job canceled"
+		exit 1
+	fi
+	checkpoint_id=""
+	while (( SECONDS < deadline )); do
+		checkpoint_id="$(curl --fail --silent --show-error "${FLINK_REST_URL%/}/jobs/${job_id}/checkpoints" | python3 -c 'import json,sys; data=json.load(sys.stdin); latest=data.get("latest",{}).get("completed"); print("" if not latest else latest.get("id", ""))')" || checkpoint_id=""
+		[[ "${checkpoint_id}" =~ ^[0-9]+$ ]] && break
+		sleep 2
+	done
+	if [[ ! "${checkpoint_id}" =~ ^[0-9]+$ ]]; then
+		"${cmd[0]}" cancel "${job_id}" >/dev/null 2>&1 || true
+		log_error "PCAP consumer produced no completed checkpoint; job canceled"
+		exit 1
+	fi
+	ready_observed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+	export JOB_ID="${job_id}" CHECKPOINT_ID="${checkpoint_id}" READY_OBSERVED_AT="${ready_observed_at}" JOB_JAR KAFKA_BROKERS M02_READINESS_RECEIPT_PATH M02_ROLLOUT_ID M02_CANDIDATE_ID
+	python3 - <<'PY'
+import hashlib, json, os, pathlib, tempfile
+target = pathlib.Path(os.environ["M02_READINESS_RECEIPT_PATH"])
+target.parent.mkdir(parents=True, exist_ok=True)
+body = {
+    "schema_version": 1,
+    "artifact_kind": "M02_CONSUMER_READINESS_RECEIPT",
+    "rollout_id": os.environ["M02_ROLLOUT_ID"],
+    "candidate_id": os.environ["M02_CANDIDATE_ID"],
+    "consumer": "flink-pcap-index-job",
+    "job_id": os.environ["JOB_ID"],
+    "completed_checkpoint_id": int(os.environ["CHECKPOINT_ID"]),
+    "state": "RUNNING",
+    "activation": "CONSUMER_FIRST_IDLE",
+    "input_topics": ["pcap.index.v1"],
+    "output_topics": ["dlq.v1"],
+    "kafka_brokers": os.environ["KAFKA_BROKERS"],
+    "jar_sha256": hashlib.sha256(pathlib.Path(os.environ["JOB_JAR"]).read_bytes()).hexdigest(),
+    "ready_observed_at": os.environ["READY_OBSERVED_AT"],
+    "producer_enabled": False,
+}
+fd, temporary = tempfile.mkstemp(prefix=target.name + ".", dir=target.parent)
+with os.fdopen(fd, "w", encoding="utf-8") as stream:
+    json.dump(body, stream, sort_keys=True, indent=2)
+    stream.write("\n")
+os.replace(temporary, target)
+PY
+	log_info "PCAP consumer RUNNING receipt: ${M02_READINESS_RECEIPT_PATH}"
 }
 
 main() {

@@ -15,8 +15,9 @@ x-flink-common: &flink-common
     KAFKA_BROKERS: kafka:9092
     KAFKA_INPUT_TOPIC: session.events.v1
     KAFKA_OUTPUT_TOPIC: feature.stat.v1
-    KAFKA_DLQ_TOPIC: dlq.feature-job
-    KAFKA_L2_TRIGGER_TOPIC: l2.trigger.v1
+    KAFKA_DLQ_TOPIC: dlq.v1
+    L2_TRIGGER_ENABLED: "false"
+    KAFKA_L2_TRIGGER_TOPIC: ""
     KAFKA_GROUP_ID: flink-feature-job
     # PostgreSQL
     POSTGRES_URL: jdbc:postgresql://postgres:5432/traffic
@@ -26,6 +27,8 @@ x-flink-common: &flink-common
     CLICKHOUSE_URL: clickhouse:8123
     CLICKHOUSE_DATABASE: traffic
     CLICKHOUSE_TABLE: feature_stat_local
+    CLICKHOUSE_SEQUENCE_TABLE: feature_seq_local
+    CLICKHOUSE_FINGERPRINT_TABLE: feature_fp_local
     CLICKHOUSE_USER: default
     CLICKHOUSE_PASSWORD: ""
     # Checkpoint
@@ -168,10 +171,7 @@ services:
         --topic feature.stat.v1 --partitions 4 --replication-factor 1
 
       kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
-        --topic dlq.feature-job --partitions 2 --replication-factor 1
-
-      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
-        --topic l2.trigger.v1 --partitions 4 --replication-factor 1
+        --topic dlq.v1 --partitions 2 --replication-factor 1
 
       echo 'Topics created:'
       kafka-topics --bootstrap-server kafka:9092 --list

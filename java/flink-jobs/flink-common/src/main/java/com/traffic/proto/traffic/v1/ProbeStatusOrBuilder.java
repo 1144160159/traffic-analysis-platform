@@ -73,4 +73,40 @@ public interface ProbeStatusOrBuilder extends
    */
   com.traffic.proto.traffic.v1.InterfaceStatusOrBuilder getInterfacesOrBuilder(
       int index);
+
+  /**
+   * <pre>
+   * Additive authority breakdown. The legacy packets_dropped field equals
+   * capture_allocation_drops + capture_kernel_drops and excludes parser,
+   * downstream queue, and sender failures.
+   * </pre>
+   *
+   * <code>uint64 capture_allocation_drops = 11 [json_name = "captureAllocationDrops"];</code>
+   * @return The captureAllocationDrops.
+   */
+  long getCaptureAllocationDrops();
+
+  /**
+   * <code>uint64 capture_kernel_drops = 12 [json_name = "captureKernelDrops"];</code>
+   * @return The captureKernelDrops.
+   */
+  long getCaptureKernelDrops();
+
+  /**
+   * <code>uint64 capture_errors = 13 [json_name = "captureErrors"];</code>
+   * @return The captureErrors.
+   */
+  long getCaptureErrors();
+
+  /**
+   * <code>uint64 capture_bytes = 14 [json_name = "captureBytes"];</code>
+   * @return The captureBytes.
+   */
+  long getCaptureBytes();
+
+  /**
+   * <code>uint64 capture_counter_revision = 15 [json_name = "captureCounterRevision"];</code>
+   * @return The captureCounterRevision.
+   */
+  long getCaptureCounterRevision();
 }

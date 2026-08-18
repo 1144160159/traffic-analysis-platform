@@ -87,7 +87,7 @@ public class TlsFingerprintMatcher implements RuleMatcher {
             case "ja3s_fingerprint": return matchJA3S(feature, rule, conditions);
             case "tls_version":      return matchTlsVersion(feature, rule, conditions);
             case "cipher_suite":     return matchCipherSuite(feature, rule, conditions);
-            case "sni_anomaly":      return matchSniAnomaly(feature, rule, conditions);
+            case "sni_anomaly":      return matchSniAnomaly(feature, rule, conditions, context);
             default:                 return Optional.empty();
         }
     }
@@ -169,8 +169,8 @@ public class TlsFingerprintMatcher implements RuleMatcher {
         return Optional.empty();
     }
 
-    private Optional<DetectionResult> matchSniAnomaly(FeatureStat feature, Rule rule, Map<String, Object> cond) {
-        MatchContext ctx = null; // context not available here, will be null-safely handled
+    private Optional<DetectionResult> matchSniAnomaly(FeatureStat feature, Rule rule,
+                                                      Map<String, Object> cond, MatchContext context) {
         String sni = getField(feature, "tls_sni", "");
         if (sni.isEmpty()) return Optional.empty();
 
@@ -193,7 +193,7 @@ public class TlsFingerprintMatcher implements RuleMatcher {
         }
 
         // Check for SNI port mismatch (TLS on unusual port + unusual SNI)
-        int dstPort = ctx != null ? ctx.getDstPort() : 0;
+        int dstPort = context != null ? context.getDstPort() : 0;
         if (dstPort != 0 && dstPort != 443 && dstPort != 8443 && !sni.contains(":")) {
             return Optional.of(buildResult(rule, "tls.sni_anomaly", "sni_port_mismatch", 0.50f,
                     String.format("TLS on unusual port %d with SNI %s", dstPort, sni),
@@ -205,32 +205,25 @@ public class TlsFingerprintMatcher implements RuleMatcher {
 
     // ---- helpers ----
 
+    /**
+     * 从 FeatureStat 读取指定名称的字符串字段（fail-closed）。
+     *
+     * FeatureStat 当前不包含 ja3_hash/ja3s_hash/tls_version/tls_cipher/tls_sni
+     * 等 TLS 指纹字段（这些字段属于 FeatureFingerprint/L3 特征）。因此本方法
+     * 只做精确字段名匹配，字段缺失时返回默认值、匹配器不命中——禁止把缺失
+     * 当作"无异常"，也禁止用 toString() 解析猜测值。
+     */
     private String getField(FeatureStat f, String name, String def) {
-        // 从 FeatureStat 的 protobuf 字段中提取
-        // 使用 getAllFields() 反射方式 (兼容不同 proto 版本)
         try {
             Map<com.google.protobuf.Descriptors.FieldDescriptor, Object> fields = f.getAllFields();
             for (Map.Entry<com.google.protobuf.Descriptors.FieldDescriptor, Object> entry : fields.entrySet()) {
-                String fieldName = entry.getKey().getName();
-                if (fieldName != null && fieldName.startsWith(name)) {
+                if (name.equals(entry.getKey().getName())) {
                     Object val = entry.getValue();
                     return val != null ? val.toString() : def;
                 }
             }
         } catch (Exception e) {
             LOG.trace("getField via reflection failed: {}", e.getMessage());
-        }
-        // 尝试从 toString 解析
-        try {
-            String str = f.toString();
-            if (str.contains(name + ":")) {
-                int start = str.indexOf(name + ":") + name.length() + 1;
-                int end = str.indexOf("\n", start);
-                if (end < 0) end = Math.min(start + 64, str.length());
-                return str.substring(start, end).trim();
-            }
-        } catch (Exception e) {
-            LOG.trace("getField via toString failed: {}", e.getMessage());
         }
         return def;
     }
@@ -239,7 +232,7 @@ public class TlsFingerprintMatcher implements RuleMatcher {
                                          float score, String summary, String... evidenceKVs) {
         DetectionResult.Builder b = DetectionResult.builder()
                 .ruleId(rule.getRuleId()).ruleName(rule.getName())
-                .ruleType(RuleType.CUSTOM)
+                .ruleType(rule.getType())
                 .addLabel(detectionType).addLabel(label)
                 .score(score)
                 .addEvidence("summary", summary);

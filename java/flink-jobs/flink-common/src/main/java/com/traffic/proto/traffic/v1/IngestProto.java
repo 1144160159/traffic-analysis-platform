@@ -26,6 +26,11 @@ public final class IngestProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_UploadFlowsResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_FlowItemResult_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_FlowItemResult_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_StreamFlowsRequest_descriptor;
   static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -56,6 +61,21 @@ public final class IngestProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_UploadPcapIndexResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_UploadAssetBindingsRequest_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_UploadAssetBindingsRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_AssetBindingItemResult_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_AssetBindingItemResult_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_UploadAssetBindingsResponse_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_UploadAssetBindingsResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_HeartbeatRequest_descriptor;
   static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -75,6 +95,11 @@ public final class IngestProto {
   static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_ProbeOperationAck_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_ProbeGroupReadinessReceiptV1_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_ProbeGroupReadinessReceiptV1_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_RegisterProbeRequest_descriptor;
   static final
@@ -131,17 +156,33 @@ public final class IngestProto {
     java.lang.String[] descriptorData = {
       "\n\027traffic/v1/ingest.proto\022\ntraffic.v1\032\025t" +
       "raffic/v1/flow.proto\032\030traffic/v1/session" +
-      ".proto\032\025traffic/v1/pcap.proto\"e\n\022UploadF" +
-      "lowsRequest\022-\n\006events\030\001 \003(\0132\025.traffic.v1" +
-      ".FlowEventR\006events\022 \n\013compression\030\002 \001(\tR" +
-      "\013compression\"\212\001\n\023UploadFlowsResponse\022\032\n\010" +
-      "accepted\030\001 \001(\005R\010accepted\022\032\n\010rejected\030\002 \001" +
-      "(\005R\010rejected\022!\n\014rejected_ids\030\003 \003(\tR\013reje" +
-      "ctedIds\022\030\n\007message\030\004 \001(\tR\007message\"A\n\022Str" +
-      "eamFlowsRequest\022+\n\005event\030\001 \001(\0132\025.traffic" +
-      ".v1.FlowEventR\005event\"b\n\023StreamFlowsRespo" +
-      "nse\022\031\n\010event_id\030\001 \001(\tR\007eventId\022\032\n\010accept" +
-      "ed\030\002 \001(\010R\010accepted\022\024\n\005error\030\003 \001(\tR\005error" +
+      ".proto\032\025traffic/v1/pcap.proto\032\026traffic/v" +
+      "1/asset.proto\"\243\001\n\022UploadFlowsRequest\022-\n\006" +
+      "events\030\001 \003(\0132\025.traffic.v1.FlowEventR\006eve" +
+      "nts\022 \n\013compression\030\002 \001(\tR\013compression\022<\n" +
+      "\032accepted_response_revision\030\003 \001(\rR\030accep" +
+      "tedResponseRevision\"\366\001\n\023UploadFlowsRespo" +
+      "nse\022\032\n\010accepted\030\001 \001(\005R\010accepted\022\032\n\010rejec" +
+      "ted\030\002 \001(\005R\010rejected\022!\n\014rejected_ids\030\003 \003(" +
+      "\tR\013rejectedIds\022\030\n\007message\030\004 \001(\tR\007message" +
+      "\022=\n\014item_results\030\005 \003(\0132\032.traffic.v1.Flow" +
+      "ItemResultR\013itemResults\022+\n\021response_revi" +
+      "sion\030\006 \001(\rR\020responseRevision\"\315\001\n\016FlowIte" +
+      "mResult\022\037\n\013input_index\030\001 \001(\rR\ninputIndex" +
+      "\022\031\n\010event_id\030\002 \001(\tR\007eventId\022A\n\013dispositi" +
+      "on\030\003 \001(\0162\037.traffic.v1.FlowItemDispositio" +
+      "nR\013disposition\022\037\n\013reason_code\030\004 \001(\tR\nrea" +
+      "sonCode\022\033\n\tack_scope\030\005 \001(\tR\010ackScope\"\177\n\022" +
+      "StreamFlowsRequest\022+\n\005event\030\001 \001(\0132\025.traf" +
+      "fic.v1.FlowEventR\005event\022<\n\032accepted_resp" +
+      "onse_revision\030\002 \001(\rR\030acceptedResponseRev" +
+      "ision\"\220\002\n\023StreamFlowsResponse\022\031\n\010event_i" +
+      "d\030\001 \001(\tR\007eventId\022\032\n\010accepted\030\002 \001(\010R\010acce" +
+      "pted\022\024\n\005error\030\003 \001(\tR\005error\022A\n\013dispositio" +
+      "n\030\004 \001(\0162\037.traffic.v1.FlowItemDisposition" +
+      "R\013disposition\022\037\n\013reason_code\030\005 \001(\tR\nreas" +
+      "onCode\022\033\n\tack_scope\030\006 \001(\tR\010ackScope\022+\n\021r" +
+      "esponse_revision\030\007 \001(\rR\020responseRevision" +
       "\"o\n\025UploadSessionsRequest\0224\n\010sessions\030\001 " +
       "\003(\0132\030.traffic.v1.SessionEventR\010sessions\022" +
       " \n\013compression\030\002 \001(\tR\013compression\"\215\001\n\026Up" +
@@ -152,111 +193,169 @@ public final class IngestProto {
       "est\022/\n\005index\030\001 \001(\0132\031.traffic.v1.PcapInde" +
       "xMetaR\005index\"M\n\027UploadPcapIndexResponse\022" +
       "\030\n\007success\030\001 \001(\010R\007success\022\030\n\007message\030\002 \001" +
-      "(\tR\007message\"\301\001\n\020HeartbeatRequest\022\033\n\ttena" +
-      "nt_id\030\001 \001(\tR\010tenantId\022\031\n\010probe_id\030\002 \001(\tR" +
-      "\007probeId\022/\n\006status\030\003 \001(\0132\027.traffic.v1.Pr" +
-      "obeStatusR\006status\022D\n\016operation_acks\030\004 \003(" +
-      "\0132\035.traffic.v1.ProbeOperationAckR\roperat" +
-      "ionAcks\"\343\001\n\021HeartbeatResponse\022\016\n\002ok\030\001 \001(" +
-      "\010R\002ok\022/\n\006config\030\002 \001(\0132\027.traffic.v1.Probe" +
-      "ConfigR\006config\022P\n\022operation_commands\030\003 \003" +
-      "(\0132!.traffic.v1.ProbeOperationCommandR\021o" +
-      "perationCommands\022;\n\032accepted_ack_operati" +
-      "on_ids\030\004 \003(\tR\027acceptedAckOperationIds\"\215\003" +
-      "\n\025ProbeOperationCommand\022\031\n\010event_id\030\001 \001(" +
-      "\tR\007eventId\022\033\n\ttenant_id\030\002 \001(\tR\010tenantId\022" +
-      "\031\n\010probe_id\030\003 \001(\tR\007probeId\022!\n\014operation_" +
-      "id\030\004 \001(\tR\013operationId\022%\n\016operation_type\030" +
-      "\005 \001(\tR\roperationType\022)\n\020command_revision" +
-      "\030\006 \001(\003R\017commandRevision\022\'\n\017desired_versi" +
-      "on\030\007 \001(\tR\016desiredVersion\022!\n\014command_hash" +
-      "\030\010 \001(\tR\013commandHash\022\"\n\rexpires_at_ms\030\t \001" +
-      "(\003R\013expiresAtMs\022\031\n\010trace_id\030\n \001(\tR\007trace" +
-      "Id\022!\n\014command_json\030\013 \001(\014R\013commandJson\"\325\002" +
-      "\n\021ProbeOperationAck\022!\n\014operation_id\030\001 \001(" +
-      "\tR\013operationId\022)\n\020command_revision\030\002 \001(\003" +
-      "R\017commandRevision\022)\n\020reported_version\030\003 " +
-      "\001(\tR\017reportedVersion\022#\n\rreported_hash\030\004 " +
-      "\001(\tR\014reportedHash\022#\n\ragent_version\030\005 \001(\t" +
-      "R\014agentVersion\022\030\n\007applied\030\006 \001(\010R\007applied" +
-      "\022\024\n\005error\030\007 \001(\tR\005error\022,\n\022acknowledged_a" +
-      "t_ms\030\010 \001(\003R\020acknowledgedAtMs\022\037\n\013detail_j" +
-      "son\030\t \001(\014R\ndetailJson\"\373\001\n\024RegisterProbeR" +
-      "equest\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\031\n\010p" +
-      "robe_id\030\002 \001(\tR\007probeId\0224\n\010hardware\030\003 \001(\013" +
-      "2\030.traffic.v1.HardwareInfoR\010hardware\022)\n\020" +
-      "software_version\030\004 \001(\tR\017softwareVersion\022" +
-      "!\n\014build_commit\030\005 \001(\tR\013buildCommit\022\'\n\017bu" +
-      "ild_timestamp\030\006 \001(\003R\016buildTimestamp\"\213\001\n\025" +
-      "RegisterProbeResponse\022\030\n\007success\030\001 \001(\010R\007" +
-      "success\022\030\n\007message\030\002 \001(\tR\007message\022>\n\016ini" +
-      "tial_config\030\003 \001(\0132\027.traffic.v1.ProbeConf" +
-      "igR\rinitialConfig\"\305\002\n\013ProbeStatus\022\033\n\tcpu" +
-      "_usage\030\001 \001(\002R\010cpuUsage\022!\n\014memory_usage\030\002" +
-      " \001(\002R\013memoryUsage\022\037\n\013capture_pps\030\003 \001(\004R\n" +
-      "capturePps\022\035\n\nupload_bps\030\004 \001(\004R\tuploadBp" +
-      "s\022)\n\020packets_captured\030\005 \001(\004R\017packetsCapt" +
-      "ured\022\'\n\017packets_dropped\030\006 \001(\004R\016packetsDr" +
-      "opped\022%\n\016uptime_seconds\030\007 \001(\003R\ruptimeSec" +
-      "onds\022;\n\ninterfaces\030\n \003(\0132\033.traffic.v1.In" +
-      "terfaceStatusR\ninterfaces\"\356\002\n\017InterfaceS" +
-      "tatus\022\022\n\004name\030\001 \001(\tR\004name\022\027\n\007link_up\030\002 \001" +
-      "(\010R\006linkUp\022\035\n\nspeed_mbps\030\003 \001(\004R\tspeedMbp" +
-      "s\022\035\n\nrx_packets\030\004 \001(\004R\trxPackets\022\035\n\ntx_p" +
-      "ackets\030\005 \001(\004R\ttxPackets\022\031\n\010rx_bytes\030\006 \001(" +
-      "\004R\007rxBytes\022\031\n\010tx_bytes\030\007 \001(\004R\007txBytes\022\033\n" +
-      "\trx_errors\030\010 \001(\004R\010rxErrors\022\033\n\ttx_errors\030" +
-      "\t \001(\004R\010txErrors\022\"\n\rrx_crc_errors\030\n \001(\004R\013" +
-      "rxCrcErrors\022\035\n\nrx_dropped\030\013 \001(\004R\trxDropp" +
-      "ed\022\036\n\ncollisions\030\014 \001(\004R\ncollisions\"\275\003\n\013P" +
-      "robeConfig\022%\n\016config_version\030\001 \001(\tR\rconf" +
-      "igVersion\022\037\n\013sample_rate\030\002 \001(\002R\nsampleRa" +
-      "te\022\035\n\nbpf_filter\030\003 \001(\tR\tbpfFilter\022(\n\020idl" +
-      "e_timeout_sec\030\004 \001(\rR\016idleTimeoutSec\022,\n\022a" +
-      "ctive_timeout_sec\030\005 \001(\rR\020activeTimeoutSe" +
-      "c\022\035\n\nbatch_size\030\006 \001(\rR\tbatchSize\022.\n\023feat" +
-      "ure_set_version\030\007 \001(\tR\021featureSetVersion" +
-      "\022A\n\nnic_config\030\n \001(\0132\".traffic.v1.Networ" +
-      "kInterfaceConfigR\tnicConfig\022(\n\020ring_buff" +
-      "er_size\030\013 \001(\rR\016ringBufferSize\0223\n\026batch_d" +
-      "rain_timeout_ms\030\014 \001(\rR\023batchDrainTimeout" +
-      "Ms\"\235\002\n\026NetworkInterfaceConfig\022%\n\016interfa" +
-      "ce_name\030\001 \001(\tR\rinterfaceName\022)\n\020promiscu" +
-      "ous_mode\030\002 \001(\010R\017promiscuousMode\022\037\n\013bpf_f" +
-      "ilters\030\003 \003(\tR\nbpfFilters\022-\n\023ring_buffer_" +
-      "size_mb\030\004 \001(\rR\020ringBufferSizeMb\022\037\n\013drive" +
-      "r_mode\030\005 \001(\tR\ndriverMode\022@\n\014cpu_affinity" +
-      "\030\006 \001(\0132\035.traffic.v1.CPUAffinityConfigR\013c" +
-      "puAffinity\"O\n\021CPUAffinityConfig\022\033\n\tcpu_c" +
-      "ores\030\001 \003(\rR\010cpuCores\022\035\n\nnuma_aware\030\002 \001(\010" +
-      "R\tnumaAware\"\251\001\n\014HardwareInfo\022\033\n\tcpu_mode" +
-      "l\030\001 \001(\tR\010cpuModel\022\033\n\tcpu_cores\030\002 \001(\rR\010cp" +
-      "uCores\022\033\n\tmemory_mb\030\003 \001(\004R\010memoryMb\022\035\n\no" +
-      "s_version\030\004 \001(\tR\tosVersion\022#\n\004nics\030\005 \003(\013" +
-      "2\017.traffic.v1.NICR\004nics\"\271\001\n\003NIC\022\022\n\004name\030" +
-      "\001 \001(\tR\004name\022\037\n\013mac_address\030\002 \001(\tR\nmacAdd" +
-      "ress\022\037\n\013pci_address\030\003 \001(\tR\npciAddress\022\026\n" +
-      "\006driver\030\004 \001(\tR\006driver\022\035\n\nspeed_mbps\030\005 \001(" +
-      "\004R\tspeedMbps\022%\n\016driver_version\030\006 \001(\tR\rdr" +
-      "iverVersion2\210\004\n\rIngestService\022N\n\013UploadF" +
-      "lows\022\036.traffic.v1.UploadFlowsRequest\032\037.t" +
-      "raffic.v1.UploadFlowsResponse\022R\n\013StreamF" +
-      "lows\022\036.traffic.v1.StreamFlowsRequest\032\037.t" +
-      "raffic.v1.StreamFlowsResponse(\0010\001\022W\n\016Upl" +
-      "oadSessions\022!.traffic.v1.UploadSessionsR" +
-      "equest\032\".traffic.v1.UploadSessionsRespon" +
-      "se\022Z\n\017UploadPcapIndex\022\".traffic.v1.Uploa" +
-      "dPcapIndexRequest\032#.traffic.v1.UploadPca" +
-      "pIndexResponse\022H\n\tHeartbeat\022\034.traffic.v1" +
-      ".HeartbeatRequest\032\035.traffic.v1.Heartbeat" +
-      "Response\022T\n\rRegisterProbe\022 .traffic.v1.R" +
-      "egisterProbeRequest\032!.traffic.v1.Registe" +
-      "rProbeResponseB\325\001\n\034com.traffic.proto.tra" +
-      "ffic.v1B\013IngestProtoP\001Z_github.com/11441" +
-      "60159/traffic-analysis-platform/go/contr" +
-      "ol-plane/pkg/proto/traffic/v1;trafficv1\242" +
-      "\002\003TXX\252\002\nTraffic.V1\312\002\nTraffic\\V1\342\002\026Traffi" +
-      "c\\V1\\GPBMetadata\352\002\013Traffic::V1b\006proto3"
+      "(\tR\007message\"\310\001\n\032UploadAssetBindingsReque" +
+      "st\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\031\n\010probe" +
+      "_id\030\002 \001(\tR\007probeId\0224\n\010bindings\030\003 \003(\0132\030.t" +
+      "raffic.v1.MacIpBindingR\010bindings\022<\n\032acce" +
+      "pted_response_revision\030\004 \001(\rR\030acceptedRe" +
+      "sponseRevision\"\351\001\n\026AssetBindingItemResul" +
+      "t\022\037\n\013input_index\030\001 \001(\rR\ninputIndex\022%\n\016ob" +
+      "servation_id\030\002 \001(\tR\robservationId\022I\n\013dis" +
+      "position\030\003 \001(\0162\'.traffic.v1.AssetBinding" +
+      "ItemDispositionR\013disposition\022\037\n\013reason_c" +
+      "ode\030\004 \001(\tR\nreasonCode\022\033\n\tack_scope\030\005 \001(\t" +
+      "R\010ackScope\"\343\001\n\033UploadAssetBindingsRespon" +
+      "se\022\032\n\010accepted\030\001 \001(\005R\010accepted\022\032\n\010reject" +
+      "ed\030\002 \001(\005R\010rejected\022E\n\014item_results\030\003 \003(\013" +
+      "2\".traffic.v1.AssetBindingItemResultR\013it" +
+      "emResults\022+\n\021response_revision\030\004 \001(\rR\020re" +
+      "sponseRevision\022\030\n\007message\030\005 \001(\tR\007message" +
+      "\"\301\001\n\020HeartbeatRequest\022\033\n\ttenant_id\030\001 \001(\t" +
+      "R\010tenantId\022\031\n\010probe_id\030\002 \001(\tR\007probeId\022/\n" +
+      "\006status\030\003 \001(\0132\027.traffic.v1.ProbeStatusR\006" +
+      "status\022D\n\016operation_acks\030\004 \003(\0132\035.traffic" +
+      ".v1.ProbeOperationAckR\roperationAcks\"\343\001\n" +
+      "\021HeartbeatResponse\022\016\n\002ok\030\001 \001(\010R\002ok\022/\n\006co" +
+      "nfig\030\002 \001(\0132\027.traffic.v1.ProbeConfigR\006con" +
+      "fig\022P\n\022operation_commands\030\003 \003(\0132!.traffi" +
+      "c.v1.ProbeOperationCommandR\021operationCom" +
+      "mands\022;\n\032accepted_ack_operation_ids\030\004 \003(" +
+      "\tR\027acceptedAckOperationIds\"\215\003\n\025ProbeOper" +
+      "ationCommand\022\031\n\010event_id\030\001 \001(\tR\007eventId\022" +
+      "\033\n\ttenant_id\030\002 \001(\tR\010tenantId\022\031\n\010probe_id" +
+      "\030\003 \001(\tR\007probeId\022!\n\014operation_id\030\004 \001(\tR\013o" +
+      "perationId\022%\n\016operation_type\030\005 \001(\tR\roper" +
+      "ationType\022)\n\020command_revision\030\006 \001(\003R\017com" +
+      "mandRevision\022\'\n\017desired_version\030\007 \001(\tR\016d" +
+      "esiredVersion\022!\n\014command_hash\030\010 \001(\tR\013com" +
+      "mandHash\022\"\n\rexpires_at_ms\030\t \001(\003R\013expires" +
+      "AtMs\022\031\n\010trace_id\030\n \001(\tR\007traceId\022!\n\014comma" +
+      "nd_json\030\013 \001(\014R\013commandJson\"\325\002\n\021ProbeOper" +
+      "ationAck\022!\n\014operation_id\030\001 \001(\tR\013operatio" +
+      "nId\022)\n\020command_revision\030\002 \001(\003R\017commandRe" +
+      "vision\022)\n\020reported_version\030\003 \001(\tR\017report" +
+      "edVersion\022#\n\rreported_hash\030\004 \001(\tR\014report" +
+      "edHash\022#\n\ragent_version\030\005 \001(\tR\014agentVers" +
+      "ion\022\030\n\007applied\030\006 \001(\010R\007applied\022\024\n\005error\030\007" +
+      " \001(\tR\005error\022,\n\022acknowledged_at_ms\030\010 \001(\003R" +
+      "\020acknowledgedAtMs\022\037\n\013detail_json\030\t \001(\014R\n" +
+      "detailJson\"\252\003\n\034ProbeGroupReadinessReceip" +
+      "tV1\022\035\n\nreceipt_id\030\001 \001(\tR\treceiptId\022%\n\016co" +
+      "nsumer_group\030\002 \001(\tR\rconsumerGroup\022%\n\016obs" +
+      "erved_topic\030\003 \001(\tR\robservedTopic\022\033\n\tmemb" +
+      "er_id\030\004 \001(\tR\010memberId\022#\n\rgeneration_id\030\005" +
+      " \001(\005R\014generationId\022\037\n\013owner_epoch\030\006 \001(\003R" +
+      "\nownerEpoch\022<\n\005state\030\007 \001(\0162&.traffic.v1." +
+      "ProbeGroupReadinessStateV1R\005state\022$\n\016obs" +
+      "erved_at_ms\030\010 \001(\003R\014observedAtMs\022\"\n\rexpir" +
+      "es_at_ms\030\t \001(\003R\013expiresAtMs\0222\n\025publisher" +
+      "_instance_id\030\n \001(\tR\023publisherInstanceId\"" +
+      "\373\001\n\024RegisterProbeRequest\022\033\n\ttenant_id\030\001 " +
+      "\001(\tR\010tenantId\022\031\n\010probe_id\030\002 \001(\tR\007probeId" +
+      "\0224\n\010hardware\030\003 \001(\0132\030.traffic.v1.Hardware" +
+      "InfoR\010hardware\022)\n\020software_version\030\004 \001(\t" +
+      "R\017softwareVersion\022!\n\014build_commit\030\005 \001(\tR" +
+      "\013buildCommit\022\'\n\017build_timestamp\030\006 \001(\003R\016b" +
+      "uildTimestamp\"\213\001\n\025RegisterProbeResponse\022" +
+      "\030\n\007success\030\001 \001(\010R\007success\022\030\n\007message\030\002 \001" +
+      "(\tR\007message\022>\n\016initial_config\030\003 \001(\0132\027.tr" +
+      "affic.v1.ProbeConfigR\rinitialConfig\"\267\004\n\013" +
+      "ProbeStatus\022\033\n\tcpu_usage\030\001 \001(\002R\010cpuUsage" +
+      "\022!\n\014memory_usage\030\002 \001(\002R\013memoryUsage\022\037\n\013c" +
+      "apture_pps\030\003 \001(\004R\ncapturePps\022\035\n\nupload_b" +
+      "ps\030\004 \001(\004R\tuploadBps\022)\n\020packets_captured\030" +
+      "\005 \001(\004R\017packetsCaptured\022\'\n\017packets_droppe" +
+      "d\030\006 \001(\004R\016packetsDropped\022%\n\016uptime_second" +
+      "s\030\007 \001(\003R\ruptimeSeconds\022;\n\ninterfaces\030\n \003" +
+      "(\0132\033.traffic.v1.InterfaceStatusR\ninterfa" +
+      "ces\0228\n\030capture_allocation_drops\030\013 \001(\004R\026c" +
+      "aptureAllocationDrops\0220\n\024capture_kernel_" +
+      "drops\030\014 \001(\004R\022captureKernelDrops\022%\n\016captu" +
+      "re_errors\030\r \001(\004R\rcaptureErrors\022#\n\rcaptur" +
+      "e_bytes\030\016 \001(\004R\014captureBytes\0228\n\030capture_c" +
+      "ounter_revision\030\017 \001(\004R\026captureCounterRev" +
+      "ision\"\356\002\n\017InterfaceStatus\022\022\n\004name\030\001 \001(\tR" +
+      "\004name\022\027\n\007link_up\030\002 \001(\010R\006linkUp\022\035\n\nspeed_" +
+      "mbps\030\003 \001(\004R\tspeedMbps\022\035\n\nrx_packets\030\004 \001(" +
+      "\004R\trxPackets\022\035\n\ntx_packets\030\005 \001(\004R\ttxPack" +
+      "ets\022\031\n\010rx_bytes\030\006 \001(\004R\007rxBytes\022\031\n\010tx_byt" +
+      "es\030\007 \001(\004R\007txBytes\022\033\n\trx_errors\030\010 \001(\004R\010rx" +
+      "Errors\022\033\n\ttx_errors\030\t \001(\004R\010txErrors\022\"\n\rr" +
+      "x_crc_errors\030\n \001(\004R\013rxCrcErrors\022\035\n\nrx_dr" +
+      "opped\030\013 \001(\004R\trxDropped\022\036\n\ncollisions\030\014 \001" +
+      "(\004R\ncollisions\"\275\003\n\013ProbeConfig\022%\n\016config" +
+      "_version\030\001 \001(\tR\rconfigVersion\022\037\n\013sample_" +
+      "rate\030\002 \001(\002R\nsampleRate\022\035\n\nbpf_filter\030\003 \001" +
+      "(\tR\tbpfFilter\022(\n\020idle_timeout_sec\030\004 \001(\rR" +
+      "\016idleTimeoutSec\022,\n\022active_timeout_sec\030\005 " +
+      "\001(\rR\020activeTimeoutSec\022\035\n\nbatch_size\030\006 \001(" +
+      "\rR\tbatchSize\022.\n\023feature_set_version\030\007 \001(" +
+      "\tR\021featureSetVersion\022A\n\nnic_config\030\n \001(\013" +
+      "2\".traffic.v1.NetworkInterfaceConfigR\tni" +
+      "cConfig\022(\n\020ring_buffer_size\030\013 \001(\rR\016ringB" +
+      "ufferSize\0223\n\026batch_drain_timeout_ms\030\014 \001(" +
+      "\rR\023batchDrainTimeoutMs\"\235\002\n\026NetworkInterf" +
+      "aceConfig\022%\n\016interface_name\030\001 \001(\tR\rinter" +
+      "faceName\022)\n\020promiscuous_mode\030\002 \001(\010R\017prom" +
+      "iscuousMode\022\037\n\013bpf_filters\030\003 \003(\tR\nbpfFil" +
+      "ters\022-\n\023ring_buffer_size_mb\030\004 \001(\rR\020ringB" +
+      "ufferSizeMb\022\037\n\013driver_mode\030\005 \001(\tR\ndriver" +
+      "Mode\022@\n\014cpu_affinity\030\006 \001(\0132\035.traffic.v1." +
+      "CPUAffinityConfigR\013cpuAffinity\"O\n\021CPUAff" +
+      "inityConfig\022\033\n\tcpu_cores\030\001 \003(\rR\010cpuCores" +
+      "\022\035\n\nnuma_aware\030\002 \001(\010R\tnumaAware\"\251\001\n\014Hard" +
+      "wareInfo\022\033\n\tcpu_model\030\001 \001(\tR\010cpuModel\022\033\n" +
+      "\tcpu_cores\030\002 \001(\rR\010cpuCores\022\033\n\tmemory_mb\030" +
+      "\003 \001(\004R\010memoryMb\022\035\n\nos_version\030\004 \001(\tR\tosV" +
+      "ersion\022#\n\004nics\030\005 \003(\0132\017.traffic.v1.NICR\004n" +
+      "ics\"\271\001\n\003NIC\022\022\n\004name\030\001 \001(\tR\004name\022\037\n\013mac_a" +
+      "ddress\030\002 \001(\tR\nmacAddress\022\037\n\013pci_address\030" +
+      "\003 \001(\tR\npciAddress\022\026\n\006driver\030\004 \001(\tR\006drive" +
+      "r\022\035\n\nspeed_mbps\030\005 \001(\004R\tspeedMbps\022%\n\016driv" +
+      "er_version\030\006 \001(\tR\rdriverVersion*\216\002\n\023Flow" +
+      "ItemDisposition\022%\n!FLOW_ITEM_DISPOSITION" +
+      "_UNSPECIFIED\020\000\022%\n!FLOW_ITEM_DISPOSITION_" +
+      "KAFKA_ACKED\020\001\022-\n)FLOW_ITEM_DISPOSITION_D" +
+      "UPLICATE_COMMITTED\020\002\022*\n&FLOW_ITEM_DISPOS" +
+      "ITION_REJECTED_INVALID\020\003\022#\n\037FLOW_ITEM_DI" +
+      "SPOSITION_RETRYABLE\020\004\022)\n%FLOW_ITEM_DISPO" +
+      "SITION_OUTCOME_UNKNOWN\020\005*\314\002\n\033AssetBindin" +
+      "gItemDisposition\022.\n*ASSET_BINDING_ITEM_D" +
+      "ISPOSITION_UNSPECIFIED\020\000\022.\n*ASSET_BINDIN" +
+      "G_ITEM_DISPOSITION_KAFKA_ACKED\020\001\0226\n2ASSE" +
+      "T_BINDING_ITEM_DISPOSITION_DUPLICATE_COM" +
+      "MITTED\020\002\0223\n/ASSET_BINDING_ITEM_DISPOSITI" +
+      "ON_REJECTED_INVALID\020\003\022,\n(ASSET_BINDING_I" +
+      "TEM_DISPOSITION_RETRYABLE\020\004\0222\n.ASSET_BIN" +
+      "DING_ITEM_DISPOSITION_OUTCOME_UNKNOWN\020\005*" +
+      "\373\001\n\032ProbeGroupReadinessStateV1\022.\n*PROBE_" +
+      "GROUP_READINESS_STATE_V1_UNSPECIFIED\020\000\022+" +
+      "\n\'PROBE_GROUP_READINESS_STATE_V1_ASSIGNE" +
+      "D\020\001\022(\n$PROBE_GROUP_READINESS_STATE_V1_RE" +
+      "ADY\020\002\022*\n&PROBE_GROUP_READINESS_STATE_V1_" +
+      "REVOKED\020\003\022*\n&PROBE_GROUP_READINESS_STATE" +
+      "_V1_STOPPED\020\0042\360\004\n\rIngestService\022N\n\013Uploa" +
+      "dFlows\022\036.traffic.v1.UploadFlowsRequest\032\037" +
+      ".traffic.v1.UploadFlowsResponse\022R\n\013Strea" +
+      "mFlows\022\036.traffic.v1.StreamFlowsRequest\032\037" +
+      ".traffic.v1.StreamFlowsResponse(\0010\001\022W\n\016U" +
+      "ploadSessions\022!.traffic.v1.UploadSession" +
+      "sRequest\032\".traffic.v1.UploadSessionsResp" +
+      "onse\022Z\n\017UploadPcapIndex\022\".traffic.v1.Upl" +
+      "oadPcapIndexRequest\032#.traffic.v1.UploadP" +
+      "capIndexResponse\022f\n\023UploadAssetBindings\022" +
+      "&.traffic.v1.UploadAssetBindingsRequest\032" +
+      "\'.traffic.v1.UploadAssetBindingsResponse" +
+      "\022H\n\tHeartbeat\022\034.traffic.v1.HeartbeatRequ" +
+      "est\032\035.traffic.v1.HeartbeatResponse\022T\n\rRe" +
+      "gisterProbe\022 .traffic.v1.RegisterProbeRe" +
+      "quest\032!.traffic.v1.RegisterProbeResponse" +
+      "B\325\001\n\034com.traffic.proto.traffic.v1B\013Inges" +
+      "tProtoP\001Z_github.com/1144160159/traffic-" +
+      "analysis-platform/go/control-plane/pkg/p" +
+      "roto/traffic/v1;trafficv1\242\002\003TXX\252\002\nTraffi" +
+      "c.V1\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetada" +
+      "ta\352\002\013Traffic::V1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -264,129 +363,160 @@ public final class IngestProto {
           com.traffic.proto.traffic.v1.FlowProto.getDescriptor(),
           com.traffic.proto.traffic.v1.SessionProto.getDescriptor(),
           com.traffic.proto.traffic.v1.PcapProto.getDescriptor(),
+          com.traffic.proto.traffic.v1.AssetProto.getDescriptor(),
         });
     internal_static_traffic_v1_UploadFlowsRequest_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_traffic_v1_UploadFlowsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_UploadFlowsRequest_descriptor,
-        new java.lang.String[] { "Events", "Compression", });
+        new java.lang.String[] { "Events", "Compression", "AcceptedResponseRevision", });
     internal_static_traffic_v1_UploadFlowsResponse_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_traffic_v1_UploadFlowsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_UploadFlowsResponse_descriptor,
-        new java.lang.String[] { "Accepted", "Rejected", "RejectedIds", "Message", });
-    internal_static_traffic_v1_StreamFlowsRequest_descriptor =
+        new java.lang.String[] { "Accepted", "Rejected", "RejectedIds", "Message", "ItemResults", "ResponseRevision", });
+    internal_static_traffic_v1_FlowItemResult_descriptor =
       getDescriptor().getMessageTypes().get(2);
+    internal_static_traffic_v1_FlowItemResult_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_FlowItemResult_descriptor,
+        new java.lang.String[] { "InputIndex", "EventId", "Disposition", "ReasonCode", "AckScope", });
+    internal_static_traffic_v1_StreamFlowsRequest_descriptor =
+      getDescriptor().getMessageTypes().get(3);
     internal_static_traffic_v1_StreamFlowsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_StreamFlowsRequest_descriptor,
-        new java.lang.String[] { "Event", });
+        new java.lang.String[] { "Event", "AcceptedResponseRevision", });
     internal_static_traffic_v1_StreamFlowsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_traffic_v1_StreamFlowsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_StreamFlowsResponse_descriptor,
-        new java.lang.String[] { "EventId", "Accepted", "Error", });
+        new java.lang.String[] { "EventId", "Accepted", "Error", "Disposition", "ReasonCode", "AckScope", "ResponseRevision", });
     internal_static_traffic_v1_UploadSessionsRequest_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_traffic_v1_UploadSessionsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_UploadSessionsRequest_descriptor,
         new java.lang.String[] { "Sessions", "Compression", });
     internal_static_traffic_v1_UploadSessionsResponse_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_traffic_v1_UploadSessionsResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_UploadSessionsResponse_descriptor,
         new java.lang.String[] { "Accepted", "Rejected", "RejectedIds", "Message", });
     internal_static_traffic_v1_UploadPcapIndexRequest_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_traffic_v1_UploadPcapIndexRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_UploadPcapIndexRequest_descriptor,
         new java.lang.String[] { "Index", });
     internal_static_traffic_v1_UploadPcapIndexResponse_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_traffic_v1_UploadPcapIndexResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_UploadPcapIndexResponse_descriptor,
         new java.lang.String[] { "Success", "Message", });
+    internal_static_traffic_v1_UploadAssetBindingsRequest_descriptor =
+      getDescriptor().getMessageTypes().get(9);
+    internal_static_traffic_v1_UploadAssetBindingsRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_UploadAssetBindingsRequest_descriptor,
+        new java.lang.String[] { "TenantId", "ProbeId", "Bindings", "AcceptedResponseRevision", });
+    internal_static_traffic_v1_AssetBindingItemResult_descriptor =
+      getDescriptor().getMessageTypes().get(10);
+    internal_static_traffic_v1_AssetBindingItemResult_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_AssetBindingItemResult_descriptor,
+        new java.lang.String[] { "InputIndex", "ObservationId", "Disposition", "ReasonCode", "AckScope", });
+    internal_static_traffic_v1_UploadAssetBindingsResponse_descriptor =
+      getDescriptor().getMessageTypes().get(11);
+    internal_static_traffic_v1_UploadAssetBindingsResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_UploadAssetBindingsResponse_descriptor,
+        new java.lang.String[] { "Accepted", "Rejected", "ItemResults", "ResponseRevision", "Message", });
     internal_static_traffic_v1_HeartbeatRequest_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_traffic_v1_HeartbeatRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_HeartbeatRequest_descriptor,
         new java.lang.String[] { "TenantId", "ProbeId", "Status", "OperationAcks", });
     internal_static_traffic_v1_HeartbeatResponse_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_traffic_v1_HeartbeatResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_HeartbeatResponse_descriptor,
         new java.lang.String[] { "Ok", "Config", "OperationCommands", "AcceptedAckOperationIds", });
     internal_static_traffic_v1_ProbeOperationCommand_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_traffic_v1_ProbeOperationCommand_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_ProbeOperationCommand_descriptor,
         new java.lang.String[] { "EventId", "TenantId", "ProbeId", "OperationId", "OperationType", "CommandRevision", "DesiredVersion", "CommandHash", "ExpiresAtMs", "TraceId", "CommandJson", });
     internal_static_traffic_v1_ProbeOperationAck_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(15);
     internal_static_traffic_v1_ProbeOperationAck_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_ProbeOperationAck_descriptor,
         new java.lang.String[] { "OperationId", "CommandRevision", "ReportedVersion", "ReportedHash", "AgentVersion", "Applied", "Error", "AcknowledgedAtMs", "DetailJson", });
+    internal_static_traffic_v1_ProbeGroupReadinessReceiptV1_descriptor =
+      getDescriptor().getMessageTypes().get(16);
+    internal_static_traffic_v1_ProbeGroupReadinessReceiptV1_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_ProbeGroupReadinessReceiptV1_descriptor,
+        new java.lang.String[] { "ReceiptId", "ConsumerGroup", "ObservedTopic", "MemberId", "GenerationId", "OwnerEpoch", "State", "ObservedAtMs", "ExpiresAtMs", "PublisherInstanceId", });
     internal_static_traffic_v1_RegisterProbeRequest_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(17);
     internal_static_traffic_v1_RegisterProbeRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_RegisterProbeRequest_descriptor,
         new java.lang.String[] { "TenantId", "ProbeId", "Hardware", "SoftwareVersion", "BuildCommit", "BuildTimestamp", });
     internal_static_traffic_v1_RegisterProbeResponse_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(18);
     internal_static_traffic_v1_RegisterProbeResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_RegisterProbeResponse_descriptor,
         new java.lang.String[] { "Success", "Message", "InitialConfig", });
     internal_static_traffic_v1_ProbeStatus_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(19);
     internal_static_traffic_v1_ProbeStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_ProbeStatus_descriptor,
-        new java.lang.String[] { "CpuUsage", "MemoryUsage", "CapturePps", "UploadBps", "PacketsCaptured", "PacketsDropped", "UptimeSeconds", "Interfaces", });
+        new java.lang.String[] { "CpuUsage", "MemoryUsage", "CapturePps", "UploadBps", "PacketsCaptured", "PacketsDropped", "UptimeSeconds", "Interfaces", "CaptureAllocationDrops", "CaptureKernelDrops", "CaptureErrors", "CaptureBytes", "CaptureCounterRevision", });
     internal_static_traffic_v1_InterfaceStatus_descriptor =
-      getDescriptor().getMessageTypes().get(15);
+      getDescriptor().getMessageTypes().get(20);
     internal_static_traffic_v1_InterfaceStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_InterfaceStatus_descriptor,
         new java.lang.String[] { "Name", "LinkUp", "SpeedMbps", "RxPackets", "TxPackets", "RxBytes", "TxBytes", "RxErrors", "TxErrors", "RxCrcErrors", "RxDropped", "Collisions", });
     internal_static_traffic_v1_ProbeConfig_descriptor =
-      getDescriptor().getMessageTypes().get(16);
+      getDescriptor().getMessageTypes().get(21);
     internal_static_traffic_v1_ProbeConfig_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_ProbeConfig_descriptor,
         new java.lang.String[] { "ConfigVersion", "SampleRate", "BpfFilter", "IdleTimeoutSec", "ActiveTimeoutSec", "BatchSize", "FeatureSetVersion", "NicConfig", "RingBufferSize", "BatchDrainTimeoutMs", });
     internal_static_traffic_v1_NetworkInterfaceConfig_descriptor =
-      getDescriptor().getMessageTypes().get(17);
+      getDescriptor().getMessageTypes().get(22);
     internal_static_traffic_v1_NetworkInterfaceConfig_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_NetworkInterfaceConfig_descriptor,
         new java.lang.String[] { "InterfaceName", "PromiscuousMode", "BpfFilters", "RingBufferSizeMb", "DriverMode", "CpuAffinity", });
     internal_static_traffic_v1_CPUAffinityConfig_descriptor =
-      getDescriptor().getMessageTypes().get(18);
+      getDescriptor().getMessageTypes().get(23);
     internal_static_traffic_v1_CPUAffinityConfig_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_CPUAffinityConfig_descriptor,
         new java.lang.String[] { "CpuCores", "NumaAware", });
     internal_static_traffic_v1_HardwareInfo_descriptor =
-      getDescriptor().getMessageTypes().get(19);
+      getDescriptor().getMessageTypes().get(24);
     internal_static_traffic_v1_HardwareInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_HardwareInfo_descriptor,
         new java.lang.String[] { "CpuModel", "CpuCores", "MemoryMb", "OsVersion", "Nics", });
     internal_static_traffic_v1_NIC_descriptor =
-      getDescriptor().getMessageTypes().get(20);
+      getDescriptor().getMessageTypes().get(25);
     internal_static_traffic_v1_NIC_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_NIC_descriptor,
@@ -394,6 +524,7 @@ public final class IngestProto {
     com.traffic.proto.traffic.v1.FlowProto.getDescriptor();
     com.traffic.proto.traffic.v1.SessionProto.getDescriptor();
     com.traffic.proto.traffic.v1.PcapProto.getDescriptor();
+    com.traffic.proto.traffic.v1.AssetProto.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

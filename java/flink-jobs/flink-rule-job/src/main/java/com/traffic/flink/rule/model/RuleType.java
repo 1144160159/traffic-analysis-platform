@@ -49,6 +49,15 @@ public enum RuleType {
      */
     ANOMALY("anomaly"),
 
+    /** Signature rule accepted by the control plane; runtime matcher pending. */
+    SIGNATURE("signature"),
+
+    /** Correlation rule accepted by the control plane; runtime matcher pending. */
+    CORRELATION("correlation"),
+
+    /** ML rule is evaluated by the frozen behavior path, not this matcher. */
+    ML("ml"),
+
     /**
      * 协议异常检测 (ProtocolAnomalyMatcher)
      */

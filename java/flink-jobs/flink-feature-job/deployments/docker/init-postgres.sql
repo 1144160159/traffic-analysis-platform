@@ -94,7 +94,7 @@ ON CONFLICT (tenant_id, config_key) DO UPDATE SET
 INSERT INTO feature_sets (feature_set_id, schema_version, name, description, params) VALUES 
     ('default', 'v2.0', 'Default Feature Set', 'Standard feature extraction configuration', '{
         "iat_threshold_ms": 1000.0,
-        "enable_l2_trigger": true,
+        "enable_l2_trigger": false,
         "l2_thresholds": {
             "high_pps_threshold": 10000.0,
             "high_bps_threshold": 1000000000.0,
@@ -105,7 +105,7 @@ INSERT INTO feature_sets (feature_set_id, schema_version, name, description, par
     }'::jsonb),
     ('high-sensitivity', 'v2.0', 'High Sensitivity', 'Lower thresholds for sensitive detection', '{
         "iat_threshold_ms": 500.0,
-        "enable_l2_trigger": true,
+        "enable_l2_trigger": false,
         "l2_thresholds": {
             "high_pps_threshold": 5000.0,
             "high_bps_threshold": 500000000.0,

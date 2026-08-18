@@ -463,6 +463,48 @@ private static final long serialVersionUID = 0L;
     return subflowCount_;
   }
 
+  public static final int IDENTITY_REVISION_FIELD_NUMBER = 23;
+  private int identityRevision_ = 0;
+  /**
+   * <pre>
+   * Additive identity algorithm revision. Zero means the legacy algorithm;
+   * revision 2 is the canonical capture-event-time identity contract.
+   * </pre>
+   *
+   * <code>uint32 identity_revision = 23 [json_name = "identityRevision"];</code>
+   * @return The identityRevision.
+   */
+  @java.lang.Override
+  public int getIdentityRevision() {
+    return identityRevision_;
+  }
+
+  public static final int FEATURE_OBSERVATION_FIELD_NUMBER = 24;
+  private com.traffic.proto.traffic.v1.TrafficFeatureObservation featureObservation_;
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+   * @return Whether the featureObservation field is set.
+   */
+  @java.lang.Override
+  public boolean hasFeatureObservation() {
+    return ((bitField0_ & 0x00000040) != 0);
+  }
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+   * @return The featureObservation.
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.TrafficFeatureObservation getFeatureObservation() {
+    return featureObservation_ == null ? com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance() : featureObservation_;
+  }
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder getFeatureObservationOrBuilder() {
+    return featureObservation_ == null ? com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance() : featureObservation_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -542,6 +584,12 @@ private static final long serialVersionUID = 0L;
     }
     if (subflowCount_ != 0) {
       output.writeUInt32(22, subflowCount_);
+    }
+    if (identityRevision_ != 0) {
+      output.writeUInt32(23, identityRevision_);
+    }
+    if (((bitField0_ & 0x00000040) != 0)) {
+      output.writeMessage(24, getFeatureObservation());
     }
     getUnknownFields().writeTo(output);
   }
@@ -637,6 +685,14 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeUInt32Size(22, subflowCount_);
     }
+    if (identityRevision_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(23, identityRevision_);
+    }
+    if (((bitField0_ & 0x00000040) != 0)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(24, getFeatureObservation());
+    }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
@@ -716,6 +772,13 @@ private static final long serialVersionUID = 0L;
     }
     if (getSubflowCount()
         != other.getSubflowCount()) return false;
+    if (getIdentityRevision()
+        != other.getIdentityRevision()) return false;
+    if (hasFeatureObservation() != other.hasFeatureObservation()) return false;
+    if (hasFeatureObservation()) {
+      if (!getFeatureObservation()
+          .equals(other.getFeatureObservation())) return false;
+    }
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -789,6 +852,12 @@ private static final long serialVersionUID = 0L;
     }
     hash = (37 * hash) + SUBFLOW_COUNT_FIELD_NUMBER;
     hash = (53 * hash) + getSubflowCount();
+    hash = (37 * hash) + IDENTITY_REVISION_FIELD_NUMBER;
+    hash = (53 * hash) + getIdentityRevision();
+    if (hasFeatureObservation()) {
+      hash = (37 * hash) + FEATURE_OBSERVATION_FIELD_NUMBER;
+      hash = (53 * hash) + getFeatureObservation().hashCode();
+    }
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -929,6 +998,7 @@ private static final long serialVersionUID = 0L;
         getIatStatsFieldBuilder();
         getActiveStatsFieldBuilder();
         getIdleStatsFieldBuilder();
+        getFeatureObservationFieldBuilder();
       }
     }
     @java.lang.Override
@@ -981,6 +1051,12 @@ private static final long serialVersionUID = 0L;
         idleStatsBuilder_ = null;
       }
       subflowCount_ = 0;
+      identityRevision_ = 0;
+      featureObservation_ = null;
+      if (featureObservationBuilder_ != null) {
+        featureObservationBuilder_.dispose();
+        featureObservationBuilder_ = null;
+      }
       return this;
     }
 
@@ -1098,6 +1174,15 @@ private static final long serialVersionUID = 0L;
       }
       if (((from_bitField0_ & 0x00200000) != 0)) {
         result.subflowCount_ = subflowCount_;
+      }
+      if (((from_bitField0_ & 0x00400000) != 0)) {
+        result.identityRevision_ = identityRevision_;
+      }
+      if (((from_bitField0_ & 0x00800000) != 0)) {
+        result.featureObservation_ = featureObservationBuilder_ == null
+            ? featureObservation_
+            : featureObservationBuilder_.build();
+        to_bitField0_ |= 0x00000040;
       }
       result.bitField0_ |= to_bitField0_;
     }
@@ -1217,6 +1302,12 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getSubflowCount() != 0) {
         setSubflowCount(other.getSubflowCount());
+      }
+      if (other.getIdentityRevision() != 0) {
+        setIdentityRevision(other.getIdentityRevision());
+      }
+      if (other.hasFeatureObservation()) {
+        mergeFeatureObservation(other.getFeatureObservation());
       }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
@@ -1366,6 +1457,18 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00200000;
               break;
             } // case 176
+            case 184: {
+              identityRevision_ = input.readUInt32();
+              bitField0_ |= 0x00400000;
+              break;
+            } // case 184
+            case 194: {
+              input.readMessage(
+                  getFeatureObservationFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              bitField0_ |= 0x00800000;
+              break;
+            } // case 194
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -2739,6 +2842,174 @@ private static final long serialVersionUID = 0L;
       subflowCount_ = 0;
       onChanged();
       return this;
+    }
+
+    private int identityRevision_ ;
+    /**
+     * <pre>
+     * Additive identity algorithm revision. Zero means the legacy algorithm;
+     * revision 2 is the canonical capture-event-time identity contract.
+     * </pre>
+     *
+     * <code>uint32 identity_revision = 23 [json_name = "identityRevision"];</code>
+     * @return The identityRevision.
+     */
+    @java.lang.Override
+    public int getIdentityRevision() {
+      return identityRevision_;
+    }
+    /**
+     * <pre>
+     * Additive identity algorithm revision. Zero means the legacy algorithm;
+     * revision 2 is the canonical capture-event-time identity contract.
+     * </pre>
+     *
+     * <code>uint32 identity_revision = 23 [json_name = "identityRevision"];</code>
+     * @param value The identityRevision to set.
+     * @return This builder for chaining.
+     */
+    public Builder setIdentityRevision(int value) {
+
+      identityRevision_ = value;
+      bitField0_ |= 0x00400000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive identity algorithm revision. Zero means the legacy algorithm;
+     * revision 2 is the canonical capture-event-time identity contract.
+     * </pre>
+     *
+     * <code>uint32 identity_revision = 23 [json_name = "identityRevision"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearIdentityRevision() {
+      bitField0_ = (bitField0_ & ~0x00400000);
+      identityRevision_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private com.traffic.proto.traffic.v1.TrafficFeatureObservation featureObservation_;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.traffic.proto.traffic.v1.TrafficFeatureObservation, com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder, com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder> featureObservationBuilder_;
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+     * @return Whether the featureObservation field is set.
+     */
+    public boolean hasFeatureObservation() {
+      return ((bitField0_ & 0x00800000) != 0);
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+     * @return The featureObservation.
+     */
+    public com.traffic.proto.traffic.v1.TrafficFeatureObservation getFeatureObservation() {
+      if (featureObservationBuilder_ == null) {
+        return featureObservation_ == null ? com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance() : featureObservation_;
+      } else {
+        return featureObservationBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+     */
+    public Builder setFeatureObservation(com.traffic.proto.traffic.v1.TrafficFeatureObservation value) {
+      if (featureObservationBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        featureObservation_ = value;
+      } else {
+        featureObservationBuilder_.setMessage(value);
+      }
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+     */
+    public Builder setFeatureObservation(
+        com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder builderForValue) {
+      if (featureObservationBuilder_ == null) {
+        featureObservation_ = builderForValue.build();
+      } else {
+        featureObservationBuilder_.setMessage(builderForValue.build());
+      }
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+     */
+    public Builder mergeFeatureObservation(com.traffic.proto.traffic.v1.TrafficFeatureObservation value) {
+      if (featureObservationBuilder_ == null) {
+        if (((bitField0_ & 0x00800000) != 0) &&
+          featureObservation_ != null &&
+          featureObservation_ != com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance()) {
+          getFeatureObservationBuilder().mergeFrom(value);
+        } else {
+          featureObservation_ = value;
+        }
+      } else {
+        featureObservationBuilder_.mergeFrom(value);
+      }
+      if (featureObservation_ != null) {
+        bitField0_ |= 0x00800000;
+        onChanged();
+      }
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+     */
+    public Builder clearFeatureObservation() {
+      bitField0_ = (bitField0_ & ~0x00800000);
+      featureObservation_ = null;
+      if (featureObservationBuilder_ != null) {
+        featureObservationBuilder_.dispose();
+        featureObservationBuilder_ = null;
+      }
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+     */
+    public com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder getFeatureObservationBuilder() {
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return getFeatureObservationFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+     */
+    public com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder getFeatureObservationOrBuilder() {
+      if (featureObservationBuilder_ != null) {
+        return featureObservationBuilder_.getMessageOrBuilder();
+      } else {
+        return featureObservation_ == null ?
+            com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance() : featureObservation_;
+      }
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.traffic.proto.traffic.v1.TrafficFeatureObservation, com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder, com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder>
+        getFeatureObservationFieldBuilder() {
+      if (featureObservationBuilder_ == null) {
+        featureObservationBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.traffic.proto.traffic.v1.TrafficFeatureObservation, com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder, com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder>(
+                getFeatureObservation(),
+                getParentForChildren(),
+                isClean());
+        featureObservation_ = null;
+      }
+      return featureObservationBuilder_;
     }
     @java.lang.Override
     public final Builder setUnknownFields(

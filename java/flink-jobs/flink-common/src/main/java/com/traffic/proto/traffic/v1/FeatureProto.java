@@ -45,7 +45,7 @@ public final class FeatureProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\030traffic/v1/feature.proto\022\ntraffic.v1\032\027" +
-      "traffic/v1/common.proto\"\301\006\n\013FeatureStat\022" +
+      "traffic/v1/common.proto\"\211\n\n\013FeatureStat\022" +
       "/\n\006header\030\001 \001(\0132\027.traffic.v1.EventHeader" +
       "R\006header\022%\n\016schema_version\030\002 \001(\tR\rschema" +
       "Version\022\037\n\013object_type\030\003 \001(\tR\nobjectType" +
@@ -66,52 +66,105 @@ public final class FeatureProto {
       "n_bytes_bwd\030\025 \001(\rR\022tcpInitWinBytesBwd\022\024\n" +
       "\005extra\030\026 \003(\002R\005extra\022+\n\005tuple\030\027 \001(\0132\025.tra" +
       "ffic.v1.FiveTupleR\005tuple\022!\n\014evidence_ids" +
-      "\030\030 \003(\tR\013evidenceIds\"\355\005\n\nFeatureSeq\022/\n\006he" +
-      "ader\030\001 \001(\0132\027.traffic.v1.EventHeaderR\006hea" +
-      "der\022\037\n\013object_type\030\002 \001(\tR\nobjectType\022\033\n\t" +
-      "object_id\030\003 \001(\tR\010objectId\022!\n\014community_i" +
-      "d\030\004 \001(\tR\013communityId\022\033\n\twindow_id\030\005 \001(\tR" +
-      "\010windowId\022\031\n\010ts_start\030\006 \001(\003R\007tsStart\022\025\n\006" +
-      "ts_end\030\007 \001(\003R\005tsEnd\022&\n\017pktlen_seq_hash\030\010" +
-      " \001(\tR\rpktlenSeqHash\022 \n\014iat_seq_hash\030\t \001(" +
-      "\tR\niatSeqHash\022,\n\022wavelet_releng_fwd\030\n \001(" +
-      "\002R\020waveletRelengFwd\022,\n\022wavelet_releng_bw" +
-      "d\030\013 \001(\002R\020waveletRelengBwd\022.\n\023wavelet_ent" +
-      "ropy_fwd\030\014 \001(\002R\021waveletEntropyFwd\022.\n\023wav" +
-      "elet_entropy_bwd\030\r \001(\002R\021waveletEntropyBw" +
-      "d\0225\n\027wavelet_detail_mean_fwd\030\016 \001(\002R\024wave" +
-      "letDetailMeanFwd\0225\n\027wavelet_detail_mean_" +
-      "bwd\030\017 \001(\002R\024waveletDetailMeanBwd\0223\n\026wavel" +
-      "et_detail_std_fwd\030\020 \001(\002R\023waveletDetailSt" +
-      "dFwd\0223\n\026wavelet_detail_std_bwd\030\021 \001(\002R\023wa" +
-      "veletDetailStdBwd\022 \n\014seq_blob_ref\030\022 \001(\tR" +
-      "\nseqBlobRef\"\376\003\n\022FeatureFingerprint\022/\n\006he" +
-      "ader\030\001 \001(\0132\027.traffic.v1.EventHeaderR\006hea" +
-      "der\022!\n\014community_id\030\002 \001(\tR\013communityId\022\035" +
-      "\n\nsession_id\030\003 \001(\tR\tsessionId\022\016\n\002ts\030\004 \001(" +
-      "\003R\002ts\022!\n\014is_encrypted\030\005 \001(\rR\013isEncrypted" +
-      "\022\037\n\013tls_version\030\006 \001(\tR\ntlsVersion\022\020\n\003ja3" +
-      "\030\007 \001(\tR\003ja3\022\031\n\010sni_hash\030\010 \001(\tR\007sniHash\022\037" +
-      "\n\013cert_sha256\030\t \001(\tR\ncertSha256\022-\n\023cert_" +
-      "is_self_signed\030\n \001(\rR\020certIsSelfSigned\022\035" +
-      "\n\npubkey_len\030\013 \001(\rR\tpubkeyLen\022\031\n\010hex_fre" +
-      "q\030\014 \003(\002R\007hexFreq\022\033\n\thex_ratio\030\r \003(\002R\010hex" +
-      "Ratio\022\'\n\017entropy_payload\030\016 \001(\002R\016entropyP" +
-      "ayload\022$\n\016chi_square_bfd\030\017 \001(\002R\014chiSquar" +
-      "eBfd\"\245\002\n\014FeatureBatch\022-\n\005stats\030\001 \003(\0132\027.t" +
-      "raffic.v1.FeatureStatR\005stats\0224\n\tsequence" +
-      "s\030\002 \003(\0132\026.traffic.v1.FeatureSeqR\tsequenc" +
-      "es\022B\n\014fingerprints\030\003 \003(\0132\036.traffic.v1.Fe" +
-      "atureFingerprintR\014fingerprints\022\031\n\010batch_" +
-      "id\030\004 \001(\tR\007batchId\022\033\n\ttenant_id\030\005 \001(\tR\010te" +
-      "nantId\022\025\n\006run_id\030\006 \001(\tR\005runId\022\035\n\ncreated" +
-      "_at\030\007 \001(\003R\tcreatedAtB\326\001\n\034com.traffic.pro" +
-      "to.traffic.v1B\014FeatureProtoP\001Z_github.co" +
-      "m/1144160159/traffic-analysis-platform/g" +
-      "o/control-plane/pkg/proto/traffic/v1;tra" +
-      "fficv1\242\002\003TXX\252\002\nTraffic.V1\312\002\nTraffic\\V1\342\002" +
-      "\026Traffic\\V1\\GPBMetadata\352\002\013Traffic::V1b\006p" +
-      "roto3"
+      "\030\030 \003(\tR\013evidenceIds\022F\n\020feature_category\030" +
+      "\031 \001(\0162\033.traffic.v1.FeatureCategoryR\017feat" +
+      "ureCategory\022C\n\014availability\030\032 \001(\0162\037.traf" +
+      "fic.v1.FeatureAvailabilityR\014availability" +
+      "\022+\n\021algorithm_version\030\033 \001(\tR\020algorithmVe" +
+      "rsion\022\033\n\twindow_id\030\034 \001(\tR\010windowId\022-\n\023ev" +
+      "ent_time_start_ms\030\035 \001(\003R\020eventTimeStartM" +
+      "s\022)\n\021event_time_end_ms\030\036 \001(\003R\016eventTimeE" +
+      "ndMs\022\035\n\nvalue_unit\030\037 \001(\tR\tvalueUnit\022(\n\020s" +
+      "ource_event_ids\030  \003(\tR\016sourceEventIds\022%\n" +
+      "\016missing_fields\030! \003(\tR\rmissingFields\022%\n\016" +
+      "missing_reason\030\" \001(\tR\rmissingReason\"\210\t\n\n" +
+      "FeatureSeq\022/\n\006header\030\001 \001(\0132\027.traffic.v1." +
+      "EventHeaderR\006header\022\037\n\013object_type\030\002 \001(\t" +
+      "R\nobjectType\022\033\n\tobject_id\030\003 \001(\tR\010objectI" +
+      "d\022!\n\014community_id\030\004 \001(\tR\013communityId\022\033\n\t" +
+      "window_id\030\005 \001(\tR\010windowId\022\031\n\010ts_start\030\006 " +
+      "\001(\003R\007tsStart\022\025\n\006ts_end\030\007 \001(\003R\005tsEnd\022&\n\017p" +
+      "ktlen_seq_hash\030\010 \001(\tR\rpktlenSeqHash\022 \n\014i" +
+      "at_seq_hash\030\t \001(\tR\niatSeqHash\022,\n\022wavelet" +
+      "_releng_fwd\030\n \001(\002R\020waveletRelengFwd\022,\n\022w" +
+      "avelet_releng_bwd\030\013 \001(\002R\020waveletRelengBw" +
+      "d\022.\n\023wavelet_entropy_fwd\030\014 \001(\002R\021waveletE" +
+      "ntropyFwd\022.\n\023wavelet_entropy_bwd\030\r \001(\002R\021" +
+      "waveletEntropyBwd\0225\n\027wavelet_detail_mean" +
+      "_fwd\030\016 \001(\002R\024waveletDetailMeanFwd\0225\n\027wave" +
+      "let_detail_mean_bwd\030\017 \001(\002R\024waveletDetail" +
+      "MeanBwd\0223\n\026wavelet_detail_std_fwd\030\020 \001(\002R" +
+      "\023waveletDetailStdFwd\0223\n\026wavelet_detail_s" +
+      "td_bwd\030\021 \001(\002R\023waveletDetailStdBwd\022 \n\014seq" +
+      "_blob_ref\030\022 \001(\tR\nseqBlobRef\022F\n\020feature_c" +
+      "ategory\030\023 \001(\0162\033.traffic.v1.FeatureCatego" +
+      "ryR\017featureCategory\022C\n\014availability\030\024 \001(" +
+      "\0162\037.traffic.v1.FeatureAvailabilityR\014avai" +
+      "lability\022%\n\016schema_version\030\025 \001(\tR\rschema" +
+      "Version\022+\n\021algorithm_version\030\026 \001(\tR\020algo" +
+      "rithmVersion\022\035\n\nvalue_unit\030\027 \001(\tR\tvalueU" +
+      "nit\022(\n\020source_event_ids\030\030 \003(\tR\016sourceEve" +
+      "ntIds\022!\n\014evidence_ids\030\031 \003(\tR\013evidenceIds" +
+      "\022%\n\016missing_fields\030\032 \003(\tR\rmissingFields\022" +
+      "%\n\016missing_reason\030\033 \001(\tR\rmissingReason\"\325" +
+      "\t\n\022FeatureFingerprint\022/\n\006header\030\001 \001(\0132\027." +
+      "traffic.v1.EventHeaderR\006header\022!\n\014commun" +
+      "ity_id\030\002 \001(\tR\013communityId\022\035\n\nsession_id\030" +
+      "\003 \001(\tR\tsessionId\022\016\n\002ts\030\004 \001(\003R\002ts\022!\n\014is_e" +
+      "ncrypted\030\005 \001(\rR\013isEncrypted\022\037\n\013tls_versi" +
+      "on\030\006 \001(\tR\ntlsVersion\022\020\n\003ja3\030\007 \001(\tR\003ja3\022\031" +
+      "\n\010sni_hash\030\010 \001(\tR\007sniHash\022\037\n\013cert_sha256" +
+      "\030\t \001(\tR\ncertSha256\022-\n\023cert_is_self_signe" +
+      "d\030\n \001(\rR\020certIsSelfSigned\022\035\n\npubkey_len\030" +
+      "\013 \001(\rR\tpubkeyLen\022\031\n\010hex_freq\030\014 \003(\002R\007hexF" +
+      "req\022\033\n\thex_ratio\030\r \003(\002R\010hexRatio\022\'\n\017entr" +
+      "opy_payload\030\016 \001(\002R\016entropyPayload\022$\n\016chi" +
+      "_square_bfd\030\017 \001(\002R\014chiSquareBfd\022F\n\020featu" +
+      "re_category\030\020 \001(\0162\033.traffic.v1.FeatureCa" +
+      "tegoryR\017featureCategory\022C\n\014availability\030" +
+      "\021 \001(\0162\037.traffic.v1.FeatureAvailabilityR\014" +
+      "availability\022%\n\016schema_version\030\022 \001(\tR\rsc" +
+      "hemaVersion\022+\n\021algorithm_version\030\023 \001(\tR\020" +
+      "algorithmVersion\022\033\n\twindow_id\030\024 \001(\tR\010win" +
+      "dowId\022-\n\023event_time_start_ms\030\025 \001(\003R\020even" +
+      "tTimeStartMs\022)\n\021event_time_end_ms\030\026 \001(\003R" +
+      "\016eventTimeEndMs\022\035\n\nvalue_unit\030\027 \001(\tR\tval" +
+      "ueUnit\022(\n\020source_event_ids\030\030 \003(\tR\016source" +
+      "EventIds\022!\n\014evidence_ids\030\031 \003(\tR\013evidence" +
+      "Ids\022%\n\016missing_fields\030\032 \003(\tR\rmissingFiel" +
+      "ds\022%\n\016missing_reason\030\033 \001(\tR\rmissingReaso" +
+      "n\022\020\n\003ja4\030\034 \001(\tR\003ja4\022\020\n\003sni\030\035 \001(\tR\003sni\022!\n" +
+      "\014quic_version\030\036 \001(\tR\013quicVersion\022T\n\022tran" +
+      "sport_security\030\037 \001(\0162%.traffic.v1.Transp" +
+      "ortSecurityProtocolR\021transportSecurity\022&" +
+      "\n\017raw_traffic_ref\030  \001(\tR\rrawTrafficRef\"\245" +
+      "\002\n\014FeatureBatch\022-\n\005stats\030\001 \003(\0132\027.traffic" +
+      ".v1.FeatureStatR\005stats\0224\n\tsequences\030\002 \003(" +
+      "\0132\026.traffic.v1.FeatureSeqR\tsequences\022B\n\014" +
+      "fingerprints\030\003 \003(\0132\036.traffic.v1.FeatureF" +
+      "ingerprintR\014fingerprints\022\031\n\010batch_id\030\004 \001" +
+      "(\tR\007batchId\022\033\n\ttenant_id\030\005 \001(\tR\010tenantId" +
+      "\022\025\n\006run_id\030\006 \001(\tR\005runId\022\035\n\ncreated_at\030\007 " +
+      "\001(\003R\tcreatedAt*\362\001\n\017FeatureCategory\022 \n\034FE" +
+      "ATURE_CATEGORY_UNSPECIFIED\020\000\022\"\n\036FEATURE_" +
+      "CATEGORY_FLOW_METADATA\020\001\022&\n\"FEATURE_CATE" +
+      "GORY_PLAINTEXT_VISIBLE\020\002\022!\n\035FEATURE_CATE" +
+      "GORY_SIDE_CHANNEL\020\003\022\"\n\036FEATURE_CATEGORY_" +
+      "RAW_REFERENCE\020\004\022*\n&FEATURE_CATEGORY_RAND" +
+      "OMNESS_STATISTICS\020\005*\246\002\n\023FeatureAvailabil" +
+      "ity\022$\n FEATURE_AVAILABILITY_UNSPECIFIED\020" +
+      "\000\022\"\n\036FEATURE_AVAILABILITY_AVAILABLE\020\001\022&\n" +
+      "\"FEATURE_AVAILABILITY_MISSING_INPUT\020\002\022\'\n" +
+      "#FEATURE_AVAILABILITY_NOT_APPLICABLE\020\003\022$" +
+      "\n FEATURE_AVAILABILITY_UNSUPPORTED\020\004\022 \n\034" +
+      "FEATURE_AVAILABILITY_INVALID\020\005\022,\n(FEATUR" +
+      "E_AVAILABILITY_PARTIALLY_AVAILABLE\020\006B\326\001\n" +
+      "\034com.traffic.proto.traffic.v1B\014FeaturePr" +
+      "otoP\001Z_github.com/1144160159/traffic-ana" +
+      "lysis-platform/go/control-plane/pkg/prot" +
+      "o/traffic/v1;trafficv1\242\002\003TXX\252\002\nTraffic.V" +
+      "1\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetadata\352" +
+      "\002\013Traffic::V1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -123,19 +176,19 @@ public final class FeatureProto {
     internal_static_traffic_v1_FeatureStat_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_FeatureStat_descriptor,
-        new java.lang.String[] { "Header", "SchemaVersion", "ObjectType", "ObjectId", "CommunityId", "Ts", "Protocol", "DurationMs", "Pps", "Bps", "UpDownRatio", "PktlenMean", "PktlenStd", "IatMeanMs", "IatStdMs", "ActiveMeanMs", "IdleMeanMs", "TcpFlagSynCnt", "TcpFlagAckCnt", "TcpInitWinBytesFwd", "TcpInitWinBytesBwd", "Extra", "Tuple", "EvidenceIds", });
+        new java.lang.String[] { "Header", "SchemaVersion", "ObjectType", "ObjectId", "CommunityId", "Ts", "Protocol", "DurationMs", "Pps", "Bps", "UpDownRatio", "PktlenMean", "PktlenStd", "IatMeanMs", "IatStdMs", "ActiveMeanMs", "IdleMeanMs", "TcpFlagSynCnt", "TcpFlagAckCnt", "TcpInitWinBytesFwd", "TcpInitWinBytesBwd", "Extra", "Tuple", "EvidenceIds", "FeatureCategory", "Availability", "AlgorithmVersion", "WindowId", "EventTimeStartMs", "EventTimeEndMs", "ValueUnit", "SourceEventIds", "MissingFields", "MissingReason", });
     internal_static_traffic_v1_FeatureSeq_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_traffic_v1_FeatureSeq_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_FeatureSeq_descriptor,
-        new java.lang.String[] { "Header", "ObjectType", "ObjectId", "CommunityId", "WindowId", "TsStart", "TsEnd", "PktlenSeqHash", "IatSeqHash", "WaveletRelengFwd", "WaveletRelengBwd", "WaveletEntropyFwd", "WaveletEntropyBwd", "WaveletDetailMeanFwd", "WaveletDetailMeanBwd", "WaveletDetailStdFwd", "WaveletDetailStdBwd", "SeqBlobRef", });
+        new java.lang.String[] { "Header", "ObjectType", "ObjectId", "CommunityId", "WindowId", "TsStart", "TsEnd", "PktlenSeqHash", "IatSeqHash", "WaveletRelengFwd", "WaveletRelengBwd", "WaveletEntropyFwd", "WaveletEntropyBwd", "WaveletDetailMeanFwd", "WaveletDetailMeanBwd", "WaveletDetailStdFwd", "WaveletDetailStdBwd", "SeqBlobRef", "FeatureCategory", "Availability", "SchemaVersion", "AlgorithmVersion", "ValueUnit", "SourceEventIds", "EvidenceIds", "MissingFields", "MissingReason", });
     internal_static_traffic_v1_FeatureFingerprint_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_traffic_v1_FeatureFingerprint_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_FeatureFingerprint_descriptor,
-        new java.lang.String[] { "Header", "CommunityId", "SessionId", "Ts", "IsEncrypted", "TlsVersion", "Ja3", "SniHash", "CertSha256", "CertIsSelfSigned", "PubkeyLen", "HexFreq", "HexRatio", "EntropyPayload", "ChiSquareBfd", });
+        new java.lang.String[] { "Header", "CommunityId", "SessionId", "Ts", "IsEncrypted", "TlsVersion", "Ja3", "SniHash", "CertSha256", "CertIsSelfSigned", "PubkeyLen", "HexFreq", "HexRatio", "EntropyPayload", "ChiSquareBfd", "FeatureCategory", "Availability", "SchemaVersion", "AlgorithmVersion", "WindowId", "EventTimeStartMs", "EventTimeEndMs", "ValueUnit", "SourceEventIds", "EvidenceIds", "MissingFields", "MissingReason", "Ja4", "Sni", "QuicVersion", "TransportSecurity", "RawTrafficRef", });
     internal_static_traffic_v1_FeatureBatch_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_traffic_v1_FeatureBatch_fieldAccessorTable = new

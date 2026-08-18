@@ -85,9 +85,13 @@ public class LokiSinkFactory {
 
         @Override
         public void snapshotState(FunctionSnapshotContext context) throws Exception {
-            // A successful checkpoint may not advance beyond an unacknowledged
-            // HTTP side effect. A failed push fails the checkpoint and leaves
-            // the in-memory retry buffer intact.
+            // 有意的 checkpoint 耦合（显式接受并文档化）：一次成功的 checkpoint
+            // 不能越过未 ACK 的 HTTP 副作用，因此 snapshotState 内同步 flush。
+            // 代价是外部存储故障时 checkpoint 被阻断（配合
+            // setTolerableCheckpointFailureNumber(0) 使作业失败重启），
+            // 换取"状态推进 == Loki 已接收"的强一致语义；已启用连接/读超时
+            // （connectTimeoutMs/readTimeoutMs）限制阻塞时长。若需解耦，
+            // 需改为异步 flush + 重放状态并接受"checkpoint 先于 HTTP ACK"。
             flush();
             pendingState.clear();
             for (String stream : pendingStreams) {

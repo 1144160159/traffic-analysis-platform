@@ -1,6 +1,7 @@
 package com.traffic.flink.log.parser;
 
 import com.traffic.proto.traffic.v1.DeviceLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
  */
 public class SyslogParser implements MapFunction<DeviceLog, DeviceLog> {
     private static final Logger LOG = LoggerFactory.getLogger(SyslogParser.class);
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     // RFC 5424: <134>1 2024-01-01T00:00:00Z hostname app procid msgid [key="val"] message
     private static final Pattern RFC5424 = Pattern.compile(
@@ -25,6 +27,21 @@ public class SyslogParser implements MapFunction<DeviceLog, DeviceLog> {
     // RFC 3164: <134>Jan  1 00:00:00 hostname message
     private static final Pattern RFC3164 = Pattern.compile(
             "<(\\d+)>(\\w{3}\\s+\\d+\\s+\\d{2}:\\d{2}:\\d{2})\\s+(\\S+)\\s+(.+)");
+    private static final Pattern PRI_PREFIX = Pattern.compile("<(\\d{1,3})>.+", Pattern.DOTALL);
+
+    /** Consumer contract syntax check used before offsets are checkpointed. */
+    public static boolean isSupportedMessage(String message) {
+        if (message == null || message.trim().isEmpty()) return false;
+        if (RFC5424.matcher(message).matches() || RFC3164.matcher(message).matches()) return true;
+        Matcher matcher = PRI_PREFIX.matcher(message);
+        if (!matcher.matches()) return false;
+        try {
+            int priority = Integer.parseInt(matcher.group(1));
+            return priority >= 0 && priority <= 191;
+        } catch (NumberFormatException error) {
+            return false;
+        }
+    }
 
     @Override
     public DeviceLog map(DeviceLog log) {
@@ -42,8 +59,8 @@ public class SyslogParser implements MapFunction<DeviceLog, DeviceLog> {
                        .setSeverity(pri % 8)
                        .setDeviceType(inferDeviceType(m5424.group(4))) // hostname→device_type
                        .setMessage(m5424.group(9) != null ? m5424.group(9).trim() : msg)
-                       .setParsed(String.format("{\"app\":\"%s\",\"host\":\"%s\",\"version\":1}",
-                               m5424.group(5), m5424.group(4)));
+                       // 用 Jackson 构造 parsed，避免手拼 JSON 转义不全
+                       .setParsed(parsedJson("app", m5424.group(5), "host", m5424.group(4)));
                 return builder.build();
             }
 
@@ -81,5 +98,22 @@ public class SyslogParser implements MapFunction<DeviceLog, DeviceLog> {
         if (h.contains("srv") || h.contains("server") || h.contains("vm")) return "server";
         if (h.contains("ap") || h.contains("wlc")) return "wireless";
         return "network_device";
+    }
+
+    /**
+     * 用 Jackson 构造 parsed JSON 对象，键值自动转义
+     * （手拼 String.format 对含引号/控制字符的 hostname/app 会产出非法 JSON）。
+     */
+    private static String parsedJson(String key1, String value1, String key2, String value2) {
+        try {
+            com.fasterxml.jackson.databind.node.ObjectNode node =
+                    JSON.createObjectNode();
+            node.put(key1, value1 == null ? "" : value1);
+            node.put(key2, value2 == null ? "" : value2);
+            node.put("version", 1);
+            return JSON.writeValueAsString(node);
+        } catch (Exception e) {
+            throw new IllegalStateException("failed to serialize parsed JSON", e);
+        }
     }
 }

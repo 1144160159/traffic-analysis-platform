@@ -20,6 +20,7 @@ private static final long serialVersionUID = 0L;
     rejectedIds_ =
         com.google.protobuf.LazyStringArrayList.emptyList();
     message_ = "";
+    itemResults_ = java.util.Collections.emptyList();
   }
 
   @java.lang.Override
@@ -140,6 +141,88 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int ITEM_RESULTS_FIELD_NUMBER = 5;
+  @SuppressWarnings("serial")
+  private java.util.List<com.traffic.proto.traffic.v1.FlowItemResult> itemResults_;
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  @java.lang.Override
+  public java.util.List<com.traffic.proto.traffic.v1.FlowItemResult> getItemResultsList() {
+    return itemResults_;
+  }
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  @java.lang.Override
+  public java.util.List<? extends com.traffic.proto.traffic.v1.FlowItemResultOrBuilder>
+      getItemResultsOrBuilderList() {
+    return itemResults_;
+  }
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  @java.lang.Override
+  public int getItemResultsCount() {
+    return itemResults_.size();
+  }
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.FlowItemResult getItemResults(int index) {
+    return itemResults_.get(index);
+  }
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.FlowItemResultOrBuilder getItemResultsOrBuilder(
+      int index) {
+    return itemResults_.get(index);
+  }
+
+  public static final int RESPONSE_REVISION_FIELD_NUMBER = 6;
+  private int responseRevision_ = 0;
+  /**
+   * <code>uint32 response_revision = 6 [json_name = "responseRevision"];</code>
+   * @return The responseRevision.
+   */
+  @java.lang.Override
+  public int getResponseRevision() {
+    return responseRevision_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -165,6 +248,12 @@ private static final long serialVersionUID = 0L;
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 4, message_);
+    }
+    for (int i = 0; i < itemResults_.size(); i++) {
+      output.writeMessage(5, itemResults_.get(i));
+    }
+    if (responseRevision_ != 0) {
+      output.writeUInt32(6, responseRevision_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -194,6 +283,14 @@ private static final long serialVersionUID = 0L;
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, message_);
     }
+    for (int i = 0; i < itemResults_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(5, itemResults_.get(i));
+    }
+    if (responseRevision_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(6, responseRevision_);
+    }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
@@ -217,6 +314,10 @@ private static final long serialVersionUID = 0L;
         .equals(other.getRejectedIdsList())) return false;
     if (!getMessage()
         .equals(other.getMessage())) return false;
+    if (!getItemResultsList()
+        .equals(other.getItemResultsList())) return false;
+    if (getResponseRevision()
+        != other.getResponseRevision()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -238,6 +339,12 @@ private static final long serialVersionUID = 0L;
     }
     hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
     hash = (53 * hash) + getMessage().hashCode();
+    if (getItemResultsCount() > 0) {
+      hash = (37 * hash) + ITEM_RESULTS_FIELD_NUMBER;
+      hash = (53 * hash) + getItemResultsList().hashCode();
+    }
+    hash = (37 * hash) + RESPONSE_REVISION_FIELD_NUMBER;
+    hash = (53 * hash) + getResponseRevision();
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -374,6 +481,14 @@ private static final long serialVersionUID = 0L;
       rejectedIds_ =
           com.google.protobuf.LazyStringArrayList.emptyList();
       message_ = "";
+      if (itemResultsBuilder_ == null) {
+        itemResults_ = java.util.Collections.emptyList();
+      } else {
+        itemResults_ = null;
+        itemResultsBuilder_.clear();
+      }
+      bitField0_ = (bitField0_ & ~0x00000010);
+      responseRevision_ = 0;
       return this;
     }
 
@@ -400,9 +515,22 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.traffic.proto.traffic.v1.UploadFlowsResponse buildPartial() {
       com.traffic.proto.traffic.v1.UploadFlowsResponse result = new com.traffic.proto.traffic.v1.UploadFlowsResponse(this);
+      buildPartialRepeatedFields(result);
       if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
+    }
+
+    private void buildPartialRepeatedFields(com.traffic.proto.traffic.v1.UploadFlowsResponse result) {
+      if (itemResultsBuilder_ == null) {
+        if (((bitField0_ & 0x00000010) != 0)) {
+          itemResults_ = java.util.Collections.unmodifiableList(itemResults_);
+          bitField0_ = (bitField0_ & ~0x00000010);
+        }
+        result.itemResults_ = itemResults_;
+      } else {
+        result.itemResults_ = itemResultsBuilder_.build();
+      }
     }
 
     private void buildPartial0(com.traffic.proto.traffic.v1.UploadFlowsResponse result) {
@@ -419,6 +547,9 @@ private static final long serialVersionUID = 0L;
       }
       if (((from_bitField0_ & 0x00000008) != 0)) {
         result.message_ = message_;
+      }
+      if (((from_bitField0_ & 0x00000020) != 0)) {
+        result.responseRevision_ = responseRevision_;
       }
     }
 
@@ -487,6 +618,35 @@ private static final long serialVersionUID = 0L;
         bitField0_ |= 0x00000008;
         onChanged();
       }
+      if (itemResultsBuilder_ == null) {
+        if (!other.itemResults_.isEmpty()) {
+          if (itemResults_.isEmpty()) {
+            itemResults_ = other.itemResults_;
+            bitField0_ = (bitField0_ & ~0x00000010);
+          } else {
+            ensureItemResultsIsMutable();
+            itemResults_.addAll(other.itemResults_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.itemResults_.isEmpty()) {
+          if (itemResultsBuilder_.isEmpty()) {
+            itemResultsBuilder_.dispose();
+            itemResultsBuilder_ = null;
+            itemResults_ = other.itemResults_;
+            bitField0_ = (bitField0_ & ~0x00000010);
+            itemResultsBuilder_ =
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getItemResultsFieldBuilder() : null;
+          } else {
+            itemResultsBuilder_.addAllMessages(other.itemResults_);
+          }
+        }
+      }
+      if (other.getResponseRevision() != 0) {
+        setResponseRevision(other.getResponseRevision());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -534,6 +694,24 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000008;
               break;
             } // case 34
+            case 42: {
+              com.traffic.proto.traffic.v1.FlowItemResult m =
+                  input.readMessage(
+                      com.traffic.proto.traffic.v1.FlowItemResult.parser(),
+                      extensionRegistry);
+              if (itemResultsBuilder_ == null) {
+                ensureItemResultsIsMutable();
+                itemResults_.add(m);
+              } else {
+                itemResultsBuilder_.addMessage(m);
+              }
+              break;
+            } // case 42
+            case 48: {
+              responseRevision_ = input.readUInt32();
+              bitField0_ |= 0x00000020;
+              break;
+            } // case 48
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -794,6 +972,386 @@ private static final long serialVersionUID = 0L;
       checkByteStringIsUtf8(value);
       message_ = value;
       bitField0_ |= 0x00000008;
+      onChanged();
+      return this;
+    }
+
+    private java.util.List<com.traffic.proto.traffic.v1.FlowItemResult> itemResults_ =
+      java.util.Collections.emptyList();
+    private void ensureItemResultsIsMutable() {
+      if (!((bitField0_ & 0x00000010) != 0)) {
+        itemResults_ = new java.util.ArrayList<com.traffic.proto.traffic.v1.FlowItemResult>(itemResults_);
+        bitField0_ |= 0x00000010;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.traffic.proto.traffic.v1.FlowItemResult, com.traffic.proto.traffic.v1.FlowItemResult.Builder, com.traffic.proto.traffic.v1.FlowItemResultOrBuilder> itemResultsBuilder_;
+
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public java.util.List<com.traffic.proto.traffic.v1.FlowItemResult> getItemResultsList() {
+      if (itemResultsBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(itemResults_);
+      } else {
+        return itemResultsBuilder_.getMessageList();
+      }
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public int getItemResultsCount() {
+      if (itemResultsBuilder_ == null) {
+        return itemResults_.size();
+      } else {
+        return itemResultsBuilder_.getCount();
+      }
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public com.traffic.proto.traffic.v1.FlowItemResult getItemResults(int index) {
+      if (itemResultsBuilder_ == null) {
+        return itemResults_.get(index);
+      } else {
+        return itemResultsBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public Builder setItemResults(
+        int index, com.traffic.proto.traffic.v1.FlowItemResult value) {
+      if (itemResultsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureItemResultsIsMutable();
+        itemResults_.set(index, value);
+        onChanged();
+      } else {
+        itemResultsBuilder_.setMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public Builder setItemResults(
+        int index, com.traffic.proto.traffic.v1.FlowItemResult.Builder builderForValue) {
+      if (itemResultsBuilder_ == null) {
+        ensureItemResultsIsMutable();
+        itemResults_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        itemResultsBuilder_.setMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public Builder addItemResults(com.traffic.proto.traffic.v1.FlowItemResult value) {
+      if (itemResultsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureItemResultsIsMutable();
+        itemResults_.add(value);
+        onChanged();
+      } else {
+        itemResultsBuilder_.addMessage(value);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public Builder addItemResults(
+        int index, com.traffic.proto.traffic.v1.FlowItemResult value) {
+      if (itemResultsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureItemResultsIsMutable();
+        itemResults_.add(index, value);
+        onChanged();
+      } else {
+        itemResultsBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public Builder addItemResults(
+        com.traffic.proto.traffic.v1.FlowItemResult.Builder builderForValue) {
+      if (itemResultsBuilder_ == null) {
+        ensureItemResultsIsMutable();
+        itemResults_.add(builderForValue.build());
+        onChanged();
+      } else {
+        itemResultsBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public Builder addItemResults(
+        int index, com.traffic.proto.traffic.v1.FlowItemResult.Builder builderForValue) {
+      if (itemResultsBuilder_ == null) {
+        ensureItemResultsIsMutable();
+        itemResults_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        itemResultsBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public Builder addAllItemResults(
+        java.lang.Iterable<? extends com.traffic.proto.traffic.v1.FlowItemResult> values) {
+      if (itemResultsBuilder_ == null) {
+        ensureItemResultsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, itemResults_);
+        onChanged();
+      } else {
+        itemResultsBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public Builder clearItemResults() {
+      if (itemResultsBuilder_ == null) {
+        itemResults_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+      } else {
+        itemResultsBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public Builder removeItemResults(int index) {
+      if (itemResultsBuilder_ == null) {
+        ensureItemResultsIsMutable();
+        itemResults_.remove(index);
+        onChanged();
+      } else {
+        itemResultsBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public com.traffic.proto.traffic.v1.FlowItemResult.Builder getItemResultsBuilder(
+        int index) {
+      return getItemResultsFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public com.traffic.proto.traffic.v1.FlowItemResultOrBuilder getItemResultsOrBuilder(
+        int index) {
+      if (itemResultsBuilder_ == null) {
+        return itemResults_.get(index);  } else {
+        return itemResultsBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public java.util.List<? extends com.traffic.proto.traffic.v1.FlowItemResultOrBuilder>
+         getItemResultsOrBuilderList() {
+      if (itemResultsBuilder_ != null) {
+        return itemResultsBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(itemResults_);
+      }
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public com.traffic.proto.traffic.v1.FlowItemResult.Builder addItemResultsBuilder() {
+      return getItemResultsFieldBuilder().addBuilder(
+          com.traffic.proto.traffic.v1.FlowItemResult.getDefaultInstance());
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public com.traffic.proto.traffic.v1.FlowItemResult.Builder addItemResultsBuilder(
+        int index) {
+      return getItemResultsFieldBuilder().addBuilder(
+          index, com.traffic.proto.traffic.v1.FlowItemResult.getDefaultInstance());
+    }
+    /**
+     * <pre>
+     * Additive exact-set acknowledgement. When present, there is exactly one
+     * result for every request input_index; old aggregate fields remain for
+     * wire compatibility but cannot override these dispositions.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+     */
+    public java.util.List<com.traffic.proto.traffic.v1.FlowItemResult.Builder>
+         getItemResultsBuilderList() {
+      return getItemResultsFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.traffic.proto.traffic.v1.FlowItemResult, com.traffic.proto.traffic.v1.FlowItemResult.Builder, com.traffic.proto.traffic.v1.FlowItemResultOrBuilder>
+        getItemResultsFieldBuilder() {
+      if (itemResultsBuilder_ == null) {
+        itemResultsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.traffic.proto.traffic.v1.FlowItemResult, com.traffic.proto.traffic.v1.FlowItemResult.Builder, com.traffic.proto.traffic.v1.FlowItemResultOrBuilder>(
+                itemResults_,
+                ((bitField0_ & 0x00000010) != 0),
+                getParentForChildren(),
+                isClean());
+        itemResults_ = null;
+      }
+      return itemResultsBuilder_;
+    }
+
+    private int responseRevision_ ;
+    /**
+     * <code>uint32 response_revision = 6 [json_name = "responseRevision"];</code>
+     * @return The responseRevision.
+     */
+    @java.lang.Override
+    public int getResponseRevision() {
+      return responseRevision_;
+    }
+    /**
+     * <code>uint32 response_revision = 6 [json_name = "responseRevision"];</code>
+     * @param value The responseRevision to set.
+     * @return This builder for chaining.
+     */
+    public Builder setResponseRevision(int value) {
+
+      responseRevision_ = value;
+      bitField0_ |= 0x00000020;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint32 response_revision = 6 [json_name = "responseRevision"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearResponseRevision() {
+      bitField0_ = (bitField0_ & ~0x00000020);
+      responseRevision_ = 0;
       onChanged();
       return this;
     }

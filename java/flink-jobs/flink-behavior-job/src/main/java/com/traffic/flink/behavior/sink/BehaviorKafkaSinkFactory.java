@@ -23,7 +23,7 @@ import java.util.Properties;
 /**
  * Kafka Sink 工厂类
  * 
- * 创建用于写入 detections.behavior.v1 Topic 的 Sink。
+ * 创建用于写入 canonical detections.v1 Topic 的 Sink。
  * 
  * 特性：
  * 1. 幂等生产者（enable.idempotence=true）
@@ -134,7 +134,7 @@ public class BehaviorKafkaSinkFactory {
      * 2. 使用 tenant_id:community_id 作为分区键
      * 3. 在 Header 中添加 event_id 用于幂等
      */
-    private static class DetectionBehaviorSerializationSchema 
+    static class DetectionBehaviorSerializationSchema
             implements KafkaRecordSerializationSchema<DetectionBehavior> {
 
         private static final long serialVersionUID = 1L;
@@ -149,6 +149,14 @@ public class BehaviorKafkaSinkFactory {
                 DetectionBehavior detection,
                 KafkaSinkContext context,
                 Long timestamp) {
+
+            if (detection == null
+                    || !detection.hasHeader()
+                    || detection.getHeader().getTenantId().trim().isEmpty()
+                    || detection.getCommunityId().trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "DetectionBehavior requires tenant_id and community_id before Kafka publish");
+            }
 
             // 构建分区键：tenant_id:community_id
             String partitionKey = buildPartitionKey(detection);
@@ -194,19 +202,11 @@ public class BehaviorKafkaSinkFactory {
         private String buildPartitionKey(DetectionBehavior detection) {
             StringBuilder sb = new StringBuilder();
 
-            if (detection.hasHeader() && detection.getHeader().getTenantId() != null) {
-                sb.append(detection.getHeader().getTenantId());
-            } else {
-                sb.append("default");
-            }
+            sb.append(detection.getHeader().getTenantId());
 
             sb.append(":");
 
-            if (detection.getCommunityId() != null && !detection.getCommunityId().isEmpty()) {
-                sb.append(detection.getCommunityId());
-            } else {
-                sb.append(detection.getObjectId());
-            }
+            sb.append(detection.getCommunityId());
 
             return sb.toString();
         }

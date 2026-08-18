@@ -311,7 +311,7 @@ groups:
       # DLQ 消息数量增加
       - alert: FlinkDLQMessagesIncreasing
         expr: |
-          increase(kafka_consumer_records_consumed_total{topic="dlq.rule-job"}[10m]) > 0
+          increase(kafka_consumer_records_consumed_total{topic="dlq.v1"}[10m]) > 0
         for: 1m
         labels:
           severity: warning

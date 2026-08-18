@@ -1,8 +1,8 @@
 package com.traffic.flink.feature.config;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Feature Set 配置
@@ -18,6 +18,9 @@ public class FeatureSetConfig implements Serializable {
 
     // Schema 版本
     private String schemaVersion;
+
+    // false 表示从 BroadcastState 删除该特征集的 tombstone。
+    private boolean active = true;
 
     // IAT 阈值（区分 Active/Idle）
     private float iatThresholdMs;
@@ -36,7 +39,7 @@ public class FeatureSetConfig implements Serializable {
     private long updatedAt;
 
     public FeatureSetConfig() {
-        this.featureWeights = new HashMap<>();
+        this.featureWeights = new TreeMap<>();
         this.l2Thresholds = new L2TriggerThresholds();
     }
 
@@ -62,6 +65,14 @@ public class FeatureSetConfig implements Serializable {
 
     public void setSchemaVersion(String schemaVersion) {
         this.schemaVersion = schemaVersion;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public float getIatThresholdMs() {
@@ -117,6 +128,7 @@ public class FeatureSetConfig implements Serializable {
         return "FeatureSetConfig{" +
                 "featureSetId='" + featureSetId + '\'' +
                 ", schemaVersion='" + schemaVersion + '\'' +
+                ", active=" + active +
                 ", iatThresholdMs=" + iatThresholdMs +
                 ", enableL2Trigger=" + enableL2Trigger +
                 ", l2Thresholds=" + l2Thresholds +

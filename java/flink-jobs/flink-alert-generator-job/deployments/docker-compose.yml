@@ -22,9 +22,11 @@ x-flink-common: &flink-common
     dockerfile: Dockerfile
   environment: &flink-env
     KAFKA_BROKERS: kafka:9092
+    KAFKA_INPUT_TOPIC: detections.v1
     KAFKA_INPUT_TOPIC_BEHAVIOR: detections.behavior.v1
     KAFKA_INPUT_TOPIC_BUSINESS: detections.business.v1
     KAFKA_OUTPUT_TOPIC: alerts.v1
+    KAFKA_DLQ_TOPIC: dlq.v1
     CLICKHOUSE_URL: clickhouse:8123
     CLICKHOUSE_DB: traffic
     CLICKHOUSE_ALERT_TABLE: alerts_local
@@ -40,7 +42,8 @@ x-flink-common: &flink-common
     SEVERITY_HIGH: "0.7"
     SEVERITY_MEDIUM: "0.5"
     SEVERITY_LOW: "0.3"
-    ENABLE_BUSINESS_DETECTION: "true"
+    ENABLE_LEGACY_BEHAVIOR_DETECTION: "false"
+    ENABLE_BUSINESS_DETECTION: "false"
     DEBUG_PRINT: "false"
   volumes:
     - flink-checkpoints:/opt/flink/checkpoints

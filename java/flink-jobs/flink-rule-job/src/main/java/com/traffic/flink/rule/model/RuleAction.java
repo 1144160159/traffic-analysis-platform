@@ -6,6 +6,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * 规则动作枚举
  */
 public enum RuleAction {
+
+    /**
+     * 创建规则（与 UPDATE 共用版本化 upsert 状态机）
+     */
+    CREATE("create"),
     
     /**
      * 更新/创建规则
@@ -49,6 +54,6 @@ public enum RuleAction {
                 return action;
             }
         }
-        return UPDATE; // 默认更新
+        throw new IllegalArgumentException("unsupported rule action: " + value);
     }
 }

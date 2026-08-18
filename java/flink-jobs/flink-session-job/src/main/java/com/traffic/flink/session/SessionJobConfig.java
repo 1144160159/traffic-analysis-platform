@@ -1,10 +1,13 @@
 package com.traffic.flink.session;
 
 import com.traffic.flink.common.ConfigUtil;
+import com.traffic.flink.common.DeploymentActivation;
+import com.traffic.flink.common.eventtime.EventTimePolicy;
 import org.apache.flink.api.java.utils.ParameterTool;
 
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.regex.Pattern;
 
 /**
  * Session Job 配置类（扩展版）
@@ -18,6 +21,11 @@ import java.time.Duration;
 public class SessionJobConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    public static final String INPUT_TOPIC = "flow.events.v1";
+    public static final String AUDIT_TOPIC = "audit.logs";
+    public static final String CANONICAL_GROUP = "flink-session-job";
+    private static final Pattern TRANSACTIONAL_PREFIX =
+            Pattern.compile("[A-Za-z0-9._-]{1,200}");
 
     // ==================== 模式配置 ====================
     private final String sessionMode; // window | process
@@ -31,6 +39,12 @@ public class SessionJobConfig implements Serializable {
     private final String chDlqTopic;
     private final String osDlqTopic;
     private final String consumerGroupId;
+    private final String auditTopic;
+    private final String dlqTransactionalIdPrefix;
+    private final String outputTransactionalIdPrefix;
+    private final String qualityTransactionalIdPrefix;
+    private final long kafkaTransactionTimeoutMs;
+    private final DeploymentActivation deploymentActivation;
 
     // Kafka 消费者高级参数
     private final int fetchMinBytes;
@@ -45,6 +59,8 @@ public class SessionJobConfig implements Serializable {
     private final String clickhouseTable;
     private final boolean flowRawSinkEnabled;
     private final String flowRawClickhouseTable;
+    private final boolean sourceFactSinkEnabled;
+    private final String sourceFactClickhouseTable;
     private final String clickhouseUser;
     private final String clickhousePassword;
     private final int clickhouseBatchSize;
@@ -75,7 +91,9 @@ public class SessionJobConfig implements Serializable {
     private final long sessionGapMs;
     private final long activeTimeoutMs;
     private final long watermarkDelayMs;
+    private final long watermarkIdlenessMs;
     private final long allowedLatenessMs;
+    private final long maxFutureSkewMs;
 
     // ==================== State 配置 ====================
     private final long stateTtlMs;
@@ -95,6 +113,12 @@ public class SessionJobConfig implements Serializable {
         this.chDlqTopic = builder.chDlqTopic;
         this.osDlqTopic = builder.osDlqTopic;
         this.consumerGroupId = builder.consumerGroupId;
+        this.auditTopic = builder.auditTopic;
+        this.dlqTransactionalIdPrefix = builder.dlqTransactionalIdPrefix;
+        this.outputTransactionalIdPrefix = builder.outputTransactionalIdPrefix;
+        this.qualityTransactionalIdPrefix = builder.qualityTransactionalIdPrefix;
+        this.kafkaTransactionTimeoutMs = builder.kafkaTransactionTimeoutMs;
+        this.deploymentActivation = builder.deploymentActivation;
         this.fetchMinBytes = builder.fetchMinBytes;
         this.fetchMaxWaitMs = builder.fetchMaxWaitMs;
         this.maxPollRecords = builder.maxPollRecords;
@@ -105,6 +129,8 @@ public class SessionJobConfig implements Serializable {
         this.clickhouseTable = builder.clickhouseTable;
         this.flowRawSinkEnabled = builder.flowRawSinkEnabled;
         this.flowRawClickhouseTable = builder.flowRawClickhouseTable;
+        this.sourceFactSinkEnabled = builder.sourceFactSinkEnabled;
+        this.sourceFactClickhouseTable = builder.sourceFactClickhouseTable;
         this.clickhouseUser = builder.clickhouseUser;
         this.clickhousePassword = builder.clickhousePassword;
         this.clickhouseBatchSize = builder.clickhouseBatchSize;
@@ -129,32 +155,121 @@ public class SessionJobConfig implements Serializable {
         this.sessionGapMs = builder.sessionGapMs;
         this.activeTimeoutMs = builder.activeTimeoutMs;
         this.watermarkDelayMs = builder.watermarkDelayMs;
+        this.watermarkIdlenessMs = builder.watermarkIdlenessMs;
         this.allowedLatenessMs = builder.allowedLatenessMs;
+        this.maxFutureSkewMs = builder.maxFutureSkewMs;
         this.stateTtlMs = builder.stateTtlMs;
         this.stateTtlEnabled = builder.stateTtlEnabled;
         this.parallelism = builder.parallelism;
         this.maxParallelism = builder.maxParallelism;
+        if (!"dlq.v1".equals(inputDlqTopic)
+                || !"dlq.v1".equals(lateDataTopic)
+                || !"dlq.v1".equals(chDlqTopic)
+                || !"dlq.v1".equals(osDlqTopic)) {
+            throw new IllegalArgumentException(
+                    "Session job parse late and projection failures must use canonical dlq.v1");
+        }
+        validate();
+    }
+
+    private void validate() {
+        if (!INPUT_TOPIC.equals(inputTopic)) {
+            throw new IllegalArgumentException("Session job input is pinned to flow.events.v1");
+        }
+        if (!AUDIT_TOPIC.equals(auditTopic)) {
+            throw new IllegalArgumentException("Session job quality receipts are pinned to audit.logs");
+        }
+        if (!TRANSACTIONAL_PREFIX.matcher(dlqTransactionalIdPrefix).matches()
+                || !TRANSACTIONAL_PREFIX.matcher(outputTransactionalIdPrefix).matches()
+                || !TRANSACTIONAL_PREFIX.matcher(qualityTransactionalIdPrefix).matches()) {
+            throw new IllegalArgumentException("Session job Kafka transactional prefix is invalid");
+        }
+        if (dlqTransactionalIdPrefix.equals(qualityTransactionalIdPrefix)
+                || dlqTransactionalIdPrefix.equals(outputTransactionalIdPrefix)
+                || outputTransactionalIdPrefix.equals(qualityTransactionalIdPrefix)) {
+            throw new IllegalArgumentException(
+                    "DLQ, output and quality transactional prefixes must differ");
+        }
+        if (checkpointIntervalMs <= 0L || checkpointTimeoutMs <= 0L
+                || kafkaTransactionTimeoutMs <= checkpointTimeoutMs + checkpointIntervalMs) {
+            throw new IllegalArgumentException(
+                    "Kafka transaction timeout must exceed checkpoint timeout plus interval");
+        }
+        if (!isProcessMode() && !isWindowMode()) {
+            throw new IllegalArgumentException("session.mode must be process or window");
+        }
+        if (sessionGapMs <= 0 || activeTimeoutMs <= 0 || watermarkDelayMs < 0
+                || watermarkIdlenessMs <= 0 || allowedLatenessMs < 0 || maxFutureSkewMs < 0) {
+            throw new IllegalArgumentException("session timeout, watermark and lateness configuration is invalid");
+        }
+        if (isProcessMode() && !stateTtlEnabled) {
+            throw new IllegalArgumentException("process mode requires state.ttl.enabled=true");
+        }
+        long timerHorizon = Math.max(sessionGapMs, activeTimeoutMs);
+        timerHorizon = saturatedAdd(timerHorizon, watermarkDelayMs);
+        timerHorizon = saturatedAdd(timerHorizon, allowedLatenessMs);
+        if (isProcessMode() && stateTtlMs <= timerHorizon) {
+            throw new IllegalArgumentException(
+                    "state.ttl.ms must exceed active/idle timeout plus watermark delay and allowed lateness");
+        }
+        if (parallelism <= 0 || maxParallelism <= 0 || parallelism > maxParallelism) {
+            throw new IllegalArgumentException("parallelism must be positive and not exceed max.parallelism");
+        }
+        if (sourceFactSinkEnabled && !deploymentActivation.externalWritesEnabled()) {
+            throw new IllegalArgumentException(
+                    "source-fact ClickHouse writes require an externally writable activation");
+        }
+        if (sourceFactSinkEnabled
+                && !"traffic.source_flow_facts_v1".equals(sourceFactClickhouseTable)) {
+            throw new IllegalArgumentException(
+                    "flow source facts are pinned to traffic.source_flow_facts_v1");
+        }
+    }
+
+    private static long saturatedAdd(long left, long right) {
+        if (right > 0 && left > Long.MAX_VALUE - right) return Long.MAX_VALUE;
+        return left + right;
     }
 
     /**
-     * 从命令行参数构建配置
+     * 从命令行参数 + session-job.properties + 环境变量构建配置。
+     * 此前仅用 ParameterTool.fromArgs(args)，session-job.properties 中的
+     * 调优值（checkpoint.interval.ms 等）从未加载；ConfigUtil.loadConfig
+     * 按 文件 < 环境变量 < 系统属性 < 命令行 合并。
      */
-    public static SessionJobConfig fromArgs(String[] args) {
-        ParameterTool params = ParameterTool.fromArgs(args);
+    public static SessionJobConfig fromArgs(String[] args) throws Exception {
+        ParameterTool params = ConfigUtil.loadConfig(args, "session-job.properties");
 
         String osHostsStr = params.get("opensearch.hosts", "opensearch.middleware.svc");
         String[] osHosts = osHostsStr.split(",");
+        String consumerGroup = params.get("consumer.group", "flink-session-job");
+        DeploymentActivation activation = DeploymentActivation.from(
+                params, "flink-session-job", consumerGroup);
+        String candidateSuffix = activation.isCandidateBound()
+                ? "-" + activation.getCandidateSha256().substring(0, 12) : "";
 
         return new Builder()
             .sessionMode(params.get("session.mode", "process"))
             .kafkaBrokers(params.get("kafka.brokers", ConfigUtil.KAFKA_BROKERS))
             .inputTopic(params.get("input.topic", ConfigUtil.TOPIC_FLOW_EVENTS))
             .outputTopic(params.get("output.topic", ConfigUtil.TOPIC_SESSION_EVENTS))
-            .lateDataTopic(params.get("late.data.topic", "session.late.v1"))
+            .lateDataTopic(params.get("late.data.topic", "dlq.v1"))
             .inputDlqTopic(params.get("input.dlq.topic", "dlq.v1"))
-            .chDlqTopic(params.get("ch.dlq.topic", "dlq.session.ch.v1"))
-            .osDlqTopic(params.get("os.dlq.topic", "dlq.session.os.v1"))
-            .consumerGroupId(params.get("consumer.group", "flink-session-job"))
+            .chDlqTopic(params.get("ch.dlq.topic", "dlq.v1"))
+            .osDlqTopic(params.get("os.dlq.topic", "dlq.v1"))
+            .consumerGroupId(consumerGroup)
+            .auditTopic(params.get("audit.topic", AUDIT_TOPIC))
+            .dlqTransactionalIdPrefix(params.get(
+                    "kafka.dlq.transactional.id.prefix",
+                    "flink-session-job-dlq-v1" + candidateSuffix))
+            .outputTransactionalIdPrefix(params.get(
+                    "kafka.output.transactional.id.prefix",
+                    "flink-session-job-output-v1" + candidateSuffix))
+            .qualityTransactionalIdPrefix(params.get(
+                    "kafka.quality.transactional.id.prefix",
+                    "flink-session-job-quality-v1" + candidateSuffix))
+            .kafkaTransactionTimeoutMs(params.getLong("kafka.transaction.timeout.ms", 900000L))
+            .deploymentActivation(activation)
             .fetchMinBytes(params.getInt("kafka.fetch.min.bytes", 1))
             .fetchMaxWaitMs(params.getInt("kafka.fetch.max.wait.ms", 500))
             .maxPollRecords(params.getInt("kafka.max.poll.records", 500))
@@ -165,6 +280,9 @@ public class SessionJobConfig implements Serializable {
             .clickhouseTable(params.get("clickhouse.table", "sessions"))
             .flowRawSinkEnabled(params.getBoolean("flow.raw.sink.enabled", true))
             .flowRawClickhouseTable(params.get("flow.raw.clickhouse.table", "flows_raw"))
+            .sourceFactSinkEnabled(params.getBoolean("source.fact.sink.enabled", false))
+            .sourceFactClickhouseTable(params.get(
+                    "source.fact.clickhouse.table", "traffic.source_flow_facts_v1"))
             .clickhouseUser(params.get("clickhouse.user", ConfigUtil.CLICKHOUSE_USER))
             .clickhousePassword(params.get("clickhouse.password", ConfigUtil.CLICKHOUSE_PASSWORD))
             .clickhouseBatchSize(params.getInt("clickhouse.batch.size", ConfigUtil.CLICKHOUSE_BATCH_SIZE))
@@ -189,8 +307,10 @@ public class SessionJobConfig implements Serializable {
             .sessionGapMs(params.getLong("session.gap.ms", ConfigUtil.SESSION_GAP_MS))
             .activeTimeoutMs(params.getLong("active.timeout.ms", 1800000L))
             .watermarkDelayMs(params.getLong("watermark.delay.ms", ConfigUtil.WATERMARK_DELAY_MS))
+            .watermarkIdlenessMs(params.getLong("watermark.idleness.ms", 60000L))
             .allowedLatenessMs(params.getLong("allowed.lateness.ms", 0L))
-            .stateTtlMs(params.getLong("state.ttl.ms", 1800000L))
+            .maxFutureSkewMs(params.getLong("event.max.future.skew.ms", 300000L))
+            .stateTtlMs(params.getLong("state.ttl.ms", 3600000L))
             .stateTtlEnabled(params.getBoolean("state.ttl.enabled", true))
             .parallelism(params.getInt("parallelism", 4))
             .maxParallelism(params.getInt("max.parallelism", 128))
@@ -211,6 +331,12 @@ public class SessionJobConfig implements Serializable {
     public String getChDlqTopic() { return chDlqTopic; }
     public String getOsDlqTopic() { return osDlqTopic; }
     public String getConsumerGroupId() { return consumerGroupId; }
+    public String getAuditTopic() { return auditTopic; }
+    public String getDlqTransactionalIdPrefix() { return dlqTransactionalIdPrefix; }
+    public String getOutputTransactionalIdPrefix() { return outputTransactionalIdPrefix; }
+    public String getQualityTransactionalIdPrefix() { return qualityTransactionalIdPrefix; }
+    public long getKafkaTransactionTimeoutMs() { return kafkaTransactionTimeoutMs; }
+    public DeploymentActivation getDeploymentActivation() { return deploymentActivation; }
     public int getFetchMinBytes() { return fetchMinBytes; }
     public int getFetchMaxWaitMs() { return fetchMaxWaitMs; }
     public int getMaxPollRecords() { return maxPollRecords; }
@@ -222,6 +348,8 @@ public class SessionJobConfig implements Serializable {
     public String getClickhouseTable() { return clickhouseTable; }
     public boolean isFlowRawSinkEnabled() { return flowRawSinkEnabled; }
     public String getFlowRawClickhouseTable() { return flowRawClickhouseTable; }
+    public boolean isSourceFactSinkEnabled() { return sourceFactSinkEnabled; }
+    public String getSourceFactClickhouseTable() { return sourceFactClickhouseTable; }
     public String getClickhouseUser() { return clickhouseUser; }
     public String getClickhousePassword() { return clickhousePassword; }
     public int getClickhouseBatchSize() { return clickhouseBatchSize; }
@@ -252,7 +380,14 @@ public class SessionJobConfig implements Serializable {
     public Duration getActiveTimeoutDuration() { return Duration.ofMillis(activeTimeoutMs); }
     public long getWatermarkDelayMs() { return watermarkDelayMs; }
     public Duration getWatermarkDelayDuration() { return Duration.ofMillis(watermarkDelayMs); }
+    public long getWatermarkIdlenessMs() { return watermarkIdlenessMs; }
     public long getAllowedLatenessMs() { return allowedLatenessMs; }
+    public long getMaxFutureSkewMs() { return maxFutureSkewMs; }
+    public EventTimePolicy eventTimePolicy() {
+        return new EventTimePolicy(
+                watermarkDelayMs, watermarkIdlenessMs, allowedLatenessMs,
+                maxFutureSkewMs, 0L);
+    }
 
     public long getStateTtlMs() { return stateTtlMs; }
     public Duration getStateTtlDuration() { return Duration.ofMillis(stateTtlMs); }
@@ -268,11 +403,18 @@ public class SessionJobConfig implements Serializable {
         private String kafkaBrokers = ConfigUtil.KAFKA_BROKERS;
         private String inputTopic = ConfigUtil.TOPIC_FLOW_EVENTS;
         private String outputTopic = ConfigUtil.TOPIC_SESSION_EVENTS;
-        private String lateDataTopic = "session.late.v1";
+        private String lateDataTopic = "dlq.v1";
         private String inputDlqTopic = "dlq.v1";
-        private String chDlqTopic = "dlq.session.ch.v1";
-        private String osDlqTopic = "dlq.session.os.v1";
+        private String chDlqTopic = "dlq.v1";
+        private String osDlqTopic = "dlq.v1";
         private String consumerGroupId = "flink-session-job";
+        private String auditTopic = AUDIT_TOPIC;
+        private String dlqTransactionalIdPrefix = "flink-session-job-dlq-v1";
+        private String outputTransactionalIdPrefix = "flink-session-job-output-v1";
+        private String qualityTransactionalIdPrefix = "flink-session-job-quality-v1";
+        private long kafkaTransactionTimeoutMs = 900000L;
+        private DeploymentActivation deploymentActivation =
+                DeploymentActivation.legacy("flink-session-job");
         private int fetchMinBytes = 1;
         private int fetchMaxWaitMs = 500;
         private int maxPollRecords = 500;
@@ -283,6 +425,8 @@ public class SessionJobConfig implements Serializable {
         private String clickhouseTable = "sessions";
         private boolean flowRawSinkEnabled = true;
         private String flowRawClickhouseTable = "flows_raw";
+        private boolean sourceFactSinkEnabled = false;
+        private String sourceFactClickhouseTable = "traffic.source_flow_facts_v1";
         private String clickhouseUser = ConfigUtil.CLICKHOUSE_USER;
         private String clickhousePassword = ConfigUtil.CLICKHOUSE_PASSWORD;
         private int clickhouseBatchSize = ConfigUtil.CLICKHOUSE_BATCH_SIZE;
@@ -307,8 +451,10 @@ public class SessionJobConfig implements Serializable {
         private long sessionGapMs = ConfigUtil.SESSION_GAP_MS;
         private long activeTimeoutMs = 1800000L;
         private long watermarkDelayMs = ConfigUtil.WATERMARK_DELAY_MS;
+        private long watermarkIdlenessMs = 60000L;
         private long allowedLatenessMs = 0L;
-        private long stateTtlMs = 1800000L;
+        private long maxFutureSkewMs = 300000L;
+        private long stateTtlMs = 3600000L;
         private boolean stateTtlEnabled = true;
         private int parallelism = 4;
         private int maxParallelism = 128;
@@ -322,6 +468,12 @@ public class SessionJobConfig implements Serializable {
         public Builder chDlqTopic(String chDlqTopic) { this.chDlqTopic = chDlqTopic; return this; }
         public Builder osDlqTopic(String osDlqTopic) { this.osDlqTopic = osDlqTopic; return this; }
         public Builder consumerGroupId(String consumerGroupId) { this.consumerGroupId = consumerGroupId; return this; }
+        public Builder auditTopic(String auditTopic) { this.auditTopic = auditTopic; return this; }
+        public Builder dlqTransactionalIdPrefix(String value) { this.dlqTransactionalIdPrefix = value; return this; }
+        public Builder outputTransactionalIdPrefix(String value) { this.outputTransactionalIdPrefix = value; return this; }
+        public Builder qualityTransactionalIdPrefix(String value) { this.qualityTransactionalIdPrefix = value; return this; }
+        public Builder kafkaTransactionTimeoutMs(long value) { this.kafkaTransactionTimeoutMs = value; return this; }
+        public Builder deploymentActivation(DeploymentActivation deploymentActivation) { this.deploymentActivation = deploymentActivation; return this; }
         public Builder fetchMinBytes(int fetchMinBytes) { this.fetchMinBytes = fetchMinBytes; return this; }
         public Builder fetchMaxWaitMs(int fetchMaxWaitMs) { this.fetchMaxWaitMs = fetchMaxWaitMs; return this; }
         public Builder maxPollRecords(int maxPollRecords) { this.maxPollRecords = maxPollRecords; return this; }
@@ -332,6 +484,8 @@ public class SessionJobConfig implements Serializable {
         public Builder clickhouseTable(String clickhouseTable) { this.clickhouseTable = clickhouseTable; return this; }
         public Builder flowRawSinkEnabled(boolean flowRawSinkEnabled) { this.flowRawSinkEnabled = flowRawSinkEnabled; return this; }
         public Builder flowRawClickhouseTable(String flowRawClickhouseTable) { this.flowRawClickhouseTable = flowRawClickhouseTable; return this; }
+        public Builder sourceFactSinkEnabled(boolean value) { this.sourceFactSinkEnabled = value; return this; }
+        public Builder sourceFactClickhouseTable(String value) { this.sourceFactClickhouseTable = value; return this; }
         public Builder clickhouseUser(String clickhouseUser) { this.clickhouseUser = clickhouseUser; return this; }
         public Builder clickhousePassword(String clickhousePassword) { this.clickhousePassword = clickhousePassword; return this; }
         public Builder clickhouseBatchSize(int clickhouseBatchSize) { this.clickhouseBatchSize = clickhouseBatchSize; return this; }
@@ -356,7 +510,9 @@ public class SessionJobConfig implements Serializable {
         public Builder sessionGapMs(long sessionGapMs) { this.sessionGapMs = sessionGapMs; return this; }
         public Builder activeTimeoutMs(long activeTimeoutMs) { this.activeTimeoutMs = activeTimeoutMs; return this; }
         public Builder watermarkDelayMs(long watermarkDelayMs) { this.watermarkDelayMs = watermarkDelayMs; return this; }
+        public Builder watermarkIdlenessMs(long value) { this.watermarkIdlenessMs = value; return this; }
         public Builder allowedLatenessMs(long allowedLatenessMs) { this.allowedLatenessMs = allowedLatenessMs; return this; }
+        public Builder maxFutureSkewMs(long value) { this.maxFutureSkewMs = value; return this; }
         public Builder stateTtlMs(long stateTtlMs) { this.stateTtlMs = stateTtlMs; return this; }
         public Builder stateTtlEnabled(boolean stateTtlEnabled) { this.stateTtlEnabled = stateTtlEnabled; return this; }
         public Builder parallelism(int parallelism) { this.parallelism = parallelism; return this; }

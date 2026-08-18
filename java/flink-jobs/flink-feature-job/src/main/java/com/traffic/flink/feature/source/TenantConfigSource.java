@@ -110,9 +110,28 @@ public class TenantConfigSource extends RichSourceFunction<TenantConfig> {
 
             } catch (Exception e) {
                 LOG.error("Failed to load tenant config: {}", e.getMessage(), e);
+                // 连接可能已失效：关闭后重建，否则断连后配置热更新永久静默失效
+                closeQuietly();
+                try {
+                    this.connection = DriverManager.getConnection(jdbcUrl, username, password);
+                    LOG.info("Tenant config JDBC connection re-established");
+                } catch (Exception reconnectError) {
+                    LOG.error("Tenant config JDBC reconnect failed: {}", reconnectError.getMessage());
+                }
                 // 失败后等待更长时间再重试
                 Thread.sleep(pollIntervalMs * 5);
             }
+        }
+    }
+
+    private void closeQuietly() {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (Exception ignored) {
+                // best-effort close
+            }
+            connection = null;
         }
     }
 

@@ -73,34 +73,7 @@ public class XGBoostModelWrapper implements BehaviorModel {
     }
 
     public float[] buildFeatureVector(FeatureStat feature) {
-        float[] values = new float[featureColumns.size()];
-        for (int index = 0; index < featureColumns.size(); index++) {
-            values[index] = extractFeatureValue(feature, featureColumns.get(index));
-        }
-        return values;
-    }
-
-    private float extractFeatureValue(FeatureStat feature, String columnName) {
-        switch (columnName) {
-            case "pps": return feature.getPps();
-            case "bps": return feature.getBps();
-            case "up_down_ratio": return feature.getUpDownRatio();
-            case "pktlen_mean": return feature.getPktlenMean();
-            case "pktlen_std": return feature.getPktlenStd();
-            case "iat_mean_ms": return feature.getIatMeanMs();
-            case "iat_std_ms": return feature.getIatStdMs();
-            case "active_mean_ms": return feature.getActiveMeanMs();
-            case "idle_mean_ms": return feature.getIdleMeanMs();
-            case "duration_ms": return feature.getDurationMs();
-            case "tcp_flag_syn_cnt": return feature.getTcpFlagSynCnt();
-            case "tcp_flag_ack_cnt": return feature.getTcpFlagAckCnt();
-            case "tcp_init_win_bytes_fwd": return feature.getTcpInitWinBytesFwd();
-            case "tcp_init_win_bytes_bwd": return feature.getTcpInitWinBytesBwd();
-            case "protocol": return feature.getProtocol();
-            default:
-                LOG.trace("Unknown feature column {}, using zero", columnName);
-                return 0.0f;
-        }
+        return FeatureStatVectorizer.vectorize(feature, featureColumns);
     }
 
     public float predict(float[] features) {

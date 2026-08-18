@@ -126,7 +126,7 @@ public enum Severity
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(1);
+    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(2);
   }
 
   private static final Severity[] VALUES = values();

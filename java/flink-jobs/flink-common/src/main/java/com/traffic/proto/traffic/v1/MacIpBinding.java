@@ -25,6 +25,10 @@ private static final long serialVersionUID = 0L;
     ipAddress_ = "";
     tenantId_ = "";
     source_ = "";
+    observationId_ = "";
+    probeId_ = "";
+    vlanId_ = "";
+    sourceEventId_ = "";
   }
 
   @java.lang.Override
@@ -226,6 +230,209 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int OBSERVATION_ID_FIELD_NUMBER = 6;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object observationId_ = "";
+  /**
+   * <pre>
+   * Stable probe-local identity. Retries must retain this value and payload.
+   * </pre>
+   *
+   * <code>string observation_id = 6 [json_name = "observationId"];</code>
+   * @return The observationId.
+   */
+  @java.lang.Override
+  public java.lang.String getObservationId() {
+    java.lang.Object ref = observationId_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      observationId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <pre>
+   * Stable probe-local identity. Retries must retain this value and payload.
+   * </pre>
+   *
+   * <code>string observation_id = 6 [json_name = "observationId"];</code>
+   * @return The bytes for observationId.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getObservationIdBytes() {
+    java.lang.Object ref = observationId_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      observationId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int PROBE_ID_FIELD_NUMBER = 7;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object probeId_ = "";
+  /**
+   * <pre>
+   * Authenticated gateway identity; a non-empty mismatching value is rejected.
+   * </pre>
+   *
+   * <code>string probe_id = 7 [json_name = "probeId"];</code>
+   * @return The probeId.
+   */
+  @java.lang.Override
+  public java.lang.String getProbeId() {
+    java.lang.Object ref = probeId_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      probeId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <pre>
+   * Authenticated gateway identity; a non-empty mismatching value is rejected.
+   * </pre>
+   *
+   * <code>string probe_id = 7 [json_name = "probeId"];</code>
+   * @return The bytes for probeId.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getProbeIdBytes() {
+    java.lang.Object ref = probeId_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      probeId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int VLAN_ID_FIELD_NUMBER = 8;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object vlanId_ = "";
+  /**
+   * <pre>
+   * Observation scope. Empty remains compatible with untagged legacy traffic.
+   * </pre>
+   *
+   * <code>string vlan_id = 8 [json_name = "vlanId"];</code>
+   * @return The vlanId.
+   */
+  @java.lang.Override
+  public java.lang.String getVlanId() {
+    java.lang.Object ref = vlanId_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      vlanId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <pre>
+   * Observation scope. Empty remains compatible with untagged legacy traffic.
+   * </pre>
+   *
+   * <code>string vlan_id = 8 [json_name = "vlanId"];</code>
+   * @return The bytes for vlanId.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getVlanIdBytes() {
+    java.lang.Object ref = vlanId_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      vlanId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int SOURCE_EVENT_ID_FIELD_NUMBER = 9;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object sourceEventId_ = "";
+  /**
+   * <pre>
+   * Packet/parser identity used for audit correlation, not as Kafka authority.
+   * </pre>
+   *
+   * <code>string source_event_id = 9 [json_name = "sourceEventId"];</code>
+   * @return The sourceEventId.
+   */
+  @java.lang.Override
+  public java.lang.String getSourceEventId() {
+    java.lang.Object ref = sourceEventId_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      sourceEventId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <pre>
+   * Packet/parser identity used for audit correlation, not as Kafka authority.
+   * </pre>
+   *
+   * <code>string source_event_id = 9 [json_name = "sourceEventId"];</code>
+   * @return The bytes for sourceEventId.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getSourceEventIdBytes() {
+    java.lang.Object ref = sourceEventId_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      sourceEventId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int SCHEMA_VERSION_FIELD_NUMBER = 10;
+  private int schemaVersion_ = 0;
+  /**
+   * <pre>
+   * Additive payload contract revision. New probe uploads use value 1.
+   * </pre>
+   *
+   * <code>uint32 schema_version = 10 [json_name = "schemaVersion"];</code>
+   * @return The schemaVersion.
+   */
+  @java.lang.Override
+  public int getSchemaVersion() {
+    return schemaVersion_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -255,6 +462,21 @@ private static final long serialVersionUID = 0L;
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(source_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, source_);
     }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(observationId_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, observationId_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(probeId_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 7, probeId_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(vlanId_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 8, vlanId_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sourceEventId_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 9, sourceEventId_);
+    }
+    if (schemaVersion_ != 0) {
+      output.writeUInt32(10, schemaVersion_);
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -279,6 +501,22 @@ private static final long serialVersionUID = 0L;
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(source_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, source_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(observationId_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, observationId_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(probeId_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, probeId_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(vlanId_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, vlanId_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sourceEventId_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(9, sourceEventId_);
+    }
+    if (schemaVersion_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(10, schemaVersion_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -305,6 +543,16 @@ private static final long serialVersionUID = 0L;
         != other.getObservedAt()) return false;
     if (!getSource()
         .equals(other.getSource())) return false;
+    if (!getObservationId()
+        .equals(other.getObservationId())) return false;
+    if (!getProbeId()
+        .equals(other.getProbeId())) return false;
+    if (!getVlanId()
+        .equals(other.getVlanId())) return false;
+    if (!getSourceEventId()
+        .equals(other.getSourceEventId())) return false;
+    if (getSchemaVersion()
+        != other.getSchemaVersion()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -327,6 +575,16 @@ private static final long serialVersionUID = 0L;
         getObservedAt());
     hash = (37 * hash) + SOURCE_FIELD_NUMBER;
     hash = (53 * hash) + getSource().hashCode();
+    hash = (37 * hash) + OBSERVATION_ID_FIELD_NUMBER;
+    hash = (53 * hash) + getObservationId().hashCode();
+    hash = (37 * hash) + PROBE_ID_FIELD_NUMBER;
+    hash = (53 * hash) + getProbeId().hashCode();
+    hash = (37 * hash) + VLAN_ID_FIELD_NUMBER;
+    hash = (53 * hash) + getVlanId().hashCode();
+    hash = (37 * hash) + SOURCE_EVENT_ID_FIELD_NUMBER;
+    hash = (53 * hash) + getSourceEventId().hashCode();
+    hash = (37 * hash) + SCHEMA_VERSION_FIELD_NUMBER;
+    hash = (53 * hash) + getSchemaVersion();
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -467,6 +725,11 @@ private static final long serialVersionUID = 0L;
       tenantId_ = "";
       observedAt_ = 0L;
       source_ = "";
+      observationId_ = "";
+      probeId_ = "";
+      vlanId_ = "";
+      sourceEventId_ = "";
+      schemaVersion_ = 0;
       return this;
     }
 
@@ -514,6 +777,21 @@ private static final long serialVersionUID = 0L;
       }
       if (((from_bitField0_ & 0x00000010) != 0)) {
         result.source_ = source_;
+      }
+      if (((from_bitField0_ & 0x00000020) != 0)) {
+        result.observationId_ = observationId_;
+      }
+      if (((from_bitField0_ & 0x00000040) != 0)) {
+        result.probeId_ = probeId_;
+      }
+      if (((from_bitField0_ & 0x00000080) != 0)) {
+        result.vlanId_ = vlanId_;
+      }
+      if (((from_bitField0_ & 0x00000100) != 0)) {
+        result.sourceEventId_ = sourceEventId_;
+      }
+      if (((from_bitField0_ & 0x00000200) != 0)) {
+        result.schemaVersion_ = schemaVersion_;
       }
     }
 
@@ -584,6 +862,29 @@ private static final long serialVersionUID = 0L;
         bitField0_ |= 0x00000010;
         onChanged();
       }
+      if (!other.getObservationId().isEmpty()) {
+        observationId_ = other.observationId_;
+        bitField0_ |= 0x00000020;
+        onChanged();
+      }
+      if (!other.getProbeId().isEmpty()) {
+        probeId_ = other.probeId_;
+        bitField0_ |= 0x00000040;
+        onChanged();
+      }
+      if (!other.getVlanId().isEmpty()) {
+        vlanId_ = other.vlanId_;
+        bitField0_ |= 0x00000080;
+        onChanged();
+      }
+      if (!other.getSourceEventId().isEmpty()) {
+        sourceEventId_ = other.sourceEventId_;
+        bitField0_ |= 0x00000100;
+        onChanged();
+      }
+      if (other.getSchemaVersion() != 0) {
+        setSchemaVersion(other.getSchemaVersion());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -635,6 +936,31 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000010;
               break;
             } // case 42
+            case 50: {
+              observationId_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000020;
+              break;
+            } // case 50
+            case 58: {
+              probeId_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000040;
+              break;
+            } // case 58
+            case 66: {
+              vlanId_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000080;
+              break;
+            } // case 66
+            case 74: {
+              sourceEventId_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000100;
+              break;
+            } // case 74
+            case 80: {
+              schemaVersion_ = input.readUInt32();
+              bitField0_ |= 0x00000200;
+              break;
+            } // case 80
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -1000,6 +1326,418 @@ private static final long serialVersionUID = 0L;
       checkByteStringIsUtf8(value);
       source_ = value;
       bitField0_ |= 0x00000010;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object observationId_ = "";
+    /**
+     * <pre>
+     * Stable probe-local identity. Retries must retain this value and payload.
+     * </pre>
+     *
+     * <code>string observation_id = 6 [json_name = "observationId"];</code>
+     * @return The observationId.
+     */
+    public java.lang.String getObservationId() {
+      java.lang.Object ref = observationId_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        observationId_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Stable probe-local identity. Retries must retain this value and payload.
+     * </pre>
+     *
+     * <code>string observation_id = 6 [json_name = "observationId"];</code>
+     * @return The bytes for observationId.
+     */
+    public com.google.protobuf.ByteString
+        getObservationIdBytes() {
+      java.lang.Object ref = observationId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        observationId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Stable probe-local identity. Retries must retain this value and payload.
+     * </pre>
+     *
+     * <code>string observation_id = 6 [json_name = "observationId"];</code>
+     * @param value The observationId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setObservationId(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      observationId_ = value;
+      bitField0_ |= 0x00000020;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Stable probe-local identity. Retries must retain this value and payload.
+     * </pre>
+     *
+     * <code>string observation_id = 6 [json_name = "observationId"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearObservationId() {
+      observationId_ = getDefaultInstance().getObservationId();
+      bitField0_ = (bitField0_ & ~0x00000020);
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Stable probe-local identity. Retries must retain this value and payload.
+     * </pre>
+     *
+     * <code>string observation_id = 6 [json_name = "observationId"];</code>
+     * @param value The bytes for observationId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setObservationIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      observationId_ = value;
+      bitField0_ |= 0x00000020;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object probeId_ = "";
+    /**
+     * <pre>
+     * Authenticated gateway identity; a non-empty mismatching value is rejected.
+     * </pre>
+     *
+     * <code>string probe_id = 7 [json_name = "probeId"];</code>
+     * @return The probeId.
+     */
+    public java.lang.String getProbeId() {
+      java.lang.Object ref = probeId_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        probeId_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Authenticated gateway identity; a non-empty mismatching value is rejected.
+     * </pre>
+     *
+     * <code>string probe_id = 7 [json_name = "probeId"];</code>
+     * @return The bytes for probeId.
+     */
+    public com.google.protobuf.ByteString
+        getProbeIdBytes() {
+      java.lang.Object ref = probeId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        probeId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Authenticated gateway identity; a non-empty mismatching value is rejected.
+     * </pre>
+     *
+     * <code>string probe_id = 7 [json_name = "probeId"];</code>
+     * @param value The probeId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setProbeId(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      probeId_ = value;
+      bitField0_ |= 0x00000040;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Authenticated gateway identity; a non-empty mismatching value is rejected.
+     * </pre>
+     *
+     * <code>string probe_id = 7 [json_name = "probeId"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearProbeId() {
+      probeId_ = getDefaultInstance().getProbeId();
+      bitField0_ = (bitField0_ & ~0x00000040);
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Authenticated gateway identity; a non-empty mismatching value is rejected.
+     * </pre>
+     *
+     * <code>string probe_id = 7 [json_name = "probeId"];</code>
+     * @param value The bytes for probeId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setProbeIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      probeId_ = value;
+      bitField0_ |= 0x00000040;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object vlanId_ = "";
+    /**
+     * <pre>
+     * Observation scope. Empty remains compatible with untagged legacy traffic.
+     * </pre>
+     *
+     * <code>string vlan_id = 8 [json_name = "vlanId"];</code>
+     * @return The vlanId.
+     */
+    public java.lang.String getVlanId() {
+      java.lang.Object ref = vlanId_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        vlanId_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Observation scope. Empty remains compatible with untagged legacy traffic.
+     * </pre>
+     *
+     * <code>string vlan_id = 8 [json_name = "vlanId"];</code>
+     * @return The bytes for vlanId.
+     */
+    public com.google.protobuf.ByteString
+        getVlanIdBytes() {
+      java.lang.Object ref = vlanId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        vlanId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Observation scope. Empty remains compatible with untagged legacy traffic.
+     * </pre>
+     *
+     * <code>string vlan_id = 8 [json_name = "vlanId"];</code>
+     * @param value The vlanId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setVlanId(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      vlanId_ = value;
+      bitField0_ |= 0x00000080;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Observation scope. Empty remains compatible with untagged legacy traffic.
+     * </pre>
+     *
+     * <code>string vlan_id = 8 [json_name = "vlanId"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearVlanId() {
+      vlanId_ = getDefaultInstance().getVlanId();
+      bitField0_ = (bitField0_ & ~0x00000080);
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Observation scope. Empty remains compatible with untagged legacy traffic.
+     * </pre>
+     *
+     * <code>string vlan_id = 8 [json_name = "vlanId"];</code>
+     * @param value The bytes for vlanId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setVlanIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      vlanId_ = value;
+      bitField0_ |= 0x00000080;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object sourceEventId_ = "";
+    /**
+     * <pre>
+     * Packet/parser identity used for audit correlation, not as Kafka authority.
+     * </pre>
+     *
+     * <code>string source_event_id = 9 [json_name = "sourceEventId"];</code>
+     * @return The sourceEventId.
+     */
+    public java.lang.String getSourceEventId() {
+      java.lang.Object ref = sourceEventId_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        sourceEventId_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Packet/parser identity used for audit correlation, not as Kafka authority.
+     * </pre>
+     *
+     * <code>string source_event_id = 9 [json_name = "sourceEventId"];</code>
+     * @return The bytes for sourceEventId.
+     */
+    public com.google.protobuf.ByteString
+        getSourceEventIdBytes() {
+      java.lang.Object ref = sourceEventId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        sourceEventId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Packet/parser identity used for audit correlation, not as Kafka authority.
+     * </pre>
+     *
+     * <code>string source_event_id = 9 [json_name = "sourceEventId"];</code>
+     * @param value The sourceEventId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setSourceEventId(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      sourceEventId_ = value;
+      bitField0_ |= 0x00000100;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Packet/parser identity used for audit correlation, not as Kafka authority.
+     * </pre>
+     *
+     * <code>string source_event_id = 9 [json_name = "sourceEventId"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearSourceEventId() {
+      sourceEventId_ = getDefaultInstance().getSourceEventId();
+      bitField0_ = (bitField0_ & ~0x00000100);
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Packet/parser identity used for audit correlation, not as Kafka authority.
+     * </pre>
+     *
+     * <code>string source_event_id = 9 [json_name = "sourceEventId"];</code>
+     * @param value The bytes for sourceEventId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setSourceEventIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      sourceEventId_ = value;
+      bitField0_ |= 0x00000100;
+      onChanged();
+      return this;
+    }
+
+    private int schemaVersion_ ;
+    /**
+     * <pre>
+     * Additive payload contract revision. New probe uploads use value 1.
+     * </pre>
+     *
+     * <code>uint32 schema_version = 10 [json_name = "schemaVersion"];</code>
+     * @return The schemaVersion.
+     */
+    @java.lang.Override
+    public int getSchemaVersion() {
+      return schemaVersion_;
+    }
+    /**
+     * <pre>
+     * Additive payload contract revision. New probe uploads use value 1.
+     * </pre>
+     *
+     * <code>uint32 schema_version = 10 [json_name = "schemaVersion"];</code>
+     * @param value The schemaVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setSchemaVersion(int value) {
+
+      schemaVersion_ = value;
+      bitField0_ |= 0x00000200;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive payload contract revision. New probe uploads use value 1.
+     * </pre>
+     *
+     * <code>uint32 schema_version = 10 [json_name = "schemaVersion"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearSchemaVersion() {
+      bitField0_ = (bitField0_ & ~0x00000200);
+      schemaVersion_ = 0;
       onChanged();
       return this;
     }

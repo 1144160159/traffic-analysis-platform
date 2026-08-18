@@ -15,7 +15,8 @@ PARALLELISM=${PARALLELISM:-4}
 KAFKA_BROKERS=${KAFKA_BROKERS:-kafka-bootstrap.middleware.svc:9092}
 CLICKHOUSE_URL=${CLICKHOUSE_URL:-localhost:8123}
 CHECKPOINT_PATH=${CHECKPOINT_PATH:-s3://flink-checkpoints/checkpoints/rule-job}
-OUTPUT_TOPIC=${OUTPUT_TOPIC:-detections.behavior.v1}
+OUTPUT_TOPIC=${OUTPUT_TOPIC:-detections.v1}
+RULE_APPLIED_TOPIC=${RULE_APPLIED_TOPIC:-rule-update-applied.v1}
 CLICKHOUSE_TABLE=${CLICKHOUSE_TABLE:-detections_behavior}
 resolve_clickhouse_password
 
@@ -61,8 +62,9 @@ $FLINK_HOME/bin/flink run \
     --kafka.brokers $KAFKA_BROKERS \
     --kafka.feature.topic feature.stat.v1 \
     --kafka.rule.topic rule.updates \
+    --kafka.rule.applied.topic $RULE_APPLIED_TOPIC \
     --kafka.output.topic $OUTPUT_TOPIC \
-    --kafka.dlq.topic dlq.rule-job \
+    --kafka.dlq.topic dlq.v1 \
     --clickhouse.url $CLICKHOUSE_URL \
     --clickhouse.database traffic \
     --clickhouse.table $CLICKHOUSE_TABLE \

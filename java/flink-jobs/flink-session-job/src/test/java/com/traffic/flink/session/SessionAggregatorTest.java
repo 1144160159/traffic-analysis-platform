@@ -133,6 +133,28 @@ class SessionAggregatorTest {
         assertEquals(1000, session.getDurationMs());
         assertEquals(150, session.getPacketsTotal());
         assertEquals(1500, session.getBytesTotal());
+        assertEquals("session-id-sha256-v1", session.getIdentityVersion());
+        assertEquals(1, session.getSessionVersion());
+        assertEquals(1000L, session.getEventTimeStartMs());
+        assertEquals(2000L, session.getEventTimeEndMs());
+        assertEquals(session.getFlowIdsList(), session.getEvidenceIdsList());
+        assertEquals(1, session.getSourceEventIdsCount());
+        assertTrue(session.getSourceEventIds(0).startsWith("test-event-"));
+        assertEquals(session.getEvidenceIdsCount(), session.getEvidenceCount());
+        assertNotEquals(SessionCompleteness.SESSION_COMPLETENESS_UNSPECIFIED,
+                session.getCompleteness());
+        assertEquals("traffic.session.event.v1", session.getHeader().getEventType());
+        assertEquals("v1", session.getHeader().getSchemaVersion());
+        assertEquals("session", session.getHeader().getAggregateType());
+        assertEquals(session.getSessionId(), session.getHeader().getAggregateId());
+        assertEquals(1, session.getHeader().getAggregateVersion());
+        assertEquals(session.getTsEnd(), session.getHeader().getOccurredAt());
+        assertEquals(session.getHeader().getFlinkOutTs(), session.getHeader().getProducedAt());
+        assertEquals(session.getSourceEventIds(0), session.getHeader().getCausationId());
+        assertEquals(session.getHeader().getCausationId(), session.getHeader().getTraceId());
+        assertEquals(session.getCommunityId(), session.getHeader().getCorrelationId());
+        assertEquals(session.getHeader().getEventId(), session.getHeader().getIdempotencyKey());
+        assertEquals("flink-session-job", session.getHeader().getProducer());
     }
 
     @Test
@@ -579,7 +601,99 @@ class SessionAggregatorTest {
         SessionEvent session = aggregator.getResult(acc);
         
         assertEquals(150, acc.flowCount, "应记录 150 个 Flow");
-        assertTrue(session.getFlowIdsCount() <= 100, "Flow IDs 应限制在 100 个以内");
+        assertEquals(100, session.getFlowIdsCount(), "Flow IDs 应限制为确定性的 100 个");
+        assertEquals(session.getFlowIdsList(), session.getEvidenceIdsList());
+        assertEquals(100, session.getSourceEventIdsCount());
+        assertEquals(SessionCompleteness.SESSION_COMPLETENESS_TRUNCATED,
+                session.getCompleteness());
+        assertTrue(session.getMissingFieldsList().contains("evidence_ids_truncated"));
+        assertTrue(session.getMissingFieldsList().contains("source_event_ids_truncated"));
+    }
+
+    @Test
+    @DisplayName("Flow evidence 去重排序和截断与到达顺序无关")
+    void testFlowEvidenceOrderIsDeterministic() {
+        SessionAccumulator forward = aggregator.createAccumulator();
+        SessionAccumulator reverse = aggregator.createAccumulator();
+        for (int i = 0; i < 120; i++) {
+            forward.addFlowId(String.format("flow-%03d", i));
+            reverse.addFlowId(String.format("flow-%03d", 119 - i));
+        }
+        forward.addFlowId("flow-010");
+        reverse.addFlowId("flow-010");
+
+        assertEquals(forward.flowIds, reverse.flowIds);
+        assertEquals(100, forward.flowIds.size());
+        assertEquals("flow-000", forward.flowIds.get(0));
+        assertEquals("flow-099", forward.flowIds.get(99));
+        for (int i = 0; i < 120; i++) {
+            forward.addSourceEventId(String.format("event-%03d", i));
+            reverse.addSourceEventId(String.format("event-%03d", 119 - i));
+        }
+        assertEquals(forward.sourceEventIds, reverse.sourceEventIds);
+        assertEquals("event-099", forward.sourceEventIds.get(99));
+        assertTrue(forward.flowIdsTruncated);
+        assertTrue(reverse.flowIdsTruncated);
+        assertTrue(forward.sourceEventIdsTruncated);
+        assertTrue(reverse.sourceEventIdsTruncated);
+    }
+
+    @Test
+    @DisplayName("窗口合并保留确定性 lineage 和截断状态")
+    void testMergePreservesLineageAndTruncation() {
+        SessionAccumulator left = aggregator.createAccumulator();
+        SessionAccumulator right = aggregator.createAccumulator();
+        FlowEvent leftFlow = createTestFlow(
+                "tenant1", "run1", "1:abc123", "192.168.1.1", "10.0.0.1",
+                12345, 80, 6, 1000, 2000, 10, 5, 100, 50).toBuilder()
+                .setHeader(EventHeader.newBuilder()
+                        .setEventId("source-b")
+                        .setTenantId("tenant1")
+                        .setRunId("run1")
+                        .setTraceId("trace-z")
+                        .setCorrelationId("correlation-z"))
+                .build();
+        FlowEvent rightFlow = leftFlow.toBuilder()
+                .setFlowId("flow-right")
+                .setHeader(leftFlow.getHeader().toBuilder()
+                        .setEventId("source-a")
+                        .setTraceId("trace-a")
+                        .setCorrelationId("correlation-a"))
+                .build();
+        left = aggregator.add(leftFlow, left);
+        right = aggregator.add(rightFlow, right);
+        left.flowIdsTruncated = true;
+
+        SessionAccumulator merged = aggregator.merge(left, right);
+        SessionEvent session = aggregator.getResult(merged);
+
+        assertEquals("trace-a", session.getHeader().getTraceId());
+        assertEquals("correlation-a", session.getHeader().getCorrelationId());
+        assertEquals("source-a", session.getHeader().getCausationId());
+        assertEquals(SessionCompleteness.SESSION_COMPLETENESS_TRUNCATED,
+                session.getCompleteness());
+        assertTrue(session.getMissingFieldsList().contains("evidence_ids_truncated"));
+    }
+
+    @Test
+    @DisplayName("旧 Session wire 未提供 M03 字段时保持显式默认")
+    void testLegacySessionWireDefaultsRemainCompatible() throws Exception {
+        byte[] legacyWire = SessionEvent.newBuilder()
+                .setSessionId("legacy-session")
+                .setTsStart(1000)
+                .setTsEnd(2000)
+                .build()
+                .toByteArray();
+
+        SessionEvent decoded = SessionEvent.parseFrom(legacyWire);
+        assertEquals("legacy-session", decoded.getSessionId());
+        assertEquals("", decoded.getIdentityVersion());
+        assertEquals(0, decoded.getSessionVersion());
+        assertEquals(0, decoded.getEventTimeStartMs());
+        assertEquals(SessionCompleteness.SESSION_COMPLETENESS_UNSPECIFIED,
+                decoded.getCompleteness());
+        assertTrue(decoded.getSourceEventIdsList().isEmpty());
+        assertTrue(decoded.getEvidenceIdsList().isEmpty());
     }
 
     // ==================== 辅助方法 ====================

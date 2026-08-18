@@ -48,7 +48,7 @@ services:
         metrics.reporter.prom.port: 9249
     volumes:
       - ./target/flink-behavior-job-1.0.0.jar:/opt/flink/usrlib/flink-behavior-job-1.0.0.jar:ro
-      - ./src/main/resources/behavior-job.properties:/opt/flink/conf/behavior-job.properties:ro
+      - ./src/main/resources/feature-job.properties:/opt/flink/conf/behavior-job.properties:ro
       - flink-checkpoints:/opt/flink/checkpoints
       - flink-savepoints:/opt/flink/savepoints
       - flink-logs:/opt/flink/log
@@ -189,7 +189,7 @@ services:
 
       # 创建输出 Topic
       kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
-        --topic detections.behavior.v1 \
+        --topic detections.v1 \
         --partitions 6 \
         --replication-factor 1 \
         --config retention.ms=604800000 \

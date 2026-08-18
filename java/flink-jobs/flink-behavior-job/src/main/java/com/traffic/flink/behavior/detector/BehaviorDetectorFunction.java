@@ -1,21 +1,21 @@
 package com.traffic.flink.behavior.detector;
 
-import com.traffic.flink.common.DeterministicId;
 import com.traffic.flink.behavior.config.BehaviorJobConfig;
 import com.traffic.flink.behavior.model.BehaviorModel;
 import com.traffic.flink.behavior.model.ModelInferenceResult;
 import com.traffic.proto.traffic.v1.DetectionBehavior;
-import com.traffic.proto.traffic.v1.EventHeader;
 import com.traffic.proto.traffic.v1.FeatureStat;
 
+import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.metrics.Counter;
+import org.apache.flink.metrics.Gauge;
 import org.apache.flink.streaming.api.functions.async.ResultFuture;
 import org.apache.flink.streaming.api.functions.async.RichAsyncFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,22 +27,20 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 异步行为检测函数
- * 
+ *
  * 使用 Flink AsyncIO 进行异步模型推理，提高吞吐量。
- * 
+ *
  * 功能：
  * 1. 接收 FeatureStat 输入
  * 2. 并行调用多个行为检测模型
  * 3. 聚合推理结果
- * 4. 输出 DetectionBehavior 事件
- * 
- * 架构特点：
- * - 异步非阻塞推理
- * - 多模型并行执行
- * - 支持模型热更新
- * - 完善的错误处理
+ * 4. 输出带 typed outcome 的 BehaviorInferenceOutcome（DETECTED /
+ *    LOW_CONFIDENCE / NO_DETECTION / MODEL_ERROR / TIMEOUT）
+ *
+ * 修复：推理异常/超时不再 complete(emptyList()) 静默吞掉——
+ * 无输出≠阴性；异常与超时以显式 outcome 上抛，由下游接入 DLQ。
  */
-public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, DetectionBehavior> {
+public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, BehaviorInferenceOutcome> {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(BehaviorDetectorFunction.class);
@@ -68,7 +66,9 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
     private transient AtomicLong processedCount;
     private transient AtomicLong detectedCount;
     private transient AtomicLong errorCount;
+    private transient AtomicLong timeoutCount;
     private transient AtomicLong totalInferenceTimeMs;
+    private transient Counter modelErrorCounter;
 
     public BehaviorDetectorFunction(BehaviorJobConfig config, ModelRegistry modelRegistry) {
         this.config = config;
@@ -91,13 +91,21 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
         processedCount = new AtomicLong(0);
         detectedCount = new AtomicLong(0);
         errorCount = new AtomicLong(0);
+        timeoutCount = new AtomicLong(0);
         totalInferenceTimeMs = new AtomicLong(0);
+
+        RuntimeContext runtimeContext = getRuntimeContext();
+        runtimeContext.getMetricGroup().gauge("behavior_processed_total", (Gauge<Long>) processedCount::get);
+        runtimeContext.getMetricGroup().gauge("behavior_detected_total", (Gauge<Long>) detectedCount::get);
+        runtimeContext.getMetricGroup().gauge("behavior_model_errors_total", (Gauge<Long>) errorCount::get);
+        runtimeContext.getMetricGroup().gauge("behavior_inference_timeouts_total", (Gauge<Long>) timeoutCount::get);
+        modelErrorCounter = runtimeContext.getMetricGroup().counter("behavior_model_error_events_total");
 
         LOG.info("BehaviorDetectorFunction opened with {} inference threads", threads);
     }
 
     @Override
-    public void asyncInvoke(FeatureStat input, ResultFuture<DetectionBehavior> resultFuture) {
+    public void asyncInvoke(FeatureStat input, ResultFuture<BehaviorInferenceOutcome> resultFuture) {
         // 异步执行推理
         CompletableFuture.supplyAsync(() -> {
             long startTime = System.currentTimeMillis();
@@ -115,47 +123,61 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
                 }
                 totalInferenceTimeMs.addAndGet(System.currentTimeMillis() - startTime);
 
-                return bestResult;
+                if (bestResult == null) {
+                    // 模型正常推理但无命中：阴性也是合法 typed outcome
+                    return BehaviorInferenceOutcome.noDetection();
+                }
+                DetectionBehavior detection = toDetectionBehavior(input, bestResult);
+                if (bestResult.isDetected()
+                        && detection.getTopScore() >= config.getMinConfidenceThreshold()) {
+                    return BehaviorInferenceOutcome.detected(detection);
+                }
+                if (config.isDebugPrintEnabled()) {
+                    return BehaviorInferenceOutcome.detected(detection);
+                }
+                return BehaviorInferenceOutcome.lowConfidence(detection);
 
             } catch (Exception e) {
                 errorCount.incrementAndGet();
-                LOG.error("Inference error for feature {}: {}", 
+                if (modelErrorCounter != null) {
+                    modelErrorCounter.inc();
+                }
+                LOG.error("Inference error for feature {}: {}",
                         input.getObjectId(), e.getMessage(), e);
-                return null;
+                return BehaviorInferenceOutcome.modelError(e.getMessage());
             }
-        }, inferenceExecutor).thenAccept(result -> {
-            if (result != null && result.isDetected()) {
-                // 转换为 DetectionBehavior 并输出
-                DetectionBehavior detection = toDetectionBehavior(input, result);
-                resultFuture.complete(Collections.singletonList(detection));
-            } else if (result != null && config.isDebugPrintEnabled()) {
-                // 调试模式下也输出非检测结果
-                DetectionBehavior detection = toDetectionBehavior(input, result);
-                resultFuture.complete(Collections.singletonList(detection));
-            } else {
-                // 无检测结果
-                resultFuture.complete(Collections.emptyList());
-            }
+        }, inferenceExecutor).thenAccept(outcome -> {
+            resultFuture.complete(Collections.singletonList(outcome));
         }).exceptionally(throwable -> {
             LOG.error("Async invoke failed: {}", throwable.getMessage(), throwable);
             errorCount.incrementAndGet();
-            resultFuture.complete(Collections.emptyList());
+            if (modelErrorCounter != null) {
+                modelErrorCounter.inc();
+            }
+            resultFuture.complete(Collections.singletonList(
+                    BehaviorInferenceOutcome.modelError(throwable.getMessage())));
             return null;
         });
     }
 
     @Override
-    public void timeout(FeatureStat input, ResultFuture<DetectionBehavior> resultFuture) {
+    public void timeout(FeatureStat input, ResultFuture<BehaviorInferenceOutcome> resultFuture) {
         LOG.warn("Inference timeout for feature: {}", input.getObjectId());
+        timeoutCount.incrementAndGet();
         errorCount.incrementAndGet();
-        resultFuture.complete(Collections.emptyList());
+        if (modelErrorCounter != null) {
+            modelErrorCounter.inc();
+        }
+        // 超时显式输出 TIMEOUT outcome，由下游接入 DLQ；不静默丢弃
+        resultFuture.complete(Collections.singletonList(
+                BehaviorInferenceOutcome.timeout("inference timeout for feature " + input.getObjectId())));
     }
 
     /**
      * 运行所有启用的模型
      */
     private List<ModelInferenceResult> runAllModels(FeatureStat feature) {
-        List<ModelInferenceResult> results = new ArrayList<>();
+        List<ModelInferenceResult> results = new java.util.ArrayList<>();
         String tenantId = feature.hasHeader() ? feature.getHeader().getTenantId() : "";
         Map<String, BehaviorModel> models = modelRegistry.getModelsForTenant(tenantId);
 
@@ -236,93 +258,14 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
         return bestResult;
     }
 
-    /**
-     * 将推理结果转换为 DetectionBehavior Protobuf 消息
-     */
     private DetectionBehavior toDetectionBehavior(FeatureStat input, ModelInferenceResult result) {
         String tenantId = input.hasHeader() ? input.getHeader().getTenantId() : "";
         String modelVersion = modelRegistry.getModelVersion(tenantId, result.getModelName());
         if (modelVersion == null || modelVersion.isEmpty()) {
             modelVersion = result.getModelVersion();
         }
-        long eventTime = input.getTs();
-        long ingestTime = input.hasHeader() && input.getHeader().getIngestTs() > 0
-                ? input.getHeader().getIngestTs()
-                : eventTime;
-        // 构建 EventHeader
-        String eventId = generateEventId(input, result, modelVersion);
-        long producedAt = System.currentTimeMillis();
-        EventHeader.Builder headerBuilder = EventHeader.newBuilder()
-                .setEventId(eventId)
-                .setEventTs(eventTime)
-                .setIngestTs(ingestTime)
-                .setEventType("traffic.detection.behavior.v1")
-                .setSchemaVersion("1")
-                .setAggregateType("detection")
-                .setAggregateId(input.getObjectId())
-                .setAggregateVersion(1)
-                .setOccurredAt(eventTime)
-                .setProducedAt(producedAt)
-                .setIdempotencyKey(eventId)
-                .setProducer("flink-behavior-job");
-
-        // 复制输入的 Header 字段
-        if (input.hasHeader()) {
-            EventHeader inputHeader = input.getHeader();
-            headerBuilder.setTenantId(inputHeader.getTenantId());
-            headerBuilder.setRunId(inputHeader.getRunId());
-            headerBuilder.setProbeId(inputHeader.getProbeId());
-            headerBuilder.setFeatureSetId(inputHeader.getFeatureSetId());
-            headerBuilder.setTraceId(inputHeader.getTraceId().isEmpty()
-                    ? inputHeader.getEventId() : inputHeader.getTraceId());
-            headerBuilder.setCausationId(inputHeader.getEventId());
-            headerBuilder.setCorrelationId(inputHeader.getCorrelationId().isEmpty()
-                    ? input.getCommunityId() : inputHeader.getCorrelationId());
-        }
-
-        // 构建 DetectionBehavior
-        DetectionBehavior.Builder builder = DetectionBehavior.newBuilder()
-                .setHeader(headerBuilder.build())
-                .setModelVersion(modelVersion)
-                .setCommunityId(input.getCommunityId())
-                .setObjectType(input.getObjectType())
-                .setObjectId(input.getObjectId())
-                .setTs(input.getTs())
-                .setTopLabel(result.getTopLabel())
-                .setTopScore(result.getTopScore())
-                .setTuple(input.getTuple())
-                .addAllEvidenceIds(input.getEvidenceIdsList());
-
-        // 添加所有标签和分数
-        List<String> labels = result.getLabels();
-        List<Float> scores = result.getScores();
-        if (labels != null && scores != null) {
-            builder.addAllLabels(labels);
-            builder.addAllScores(scores);
-        }
-
-        return builder.build();
-    }
-
-    /**
-     * 生成事件ID
-     * 格式：hash(tenant_id + run_id + object_id + ts + model_name)
-     */
-    private String generateEventId(
-            FeatureStat input, ModelInferenceResult result, String modelVersion) {
-        EventHeader header = input.hasHeader()
-                ? input.getHeader()
-                : EventHeader.getDefaultInstance();
-        return DeterministicId.uuid(
-                "flink-behavior-detection/v1",
-                header.getTenantId(),
-                header.getEventId(),
-                header.getRunId(),
-                input.getObjectId(),
-                input.getTs(),
-                result.getModelName(),
-                modelVersion,
-                result.getTopLabel());
+        return BehaviorDetectionEventFactory.build(
+                input, result, modelVersion, System.currentTimeMillis());
     }
 
     @Override
@@ -341,10 +284,11 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
         }
 
         // 打印统计信息
-        LOG.info("BehaviorDetectorFunction closed. Stats: processed={}, detected={}, errors={}, avgLatencyMs={}",
+        LOG.info("BehaviorDetectorFunction closed. Stats: processed={}, detected={}, errors={}, timeouts={}, avgLatencyMs={}",
                 processedCount.get(),
                 detectedCount.get(),
                 errorCount.get(),
+                timeoutCount.get(),
                 processedCount.get() > 0 ? totalInferenceTimeMs.get() / processedCount.get() : 0);
 
         super.close();

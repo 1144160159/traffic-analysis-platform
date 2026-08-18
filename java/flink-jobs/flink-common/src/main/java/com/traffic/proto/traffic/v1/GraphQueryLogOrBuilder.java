@@ -154,6 +154,11 @@ public interface GraphQueryLogOrBuilder extends
   int getDurationMs();
 
   /**
+   * <pre>
+   * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+   * a future breaking-change migration should use `bool`.
+   * </pre>
+   *
    * <code>uint32 cache_hit = 16 [json_name = "cacheHit"];</code>
    * @return The cacheHit.
    */

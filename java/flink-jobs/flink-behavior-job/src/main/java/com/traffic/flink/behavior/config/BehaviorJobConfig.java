@@ -46,8 +46,12 @@ public class BehaviorJobConfig implements Serializable {
     private final String kafkaBrokers;
     private final String inputTopic;
     private final String outputTopic;
+    private final String dlqTopic;
     private final String modelUpdateTopic;
     private final String modelAppliedTopic;
+    private final String modelShadowObservationTopic;
+    private final String modelShadowFeatureConsumerGroupId;
+    private final String modelShadowUpdateConsumerGroupId;
     private final String consumerGroupId;
 
     // ==================== ClickHouse 配置 ====================
@@ -77,6 +81,19 @@ public class BehaviorJobConfig implements Serializable {
     private final String modelPath;
     private final String modelVersion;
     private final Set<String> enabledModels;
+    private final String detectionMode;
+    private final String knownProfileId;
+    private final String knownProfileSha256;
+    private final boolean modelHotUpdateEnabled;
+    private final boolean modelUpdateConsumerEnabled;
+    private final String modelConsumerDeploymentId;
+    private final String modelConsumerProfileSha256;
+    private final String modelRuntimeContract;
+    private final String modelRuntimeVersion;
+    private final int modelFeatureSchemaVersion;
+    private final int modelGraphSchemaVersion;
+    private final String modelSigningPublicKeyFile;
+    private final String modelSigningPublicKeyPemBase64;
     private final long modelReloadIntervalMs;
     private final boolean modelCacheEnabled;
     private final int modelCacheSize;
@@ -88,6 +105,13 @@ public class BehaviorJobConfig implements Serializable {
     private final int asyncMaxRetries;
     private final int inferenceThreads;
     private final int batchInferenceSize;
+    private final boolean modelShadowEvaluationEnabled;
+    private final boolean modelShadowObservationOnly;
+    private final double modelShadowSampleRate;
+    private final long modelShadowChallengerTimeoutMs;
+    private final long modelShadowPackageLoadTimeoutMs;
+    private final int modelShadowChallengerThreads;
+    private final int modelShadowChallengerQueueCapacity;
 
     // ==================== 检测配置 ====================
     private final float minConfidenceThreshold;
@@ -117,8 +141,12 @@ public class BehaviorJobConfig implements Serializable {
         this.kafkaBrokers = builder.kafkaBrokers;
         this.inputTopic = builder.inputTopic;
         this.outputTopic = builder.outputTopic;
+        this.dlqTopic = builder.dlqTopic;
         this.modelUpdateTopic = builder.modelUpdateTopic;
         this.modelAppliedTopic = builder.modelAppliedTopic;
+        this.modelShadowObservationTopic = builder.modelShadowObservationTopic;
+        this.modelShadowFeatureConsumerGroupId = builder.modelShadowFeatureConsumerGroupId;
+        this.modelShadowUpdateConsumerGroupId = builder.modelShadowUpdateConsumerGroupId;
         this.consumerGroupId = builder.consumerGroupId;
         this.clickhouseUrl = builder.clickhouseUrl;
         this.clickhouseDatabase = builder.clickhouseDatabase;
@@ -138,6 +166,19 @@ public class BehaviorJobConfig implements Serializable {
         this.modelPath = builder.modelPath;
         this.modelVersion = builder.modelVersion;
         this.enabledModels = builder.enabledModels;
+        this.detectionMode = builder.detectionMode;
+        this.knownProfileId = builder.knownProfileId;
+        this.knownProfileSha256 = builder.knownProfileSha256;
+        this.modelHotUpdateEnabled = builder.modelHotUpdateEnabled;
+        this.modelUpdateConsumerEnabled = builder.modelUpdateConsumerEnabled;
+        this.modelConsumerDeploymentId = builder.modelConsumerDeploymentId;
+        this.modelConsumerProfileSha256 = builder.modelConsumerProfileSha256;
+        this.modelRuntimeContract = builder.modelRuntimeContract;
+        this.modelRuntimeVersion = builder.modelRuntimeVersion;
+        this.modelFeatureSchemaVersion = builder.modelFeatureSchemaVersion;
+        this.modelGraphSchemaVersion = builder.modelGraphSchemaVersion;
+        this.modelSigningPublicKeyFile = builder.modelSigningPublicKeyFile;
+        this.modelSigningPublicKeyPemBase64 = builder.modelSigningPublicKeyPemBase64;
         this.modelReloadIntervalMs = builder.modelReloadIntervalMs;
         this.modelCacheEnabled = builder.modelCacheEnabled;
         this.modelCacheSize = builder.modelCacheSize;
@@ -147,6 +188,13 @@ public class BehaviorJobConfig implements Serializable {
         this.asyncMaxRetries = builder.asyncMaxRetries;
         this.inferenceThreads = builder.inferenceThreads;
         this.batchInferenceSize = builder.batchInferenceSize;
+        this.modelShadowEvaluationEnabled = builder.modelShadowEvaluationEnabled;
+        this.modelShadowObservationOnly = builder.modelShadowObservationOnly;
+        this.modelShadowSampleRate = builder.modelShadowSampleRate;
+        this.modelShadowChallengerTimeoutMs = builder.modelShadowChallengerTimeoutMs;
+        this.modelShadowPackageLoadTimeoutMs = builder.modelShadowPackageLoadTimeoutMs;
+        this.modelShadowChallengerThreads = builder.modelShadowChallengerThreads;
+        this.modelShadowChallengerQueueCapacity = builder.modelShadowChallengerQueueCapacity;
         this.minConfidenceThreshold = builder.minConfidenceThreshold;
         this.highConfidenceThreshold = builder.highConfidenceThreshold;
         this.multiLabelEnabled = builder.multiLabelEnabled;
@@ -172,6 +220,10 @@ public class BehaviorJobConfig implements Serializable {
     public static BehaviorJobConfig fromArgs(String[] args) {
         // 首先加载配置文件
         Properties fileProps = loadPropertiesFile("behavior-job.properties");
+        if (fileProps.isEmpty()) {
+            // Retained compatibility for the historically misnamed packaged resource.
+            fileProps = loadPropertiesFile("feature-job.properties");
+        }
         
         // 然后加载命令行参数
         ParameterTool params = ParameterTool.fromArgs(args);
@@ -184,13 +236,27 @@ public class BehaviorJobConfig implements Serializable {
                 .inputTopic(getConfig(params, fileProps, "kafka.input.topic", 
                         getEnv("KAFKA_INPUT_TOPIC", "feature.stat.v1")))
                 .outputTopic(getConfig(params, fileProps, "kafka.output.topic", 
-                        getEnv("KAFKA_OUTPUT_TOPIC", "detections.behavior.v1")))
+                        getEnv("KAFKA_OUTPUT_TOPIC", "detections.v1")))
+                .dlqTopic(getConfig(params, fileProps, "kafka.dlq.topic",
+                        getEnv("KAFKA_DLQ_TOPIC", "dlq.v1")))
                 .modelUpdateTopic(getConfig(params, fileProps, "kafka.model.update.topic",
                         getEnv("KAFKA_MODEL_UPDATE_TOPIC",
                                 getEnv("MODEL_UPDATE_TOPIC",
                                         getEnv("KAFKA_MODEL_TOPIC", "model-updates")))))
                 .modelAppliedTopic(getConfig(params, fileProps, "kafka.model.applied.topic",
                         getEnv("KAFKA_MODEL_APPLIED_TOPIC", "model-update-applied.v1")))
+                .modelShadowObservationTopic(getConfigEnvironmentFirst(
+                        params, fileProps, "kafka.model.shadow.observation.topic",
+                        "KAFKA_MODEL_SHADOW_OBSERVATION_TOPIC",
+                        "model-shadow-observations.v1"))
+                .modelShadowFeatureConsumerGroupId(getConfigEnvironmentFirst(
+                        params, fileProps, "model.shadow.feature.consumer.group.id",
+                        "MODEL_SHADOW_FEATURE_CONSUMER_GROUP_ID",
+                        "flink-behavior-job-champion-challenger-features"))
+                .modelShadowUpdateConsumerGroupId(getConfigEnvironmentFirst(
+                        params, fileProps, "model.shadow.update.consumer.group.id",
+                        "MODEL_SHADOW_UPDATE_CONSUMER_GROUP_ID",
+                        "flink-behavior-job-champion-challenger-model-updates"))
                 .consumerGroupId(getConfig(params, fileProps, "kafka.group.id", 
                         getEnv("KAFKA_GROUP_ID", "flink-behavior-job")))
                 
@@ -228,10 +294,37 @@ public class BehaviorJobConfig implements Serializable {
                         getEnv("MODEL_PATH", "/opt/flink/models")))
                 .modelVersion(getConfig(params, fileProps, "model.version", 
                         getEnv("MODEL_VERSION", "v1.0")))
-                // 修复：添加所有 10 个模型到默认启用列表
                 .enabledModels(parseModels(getConfig(params, fileProps, "model.enabled", 
                         "scan,tunnel,dga,encrypted,anomaly,c2,data_exfil,botnet,malware,phishing")))
-                .modelReloadIntervalMs(getConfigLong(params, fileProps, "model.reload.interval.ms", 300000L))
+                .detectionMode(getConfig(params, fileProps, "detection.mode",
+                        getEnv("DETECTION_MODE", "off")))
+                .knownProfileId(getConfig(params, fileProps, "detection.known.profile.id",
+                        "m04-known-behavior-v1"))
+                .knownProfileSha256(getConfig(params, fileProps, "detection.known.profile.sha256",
+                        "3308cd498548716c68b79c8f665f5a1cb6d7b1d95769234853bbf1e9f7a03cdb"))
+                .modelHotUpdateEnabled(getConfigBoolean(
+                        params, fileProps, "model.hot.update.enabled", false))
+                .modelUpdateConsumerEnabled(getConfigBoolean(
+                        params, fileProps, "model.update.consumer.v1.enabled",
+                        Boolean.parseBoolean(getEnv("MODEL_UPDATE_CONSUMER_V1_ENABLED", "false"))))
+                .modelConsumerDeploymentId(getConfig(params, fileProps,
+                        "model.consumer.deployment.id", getEnv("MODEL_CONSUMER_DEPLOYMENT_ID", "")))
+                .modelConsumerProfileSha256(getConfig(params, fileProps,
+                        "model.consumer.profile.sha256", getEnv("MODEL_CONSUMER_PROFILE_SHA256", "")))
+                .modelRuntimeContract(getConfig(params, fileProps,
+                        "model.runtime.contract", getEnv("MODEL_RUNTIME_CONTRACT", "traffic.behavior.inference.v1")))
+                .modelRuntimeVersion(getConfig(params, fileProps,
+                        "model.runtime.version", getEnv("MODEL_RUNTIME_VERSION", "1.0.0")))
+                .modelFeatureSchemaVersion(getConfigInt(params, fileProps,
+                        "model.feature.schema.version", getEnvInt("MODEL_FEATURE_SCHEMA_VERSION", 1)))
+                .modelGraphSchemaVersion(getConfigInt(params, fileProps,
+                        "model.graph.schema.version", getEnvInt("MODEL_GRAPH_SCHEMA_VERSION", 1)))
+                .modelSigningPublicKeyFile(getConfig(params, fileProps,
+                        "model.signing.public.key.file", getEnv("MODEL_SIGNING_PUBLIC_KEY_FILE", "")))
+                .modelSigningPublicKeyPemBase64(getConfig(params, fileProps,
+                        "model.signing.public.key.pem.base64",
+                        getEnv("MODEL_SIGNING_PUBLIC_KEY_PEM_BASE64", "")))
+                .modelReloadIntervalMs(getConfigLong(params, fileProps, "model.reload.interval.ms", 0L))
                 .modelCacheEnabled(getConfigBoolean(params, fileProps, "model.cache.enabled", true))
                 .modelCacheSize(getConfigInt(params, fileProps, "model.cache.size", 1000))
                 
@@ -242,6 +335,27 @@ public class BehaviorJobConfig implements Serializable {
                 .asyncMaxRetries(getConfigInt(params, fileProps, "inference.async.max.retries", 2))
                 .inferenceThreads(getConfigInt(params, fileProps, "inference.threads", 4))
                 .batchInferenceSize(getConfigInt(params, fileProps, "inference.batch.size", 32))
+                .modelShadowEvaluationEnabled(Boolean.parseBoolean(getConfigEnvironmentFirst(
+                        params, fileProps, "model.shadow.evaluation.v1.enabled",
+                        "MODEL_SHADOW_EVALUATION_V1_ENABLED", "false")))
+                .modelShadowObservationOnly(Boolean.parseBoolean(getConfigEnvironmentFirst(
+                        params, fileProps, "model.shadow.observation.only",
+                        "MODEL_SHADOW_OBSERVATION_ONLY", "false")))
+                .modelShadowSampleRate(Double.parseDouble(getConfigEnvironmentFirst(
+                        params, fileProps, "model.shadow.sample.rate",
+                        "MODEL_SHADOW_SAMPLE_RATE", "0.0")))
+                .modelShadowChallengerTimeoutMs(Long.parseLong(getConfigEnvironmentFirst(
+                        params, fileProps, "model.shadow.challenger.timeout.ms",
+                        "MODEL_SHADOW_CHALLENGER_TIMEOUT_MS", "250")))
+                .modelShadowPackageLoadTimeoutMs(Long.parseLong(getConfigEnvironmentFirst(
+                        params, fileProps, "model.shadow.package.load.timeout.ms",
+                        "MODEL_SHADOW_PACKAGE_LOAD_TIMEOUT_MS", "120000")))
+                .modelShadowChallengerThreads(Integer.parseInt(getConfigEnvironmentFirst(
+                        params, fileProps, "model.shadow.challenger.threads",
+                        "MODEL_SHADOW_CHALLENGER_THREADS", "2")))
+                .modelShadowChallengerQueueCapacity(Integer.parseInt(getConfigEnvironmentFirst(
+                        params, fileProps, "model.shadow.challenger.queue.capacity",
+                        "MODEL_SHADOW_CHALLENGER_QUEUE_CAPACITY", "64")))
                 
                 // 检测
                 .minConfidenceThreshold(getConfigFloat(params, fileProps, "detection.min.confidence", 0.5f))
@@ -296,6 +410,18 @@ public class BehaviorJobConfig implements Serializable {
         return value != null && !value.isEmpty() ? value : defaultValue;
     }
 
+    private static int getEnvInt(String key, int defaultValue) {
+        String value = getEnv(key, "");
+        if (value.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException error) {
+            throw new IllegalArgumentException(key + " must be an integer", error);
+        }
+    }
+
     /**
      * 获取配置值（优先级：命令行 > 配置文件 > 默认值）
      */
@@ -303,6 +429,15 @@ public class BehaviorJobConfig implements Serializable {
         if (params.has(key)) {
             return params.get(key);
         }
+        return props.getProperty(key, defaultValue);
+    }
+
+    private static String getConfigEnvironmentFirst(
+            ParameterTool params, Properties props, String key, String environmentKey,
+            String defaultValue) {
+        if (params.has(key)) return params.get(key);
+        String environmentValue = System.getenv(environmentKey);
+        if (environmentValue != null && !environmentValue.isBlank()) return environmentValue;
         return props.getProperty(key, defaultValue);
     }
 
@@ -369,8 +504,12 @@ public class BehaviorJobConfig implements Serializable {
     public String getKafkaBrokers() { return kafkaBrokers; }
     public String getInputTopic() { return inputTopic; }
     public String getOutputTopic() { return outputTopic; }
+    public String getDlqTopic() { return dlqTopic; }
     public String getModelUpdateTopic() { return modelUpdateTopic; }
     public String getModelAppliedTopic() { return modelAppliedTopic; }
+    public String getModelShadowObservationTopic() { return modelShadowObservationTopic; }
+    public String getModelShadowFeatureConsumerGroupId() { return modelShadowFeatureConsumerGroupId; }
+    public String getModelShadowUpdateConsumerGroupId() { return modelShadowUpdateConsumerGroupId; }
     public String getConsumerGroupId() { return consumerGroupId; }
     public String getClickhouseUrl() { return clickhouseUrl; }
     public String getClickhouseDatabase() { return clickhouseDatabase; }
@@ -391,6 +530,47 @@ public class BehaviorJobConfig implements Serializable {
     public String getModelPath() { return modelPath; }
     public String getModelVersion() { return modelVersion; }
     public Set<String> getEnabledModels() { return enabledModels; }
+    public String getDetectionMode() { return detectionMode; }
+    public String getKnownProfileId() { return knownProfileId; }
+    public String getKnownProfileSha256() { return knownProfileSha256; }
+    public boolean isModelHotUpdateEnabled() { return modelHotUpdateEnabled; }
+    public boolean isModelUpdateConsumerEnabled() { return modelUpdateConsumerEnabled; }
+    public boolean isModelUpdateConsumerConfigured() { return modelUpdateConsumerEnabled || modelHotUpdateEnabled; }
+    public String getModelConsumerDeploymentId() { return modelConsumerDeploymentId; }
+    public String getModelConsumerProfileSha256() { return modelConsumerProfileSha256; }
+    public String getModelRuntimeContract() { return modelRuntimeContract; }
+    public String getModelRuntimeVersion() { return modelRuntimeVersion; }
+    public int getModelFeatureSchemaVersion() { return modelFeatureSchemaVersion; }
+    public int getModelGraphSchemaVersion() { return modelGraphSchemaVersion; }
+    public String getModelSigningPublicKeyFile() { return modelSigningPublicKeyFile; }
+    public String getModelSigningPublicKeyPemBase64() { return modelSigningPublicKeyPemBase64; }
+
+    public void validateModelUpdateConsumerConfig() {
+        if (!isModelUpdateConsumerConfigured()) {
+            return;
+        }
+        if (modelConsumerDeploymentId == null || modelConsumerDeploymentId.isBlank()) {
+            throw new IllegalArgumentException("MODEL_CONSUMER_DEPLOYMENT_ID is required when the model-update consumer is enabled");
+        }
+        if (modelConsumerProfileSha256 == null || !modelConsumerProfileSha256.matches("^[0-9a-f]{64}$")) {
+            throw new IllegalArgumentException("MODEL_CONSUMER_PROFILE_SHA256 must be a lowercase SHA-256 digest");
+        }
+        if (!"traffic.behavior.inference.v1".equals(modelRuntimeContract)) {
+            throw new IllegalArgumentException("unsupported model runtime contract: " + modelRuntimeContract);
+        }
+        if (modelRuntimeVersion == null || !modelRuntimeVersion.matches("^[0-9]+\\.[0-9]+\\.[0-9]+$")) {
+            throw new IllegalArgumentException("MODEL_RUNTIME_VERSION must be semantic major.minor.patch");
+        }
+        if (modelFeatureSchemaVersion <= 0 || modelGraphSchemaVersion <= 0) {
+            throw new IllegalArgumentException("model feature and graph schema versions must be positive");
+        }
+        boolean hasFile = modelSigningPublicKeyFile != null && !modelSigningPublicKeyFile.isBlank();
+        boolean hasInline = modelSigningPublicKeyPemBase64 != null && !modelSigningPublicKeyPemBase64.isBlank();
+        if (hasFile == hasInline) {
+            throw new IllegalArgumentException(
+                    "exactly one trusted model signing public key file or base64 PEM is required");
+        }
+    }
     public long getModelReloadIntervalMs() { return modelReloadIntervalMs; }
     public boolean isModelCacheEnabled() { return modelCacheEnabled; }
     public int getModelCacheSize() { return modelCacheSize; }
@@ -400,6 +580,68 @@ public class BehaviorJobConfig implements Serializable {
     public int getAsyncMaxRetries() { return asyncMaxRetries; }
     public int getInferenceThreads() { return inferenceThreads; }
     public int getBatchInferenceSize() { return batchInferenceSize; }
+    public boolean isModelShadowEvaluationEnabled() { return modelShadowEvaluationEnabled; }
+    public boolean isModelShadowObservationOnly() { return modelShadowObservationOnly; }
+    public double getModelShadowSampleRate() { return modelShadowSampleRate; }
+    public long getModelShadowChallengerTimeoutMs() { return modelShadowChallengerTimeoutMs; }
+    public long getModelShadowPackageLoadTimeoutMs() { return modelShadowPackageLoadTimeoutMs; }
+    public int getModelShadowChallengerThreads() { return modelShadowChallengerThreads; }
+    public int getModelShadowChallengerQueueCapacity() { return modelShadowChallengerQueueCapacity; }
+
+    public void validateChampionChallengerShadowConfig() {
+        if (modelShadowObservationOnly && !modelShadowEvaluationEnabled) {
+            throw new IllegalArgumentException(
+                    "shadow observation-only mode requires champion/challenger evaluation");
+        }
+        if (!modelShadowEvaluationEnabled) return;
+        if (!"known_frozen".equalsIgnoreCase(detectionMode)) {
+            throw new IllegalArgumentException(
+                    "champion/challenger shadow requires the frozen champion detection mode");
+        }
+        if (!modelUpdateConsumerEnabled) {
+            throw new IllegalArgumentException(
+                    "champion/challenger shadow requires the integrated model-update consumer");
+        }
+        if (modelHotUpdateEnabled || modelReloadIntervalMs != 0L) {
+            throw new IllegalArgumentException(
+                    "champion/challenger shadow forbids serving model mutation");
+        }
+        validateModelUpdateConsumerConfig();
+        if (modelShadowObservationTopic == null
+                || !modelShadowObservationTopic.matches("^[a-zA-Z0-9._-]+$")) {
+            throw new IllegalArgumentException("model shadow observation topic is invalid");
+        }
+        if (!validKafkaGroup(modelShadowFeatureConsumerGroupId)
+                || !validKafkaGroup(modelShadowUpdateConsumerGroupId)) {
+            throw new IllegalArgumentException("model shadow consumer groups are invalid");
+        }
+        if (modelShadowObservationOnly
+                && modelShadowFeatureConsumerGroupId.equals(consumerGroupId)) {
+            throw new IllegalArgumentException(
+                    "shadow observation-only feature group must not compete with serving");
+        }
+        if (!Double.isFinite(modelShadowSampleRate)
+                || modelShadowSampleRate <= 0.0d || modelShadowSampleRate > 1.0d) {
+            throw new IllegalArgumentException("model shadow sample rate must be in (0,1]");
+        }
+        if (modelShadowChallengerTimeoutMs <= 0L
+                || modelShadowChallengerTimeoutMs >= asyncTimeoutMs) {
+            throw new IllegalArgumentException(
+                    "challenger timeout must be positive and below the serving async timeout");
+        }
+        if (modelShadowPackageLoadTimeoutMs <= 0L) {
+            throw new IllegalArgumentException("shadow package load timeout must be positive");
+        }
+        if (modelShadowChallengerThreads <= 0
+                || modelShadowChallengerQueueCapacity <= 0) {
+            throw new IllegalArgumentException(
+                    "challenger threads and queue capacity must be positive");
+        }
+    }
+
+    private static boolean validKafkaGroup(String value) {
+        return value != null && value.matches("^[a-zA-Z0-9._-]+$");
+    }
     public float getMinConfidenceThreshold() { return minConfidenceThreshold; }
     public float getHighConfidenceThreshold() { return highConfidenceThreshold; }
     public boolean isMultiLabelEnabled() { return multiLabelEnabled; }
@@ -453,6 +695,7 @@ public class BehaviorJobConfig implements Serializable {
                 ", modelUpdateTopic='" + modelUpdateTopic + '\'' +
                 ", parallelism=" + parallelism +
                 ", modelVersion='" + modelVersion + '\'' +
+                ", detectionMode='" + detectionMode + '\'' +
                 ", enabledModels=" + enabledModels +
                 ", asyncInferenceEnabled=" + asyncInferenceEnabled +
                 ", minConfidenceThreshold=" + minConfidenceThreshold +
@@ -465,9 +708,15 @@ public class BehaviorJobConfig implements Serializable {
     public static class Builder {
         private String kafkaBrokers = "kafka-bootstrap.middleware.svc:9092";
         private String inputTopic = "feature.stat.v1";
-        private String outputTopic = "detections.behavior.v1";
+        private String outputTopic = "detections.v1";
+        private String dlqTopic = "dlq.v1";
         private String modelUpdateTopic = "model-updates";
         private String modelAppliedTopic = "model-update-applied.v1";
+        private String modelShadowObservationTopic = "model-shadow-observations.v1";
+        private String modelShadowFeatureConsumerGroupId =
+                "flink-behavior-job-champion-challenger-features";
+        private String modelShadowUpdateConsumerGroupId =
+                "flink-behavior-job-champion-challenger-model-updates";
         private String consumerGroupId = "flink-behavior-job";
         private String clickhouseUrl = "clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123";
         private String clickhouseDatabase = "traffic";
@@ -486,11 +735,24 @@ public class BehaviorJobConfig implements Serializable {
         private int maxParallelism = 128;
         private String modelPath = "/opt/flink/models";
         private String modelVersion = "v1.0";
-        // 修复：默认启用所有 10 个模型
         private Set<String> enabledModels = new HashSet<>(Arrays.asList(
                 "scan", "tunnel", "dga", "encrypted", "anomaly", "c2", "data_exfil",
                 "botnet", "malware", "phishing"));
-        private long modelReloadIntervalMs = 300000L;
+        private String detectionMode = "off";
+        private String knownProfileId = "m04-known-behavior-v1";
+        private String knownProfileSha256 =
+                "3308cd498548716c68b79c8f665f5a1cb6d7b1d95769234853bbf1e9f7a03cdb";
+        private boolean modelHotUpdateEnabled = false;
+        private boolean modelUpdateConsumerEnabled = false;
+        private String modelConsumerDeploymentId = "";
+        private String modelConsumerProfileSha256 = "";
+        private String modelRuntimeContract = "traffic.behavior.inference.v1";
+        private String modelRuntimeVersion = "1.0.0";
+        private int modelFeatureSchemaVersion = 1;
+        private int modelGraphSchemaVersion = 1;
+        private String modelSigningPublicKeyFile = "";
+        private String modelSigningPublicKeyPemBase64 = "";
+        private long modelReloadIntervalMs = 0L;
         private boolean modelCacheEnabled = true;
         private int modelCacheSize = 1000;
         private boolean asyncInferenceEnabled = true;
@@ -499,6 +761,13 @@ public class BehaviorJobConfig implements Serializable {
         private int asyncMaxRetries = 2;
         private int inferenceThreads = 4;
         private int batchInferenceSize = 32;
+        private boolean modelShadowEvaluationEnabled = false;
+        private boolean modelShadowObservationOnly = false;
+        private double modelShadowSampleRate = 0.0d;
+        private long modelShadowChallengerTimeoutMs = 250L;
+        private long modelShadowPackageLoadTimeoutMs = 120_000L;
+        private int modelShadowChallengerThreads = 2;
+        private int modelShadowChallengerQueueCapacity = 64;
         private float minConfidenceThreshold = 0.5f;
         private float highConfidenceThreshold = 0.8f;
         private boolean multiLabelEnabled = true;
@@ -521,8 +790,12 @@ public class BehaviorJobConfig implements Serializable {
         public Builder kafkaBrokers(String val) { kafkaBrokers = val; return this; }
         public Builder inputTopic(String val) { inputTopic = val; return this; }
         public Builder outputTopic(String val) { outputTopic = val; return this; }
+        public Builder dlqTopic(String val) { dlqTopic = val; return this; }
         public Builder modelUpdateTopic(String val) { modelUpdateTopic = val; return this; }
         public Builder modelAppliedTopic(String val) { modelAppliedTopic = val; return this; }
+        public Builder modelShadowObservationTopic(String val) { modelShadowObservationTopic = val; return this; }
+        public Builder modelShadowFeatureConsumerGroupId(String val) { modelShadowFeatureConsumerGroupId = val; return this; }
+        public Builder modelShadowUpdateConsumerGroupId(String val) { modelShadowUpdateConsumerGroupId = val; return this; }
         public Builder consumerGroupId(String val) { consumerGroupId = val; return this; }
         public Builder clickhouseUrl(String val) { clickhouseUrl = val; return this; }
         public Builder clickhouseDatabase(String val) { clickhouseDatabase = val; return this; }
@@ -542,6 +815,19 @@ public class BehaviorJobConfig implements Serializable {
         public Builder modelPath(String val) { modelPath = val; return this; }
         public Builder modelVersion(String val) { modelVersion = val; return this; }
         public Builder enabledModels(Set<String> val) { enabledModels = val; return this; }
+        public Builder detectionMode(String val) { detectionMode = val; return this; }
+        public Builder knownProfileId(String val) { knownProfileId = val; return this; }
+        public Builder knownProfileSha256(String val) { knownProfileSha256 = val; return this; }
+        public Builder modelHotUpdateEnabled(boolean val) { modelHotUpdateEnabled = val; return this; }
+        public Builder modelUpdateConsumerEnabled(boolean val) { modelUpdateConsumerEnabled = val; return this; }
+        public Builder modelConsumerDeploymentId(String val) { modelConsumerDeploymentId = val; return this; }
+        public Builder modelConsumerProfileSha256(String val) { modelConsumerProfileSha256 = val; return this; }
+        public Builder modelRuntimeContract(String val) { modelRuntimeContract = val; return this; }
+        public Builder modelRuntimeVersion(String val) { modelRuntimeVersion = val; return this; }
+        public Builder modelFeatureSchemaVersion(int val) { modelFeatureSchemaVersion = val; return this; }
+        public Builder modelGraphSchemaVersion(int val) { modelGraphSchemaVersion = val; return this; }
+        public Builder modelSigningPublicKeyFile(String val) { modelSigningPublicKeyFile = val; return this; }
+        public Builder modelSigningPublicKeyPemBase64(String val) { modelSigningPublicKeyPemBase64 = val; return this; }
         public Builder modelReloadIntervalMs(long val) { modelReloadIntervalMs = val; return this; }
         public Builder modelCacheEnabled(boolean val) { modelCacheEnabled = val; return this; }
         public Builder modelCacheSize(int val) { modelCacheSize = val; return this; }
@@ -551,6 +837,13 @@ public class BehaviorJobConfig implements Serializable {
         public Builder asyncMaxRetries(int val) { asyncMaxRetries = val; return this; }
         public Builder inferenceThreads(int val) { inferenceThreads = val; return this; }
         public Builder batchInferenceSize(int val) { batchInferenceSize = val; return this; }
+        public Builder modelShadowEvaluationEnabled(boolean val) { modelShadowEvaluationEnabled = val; return this; }
+        public Builder modelShadowObservationOnly(boolean val) { modelShadowObservationOnly = val; return this; }
+        public Builder modelShadowSampleRate(double val) { modelShadowSampleRate = val; return this; }
+        public Builder modelShadowChallengerTimeoutMs(long val) { modelShadowChallengerTimeoutMs = val; return this; }
+        public Builder modelShadowPackageLoadTimeoutMs(long val) { modelShadowPackageLoadTimeoutMs = val; return this; }
+        public Builder modelShadowChallengerThreads(int val) { modelShadowChallengerThreads = val; return this; }
+        public Builder modelShadowChallengerQueueCapacity(int val) { modelShadowChallengerQueueCapacity = val; return this; }
         public Builder minConfidenceThreshold(float val) { minConfidenceThreshold = val; return this; }
         public Builder highConfidenceThreshold(float val) { highConfidenceThreshold = val; return this; }
         public Builder multiLabelEnabled(boolean val) { multiLabelEnabled = val; return this; }

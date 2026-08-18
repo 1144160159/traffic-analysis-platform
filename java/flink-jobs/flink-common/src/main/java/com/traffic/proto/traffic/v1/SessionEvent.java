@@ -28,6 +28,14 @@ private static final long serialVersionUID = 0L;
     flowIds_ =
         com.google.protobuf.LazyStringArrayList.emptyList();
     endReason_ = "";
+    identityVersion_ = "";
+    sourceEventIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    evidenceIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    completeness_ = 0;
+    missingFields_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
   }
 
   @java.lang.Override
@@ -709,6 +717,272 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int IDENTITY_VERSION_FIELD_NUMBER = 43;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object identityVersion_ = "";
+  /**
+   * <pre>
+   * Additive M03 identity and event-time contract. All timestamps are Unix
+   * epoch milliseconds; identity_version names the deterministic ID recipe.
+   * </pre>
+   *
+   * <code>string identity_version = 43 [json_name = "identityVersion"];</code>
+   * @return The identityVersion.
+   */
+  @java.lang.Override
+  public java.lang.String getIdentityVersion() {
+    java.lang.Object ref = identityVersion_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      identityVersion_ = s;
+      return s;
+    }
+  }
+  /**
+   * <pre>
+   * Additive M03 identity and event-time contract. All timestamps are Unix
+   * epoch milliseconds; identity_version names the deterministic ID recipe.
+   * </pre>
+   *
+   * <code>string identity_version = 43 [json_name = "identityVersion"];</code>
+   * @return The bytes for identityVersion.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getIdentityVersionBytes() {
+    java.lang.Object ref = identityVersion_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      identityVersion_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int SESSION_VERSION_FIELD_NUMBER = 44;
+  private long sessionVersion_ = 0L;
+  /**
+   * <code>uint64 session_version = 44 [json_name = "sessionVersion"];</code>
+   * @return The sessionVersion.
+   */
+  @java.lang.Override
+  public long getSessionVersion() {
+    return sessionVersion_;
+  }
+
+  public static final int EVENT_TIME_START_MS_FIELD_NUMBER = 45;
+  private long eventTimeStartMs_ = 0L;
+  /**
+   * <code>int64 event_time_start_ms = 45 [json_name = "eventTimeStartMs"];</code>
+   * @return The eventTimeStartMs.
+   */
+  @java.lang.Override
+  public long getEventTimeStartMs() {
+    return eventTimeStartMs_;
+  }
+
+  public static final int EVENT_TIME_END_MS_FIELD_NUMBER = 46;
+  private long eventTimeEndMs_ = 0L;
+  /**
+   * <code>int64 event_time_end_ms = 46 [json_name = "eventTimeEndMs"];</code>
+   * @return The eventTimeEndMs.
+   */
+  @java.lang.Override
+  public long getEventTimeEndMs() {
+    return eventTimeEndMs_;
+  }
+
+  public static final int SOURCE_EVENT_IDS_FIELD_NUMBER = 47;
+  @SuppressWarnings("serial")
+  private com.google.protobuf.LazyStringArrayList sourceEventIds_ =
+      com.google.protobuf.LazyStringArrayList.emptyList();
+  /**
+   * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+   * @return A list containing the sourceEventIds.
+   */
+  public com.google.protobuf.ProtocolStringList
+      getSourceEventIdsList() {
+    return sourceEventIds_;
+  }
+  /**
+   * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+   * @return The count of sourceEventIds.
+   */
+  public int getSourceEventIdsCount() {
+    return sourceEventIds_.size();
+  }
+  /**
+   * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the element to return.
+   * @return The sourceEventIds at the given index.
+   */
+  public java.lang.String getSourceEventIds(int index) {
+    return sourceEventIds_.get(index);
+  }
+  /**
+   * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the sourceEventIds at the given index.
+   */
+  public com.google.protobuf.ByteString
+      getSourceEventIdsBytes(int index) {
+    return sourceEventIds_.getByteString(index);
+  }
+
+  public static final int EVIDENCE_IDS_FIELD_NUMBER = 48;
+  @SuppressWarnings("serial")
+  private com.google.protobuf.LazyStringArrayList evidenceIds_ =
+      com.google.protobuf.LazyStringArrayList.emptyList();
+  /**
+   * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+   * @return A list containing the evidenceIds.
+   */
+  public com.google.protobuf.ProtocolStringList
+      getEvidenceIdsList() {
+    return evidenceIds_;
+  }
+  /**
+   * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+   * @return The count of evidenceIds.
+   */
+  public int getEvidenceIdsCount() {
+    return evidenceIds_.size();
+  }
+  /**
+   * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+   * @param index The index of the element to return.
+   * @return The evidenceIds at the given index.
+   */
+  public java.lang.String getEvidenceIds(int index) {
+    return evidenceIds_.get(index);
+  }
+  /**
+   * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the evidenceIds at the given index.
+   */
+  public com.google.protobuf.ByteString
+      getEvidenceIdsBytes(int index) {
+    return evidenceIds_.getByteString(index);
+  }
+
+  public static final int COMPLETENESS_FIELD_NUMBER = 49;
+  private int completeness_ = 0;
+  /**
+   * <code>.traffic.v1.SessionCompleteness completeness = 49 [json_name = "completeness"];</code>
+   * @return The enum numeric value on the wire for completeness.
+   */
+  @java.lang.Override public int getCompletenessValue() {
+    return completeness_;
+  }
+  /**
+   * <code>.traffic.v1.SessionCompleteness completeness = 49 [json_name = "completeness"];</code>
+   * @return The completeness.
+   */
+  @java.lang.Override public com.traffic.proto.traffic.v1.SessionCompleteness getCompleteness() {
+    com.traffic.proto.traffic.v1.SessionCompleteness result = com.traffic.proto.traffic.v1.SessionCompleteness.forNumber(completeness_);
+    return result == null ? com.traffic.proto.traffic.v1.SessionCompleteness.UNRECOGNIZED : result;
+  }
+
+  public static final int MISSING_FIELDS_FIELD_NUMBER = 50;
+  @SuppressWarnings("serial")
+  private com.google.protobuf.LazyStringArrayList missingFields_ =
+      com.google.protobuf.LazyStringArrayList.emptyList();
+  /**
+   * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+   * @return A list containing the missingFields.
+   */
+  public com.google.protobuf.ProtocolStringList
+      getMissingFieldsList() {
+    return missingFields_;
+  }
+  /**
+   * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+   * @return The count of missingFields.
+   */
+  public int getMissingFieldsCount() {
+    return missingFields_.size();
+  }
+  /**
+   * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+   * @param index The index of the element to return.
+   * @return The missingFields at the given index.
+   */
+  public java.lang.String getMissingFields(int index) {
+    return missingFields_.get(index);
+  }
+  /**
+   * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the missingFields at the given index.
+   */
+  public com.google.protobuf.ByteString
+      getMissingFieldsBytes(int index) {
+    return missingFields_.getByteString(index);
+  }
+
+  public static final int FEATURE_OBSERVATION_FIELD_NUMBER = 51;
+  private com.traffic.proto.traffic.v1.TrafficFeatureObservation featureObservation_;
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+   * @return Whether the featureObservation field is set.
+   */
+  @java.lang.Override
+  public boolean hasFeatureObservation() {
+    return ((bitField0_ & 0x00000004) != 0);
+  }
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+   * @return The featureObservation.
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.TrafficFeatureObservation getFeatureObservation() {
+    return featureObservation_ == null ? com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance() : featureObservation_;
+  }
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder getFeatureObservationOrBuilder() {
+    return featureObservation_ == null ? com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance() : featureObservation_;
+  }
+
+  public static final int PACKETS_FWD_FIELD_NUMBER = 52;
+  private long packetsFwd_ = 0L;
+  /**
+   * <pre>
+   * Directional packet counts: forward = packets emitted in the initiator
+   * (client) direction, backward = responder (server) direction. Zero when the
+   * producer cannot attribute direction; both fields are additive (legacy
+   * producers stay wire-compatible with proto3 zero defaults).
+   * </pre>
+   *
+   * <code>uint64 packets_fwd = 52 [json_name = "packetsFwd"];</code>
+   * @return The packetsFwd.
+   */
+  @java.lang.Override
+  public long getPacketsFwd() {
+    return packetsFwd_;
+  }
+
+  public static final int PACKETS_BWD_FIELD_NUMBER = 53;
+  private long packetsBwd_ = 0L;
+  /**
+   * <code>uint64 packets_bwd = 53 [json_name = "packetsBwd"];</code>
+   * @return The packetsBwd.
+   */
+  @java.lang.Override
+  public long getPacketsBwd() {
+    return packetsBwd_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -848,6 +1122,39 @@ private static final long serialVersionUID = 0L;
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(endReason_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 42, endReason_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(identityVersion_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 43, identityVersion_);
+    }
+    if (sessionVersion_ != 0L) {
+      output.writeUInt64(44, sessionVersion_);
+    }
+    if (eventTimeStartMs_ != 0L) {
+      output.writeInt64(45, eventTimeStartMs_);
+    }
+    if (eventTimeEndMs_ != 0L) {
+      output.writeInt64(46, eventTimeEndMs_);
+    }
+    for (int i = 0; i < sourceEventIds_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 47, sourceEventIds_.getRaw(i));
+    }
+    for (int i = 0; i < evidenceIds_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 48, evidenceIds_.getRaw(i));
+    }
+    if (completeness_ != com.traffic.proto.traffic.v1.SessionCompleteness.SESSION_COMPLETENESS_UNSPECIFIED.getNumber()) {
+      output.writeEnum(49, completeness_);
+    }
+    for (int i = 0; i < missingFields_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 50, missingFields_.getRaw(i));
+    }
+    if (((bitField0_ & 0x00000004) != 0)) {
+      output.writeMessage(51, getFeatureObservation());
+    }
+    if (packetsFwd_ != 0L) {
+      output.writeUInt64(52, packetsFwd_);
+    }
+    if (packetsBwd_ != 0L) {
+      output.writeUInt64(53, packetsBwd_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -1025,6 +1332,61 @@ private static final long serialVersionUID = 0L;
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(endReason_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(42, endReason_);
     }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(identityVersion_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(43, identityVersion_);
+    }
+    if (sessionVersion_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(44, sessionVersion_);
+    }
+    if (eventTimeStartMs_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(45, eventTimeStartMs_);
+    }
+    if (eventTimeEndMs_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(46, eventTimeEndMs_);
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < sourceEventIds_.size(); i++) {
+        dataSize += computeStringSizeNoTag(sourceEventIds_.getRaw(i));
+      }
+      size += dataSize;
+      size += 2 * getSourceEventIdsList().size();
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < evidenceIds_.size(); i++) {
+        dataSize += computeStringSizeNoTag(evidenceIds_.getRaw(i));
+      }
+      size += dataSize;
+      size += 2 * getEvidenceIdsList().size();
+    }
+    if (completeness_ != com.traffic.proto.traffic.v1.SessionCompleteness.SESSION_COMPLETENESS_UNSPECIFIED.getNumber()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(49, completeness_);
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < missingFields_.size(); i++) {
+        dataSize += computeStringSizeNoTag(missingFields_.getRaw(i));
+      }
+      size += dataSize;
+      size += 2 * getMissingFieldsList().size();
+    }
+    if (((bitField0_ & 0x00000004) != 0)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(51, getFeatureObservation());
+    }
+    if (packetsFwd_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(52, packetsFwd_);
+    }
+    if (packetsBwd_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(53, packetsBwd_);
+    }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
@@ -1137,6 +1499,30 @@ private static final long serialVersionUID = 0L;
         .equals(other.getFlowIdsList())) return false;
     if (!getEndReason()
         .equals(other.getEndReason())) return false;
+    if (!getIdentityVersion()
+        .equals(other.getIdentityVersion())) return false;
+    if (getSessionVersion()
+        != other.getSessionVersion()) return false;
+    if (getEventTimeStartMs()
+        != other.getEventTimeStartMs()) return false;
+    if (getEventTimeEndMs()
+        != other.getEventTimeEndMs()) return false;
+    if (!getSourceEventIdsList()
+        .equals(other.getSourceEventIdsList())) return false;
+    if (!getEvidenceIdsList()
+        .equals(other.getEvidenceIdsList())) return false;
+    if (completeness_ != other.completeness_) return false;
+    if (!getMissingFieldsList()
+        .equals(other.getMissingFieldsList())) return false;
+    if (hasFeatureObservation() != other.hasFeatureObservation()) return false;
+    if (hasFeatureObservation()) {
+      if (!getFeatureObservation()
+          .equals(other.getFeatureObservation())) return false;
+    }
+    if (getPacketsFwd()
+        != other.getPacketsFwd()) return false;
+    if (getPacketsBwd()
+        != other.getPacketsBwd()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -1255,6 +1641,41 @@ private static final long serialVersionUID = 0L;
     }
     hash = (37 * hash) + END_REASON_FIELD_NUMBER;
     hash = (53 * hash) + getEndReason().hashCode();
+    hash = (37 * hash) + IDENTITY_VERSION_FIELD_NUMBER;
+    hash = (53 * hash) + getIdentityVersion().hashCode();
+    hash = (37 * hash) + SESSION_VERSION_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getSessionVersion());
+    hash = (37 * hash) + EVENT_TIME_START_MS_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getEventTimeStartMs());
+    hash = (37 * hash) + EVENT_TIME_END_MS_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getEventTimeEndMs());
+    if (getSourceEventIdsCount() > 0) {
+      hash = (37 * hash) + SOURCE_EVENT_IDS_FIELD_NUMBER;
+      hash = (53 * hash) + getSourceEventIdsList().hashCode();
+    }
+    if (getEvidenceIdsCount() > 0) {
+      hash = (37 * hash) + EVIDENCE_IDS_FIELD_NUMBER;
+      hash = (53 * hash) + getEvidenceIdsList().hashCode();
+    }
+    hash = (37 * hash) + COMPLETENESS_FIELD_NUMBER;
+    hash = (53 * hash) + completeness_;
+    if (getMissingFieldsCount() > 0) {
+      hash = (37 * hash) + MISSING_FIELDS_FIELD_NUMBER;
+      hash = (53 * hash) + getMissingFieldsList().hashCode();
+    }
+    if (hasFeatureObservation()) {
+      hash = (37 * hash) + FEATURE_OBSERVATION_FIELD_NUMBER;
+      hash = (53 * hash) + getFeatureObservation().hashCode();
+    }
+    hash = (37 * hash) + PACKETS_FWD_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getPacketsFwd());
+    hash = (37 * hash) + PACKETS_BWD_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getPacketsBwd());
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -1391,6 +1812,7 @@ private static final long serialVersionUID = 0L;
               .alwaysUseFieldBuilders) {
         getHeaderFieldBuilder();
         getTupleFieldBuilder();
+        getFeatureObservationFieldBuilder();
       }
     }
     @java.lang.Override
@@ -1449,6 +1871,24 @@ private static final long serialVersionUID = 0L;
       flowIds_ =
           com.google.protobuf.LazyStringArrayList.emptyList();
       endReason_ = "";
+      identityVersion_ = "";
+      sessionVersion_ = 0L;
+      eventTimeStartMs_ = 0L;
+      eventTimeEndMs_ = 0L;
+      sourceEventIds_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+      evidenceIds_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+      completeness_ = 0;
+      missingFields_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+      featureObservation_ = null;
+      if (featureObservationBuilder_ != null) {
+        featureObservationBuilder_.dispose();
+        featureObservationBuilder_ = null;
+      }
+      packetsFwd_ = 0L;
+      packetsBwd_ = 0L;
       return this;
     }
 
@@ -1622,6 +2062,47 @@ private static final long serialVersionUID = 0L;
       if (((from_bitField1_ & 0x00000200) != 0)) {
         result.endReason_ = endReason_;
       }
+      if (((from_bitField1_ & 0x00000400) != 0)) {
+        result.identityVersion_ = identityVersion_;
+      }
+      if (((from_bitField1_ & 0x00000800) != 0)) {
+        result.sessionVersion_ = sessionVersion_;
+      }
+      if (((from_bitField1_ & 0x00001000) != 0)) {
+        result.eventTimeStartMs_ = eventTimeStartMs_;
+      }
+      if (((from_bitField1_ & 0x00002000) != 0)) {
+        result.eventTimeEndMs_ = eventTimeEndMs_;
+      }
+      if (((from_bitField1_ & 0x00004000) != 0)) {
+        sourceEventIds_.makeImmutable();
+        result.sourceEventIds_ = sourceEventIds_;
+      }
+      if (((from_bitField1_ & 0x00008000) != 0)) {
+        evidenceIds_.makeImmutable();
+        result.evidenceIds_ = evidenceIds_;
+      }
+      if (((from_bitField1_ & 0x00010000) != 0)) {
+        result.completeness_ = completeness_;
+      }
+      if (((from_bitField1_ & 0x00020000) != 0)) {
+        missingFields_.makeImmutable();
+        result.missingFields_ = missingFields_;
+      }
+      int to_bitField0_ = 0;
+      if (((from_bitField1_ & 0x00040000) != 0)) {
+        result.featureObservation_ = featureObservationBuilder_ == null
+            ? featureObservation_
+            : featureObservationBuilder_.build();
+        to_bitField0_ |= 0x00000004;
+      }
+      if (((from_bitField1_ & 0x00080000) != 0)) {
+        result.packetsFwd_ = packetsFwd_;
+      }
+      if (((from_bitField1_ & 0x00100000) != 0)) {
+        result.packetsBwd_ = packetsBwd_;
+      }
+      result.bitField0_ |= to_bitField0_;
     }
 
     @java.lang.Override
@@ -1810,6 +2291,62 @@ private static final long serialVersionUID = 0L;
         endReason_ = other.endReason_;
         bitField1_ |= 0x00000200;
         onChanged();
+      }
+      if (!other.getIdentityVersion().isEmpty()) {
+        identityVersion_ = other.identityVersion_;
+        bitField1_ |= 0x00000400;
+        onChanged();
+      }
+      if (other.getSessionVersion() != 0L) {
+        setSessionVersion(other.getSessionVersion());
+      }
+      if (other.getEventTimeStartMs() != 0L) {
+        setEventTimeStartMs(other.getEventTimeStartMs());
+      }
+      if (other.getEventTimeEndMs() != 0L) {
+        setEventTimeEndMs(other.getEventTimeEndMs());
+      }
+      if (!other.sourceEventIds_.isEmpty()) {
+        if (sourceEventIds_.isEmpty()) {
+          sourceEventIds_ = other.sourceEventIds_;
+          bitField1_ |= 0x00004000;
+        } else {
+          ensureSourceEventIdsIsMutable();
+          sourceEventIds_.addAll(other.sourceEventIds_);
+        }
+        onChanged();
+      }
+      if (!other.evidenceIds_.isEmpty()) {
+        if (evidenceIds_.isEmpty()) {
+          evidenceIds_ = other.evidenceIds_;
+          bitField1_ |= 0x00008000;
+        } else {
+          ensureEvidenceIdsIsMutable();
+          evidenceIds_.addAll(other.evidenceIds_);
+        }
+        onChanged();
+      }
+      if (other.completeness_ != 0) {
+        setCompletenessValue(other.getCompletenessValue());
+      }
+      if (!other.missingFields_.isEmpty()) {
+        if (missingFields_.isEmpty()) {
+          missingFields_ = other.missingFields_;
+          bitField1_ |= 0x00020000;
+        } else {
+          ensureMissingFieldsIsMutable();
+          missingFields_.addAll(other.missingFields_);
+        }
+        onChanged();
+      }
+      if (other.hasFeatureObservation()) {
+        mergeFeatureObservation(other.getFeatureObservation());
+      }
+      if (other.getPacketsFwd() != 0L) {
+        setPacketsFwd(other.getPacketsFwd());
+      }
+      if (other.getPacketsBwd() != 0L) {
+        setPacketsBwd(other.getPacketsBwd());
       }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
@@ -2052,6 +2589,66 @@ private static final long serialVersionUID = 0L;
               bitField1_ |= 0x00000200;
               break;
             } // case 338
+            case 346: {
+              identityVersion_ = input.readStringRequireUtf8();
+              bitField1_ |= 0x00000400;
+              break;
+            } // case 346
+            case 352: {
+              sessionVersion_ = input.readUInt64();
+              bitField1_ |= 0x00000800;
+              break;
+            } // case 352
+            case 360: {
+              eventTimeStartMs_ = input.readInt64();
+              bitField1_ |= 0x00001000;
+              break;
+            } // case 360
+            case 368: {
+              eventTimeEndMs_ = input.readInt64();
+              bitField1_ |= 0x00002000;
+              break;
+            } // case 368
+            case 378: {
+              java.lang.String s = input.readStringRequireUtf8();
+              ensureSourceEventIdsIsMutable();
+              sourceEventIds_.add(s);
+              break;
+            } // case 378
+            case 386: {
+              java.lang.String s = input.readStringRequireUtf8();
+              ensureEvidenceIdsIsMutable();
+              evidenceIds_.add(s);
+              break;
+            } // case 386
+            case 392: {
+              completeness_ = input.readEnum();
+              bitField1_ |= 0x00010000;
+              break;
+            } // case 392
+            case 402: {
+              java.lang.String s = input.readStringRequireUtf8();
+              ensureMissingFieldsIsMutable();
+              missingFields_.add(s);
+              break;
+            } // case 402
+            case 410: {
+              input.readMessage(
+                  getFeatureObservationFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              bitField1_ |= 0x00040000;
+              break;
+            } // case 410
+            case 416: {
+              packetsFwd_ = input.readUInt64();
+              bitField1_ |= 0x00080000;
+              break;
+            } // case 416
+            case 424: {
+              packetsBwd_ = input.readUInt64();
+              bitField1_ |= 0x00100000;
+              break;
+            } // case 424
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -3867,6 +4464,791 @@ private static final long serialVersionUID = 0L;
       checkByteStringIsUtf8(value);
       endReason_ = value;
       bitField1_ |= 0x00000200;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object identityVersion_ = "";
+    /**
+     * <pre>
+     * Additive M03 identity and event-time contract. All timestamps are Unix
+     * epoch milliseconds; identity_version names the deterministic ID recipe.
+     * </pre>
+     *
+     * <code>string identity_version = 43 [json_name = "identityVersion"];</code>
+     * @return The identityVersion.
+     */
+    public java.lang.String getIdentityVersion() {
+      java.lang.Object ref = identityVersion_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        identityVersion_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Additive M03 identity and event-time contract. All timestamps are Unix
+     * epoch milliseconds; identity_version names the deterministic ID recipe.
+     * </pre>
+     *
+     * <code>string identity_version = 43 [json_name = "identityVersion"];</code>
+     * @return The bytes for identityVersion.
+     */
+    public com.google.protobuf.ByteString
+        getIdentityVersionBytes() {
+      java.lang.Object ref = identityVersion_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        identityVersion_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Additive M03 identity and event-time contract. All timestamps are Unix
+     * epoch milliseconds; identity_version names the deterministic ID recipe.
+     * </pre>
+     *
+     * <code>string identity_version = 43 [json_name = "identityVersion"];</code>
+     * @param value The identityVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setIdentityVersion(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      identityVersion_ = value;
+      bitField1_ |= 0x00000400;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive M03 identity and event-time contract. All timestamps are Unix
+     * epoch milliseconds; identity_version names the deterministic ID recipe.
+     * </pre>
+     *
+     * <code>string identity_version = 43 [json_name = "identityVersion"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearIdentityVersion() {
+      identityVersion_ = getDefaultInstance().getIdentityVersion();
+      bitField1_ = (bitField1_ & ~0x00000400);
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive M03 identity and event-time contract. All timestamps are Unix
+     * epoch milliseconds; identity_version names the deterministic ID recipe.
+     * </pre>
+     *
+     * <code>string identity_version = 43 [json_name = "identityVersion"];</code>
+     * @param value The bytes for identityVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setIdentityVersionBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      identityVersion_ = value;
+      bitField1_ |= 0x00000400;
+      onChanged();
+      return this;
+    }
+
+    private long sessionVersion_ ;
+    /**
+     * <code>uint64 session_version = 44 [json_name = "sessionVersion"];</code>
+     * @return The sessionVersion.
+     */
+    @java.lang.Override
+    public long getSessionVersion() {
+      return sessionVersion_;
+    }
+    /**
+     * <code>uint64 session_version = 44 [json_name = "sessionVersion"];</code>
+     * @param value The sessionVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setSessionVersion(long value) {
+
+      sessionVersion_ = value;
+      bitField1_ |= 0x00000800;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 session_version = 44 [json_name = "sessionVersion"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearSessionVersion() {
+      bitField1_ = (bitField1_ & ~0x00000800);
+      sessionVersion_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long eventTimeStartMs_ ;
+    /**
+     * <code>int64 event_time_start_ms = 45 [json_name = "eventTimeStartMs"];</code>
+     * @return The eventTimeStartMs.
+     */
+    @java.lang.Override
+    public long getEventTimeStartMs() {
+      return eventTimeStartMs_;
+    }
+    /**
+     * <code>int64 event_time_start_ms = 45 [json_name = "eventTimeStartMs"];</code>
+     * @param value The eventTimeStartMs to set.
+     * @return This builder for chaining.
+     */
+    public Builder setEventTimeStartMs(long value) {
+
+      eventTimeStartMs_ = value;
+      bitField1_ |= 0x00001000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int64 event_time_start_ms = 45 [json_name = "eventTimeStartMs"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearEventTimeStartMs() {
+      bitField1_ = (bitField1_ & ~0x00001000);
+      eventTimeStartMs_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long eventTimeEndMs_ ;
+    /**
+     * <code>int64 event_time_end_ms = 46 [json_name = "eventTimeEndMs"];</code>
+     * @return The eventTimeEndMs.
+     */
+    @java.lang.Override
+    public long getEventTimeEndMs() {
+      return eventTimeEndMs_;
+    }
+    /**
+     * <code>int64 event_time_end_ms = 46 [json_name = "eventTimeEndMs"];</code>
+     * @param value The eventTimeEndMs to set.
+     * @return This builder for chaining.
+     */
+    public Builder setEventTimeEndMs(long value) {
+
+      eventTimeEndMs_ = value;
+      bitField1_ |= 0x00002000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int64 event_time_end_ms = 46 [json_name = "eventTimeEndMs"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearEventTimeEndMs() {
+      bitField1_ = (bitField1_ & ~0x00002000);
+      eventTimeEndMs_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private com.google.protobuf.LazyStringArrayList sourceEventIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    private void ensureSourceEventIdsIsMutable() {
+      if (!sourceEventIds_.isModifiable()) {
+        sourceEventIds_ = new com.google.protobuf.LazyStringArrayList(sourceEventIds_);
+      }
+      bitField1_ |= 0x00004000;
+    }
+    /**
+     * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+     * @return A list containing the sourceEventIds.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getSourceEventIdsList() {
+      sourceEventIds_.makeImmutable();
+      return sourceEventIds_;
+    }
+    /**
+     * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+     * @return The count of sourceEventIds.
+     */
+    public int getSourceEventIdsCount() {
+      return sourceEventIds_.size();
+    }
+    /**
+     * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+     * @param index The index of the element to return.
+     * @return The sourceEventIds at the given index.
+     */
+    public java.lang.String getSourceEventIds(int index) {
+      return sourceEventIds_.get(index);
+    }
+    /**
+     * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the sourceEventIds at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getSourceEventIdsBytes(int index) {
+      return sourceEventIds_.getByteString(index);
+    }
+    /**
+     * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+     * @param index The index to set the value at.
+     * @param value The sourceEventIds to set.
+     * @return This builder for chaining.
+     */
+    public Builder setSourceEventIds(
+        int index, java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureSourceEventIdsIsMutable();
+      sourceEventIds_.set(index, value);
+      bitField1_ |= 0x00004000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+     * @param value The sourceEventIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addSourceEventIds(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureSourceEventIdsIsMutable();
+      sourceEventIds_.add(value);
+      bitField1_ |= 0x00004000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+     * @param values The sourceEventIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllSourceEventIds(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureSourceEventIdsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, sourceEventIds_);
+      bitField1_ |= 0x00004000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearSourceEventIds() {
+      sourceEventIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+      bitField1_ = (bitField1_ & ~0x00004000);;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+     * @param value The bytes of the sourceEventIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addSourceEventIdsBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      ensureSourceEventIdsIsMutable();
+      sourceEventIds_.add(value);
+      bitField1_ |= 0x00004000;
+      onChanged();
+      return this;
+    }
+
+    private com.google.protobuf.LazyStringArrayList evidenceIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    private void ensureEvidenceIdsIsMutable() {
+      if (!evidenceIds_.isModifiable()) {
+        evidenceIds_ = new com.google.protobuf.LazyStringArrayList(evidenceIds_);
+      }
+      bitField1_ |= 0x00008000;
+    }
+    /**
+     * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+     * @return A list containing the evidenceIds.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getEvidenceIdsList() {
+      evidenceIds_.makeImmutable();
+      return evidenceIds_;
+    }
+    /**
+     * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+     * @return The count of evidenceIds.
+     */
+    public int getEvidenceIdsCount() {
+      return evidenceIds_.size();
+    }
+    /**
+     * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+     * @param index The index of the element to return.
+     * @return The evidenceIds at the given index.
+     */
+    public java.lang.String getEvidenceIds(int index) {
+      return evidenceIds_.get(index);
+    }
+    /**
+     * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the evidenceIds at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getEvidenceIdsBytes(int index) {
+      return evidenceIds_.getByteString(index);
+    }
+    /**
+     * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+     * @param index The index to set the value at.
+     * @param value The evidenceIds to set.
+     * @return This builder for chaining.
+     */
+    public Builder setEvidenceIds(
+        int index, java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureEvidenceIdsIsMutable();
+      evidenceIds_.set(index, value);
+      bitField1_ |= 0x00008000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+     * @param value The evidenceIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addEvidenceIds(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureEvidenceIdsIsMutable();
+      evidenceIds_.add(value);
+      bitField1_ |= 0x00008000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+     * @param values The evidenceIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllEvidenceIds(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureEvidenceIdsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, evidenceIds_);
+      bitField1_ |= 0x00008000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearEvidenceIds() {
+      evidenceIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+      bitField1_ = (bitField1_ & ~0x00008000);;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+     * @param value The bytes of the evidenceIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addEvidenceIdsBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      ensureEvidenceIdsIsMutable();
+      evidenceIds_.add(value);
+      bitField1_ |= 0x00008000;
+      onChanged();
+      return this;
+    }
+
+    private int completeness_ = 0;
+    /**
+     * <code>.traffic.v1.SessionCompleteness completeness = 49 [json_name = "completeness"];</code>
+     * @return The enum numeric value on the wire for completeness.
+     */
+    @java.lang.Override public int getCompletenessValue() {
+      return completeness_;
+    }
+    /**
+     * <code>.traffic.v1.SessionCompleteness completeness = 49 [json_name = "completeness"];</code>
+     * @param value The enum numeric value on the wire for completeness to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCompletenessValue(int value) {
+      completeness_ = value;
+      bitField1_ |= 0x00010000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.SessionCompleteness completeness = 49 [json_name = "completeness"];</code>
+     * @return The completeness.
+     */
+    @java.lang.Override
+    public com.traffic.proto.traffic.v1.SessionCompleteness getCompleteness() {
+      com.traffic.proto.traffic.v1.SessionCompleteness result = com.traffic.proto.traffic.v1.SessionCompleteness.forNumber(completeness_);
+      return result == null ? com.traffic.proto.traffic.v1.SessionCompleteness.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.traffic.v1.SessionCompleteness completeness = 49 [json_name = "completeness"];</code>
+     * @param value The completeness to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCompleteness(com.traffic.proto.traffic.v1.SessionCompleteness value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      bitField1_ |= 0x00010000;
+      completeness_ = value.getNumber();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.SessionCompleteness completeness = 49 [json_name = "completeness"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCompleteness() {
+      bitField1_ = (bitField1_ & ~0x00010000);
+      completeness_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private com.google.protobuf.LazyStringArrayList missingFields_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    private void ensureMissingFieldsIsMutable() {
+      if (!missingFields_.isModifiable()) {
+        missingFields_ = new com.google.protobuf.LazyStringArrayList(missingFields_);
+      }
+      bitField1_ |= 0x00020000;
+    }
+    /**
+     * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+     * @return A list containing the missingFields.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getMissingFieldsList() {
+      missingFields_.makeImmutable();
+      return missingFields_;
+    }
+    /**
+     * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+     * @return The count of missingFields.
+     */
+    public int getMissingFieldsCount() {
+      return missingFields_.size();
+    }
+    /**
+     * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+     * @param index The index of the element to return.
+     * @return The missingFields at the given index.
+     */
+    public java.lang.String getMissingFields(int index) {
+      return missingFields_.get(index);
+    }
+    /**
+     * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the missingFields at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getMissingFieldsBytes(int index) {
+      return missingFields_.getByteString(index);
+    }
+    /**
+     * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+     * @param index The index to set the value at.
+     * @param value The missingFields to set.
+     * @return This builder for chaining.
+     */
+    public Builder setMissingFields(
+        int index, java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureMissingFieldsIsMutable();
+      missingFields_.set(index, value);
+      bitField1_ |= 0x00020000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+     * @param value The missingFields to add.
+     * @return This builder for chaining.
+     */
+    public Builder addMissingFields(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureMissingFieldsIsMutable();
+      missingFields_.add(value);
+      bitField1_ |= 0x00020000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+     * @param values The missingFields to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllMissingFields(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureMissingFieldsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, missingFields_);
+      bitField1_ |= 0x00020000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearMissingFields() {
+      missingFields_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+      bitField1_ = (bitField1_ & ~0x00020000);;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+     * @param value The bytes of the missingFields to add.
+     * @return This builder for chaining.
+     */
+    public Builder addMissingFieldsBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      ensureMissingFieldsIsMutable();
+      missingFields_.add(value);
+      bitField1_ |= 0x00020000;
+      onChanged();
+      return this;
+    }
+
+    private com.traffic.proto.traffic.v1.TrafficFeatureObservation featureObservation_;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.traffic.proto.traffic.v1.TrafficFeatureObservation, com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder, com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder> featureObservationBuilder_;
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+     * @return Whether the featureObservation field is set.
+     */
+    public boolean hasFeatureObservation() {
+      return ((bitField1_ & 0x00040000) != 0);
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+     * @return The featureObservation.
+     */
+    public com.traffic.proto.traffic.v1.TrafficFeatureObservation getFeatureObservation() {
+      if (featureObservationBuilder_ == null) {
+        return featureObservation_ == null ? com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance() : featureObservation_;
+      } else {
+        return featureObservationBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+     */
+    public Builder setFeatureObservation(com.traffic.proto.traffic.v1.TrafficFeatureObservation value) {
+      if (featureObservationBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        featureObservation_ = value;
+      } else {
+        featureObservationBuilder_.setMessage(value);
+      }
+      bitField1_ |= 0x00040000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+     */
+    public Builder setFeatureObservation(
+        com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder builderForValue) {
+      if (featureObservationBuilder_ == null) {
+        featureObservation_ = builderForValue.build();
+      } else {
+        featureObservationBuilder_.setMessage(builderForValue.build());
+      }
+      bitField1_ |= 0x00040000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+     */
+    public Builder mergeFeatureObservation(com.traffic.proto.traffic.v1.TrafficFeatureObservation value) {
+      if (featureObservationBuilder_ == null) {
+        if (((bitField1_ & 0x00040000) != 0) &&
+          featureObservation_ != null &&
+          featureObservation_ != com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance()) {
+          getFeatureObservationBuilder().mergeFrom(value);
+        } else {
+          featureObservation_ = value;
+        }
+      } else {
+        featureObservationBuilder_.mergeFrom(value);
+      }
+      if (featureObservation_ != null) {
+        bitField1_ |= 0x00040000;
+        onChanged();
+      }
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+     */
+    public Builder clearFeatureObservation() {
+      bitField1_ = (bitField1_ & ~0x00040000);
+      featureObservation_ = null;
+      if (featureObservationBuilder_ != null) {
+        featureObservationBuilder_.dispose();
+        featureObservationBuilder_ = null;
+      }
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+     */
+    public com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder getFeatureObservationBuilder() {
+      bitField1_ |= 0x00040000;
+      onChanged();
+      return getFeatureObservationFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+     */
+    public com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder getFeatureObservationOrBuilder() {
+      if (featureObservationBuilder_ != null) {
+        return featureObservationBuilder_.getMessageOrBuilder();
+      } else {
+        return featureObservation_ == null ?
+            com.traffic.proto.traffic.v1.TrafficFeatureObservation.getDefaultInstance() : featureObservation_;
+      }
+    }
+    /**
+     * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.traffic.proto.traffic.v1.TrafficFeatureObservation, com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder, com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder>
+        getFeatureObservationFieldBuilder() {
+      if (featureObservationBuilder_ == null) {
+        featureObservationBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.traffic.proto.traffic.v1.TrafficFeatureObservation, com.traffic.proto.traffic.v1.TrafficFeatureObservation.Builder, com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder>(
+                getFeatureObservation(),
+                getParentForChildren(),
+                isClean());
+        featureObservation_ = null;
+      }
+      return featureObservationBuilder_;
+    }
+
+    private long packetsFwd_ ;
+    /**
+     * <pre>
+     * Directional packet counts: forward = packets emitted in the initiator
+     * (client) direction, backward = responder (server) direction. Zero when the
+     * producer cannot attribute direction; both fields are additive (legacy
+     * producers stay wire-compatible with proto3 zero defaults).
+     * </pre>
+     *
+     * <code>uint64 packets_fwd = 52 [json_name = "packetsFwd"];</code>
+     * @return The packetsFwd.
+     */
+    @java.lang.Override
+    public long getPacketsFwd() {
+      return packetsFwd_;
+    }
+    /**
+     * <pre>
+     * Directional packet counts: forward = packets emitted in the initiator
+     * (client) direction, backward = responder (server) direction. Zero when the
+     * producer cannot attribute direction; both fields are additive (legacy
+     * producers stay wire-compatible with proto3 zero defaults).
+     * </pre>
+     *
+     * <code>uint64 packets_fwd = 52 [json_name = "packetsFwd"];</code>
+     * @param value The packetsFwd to set.
+     * @return This builder for chaining.
+     */
+    public Builder setPacketsFwd(long value) {
+
+      packetsFwd_ = value;
+      bitField1_ |= 0x00080000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Directional packet counts: forward = packets emitted in the initiator
+     * (client) direction, backward = responder (server) direction. Zero when the
+     * producer cannot attribute direction; both fields are additive (legacy
+     * producers stay wire-compatible with proto3 zero defaults).
+     * </pre>
+     *
+     * <code>uint64 packets_fwd = 52 [json_name = "packetsFwd"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearPacketsFwd() {
+      bitField1_ = (bitField1_ & ~0x00080000);
+      packetsFwd_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long packetsBwd_ ;
+    /**
+     * <code>uint64 packets_bwd = 53 [json_name = "packetsBwd"];</code>
+     * @return The packetsBwd.
+     */
+    @java.lang.Override
+    public long getPacketsBwd() {
+      return packetsBwd_;
+    }
+    /**
+     * <code>uint64 packets_bwd = 53 [json_name = "packetsBwd"];</code>
+     * @param value The packetsBwd to set.
+     * @return This builder for chaining.
+     */
+    public Builder setPacketsBwd(long value) {
+
+      packetsBwd_ = value;
+      bitField1_ |= 0x00100000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 packets_bwd = 53 [json_name = "packetsBwd"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearPacketsBwd() {
+      bitField1_ = (bitField1_ & ~0x00100000);
+      packetsBwd_ = 0L;
       onChanged();
       return this;
     }

@@ -117,7 +117,7 @@ public enum TaskType
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(4);
+    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(5);
   }
 
   private static final TaskType[] VALUES = values();

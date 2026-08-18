@@ -35,7 +35,7 @@ public final class SessionProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\030traffic/v1/session.proto\022\ntraffic.v1\032\027" +
-      "traffic/v1/common.proto\"\274\n\n\014SessionEvent" +
+      "traffic/v1/common.proto\"\275\016\n\014SessionEvent" +
       "\022/\n\006header\030\001 \001(\0132\027.traffic.v1.EventHeade" +
       "rR\006header\022\035\n\nsession_id\030\002 \001(\tR\tsessionId" +
       "\022!\n\014community_id\030\003 \001(\tR\013communityId\022+\n\005t" +
@@ -69,19 +69,37 @@ public final class SessionProto {
       "ablished\030\' \001(\010R\risEstablished\022%\n\016evidenc" +
       "e_count\030( \001(\rR\revidenceCount\022\031\n\010flow_ids" +
       "\030) \003(\tR\007flowIds\022\035\n\nend_reason\030* \001(\tR\tend" +
-      "Reason\"\216\002\n\014SessionBatch\0224\n\010sessions\030\001 \003(" +
-      "\0132\030.traffic.v1.SessionEventR\010sessions\022\031\n" +
-      "\010batch_id\030\002 \001(\tR\007batchId\022\033\n\ttenant_id\030\003 " +
-      "\001(\tR\010tenantId\022\031\n\010probe_id\030\004 \001(\tR\007probeId" +
-      "\022\025\n\006run_id\030\005 \001(\tR\005runId\022\035\n\nbatch_size\030\006 " +
-      "\001(\rR\tbatchSize\022 \n\013compression\030\007 \001(\tR\013com" +
-      "pression\022\035\n\ncreated_at\030\010 \001(\003R\tcreatedAtB" +
-      "\326\001\n\034com.traffic.proto.traffic.v1B\014Sessio" +
-      "nProtoP\001Z_github.com/1144160159/traffic-" +
-      "analysis-platform/go/control-plane/pkg/p" +
-      "roto/traffic/v1;trafficv1\242\002\003TXX\252\002\nTraffi" +
-      "c.V1\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetada" +
-      "ta\352\002\013Traffic::V1b\006proto3"
+      "Reason\022)\n\020identity_version\030+ \001(\tR\017identi" +
+      "tyVersion\022\'\n\017session_version\030, \001(\004R\016sess" +
+      "ionVersion\022-\n\023event_time_start_ms\030- \001(\003R" +
+      "\020eventTimeStartMs\022)\n\021event_time_end_ms\030." +
+      " \001(\003R\016eventTimeEndMs\022(\n\020source_event_ids" +
+      "\030/ \003(\tR\016sourceEventIds\022!\n\014evidence_ids\0300" +
+      " \003(\tR\013evidenceIds\022C\n\014completeness\0301 \001(\0162" +
+      "\037.traffic.v1.SessionCompletenessR\014comple" +
+      "teness\022%\n\016missing_fields\0302 \003(\tR\rmissingF" +
+      "ields\022V\n\023feature_observation\0303 \001(\0132%.tra" +
+      "ffic.v1.TrafficFeatureObservationR\022featu" +
+      "reObservation\022\037\n\013packets_fwd\0304 \001(\004R\npack" +
+      "etsFwd\022\037\n\013packets_bwd\0305 \001(\004R\npacketsBwd\"" +
+      "\216\002\n\014SessionBatch\0224\n\010sessions\030\001 \003(\0132\030.tra" +
+      "ffic.v1.SessionEventR\010sessions\022\031\n\010batch_" +
+      "id\030\002 \001(\tR\007batchId\022\033\n\ttenant_id\030\003 \001(\tR\010te" +
+      "nantId\022\031\n\010probe_id\030\004 \001(\tR\007probeId\022\025\n\006run" +
+      "_id\030\005 \001(\tR\005runId\022\035\n\nbatch_size\030\006 \001(\rR\tba" +
+      "tchSize\022 \n\013compression\030\007 \001(\tR\013compressio" +
+      "n\022\035\n\ncreated_at\030\010 \001(\003R\tcreatedAt*\306\001\n\023Ses" +
+      "sionCompleteness\022$\n SESSION_COMPLETENESS" +
+      "_UNSPECIFIED\020\000\022!\n\035SESSION_COMPLETENESS_C" +
+      "OMPLETE\020\001\022 \n\034SESSION_COMPLETENESS_PARTIA" +
+      "L\020\002\022\"\n\036SESSION_COMPLETENESS_TRUNCATED\020\003\022" +
+      " \n\034SESSION_COMPLETENESS_INVALID\020\004B\326\001\n\034co" +
+      "m.traffic.proto.traffic.v1B\014SessionProto" +
+      "P\001Z_github.com/1144160159/traffic-analys" +
+      "is-platform/go/control-plane/pkg/proto/t" +
+      "raffic/v1;trafficv1\242\002\003TXX\252\002\nTraffic.V1\312\002" +
+      "\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetadata\352\002\013T" +
+      "raffic::V1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -93,7 +111,7 @@ public final class SessionProto {
     internal_static_traffic_v1_SessionEvent_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_SessionEvent_descriptor,
-        new java.lang.String[] { "Header", "SessionId", "CommunityId", "Tuple", "TsStart", "TsEnd", "DurationMs", "Protocol", "ClientIp", "ServerIp", "ClientPort", "ServerPort", "PacketsTotal", "BytesTotal", "BytesFwd", "BytesBwd", "UpDownRatio", "NumPkts", "AvgPayload", "MinPayload", "MaxPayload", "StdPayload", "MeanIatMs", "MinIatMs", "MaxIatMs", "StdIatMs", "FlagsSyn", "FlagsAck", "FlagsFin", "FlagsPsh", "FlagsRst", "DnsPktCnt", "TcpPktCnt", "UdpPktCnt", "IcmpPktCnt", "HasSyn", "HasFin", "HasRst", "IsEstablished", "EvidenceCount", "FlowIds", "EndReason", });
+        new java.lang.String[] { "Header", "SessionId", "CommunityId", "Tuple", "TsStart", "TsEnd", "DurationMs", "Protocol", "ClientIp", "ServerIp", "ClientPort", "ServerPort", "PacketsTotal", "BytesTotal", "BytesFwd", "BytesBwd", "UpDownRatio", "NumPkts", "AvgPayload", "MinPayload", "MaxPayload", "StdPayload", "MeanIatMs", "MinIatMs", "MaxIatMs", "StdIatMs", "FlagsSyn", "FlagsAck", "FlagsFin", "FlagsPsh", "FlagsRst", "DnsPktCnt", "TcpPktCnt", "UdpPktCnt", "IcmpPktCnt", "HasSyn", "HasFin", "HasRst", "IsEstablished", "EvidenceCount", "FlowIds", "EndReason", "IdentityVersion", "SessionVersion", "EventTimeStartMs", "EventTimeEndMs", "SourceEventIds", "EvidenceIds", "Completeness", "MissingFields", "FeatureObservation", "PacketsFwd", "PacketsBwd", });
     internal_static_traffic_v1_SessionBatch_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_traffic_v1_SessionBatch_fieldAccessorTable = new

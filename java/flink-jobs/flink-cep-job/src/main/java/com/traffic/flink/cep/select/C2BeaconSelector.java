@@ -52,7 +52,10 @@ public class C2BeaconSelector extends PatternProcessFunction<Alert, Campaign> {
                         campaign.getCampaignId(), beaconAlerts.size(), campaign.getScore());
             }
         } catch (Exception e) {
+            // 构建 Campaign 失败不允许静默吞掉：campaign 丢失且 offset
+            // 照常推进等于数据丢失。统一上抛，由 Flink 重启策略恢复。
             LOG.error("Error creating C2 beacon campaign: {}", e.getMessage(), e);
+            throw new RuntimeException("C2 beacon campaign build failed", e);
         }
     }
 
@@ -94,10 +97,7 @@ public class C2BeaconSelector extends PatternProcessFunction<Alert, Campaign> {
         String summary = buildSummary(beaconAlerts, avgInterval);
 
         // 提取租户信息
-        String tenantId = beaconAlerts.get(0).getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            tenantId = "unknown";
-        }
+		String tenantId = CampaignBuilderUtils.getTenantId(beaconAlerts);
 
         String eventId = DeterministicId.uuidFromSorted(
                 "flink-cep-campaign/v1", alertIds,

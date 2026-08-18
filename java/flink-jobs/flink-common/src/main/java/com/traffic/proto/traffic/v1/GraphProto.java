@@ -50,6 +50,46 @@ public final class GraphProto {
   static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_GraphStatsBatch_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_GraphEntityIdentity_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_GraphEntityIdentity_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_GraphEvidenceAnchor_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_GraphEvidenceAnchor_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_GraphProjectionSource_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_GraphProjectionSource_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_GraphProjectedEntity_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_GraphProjectedEntity_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_GraphProjectedEntity_AttributesEntry_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_GraphProjectedEntity_AttributesEntry_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_GraphProjectedRelation_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_GraphProjectedRelation_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_GraphProjectionEvent_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_GraphProjectionEvent_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_traffic_v1_GraphProjectionEventBatch_descriptor;
+  static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_traffic_v1_GraphProjectionEventBatch_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -59,88 +99,148 @@ public final class GraphProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\026traffic/v1/graph.proto\022\ntraffic.v1\"\356\006\n" +
-      "\rGraphQueryLog\022\033\n\ttenant_id\030\001 \001(\tR\010tenan" +
-      "tId\022\031\n\010query_id\030\002 \001(\tR\007queryId\022\027\n\007user_i" +
-      "d\030\003 \001(\tR\006userId\022\035\n\nquery_type\030\004 \001(\tR\tque" +
-      "ryType\022\033\n\tcenter_ip\030\005 \001(\tR\010centerIp\022\035\n\nc" +
-      "enter_ips\030\006 \003(\tR\tcenterIps\022\024\n\005depth\030\007 \001(" +
-      "\rR\005depth\022\025\n\006run_id\030\010 \001(\tR\005runId\022(\n\020query" +
-      "_start_time\030\t \001(\003R\016queryStartTime\022$\n\016que" +
-      "ry_end_time\030\n \001(\003R\014queryEndTime\022\035\n\nnode_" +
-      "count\030\013 \001(\rR\tnodeCount\022\035\n\nedge_count\030\014 \001" +
-      "(\rR\tedgeCount\022\035\n\npath_count\030\r \001(\rR\tpathC" +
-      "ount\022*\n\021result_size_bytes\030\016 \001(\004R\017resultS" +
-      "izeBytes\022\037\n\013duration_ms\030\017 \001(\rR\ndurationM" +
-      "s\022\033\n\tcache_hit\030\020 \001(\rR\010cacheHit\022$\n\016ch_que" +
-      "ry_count\030\021 \001(\rR\014chQueryCount\022/\n\024ch_total" +
-      "_duration_ms\030\022 \001(\rR\021chTotalDurationMs\022 \n" +
-      "\014ch_rows_read\030\023 \001(\004R\nchRowsRead\022\"\n\rch_by" +
-      "tes_read\030\024 \001(\004R\013chBytesRead\022\026\n\006status\030\025 " +
-      "\001(\tR\006status\022\035\n\nerror_code\030\026 \001(\tR\terrorCo" +
-      "de\022#\n\rerror_message\030\027 \001(\tR\014errorMessage\022" +
-      "\031\n\010trace_id\030\030 \001(\tR\007traceId\022\033\n\tclient_ip\030" +
-      "\031 \001(\tR\010clientIp\022\035\n\nuser_agent\030\032 \001(\tR\tuse" +
-      "rAgent\022\035\n\ncreated_at\030\033 \001(\003R\tcreatedAt\"\310\003" +
-      "\n\017GraphCacheStats\022\033\n\ttenant_id\030\001 \001(\tR\010te" +
-      "nantId\022\022\n\004hour\030\002 \001(\003R\004hour\022\035\n\nquery_type" +
-      "\030\003 \001(\tR\tqueryType\022#\n\rtotal_queries\030\004 \001(\004" +
-      "R\014totalQueries\022\035\n\ncache_hits\030\005 \001(\004R\tcach" +
-      "eHits\022!\n\014cache_misses\030\006 \001(\004R\013cacheMisses" +
-      "\022&\n\017avg_duration_ms\030\007 \001(\002R\ravgDurationMs" +
-      "\022&\n\017p95_duration_ms\030\010 \001(\002R\rp95DurationMs" +
-      "\022&\n\017p99_duration_ms\030\t \001(\002R\rp99DurationMs" +
-      "\022\037\n\013total_nodes\030\n \001(\004R\ntotalNodes\022\037\n\013tot" +
-      "al_edges\030\013 \001(\004R\ntotalEdges\022\037\n\013error_coun" +
-      "t\030\014 \001(\004R\nerrorCount\022#\n\rtimeout_count\030\r \001" +
-      "(\004R\014timeoutCount\"\353\001\n\nGraphHotIP\022\033\n\ttenan" +
-      "t_id\030\001 \001(\tR\010tenantId\022\022\n\004date\030\002 \001(\003R\004date" +
-      "\022\016\n\002ip\030\003 \001(\tR\002ip\022\037\n\013query_count\030\004 \001(\004R\nq" +
-      "ueryCount\022\'\n\017total_neighbors\030\005 \001(\004R\016tota" +
-      "lNeighbors\022*\n\021avg_session_count\030\006 \001(\002R\017a" +
-      "vgSessionCount\022&\n\017last_query_time\030\007 \001(\003R" +
-      "\rlastQueryTime\"\232\003\n\016GraphSlowQuery\022\033\n\tten" +
-      "ant_id\030\001 \001(\tR\010tenantId\022\031\n\010query_id\030\002 \001(\t" +
-      "R\007queryId\022\035\n\nquery_type\030\003 \001(\tR\tqueryType" +
-      "\022\033\n\tcenter_ip\030\004 \001(\tR\010centerIp\022\024\n\005depth\030\005" +
-      " \001(\rR\005depth\022\025\n\006run_id\030\006 \001(\tR\005runId\022\037\n\013du" +
-      "ration_ms\030\007 \001(\rR\ndurationMs\022\035\n\nnode_coun" +
-      "t\030\010 \001(\rR\tnodeCount\022\035\n\nedge_count\030\t \001(\rR\t" +
-      "edgeCount\022 \n\014ch_rows_read\030\n \001(\004R\nchRowsR" +
-      "ead\022\"\n\rch_bytes_read\030\013 \001(\004R\013chBytesRead\022" +
-      "#\n\rerror_message\030\014 \001(\tR\014errorMessage\022\035\n\n" +
-      "created_at\030\r \001(\003R\tcreatedAt\"\324\002\n\017GraphIPA" +
-      "ffinity\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\022\n\004" +
-      "date\030\002 \001(\003R\004date\022\021\n\004ip_a\030\003 \001(\tR\003ipA\022\021\n\004i" +
-      "p_b\030\004 \001(\tR\003ipB\022#\n\rsession_count\030\005 \001(\rR\014s" +
-      "essionCount\022\037\n\013total_bytes\030\006 \001(\004R\ntotalB" +
-      "ytes\022&\n\017avg_duration_ms\030\007 \001(\002R\ravgDurati" +
-      "onMs\022\037\n\014a_to_b_count\030\010 \001(\rR\taToBCount\022\037\n" +
-      "\014b_to_a_count\030\t \001(\rR\tbToACount\022\035\n\nfirst_" +
-      "seen\030\n \001(\003R\tfirstSeen\022\033\n\tlast_seen\030\013 \001(\003" +
-      "R\010lastSeen\"\232\001\n\022GraphQueryLogBatch\022-\n\004log" +
-      "s\030\001 \003(\0132\031.traffic.v1.GraphQueryLogR\004logs" +
-      "\022\031\n\010batch_id\030\002 \001(\tR\007batchId\022\033\n\ttenant_id" +
-      "\030\003 \001(\tR\010tenantId\022\035\n\ncreated_at\030\004 \001(\003R\tcr" +
-      "eatedAt\"\330\002\n\017GraphStatsBatch\022<\n\013cache_sta" +
-      "ts\030\001 \003(\0132\033.traffic.v1.GraphCacheStatsR\nc" +
-      "acheStats\022/\n\007hot_ips\030\002 \003(\0132\026.traffic.v1." +
-      "GraphHotIPR\006hotIps\022=\n\014slow_queries\030\003 \003(\013" +
-      "2\032.traffic.v1.GraphSlowQueryR\013slowQuerie" +
-      "s\022@\n\rip_affinities\030\004 \003(\0132\033.traffic.v1.Gr" +
-      "aphIPAffinityR\014ipAffinities\022\031\n\010batch_id\030" +
-      "\005 \001(\tR\007batchId\022\033\n\ttenant_id\030\006 \001(\tR\010tenan" +
-      "tId\022\035\n\ncreated_at\030\007 \001(\003R\tcreatedAtB\324\001\n\034c" +
-      "om.traffic.proto.traffic.v1B\nGraphProtoP" +
-      "\001Z_github.com/1144160159/traffic-analysi" +
-      "s-platform/go/control-plane/pkg/proto/tr" +
-      "affic/v1;trafficv1\242\002\003TXX\252\002\nTraffic.V1\312\002\n" +
-      "Traffic\\V1\342\002\026Traffic\\V1\\GPBMetadata\352\002\013Tr" +
-      "affic::V1b\006proto3"
+      "\n\026traffic/v1/graph.proto\022\ntraffic.v1\032\027tr" +
+      "affic/v1/common.proto\"\356\006\n\rGraphQueryLog\022" +
+      "\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\031\n\010query_id" +
+      "\030\002 \001(\tR\007queryId\022\027\n\007user_id\030\003 \001(\tR\006userId" +
+      "\022\035\n\nquery_type\030\004 \001(\tR\tqueryType\022\033\n\tcente" +
+      "r_ip\030\005 \001(\tR\010centerIp\022\035\n\ncenter_ips\030\006 \003(\t" +
+      "R\tcenterIps\022\024\n\005depth\030\007 \001(\rR\005depth\022\025\n\006run" +
+      "_id\030\010 \001(\tR\005runId\022(\n\020query_start_time\030\t \001" +
+      "(\003R\016queryStartTime\022$\n\016query_end_time\030\n \001" +
+      "(\003R\014queryEndTime\022\035\n\nnode_count\030\013 \001(\rR\tno" +
+      "deCount\022\035\n\nedge_count\030\014 \001(\rR\tedgeCount\022\035" +
+      "\n\npath_count\030\r \001(\rR\tpathCount\022*\n\021result_" +
+      "size_bytes\030\016 \001(\004R\017resultSizeBytes\022\037\n\013dur" +
+      "ation_ms\030\017 \001(\rR\ndurationMs\022\033\n\tcache_hit\030" +
+      "\020 \001(\rR\010cacheHit\022$\n\016ch_query_count\030\021 \001(\rR" +
+      "\014chQueryCount\022/\n\024ch_total_duration_ms\030\022 " +
+      "\001(\rR\021chTotalDurationMs\022 \n\014ch_rows_read\030\023" +
+      " \001(\004R\nchRowsRead\022\"\n\rch_bytes_read\030\024 \001(\004R" +
+      "\013chBytesRead\022\026\n\006status\030\025 \001(\tR\006status\022\035\n\n" +
+      "error_code\030\026 \001(\tR\terrorCode\022#\n\rerror_mes" +
+      "sage\030\027 \001(\tR\014errorMessage\022\031\n\010trace_id\030\030 \001" +
+      "(\tR\007traceId\022\033\n\tclient_ip\030\031 \001(\tR\010clientIp" +
+      "\022\035\n\nuser_agent\030\032 \001(\tR\tuserAgent\022\035\n\ncreat" +
+      "ed_at\030\033 \001(\003R\tcreatedAt\"\310\003\n\017GraphCacheSta" +
+      "ts\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\022\n\004hour\030" +
+      "\002 \001(\003R\004hour\022\035\n\nquery_type\030\003 \001(\tR\tqueryTy" +
+      "pe\022#\n\rtotal_queries\030\004 \001(\004R\014totalQueries\022" +
+      "\035\n\ncache_hits\030\005 \001(\004R\tcacheHits\022!\n\014cache_" +
+      "misses\030\006 \001(\004R\013cacheMisses\022&\n\017avg_duratio" +
+      "n_ms\030\007 \001(\002R\ravgDurationMs\022&\n\017p95_duratio" +
+      "n_ms\030\010 \001(\002R\rp95DurationMs\022&\n\017p99_duratio" +
+      "n_ms\030\t \001(\002R\rp99DurationMs\022\037\n\013total_nodes" +
+      "\030\n \001(\004R\ntotalNodes\022\037\n\013total_edges\030\013 \001(\004R" +
+      "\ntotalEdges\022\037\n\013error_count\030\014 \001(\004R\nerrorC" +
+      "ount\022#\n\rtimeout_count\030\r \001(\004R\014timeoutCoun" +
+      "t\"\353\001\n\nGraphHotIP\022\033\n\ttenant_id\030\001 \001(\tR\010ten" +
+      "antId\022\022\n\004date\030\002 \001(\003R\004date\022\016\n\002ip\030\003 \001(\tR\002i" +
+      "p\022\037\n\013query_count\030\004 \001(\004R\nqueryCount\022\'\n\017to" +
+      "tal_neighbors\030\005 \001(\004R\016totalNeighbors\022*\n\021a" +
+      "vg_session_count\030\006 \001(\002R\017avgSessionCount\022" +
+      "&\n\017last_query_time\030\007 \001(\003R\rlastQueryTime\"" +
+      "\232\003\n\016GraphSlowQuery\022\033\n\ttenant_id\030\001 \001(\tR\010t" +
+      "enantId\022\031\n\010query_id\030\002 \001(\tR\007queryId\022\035\n\nqu" +
+      "ery_type\030\003 \001(\tR\tqueryType\022\033\n\tcenter_ip\030\004" +
+      " \001(\tR\010centerIp\022\024\n\005depth\030\005 \001(\rR\005depth\022\025\n\006" +
+      "run_id\030\006 \001(\tR\005runId\022\037\n\013duration_ms\030\007 \001(\r" +
+      "R\ndurationMs\022\035\n\nnode_count\030\010 \001(\rR\tnodeCo" +
+      "unt\022\035\n\nedge_count\030\t \001(\rR\tedgeCount\022 \n\014ch" +
+      "_rows_read\030\n \001(\004R\nchRowsRead\022\"\n\rch_bytes" +
+      "_read\030\013 \001(\004R\013chBytesRead\022#\n\rerror_messag" +
+      "e\030\014 \001(\tR\014errorMessage\022\035\n\ncreated_at\030\r \001(" +
+      "\003R\tcreatedAt\"\324\002\n\017GraphIPAffinity\022\033\n\ttena" +
+      "nt_id\030\001 \001(\tR\010tenantId\022\022\n\004date\030\002 \001(\003R\004dat" +
+      "e\022\021\n\004ip_a\030\003 \001(\tR\003ipA\022\021\n\004ip_b\030\004 \001(\tR\003ipB\022" +
+      "#\n\rsession_count\030\005 \001(\rR\014sessionCount\022\037\n\013" +
+      "total_bytes\030\006 \001(\004R\ntotalBytes\022&\n\017avg_dur" +
+      "ation_ms\030\007 \001(\002R\ravgDurationMs\022\037\n\014a_to_b_" +
+      "count\030\010 \001(\rR\taToBCount\022\037\n\014b_to_a_count\030\t" +
+      " \001(\rR\tbToACount\022\035\n\nfirst_seen\030\n \001(\003R\tfir" +
+      "stSeen\022\033\n\tlast_seen\030\013 \001(\003R\010lastSeen\"\232\001\n\022" +
+      "GraphQueryLogBatch\022-\n\004logs\030\001 \003(\0132\031.traff" +
+      "ic.v1.GraphQueryLogR\004logs\022\031\n\010batch_id\030\002 " +
+      "\001(\tR\007batchId\022\033\n\ttenant_id\030\003 \001(\tR\010tenantI" +
+      "d\022\035\n\ncreated_at\030\004 \001(\003R\tcreatedAt\"\330\002\n\017Gra" +
+      "phStatsBatch\022<\n\013cache_stats\030\001 \003(\0132\033.traf" +
+      "fic.v1.GraphCacheStatsR\ncacheStats\022/\n\007ho" +
+      "t_ips\030\002 \003(\0132\026.traffic.v1.GraphHotIPR\006hot" +
+      "Ips\022=\n\014slow_queries\030\003 \003(\0132\032.traffic.v1.G" +
+      "raphSlowQueryR\013slowQueries\022@\n\rip_affinit" +
+      "ies\030\004 \003(\0132\033.traffic.v1.GraphIPAffinityR\014" +
+      "ipAffinities\022\031\n\010batch_id\030\005 \001(\tR\007batchId\022" +
+      "\033\n\ttenant_id\030\006 \001(\tR\010tenantId\022\035\n\ncreated_" +
+      "at\030\007 \001(\003R\tcreatedAt\"\223\001\n\023GraphEntityIdent" +
+      "ity\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\037\n\013enti" +
+      "ty_type\030\002 \001(\tR\nentityType\022!\n\014canonical_i" +
+      "d\030\003 \001(\tR\013canonicalId\022\033\n\tvertex_id\030\004 \001(\tR" +
+      "\010vertexId\"\341\001\n\023GraphEvidenceAnchor\022\037\n\013evi" +
+      "dence_id\030\001 \001(\tR\nevidenceId\022#\n\revidence_k" +
+      "ind\030\002 \001(\tR\014evidenceKind\022#\n\rimmutable_uri" +
+      "\030\003 \001(\tR\014immutableUri\022\026\n\006sha256\030\004 \001(\tR\006sh" +
+      "a256\022&\n\017source_event_id\030\005 \001(\tR\rsourceEve" +
+      "ntId\022\037\n\013occurred_at\030\006 \001(\003R\noccurredAt\"\241\002" +
+      "\n\025GraphProjectionSource\022#\n\rsource_system" +
+      "\030\001 \001(\tR\014sourceSystem\022&\n\017source_event_id\030" +
+      "\002 \001(\tR\rsourceEventId\022%\n\016aggregate_type\030\003" +
+      " \001(\tR\raggregateType\022!\n\014aggregate_id\030\004 \001(" +
+      "\tR\013aggregateId\022+\n\021aggregate_version\030\005 \001(" +
+      "\004R\020aggregateVersion\022#\n\rsource_sha256\030\006 \001" +
+      "(\tR\014sourceSha256\022\037\n\013occurred_at\030\007 \001(\003R\no" +
+      "ccurredAt\"\240\003\n\024GraphProjectedEntity\022;\n\010id" +
+      "entity\030\001 \001(\0132\037.traffic.v1.GraphEntityIde" +
+      "ntityR\010identity\022P\n\nattributes\030\002 \003(\01320.tr" +
+      "affic.v1.GraphProjectedEntity.Attributes" +
+      "EntryR\nattributes\022\035\n\nvalid_from\030\003 \001(\003R\tv" +
+      "alidFrom\022\031\n\010valid_to\030\004 \001(\003R\007validTo\0229\n\006s" +
+      "ource\030\005 \001(\0132!.traffic.v1.GraphProjection" +
+      "SourceR\006source\022+\n\021projection_sha256\030\006 \001(" +
+      "\tR\020projectionSha256\022\030\n\007revoked\030\007 \001(\010R\007re" +
+      "voked\032=\n\017AttributesEntry\022\020\n\003key\030\001 \001(\tR\003k" +
+      "ey\022\024\n\005value\030\002 \001(\tR\005value:\0028\001\"\214\005\n\026GraphPr" +
+      "ojectedRelation\022\033\n\ttenant_id\030\001 \001(\tR\010tena" +
+      "ntId\022\027\n\007edge_id\030\002 \001(\tR\006edgeId\022#\n\rrelatio" +
+      "n_type\030\003 \001(\tR\014relationType\022H\n\017source_ide" +
+      "ntity\030\004 \001(\0132\037.traffic.v1.GraphEntityIden" +
+      "tityR\016sourceIdentity\022H\n\017target_identity\030" +
+      "\005 \001(\0132\037.traffic.v1.GraphEntityIdentityR\016" +
+      "targetIdentity\022H\n\017provenance_kind\030\006 \001(\0162" +
+      "\037.traffic.v1.GraphProvenanceKindR\016proven" +
+      "anceKind\022\036\n\nconfidence\030\007 \001(\001R\nconfidence" +
+      "\022 \n\013uncertainty\030\010 \001(\tR\013uncertainty\022;\n\010ev" +
+      "idence\030\t \003(\0132\037.traffic.v1.GraphEvidenceA" +
+      "nchorR\010evidence\022\035\n\nvalid_from\030\n \001(\003R\tval" +
+      "idFrom\022\031\n\010valid_to\030\013 \001(\003R\007validTo\0229\n\006sou" +
+      "rce\030\014 \001(\0132!.traffic.v1.GraphProjectionSo" +
+      "urceR\006source\022+\n\021projection_sha256\030\r \001(\tR" +
+      "\020projectionSha256\022\030\n\007revoked\030\016 \001(\010R\007revo" +
+      "ked\"\370\001\n\024GraphProjectionEvent\022/\n\006header\030\001" +
+      " \001(\0132\027.traffic.v1.EventHeaderR\006header\022#\n" +
+      "\rpartition_key\030\002 \001(\tR\014partitionKey\022:\n\006en" +
+      "tity\030\003 \001(\0132 .traffic.v1.GraphProjectedEn" +
+      "tityH\000R\006entity\022@\n\010relation\030\004 \001(\0132\".traff" +
+      "ic.v1.GraphProjectedRelationH\000R\010relation" +
+      "B\014\n\nprojection\"\254\001\n\031GraphProjectionEventB" +
+      "atch\0228\n\006events\030\001 \003(\0132 .traffic.v1.GraphP" +
+      "rojectionEventR\006events\022\031\n\010batch_id\030\002 \001(\t" +
+      "R\007batchId\022\033\n\ttenant_id\030\003 \001(\tR\010tenantId\022\035" +
+      "\n\ncreated_at\030\004 \001(\003R\tcreatedAt*\246\001\n\023GraphP" +
+      "rovenanceKind\022%\n!GRAPH_PROVENANCE_KIND_U" +
+      "NSPECIFIED\020\000\022\"\n\036GRAPH_PROVENANCE_KIND_OB" +
+      "SERVED\020\001\022!\n\035GRAPH_PROVENANCE_KIND_DERIVE" +
+      "D\020\002\022!\n\035GRAPH_PROVENANCE_KIND_ANALYST\020\003B\324" +
+      "\001\n\034com.traffic.proto.traffic.v1B\nGraphPr" +
+      "otoP\001Z_github.com/1144160159/traffic-ana" +
+      "lysis-platform/go/control-plane/pkg/prot" +
+      "o/traffic/v1;trafficv1\242\002\003TXX\252\002\nTraffic.V" +
+      "1\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetadata\352" +
+      "\002\013Traffic::V1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.traffic.proto.traffic.v1.CommonProto.getDescriptor(),
         });
     internal_static_traffic_v1_GraphQueryLog_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -184,6 +284,55 @@ public final class GraphProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_GraphStatsBatch_descriptor,
         new java.lang.String[] { "CacheStats", "HotIps", "SlowQueries", "IpAffinities", "BatchId", "TenantId", "CreatedAt", });
+    internal_static_traffic_v1_GraphEntityIdentity_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_traffic_v1_GraphEntityIdentity_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_GraphEntityIdentity_descriptor,
+        new java.lang.String[] { "TenantId", "EntityType", "CanonicalId", "VertexId", });
+    internal_static_traffic_v1_GraphEvidenceAnchor_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_traffic_v1_GraphEvidenceAnchor_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_GraphEvidenceAnchor_descriptor,
+        new java.lang.String[] { "EvidenceId", "EvidenceKind", "ImmutableUri", "Sha256", "SourceEventId", "OccurredAt", });
+    internal_static_traffic_v1_GraphProjectionSource_descriptor =
+      getDescriptor().getMessageTypes().get(9);
+    internal_static_traffic_v1_GraphProjectionSource_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_GraphProjectionSource_descriptor,
+        new java.lang.String[] { "SourceSystem", "SourceEventId", "AggregateType", "AggregateId", "AggregateVersion", "SourceSha256", "OccurredAt", });
+    internal_static_traffic_v1_GraphProjectedEntity_descriptor =
+      getDescriptor().getMessageTypes().get(10);
+    internal_static_traffic_v1_GraphProjectedEntity_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_GraphProjectedEntity_descriptor,
+        new java.lang.String[] { "Identity", "Attributes", "ValidFrom", "ValidTo", "Source", "ProjectionSha256", "Revoked", });
+    internal_static_traffic_v1_GraphProjectedEntity_AttributesEntry_descriptor =
+      internal_static_traffic_v1_GraphProjectedEntity_descriptor.getNestedTypes().get(0);
+    internal_static_traffic_v1_GraphProjectedEntity_AttributesEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_GraphProjectedEntity_AttributesEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_traffic_v1_GraphProjectedRelation_descriptor =
+      getDescriptor().getMessageTypes().get(11);
+    internal_static_traffic_v1_GraphProjectedRelation_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_GraphProjectedRelation_descriptor,
+        new java.lang.String[] { "TenantId", "EdgeId", "RelationType", "SourceIdentity", "TargetIdentity", "ProvenanceKind", "Confidence", "Uncertainty", "Evidence", "ValidFrom", "ValidTo", "Source", "ProjectionSha256", "Revoked", });
+    internal_static_traffic_v1_GraphProjectionEvent_descriptor =
+      getDescriptor().getMessageTypes().get(12);
+    internal_static_traffic_v1_GraphProjectionEvent_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_GraphProjectionEvent_descriptor,
+        new java.lang.String[] { "Header", "PartitionKey", "Entity", "Relation", "Projection", });
+    internal_static_traffic_v1_GraphProjectionEventBatch_descriptor =
+      getDescriptor().getMessageTypes().get(13);
+    internal_static_traffic_v1_GraphProjectionEventBatch_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_traffic_v1_GraphProjectionEventBatch_descriptor,
+        new java.lang.String[] { "Events", "BatchId", "TenantId", "CreatedAt", });
+    com.traffic.proto.traffic.v1.CommonProto.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

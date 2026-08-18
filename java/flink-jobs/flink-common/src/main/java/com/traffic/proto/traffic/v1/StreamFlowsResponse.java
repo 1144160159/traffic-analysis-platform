@@ -19,6 +19,9 @@ private static final long serialVersionUID = 0L;
   private StreamFlowsResponse() {
     eventId_ = "";
     error_ = "";
+    disposition_ = 0;
+    reasonCode_ = "";
+    ackScope_ = "";
   }
 
   @java.lang.Override
@@ -130,6 +133,113 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int DISPOSITION_FIELD_NUMBER = 4;
+  private int disposition_ = 0;
+  /**
+   * <code>.traffic.v1.FlowItemDisposition disposition = 4 [json_name = "disposition"];</code>
+   * @return The enum numeric value on the wire for disposition.
+   */
+  @java.lang.Override public int getDispositionValue() {
+    return disposition_;
+  }
+  /**
+   * <code>.traffic.v1.FlowItemDisposition disposition = 4 [json_name = "disposition"];</code>
+   * @return The disposition.
+   */
+  @java.lang.Override public com.traffic.proto.traffic.v1.FlowItemDisposition getDisposition() {
+    com.traffic.proto.traffic.v1.FlowItemDisposition result = com.traffic.proto.traffic.v1.FlowItemDisposition.forNumber(disposition_);
+    return result == null ? com.traffic.proto.traffic.v1.FlowItemDisposition.UNRECOGNIZED : result;
+  }
+
+  public static final int REASON_CODE_FIELD_NUMBER = 5;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object reasonCode_ = "";
+  /**
+   * <code>string reason_code = 5 [json_name = "reasonCode"];</code>
+   * @return The reasonCode.
+   */
+  @java.lang.Override
+  public java.lang.String getReasonCode() {
+    java.lang.Object ref = reasonCode_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      reasonCode_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string reason_code = 5 [json_name = "reasonCode"];</code>
+   * @return The bytes for reasonCode.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getReasonCodeBytes() {
+    java.lang.Object ref = reasonCode_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      reasonCode_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int ACK_SCOPE_FIELD_NUMBER = 6;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object ackScope_ = "";
+  /**
+   * <code>string ack_scope = 6 [json_name = "ackScope"];</code>
+   * @return The ackScope.
+   */
+  @java.lang.Override
+  public java.lang.String getAckScope() {
+    java.lang.Object ref = ackScope_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      ackScope_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string ack_scope = 6 [json_name = "ackScope"];</code>
+   * @return The bytes for ackScope.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getAckScopeBytes() {
+    java.lang.Object ref = ackScope_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      ackScope_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int RESPONSE_REVISION_FIELD_NUMBER = 7;
+  private int responseRevision_ = 0;
+  /**
+   * <code>uint32 response_revision = 7 [json_name = "responseRevision"];</code>
+   * @return The responseRevision.
+   */
+  @java.lang.Override
+  public int getResponseRevision() {
+    return responseRevision_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -153,6 +263,18 @@ private static final long serialVersionUID = 0L;
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 3, error_);
     }
+    if (disposition_ != com.traffic.proto.traffic.v1.FlowItemDisposition.FLOW_ITEM_DISPOSITION_UNSPECIFIED.getNumber()) {
+      output.writeEnum(4, disposition_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(reasonCode_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, reasonCode_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(ackScope_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, ackScope_);
+    }
+    if (responseRevision_ != 0) {
+      output.writeUInt32(7, responseRevision_);
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -171,6 +293,20 @@ private static final long serialVersionUID = 0L;
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, error_);
+    }
+    if (disposition_ != com.traffic.proto.traffic.v1.FlowItemDisposition.FLOW_ITEM_DISPOSITION_UNSPECIFIED.getNumber()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(4, disposition_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(reasonCode_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, reasonCode_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(ackScope_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, ackScope_);
+    }
+    if (responseRevision_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(7, responseRevision_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -193,6 +329,13 @@ private static final long serialVersionUID = 0L;
         != other.getAccepted()) return false;
     if (!getError()
         .equals(other.getError())) return false;
+    if (disposition_ != other.disposition_) return false;
+    if (!getReasonCode()
+        .equals(other.getReasonCode())) return false;
+    if (!getAckScope()
+        .equals(other.getAckScope())) return false;
+    if (getResponseRevision()
+        != other.getResponseRevision()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -211,6 +354,14 @@ private static final long serialVersionUID = 0L;
         getAccepted());
     hash = (37 * hash) + ERROR_FIELD_NUMBER;
     hash = (53 * hash) + getError().hashCode();
+    hash = (37 * hash) + DISPOSITION_FIELD_NUMBER;
+    hash = (53 * hash) + disposition_;
+    hash = (37 * hash) + REASON_CODE_FIELD_NUMBER;
+    hash = (53 * hash) + getReasonCode().hashCode();
+    hash = (37 * hash) + ACK_SCOPE_FIELD_NUMBER;
+    hash = (53 * hash) + getAckScope().hashCode();
+    hash = (37 * hash) + RESPONSE_REVISION_FIELD_NUMBER;
+    hash = (53 * hash) + getResponseRevision();
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -345,6 +496,10 @@ private static final long serialVersionUID = 0L;
       eventId_ = "";
       accepted_ = false;
       error_ = "";
+      disposition_ = 0;
+      reasonCode_ = "";
+      ackScope_ = "";
+      responseRevision_ = 0;
       return this;
     }
 
@@ -386,6 +541,18 @@ private static final long serialVersionUID = 0L;
       }
       if (((from_bitField0_ & 0x00000004) != 0)) {
         result.error_ = error_;
+      }
+      if (((from_bitField0_ & 0x00000008) != 0)) {
+        result.disposition_ = disposition_;
+      }
+      if (((from_bitField0_ & 0x00000010) != 0)) {
+        result.reasonCode_ = reasonCode_;
+      }
+      if (((from_bitField0_ & 0x00000020) != 0)) {
+        result.ackScope_ = ackScope_;
+      }
+      if (((from_bitField0_ & 0x00000040) != 0)) {
+        result.responseRevision_ = responseRevision_;
       }
     }
 
@@ -446,6 +613,22 @@ private static final long serialVersionUID = 0L;
         bitField0_ |= 0x00000004;
         onChanged();
       }
+      if (other.disposition_ != 0) {
+        setDispositionValue(other.getDispositionValue());
+      }
+      if (!other.getReasonCode().isEmpty()) {
+        reasonCode_ = other.reasonCode_;
+        bitField0_ |= 0x00000010;
+        onChanged();
+      }
+      if (!other.getAckScope().isEmpty()) {
+        ackScope_ = other.ackScope_;
+        bitField0_ |= 0x00000020;
+        onChanged();
+      }
+      if (other.getResponseRevision() != 0) {
+        setResponseRevision(other.getResponseRevision());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -487,6 +670,26 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000004;
               break;
             } // case 26
+            case 32: {
+              disposition_ = input.readEnum();
+              bitField0_ |= 0x00000008;
+              break;
+            } // case 32
+            case 42: {
+              reasonCode_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000010;
+              break;
+            } // case 42
+            case 50: {
+              ackScope_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000020;
+              break;
+            } // case 50
+            case 56: {
+              responseRevision_ = input.readUInt32();
+              bitField0_ |= 0x00000040;
+              break;
+            } // case 56
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -676,6 +879,235 @@ private static final long serialVersionUID = 0L;
       checkByteStringIsUtf8(value);
       error_ = value;
       bitField0_ |= 0x00000004;
+      onChanged();
+      return this;
+    }
+
+    private int disposition_ = 0;
+    /**
+     * <code>.traffic.v1.FlowItemDisposition disposition = 4 [json_name = "disposition"];</code>
+     * @return The enum numeric value on the wire for disposition.
+     */
+    @java.lang.Override public int getDispositionValue() {
+      return disposition_;
+    }
+    /**
+     * <code>.traffic.v1.FlowItemDisposition disposition = 4 [json_name = "disposition"];</code>
+     * @param value The enum numeric value on the wire for disposition to set.
+     * @return This builder for chaining.
+     */
+    public Builder setDispositionValue(int value) {
+      disposition_ = value;
+      bitField0_ |= 0x00000008;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.FlowItemDisposition disposition = 4 [json_name = "disposition"];</code>
+     * @return The disposition.
+     */
+    @java.lang.Override
+    public com.traffic.proto.traffic.v1.FlowItemDisposition getDisposition() {
+      com.traffic.proto.traffic.v1.FlowItemDisposition result = com.traffic.proto.traffic.v1.FlowItemDisposition.forNumber(disposition_);
+      return result == null ? com.traffic.proto.traffic.v1.FlowItemDisposition.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.traffic.v1.FlowItemDisposition disposition = 4 [json_name = "disposition"];</code>
+     * @param value The disposition to set.
+     * @return This builder for chaining.
+     */
+    public Builder setDisposition(com.traffic.proto.traffic.v1.FlowItemDisposition value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      bitField0_ |= 0x00000008;
+      disposition_ = value.getNumber();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.FlowItemDisposition disposition = 4 [json_name = "disposition"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearDisposition() {
+      bitField0_ = (bitField0_ & ~0x00000008);
+      disposition_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object reasonCode_ = "";
+    /**
+     * <code>string reason_code = 5 [json_name = "reasonCode"];</code>
+     * @return The reasonCode.
+     */
+    public java.lang.String getReasonCode() {
+      java.lang.Object ref = reasonCode_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        reasonCode_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string reason_code = 5 [json_name = "reasonCode"];</code>
+     * @return The bytes for reasonCode.
+     */
+    public com.google.protobuf.ByteString
+        getReasonCodeBytes() {
+      java.lang.Object ref = reasonCode_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        reasonCode_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string reason_code = 5 [json_name = "reasonCode"];</code>
+     * @param value The reasonCode to set.
+     * @return This builder for chaining.
+     */
+    public Builder setReasonCode(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      reasonCode_ = value;
+      bitField0_ |= 0x00000010;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string reason_code = 5 [json_name = "reasonCode"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearReasonCode() {
+      reasonCode_ = getDefaultInstance().getReasonCode();
+      bitField0_ = (bitField0_ & ~0x00000010);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string reason_code = 5 [json_name = "reasonCode"];</code>
+     * @param value The bytes for reasonCode to set.
+     * @return This builder for chaining.
+     */
+    public Builder setReasonCodeBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      reasonCode_ = value;
+      bitField0_ |= 0x00000010;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object ackScope_ = "";
+    /**
+     * <code>string ack_scope = 6 [json_name = "ackScope"];</code>
+     * @return The ackScope.
+     */
+    public java.lang.String getAckScope() {
+      java.lang.Object ref = ackScope_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        ackScope_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string ack_scope = 6 [json_name = "ackScope"];</code>
+     * @return The bytes for ackScope.
+     */
+    public com.google.protobuf.ByteString
+        getAckScopeBytes() {
+      java.lang.Object ref = ackScope_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        ackScope_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string ack_scope = 6 [json_name = "ackScope"];</code>
+     * @param value The ackScope to set.
+     * @return This builder for chaining.
+     */
+    public Builder setAckScope(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ackScope_ = value;
+      bitField0_ |= 0x00000020;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string ack_scope = 6 [json_name = "ackScope"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearAckScope() {
+      ackScope_ = getDefaultInstance().getAckScope();
+      bitField0_ = (bitField0_ & ~0x00000020);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string ack_scope = 6 [json_name = "ackScope"];</code>
+     * @param value The bytes for ackScope to set.
+     * @return This builder for chaining.
+     */
+    public Builder setAckScopeBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      ackScope_ = value;
+      bitField0_ |= 0x00000020;
+      onChanged();
+      return this;
+    }
+
+    private int responseRevision_ ;
+    /**
+     * <code>uint32 response_revision = 7 [json_name = "responseRevision"];</code>
+     * @return The responseRevision.
+     */
+    @java.lang.Override
+    public int getResponseRevision() {
+      return responseRevision_;
+    }
+    /**
+     * <code>uint32 response_revision = 7 [json_name = "responseRevision"];</code>
+     * @param value The responseRevision to set.
+     * @return This builder for chaining.
+     */
+    public Builder setResponseRevision(int value) {
+
+      responseRevision_ = value;
+      bitField0_ |= 0x00000040;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint32 response_revision = 7 [json_name = "responseRevision"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearResponseRevision() {
+      bitField0_ = (bitField0_ & ~0x00000040);
+      responseRevision_ = 0;
       onChanged();
       return this;
     }

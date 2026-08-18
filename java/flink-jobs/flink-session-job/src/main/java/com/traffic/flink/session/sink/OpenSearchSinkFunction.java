@@ -1,5 +1,6 @@
 package com.traffic.flink.session.sink;
 
+import com.traffic.flink.common.DeploymentActivation;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
 import org.apache.flink.configuration.Configuration;
@@ -60,6 +61,7 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
     private final String password;
     private final int batchSize;
     private final long batchIntervalMs;
+    private final DeploymentActivation activation;
 
     // ==================== 运行时资源 ====================
     private transient RestHighLevelClient client;
@@ -81,6 +83,20 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
             String password,
             int batchSize,
             long batchIntervalMs) {
+        this(hosts, port, scheme, indexName, user, password, batchSize, batchIntervalMs,
+                DeploymentActivation.legacy("flink-session-job"));
+    }
+
+    public OpenSearchSinkFunction(
+            String[] hosts,
+            int port,
+            String scheme,
+            String indexName,
+            String user,
+            String password,
+            int batchSize,
+            long batchIntervalMs,
+            DeploymentActivation activation) {
         this.hosts = hosts;
         this.port = port;
         this.scheme = scheme;
@@ -89,6 +105,7 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
         this.password = password;
         this.batchSize = batchSize;
         this.batchIntervalMs = batchIntervalMs;
+        this.activation = java.util.Objects.requireNonNull(activation, "activation");
     }
 
     @Override
@@ -145,7 +162,7 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
     @Override
     public void close() throws Exception {
         // Flush 剩余数据
-        if (buffer != null && !buffer.isEmpty()) {
+        if (activation.externalWritesEnabled() && buffer != null && !buffer.isEmpty()) {
             flushBuffer();
         }
 
@@ -163,6 +180,7 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
 
     @Override
     public void invoke(SessionEvent session, Context context) throws Exception {
+        if (!activation.externalWritesEnabled()) return;
         buffer.add(session);
 
         // 检查是否需要 Flush
@@ -179,7 +197,7 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
     public void snapshotState(FunctionSnapshotContext context) throws Exception {
         // A checkpoint cannot commit source offsets while OpenSearch still has
         // unacknowledged documents. Deterministic event_id makes replay safe.
-        flushBuffer();
+        if (activation.externalWritesEnabled()) flushBuffer();
         pendingState.clear();
         for (SessionEvent session : buffer) {
             pendingState.add(session);
@@ -202,6 +220,9 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
      * Flush 缓冲区到 OpenSearch
      */
     private void flushBuffer() throws Exception {
+        if (!activation.externalWritesEnabled()) {
+            return;
+        }
         if (buffer.isEmpty()) {
             return;
         }
@@ -233,9 +254,17 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
         }
         bulkFlushCounter.inc();
 
+        BulkItemResponse[] responseItems = bulkResponse.getItems();
+        try {
+            validateBulkReceiptCount(toFlush.size(), responseItems);
+        } catch (IOException incompleteReceipt) {
+            indexFailCounter.inc(toFlush.size());
+            throw incompleteReceipt;
+        }
+
         int successCount = 0;
         int failCount = 0;
-        for (BulkItemResponse itemResponse : bulkResponse.getItems()) {
+        for (BulkItemResponse itemResponse : responseItems) {
             if (itemResponse.isFailed()) {
                 failCount++;
                 LOG.warn("Failed to index document {}: {}",
@@ -248,7 +277,7 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
 
         indexSuccessCounter.inc(successCount);
         indexFailCounter.inc(failCount);
-        String failureSummary = bulkFailureSummary(bulkResponse.getItems());
+        String failureSummary = bulkFailureSummary(responseItems);
         if (!failureSummary.isEmpty()) {
             LOG.error("OpenSearch bulk partially failed ({}/{}); retaining the batch and failing the task: {}",
                     failCount, toFlush.size(), failureSummary);
@@ -273,6 +302,13 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
             summary.append(item.getId()).append(": ").append(item.getFailureMessage());
         }
         return summary.toString();
+    }
+
+    static void validateBulkReceiptCount(int expected, BulkItemResponse[] items) throws IOException {
+        if (items == null || items.length != expected) {
+            throw new IOException("OpenSearch returned an incomplete bulk receipt: expected="
+                    + expected + ", actual=" + (items == null ? "null" : items.length));
+        }
     }
 
     /**

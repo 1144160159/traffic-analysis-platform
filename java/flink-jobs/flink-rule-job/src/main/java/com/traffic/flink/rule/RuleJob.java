@@ -1,23 +1,26 @@
 package com.traffic.flink.rule;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.traffic.flink.common.CanonicalDlqMessage;
 import com.traffic.flink.common.ConfigUtils;
 import com.traffic.flink.common.KafkaStartingOffsets;
-import com.traffic.flink.common.ProtoDeserializer;
+import com.traffic.flink.common.RawKafkaRecord;
+import com.traffic.flink.common.RawKafkaRecordDeserializationSchema;
 import com.traffic.flink.rule.broadcast.RuleBroadcastProcessFunction;
 import com.traffic.flink.rule.model.Rule;
 import com.traffic.flink.rule.sink.ClickHouseDetectionSinkFactory;
 import com.traffic.flink.rule.sink.KafkaDetectionSinkFactory;
+import com.traffic.flink.rule.sink.RuleDlqSinkFactory;
+import com.traffic.flink.rule.sink.RuleUpdateAckKafkaSinkFactory;
+import com.traffic.flink.rule.model.RuleUpdateAppliedAck;
+import com.traffic.flink.rule.source.FeatureStatParseFunction;
+import com.traffic.flink.rule.source.RuleJsonParseFunction;
 import com.traffic.proto.traffic.v1.DetectionBehavior;
 import com.traffic.proto.traffic.v1.FeatureStat;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
-import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend;
@@ -30,15 +33,10 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.OutputTag;
 
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Flink Rule Job - 动态规则引擎（增强版）
@@ -64,9 +62,10 @@ public class RuleJob {
 
     private static final Logger LOG = LoggerFactory.getLogger(RuleJob.class);
 
-    // DLQ OutputTag
-    private static final OutputTag<String> DLQ_RULE_PARSE_FAILED = 
-            new OutputTag<String>("dlq-rule-parse-failed"){};
+    private static final OutputTag<CanonicalDlqMessage> FEATURE_PARSE_DLQ_TAG =
+            new OutputTag<CanonicalDlqMessage>("rule-feature-parse-dlq") {};
+    private static final OutputTag<CanonicalDlqMessage> RULE_PARSE_DLQ_TAG =
+            new OutputTag<CanonicalDlqMessage>("rule-update-parse-dlq") {};
 
     public static void main(String[] args) throws Exception {
         LOG.info("Starting Rule Engine Job (Enhanced Version)...");
@@ -79,8 +78,17 @@ public class RuleJob {
         String featureTopic = ConfigUtils.get(params, "kafka.feature.topic", "feature.stat.v1");
         String ruleUpdateTopic = ConfigUtils.get(params, "kafka.rule.topic", "rule.updates");
         String outputTopic = ConfigUtils.get(params, "kafka.output.topic", "detections.v1");
-        String dlqTopic = ConfigUtils.get(params, "kafka.dlq.topic", "dlq.rule-job");
+        String ruleAppliedTopic = ConfigUtils.get(
+                params, "kafka.rule.applied.topic", "rule-update-applied.v1");
+        String dlqTopic = ConfigUtils.get(params, "kafka.dlq.topic", "dlq.v1");
         String groupId = ConfigUtils.get(params, "kafka.group.id", "flink-rule-job");
+        if (!"dlq.v1".equals(dlqTopic)) {
+            throw new IllegalArgumentException("Rule job failures must use canonical dlq.v1");
+        }
+        if (!"rule-update-applied.v1".equals(ruleAppliedTopic)) {
+            throw new IllegalArgumentException(
+                    "Rule job application receipts must use rule-update-applied.v1");
+        }
         String checkpointPath = ConfigUtils.get(params, "checkpoint.path",
                 "s3://flink-checkpoints/checkpoints/rule-job");
 
@@ -108,12 +116,12 @@ public class RuleJob {
         ));
 
         // ==================== 主流：Feature 数据 ====================
-        KafkaSource<FeatureStat> featureSource = KafkaSource.<FeatureStat>builder()
+        KafkaSource<RawKafkaRecord> featureSource = KafkaSource.<RawKafkaRecord>builder()
                 .setBootstrapServers(kafkaBrokers)
                 .setTopics(featureTopic)
                 .setGroupId(groupId)
                 .setStartingOffsets(KafkaStartingOffsets.from(params))
-                .setValueOnlyDeserializer(new ProtoDeserializer<>(FeatureStat.class))
+                .setDeserializer(new RawKafkaRecordDeserializationSchema())
                 .setProperties(ConfigUtils.kafkaClientProperties(params))
                 .setProperty("partition.discovery.interval.ms", "30000")
                 .build();
@@ -123,49 +131,55 @@ public class RuleJob {
                 .withTimestampAssigner((feature, timestamp) -> feature.getTs())
                 .withIdleness(Duration.ofMinutes(1));
 
-        DataStream<FeatureStat> featureStream = env
-                .fromSource(featureSource, featureWatermark, "Kafka-Feature-Source")
+        DataStream<RawKafkaRecord> featureStream = env
+                .fromSource(featureSource, WatermarkStrategy.noWatermarks(), "Kafka-Feature-Source")
                 .uid("feature-source")
                 .name("Feature Stats Source");
 
-        // 过滤无效特征
-        DataStream<FeatureStat> validFeatureStream = featureStream
-                .filter(feature -> feature != null && 
-                        feature.getHeader() != null &&
-                        feature.getCommunityId() != null &&
-                        !feature.getCommunityId().isEmpty())
+        SingleOutputStreamOperator<FeatureStat> parsedFeatureStream = featureStream
+                .process(new FeatureStatParseFunction(FEATURE_PARSE_DLQ_TAG))
                 .uid("filter-invalid-features")
-                .name("Filter Invalid Features");
+                .name("Validate FeatureStat with source tuple");
+
+        DataStream<FeatureStat> validFeatureStream = parsedFeatureStream
+                .assignTimestampsAndWatermarks(featureWatermark)
+                .uid("feature-stat-watermarks")
+                .name("Assign FeatureStat Watermarks");
 
         // ==================== 广播流：规则更新 ====================
-        KafkaSource<String> ruleSource = KafkaSource.<String>builder()
+        KafkaSource<RawKafkaRecord> ruleSource = KafkaSource.<RawKafkaRecord>builder()
                 .setBootstrapServers(kafkaBrokers)
                 .setTopics(ruleUpdateTopic)
                 .setGroupId(groupId + "-rule")
                 .setStartingOffsets(OffsetsInitializer.earliest()) // 从头读取规则
-                .setValueOnlyDeserializer(new SimpleStringSchema())
+                .setDeserializer(new RawKafkaRecordDeserializationSchema())
                 .setProperties(ConfigUtils.kafkaClientProperties(params))
                 .setProperty("partition.discovery.interval.ms", "30000")
                 .build();
 
         // 规则流使用单调递增水印（规则按时间顺序到达）
-        WatermarkStrategy<String> ruleWatermark = WatermarkStrategy
-                .<String>forMonotonousTimestamps()
+        WatermarkStrategy<Rule> ruleWatermark = WatermarkStrategy
+                .<Rule>forMonotonousTimestamps()
                 .withIdleness(Duration.ofMinutes(5));
 
-        DataStream<String> ruleStringStream = env
-                .fromSource(ruleSource, ruleWatermark, "Kafka-Rule-Source")
+        DataStream<RawKafkaRecord> ruleStringStream = env
+                .fromSource(ruleSource, WatermarkStrategy.noWatermarks(), "Kafka-Rule-Source")
                 .uid("rule-source")
                 .name("Rule Updates Source");
 
-        // 解析规则 JSON（带 DLQ 处理）
-        SingleOutputStreamOperator<Rule> ruleStream = ruleStringStream
-                .process(new RuleJsonParser())
+        SingleOutputStreamOperator<Rule> parsedRuleStream = ruleStringStream
+                .process(new RuleJsonParseFunction(RULE_PARSE_DLQ_TAG))
                 .uid("parse-rules")
-                .name("Parse Rule JSON");
+                .name("Validate Rule JSON with source tuple");
 
-        // 提取解析失败的规则进入 DLQ
-        DataStream<String> dlqStream = ruleStream.getSideOutput(DLQ_RULE_PARSE_FAILED);
+        DataStream<Rule> ruleStream = parsedRuleStream
+                .assignTimestampsAndWatermarks(ruleWatermark)
+                .uid("rule-update-watermarks")
+                .name("Assign Rule Update Watermarks");
+
+        DataStream<CanonicalDlqMessage> dlqStream = parsedFeatureStream
+                .getSideOutput(FEATURE_PARSE_DLQ_TAG)
+                .union(parsedRuleStream.getSideOutput(RULE_PARSE_DLQ_TAG));
 
         // 创建广播流
         MapStateDescriptor<String, Rule> ruleStateDesc = 
@@ -179,6 +193,8 @@ public class RuleJob {
                 .process(new RuleBroadcastProcessFunction())
                 .uid("rule-matcher")
                 .name("Rule Matcher");
+        DataStream<RuleUpdateAppliedAck> ruleUpdateAcks = detectionStream
+                .getSideOutput(RuleBroadcastProcessFunction.RULE_UPDATE_ACK_TAG);
 
         // ==================== Sink ====================
 
@@ -199,9 +215,14 @@ public class RuleJob {
         ).uid("kafka-sink").name("Kafka Detection Sink");
 
         // Sink 3: DLQ（规则解析失败）
-        dlqStream.sinkTo(createDLQSink(kafkaBrokers, dlqTopic))
+        dlqStream.sinkTo(RuleDlqSinkFactory.create(kafkaBrokers, dlqTopic))
                 .uid("dlq-sink")
-                .name("DLQ Sink");
+                .name("Canonical DLQ Sink");
+
+        ruleUpdateAcks.sinkTo(
+                RuleUpdateAckKafkaSinkFactory.create(kafkaBrokers, ruleAppliedTopic))
+                .uid("rule-update-applied-ack-sink")
+                .name("Kafka Sink (rule-update-applied.v1)");
 
         // 打印统计信息（调试）
         if (ConfigUtils.getBoolean(params, "debug.print", false)) {
@@ -212,6 +233,7 @@ public class RuleJob {
         LOG.info("  Feature Topic: {}", featureTopic);
         LOG.info("  Rule Update Topic: {}", ruleUpdateTopic);
         LOG.info("  Output Topic: {}", outputTopic);
+        LOG.info("  Rule Applied Topic: {}", ruleAppliedTopic);
         LOG.info("  DLQ Topic: {}", dlqTopic);
         LOG.info("  ClickHouse: {}.{}", clickhouseDatabase, clickhouseTable);
         LOG.info("  Parallelism: {}", parallelism);
@@ -245,95 +267,4 @@ public class RuleJob {
         config.setCheckpointStorage(new FileSystemCheckpointStorage(checkpointPath));
     }
 
-    /**
-     * 创建 DLQ Kafka Sink
-     */
-    private static KafkaSink<String> createDLQSink(String brokers, String topic) {
-        return KafkaSink.<String>builder()
-                .setBootstrapServers(brokers)
-                .setRecordSerializer(new DLQKafkaSerializer(topic))
-                .setKafkaProducerConfig(com.traffic.flink.common.ConfigUtil.kafkaClientProperties())
-                .build();
-    }
-
-    /**
-     * DLQ Kafka 序列化器
-     */
-    private static class DLQKafkaSerializer implements KafkaRecordSerializationSchema<String> {
-
-        private static final long serialVersionUID = 1L;
-        private final String topic;
-
-        public DLQKafkaSerializer(String topic) {
-            this.topic = topic;
-        }
-
-        @Nullable
-        @Override
-        public ProducerRecord<byte[], byte[]> serialize(
-                String element,
-                KafkaSinkContext context,
-                Long timestamp
-        ) {
-            if (element == null) {
-                return null;
-            }
-
-            // Key: "rule-parse-failed"
-            byte[] keyBytes = "rule-parse-failed".getBytes(StandardCharsets.UTF_8);
-            byte[] valueBytes = element.getBytes(StandardCharsets.UTF_8);
-
-            return new ProducerRecord<>(topic, null, timestamp, keyBytes, valueBytes);
-        }
-    }
-
-    /**
-     * 规则 JSON 解析处理函数（带 DLQ 输出）
-     */
-    private static class RuleJsonParser extends org.apache.flink.streaming.api.functions.ProcessFunction<String, Rule> {
-
-        private static final long serialVersionUID = 1L;
-        private static final Logger LOG = LoggerFactory.getLogger(RuleJsonParser.class);
-
-        private transient ObjectMapper mapper;
-        private transient long successCount = 0;
-        private transient long errorCount = 0;
-
-        @Override
-        public void open(org.apache.flink.configuration.Configuration parameters) throws Exception {
-            super.open(parameters);
-            mapper = new ObjectMapper();
-        }
-
-        @Override
-        public void processElement(
-                String json,
-                Context ctx,
-                org.apache.flink.util.Collector<Rule> out
-        ) throws Exception {
-            try {
-                Rule rule = mapper.readValue(json, Rule.class);
-                out.collect(rule);
-                successCount++;
-                
-                if (successCount % 1000 == 0) {
-                    LOG.info("Parsed {} rules successfully (errors: {})", successCount, errorCount);
-                }
-            } catch (Exception e) {
-                errorCount++;
-                
-                // 输出到 DLQ
-                Map<String, Object> dlqRecord = new HashMap<>();
-                dlqRecord.put("error_code", "RULE_PARSE_FAILED");
-                dlqRecord.put("error_message", e.getMessage());
-                dlqRecord.put("raw_event", json);
-                dlqRecord.put("timestamp", System.currentTimeMillis());
-                
-                String dlqJson = mapper.writeValueAsString(dlqRecord);
-                ctx.output(DLQ_RULE_PARSE_FAILED, dlqJson);
-                
-                LOG.error("Failed to parse rule JSON (sent to DLQ): {}", json, e);
-            }
-        }
-    }
 }

@@ -1,14 +1,26 @@
 package com.traffic.flink.behavior.user;
 
 import com.traffic.flink.behavior.user.detector.*;
+import com.traffic.flink.behavior.user.baseline.BaselineActivationAck;
+import com.traffic.flink.behavior.user.baseline.BaselineActivationAckKafkaSinkFactory;
+import com.traffic.flink.behavior.user.baseline.BaselineAwareUserEvent;
+import com.traffic.flink.behavior.user.baseline.BaselineLifecycleEvent;
+import com.traffic.flink.behavior.user.baseline.BaselineLifecycleParseFunction;
+import com.traffic.flink.behavior.user.baseline.BaselineLifecycleProcessFunction;
 import com.traffic.flink.behavior.user.model.AnomalyEvent;
 import com.traffic.flink.behavior.user.sink.*;
 import com.traffic.flink.common.ConfigUtils;
+import com.traffic.flink.common.CanonicalDlqMessage;
+import com.traffic.flink.common.DeploymentActivation;
 import com.traffic.flink.common.DeterministicId;
-import com.traffic.flink.common.ProtoDeserializer;
+import com.traffic.flink.common.RawKafkaRecord;
+import com.traffic.flink.common.RawKafkaRecordDeserializationSchema;
+import com.traffic.flink.common.eventtime.EventTimePolicy;
+import com.traffic.flink.common.sourcequality.SourceQualityReceipt;
+import com.traffic.flink.common.sourcefact.SourceFactClickHouseSink;
+import com.traffic.flink.common.sourcefact.SourceFactRecord;
 import com.traffic.proto.traffic.v1.Alert;
 import com.traffic.proto.traffic.v1.AlertStatus;
-import com.traffic.proto.traffic.v1.DeadLetter;
 import com.traffic.proto.traffic.v1.Severity;
 import com.traffic.proto.traffic.v1.UserEvent;
 
@@ -24,6 +36,8 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.util.OutputTag;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
@@ -32,7 +46,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -50,6 +63,16 @@ import java.util.Properties;
  */
 public class UserBehaviorJob {
     private static final Logger LOG = LoggerFactory.getLogger(UserBehaviorJob.class);
+    private static final OutputTag<CanonicalDlqMessage> PARSE_DLQ =
+            new OutputTag<CanonicalDlqMessage>("user-event-parse-dlq-v1") {};
+    private static final OutputTag<CanonicalDlqMessage> QUALITY_DLQ =
+            new OutputTag<CanonicalDlqMessage>("user-event-quality-dlq-v1") {};
+    private static final OutputTag<SourceQualityReceipt> PARSE_QUALITY =
+            new OutputTag<SourceQualityReceipt>("user-event-parse-quality-v1") {};
+    private static final OutputTag<SourceQualityReceipt> EVENT_QUALITY =
+            new OutputTag<SourceQualityReceipt>("user-event-terminal-quality-v1") {};
+    private static final OutputTag<ValidatedUserEvent> ACCEPTED_SOURCE_FACT =
+            new OutputTag<ValidatedUserEvent>("user-event-accepted-source-fact-v1") {};
 
     public static void main(String[] args) throws Exception {
         ParameterTool params = ConfigUtils.loadConfig(args, "user-behavior-job.properties");
@@ -59,6 +82,22 @@ public class UserBehaviorJob {
         String outputTopic = ConfigUtils.get(params, "kafka.output.topic", "alerts.v1");
         String dlqTopic = ConfigUtils.get(params, "kafka.dlq.topic", "dlq.v1");
         String groupId = ConfigUtils.get(params, "kafka.group.id", "flink-user-behavior-job");
+        DeploymentActivation activation = DeploymentActivation.from(
+                params, "flink-user-behavior-job", groupId);
+        boolean legacyProjectionDefault =
+                activation.getMode() == DeploymentActivation.Mode.LEGACY;
+        boolean projectionWritesEnabled = ConfigUtils.getBoolean(
+                params, "projection.writes.enabled", legacyProjectionDefault);
+        boolean sourceFactWritesEnabled = ConfigUtils.getBoolean(
+                params, "source.fact.writes.enabled", false);
+        if (projectionWritesEnabled
+                && activation.getMode() == DeploymentActivation.Mode.SHADOW) {
+            throw new IllegalArgumentException("shadow activation must not enable user projections");
+        }
+        if (sourceFactWritesEnabled && !activation.externalWritesEnabled()) {
+            throw new IllegalArgumentException(
+                    "source-fact ClickHouse writes require an externally writable activation");
+        }
         String checkpointPath = ConfigUtils.get(
                 params,
                 "checkpoint.path",
@@ -70,6 +109,70 @@ public class UserBehaviorJob {
                 params, "watermark.max.out.of.orderness.seconds", 30L);
         long allowedLatenessSeconds = ConfigUtils.getLong(
                 params, "watermark.allowed.lateness.seconds", 120L);
+        long watermarkIdlenessMs = ConfigUtils.getLong(params, "watermark.idleness.ms", 60_000L);
+        long maxFutureSkewMs = ConfigUtils.getLong(params, "event.max.future.skew.ms", 300_000L);
+        long maxClockRollbackMs = ConfigUtils.getLong(params, "event.max.clock.rollback.ms", 0L);
+        long kafkaTransactionTimeoutMs = ConfigUtils.getLong(
+                params, "kafka.transaction.timeout.ms", 900_000L);
+        String auditTopic = ConfigUtils.get(params, "kafka.audit.topic", "audit.logs");
+        String suffix = activation.isCandidateBound()
+                ? "-" + activation.getCandidateSha256().substring(0, 12) : "";
+        String dlqTransactionPrefix = ConfigUtils.get(
+                params, "kafka.dlq.transactional.id.prefix",
+                "flink-user-behavior-dlq-v1" + suffix);
+        String alertTransactionPrefix = ConfigUtils.get(
+                params, "kafka.alert.transactional.id.prefix",
+                "flink-user-behavior-alert-v1" + suffix);
+        String qualityTransactionPrefix = ConfigUtils.get(
+                params, "kafka.quality.transactional.id.prefix",
+                "flink-user-behavior-quality-v1" + suffix);
+        boolean baselineLifecycleEnabled = ConfigUtils.getBoolean(
+                params, "baseline.lifecycle.enabled", false);
+        String baselineLifecycleTopic = ConfigUtils.get(
+                params, "kafka.baseline.lifecycle.topic", "baseline.lifecycle.v1");
+        String baselineLifecycleGroup = ConfigUtils.get(
+                params, "kafka.baseline.lifecycle.group", "flink-user-behavior-baseline-v1");
+        String baselineAckTopic = ConfigUtils.get(
+                params, "kafka.baseline.ack.topic", "baseline.activation-acks.v1");
+        String baselineConsumerId = ConfigUtils.get(
+                params, "baseline.consumer.id", "flink-user-behavior-job");
+        String baselineAckTransactionPrefix = ConfigUtils.get(
+                params, "kafka.baseline.ack.transactional.id.prefix",
+                "flink-user-behavior-baseline-ack-v1" + suffix);
+        if (!"user.events.v1".equals(inputTopic)
+                || !"dlq.v1".equals(dlqTopic)
+                || !"audit.logs".equals(auditTopic)) {
+            throw new IllegalArgumentException("user behavior input, DLQ and audit topics are canonical and pinned");
+        }
+        if (dlqTransactionPrefix.equals(qualityTransactionPrefix)
+                || dlqTransactionPrefix.equals(alertTransactionPrefix)
+                || alertTransactionPrefix.equals(qualityTransactionPrefix)) {
+            throw new IllegalArgumentException(
+                    "DLQ, alert and quality transactional prefixes must differ");
+        }
+        if (baselineLifecycleEnabled) {
+            if (activation.getMode() != DeploymentActivation.Mode.PRODUCTION
+                    || !activation.isCandidateBound() || !activation.externalWritesEnabled()
+                    || !"baseline.lifecycle.v1".equals(baselineLifecycleTopic)
+                    || !"flink-user-behavior-baseline-v1".equals(baselineLifecycleGroup)
+                    || !"baseline.activation-acks.v1".equals(baselineAckTopic)
+                    || !"flink-user-behavior-job".equals(baselineConsumerId)
+                    || baselineAckTransactionPrefix.equals(dlqTransactionPrefix)
+                    || baselineAckTransactionPrefix.equals(qualityTransactionPrefix)
+                    || baselineAckTransactionPrefix.equals(alertTransactionPrefix)) {
+                throw new IllegalArgumentException(
+                        "behavior baseline lifecycle requires the production candidate and exact topic/group/consumer identities");
+            }
+        }
+        if (kafkaTransactionTimeoutMs <= checkpointTimeoutMs + checkpointIntervalMs) {
+            throw new IllegalArgumentException("Kafka transaction timeout must exceed checkpoint timeout plus interval");
+        }
+        EventTimePolicy eventTimePolicy = new EventTimePolicy(
+                maxOutOfOrderSeconds * 1000L,
+                watermarkIdlenessMs,
+                allowedLatenessSeconds * 1000L,
+                maxFutureSkewMs,
+                maxClockRollbackMs);
         String clickhouseUrl = ConfigUtils.get(
                 params,
                 "clickhouse.url",
@@ -78,6 +181,13 @@ public class UserBehaviorJob {
         String clickhousePassword = ConfigUtils.get(params, "clickhouse.password", "");
         String clickhouseAnomalyTable = ConfigUtils.get(
                 params, "clickhouse.anomaly.table", "traffic.user_anomalies_v2");
+        String clickhouseSourceFactTable = ConfigUtils.get(
+                params, "clickhouse.source.fact.table", "traffic.source_user_behavior_facts_v1");
+        if (sourceFactWritesEnabled
+                && !"traffic.source_user_behavior_facts_v1".equals(clickhouseSourceFactTable)) {
+            throw new IllegalArgumentException(
+                    "user source facts are pinned to traffic.source_user_behavior_facts_v1");
+        }
         int clickhouseBatchSize = ConfigUtils.getInt(params, "clickhouse.batch.size", 500);
         long clickhouseBatchIntervalMs = ConfigUtils.getLong(
                 params, "clickhouse.batch.interval.ms", 2_000L);
@@ -86,51 +196,152 @@ public class UserBehaviorJob {
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(parallelism);
-        env.enableCheckpointing(checkpointIntervalMs, CheckpointingMode.AT_LEAST_ONCE);
+        env.enableCheckpointing(checkpointIntervalMs, CheckpointingMode.EXACTLY_ONCE);
         env.getCheckpointConfig().setCheckpointTimeout(checkpointTimeoutMs);
         env.getCheckpointConfig().setCheckpointStorage(new FileSystemCheckpointStorage(checkpointPath));
+        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(checkpointIntervalMs / 2);
+        env.getCheckpointConfig().setMaxConcurrentCheckpoints(1);
+        env.getCheckpointConfig().setExternalizedCheckpointCleanup(
+                org.apache.flink.streaming.api.environment.CheckpointConfig
+                        .ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
+        // RocksDB 状态后端（增量），检测器 keyed state 与基线广播态与其余作业一致
+        org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend stateBackend =
+                new org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend(true);
+        env.setStateBackend(stateBackend);
+        // 显式重启策略：固定延迟重启，覆盖短时 Kafka/存储故障窗口
+        env.setRestartStrategy(org.apache.flink.api.common.restartstrategy.RestartStrategies
+                .fixedDelayRestart(
+                        ConfigUtils.getInt(params, "restart.attempts", 10),
+                        org.apache.flink.api.common.time.Time.seconds(
+                                ConfigUtils.getInt(params, "restart.delay.seconds", 30))));
 
-        KafkaSource<UserEvent> source = KafkaSource.<UserEvent>builder()
+        Properties consumerProperties = ConfigUtils.kafkaClientProperties(params);
+        consumerProperties.setProperty("enable.auto.commit", "false");
+        consumerProperties.setProperty("commit.offsets.on.checkpoint", "true");
+        consumerProperties.setProperty("isolation.level", "read_committed");
+        KafkaSource<RawKafkaRecord> source = KafkaSource.<RawKafkaRecord>builder()
                 .setBootstrapServers(kafkaBrokers)
                 .setTopics(inputTopic)
                 .setGroupId(groupId)
                 .setStartingOffsets(OffsetsInitializer.earliest())
-                .setValueOnlyDeserializer(new ProtoDeserializer<>(UserEvent.class))
-                .setProperties(ConfigUtils.kafkaClientProperties(params))
+                .setDeserializer(new RawKafkaRecordDeserializationSchema())
+                .setProperties(consumerProperties)
                 .build();
 
-        DataStream<UserEvent> validatedEvents = env.fromSource(source,
-                WatermarkStrategy.<UserEvent>forBoundedOutOfOrderness(
-                                Duration.ofSeconds(maxOutOfOrderSeconds))
-                        .withTimestampAssigner((e, ts) -> e.getTimestamp()),
-                "Kafka-UserEvents")
-                .uid("kafka-source").name("Kafka Source (user.events.v1)")
-                .filter(e -> e != null && e.getEventId() != null && !e.getEventId().isEmpty())
-                .uid("null-filter").name("Filter Invalid Events");
+        DataStream<RawKafkaRecord> rawEvents = env.fromSource(
+                source, WatermarkStrategy.noWatermarks(), "Kafka-RawUserEvents")
+                .uid("user-event-raw-kafka-source-v2")
+                .name("Kafka Raw Source (user.events.v1)");
+        SingleOutputStreamOperator<ValidatedUserEvent> parsedEvents = rawEvents
+                .process(new UserEventParseFunction(
+                        inputTopic, groupId, eventTimePolicy, PARSE_DLQ, PARSE_QUALITY))
+                .uid("user-event-strict-parser-v1")
+                .name("Strict UserEvent envelope parser");
+        DataStream<ValidatedUserEvent> timestampedEvents = parsedEvents
+                .assignTimestampsAndWatermarks(eventTimePolicy.watermarkStrategy(
+                        value -> value.getEvent().getTimestamp()))
+                .uid("user-event-watermark-v1")
+                .name("Shared UserEvent event-time watermark");
+        SingleOutputStreamOperator<UserEvent> events = timestampedEvents
+                .keyBy(ValidatedUserEvent::identityKey)
+                .process(new UserEventTimeFunction(
+                        eventTimePolicy, groupId, QUALITY_DLQ, EVENT_QUALITY,
+                        ACCEPTED_SOURCE_FACT))
+                .uid("user-event-quality-barrier-v1")
+                .name("UserEvent duplicate late and conflict barrier");
 
-        SingleOutputStreamOperator<UserEvent> events = validatedEvents
-                .process(new LateUserEventRouter(
-                        allowedLatenessSeconds * 1000L, inputTopic))
-                .uid("late-user-event-router").name("Route Late User Events");
-        events.getSideOutput(LateUserEventRouter.LATE_EVENTS)
-                .sinkTo(createDeadLetterSink(kafkaBrokers, dlqTopic))
-                .uid("late-user-event-dlq-sink").name("Kafka Sink (" + dlqTopic + ")");
+        parsedEvents.getSideOutput(PARSE_DLQ)
+                .union(events.getSideOutput(QUALITY_DLQ))
+                .sinkTo(createCanonicalDeadLetterSink(
+                        kafkaBrokers, dlqTopic, dlqTransactionPrefix,
+                        kafkaTransactionTimeoutMs, params))
+                .uid("user-event-canonical-dlq-sink-v1")
+                .name("Checkpoint-coupled canonical UserEvent DLQ");
+        parsedEvents.getSideOutput(PARSE_QUALITY)
+                .union(events.getSideOutput(EVENT_QUALITY))
+                .sinkTo(createSourceQualitySink(
+                        kafkaBrokers, auditTopic, qualityTransactionPrefix,
+                        kafkaTransactionTimeoutMs, params))
+                .uid("user-event-source-quality-sink-v1")
+                .name("Checkpoint-coupled UserEvent quality receipts");
+
+        if (sourceFactWritesEnabled) {
+            events.getSideOutput(ACCEPTED_SOURCE_FACT)
+                    .map(input -> toUserSourceFact(input, groupId))
+                    .uid("user-event-source-fact-mapper-v1")
+                    .name("Map accepted UserEvent source facts")
+                    .addSink(new SourceFactClickHouseSink(
+                            clickhouseUrl,
+                            clickhouseSourceFactTable,
+                            clickhouseUser,
+                            clickhousePassword,
+                            clickhouseBatchSize,
+                            clickhouseMaxRetries))
+                    .uid("user-event-source-fact-clickhouse-v1")
+                    .name("ClickHouse source_user_behavior_facts_v1");
+        }
+
+        DataStream<BaselineAwareUserEvent> baselineAwareEvents;
+        if (baselineLifecycleEnabled) {
+            Properties baselineConsumerProperties = ConfigUtils.kafkaClientProperties(params);
+            baselineConsumerProperties.setProperty("enable.auto.commit", "false");
+            baselineConsumerProperties.setProperty("commit.offsets.on.checkpoint", "true");
+            baselineConsumerProperties.setProperty("isolation.level", "read_committed");
+            KafkaSource<RawKafkaRecord> baselineSource = KafkaSource.<RawKafkaRecord>builder()
+                    .setBootstrapServers(kafkaBrokers)
+                    .setTopics(baselineLifecycleTopic)
+                    .setGroupId(baselineLifecycleGroup)
+                    .setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST))
+                    .setDeserializer(new RawKafkaRecordDeserializationSchema())
+                    .setProperties(baselineConsumerProperties)
+                    .build();
+            DataStream<BaselineLifecycleEvent> baselineEvents = env
+                    .fromSource(baselineSource, WatermarkStrategy.noWatermarks(), "Kafka-BaselineLifecycle")
+                    .uid("behavior-baseline-lifecycle-source-v1")
+                    .name("Kafka Source (baseline.lifecycle.v1)")
+                    .process(new BaselineLifecycleParseFunction(
+                            baselineLifecycleTopic, activation.getCandidateSha256(), baselineConsumerId))
+                    .uid("behavior-baseline-lifecycle-parser-v1")
+                    .name("Strict behavior baseline lifecycle parser");
+            SingleOutputStreamOperator<BaselineAwareUserEvent> applied = events
+                    .connect(baselineEvents.broadcast(
+                            BaselineLifecycleProcessFunction.STAGED_BASELINES,
+                            BaselineLifecycleProcessFunction.ACTIVE_BASELINES,
+                            BaselineLifecycleProcessFunction.PROCESSED_EVENTS))
+                    .process(new BaselineLifecycleProcessFunction(baselineConsumerId))
+                    .uid("behavior-baseline-stage-activate-v1")
+                    .name("Stage and activate checkpointed behavior baselines");
+            DataStream<BaselineActivationAck> activationAcks =
+                    applied.getSideOutput(BaselineLifecycleProcessFunction.ACTIVATION_ACKS);
+            activationAcks.sinkTo(BaselineActivationAckKafkaSinkFactory.create(
+                            kafkaBrokers, baselineAckTopic, baselineAckTransactionPrefix,
+                            kafkaTransactionTimeoutMs, params))
+                    .uid("behavior-baseline-activation-ack-sink-v1")
+                    .name("Exactly-once Kafka Sink (baseline.activation-acks.v1)");
+            baselineAwareEvents = applied;
+        } else {
+            baselineAwareEvents = events
+                    .map(event -> new BaselineAwareUserEvent(event, null))
+                    .returns(BaselineAwareUserEvent.class)
+                    .uid("behavior-baseline-compatibility-wrapper-v1")
+                    .name("Behavior baseline compatibility wrapper");
+        }
 
         // Detector 1: Impossible Travel
-        DataStream<AnomalyEvent> travelAnomalies = events
-                .keyBy(e -> e.getTenantId() + "|" + e.getUserId())
+        DataStream<AnomalyEvent> travelAnomalies = baselineAwareEvents
+                .keyBy(e -> e.getEvent().getTenantId() + "|" + e.getEvent().getUserId())
                 .process(new ImpossibleTravelDetector())
                 .uid("travel-detector").name("Impossible Travel Detector");
 
         // Detector 2: Brute Force Login
-        DataStream<AnomalyEvent> bruteAnomalies = events
-                .keyBy(e -> e.getTenantId() + "|" + e.getUserId())
+        DataStream<AnomalyEvent> bruteAnomalies = baselineAwareEvents
+                .keyBy(e -> e.getEvent().getTenantId() + "|" + e.getEvent().getUserId())
                 .process(new BruteForceLoginDetector())
                 .uid("brute-detector").name("Brute Force Login Detector");
 
         // Detector 3: Privilege Escalation
-        DataStream<AnomalyEvent> privAnomalies = events
-                .keyBy(e -> e.getTenantId() + "|" + e.getUserId())
+        DataStream<AnomalyEvent> privAnomalies = baselineAwareEvents
+                .keyBy(e -> e.getEvent().getTenantId() + "|" + e.getEvent().getUserId())
                 .process(new PrivilegeEscalationDetector())
                 .uid("priv-detector").name("Privilege Escalation Detector");
 
@@ -147,29 +358,49 @@ public class UserBehaviorJob {
                 })
                 .returns(AnomalyEvent.class)
                 .uid("mark-replay-context").name("Mark Replay Context");
+        if (projectionWritesEnabled) {
+            // Sink 1: Kafka alerts.v1 (protobuf Alert, shared downstream contract)
+            KafkaSink<Alert> alertSink = createAlertSink(
+                    kafkaBrokers, outputTopic, alertTransactionPrefix, kafkaTransactionTimeoutMs);
+            allAnomalies
+                    .map(UserBehaviorJob::toAlert)
+                    .uid("anomaly-to-alert").name("Convert AnomalyEvent to Alert")
+                    .sinkTo(alertSink)
+                    .uid("alert-kafka-sink").name("Kafka Sink (" + outputTopic + ")");
 
-        // Sink 1: Kafka alerts.v1 (protobuf Alert, shared downstream contract)
-        KafkaSink<Alert> alertSink = createAlertSink(kafkaBrokers, outputTopic);
-        allAnomalies
-                .map(UserBehaviorJob::toAlert)
-                .uid("anomaly-to-alert").name("Convert AnomalyEvent to Alert")
-                .sinkTo(alertSink)
-                .uid("alert-kafka-sink").name("Kafka Sink (" + outputTopic + ")");
-
-        // Sink 2: ClickHouse
-        allAnomalies.addSink(new ClickHouseAnomalySink(
-                        clickhouseUrl,
-                        clickhouseUser,
-                        clickhousePassword,
-                        clickhouseAnomalyTable,
-                        clickhouseBatchSize,
-                        clickhouseBatchIntervalMs,
-                        clickhouseMaxRetries))
-                .uid("ch-sink").name("ClickHouse Sink (user_anomalies_v2)");
+            // Sink 2: ClickHouse
+            allAnomalies.addSink(new ClickHouseAnomalySink(
+                            clickhouseUrl,
+                            clickhouseUser,
+                            clickhousePassword,
+                            clickhouseAnomalyTable,
+                            clickhouseBatchSize,
+                            clickhouseBatchIntervalMs,
+                            clickhouseMaxRetries))
+                    .uid("ch-sink").name("ClickHouse Sink (user_anomalies_v2)");
+        } else {
+            LOG.info("Consumer-ready mode: alerts.v1 and ClickHouse projections are disabled");
+        }
 
         LOG.info("User Behavior Job started: input={}, output={}, checkpoint={}, parallelism={}",
                 inputTopic, outputTopic, checkpointPath, parallelism);
         env.execute("User Behavior Anomaly Detection Job");
+    }
+
+    static SourceFactRecord toUserSourceFact(
+            ValidatedUserEvent input, String consumerGroup) {
+        UserEvent event = input.getEvent();
+        return SourceFactRecord.fromAccepted(
+                "user_behavior",
+                event.getTenantId(),
+                event.getUserId(),
+                event.getEventId(),
+                event.getTimestamp(),
+                input.getSource().getTimestamp(),
+                "v1",
+                input.getSource(),
+                consumerGroup,
+                input.getSource().getOffset() + 1L);
     }
 
     static Alert toAlert(AnomalyEvent anomaly) {
@@ -224,6 +455,14 @@ public class UserBehaviorJob {
                 .build();
     }
 
+    /**
+     * 严重度阈值（与告警生成器口径一致，提为命名常量避免散落魔法数字）
+     */
+    private static final float SEVERITY_CRITICAL_THRESHOLD = 0.9f;
+    private static final float SEVERITY_HIGH_THRESHOLD = 0.7f;
+    private static final float SEVERITY_MEDIUM_THRESHOLD = 0.5f;
+    private static final float SEVERITY_LOW_THRESHOLD = 0.3f;
+
     private static Severity mapSeverity(String severity, float score) {
         String normalized = severity == null ? "" : severity.toLowerCase(Locale.ROOT);
         switch (normalized) {
@@ -238,38 +477,77 @@ public class UserBehaviorJob {
             case "info":
                 return Severity.SEVERITY_INFO;
             default:
-                if (score >= 0.9f) return Severity.SEVERITY_CRITICAL;
-                if (score >= 0.7f) return Severity.SEVERITY_HIGH;
-                if (score >= 0.5f) return Severity.SEVERITY_MEDIUM;
-                if (score >= 0.3f) return Severity.SEVERITY_LOW;
+                if (score >= SEVERITY_CRITICAL_THRESHOLD) return Severity.SEVERITY_CRITICAL;
+                if (score >= SEVERITY_HIGH_THRESHOLD) return Severity.SEVERITY_HIGH;
+                if (score >= SEVERITY_MEDIUM_THRESHOLD) return Severity.SEVERITY_MEDIUM;
+                if (score >= SEVERITY_LOW_THRESHOLD) return Severity.SEVERITY_LOW;
                 return Severity.SEVERITY_INFO;
         }
     }
 
-    private static KafkaSink<Alert> createAlertSink(String brokers, String topic) {
+    /**
+     * 创建 Alert Kafka Sink（EXACTLY_ONCE，事务与 checkpoint 耦合；
+     * 与 DLQ/quality sink 语义一致，重启不重复发 alert）
+     */
+    private static KafkaSink<Alert> createAlertSink(
+            String brokers,
+            String topic,
+            String transactionalPrefix,
+            long transactionTimeoutMs) {
         Properties producerProps = com.traffic.flink.common.ConfigUtil.kafkaClientProperties();
         producerProps.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
         producerProps.setProperty(ProducerConfig.ACKS_CONFIG, "all");
         producerProps.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "lz4");
+        producerProps.setProperty(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG,
+                String.valueOf(transactionTimeoutMs));
 
         return KafkaSink.<Alert>builder()
                 .setBootstrapServers(brokers)
                 .setRecordSerializer(new AlertKafkaSerializer(topic))
-                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(transactionalPrefix)
                 .setKafkaProducerConfig(producerProps)
                 .build();
     }
 
-    private static KafkaSink<DeadLetter> createDeadLetterSink(String brokers, String topic) {
-        Properties producerProps = com.traffic.flink.common.ConfigUtil.kafkaClientProperties();
+    private static KafkaSink<CanonicalDlqMessage> createCanonicalDeadLetterSink(
+            String brokers,
+            String topic,
+            String transactionalPrefix,
+            long transactionTimeoutMs,
+            ParameterTool params) {
+        Properties producerProps = ConfigUtils.kafkaClientProperties(params);
         producerProps.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
         producerProps.setProperty(ProducerConfig.ACKS_CONFIG, "all");
         producerProps.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "lz4");
+        producerProps.setProperty(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG,
+                String.valueOf(transactionTimeoutMs));
 
-        return KafkaSink.<DeadLetter>builder()
+        return KafkaSink.<CanonicalDlqMessage>builder()
                 .setBootstrapServers(brokers)
-                .setRecordSerializer(new DeadLetterKafkaSerializer(topic))
-                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+                .setRecordSerializer(new CanonicalDeadLetterKafkaSerializer(topic))
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(transactionalPrefix)
+                .setKafkaProducerConfig(producerProps)
+                .build();
+    }
+
+    private static KafkaSink<SourceQualityReceipt> createSourceQualitySink(
+            String brokers,
+            String topic,
+            String transactionalPrefix,
+            long transactionTimeoutMs,
+            ParameterTool params) {
+        Properties producerProps = ConfigUtils.kafkaClientProperties(params);
+        producerProps.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+        producerProps.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+        producerProps.setProperty(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG,
+                String.valueOf(transactionTimeoutMs));
+        return KafkaSink.<SourceQualityReceipt>builder()
+                .setBootstrapServers(brokers)
+                .setRecordSerializer(new SourceQualityKafkaSerializer(topic))
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(transactionalPrefix)
                 .setKafkaProducerConfig(producerProps)
                 .build();
     }
@@ -304,27 +582,49 @@ public class UserBehaviorJob {
         }
     }
 
-    private static class DeadLetterKafkaSerializer implements KafkaRecordSerializationSchema<DeadLetter> {
+    static class CanonicalDeadLetterKafkaSerializer
+            implements KafkaRecordSerializationSchema<CanonicalDlqMessage> {
         private static final long serialVersionUID = 1L;
         private final String topic;
 
-        DeadLetterKafkaSerializer(String topic) {
+        CanonicalDeadLetterKafkaSerializer(String topic) {
             this.topic = topic;
         }
 
         @Nullable
         @Override
         public ProducerRecord<byte[], byte[]> serialize(
-                DeadLetter element, KafkaSinkContext context, Long timestamp) {
+                CanonicalDlqMessage element, KafkaSinkContext context, Long timestamp) {
             if (element == null) {
                 return null;
             }
             return new ProducerRecord<>(
                     topic,
                     null,
-                    element.getCreatedAt() > 0 ? element.getCreatedAt() : null,
-                    nonBlank(element.getTenantId(), "unknown").getBytes(StandardCharsets.UTF_8),
-                    element.toByteArray());
+                    timestamp,
+                    (element.tenantId() + ":" + element.originalTopic() + ":"
+                            + element.originalPartition() + ":" + element.originalOffset())
+                            .getBytes(StandardCharsets.UTF_8),
+                    element.toJson().getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    static class SourceQualityKafkaSerializer
+            implements KafkaRecordSerializationSchema<SourceQualityReceipt> {
+        private static final long serialVersionUID = 1L;
+        private final String topic;
+
+        SourceQualityKafkaSerializer(String topic) { this.topic = topic; }
+
+        @Nullable
+        @Override
+        public ProducerRecord<byte[], byte[]> serialize(
+                SourceQualityReceipt element, KafkaSinkContext context, Long ignored) {
+            if (element == null) return null;
+            return new ProducerRecord<>(
+                    topic,
+                    element.getTenantId().getBytes(StandardCharsets.UTF_8),
+                    element.toAuditEventJson());
         }
     }
 }

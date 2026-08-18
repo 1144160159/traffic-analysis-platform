@@ -153,8 +153,10 @@ public class CepJob {
             LOG.info("DLQ enabled, topic: {}", dlqTopic);
         }
 
-        // 按源 IP 分组（关联分析通常基于攻击者）
-        KeyedStream<Alert, String> keyedAlerts = validAlerts.keyBy(Alert::getSrcIp);
+        // CEP state must be isolated by tenant as well as attacker identity.
+        // A source IP alone is not globally unique and previously allowed the
+        // same address in two tenants to share one pattern state machine.
+        KeyedStream<Alert, String> keyedAlerts = validAlerts.keyBy(CampaignBuilderUtils::tenantSourceKey);
 
         // ==================== CEP 模式匹配 ====================
 
@@ -167,8 +169,11 @@ public class CepJob {
                 keyedAlerts, patternConfig);
 
         // 模式 3: 横向移动
+        // 使用 (tenant, srcIp) 与 (tenant, dstIp) 双键扇出：跳板主机 B 的
+        // compromise.dst=B 与 internal.src=B 因此可在同一条 CEP 分区相遇。
+        // 修复原单一 (tenant, srcIp) key 导致跨主机跳板链永不匹配的问题。
         DataStream<Campaign> lateralMovementCampaigns = applyLateralMovementPattern(
-                keyedAlerts, patternConfig);
+                validAlerts, patternConfig);
 
         // 模式 4: 数据外泄
         DataStream<Campaign> dataExfilCampaigns = applyDataExfilPattern(
@@ -185,12 +190,30 @@ public class CepJob {
                 .union(dataExfilCampaigns)
                 .union(c2BeaconCampaigns);
 
+        // ==================== Campaign 去重 ====================
+        // campaign_id 是确定性 ID（由告警 ID 集合派生）；横向移动扇出、CEP
+        // 重叠匹配与重启回放都会产生同一 campaignId 的重复记录，按
+        // campaignId keyed 去重收敛（DDL 为 MergeTree 无去重版本列）。
+        allCampaigns = allCampaigns
+                .keyBy(Campaign::getCampaignId)
+                .process(new CampaignDeduplicator())
+                .uid("campaign-dedup-v1")
+                .name("Campaign Deduplicator");
+
         // ==================== Sink ====================
 
-        // Kafka Sink
-        allCampaigns.sinkTo(
-                KafkaSinkFactory.createCampaignSink(kafkaBrokers, outputTopic)
-        ).uid("kafka-sink").name("Kafka Campaign Sink");
+        // Publisher admission is independent from CEP computation and the
+        // ClickHouse sink. Kubernetes enables it only after the campaigns.v1
+        // Protobuf consumer has produced a candidate-bound ready receipt.
+        boolean campaignPublisherEnabled = ConfigUtils.getBoolean(
+                params, "campaign.publisher.enabled", false);
+        if (campaignPublisherEnabled) {
+            allCampaigns.sinkTo(
+                    KafkaSinkFactory.createCampaignSink(kafkaBrokers, outputTopic)
+            ).uid("kafka-sink").name("Kafka Campaign Sink");
+        } else {
+            LOG.warn("Campaign Kafka publisher is disabled; CEP results remain in the ClickHouse rail only");
+        }
 
         // ClickHouse Sink
         allCampaigns.addSink(
@@ -211,6 +234,7 @@ public class CepJob {
         LOG.info("Job configured:");
         LOG.info("  Input Topic: {}", inputTopic);
         LOG.info("  Output Topic: {}", outputTopic);
+        LOG.info("  Campaign Publisher Enabled: {}", campaignPublisherEnabled);
         LOG.info("  DLQ Topic: {}", dlqTopic);
         LOG.info("  ClickHouse: {}.{}", clickhouseDatabase, clickhouseTable);
         LOG.info("  Parallelism: {}", parallelism);
@@ -260,7 +284,8 @@ public class CepJob {
                     return;
                 }
 
-                if (alert.getTenantId() == null || alert.getTenantId().isEmpty()) {
+				if (alert.getTenantId() == null || alert.getTenantId().trim().isEmpty() ||
+						"unknown".equalsIgnoreCase(alert.getTenantId().trim())) {
                     ctx.output(DLQ_TAG, buildDlqMessage("missing_tenant_id", 
                             "Tenant ID is missing", alert));
                     return;
@@ -371,14 +396,22 @@ public class CepJob {
     }
 
     /**
-     * 应用横向移动模式
+     * 应用横向移动模式（双键扇出）
      */
     private static DataStream<Campaign> applyLateralMovementPattern(
-            KeyedStream<Alert, String> keyedAlerts,
+            DataStream<Alert> validAlerts,
             PatternConfig config
     ) {
-        PatternStream<Alert> patternStream = CEP.pattern(
-                keyedAlerts,
+        DataStream<LateralMovementKeyedAlert> fannedAlerts = validAlerts
+                .flatMap(new LateralMovementFanout())
+                .uid("lateral-movement-fanout-v1")
+                .name("Lateral Movement Src/Dst Fanout");
+
+        KeyedStream<LateralMovementKeyedAlert, String> keyed = fannedAlerts
+                .keyBy(LateralMovementKeyedAlert::getPartitionKey);
+
+        PatternStream<LateralMovementKeyedAlert> patternStream = CEP.pattern(
+                keyed,
                 LateralMovementPattern.create(config)
         );
 
@@ -386,6 +419,66 @@ public class CepJob {
                 .process(new LateralMovementSelector())
                 .uid("lateral-movement-pattern")
                 .name("Lateral Movement Pattern");
+    }
+
+    /**
+     * 将每条告警扇出到 (tenant, srcIp) 与 (tenant, dstIp) 两个 CEP key，
+     * 使跳板主机两侧的告警在同一分区相遇。
+     */
+    static final class LateralMovementFanout
+            implements org.apache.flink.api.common.functions.FlatMapFunction<Alert, LateralMovementKeyedAlert> {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void flatMap(Alert alert, Collector<LateralMovementKeyedAlert> out) {
+            String tenant = alert.getTenantId() != null ? alert.getTenantId() : "";
+            String srcIp = alert.getSrcIp() != null ? alert.getSrcIp() : "";
+            String dstIp = alert.getDstIp() != null ? alert.getDstIp() : "";
+            if (!srcIp.isEmpty() && !"0.0.0.0".equals(srcIp)) {
+                out.collect(new LateralMovementKeyedAlert(tenant + "\u001f" + srcIp, alert));
+            }
+            if (!dstIp.isEmpty() && !"0.0.0.0".equals(dstIp)) {
+                out.collect(new LateralMovementKeyedAlert(tenant + "\u001f" + dstIp, alert));
+            }
+        }
+    }
+
+    /**
+     * Campaign 去重器：同一 campaignId 只输出一次（带 TTL 的 keyed state）。
+     * 确定性 campaignId 使重放、扇出与重叠匹配产生的重复记录收敛。
+     */
+    static final class CampaignDeduplicator
+            extends org.apache.flink.streaming.api.functions.KeyedProcessFunction<String, Campaign, Campaign> {
+        private static final long serialVersionUID = 1L;
+        private static final long DEDUP_TTL_MS = 7L * 24L * 3600L * 1000L; // 7 天
+
+        private transient org.apache.flink.api.common.state.ValueState<Long> seenTimeState;
+
+        @Override
+        public void open(org.apache.flink.configuration.Configuration parameters) throws Exception {
+            super.open(parameters);
+            org.apache.flink.api.common.state.ValueStateDescriptor<Long> descriptor =
+                    new org.apache.flink.api.common.state.ValueStateDescriptor<>(
+                            "campaign-seen-time-v1", Long.class);
+            descriptor.enableTimeToLive(org.apache.flink.api.common.state.StateTtlConfig
+                    .newBuilder(org.apache.flink.api.common.time.Time.milliseconds(DEDUP_TTL_MS))
+                    .setUpdateType(org.apache.flink.api.common.state.StateTtlConfig.UpdateType.OnCreateAndWrite)
+                    .setStateVisibility(org.apache.flink.api.common.state.StateTtlConfig.StateVisibility.NeverReturnExpired)
+                    .build());
+            seenTimeState = getRuntimeContext().getState(descriptor);
+        }
+
+        @Override
+        public void processElement(
+                Campaign campaign,
+                Context context,
+                Collector<Campaign> out) throws Exception {
+            if (seenTimeState.value() != null) {
+                return; // 已见，去重
+            }
+            seenTimeState.update(campaign.getTsEnd() > 0 ? campaign.getTsEnd() : System.currentTimeMillis());
+            out.collect(campaign);
+        }
     }
 
     /**

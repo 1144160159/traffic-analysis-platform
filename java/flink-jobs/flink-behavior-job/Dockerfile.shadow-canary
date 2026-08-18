@@ -1,0 +1,7 @@
+FROM docker.io/traffic/flink:1.18-xgboost-runtime-20260718-r1
+
+USER root
+COPY --chown=flink:flink target/flink-behavior-job-1.0.0-SNAPSHOT.jar /opt/flink/usrlib/flink-behavior-job.jar
+USER flink
+
+ENTRYPOINT ["java", "-cp", "/opt/flink/usrlib/flink-behavior-job.jar:/opt/flink/lib/*"]

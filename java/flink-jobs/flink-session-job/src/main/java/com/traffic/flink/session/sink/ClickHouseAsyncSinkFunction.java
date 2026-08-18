@@ -1,7 +1,5 @@
 package com.traffic.flink.session.sink;
 
-import com.traffic.proto.traffic.v1.EventHeader;
-import com.traffic.proto.traffic.v1.FiveTuple;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
 import org.apache.flink.configuration.Configuration;
@@ -357,118 +355,14 @@ public class ClickHouseAsyncSinkFunction extends RichAsyncFunction<SessionEvent,
      * 构建 INSERT SQL
      */
     private String buildInsertSql() {
-        return String.format(
-            "INSERT INTO %s (" +
-                "session_id, tenant_id, community_id, " +
-                "ts_start, ts_end, duration_ms, " +
-                "packets_fwd, packets_bwd, bytes_fwd, bytes_bwd, " +
-                "event_id, run_id, feature_set_id, event_ts, ingest_ts, kafka_ts, flink_out_ts, probe_id, " +
-                "src_ip, dst_ip, src_port, dst_port, protocol, " +
-                "bytes_total, up_down_ratio, num_pkts, avg_payload, min_payload, max_payload, std_payload, " +
-                "mean_iat_ms, min_iat_ms, max_iat_ms, std_iat_ms, " +
-                "flags_syn, flags_ack, flags_fin, flags_psh, flags_rst, " +
-                "dns_pkt_cnt, tcp_pkt_cnt, udp_pkt_cnt, icmp_pkt_cnt, " +
-                "has_syn, has_fin, has_rst, is_established, " +
-                "evidence_count, flow_ids, end_reason" +
-            ") VALUES (" +
-                "?, ?, ?, " +
-                "?, ?, ?, " +
-                "?, ?, ?, ?, " +
-                "?, ?, ?, ?, ?, ?, ?, ?, " +
-                "?, ?, ?, ?, ?, ?, ?, " +
-                "?, ?, ?, ?, ?, " +
-                "?, ?, ?, ?, " +
-                "?, ?, ?, ?, ?, " +
-                "?, ?, ?, ?, " +
-                "?, ?, ?, ?, " +
-                "?, ?, ?" +
-            ")",
-            table
-        );
+        return ClickHouseSinkFactory.buildInsertSql(table);
     }
 
     /**
      * 设置 PreparedStatement 参数
      */
     private void setStatementParameters(PreparedStatement ps, SessionEvent session) throws SQLException {
-        int idx = 1;
-        EventHeader header = session.hasHeader()
-                ? session.getHeader()
-                : EventHeader.getDefaultInstance();
-        FiveTuple tuple = session.hasTuple()
-                ? session.getTuple()
-                : FiveTuple.getDefaultInstance();
-
-        // 租户与标识
-        ps.setString(idx++, session.getSessionId());
-        ps.setString(idx++, header.getTenantId());
-        ps.setString(idx++, session.getCommunityId());
-
-        // 时间范围
-        ps.setLong(idx++, session.getTsStart());
-        ps.setLong(idx++, session.getTsEnd());
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getDurationMs()));
-
-        // SessionEvent proto has packets_total only; keep total in packets_fwd and num_pkts.
-        ps.setLong(idx++, session.getPacketsTotal());
-        ps.setLong(idx++, 0L);
-        ps.setLong(idx++, session.getBytesFwd());
-        ps.setLong(idx++, session.getBytesBwd());
-
-        ps.setString(idx++, header.getEventId());
-        ps.setString(idx++, header.getRunId());
-        ps.setString(idx++, header.getFeatureSetId());
-        ps.setLong(idx++, header.getEventTs());
-        ps.setLong(idx++, header.getIngestTs());
-        ps.setLong(idx++, header.getKafkaTs());
-        ps.setLong(idx++, header.getFlinkOutTs() > 0 ? header.getFlinkOutTs() : System.currentTimeMillis());
-        ps.setString(idx++, header.getProbeId());
-
-        ps.setString(idx++, tuple.getSrcIp());
-        ps.setString(idx++, tuple.getDstIp());
-        ps.setLong(idx++, Integer.toUnsignedLong(tuple.getSrcPort()));
-        ps.setLong(idx++, Integer.toUnsignedLong(tuple.getDstPort()));
-        ps.setInt(idx++, session.getProtocol());
-
-        // 流量统计
-        ps.setLong(idx++, session.getBytesTotal());
-        ps.setFloat(idx++, session.getUpDownRatio());
-
-        // 包长统计
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getNumPkts()));
-        ps.setFloat(idx++, session.getAvgPayload());
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getMinPayload()));
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getMaxPayload()));
-        ps.setFloat(idx++, session.getStdPayload());
-
-        // IAT 统计
-        ps.setFloat(idx++, session.getMeanIatMs());
-        ps.setFloat(idx++, session.getMinIatMs());
-        ps.setFloat(idx++, session.getMaxIatMs());
-        ps.setFloat(idx++, session.getStdIatMs());
-
-        // TCP 标志
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getFlagsSyn()));
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getFlagsAck()));
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getFlagsFin()));
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getFlagsPsh()));
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getFlagsRst()));
-
-        // 协议统计
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getDnsPktCnt()));
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getTcpPktCnt()));
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getUdpPktCnt()));
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getIcmpPktCnt()));
-
-        ps.setInt(idx++, session.getHasSyn() ? 1 : 0);
-        ps.setInt(idx++, session.getHasFin() ? 1 : 0);
-        ps.setInt(idx++, session.getHasRst() ? 1 : 0);
-        ps.setInt(idx++, session.getIsEstablished() ? 1 : 0);
-
-        // 其他
-        ps.setLong(idx++, Integer.toUnsignedLong(session.getEvidenceCount()));
-        ps.setObject(idx++, session.getFlowIdsList().toArray(new String[0]));
-        ps.setString(idx++, session.getEndReason());
+        ClickHouseSinkFactory.bindStatement(ps, session);
     }
 
     private static final class PendingWrite {

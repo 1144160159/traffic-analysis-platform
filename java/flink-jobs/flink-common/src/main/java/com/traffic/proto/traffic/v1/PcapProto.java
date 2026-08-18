@@ -49,7 +49,7 @@ public final class PcapProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\025traffic/v1/pcap.proto\022\ntraffic.v1\"\324\003\n\r" +
+      "\n\025traffic/v1/pcap.proto\022\ntraffic.v1\"\335\005\n\r" +
       "PcapIndexMeta\022\033\n\ttenant_id\030\001 \001(\tR\010tenant" +
       "Id\022\031\n\010probe_id\030\002 \001(\tR\007probeId\022\031\n\010file_ke" +
       "y\030\003 \001(\tR\007fileKey\022\031\n\010ts_start\030\004 \001(\003R\007tsSt" +
@@ -61,41 +61,48 @@ public final class PcapProto {
       "Start\022\035\n\noffset_end\030\014 \001(\004R\toffsetEnd\022(\n\020" +
       "bloom_filter_b64\030\r \001(\tR\016bloomFilterB64\022#" +
       "\n\rcommunity_ids\030\016 \003(\tR\014communityIds\022\035\n\nc" +
-      "reated_ts\030\017 \001(\003R\tcreatedTs\"\267\001\n\016PcapIndex" +
-      "Batch\0223\n\007indexes\030\001 \003(\0132\031.traffic.v1.Pcap" +
-      "IndexMetaR\007indexes\022\031\n\010batch_id\030\002 \001(\tR\007ba" +
-      "tchId\022\033\n\ttenant_id\030\003 \001(\tR\010tenantId\022\031\n\010pr" +
-      "obe_id\030\004 \001(\tR\007probeId\022\035\n\ncreated_at\030\005 \001(" +
-      "\003R\tcreatedAt\"\242\003\n\016PcapCutRequest\022\033\n\ttenan" +
-      "t_id\030\001 \001(\tR\010tenantId\022\025\n\006src_ip\030\002 \001(\tR\005sr" +
-      "cIp\022\025\n\006dst_ip\030\003 \001(\tR\005dstIp\022\031\n\010src_port\030\004" +
-      " \001(\rR\007srcPort\022\031\n\010dst_port\030\005 \001(\rR\007dstPort" +
-      "\022\032\n\010protocol\030\006 \001(\rR\010protocol\022\035\n\nstart_ti" +
-      "me\030\007 \001(\003R\tstartTime\022\031\n\010end_time\030\010 \001(\003R\007e" +
-      "ndTime\022!\n\014community_id\030\t \001(\tR\013communityI" +
-      "d\022\027\n\007flow_id\030\n \001(\tR\006flowId\022\037\n\013max_packet" +
-      "s\030\013 \001(\rR\nmaxPackets\022\033\n\tmax_bytes\030\014 \001(\004R\010" +
-      "maxBytes\022#\n\routput_format\030\r \001(\tR\014outputF" +
-      "ormat\022\032\n\010compress\030\016 \001(\010R\010compress\"\303\003\n\017Pc" +
-      "apCutResponse\022\025\n\006job_id\030\001 \001(\tR\005jobId\022\026\n\006" +
-      "status\030\002 \001(\tR\006status\022!\n\014download_url\030\003 \001" +
-      "(\tR\013downloadUrl\022)\n\020progress_percent\030\004 \001(" +
-      "\005R\017progressPercent\022#\n\rerror_message\030\005 \001(" +
-      "\tR\014errorMessage\022#\n\rtotal_packets\030\006 \001(\004R\014" +
-      "totalPackets\022\037\n\013total_bytes\030\007 \001(\004R\ntotal" +
-      "Bytes\022#\n\rfiles_scanned\030\010 \001(\005R\014filesScann" +
-      "ed\022#\n\rfiles_matched\030\t \001(\005R\014filesMatched\022" +
-      "\035\n\ncreated_at\030\n \001(\003R\tcreatedAt\022\035\n\nstarte" +
-      "d_at\030\013 \001(\003R\tstartedAt\022!\n\014completed_at\030\014 " +
-      "\001(\003R\013completedAt\022\035\n\nexpires_at\030\r \001(\003R\tex" +
-      "piresAt\"F\n\020PcapCutJobStatus\022\025\n\006job_id\030\001 " +
-      "\001(\tR\005jobId\022\033\n\ttenant_id\030\002 \001(\tR\010tenantIdB" +
-      "\323\001\n\034com.traffic.proto.traffic.v1B\tPcapPr" +
-      "otoP\001Z_github.com/1144160159/traffic-ana" +
-      "lysis-platform/go/control-plane/pkg/prot" +
-      "o/traffic/v1;trafficv1\242\002\003TXX\252\002\nTraffic.V" +
-      "1\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetadata\352" +
-      "\002\013Traffic::V1b\006proto3"
+      "reated_ts\030\017 \001(\003R\tcreatedTs\022\026\n\006bucket\030\020 \001" +
+      "(\tR\006bucket\022%\n\016object_version\030\021 \001(\tR\robje" +
+      "ctVersion\022\022\n\004etag\030\022 \001(\tR\004etag\022#\n\rorigina" +
+      "l_size\030\023 \001(\004R\014originalSize\022\037\n\013stored_siz" +
+      "e\030\024 \001(\004R\nstoredSize\022 \n\013compression\030\025 \001(\t" +
+      "R\013compression\022)\n\020manifest_version\030\026 \001(\rR" +
+      "\017manifestVersion\022!\n\014packet_count\030\027 \001(\004R\013" +
+      "packetCount\"\267\001\n\016PcapIndexBatch\0223\n\007indexe" +
+      "s\030\001 \003(\0132\031.traffic.v1.PcapIndexMetaR\007inde" +
+      "xes\022\031\n\010batch_id\030\002 \001(\tR\007batchId\022\033\n\ttenant" +
+      "_id\030\003 \001(\tR\010tenantId\022\031\n\010probe_id\030\004 \001(\tR\007p" +
+      "robeId\022\035\n\ncreated_at\030\005 \001(\003R\tcreatedAt\"\242\003" +
+      "\n\016PcapCutRequest\022\033\n\ttenant_id\030\001 \001(\tR\010ten" +
+      "antId\022\025\n\006src_ip\030\002 \001(\tR\005srcIp\022\025\n\006dst_ip\030\003" +
+      " \001(\tR\005dstIp\022\031\n\010src_port\030\004 \001(\rR\007srcPort\022\031" +
+      "\n\010dst_port\030\005 \001(\rR\007dstPort\022\032\n\010protocol\030\006 " +
+      "\001(\rR\010protocol\022\035\n\nstart_time\030\007 \001(\003R\tstart" +
+      "Time\022\031\n\010end_time\030\010 \001(\003R\007endTime\022!\n\014commu" +
+      "nity_id\030\t \001(\tR\013communityId\022\027\n\007flow_id\030\n " +
+      "\001(\tR\006flowId\022\037\n\013max_packets\030\013 \001(\rR\nmaxPac" +
+      "kets\022\033\n\tmax_bytes\030\014 \001(\004R\010maxBytes\022#\n\rout" +
+      "put_format\030\r \001(\tR\014outputFormat\022\032\n\010compre" +
+      "ss\030\016 \001(\010R\010compress\"\303\003\n\017PcapCutResponse\022\025" +
+      "\n\006job_id\030\001 \001(\tR\005jobId\022\026\n\006status\030\002 \001(\tR\006s" +
+      "tatus\022!\n\014download_url\030\003 \001(\tR\013downloadUrl" +
+      "\022)\n\020progress_percent\030\004 \001(\005R\017progressPerc" +
+      "ent\022#\n\rerror_message\030\005 \001(\tR\014errorMessage" +
+      "\022#\n\rtotal_packets\030\006 \001(\004R\014totalPackets\022\037\n" +
+      "\013total_bytes\030\007 \001(\004R\ntotalBytes\022#\n\rfiles_" +
+      "scanned\030\010 \001(\005R\014filesScanned\022#\n\rfiles_mat" +
+      "ched\030\t \001(\005R\014filesMatched\022\035\n\ncreated_at\030\n" +
+      " \001(\003R\tcreatedAt\022\035\n\nstarted_at\030\013 \001(\003R\tsta" +
+      "rtedAt\022!\n\014completed_at\030\014 \001(\003R\013completedA" +
+      "t\022\035\n\nexpires_at\030\r \001(\003R\texpiresAt\"F\n\020Pcap" +
+      "CutJobStatus\022\025\n\006job_id\030\001 \001(\tR\005jobId\022\033\n\tt" +
+      "enant_id\030\002 \001(\tR\010tenantIdB\323\001\n\034com.traffic" +
+      ".proto.traffic.v1B\tPcapProtoP\001Z_github.c" +
+      "om/1144160159/traffic-analysis-platform/" +
+      "go/control-plane/pkg/proto/traffic/v1;tr" +
+      "afficv1\242\002\003TXX\252\002\nTraffic.V1\312\002\nTraffic\\V1\342" +
+      "\002\026Traffic\\V1\\GPBMetadata\352\002\013Traffic::V1b\006" +
+      "proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -106,7 +113,7 @@ public final class PcapProto {
     internal_static_traffic_v1_PcapIndexMeta_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_PcapIndexMeta_descriptor,
-        new java.lang.String[] { "TenantId", "ProbeId", "FileKey", "TsStart", "TsEnd", "ByteSize", "ZstdLevel", "Sha256", "CommunityId", "FlowId", "OffsetStart", "OffsetEnd", "BloomFilterB64", "CommunityIds", "CreatedTs", });
+        new java.lang.String[] { "TenantId", "ProbeId", "FileKey", "TsStart", "TsEnd", "ByteSize", "ZstdLevel", "Sha256", "CommunityId", "FlowId", "OffsetStart", "OffsetEnd", "BloomFilterB64", "CommunityIds", "CreatedTs", "Bucket", "ObjectVersion", "Etag", "OriginalSize", "StoredSize", "Compression", "ManifestVersion", "PacketCount", });
     internal_static_traffic_v1_PcapIndexBatch_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_traffic_v1_PcapIndexBatch_fieldAccessorTable = new

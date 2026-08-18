@@ -326,4 +326,164 @@ public interface SessionEventOrBuilder extends
    */
   com.google.protobuf.ByteString
       getEndReasonBytes();
+
+  /**
+   * <pre>
+   * Additive M03 identity and event-time contract. All timestamps are Unix
+   * epoch milliseconds; identity_version names the deterministic ID recipe.
+   * </pre>
+   *
+   * <code>string identity_version = 43 [json_name = "identityVersion"];</code>
+   * @return The identityVersion.
+   */
+  java.lang.String getIdentityVersion();
+  /**
+   * <pre>
+   * Additive M03 identity and event-time contract. All timestamps are Unix
+   * epoch milliseconds; identity_version names the deterministic ID recipe.
+   * </pre>
+   *
+   * <code>string identity_version = 43 [json_name = "identityVersion"];</code>
+   * @return The bytes for identityVersion.
+   */
+  com.google.protobuf.ByteString
+      getIdentityVersionBytes();
+
+  /**
+   * <code>uint64 session_version = 44 [json_name = "sessionVersion"];</code>
+   * @return The sessionVersion.
+   */
+  long getSessionVersion();
+
+  /**
+   * <code>int64 event_time_start_ms = 45 [json_name = "eventTimeStartMs"];</code>
+   * @return The eventTimeStartMs.
+   */
+  long getEventTimeStartMs();
+
+  /**
+   * <code>int64 event_time_end_ms = 46 [json_name = "eventTimeEndMs"];</code>
+   * @return The eventTimeEndMs.
+   */
+  long getEventTimeEndMs();
+
+  /**
+   * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+   * @return A list containing the sourceEventIds.
+   */
+  java.util.List<java.lang.String>
+      getSourceEventIdsList();
+  /**
+   * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+   * @return The count of sourceEventIds.
+   */
+  int getSourceEventIdsCount();
+  /**
+   * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the element to return.
+   * @return The sourceEventIds at the given index.
+   */
+  java.lang.String getSourceEventIds(int index);
+  /**
+   * <code>repeated string source_event_ids = 47 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the sourceEventIds at the given index.
+   */
+  com.google.protobuf.ByteString
+      getSourceEventIdsBytes(int index);
+
+  /**
+   * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+   * @return A list containing the evidenceIds.
+   */
+  java.util.List<java.lang.String>
+      getEvidenceIdsList();
+  /**
+   * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+   * @return The count of evidenceIds.
+   */
+  int getEvidenceIdsCount();
+  /**
+   * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+   * @param index The index of the element to return.
+   * @return The evidenceIds at the given index.
+   */
+  java.lang.String getEvidenceIds(int index);
+  /**
+   * <code>repeated string evidence_ids = 48 [json_name = "evidenceIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the evidenceIds at the given index.
+   */
+  com.google.protobuf.ByteString
+      getEvidenceIdsBytes(int index);
+
+  /**
+   * <code>.traffic.v1.SessionCompleteness completeness = 49 [json_name = "completeness"];</code>
+   * @return The enum numeric value on the wire for completeness.
+   */
+  int getCompletenessValue();
+  /**
+   * <code>.traffic.v1.SessionCompleteness completeness = 49 [json_name = "completeness"];</code>
+   * @return The completeness.
+   */
+  com.traffic.proto.traffic.v1.SessionCompleteness getCompleteness();
+
+  /**
+   * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+   * @return A list containing the missingFields.
+   */
+  java.util.List<java.lang.String>
+      getMissingFieldsList();
+  /**
+   * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+   * @return The count of missingFields.
+   */
+  int getMissingFieldsCount();
+  /**
+   * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+   * @param index The index of the element to return.
+   * @return The missingFields at the given index.
+   */
+  java.lang.String getMissingFields(int index);
+  /**
+   * <code>repeated string missing_fields = 50 [json_name = "missingFields"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the missingFields at the given index.
+   */
+  com.google.protobuf.ByteString
+      getMissingFieldsBytes(int index);
+
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+   * @return Whether the featureObservation field is set.
+   */
+  boolean hasFeatureObservation();
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+   * @return The featureObservation.
+   */
+  com.traffic.proto.traffic.v1.TrafficFeatureObservation getFeatureObservation();
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 51 [json_name = "featureObservation"];</code>
+   */
+  com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder getFeatureObservationOrBuilder();
+
+  /**
+   * <pre>
+   * Directional packet counts: forward = packets emitted in the initiator
+   * (client) direction, backward = responder (server) direction. Zero when the
+   * producer cannot attribute direction; both fields are additive (legacy
+   * producers stay wire-compatible with proto3 zero defaults).
+   * </pre>
+   *
+   * <code>uint64 packets_fwd = 52 [json_name = "packetsFwd"];</code>
+   * @return The packetsFwd.
+   */
+  long getPacketsFwd();
+
+  /**
+   * <code>uint64 packets_bwd = 53 [json_name = "packetsBwd"];</code>
+   * @return The packetsBwd.
+   */
+  long getPacketsBwd();
 }

@@ -180,7 +180,7 @@ services:
       
       kafka-topics --create --if-not-exists \
         --bootstrap-server kafka:9092 \
-        --topic dlq.rule-job \
+        --topic dlq.v1 \
         --partitions 1 \
         --replication-factor 1 \
         --config retention.ms=2592000000

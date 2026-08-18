@@ -235,4 +235,136 @@ public interface FeatureStatOrBuilder extends
    */
   com.google.protobuf.ByteString
       getEvidenceIdsBytes(int index);
+
+  /**
+   * <code>.traffic.v1.FeatureCategory feature_category = 25 [json_name = "featureCategory"];</code>
+   * @return The enum numeric value on the wire for featureCategory.
+   */
+  int getFeatureCategoryValue();
+  /**
+   * <code>.traffic.v1.FeatureCategory feature_category = 25 [json_name = "featureCategory"];</code>
+   * @return The featureCategory.
+   */
+  com.traffic.proto.traffic.v1.FeatureCategory getFeatureCategory();
+
+  /**
+   * <code>.traffic.v1.FeatureAvailability availability = 26 [json_name = "availability"];</code>
+   * @return The enum numeric value on the wire for availability.
+   */
+  int getAvailabilityValue();
+  /**
+   * <code>.traffic.v1.FeatureAvailability availability = 26 [json_name = "availability"];</code>
+   * @return The availability.
+   */
+  com.traffic.proto.traffic.v1.FeatureAvailability getAvailability();
+
+  /**
+   * <code>string algorithm_version = 27 [json_name = "algorithmVersion"];</code>
+   * @return The algorithmVersion.
+   */
+  java.lang.String getAlgorithmVersion();
+  /**
+   * <code>string algorithm_version = 27 [json_name = "algorithmVersion"];</code>
+   * @return The bytes for algorithmVersion.
+   */
+  com.google.protobuf.ByteString
+      getAlgorithmVersionBytes();
+
+  /**
+   * <code>string window_id = 28 [json_name = "windowId"];</code>
+   * @return The windowId.
+   */
+  java.lang.String getWindowId();
+  /**
+   * <code>string window_id = 28 [json_name = "windowId"];</code>
+   * @return The bytes for windowId.
+   */
+  com.google.protobuf.ByteString
+      getWindowIdBytes();
+
+  /**
+   * <code>int64 event_time_start_ms = 29 [json_name = "eventTimeStartMs"];</code>
+   * @return The eventTimeStartMs.
+   */
+  long getEventTimeStartMs();
+
+  /**
+   * <code>int64 event_time_end_ms = 30 [json_name = "eventTimeEndMs"];</code>
+   * @return The eventTimeEndMs.
+   */
+  long getEventTimeEndMs();
+
+  /**
+   * <code>string value_unit = 31 [json_name = "valueUnit"];</code>
+   * @return The valueUnit.
+   */
+  java.lang.String getValueUnit();
+  /**
+   * <code>string value_unit = 31 [json_name = "valueUnit"];</code>
+   * @return The bytes for valueUnit.
+   */
+  com.google.protobuf.ByteString
+      getValueUnitBytes();
+
+  /**
+   * <code>repeated string source_event_ids = 32 [json_name = "sourceEventIds"];</code>
+   * @return A list containing the sourceEventIds.
+   */
+  java.util.List<java.lang.String>
+      getSourceEventIdsList();
+  /**
+   * <code>repeated string source_event_ids = 32 [json_name = "sourceEventIds"];</code>
+   * @return The count of sourceEventIds.
+   */
+  int getSourceEventIdsCount();
+  /**
+   * <code>repeated string source_event_ids = 32 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the element to return.
+   * @return The sourceEventIds at the given index.
+   */
+  java.lang.String getSourceEventIds(int index);
+  /**
+   * <code>repeated string source_event_ids = 32 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the sourceEventIds at the given index.
+   */
+  com.google.protobuf.ByteString
+      getSourceEventIdsBytes(int index);
+
+  /**
+   * <code>repeated string missing_fields = 33 [json_name = "missingFields"];</code>
+   * @return A list containing the missingFields.
+   */
+  java.util.List<java.lang.String>
+      getMissingFieldsList();
+  /**
+   * <code>repeated string missing_fields = 33 [json_name = "missingFields"];</code>
+   * @return The count of missingFields.
+   */
+  int getMissingFieldsCount();
+  /**
+   * <code>repeated string missing_fields = 33 [json_name = "missingFields"];</code>
+   * @param index The index of the element to return.
+   * @return The missingFields at the given index.
+   */
+  java.lang.String getMissingFields(int index);
+  /**
+   * <code>repeated string missing_fields = 33 [json_name = "missingFields"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the missingFields at the given index.
+   */
+  com.google.protobuf.ByteString
+      getMissingFieldsBytes(int index);
+
+  /**
+   * <code>string missing_reason = 34 [json_name = "missingReason"];</code>
+   * @return The missingReason.
+   */
+  java.lang.String getMissingReason();
+  /**
+   * <code>string missing_reason = 34 [json_name = "missingReason"];</code>
+   * @return The bytes for missingReason.
+   */
+  com.google.protobuf.ByteString
+      getMissingReasonBytes();
 }

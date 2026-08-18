@@ -1,6 +1,8 @@
 package com.traffic.flink.rule.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
@@ -26,7 +28,8 @@ public class Rule implements Serializable {
     @JsonProperty("name")
     private String name;
 
-    @JsonProperty("rule_type")
+    @JsonProperty("type")
+    @JsonAlias("rule_type")
     private String ruleTypeStr;
 
     @JsonProperty("engine")
@@ -71,6 +74,27 @@ public class Rule implements Serializable {
     @JsonProperty("updated_at")
     private Long updatedAt;
 
+    // Canonical RuleCommandV1Json transport metadata. These fields are set by
+    // the source parser and retained in broadcast state for replay/conflict
+    // decisions; they are not part of the nested rule JSON object.
+    @JsonIgnore
+    private String commandEventId;
+
+    @JsonIgnore
+    private long commandTimestamp;
+
+    @JsonIgnore
+    private String commandChecksum;
+
+    @JsonIgnore
+    private String commandSchemaVersion;
+
+    @JsonIgnore
+    private String commandChecksumAlgorithm;
+
+    @JsonIgnore
+    private boolean canonicalCommandEnvelope;
+
     // ==================== Getters & Setters ====================
 
     public String getRuleId() {
@@ -105,6 +129,7 @@ public class Rule implements Serializable {
         this.ruleTypeStr = ruleTypeStr;
     }
 
+    @JsonIgnore
     public RuleType getType() {
         try {
             return RuleType.valueOf(ruleTypeStr.toUpperCase());
@@ -113,6 +138,7 @@ public class Rule implements Serializable {
         }
     }
 
+    @JsonIgnore
     public void setType(RuleType type) {
         if (type == null) return;
         this.ruleTypeStr = type.name().toLowerCase();
@@ -158,6 +184,7 @@ public class Rule implements Serializable {
         this.severityStr = severityStr;
     }
 
+    @JsonIgnore
     public Severity getSeverity() {
         try {
             return Severity.valueOf(severityStr.toUpperCase());
@@ -210,6 +237,7 @@ public class Rule implements Serializable {
         this.actionStr = actionStr;
     }
 
+    @JsonIgnore
     public RuleAction getAction() {
         try {
             return RuleAction.valueOf(actionStr.toUpperCase());
@@ -248,6 +276,66 @@ public class Rule implements Serializable {
 
     public void setUpdatedAt(Long updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @JsonIgnore
+    public String getCommandEventId() {
+        return commandEventId;
+    }
+
+    @JsonIgnore
+    public void setCommandEventId(String commandEventId) {
+        this.commandEventId = commandEventId;
+    }
+
+    @JsonIgnore
+    public long getCommandTimestamp() {
+        return commandTimestamp;
+    }
+
+    @JsonIgnore
+    public void setCommandTimestamp(long commandTimestamp) {
+        this.commandTimestamp = commandTimestamp;
+    }
+
+    @JsonIgnore
+    public String getCommandChecksum() {
+        return commandChecksum;
+    }
+
+    @JsonIgnore
+    public void setCommandChecksum(String commandChecksum) {
+        this.commandChecksum = commandChecksum;
+    }
+
+    @JsonIgnore
+    public String getCommandSchemaVersion() {
+        return commandSchemaVersion;
+    }
+
+    @JsonIgnore
+    public void setCommandSchemaVersion(String commandSchemaVersion) {
+        this.commandSchemaVersion = commandSchemaVersion;
+    }
+
+    @JsonIgnore
+    public String getCommandChecksumAlgorithm() {
+        return commandChecksumAlgorithm;
+    }
+
+    @JsonIgnore
+    public void setCommandChecksumAlgorithm(String commandChecksumAlgorithm) {
+        this.commandChecksumAlgorithm = commandChecksumAlgorithm;
+    }
+
+    @JsonIgnore
+    public boolean isCanonicalCommandEnvelope() {
+        return canonicalCommandEnvelope;
+    }
+
+    @JsonIgnore
+    public void setCanonicalCommandEnvelope(boolean canonicalCommandEnvelope) {
+        this.canonicalCommandEnvelope = canonicalCommandEnvelope;
     }
 
     // ==================== Condition 辅助方法 ====================

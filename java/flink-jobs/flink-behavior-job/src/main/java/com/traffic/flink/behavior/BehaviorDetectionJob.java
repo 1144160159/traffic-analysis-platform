@@ -5,16 +5,31 @@
 package com.traffic.flink.behavior;
 
 import com.traffic.flink.behavior.config.BehaviorJobConfig;
+import com.traffic.flink.behavior.config.BehaviorActivationPolicy;
 import com.traffic.flink.behavior.detector.BehaviorDetectorFunction;
+import com.traffic.flink.behavior.detector.BehaviorInferenceOutcome;
+import com.traffic.flink.behavior.detector.BehaviorOutcomeSplitter;
+import com.traffic.flink.behavior.detector.ChampionChallengerShadowFunction;
 import com.traffic.flink.behavior.detector.ModelRegistry;
 import com.traffic.flink.behavior.detector.ModelUpdateBroadcastHandler;
 import com.traffic.flink.behavior.detector.SyncBehaviorDetector;
 import com.traffic.flink.behavior.model.ModelUpdateEvent;
 import com.traffic.flink.behavior.model.ModelUpdateAppliedAck;
+import com.traffic.flink.behavior.model.ChampionChallengerObservation;
+import com.traffic.flink.behavior.model.ShadowEvaluationRequest;
+import com.traffic.flink.behavior.source.ModelConsumerReadinessSource;
 import com.traffic.flink.behavior.sink.BehaviorClickHouseSinkFactory;
+import com.traffic.flink.behavior.sink.BehaviorDlqSinkFactory;
 import com.traffic.flink.behavior.sink.BehaviorKafkaSinkFactory;
 import com.traffic.flink.behavior.sink.ModelUpdateAckKafkaSinkFactory;
-import com.traffic.flink.common.ProtoDeserializer;
+import com.traffic.flink.behavior.sink.ChampionChallengerObservationKafkaSinkFactory;
+import com.traffic.flink.behavior.source.BehaviorFeatureLatenessFunction;
+import com.traffic.flink.behavior.source.BehaviorFeatureParseFunction;
+import com.traffic.flink.behavior.source.ValidatedBehaviorFeature;
+import com.traffic.flink.common.CanonicalDlqMessage;
+import com.traffic.flink.common.RawKafkaRecord;
+import com.traffic.flink.common.RawKafkaRecordDeserializationSchema;
+import com.traffic.flink.common.ProtoTypeInformation;
 import com.traffic.proto.traffic.v1.DetectionBehavior;
 import com.traffic.proto.traffic.v1.FeatureStat;
 
@@ -60,7 +75,7 @@ import java.util.concurrent.TimeUnit;
  * 10. 钓鱼检测 - 识别钓鱼网站访问行为
  * 
  * 输入: feature.stat.v1 (Kafka)
- * 输出: detections.behavior.v1 (Kafka) + detections_behavior_local (ClickHouse)
+ * 输出: detections.v1 (Kafka) + detections_behavior_local (ClickHouse)
  * 
  * 架构特点：
  * - 使用异步 I/O 进行模型推理，提高吞吐量
@@ -89,6 +104,10 @@ public class BehaviorDetectionJob {
      */
     public static final OutputTag<FeatureStat> FEATURE_ANOMALY_TAG = 
             new OutputTag<FeatureStat>("feature-anomalies") {};
+    private static final OutputTag<CanonicalDlqMessage> FEATURE_PARSE_DLQ_TAG =
+            new OutputTag<CanonicalDlqMessage>("behavior-feature-parse-dlq") {};
+    private static final OutputTag<CanonicalDlqMessage> FEATURE_LATE_DLQ_TAG =
+            new OutputTag<CanonicalDlqMessage>("behavior-feature-late-dlq") {};
 
     public static void main(String[] args) throws Exception {
         LOG.info("========================================");
@@ -97,7 +116,19 @@ public class BehaviorDetectionJob {
 
         // 加载配置
         BehaviorJobConfig config = BehaviorJobConfig.fromArgs(args);
+        config.validateChampionChallengerShadowConfig();
         LOG.info("Configuration loaded: {}", config);
+        BehaviorActivationPolicy activation = BehaviorActivationPolicy.validate(config);
+        if (!activation.shouldRun()) {
+            if (config.isModelUpdateConsumerEnabled()) {
+                ModelUpdateConsumerJob.execute(config);
+                return;
+            }
+            LOG.info("Behavior detection is default-off; no Kafka consumer or producer is started");
+            return;
+        }
+        LOG.info("Behavior detection activation: mode={}, profileId={}, profileSha256={}",
+                activation.getMode(), activation.getProfileId(), activation.getProfileSha256());
 
         // 创建执行环境
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -119,76 +150,170 @@ public class BehaviorDetectionJob {
                 Time.of(30, TimeUnit.SECONDS)
         ));
 
-        // 初始化模型注册表
-        ModelRegistry modelRegistry = new ModelRegistry(config);
-        LOG.info("Model registry initialized with {} models", modelRegistry.getModelCount());
-
         // 创建 Kafka Source
-        KafkaSource<FeatureStat> source = createKafkaSource(config);
-        KafkaSource<ModelUpdateEvent> modelUpdateSource = createModelUpdateSource(config);
+        KafkaSource<RawKafkaRecord> source = createKafkaSource(config);
 
         // 配置水印策略
-        WatermarkStrategy<FeatureStat> watermarkStrategy = WatermarkStrategy
-                .<FeatureStat>forBoundedOutOfOrderness(
+        WatermarkStrategy<ValidatedBehaviorFeature> watermarkStrategy = WatermarkStrategy
+                .<ValidatedBehaviorFeature>forBoundedOutOfOrderness(
                         Duration.ofMillis(config.getWatermarkDelayMs()))
-                .withTimestampAssigner((feature, timestamp) -> feature.getTs())
+                .withTimestampAssigner((input, timestamp) -> input.getFeature().getTs())
                 .withIdleness(Duration.ofMinutes(1));
 
         // 构建数据流
-        DataStream<FeatureStat> featureStream = env
-                .fromSource(source, watermarkStrategy, "Kafka-FeatureStats")
+        DataStream<RawKafkaRecord> featureStream = env
+                .fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka-FeatureStats")
                 .uid("kafka-source")
                 .name("Kafka Source (feature.stat.v1)");
 
-        // 过滤无效数据
-        DataStream<FeatureStat> validFeatureStream = featureStream
-                .filter(feature -> feature != null && 
-                        feature.hasHeader() &&
-                        feature.getHeader().getTenantId() != null &&
-                        !feature.getHeader().getTenantId().isEmpty() &&
-                        feature.getObjectId() != null &&
-                        !feature.getObjectId().isEmpty())
+        SingleOutputStreamOperator<ValidatedBehaviorFeature> parsedFeatureStream = featureStream
+                .process(new BehaviorFeatureParseFunction(FEATURE_PARSE_DLQ_TAG))
                 .uid("filter-invalid")
-                .name("Filter Invalid Features");
+                .name("Validate FeatureStat with source tuple");
 
-        DataStream<ModelUpdateEvent> modelUpdateStream = env
-                .fromSource(modelUpdateSource, WatermarkStrategy.noWatermarks(), "Kafka-ModelUpdates")
-                .uid("kafka-model-update-source")
-                .name("Kafka Source (model-updates)");
+        SingleOutputStreamOperator<ValidatedBehaviorFeature> timestampedFeatureStream =
+                parsedFeatureStream
+                        .assignTimestampsAndWatermarks(watermarkStrategy)
+                        .uid("behavior-feature-watermarks")
+                        .name("Assign Behavior Feature Watermarks");
 
-        SingleOutputStreamOperator<FeatureStat> featuresWithModelUpdates = validFeatureStream
-                .connect(modelUpdateStream.broadcast(
-                        ModelUpdateBroadcastHandler.MODEL_UPDATE_STATE,
-                        ModelUpdateBroadcastHandler.PROCESSED_EVENT_STATE))
-                .process(new ModelUpdateBroadcastHandler(config))
-                .uid("model-update-broadcast")
-                .name("Model Update Broadcast");
+        SingleOutputStreamOperator<FeatureStat> validFeatureStream = timestampedFeatureStream
+                .process(new BehaviorFeatureLatenessFunction(
+                        config.getAllowedLatenessMs(), FEATURE_LATE_DLQ_TAG))
+                .returns(ProtoTypeInformation.forMessage(FeatureStat.class))
+                .uid("behavior-feature-lateness")
+                .name("Classify Late Behavior Features");
 
-        DataStream<ModelUpdateAppliedAck> modelAppliedAcks =
-                featuresWithModelUpdates.getSideOutput(ModelUpdateBroadcastHandler.MODEL_UPDATE_ACK_TAG);
-        modelAppliedAcks.sinkTo(ModelUpdateAckKafkaSinkFactory.createSink(
-                        config.getKafkaBrokers(), config.getModelAppliedTopic()))
-                .uid("model-update-applied-ack-sink")
-                .name("Kafka Sink (model-update-applied.v1)");
+        DataStream<CanonicalDlqMessage> dlqStream = parsedFeatureStream
+                .getSideOutput(FEATURE_PARSE_DLQ_TAG)
+                .union(validFeatureStream.getSideOutput(FEATURE_LATE_DLQ_TAG));
+
+        DataStream<FeatureStat> featuresWithModelUpdates = validFeatureStream;
+        DataStream<ShadowEvaluationRequest> shadowEvaluationRequests = null;
+        if (config.isModelUpdateConsumerConfigured()) {
+            config.validateModelUpdateConsumerConfig();
+            if (config.isModelHotUpdateEnabled() && !activation.allowsHotUpdates()) {
+                throw new IllegalArgumentException(
+                        "model hot update is only permitted in explicitly activated dynamic mode");
+            }
+            KafkaSource<ModelUpdateEvent> modelUpdateSource = createModelUpdateSource(config);
+            DataStream<ModelUpdateEvent> modelUpdateStream = env
+                    .fromSource(modelUpdateSource, WatermarkStrategy.noWatermarks(), "Kafka-ModelUpdates")
+                    .uid("kafka-model-update-source")
+                    .name("Kafka Source (model-updates)");
+
+            SingleOutputStreamOperator<FeatureStat> updatedFeatures = validFeatureStream
+                    .connect(modelUpdateStream.broadcast(
+                            ModelUpdateBroadcastHandler.MODEL_UPDATE_STATE,
+                            ModelUpdateBroadcastHandler.PROCESSED_EVENT_STATE,
+                            ModelUpdateBroadcastHandler.SHADOW_PACKAGE_EVENT_STATE))
+                    .process(new ModelUpdateBroadcastHandler(config))
+                    .returns(ProtoTypeInformation.forMessage(FeatureStat.class))
+                    .uid("model-update-broadcast")
+                    .name("Model Update Broadcast");
+            DataStream<ModelUpdateAppliedAck> modelAppliedAcks =
+                    updatedFeatures.getSideOutput(ModelUpdateBroadcastHandler.MODEL_UPDATE_ACK_TAG);
+            if (!config.isModelShadowEvaluationEnabled()) {
+                DataStream<ModelUpdateAppliedAck> consumerReadiness = env
+                        .addSource(new ModelConsumerReadinessSource(config))
+                        .setParallelism(config.getParallelism())
+                        .uid("model-update-consumer-readiness-source")
+                        .name("Model Update Consumer Readiness");
+                modelAppliedAcks.union(consumerReadiness).sinkTo(
+                                ModelUpdateAckKafkaSinkFactory.createSink(
+                                        config.getKafkaBrokers(), config.getModelAppliedTopic()))
+                        .uid("model-update-applied-ack-sink")
+                        .name("Kafka Sink (model-update-applied.v1)");
+            } else {
+                // N011 remains the sole authoritative readiness/ACK quorum.
+                // N012 consumes the immutable event independently and must not
+                // let observer replicas satisfy or contaminate that quorum.
+                LOG.info("N012 shadow observer suppresses model readiness and shadow ACK publication");
+            }
+            featuresWithModelUpdates = updatedFeatures;
+            shadowEvaluationRequests = updatedFeatures.getSideOutput(
+                    ModelUpdateBroadcastHandler.SHADOW_EVALUATION_REQUEST_TAG);
+        }
+
+        // N012 observer branch: the serving detector below remains unchanged.
+        // Disabling the flag removes this entire branch from the job graph.
+        if (config.isModelShadowEvaluationEnabled()) {
+            if (shadowEvaluationRequests == null) {
+                throw new IllegalStateException(
+                        "shadow evaluation request stream is unavailable");
+            }
+            DataStream<ChampionChallengerObservation> shadowObservations =
+                    buildChampionChallengerObserver(shadowEvaluationRequests, config);
+            shadowObservations.sinkTo(
+                            ChampionChallengerObservationKafkaSinkFactory.create(
+                                    config.getKafkaBrokers(),
+                                    config.getModelShadowObservationTopic()))
+                    .uid("champion-challenger-shadow-observation-sink")
+                    .name("Kafka Sink (model-shadow-observations.v1)");
+        }
+
+        if (config.isModelShadowObservationOnly()) {
+            LOG.info("N012 observation-only mode: serving, ClickHouse and DLQ sinks are absent");
+            printJobInfo(config);
+            env.execute("Behavior Champion Challenger Shadow Observation Job");
+            return;
+        }
+
+        // The serving registry is deliberately absent from observation-only jobs.
+        ModelRegistry modelRegistry = new ModelRegistry(config);
+        LOG.info("Model registry initialized with {} models", modelRegistry.getModelCount());
 
         // 行为检测（使用异步 I/O 进行模型推理）
         SingleOutputStreamOperator<DetectionBehavior> detectionStream;
+        DataStream<DetectionBehavior> lowConfidenceStream = null;
+        DataStream<String> modelErrorStream = null;
         
         if (config.isAsyncInferenceEnabled()) {
-            // 异步模式：高吞吐量，适合生产环境
-            detectionStream = AsyncDataStream.unorderedWait(
-                    featuresWithModelUpdates,
-                    new BehaviorDetectorFunction(config, modelRegistry),
-                    config.getAsyncTimeoutMs(),
-                    TimeUnit.MILLISECONDS,
-                    config.getAsyncCapacity()
-            ).uid("async-behavior-detector").name("Async Behavior Detector");
+            // 异步模式：高吞吐量，适合生产环境。
+            // 推理结果带 typed outcome（DETECTED/LOW_CONFIDENCE/NO_DETECTION/
+            // MODEL_ERROR/TIMEOUT），由 BehaviorOutcomeSplitter 分流：
+            // 命中→主流；低置信度→LOW_CONFIDENCE_TAG；错误/超时→MODEL_ERROR_TAG→DLQ。
+            SingleOutputStreamOperator<BehaviorInferenceOutcome> outcomeStream =
+                    AsyncDataStream.unorderedWait(
+                            featuresWithModelUpdates,
+                            new BehaviorDetectorFunction(config, modelRegistry),
+                            config.getAsyncTimeoutMs(),
+                            TimeUnit.MILLISECONDS,
+                            config.getAsyncCapacity()
+                    ).uid("async-behavior-detector").name("Async Behavior Detector");
+            SingleOutputStreamOperator<DetectionBehavior> splitStream = outcomeStream
+                    .process(new BehaviorOutcomeSplitter(LOW_CONFIDENCE_TAG, MODEL_ERROR_TAG, FEATURE_ANOMALY_TAG))
+                    .uid("behavior-outcome-splitter-v1")
+                    .name("Split Behavior Inference Outcomes");
+            detectionStream = splitStream;
+            lowConfidenceStream = splitStream.getSideOutput(LOW_CONFIDENCE_TAG);
+            modelErrorStream = splitStream.getSideOutput(MODEL_ERROR_TAG);
         } else {
             // 同步模式：用于调试和测试
             detectionStream = featuresWithModelUpdates
                     .flatMap(new SyncBehaviorDetector(config, modelRegistry))
                     .uid("sync-behavior-detector")
                     .name("Sync Behavior Detector");
+        }
+
+        // 模型推理错误/超时接入 canonical DLQ（不再静默丢失）。
+        // 错误消息无 Kafka 源坐标，使用合成 RawKafkaRecord 保留语义载荷。
+        if (modelErrorStream != null) {
+            final String featureTopic = config.getInputTopic();
+            dlqStream = dlqStream.union(modelErrorStream.map(error -> {
+                        RawKafkaRecord synthetic = new RawKafkaRecord(
+                                featureTopic, -1, -1L, System.currentTimeMillis(),
+                                null, new byte[0], new java.util.HashMap<>());
+                        return CanonicalDlqMessage.failure(
+                                synthetic, "MODEL_INFERENCE_ERROR", "model_inference",
+                                error, "", "", "", "", "",
+                                "flink-behavior-job", "text/plain", "inference-error", "v1");
+                    })
+                    .uid("behavior-model-error-dlq-mapper-v1")
+                    .name("Map model inference errors to canonical DLQ"));
+        }
+        if (lowConfidenceStream != null && config.isDebugPrintEnabled()) {
+            lowConfidenceStream.print("LowConfidence").setParallelism(1).uid("print-low-confidence");
         }
 
         // 过滤空结果和低置信度结果
@@ -217,7 +342,12 @@ public class BehaviorDetectionJob {
                         config.getKafkaBrokers(),
                         config.getOutputTopic()
                 )
-        ).uid("kafka-sink").name("Kafka Sink (detections.behavior.v1)");
+        ).uid("kafka-sink").name("Kafka Sink (detections.v1)");
+
+        dlqStream.sinkTo(BehaviorDlqSinkFactory.create(
+                        config.getKafkaBrokers(), config.getDlqTopic()))
+                .uid("behavior-dlq-sink")
+                .name("Canonical DLQ Sink");
 
         // 调试模式：打印检测结果
         if (config.isDebugPrintEnabled()) {
@@ -231,17 +361,37 @@ public class BehaviorDetectionJob {
         env.execute("Behavior Detection Job");
     }
 
+    static DataStream<ChampionChallengerObservation> buildChampionChallengerObserver(
+            DataStream<ShadowEvaluationRequest> requests,
+            BehaviorJobConfig config) {
+        config.validateChampionChallengerShadowConfig();
+        long observerTimeoutMs = config.getModelShadowPackageLoadTimeoutMs()
+                + config.getAsyncTimeoutMs()
+                + config.getModelShadowChallengerTimeoutMs() + 1000L;
+        return AsyncDataStream.unorderedWait(
+                        requests,
+                        new ChampionChallengerShadowFunction(config),
+                        observerTimeoutMs,
+                        TimeUnit.MILLISECONDS,
+                        config.getAsyncCapacity())
+                .uid("champion-challenger-shadow-observer")
+                .name("Champion Challenger Shadow Observer");
+    }
+
     /**
      * 创建 Kafka Source
      */
-    private static KafkaSource<FeatureStat> createKafkaSource(BehaviorJobConfig config) {
-        return KafkaSource.<FeatureStat>builder()
+    static KafkaSource<RawKafkaRecord> createKafkaSource(BehaviorJobConfig config) {
+        String featureConsumerGroup = config.isModelShadowObservationOnly()
+                ? config.getModelShadowFeatureConsumerGroupId()
+                : config.getConsumerGroupId();
+        return KafkaSource.<RawKafkaRecord>builder()
                 .setBootstrapServers(config.getKafkaBrokers())
                 .setTopics(config.getInputTopic())
-                .setGroupId(config.getConsumerGroupId())
+                .setGroupId(featureConsumerGroup)
                 .setStartingOffsets(OffsetsInitializer.committedOffsets(
                         org.apache.kafka.clients.consumer.OffsetResetStrategy.LATEST))
-                .setValueOnlyDeserializer(new ProtoDeserializer<>(FeatureStat.class))
+                .setDeserializer(new RawKafkaRecordDeserializationSchema())
                 .setProperties(com.traffic.flink.common.ConfigUtil.kafkaClientProperties())
                 .setProperty("partition.discovery.interval.ms", "30000")
                 .setProperty("fetch.min.bytes", "1")
@@ -253,11 +403,14 @@ public class BehaviorDetectionJob {
     /**
      * 创建模型热更新 Kafka Source
      */
-    private static KafkaSource<ModelUpdateEvent> createModelUpdateSource(BehaviorJobConfig config) {
+    static KafkaSource<ModelUpdateEvent> createModelUpdateSource(BehaviorJobConfig config) {
+        String modelUpdateGroup = config.isModelShadowEvaluationEnabled()
+                ? config.getModelShadowUpdateConsumerGroupId()
+                : config.getConsumerGroupId() + "-model-updates";
         return KafkaSource.<ModelUpdateEvent>builder()
                 .setBootstrapServers(config.getKafkaBrokers())
                 .setTopics(config.getModelUpdateTopic())
-                .setGroupId(config.getConsumerGroupId() + "-model-updates")
+                .setGroupId(modelUpdateGroup)
                 .setStartingOffsets(OffsetsInitializer.committedOffsets(
                         org.apache.kafka.clients.consumer.OffsetResetStrategy.LATEST))
                 .setValueOnlyDeserializer(new DeserializationSchema<ModelUpdateEvent>() {
@@ -288,7 +441,7 @@ public class BehaviorDetectionJob {
     /**
      * 配置 Checkpoint
      */
-    private static void configureCheckpoint(StreamExecutionEnvironment env, BehaviorJobConfig config) {
+    static void configureCheckpoint(StreamExecutionEnvironment env, BehaviorJobConfig config) {
         env.enableCheckpointing(config.getCheckpointIntervalMs());
 
         CheckpointConfig checkpointConfig = env.getCheckpointConfig();
@@ -312,7 +465,7 @@ public class BehaviorDetectionJob {
     /**
      * 配置状态后端
      */
-    private static void configureStateBackend(StreamExecutionEnvironment env, BehaviorJobConfig config) {
+    static void configureStateBackend(StreamExecutionEnvironment env, BehaviorJobConfig config) {
                 EmbeddedRocksDBStateBackend stateBackend = new EmbeddedRocksDBStateBackend(true);
                 // Some Flink versions expose enableTtlCompactionFilter(), others do not.
                 // Use reflection to call it when available to preserve compatibility.
@@ -344,7 +497,14 @@ public class BehaviorDetectionJob {
         LOG.info("  Output Topic: {}", config.getOutputTopic());
         LOG.info("  Model Update Topic: {}", config.getModelUpdateTopic());
         LOG.info("  Model Applied Topic: {}", config.getModelAppliedTopic());
-        LOG.info("  Consumer Group: {}", config.getConsumerGroupId());
+        LOG.info("  Consumer Group: {}", config.isModelShadowObservationOnly()
+                ? config.getModelShadowFeatureConsumerGroupId()
+                : config.getConsumerGroupId());
+        if (config.isModelShadowEvaluationEnabled()) {
+            LOG.info("  Shadow Update Consumer Group: {}",
+                    config.getModelShadowUpdateConsumerGroupId());
+            LOG.info("  Shadow Observation Only: {}", config.isModelShadowObservationOnly());
+        }
         LOG.info("  Parallelism: {}", config.getParallelism());
         LOG.info("  Max Parallelism: {}", config.getMaxParallelism());
         LOG.info("  Checkpoint Interval: {}ms", config.getCheckpointIntervalMs());

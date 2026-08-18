@@ -1,8 +1,12 @@
 package com.traffic.flink.feature;
 
 import com.traffic.flink.common.ConfigUtils;
+import com.traffic.flink.common.CanonicalDlqMessage;
+import com.traffic.flink.common.DeploymentActivation;
+import com.traffic.flink.common.ExternalWriteGate;
 import com.traffic.flink.common.KafkaStartingOffsets;
-import com.traffic.flink.common.ProtoDeserializer;
+import com.traffic.flink.common.RawKafkaRecord;
+import com.traffic.flink.common.RawKafkaRecordDeserializationSchema;
 import com.traffic.flink.feature.config.FeatureSetConfig;
 import com.traffic.flink.feature.config.TenantConfig;
 import com.traffic.flink.feature.processor.FeatureProcessFunctionV3;
@@ -10,8 +14,12 @@ import com.traffic.flink.feature.sink.ClickHouseSinkFactory;
 import com.traffic.flink.feature.sink.DLQSinkFactory;
 import com.traffic.flink.feature.sink.KafkaSinkFactory;
 import com.traffic.flink.feature.source.FeatureSetConfigSource;
+import com.traffic.flink.feature.source.SessionEventParseFunction;
 import com.traffic.flink.feature.source.TenantConfigSource;
+import com.traffic.flink.feature.source.ValidatedSessionInput;
 import com.traffic.proto.traffic.v1.FeatureStat;
+import com.traffic.proto.traffic.v1.FeatureFingerprint;
+import com.traffic.proto.traffic.v1.FeatureSeq;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -26,11 +34,13 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.util.OutputTag;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.Properties;
 
 /**
  * Flink Feature Extraction Job（完整增强版 v3）
@@ -49,12 +59,14 @@ import java.time.Duration;
  * 输出:
  *   - feature.stat.v1 (Kafka)
  *   - feature_stat_local (ClickHouse)
- *   - dlq.feature-job (Kafka, 错误记录)
- *   - l2-trigger (侧输出, 候选 L2 Session)
+ *   - dlq.v1 (Kafka, canonical DLQMessageV1Json)
+ *   - optional l2-trigger side output (default off until its topic contract is approved)
  */
 public class FeatureJob {
 
     private static final Logger LOG = LoggerFactory.getLogger(FeatureJob.class);
+    private static final OutputTag<CanonicalDlqMessage> SESSION_PARSE_DLQ_TAG =
+            new OutputTag<CanonicalDlqMessage>("feature-session-parse-dlq") {};
 
     public static void main(String[] args) throws Exception {
         LOG.info("Starting Feature Extraction Job v3 (Full Enhanced Version)...");
@@ -66,9 +78,18 @@ public class FeatureJob {
         String kafkaBrokers = ConfigUtils.get(params, "kafka.brokers", "kafka-bootstrap.middleware.svc:9092");
         String inputTopic = ConfigUtils.get(params, "kafka.input.topic", "session.events.v1");
         String outputTopic = ConfigUtils.get(params, "kafka.output.topic", "feature.stat.v1");
-        String dlqTopic = ConfigUtils.get(params, "kafka.dlq.topic", "dlq.feature-job");
-        String l2TriggerTopic = ConfigUtils.get(params, "kafka.l2.trigger.topic", "l2.trigger.v1");
+        String dlqTopic = ConfigUtils.get(params, "kafka.dlq.topic", "dlq.v1");
+        boolean l2TriggerEnabled = ConfigUtils.getBoolean(params, "l2.trigger.enabled", false);
+        String l2TriggerTopic = ConfigUtils.get(params, "kafka.l2.trigger.topic", "");
+        if (!"dlq.v1".equals(dlqTopic)) {
+            throw new IllegalArgumentException("Feature job failures must use canonical dlq.v1");
+        }
+        if (l2TriggerEnabled && l2TriggerTopic.trim().isEmpty()) {
+            throw new IllegalArgumentException("l2.trigger.topic is required when l2.trigger.enabled=true");
+        }
         String groupId = ConfigUtils.get(params, "kafka.group.id", "flink-feature-job");
+        DeploymentActivation activation = DeploymentActivation.from(
+                params, "flink-feature-job", groupId);
 
         // PostgreSQL 配置
         String postgresUrl = ConfigUtils.get(params, "postgres.url", "jdbc:postgresql://postgres-primary.databases.svc:5432/traffic_platform");
@@ -80,6 +101,10 @@ public class FeatureJob {
         String clickhouseUrl = ConfigUtils.get(params, "clickhouse.url", "clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123");
         String clickhouseDatabase = ConfigUtils.get(params, "clickhouse.database", "traffic");
         String clickhouseTable = ConfigUtils.get(params, "clickhouse.table", "feature_stat");
+        String clickhouseSequenceTable = ConfigUtils.get(
+                params, "clickhouse.sequence.table", "feature_seq");
+        String clickhouseFingerprintTable = ConfigUtils.get(
+                params, "clickhouse.fingerprint.table", "feature_fp");
         String clickhouseUser = ConfigUtils.get(params, "clickhouse.user", "default");
         String clickhousePassword = ConfigUtils.get(params, "clickhouse.password", "");
 
@@ -89,10 +114,15 @@ public class FeatureJob {
                 "checkpoint.path",
                 "s3://flink-checkpoints/checkpoints/feature-job");
         long checkpointInterval = ConfigUtils.getLong(params, "checkpoint.interval.ms", 60000);
+        long checkpointTimeout = ConfigUtils.getLong(params, "checkpoint.timeout.ms", 600000);
 
         // 作业配置
         int parallelism = ConfigUtils.getInt(params, "parallelism", 4);
         int watermarkDelaySeconds = ConfigUtils.getInt(params, "watermark.delay.seconds", 10);
+        long allowedLatenessMs = ConfigUtils.getLong(params, "allowed.lateness.ms", 0L);
+        if (watermarkDelaySeconds < 0 || allowedLatenessMs < 0L) {
+            throw new IllegalArgumentException("watermark delay and allowed lateness must not be negative");
+        }
 
         // 降级配置
         boolean enableSampling = ConfigUtils.getBoolean(params, "degradation.sampling.enabled", false);
@@ -106,7 +136,7 @@ public class FeatureJob {
         env.setParallelism(parallelism);
 
         // 配置 Checkpoint
-        configureCheckpoint(env, checkpointPath, checkpointInterval);
+        configureCheckpoint(env, checkpointPath, checkpointInterval, checkpointTimeout);
 
         // 配置重启策略。默认覆盖短时 Kafka/存储故障窗口，仍允许通过合同化参数调整。
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
@@ -116,26 +146,34 @@ public class FeatureJob {
         ));
 
         // ==================== Kafka Source ====================
-        KafkaSource<SessionEvent> sessionSource = KafkaSource.<SessionEvent>builder()
+        KafkaSource<RawKafkaRecord> sessionSource = KafkaSource.<RawKafkaRecord>builder()
                 .setBootstrapServers(kafkaBrokers)
                 .setTopics(inputTopic)
                 .setGroupId(groupId)
                 .setStartingOffsets(KafkaStartingOffsets.from(params))
-                .setValueOnlyDeserializer(new ProtoDeserializer<>(SessionEvent.class, true, true))
-                .setProperties(ConfigUtils.kafkaClientProperties(params))
-                .setProperty("partition.discovery.interval.ms", "30000")
-                .setProperty("max.poll.records", "1000")
+                .setDeserializer(new RawKafkaRecordDeserializationSchema())
+                .setProperties(featureConsumerProperties(params))
                 .build();
 
-        WatermarkStrategy<SessionEvent> watermarkStrategy = WatermarkStrategy
-                .<SessionEvent>forBoundedOutOfOrderness(Duration.ofSeconds(watermarkDelaySeconds))
-                .withTimestampAssigner((event, timestamp) -> event.getTsEnd())
+        WatermarkStrategy<ValidatedSessionInput> watermarkStrategy = WatermarkStrategy
+                .<ValidatedSessionInput>forBoundedOutOfOrderness(Duration.ofSeconds(watermarkDelaySeconds))
+                .withTimestampAssigner((input, timestamp) -> input.getSession().getTsEnd())
                 .withIdleness(Duration.ofMinutes(1));
 
-        DataStream<SessionEvent> sessionStream = env
-                .fromSource(sessionSource, watermarkStrategy, "Kafka-Session-Source")
+        DataStream<RawKafkaRecord> rawSessionStream = env
+                .fromSource(sessionSource, WatermarkStrategy.noWatermarks(), "Kafka-Session-Source")
                 .uid("session-source")
                 .name("Session Events Source");
+
+        SingleOutputStreamOperator<ValidatedSessionInput> validatedSessionStream = rawSessionStream
+                .process(new SessionEventParseFunction(SESSION_PARSE_DLQ_TAG))
+                .uid("filter-invalid")
+                .name("Validate SessionEvent with source tuple");
+
+        DataStream<ValidatedSessionInput> sessionStream = validatedSessionStream
+                .assignTimestampsAndWatermarks(watermarkStrategy)
+                .uid("feature-session-watermark")
+                .name("Assign SessionEvent Watermarks");
 
         // ==================== PostgreSQL Config Sources ====================
         
@@ -178,53 +216,87 @@ public class FeatureJob {
 
         // ==================== 数据流处理 ====================
         
-        // 过滤无效数据
-        DataStream<SessionEvent> validSessionStream = sessionStream
-                .filter(session -> session != null &&
-                        session.getHeader() != null &&
-                        session.getSessionId() != null &&
-                        !session.getSessionId().isEmpty())
-                .uid("filter-invalid")
-                .name("Filter Invalid Sessions");
-
         // 特征计算（连接 BroadcastStream）
-        SingleOutputStreamOperator<FeatureStat> featureStream = validSessionStream
+        SingleOutputStreamOperator<FeatureStat> featureStream = sessionStream
                 .connect(configBroadcastStream)
-                .process(new FeatureProcessFunctionV3(enableSampling, samplingRate))
+                .process(new FeatureProcessFunctionV3(
+                        enableSampling, samplingRate, allowedLatenessMs))
                 .uid("feature-calculator-v3")
                 .name("Feature Calculator v3");
 
         // 提取侧输出
-        DataStream<String> dlqStream = featureStream.getSideOutput(FeatureProcessFunctionV3.DLQ_TAG);
+        DataStream<CanonicalDlqMessage> dlqStream = validatedSessionStream
+                .getSideOutput(SESSION_PARSE_DLQ_TAG)
+                .union(featureStream.getSideOutput(FeatureProcessFunctionV3.DLQ_TAG));
         DataStream<SessionEvent> l2TriggerStream = featureStream.getSideOutput(FeatureProcessFunctionV3.L2_TRIGGER_TAG);
+        DataStream<FeatureSeq> featureSequenceStream = featureStream.getSideOutput(
+                FeatureProcessFunctionV3.FEATURE_SEQ_TAG);
+        DataStream<FeatureFingerprint> featureFingerprintStream = featureStream.getSideOutput(
+                FeatureProcessFunctionV3.FEATURE_FINGERPRINT_TAG);
+
+        DataStream<FeatureStat> externalFeatureStream = featureStream
+                .filter(new ExternalWriteGate<>(activation))
+                .uid("feature-external-write-gate-v1")
+                .name("Deployment Gate (Feature external sinks)");
+        DataStream<FeatureSeq> externalSequenceStream = featureSequenceStream
+                .filter(new ExternalWriteGate<>(activation))
+                .uid("feature-sequence-external-write-gate-v1")
+                .name("Deployment Gate (Feature sequence sink)");
+        DataStream<FeatureFingerprint> externalFingerprintStream = featureFingerprintStream
+                .filter(new ExternalWriteGate<>(activation))
+                .uid("feature-fingerprint-external-write-gate-v1")
+                .name("Deployment Gate (Feature fingerprint sink)");
+        DataStream<CanonicalDlqMessage> externalDlqStream = dlqStream
+                .filter(new ExternalWriteGate<>(activation))
+                .uid("feature-dlq-external-write-gate-v1")
+                .name("Deployment Gate (Feature DLQ)");
+        DataStream<SessionEvent> externalL2TriggerStream = l2TriggerStream
+                .filter(new ExternalWriteGate<>(activation))
+                .uid("feature-l2-external-write-gate-v1")
+                .name("Deployment Gate (Feature L2 trigger)");
 
         // ==================== Sink 配置 ====================
 
         // Sink 1: ClickHouse
-        featureStream.addSink(
+        externalFeatureStream.addSink(
                 ClickHouseSinkFactory.createFeatureSink(
                         clickhouseUrl,
                         clickhouseDatabase,
                         clickhouseTable,
                         clickhouseUser,
-                        clickhousePassword
+                        clickhousePassword,
+                        activation
                 )
         ).uid("clickhouse-sink").name("ClickHouse Sink");
 
+        externalSequenceStream.addSink(
+                ClickHouseSinkFactory.createFeatureSequenceSink(
+                        clickhouseUrl, clickhouseDatabase, clickhouseSequenceTable,
+                        clickhouseUser, clickhousePassword, activation)
+        ).uid("clickhouse-feature-sequence-sink").name("ClickHouse Feature Sequence Sink");
+
+        externalFingerprintStream.addSink(
+                ClickHouseSinkFactory.createFeatureFingerprintSink(
+                        clickhouseUrl, clickhouseDatabase, clickhouseFingerprintTable,
+                        clickhouseUser, clickhousePassword, activation)
+        ).uid("clickhouse-feature-fingerprint-sink").name("ClickHouse Feature Fingerprint Sink");
+
         // Sink 2: Kafka（主输出）
-        featureStream.sinkTo(
+        externalFeatureStream.sinkTo(
                 KafkaSinkFactory.createFeatureSink(kafkaBrokers, outputTopic)
         ).uid("kafka-sink").name("Kafka Sink");
 
         // Sink 3: DLQ Kafka
-        dlqStream.sinkTo(
+        externalDlqStream.sinkTo(
                 DLQSinkFactory.createDLQSink(kafkaBrokers, dlqTopic)
         ).uid("dlq-sink").name("DLQ Sink");
 
         // Sink 4: L2 Trigger Kafka
-        l2TriggerStream.sinkTo(
-                KafkaSinkFactory.createSessionEventSink(kafkaBrokers, l2TriggerTopic)
-        ).uid("l2-trigger-sink").name("L2 Trigger Sink");
+        if (l2TriggerEnabled) {
+            externalL2TriggerStream.sinkTo(
+                    KafkaSinkFactory.createSessionEventSink(kafkaBrokers, l2TriggerTopic)
+            ).uid("l2-trigger-sink").name("L2 Trigger Sink");
+        }
 
         // ==================== 调试输出（可选）====================
         if (ConfigUtils.getBoolean(params, "debug.print", false)) {
@@ -236,11 +308,16 @@ public class FeatureJob {
         // ==================== 执行作业 ====================
         LOG.info("Job v3 configured successfully:");
         LOG.info("  Input: {}", inputTopic);
+        LOG.info("  Deployment Activation: {}", activation);
         LOG.info("  Output: {} + {}", outputTopic, clickhouseTable);
+        LOG.info("  Feature sequence/fingerprint tables: {} + {}",
+                clickhouseSequenceTable, clickhouseFingerprintTable);
         LOG.info("  DLQ: {}", dlqTopic);
-        LOG.info("  L2 Trigger: {}", l2TriggerTopic);
+        LOG.info("  L2 Trigger: enabled={}, topic={}", l2TriggerEnabled, l2TriggerTopic);
         LOG.info("  Config Sources: PostgreSQL (poll interval: {}ms)", configPollIntervalMs);
         LOG.info("  Parallelism: {}", parallelism);
+        LOG.info("  Event time: watermark delay={}s, allowed lateness={}ms",
+                watermarkDelaySeconds, allowedLatenessMs);
         LOG.info("  Checkpoint: {}ms", checkpointInterval);
         LOG.info("  Degradation: sampling={}, rate={}", enableSampling, samplingRate);
 
@@ -253,12 +330,15 @@ public class FeatureJob {
     private static void configureCheckpoint(
             StreamExecutionEnvironment env,
             String checkpointPath,
-            long intervalMs
+            long intervalMs,
+            long timeoutMs
     ) {
         env.enableCheckpointing(intervalMs, CheckpointingMode.EXACTLY_ONCE);
 
         CheckpointConfig checkpointConfig = env.getCheckpointConfig();
-        checkpointConfig.setCheckpointTimeout(120000);
+        // checkpoint.timeout.ms 从配置读取（properties 声明 600000），
+        // 此前硬编码 120000 导致声明与实现不一致
+        checkpointConfig.setCheckpointTimeout(timeoutMs);
         checkpointConfig.setMinPauseBetweenCheckpoints(intervalMs / 2);
         checkpointConfig.setMaxConcurrentCheckpoints(1);
         checkpointConfig.setExternalizedCheckpointCleanup(
@@ -272,5 +352,15 @@ public class FeatureJob {
         checkpointConfig.setCheckpointStorage(new FileSystemCheckpointStorage(checkpointPath));
 
         LOG.info("Checkpoint configured: path={}, interval={}ms", checkpointPath, intervalMs);
+    }
+
+    static Properties featureConsumerProperties(ParameterTool params) {
+        Properties properties = ConfigUtils.kafkaClientProperties(params);
+        // KafkaSource offsets are committed only by a completed Flink checkpoint.
+        properties.setProperty("enable.auto.commit", "false");
+        properties.setProperty("commit.offsets.on.checkpoint", "true");
+        properties.setProperty("partition.discovery.interval.ms", "30000");
+        properties.setProperty("max.poll.records", "1000");
+        return properties;
     }
 }

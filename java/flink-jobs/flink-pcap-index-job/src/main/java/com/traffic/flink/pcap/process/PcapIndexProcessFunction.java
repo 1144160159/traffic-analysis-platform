@@ -149,14 +149,16 @@ public class PcapIndexProcessFunction extends ProcessFunction<PcapIndexMeta, Pca
 
         } catch (Exception e) {
             metrics.incError();
-            LOG.error("Error processing PCAP index: tenant={}, probe={}, file={}, error={}",
+            // 校验失败走上面的 DLQ 路径；此处是意外的系统性异常
+            // （如 out.collect 抛错、序列化/指标异常），不允许吞掉后继续——
+            // 否则作业"健康"运行但数据停更，且已部分 collect 的记录会
+            // 同时进入主流与 DLQ 造成重复。统一上抛，由 Flink 重启策略
+            // （fixedDelayRestart）从 checkpoint 恢复。
+            LOG.error("Unexpected error processing PCAP index: tenant={}, probe={}, file={}, error={}",
                     meta.getTenantId(), meta.getProbeId(), meta.getFileKey(),
                     e.getMessage(), e);
-            
-            // 异常也写入 DLQ
-            String dlqMessage = buildDLQMessage(meta, "Exception: " + e.getMessage());
-            ctx.output(DLQ_TAG, dlqMessage);
-            metrics.incDlqWrite();
+            throw new RuntimeException(
+                    "pcap index processing failure: file=" + meta.getFileKey(), e);
         }
     }
 

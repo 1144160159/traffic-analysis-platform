@@ -56,4 +56,64 @@ public interface UploadFlowsResponseOrBuilder extends
    */
   com.google.protobuf.ByteString
       getMessageBytes();
+
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  java.util.List<com.traffic.proto.traffic.v1.FlowItemResult>
+      getItemResultsList();
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  com.traffic.proto.traffic.v1.FlowItemResult getItemResults(int index);
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  int getItemResultsCount();
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  java.util.List<? extends com.traffic.proto.traffic.v1.FlowItemResultOrBuilder>
+      getItemResultsOrBuilderList();
+  /**
+   * <pre>
+   * Additive exact-set acknowledgement. When present, there is exactly one
+   * result for every request input_index; old aggregate fields remain for
+   * wire compatibility but cannot override these dispositions.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.FlowItemResult item_results = 5 [json_name = "itemResults"];</code>
+   */
+  com.traffic.proto.traffic.v1.FlowItemResultOrBuilder getItemResultsOrBuilder(
+      int index);
+
+  /**
+   * <code>uint32 response_revision = 6 [json_name = "responseRevision"];</code>
+   * @return The responseRevision.
+   */
+  int getResponseRevision();
 }

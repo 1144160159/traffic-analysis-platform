@@ -6,6 +6,7 @@ import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.internals.RecordHeader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,30 +65,47 @@ public class KafkaSinkFactory {
                 Long timestamp
         ) {
             if (element == null) {
-                return null;
+				throw new IllegalArgumentException("campaign Kafka publisher rejects null records");
             }
 
-            // Key: tenant_id:campaign_id
-            String key = buildKey(element);
-            byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
-            
-            // Value: Protobuf 二进制
-            byte[] valueBytes = element.toByteArray();
-
-            // 使用战役结束时间作为 Kafka 记录时间戳
-            Long recordTimestamp = element.getTsEnd() > 0 ? element.getTsEnd() : null;
-
-            return new ProducerRecord<>(topic, null, recordTimestamp, keyBytes, valueBytes);
+			return buildCampaignRecord(topic, element);
         }
 
-        private String buildKey(Campaign campaign) {
-            String tenantId = campaign.getTenantId();
-            String campaignId = campaign.getCampaignId();
-            
-            if (tenantId == null) tenantId = "unknown";
-            if (campaignId == null) campaignId = "unknown";
-            
-            return tenantId + ":" + campaignId;
-        }
     }
+
+	static String buildCampaignKey(Campaign campaign) {
+		if (campaign == null) {
+			throw new IllegalArgumentException("campaign Kafka publisher rejects null records");
+		}
+		String tenantId = campaign.getTenantId().trim();
+		String campaignId = campaign.getCampaignId().trim();
+		if (tenantId.isEmpty() || "unknown".equalsIgnoreCase(tenantId) || campaignId.isEmpty() || !campaign.hasHeader() ||
+				!tenantId.equals(campaign.getHeader().getTenantId())) {
+			throw new IllegalArgumentException("campaign Kafka key requires a consistent tenant and campaign identity");
+		}
+		return tenantId + ":" + campaignId;
+	}
+
+	static ProducerRecord<byte[], byte[]> buildCampaignRecord(String topic, Campaign campaign) {
+		if (topic == null || topic.trim().isEmpty()) {
+			throw new IllegalArgumentException("campaign Kafka topic is required");
+		}
+		String key = buildCampaignKey(campaign);
+		Long recordTimestamp = campaign.getTsEnd() > 0 ? campaign.getTsEnd() : null;
+		ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(
+				topic, null, recordTimestamp, key.getBytes(StandardCharsets.UTF_8), campaign.toByteArray());
+		addHeader(record, "content_type", "application/x-protobuf");
+		addHeader(record, "proto_message_type", "traffic.v1.Campaign");
+		addHeader(record, "schema_version", "1");
+		addHeader(record, "source_service", "flink-cep-job");
+		addHeader(record, "target_topic", topic);
+		addHeader(record, "tenant_id", campaign.getTenantId());
+		addHeader(record, "campaign_id", campaign.getCampaignId());
+		addHeader(record, "event_id", campaign.getEventId());
+		return record;
+	}
+
+	private static void addHeader(ProducerRecord<byte[], byte[]> record, String name, String value) {
+		record.headers().add(new RecordHeader(name, value.getBytes(StandardCharsets.UTF_8)));
+	}
 }

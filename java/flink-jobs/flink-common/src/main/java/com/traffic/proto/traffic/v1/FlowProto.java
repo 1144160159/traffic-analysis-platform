@@ -40,7 +40,7 @@ public final class FlowProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\025traffic/v1/flow.proto\022\ntraffic.v1\032\027tra" +
-      "ffic/v1/common.proto\"\257\006\n\tFlowEvent\022/\n\006he" +
+      "ffic/v1/common.proto\"\264\007\n\tFlowEvent\022/\n\006he" +
       "ader\030\001 \001(\0132\027.traffic.v1.EventHeaderR\006hea" +
       "der\022\027\n\007flow_id\030\002 \001(\tR\006flowId\022!\n\014communit" +
       "y_id\030\003 \001(\tR\013communityId\022+\n\005tuple\030\004 \001(\0132\025" +
@@ -60,21 +60,25 @@ public final class FlowProto {
       "\014active_stats\030\024 \001(\0132\033.traffic.v1.ActiveI" +
       "dleStatsR\013activeStats\022:\n\nidle_stats\030\025 \001(" +
       "\0132\033.traffic.v1.ActiveIdleStatsR\tidleStat" +
-      "s\022#\n\rsubflow_count\030\026 \001(\rR\014subflowCount\"o" +
-      "\n\tFlowBatch\022+\n\005flows\030\001 \003(\0132\025.traffic.v1." +
-      "FlowEventR\005flows\0225\n\010metadata\030\002 \001(\0132\031.tra" +
-      "ffic.v1.BatchMetadataR\010metadata\"\331\001\n\rBatc" +
-      "hMetadata\022\031\n\010batch_id\030\001 \001(\tR\007batchId\022\033\n\t" +
-      "tenant_id\030\002 \001(\tR\010tenantId\022\031\n\010probe_id\030\003 " +
-      "\001(\tR\007probeId\022\025\n\006run_id\030\004 \001(\tR\005runId\022\035\n\nb" +
-      "atch_size\030\005 \001(\rR\tbatchSize\022 \n\013compressio" +
-      "n\030\006 \001(\tR\013compression\022\035\n\ncreated_at\030\007 \001(\003" +
-      "R\tcreatedAtB\323\001\n\034com.traffic.proto.traffi" +
-      "c.v1B\tFlowProtoP\001Z_github.com/1144160159" +
-      "/traffic-analysis-platform/go/control-pl" +
-      "ane/pkg/proto/traffic/v1;trafficv1\242\002\003TXX" +
-      "\252\002\nTraffic.V1\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\" +
-      "GPBMetadata\352\002\013Traffic::V1b\006proto3"
+      "s\022#\n\rsubflow_count\030\026 \001(\rR\014subflowCount\022+" +
+      "\n\021identity_revision\030\027 \001(\rR\020identityRevis" +
+      "ion\022V\n\023feature_observation\030\030 \001(\0132%.traff" +
+      "ic.v1.TrafficFeatureObservationR\022feature" +
+      "Observation\"o\n\tFlowBatch\022+\n\005flows\030\001 \003(\0132" +
+      "\025.traffic.v1.FlowEventR\005flows\0225\n\010metadat" +
+      "a\030\002 \001(\0132\031.traffic.v1.BatchMetadataR\010meta" +
+      "data\"\331\001\n\rBatchMetadata\022\031\n\010batch_id\030\001 \001(\t" +
+      "R\007batchId\022\033\n\ttenant_id\030\002 \001(\tR\010tenantId\022\031" +
+      "\n\010probe_id\030\003 \001(\tR\007probeId\022\025\n\006run_id\030\004 \001(" +
+      "\tR\005runId\022\035\n\nbatch_size\030\005 \001(\rR\tbatchSize\022" +
+      " \n\013compression\030\006 \001(\tR\013compression\022\035\n\ncre" +
+      "ated_at\030\007 \001(\003R\tcreatedAtB\323\001\n\034com.traffic" +
+      ".proto.traffic.v1B\tFlowProtoP\001Z_github.c" +
+      "om/1144160159/traffic-analysis-platform/" +
+      "go/control-plane/pkg/proto/traffic/v1;tr" +
+      "afficv1\242\002\003TXX\252\002\nTraffic.V1\312\002\nTraffic\\V1\342" +
+      "\002\026Traffic\\V1\\GPBMetadata\352\002\013Traffic::V1b\006" +
+      "proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -86,7 +90,7 @@ public final class FlowProto {
     internal_static_traffic_v1_FlowEvent_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_FlowEvent_descriptor,
-        new java.lang.String[] { "Header", "FlowId", "CommunityId", "Tuple", "Direction", "TsStart", "TsEnd", "DurationMs", "PacketsFwd", "PacketsBwd", "BytesFwd", "BytesBwd", "Pps", "Bps", "PktlenStats", "IatStats", "TcpFlagsFwd", "TcpFlagsBwd", "Tos", "ActiveStats", "IdleStats", "SubflowCount", });
+        new java.lang.String[] { "Header", "FlowId", "CommunityId", "Tuple", "Direction", "TsStart", "TsEnd", "DurationMs", "PacketsFwd", "PacketsBwd", "BytesFwd", "BytesBwd", "Pps", "Bps", "PktlenStats", "IatStats", "TcpFlagsFwd", "TcpFlagsBwd", "Tos", "ActiveStats", "IdleStats", "SubflowCount", "IdentityRevision", "FeatureObservation", });
     internal_static_traffic_v1_FlowBatch_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_traffic_v1_FlowBatch_fieldAccessorTable = new

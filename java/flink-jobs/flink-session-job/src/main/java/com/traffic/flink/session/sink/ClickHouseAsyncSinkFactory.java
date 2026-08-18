@@ -64,7 +64,9 @@ public class ClickHouseAsyncSinkFactory {
                 config.getClickhouseAsyncCapacity()
         ).filter(session -> session != null) // 过滤掉成功写入的空结果
          .name("ClickHouse Async Sink (with failover)")
-         .uid("clickhouse-async-sink");
+         // uid 与真实链路 CheckpointAwareSessionClickHouseSink 的
+         // "clickhouse-async-sink" 区分，避免误接线时 UID 冲突
+         .uid("clickhouse-async-sink-legacy-config");
     }
 
     /**
@@ -96,6 +98,6 @@ public class ClickHouseAsyncSinkFactory {
                 100         // capacity
         ).filter(session -> session != null)
          .name("ClickHouse Async Sink")
-         .uid("clickhouse-async-sink");
+         .uid("clickhouse-async-sink-legacy-defaults");
     }
 }

@@ -49,7 +49,7 @@ class AlertGeneratorTest {
                     }
                     String tenant = detection.getHeader().getTenantId();
                     if (tenant == null || tenant.isEmpty()) {
-                        tenant = "default";
+                        tenant = "invalid-tenant";
                     }
                     String raw = tenant + ":" + detection.getTopLabel() + ":" + detection.getCommunityId();
                     return tenant + ":" + md5Hex(raw);
@@ -86,6 +86,16 @@ class AlertGeneratorTest {
         assertFalse(alert.getEventId().isEmpty());
         assertEquals(TRACE_ID, alert.getTraceId());
         assertTrue(alert.getArkimeSessionLink().contains("arkime.test"));
+        assertEquals("192.0.2.10", alert.getSrcIp());
+        assertEquals("198.51.100.20", alert.getDstIp());
+        assertEquals(54321, alert.getSrcPort());
+        assertEquals(443, alert.getDstPort());
+        assertEquals(6, alert.getProtocol());
+        assertEquals("TCP", alert.getProtocolName());
+        assertEquals("9", alert.getRuleVersion());
+        assertEquals(2, alert.getEvidenceIdsCount());
+        assertEquals("source-evidence-1", alert.getEvidenceIds(0));
+        assertTrue(alert.getEvidenceIds(1).startsWith("evidence-"));
 
         // 验证 Evidence
         assertNotNull(evidence);
@@ -257,6 +267,37 @@ class AlertGeneratorTest {
     }
 
     @Test
+    @DisplayName("缺失租户不得生成 default 租户告警")
+    void missingTenantIsRejected() throws Exception {
+        DetectionBehavior detection = createDetection(
+                "", "community-missing-tenant", "malware", 0.95f, 2000L);
+
+        testHarness.processElement(new StreamRecord<>(detection, 2000L));
+
+        assertEquals(0, extractOutput().size());
+    }
+
+    @Test
+    @DisplayName("缺失五元组时保留未知值且不得从 Community ID 伪造 IP")
+    void missingTupleIsNotFabricatedFromCommunityId() throws Exception {
+        DetectionBehavior detection = createDetection(
+                "tenant-1", "1:one-way-community-id", "malware", 0.95f, 3000L)
+                .toBuilder()
+                .clearTuple()
+                .build();
+
+        testHarness.processElement(new StreamRecord<>(detection, 3000L));
+
+        Alert alert = extractOutput().get(0).f0;
+        assertEquals("", alert.getSrcIp());
+        assertEquals("", alert.getDstIp());
+        assertEquals(0, alert.getProtocol());
+        assertEquals("UNKNOWN", alert.getProtocolName());
+        assertFalse(alert.getSrcIp().startsWith("cid:"));
+        assertFalse(alert.getDstIp().startsWith("cid:"));
+    }
+
+    @Test
     @DisplayName("Arkime 链接生成正确性")
     void testArkimeLinkGeneration() throws Exception {
         long ts = 1700000000000L;
@@ -268,7 +309,9 @@ class AlertGeneratorTest {
         String arkimeLink = output.get(0).f0.getArkimeSessionLink();
 
         assertTrue(arkimeLink.contains("arkime.test:8005"));
-        assertTrue(arkimeLink.contains("community.id==1:abc123=="));
+        // communityId 已做 URL 编码（1:abc123== -> 1%3Aabc123%3D%3D），防止
+        // '='、'&' 等字符破坏 query 结构；服务端解码后表达式语义不变。
+        assertTrue(arkimeLink.contains("community.id==1%3Aabc123%3D%3D"));
         assertTrue(arkimeLink.contains("startTime="));
         assertTrue(arkimeLink.contains("stopTime="));
     }
@@ -301,9 +344,18 @@ class AlertGeneratorTest {
                 .setObjectId("session-" + ts)
                 .setTs(ts)
                 .addLabels(topLabel)
+                .addLabels("rule_version:9")
                 .addScores(topScore)
                 .setTopLabel(topLabel)
                 .setTopScore(topScore)
+                .setTuple(FiveTuple.newBuilder()
+                        .setSrcIp("192.0.2.10")
+                        .setDstIp("198.51.100.20")
+                        .setSrcPort(54321)
+                        .setDstPort(443)
+                        .setProtocol(6)
+                        .build())
+                .addEvidenceIds("source-evidence-1")
                 .build();
     }
 

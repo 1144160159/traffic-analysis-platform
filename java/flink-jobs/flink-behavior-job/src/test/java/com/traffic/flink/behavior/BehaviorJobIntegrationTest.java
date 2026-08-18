@@ -2,12 +2,15 @@ package com.traffic.flink.behavior;
 
 import com.traffic.flink.behavior.config.BehaviorJobConfig;
 import com.traffic.flink.behavior.detector.BehaviorDetectorFunction;
+import com.traffic.flink.behavior.detector.BehaviorInferenceOutcome;
 import com.traffic.flink.behavior.detector.ModelRegistry;
 import com.traffic.flink.common.ProtoDeserializer;
 import com.traffic.flink.common.ProtoSerializer;
 import com.traffic.proto.traffic.v1.DetectionBehavior;
 import com.traffic.proto.traffic.v1.EventHeader;
+import com.traffic.proto.traffic.v1.FeatureAvailability;
 import com.traffic.proto.traffic.v1.FeatureStat;
+import com.traffic.proto.traffic.v1.FiveTuple;
 
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.AsyncDataStream;
@@ -115,7 +118,7 @@ public class BehaviorJobIntegrationTest {
             // When: 构建数据流
             DataStream<FeatureStat> input = env.fromCollection(testData);
 
-            DataStream<DetectionBehavior> detections = AsyncDataStream.unorderedWait(
+            DataStream<BehaviorInferenceOutcome> outcomes = AsyncDataStream.unorderedWait(
                     input,
                     new BehaviorDetectorFunction(config, modelRegistry),
                     config.getAsyncTimeoutMs(),
@@ -123,9 +126,8 @@ public class BehaviorJobIntegrationTest {
                     config.getAsyncCapacity()
             );
 
-            // 收集结果
-            List<DetectionBehavior> results = new ArrayList<>();
-            detections.executeAndCollect().forEachRemaining(results::add);
+            // 收集结果（只取 DETECTED/LOW_CONFIDENCE 的检测）
+            List<DetectionBehavior> results = collectDetections(outcomes);
 
             // Then: pipeline ran without errors, results may vary by model version
             assertNotNull(results);
@@ -147,7 +149,7 @@ public class BehaviorJobIntegrationTest {
             // When
             DataStream<FeatureStat> input = env.fromCollection(testData);
 
-            DataStream<DetectionBehavior> detections = AsyncDataStream.unorderedWait(
+            DataStream<BehaviorInferenceOutcome> outcomes = AsyncDataStream.unorderedWait(
                     input,
                     new BehaviorDetectorFunction(config, modelRegistry),
                     config.getAsyncTimeoutMs(),
@@ -157,9 +159,10 @@ public class BehaviorJobIntegrationTest {
 
             // 过滤低置信度 (use local variable to avoid capturing non-serializable test instance)
             float minThreshold = config.getMinConfidenceThreshold();
-            DataStream<DetectionBehavior> filtered = detections.filter(
-                    d -> d.getTopScore() >= minThreshold
-            );
+            DataStream<DetectionBehavior> filtered = outcomes
+                    .filter(o -> o.getDetection() != null
+                            && o.getDetection().getTopScore() >= minThreshold)
+                    .map(o -> o.getDetection());
 
             List<DetectionBehavior> results = new ArrayList<>();
             filtered.executeAndCollect().forEachRemaining(results::add);
@@ -192,7 +195,7 @@ public class BehaviorJobIntegrationTest {
             // When
             DataStream<FeatureStat> input = env.fromCollection(testData);
 
-            DataStream<DetectionBehavior> detections = AsyncDataStream.unorderedWait(
+            DataStream<BehaviorInferenceOutcome> outcomes = AsyncDataStream.unorderedWait(
                     input,
                     new BehaviorDetectorFunction(config, modelRegistry),
                     config.getAsyncTimeoutMs(),
@@ -200,8 +203,7 @@ public class BehaviorJobIntegrationTest {
                     config.getAsyncCapacity()
             );
 
-            List<DetectionBehavior> results = new ArrayList<>();
-            detections.executeAndCollect().forEachRemaining(results::add);
+            List<DetectionBehavior> results = collectDetections(outcomes);
 
             // Then: 应该检测到多种类型的威胁
             Set<String> detectedTypes = new HashSet<>();
@@ -234,7 +236,7 @@ public class BehaviorJobIntegrationTest {
 
             DataStream<FeatureStat> input = env.fromCollection(testData);
 
-            DataStream<DetectionBehavior> detections = AsyncDataStream.unorderedWait(
+            DataStream<BehaviorInferenceOutcome> outcomes = AsyncDataStream.unorderedWait(
                     input,
                     new BehaviorDetectorFunction(config, modelRegistry),
                     config.getAsyncTimeoutMs(),
@@ -242,8 +244,7 @@ public class BehaviorJobIntegrationTest {
                     config.getAsyncCapacity()
             );
 
-            List<DetectionBehavior> results = new ArrayList<>();
-            detections.executeAndCollect().forEachRemaining(results::add);
+            List<DetectionBehavior> results = collectDetections(outcomes);
 
             long elapsed = System.currentTimeMillis() - startTime;
 
@@ -277,7 +278,7 @@ public class BehaviorJobIntegrationTest {
             // When
             DataStream<FeatureStat> input = env.fromCollection(testData);
 
-            DataStream<DetectionBehavior> detections = AsyncDataStream.unorderedWait(
+            DataStream<BehaviorInferenceOutcome> outcomes = AsyncDataStream.unorderedWait(
                     input,
                     new BehaviorDetectorFunction(config, modelRegistry),
                     config.getAsyncTimeoutMs(),
@@ -289,7 +290,9 @@ public class BehaviorJobIntegrationTest {
             
             // 应该不抛出异常
             assertDoesNotThrow(() -> {
-                detections.executeAndCollect().forEachRemaining(results::add);
+                outcomes.executeAndCollect().forEachRemaining(o -> {
+                    if (o.getDetection() != null) results.add(o.getDetection());
+                });
             });
 
             // Then: 应该处理有效的特征
@@ -318,7 +321,7 @@ public class BehaviorJobIntegrationTest {
             // When
             DataStream<FeatureStat> input = env.fromCollection(testData);
 
-            DataStream<DetectionBehavior> detections = AsyncDataStream.unorderedWait(
+            DataStream<BehaviorInferenceOutcome> outcomes = AsyncDataStream.unorderedWait(
                     input,
                     new BehaviorDetectorFunction(timeoutConfig, timeoutRegistry),
                     timeoutConfig.getAsyncTimeoutMs(),
@@ -326,12 +329,14 @@ public class BehaviorJobIntegrationTest {
                     timeoutConfig.getAsyncCapacity()
             );
 
-            List<DetectionBehavior> results = new ArrayList<>();
+            List<BehaviorInferenceOutcome> results = new ArrayList<>();
             
-            // Then: 超时应该被优雅处理，不应该崩溃
+            // Then: 超时应该被优雅处理（若推理先于 1ms 完成则产生正常 outcome，
+            // 若超时触发则产生 TIMEOUT outcome），任何情况都不应崩溃
             assertDoesNotThrow(() -> {
-                detections.executeAndCollect().forEachRemaining(results::add);
+                outcomes.executeAndCollect().forEachRemaining(results::add);
             });
+            assertFalse(results.isEmpty(), "every input must produce an explicit outcome");
 
             timeoutRegistry.close();
         }
@@ -359,7 +364,7 @@ public class BehaviorJobIntegrationTest {
 
             DataStream<FeatureStat> input = env.fromCollection(testData);
 
-            DataStream<DetectionBehavior> detections = AsyncDataStream.unorderedWait(
+            DataStream<BehaviorInferenceOutcome> outcomes = AsyncDataStream.unorderedWait(
                     input,
                     new BehaviorDetectorFunction(config, modelRegistry),
                     config.getAsyncTimeoutMs(),
@@ -367,8 +372,7 @@ public class BehaviorJobIntegrationTest {
                     config.getAsyncCapacity()
             );
 
-            List<DetectionBehavior> results = new ArrayList<>();
-            detections.executeAndCollect().forEachRemaining(results::add);
+            List<DetectionBehavior> results = collectDetections(outcomes);
 
             long elapsed = System.currentTimeMillis() - startTime;
 
@@ -381,25 +385,52 @@ public class BehaviorJobIntegrationTest {
 
     // ==================== 辅助方法 ====================
 
-    private EventHeader createHeader(String tenantId, String eventId) {
+    private EventHeader createHeader(String tenantId, String eventId, long eventTs) {
         return EventHeader.newBuilder()
                 .setTenantId(tenantId)
                 .setRunId("integration-test-run")
                 .setEventId(eventId)
-                .setEventTs(System.currentTimeMillis())
-                .setIngestTs(System.currentTimeMillis())
+                .setEventTs(eventTs)
+                .setIngestTs(eventTs + 1)
                 .setProbeId("test-probe")
                 .setFeatureSetId("feature-set-v1")
+                .setTraceId("trace-" + eventId)
+                .setCausationId("session-" + eventId)
+                .setCorrelationId("1:test-community-" + eventId)
+                .setEventType("traffic.feature.stat.v1")
+                .setSchemaVersion("1")
+                .setAggregateType("flow")
+                .setAggregateId(eventId)
+                .setAggregateVersion(1)
+                .setOccurredAt(eventTs)
+                .setProducedAt(eventTs + 1)
+                .setIdempotencyKey(eventId)
+                .setProducer("flink-feature-job")
                 .build();
     }
 
+    /**
+     * 从异步推理 outcome 流中收集 DETECTED/LOW_CONFIDENCE 的检测结果。
+     */
+    private static List<DetectionBehavior> collectDetections(
+            DataStream<BehaviorInferenceOutcome> outcomes) throws Exception {
+        List<DetectionBehavior> results = new ArrayList<>();
+        outcomes.executeAndCollect().forEachRemaining(o -> {
+            if (o.getDetection() != null) {
+                results.add(o.getDetection());
+            }
+        });
+        return results;
+    }
+
     private FeatureStat createPortScanFeature(String tenantId, String objectId) {
+        long eventTs = System.currentTimeMillis();
         return FeatureStat.newBuilder()
-                .setHeader(createHeader(tenantId, objectId))
+                .setHeader(createHeader(tenantId, objectId, eventTs))
                 .setObjectType("flow")
                 .setObjectId(objectId)
                 .setCommunityId("1:test-community-" + objectId)
-                .setTs(System.currentTimeMillis())
+                .setTs(eventTs)
                 .setPps(1500.0f)
                 .setBps(900000)
                 .setDurationMs(60)
@@ -410,17 +441,21 @@ public class BehaviorJobIntegrationTest {
                 .setTcpFlagSynCnt(1000)
                 .setTcpFlagAckCnt(100)
                 .setProtocol(6)
+                .setTuple(createTuple(6, 443))
+                .setAvailability(FeatureAvailability.FEATURE_AVAILABILITY_AVAILABLE)
+                .addEvidenceIds("evidence-" + objectId)
                 .setUpDownRatio(10.0f)
                 .build();
     }
 
     private FeatureStat createNormalHTTPFeature(String tenantId, String objectId) {
+        long eventTs = System.currentTimeMillis();
         return FeatureStat.newBuilder()
-                .setHeader(createHeader(tenantId, objectId))
+                .setHeader(createHeader(tenantId, objectId, eventTs))
                 .setObjectType("flow")
                 .setObjectId(objectId)
                 .setCommunityId("1:test-community-" + objectId)
-                .setTs(System.currentTimeMillis())
+                .setTs(eventTs)
                 .setPps(5.0f)
                 .setBps(500000)
                 .setDurationMs(30000)
@@ -431,17 +466,21 @@ public class BehaviorJobIntegrationTest {
                 .setTcpFlagSynCnt(1)
                 .setTcpFlagAckCnt(100)
                 .setProtocol(6)
+                .setTuple(createTuple(6, 443))
+                .setAvailability(FeatureAvailability.FEATURE_AVAILABILITY_AVAILABLE)
+                .addEvidenceIds("evidence-" + objectId)
                 .setUpDownRatio(0.3f)
                 .build();
     }
 
     private FeatureStat createDNSTunnelFeature(String tenantId, String objectId) {
+        long eventTs = System.currentTimeMillis();
         return FeatureStat.newBuilder()
-                .setHeader(createHeader(tenantId, objectId))
+                .setHeader(createHeader(tenantId, objectId, eventTs))
                 .setObjectType("flow")
                 .setObjectId(objectId)
                 .setCommunityId("1:test-community-" + objectId)
-                .setTs(System.currentTimeMillis())
+                .setTs(eventTs)
                 .setPps(20.0f)
                 .setBps(50000)
                 .setDurationMs(60000)
@@ -450,17 +489,21 @@ public class BehaviorJobIntegrationTest {
                 .setPktlenMean(300.0f)
                 .setPktlenStd(50.0f)
                 .setProtocol(17) // UDP
+                .setTuple(createTuple(17, 53))
+                .setAvailability(FeatureAvailability.FEATURE_AVAILABILITY_AVAILABLE)
+                .addEvidenceIds("evidence-" + objectId)
                 .setUpDownRatio(2.5f)
                 .build();
     }
 
     private FeatureStat createC2BeaconFeature(String tenantId, String objectId) {
+        long eventTs = System.currentTimeMillis();
         return FeatureStat.newBuilder()
-                .setHeader(createHeader(tenantId, objectId))
+                .setHeader(createHeader(tenantId, objectId, eventTs))
                 .setObjectType("flow")
                 .setObjectId(objectId)
                 .setCommunityId("1:test-community-" + objectId)
-                .setTs(System.currentTimeMillis())
+                .setTs(eventTs)
                 .setPps(0.5f)
                 .setBps(5000)
                 .setDurationMs(600000) // 10分钟
@@ -469,20 +512,34 @@ public class BehaviorJobIntegrationTest {
                 .setPktlenMean(150.0f)
                 .setPktlenStd(20.0f)
                 .setProtocol(6)
+                .setTuple(createTuple(6, 443))
+                .setAvailability(FeatureAvailability.FEATURE_AVAILABILITY_AVAILABLE)
+                .addEvidenceIds("evidence-" + objectId)
                 .setUpDownRatio(0.5f)
                 .build();
     }
 
     private FeatureStat createInvalidFeature(String tenantId, String objectId) {
         // 创建一个缺少必要字段的特征
+        long eventTs = System.currentTimeMillis();
         return FeatureStat.newBuilder()
-                .setHeader(createHeader(tenantId, objectId))
+                .setHeader(createHeader(tenantId, objectId, eventTs))
                 .setObjectType("flow")
                 .setObjectId(objectId)
                 .setCommunityId("1:test-community-" + objectId)
-                .setTs(System.currentTimeMillis())
+                .setTs(eventTs)
                 .setPps(0.0f)
                 .setProtocol(6)
+                .build();
+    }
+
+    private FiveTuple createTuple(int protocol, int destinationPort) {
+        return FiveTuple.newBuilder()
+                .setSrcIp("192.0.2.10")
+                .setDstIp("198.51.100.20")
+                .setSrcPort(54321)
+                .setDstPort(destinationPort)
+                .setProtocol(protocol)
                 .build();
     }
 }

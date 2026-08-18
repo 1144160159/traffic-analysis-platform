@@ -139,6 +139,37 @@ public final class IngestServiceGrpc {
     return getUploadPcapIndexMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.traffic.proto.traffic.v1.UploadAssetBindingsRequest,
+      com.traffic.proto.traffic.v1.UploadAssetBindingsResponse> getUploadAssetBindingsMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "UploadAssetBindings",
+      requestType = com.traffic.proto.traffic.v1.UploadAssetBindingsRequest.class,
+      responseType = com.traffic.proto.traffic.v1.UploadAssetBindingsResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.traffic.proto.traffic.v1.UploadAssetBindingsRequest,
+      com.traffic.proto.traffic.v1.UploadAssetBindingsResponse> getUploadAssetBindingsMethod() {
+    io.grpc.MethodDescriptor<com.traffic.proto.traffic.v1.UploadAssetBindingsRequest, com.traffic.proto.traffic.v1.UploadAssetBindingsResponse> getUploadAssetBindingsMethod;
+    if ((getUploadAssetBindingsMethod = IngestServiceGrpc.getUploadAssetBindingsMethod) == null) {
+      synchronized (IngestServiceGrpc.class) {
+        if ((getUploadAssetBindingsMethod = IngestServiceGrpc.getUploadAssetBindingsMethod) == null) {
+          IngestServiceGrpc.getUploadAssetBindingsMethod = getUploadAssetBindingsMethod =
+              io.grpc.MethodDescriptor.<com.traffic.proto.traffic.v1.UploadAssetBindingsRequest, com.traffic.proto.traffic.v1.UploadAssetBindingsResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "UploadAssetBindings"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.traffic.proto.traffic.v1.UploadAssetBindingsRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.traffic.proto.traffic.v1.UploadAssetBindingsResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new IngestServiceMethodDescriptorSupplier("UploadAssetBindings"))
+              .build();
+        }
+      }
+    }
+    return getUploadAssetBindingsMethod;
+  }
+
   private static volatile io.grpc.MethodDescriptor<com.traffic.proto.traffic.v1.HeartbeatRequest,
       com.traffic.proto.traffic.v1.HeartbeatResponse> getHeartbeatMethod;
 
@@ -291,6 +322,18 @@ public final class IngestServiceGrpc {
 
     /**
      * <pre>
+     * Upload passive ARP/DHCP observations through the authenticated probe
+     * channel. The Gateway owns Kafka credentials and returns broker-scoped
+     * exact item results; probes never publish asset.bindings.v1 directly.
+     * </pre>
+     */
+    default void uploadAssetBindings(com.traffic.proto.traffic.v1.UploadAssetBindingsRequest request,
+        io.grpc.stub.StreamObserver<com.traffic.proto.traffic.v1.UploadAssetBindingsResponse> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getUploadAssetBindingsMethod(), responseObserver);
+    }
+
+    /**
+     * <pre>
      * 探针心跳与配置同步
      * </pre>
      */
@@ -383,6 +426,19 @@ public final class IngestServiceGrpc {
 
     /**
      * <pre>
+     * Upload passive ARP/DHCP observations through the authenticated probe
+     * channel. The Gateway owns Kafka credentials and returns broker-scoped
+     * exact item results; probes never publish asset.bindings.v1 directly.
+     * </pre>
+     */
+    public void uploadAssetBindings(com.traffic.proto.traffic.v1.UploadAssetBindingsRequest request,
+        io.grpc.stub.StreamObserver<com.traffic.proto.traffic.v1.UploadAssetBindingsResponse> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getUploadAssetBindingsMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     * <pre>
      * 探针心跳与配置同步
      * </pre>
      */
@@ -448,6 +504,18 @@ public final class IngestServiceGrpc {
     public com.traffic.proto.traffic.v1.UploadPcapIndexResponse uploadPcapIndex(com.traffic.proto.traffic.v1.UploadPcapIndexRequest request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getUploadPcapIndexMethod(), getCallOptions(), request);
+    }
+
+    /**
+     * <pre>
+     * Upload passive ARP/DHCP observations through the authenticated probe
+     * channel. The Gateway owns Kafka credentials and returns broker-scoped
+     * exact item results; probes never publish asset.bindings.v1 directly.
+     * </pre>
+     */
+    public com.traffic.proto.traffic.v1.UploadAssetBindingsResponse uploadAssetBindings(com.traffic.proto.traffic.v1.UploadAssetBindingsRequest request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getUploadAssetBindingsMethod(), getCallOptions(), request);
     }
 
     /**
@@ -522,6 +590,19 @@ public final class IngestServiceGrpc {
 
     /**
      * <pre>
+     * Upload passive ARP/DHCP observations through the authenticated probe
+     * channel. The Gateway owns Kafka credentials and returns broker-scoped
+     * exact item results; probes never publish asset.bindings.v1 directly.
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.traffic.proto.traffic.v1.UploadAssetBindingsResponse> uploadAssetBindings(
+        com.traffic.proto.traffic.v1.UploadAssetBindingsRequest request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getUploadAssetBindingsMethod(), getCallOptions()), request);
+    }
+
+    /**
+     * <pre>
      * 探针心跳与配置同步
      * </pre>
      */
@@ -546,9 +627,10 @@ public final class IngestServiceGrpc {
   private static final int METHODID_UPLOAD_FLOWS = 0;
   private static final int METHODID_UPLOAD_SESSIONS = 1;
   private static final int METHODID_UPLOAD_PCAP_INDEX = 2;
-  private static final int METHODID_HEARTBEAT = 3;
-  private static final int METHODID_REGISTER_PROBE = 4;
-  private static final int METHODID_STREAM_FLOWS = 5;
+  private static final int METHODID_UPLOAD_ASSET_BINDINGS = 3;
+  private static final int METHODID_HEARTBEAT = 4;
+  private static final int METHODID_REGISTER_PROBE = 5;
+  private static final int METHODID_STREAM_FLOWS = 6;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -578,6 +660,10 @@ public final class IngestServiceGrpc {
         case METHODID_UPLOAD_PCAP_INDEX:
           serviceImpl.uploadPcapIndex((com.traffic.proto.traffic.v1.UploadPcapIndexRequest) request,
               (io.grpc.stub.StreamObserver<com.traffic.proto.traffic.v1.UploadPcapIndexResponse>) responseObserver);
+          break;
+        case METHODID_UPLOAD_ASSET_BINDINGS:
+          serviceImpl.uploadAssetBindings((com.traffic.proto.traffic.v1.UploadAssetBindingsRequest) request,
+              (io.grpc.stub.StreamObserver<com.traffic.proto.traffic.v1.UploadAssetBindingsResponse>) responseObserver);
           break;
         case METHODID_HEARTBEAT:
           serviceImpl.heartbeat((com.traffic.proto.traffic.v1.HeartbeatRequest) request,
@@ -636,6 +722,13 @@ public final class IngestServiceGrpc {
               com.traffic.proto.traffic.v1.UploadPcapIndexRequest,
               com.traffic.proto.traffic.v1.UploadPcapIndexResponse>(
                 service, METHODID_UPLOAD_PCAP_INDEX)))
+        .addMethod(
+          getUploadAssetBindingsMethod(),
+          io.grpc.stub.ServerCalls.asyncUnaryCall(
+            new MethodHandlers<
+              com.traffic.proto.traffic.v1.UploadAssetBindingsRequest,
+              com.traffic.proto.traffic.v1.UploadAssetBindingsResponse>(
+                service, METHODID_UPLOAD_ASSET_BINDINGS)))
         .addMethod(
           getHeartbeatMethod(),
           io.grpc.stub.ServerCalls.asyncUnaryCall(
@@ -702,6 +795,7 @@ public final class IngestServiceGrpc {
               .addMethod(getStreamFlowsMethod())
               .addMethod(getUploadSessionsMethod())
               .addMethod(getUploadPcapIndexMethod())
+              .addMethod(getUploadAssetBindingsMethod())
               .addMethod(getHeartbeatMethod())
               .addMethod(getRegisterProbeMethod())
               .build();

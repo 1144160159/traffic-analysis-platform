@@ -126,7 +126,7 @@ consume-dlq: ## 消费 DLQ 数据
 	@echo "Consuming DLQ data..."
 	docker-compose exec kafka kafka-console-consumer \
 		--bootstrap-server localhost:9092 \
-		--topic dlq.feature-job \
+		--topic dlq.v1 \
 		--from-beginning
 
 # ==================== 数据库 ====================

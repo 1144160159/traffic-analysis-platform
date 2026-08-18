@@ -126,7 +126,7 @@ public enum DeploymentStatus
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(3);
+    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(4);
   }
 
   private static final DeploymentStatus[] VALUES = values();

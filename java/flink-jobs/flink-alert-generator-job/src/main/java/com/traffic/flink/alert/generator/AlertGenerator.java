@@ -5,26 +5,28 @@ import com.traffic.flink.alert.evidence.EvidenceBuilder;
 import com.traffic.flink.common.DeterministicId;
 import com.traffic.proto.traffic.v1.*;
 
+import org.apache.flink.api.common.state.MapState;
+import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.StateTtlConfig;
-import org.apache.flink.api.common.state.ValueState;
-import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.metrics.Counter;
-import org.apache.flink.metrics.Gauge;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.MessageDigest;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Alert 生成器 (重构版)
@@ -60,15 +62,17 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
     private final float severityMediumThreshold;
     private final float severityLowThreshold;
 
-    // 去重状态（带 TTL）
-    private transient ValueState<DedupState> dedupState;
+    // 去重状态（带 TTL）：key = fingerprint，value = 该指纹的去重状态。
+    // 使用 MapState 而非 ValueState：不同指纹的告警互不覆盖，指纹 A/B/A
+    // 交替出现时不会丢失 A 的去重历史，避免重复告警逃逸。
+    private transient MapState<String, DedupState> dedupState;
 
     // Metrics
     private transient Counter alertsGenerated;
     private transient Counter alertsDeduplicated;
     private transient Counter alertsUpdated;
     private transient Counter evidencesGenerated;
-    private transient long currentStateCount;
+    private transient Counter alertsRejected;
 
     /**
      * 构造函数（简化版，使用默认阈值）
@@ -110,7 +114,11 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
 
-        // 配置 State TTL（去重窗口的 2 倍，确保有足够缓冲）
+        // 配置 State TTL（去重窗口的 2 倍，确保有足够缓冲）。
+        // 注意：Flink TTL 基于处理时间，而去重窗口判断基于事件时间
+        // （detection.getTs()）。TTL = 2×窗口 大于窗口+最大乱序延迟，
+        // 处理延迟超过 TTL 时状态会被清理，此时窗口内重放可能再发告警，
+        // 由确定性 alert_id 在下游 ReplacingMergeTree 收敛。
         StateTtlConfig ttlConfig = StateTtlConfig
                 .newBuilder(Time.minutes(dedupWindowMinutes * 2))
                 .setUpdateType(StateTtlConfig.UpdateType.OnReadAndWrite)
@@ -119,12 +127,13 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 .build();
 
         // 初始化去重状态（带 TTL）
-        ValueStateDescriptor<DedupState> dedupDescriptor = new ValueStateDescriptor<>(
-                "dedup-state",
+        MapStateDescriptor<String, DedupState> dedupDescriptor = new MapStateDescriptor<>(
+                "dedup-map-state",
+                TypeInformation.of(String.class),
                 TypeInformation.of(new TypeHint<DedupState>() {})
         );
         dedupDescriptor.enableTimeToLive(ttlConfig);
-        dedupState = getRuntimeContext().getState(dedupDescriptor);
+        dedupState = getRuntimeContext().getMapState(dedupDescriptor);
 
         // 注册 Metrics
         alertsGenerated = getRuntimeContext()
@@ -143,10 +152,9 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 .getMetricGroup()
                 .counter("evidences_generated_total");
 
-        // 状态数量 Gauge
-        getRuntimeContext()
+        alertsRejected = getRuntimeContext()
                 .getMetricGroup()
-                .gauge("dedup_state_count", (Gauge<Long>) () -> currentStateCount);
+                .counter("alerts_rejected_total");
 
         LOG.info("AlertGenerator initialized: dedupWindow={}min, arkimeUrl={}, timeBuffer={}s, " +
                         "thresholds=[critical={}, high={}, medium={}, low={}]",
@@ -165,29 +173,34 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
         // 空值保护：过滤 null detection
         if (detection == null) {
             LOG.warn("Received null detection, skipping");
+            if (alertsRejected != null) alertsRejected.inc();
             return;
         }
 
         // 提取基本信息
-        EventHeader header = detection.getHeader();
-        if (header == null) {
-            LOG.warn("Detection has null header, skipping: communityId={}",
+        if (!detection.hasHeader()) {
+            LOG.warn("Detection has no header, skipping: communityId={}",
                     detection.getCommunityId());
+            if (alertsRejected != null) alertsRejected.inc();
             return;
         }
+        EventHeader header = detection.getHeader();
         String tenantId = header.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            LOG.warn("Detection has empty tenant_id, using default");
-            tenantId = "default";
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            LOG.warn("Detection has empty tenant_id, rejecting eventId={}", header.getEventId());
+            if (alertsRejected != null) alertsRejected.inc();
+            return;
         }
         String communityId = detection.getCommunityId();
         if (communityId == null || communityId.isEmpty()) {
             LOG.debug("Detection has empty community_id, skipping");
+            if (alertsRejected != null) alertsRejected.inc();
             return;
         }
         String topLabel = detection.getTopLabel();
         if (topLabel == null || topLabel.isEmpty()) {
             LOG.debug("Detection has empty top_label, skipping");
+            if (alertsRejected != null) alertsRejected.inc();
             return;
         }
         long currentTime = detection.getTs();
@@ -201,11 +214,13 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 detection.getTopLabel(),
                 tupleInfo.srcIp,
                 tupleInfo.dstIp,
-                tupleInfo.dstPort
+                tupleInfo.dstPort,
+                communityId,
+                tupleInfo.observed
         );
 
-        // 获取去重状态
-        DedupState state = dedupState.value();
+        // 获取去重状态（按指纹）
+        DedupState state = dedupState.get(fingerprint);
 
         // 判断是否需要去重
         if (state != null && state.getFingerprint().equals(fingerprint)) {
@@ -217,7 +232,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 state.setLastSeen(currentTime);
                 state.setCount(state.getCount() + 1);
                 state.setStateVersion(state.getStateVersion() + 1);
-                dedupState.update(state);
+                dedupState.put(fingerprint, state);
 
                 // 构建更新告警（用于 ReplacingMergeTree 合并）
                 Alert updateAlert = buildUpdateAlert(
@@ -279,9 +294,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
         newState.setLastSeen(currentTime);
         newState.setCount(1);
         newState.setStateVersion(1);
-        dedupState.update(newState);
-
-        currentStateCount++;
+        dedupState.put(fingerprint, newState);
 
         // 输出 Alert 和 Evidence
         out.collect(Tuple2.of(alert, evidence));
@@ -296,10 +309,25 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
     /**
      * 提取五元组信息
      * 
-     * 优先从 detection 的 extra 字段提取，如果没有则尝试解析 community_id
+     * 优先使用协议中的五元组；兼容旧标签，但绝不从单向 community_id 伪造地址。
      */
     private FiveTupleInfo extractFiveTuple(DetectionBehavior detection) {
         FiveTupleInfo info = new FiveTupleInfo();
+
+        if (detection.hasTuple()) {
+            FiveTuple tuple = detection.getTuple();
+            if (!tuple.getSrcIp().trim().isEmpty()
+                    && !tuple.getDstIp().trim().isEmpty()
+                    && tuple.getProtocol() > 0) {
+                info.srcIp = tuple.getSrcIp();
+                info.dstIp = tuple.getDstIp();
+                info.srcPort = tuple.getSrcPort();
+                info.dstPort = tuple.getDstPort();
+                info.protocol = tuple.getProtocol();
+                info.observed = true;
+                return info;
+            }
+        }
 
         // 方法1：从 extra 字段提取（如果上游 Flink Job 已添加）
         // 假设 extra 字段格式：[srcIp_hash, dstIp_hash, srcPort, dstPort, protocol]
@@ -315,8 +343,6 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
 
         // 当前实现：尝试从 detection 的上下文提取
         // 如果无法获取，使用 community_id 作为唯一标识
-        String communityId = detection.getCommunityId();
-
         // 检查是否有 extra 字段携带五元组信息
         if (detection.getLabelsCount() > 0) {
             // 尝试从 labels 中提取 IP 信息（某些模型会输出）
@@ -347,19 +373,14 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
             }
         }
 
-        // 如果仍无法获取五元组，使用 community_id 作为唯一标识
-        // 并记录警告日志（生产环境应确保上游正确携带信息）
-        if (info.srcIp.equals("0.0.0.0") && info.dstIp.equals("0.0.0.0")) {
-            LOG.warn("Five-tuple info not available for detection, " +
-                            "using community_id as identifier: communityId={}, objectId={}",
-                    communityId, detection.getObjectId());
-
-            // 使用 community_id 的部分作为伪 IP（仅用于指纹计算）
-            // 这不是理想方案，生产环境应确保上游正确携带五元组
-            info.srcIp = "cid:" + communityId.substring(0, Math.min(8, communityId.length()));
-            info.dstIp = "cid:" + communityId.substring(Math.min(8, communityId.length()));
+        if (!info.srcIp.isEmpty() && !info.dstIp.isEmpty() && info.protocol > 0) {
+            info.observed = true;
+            return info;
         }
 
+        LOG.warn("Five-tuple info not available; preserving it as unknown: communityId={}, objectId={}",
+                detection.getCommunityId(), detection.getObjectId());
+        info = new FiveTupleInfo();
         return info;
     }
 
@@ -373,12 +394,16 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
             String alertType,
             String srcIp,
             String dstIp,
-            int dstPort
+            int dstPort,
+            String communityId,
+            boolean tupleObserved
     ) {
         try {
-            // 按设计文档的指纹格式
-            String raw = String.format("%s:%s:%s:%s:%d",
-                    tenantId, alertType, srcIp, dstIp, dstPort);
+            String raw = tupleObserved
+                    ? String.format("%s:%s:tuple:%s:%s:%d",
+                            tenantId, alertType, srcIp, dstIp, dstPort)
+                    : String.format("%s:%s:community:%s",
+                            tenantId, alertType, communityId);
 
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] hash = md.digest(raw.getBytes(StandardCharsets.UTF_8));
@@ -393,7 +418,8 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
             LOG.error("Failed to generate fingerprint", e);
             return DeterministicId.shortId(
                     "flink-alert-fingerprint-fallback/v1", 32,
-                    tenantId, alertType, srcIp, dstIp, dstPort);
+                    tenantId, alertType, srcIp, dstIp, dstPort,
+                    communityId, tupleObserved);
         }
     }
 
@@ -435,10 +461,19 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
         long startTime = timestamp - (arkimeTimeBufferSeconds * 1000L);
         long endTime = timestamp + (arkimeTimeBufferSeconds * 1000L);
 
+        // communityId 含 '=' 等字符（base64 填充），必须 URL 编码后再拼入 query
+        String encodedCommunityId;
+        try {
+            encodedCommunityId = URLEncoder.encode(communityId, StandardCharsets.UTF_8.name());
+        } catch (Exception e) {
+            LOG.warn("Failed to URL-encode communityId={}, using raw value", communityId);
+            encodedCommunityId = communityId;
+        }
+
         // 转换为秒（Arkime 使用秒级时间戳）
         return String.format("%s?date=-1&expression=community.id==%s&startTime=%d&stopTime=%d",
                 arkimeUrl,
-                communityId,
+                encodedCommunityId,
                 startTime / 1000,
                 endTime / 1000);
     }
@@ -456,8 +491,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
             String evidenceId
     ) {
         EventHeader header = detection.getHeader();
-        String tenantId = (header != null && header.getTenantId() != null && !header.getTenantId().isEmpty())
-                ? header.getTenantId() : "default";
+        String tenantId = header.getTenantId();
 
         // 提取标签
         List<String> labels = new ArrayList<>(detection.getLabelsList());
@@ -469,8 +503,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
         String protocolName = getProtocolName(tupleInfo.protocol);
 
         // 构建 evidence_ids 列表
-        List<String> evidenceIds = new ArrayList<>();
-        evidenceIds.add(evidenceId);
+        List<String> evidenceIds = mergeEvidenceIds(detection, evidenceId);
 
         return Alert.newBuilder()
                 .setTenantId(tenantId)
@@ -491,7 +524,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 .setSessionId(detection.getObjectId())
                 .setCampaignId("") // 由 CEP Job 后续填充
                 .setModelVersion(detection.getModelVersion())
-                .setRuleVersion("") // 行为检测无规则版本
+                .setRuleVersion(ruleVersion(detection))
                 .setFeatureSetId(header.getFeatureSetId())
                 .setStatus(AlertStatus.ALERT_STATUS_NEW)
                 .setAssignee("")
@@ -523,8 +556,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
             FiveTupleInfo tupleInfo
     ) {
         EventHeader header = detection.getHeader();
-        String tenantId = (header != null && header.getTenantId() != null && !header.getTenantId().isEmpty())
-                ? header.getTenantId() : "default";
+        String tenantId = header.getTenantId();
 
         // 映射严重程度（可能随着 score 变化）
         Severity severity = mapSeverity(detection.getTopScore());
@@ -553,10 +585,11 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 .setSessionId(detection.getObjectId())
                 .setCampaignId("")
                 .setModelVersion(detection.getModelVersion())
-                .setRuleVersion("")
+                .setRuleVersion(ruleVersion(detection))
                 .setFeatureSetId(header.getFeatureSetId())
                 .setStatus(AlertStatus.ALERT_STATUS_NEW)
                 .setAssignee("")
+                .addAllEvidenceIds(mergeEvidenceIds(detection, generateEvidenceId(alertId)))
                 .setDedupFingerprint(fingerprint)
                 .setUpdatedTs(lastSeen) // 使用最新时间
                 .setEventId(generateDeterministicEventId(alertId, fingerprint, firstSeen))
@@ -591,8 +624,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
             FiveTupleInfo tupleInfo
     ) {
         EventHeader header = detection.getHeader();
-        String tenantId = (header != null && header.getTenantId() != null && !header.getTenantId().isEmpty())
-                ? header.getTenantId() : "default";
+        String tenantId = header.getTenantId();
 
         // 使用 EvidenceBuilder 构建证据
         EvidenceBuilder builder = new EvidenceBuilder(
@@ -623,6 +655,8 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 .addMetric("community_id", detection.getCommunityId())
                 .addMetric("top_label", detection.getTopLabel())
                 .addMetric("top_score", String.format("%.4f", detection.getTopScore()))
+                .addMetric("rule_version", ruleVersion(detection))
+                .addMetric("source_evidence_count", String.valueOf(detection.getEvidenceIdsCount()))
                 .addMetric("feature_set_id", header.getFeatureSetId())
                 .addMetric("probe_id", header.getProbeId())
                 .addMetric("run_id", header.getRunId());
@@ -632,7 +666,12 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 .addMetric("dst_ip", tupleInfo.dstIp)
                 .addMetric("src_port", String.valueOf(tupleInfo.srcPort))
                 .addMetric("dst_port", String.valueOf(tupleInfo.dstPort))
-                .addMetric("protocol", String.valueOf(tupleInfo.protocol));
+                .addMetric("protocol", String.valueOf(tupleInfo.protocol))
+                .addMetric("tuple_observed", String.valueOf(tupleInfo.observed));
+
+        for (int i = 0; i < detection.getEvidenceIdsCount(); i++) {
+            builder.addMetric("source_evidence_id_" + i, detection.getEvidenceIds(i));
+        }
 
         // 添加所有标签和分数
         for (int i = 0; i < detection.getLabelsCount(); i++) {
@@ -671,6 +710,8 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
      */
     private String getProtocolName(int protocol) {
         switch (protocol) {
+            case 0:
+                return "UNKNOWN";
             case 1:
                 return "ICMP";
             case 6:
@@ -698,16 +739,37 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
      * 五元组信息内部类
      */
     private static class FiveTupleInfo {
-        String srcIp = "0.0.0.0";
-        String dstIp = "0.0.0.0";
+        String srcIp = "";
+        String dstIp = "";
         int srcPort = 0;
         int dstPort = 0;
-        int protocol = 6; // 默认 TCP
+        int protocol = 0;
+        boolean observed = false;
 
         @Override
         public String toString() {
             return String.format("%s:%d -> %s:%d [%d]",
                     srcIp, srcPort, dstIp, dstPort, protocol);
         }
+    }
+
+    private List<String> mergeEvidenceIds(DetectionBehavior detection, String generatedEvidenceId) {
+        Set<String> ids = new LinkedHashSet<>();
+        for (String sourceId : detection.getEvidenceIdsList()) {
+            if (sourceId != null && !sourceId.trim().isEmpty()) {
+                ids.add(sourceId);
+            }
+        }
+        ids.add(generatedEvidenceId);
+        return new ArrayList<>(ids);
+    }
+
+    private String ruleVersion(DetectionBehavior detection) {
+        for (String label : detection.getLabelsList()) {
+            if (label != null && label.startsWith("rule_version:")) {
+                return label.substring("rule_version:".length()).trim();
+            }
+        }
+        return "";
     }
 }

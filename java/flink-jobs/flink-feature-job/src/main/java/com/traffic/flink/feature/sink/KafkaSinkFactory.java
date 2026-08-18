@@ -180,7 +180,9 @@ public class KafkaSinkFactory {
             } catch (Exception e) {
                 LOG.error("Failed to serialize FeatureStat {}: {}", 
                         element.getObjectId(), e.getMessage(), e);
-                return null;
+                // Returning null silently drops a source record while allowing
+                // the checkpoint to commit. Fail the sink instead.
+                throw new IllegalStateException("FeatureStat serialization failed", e);
             }
         }
 
@@ -286,7 +288,9 @@ public class KafkaSinkFactory {
             } catch (Exception e) {
                 LOG.error("Failed to serialize SessionEvent {}: {}",
                         element.getSessionId(), e.getMessage(), e);
-                return null;
+                // 与 FeatureStat 序列化器一致：序列化失败抛异常使作业失败重启，
+                // 不静默丢弃（return null 会让 L2 触发记录丢失且 checkpoint 照常提交）
+                throw new IllegalStateException("SessionEvent serialization failed", e);
             }
         }
 

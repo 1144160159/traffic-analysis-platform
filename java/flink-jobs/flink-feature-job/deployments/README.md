@@ -52,9 +52,11 @@ Flink Feature Extraction Job 是流量分析平台的核心组件，负责从 Se
 |------|----------|------|
 | 输入 | `session.events.v1` | Protobuf |
 | 输出 | `feature.stat.v1` | Protobuf |
-| 输出 | `feature_stat_local` | ClickHouse |
-| DLQ | `dlq.feature-job` | JSON |
-| L2 触发 | `l2.trigger.v1` | Protobuf |
+| L1 输出 | `feature_stat_local`（本地）/`feature_stat`（集群） | ClickHouse |
+| L2 输出 | `feature_seq_local`（本地）/`feature_seq`（集群） | ClickHouse |
+| L3 输出 | `feature_fp_local`（本地）/`feature_fp`（集群） | ClickHouse |
+| DLQ | `dlq.v1` | Canonical DLQ JSON |
+| L2 触发 | 默认关闭；Topic 合同批准后才可配置 | Protobuf |
 
 ## 快速开始
 
@@ -117,6 +119,8 @@ config.poll.interval.ms=30000
 clickhouse.url=localhost:8123
 clickhouse.database=traffic
 clickhouse.table=feature_stat_local
+clickhouse.sequence.table=feature_seq_local
+clickhouse.fingerprint.table=feature_fp_local
 
 # Checkpoint
 checkpoint.path=file:///data/flink/checkpoints

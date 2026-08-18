@@ -158,6 +158,67 @@ private static final long serialVersionUID = 0L;
     return interfaces_.get(index);
   }
 
+  public static final int CAPTURE_ALLOCATION_DROPS_FIELD_NUMBER = 11;
+  private long captureAllocationDrops_ = 0L;
+  /**
+   * <pre>
+   * Additive authority breakdown. The legacy packets_dropped field equals
+   * capture_allocation_drops + capture_kernel_drops and excludes parser,
+   * downstream queue, and sender failures.
+   * </pre>
+   *
+   * <code>uint64 capture_allocation_drops = 11 [json_name = "captureAllocationDrops"];</code>
+   * @return The captureAllocationDrops.
+   */
+  @java.lang.Override
+  public long getCaptureAllocationDrops() {
+    return captureAllocationDrops_;
+  }
+
+  public static final int CAPTURE_KERNEL_DROPS_FIELD_NUMBER = 12;
+  private long captureKernelDrops_ = 0L;
+  /**
+   * <code>uint64 capture_kernel_drops = 12 [json_name = "captureKernelDrops"];</code>
+   * @return The captureKernelDrops.
+   */
+  @java.lang.Override
+  public long getCaptureKernelDrops() {
+    return captureKernelDrops_;
+  }
+
+  public static final int CAPTURE_ERRORS_FIELD_NUMBER = 13;
+  private long captureErrors_ = 0L;
+  /**
+   * <code>uint64 capture_errors = 13 [json_name = "captureErrors"];</code>
+   * @return The captureErrors.
+   */
+  @java.lang.Override
+  public long getCaptureErrors() {
+    return captureErrors_;
+  }
+
+  public static final int CAPTURE_BYTES_FIELD_NUMBER = 14;
+  private long captureBytes_ = 0L;
+  /**
+   * <code>uint64 capture_bytes = 14 [json_name = "captureBytes"];</code>
+   * @return The captureBytes.
+   */
+  @java.lang.Override
+  public long getCaptureBytes() {
+    return captureBytes_;
+  }
+
+  public static final int CAPTURE_COUNTER_REVISION_FIELD_NUMBER = 15;
+  private long captureCounterRevision_ = 0L;
+  /**
+   * <code>uint64 capture_counter_revision = 15 [json_name = "captureCounterRevision"];</code>
+   * @return The captureCounterRevision.
+   */
+  @java.lang.Override
+  public long getCaptureCounterRevision() {
+    return captureCounterRevision_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -195,6 +256,21 @@ private static final long serialVersionUID = 0L;
     }
     for (int i = 0; i < interfaces_.size(); i++) {
       output.writeMessage(10, interfaces_.get(i));
+    }
+    if (captureAllocationDrops_ != 0L) {
+      output.writeUInt64(11, captureAllocationDrops_);
+    }
+    if (captureKernelDrops_ != 0L) {
+      output.writeUInt64(12, captureKernelDrops_);
+    }
+    if (captureErrors_ != 0L) {
+      output.writeUInt64(13, captureErrors_);
+    }
+    if (captureBytes_ != 0L) {
+      output.writeUInt64(14, captureBytes_);
+    }
+    if (captureCounterRevision_ != 0L) {
+      output.writeUInt64(15, captureCounterRevision_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -237,6 +313,26 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(10, interfaces_.get(i));
     }
+    if (captureAllocationDrops_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(11, captureAllocationDrops_);
+    }
+    if (captureKernelDrops_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(12, captureKernelDrops_);
+    }
+    if (captureErrors_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(13, captureErrors_);
+    }
+    if (captureBytes_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(14, captureBytes_);
+    }
+    if (captureCounterRevision_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(15, captureCounterRevision_);
+    }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
@@ -270,6 +366,16 @@ private static final long serialVersionUID = 0L;
         != other.getUptimeSeconds()) return false;
     if (!getInterfacesList()
         .equals(other.getInterfacesList())) return false;
+    if (getCaptureAllocationDrops()
+        != other.getCaptureAllocationDrops()) return false;
+    if (getCaptureKernelDrops()
+        != other.getCaptureKernelDrops()) return false;
+    if (getCaptureErrors()
+        != other.getCaptureErrors()) return false;
+    if (getCaptureBytes()
+        != other.getCaptureBytes()) return false;
+    if (getCaptureCounterRevision()
+        != other.getCaptureCounterRevision()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -306,6 +412,21 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + INTERFACES_FIELD_NUMBER;
       hash = (53 * hash) + getInterfacesList().hashCode();
     }
+    hash = (37 * hash) + CAPTURE_ALLOCATION_DROPS_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getCaptureAllocationDrops());
+    hash = (37 * hash) + CAPTURE_KERNEL_DROPS_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getCaptureKernelDrops());
+    hash = (37 * hash) + CAPTURE_ERRORS_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getCaptureErrors());
+    hash = (37 * hash) + CAPTURE_BYTES_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getCaptureBytes());
+    hash = (37 * hash) + CAPTURE_COUNTER_REVISION_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getCaptureCounterRevision());
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -451,6 +572,11 @@ private static final long serialVersionUID = 0L;
         interfacesBuilder_.clear();
       }
       bitField0_ = (bitField0_ & ~0x00000080);
+      captureAllocationDrops_ = 0L;
+      captureKernelDrops_ = 0L;
+      captureErrors_ = 0L;
+      captureBytes_ = 0L;
+      captureCounterRevision_ = 0L;
       return this;
     }
 
@@ -517,6 +643,21 @@ private static final long serialVersionUID = 0L;
       }
       if (((from_bitField0_ & 0x00000040) != 0)) {
         result.uptimeSeconds_ = uptimeSeconds_;
+      }
+      if (((from_bitField0_ & 0x00000100) != 0)) {
+        result.captureAllocationDrops_ = captureAllocationDrops_;
+      }
+      if (((from_bitField0_ & 0x00000200) != 0)) {
+        result.captureKernelDrops_ = captureKernelDrops_;
+      }
+      if (((from_bitField0_ & 0x00000400) != 0)) {
+        result.captureErrors_ = captureErrors_;
+      }
+      if (((from_bitField0_ & 0x00000800) != 0)) {
+        result.captureBytes_ = captureBytes_;
+      }
+      if (((from_bitField0_ & 0x00001000) != 0)) {
+        result.captureCounterRevision_ = captureCounterRevision_;
       }
     }
 
@@ -611,6 +752,21 @@ private static final long serialVersionUID = 0L;
           }
         }
       }
+      if (other.getCaptureAllocationDrops() != 0L) {
+        setCaptureAllocationDrops(other.getCaptureAllocationDrops());
+      }
+      if (other.getCaptureKernelDrops() != 0L) {
+        setCaptureKernelDrops(other.getCaptureKernelDrops());
+      }
+      if (other.getCaptureErrors() != 0L) {
+        setCaptureErrors(other.getCaptureErrors());
+      }
+      if (other.getCaptureBytes() != 0L) {
+        setCaptureBytes(other.getCaptureBytes());
+      }
+      if (other.getCaptureCounterRevision() != 0L) {
+        setCaptureCounterRevision(other.getCaptureCounterRevision());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -685,6 +841,31 @@ private static final long serialVersionUID = 0L;
               }
               break;
             } // case 82
+            case 88: {
+              captureAllocationDrops_ = input.readUInt64();
+              bitField0_ |= 0x00000100;
+              break;
+            } // case 88
+            case 96: {
+              captureKernelDrops_ = input.readUInt64();
+              bitField0_ |= 0x00000200;
+              break;
+            } // case 96
+            case 104: {
+              captureErrors_ = input.readUInt64();
+              bitField0_ |= 0x00000400;
+              break;
+            } // case 104
+            case 112: {
+              captureBytes_ = input.readUInt64();
+              bitField0_ |= 0x00000800;
+              break;
+            } // case 112
+            case 120: {
+              captureCounterRevision_ = input.readUInt64();
+              bitField0_ |= 0x00001000;
+              break;
+            } // case 120
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -1164,6 +1345,184 @@ private static final long serialVersionUID = 0L;
         interfaces_ = null;
       }
       return interfacesBuilder_;
+    }
+
+    private long captureAllocationDrops_ ;
+    /**
+     * <pre>
+     * Additive authority breakdown. The legacy packets_dropped field equals
+     * capture_allocation_drops + capture_kernel_drops and excludes parser,
+     * downstream queue, and sender failures.
+     * </pre>
+     *
+     * <code>uint64 capture_allocation_drops = 11 [json_name = "captureAllocationDrops"];</code>
+     * @return The captureAllocationDrops.
+     */
+    @java.lang.Override
+    public long getCaptureAllocationDrops() {
+      return captureAllocationDrops_;
+    }
+    /**
+     * <pre>
+     * Additive authority breakdown. The legacy packets_dropped field equals
+     * capture_allocation_drops + capture_kernel_drops and excludes parser,
+     * downstream queue, and sender failures.
+     * </pre>
+     *
+     * <code>uint64 capture_allocation_drops = 11 [json_name = "captureAllocationDrops"];</code>
+     * @param value The captureAllocationDrops to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCaptureAllocationDrops(long value) {
+
+      captureAllocationDrops_ = value;
+      bitField0_ |= 0x00000100;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive authority breakdown. The legacy packets_dropped field equals
+     * capture_allocation_drops + capture_kernel_drops and excludes parser,
+     * downstream queue, and sender failures.
+     * </pre>
+     *
+     * <code>uint64 capture_allocation_drops = 11 [json_name = "captureAllocationDrops"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCaptureAllocationDrops() {
+      bitField0_ = (bitField0_ & ~0x00000100);
+      captureAllocationDrops_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long captureKernelDrops_ ;
+    /**
+     * <code>uint64 capture_kernel_drops = 12 [json_name = "captureKernelDrops"];</code>
+     * @return The captureKernelDrops.
+     */
+    @java.lang.Override
+    public long getCaptureKernelDrops() {
+      return captureKernelDrops_;
+    }
+    /**
+     * <code>uint64 capture_kernel_drops = 12 [json_name = "captureKernelDrops"];</code>
+     * @param value The captureKernelDrops to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCaptureKernelDrops(long value) {
+
+      captureKernelDrops_ = value;
+      bitField0_ |= 0x00000200;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 capture_kernel_drops = 12 [json_name = "captureKernelDrops"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCaptureKernelDrops() {
+      bitField0_ = (bitField0_ & ~0x00000200);
+      captureKernelDrops_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long captureErrors_ ;
+    /**
+     * <code>uint64 capture_errors = 13 [json_name = "captureErrors"];</code>
+     * @return The captureErrors.
+     */
+    @java.lang.Override
+    public long getCaptureErrors() {
+      return captureErrors_;
+    }
+    /**
+     * <code>uint64 capture_errors = 13 [json_name = "captureErrors"];</code>
+     * @param value The captureErrors to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCaptureErrors(long value) {
+
+      captureErrors_ = value;
+      bitField0_ |= 0x00000400;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 capture_errors = 13 [json_name = "captureErrors"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCaptureErrors() {
+      bitField0_ = (bitField0_ & ~0x00000400);
+      captureErrors_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long captureBytes_ ;
+    /**
+     * <code>uint64 capture_bytes = 14 [json_name = "captureBytes"];</code>
+     * @return The captureBytes.
+     */
+    @java.lang.Override
+    public long getCaptureBytes() {
+      return captureBytes_;
+    }
+    /**
+     * <code>uint64 capture_bytes = 14 [json_name = "captureBytes"];</code>
+     * @param value The captureBytes to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCaptureBytes(long value) {
+
+      captureBytes_ = value;
+      bitField0_ |= 0x00000800;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 capture_bytes = 14 [json_name = "captureBytes"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCaptureBytes() {
+      bitField0_ = (bitField0_ & ~0x00000800);
+      captureBytes_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long captureCounterRevision_ ;
+    /**
+     * <code>uint64 capture_counter_revision = 15 [json_name = "captureCounterRevision"];</code>
+     * @return The captureCounterRevision.
+     */
+    @java.lang.Override
+    public long getCaptureCounterRevision() {
+      return captureCounterRevision_;
+    }
+    /**
+     * <code>uint64 capture_counter_revision = 15 [json_name = "captureCounterRevision"];</code>
+     * @param value The captureCounterRevision to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCaptureCounterRevision(long value) {
+
+      captureCounterRevision_ = value;
+      bitField0_ |= 0x00001000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 capture_counter_revision = 15 [json_name = "captureCounterRevision"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCaptureCounterRevision() {
+      bitField0_ = (bitField0_ & ~0x00001000);
+      captureCounterRevision_ = 0L;
+      onChanged();
+      return this;
     }
     @java.lang.Override
     public final Builder setUnknownFields(

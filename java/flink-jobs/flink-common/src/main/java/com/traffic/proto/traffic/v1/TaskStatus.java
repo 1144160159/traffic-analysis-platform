@@ -126,7 +126,7 @@ public enum TaskStatus
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(5);
+    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(6);
   }
 
   private static final TaskStatus[] VALUES = values();

@@ -55,6 +55,23 @@ CREATE TABLE IF NOT EXISTS traffic.feature_stat_local
     -- 扩展字段（20 个槽位）
     extra Array(Float32),
     
+    -- M03 来源、版本和缺失语义
+    event_schema_version String DEFAULT '',
+    aggregate_version UInt64 DEFAULT 0,
+    event_time_start_ms Int64 DEFAULT 0,
+    event_time_end_ms Int64 DEFAULT 0,
+    source_watermark_ms Nullable(Int64) DEFAULT NULL,
+    source_event_ids Array(String) DEFAULT [],
+    evidence_ids Array(String) DEFAULT [],
+    feature_category LowCardinality(String) DEFAULT 'FEATURE_CATEGORY_UNSPECIFIED',
+    availability LowCardinality(String) DEFAULT 'FEATURE_AVAILABILITY_UNSPECIFIED',
+    algorithm_version String DEFAULT '',
+    window_id String DEFAULT '',
+    value_unit String DEFAULT '',
+    is_partial UInt8 DEFAULT 1,
+    missing_fields Array(String) DEFAULT [],
+    missing_reason String DEFAULT '',
+
     -- 摄入时间
     ingest_ts DateTime64(3, 'UTC'),
     
@@ -147,6 +164,91 @@ ALTER TABLE traffic.feature_stat_local
 
 ALTER TABLE traffic.feature_stat_local
     ADD INDEX IF NOT EXISTS idx_bps bps TYPE minmax GRANULARITY 4;
+
+-- ==================== feature_seq_local 表 ====================
+-- 本地开发环境由作业直接写 MergeTree；生产环境写 Distributed feature_seq。
+CREATE TABLE IF NOT EXISTS traffic.feature_seq_local
+(
+    tenant_id String,
+    run_id String,
+    feature_set_id String,
+    event_id String,
+    object_type LowCardinality(String),
+    object_id String,
+    community_id String,
+    window_id String,
+    ts_start DateTime64(3, 'UTC'),
+    ts_end DateTime64(3, 'UTC'),
+    pktlen_seq_hash String,
+    iat_seq_hash String,
+    wavelet_releng_fwd Float32,
+    wavelet_releng_bwd Float32,
+    wavelet_entropy_fwd Float32,
+    wavelet_entropy_bwd Float32,
+    wavelet_detail_mean_fwd Float32,
+    wavelet_detail_mean_bwd Float32,
+    wavelet_detail_std_fwd Float32,
+    wavelet_detail_std_bwd Float32,
+    seq_blob_ref String,
+    feature_category LowCardinality(String),
+    availability LowCardinality(String),
+    schema_version String,
+    algorithm_version String,
+    value_unit String,
+    source_event_ids Array(String),
+    evidence_ids Array(String),
+    missing_fields Array(String),
+    missing_reason String,
+    ingest_ts DateTime64(3, 'UTC')
+)
+ENGINE = MergeTree()
+PARTITION BY (tenant_id, toDate(ts_end))
+ORDER BY (tenant_id, community_id, ts_end, object_id, window_id)
+TTL ts_end + INTERVAL 30 DAY;
+
+-- ==================== feature_fp_local 表 ====================
+CREATE TABLE IF NOT EXISTS traffic.feature_fp_local
+(
+    tenant_id String,
+    run_id String,
+    feature_set_id String,
+    event_id String,
+    community_id String,
+    session_id String,
+    ts DateTime64(3, 'UTC'),
+    is_encrypted UInt8,
+    tls_version LowCardinality(String),
+    ja3 LowCardinality(String),
+    ja4 String,
+    sni String,
+    sni_hash String,
+    cert_sha256 String,
+    cert_is_self_signed UInt8,
+    pubkey_len UInt16,
+    quic_version String,
+    transport_security LowCardinality(String),
+    raw_traffic_ref String,
+    hex_freq Array(Float32),
+    hex_ratio Array(Float32),
+    entropy_payload Float32,
+    chi_square_bfd Float32,
+    feature_category LowCardinality(String),
+    availability LowCardinality(String),
+    schema_version String,
+    algorithm_version String,
+    window_id String,
+    event_time_start_ms Int64,
+    event_time_end_ms Int64,
+    source_event_ids Array(String),
+    evidence_ids Array(String),
+    missing_fields Array(String),
+    missing_reason String,
+    ingest_ts DateTime64(3, 'UTC')
+)
+ENGINE = MergeTree()
+PARTITION BY (tenant_id, toDate(ts))
+ORDER BY (tenant_id, community_id, ts, session_id)
+TTL ts + INTERVAL 30 DAY;
 
 -- ==================== 系统设置（开发环境）====================
 -- 注意：生产环境应在 config.xml 中配置

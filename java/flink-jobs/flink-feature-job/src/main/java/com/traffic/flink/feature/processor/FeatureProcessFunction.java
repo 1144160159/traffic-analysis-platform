@@ -306,7 +306,7 @@ public class FeatureProcessFunction extends BroadcastProcessFunction<SessionEven
         }
 
         if (session.getStdPayload() > 100.0f) {
-            metrics.incEncrypted();
+            metrics.incHighPayloadVariance();
         }
 
         metrics.recordPPS(feature.getPps());
@@ -389,7 +389,7 @@ public class FeatureProcessFunction extends BroadcastProcessFunction<SessionEven
         if (now - lastLogTime > 10_000) {
             LOG.info("Feature Stats: " +
                             "processed={}, error={}, skipped={}, " +
-                            "zero_packets={}, high_pps={}, high_bps={}, encrypted={}, " +
+                            "zero_packets={}, high_pps={}, high_bps={}, high_payload_variance={}, " +
                             "l2_triggered={}, dlq_write={}, " +
                             "processing_rate={}/s, error_rate={}/s",
                     metrics.getProcessedCounter().getCount(),
@@ -398,7 +398,7 @@ public class FeatureProcessFunction extends BroadcastProcessFunction<SessionEven
                     metrics.getZeroPacketsCounter().getCount(),
                     metrics.getHighPpsCounter().getCount(),
                     metrics.getHighBpsCounter().getCount(),
-                    metrics.getEncryptedCounter().getCount(),
+                    metrics.getHighPayloadVarianceCounter().getCount(),
                     metrics.getL2TriggeredCounter().getCount(),
                     metrics.getDlqWriteCounter().getCount(),
                     String.format("%.2f", metrics.getProcessingRate().getRate()),

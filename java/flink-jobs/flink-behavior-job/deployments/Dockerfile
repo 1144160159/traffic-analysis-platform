@@ -78,8 +78,8 @@ COPY --from=builder --chown=flink:flink \
 
 # 复制配置文件
 COPY --chown=flink:flink \
-    flink-jobs/flink-behavior-job/src/main/resources/behavior-job.properties \
-    ${FLINK_HOME}/conf/
+    flink-jobs/flink-behavior-job/src/main/resources/feature-job.properties \
+    ${FLINK_HOME}/conf/behavior-job.properties
 
 # 复制额外的 Flink 配置
 COPY --chown=flink:flink docker/flink-conf.yaml ${FLINK_HOME}/conf/flink-conf.yaml

@@ -10,7 +10,7 @@ import org.apache.flink.runtime.metrics.DescriptiveStatisticsHistogram;
  * Feature Job 统一 Metrics 管理（增强版 v2）
  * 
  * 增强内容（P1）：
- * 1. ✅ 业务 Metrics（zero_packets/high_pps/encrypted/l2_triggered）
+ * 1. ✅ 业务 Metrics（zero_packets/high_pps/high_payload_variance/l2_triggered）
  * 2. ✅ 端到端延迟 Histogram
  * 3. ✅ ClickHouse/Kafka 写入成功/失败计数
  * 4. ✅ DLQ 写入计数
@@ -28,7 +28,7 @@ public class FeatureMetrics {
     private final Counter zeroPacketsCounter;
     private final Counter highPpsCounter;
     private final Counter highBpsCounter;
-    private final Counter encryptedCounter;
+    private final Counter highPayloadVarianceCounter;
     private final Counter l2TriggeredCounter;
 
     // Sink 计数
@@ -68,7 +68,7 @@ public class FeatureMetrics {
         this.zeroPacketsCounter = metricGroup.counter("feature_zero_packets_total");
         this.highPpsCounter = metricGroup.counter("feature_high_pps_total");
         this.highBpsCounter = metricGroup.counter("feature_high_bps_total");
-        this.encryptedCounter = metricGroup.counter("feature_encrypted_total");
+        this.highPayloadVarianceCounter = metricGroup.counter("feature_high_payload_variance_total");
         this.l2TriggeredCounter = metricGroup.counter("feature_l2_triggered_total");
 
         // Sink 计数
@@ -151,8 +151,8 @@ public class FeatureMetrics {
         highBpsCounter.inc();
     }
 
-    public void incEncrypted() {
-        encryptedCounter.inc();
+    public void incHighPayloadVariance() {
+        highPayloadVarianceCounter.inc();
     }
 
     public void incL2Triggered() {
@@ -243,8 +243,8 @@ public class FeatureMetrics {
         return highBpsCounter;
     }
 
-    public Counter getEncryptedCounter() {
-        return encryptedCounter;
+    public Counter getHighPayloadVarianceCounter() {
+        return highPayloadVarianceCounter;
     }
 
     public Counter getL2TriggeredCounter() {

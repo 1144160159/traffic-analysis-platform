@@ -22,4 +22,10 @@ public interface StreamFlowsRequestOrBuilder extends
    * <code>.traffic.v1.FlowEvent event = 1 [json_name = "event"];</code>
    */
   com.traffic.proto.traffic.v1.FlowEventOrBuilder getEventOrBuilder();
+
+  /**
+   * <code>uint32 accepted_response_revision = 2 [json_name = "acceptedResponseRevision"];</code>
+   * @return The acceptedResponseRevision.
+   */
+  int getAcceptedResponseRevision();
 }

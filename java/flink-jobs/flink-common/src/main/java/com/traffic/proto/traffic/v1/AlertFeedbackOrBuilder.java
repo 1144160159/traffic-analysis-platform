@@ -93,6 +93,11 @@ public interface AlertFeedbackOrBuilder extends
       getCommentBytes();
 
   /**
+   * <pre>
+   * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+   * a future breaking-change migration should use `bool`.
+   * </pre>
+   *
    * <code>uint32 add_to_whitelist = 8 [json_name = "addToWhitelist"];</code>
    * @return The addToWhitelist.
    */

@@ -12,17 +12,22 @@ metadata:
 data:
   rule-job.properties: |
     # Kafka
-    kafka.brokers=kafka-headless.traffic-analysis.svc.cluster.local:9092
+    kafka.brokers=kafka-bootstrap.middleware.svc:9092
+    kafka.security.protocol=SASL_SSL
+    kafka.sasl.mechanism=SCRAM-SHA-512
+    kafka.ssl.truststore.location=/etc/kafka/tls/kafka.truststore.p12
+    kafka.ssl.truststore.type=PKCS12
     kafka.feature.topic=feature.stat.v1
     kafka.rule.topic=rule.updates
+    kafka.rule.applied.topic=rule-update-applied.v1
     kafka.output.topic=detections.v1
-    kafka.dlq.topic=dlq.rule-job
+    kafka.dlq.topic=dlq.v1
     kafka.group.id=flink-rule-job
     
     # ClickHouse
-    clickhouse.url=clickhouse-headless.traffic-analysis.svc.cluster.local:8123
+    clickhouse.url=clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123
     clickhouse.database=traffic
-    clickhouse.table=detections_behavior_local
+    clickhouse.table=detections_behavior
     clickhouse.user=default
     clickhouse.password=${CLICKHOUSE_PASSWORD}
     

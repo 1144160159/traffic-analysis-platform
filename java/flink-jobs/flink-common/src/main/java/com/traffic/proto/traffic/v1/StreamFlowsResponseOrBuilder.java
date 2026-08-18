@@ -37,4 +37,45 @@ public interface StreamFlowsResponseOrBuilder extends
    */
   com.google.protobuf.ByteString
       getErrorBytes();
+
+  /**
+   * <code>.traffic.v1.FlowItemDisposition disposition = 4 [json_name = "disposition"];</code>
+   * @return The enum numeric value on the wire for disposition.
+   */
+  int getDispositionValue();
+  /**
+   * <code>.traffic.v1.FlowItemDisposition disposition = 4 [json_name = "disposition"];</code>
+   * @return The disposition.
+   */
+  com.traffic.proto.traffic.v1.FlowItemDisposition getDisposition();
+
+  /**
+   * <code>string reason_code = 5 [json_name = "reasonCode"];</code>
+   * @return The reasonCode.
+   */
+  java.lang.String getReasonCode();
+  /**
+   * <code>string reason_code = 5 [json_name = "reasonCode"];</code>
+   * @return The bytes for reasonCode.
+   */
+  com.google.protobuf.ByteString
+      getReasonCodeBytes();
+
+  /**
+   * <code>string ack_scope = 6 [json_name = "ackScope"];</code>
+   * @return The ackScope.
+   */
+  java.lang.String getAckScope();
+  /**
+   * <code>string ack_scope = 6 [json_name = "ackScope"];</code>
+   * @return The bytes for ackScope.
+   */
+  com.google.protobuf.ByteString
+      getAckScopeBytes();
+
+  /**
+   * <code>uint32 response_revision = 7 [json_name = "responseRevision"];</code>
+   * @return The responseRevision.
+   */
+  int getResponseRevision();
 }

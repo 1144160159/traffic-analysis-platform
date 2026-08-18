@@ -1,6 +1,7 @@
 package com.traffic.flink.session.sink;
 
 import com.traffic.flink.session.SessionJobConfig;
+import com.traffic.flink.common.DeploymentActivation;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
@@ -29,6 +30,12 @@ public class OpenSearchSinkFactory {
      * @return OpenSearch SinkFunction
      */
     public static SinkFunction<SessionEvent> createSink(SessionJobConfig config) {
+        return createSink(config, config.getDeploymentActivation());
+    }
+
+    public static SinkFunction<SessionEvent> createSink(
+            SessionJobConfig config,
+            DeploymentActivation activation) {
         LOG.info("Creating OpenSearch Sink: hosts={}, index={}, batchSize={}",
                 String.join(",", config.getOpenSearchHosts()),
                 config.getOpenSearchIndex(),
@@ -42,7 +49,8 @@ public class OpenSearchSinkFactory {
                 config.getOpenSearchUser(),
                 config.getOpenSearchPassword(),
                 config.getOpenSearchBatchSize(),
-                config.getOpenSearchBatchIntervalMs()
+                config.getOpenSearchBatchIntervalMs(),
+                activation
         );
     }
 

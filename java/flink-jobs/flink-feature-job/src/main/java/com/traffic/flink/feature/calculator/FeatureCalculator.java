@@ -2,6 +2,8 @@ package com.traffic.flink.feature.calculator;
 
 import com.traffic.flink.common.DeterministicId;
 import com.traffic.proto.traffic.v1.EventHeader;
+import com.traffic.proto.traffic.v1.FeatureAvailability;
+import com.traffic.proto.traffic.v1.FeatureCategory;
 import com.traffic.proto.traffic.v1.FeatureStat;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
@@ -10,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * L1 统计特征计算器（增强版 v2）
@@ -50,11 +53,7 @@ public class FeatureCalculator {
     // 特征版本（升级到 v2.0）
     private static final String SCHEMA_VERSION = "v2.0";
 
-    // IAT 阈值（区分 Active/Idle），单位 ms
-    private static final float IAT_THRESHOLD_MS = 1000.0f;
-
-    // TCP 初始窗口 UNKNOWN 值
-    private static final long TCP_WINDOW_UNKNOWN = Integer.MAX_VALUE;
+    private static final String ALGORITHM_VERSION = "feature-stat-flow-metadata-v1";
 
     private FeatureCalculator() {
         // Utility class
@@ -65,10 +64,8 @@ public class FeatureCalculator {
      */
     public static FeatureStat calculate(SessionEvent session) {
         // ==================== 提取基础信息 ====================
-        long durationMs = session.getDurationMs();
-        if (durationMs <= 0) {
-            durationMs = 1; // 避免除零
-        }
+        long durationMs = Integer.toUnsignedLong(session.getDurationMs());
+        boolean rateFeaturesAvailable = durationMs > 0;
 
         long packetsTotal = session.getPacketsTotal();
         long bytesTotal = session.getBytesTotal();
@@ -77,28 +74,15 @@ public class FeatureCalculator {
 
         // ==================== 速率特征 ====================
         float durationSec = durationMs / 1000.0f;
-        float pps = packetsTotal / Math.max(durationSec, 0.001f);
-        float bps = bytesTotal * 8.0f / Math.max(durationSec, 0.001f);
+        float pps = rateFeaturesAvailable ? packetsTotal / durationSec : 0.0f;
+        float bps = rateFeaturesAvailable ? bytesTotal * 8.0f / durationSec : 0.0f;
 
         // ==================== 方向特征 ====================
         float upDownRatio = calculateUpDownRatio(bytesFwd, bytesBwd);
 
         // ==================== 包长特征 ====================
-        float pktlenMean = 0.0f;
-        float pktlenStd = 0.0f;
-        if (packetsTotal > 0) {
-            pktlenMean = (float) bytesTotal / packetsTotal;
-            
-            // 使用 Welford 算法估算标准差
-            if (session.getMaxPayload() > session.getMinPayload()) {
-                pktlenStd = estimateStdDev(
-                        session.getMinPayload(),
-                        session.getMaxPayload(),
-                        pktlenMean,
-                        packetsTotal
-                );
-            }
-        }
+        float pktlenMean = session.getAvgPayload();
+        float pktlenStd = session.getStdPayload();
 
         // ==================== IAT 特征（✅ 修复：使用 min/max）====================
         float iatMeanMs = session.getMeanIatMs();
@@ -106,35 +90,15 @@ public class FeatureCalculator {
         float iatMinMs = session.getMinIatMs();
         float iatMaxMs = session.getMaxIatMs();
 
-        // 如果 session 没有提供 IAT mean，则估算
-        if (iatMeanMs <= 0 && packetsTotal > 1) {
-            iatMeanMs = (float) durationMs / (packetsTotal - 1);
-        }
+        // Missing IAT remains missing. Do not synthesize values from duration.
+        boolean iatAvailable = packetsTotal > 1
+                && iatMeanMs > 0 && iatMinMs > 0 && iatMaxMs >= iatMinMs;
 
-        // 如果 session 没有提供 IAT min/max，则估算
-        if (iatMinMs <= 0 && iatMeanMs > 0) {
-            iatMinMs = iatMeanMs * 0.1f; // 估算为均值的 10%
-        }
-        if (iatMaxMs <= 0 && iatMeanMs > 0) {
-            iatMaxMs = iatMeanMs * 3.0f; // 估算为均值的 3 倍
-        }
-
-        // ==================== Active/Idle 特征 ====================
+        // SessionEvent does not provide measured active/idle segments. Do not
+        // infer them from mean IAT: zero remains the wire default and the
+        // missing contract below carries the absence explicitly.
         float activeMeanMs = 0.0f;
         float idleMeanMs = 0.0f;
-
-        // 基于 IAT 阈值估算
-        if (iatMeanMs > 0) {
-            if (iatMeanMs < IAT_THRESHOLD_MS) {
-                // 大部分时间 Active
-                activeMeanMs = durationMs * 0.8f;
-                idleMeanMs = durationMs * 0.2f;
-            } else {
-                // 大部分时间 Idle
-                activeMeanMs = durationMs * 0.3f;
-                idleMeanMs = durationMs * 0.7f;
-            }
-        }
 
         // ==================== TCP Flags 特征 ====================
         int tcpFlagSynCnt = session.getFlagsSyn();
@@ -146,12 +110,10 @@ public class FeatureCalculator {
             protocol = session.getTuple().getProtocol();
         }
 
-        // ==================== TCP 初始窗口（✅ 修复：使用 UNKNOWN 值）====================
-        long tcpInitWinBytesFwd = TCP_WINDOW_UNKNOWN;
-        long tcpInitWinBytesBwd = TCP_WINDOW_UNKNOWN;
-        
-        // 注意：SessionEvent Protobuf 中未定义此字段，标记为 UNKNOWN
-        // 若未来 Session Job 提供此字段，则使用实际值
+        // SessionEvent does not carry TCP initial windows. Numeric values stay
+        // at the protobuf default and missing_fields carries the truth.
+        int tcpInitWinBytesFwd = 0;
+        int tcpInitWinBytesBwd = 0;
 
         // ==================== 扩展特征（✅ 修复：扩展到 20 个槽位）====================
         List<Float> extra = buildExtraFeaturesV2(session, packetsTotal, iatMinMs, iatMaxMs);
@@ -168,6 +130,24 @@ public class FeatureCalculator {
         String correlationId = sourceHeader.getCorrelationId().isEmpty()
                 ? session.getCommunityId()
                 : sourceHeader.getCorrelationId();
+        List<String> sourceIdentityInputs = new ArrayList<>(session.getSourceEventIdsList());
+        sourceIdentityInputs.add(sourceHeader.getEventId());
+        List<String> sourceEventIds = stableNonEmptyIds(sourceIdentityInputs);
+        List<String> evidenceIds = stableNonEmptyIds(
+                session.getEvidenceIdsList().isEmpty()
+                        ? session.getFlowIdsList()
+                        : session.getEvidenceIdsList());
+        List<String> missingFields = new ArrayList<>();
+        for (String field : session.getMissingFieldsList()) {
+            missingFields.add("source_session." + field);
+        }
+        if (!rateFeaturesAvailable) missingFields.add("rate_features.duration_ms");
+        if (!iatAvailable) missingFields.add("inter_arrival_statistics");
+        missingFields.add("active_mean_ms");
+        missingFields.add("idle_mean_ms");
+        missingFields.add("tcp_initial_window_fwd_bytes");
+        missingFields.add("tcp_initial_window_bwd_bytes");
+        missingFields = stableNonEmptyIds(missingFields);
         EventHeader header = EventHeader.newBuilder()
                 .setEventId(eventId)
                 .setTenantId(session.getHeader().getTenantId())
@@ -217,12 +197,26 @@ public class FeatureCalculator {
                 .setTcpFlagSynCnt(tcpFlagSynCnt)
                 .setTcpFlagAckCnt(tcpFlagAckCnt)
                 // TCP 初始窗口（UNKNOWN 值）
-                .setTcpInitWinBytesFwd(tcpInitWinBytesFwd > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) tcpInitWinBytesFwd)
-                .setTcpInitWinBytesBwd(tcpInitWinBytesBwd > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) tcpInitWinBytesBwd)
+                .setTcpInitWinBytesFwd(tcpInitWinBytesFwd)
+                .setTcpInitWinBytesBwd(tcpInitWinBytesBwd)
                 // 扩展特征（20 个槽位）
                 .addAllExtra(extra)
                 .setTuple(session.getTuple())
-                .addAllEvidenceIds(session.getFlowIdsList())
+                .addAllEvidenceIds(evidenceIds)
+                .setFeatureCategory(FeatureCategory.FEATURE_CATEGORY_FLOW_METADATA)
+                .setAvailability(missingFields.isEmpty()
+                        ? FeatureAvailability.FEATURE_AVAILABILITY_AVAILABLE
+                        : FeatureAvailability.FEATURE_AVAILABILITY_PARTIALLY_AVAILABLE)
+                .setAlgorithmVersion(ALGORITHM_VERSION)
+                .setWindowId(session.getSessionId())
+                .setEventTimeStartMs(session.getEventTimeStartMs() > 0
+                        ? session.getEventTimeStartMs() : session.getTsStart())
+                .setEventTimeEndMs(session.getEventTimeEndMs() > 0
+                        ? session.getEventTimeEndMs() : session.getTsEnd())
+                .setValueUnit("mixed:rate_bps,rate_pps,time_ms,bytes,count,ratio")
+                .addAllSourceEventIds(sourceEventIds)
+                .addAllMissingFields(missingFields)
+                .setMissingReason(missingFields.isEmpty() ? "" : "source session did not measure listed fields")
                 .build();
     }
 
@@ -237,23 +231,6 @@ public class FeatureCalculator {
         } else {
             return 0.0f;  // 无数据
         }
-    }
-
-    /**
-     * 估算标准差（基于 min/max/mean）
-     * 使用修正的贝塞尔公式：std ≈ (max - min) / (2 * sqrt(n))
-     */
-    private static float estimateStdDev(int min, int max, float mean, long count) {
-        if (count <= 1) {
-            return 0.0f;
-        }
-        
-        // 使用范围估算（假设接近正态分布）
-        float range = max - min;
-        float estimatedStd = range / (2.0f * (float) Math.sqrt(count));
-        
-        // 限制最大值（防止异常值）
-        return Math.min(estimatedStd, range / 2.0f);
     }
 
     /**
@@ -399,6 +376,16 @@ public class FeatureCalculator {
                 SCHEMA_VERSION);
     }
 
+    static List<String> stableNonEmptyIds(List<String> values) {
+        TreeSet<String> ordered = new TreeSet<>();
+        for (String value : values) {
+            if (value != null && !value.isEmpty()) {
+                ordered.add(value);
+            }
+        }
+        return new ArrayList<>(ordered);
+    }
+
     /**
      * 创建错误特征对象
      */
@@ -416,7 +403,17 @@ public class FeatureCalculator {
                 .setSchemaVersion(SCHEMA_VERSION)
                 .setObjectType("error")
                 .setObjectId(sessionId)
-                .setCommunityId("error:" + errorMessage)
+                .setCommunityId(session.getCommunityId())
+                .setFeatureCategory(FeatureCategory.FEATURE_CATEGORY_FLOW_METADATA)
+                .setAvailability(FeatureAvailability.FEATURE_AVAILABILITY_INVALID)
+                .setAlgorithmVersion(ALGORITHM_VERSION)
+                .setWindowId(sessionId)
+                .setEventTimeStartMs(session.getTsStart())
+                .setEventTimeEndMs(session.getTsEnd())
+                .setValueUnit("none")
+                .addMissingFields("feature_calculation")
+                .setMissingReason(errorMessage == null || errorMessage.isEmpty()
+                        ? "feature calculation failed" : errorMessage)
                 .build();
     }
 }

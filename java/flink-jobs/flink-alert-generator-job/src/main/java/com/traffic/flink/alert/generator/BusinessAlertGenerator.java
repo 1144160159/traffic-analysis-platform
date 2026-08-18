@@ -5,9 +5,9 @@ import com.traffic.flink.alert.evidence.EvidenceBuilder;
 import com.traffic.flink.common.DeterministicId;
 import com.traffic.proto.traffic.v1.*;
 
+import org.apache.flink.api.common.state.MapState;
+import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.StateTtlConfig;
-import org.apache.flink.api.common.state.ValueState;
-import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -20,8 +20,9 @@ import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.MessageDigest;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,22 +47,41 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
     private final String arkimeUrl;
     private final int arkimeTimeBufferSeconds;
 
-    // 去重状态（带 TTL）
-    private transient ValueState<DedupState> dedupState;
+    // Severity 阈值配置（与 AlertGenerator 同源，避免口径分裂）
+    private final float severityCriticalThreshold;
+    private final float severityHighThreshold;
+    private final float severityMediumThreshold;
+    private final float severityLowThreshold;
+
+    // 去重状态（带 TTL）：key = fingerprint
+    private transient MapState<String, DedupState> dedupState;
 
     // Metrics
     private transient Counter alertsGenerated;
     private transient Counter alertsDeduplicated;
     private transient Counter alertsUpdated;
     private transient Counter evidencesGenerated;
+    private transient Counter alertsRejected;
 
     /**
      * 构造函数
      */
-    public BusinessAlertGenerator(long dedupWindowMinutes, String arkimeUrl, int arkimeTimeBufferSeconds) {
+    public BusinessAlertGenerator(
+            long dedupWindowMinutes,
+            String arkimeUrl,
+            int arkimeTimeBufferSeconds,
+            float severityCriticalThreshold,
+            float severityHighThreshold,
+            float severityMediumThreshold,
+            float severityLowThreshold
+    ) {
         this.dedupWindowMinutes = dedupWindowMinutes;
         this.arkimeUrl = arkimeUrl;
         this.arkimeTimeBufferSeconds = arkimeTimeBufferSeconds;
+        this.severityCriticalThreshold = severityCriticalThreshold;
+        this.severityHighThreshold = severityHighThreshold;
+        this.severityMediumThreshold = severityMediumThreshold;
+        this.severityLowThreshold = severityLowThreshold;
     }
 
     @Override
@@ -77,12 +97,13 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
                 .build();
 
         // 初始化去重状态
-        ValueStateDescriptor<DedupState> dedupDescriptor = new ValueStateDescriptor<>(
-                "business-dedup-state",
+        MapStateDescriptor<String, DedupState> dedupDescriptor = new MapStateDescriptor<>(
+                "business-dedup-map-state",
+                TypeInformation.of(String.class),
                 TypeInformation.of(new TypeHint<DedupState>() {})
         );
         dedupDescriptor.enableTimeToLive(ttlConfig);
-        dedupState = getRuntimeContext().getState(dedupDescriptor);
+        dedupState = getRuntimeContext().getMapState(dedupDescriptor);
 
         // 注册 Metrics
         alertsGenerated = getRuntimeContext()
@@ -101,8 +122,15 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
                 .getMetricGroup()
                 .counter("business_evidences_generated_total");
 
-        LOG.info("BusinessAlertGenerator initialized: dedupWindow={}min, arkimeUrl={}",
-                dedupWindowMinutes, arkimeUrl);
+        alertsRejected = getRuntimeContext()
+                .getMetricGroup()
+                .counter("business_alerts_rejected_total");
+
+        LOG.info("BusinessAlertGenerator initialized: dedupWindow={}min, arkimeUrl={}, " +
+                        "thresholds=[critical={}, high={}, medium={}, low={}]",
+                dedupWindowMinutes, arkimeUrl,
+                severityCriticalThreshold, severityHighThreshold,
+                severityMediumThreshold, severityLowThreshold);
     }
 
     @Override
@@ -112,9 +140,24 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
             Collector<Tuple2<Alert, Evidence>> out
     ) throws Exception {
 
+        if (detection == null || !detection.hasHeader()) {
+            LOG.warn("Received null/broken business detection, skipping");
+            if (alertsRejected != null) alertsRejected.inc();
+            return;
+        }
         EventHeader header = detection.getHeader();
         String tenantId = header.getTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            LOG.warn("Business detection has empty tenant_id, rejecting eventId={}", header.getEventId());
+            if (alertsRejected != null) alertsRejected.inc();
+            return;
+        }
         String communityId = detection.getCommunityId();
+        if (communityId == null || communityId.isEmpty()) {
+            LOG.warn("Business detection has empty community_id, rejecting eventId={}", header.getEventId());
+            if (alertsRejected != null) alertsRejected.inc();
+            return;
+        }
         long currentTime = detection.getTs();
 
         // 生成去重指纹
@@ -125,8 +168,8 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
                 communityId
         );
 
-        // 获取去重状态
-        DedupState state = dedupState.value();
+        // 获取去重状态（按指纹）
+        DedupState state = dedupState.get(fingerprint);
 
         // 判断是否需要去重
         if (state != null && state.getFingerprint().equals(fingerprint)) {
@@ -137,7 +180,7 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
                 state.setLastSeen(currentTime);
                 state.setCount(state.getCount() + 1);
                 state.setStateVersion(state.getStateVersion() + 1);
-                dedupState.update(state);
+                dedupState.put(fingerprint, state);
 
                 // 输出更新事件
                 Alert updateAlert = buildUpdateAlert(
@@ -190,7 +233,7 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
         newState.setLastSeen(currentTime);
         newState.setCount(1);
         newState.setStateVersion(1);
-        dedupState.update(newState);
+        dedupState.put(fingerprint, newState);
 
         // 输出
         out.collect(Tuple2.of(alert, evidence));
@@ -267,24 +310,33 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
         long startTime = timestamp - (arkimeTimeBufferSeconds * 1000L);
         long endTime = timestamp + (arkimeTimeBufferSeconds * 1000L);
 
+        // communityId 含 '=' 等字符（base64 填充），必须 URL 编码后再拼入 query
+        String encodedCommunityId;
+        try {
+            encodedCommunityId = URLEncoder.encode(communityId, StandardCharsets.UTF_8.name());
+        } catch (Exception e) {
+            LOG.warn("Failed to URL-encode communityId={}, using raw value", communityId);
+            encodedCommunityId = communityId;
+        }
+
         return String.format("%s?date=-1&expression=community.id==%s&startTime=%d&stopTime=%d",
                 arkimeUrl,
-                communityId,
+                encodedCommunityId,
                 startTime / 1000,
                 endTime / 1000);
     }
 
     /**
-     * 映射严重程度
+     * 映射严重程度（使用与 AlertGenerator 同源的可配置阈值）
      */
     private Severity mapSeverity(float score) {
-        if (score >= 0.9) {
+        if (score >= severityCriticalThreshold) {
             return Severity.SEVERITY_CRITICAL;
-        } else if (score >= 0.7) {
+        } else if (score >= severityHighThreshold) {
             return Severity.SEVERITY_HIGH;
-        } else if (score >= 0.5) {
+        } else if (score >= severityMediumThreshold) {
             return Severity.SEVERITY_MEDIUM;
-        } else if (score >= 0.3) {
+        } else if (score >= severityLowThreshold) {
             return Severity.SEVERITY_LOW;
         } else {
             return Severity.SEVERITY_INFO;
@@ -312,6 +364,9 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
         List<String> evidenceIds = new ArrayList<>();
         evidenceIds.add(evidenceId);
 
+        // DetectionBusiness 不携带五元组（proto 无 tuple 字段，禁止伪造）。
+        // 以显式 UNKNOWN 占位：srcIp/dstIp 为空、协议 0（UNKNOWN），
+        // 而不是伪造成 0.0.0.0/TCP。真实五元组需要 proto 契约扩展后接入。
         return Alert.newBuilder()
                 .setTenantId(header.getTenantId())
                 .setAlertId(alertId)
@@ -321,12 +376,12 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
                 .setAlertType(detection.getDetectionType())
                 .setScore(detection.getScore())
                 .addAllLabels(labels)
-                .setSrcIp("0.0.0.0") // 需要从 Session 获取
-                .setDstIp("0.0.0.0")
+                .setSrcIp("")
+                .setDstIp("")
                 .setSrcPort(0)
                 .setDstPort(0)
-                .setProtocol(6)
-                .setProtocolName("TCP")
+                .setProtocol(0)
+                .setProtocolName("UNKNOWN")
                 .setCommunityId(detection.getCommunityId())
                 .setSessionId(detection.getSessionId())
                 .setCampaignId(detection.getCampaignId())
@@ -378,12 +433,12 @@ public class BusinessAlertGenerator extends KeyedProcessFunction<String, Detecti
                 .setAlertType(detection.getDetectionType())
                 .setScore(detection.getScore())
                 .addAllLabels(labels)
-                .setSrcIp("0.0.0.0")
-                .setDstIp("0.0.0.0")
+                .setSrcIp("")
+                .setDstIp("")
                 .setSrcPort(0)
                 .setDstPort(0)
-                .setProtocol(6)
-                .setProtocolName("TCP")
+                .setProtocol(0)
+                .setProtocolName("UNKNOWN")
                 .setCommunityId(detection.getCommunityId())
                 .setSessionId(detection.getSessionId())
                 .setCampaignId(detection.getCampaignId())

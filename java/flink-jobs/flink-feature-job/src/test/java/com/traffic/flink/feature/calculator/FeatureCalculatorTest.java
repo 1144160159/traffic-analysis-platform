@@ -1,6 +1,8 @@
 package com.traffic.flink.feature.calculator;
 
 import com.traffic.proto.traffic.v1.EventHeader;
+import com.traffic.proto.traffic.v1.FeatureAvailability;
+import com.traffic.proto.traffic.v1.FeatureCategory;
 import com.traffic.proto.traffic.v1.FeatureStat;
 import com.traffic.proto.traffic.v1.FiveTuple;
 import com.traffic.proto.traffic.v1.SessionEvent;
@@ -11,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -82,6 +86,12 @@ class FeatureCalculatorTest {
         assertEquals("flink-feature-job", first.getHeader().getProducer());
         assertEquals(session.getTuple(), first.getTuple());
         assertEquals(session.getFlowIdsList(), first.getEvidenceIdsList());
+        assertEquals(FeatureCategory.FEATURE_CATEGORY_FLOW_METADATA,
+                first.getFeatureCategory());
+        assertEquals("feature-stat-flow-metadata-v1", first.getAlgorithmVersion());
+        assertEquals("session-1", first.getWindowId());
+        assertEquals("mixed:rate_bps,rate_pps,time_ms,bytes,count,ratio",
+                first.getValueUnit());
     }
 
     @Test
@@ -98,6 +108,25 @@ class FeatureCalculatorTest {
 
         assertEquals(100.0f, feature.getPps(), 1.0f);
         assertEquals(1200000.0f, feature.getBps(), 1000.0f);
+    }
+
+    @Test
+    @DisplayName("零时长会话不伪造1ms速率")
+    void testZeroDurationKeepsRateUnavailable() {
+        SessionEvent session = sessionBuilder
+                .setDurationMs(0)
+                .setPacketsTotal(1)
+                .setBytesTotal(128)
+                .build();
+
+        FeatureStat feature = FeatureCalculator.calculate(session);
+
+        assertEquals(0, feature.getDurationMs());
+        assertEquals(0.0f, feature.getPps(), 0.0f);
+        assertEquals(0.0f, feature.getBps(), 0.0f);
+        assertEquals(FeatureAvailability.FEATURE_AVAILABILITY_PARTIALLY_AVAILABLE,
+                feature.getAvailability());
+        assertTrue(feature.getMissingFieldsList().contains("rate_features.duration_ms"));
     }
 
     @Test
@@ -142,8 +171,8 @@ class FeatureCalculatorTest {
     }
 
     @Test
-    @DisplayName("IAT 估算 - 当 Session 没有提供 min/max 时")
-    void testIatMinMaxEstimation() {
+    @DisplayName("IAT 缺失时不估算并显式标记")
+    void testIatMissingIsNotSynthesized() {
         SessionEvent session = sessionBuilder
                 .setDurationMs(10000)
                 .setPacketsTotal(100)
@@ -154,9 +183,11 @@ class FeatureCalculatorTest {
 
         FeatureStat feature = FeatureCalculator.calculate(session);
 
-        // 应估算 min = mean * 0.1, max = mean * 3.0
-        assertEquals(10.0f, feature.getExtra(8), 1.0f);   // min_iat_ms ≈ 10
-        assertEquals(300.0f, feature.getExtra(9), 1.0f);  // max_iat_ms ≈ 300
+        assertEquals(0.0f, feature.getExtra(8), 0.0f);
+        assertEquals(0.0f, feature.getExtra(9), 0.0f);
+        assertEquals(FeatureAvailability.FEATURE_AVAILABILITY_PARTIALLY_AVAILABLE,
+                feature.getAvailability());
+        assertTrue(feature.getMissingFieldsList().contains("inter_arrival_statistics"));
     }
 
     // ==================== 包长特征测试（✅ 新增 min/max）====================
@@ -288,7 +319,7 @@ class FeatureCalculatorTest {
     // ==================== TCP 初始窗口测试（✅ 修复）====================
 
     @Test
-    @DisplayName("TCP 初始窗口 - UNKNOWN 值")
+    @DisplayName("TCP 初始窗口缺失时不使用哨兵值")
     void testTcpInitWindowUnknown() {
         SessionEvent session = sessionBuilder
                 .setPacketsTotal(100)
@@ -296,9 +327,14 @@ class FeatureCalculatorTest {
 
         FeatureStat feature = FeatureCalculator.calculate(session);
 
-        // ✅ 验证 TCP 初始窗口为 UNKNOWN 值（Integer.MAX_VALUE）
-        assertEquals(Integer.MAX_VALUE, feature.getTcpInitWinBytesFwd());
-        assertEquals(Integer.MAX_VALUE, feature.getTcpInitWinBytesBwd());
+        assertEquals(0, feature.getTcpInitWinBytesFwd());
+        assertEquals(0, feature.getTcpInitWinBytesBwd());
+        assertTrue(feature.getMissingFieldsList().contains("tcp_initial_window_fwd_bytes"));
+        assertTrue(feature.getMissingFieldsList().contains("tcp_initial_window_bwd_bytes"));
+        assertEquals(0.0f, feature.getActiveMeanMs(), 0.0f);
+        assertEquals(0.0f, feature.getIdleMeanMs(), 0.0f);
+        assertTrue(feature.getMissingFieldsList().contains("active_mean_ms"));
+        assertTrue(feature.getMissingFieldsList().contains("idle_mean_ms"));
     }
 
     // ==================== Extra 字段完整性测试 ====================
@@ -472,7 +508,31 @@ class FeatureCalculatorTest {
         assertNotNull(errorFeature);
         assertEquals("error", errorFeature.getObjectType());
         assertEquals("session-1", errorFeature.getObjectId());
-        assertTrue(errorFeature.getCommunityId().contains("error"));
+        assertEquals("1:abc123==", errorFeature.getCommunityId());
         assertEquals("v2.0", errorFeature.getSchemaVersion());
+        assertEquals(FeatureAvailability.FEATURE_AVAILABILITY_INVALID,
+                errorFeature.getAvailability());
+        assertEquals("Test error", errorFeature.getMissingReason());
+        assertEquals(List.of("feature_calculation"), errorFeature.getMissingFieldsList());
+    }
+
+    @Test
+    @DisplayName("旧 Feature wire 未提供 M03 字段时保持显式默认")
+    void testLegacyFeatureWireDefaultsRemainCompatible() throws Exception {
+        byte[] legacyWire = FeatureStat.newBuilder()
+                .setSchemaVersion("v2.0")
+                .setObjectType("session")
+                .setObjectId("legacy-session")
+                .build()
+                .toByteArray();
+
+        FeatureStat decoded = FeatureStat.parseFrom(legacyWire);
+        assertEquals("legacy-session", decoded.getObjectId());
+        assertEquals(FeatureCategory.FEATURE_CATEGORY_UNSPECIFIED,
+                decoded.getFeatureCategory());
+        assertEquals(FeatureAvailability.FEATURE_AVAILABILITY_UNSPECIFIED,
+                decoded.getAvailability());
+        assertEquals("", decoded.getAlgorithmVersion());
+        assertTrue(decoded.getMissingFieldsList().isEmpty());
     }
 }

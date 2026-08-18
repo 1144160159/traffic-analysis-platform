@@ -137,6 +137,36 @@ public final class CommunityIdUtil {
     }
 
     /**
+     * ICMP/ICMPv6 Community ID（community-id-spec 编码）。
+     * 规范要求端口位为一个 16 位值 (type &lt;&lt; 8) | code,且两侧相同;
+     * 应答类型需归一化为请求类型(ICMPv4 echo reply 0 → request 8,
+     * ICMPv6 echo reply 129 → request 128),保证请求/应答同一 Community ID。
+     * 与 Rust probe-agent community_id.rs 的固定向量对齐。
+     *
+     * @param srcIp    源 IP 地址
+     * @param dstIp    目标 IP 地址
+     * @param icmpType ICMP type(如 echo request 8 / 128)
+     * @param icmpCode ICMP code
+     * @param protocol 协议号 (1=ICMP, 58=ICMPv6)
+     * @return Community ID 字符串
+     */
+    public static String computeIcmp(
+            String srcIp, String dstIp,
+            int icmpType, int icmpCode,
+            int protocol
+    ) {
+        // 应答类型归一化为请求类型,保证 request/reply 对称。
+        int normalizedType = icmpType & 0xFF;
+        if (protocol == 1 && normalizedType == 0) {
+            normalizedType = 8; // ICMPv4 echo reply -> request
+        } else if (protocol == 58 && normalizedType == 129) {
+            normalizedType = 128; // ICMPv6 echo reply -> request
+        }
+        int packedPort = (normalizedType << 8) | (icmpCode & 0xFF);
+        return compute(srcIp, dstIp, packedPort, packedPort, protocol);
+    }
+
+    /**
      * 验证 IP 地址格式
      */
     public static boolean isValidIp(String ip) {

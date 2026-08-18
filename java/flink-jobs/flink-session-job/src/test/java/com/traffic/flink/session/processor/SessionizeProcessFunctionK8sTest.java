@@ -131,6 +131,41 @@ class SessionizeProcessFunctionK8sTest {
         assertEquals(1, results.size(), "Only 1 session: idle timer reset by second flow");
     }
 
+    @Test @DisplayName("重复 FlowEvent 只累加一次")
+    void testDuplicateFlowIsIdempotent() throws Exception {
+        FlowEvent flow = createFlowWithIdentity("tenant1", "1:dedup", "flow-1", "event-1", 1000L, 1100L);
+        List<SessionEvent> results = runPipeline(List.of(flow, flow), 1100L + IDLE_TIMEOUT_MS + 500);
+
+        assertEquals(1, results.size());
+        assertEquals(150, results.get(0).getPacketsTotal());
+        assertEquals(List.of("flow-1"), results.get(0).getFlowIdsList());
+        assertEquals(List.of("event-1"), results.get(0).getSourceEventIdsList());
+    }
+
+    @Test @DisplayName("乱序输入保持会话身份与统计确定")
+    void testOutOfOrderInputIsDeterministic() throws Exception {
+        FlowEvent early = createFlowWithIdentity("tenant1", "1:order", "flow-a", "event-a", 1000L, 1100L);
+        FlowEvent late = createFlowWithIdentity("tenant1", "1:order", "flow-b", "event-b", 3000L, 3100L);
+
+        SessionEvent ordered = runPipeline(List.of(early, late), 3100L + IDLE_TIMEOUT_MS + 500).get(0);
+        SessionEvent reversed = runPipeline(List.of(late, early), 3100L + IDLE_TIMEOUT_MS + 500).get(0);
+
+        assertEquals(ordered.getSessionId(), reversed.getSessionId());
+        assertEquals(ordered.getHeader().getEventId(), reversed.getHeader().getEventId());
+        assertEquals(ordered.getTsStart(), reversed.getTsStart());
+        assertEquals(ordered.getTsEnd(), reversed.getTsEnd());
+        assertEquals(ordered.getPacketsTotal(), reversed.getPacketsTotal());
+        assertEquals(ordered.getSourceEventIdsList(), reversed.getSourceEventIdsList());
+    }
+
+    @Test @DisplayName("允许迟到边界与超迟到边界")
+    void testAllowedLatenessBoundary() {
+        assertFalse(SessionizeProcessFunction.isTooLate(1_000L, 1_500L, 1_000L));
+        assertFalse(SessionizeProcessFunction.isTooLate(1_000L, 2_000L, 1_000L));
+        assertTrue(SessionizeProcessFunction.isTooLate(999L, 2_000L, 1_000L));
+        assertFalse(SessionizeProcessFunction.isTooLate(1_000L, Long.MIN_VALUE, 0L));
+    }
+
     // ==================== Static Helpers (must be static for Flink serialization) ====================
 
     private List<SessionEvent> runPipeline(List<FlowEvent> flows, long finalWatermark) throws Exception {
@@ -173,6 +208,22 @@ class SessionizeProcessFunctionK8sTest {
                 .setCommunityId(cid).setTuple(tuple("192.168.1.1", "10.0.0.1", 12345, 80, 6))
                 .setTsStart(ts).setTsEnd(te).setPacketsFwd(100).setPacketsBwd(50)
                 .setBytesFwd(1000).setBytesBwd(500).build();
+    }
+
+    private static FlowEvent createFlowWithIdentity(
+            String tid, String cid, String flowId, String eventId, long ts, long te) {
+        return FlowEvent.newBuilder()
+                .setHeader(EventHeader.newBuilder().setTenantId(tid).setRunId("rt").setEventId(eventId))
+                .setFlowId(flowId)
+                .setCommunityId(cid)
+                .setTuple(tuple("192.168.1.1", "10.0.0.1", 12345, 80, 6))
+                .setTsStart(ts)
+                .setTsEnd(te)
+                .setPacketsFwd(100)
+                .setPacketsBwd(50)
+                .setBytesFwd(1000)
+                .setBytesBwd(500)
+                .build();
     }
 
     private static FlowEvent createFlowWithStats(String tid, String cid,

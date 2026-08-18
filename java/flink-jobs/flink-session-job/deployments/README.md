@@ -456,9 +456,9 @@ curl -s http://localhost:9090/api/v1/query?query=flink_jobmanager_job_lastCheckp
    state.backend.rocksdb.ttl.compaction.filter.enabled: true
    ```
 
-3. **减少状态 TTL**
+3. **配置安全的状态 TTL**
    ```properties
-   state.ttl.ms=900000  # 15 分钟
+   state.ttl.ms=3600000  # 必须大于 active/idle timeout + watermark delay + allowed lateness
    ```
 
 ### 3. Checkpoint 优化

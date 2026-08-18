@@ -1,14 +1,18 @@
 package com.traffic.flink.session.processor;
 
 import com.traffic.flink.common.CommunityIdUtil;
+import com.traffic.flink.common.eventtime.EventTimePolicy;
 import com.traffic.flink.session.SessionJobConfig;
 import com.traffic.flink.session.aggregator.SessionAccumulator;
 import com.traffic.proto.traffic.v1.EventHeader;
 import com.traffic.proto.traffic.v1.FiveTuple;
 import com.traffic.proto.traffic.v1.FlowEvent;
+import com.traffic.proto.traffic.v1.SessionCompleteness;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
 import org.apache.flink.api.common.state.StateTtlConfig;
+import org.apache.flink.api.common.state.MapState;
+import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.time.Time;
@@ -26,7 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
+import java.util.TreeSet;
 
 /**
  * SessionizeProcessFunction - 基于 KeyedProcessFunction 的会话聚合
@@ -56,12 +63,15 @@ public class SessionizeProcessFunction
     private final long idleTimeoutMs;
     private final long activeTimeoutMs;
     private final long stateTtlMs;
+    private final long allowedLatenessMs;
+    private final boolean stateTtlEnabled;
     private final OutputTag<FlowEvent> lateDataOutputTag;
 
     // ==================== 状态 ====================
     private transient ValueState<SessionAccumulator> accumulatorState;
     private transient ValueState<Long> idleTimerState;
     private transient ValueState<Long> activeTimerState;
+    private transient MapState<String, Boolean> seenInputIdentitiesState;
 
     // ==================== Metrics ====================
     private transient Counter sessionEmittedCounter;
@@ -70,6 +80,7 @@ public class SessionizeProcessFunction
     private transient Counter idleTimeoutCounter;
     private transient Counter activeTimeoutCounter;
     private transient Counter flowProcessedCounter;
+    private transient Counter duplicateFlowCounter;
 
     // 协议常量
     private static final int PROTOCOL_TCP = 6;
@@ -91,6 +102,8 @@ public class SessionizeProcessFunction
         this.idleTimeoutMs = config.getSessionGapMs();
         this.activeTimeoutMs = config.getActiveTimeoutMs();
         this.stateTtlMs = config.getStateTtlMs();
+        this.allowedLatenessMs = config.getAllowedLatenessMs();
+        this.stateTtlEnabled = config.isStateTtlEnabled();
         this.lateDataOutputTag = lateDataOutputTag;
     }
 
@@ -102,6 +115,8 @@ public class SessionizeProcessFunction
         this.idleTimeoutMs = idleTimeoutMs;
         this.activeTimeoutMs = activeTimeoutMs;
         this.stateTtlMs = stateTtlMs;
+        this.allowedLatenessMs = 0L;
+        this.stateTtlEnabled = true;
         this.lateDataOutputTag = lateDataOutputTag;
     }
 
@@ -123,7 +138,7 @@ public class SessionizeProcessFunction
                 "session-accumulator",
                 TypeInformation.of(SessionAccumulator.class)
         );
-        accDescriptor.enableTimeToLive(ttlConfig);
+        if (stateTtlEnabled) accDescriptor.enableTimeToLive(ttlConfig);
         this.accumulatorState = getRuntimeContext().getState(accDescriptor);
 
         // Idle Timer 状态
@@ -131,7 +146,7 @@ public class SessionizeProcessFunction
                 "idle-timer-ts",
                 Long.class
         );
-        idleTimerDescriptor.enableTimeToLive(ttlConfig);
+        if (stateTtlEnabled) idleTimerDescriptor.enableTimeToLive(ttlConfig);
         this.idleTimerState = getRuntimeContext().getState(idleTimerDescriptor);
 
         // Active Timer 状态
@@ -139,8 +154,13 @@ public class SessionizeProcessFunction
                 "active-timer-ts",
                 Long.class
         );
-        activeTimerDescriptor.enableTimeToLive(ttlConfig);
+        if (stateTtlEnabled) activeTimerDescriptor.enableTimeToLive(ttlConfig);
         this.activeTimerState = getRuntimeContext().getState(activeTimerDescriptor);
+
+        MapStateDescriptor<String, Boolean> seenInputDescriptor = new MapStateDescriptor<>(
+                "session-seen-input-identities-v1", String.class, Boolean.class);
+        if (stateTtlEnabled) seenInputDescriptor.enableTimeToLive(ttlConfig);
+        this.seenInputIdentitiesState = getRuntimeContext().getMapState(seenInputDescriptor);
 
         // ==================== 初始化 Metrics ====================
         MetricGroup metricGroup = getRuntimeContext().getMetricGroup()
@@ -152,6 +172,7 @@ public class SessionizeProcessFunction
         this.idleTimeoutCounter = metricGroup.counter("idle_timeout_total");
         this.activeTimeoutCounter = metricGroup.counter("active_timeout_total");
         this.flowProcessedCounter = metricGroup.counter("flow_processed_total");
+        this.duplicateFlowCounter = metricGroup.counter("duplicate_flow_total");
 
         LOG.info("SessionizeProcessFunction initialized: idleTimeout={}ms, activeTimeout={}ms, stateTTL={}ms",
                 idleTimeoutMs, activeTimeoutMs, stateTtlMs);
@@ -161,16 +182,23 @@ public class SessionizeProcessFunction
     public void processElement(FlowEvent flow, Context ctx, Collector<SessionEvent> out) throws Exception {
         // 检查是否为 Late Data
         long currentWatermark = ctx.timerService().currentWatermark();
-        if (flow.getTsEnd() <= currentWatermark && currentWatermark != Long.MIN_VALUE) {
+        if (lateDataOutputTag != null
+                && isTooLate(flow.getTsEnd(), currentWatermark, allowedLatenessMs)) {
             // Late Data：输出到侧流
-            if (lateDataOutputTag != null) {
-                ctx.output(lateDataOutputTag, flow);
-            }
+            ctx.output(lateDataOutputTag, flow);
             lateFlowCounter.inc();
             LOG.debug("Late flow detected: flow_id={}, tsEnd={}, watermark={}",
                     flow.getFlowId(), flow.getTsEnd(), currentWatermark);
             return;
         }
+
+        String inputIdentity = inputIdentity(flow);
+        if (seenInputIdentitiesState.contains(inputIdentity)) {
+            duplicateFlowCounter.inc();
+            LOG.debug("Duplicate flow ignored: identity={}, key={}", inputIdentity, ctx.getCurrentKey());
+            return;
+        }
+        seenInputIdentitiesState.put(inputIdentity, Boolean.TRUE);
 
         flowProcessedCounter.inc();
 
@@ -181,6 +209,8 @@ public class SessionizeProcessFunction
         if (isNewSession) {
             acc = new SessionAccumulator();
         }
+
+        long previousTsStart = isNewSession ? Long.MAX_VALUE : acc.tsStart;
 
         // 累加 Flow 到 Session
         accumulateFlow(flow, acc);
@@ -194,21 +224,31 @@ public class SessionizeProcessFunction
 
         if (isNewSession) {
             // 新会话：注册 Active Timer（基于会话开始时间）
-            long activeTimerTs = acc.tsStart + activeTimeoutMs;
+            long activeTimerTs = timeoutTimer(acc.tsStart, activeTimeoutMs);
             ctx.timerService().registerEventTimeTimer(activeTimerTs);
             activeTimerState.update(activeTimerTs);
 
             // 注册 Idle Timer
-            long idleTimerTs = flowTsEnd + idleTimeoutMs;
+            long idleTimerTs = timeoutTimer(flowTsEnd, idleTimeoutMs);
             ctx.timerService().registerEventTimeTimer(idleTimerTs);
             idleTimerState.update(idleTimerTs);
 
             LOG.debug("New session started: key={}, activeTimer={}, idleTimer={}",
                     ctx.getCurrentKey(), activeTimerTs, idleTimerTs);
         } else {
+            if (acc.tsStart < previousTsStart) {
+                Long oldActiveTimer = activeTimerState.value();
+                long newActiveTimer = timeoutTimer(acc.tsStart, activeTimeoutMs);
+                if (oldActiveTimer != null && newActiveTimer < oldActiveTimer) {
+                    ctx.timerService().deleteEventTimeTimer(oldActiveTimer);
+                    ctx.timerService().registerEventTimeTimer(newActiveTimer);
+                    activeTimerState.update(newActiveTimer);
+                }
+            }
+
             // 已有会话：更新 Idle Timer
             Long oldIdleTimer = idleTimerState.value();
-            long newIdleTimer = flowTsEnd + idleTimeoutMs;
+            long newIdleTimer = timeoutTimer(flowTsEnd, idleTimeoutMs);
 
             if (oldIdleTimer != null && newIdleTimer > oldIdleTimer) {
                 // 删除旧的 Idle Timer，注册新的
@@ -221,6 +261,27 @@ public class SessionizeProcessFunction
             }
             // Active Timer 保持不变
         }
+    }
+
+    static boolean isTooLate(long eventTimestamp, long watermark, long allowedLatenessMs) {
+        return EventTimePolicy.isLate(eventTimestamp, watermark, allowedLatenessMs);
+    }
+
+    static String inputIdentity(FlowEvent flow) {
+        if (flow.hasHeader() && !flow.getHeader().getEventId().isEmpty()) {
+            return "event:" + flow.getHeader().getEventId();
+        }
+        return "flow:" + flow.getFlowId();
+    }
+
+    private static long safeAdd(long left, long right) {
+        if (right > 0 && left > Long.MAX_VALUE - right) return Long.MAX_VALUE;
+        if (right < 0 && left < Long.MIN_VALUE - right) return Long.MIN_VALUE;
+        return left + right;
+    }
+
+    private long timeoutTimer(long eventTimestamp, long timeoutMs) {
+        return safeAdd(safeAdd(eventTimestamp, timeoutMs), allowedLatenessMs);
     }
 
     @Override
@@ -278,6 +339,7 @@ public class SessionizeProcessFunction
                 acc.runId = flow.getHeader().getRunId();
                 acc.featureSetId = flow.getHeader().getFeatureSetId();
                 acc.probeId = flow.getHeader().getProbeId();
+                acc.observeHeader(flow.getHeader());
             }
         }
 
@@ -296,8 +358,8 @@ public class SessionizeProcessFunction
         acc.bytesFwd += flow.getBytesFwd();
         acc.bytesBwd += flow.getBytesBwd();
 
-        // 累加 TCP 标志位
-        if (flow.getTuple().getProtocol() == PROTOCOL_TCP) {
+        // 累加 TCP 标志位（tuple 由上游解析层保证存在；此处防御性判空）
+        if (flow.getTuple() != null && flow.getTuple().getProtocol() == PROTOCOL_TCP) {
             acc.tcpFlagsFwd |= flow.getTcpFlagsFwd();
             acc.tcpFlagsBwd |= flow.getTcpFlagsBwd();
             if ((flow.getTcpFlagsFwd() & TCP_FLAG_ACK) > 0 || (flow.getTcpFlagsBwd() & TCP_FLAG_ACK) > 0) {
@@ -355,15 +417,16 @@ public class SessionizeProcessFunction
             }
         }
 
-        // 累加协议统计
-        int protocol = flow.getTuple().getProtocol();
+        // 累加协议统计（tuple 由上游解析层保证存在；此处防御性判空）
+        FiveTuple flowTuple = flow.getTuple();
+        int protocol = flowTuple != null ? flowTuple.getProtocol() : 0;
         long packets = flow.getPacketsFwd() + flow.getPacketsBwd();
 
         if (protocol == PROTOCOL_TCP) {
             acc.tcpPktCnt += packets;
         } else if (protocol == PROTOCOL_UDP) {
             acc.udpPktCnt += packets;
-            if (flow.getTuple().getDstPort() == DNS_PORT || flow.getTuple().getSrcPort() == DNS_PORT) {
+            if (flowTuple.getDstPort() == DNS_PORT || flowTuple.getSrcPort() == DNS_PORT) {
                 acc.dnsPktCnt += packets;
             }
         } else if (protocol == PROTOCOL_ICMP) {
@@ -371,8 +434,13 @@ public class SessionizeProcessFunction
         }
 
         // 记录 Flow ID
-        if (acc.flowIds.size() < 100) {
-            acc.flowIds.add(flow.getFlowId());
+        acc.addFlowId(flow.getFlowId());
+        if (flow.hasHeader()) {
+            acc.addSourceEventId(flow.getHeader().getEventId());
+            acc.observeHeader(flow.getHeader());
+        }
+        if (flow.hasFeatureObservation()) {
+            acc.observeFeatureObservation(flow.getFeatureObservation());
         }
 
         acc.flowCount++;
@@ -393,18 +461,7 @@ public class SessionizeProcessFunction
             String sessionId = generateDeterministicSessionId(acc);
             String eventId = generateDeterministicEventId(acc);
 
-            // 构建 EventHeader
-            EventHeader header = EventHeader.newBuilder()
-                    .setEventId(eventId)
-                    .setTenantId(acc.tenantId != null ? acc.tenantId : "unknown")
-                    .setRunId(acc.runId != null ? acc.runId : "unknown")
-                    .setEventTs(acc.tsEnd)
-                    .setIngestTs(acc.sourceIngestTs > 0 ? acc.sourceIngestTs : System.currentTimeMillis())
-                    .setKafkaTs(acc.kafkaTs)
-                    .setFlinkOutTs(System.currentTimeMillis())
-                    .setProbeId(acc.probeId != null ? acc.probeId : "unknown")
-                    .setFeatureSetId(acc.featureSetId != null ? acc.featureSetId : "default")
-                    .build();
+            EventHeader header = buildEventHeader(acc, eventId, sessionId, communityId);
 
             // 计算统计值
             long durationMs = acc.getDurationMs();
@@ -431,9 +488,13 @@ public class SessionizeProcessFunction
 
             // 确定结束原因
             String finalEndReason = determineFinalEndReason(acc, endReason);
+            List<String> evidenceIds = stableNonEmptyIds(acc.flowIds);
+            List<String> sourceEventIds = stableNonEmptyIds(acc.sourceEventIds);
+            List<String> missingFields = sessionMissingFields(acc);
+            SessionCompleteness completeness = sessionCompleteness(acc, missingFields);
 
             // 构建 SessionEvent
-            SessionEvent session = SessionEvent.newBuilder()
+            SessionEvent.Builder sessionBuilder = SessionEvent.newBuilder()
                     .setHeader(header)
                     .setSessionId(sessionId)
                     .setCommunityId(communityId)
@@ -453,6 +514,10 @@ public class SessionizeProcessFunction
                     .setClientPort(acc.determinedClientPort)
                     .setServerPort(acc.determinedServerPort)
                     .setPacketsTotal(acc.getPacketsTotal())
+                    // 定向包数:up=client→server(fwd),down=server→client(bwd),
+                    // 由 determineClientServerAndMapDirection 映射后写入 SessionEvent 新契约字段。
+                    .setPacketsFwd(acc.packetsUp)
+                    .setPacketsBwd(acc.packetsDown)
                     .setBytesTotal(acc.getBytesTotal())
                     .setBytesFwd(acc.bytesUp)
                     .setBytesBwd(acc.bytesDown)
@@ -479,10 +544,21 @@ public class SessionizeProcessFunction
                     .setHasFin(hasFin)
                     .setHasRst(hasRst)
                     .setIsEstablished(isEstablished)
-                    .setEvidenceCount(0)
-                    .addAllFlowIds(acc.flowIds)
+                    .setEvidenceCount(evidenceIds.size())
+                    .addAllFlowIds(evidenceIds)
                     .setEndReason(finalEndReason)
-                    .build();
+                    .setIdentityVersion("session-id-sha256-v1")
+                    .setSessionVersion(1)
+                    .setEventTimeStartMs(acc.tsStart)
+                    .setEventTimeEndMs(acc.tsEnd)
+                    .addAllSourceEventIds(sourceEventIds)
+                    .addAllEvidenceIds(evidenceIds)
+                    .setCompleteness(completeness)
+                    .addAllMissingFields(missingFields);
+            if (acc.hasFeatureObservation) {
+                sessionBuilder.setFeatureObservation(acc.buildFeatureObservation());
+            }
+            SessionEvent session = sessionBuilder.build();
 
             out.collect(session);
 
@@ -494,13 +570,90 @@ public class SessionizeProcessFunction
                     sessionId, durationMs, acc.getPacketsTotal(), acc.getBytesTotal(), finalEndReason);
 
         } catch (Exception e) {
-            LOG.error("Error emitting session: {}", e.getMessage(), e);
+            // 会话构建失败不允许静默吞掉：会话丢失且 offset 照常推进等于
+            // 数据丢失。统一上抛，由 Flink 重启策略恢复。
+            LOG.error("Error emitting session for tenant={}, community={}: {}",
+                    acc.tenantId, acc.communityId, e.getMessage(), e);
+            throw new RuntimeException(
+                    "session emission failed: tenant=" + acc.tenantId
+                            + " community=" + acc.communityId, e);
         }
     }
 
     /**
      * 清空所有状态
      */
+    static List<String> stableNonEmptyIds(List<String> values) {
+        TreeSet<String> ordered = new TreeSet<>();
+        for (String value : values) {
+            if (value != null && !value.isEmpty()) {
+                ordered.add(value);
+            }
+        }
+        return new ArrayList<>(ordered);
+    }
+
+    private static List<String> sessionMissingFields(SessionAccumulator acc) {
+        List<String> missing = new ArrayList<>();
+        if (acc.tsStart == Long.MAX_VALUE || acc.tsEnd <= 0) missing.add("event_time");
+        if (acc.communityId == null || acc.communityId.isEmpty()) missing.add("community_id");
+        if (acc.tenantId == null || acc.tenantId.isEmpty()) missing.add("tenant_id");
+        if (acc.sourceEventIds.isEmpty()) missing.add("source_event_ids");
+        if (acc.flowIds.isEmpty()) missing.add("evidence_ids");
+        if (acc.sourceEventIdsTruncated) missing.add("source_event_ids_truncated");
+        if (acc.flowIdsTruncated) missing.add("evidence_ids_truncated");
+        if (acc.pktlenCount == 0) missing.add("packet_length_statistics");
+        if (acc.iatCount == 0) missing.add("inter_arrival_statistics");
+        return missing;
+    }
+
+    private static SessionCompleteness sessionCompleteness(
+            SessionAccumulator acc, List<String> missingFields) {
+        if (acc.flowIdsTruncated || acc.sourceEventIdsTruncated) {
+            return SessionCompleteness.SESSION_COMPLETENESS_TRUNCATED;
+        }
+        return missingFields.isEmpty()
+                ? SessionCompleteness.SESSION_COMPLETENESS_COMPLETE
+                : SessionCompleteness.SESSION_COMPLETENESS_PARTIAL;
+    }
+
+    private static EventHeader buildEventHeader(
+            SessionAccumulator acc,
+            String eventId,
+            String sessionId,
+            String communityId) {
+        long producedAt = System.currentTimeMillis();
+        List<String> sourceEventIds = stableNonEmptyIds(acc.sourceEventIds);
+        String causationId = sourceEventIds.isEmpty() ? "" : sourceEventIds.get(0);
+        String traceId = acc.traceId == null || acc.traceId.isEmpty()
+                ? causationId : acc.traceId;
+        String correlationId = acc.correlationId == null || acc.correlationId.isEmpty()
+                ? communityId : acc.correlationId;
+        return EventHeader.newBuilder()
+                .setEventId(eventId)
+                .setTenantId(acc.tenantId != null ? acc.tenantId : "unknown")
+                .setRunId(acc.runId != null ? acc.runId : "unknown")
+                .setEventTs(acc.tsEnd)
+                .setIngestTs(acc.sourceIngestTs > 0 ? acc.sourceIngestTs : producedAt)
+                .setKafkaTs(acc.kafkaTs)
+                .setFlinkOutTs(producedAt)
+                .setProbeId(acc.probeId != null ? acc.probeId : "unknown")
+                .setFeatureSetId(acc.featureSetId != null ? acc.featureSetId : "default")
+                .setEventType("traffic.session.event.v1")
+                .setSchemaVersion("v1")
+                .setAggregateType("session")
+                .setAggregateId(sessionId)
+                .setAggregateVersion(1)
+                .setOccurredAt(acc.tsEnd)
+                .setProducedAt(producedAt)
+                .setTraceId(traceId)
+                .setCausationId(causationId)
+                .setCorrelationId(correlationId != null ? correlationId : "")
+                .setIdempotencyKey(eventId)
+                .setProducer("flink-session-job")
+                .build();
+    }
+
     private void clearAllState(OnTimerContext ctx) throws Exception {
         Long activeTs = activeTimerState.value();
         Long idleTs = idleTimerState.value();
@@ -570,6 +723,12 @@ public class SessionizeProcessFunction
             return acc.communityId;
         }
 
+        // ICMP/ICMPv6 按 community-id-spec 单 16 位 (type<<8)|code 编码,与 Rust 侧对齐;
+        // srcPort 承载 type、dstPort 承载 code。
+        if (acc.protocol == PROTOCOL_ICMP || acc.protocol == 58) {
+            return CommunityIdUtil.computeIcmp(
+                    acc.srcIp, acc.dstIp, acc.srcPort, acc.dstPort, acc.protocol);
+        }
         return CommunityIdUtil.compute(
                 acc.srcIp,
                 acc.dstIp,
@@ -621,8 +780,10 @@ public class SessionizeProcessFunction
             byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes);
         } catch (Exception e) {
-            LOG.error("Error generating SHA256 hash: {}", e.getMessage());
-            return "error-hash";
+            // SHA-256 失败不允许静默降级为固定 "error-hash"（会造成确定性 ID
+            // 冲突、去重失效）。统一上抛由重启策略恢复。
+            LOG.error("SHA-256 generation failed: {}", e.getMessage(), e);
+            throw new IllegalStateException("SHA-256 generation failed", e);
         }
     }
 

@@ -12,6 +12,8 @@ import org.mockito.ArgumentCaptor;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.sql.PreparedStatement;
+import java.sql.Types;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -79,11 +81,46 @@ class ClickHouseAsyncSinkFunctionTest {
 
     @Test
     void testBuildInsertSql() throws Exception {
-        // 通过反射测试 SQL 构建（可选）
-        // 这里主要验证 SQL 模板的字段数量正确
-        int expectedFields = 40; // 大约 40 个字段
-        // 实际验证需要访问私有方法，这里只做基本验证
-        assertNotNull(asyncSinkFunction);
+        String sql = ClickHouseSinkFactory.buildInsertSql("sessions_local");
+        assertEquals(62, sql.chars().filter(ch -> ch == '?').count());
+        assertTrue(sql.contains("event_schema_version"));
+        assertTrue(sql.contains("source_watermark_ms"));
+        assertTrue(sql.contains("missing_fields"));
+        assertFalse(sql.contains("bytes_up"));
+        assertFalse(sql.contains("packets_total"));
+    }
+
+    @Test
+    void testM03ContractFieldsAreBoundWithoutFabricatedWatermark() throws Exception {
+        PreparedStatement statement = mock(PreparedStatement.class);
+        SessionEvent session = createTestSession("tenant1", "session-1").toBuilder()
+                .setIdentityVersion("session-id-v1")
+                .setSessionVersion(7)
+                .setEventTimeStartMs(1000)
+                .setEventTimeEndMs(2000)
+                .addSourceEventIds("flow-event-1")
+                .addEvidenceIds("evidence-1")
+                .setCompleteness(com.traffic.proto.traffic.v1.SessionCompleteness.SESSION_COMPLETENESS_PARTIAL)
+                .addMissingFields("inter_arrival_statistics")
+                .setHeader(createTestSession("tenant1", "header-source").getHeader().toBuilder()
+                        .setSchemaVersion("v1.0")
+                        .setAggregateVersion(7)
+                        .setFlinkOutTs(0)
+                        .build())
+                .build();
+
+        ClickHouseSinkFactory.bindStatement(statement, session);
+
+        verify(statement).setString(51, "v1.0");
+        verify(statement).setLong(52, 7L);
+        verify(statement).setString(53, "session-id-v1");
+        verify(statement).setLong(54, 7L);
+        verify(statement).setLong(55, 1000L);
+        verify(statement).setLong(56, 2000L);
+        verify(statement).setNull(57, Types.BIGINT);
+        verify(statement).setString(60, "SESSION_COMPLETENESS_PARTIAL");
+        verify(statement).setInt(61, 1);
+        verify(statement).setLong(17, 0L);
     }
 
     // ==================== 辅助方法 ====================

@@ -82,11 +82,12 @@ class CepJobIntegrationTest {
     void testMultiTenantIsolation() throws Exception {
         long baseTime = System.currentTimeMillis();
         List<Alert> alerts = Arrays.asList(
-                createAlert("a1", "tenant-1", "192.168.1.100", "10.0.0.1", "PORT_SCAN", Severity.SEVERITY_MEDIUM, baseTime - 60000),
-                createAlert("a2", "tenant-2", "192.168.1.100", "10.0.0.1", "EXPLOIT", Severity.SEVERITY_CRITICAL, baseTime));
+				createAlert("scan-1", "tenant-1", "192.168.1.100", "10.0.0.1", "PORT_SCAN", Severity.SEVERITY_MEDIUM, baseTime - 180000),
+				createAlert("scan-2", "tenant-1", "192.168.1.100", "10.0.0.2", "PORT_SCAN", Severity.SEVERITY_MEDIUM, baseTime - 120000),
+				createAlert("scan-3", "tenant-1", "192.168.1.100", "10.0.0.3", "PORT_SCAN", Severity.SEVERITY_MEDIUM, baseTime - 60000),
+				createAlert("exploit-1", "tenant-2", "192.168.1.100", "10.0.0.1", "EXPLOIT", Severity.SEVERITY_CRITICAL, baseTime));
         List<Campaign> results = runPipeline(alerts, ScanExploitPattern.create(patternConfig), new ScanExploitSelector());
-        // Different tenants: may or may not match depending on pattern grouping (srcIp-based, not tenant-based)
-        assertThat(results).isNotNull();
+		assertThat(results).as("same src_ip across tenants must not share CEP state").isEmpty();
     }
 
     @Test @DisplayName("窗口超时不匹配")
@@ -125,7 +126,7 @@ class CepJobIntegrationTest {
                 .assignTimestampsAndWatermarks(
                         WatermarkStrategy.<Alert>forMonotonousTimestamps()
                                 .withTimestampAssigner((a, ts) -> a.getLastSeen()));
-        KeyedStream<Alert, String> keyed = input.keyBy(Alert::getSrcIp);
+		KeyedStream<Alert, String> keyed = input.keyBy(CampaignBuilderUtils::tenantSourceKey);
         PatternStream<Alert> ps = CEP.pattern(keyed, pattern);
         DataStream<Campaign> campaigns = ps.process(selector);
 

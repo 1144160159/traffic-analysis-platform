@@ -2,12 +2,17 @@ package com.traffic.flink.alert;
 
 import com.traffic.flink.alert.generator.AlertGenerator;
 import com.traffic.flink.alert.generator.BusinessAlertGenerator;
+import com.traffic.flink.alert.sink.AlertDlqSinkFactory;
 import com.traffic.flink.alert.sink.ClickHouseAlertSinkFactory;
 import com.traffic.flink.alert.sink.KafkaAlertSinkFactory;
 import com.traffic.flink.alert.sink.OpenSearchAlertSinkFactory;
+import com.traffic.flink.alert.source.BehaviorDetectionParseFunction;
+import com.traffic.flink.alert.source.BusinessDetectionParseFunction;
+import com.traffic.flink.common.CanonicalDlqMessage;
 import com.traffic.flink.common.ConfigUtils;
 import com.traffic.flink.common.KafkaStartingOffsets;
-import com.traffic.flink.common.ProtoDeserializer;
+import com.traffic.flink.common.RawKafkaRecord;
+import com.traffic.flink.common.RawKafkaRecordDeserializationSchema;
 import com.traffic.proto.traffic.v1.Alert;
 import com.traffic.proto.traffic.v1.DetectionBehavior;
 import com.traffic.proto.traffic.v1.DetectionBusiness;
@@ -25,6 +30,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.util.OutputTag;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +66,10 @@ import java.time.Duration;
 public class AlertGeneratorJob {
 
     private static final Logger LOG = LoggerFactory.getLogger(AlertGeneratorJob.class);
+    private static final OutputTag<CanonicalDlqMessage> BEHAVIOR_PARSE_DLQ_TAG =
+            new OutputTag<CanonicalDlqMessage>("alert-behavior-parse-dlq") {};
+    private static final OutputTag<CanonicalDlqMessage> BUSINESS_PARSE_DLQ_TAG =
+            new OutputTag<CanonicalDlqMessage>("alert-business-parse-dlq") {};
 
     public static void main(String[] args) throws Exception {
         LOG.info("Starting Alert Generator Job...");
@@ -71,10 +81,15 @@ public class AlertGeneratorJob {
         
         // Kafka 配置
         String kafkaBrokers = ConfigUtils.get(params, "kafka.brokers", "kafka-bootstrap.middleware.svc:9092");
+        String canonicalInputTopic = ConfigUtils.get(params, "kafka.input.topic", "detections.v1");
         String behaviorInputTopic = ConfigUtils.get(params, "kafka.input.topic.behavior", "detections.behavior.v1");
         String businessInputTopic = ConfigUtils.get(params, "kafka.input.topic.business", "detections.business.v1");
         String outputTopic = ConfigUtils.get(params, "kafka.output.topic", "alerts.v1");
+        String dlqTopic = ConfigUtils.get(params, "kafka.dlq.topic", "dlq.v1");
         String groupId = ConfigUtils.get(params, "kafka.group.id", "flink-alert-generator-job");
+        if (!"dlq.v1".equals(dlqTopic)) {
+            throw new IllegalArgumentException("Alert generator failures must use canonical dlq.v1");
+        }
 
         // Checkpoint 配置（集群默认使用本地挂载路径，S3/MinIO 作为可选文件系统）
         String checkpointPath = ConfigUtils.get(params, "checkpoint.path",
@@ -87,7 +102,7 @@ public class AlertGeneratorJob {
         String clickhouseDatabase = ConfigUtils.get(params, "clickhouse.database", "traffic");
         String clickhouseAlertTable = ConfigUtils.get(params, "clickhouse.alert.table", "alerts");
         String clickhouseEvidenceTable = ConfigUtils.get(params, "clickhouse.evidence.table", "evidence");
-        String clickhouseUser = ConfigUtils.get(params, "clickhouse.user", "default");
+        String clickhouseUser = ConfigUtils.get(params, "clickhouse.user", "");
         String clickhousePassword = ConfigUtils.get(params, "clickhouse.password", "");
 
         // OpenSearch 配置
@@ -97,8 +112,11 @@ public class AlertGeneratorJob {
         String opensearchWriteAlias = ConfigUtils.get(params, "opensearch.alerts.write.alias", "alerts-v2-write");
         String opensearchIndex = resolveOpenSearchWriteTarget(
                 opensearchV2Enabled, opensearchLegacyIndex, opensearchWriteAlias);
-        String opensearchUser = ConfigUtils.get(params, "opensearch.user", "admin");
-        String opensearchPassword = ConfigUtils.get(params, "opensearch.password", "admin");
+        String opensearchUser = ConfigUtils.get(params, "opensearch.user", "");
+        String opensearchPassword = ConfigUtils.get(params, "opensearch.password", "");
+
+        // 凭证必须显式配置（env/Secret 注入，禁止默认口令直连生产存储）
+        validateCredentials(clickhouseUser, clickhousePassword, opensearchUser, opensearchPassword);
 
         // Arkime 配置
         String arkimeUrl = ConfigUtils.get(params, "arkime.url", "http://localhost:8005");
@@ -118,7 +136,10 @@ public class AlertGeneratorJob {
         int sinkParallelism = ConfigUtils.getInt(params, "sink.parallelism", 2);
 
         // 是否启用 Business 检测输入
-        boolean enableBusinessDetection = ConfigUtils.getBoolean(params, "enable.business.detection", true);
+        boolean enableLegacyBehaviorDetection = ConfigUtils.getBoolean(
+                params, "enable.legacy.behavior.detection", false);
+        boolean enableBusinessDetection = ConfigUtils.getBoolean(
+                params, "enable.business.detection", false);
 
         LOG.info("OpenSearch alert projection target={}, v2Enabled={}",
                 opensearchIndex, opensearchV2Enabled);
@@ -140,12 +161,12 @@ public class AlertGeneratorJob {
 
         // ==================== Behavior Detection Source ====================
         
-        KafkaSource<DetectionBehavior> behaviorSource = KafkaSource.<DetectionBehavior>builder()
+        KafkaSource<RawKafkaRecord> behaviorSource = KafkaSource.<RawKafkaRecord>builder()
                 .setBootstrapServers(kafkaBrokers)
-                .setTopics(behaviorInputTopic)
-                .setGroupId(groupId + "-behavior")
+                .setTopics(canonicalInputTopic)
+                .setGroupId(groupId)
                 .setStartingOffsets(KafkaStartingOffsets.from(params))
-                .setValueOnlyDeserializer(new ProtoDeserializer<>(DetectionBehavior.class))
+                .setDeserializer(new RawKafkaRecordDeserializationSchema())
                 .setProperties(ConfigUtils.kafkaClientProperties(params))
                 .setProperty("partition.discovery.interval.ms", "30000")
                 .build();
@@ -155,24 +176,57 @@ public class AlertGeneratorJob {
                 .withTimestampAssigner((detection, timestamp) -> detection.getTs())
                 .withIdleness(Duration.ofMinutes(1));
 
-        DataStream<DetectionBehavior> behaviorStream = env
-                .fromSource(behaviorSource, behaviorWatermarkStrategy, "Kafka-Behavior-Detection-Source")
+        DataStream<RawKafkaRecord> behaviorStream = env
+                .fromSource(behaviorSource, WatermarkStrategy.noWatermarks(), "Kafka-Behavior-Detection-Source")
                 .uid("behavior-detection-source")
                 .name("Behavior Detection Events Source");
 
-        // 过滤无效检测
-        DataStream<DetectionBehavior> validBehaviorStream = behaviorStream
-                .filter(detection -> detection != null &&
-                        detection.getHeader() != null &&
-                        detection.getCommunityId() != null &&
-                        !detection.getCommunityId().isEmpty() &&
-                        detection.getTopScore() > 0)
+        SingleOutputStreamOperator<DetectionBehavior> parsedBehaviorStream = behaviorStream
+                .process(new BehaviorDetectionParseFunction(BEHAVIOR_PARSE_DLQ_TAG))
                 .uid("filter-invalid-behavior-detections")
-                .name("Filter Invalid Behavior Detections");
+                .name("Validate Behavior Detections with source tuple");
+
+        DataStream<DetectionBehavior> validBehaviorStream = parsedBehaviorStream
+                .assignTimestampsAndWatermarks(behaviorWatermarkStrategy)
+                .uid("behavior-detection-watermarks")
+                .name("Assign Behavior Detection Watermarks");
+
+        DataStream<CanonicalDlqMessage> dlqStream =
+                parsedBehaviorStream.getSideOutput(BEHAVIOR_PARSE_DLQ_TAG);
+
+        DataStream<DetectionBehavior> allBehaviorStream = validBehaviorStream;
+        if (enableLegacyBehaviorDetection) {
+            KafkaSource<RawKafkaRecord> legacyBehaviorSource = KafkaSource.<RawKafkaRecord>builder()
+                    .setBootstrapServers(kafkaBrokers)
+                    .setTopics(behaviorInputTopic)
+                    .setGroupId(groupId + "-legacy-behavior")
+                    .setStartingOffsets(KafkaStartingOffsets.from(params))
+                    .setDeserializer(new RawKafkaRecordDeserializationSchema())
+                    .setProperties(ConfigUtils.kafkaClientProperties(params))
+                    .setProperty("partition.discovery.interval.ms", "30000")
+                    .build();
+            DataStream<RawKafkaRecord> legacyBehaviorRawStream = env
+                    .fromSource(legacyBehaviorSource, WatermarkStrategy.noWatermarks(),
+                            "Kafka-Legacy-Behavior-Detection-Source")
+                    .uid("legacy-behavior-detection-source")
+                    .name("Legacy Behavior Detection Events Source");
+            SingleOutputStreamOperator<DetectionBehavior> parsedLegacyBehaviorStream =
+                    legacyBehaviorRawStream
+                            .process(new BehaviorDetectionParseFunction(BEHAVIOR_PARSE_DLQ_TAG))
+                            .uid("validate-legacy-behavior-detections")
+                            .name("Validate Legacy Behavior Detections with source tuple");
+            DataStream<DetectionBehavior> legacyBehaviorStream = parsedLegacyBehaviorStream
+                    .assignTimestampsAndWatermarks(behaviorWatermarkStrategy)
+                    .uid("legacy-behavior-detection-watermarks")
+                    .name("Assign Legacy Behavior Detection Watermarks");
+            allBehaviorStream = allBehaviorStream.union(legacyBehaviorStream);
+            dlqStream = dlqStream.union(
+                    parsedLegacyBehaviorStream.getSideOutput(BEHAVIOR_PARSE_DLQ_TAG));
+        }
 
         // ==================== Behavior Alert 生成 ====================
         
-        SingleOutputStreamOperator<Tuple2<Alert, Evidence>> behaviorAlertStream = validBehaviorStream
+        SingleOutputStreamOperator<Tuple2<Alert, Evidence>> behaviorAlertStream = allBehaviorStream
                 .keyBy(detection -> detection.getHeader().getTenantId() + ":" + detection.getCommunityId())
                 .process(new AlertGenerator(
                         dedupWindowMinutes,
@@ -183,20 +237,23 @@ public class AlertGeneratorJob {
                         severityMedium,
                         severityLow
                 ))
-                .uid("behavior-alert-generator")
+                // 去重状态由 ValueState 升级为 MapState（按指纹独立去重），
+                // 旧状态无法热迁移，换新 UID 强制从空状态冷启动。
+                .uid("behavior-alert-generator-v2")
                 .name("Behavior Alert Generator");
 
         // ==================== Business Detection Source (可选) ====================
         
         DataStream<Tuple2<Alert, Evidence>> businessAlertStream = null;
+        SingleOutputStreamOperator<DetectionBusiness> parsedBusinessStream = null;
 
         if (enableBusinessDetection) {
-            KafkaSource<DetectionBusiness> businessSource = KafkaSource.<DetectionBusiness>builder()
+            KafkaSource<RawKafkaRecord> businessSource = KafkaSource.<RawKafkaRecord>builder()
                     .setBootstrapServers(kafkaBrokers)
                     .setTopics(businessInputTopic)
                     .setGroupId(groupId + "-business")
                     .setStartingOffsets(KafkaStartingOffsets.from(params))
-                    .setValueOnlyDeserializer(new ProtoDeserializer<>(DetectionBusiness.class))
+                    .setDeserializer(new RawKafkaRecordDeserializationSchema())
                     .setProperties(ConfigUtils.kafkaClientProperties(params))
                     .setProperty("partition.discovery.interval.ms", "30000")
                     .build();
@@ -206,19 +263,20 @@ public class AlertGeneratorJob {
                     .withTimestampAssigner((detection, timestamp) -> detection.getTs())
                     .withIdleness(Duration.ofMinutes(1));
 
-            DataStream<DetectionBusiness> businessStream = env
-                    .fromSource(businessSource, businessWatermarkStrategy, "Kafka-Business-Detection-Source")
+            DataStream<RawKafkaRecord> businessStream = env
+                    .fromSource(businessSource, WatermarkStrategy.noWatermarks(), "Kafka-Business-Detection-Source")
                     .uid("business-detection-source")
                     .name("Business Detection Events Source");
 
-            // 过滤无效检测
-            DataStream<DetectionBusiness> validBusinessStream = businessStream
-                    .filter(detection -> detection != null &&
-                            detection.getHeader() != null &&
-                            detection.getCommunityId() != null &&
-                            !detection.getCommunityId().isEmpty())
+            parsedBusinessStream = businessStream
+                    .process(new BusinessDetectionParseFunction(BUSINESS_PARSE_DLQ_TAG))
                     .uid("filter-invalid-business-detections")
-                    .name("Filter Invalid Business Detections");
+                    .name("Validate Business Detections with source tuple");
+
+            DataStream<DetectionBusiness> validBusinessStream = parsedBusinessStream
+                    .assignTimestampsAndWatermarks(businessWatermarkStrategy)
+                    .uid("business-detection-watermarks")
+                    .name("Assign Business Detection Watermarks");
 
             // Business Alert 生成
             businessAlertStream = validBusinessStream
@@ -226,10 +284,18 @@ public class AlertGeneratorJob {
                     .process(new BusinessAlertGenerator(
                             dedupWindowMinutes,
                             arkimeUrl,
-                            arkimeTimeBuffer
+                            arkimeTimeBuffer,
+                            severityCritical,
+                            severityHigh,
+                            severityMedium,
+                            severityLow
                     ))
-                    .uid("business-alert-generator")
+                    // 去重状态由 ValueState 升级为 MapState，换新 UID 冷启动
+                    .uid("business-alert-generator-v2")
                     .name("Business Alert Generator");
+
+            dlqStream = dlqStream.union(
+                    parsedBusinessStream.getSideOutput(BUSINESS_PARSE_DLQ_TAG));
         }
 
         // ==================== 合并 Alert 流 ====================
@@ -302,6 +368,12 @@ public class AlertGeneratorJob {
                 .uid("clickhouse-evidence-sink")
                 .name("ClickHouse Evidence Sink");
 
+        dlqStream
+                .sinkTo(AlertDlqSinkFactory.create(kafkaBrokers, dlqTopic))
+                .setParallelism(sinkParallelism)
+                .uid("alert-generator-dlq-sink")
+                .name("Canonical DLQ Sink");
+
         // ==================== 调试输出 ====================
         
         if (ConfigUtils.getBoolean(params, "debug.print", false)) {
@@ -312,9 +384,12 @@ public class AlertGeneratorJob {
         // ==================== 打印配置摘要 ====================
         
         LOG.info("========== Alert Generator Job Configuration ==========");
-        LOG.info("Behavior Input Topic: {}", behaviorInputTopic);
+        LOG.info("Canonical Detection Input Topic: {}", canonicalInputTopic);
+        LOG.info("Legacy Behavior Input Topic: {} (enabled={})",
+                behaviorInputTopic, enableLegacyBehaviorDetection);
         LOG.info("Business Input Topic: {} (enabled={})", businessInputTopic, enableBusinessDetection);
         LOG.info("Output Topic: {}", outputTopic);
+        LOG.info("DLQ Topic: {}", dlqTopic);
         LOG.info("ClickHouse: {}.{}", clickhouseDatabase, clickhouseAlertTable);
         LOG.info("OpenSearch: {}/{}", opensearchUrl, opensearchIndex);
         LOG.info("Arkime URL: {} (buffer={}s)", arkimeUrl, arkimeTimeBuffer);
@@ -335,6 +410,39 @@ public class AlertGeneratorJob {
             throw new IllegalArgumentException("OpenSearch alert write target must not be blank");
         }
         return target;
+    }
+
+    /**
+     * 凭证校验：ClickHouse 与 OpenSearch 的用户名/密码必须显式配置。
+     * 禁止默认口令（OpenSearch admin/admin）与空密码直连生产存储；
+     * 未配置时 fail-fast，由部署侧经环境变量/Secret 注入
+     * （ConfigUtils 支持 CLICKHOUSE_PASSWORD/OPENSEARCH_USER/OPENSEARCH_PASSWORD
+     * 等环境变量映射到对应配置键）。
+     */
+    private static void validateCredentials(
+            String clickhouseUser,
+            String clickhousePassword,
+            String opensearchUser,
+            String opensearchPassword) {
+        if (clickhouseUser == null || clickhouseUser.isBlank()) {
+            throw new IllegalArgumentException(
+                    "clickhouse.user must be configured via environment/Secret (CLICKHOUSE_USER)");
+        }
+        if (clickhousePassword == null || clickhousePassword.isBlank()) {
+            throw new IllegalArgumentException(
+                    "clickhouse.password must be configured via environment/Secret (CLICKHOUSE_PASSWORD); "
+                            + "empty default password is forbidden");
+        }
+        if (opensearchUser == null || opensearchUser.isBlank() || "admin".equals(opensearchUser)) {
+            throw new IllegalArgumentException(
+                    "opensearch.user must be explicitly configured via environment/Secret "
+                            + "(OPENSEARCH_USER); default 'admin' is forbidden");
+        }
+        if (opensearchPassword == null || opensearchPassword.isBlank()) {
+            throw new IllegalArgumentException(
+                    "opensearch.password must be configured via environment/Secret (OPENSEARCH_PASSWORD); "
+                            + "default 'admin' is forbidden");
+        }
     }
 
     /**

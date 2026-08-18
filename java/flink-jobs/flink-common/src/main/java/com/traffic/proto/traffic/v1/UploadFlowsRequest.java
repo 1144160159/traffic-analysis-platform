@@ -121,6 +121,21 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int ACCEPTED_RESPONSE_REVISION_FIELD_NUMBER = 3;
+  private int acceptedResponseRevision_ = 0;
+  /**
+   * <pre>
+   * Highest exact-set response revision the client can durably apply.
+   * </pre>
+   *
+   * <code>uint32 accepted_response_revision = 3 [json_name = "acceptedResponseRevision"];</code>
+   * @return The acceptedResponseRevision.
+   */
+  @java.lang.Override
+  public int getAcceptedResponseRevision() {
+    return acceptedResponseRevision_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -141,6 +156,9 @@ private static final long serialVersionUID = 0L;
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(compression_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 2, compression_);
     }
+    if (acceptedResponseRevision_ != 0) {
+      output.writeUInt32(3, acceptedResponseRevision_);
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -156,6 +174,10 @@ private static final long serialVersionUID = 0L;
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(compression_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, compression_);
+    }
+    if (acceptedResponseRevision_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(3, acceptedResponseRevision_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -176,6 +198,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getEventsList())) return false;
     if (!getCompression()
         .equals(other.getCompression())) return false;
+    if (getAcceptedResponseRevision()
+        != other.getAcceptedResponseRevision()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -193,6 +217,8 @@ private static final long serialVersionUID = 0L;
     }
     hash = (37 * hash) + COMPRESSION_FIELD_NUMBER;
     hash = (53 * hash) + getCompression().hashCode();
+    hash = (37 * hash) + ACCEPTED_RESPONSE_REVISION_FIELD_NUMBER;
+    hash = (53 * hash) + getAcceptedResponseRevision();
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -332,6 +358,7 @@ private static final long serialVersionUID = 0L;
       }
       bitField0_ = (bitField0_ & ~0x00000001);
       compression_ = "";
+      acceptedResponseRevision_ = 0;
       return this;
     }
 
@@ -380,6 +407,9 @@ private static final long serialVersionUID = 0L;
       int from_bitField0_ = bitField0_;
       if (((from_bitField0_ & 0x00000002) != 0)) {
         result.compression_ = compression_;
+      }
+      if (((from_bitField0_ & 0x00000004) != 0)) {
+        result.acceptedResponseRevision_ = acceptedResponseRevision_;
       }
     }
 
@@ -458,6 +488,9 @@ private static final long serialVersionUID = 0L;
         bitField0_ |= 0x00000002;
         onChanged();
       }
+      if (other.getAcceptedResponseRevision() != 0) {
+        setAcceptedResponseRevision(other.getAcceptedResponseRevision());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -502,6 +535,11 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000002;
               break;
             } // case 18
+            case 24: {
+              acceptedResponseRevision_ = input.readUInt32();
+              bitField0_ |= 0x00000004;
+              break;
+            } // case 24
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -827,6 +865,50 @@ private static final long serialVersionUID = 0L;
       checkByteStringIsUtf8(value);
       compression_ = value;
       bitField0_ |= 0x00000002;
+      onChanged();
+      return this;
+    }
+
+    private int acceptedResponseRevision_ ;
+    /**
+     * <pre>
+     * Highest exact-set response revision the client can durably apply.
+     * </pre>
+     *
+     * <code>uint32 accepted_response_revision = 3 [json_name = "acceptedResponseRevision"];</code>
+     * @return The acceptedResponseRevision.
+     */
+    @java.lang.Override
+    public int getAcceptedResponseRevision() {
+      return acceptedResponseRevision_;
+    }
+    /**
+     * <pre>
+     * Highest exact-set response revision the client can durably apply.
+     * </pre>
+     *
+     * <code>uint32 accepted_response_revision = 3 [json_name = "acceptedResponseRevision"];</code>
+     * @param value The acceptedResponseRevision to set.
+     * @return This builder for chaining.
+     */
+    public Builder setAcceptedResponseRevision(int value) {
+
+      acceptedResponseRevision_ = value;
+      bitField0_ |= 0x00000004;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Highest exact-set response revision the client can durably apply.
+     * </pre>
+     *
+     * <code>uint32 accepted_response_revision = 3 [json_name = "acceptedResponseRevision"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearAcceptedResponseRevision() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      acceptedResponseRevision_ = 0;
       onChanged();
       return this;
     }

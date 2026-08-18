@@ -1,11 +1,18 @@
 package com.traffic.flink.feature.processor;
 
 import com.traffic.flink.common.DeterministicId;
+import com.traffic.flink.common.CanonicalDlqMessage;
+import com.traffic.flink.common.eventtime.EventTimePolicy;
 import com.traffic.flink.feature.calculator.FeatureCalculator;
+import com.traffic.flink.feature.calculator.FeatureFingerprintCalculator;
+import com.traffic.flink.feature.calculator.FeatureSeqCalculator;
 import com.traffic.flink.feature.config.FeatureSetConfig;
 import com.traffic.flink.feature.config.TenantConfig;
 import com.traffic.flink.feature.metrics.FeatureMetrics;
+import com.traffic.flink.feature.source.ValidatedSessionInput;
 import com.traffic.proto.traffic.v1.FeatureStat;
+import com.traffic.proto.traffic.v1.FeatureFingerprint;
+import com.traffic.proto.traffic.v1.FeatureSeq;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
 import org.apache.flink.api.common.state.BroadcastState;
@@ -21,9 +28,6 @@ import org.apache.flink.metrics.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Base64;
 
 /**
  * Feature 处理函数 v3（完整增强版）
@@ -35,16 +39,21 @@ import java.util.Base64;
  * 4. ✅ 租户级配置支持
  * 5. ✅ 租户优先级管理
  */
-public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEvent, Object, FeatureStat> {
+public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<ValidatedSessionInput, Object, FeatureStat> {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(FeatureProcessFunctionV3.class);
 
     // 侧输出标签
-    public static final OutputTag<String> DLQ_TAG =
-            new OutputTag<String>("dlq-errors", TypeInformation.of(String.class)) {};
+    public static final OutputTag<CanonicalDlqMessage> DLQ_TAG =
+            new OutputTag<CanonicalDlqMessage>("dlq-errors", TypeInformation.of(CanonicalDlqMessage.class)) {};
     public static final OutputTag<SessionEvent> L2_TRIGGER_TAG =
             new OutputTag<SessionEvent>("l2-trigger", TypeInformation.of(SessionEvent.class)) {};
+    public static final OutputTag<FeatureSeq> FEATURE_SEQ_TAG =
+            new OutputTag<FeatureSeq>("feature-sequence", TypeInformation.of(FeatureSeq.class)) {};
+    public static final OutputTag<FeatureFingerprint> FEATURE_FINGERPRINT_TAG =
+            new OutputTag<FeatureFingerprint>(
+                    "feature-fingerprint", TypeInformation.of(FeatureFingerprint.class)) {};
 
     // BroadcastState 描述符
     public static final MapStateDescriptor<String, FeatureSetConfig> FEATURE_SET_STATE_DESC =
@@ -56,6 +65,7 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
     // 配置
     private final boolean enableSampling;
     private final float defaultSamplingRate;
+    private final long allowedLatenessMs;
 
     // 降级相关
     private static final long E2E_LATENCY_WARN_MS = 60000;
@@ -66,17 +76,34 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
     private transient long lastLogTime;
     private transient long processedCount;
 
+    // 租户级 EPS 配额滑动窗口（子任务内存态，重启后重置）
+    private transient java.util.Map<String, TenantEpsWindow> tenantEpsWindows;
+
     // 默认配置（当 BroadcastState 未加载时使用）
     private transient FeatureSetConfig defaultFeatureSetConfig;
     private transient TenantConfig defaultTenantConfig;
 
     public FeatureProcessFunctionV3() {
-        this(false, 1.0f);
+        this(false, 1.0f, 0L);
     }
 
     public FeatureProcessFunctionV3(boolean enableSampling, float defaultSamplingRate) {
+        this(enableSampling, defaultSamplingRate, 0L);
+    }
+
+    public FeatureProcessFunctionV3(
+            boolean enableSampling,
+            float defaultSamplingRate,
+            long allowedLatenessMs) {
+        if (defaultSamplingRate < 0.0f || defaultSamplingRate > 1.0f) {
+            throw new IllegalArgumentException("default sampling rate must be between 0 and 1");
+        }
+        if (allowedLatenessMs < 0L) {
+            throw new IllegalArgumentException("allowed lateness must not be negative");
+        }
         this.enableSampling = enableSampling;
         this.defaultSamplingRate = defaultSamplingRate;
+        this.allowedLatenessMs = allowedLatenessMs;
     }
 
     @Override
@@ -87,6 +114,7 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
         this.metrics = new FeatureMetrics(getRuntimeContext().getMetricGroup());
         this.lastLogTime = System.currentTimeMillis();
         this.processedCount = 0;
+        this.tenantEpsWindows = new java.util.HashMap<>();
 
         // 初始化默认配置
         this.defaultFeatureSetConfig = createDefaultFeatureSetConfig();
@@ -98,10 +126,22 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
 
     @Override
     public void processElement(
-            SessionEvent session,
+            ValidatedSessionInput input,
             ReadOnlyContext ctx,
             Collector<FeatureStat> out
     ) throws Exception {
+
+        SessionEvent session = input.getSession();
+
+        long eventTimestamp = session.getEventTimeEndMs() > 0
+                ? session.getEventTimeEndMs() : session.getTsEnd();
+        long watermark = ctx.currentWatermark();
+        if (isTooLate(eventTimestamp, watermark, allowedLatenessMs)) {
+            metrics.incSkipped();
+            metrics.incDlqWrite();
+            ctx.output(DLQ_TAG, lateDataFailure(input, watermark, allowedLatenessMs));
+            return;
+        }
 
         try {
             // ==================== 获取配置 ====================
@@ -144,6 +184,8 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
             // ==================== 计算特征 ====================
             long startTime = System.nanoTime();
             FeatureStat feature = FeatureCalculator.calculate(session);
+            FeatureSeq sequence = FeatureSeqCalculator.calculate(session);
+            FeatureFingerprint fingerprint = FeatureFingerprintCalculator.calculate(session);
             long endTime = System.nanoTime();
 
             metrics.recordFeatureDuration(endTime - startTime);
@@ -160,6 +202,8 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
             }
 
             // ==================== 输出特征 ====================
+            ctx.output(FEATURE_SEQ_TAG, sequence);
+            ctx.output(FEATURE_FINGERPRINT_TAG, fingerprint);
             metrics.incProcessed();
             out.collect(feature);
 
@@ -171,7 +215,7 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
 
         } catch (Exception e) {
             metrics.incError();
-            handleError(session, e, ctx);
+            handleError(input, e, ctx);
         }
     }
 
@@ -186,8 +230,13 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
             // 更新 Feature Set 配置
             FeatureSetConfig config = (FeatureSetConfig) value;
             BroadcastState<String, FeatureSetConfig> state = ctx.getBroadcastState(FEATURE_SET_STATE_DESC);
-            state.put(config.getFeatureSetId(), config);
-            LOG.info("Feature Set config updated: {}", config);
+            if (config.isActive()) {
+                state.put(config.getFeatureSetId(), config);
+                LOG.info("Feature Set config updated: {}", config);
+            } else {
+                state.remove(config.getFeatureSetId());
+                LOG.info("Feature Set config removed: featureSetId={}", config.getFeatureSetId());
+            }
 
         } else if (value instanceof TenantConfig) {
             // 更新 Tenant 配置
@@ -227,12 +276,47 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
             return true;
         }
 
-        // 4. 跳过无效数据
-        if (session.getPacketsTotal() == 0 && session.getBytesTotal() == 0) {
+        // 4. 租户级 EPS 配额（maxEventsPerSecond > 0 时生效）。
+        // 配额在子任务内尽力执行（内存滑动窗口，重启后重置）；超限输入被跳过。
+        // 此前配额字段被写入广播状态但从未校验，租户级限流形同虚设。
+        if (tenantConfig.getMaxEventsPerSecond() > 0
+                && !tryAcquireEps(session.getHeader().getTenantId(),
+                        tenantConfig.getMaxEventsPerSecond())) {
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * 租户级 EPS 配额滑动窗口：每租户每秒配额。
+     */
+    private boolean tryAcquireEps(String tenantId, int maxEventsPerSecond) {
+        long nowSecond = System.currentTimeMillis() / 1000L;
+        TenantEpsWindow window = tenantEpsWindows.get(tenantId);
+        if (window == null) {
+            window = new TenantEpsWindow(nowSecond, 0);
+            tenantEpsWindows.put(tenantId, window);
+        } else if (window.second != nowSecond) {
+            window.second = nowSecond;
+            window.count = 0;
+        }
+        if (window.count >= maxEventsPerSecond) {
+            return false;
+        }
+        window.count++;
+        return true;
+    }
+
+    /** 租户 EPS 滑动窗口（1 秒粒度，子任务内存态） */
+    private static final class TenantEpsWindow {
+        long second;
+        int count;
+
+        TenantEpsWindow(long second, int count) {
+            this.second = second;
+            this.count = count;
+        }
     }
 
     /**
@@ -258,7 +342,7 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
             return true;
         }
 
-        // 3. 疑似加密流量（载荷标准差高）
+        // 3. 高载荷方差只触发深度特征，不推断加密或恶意。
         if (session.getStdPayload() > thresholds.getEncryptedStdPayloadThreshold()) {
             return true;
         }
@@ -299,7 +383,7 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
         }
 
         if (session.getStdPayload() > 100.0f) {
-            metrics.incEncrypted();
+            metrics.incHighPayloadVariance();
         }
 
         metrics.recordPPS(feature.getPps());
@@ -310,7 +394,8 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
     /**
      * 错误处理
      */
-    private void handleError(SessionEvent session, Exception e, ReadOnlyContext ctx) {
+    private void handleError(ValidatedSessionInput input, Exception e, ReadOnlyContext ctx) {
+        SessionEvent session = input.getSession();
         LOG.error("Failed to calculate features for session {} (tenant={}, run_id={}): {}",
                 session.getSessionId(),
                 session.getHeader().getTenantId(),
@@ -318,60 +403,49 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
                 e.getMessage(),
                 e);
 
-        String dlqMessage = buildEnhancedDLQMessage(session, e);
+        CanonicalDlqMessage dlqMessage = CanonicalDlqMessage.failure(
+                input.getSource(),
+                "FEATURE_CALCULATION_FAILED",
+                "processing_error",
+                e.getMessage(),
+                session.getHeader().getTenantId(),
+                session.getHeader().getEventId(),
+                session.getHeader().getTraceId(),
+                session.getHeader().getRunId(),
+                session.getHeader().getProbeId());
         ctx.output(DLQ_TAG, dlqMessage);
         metrics.incDlqWrite();
     }
 
-    /**
-     * 构造增强版 DLQ 消息
-     */
-    private String buildEnhancedDLQMessage(SessionEvent session, Exception e) {
-        String stackTrace = getStackTraceString(e);
-        String rawEventBase64 = Base64.getEncoder().encodeToString(session.toByteArray());
-
-        return String.format(
-                "{\"tenant_id\":\"%s\"," +
-                        "\"run_id\":\"%s\"," +
-                        "\"session_id\":\"%s\"," +
-                        "\"event_id\":\"%s\"," +
-                        "\"community_id\":\"%s\"," +
-                        "\"probe_id\":\"%s\"," +
-                        "\"error_type\":\"%s\"," +
-                        "\"error_message\":\"%s\"," +
-                        "\"stack_trace\":\"%s\"," +
-                        "\"timestamp\":%d," +
-                        "\"raw_event_base64\":\"%s\"}",
-                escapeJson(session.getHeader().getTenantId()),
-                escapeJson(session.getHeader().getRunId()),
-                escapeJson(session.getSessionId()),
-                escapeJson(session.getHeader().getEventId()),
-                escapeJson(session.getCommunityId()),
-                escapeJson(session.getHeader().getProbeId()),
-                escapeJson(e.getClass().getSimpleName()),
-                escapeJson(e.getMessage()),
-                escapeJson(stackTrace),
-                System.currentTimeMillis(),
-                rawEventBase64
-        );
+    static boolean isTooLate(long eventTimestamp, long watermark, long allowedLatenessMs) {
+        return EventTimePolicy.isLate(eventTimestamp, watermark, allowedLatenessMs);
     }
 
-    private String getStackTraceString(Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        return sw.toString();
+    static CanonicalDlqMessage lateDataFailure(
+            ValidatedSessionInput input,
+            long watermark,
+            long allowedLatenessMs) {
+        SessionEvent session = input.getSession();
+        long eventTimestamp = session.getEventTimeEndMs() > 0
+                ? session.getEventTimeEndMs() : session.getTsEnd();
+        return CanonicalDlqMessage.failure(
+                input.getSource(),
+                "SUPER_LATE_EVENT",
+                "event_time_lateness",
+                "event_time_exceeded_feature_allowed_lateness: event_time_ms=" + eventTimestamp
+                        + ", watermark_ms=" + watermark
+                        + ", allowed_lateness_ms=" + allowedLatenessMs,
+                session.getHeader().getTenantId(),
+                session.getHeader().getEventId(),
+                session.getHeader().getTraceId(),
+                session.getHeader().getRunId(),
+                session.getHeader().getProbeId());
     }
 
-    private String escapeJson(String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
+    private static long safeAdd(long left, long right) {
+        if (right > 0L && left > Long.MAX_VALUE - right) return Long.MAX_VALUE;
+        if (right < 0L && left < Long.MIN_VALUE - right) return Long.MIN_VALUE;
+        return left + right;
     }
 
     /**
@@ -382,7 +456,7 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
         if (now - lastLogTime > 10_000) {
             LOG.info("Feature Stats: " +
                             "processed={}, error={}, skipped={}, " +
-                            "zero_packets={}, high_pps={}, high_bps={}, encrypted={}, " +
+                            "zero_packets={}, high_pps={}, high_bps={}, high_payload_variance={}, " +
                             "l2_triggered={}, dlq_write={}, " +
                             "processing_rate={}/s, error_rate={}/s",
                     metrics.getProcessedCounter().getCount(),
@@ -391,7 +465,7 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
                     metrics.getZeroPacketsCounter().getCount(),
                             metrics.getHighPpsCounter().getCount(),
                             metrics.getHighBpsCounter().getCount(),
-                            metrics.getEncryptedCounter().getCount(),
+                            metrics.getHighPayloadVarianceCounter().getCount(),
                             metrics.getL2TriggeredCounter().getCount(),
                     metrics.getDlqWriteCounter().getCount(),
                     String.format("%.2f", metrics.getProcessingRate().getRate()),
@@ -407,7 +481,7 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
     private FeatureSetConfig createDefaultFeatureSetConfig() {
         FeatureSetConfig config = new FeatureSetConfig("default", "v2.0");
         config.setIatThresholdMs(1000.0f);
-        config.setEnableL2Trigger(true);
+        config.setEnableL2Trigger(false);
 
         FeatureSetConfig.L2TriggerThresholds thresholds = new FeatureSetConfig.L2TriggerThresholds();
         thresholds.setHighPpsThreshold(10000.0f);

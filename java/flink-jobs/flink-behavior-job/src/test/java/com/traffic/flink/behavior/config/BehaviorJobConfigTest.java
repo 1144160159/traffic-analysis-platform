@@ -27,8 +27,19 @@ class BehaviorJobConfigTest {
         // Kafka 默认配置 (K8s 集群端点)
         assertEquals("kafka-bootstrap.middleware.svc:9092", config.getKafkaBrokers());
         assertEquals("feature.stat.v1", config.getInputTopic());
-        assertEquals("detections.behavior.v1", config.getOutputTopic());
+        assertEquals("detections.v1", config.getOutputTopic());
         assertEquals("flink-behavior-job", config.getConsumerGroupId());
+        assertEquals("off", config.getDetectionMode());
+        assertFalse(config.isModelHotUpdateEnabled());
+        assertEquals(0L, config.getModelReloadIntervalMs());
+        assertFalse(config.isModelShadowEvaluationEnabled());
+        assertFalse(config.isModelShadowObservationOnly());
+        assertEquals(0.0d, config.getModelShadowSampleRate());
+        assertEquals("model-shadow-observations.v1", config.getModelShadowObservationTopic());
+        assertEquals("flink-behavior-job-champion-challenger-features",
+                config.getModelShadowFeatureConsumerGroupId());
+        assertEquals("flink-behavior-job-champion-challenger-model-updates",
+                config.getModelShadowUpdateConsumerGroupId());
 
         // ClickHouse 默认配置 (K8s 集群端点)
         assertEquals("clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123", config.getClickhouseUrl());
@@ -171,6 +182,77 @@ class BehaviorJobConfigTest {
 
         assertEquals(15000L, config.getWatermarkDelayMs());
         assertEquals(15000L, config.getWatermarkDelayDuration().toMillis());
+    }
+
+    @Test
+    @DisplayName("champion/challenger requires frozen champion and signed consumer")
+    void championChallengerConfigFailsClosed() {
+        BehaviorJobConfig missingConsumer = new BehaviorJobConfig.Builder()
+                .detectionMode("known_frozen")
+                .modelShadowEvaluationEnabled(true)
+                .modelShadowSampleRate(0.1d)
+                .build();
+        assertThrows(IllegalArgumentException.class,
+                missingConsumer::validateChampionChallengerShadowConfig);
+
+        BehaviorJobConfig valid = new BehaviorJobConfig.Builder()
+                .detectionMode("known_frozen")
+                .modelUpdateConsumerEnabled(true)
+                .modelConsumerDeploymentId("behavior-shadow-n012")
+                .modelConsumerProfileSha256("a".repeat(64))
+                .modelSigningPublicKeyPemBase64("signed-test-key")
+                .modelShadowEvaluationEnabled(true)
+                .modelShadowSampleRate(0.1d)
+                .modelShadowChallengerTimeoutMs(100L)
+                .asyncTimeoutMs(1_000L)
+                .build();
+        assertDoesNotThrow(valid::validateChampionChallengerShadowConfig);
+
+        BehaviorJobConfig isolatedObserver = new BehaviorJobConfig.Builder()
+                .detectionMode("known_frozen")
+                .modelUpdateConsumerEnabled(true)
+                .modelConsumerDeploymentId("behavior-shadow-n012")
+                .modelConsumerProfileSha256("a".repeat(64))
+                .modelSigningPublicKeyPemBase64("signed-test-key")
+                .modelShadowEvaluationEnabled(true)
+                .modelShadowObservationOnly(true)
+                .modelShadowSampleRate(0.1d)
+                .modelShadowChallengerTimeoutMs(100L)
+                .asyncTimeoutMs(1_000L)
+                .build();
+        assertDoesNotThrow(isolatedObserver::validateChampionChallengerShadowConfig);
+
+        BehaviorJobConfig competingObserver = new BehaviorJobConfig.Builder()
+                .detectionMode("known_frozen")
+                .modelUpdateConsumerEnabled(true)
+                .modelConsumerDeploymentId("behavior-shadow-n012")
+                .modelConsumerProfileSha256("a".repeat(64))
+                .modelSigningPublicKeyPemBase64("signed-test-key")
+                .modelShadowEvaluationEnabled(true)
+                .modelShadowObservationOnly(true)
+                .modelShadowFeatureConsumerGroupId("flink-behavior-job")
+                .modelShadowSampleRate(0.1d)
+                .build();
+        assertThrows(IllegalArgumentException.class,
+                competingObserver::validateChampionChallengerShadowConfig);
+
+        BehaviorJobConfig observerWithoutEvaluation = new BehaviorJobConfig.Builder()
+                .modelShadowObservationOnly(true)
+                .build();
+        assertThrows(IllegalArgumentException.class,
+                observerWithoutEvaluation::validateChampionChallengerShadowConfig);
+
+        BehaviorJobConfig mutableChampion = new BehaviorJobConfig.Builder()
+                .detectionMode("dynamic")
+                .modelUpdateConsumerEnabled(true)
+                .modelConsumerDeploymentId("behavior-shadow-n012")
+                .modelConsumerProfileSha256("a".repeat(64))
+                .modelSigningPublicKeyPemBase64("signed-test-key")
+                .modelShadowEvaluationEnabled(true)
+                .modelShadowSampleRate(0.1d)
+                .build();
+        assertThrows(IllegalArgumentException.class,
+                mutableChampion::validateChampionChallengerShadowConfig);
     }
 
     @Test

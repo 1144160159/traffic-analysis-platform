@@ -95,6 +95,10 @@ public class ModelRegistry implements Serializable, AutoCloseable {
      */
     private transient ScheduledExecutorService reloadScheduler;
     private transient MinioModelLoader artifactLoader;
+    private transient GovernedModelPackageLoader governedPackageLoader;
+    private final String shadowCacheNamespace;
+    private final Map<String, GovernedModelPackageLoader.ShadowPackage> shadowPackages =
+            new ConcurrentHashMap<>();
 
     /**
      * 初始化时间
@@ -102,8 +106,25 @@ public class ModelRegistry implements Serializable, AutoCloseable {
     private final long initTime = System.currentTimeMillis();
 
     public ModelRegistry(BehaviorJobConfig config) {
+        this(config, true, "serving-shadow");
+    }
+
+    public ModelRegistry(BehaviorJobConfig config, boolean initializeServingModels) {
+        this(config, initializeServingModels, "default");
+    }
+
+    public ModelRegistry(BehaviorJobConfig config, boolean initializeServingModels,
+                         String shadowCacheNamespace) {
         this.config = config;
-        initializeModels();
+        if (shadowCacheNamespace == null || !shadowCacheNamespace.matches("^[a-zA-Z0-9._-]+$")) {
+            throw new IllegalArgumentException("shadow cache namespace is invalid");
+        }
+        this.shadowCacheNamespace = shadowCacheNamespace;
+        if (initializeServingModels) {
+            initializeModels();
+        } else {
+            LOG.info("Model registry started in shadow-only mode; serving model initialization is disabled");
+        }
         startReloadScheduler();
     }
 
@@ -333,6 +354,46 @@ public class ModelRegistry implements Serializable, AutoCloseable {
         }
     }
 
+    /**
+     * Verifies, downloads and warms a governed baseline/GNN package without
+     * publishing it to the active inference maps.  The aggregate revision is
+     * monotonic per tenant/model; the same revision cannot be rebound to a
+     * different immutable package.
+     */
+    public ShadowStageReceipt stageShadowPackage(ModelUpdateEvent event) throws Exception {
+        requireValue(event == null ? null : event.getTenantId(), "tenant_id");
+        requireValue(event == null ? null : event.getModelId(), "model_id");
+        String scopedKey = scopeKey(event.getTenantId(), event.getModelId());
+        Object lock = modelSwapLocks.computeIfAbsent(scopedKey, ignored -> new Object());
+        synchronized (lock) {
+            GovernedModelPackageLoader.ShadowPackage current = shadowPackages.get(scopedKey);
+            if (current != null) {
+                if (event.getAggregateRevision() < current.getAggregateRevision()) {
+                    throw new StaleShadowRevisionException(
+                            "shadow package aggregate revision is older than the staged revision");
+                }
+                if (event.getAggregateRevision() == current.getAggregateRevision()) {
+                    if (!current.getPackageSha256().equals(event.getPackageSha256())) {
+                        throw new StaleShadowRevisionException(
+                                "shadow package aggregate revision is already bound to another package");
+                    }
+                    return new ShadowStageReceipt(current.getPackageId(), current.getPackageSha256(),
+                            current.getAggregateRevision(), false);
+                }
+            }
+
+            GovernedModelPackageLoader.ShadowPackage candidate = governedPackageLoader().stage(event);
+            GovernedModelPackageLoader.ShadowPackage previous = shadowPackages.put(scopedKey, candidate);
+            retireShadowPackage(previous, candidate);
+            LOG.info("Staged governed shadow package without activation: tenant={}, modelId={}, "
+                            + "packageId={}, revision={}, sha256={}",
+                    event.getTenantId(), event.getModelId(), candidate.getPackageId(),
+                    candidate.getAggregateRevision(), candidate.getPackageSha256());
+            return new ShadowStageReceipt(candidate.getPackageId(), candidate.getPackageSha256(),
+                    candidate.getAggregateRevision(), true);
+        }
+    }
+
     public void removeTenantModel(String tenantId, String modelId) {
         String key = scopeKey(tenantId, modelId);
         BehaviorModel removed = activeTenantModels.remove(key);
@@ -347,6 +408,30 @@ public class ModelRegistry implements Serializable, AutoCloseable {
                 }
             }, 30, TimeUnit.SECONDS);
         }
+        GovernedModelPackageLoader.ShadowPackage shadow = shadowPackages.remove(key);
+        if (shadow != null) {
+            retireShadowPackage(shadow, null);
+        }
+    }
+
+    /** Local observer cache only; this map is not a serving source. */
+    public GovernedModelPackageLoader.ShadowPackage getLocalShadowPackage(
+            String tenantId, String modelId) {
+        return shadowPackages.get(scopeKey(tenantId, modelId));
+    }
+
+    private static void retireShadowPackage(
+            GovernedModelPackageLoader.ShadowPackage retired,
+            GovernedModelPackageLoader.ShadowPackage replacement) {
+        if (retired == null || retired == replacement) return;
+        retiredModelCloser.schedule(() -> {
+            try {
+                retired.close();
+            } catch (Exception closeError) {
+                LOG.warn("Failed to close retired shadow package {}: {}",
+                        retired.getPackageId(), closeError.getMessage());
+            }
+        }, 30, TimeUnit.SECONDS);
     }
 
     private MinioModelLoader artifactLoader() {
@@ -355,6 +440,13 @@ public class ModelRegistry implements Serializable, AutoCloseable {
             artifactLoader.initialize();
         }
         return artifactLoader;
+    }
+
+    private GovernedModelPackageLoader governedPackageLoader() {
+        if (governedPackageLoader == null) {
+            governedPackageLoader = new GovernedModelPackageLoader(config, shadowCacheNamespace);
+        }
+        return governedPackageLoader;
     }
 
     private static void requireValue(String value, String name) {
@@ -390,6 +482,31 @@ public class ModelRegistry implements Serializable, AutoCloseable {
         public String getArtifactSha256() { return artifactSha256; }
         public float getWarmupScore() { return warmupScore; }
         public boolean isSwitched() { return switched; }
+    }
+
+    public static final class ShadowStageReceipt implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private final String packageId;
+        private final String packageSha256;
+        private final long aggregateRevision;
+        private final boolean staged;
+
+        ShadowStageReceipt(String packageId, String packageSha256,
+                           long aggregateRevision, boolean staged) {
+            this.packageId = packageId;
+            this.packageSha256 = packageSha256;
+            this.aggregateRevision = aggregateRevision;
+            this.staged = staged;
+        }
+
+        public String getPackageId() { return packageId; }
+        public String getPackageSha256() { return packageSha256; }
+        public long getAggregateRevision() { return aggregateRevision; }
+        public boolean isStaged() { return staged; }
+    }
+
+    public static final class StaleShadowRevisionException extends IllegalArgumentException {
+        public StaleShadowRevisionException(String message) { super(message); }
     }
 
     /**
@@ -571,6 +688,17 @@ public class ModelRegistry implements Serializable, AutoCloseable {
         }
 
         models.clear();
+        for (Map.Entry<String, GovernedModelPackageLoader.ShadowPackage> entry : shadowPackages.entrySet()) {
+            try {
+                entry.getValue().close();
+            } catch (Exception e) {
+                LOG.warn("Failed to close shadow package {}: {}", entry.getKey(), e.getMessage());
+            }
+        }
+        shadowPackages.clear();
+        if (governedPackageLoader != null) {
+            governedPackageLoader.close();
+        }
         if (artifactLoader != null) {
             artifactLoader.close();
         }

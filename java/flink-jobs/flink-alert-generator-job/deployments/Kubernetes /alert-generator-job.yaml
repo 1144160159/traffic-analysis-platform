@@ -9,10 +9,14 @@ data:
   alert-generator-job.properties: |
     # Kafka
     kafka.brokers=kafka-headless.traffic-analysis.svc.cluster.local:9092
+    kafka.input.topic=detections.v1
     kafka.input.topic.behavior=detections.behavior.v1
     kafka.input.topic.business=detections.business.v1
     kafka.output.topic=alerts.v1
+    kafka.dlq.topic=dlq.v1
     kafka.group.id=flink-alert-generator-job
+    enable.legacy.behavior.detection=false
+    enable.business.detection=false
 
     # ClickHouse
     clickhouse.url=clickhouse.traffic-analysis.svc.cluster.local:8123

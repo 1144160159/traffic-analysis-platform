@@ -52,6 +52,29 @@ public class CommunityIdUtilTest {
     }
 
     @Test
+    public void testIcmpSpecEncodingPinnedVector() {
+        // 与 Rust probe-agent community_id.rs 固定向量一致:
+        // ICMPv4 echo request 10.0.0.1->10.0.0.2 (type 8, code 0)
+        // 规范编码 port = (8<<8)|0 = 0x0800,两侧相同。
+        String request = CommunityIdUtil.computeIcmp("10.0.0.1", "10.0.0.2", 8, 0, 1);
+        assertEquals("1:T+cveHbOI4LUN7f4h/f3+I7F4uM=", request);
+        // echo reply (type 0) 归一化为请求 type 8,Community ID 必须相同
+        String reply = CommunityIdUtil.computeIcmp("10.0.0.2", "10.0.0.1", 0, 0, 1);
+        assertEquals(request, reply);
+    }
+
+    @Test
+    public void testIcmpv6SpecEncodingPinnedVector() {
+        // 与 Rust 固定向量一致:ICMPv6 echo request 2001:db8::1->2001:db8::2
+        // (type 128, code 0) => port = (128<<8)|0 = 0x8000
+        String request = CommunityIdUtil.computeIcmp("2001:db8::1", "2001:db8::2", 128, 0, 58);
+        assertEquals("1:yOIIKDvdmAbFOlh2kOEOMIfOa2c=", request);
+        // echo reply (type 129) 归一化为 128
+        String reply = CommunityIdUtil.computeIcmp("2001:db8::2", "2001:db8::1", 129, 0, 58);
+        assertEquals(request, reply);
+    }
+
+    @Test
     public void testOrderNormalization() {
         // IP order normalization: src < dst, or if equal then port comparison
         String result1 = CommunityIdUtil.compute("10.0.0.1", "10.0.0.2", 12345, 80, 6);

@@ -158,4 +158,91 @@ public interface PcapIndexMetaOrBuilder extends
    * @return The createdTs.
    */
   long getCreatedTs();
+
+  /**
+   * <pre>
+   * Object-store manifest fields are additive. Kafka source coordinates remain
+   * transport authority and MUST NOT be copied into this wire message.
+   * </pre>
+   *
+   * <code>string bucket = 16 [json_name = "bucket"];</code>
+   * @return The bucket.
+   */
+  java.lang.String getBucket();
+  /**
+   * <pre>
+   * Object-store manifest fields are additive. Kafka source coordinates remain
+   * transport authority and MUST NOT be copied into this wire message.
+   * </pre>
+   *
+   * <code>string bucket = 16 [json_name = "bucket"];</code>
+   * @return The bytes for bucket.
+   */
+  com.google.protobuf.ByteString
+      getBucketBytes();
+
+  /**
+   * <code>string object_version = 17 [json_name = "objectVersion"];</code>
+   * @return The objectVersion.
+   */
+  java.lang.String getObjectVersion();
+  /**
+   * <code>string object_version = 17 [json_name = "objectVersion"];</code>
+   * @return The bytes for objectVersion.
+   */
+  com.google.protobuf.ByteString
+      getObjectVersionBytes();
+
+  /**
+   * <code>string etag = 18 [json_name = "etag"];</code>
+   * @return The etag.
+   */
+  java.lang.String getEtag();
+  /**
+   * <code>string etag = 18 [json_name = "etag"];</code>
+   * @return The bytes for etag.
+   */
+  com.google.protobuf.ByteString
+      getEtagBytes();
+
+  /**
+   * <code>uint64 original_size = 19 [json_name = "originalSize"];</code>
+   * @return The originalSize.
+   */
+  long getOriginalSize();
+
+  /**
+   * <code>uint64 stored_size = 20 [json_name = "storedSize"];</code>
+   * @return The storedSize.
+   */
+  long getStoredSize();
+
+  /**
+   * <code>string compression = 21 [json_name = "compression"];</code>
+   * @return The compression.
+   */
+  java.lang.String getCompression();
+  /**
+   * <code>string compression = 21 [json_name = "compression"];</code>
+   * @return The bytes for compression.
+   */
+  com.google.protobuf.ByteString
+      getCompressionBytes();
+
+  /**
+   * <code>uint32 manifest_version = 22 [json_name = "manifestVersion"];</code>
+   * @return The manifestVersion.
+   */
+  int getManifestVersion();
+
+  /**
+   * <pre>
+   * Additive: total packet count observed in the archived capture window.
+   * Zero means the producer did not record a count (legacy wire-compatible).
+   * </pre>
+   *
+   * <code>uint64 packet_count = 23 [json_name = "packetCount"];</code>
+   * @return The packetCount.
+   */
+  long getPacketCount();
 }

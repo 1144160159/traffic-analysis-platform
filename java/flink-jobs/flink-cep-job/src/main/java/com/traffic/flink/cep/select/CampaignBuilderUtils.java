@@ -75,13 +75,17 @@ public final class CampaignBuilderUtils {
      * 构建 EventHeader
      */
     public static EventHeader buildEventHeader(String tenantId, long eventTs) {
+		if (tenantId == null || tenantId.trim().isEmpty() || "unknown".equalsIgnoreCase(tenantId.trim())) {
+			throw new IllegalArgumentException("campaign tenant_id is required");
+		}
+		tenantId = tenantId.trim();
         String eventId = DeterministicId.uuid(
                 "flink-cep-header/v1", tenantId, eventTs, "campaign");
         long now = System.currentTimeMillis();
         
         return EventHeader.newBuilder()
                 .setEventId(eventId)
-                .setTenantId(tenantId != null ? tenantId : "unknown")
+				.setTenantId(tenantId)
                 .setRunId("realtime")
                 .setEventTs(eventTs)
                 .setIngestTs(now)
@@ -115,11 +119,35 @@ public final class CampaignBuilderUtils {
      */
     public static String getTenantId(List<Alert> alerts) {
         if (alerts == null || alerts.isEmpty()) {
-            return "unknown";
+			throw new IllegalArgumentException("campaign requires at least one alert");
         }
-        String tenantId = alerts.get(0).getTenantId();
-        return (tenantId != null && !tenantId.isEmpty()) ? tenantId : "unknown";
+		String tenantId = alerts.get(0).getTenantId().trim();
+		if (tenantId.isEmpty() || "unknown".equalsIgnoreCase(tenantId)) {
+			throw new IllegalArgumentException("campaign tenant_id is required");
+		}
+		for (Alert alert : alerts) {
+			if (alert == null || !tenantId.equals(alert.getTenantId().trim())) {
+				throw new IllegalArgumentException("campaign pattern contains multiple tenants");
+			}
+		}
+		return tenantId;
     }
+
+	/**
+	 * Length-delimited tenant/source key used by every CEP pattern. Empty
+	 * tenant or source identities fail before keyed state admission.
+	 */
+	public static String tenantSourceKey(Alert alert) {
+		if (alert == null) {
+			throw new IllegalArgumentException("campaign alert is required");
+		}
+		String tenantId = alert.getTenantId().trim();
+		String sourceIp = alert.getSrcIp().trim();
+		if (tenantId.isEmpty() || "unknown".equalsIgnoreCase(tenantId) || sourceIp.isEmpty()) {
+			throw new IllegalArgumentException("campaign tenant_id and src_ip are required");
+		}
+		return tenantId.length() + ":" + tenantId + sourceIp.length() + ":" + sourceIp;
+	}
 
     /**
      * 格式化时间跨度
@@ -138,6 +166,9 @@ public final class CampaignBuilderUtils {
      * 生成 Campaign ID
      */
     public static String generateCampaignId(String prefix, String tenantId, long tsStart) {
+		if (tenantId == null || tenantId.trim().isEmpty() || "unknown".equalsIgnoreCase(tenantId.trim())) {
+			throw new IllegalArgumentException("campaign tenant_id is required");
+		}
         return String.format("campaign-%s-%s-%d-%s", 
                 prefix,
                 tenantId, 

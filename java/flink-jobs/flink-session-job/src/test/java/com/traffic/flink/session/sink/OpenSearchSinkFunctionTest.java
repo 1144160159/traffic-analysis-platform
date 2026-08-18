@@ -9,6 +9,7 @@ import org.opensearch.action.bulk.BulkItemResponse;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -22,6 +23,14 @@ import static org.mockito.Mockito.when;
  * 2. 字段映射完整性
  */
 class OpenSearchSinkFunctionTest {
+
+    @Test
+    void incompleteBulkReceiptIsRejected() {
+        assertThrows(IOException.class,
+                () -> OpenSearchSinkFunction.validateBulkReceiptCount(1, new BulkItemResponse[0]));
+        assertThrows(IOException.class,
+                () -> OpenSearchSinkFunction.validateBulkReceiptCount(1, null));
+    }
 
     @Test
     void testDocumentBuilding() {

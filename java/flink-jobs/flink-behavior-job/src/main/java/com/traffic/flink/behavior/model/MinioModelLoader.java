@@ -111,6 +111,33 @@ public class MinioModelLoader implements Serializable {
         return columns;
     }
 
+    /** Downloads one immutable package member into a URI+digest scoped cache. */
+    public Path downloadImmutableFile(String artifactUri, String expectedSha256, String namespace) {
+        if (artifactUri == null || artifactUri.isBlank()
+                || expectedSha256 == null || !expectedSha256.matches("^[0-9a-f]{64}$")) {
+            throw new IllegalArgumentException("immutable artifact URI and lowercase SHA-256 are required");
+        }
+        URI uri = URI.create(artifactUri);
+        String fileName = Paths.get(uri.getPath()).getFileName().toString();
+        String cacheKey = sha256Text(namespace + "\u001f" + artifactUri + "\u001f" + expectedSha256);
+        Path target = Paths.get(cacheDir, cacheKey, fileName);
+        if (isUsable(target)) {
+            verifySha256(target, expectedSha256);
+            return target;
+        }
+        try {
+            Files.createDirectories(target.getParent());
+            copyFromFlinkFileSystem(artifactUri, target);
+            verifySha256(target, expectedSha256);
+            cacheIndex.put(cacheKey, target);
+            evictCache();
+            return target;
+        } catch (Exception error) {
+            deleteTree(target.getParent());
+            throw new IllegalStateException("Failed to download immutable package member " + artifactUri, error);
+        }
+    }
+
     private static boolean isUsable(Path path) {
         try {
             return path != null && Files.isRegularFile(path) && Files.size(path) > 0;

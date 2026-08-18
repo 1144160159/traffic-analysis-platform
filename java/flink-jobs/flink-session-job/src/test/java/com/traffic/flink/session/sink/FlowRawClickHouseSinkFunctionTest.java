@@ -5,9 +5,11 @@ import com.traffic.proto.traffic.v1.FlowEvent;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FlowRawClickHouseSinkFunctionTest {
@@ -42,6 +44,31 @@ class FlowRawClickHouseSinkFunctionTest {
         sink.invoke(flow("event-2"), null);
         sink.flushBuffer();
         assertEquals(0, sink.pendingCount());
+    }
+
+    @Test
+    void incompleteAndFailedReceiptsAreRejected() {
+        assertThrows(SQLException.class,
+                () -> FlowRawClickHouseSinkFunction.validateBatchReceipt(2, new int[]{1}));
+        assertThrows(SQLException.class,
+                () -> FlowRawClickHouseSinkFunction.validateBatchReceipt(
+                        2, new int[]{1, Statement.EXECUTE_FAILED}));
+    }
+
+    @Test
+    void orderedBatchTokenAndFallbackTimestampAreDeterministic() {
+        FlowRawClickHouseSinkFunction sink = new FlowRawClickHouseSinkFunction(
+                "jdbc:unused", "traffic.flows_raw", "user", "password",
+                100, Long.MAX_VALUE, 1);
+        List<FlowEvent> original = List.of(flow("event-1"), flow("event-2"));
+        List<FlowEvent> replay = List.of(flow("event-1"), flow("event-2"));
+        List<FlowEvent> reordered = List.of(flow("event-2"), flow("event-1"));
+        assertEquals(sink.deduplicationToken(original), sink.deduplicationToken(replay));
+        assertNotEquals(sink.deduplicationToken(original), sink.deduplicationToken(reordered));
+
+        FlowEvent value = flow("event-3");
+        assertEquals(value.getHeader().getEventTs(),
+                FlowRawClickHouseSinkFunction.resolvedFlinkOutTs(value, value.getHeader()));
     }
 
     private static FlowEvent flow(String eventId) {

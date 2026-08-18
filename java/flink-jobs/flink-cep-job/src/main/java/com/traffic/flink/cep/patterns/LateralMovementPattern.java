@@ -1,7 +1,6 @@
 package com.traffic.flink.cep.patterns;
 
-import com.traffic.proto.traffic.v1.Alert;
-
+import com.traffic.flink.cep.select.LateralMovementKeyedAlert;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
@@ -20,6 +19,11 @@ import java.util.Set;
  * 1. 初始入侵告警
  * 2. 从被入侵主机发起的内部扫描/凭据访问
  * 3. 对新目标的成功访问
+ * 
+ * 输入使用 {@link LateralMovementKeyedAlert}（key=tenant+主机IP，alert=原始告警）：
+ * 每条告警同时扇出到 srcIp 与 dstIp 两个 key，使"跳板主机 B"（compromise.dst=B
+ * 与 internal.src=B）在同一条 CEP 分区中相遇——原实现按 (tenant,srcIp) 单 key，
+ * 跨主机跳板链两端不同 key 永不共处，模式永远无法匹配。
  */
 public class LateralMovementPattern {
 
@@ -41,25 +45,25 @@ public class LateralMovementPattern {
     /**
      * 创建横向移动模式
      */
-    public static Pattern<Alert, ?> create(PatternConfig config) {
-        return Pattern.<Alert>begin("compromise")
-                .where(new SimpleCondition<Alert>() {
+    public static Pattern<LateralMovementKeyedAlert, ?> create(PatternConfig config) {
+        return Pattern.<LateralMovementKeyedAlert>begin("compromise")
+                .where(new SimpleCondition<LateralMovementKeyedAlert>() {
                     @Override
-                    public boolean filter(Alert alert) {
-                        return isCompromiseAlert(alert);
+                    public boolean filter(LateralMovementKeyedAlert keyed) {
+                        return isCompromiseAlert(keyed.getAlert());
                     }
                 })
                 .followedBy("internal_activity")
-                .where(new IterativeCondition<Alert>() {
+                .where(new IterativeCondition<LateralMovementKeyedAlert>() {
                     @Override
-                    public boolean filter(Alert alert, Context<Alert> ctx) throws Exception {
-                        if (!isInternalActivity(alert)) {
+                    public boolean filter(LateralMovementKeyedAlert keyed, Context<LateralMovementKeyedAlert> ctx) throws Exception {
+                        if (!isInternalActivity(keyed.getAlert())) {
                             return false;
                         }
                         
                         // 源 IP 应该是之前被入侵的目标 IP
-                        for (Alert compromise : ctx.getEventsForPattern("compromise")) {
-                            if (compromise.getDstIp().equals(alert.getSrcIp())) {
+                        for (LateralMovementKeyedAlert compromise : ctx.getEventsForPattern("compromise")) {
+                            if (compromise.getAlert().getDstIp().equals(keyed.getAlert().getSrcIp())) {
                                 return true;
                             }
                         }
@@ -69,24 +73,24 @@ public class LateralMovementPattern {
                 .oneOrMore()
                 .optional()
                 .followedBy("lateral")
-                .where(new IterativeCondition<Alert>() {
+                .where(new IterativeCondition<LateralMovementKeyedAlert>() {
                     @Override
-                    public boolean filter(Alert alert, Context<Alert> ctx) throws Exception {
-                        if (!isLateralMovement(alert)) {
+                    public boolean filter(LateralMovementKeyedAlert keyed, Context<LateralMovementKeyedAlert> ctx) throws Exception {
+                        if (!isLateralMovement(keyed.getAlert())) {
                             return false;
                         }
                         
                         // 验证目标是内部新主机
-                        for (Alert internal : ctx.getEventsForPattern("internal_activity")) {
-                            if (internal.getSrcIp().equals(alert.getSrcIp()) &&
-                                !internal.getDstIp().equals(alert.getDstIp())) {
+                        for (LateralMovementKeyedAlert internal : ctx.getEventsForPattern("internal_activity")) {
+                            if (internal.getAlert().getSrcIp().equals(keyed.getAlert().getSrcIp()) &&
+                                !internal.getAlert().getDstIp().equals(keyed.getAlert().getDstIp())) {
                                 return true;
                             }
                         }
                         
                         // 或者直接从被入侵主机发起
-                        for (Alert compromise : ctx.getEventsForPattern("compromise")) {
-                            if (compromise.getDstIp().equals(alert.getSrcIp())) {
+                        for (LateralMovementKeyedAlert compromise : ctx.getEventsForPattern("compromise")) {
+                            if (compromise.getAlert().getDstIp().equals(keyed.getAlert().getSrcIp())) {
                                 return true;
                             }
                         }
@@ -100,14 +104,14 @@ public class LateralMovementPattern {
     /**
      * 创建默认配置的模式
      */
-    public static Pattern<Alert, ?> create() {
+    public static Pattern<LateralMovementKeyedAlert, ?> create() {
         return create(PatternConfig.defaultConfig());
     }
 
     /**
      * 判断是否是初始入侵告警
      */
-    private static boolean isCompromiseAlert(Alert alert) {
+    private static boolean isCompromiseAlert(com.traffic.proto.traffic.v1.Alert alert) {
         String type = alert.getAlertType().toUpperCase();
         if (COMPROMISE_TYPES.contains(type)) {
             return true;
@@ -128,7 +132,7 @@ public class LateralMovementPattern {
     /**
      * 判断是否是内部活动
      */
-    private static boolean isInternalActivity(Alert alert) {
+    private static boolean isInternalActivity(com.traffic.proto.traffic.v1.Alert alert) {
         String type = alert.getAlertType().toUpperCase();
         if (INTERNAL_ACTIVITY_TYPES.contains(type)) {
             return true;
@@ -149,7 +153,7 @@ public class LateralMovementPattern {
     /**
      * 判断是否是横向移动
      */
-    private static boolean isLateralMovement(Alert alert) {
+    private static boolean isLateralMovement(com.traffic.proto.traffic.v1.Alert alert) {
         String type = alert.getAlertType().toUpperCase();
         if (LATERAL_TYPES.contains(type)) {
             return true;

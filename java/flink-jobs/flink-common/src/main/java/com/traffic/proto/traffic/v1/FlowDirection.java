@@ -108,7 +108,7 @@ public enum FlowDirection
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(0);
+    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(1);
   }
 
   private static final FlowDirection[] VALUES = values();

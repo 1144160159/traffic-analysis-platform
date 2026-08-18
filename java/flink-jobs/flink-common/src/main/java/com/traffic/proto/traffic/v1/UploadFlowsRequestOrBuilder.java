@@ -43,4 +43,14 @@ public interface UploadFlowsRequestOrBuilder extends
    */
   com.google.protobuf.ByteString
       getCompressionBytes();
+
+  /**
+   * <pre>
+   * Highest exact-set response revision the client can durably apply.
+   * </pre>
+   *
+   * <code>uint32 accepted_response_revision = 3 [json_name = "acceptedResponseRevision"];</code>
+   * @return The acceptedResponseRevision.
+   */
+  int getAcceptedResponseRevision();
 }

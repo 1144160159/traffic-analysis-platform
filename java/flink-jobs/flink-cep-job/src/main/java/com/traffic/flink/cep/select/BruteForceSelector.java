@@ -55,7 +55,10 @@ public class BruteForceSelector extends PatternProcessFunction<Alert, Campaign> 
                         campaign.getCampaignId(), failedAlerts.size(), successAlerts.size(), campaign.getScore());
             }
         } catch (Exception e) {
+            // 构建 Campaign 失败不允许静默吞掉：campaign 丢失且 offset
+            // 照常推进等于数据丢失。统一上抛，由 Flink 重启策略恢复。
             LOG.error("Error creating brute force campaign: {}", e.getMessage(), e);
+            throw new RuntimeException("brute force campaign build failed", e);
         }
     }
 
@@ -99,10 +102,7 @@ public class BruteForceSelector extends PatternProcessFunction<Alert, Campaign> 
         String summary = buildSummary(failedAlerts, successAlerts);
 
         // 提取租户信息
-        String tenantId = allAlerts.get(0).getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            tenantId = "unknown";
-        }
+		String tenantId = CampaignBuilderUtils.getTenantId(allAlerts);
 
         String eventId = DeterministicId.uuidFromSorted(
                 "flink-cep-campaign/v1", alertIds,

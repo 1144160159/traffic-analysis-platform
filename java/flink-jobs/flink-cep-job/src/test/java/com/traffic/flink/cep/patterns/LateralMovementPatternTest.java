@@ -1,5 +1,6 @@
 package com.traffic.flink.cep.patterns;
 
+import com.traffic.flink.cep.select.LateralMovementKeyedAlert;
 import com.traffic.proto.traffic.v1.Alert;
 import com.traffic.proto.traffic.v1.Severity;
 
@@ -18,7 +19,7 @@ class LateralMovementPatternTest {
     @Test
     @DisplayName("创建横向移动模式")
     void testCreatePattern() {
-        Pattern<Alert, ?> pattern = LateralMovementPattern.create();
+        Pattern<LateralMovementKeyedAlert, ?> pattern = LateralMovementPattern.create();
 
         assertThat(pattern).isNotNull();
     }
@@ -30,7 +31,7 @@ class LateralMovementPatternTest {
         config.setLateralMovementWindowMinutes(90);
         config.setMinHops(3);
 
-        Pattern<Alert, ?> pattern = LateralMovementPattern.create(config);
+        Pattern<LateralMovementKeyedAlert, ?> pattern = LateralMovementPattern.create(config);
 
         assertThat(pattern).isNotNull();
     }

@@ -192,10 +192,6 @@ private static final long serialVersionUID = 0L;
   public static final int COLLISIONS_FIELD_NUMBER = 12;
   private long collisions_ = 0L;
   /**
-   * <pre>
-   *uint64 tx_dropped = 13;
-   * </pre>
-   *
    * <code>uint64 collisions = 12 [json_name = "collisions"];</code>
    * @return The collisions.
    */
@@ -1188,10 +1184,6 @@ private static final long serialVersionUID = 0L;
 
     private long collisions_ ;
     /**
-     * <pre>
-     *uint64 tx_dropped = 13;
-     * </pre>
-     *
      * <code>uint64 collisions = 12 [json_name = "collisions"];</code>
      * @return The collisions.
      */
@@ -1200,10 +1192,6 @@ private static final long serialVersionUID = 0L;
       return collisions_;
     }
     /**
-     * <pre>
-     *uint64 tx_dropped = 13;
-     * </pre>
-     *
      * <code>uint64 collisions = 12 [json_name = "collisions"];</code>
      * @param value The collisions to set.
      * @return This builder for chaining.
@@ -1216,10 +1204,6 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <pre>
-     *uint64 tx_dropped = 13;
-     * </pre>
-     *
      * <code>uint64 collisions = 12 [json_name = "collisions"];</code>
      * @return This builder for chaining.
      */

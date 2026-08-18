@@ -5,6 +5,9 @@ metadata:
   namespace: traffic
   labels:
     app: traffic-behavior-job
+  annotations:
+    traffic.analysis/champion-challenger-shadow-enabled: "false"
+    traffic.analysis/challenger-can-serve: "false"
 spec:
   # 镜像：使用前面 Dockerfile 构建的镜像
   image: registry.example.com/traffic/behavior-job:latest
@@ -56,7 +59,11 @@ spec:
               - name: KAFKA_INPUT_TOPIC
                 value: "feature.stat.v1"
               - name: KAFKA_OUTPUT_TOPIC
-                value: "detections.behavior.v1"
+                value: "detections.v1"
+              - name: KAFKA_DLQ_TOPIC
+                value: "dlq.v1"
+              - name: KAFKA_MODEL_SHADOW_OBSERVATION_TOPIC
+                value: "model-shadow-observations.v1"
               - name: KAFKA_GROUP_ID
                 value: "flink-behavior-job"
 
@@ -87,8 +94,24 @@ spec:
                 value: "/opt/flink/models"
               - name: MODEL_VERSION
                 value: "v1.0"
+              - name: DETECTION_MODE
+                value: "off"
               - name: MODEL_ENABLED
                 value: "scan,tunnel,dga,encrypted,anomaly,c2,data_exfil,botnet,malware,phishing"
+              - name: MODEL_SHADOW_EVALUATION_V1_ENABLED
+                value: "false"
+              - name: MODEL_SHADOW_OBSERVATION_ONLY
+                value: "false"
+              - name: MODEL_SHADOW_FEATURE_CONSUMER_GROUP_ID
+                value: "flink-behavior-job-champion-challenger-features"
+              - name: MODEL_SHADOW_UPDATE_CONSUMER_GROUP_ID
+                value: "flink-behavior-job-champion-challenger-model-updates"
+              - name: MODEL_SHADOW_SAMPLE_RATE
+                value: "0.0"
+              - name: MODEL_SHADOW_CHALLENGER_TIMEOUT_MS
+                value: "250"
+              - name: MODEL_SHADOW_PACKAGE_LOAD_TIMEOUT_MS
+                value: "120000"
 
               # ========== 性能/调试 ==========
               - name: PARALLELISM

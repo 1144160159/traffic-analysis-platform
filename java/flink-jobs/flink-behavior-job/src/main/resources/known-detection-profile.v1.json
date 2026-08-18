@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "profile_id": "m04-known-behavior-v1",
+  "algorithm_version": "v1.0",
+  "models": {
+    "anomaly": 0.6,
+    "botnet": 0.7,
+    "c2": 0.75,
+    "data_exfil": 0.7,
+    "dga": 0.8,
+    "encrypted": 0.7,
+    "malware": 0.75,
+    "phishing": 0.7,
+    "scan": 0.7,
+    "tunnel": 0.75
+  }
+}

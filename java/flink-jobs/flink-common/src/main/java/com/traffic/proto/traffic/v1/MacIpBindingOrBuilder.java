@@ -73,4 +73,94 @@ public interface MacIpBindingOrBuilder extends
    */
   com.google.protobuf.ByteString
       getSourceBytes();
+
+  /**
+   * <pre>
+   * Stable probe-local identity. Retries must retain this value and payload.
+   * </pre>
+   *
+   * <code>string observation_id = 6 [json_name = "observationId"];</code>
+   * @return The observationId.
+   */
+  java.lang.String getObservationId();
+  /**
+   * <pre>
+   * Stable probe-local identity. Retries must retain this value and payload.
+   * </pre>
+   *
+   * <code>string observation_id = 6 [json_name = "observationId"];</code>
+   * @return The bytes for observationId.
+   */
+  com.google.protobuf.ByteString
+      getObservationIdBytes();
+
+  /**
+   * <pre>
+   * Authenticated gateway identity; a non-empty mismatching value is rejected.
+   * </pre>
+   *
+   * <code>string probe_id = 7 [json_name = "probeId"];</code>
+   * @return The probeId.
+   */
+  java.lang.String getProbeId();
+  /**
+   * <pre>
+   * Authenticated gateway identity; a non-empty mismatching value is rejected.
+   * </pre>
+   *
+   * <code>string probe_id = 7 [json_name = "probeId"];</code>
+   * @return The bytes for probeId.
+   */
+  com.google.protobuf.ByteString
+      getProbeIdBytes();
+
+  /**
+   * <pre>
+   * Observation scope. Empty remains compatible with untagged legacy traffic.
+   * </pre>
+   *
+   * <code>string vlan_id = 8 [json_name = "vlanId"];</code>
+   * @return The vlanId.
+   */
+  java.lang.String getVlanId();
+  /**
+   * <pre>
+   * Observation scope. Empty remains compatible with untagged legacy traffic.
+   * </pre>
+   *
+   * <code>string vlan_id = 8 [json_name = "vlanId"];</code>
+   * @return The bytes for vlanId.
+   */
+  com.google.protobuf.ByteString
+      getVlanIdBytes();
+
+  /**
+   * <pre>
+   * Packet/parser identity used for audit correlation, not as Kafka authority.
+   * </pre>
+   *
+   * <code>string source_event_id = 9 [json_name = "sourceEventId"];</code>
+   * @return The sourceEventId.
+   */
+  java.lang.String getSourceEventId();
+  /**
+   * <pre>
+   * Packet/parser identity used for audit correlation, not as Kafka authority.
+   * </pre>
+   *
+   * <code>string source_event_id = 9 [json_name = "sourceEventId"];</code>
+   * @return The bytes for sourceEventId.
+   */
+  com.google.protobuf.ByteString
+      getSourceEventIdBytes();
+
+  /**
+   * <pre>
+   * Additive payload contract revision. New probe uploads use value 1.
+   * </pre>
+   *
+   * <code>uint32 schema_version = 10 [json_name = "schemaVersion"];</code>
+   * @return The schemaVersion.
+   */
+  int getSchemaVersion();
 }

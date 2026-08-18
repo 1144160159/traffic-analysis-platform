@@ -94,7 +94,7 @@ public class ProtoDeserializer<T extends Message> implements DeserializationSche
         try {
             T result = getParser().parseFrom(message);
             successCount++;
-            return stripUnknownFields ? stripUnknownFields(result) : result;
+            return stripUnknownFields ? withoutUnknownFields(result) : result;
         } catch (InvalidProtocolBufferException e) {
             errorCount++;
             if (skipOnError) {
@@ -124,11 +124,11 @@ public class ProtoDeserializer<T extends Message> implements DeserializationSche
     }
 
     @SuppressWarnings("unchecked")
-    private T stripUnknownFields(T message) {
-        return (T) stripUnknownFieldsRecursive(message);
+    public static <M extends Message> M withoutUnknownFields(M message) {
+        return (M) stripUnknownFieldsRecursive(message);
     }
 
-    private Message stripUnknownFieldsRecursive(Message message) {
+    private static Message stripUnknownFieldsRecursive(Message message) {
         boolean changed = !message.getUnknownFields().asMap().isEmpty();
         Message.Builder builder = null;
 

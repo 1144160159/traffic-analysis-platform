@@ -419,6 +419,11 @@ private static final long serialVersionUID = 0L;
   public static final int CACHE_HIT_FIELD_NUMBER = 16;
   private int cacheHit_ = 0;
   /**
+   * <pre>
+   * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+   * a future breaking-change migration should use `bool`.
+   * </pre>
+   *
    * <code>uint32 cache_hit = 16 [json_name = "cacheHit"];</code>
    * @return The cacheHit.
    */
@@ -2478,6 +2483,11 @@ private static final long serialVersionUID = 0L;
 
     private int cacheHit_ ;
     /**
+     * <pre>
+     * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+     * a future breaking-change migration should use `bool`.
+     * </pre>
+     *
      * <code>uint32 cache_hit = 16 [json_name = "cacheHit"];</code>
      * @return The cacheHit.
      */
@@ -2486,6 +2496,11 @@ private static final long serialVersionUID = 0L;
       return cacheHit_;
     }
     /**
+     * <pre>
+     * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+     * a future breaking-change migration should use `bool`.
+     * </pre>
+     *
      * <code>uint32 cache_hit = 16 [json_name = "cacheHit"];</code>
      * @param value The cacheHit to set.
      * @return This builder for chaining.
@@ -2498,6 +2513,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+     * a future breaking-change migration should use `bool`.
+     * </pre>
+     *
      * <code>uint32 cache_hit = 16 [json_name = "cacheHit"];</code>
      * @return This builder for chaining.
      */

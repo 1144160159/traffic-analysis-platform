@@ -1,5 +1,6 @@
 package com.traffic.flink.session.sink;
 
+import com.traffic.flink.common.DeploymentActivation;
 import com.traffic.proto.traffic.v1.ActiveIdleStats;
 import com.traffic.proto.traffic.v1.EventHeader;
 import com.traffic.proto.traffic.v1.FiveTuple;
@@ -24,8 +25,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Batched ClickHouse sink for raw FlowEvent rows.
@@ -35,18 +42,18 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(FlowRawClickHouseSinkFunction.class);
+    private static final Pattern TABLE_PATTERN = Pattern.compile("[A-Za-z0-9_.]+");
 
     private final String jdbcUrl;
     private final String table;
     private final String user;
     private final String password;
     private final int batchSize;
-    private final long batchIntervalMs;
     private final int maxRetries;
+    private final DeploymentActivation activation;
 
     private transient List<FlowEvent> buffer;
     private transient ListState<FlowEvent> pendingState;
-    private transient long lastFlushTime;
 
     private transient Counter insertSuccessCounter;
     private transient Counter insertFailCounter;
@@ -61,15 +68,36 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
             int batchSize,
             long batchIntervalMs,
             int maxRetries) {
+        this(jdbcUrl, table, user, password, batchSize, batchIntervalMs, maxRetries,
+                DeploymentActivation.legacy("flink-session-job"));
+    }
+
+    public FlowRawClickHouseSinkFunction(
+            String jdbcUrl,
+            String table,
+            String user,
+            String password,
+            int batchSize,
+            long batchIntervalMs,
+            int maxRetries,
+            DeploymentActivation activation) {
         this.jdbcUrl = jdbcUrl;
         this.table = table;
         this.user = user;
         this.password = password;
         this.batchSize = batchSize;
-        this.batchIntervalMs = batchIntervalMs;
         this.maxRetries = maxRetries;
+        this.activation = java.util.Objects.requireNonNull(activation, "activation");
+        if (jdbcUrl == null || jdbcUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException("ClickHouse JDBC URL must not be blank");
+        }
+        if (table == null || !TABLE_PATTERN.matcher(table).matches()) {
+            throw new IllegalArgumentException("Invalid ClickHouse table name: " + table);
+        }
+        if (batchSize <= 0 || batchIntervalMs <= 0L || maxRetries < 0) {
+            throw new IllegalArgumentException("Invalid ClickHouse raw-flow batch/retry configuration");
+        }
         this.buffer = new ArrayList<>(initialBufferCapacity());
-        this.lastFlushTime = System.currentTimeMillis();
     }
 
     @Override
@@ -79,7 +107,6 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
         if (this.buffer == null) {
             this.buffer = new ArrayList<>(initialBufferCapacity());
         }
-        this.lastFlushTime = System.currentTimeMillis();
 
         MetricGroup metricGroup = getRuntimeContext().getMetricGroup()
                 .addGroup("clickhouse_flow_raw_sink");
@@ -89,37 +116,33 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
         this.batchFlushCounter = metricGroup.counter("batch_flush_total");
 
         Class.forName("com.clickhouse.jdbc.ClickHouseDriver");
-        LOG.info("FlowRawClickHouseSinkFunction initialized: url={}, table={}, batchSize={}, batchIntervalMs={}",
-                jdbcUrl, table, batchSize, batchIntervalMs);
+        LOG.info("FlowRawClickHouseSinkFunction initialized: url={}, table={}, batchSize={}",
+                jdbcUrl, table, batchSize);
     }
 
     @Override
     public void invoke(FlowEvent flow, Context context) throws Exception {
-        if (flow == null) {
-            return;
-        }
+        if (!activation.externalWritesEnabled()) return;
+        validate(flow);
 
         buffer.add(flow);
-        long now = System.currentTimeMillis();
-        boolean shouldFlush = buffer.size() >= batchSize
-                || now - lastFlushTime >= batchIntervalMs;
-
-        if (shouldFlush) {
+        if (buffer.size() >= batchSize) {
             flushBuffer();
         }
     }
 
     @Override
     public void close() throws Exception {
-        flushBuffer();
+        if (activation.externalWritesEnabled()) flushBuffer();
         super.close();
     }
 
     @Override
     public void snapshotState(FunctionSnapshotContext context) throws Exception {
         // Do not let a checkpoint advance past rows that ClickHouse has not
-        // acknowledged. event_id makes a replay after an ACK idempotent.
-        flushBuffer();
+        // acknowledged. Stable event_id plus a deterministic batch boundary
+        // gives ambiguous retries the same ClickHouse deduplication token.
+        if (activation.externalWritesEnabled()) flushBuffer();
         pendingState.clear();
         for (FlowEvent flow : buffer) {
             pendingState.add(flow);
@@ -139,6 +162,9 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
     }
 
     void flushBuffer() throws Exception {
+        if (!activation.externalWritesEnabled()) {
+            return;
+        }
         if (buffer == null || buffer.isEmpty()) {
             return;
         }
@@ -158,7 +184,6 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
         // Only remove the acknowledged prefix. No background thread mutates
         // this collection, so checkpoint and invoke share one ordered buffer.
         buffer.subList(0, batch.size()).clear();
-        lastFlushTime = System.currentTimeMillis();
         if (insertSuccessCounter != null) {
             insertSuccessCounter.inc(batch.size());
         }
@@ -171,7 +196,7 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
         int attempts = 0;
         Exception lastException = null;
 
-        int allowedAttempts = Math.max(1, maxRetries);
+        int allowedAttempts = maxRetries + 1;
         while (attempts < allowedAttempts) {
             try {
                 writeBatch(batch);
@@ -201,14 +226,49 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
     }
 
     protected void writeBatch(List<FlowEvent> batch) throws SQLException {
-        try (Connection conn = DriverManager.getConnection(jdbcUrl, user, password);
+        String token = deduplicationToken(batch);
+        try (Connection conn = DriverManager.getConnection(
+                     withDeduplicationToken(jdbcUrl, token), user, password);
              PreparedStatement ps = conn.prepareStatement(buildInsertSql())) {
             for (FlowEvent flow : batch) {
                 setStatementParameters(ps, flow);
                 ps.addBatch();
             }
-            ps.executeBatch();
+            validateBatchReceipt(batch.size(), ps.executeBatch());
         }
+    }
+
+    static void validateBatchReceipt(int expected, int[] receipt) throws SQLException {
+        if (receipt == null || receipt.length != expected) {
+            throw new SQLException("ClickHouse returned an incomplete raw-flow batch receipt: expected="
+                    + expected + ", actual=" + (receipt == null ? "null" : receipt.length));
+        }
+        for (int item : receipt) {
+            if (item == Statement.EXECUTE_FAILED) {
+                throw new SQLException("ClickHouse reported EXECUTE_FAILED for a raw-flow batch item");
+            }
+        }
+    }
+
+    String deduplicationToken(List<FlowEvent> batch) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update((table + "\n").getBytes(StandardCharsets.UTF_8));
+            for (FlowEvent flow : batch) {
+                digest.update(stableEventId(flow).getBytes(StandardCharsets.UTF_8));
+                digest.update((byte) '\n');
+            }
+            StringBuilder token = new StringBuilder("flow-raw-batch-v1-");
+            for (byte item : digest.digest()) token.append(String.format("%02x", item & 0xff));
+            return token.toString();
+        } catch (NoSuchAlgorithmException error) {
+            throw new IllegalStateException("SHA-256 is required", error);
+        }
+    }
+
+    static String withDeduplicationToken(String url, String token) {
+        return url + (url.contains("?") ? "&" : "?") + "insert_deduplication_token="
+                + URLEncoder.encode(token, StandardCharsets.UTF_8);
     }
 
     int pendingCount() {
@@ -268,9 +328,7 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
         ActiveIdleStats idle = flow.hasIdleStats()
                 ? flow.getIdleStats()
                 : ActiveIdleStats.getDefaultInstance();
-        long flinkOutTs = header.getFlinkOutTs() > 0
-                ? header.getFlinkOutTs()
-                : System.currentTimeMillis();
+        long flinkOutTs = resolvedFlinkOutTs(flow, header);
 
         ps.setString(idx++, header.getEventId());
         ps.setString(idx++, header.getTenantId());
@@ -326,5 +384,24 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
         ps.setFloat(idx++, idle.getMeanMs());
         ps.setFloat(idx++, idle.getStdMs());
         ps.setLong(idx++, Integer.toUnsignedLong(flow.getSubflowCount()));
+    }
+
+    static long resolvedFlinkOutTs(FlowEvent flow, EventHeader header) {
+        if (header.getFlinkOutTs() > 0L) return header.getFlinkOutTs();
+        if (header.getIngestTs() > 0L) return header.getIngestTs();
+        if (header.getEventTs() > 0L) return header.getEventTs();
+        return Math.max(0L, flow.getTsEnd());
+    }
+
+    private static void validate(FlowEvent flow) {
+        if (flow == null) throw new IllegalArgumentException("FlowEvent must not be null");
+        stableEventId(flow);
+    }
+
+    private static String stableEventId(FlowEvent flow) {
+        if (!flow.hasHeader() || flow.getHeader().getEventId().trim().isEmpty()) {
+            throw new IllegalArgumentException("FlowEvent event_id must not be blank");
+        }
+        return flow.getHeader().getEventId();
     }
 }

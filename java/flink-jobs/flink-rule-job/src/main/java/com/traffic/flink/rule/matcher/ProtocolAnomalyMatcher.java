@@ -50,6 +50,21 @@ public class ProtocolAnomalyMatcher implements RuleMatcher {
 
     private Optional<DetectionResult> checkTcpFlags(FeatureStat feature, Rule rule,
                                                      Map<String, Object> cond, MatchContext ctx) {
+        // Fail-closed: tcp_flag_anomaly is only meaningful for TCP traffic and
+        // requires the flag bitmask fields to actually be present in the input.
+        // Missing input must never be interpreted as a NULL scan (flags == 0),
+        // which previously caused every feature (including UDP/ICMP) to match.
+        if (feature.getProtocol() != 6) {
+            return Optional.empty();
+        }
+        Map<String, Object> extra = parseExtra(feature);
+        boolean hasFwd = extra.get("tcp_flags_fwd") instanceof Number;
+        boolean hasBwd = extra.get("tcp_flags_bwd") instanceof Number;
+        if (!hasFwd && !hasBwd) {
+            // FeatureStat has no tcp_flags_fwd/tcp_flags_bwd fields today; the
+            // branch stays fail-closed until an equivalent field is available.
+            return Optional.empty();
+        }
         int flagsFwd = getIntField(feature, "tcp_flags_fwd", 0);
         int flagsBwd = getIntField(feature, "tcp_flags_bwd", 0);
         String direction = (String) cond.getOrDefault("direction", "any");
@@ -230,7 +245,7 @@ public class ProtocolAnomalyMatcher implements RuleMatcher {
                                          float score, String summary, String... evidenceKVs) {
         DetectionResult.Builder b = DetectionResult.builder()
                 .ruleId(rule.getRuleId()).ruleName(rule.getName())
-                .ruleType(RuleType.ANOMALY)
+                .ruleType(rule.getType())
                 .addLabel(detectionType).addLabel(label)
                 .score(score)
                 .addEvidence("summary", summary);
@@ -281,17 +296,17 @@ public class ProtocolAnomalyMatcher implements RuleMatcher {
     private Map<String, Object> parseExtra(FeatureStat feature) {
         Map<String, Object> result = new HashMap<>();
         try {
-            // FeatureStat has no labels field; use getAllFields() for flexible field access
+            // FeatureStat has no labels field; use getAllFields() for flexible field access.
+            // Values are preserved with their runtime types (Number/Boolean/String):
+            // converting Number to String previously broke getIntField/getLongField,
+            // which require `v instanceof Number`, making every field default and
+            // causing the tcp_flag branch to always match "NULL scan".
             Map<com.google.protobuf.Descriptors.FieldDescriptor, Object> allFields = feature.getAllFields();
             for (Map.Entry<com.google.protobuf.Descriptors.FieldDescriptor, Object> entry : allFields.entrySet()) {
                 String fieldName = entry.getKey().getName();
                 Object val = entry.getValue();
                 if (fieldName != null && val != null) {
-                    if (val instanceof Number) {
-                        result.put(fieldName, String.valueOf(((Number) val).doubleValue()));
-                    } else {
-                        result.put(fieldName, val.toString());
-                    }
+                    result.put(fieldName, val);
                 }
             }
         } catch (Exception e) {

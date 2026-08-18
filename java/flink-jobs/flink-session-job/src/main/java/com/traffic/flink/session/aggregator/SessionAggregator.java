@@ -5,6 +5,7 @@ import com.traffic.flink.common.DeterministicId;
 import com.traffic.proto.traffic.v1.EventHeader;
 import com.traffic.proto.traffic.v1.FlowEvent;
 import com.traffic.proto.traffic.v1.FiveTuple;
+import com.traffic.proto.traffic.v1.SessionCompleteness;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
 import org.apache.flink.api.common.functions.AggregateFunction;
@@ -14,7 +15,10 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
+import java.util.TreeSet;
 
 /**
  * Session 聚合函数（修复版）
@@ -84,8 +88,13 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
             accumulateProtocolStats(flow, acc);
 
             // 记录 Flow ID
-            if (acc.flowIds.size() < 100) {
-                acc.flowIds.add(flow.getFlowId());
+            acc.addFlowId(flow.getFlowId());
+            if (flow.hasHeader()) {
+                acc.addSourceEventId(flow.getHeader().getEventId());
+                acc.observeHeader(flow.getHeader());
+            }
+            if (flow.hasFeatureObservation()) {
+                acc.observeFeatureObservation(flow.getFeatureObservation());
             }
 
             // 更新最后见到的 Flow 时间戳（用于确定性 event_id）
@@ -96,9 +105,12 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
             return acc;
 
         } catch (Exception e) {
-            LOG.error("Error adding flow {} to accumulator: {}", 
+            // 累加失败不允许静默吞掉：该 Flow 未计入会话且无任何补偿，
+            // offset 照常推进等于数据丢失。统一上抛由重启策略恢复。
+            LOG.error("Error adding flow {} to accumulator: {}",
                     flow.getFlowId(), e.getMessage(), e);
-            return acc;
+            throw new RuntimeException(
+                    "session accumulator add failed: flow=" + flow.getFlowId(), e);
         }
     }
 
@@ -123,18 +135,7 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
             // ✅ 修复：生成确定性 Event ID
             String eventId = generateDeterministicEventId(acc);
 
-            // 构建 EventHeader
-            EventHeader header = EventHeader.newBuilder()
-                    .setEventId(eventId)
-                    .setTenantId(acc.tenantId != null ? acc.tenantId : "unknown")
-                    .setRunId(acc.runId != null ? acc.runId : "unknown")
-                    .setEventTs(acc.tsEnd)
-                    .setIngestTs(acc.sourceIngestTs > 0 ? acc.sourceIngestTs : System.currentTimeMillis())
-                    .setKafkaTs(acc.kafkaTs)
-                    .setFlinkOutTs(System.currentTimeMillis())
-                    .setProbeId(acc.probeId != null ? acc.probeId : "unknown")
-                    .setFeatureSetId(acc.featureSetId != null ? acc.featureSetId : "default")
-                    .build();
+            EventHeader header = buildEventHeader(acc, eventId, sessionId, communityId, acc.tsEnd);
 
             // 计算持续时间
             long durationMs = acc.getDurationMs();
@@ -165,6 +166,10 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
 
             // ✅ 修复：end_reason 大写统一
             String endReason = determineEndReason(acc);
+            List<String> evidenceIds = stableNonEmptyIds(acc.flowIds);
+            List<String> sourceEventIds = stableNonEmptyIds(acc.sourceEventIds);
+            List<String> missingFields = sessionMissingFields(acc);
+            SessionCompleteness completeness = sessionCompleteness(acc, missingFields);
 
             // 构建 SessionEvent
             SessionEvent.Builder sessionBuilder = SessionEvent.newBuilder()
@@ -181,6 +186,9 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
                     .setClientPort(acc.determinedClientPort)
                     .setServerPort(acc.determinedServerPort)
                     .setPacketsTotal(acc.getPacketsTotal())
+                    // 定向包数:up=client→server(fwd),down=server→client(bwd)。
+                    .setPacketsFwd(acc.packetsUp)
+                    .setPacketsBwd(acc.packetsDown)
                     .setBytesTotal(acc.getBytesTotal())
                     .setBytesFwd(acc.bytesUp)      // ✅ 修复：fwd 映射为 up（client→server）
                     .setBytesBwd(acc.bytesDown)    // ✅ 修复：bwd 映射为 down（server→client）
@@ -207,10 +215,21 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
                     .setHasFin(hasFin)
                     .setHasRst(hasRst)
                     .setIsEstablished(isEstablished)
-                    .setEvidenceCount(0)
-                    .addAllFlowIds(acc.flowIds)
-                    .setEndReason(endReason);
+                    .setEvidenceCount(evidenceIds.size())
+                    .addAllFlowIds(evidenceIds)
+                    .setEndReason(endReason)
+                    .setIdentityVersion("session-id-sha256-v1")
+                    .setSessionVersion(1)
+                    .setEventTimeStartMs(acc.tsStart)
+                    .setEventTimeEndMs(acc.tsEnd)
+                    .addAllSourceEventIds(sourceEventIds)
+                    .addAllEvidenceIds(evidenceIds)
+                    .setCompleteness(completeness)
+                    .addAllMissingFields(missingFields);
 
+            if (acc.hasFeatureObservation) {
+                sessionBuilder.setFeatureObservation(acc.buildFeatureObservation());
+            }
             return sessionBuilder.build();
 
         } catch (Exception e) {
@@ -237,6 +256,8 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
         merged.runId = a.runId;
         merged.featureSetId = a.featureSetId;
         merged.probeId = a.probeId;
+        merged.traceId = SessionAccumulator.minNonEmpty(a.traceId, b.traceId);
+        merged.correlationId = SessionAccumulator.minNonEmpty(a.correlationId, b.correlationId);
 
         // 合并时间范围
         merged.tsStart = Math.min(a.tsStart, b.tsStart);
@@ -284,11 +305,14 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
         merged.icmpPktCnt = a.icmpPktCnt + b.icmpPktCnt;
 
         // 合并 Flow IDs
-        merged.flowIds.addAll(a.flowIds);
-        if (merged.flowIds.size() < 100) {
-            int remaining = 100 - merged.flowIds.size();
-            merged.flowIds.addAll(b.flowIds.subList(0, Math.min(remaining, b.flowIds.size())));
-        }
+        merged.addFlowIds(a.flowIds);
+        merged.addFlowIds(b.flowIds);
+        merged.addSourceEventIds(a.sourceEventIds);
+        merged.addSourceEventIds(b.sourceEventIds);
+        merged.flowIdsTruncated |= a.flowIdsTruncated || b.flowIdsTruncated;
+        merged.sourceEventIdsTruncated |= a.sourceEventIdsTruncated || b.sourceEventIdsTruncated;
+        merged.mergeFeatureObservation(a);
+        merged.mergeFeatureObservation(b);
 
         merged.flowCount = a.flowCount + b.flowCount;
 
@@ -304,6 +328,78 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
 
     // ==================== 私有辅助方法 ====================
 
+    static List<String> stableNonEmptyIds(List<String> values) {
+        TreeSet<String> ordered = new TreeSet<>();
+        for (String value : values) {
+            if (value != null && !value.isEmpty()) {
+                ordered.add(value);
+            }
+        }
+        return new ArrayList<>(ordered);
+    }
+
+    private static List<String> sessionMissingFields(SessionAccumulator acc) {
+        List<String> missing = new ArrayList<>();
+        if (acc.tsStart == Long.MAX_VALUE || acc.tsEnd <= 0) missing.add("event_time");
+        if (acc.communityId == null || acc.communityId.isEmpty()) missing.add("community_id");
+        if (acc.tenantId == null || acc.tenantId.isEmpty()) missing.add("tenant_id");
+        if (acc.sourceEventIds.isEmpty()) missing.add("source_event_ids");
+        if (acc.flowIds.isEmpty()) missing.add("evidence_ids");
+        if (acc.sourceEventIdsTruncated) missing.add("source_event_ids_truncated");
+        if (acc.flowIdsTruncated) missing.add("evidence_ids_truncated");
+        if (acc.pktlenCount == 0) missing.add("packet_length_statistics");
+        if (acc.iatCount == 0) missing.add("inter_arrival_statistics");
+        return missing;
+    }
+
+    private static SessionCompleteness sessionCompleteness(
+            SessionAccumulator acc, List<String> missingFields) {
+        if (acc.flowIdsTruncated || acc.sourceEventIdsTruncated) {
+            return SessionCompleteness.SESSION_COMPLETENESS_TRUNCATED;
+        }
+        return missingFields.isEmpty()
+                ? SessionCompleteness.SESSION_COMPLETENESS_COMPLETE
+                : SessionCompleteness.SESSION_COMPLETENESS_PARTIAL;
+    }
+
+    private static EventHeader buildEventHeader(
+            SessionAccumulator acc,
+            String eventId,
+            String sessionId,
+            String communityId,
+            long eventTime) {
+        long producedAt = System.currentTimeMillis();
+        List<String> sourceEventIds = stableNonEmptyIds(acc.sourceEventIds);
+        String causationId = sourceEventIds.isEmpty() ? "" : sourceEventIds.get(0);
+        String traceId = acc.traceId == null || acc.traceId.isEmpty()
+                ? causationId : acc.traceId;
+        String correlationId = acc.correlationId == null || acc.correlationId.isEmpty()
+                ? communityId : acc.correlationId;
+        return EventHeader.newBuilder()
+                .setEventId(eventId)
+                .setTenantId(acc.tenantId != null ? acc.tenantId : "unknown")
+                .setRunId(acc.runId != null ? acc.runId : "unknown")
+                .setEventTs(eventTime)
+                .setIngestTs(acc.sourceIngestTs > 0 ? acc.sourceIngestTs : producedAt)
+                .setKafkaTs(acc.kafkaTs)
+                .setFlinkOutTs(producedAt)
+                .setProbeId(acc.probeId != null ? acc.probeId : "unknown")
+                .setFeatureSetId(acc.featureSetId != null ? acc.featureSetId : "default")
+                .setEventType("traffic.session.event.v1")
+                .setSchemaVersion("v1")
+                .setAggregateType("session")
+                .setAggregateId(sessionId)
+                .setAggregateVersion(1)
+                .setOccurredAt(eventTime)
+                .setProducedAt(producedAt)
+                .setTraceId(traceId)
+                .setCausationId(causationId)
+                .setCorrelationId(correlationId != null ? correlationId : "")
+                .setIdempotencyKey(eventId)
+                .setProducer("flink-session-job")
+                .build();
+    }
+
     /**
      * 初始化累加器
      */
@@ -314,6 +410,7 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
         acc.runId = flow.getHeader().getRunId();
         acc.featureSetId = flow.getHeader().getFeatureSetId();
         acc.probeId = flow.getHeader().getProbeId();
+        acc.observeHeader(flow.getHeader());
     }
 
     /**
@@ -530,12 +627,20 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
             return acc.communityId;
         }
         
+        // ICMP/ICMPv6 按 community-id-spec 单 16 位 (type<<8)|code 编码,与 Rust 侧对齐;
+        // tuple.srcPort 承载 type、tuple.dstPort 承载 code。
+        int protocol = acc.tuple.getProtocol();
+        if (protocol == 1 || protocol == 58) {
+            return CommunityIdUtil.computeIcmp(
+                    acc.tuple.getSrcIp(), acc.tuple.getDstIp(),
+                    acc.tuple.getSrcPort(), acc.tuple.getDstPort(), protocol);
+        }
         return CommunityIdUtil.compute(
                 acc.tuple.getSrcIp(),
                 acc.tuple.getDstIp(),
                 acc.tuple.getSrcPort(),
                 acc.tuple.getDstPort(),
-                acc.tuple.getProtocol()
+                protocol
         );
     }
 
@@ -621,7 +726,7 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
         String runId = acc.runId != null ? acc.runId : "unknown";
         String eventId = DeterministicId.uuidFromSorted(
                 "flink-session-error-event/v1",
-                acc.flowIds,
+                acc.sourceEventIds,
                 tenantId,
                 runId,
                 acc.communityId,
@@ -630,22 +735,17 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
                 acc.lastSeenFlowTs);
         String sessionId = "error-session-" + DeterministicId.shortId(
                 "flink-session-error/v1", 16, eventId);
-        EventHeader header = EventHeader.newBuilder()
-                .setEventId(eventId)
-                .setTenantId(tenantId)
-                .setRunId(runId)
-                .setEventTs(eventTime)
-                .setIngestTs(acc.sourceIngestTs > 0 ? acc.sourceIngestTs : eventTime)
-                .setKafkaTs(acc.kafkaTs)
-                .setFlinkOutTs(acc.flinkOutTs > 0 ? acc.flinkOutTs : eventTime)
-                .setProbeId(acc.probeId != null ? acc.probeId : "unknown")
-                .setFeatureSetId(acc.featureSetId != null ? acc.featureSetId : "default")
-                .build();
+        String communityId = acc.communityId != null ? acc.communityId : "";
+        EventHeader header = buildEventHeader(acc, eventId, sessionId, communityId, eventTime);
+        List<String> evidenceIds = stableNonEmptyIds(acc.flowIds);
+        List<String> sourceEventIds = stableNonEmptyIds(acc.sourceEventIds);
+        List<String> missingFields = sessionMissingFields(acc);
+        missingFields.add("session_aggregation_error");
 
         return SessionEvent.newBuilder()
                 .setHeader(header)
                 .setSessionId(sessionId)
-                .setCommunityId("error")
+                .setCommunityId(communityId)
                 .setTuple(FiveTuple.newBuilder()
                         .setSrcIp("0.0.0.0")
                         .setDstIp("0.0.0.0")
@@ -667,6 +767,16 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
                 .setBytesBwd(0)
                 .setUpDownRatio(0)
                 .setEndReason("ERROR")
+                .setEvidenceCount(evidenceIds.size())
+                .addAllFlowIds(evidenceIds)
+                .setIdentityVersion("session-id-sha256-v1")
+                .setSessionVersion(1)
+                .setEventTimeStartMs(eventTime)
+                .setEventTimeEndMs(eventTime)
+                .addAllSourceEventIds(sourceEventIds)
+                .addAllEvidenceIds(evidenceIds)
+                .setCompleteness(SessionCompleteness.SESSION_COMPLETENESS_INVALID)
+                .addAllMissingFields(missingFields)
                 .build();
     }
 }

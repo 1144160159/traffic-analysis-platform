@@ -1,8 +1,9 @@
 package com.traffic.flink.session.sink;
 
 import com.traffic.proto.traffic.v1.FlowEvent;
-import com.traffic.proto.traffic.v1.DeadLetter;
 import com.traffic.proto.traffic.v1.SessionEvent;
+import com.traffic.flink.common.CanonicalDlqMessage;
+import com.traffic.flink.common.sourcequality.SourceQualityReceipt;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
@@ -30,25 +31,19 @@ public class KafkaSinkFactory {
     private KafkaSinkFactory() {}
 
     /**
-     * 创建 Session Event Kafka Sink
+     * 创建 Session Event Kafka Sink（EXACTLY_ONCE，事务与 checkpoint 耦合）
      */
-    public static KafkaSink<SessionEvent> createSink(String brokers, String topic) {
-        LOG.info("Creating Kafka sink for SessionEvent: brokers={}, topic={}", brokers, topic);
-
-        Properties producerProps = com.traffic.flink.common.ConfigUtil.kafkaClientProperties();
-        producerProps.setProperty("acks", "all");
-        producerProps.setProperty("retries", "3");
-        producerProps.setProperty("retry.backoff.ms", "1000");
-        producerProps.setProperty("compression.type", "lz4");
-        producerProps.setProperty("batch.size", "65536");
-        producerProps.setProperty("linger.ms", "10");
-        producerProps.setProperty("buffer.memory", "67108864");
+    public static KafkaSink<SessionEvent> createSink(
+            String brokers, String topic, String transactionalIdPrefix, long transactionTimeoutMs) {
+        LOG.info("Creating Kafka sink for SessionEvent: brokers={}, topic={}, transactionalIdPrefix={}",
+                brokers, topic, transactionalIdPrefix);
 
         return KafkaSink.<SessionEvent>builder()
                 .setBootstrapServers(brokers)
                 .setRecordSerializer(new SessionEventSerializer(topic))
-                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
-                .setKafkaProducerConfig(producerProps)
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(transactionalIdPrefix)
+                .setKafkaProducerConfig(exactProducerProperties(transactionTimeoutMs))
                 .build();
     }
 
@@ -93,7 +88,10 @@ public class KafkaSinkFactory {
     /**
      * 创建统一 DeadLetter Sink（用于输入解析/字段质量失败）
      */
-    public static KafkaSink<DeadLetter> createDeadLetterSink(String brokers, String topic) {
+    public static KafkaSink<CanonicalDlqMessage> createDeadLetterSink(String brokers, String topic) {
+        if (!"dlq.v1".equals(topic)) {
+            throw new IllegalArgumentException("Session job failures must use canonical dlq.v1");
+        }
         LOG.info("Creating Kafka sink for DeadLetter: brokers={}, topic={}", brokers, topic);
 
         Properties producerProps = com.traffic.flink.common.ConfigUtil.kafkaClientProperties();
@@ -101,12 +99,69 @@ public class KafkaSinkFactory {
         producerProps.setProperty("retries", "3");
         producerProps.setProperty("compression.type", "lz4");
 
-        return KafkaSink.<DeadLetter>builder()
+        producerProps.setProperty("acks", "all");
+        producerProps.setProperty("enable.idempotence", "true");
+
+        return KafkaSink.<CanonicalDlqMessage>builder()
                 .setBootstrapServers(brokers)
                 .setRecordSerializer(new DeadLetterSerializer(topic))
                 .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                 .setKafkaProducerConfig(producerProps)
                 .build();
+    }
+
+    /**
+     * Creates the checkpoint-coupled canonical DLQ sink. A checkpoint cannot
+     * advance source offsets until the Kafka transaction containing its DLQ
+     * records is committed.
+     */
+    public static KafkaSink<CanonicalDlqMessage> createDeadLetterSink(
+            String brokers,
+            String topic,
+            String transactionalIdPrefix,
+            long transactionTimeoutMs) {
+        if (!"dlq.v1".equals(topic)) {
+            throw new IllegalArgumentException("Session job failures must use canonical dlq.v1");
+        }
+        Properties producerProps = exactProducerProperties(transactionTimeoutMs);
+        return KafkaSink.<CanonicalDlqMessage>builder()
+                .setBootstrapServers(brokers)
+                .setRecordSerializer(new DeadLetterSerializer(topic))
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(transactionalIdPrefix)
+                .setKafkaProducerConfig(producerProps)
+                .build();
+    }
+
+    /** Publishes one durable source-quality receipt for each terminal classification. */
+    public static KafkaSink<SourceQualityReceipt> createSourceQualitySink(
+            String brokers,
+            String topic,
+            String transactionalIdPrefix,
+            long transactionTimeoutMs) {
+        if (!"audit.logs".equals(topic)) {
+            throw new IllegalArgumentException("Session quality receipts must use canonical audit.logs");
+        }
+        return KafkaSink.<SourceQualityReceipt>builder()
+                .setBootstrapServers(brokers)
+                .setRecordSerializer(new SourceQualitySerializer(topic))
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(transactionalIdPrefix)
+                .setKafkaProducerConfig(exactProducerProperties(transactionTimeoutMs))
+                .build();
+    }
+
+    private static Properties exactProducerProperties(long transactionTimeoutMs) {
+        if (transactionTimeoutMs <= 0L) {
+            throw new IllegalArgumentException("Kafka transaction timeout must be positive");
+        }
+        Properties properties = com.traffic.flink.common.ConfigUtil.kafkaClientProperties();
+        properties.setProperty("acks", "all");
+        properties.setProperty("enable.idempotence", "true");
+        properties.setProperty("max.in.flight.requests.per.connection", "5");
+        properties.setProperty("compression.type", "lz4");
+        properties.setProperty("transaction.timeout.ms", String.valueOf(transactionTimeoutMs));
+        return properties;
     }
 
     /**
@@ -250,7 +305,7 @@ public class KafkaSinkFactory {
     /**
      * DeadLetter 序列化器
      */
-    private static class DeadLetterSerializer implements KafkaRecordSerializationSchema<DeadLetter> {
+    static class DeadLetterSerializer implements KafkaRecordSerializationSchema<CanonicalDlqMessage> {
         private static final long serialVersionUID = 1L;
         private final String topic;
 
@@ -261,23 +316,37 @@ public class KafkaSinkFactory {
         @Nullable
         @Override
         public ProducerRecord<byte[], byte[]> serialize(
-                DeadLetter element, KafkaSinkContext context, Long timestamp) {
+                CanonicalDlqMessage element, KafkaSinkContext context, Long timestamp) {
             if (element == null) return null;
 
-            String key = element.getTenantId() + ":" + element.getSourceTopic() + ":" + element.getSourceKey();
+            String key = element.tenantId() + ":" + element.originalTopic() + ":"
+                    + element.originalPartition() + ":" + element.originalOffset();
             byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
-            byte[] valueBytes = element.toByteArray();
+            byte[] valueBytes = element.toJson().getBytes(StandardCharsets.UTF_8);
+            return new ProducerRecord<>(topic, null, timestamp, keyBytes, valueBytes);
+        }
+    }
 
-            Headers headers = new RecordHeaders();
-            headers.add("event_id", element.getEventId().getBytes(StandardCharsets.UTF_8));
-            headers.add("tenant_id", element.getTenantId().getBytes(StandardCharsets.UTF_8));
-            headers.add("source_topic", element.getSourceTopic().getBytes(StandardCharsets.UTF_8));
-            headers.add("source_key", element.getSourceKey().getBytes(StandardCharsets.UTF_8));
-            headers.add("error_msg", element.getErrorMsg().getBytes(StandardCharsets.UTF_8));
+    static class SourceQualitySerializer
+            implements KafkaRecordSerializationSchema<SourceQualityReceipt> {
+        private static final long serialVersionUID = 1L;
+        private final String topic;
 
-            Long recordTimestamp = element.getCreatedAt() > 0 ? element.getCreatedAt() : null;
+        SourceQualitySerializer(String topic) {
+            this.topic = topic;
+        }
 
-            return new ProducerRecord<>(topic, null, recordTimestamp, keyBytes, valueBytes, headers);
+        @Nullable
+        @Override
+        public ProducerRecord<byte[], byte[]> serialize(
+                SourceQualityReceipt receipt,
+                KafkaSinkContext context,
+                Long timestamp) {
+            if (receipt == null) return null;
+            return new ProducerRecord<>(
+                    topic, null, timestamp,
+                    receipt.getTenantId().getBytes(StandardCharsets.UTF_8),
+                    receipt.toAuditEventJson());
         }
     }
 }

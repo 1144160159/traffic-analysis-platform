@@ -7,6 +7,7 @@ import com.traffic.flink.rule.util.CommunityIdParser;
 import com.traffic.proto.traffic.v1.DetectionBehavior;
 import com.traffic.proto.traffic.v1.EventHeader;
 import com.traffic.proto.traffic.v1.FeatureStat;
+import com.traffic.proto.traffic.v1.FiveTuple;
 
 import org.apache.flink.api.common.state.BroadcastState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -20,6 +21,7 @@ import org.apache.flink.metrics.Histogram;
 import org.apache.flink.metrics.Meter;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,9 @@ public class RuleBroadcastProcessFunction
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(RuleBroadcastProcessFunction.class);
 
+    public static final OutputTag<RuleUpdateAppliedAck> RULE_UPDATE_ACK_TAG =
+            new OutputTag<RuleUpdateAppliedAck>("rule-update-applied-ack") {};
+
     // 规则状态描述符
     private static final MapStateDescriptor<String, Rule> RULE_STATE_DESC =
             new MapStateDescriptor<>(
@@ -62,11 +67,17 @@ public class RuleBroadcastProcessFunction
     private transient Counter rulesMatched;
     private transient Counter rulesUpdated;
     private transient Counter rulesDeleted;
+    private transient Counter ruleUpdatesDuplicate;
+    private transient Counter ruleUpdatesStale;
+    private transient Counter ruleUpdatesConflict;
     private transient Counter ipExtractionFailed;
     
     // Metrics - 规则维度命中统计
     private transient Map<String, Counter> ruleHitCounters;
-    
+
+    // 按租户缓存的已排序启用规则（广播变更时失效；恢复后首次调用重建）
+    private transient Map<String, List<Rule>> tenantRulesCache;
+
     // Metrics - 状态
     private transient volatile int activeRuleCount = 0;
     private transient volatile long lastMatchTime = 0;
@@ -84,6 +95,7 @@ public class RuleBroadcastProcessFunction
 
         // 初始化规则命中计数器
         ruleHitCounters = new ConcurrentHashMap<>();
+        tenantRulesCache = new HashMap<>();
 
         // 注册基础 Metrics
         featuresProcessed = getRuntimeContext()
@@ -101,6 +113,18 @@ public class RuleBroadcastProcessFunction
         rulesDeleted = getRuntimeContext()
                 .getMetricGroup()
                 .counter("rules_deleted_total");
+
+        ruleUpdatesDuplicate = getRuntimeContext()
+                .getMetricGroup()
+                .counter("rule_updates_duplicate_total");
+
+        ruleUpdatesStale = getRuntimeContext()
+                .getMetricGroup()
+                .counter("rule_updates_stale_total");
+
+        ruleUpdatesConflict = getRuntimeContext()
+                .getMetricGroup()
+                .counter("rule_updates_conflict_total");
 
         ipExtractionFailed = getRuntimeContext()
                 .getMetricGroup()
@@ -137,63 +161,82 @@ public class RuleBroadcastProcessFunction
         BroadcastState<String, Rule> ruleState = ctx.getBroadcastState(RULE_STATE_DESC);
 
         String ruleKey = buildRuleKey(rule.getTenantId(), rule.getRuleId());
-        RuleAction action = rule.getAction();
+        Rule existingRule = ruleState.get(ruleKey);
+        long oldVersion = existingRule != null ? existingRule.getVersion() : 0;
+        RuleUpdateStateMachine.Decision decision =
+                RuleUpdateStateMachine.decideForRuntime(
+                        existingRule,
+                        rule,
+                        matcherFactory.getMatcher(rule.getType()) != null);
 
-        switch (action) {
-            case UPDATE:
-            case ENABLE:
-                if (rule.isEnabled()) {
-                    // 检查版本，只更新更新版本
-                    Rule existingRule = ruleState.get(ruleKey);
-                    long oldVersion = existingRule != null ? existingRule.getVersion() : 0;
-                    
-                    if (existingRule == null || existingRule.getVersion() < rule.getVersion()) {
-                        ruleState.put(ruleKey, rule);
-                        
-                        // 更新黑名单缓存
-                        if (rule.getType() == RuleType.BLACKLIST) {
-                            BlacklistMatcher.updateBlacklist(rule, matchContext);
-                        }
-                        
-                        rulesUpdated.inc();
-                        
-                        // 审计日志
-                        LOG.info("[RULE_AUDIT] Rule updated: ruleId={}, tenantId={}, version={}→{}, type={}, enabled={}, updatedBy={}", 
-                                rule.getRuleId(), 
-                                rule.getTenantId(),
-                                oldVersion,
-                                rule.getVersion(),
-                                rule.getType(),
-                                rule.isEnabled(),
-                                rule.getUpdatedBy() != null ? rule.getUpdatedBy() : "system");
-                    } else {
-                        LOG.debug("Ignoring outdated rule version: {} (current: {}, incoming: {})",
-                                rule.getRuleId(), existingRule.getVersion(), rule.getVersion());
-                    }
+        switch (decision.getStatus()) {
+            case APPLIED:
+                // 黑名单 IP 现在直接从广播规则读取（BlacklistMatcher.match 按
+                // 规则 ip_list 判定），不再维护 MatchContext 内的内存缓存，因此
+                // checkpoint 恢复后无需重建缓存即可正确匹配。
+                // Disabled/deleted rules remain as tombstones so that a stale
+                // replay cannot resurrect a superseded active version.
+                ruleState.put(ruleKey, decision.getState());
+                // 规则集变更后失效排序缓存
+                if (tenantRulesCache != null) {
+                    tenantRulesCache.clear();
                 }
-                break;
-
-            case DELETE:
-            case DISABLE:
-                Rule removed = ruleState.get(ruleKey);
-                if (removed != null) {
-                    ruleState.remove(ruleKey);
-                    
-                    // 从黑名单缓存移除
-                    if (rule.getType() == RuleType.BLACKLIST) {
-                        BlacklistMatcher.removeFromBlacklist(rule, matchContext);
-                    }
-                    
+                if (rule.isEnabled()) rulesUpdated.inc();
+                else {
                     rulesDeleted.inc();
-                    
-                    // 审计日志
-                    LOG.info("[RULE_AUDIT] Rule removed: ruleId={}, tenantId={}, action={}, removedBy={}", 
-                            rule.getRuleId(), 
-                            rule.getTenantId(),
-                            action,
-                            rule.getUpdatedBy() != null ? rule.getUpdatedBy() : "system");
+                    // 规则停用/删除时清理该规则的命中计数器，避免 metric 无界增长
+                    if (ruleHitCounters != null) {
+                        ruleHitCounters.remove(rule.getRuleId());
+                    }
                 }
+                LOG.info("[RULE_AUDIT] Rule transition applied: ruleId={}, tenantId={}, "
+                                + "version={}→{}, action={}, enabled={}, eventId={}, updatedBy={}",
+                        rule.getRuleId(), rule.getTenantId(), oldVersion, rule.getVersion(),
+                        rule.getAction(), rule.isEnabled(), rule.getCommandEventId(),
+                        rule.getUpdatedBy() != null ? rule.getUpdatedBy() : "system");
                 break;
+            case DUPLICATE:
+                ruleUpdatesDuplicate.inc();
+                LOG.info("[RULE_AUDIT] Duplicate rule command ignored: ruleId={}, version={}, eventId={}",
+                        rule.getRuleId(), rule.getVersion(), rule.getCommandEventId());
+                break;
+            case STALE:
+                ruleUpdatesStale.inc();
+                LOG.warn("[RULE_AUDIT] Stale rule command rejected: ruleId={}, currentVersion={}, "
+                                + "incomingVersion={}, eventId={}",
+                        rule.getRuleId(), oldVersion, rule.getVersion(), rule.getCommandEventId());
+                break;
+            case CONFLICT:
+                ruleUpdatesConflict.inc();
+                LOG.error("[RULE_AUDIT] Conflicting rule command rejected: ruleId={}, version={}, "
+                                + "eventId={}, reason={}",
+                        rule.getRuleId(), rule.getVersion(), rule.getCommandEventId(),
+                        decision.getReason());
+                break;
+            default:
+                throw new IllegalStateException("unknown rule transition decision");
+        }
+
+        long currentVersion = decision.getState() == null
+                ? oldVersion : decision.getState().getVersion();
+        String ackStatus = decision.getStatus().name().toLowerCase(Locale.ROOT);
+        String ackError = decision.getStatus() == RuleUpdateStateMachine.Status.CONFLICT
+                || decision.getStatus() == RuleUpdateStateMachine.Status.STALE
+                ? decision.getReason() : "";
+        if (rule.isCanonicalCommandEnvelope()) {
+            ctx.output(RULE_UPDATE_ACK_TAG, RuleUpdateAppliedAck.from(
+                    rule,
+                    currentVersion,
+                    ackStatus,
+                    ackError,
+                    getRuntimeContext().getIndexOfThisSubtask(),
+                    getRuntimeContext().getNumberOfParallelSubtasks()));
+        } else {
+            // Historical flattened records remain readable, but they have no
+            // authoritative outbox event to aggregate against in rule-manager.
+            LOG.warn("[RULE_AUDIT] Legacy flattened command applied without runtime receipt: "
+                            + "ruleId={}, version={}",
+                    rule.getRuleId(), rule.getVersion());
         }
 
         // 更新活跃规则计数
@@ -221,9 +264,6 @@ public class RuleBroadcastProcessFunction
         // 收集所有启用的规则并按优先级排序
         List<Rule> sortedRules = getSortedRules(ruleState, tenantId);
 
-        // 存储所有匹配结果
-        List<DetectionResult> detections = new ArrayList<>();
-
         // 按优先级顺序匹配规则
         for (Rule rule : sortedRules) {
             // 获取匹配器
@@ -237,21 +277,21 @@ public class RuleBroadcastProcessFunction
             try {
                 Optional<DetectionResult> result = matcher.match(feature, rule, matchContext);
                 if (result.isPresent()) {
-                    detections.add(result.get());
-                    
+                    out.collect(buildDetectionEvent(feature, result.get(), rule));
+                    rulesMatched.inc();
+
                     // 规则命中统计
                     incrementRuleHitCounter(rule.getRuleId());
                 }
             } catch (Exception e) {
-                LOG.error("Error matching rule {}: {}", rule.getRuleId(), e.getMessage(), e);
+                // matcher 异常不允许静默吞掉：检测丢失且 offset 照常推进等于
+                // 数据丢失。统一上抛，由 Flink 重启策略（fixedDelayRestart）恢复。
+                LOG.error("Matcher failure for rule {}, feature {}; failing job for recovery: {}",
+                        rule.getRuleId(), feature.getObjectId(), e.getMessage(), e);
+                throw new RuntimeException(
+                        "rule matcher failure: rule=" + rule.getRuleId()
+                                + " feature=" + feature.getObjectId(), e);
             }
-        }
-
-        // 输出检测结果
-        for (DetectionResult detection : detections) {
-            DetectionBehavior detectionEvent = buildDetectionEvent(feature, detection);
-            out.collect(detectionEvent);
-            rulesMatched.inc();
         }
 
         // 更新延迟指标
@@ -261,8 +301,20 @@ public class RuleBroadcastProcessFunction
 
     /**
      * 获取排序后的规则列表（按优先级降序）
+     *
+     * 按租户缓存已排序的启用规则；缓存在本实例内有效，并在每次收到广播规则
+     * 变更时失效重建。checkpoint 恢复会创建新实例（transient 缓存为空），
+     * 首次调用从已恢复的广播状态重建，因此不存在恢复后缓存陈旧的问题。
      */
     private List<Rule> getSortedRules(ReadOnlyBroadcastState<String, Rule> ruleState, String tenantId) throws Exception {
+        if (tenantRulesCache == null) {
+            tenantRulesCache = new HashMap<>();
+        }
+        List<Rule> cached = tenantRulesCache.get(tenantId);
+        if (cached != null) {
+            return cached;
+        }
+
         List<Rule> rules = new ArrayList<>();
         
         for (Map.Entry<String, Rule> entry : ruleState.immutableEntries()) {
@@ -283,7 +335,8 @@ public class RuleBroadcastProcessFunction
 
         // 按优先级降序排序（priority 越大越优先）
         rules.sort((r1, r2) -> Integer.compare(r2.getPriority(), r1.getPriority()));
-        
+
+        tenantRulesCache.put(tenantId, rules);
         return rules;
     }
 
@@ -296,15 +349,13 @@ public class RuleBroadcastProcessFunction
         matchContext.setProtocol(feature.getProtocol());
         matchContext.setTimestamp(feature.getTs());
 
-        // 尝试从 objectId 解析五元组
-        // objectId 格式示例：192.168.1.1:443-10.0.0.1:52345
-        CommunityIdParser.FiveTuple tuple = CommunityIdParser.parseObjectId(feature.getObjectId());
-        
+        FiveTuple tuple = resolveSourceTuple(feature);
+
         if (tuple != null) {
-            matchContext.setSrcIp(tuple.srcIp);
-            matchContext.setDstIp(tuple.dstIp);
-            matchContext.setSrcPort(tuple.srcPort);
-            matchContext.setDstPort(tuple.dstPort);
+            matchContext.setSrcIp(tuple.getSrcIp());
+            matchContext.setDstIp(tuple.getDstIp());
+            matchContext.setSrcPort(tuple.getSrcPort());
+            matchContext.setDstPort(tuple.getDstPort());
         } else {
             // objectId 解析失败，设置为 null
             matchContext.setSrcIp(null);
@@ -324,24 +375,48 @@ public class RuleBroadcastProcessFunction
     /**
      * 构建检测事件
      */
-    private DetectionBehavior buildDetectionEvent(FeatureStat feature, DetectionResult detection) {
+    DetectionBehavior buildDetectionEvent(
+            FeatureStat feature,
+            DetectionResult detection,
+            Rule rule) {
+        FiveTuple tuple = resolveSourceTuple(feature);
+        if (tuple == null) {
+            throw new IllegalArgumentException(
+                    "rule detection requires an observed source tuple; object_id fallback was not parseable");
+        }
+
         long eventTime = feature.getTs();
+        EventHeader inputHeader = feature.getHeader();
+        long producedAt = System.currentTimeMillis();
         String eventId = DeterministicId.uuid(
                 "flink-rule-detection/v1",
-                feature.getHeader().getTenantId(),
-                feature.getHeader().getEventId(),
+                inputHeader.getTenantId(),
+                inputHeader.getEventId(),
                 detection.getRuleId(),
+                rule.getVersion(),
                 detection.getRuleType().getValue(),
                 eventTime,
                 "rule-engine-v1");
         EventHeader header = EventHeader.newBuilder()
                 .setEventId(eventId)
-                .setTenantId(feature.getHeader().getTenantId())
-                .setRunId(feature.getHeader().getRunId())
+                .setTenantId(inputHeader.getTenantId())
+                .setRunId(inputHeader.getRunId())
                 .setEventTs(eventTime)
-                .setIngestTs(System.currentTimeMillis())
-                .setProbeId(feature.getHeader().getProbeId())
-                .setFeatureSetId(feature.getHeader().getFeatureSetId())
+                .setIngestTs(inputHeader.getIngestTs() > 0 ? inputHeader.getIngestTs() : eventTime)
+                .setProbeId(inputHeader.getProbeId())
+                .setFeatureSetId(inputHeader.getFeatureSetId())
+                .setEventType("traffic.detection.behavior.v1")
+                .setSchemaVersion("1")
+                .setAggregateType("detection")
+                .setAggregateId(feature.getObjectId())
+                .setAggregateVersion(rule.getVersion())
+                .setOccurredAt(eventTime)
+                .setProducedAt(producedAt)
+                .setTraceId(nonBlank(inputHeader.getTraceId(), inputHeader.getEventId()))
+                .setCausationId(inputHeader.getEventId())
+                .setCorrelationId(nonBlank(inputHeader.getCorrelationId(), feature.getCommunityId()))
+                .setIdempotencyKey(eventId)
+                .setProducer("flink-rule-job")
                 .build();
 
         // 构建标签列表
@@ -350,6 +425,9 @@ public class RuleBroadcastProcessFunction
         if (detection.getLabels() != null) {
             labels.addAll(detection.getLabels());
         }
+        labels.add("rule_id:" + rule.getRuleId());
+        labels.add("rule_version:" + rule.getVersion());
+        labels.add("detection_source:rule");
 
         // 构建分数列表
         List<Float> scores = new ArrayList<>();
@@ -366,7 +444,37 @@ public class RuleBroadcastProcessFunction
                 .addAllScores(scores)
                 .setTopLabel(detection.getRuleType().getValue())
                 .setTopScore(detection.getScore())
+                .setTuple(tuple)
+                .addAllEvidenceIds(feature.getEvidenceIdsList())
                 .build();
+    }
+
+    private FiveTuple resolveSourceTuple(FeatureStat feature) {
+        if (feature.hasTuple()
+                && !feature.getTuple().getSrcIp().trim().isEmpty()
+                && !feature.getTuple().getDstIp().trim().isEmpty()
+                && feature.getTuple().getProtocol() > 0) {
+            return feature.getTuple();
+        }
+
+        // Legacy compatibility is accepted only when object_id reversibly
+        // carries the tuple. Community ID is one-way and is never decoded or
+        // turned into placeholder addresses.
+        CommunityIdParser.FiveTuple legacy = CommunityIdParser.parseObjectId(feature.getObjectId());
+        if (legacy == null || feature.getProtocol() == 0) {
+            return null;
+        }
+        return FiveTuple.newBuilder()
+                .setSrcIp(legacy.srcIp)
+                .setDstIp(legacy.dstIp)
+                .setSrcPort(legacy.srcPort)
+                .setDstPort(legacy.dstPort)
+                .setProtocol(feature.getProtocol())
+                .build();
+    }
+
+    private static String nonBlank(String value, String fallback) {
+        return value == null || value.trim().isEmpty() ? fallback : value;
     }
 
     /**

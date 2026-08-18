@@ -144,7 +144,7 @@ public enum AlertStatus
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(2);
+    return com.traffic.proto.traffic.v1.CommonProto.getDescriptor().getEnumTypes().get(3);
   }
 
   private static final AlertStatus[] VALUES = values();

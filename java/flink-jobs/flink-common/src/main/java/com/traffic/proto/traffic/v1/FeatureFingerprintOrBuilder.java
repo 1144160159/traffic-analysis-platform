@@ -54,6 +54,11 @@ public interface FeatureFingerprintOrBuilder extends
   long getTs();
 
   /**
+   * <pre>
+   * Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+   * a future breaking-change migration should use `bool`.
+   * </pre>
+   *
    * <code>uint32 is_encrypted = 5 [json_name = "isEncrypted"];</code>
    * @return The isEncrypted.
    */
@@ -164,4 +169,232 @@ public interface FeatureFingerprintOrBuilder extends
    * @return The chiSquareBfd.
    */
   float getChiSquareBfd();
+
+  /**
+   * <code>.traffic.v1.FeatureCategory feature_category = 16 [json_name = "featureCategory"];</code>
+   * @return The enum numeric value on the wire for featureCategory.
+   */
+  int getFeatureCategoryValue();
+  /**
+   * <code>.traffic.v1.FeatureCategory feature_category = 16 [json_name = "featureCategory"];</code>
+   * @return The featureCategory.
+   */
+  com.traffic.proto.traffic.v1.FeatureCategory getFeatureCategory();
+
+  /**
+   * <code>.traffic.v1.FeatureAvailability availability = 17 [json_name = "availability"];</code>
+   * @return The enum numeric value on the wire for availability.
+   */
+  int getAvailabilityValue();
+  /**
+   * <code>.traffic.v1.FeatureAvailability availability = 17 [json_name = "availability"];</code>
+   * @return The availability.
+   */
+  com.traffic.proto.traffic.v1.FeatureAvailability getAvailability();
+
+  /**
+   * <code>string schema_version = 18 [json_name = "schemaVersion"];</code>
+   * @return The schemaVersion.
+   */
+  java.lang.String getSchemaVersion();
+  /**
+   * <code>string schema_version = 18 [json_name = "schemaVersion"];</code>
+   * @return The bytes for schemaVersion.
+   */
+  com.google.protobuf.ByteString
+      getSchemaVersionBytes();
+
+  /**
+   * <code>string algorithm_version = 19 [json_name = "algorithmVersion"];</code>
+   * @return The algorithmVersion.
+   */
+  java.lang.String getAlgorithmVersion();
+  /**
+   * <code>string algorithm_version = 19 [json_name = "algorithmVersion"];</code>
+   * @return The bytes for algorithmVersion.
+   */
+  com.google.protobuf.ByteString
+      getAlgorithmVersionBytes();
+
+  /**
+   * <code>string window_id = 20 [json_name = "windowId"];</code>
+   * @return The windowId.
+   */
+  java.lang.String getWindowId();
+  /**
+   * <code>string window_id = 20 [json_name = "windowId"];</code>
+   * @return The bytes for windowId.
+   */
+  com.google.protobuf.ByteString
+      getWindowIdBytes();
+
+  /**
+   * <code>int64 event_time_start_ms = 21 [json_name = "eventTimeStartMs"];</code>
+   * @return The eventTimeStartMs.
+   */
+  long getEventTimeStartMs();
+
+  /**
+   * <code>int64 event_time_end_ms = 22 [json_name = "eventTimeEndMs"];</code>
+   * @return The eventTimeEndMs.
+   */
+  long getEventTimeEndMs();
+
+  /**
+   * <code>string value_unit = 23 [json_name = "valueUnit"];</code>
+   * @return The valueUnit.
+   */
+  java.lang.String getValueUnit();
+  /**
+   * <code>string value_unit = 23 [json_name = "valueUnit"];</code>
+   * @return The bytes for valueUnit.
+   */
+  com.google.protobuf.ByteString
+      getValueUnitBytes();
+
+  /**
+   * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+   * @return A list containing the sourceEventIds.
+   */
+  java.util.List<java.lang.String>
+      getSourceEventIdsList();
+  /**
+   * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+   * @return The count of sourceEventIds.
+   */
+  int getSourceEventIdsCount();
+  /**
+   * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the element to return.
+   * @return The sourceEventIds at the given index.
+   */
+  java.lang.String getSourceEventIds(int index);
+  /**
+   * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the sourceEventIds at the given index.
+   */
+  com.google.protobuf.ByteString
+      getSourceEventIdsBytes(int index);
+
+  /**
+   * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+   * @return A list containing the evidenceIds.
+   */
+  java.util.List<java.lang.String>
+      getEvidenceIdsList();
+  /**
+   * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+   * @return The count of evidenceIds.
+   */
+  int getEvidenceIdsCount();
+  /**
+   * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+   * @param index The index of the element to return.
+   * @return The evidenceIds at the given index.
+   */
+  java.lang.String getEvidenceIds(int index);
+  /**
+   * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the evidenceIds at the given index.
+   */
+  com.google.protobuf.ByteString
+      getEvidenceIdsBytes(int index);
+
+  /**
+   * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+   * @return A list containing the missingFields.
+   */
+  java.util.List<java.lang.String>
+      getMissingFieldsList();
+  /**
+   * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+   * @return The count of missingFields.
+   */
+  int getMissingFieldsCount();
+  /**
+   * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+   * @param index The index of the element to return.
+   * @return The missingFields at the given index.
+   */
+  java.lang.String getMissingFields(int index);
+  /**
+   * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the missingFields at the given index.
+   */
+  com.google.protobuf.ByteString
+      getMissingFieldsBytes(int index);
+
+  /**
+   * <code>string missing_reason = 27 [json_name = "missingReason"];</code>
+   * @return The missingReason.
+   */
+  java.lang.String getMissingReason();
+  /**
+   * <code>string missing_reason = 27 [json_name = "missingReason"];</code>
+   * @return The bytes for missingReason.
+   */
+  com.google.protobuf.ByteString
+      getMissingReasonBytes();
+
+  /**
+   * <code>string ja4 = 28 [json_name = "ja4"];</code>
+   * @return The ja4.
+   */
+  java.lang.String getJa4();
+  /**
+   * <code>string ja4 = 28 [json_name = "ja4"];</code>
+   * @return The bytes for ja4.
+   */
+  com.google.protobuf.ByteString
+      getJa4Bytes();
+
+  /**
+   * <code>string sni = 29 [json_name = "sni"];</code>
+   * @return The sni.
+   */
+  java.lang.String getSni();
+  /**
+   * <code>string sni = 29 [json_name = "sni"];</code>
+   * @return The bytes for sni.
+   */
+  com.google.protobuf.ByteString
+      getSniBytes();
+
+  /**
+   * <code>string quic_version = 30 [json_name = "quicVersion"];</code>
+   * @return The quicVersion.
+   */
+  java.lang.String getQuicVersion();
+  /**
+   * <code>string quic_version = 30 [json_name = "quicVersion"];</code>
+   * @return The bytes for quicVersion.
+   */
+  com.google.protobuf.ByteString
+      getQuicVersionBytes();
+
+  /**
+   * <code>.traffic.v1.TransportSecurityProtocol transport_security = 31 [json_name = "transportSecurity"];</code>
+   * @return The enum numeric value on the wire for transportSecurity.
+   */
+  int getTransportSecurityValue();
+  /**
+   * <code>.traffic.v1.TransportSecurityProtocol transport_security = 31 [json_name = "transportSecurity"];</code>
+   * @return The transportSecurity.
+   */
+  com.traffic.proto.traffic.v1.TransportSecurityProtocol getTransportSecurity();
+
+  /**
+   * <code>string raw_traffic_ref = 32 [json_name = "rawTrafficRef"];</code>
+   * @return The rawTrafficRef.
+   */
+  java.lang.String getRawTrafficRef();
+  /**
+   * <code>string raw_traffic_ref = 32 [json_name = "rawTrafficRef"];</code>
+   * @return The bytes for rawTrafficRef.
+   */
+  com.google.protobuf.ByteString
+      getRawTrafficRefBytes();
 }

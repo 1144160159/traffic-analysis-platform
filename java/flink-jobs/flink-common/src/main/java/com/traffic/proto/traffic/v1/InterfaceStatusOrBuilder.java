@@ -81,10 +81,6 @@ public interface InterfaceStatusOrBuilder extends
   long getRxDropped();
 
   /**
-   * <pre>
-   *uint64 tx_dropped = 13;
-   * </pre>
-   *
    * <code>uint64 collisions = 12 [json_name = "collisions"];</code>
    * @return The collisions.
    */

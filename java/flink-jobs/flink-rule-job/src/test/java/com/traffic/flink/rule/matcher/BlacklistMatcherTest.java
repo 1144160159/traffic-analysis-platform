@@ -117,7 +117,11 @@ class BlacklistMatcherTest {
     @Test
     @DisplayName("空黑名单不匹配")
     void testEmptyBlacklist() {
-        context.setIpBlacklist("tenant-1", new HashSet<>());
+        // 空黑名单以规则的 ip_list 为空表达（黑名单成员直接来自广播规则，
+        // 不再依赖 MatchContext 缓存）。
+        Map<String, Object> conditions = new HashMap<>(blacklistRule.getConditions());
+        conditions.put("ip_list", new ArrayList<>());
+        blacklistRule.setConditions(conditions);
         context.setSrcIp("192.168.100.100");
 
         Optional<DetectionResult> result = matcher.match(feature, blacklistRule, context);

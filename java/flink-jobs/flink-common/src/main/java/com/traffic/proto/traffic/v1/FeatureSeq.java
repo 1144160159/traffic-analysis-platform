@@ -28,6 +28,18 @@ private static final long serialVersionUID = 0L;
     pktlenSeqHash_ = "";
     iatSeqHash_ = "";
     seqBlobRef_ = "";
+    featureCategory_ = 0;
+    availability_ = 0;
+    schemaVersion_ = "";
+    algorithmVersion_ = "";
+    valueUnit_ = "";
+    sourceEventIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    evidenceIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    missingFields_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    missingReason_ = "";
   }
 
   @java.lang.Override
@@ -460,6 +472,309 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int FEATURE_CATEGORY_FIELD_NUMBER = 19;
+  private int featureCategory_ = 0;
+  /**
+   * <code>.traffic.v1.FeatureCategory feature_category = 19 [json_name = "featureCategory"];</code>
+   * @return The enum numeric value on the wire for featureCategory.
+   */
+  @java.lang.Override public int getFeatureCategoryValue() {
+    return featureCategory_;
+  }
+  /**
+   * <code>.traffic.v1.FeatureCategory feature_category = 19 [json_name = "featureCategory"];</code>
+   * @return The featureCategory.
+   */
+  @java.lang.Override public com.traffic.proto.traffic.v1.FeatureCategory getFeatureCategory() {
+    com.traffic.proto.traffic.v1.FeatureCategory result = com.traffic.proto.traffic.v1.FeatureCategory.forNumber(featureCategory_);
+    return result == null ? com.traffic.proto.traffic.v1.FeatureCategory.UNRECOGNIZED : result;
+  }
+
+  public static final int AVAILABILITY_FIELD_NUMBER = 20;
+  private int availability_ = 0;
+  /**
+   * <code>.traffic.v1.FeatureAvailability availability = 20 [json_name = "availability"];</code>
+   * @return The enum numeric value on the wire for availability.
+   */
+  @java.lang.Override public int getAvailabilityValue() {
+    return availability_;
+  }
+  /**
+   * <code>.traffic.v1.FeatureAvailability availability = 20 [json_name = "availability"];</code>
+   * @return The availability.
+   */
+  @java.lang.Override public com.traffic.proto.traffic.v1.FeatureAvailability getAvailability() {
+    com.traffic.proto.traffic.v1.FeatureAvailability result = com.traffic.proto.traffic.v1.FeatureAvailability.forNumber(availability_);
+    return result == null ? com.traffic.proto.traffic.v1.FeatureAvailability.UNRECOGNIZED : result;
+  }
+
+  public static final int SCHEMA_VERSION_FIELD_NUMBER = 21;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object schemaVersion_ = "";
+  /**
+   * <code>string schema_version = 21 [json_name = "schemaVersion"];</code>
+   * @return The schemaVersion.
+   */
+  @java.lang.Override
+  public java.lang.String getSchemaVersion() {
+    java.lang.Object ref = schemaVersion_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      schemaVersion_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string schema_version = 21 [json_name = "schemaVersion"];</code>
+   * @return The bytes for schemaVersion.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getSchemaVersionBytes() {
+    java.lang.Object ref = schemaVersion_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      schemaVersion_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int ALGORITHM_VERSION_FIELD_NUMBER = 22;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object algorithmVersion_ = "";
+  /**
+   * <code>string algorithm_version = 22 [json_name = "algorithmVersion"];</code>
+   * @return The algorithmVersion.
+   */
+  @java.lang.Override
+  public java.lang.String getAlgorithmVersion() {
+    java.lang.Object ref = algorithmVersion_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      algorithmVersion_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string algorithm_version = 22 [json_name = "algorithmVersion"];</code>
+   * @return The bytes for algorithmVersion.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getAlgorithmVersionBytes() {
+    java.lang.Object ref = algorithmVersion_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      algorithmVersion_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int VALUE_UNIT_FIELD_NUMBER = 23;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object valueUnit_ = "";
+  /**
+   * <code>string value_unit = 23 [json_name = "valueUnit"];</code>
+   * @return The valueUnit.
+   */
+  @java.lang.Override
+  public java.lang.String getValueUnit() {
+    java.lang.Object ref = valueUnit_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      valueUnit_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string value_unit = 23 [json_name = "valueUnit"];</code>
+   * @return The bytes for valueUnit.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getValueUnitBytes() {
+    java.lang.Object ref = valueUnit_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      valueUnit_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int SOURCE_EVENT_IDS_FIELD_NUMBER = 24;
+  @SuppressWarnings("serial")
+  private com.google.protobuf.LazyStringArrayList sourceEventIds_ =
+      com.google.protobuf.LazyStringArrayList.emptyList();
+  /**
+   * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+   * @return A list containing the sourceEventIds.
+   */
+  public com.google.protobuf.ProtocolStringList
+      getSourceEventIdsList() {
+    return sourceEventIds_;
+  }
+  /**
+   * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+   * @return The count of sourceEventIds.
+   */
+  public int getSourceEventIdsCount() {
+    return sourceEventIds_.size();
+  }
+  /**
+   * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the element to return.
+   * @return The sourceEventIds at the given index.
+   */
+  public java.lang.String getSourceEventIds(int index) {
+    return sourceEventIds_.get(index);
+  }
+  /**
+   * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the sourceEventIds at the given index.
+   */
+  public com.google.protobuf.ByteString
+      getSourceEventIdsBytes(int index) {
+    return sourceEventIds_.getByteString(index);
+  }
+
+  public static final int EVIDENCE_IDS_FIELD_NUMBER = 25;
+  @SuppressWarnings("serial")
+  private com.google.protobuf.LazyStringArrayList evidenceIds_ =
+      com.google.protobuf.LazyStringArrayList.emptyList();
+  /**
+   * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+   * @return A list containing the evidenceIds.
+   */
+  public com.google.protobuf.ProtocolStringList
+      getEvidenceIdsList() {
+    return evidenceIds_;
+  }
+  /**
+   * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+   * @return The count of evidenceIds.
+   */
+  public int getEvidenceIdsCount() {
+    return evidenceIds_.size();
+  }
+  /**
+   * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+   * @param index The index of the element to return.
+   * @return The evidenceIds at the given index.
+   */
+  public java.lang.String getEvidenceIds(int index) {
+    return evidenceIds_.get(index);
+  }
+  /**
+   * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the evidenceIds at the given index.
+   */
+  public com.google.protobuf.ByteString
+      getEvidenceIdsBytes(int index) {
+    return evidenceIds_.getByteString(index);
+  }
+
+  public static final int MISSING_FIELDS_FIELD_NUMBER = 26;
+  @SuppressWarnings("serial")
+  private com.google.protobuf.LazyStringArrayList missingFields_ =
+      com.google.protobuf.LazyStringArrayList.emptyList();
+  /**
+   * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+   * @return A list containing the missingFields.
+   */
+  public com.google.protobuf.ProtocolStringList
+      getMissingFieldsList() {
+    return missingFields_;
+  }
+  /**
+   * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+   * @return The count of missingFields.
+   */
+  public int getMissingFieldsCount() {
+    return missingFields_.size();
+  }
+  /**
+   * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+   * @param index The index of the element to return.
+   * @return The missingFields at the given index.
+   */
+  public java.lang.String getMissingFields(int index) {
+    return missingFields_.get(index);
+  }
+  /**
+   * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the missingFields at the given index.
+   */
+  public com.google.protobuf.ByteString
+      getMissingFieldsBytes(int index) {
+    return missingFields_.getByteString(index);
+  }
+
+  public static final int MISSING_REASON_FIELD_NUMBER = 27;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object missingReason_ = "";
+  /**
+   * <code>string missing_reason = 27 [json_name = "missingReason"];</code>
+   * @return The missingReason.
+   */
+  @java.lang.Override
+  public java.lang.String getMissingReason() {
+    java.lang.Object ref = missingReason_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      missingReason_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string missing_reason = 27 [json_name = "missingReason"];</code>
+   * @return The bytes for missingReason.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getMissingReasonBytes() {
+    java.lang.Object ref = missingReason_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      missingReason_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -527,6 +842,33 @@ private static final long serialVersionUID = 0L;
     }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(seqBlobRef_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 18, seqBlobRef_);
+    }
+    if (featureCategory_ != com.traffic.proto.traffic.v1.FeatureCategory.FEATURE_CATEGORY_UNSPECIFIED.getNumber()) {
+      output.writeEnum(19, featureCategory_);
+    }
+    if (availability_ != com.traffic.proto.traffic.v1.FeatureAvailability.FEATURE_AVAILABILITY_UNSPECIFIED.getNumber()) {
+      output.writeEnum(20, availability_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(schemaVersion_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 21, schemaVersion_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(algorithmVersion_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 22, algorithmVersion_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(valueUnit_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 23, valueUnit_);
+    }
+    for (int i = 0; i < sourceEventIds_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 24, sourceEventIds_.getRaw(i));
+    }
+    for (int i = 0; i < evidenceIds_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 25, evidenceIds_.getRaw(i));
+    }
+    for (int i = 0; i < missingFields_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 26, missingFields_.getRaw(i));
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(missingReason_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 27, missingReason_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -602,6 +944,50 @@ private static final long serialVersionUID = 0L;
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(seqBlobRef_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(18, seqBlobRef_);
     }
+    if (featureCategory_ != com.traffic.proto.traffic.v1.FeatureCategory.FEATURE_CATEGORY_UNSPECIFIED.getNumber()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(19, featureCategory_);
+    }
+    if (availability_ != com.traffic.proto.traffic.v1.FeatureAvailability.FEATURE_AVAILABILITY_UNSPECIFIED.getNumber()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(20, availability_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(schemaVersion_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(21, schemaVersion_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(algorithmVersion_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(22, algorithmVersion_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(valueUnit_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(23, valueUnit_);
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < sourceEventIds_.size(); i++) {
+        dataSize += computeStringSizeNoTag(sourceEventIds_.getRaw(i));
+      }
+      size += dataSize;
+      size += 2 * getSourceEventIdsList().size();
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < evidenceIds_.size(); i++) {
+        dataSize += computeStringSizeNoTag(evidenceIds_.getRaw(i));
+      }
+      size += dataSize;
+      size += 2 * getEvidenceIdsList().size();
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < missingFields_.size(); i++) {
+        dataSize += computeStringSizeNoTag(missingFields_.getRaw(i));
+      }
+      size += dataSize;
+      size += 2 * getMissingFieldsList().size();
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(missingReason_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(27, missingReason_);
+    }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
@@ -664,6 +1050,22 @@ private static final long serialVersionUID = 0L;
             other.getWaveletDetailStdBwd())) return false;
     if (!getSeqBlobRef()
         .equals(other.getSeqBlobRef())) return false;
+    if (featureCategory_ != other.featureCategory_) return false;
+    if (availability_ != other.availability_) return false;
+    if (!getSchemaVersion()
+        .equals(other.getSchemaVersion())) return false;
+    if (!getAlgorithmVersion()
+        .equals(other.getAlgorithmVersion())) return false;
+    if (!getValueUnit()
+        .equals(other.getValueUnit())) return false;
+    if (!getSourceEventIdsList()
+        .equals(other.getSourceEventIdsList())) return false;
+    if (!getEvidenceIdsList()
+        .equals(other.getEvidenceIdsList())) return false;
+    if (!getMissingFieldsList()
+        .equals(other.getMissingFieldsList())) return false;
+    if (!getMissingReason()
+        .equals(other.getMissingReason())) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -723,6 +1125,30 @@ private static final long serialVersionUID = 0L;
         getWaveletDetailStdBwd());
     hash = (37 * hash) + SEQ_BLOB_REF_FIELD_NUMBER;
     hash = (53 * hash) + getSeqBlobRef().hashCode();
+    hash = (37 * hash) + FEATURE_CATEGORY_FIELD_NUMBER;
+    hash = (53 * hash) + featureCategory_;
+    hash = (37 * hash) + AVAILABILITY_FIELD_NUMBER;
+    hash = (53 * hash) + availability_;
+    hash = (37 * hash) + SCHEMA_VERSION_FIELD_NUMBER;
+    hash = (53 * hash) + getSchemaVersion().hashCode();
+    hash = (37 * hash) + ALGORITHM_VERSION_FIELD_NUMBER;
+    hash = (53 * hash) + getAlgorithmVersion().hashCode();
+    hash = (37 * hash) + VALUE_UNIT_FIELD_NUMBER;
+    hash = (53 * hash) + getValueUnit().hashCode();
+    if (getSourceEventIdsCount() > 0) {
+      hash = (37 * hash) + SOURCE_EVENT_IDS_FIELD_NUMBER;
+      hash = (53 * hash) + getSourceEventIdsList().hashCode();
+    }
+    if (getEvidenceIdsCount() > 0) {
+      hash = (37 * hash) + EVIDENCE_IDS_FIELD_NUMBER;
+      hash = (53 * hash) + getEvidenceIdsList().hashCode();
+    }
+    if (getMissingFieldsCount() > 0) {
+      hash = (37 * hash) + MISSING_FIELDS_FIELD_NUMBER;
+      hash = (53 * hash) + getMissingFieldsList().hashCode();
+    }
+    hash = (37 * hash) + MISSING_REASON_FIELD_NUMBER;
+    hash = (53 * hash) + getMissingReason().hashCode();
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -886,6 +1312,18 @@ private static final long serialVersionUID = 0L;
       waveletDetailStdFwd_ = 0F;
       waveletDetailStdBwd_ = 0F;
       seqBlobRef_ = "";
+      featureCategory_ = 0;
+      availability_ = 0;
+      schemaVersion_ = "";
+      algorithmVersion_ = "";
+      valueUnit_ = "";
+      sourceEventIds_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+      evidenceIds_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+      missingFields_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+      missingReason_ = "";
       return this;
     }
 
@@ -976,6 +1414,36 @@ private static final long serialVersionUID = 0L;
       }
       if (((from_bitField0_ & 0x00020000) != 0)) {
         result.seqBlobRef_ = seqBlobRef_;
+      }
+      if (((from_bitField0_ & 0x00040000) != 0)) {
+        result.featureCategory_ = featureCategory_;
+      }
+      if (((from_bitField0_ & 0x00080000) != 0)) {
+        result.availability_ = availability_;
+      }
+      if (((from_bitField0_ & 0x00100000) != 0)) {
+        result.schemaVersion_ = schemaVersion_;
+      }
+      if (((from_bitField0_ & 0x00200000) != 0)) {
+        result.algorithmVersion_ = algorithmVersion_;
+      }
+      if (((from_bitField0_ & 0x00400000) != 0)) {
+        result.valueUnit_ = valueUnit_;
+      }
+      if (((from_bitField0_ & 0x00800000) != 0)) {
+        sourceEventIds_.makeImmutable();
+        result.sourceEventIds_ = sourceEventIds_;
+      }
+      if (((from_bitField0_ & 0x01000000) != 0)) {
+        evidenceIds_.makeImmutable();
+        result.evidenceIds_ = evidenceIds_;
+      }
+      if (((from_bitField0_ & 0x02000000) != 0)) {
+        missingFields_.makeImmutable();
+        result.missingFields_ = missingFields_;
+      }
+      if (((from_bitField0_ & 0x04000000) != 0)) {
+        result.missingReason_ = missingReason_;
       }
       result.bitField0_ |= to_bitField0_;
     }
@@ -1090,6 +1558,62 @@ private static final long serialVersionUID = 0L;
       if (!other.getSeqBlobRef().isEmpty()) {
         seqBlobRef_ = other.seqBlobRef_;
         bitField0_ |= 0x00020000;
+        onChanged();
+      }
+      if (other.featureCategory_ != 0) {
+        setFeatureCategoryValue(other.getFeatureCategoryValue());
+      }
+      if (other.availability_ != 0) {
+        setAvailabilityValue(other.getAvailabilityValue());
+      }
+      if (!other.getSchemaVersion().isEmpty()) {
+        schemaVersion_ = other.schemaVersion_;
+        bitField0_ |= 0x00100000;
+        onChanged();
+      }
+      if (!other.getAlgorithmVersion().isEmpty()) {
+        algorithmVersion_ = other.algorithmVersion_;
+        bitField0_ |= 0x00200000;
+        onChanged();
+      }
+      if (!other.getValueUnit().isEmpty()) {
+        valueUnit_ = other.valueUnit_;
+        bitField0_ |= 0x00400000;
+        onChanged();
+      }
+      if (!other.sourceEventIds_.isEmpty()) {
+        if (sourceEventIds_.isEmpty()) {
+          sourceEventIds_ = other.sourceEventIds_;
+          bitField0_ |= 0x00800000;
+        } else {
+          ensureSourceEventIdsIsMutable();
+          sourceEventIds_.addAll(other.sourceEventIds_);
+        }
+        onChanged();
+      }
+      if (!other.evidenceIds_.isEmpty()) {
+        if (evidenceIds_.isEmpty()) {
+          evidenceIds_ = other.evidenceIds_;
+          bitField0_ |= 0x01000000;
+        } else {
+          ensureEvidenceIdsIsMutable();
+          evidenceIds_.addAll(other.evidenceIds_);
+        }
+        onChanged();
+      }
+      if (!other.missingFields_.isEmpty()) {
+        if (missingFields_.isEmpty()) {
+          missingFields_ = other.missingFields_;
+          bitField0_ |= 0x02000000;
+        } else {
+          ensureMissingFieldsIsMutable();
+          missingFields_.addAll(other.missingFields_);
+        }
+        onChanged();
+      }
+      if (!other.getMissingReason().isEmpty()) {
+        missingReason_ = other.missingReason_;
+        bitField0_ |= 0x04000000;
         onChanged();
       }
       this.mergeUnknownFields(other.getUnknownFields());
@@ -1210,6 +1734,54 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00020000;
               break;
             } // case 146
+            case 152: {
+              featureCategory_ = input.readEnum();
+              bitField0_ |= 0x00040000;
+              break;
+            } // case 152
+            case 160: {
+              availability_ = input.readEnum();
+              bitField0_ |= 0x00080000;
+              break;
+            } // case 160
+            case 170: {
+              schemaVersion_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00100000;
+              break;
+            } // case 170
+            case 178: {
+              algorithmVersion_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00200000;
+              break;
+            } // case 178
+            case 186: {
+              valueUnit_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00400000;
+              break;
+            } // case 186
+            case 194: {
+              java.lang.String s = input.readStringRequireUtf8();
+              ensureSourceEventIdsIsMutable();
+              sourceEventIds_.add(s);
+              break;
+            } // case 194
+            case 202: {
+              java.lang.String s = input.readStringRequireUtf8();
+              ensureEvidenceIdsIsMutable();
+              evidenceIds_.add(s);
+              break;
+            } // case 202
+            case 210: {
+              java.lang.String s = input.readStringRequireUtf8();
+              ensureMissingFieldsIsMutable();
+              missingFields_.add(s);
+              break;
+            } // case 210
+            case 218: {
+              missingReason_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x04000000;
+              break;
+            } // case 218
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -2168,6 +2740,733 @@ private static final long serialVersionUID = 0L;
       checkByteStringIsUtf8(value);
       seqBlobRef_ = value;
       bitField0_ |= 0x00020000;
+      onChanged();
+      return this;
+    }
+
+    private int featureCategory_ = 0;
+    /**
+     * <code>.traffic.v1.FeatureCategory feature_category = 19 [json_name = "featureCategory"];</code>
+     * @return The enum numeric value on the wire for featureCategory.
+     */
+    @java.lang.Override public int getFeatureCategoryValue() {
+      return featureCategory_;
+    }
+    /**
+     * <code>.traffic.v1.FeatureCategory feature_category = 19 [json_name = "featureCategory"];</code>
+     * @param value The enum numeric value on the wire for featureCategory to set.
+     * @return This builder for chaining.
+     */
+    public Builder setFeatureCategoryValue(int value) {
+      featureCategory_ = value;
+      bitField0_ |= 0x00040000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.FeatureCategory feature_category = 19 [json_name = "featureCategory"];</code>
+     * @return The featureCategory.
+     */
+    @java.lang.Override
+    public com.traffic.proto.traffic.v1.FeatureCategory getFeatureCategory() {
+      com.traffic.proto.traffic.v1.FeatureCategory result = com.traffic.proto.traffic.v1.FeatureCategory.forNumber(featureCategory_);
+      return result == null ? com.traffic.proto.traffic.v1.FeatureCategory.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.traffic.v1.FeatureCategory feature_category = 19 [json_name = "featureCategory"];</code>
+     * @param value The featureCategory to set.
+     * @return This builder for chaining.
+     */
+    public Builder setFeatureCategory(com.traffic.proto.traffic.v1.FeatureCategory value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      bitField0_ |= 0x00040000;
+      featureCategory_ = value.getNumber();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.FeatureCategory feature_category = 19 [json_name = "featureCategory"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearFeatureCategory() {
+      bitField0_ = (bitField0_ & ~0x00040000);
+      featureCategory_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int availability_ = 0;
+    /**
+     * <code>.traffic.v1.FeatureAvailability availability = 20 [json_name = "availability"];</code>
+     * @return The enum numeric value on the wire for availability.
+     */
+    @java.lang.Override public int getAvailabilityValue() {
+      return availability_;
+    }
+    /**
+     * <code>.traffic.v1.FeatureAvailability availability = 20 [json_name = "availability"];</code>
+     * @param value The enum numeric value on the wire for availability to set.
+     * @return This builder for chaining.
+     */
+    public Builder setAvailabilityValue(int value) {
+      availability_ = value;
+      bitField0_ |= 0x00080000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.FeatureAvailability availability = 20 [json_name = "availability"];</code>
+     * @return The availability.
+     */
+    @java.lang.Override
+    public com.traffic.proto.traffic.v1.FeatureAvailability getAvailability() {
+      com.traffic.proto.traffic.v1.FeatureAvailability result = com.traffic.proto.traffic.v1.FeatureAvailability.forNumber(availability_);
+      return result == null ? com.traffic.proto.traffic.v1.FeatureAvailability.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.traffic.v1.FeatureAvailability availability = 20 [json_name = "availability"];</code>
+     * @param value The availability to set.
+     * @return This builder for chaining.
+     */
+    public Builder setAvailability(com.traffic.proto.traffic.v1.FeatureAvailability value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      bitField0_ |= 0x00080000;
+      availability_ = value.getNumber();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.traffic.v1.FeatureAvailability availability = 20 [json_name = "availability"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearAvailability() {
+      bitField0_ = (bitField0_ & ~0x00080000);
+      availability_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object schemaVersion_ = "";
+    /**
+     * <code>string schema_version = 21 [json_name = "schemaVersion"];</code>
+     * @return The schemaVersion.
+     */
+    public java.lang.String getSchemaVersion() {
+      java.lang.Object ref = schemaVersion_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        schemaVersion_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string schema_version = 21 [json_name = "schemaVersion"];</code>
+     * @return The bytes for schemaVersion.
+     */
+    public com.google.protobuf.ByteString
+        getSchemaVersionBytes() {
+      java.lang.Object ref = schemaVersion_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        schemaVersion_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string schema_version = 21 [json_name = "schemaVersion"];</code>
+     * @param value The schemaVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setSchemaVersion(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      schemaVersion_ = value;
+      bitField0_ |= 0x00100000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string schema_version = 21 [json_name = "schemaVersion"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearSchemaVersion() {
+      schemaVersion_ = getDefaultInstance().getSchemaVersion();
+      bitField0_ = (bitField0_ & ~0x00100000);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string schema_version = 21 [json_name = "schemaVersion"];</code>
+     * @param value The bytes for schemaVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setSchemaVersionBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      schemaVersion_ = value;
+      bitField0_ |= 0x00100000;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object algorithmVersion_ = "";
+    /**
+     * <code>string algorithm_version = 22 [json_name = "algorithmVersion"];</code>
+     * @return The algorithmVersion.
+     */
+    public java.lang.String getAlgorithmVersion() {
+      java.lang.Object ref = algorithmVersion_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        algorithmVersion_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string algorithm_version = 22 [json_name = "algorithmVersion"];</code>
+     * @return The bytes for algorithmVersion.
+     */
+    public com.google.protobuf.ByteString
+        getAlgorithmVersionBytes() {
+      java.lang.Object ref = algorithmVersion_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        algorithmVersion_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string algorithm_version = 22 [json_name = "algorithmVersion"];</code>
+     * @param value The algorithmVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setAlgorithmVersion(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      algorithmVersion_ = value;
+      bitField0_ |= 0x00200000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string algorithm_version = 22 [json_name = "algorithmVersion"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearAlgorithmVersion() {
+      algorithmVersion_ = getDefaultInstance().getAlgorithmVersion();
+      bitField0_ = (bitField0_ & ~0x00200000);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string algorithm_version = 22 [json_name = "algorithmVersion"];</code>
+     * @param value The bytes for algorithmVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setAlgorithmVersionBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      algorithmVersion_ = value;
+      bitField0_ |= 0x00200000;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object valueUnit_ = "";
+    /**
+     * <code>string value_unit = 23 [json_name = "valueUnit"];</code>
+     * @return The valueUnit.
+     */
+    public java.lang.String getValueUnit() {
+      java.lang.Object ref = valueUnit_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        valueUnit_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string value_unit = 23 [json_name = "valueUnit"];</code>
+     * @return The bytes for valueUnit.
+     */
+    public com.google.protobuf.ByteString
+        getValueUnitBytes() {
+      java.lang.Object ref = valueUnit_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        valueUnit_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string value_unit = 23 [json_name = "valueUnit"];</code>
+     * @param value The valueUnit to set.
+     * @return This builder for chaining.
+     */
+    public Builder setValueUnit(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      valueUnit_ = value;
+      bitField0_ |= 0x00400000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string value_unit = 23 [json_name = "valueUnit"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearValueUnit() {
+      valueUnit_ = getDefaultInstance().getValueUnit();
+      bitField0_ = (bitField0_ & ~0x00400000);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string value_unit = 23 [json_name = "valueUnit"];</code>
+     * @param value The bytes for valueUnit to set.
+     * @return This builder for chaining.
+     */
+    public Builder setValueUnitBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      valueUnit_ = value;
+      bitField0_ |= 0x00400000;
+      onChanged();
+      return this;
+    }
+
+    private com.google.protobuf.LazyStringArrayList sourceEventIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    private void ensureSourceEventIdsIsMutable() {
+      if (!sourceEventIds_.isModifiable()) {
+        sourceEventIds_ = new com.google.protobuf.LazyStringArrayList(sourceEventIds_);
+      }
+      bitField0_ |= 0x00800000;
+    }
+    /**
+     * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+     * @return A list containing the sourceEventIds.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getSourceEventIdsList() {
+      sourceEventIds_.makeImmutable();
+      return sourceEventIds_;
+    }
+    /**
+     * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+     * @return The count of sourceEventIds.
+     */
+    public int getSourceEventIdsCount() {
+      return sourceEventIds_.size();
+    }
+    /**
+     * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+     * @param index The index of the element to return.
+     * @return The sourceEventIds at the given index.
+     */
+    public java.lang.String getSourceEventIds(int index) {
+      return sourceEventIds_.get(index);
+    }
+    /**
+     * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the sourceEventIds at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getSourceEventIdsBytes(int index) {
+      return sourceEventIds_.getByteString(index);
+    }
+    /**
+     * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+     * @param index The index to set the value at.
+     * @param value The sourceEventIds to set.
+     * @return This builder for chaining.
+     */
+    public Builder setSourceEventIds(
+        int index, java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureSourceEventIdsIsMutable();
+      sourceEventIds_.set(index, value);
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+     * @param value The sourceEventIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addSourceEventIds(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureSourceEventIdsIsMutable();
+      sourceEventIds_.add(value);
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+     * @param values The sourceEventIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllSourceEventIds(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureSourceEventIdsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, sourceEventIds_);
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearSourceEventIds() {
+      sourceEventIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+      bitField0_ = (bitField0_ & ~0x00800000);;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string source_event_ids = 24 [json_name = "sourceEventIds"];</code>
+     * @param value The bytes of the sourceEventIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addSourceEventIdsBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      ensureSourceEventIdsIsMutable();
+      sourceEventIds_.add(value);
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return this;
+    }
+
+    private com.google.protobuf.LazyStringArrayList evidenceIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    private void ensureEvidenceIdsIsMutable() {
+      if (!evidenceIds_.isModifiable()) {
+        evidenceIds_ = new com.google.protobuf.LazyStringArrayList(evidenceIds_);
+      }
+      bitField0_ |= 0x01000000;
+    }
+    /**
+     * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+     * @return A list containing the evidenceIds.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getEvidenceIdsList() {
+      evidenceIds_.makeImmutable();
+      return evidenceIds_;
+    }
+    /**
+     * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+     * @return The count of evidenceIds.
+     */
+    public int getEvidenceIdsCount() {
+      return evidenceIds_.size();
+    }
+    /**
+     * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+     * @param index The index of the element to return.
+     * @return The evidenceIds at the given index.
+     */
+    public java.lang.String getEvidenceIds(int index) {
+      return evidenceIds_.get(index);
+    }
+    /**
+     * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the evidenceIds at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getEvidenceIdsBytes(int index) {
+      return evidenceIds_.getByteString(index);
+    }
+    /**
+     * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+     * @param index The index to set the value at.
+     * @param value The evidenceIds to set.
+     * @return This builder for chaining.
+     */
+    public Builder setEvidenceIds(
+        int index, java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureEvidenceIdsIsMutable();
+      evidenceIds_.set(index, value);
+      bitField0_ |= 0x01000000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+     * @param value The evidenceIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addEvidenceIds(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureEvidenceIdsIsMutable();
+      evidenceIds_.add(value);
+      bitField0_ |= 0x01000000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+     * @param values The evidenceIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllEvidenceIds(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureEvidenceIdsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, evidenceIds_);
+      bitField0_ |= 0x01000000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearEvidenceIds() {
+      evidenceIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+      bitField0_ = (bitField0_ & ~0x01000000);;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 25 [json_name = "evidenceIds"];</code>
+     * @param value The bytes of the evidenceIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addEvidenceIdsBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      ensureEvidenceIdsIsMutable();
+      evidenceIds_.add(value);
+      bitField0_ |= 0x01000000;
+      onChanged();
+      return this;
+    }
+
+    private com.google.protobuf.LazyStringArrayList missingFields_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    private void ensureMissingFieldsIsMutable() {
+      if (!missingFields_.isModifiable()) {
+        missingFields_ = new com.google.protobuf.LazyStringArrayList(missingFields_);
+      }
+      bitField0_ |= 0x02000000;
+    }
+    /**
+     * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+     * @return A list containing the missingFields.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getMissingFieldsList() {
+      missingFields_.makeImmutable();
+      return missingFields_;
+    }
+    /**
+     * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+     * @return The count of missingFields.
+     */
+    public int getMissingFieldsCount() {
+      return missingFields_.size();
+    }
+    /**
+     * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+     * @param index The index of the element to return.
+     * @return The missingFields at the given index.
+     */
+    public java.lang.String getMissingFields(int index) {
+      return missingFields_.get(index);
+    }
+    /**
+     * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the missingFields at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getMissingFieldsBytes(int index) {
+      return missingFields_.getByteString(index);
+    }
+    /**
+     * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+     * @param index The index to set the value at.
+     * @param value The missingFields to set.
+     * @return This builder for chaining.
+     */
+    public Builder setMissingFields(
+        int index, java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureMissingFieldsIsMutable();
+      missingFields_.set(index, value);
+      bitField0_ |= 0x02000000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+     * @param value The missingFields to add.
+     * @return This builder for chaining.
+     */
+    public Builder addMissingFields(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureMissingFieldsIsMutable();
+      missingFields_.add(value);
+      bitField0_ |= 0x02000000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+     * @param values The missingFields to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllMissingFields(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureMissingFieldsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, missingFields_);
+      bitField0_ |= 0x02000000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearMissingFields() {
+      missingFields_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+      bitField0_ = (bitField0_ & ~0x02000000);;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string missing_fields = 26 [json_name = "missingFields"];</code>
+     * @param value The bytes of the missingFields to add.
+     * @return This builder for chaining.
+     */
+    public Builder addMissingFieldsBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      ensureMissingFieldsIsMutable();
+      missingFields_.add(value);
+      bitField0_ |= 0x02000000;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object missingReason_ = "";
+    /**
+     * <code>string missing_reason = 27 [json_name = "missingReason"];</code>
+     * @return The missingReason.
+     */
+    public java.lang.String getMissingReason() {
+      java.lang.Object ref = missingReason_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        missingReason_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string missing_reason = 27 [json_name = "missingReason"];</code>
+     * @return The bytes for missingReason.
+     */
+    public com.google.protobuf.ByteString
+        getMissingReasonBytes() {
+      java.lang.Object ref = missingReason_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        missingReason_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string missing_reason = 27 [json_name = "missingReason"];</code>
+     * @param value The missingReason to set.
+     * @return This builder for chaining.
+     */
+    public Builder setMissingReason(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      missingReason_ = value;
+      bitField0_ |= 0x04000000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string missing_reason = 27 [json_name = "missingReason"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearMissingReason() {
+      missingReason_ = getDefaultInstance().getMissingReason();
+      bitField0_ = (bitField0_ & ~0x04000000);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string missing_reason = 27 [json_name = "missingReason"];</code>
+     * @param value The bytes for missingReason to set.
+     * @return This builder for chaining.
+     */
+    public Builder setMissingReasonBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      missingReason_ = value;
+      bitField0_ |= 0x04000000;
       onChanged();
       return this;
     }

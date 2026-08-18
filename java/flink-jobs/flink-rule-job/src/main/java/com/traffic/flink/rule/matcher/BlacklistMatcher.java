@@ -43,20 +43,21 @@ public class BlacklistMatcher implements RuleMatcher {
         String srcIp = context.getSrcIp();
         String dstIp = context.getDstIp();
 
-        // 快速路径：使用 BloomFilter 预过滤
-        BloomFilter<String> bloomFilter = context.getBloomFilter(tenantId);
-        Set<String> blacklist = context.getIpBlacklist(tenantId);
-
-        if (blacklist == null || blacklist.isEmpty()) {
+        // 黑名单 IP 直接从广播规则读取（规则的 ip_list 随规则状态一起入
+        // checkpoint，恢复后无需依赖内存缓存；也避免跨规则合并缓存导致的
+        // 语义混淆：每条规则只对本规则的 ip_list 生效）。
+        List<String> ipList = rule.getConditionAsList("ip_list");
+        if (ipList == null || ipList.isEmpty()) {
             return Optional.empty();
         }
+        Set<String> blacklist = new HashSet<>(ipList);
 
         String matchedIp = null;
         String matchedDirection = null;
 
         // 检查源 IP
         if (("src".equals(direction) || "both".equals(direction)) && srcIp != null) {
-            if (isBlacklisted(srcIp, bloomFilter, blacklist)) {
+            if (isBlacklisted(srcIp, blacklist)) {
                 matchedIp = srcIp;
                 matchedDirection = "source";
             }
@@ -64,7 +65,7 @@ public class BlacklistMatcher implements RuleMatcher {
 
         // 检查目标 IP
         if (matchedIp == null && ("dst".equals(direction) || "both".equals(direction)) && dstIp != null) {
-            if (isBlacklisted(dstIp, bloomFilter, blacklist)) {
+            if (isBlacklisted(dstIp, blacklist)) {
                 matchedIp = dstIp;
                 matchedDirection = "destination";
             }
@@ -89,21 +90,12 @@ public class BlacklistMatcher implements RuleMatcher {
     }
 
     /**
-     * 检查 IP 是否在黑名单中
+     * 检查 IP 是否在黑名单中（直接对规则 ip_list 求成员，无缓存依赖）
      */
-    private boolean isBlacklisted(String ip, BloomFilter<String> bloomFilter, Set<String> blacklist) {
+    private boolean isBlacklisted(String ip, Set<String> blacklist) {
         if (ip == null || ip.isEmpty()) {
             return false;
         }
-
-        // 如果有 BloomFilter，先进行快速检查
-        if (bloomFilter != null) {
-            if (!bloomFilter.mightContain(ip)) {
-                return false; // BloomFilter 说不存在，一定不存在
-            }
-        }
-
-        // BloomFilter 说可能存在，用 HashSet 确认
         return blacklist.contains(ip);
     }
 

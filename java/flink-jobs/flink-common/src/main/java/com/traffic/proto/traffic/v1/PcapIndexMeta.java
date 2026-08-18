@@ -30,6 +30,10 @@ private static final long serialVersionUID = 0L;
     bloomFilterB64_ = "";
     communityIds_ =
         com.google.protobuf.LazyStringArrayList.emptyList();
+    bucket_ = "";
+    objectVersion_ = "";
+    etag_ = "";
+    compression_ = "";
   }
 
   @java.lang.Override
@@ -439,6 +443,221 @@ private static final long serialVersionUID = 0L;
     return createdTs_;
   }
 
+  public static final int BUCKET_FIELD_NUMBER = 16;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object bucket_ = "";
+  /**
+   * <pre>
+   * Object-store manifest fields are additive. Kafka source coordinates remain
+   * transport authority and MUST NOT be copied into this wire message.
+   * </pre>
+   *
+   * <code>string bucket = 16 [json_name = "bucket"];</code>
+   * @return The bucket.
+   */
+  @java.lang.Override
+  public java.lang.String getBucket() {
+    java.lang.Object ref = bucket_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      bucket_ = s;
+      return s;
+    }
+  }
+  /**
+   * <pre>
+   * Object-store manifest fields are additive. Kafka source coordinates remain
+   * transport authority and MUST NOT be copied into this wire message.
+   * </pre>
+   *
+   * <code>string bucket = 16 [json_name = "bucket"];</code>
+   * @return The bytes for bucket.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getBucketBytes() {
+    java.lang.Object ref = bucket_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      bucket_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int OBJECT_VERSION_FIELD_NUMBER = 17;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object objectVersion_ = "";
+  /**
+   * <code>string object_version = 17 [json_name = "objectVersion"];</code>
+   * @return The objectVersion.
+   */
+  @java.lang.Override
+  public java.lang.String getObjectVersion() {
+    java.lang.Object ref = objectVersion_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      objectVersion_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string object_version = 17 [json_name = "objectVersion"];</code>
+   * @return The bytes for objectVersion.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getObjectVersionBytes() {
+    java.lang.Object ref = objectVersion_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      objectVersion_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int ETAG_FIELD_NUMBER = 18;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object etag_ = "";
+  /**
+   * <code>string etag = 18 [json_name = "etag"];</code>
+   * @return The etag.
+   */
+  @java.lang.Override
+  public java.lang.String getEtag() {
+    java.lang.Object ref = etag_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      etag_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string etag = 18 [json_name = "etag"];</code>
+   * @return The bytes for etag.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getEtagBytes() {
+    java.lang.Object ref = etag_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      etag_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int ORIGINAL_SIZE_FIELD_NUMBER = 19;
+  private long originalSize_ = 0L;
+  /**
+   * <code>uint64 original_size = 19 [json_name = "originalSize"];</code>
+   * @return The originalSize.
+   */
+  @java.lang.Override
+  public long getOriginalSize() {
+    return originalSize_;
+  }
+
+  public static final int STORED_SIZE_FIELD_NUMBER = 20;
+  private long storedSize_ = 0L;
+  /**
+   * <code>uint64 stored_size = 20 [json_name = "storedSize"];</code>
+   * @return The storedSize.
+   */
+  @java.lang.Override
+  public long getStoredSize() {
+    return storedSize_;
+  }
+
+  public static final int COMPRESSION_FIELD_NUMBER = 21;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object compression_ = "";
+  /**
+   * <code>string compression = 21 [json_name = "compression"];</code>
+   * @return The compression.
+   */
+  @java.lang.Override
+  public java.lang.String getCompression() {
+    java.lang.Object ref = compression_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      compression_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string compression = 21 [json_name = "compression"];</code>
+   * @return The bytes for compression.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getCompressionBytes() {
+    java.lang.Object ref = compression_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      compression_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int MANIFEST_VERSION_FIELD_NUMBER = 22;
+  private int manifestVersion_ = 0;
+  /**
+   * <code>uint32 manifest_version = 22 [json_name = "manifestVersion"];</code>
+   * @return The manifestVersion.
+   */
+  @java.lang.Override
+  public int getManifestVersion() {
+    return manifestVersion_;
+  }
+
+  public static final int PACKET_COUNT_FIELD_NUMBER = 23;
+  private long packetCount_ = 0L;
+  /**
+   * <pre>
+   * Additive: total packet count observed in the archived capture window.
+   * Zero means the producer did not record a count (legacy wire-compatible).
+   * </pre>
+   *
+   * <code>uint64 packet_count = 23 [json_name = "packetCount"];</code>
+   * @return The packetCount.
+   */
+  @java.lang.Override
+  public long getPacketCount() {
+    return packetCount_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -497,6 +716,30 @@ private static final long serialVersionUID = 0L;
     }
     if (createdTs_ != 0L) {
       output.writeInt64(15, createdTs_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(bucket_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 16, bucket_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(objectVersion_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 17, objectVersion_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(etag_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 18, etag_);
+    }
+    if (originalSize_ != 0L) {
+      output.writeUInt64(19, originalSize_);
+    }
+    if (storedSize_ != 0L) {
+      output.writeUInt64(20, storedSize_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(compression_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 21, compression_);
+    }
+    if (manifestVersion_ != 0) {
+      output.writeUInt32(22, manifestVersion_);
+    }
+    if (packetCount_ != 0L) {
+      output.writeUInt64(23, packetCount_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -564,6 +807,34 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(15, createdTs_);
     }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(bucket_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(16, bucket_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(objectVersion_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(17, objectVersion_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(etag_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(18, etag_);
+    }
+    if (originalSize_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(19, originalSize_);
+    }
+    if (storedSize_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(20, storedSize_);
+    }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(compression_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(21, compression_);
+    }
+    if (manifestVersion_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt32Size(22, manifestVersion_);
+    }
+    if (packetCount_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(23, packetCount_);
+    }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
@@ -609,6 +880,22 @@ private static final long serialVersionUID = 0L;
         .equals(other.getCommunityIdsList())) return false;
     if (getCreatedTs()
         != other.getCreatedTs()) return false;
+    if (!getBucket()
+        .equals(other.getBucket())) return false;
+    if (!getObjectVersion()
+        .equals(other.getObjectVersion())) return false;
+    if (!getEtag()
+        .equals(other.getEtag())) return false;
+    if (getOriginalSize()
+        != other.getOriginalSize()) return false;
+    if (getStoredSize()
+        != other.getStoredSize()) return false;
+    if (!getCompression()
+        .equals(other.getCompression())) return false;
+    if (getManifestVersion()
+        != other.getManifestVersion()) return false;
+    if (getPacketCount()
+        != other.getPacketCount()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -658,6 +945,25 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + CREATED_TS_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getCreatedTs());
+    hash = (37 * hash) + BUCKET_FIELD_NUMBER;
+    hash = (53 * hash) + getBucket().hashCode();
+    hash = (37 * hash) + OBJECT_VERSION_FIELD_NUMBER;
+    hash = (53 * hash) + getObjectVersion().hashCode();
+    hash = (37 * hash) + ETAG_FIELD_NUMBER;
+    hash = (53 * hash) + getEtag().hashCode();
+    hash = (37 * hash) + ORIGINAL_SIZE_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getOriginalSize());
+    hash = (37 * hash) + STORED_SIZE_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getStoredSize());
+    hash = (37 * hash) + COMPRESSION_FIELD_NUMBER;
+    hash = (53 * hash) + getCompression().hashCode();
+    hash = (37 * hash) + MANIFEST_VERSION_FIELD_NUMBER;
+    hash = (53 * hash) + getManifestVersion();
+    hash = (37 * hash) + PACKET_COUNT_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getPacketCount());
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -809,6 +1115,14 @@ private static final long serialVersionUID = 0L;
       communityIds_ =
           com.google.protobuf.LazyStringArrayList.emptyList();
       createdTs_ = 0L;
+      bucket_ = "";
+      objectVersion_ = "";
+      etag_ = "";
+      originalSize_ = 0L;
+      storedSize_ = 0L;
+      compression_ = "";
+      manifestVersion_ = 0;
+      packetCount_ = 0L;
       return this;
     }
 
@@ -887,6 +1201,30 @@ private static final long serialVersionUID = 0L;
       }
       if (((from_bitField0_ & 0x00004000) != 0)) {
         result.createdTs_ = createdTs_;
+      }
+      if (((from_bitField0_ & 0x00008000) != 0)) {
+        result.bucket_ = bucket_;
+      }
+      if (((from_bitField0_ & 0x00010000) != 0)) {
+        result.objectVersion_ = objectVersion_;
+      }
+      if (((from_bitField0_ & 0x00020000) != 0)) {
+        result.etag_ = etag_;
+      }
+      if (((from_bitField0_ & 0x00040000) != 0)) {
+        result.originalSize_ = originalSize_;
+      }
+      if (((from_bitField0_ & 0x00080000) != 0)) {
+        result.storedSize_ = storedSize_;
+      }
+      if (((from_bitField0_ & 0x00100000) != 0)) {
+        result.compression_ = compression_;
+      }
+      if (((from_bitField0_ & 0x00200000) != 0)) {
+        result.manifestVersion_ = manifestVersion_;
+      }
+      if (((from_bitField0_ & 0x00400000) != 0)) {
+        result.packetCount_ = packetCount_;
       }
     }
 
@@ -1000,6 +1338,38 @@ private static final long serialVersionUID = 0L;
       if (other.getCreatedTs() != 0L) {
         setCreatedTs(other.getCreatedTs());
       }
+      if (!other.getBucket().isEmpty()) {
+        bucket_ = other.bucket_;
+        bitField0_ |= 0x00008000;
+        onChanged();
+      }
+      if (!other.getObjectVersion().isEmpty()) {
+        objectVersion_ = other.objectVersion_;
+        bitField0_ |= 0x00010000;
+        onChanged();
+      }
+      if (!other.getEtag().isEmpty()) {
+        etag_ = other.etag_;
+        bitField0_ |= 0x00020000;
+        onChanged();
+      }
+      if (other.getOriginalSize() != 0L) {
+        setOriginalSize(other.getOriginalSize());
+      }
+      if (other.getStoredSize() != 0L) {
+        setStoredSize(other.getStoredSize());
+      }
+      if (!other.getCompression().isEmpty()) {
+        compression_ = other.compression_;
+        bitField0_ |= 0x00100000;
+        onChanged();
+      }
+      if (other.getManifestVersion() != 0) {
+        setManifestVersion(other.getManifestVersion());
+      }
+      if (other.getPacketCount() != 0L) {
+        setPacketCount(other.getPacketCount());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -1102,6 +1472,46 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00004000;
               break;
             } // case 120
+            case 130: {
+              bucket_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00008000;
+              break;
+            } // case 130
+            case 138: {
+              objectVersion_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00010000;
+              break;
+            } // case 138
+            case 146: {
+              etag_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00020000;
+              break;
+            } // case 146
+            case 152: {
+              originalSize_ = input.readUInt64();
+              bitField0_ |= 0x00040000;
+              break;
+            } // case 152
+            case 160: {
+              storedSize_ = input.readUInt64();
+              bitField0_ |= 0x00080000;
+              break;
+            } // case 160
+            case 170: {
+              compression_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00100000;
+              break;
+            } // case 170
+            case 176: {
+              manifestVersion_ = input.readUInt32();
+              bitField0_ |= 0x00200000;
+              break;
+            } // case 176
+            case 184: {
+              packetCount_ = input.readUInt64();
+              bitField0_ |= 0x00400000;
+              break;
+            } // case 184
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -1954,6 +2364,462 @@ private static final long serialVersionUID = 0L;
     public Builder clearCreatedTs() {
       bitField0_ = (bitField0_ & ~0x00004000);
       createdTs_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object bucket_ = "";
+    /**
+     * <pre>
+     * Object-store manifest fields are additive. Kafka source coordinates remain
+     * transport authority and MUST NOT be copied into this wire message.
+     * </pre>
+     *
+     * <code>string bucket = 16 [json_name = "bucket"];</code>
+     * @return The bucket.
+     */
+    public java.lang.String getBucket() {
+      java.lang.Object ref = bucket_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        bucket_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Object-store manifest fields are additive. Kafka source coordinates remain
+     * transport authority and MUST NOT be copied into this wire message.
+     * </pre>
+     *
+     * <code>string bucket = 16 [json_name = "bucket"];</code>
+     * @return The bytes for bucket.
+     */
+    public com.google.protobuf.ByteString
+        getBucketBytes() {
+      java.lang.Object ref = bucket_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        bucket_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <pre>
+     * Object-store manifest fields are additive. Kafka source coordinates remain
+     * transport authority and MUST NOT be copied into this wire message.
+     * </pre>
+     *
+     * <code>string bucket = 16 [json_name = "bucket"];</code>
+     * @param value The bucket to set.
+     * @return This builder for chaining.
+     */
+    public Builder setBucket(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      bucket_ = value;
+      bitField0_ |= 0x00008000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Object-store manifest fields are additive. Kafka source coordinates remain
+     * transport authority and MUST NOT be copied into this wire message.
+     * </pre>
+     *
+     * <code>string bucket = 16 [json_name = "bucket"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearBucket() {
+      bucket_ = getDefaultInstance().getBucket();
+      bitField0_ = (bitField0_ & ~0x00008000);
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Object-store manifest fields are additive. Kafka source coordinates remain
+     * transport authority and MUST NOT be copied into this wire message.
+     * </pre>
+     *
+     * <code>string bucket = 16 [json_name = "bucket"];</code>
+     * @param value The bytes for bucket to set.
+     * @return This builder for chaining.
+     */
+    public Builder setBucketBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      bucket_ = value;
+      bitField0_ |= 0x00008000;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object objectVersion_ = "";
+    /**
+     * <code>string object_version = 17 [json_name = "objectVersion"];</code>
+     * @return The objectVersion.
+     */
+    public java.lang.String getObjectVersion() {
+      java.lang.Object ref = objectVersion_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        objectVersion_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string object_version = 17 [json_name = "objectVersion"];</code>
+     * @return The bytes for objectVersion.
+     */
+    public com.google.protobuf.ByteString
+        getObjectVersionBytes() {
+      java.lang.Object ref = objectVersion_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        objectVersion_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string object_version = 17 [json_name = "objectVersion"];</code>
+     * @param value The objectVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setObjectVersion(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      objectVersion_ = value;
+      bitField0_ |= 0x00010000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string object_version = 17 [json_name = "objectVersion"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearObjectVersion() {
+      objectVersion_ = getDefaultInstance().getObjectVersion();
+      bitField0_ = (bitField0_ & ~0x00010000);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string object_version = 17 [json_name = "objectVersion"];</code>
+     * @param value The bytes for objectVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setObjectVersionBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      objectVersion_ = value;
+      bitField0_ |= 0x00010000;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object etag_ = "";
+    /**
+     * <code>string etag = 18 [json_name = "etag"];</code>
+     * @return The etag.
+     */
+    public java.lang.String getEtag() {
+      java.lang.Object ref = etag_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        etag_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string etag = 18 [json_name = "etag"];</code>
+     * @return The bytes for etag.
+     */
+    public com.google.protobuf.ByteString
+        getEtagBytes() {
+      java.lang.Object ref = etag_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        etag_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string etag = 18 [json_name = "etag"];</code>
+     * @param value The etag to set.
+     * @return This builder for chaining.
+     */
+    public Builder setEtag(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      etag_ = value;
+      bitField0_ |= 0x00020000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string etag = 18 [json_name = "etag"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearEtag() {
+      etag_ = getDefaultInstance().getEtag();
+      bitField0_ = (bitField0_ & ~0x00020000);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string etag = 18 [json_name = "etag"];</code>
+     * @param value The bytes for etag to set.
+     * @return This builder for chaining.
+     */
+    public Builder setEtagBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      etag_ = value;
+      bitField0_ |= 0x00020000;
+      onChanged();
+      return this;
+    }
+
+    private long originalSize_ ;
+    /**
+     * <code>uint64 original_size = 19 [json_name = "originalSize"];</code>
+     * @return The originalSize.
+     */
+    @java.lang.Override
+    public long getOriginalSize() {
+      return originalSize_;
+    }
+    /**
+     * <code>uint64 original_size = 19 [json_name = "originalSize"];</code>
+     * @param value The originalSize to set.
+     * @return This builder for chaining.
+     */
+    public Builder setOriginalSize(long value) {
+
+      originalSize_ = value;
+      bitField0_ |= 0x00040000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 original_size = 19 [json_name = "originalSize"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearOriginalSize() {
+      bitField0_ = (bitField0_ & ~0x00040000);
+      originalSize_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long storedSize_ ;
+    /**
+     * <code>uint64 stored_size = 20 [json_name = "storedSize"];</code>
+     * @return The storedSize.
+     */
+    @java.lang.Override
+    public long getStoredSize() {
+      return storedSize_;
+    }
+    /**
+     * <code>uint64 stored_size = 20 [json_name = "storedSize"];</code>
+     * @param value The storedSize to set.
+     * @return This builder for chaining.
+     */
+    public Builder setStoredSize(long value) {
+
+      storedSize_ = value;
+      bitField0_ |= 0x00080000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 stored_size = 20 [json_name = "storedSize"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearStoredSize() {
+      bitField0_ = (bitField0_ & ~0x00080000);
+      storedSize_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object compression_ = "";
+    /**
+     * <code>string compression = 21 [json_name = "compression"];</code>
+     * @return The compression.
+     */
+    public java.lang.String getCompression() {
+      java.lang.Object ref = compression_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        compression_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string compression = 21 [json_name = "compression"];</code>
+     * @return The bytes for compression.
+     */
+    public com.google.protobuf.ByteString
+        getCompressionBytes() {
+      java.lang.Object ref = compression_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        compression_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string compression = 21 [json_name = "compression"];</code>
+     * @param value The compression to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCompression(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      compression_ = value;
+      bitField0_ |= 0x00100000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string compression = 21 [json_name = "compression"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCompression() {
+      compression_ = getDefaultInstance().getCompression();
+      bitField0_ = (bitField0_ & ~0x00100000);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string compression = 21 [json_name = "compression"];</code>
+     * @param value The bytes for compression to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCompressionBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      compression_ = value;
+      bitField0_ |= 0x00100000;
+      onChanged();
+      return this;
+    }
+
+    private int manifestVersion_ ;
+    /**
+     * <code>uint32 manifest_version = 22 [json_name = "manifestVersion"];</code>
+     * @return The manifestVersion.
+     */
+    @java.lang.Override
+    public int getManifestVersion() {
+      return manifestVersion_;
+    }
+    /**
+     * <code>uint32 manifest_version = 22 [json_name = "manifestVersion"];</code>
+     * @param value The manifestVersion to set.
+     * @return This builder for chaining.
+     */
+    public Builder setManifestVersion(int value) {
+
+      manifestVersion_ = value;
+      bitField0_ |= 0x00200000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint32 manifest_version = 22 [json_name = "manifestVersion"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearManifestVersion() {
+      bitField0_ = (bitField0_ & ~0x00200000);
+      manifestVersion_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private long packetCount_ ;
+    /**
+     * <pre>
+     * Additive: total packet count observed in the archived capture window.
+     * Zero means the producer did not record a count (legacy wire-compatible).
+     * </pre>
+     *
+     * <code>uint64 packet_count = 23 [json_name = "packetCount"];</code>
+     * @return The packetCount.
+     */
+    @java.lang.Override
+    public long getPacketCount() {
+      return packetCount_;
+    }
+    /**
+     * <pre>
+     * Additive: total packet count observed in the archived capture window.
+     * Zero means the producer did not record a count (legacy wire-compatible).
+     * </pre>
+     *
+     * <code>uint64 packet_count = 23 [json_name = "packetCount"];</code>
+     * @param value The packetCount to set.
+     * @return This builder for chaining.
+     */
+    public Builder setPacketCount(long value) {
+
+      packetCount_ = value;
+      bitField0_ |= 0x00400000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Additive: total packet count observed in the archived capture window.
+     * Zero means the producer did not record a count (legacy wire-compatible).
+     * </pre>
+     *
+     * <code>uint64 packet_count = 23 [json_name = "packetCount"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearPacketCount() {
+      bitField0_ = (bitField0_ & ~0x00400000);
+      packetCount_ = 0L;
       onChanged();
       return this;
     }

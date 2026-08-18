@@ -211,4 +211,30 @@ public interface FlowEventOrBuilder extends
    * @return The subflowCount.
    */
   int getSubflowCount();
+
+  /**
+   * <pre>
+   * Additive identity algorithm revision. Zero means the legacy algorithm;
+   * revision 2 is the canonical capture-event-time identity contract.
+   * </pre>
+   *
+   * <code>uint32 identity_revision = 23 [json_name = "identityRevision"];</code>
+   * @return The identityRevision.
+   */
+  int getIdentityRevision();
+
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+   * @return Whether the featureObservation field is set.
+   */
+  boolean hasFeatureObservation();
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+   * @return The featureObservation.
+   */
+  com.traffic.proto.traffic.v1.TrafficFeatureObservation getFeatureObservation();
+  /**
+   * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
+   */
+  com.traffic.proto.traffic.v1.TrafficFeatureObservationOrBuilder getFeatureObservationOrBuilder();
 }

@@ -104,52 +104,56 @@ public final class AssetProto {
       "tId\022\035\n\nevent_type\030\004 \001(\tR\teventType\022\033\n\tol" +
       "d_value\030\005 \001(\tR\010oldValue\022\033\n\tnew_value\030\006 \001" +
       "(\tR\010newValue\022\035\n\ncreated_at\030\007 \001(\003R\tcreate" +
-      "dAt\"\244\001\n\014MacIpBinding\022\037\n\013mac_address\030\001 \001(" +
+      "dAt\"\316\002\n\014MacIpBinding\022\037\n\013mac_address\030\001 \001(" +
       "\tR\nmacAddress\022\035\n\nip_address\030\002 \001(\tR\tipAdd" +
       "ress\022\033\n\ttenant_id\030\003 \001(\tR\010tenantId\022\037\n\013obs" +
       "erved_at\030\004 \001(\003R\nobservedAt\022\026\n\006source\030\005 \001" +
-      "(\tR\006source\"=\n\022UpsertAssetRequest\022\'\n\005asse" +
-      "t\030\001 \001(\0132\021.traffic.v1.AssetR\005asset\"J\n\023Ups" +
-      "ertAssetResponse\022\031\n\010asset_id\030\001 \001(\tR\007asse" +
-      "tId\022\030\n\007created\030\002 \001(\010R\007created\"j\n\017GetAsse" +
-      "tRequest\022\031\n\010asset_id\030\001 \001(\tR\007assetId\022\037\n\013m" +
-      "ac_address\030\002 \001(\tR\nmacAddress\022\033\n\ttenant_i" +
-      "d\030\003 \001(\tR\010tenantId\";\n\020GetAssetResponse\022\'\n" +
-      "\005asset\030\001 \001(\0132\021.traffic.v1.AssetR\005asset\"\256" +
-      "\001\n\021ListAssetsRequest\022\033\n\ttenant_id\030\001 \001(\tR" +
-      "\010tenantId\022\033\n\tpage_size\030\002 \001(\005R\010pageSize\022\035" +
-      "\n\npage_token\030\003 \001(\tR\tpageToken\022\033\n\tip_pref" +
-      "ix\030\004 \001(\tR\010ipPrefix\022#\n\rvendor_filter\030\005 \001(" +
-      "\tR\014vendorFilter\"\210\001\n\022ListAssetsResponse\022)" +
-      "\n\006assets\030\001 \003(\0132\021.traffic.v1.AssetR\006asset" +
-      "s\022&\n\017next_page_token\030\002 \001(\tR\rnextPageToke" +
-      "n\022\037\n\013total_count\030\003 \001(\005R\ntotalCount\"Q\n\031Re" +
-      "cordMacIpBindingRequest\0224\n\010bindings\030\001 \003(" +
-      "\0132\030.traffic.v1.MacIpBindingR\010bindings\"T\n" +
-      "\032RecordMacIpBindingResponse\022\032\n\010accepted\030" +
-      "\001 \001(\005R\010accepted\022\032\n\010rejected\030\002 \001(\005R\010rejec" +
-      "ted\"m\n\026GetAssetHistoryRequest\022\031\n\010asset_i" +
-      "d\030\001 \001(\tR\007assetId\022\033\n\ttenant_id\030\002 \001(\tR\010ten" +
-      "antId\022\033\n\tpage_size\030\003 \001(\005R\010pageSize\"I\n\027Ge" +
-      "tAssetHistoryResponse\022.\n\006events\030\001 \003(\0132\026." +
-      "traffic.v1.AssetEventR\006events2\263\003\n\014AssetS" +
-      "ervice\022N\n\013UpsertAsset\022\036.traffic.v1.Upser" +
-      "tAssetRequest\032\037.traffic.v1.UpsertAssetRe" +
-      "sponse\022E\n\010GetAsset\022\033.traffic.v1.GetAsset" +
-      "Request\032\034.traffic.v1.GetAssetResponse\022K\n" +
-      "\nListAssets\022\035.traffic.v1.ListAssetsReque" +
-      "st\032\036.traffic.v1.ListAssetsResponse\022c\n\022Re" +
-      "cordMacIpBinding\022%.traffic.v1.RecordMacI" +
-      "pBindingRequest\032&.traffic.v1.RecordMacIp" +
-      "BindingResponse\022Z\n\017GetAssetHistory\022\".tra" +
-      "ffic.v1.GetAssetHistoryRequest\032#.traffic" +
-      ".v1.GetAssetHistoryResponseB\324\001\n\034com.traf" +
-      "fic.proto.traffic.v1B\nAssetProtoP\001Z_gith" +
-      "ub.com/1144160159/traffic-analysis-platf" +
-      "orm/go/control-plane/pkg/proto/traffic/v" +
-      "1;trafficv1\242\002\003TXX\252\002\nTraffic.V1\312\002\nTraffic" +
-      "\\V1\342\002\026Traffic\\V1\\GPBMetadata\352\002\013Traffic::" +
-      "V1b\006proto3"
+      "(\tR\006source\022%\n\016observation_id\030\006 \001(\tR\robse" +
+      "rvationId\022\031\n\010probe_id\030\007 \001(\tR\007probeId\022\027\n\007" +
+      "vlan_id\030\010 \001(\tR\006vlanId\022&\n\017source_event_id" +
+      "\030\t \001(\tR\rsourceEventId\022%\n\016schema_version\030" +
+      "\n \001(\rR\rschemaVersion\"=\n\022UpsertAssetReque" +
+      "st\022\'\n\005asset\030\001 \001(\0132\021.traffic.v1.AssetR\005as" +
+      "set\"J\n\023UpsertAssetResponse\022\031\n\010asset_id\030\001" +
+      " \001(\tR\007assetId\022\030\n\007created\030\002 \001(\010R\007created\"" +
+      "j\n\017GetAssetRequest\022\031\n\010asset_id\030\001 \001(\tR\007as" +
+      "setId\022\037\n\013mac_address\030\002 \001(\tR\nmacAddress\022\033" +
+      "\n\ttenant_id\030\003 \001(\tR\010tenantId\";\n\020GetAssetR" +
+      "esponse\022\'\n\005asset\030\001 \001(\0132\021.traffic.v1.Asse" +
+      "tR\005asset\"\256\001\n\021ListAssetsRequest\022\033\n\ttenant" +
+      "_id\030\001 \001(\tR\010tenantId\022\033\n\tpage_size\030\002 \001(\005R\010" +
+      "pageSize\022\035\n\npage_token\030\003 \001(\tR\tpageToken\022" +
+      "\033\n\tip_prefix\030\004 \001(\tR\010ipPrefix\022#\n\rvendor_f" +
+      "ilter\030\005 \001(\tR\014vendorFilter\"\210\001\n\022ListAssets" +
+      "Response\022)\n\006assets\030\001 \003(\0132\021.traffic.v1.As" +
+      "setR\006assets\022&\n\017next_page_token\030\002 \001(\tR\rne" +
+      "xtPageToken\022\037\n\013total_count\030\003 \001(\005R\ntotalC" +
+      "ount\"Q\n\031RecordMacIpBindingRequest\0224\n\010bin" +
+      "dings\030\001 \003(\0132\030.traffic.v1.MacIpBindingR\010b" +
+      "indings\"T\n\032RecordMacIpBindingResponse\022\032\n" +
+      "\010accepted\030\001 \001(\005R\010accepted\022\032\n\010rejected\030\002 " +
+      "\001(\005R\010rejected\"m\n\026GetAssetHistoryRequest\022" +
+      "\031\n\010asset_id\030\001 \001(\tR\007assetId\022\033\n\ttenant_id\030" +
+      "\002 \001(\tR\010tenantId\022\033\n\tpage_size\030\003 \001(\005R\010page" +
+      "Size\"I\n\027GetAssetHistoryResponse\022.\n\006event" +
+      "s\030\001 \003(\0132\026.traffic.v1.AssetEventR\006events2" +
+      "\263\003\n\014AssetService\022N\n\013UpsertAsset\022\036.traffi" +
+      "c.v1.UpsertAssetRequest\032\037.traffic.v1.Ups" +
+      "ertAssetResponse\022E\n\010GetAsset\022\033.traffic.v" +
+      "1.GetAssetRequest\032\034.traffic.v1.GetAssetR" +
+      "esponse\022K\n\nListAssets\022\035.traffic.v1.ListA" +
+      "ssetsRequest\032\036.traffic.v1.ListAssetsResp" +
+      "onse\022c\n\022RecordMacIpBinding\022%.traffic.v1." +
+      "RecordMacIpBindingRequest\032&.traffic.v1.R" +
+      "ecordMacIpBindingResponse\022Z\n\017GetAssetHis" +
+      "tory\022\".traffic.v1.GetAssetHistoryRequest" +
+      "\032#.traffic.v1.GetAssetHistoryResponseB\324\001" +
+      "\n\034com.traffic.proto.traffic.v1B\nAssetPro" +
+      "toP\001Z_github.com/1144160159/traffic-anal" +
+      "ysis-platform/go/control-plane/pkg/proto" +
+      "/traffic/v1;trafficv1\242\002\003TXX\252\002\nTraffic.V1" +
+      "\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetadata\352\002" +
+      "\013Traffic::V1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -172,7 +176,7 @@ public final class AssetProto {
     internal_static_traffic_v1_MacIpBinding_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_MacIpBinding_descriptor,
-        new java.lang.String[] { "MacAddress", "IpAddress", "TenantId", "ObservedAt", "Source", });
+        new java.lang.String[] { "MacAddress", "IpAddress", "TenantId", "ObservedAt", "Source", "ObservationId", "ProbeId", "VlanId", "SourceEventId", "SchemaVersion", });
     internal_static_traffic_v1_UpsertAssetRequest_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_traffic_v1_UpsertAssetRequest_fieldAccessorTable = new

@@ -36,9 +36,6 @@ public class PcapIndexMetrics {
     private final Counter missingCommunityIdsCounter;
     private final Counter missingBloomFilterCounter;
     
-    // ✅ 新增：截断计数
-    private final Counter communityIdsTruncatedCounter;
-    
     // DLQ sink 计数。ClickHouse ACK 指标必须由真正执行 executeBatch 的
     // sink operator 发布，不能在上游处理算子中猜测。
     private final Counter dlqWriteCounter;
@@ -73,9 +70,6 @@ public class PcapIndexMetrics {
         // ==================== 新增：缺失字段计数 ====================
         this.missingCommunityIdsCounter = metricGroup.counter("pcap_missing_community_ids_total");
         this.missingBloomFilterCounter = metricGroup.counter("pcap_missing_bloom_filter_total");
-        
-        // ==================== 新增：截断计数 ====================
-        this.communityIdsTruncatedCounter = metricGroup.counter("pcap_community_ids_truncated_total");
         
         // ==================== DLQ 计数 ====================
         this.dlqWriteCounter = metricGroup.counter("dlq_write_total");
@@ -138,11 +132,6 @@ public class PcapIndexMetrics {
         missingBloomFilterCounter.inc();
     }
 
-    // ✅ 新增方法
-    public void incCommunityIdsTruncated() {
-        communityIdsTruncatedCounter.inc();
-    }
-
     public void incDlqWrite() {
         dlqWriteCounter.inc();
     }
@@ -201,11 +190,6 @@ public class PcapIndexMetrics {
     // ✅ 新增 Getter
     public Counter getMissingBloomFilterCounter() {
         return missingBloomFilterCounter;
-    }
-
-    // ✅ 新增 Getter
-    public Counter getCommunityIdsTruncatedCounter() {
-        return communityIdsTruncatedCounter;
     }
 
     public Counter getDlqWriteCounter() {

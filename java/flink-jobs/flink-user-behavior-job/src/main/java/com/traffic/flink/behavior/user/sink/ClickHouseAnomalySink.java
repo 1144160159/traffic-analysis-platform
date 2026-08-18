@@ -50,6 +50,9 @@ public class ClickHouseAnomalySink extends RichSinkFunction<AnomalyEvent>
     private transient List<AnomalyEvent> buffer;
     private transient ListState<AnomalyEvent> pendingState;
     private transient long lastFlushTime;
+    // 复用单个 JDBC 连接，避免每次 flush 新建连接（原实现每次
+    // DriverManager.getConnection）；连接失效时按需重建。
+    private transient Connection connection;
 
     private transient Counter inputCounter;
     private transient Counter acceptedCounter;
@@ -111,6 +114,7 @@ public class ClickHouseAnomalySink extends RichSinkFunction<AnomalyEvent>
         }
         lastFlushTime = System.currentTimeMillis();
         Class.forName("com.clickhouse.jdbc.ClickHouseDriver");
+        connection = openConnection();
 
         MetricGroup metrics = getRuntimeContext().getMetricGroup()
                 .addGroup("clickhouse_user_anomaly_sink");
@@ -168,6 +172,7 @@ public class ClickHouseAnomalySink extends RichSinkFunction<AnomalyEvent>
     @Override
     public void close() throws Exception {
         flushBuffer();
+        closeConnection();
         super.close();
     }
 
@@ -226,8 +231,18 @@ public class ClickHouseAnomalySink extends RichSinkFunction<AnomalyEvent>
     }
 
     protected void writeBatch(List<AnomalyEvent> batch) throws SQLException {
-        try (Connection connection = DriverManager.getConnection(url, user, password);
-             PreparedStatement statement = connection.prepareStatement(buildInsertSql())) {
+        // 复用连接；连接不可用时关闭并重建一次后重试。
+        try {
+            writeBatchWithConnection(batch);
+        } catch (SQLException connectionError) {
+            closeConnection();
+            connection = openConnection();
+            writeBatchWithConnection(batch);
+        }
+    }
+
+    private void writeBatchWithConnection(List<AnomalyEvent> batch) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(buildInsertSql())) {
             for (AnomalyEvent anomaly : batch) {
                 bindParameters(statement, anomaly);
                 statement.addBatch();
@@ -242,6 +257,21 @@ public class ClickHouseAnomalySink extends RichSinkFunction<AnomalyEvent>
                     throw new SQLException("ClickHouse reported EXECUTE_FAILED for a batch item");
                 }
             }
+        }
+    }
+
+    private Connection openConnection() throws SQLException {
+        return DriverManager.getConnection(url, user, password);
+    }
+
+    private void closeConnection() {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException ignored) {
+                LOG.warn("Failed to close ClickHouse connection", ignored);
+            }
+            connection = null;
         }
     }
 

@@ -1,0 +1,91 @@
+package com.traffic.flink.session.source;
+
+import com.traffic.flink.common.CanonicalDlqMessage;
+import com.traffic.flink.common.RawKafkaRecord;
+import com.traffic.flink.common.eventtime.EventTimePolicy;
+import com.traffic.flink.common.sourcequality.SourceQualityReceipt;
+import com.traffic.proto.traffic.v1.EventHeader;
+import com.traffic.proto.traffic.v1.FlowEvent;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.streaming.api.operators.KeyedProcessOperator;
+import org.apache.flink.streaming.api.watermark.Watermark;
+import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+import org.apache.flink.streaming.util.KeyedOneInputStreamOperatorTestHarness;
+import org.apache.flink.util.OutputTag;
+import org.junit.jupiter.api.Test;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Queue;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+class FlowLatenessFunctionTest {
+
+    @Test
+    void acceptedDuplicateConflictAndStrictLateAreExclusive() throws Exception {
+        OutputTag<CanonicalDlqMessage> dlq = new OutputTag<CanonicalDlqMessage>("flow-dlq") {};
+        OutputTag<SourceQualityReceipt> quality =
+                new OutputTag<SourceQualityReceipt>("flow-quality") {};
+        EventTimePolicy policy = new EventTimePolicy(10L, 1_000L, 100L, 5_000L, 0L);
+        KeyedOneInputStreamOperatorTestHarness<String, ValidatedFlowInput, FlowEvent> harness =
+                new KeyedOneInputStreamOperatorTestHarness<>(
+                        new KeyedProcessOperator<>(new FlowLatenessFunction(
+                                policy, "flink-session-job-shadow-candidate", dlq, quality)),
+                        ValidatedFlowInput::identityKey,
+                        TypeInformation.of(String.class));
+        try (harness) {
+            harness.open();
+            harness.setProcessingTime(2_000L);
+            harness.processElement(new StreamRecord<>(input("event-1", "flow-a", 1_000L, 0), 1_000L));
+            harness.processElement(new StreamRecord<>(input("event-1", "flow-a", 1_000L, 1), 1_000L));
+            harness.processElement(new StreamRecord<>(input("event-1", "flow-b", 1_000L, 2), 1_000L));
+            harness.processWatermark(new Watermark(1_200L));
+            harness.processElement(new StreamRecord<>(input("event-2", "flow-c", 1_100L, 3), 1_100L));
+            harness.processElement(new StreamRecord<>(input("event-3", "flow-d", 1_099L, 4), 1_099L));
+
+            assertEquals(2, harness.extractOutputValues().size());
+            Queue<StreamRecord<SourceQualityReceipt>> receipts = harness.getSideOutput(quality);
+            assertNotNull(receipts);
+            assertEquals(5, receipts.size());
+            assertEquals("accepted", receipts.remove().getValue().getCategory());
+            assertEquals("duplicate", receipts.remove().getValue().getCategory());
+            assertEquals("conflict", receipts.remove().getValue().getCategory());
+            assertEquals("accepted", receipts.remove().getValue().getCategory());
+            assertEquals("late", receipts.remove().getValue().getCategory());
+            Queue<StreamRecord<CanonicalDlqMessage>> failures = harness.getSideOutput(dlq);
+            assertNotNull(failures);
+            assertEquals(2, failures.size());
+            assertEquals("EVENT_ID_CONFLICT", failures.remove().getValue().errorCode());
+            assertEquals("SUPER_LATE_EVENT", failures.remove().getValue().errorCode());
+        }
+    }
+
+    @Test
+    void strictLateBoundaryIsOverflowSafe() {
+        assertEquals(false, FlowLatenessFunction.isTooLate(1_000L, Long.MIN_VALUE, 100L));
+        assertEquals(false, FlowLatenessFunction.isTooLate(1_000L, 1_100L, 100L));
+        assertEquals(true, FlowLatenessFunction.isTooLate(999L, 1_100L, 100L));
+    }
+
+    private static ValidatedFlowInput input(
+            String eventId, String flowId, long eventTime, long offset) {
+        FlowEvent flow = FlowEvent.newBuilder()
+                .setHeader(EventHeader.newBuilder()
+                        .setTenantId("tenant-a")
+                        .setEventId(eventId)
+                        .setProbeId("probe-a")
+                        .build())
+                .setFlowId(flowId)
+                .setCommunityId("1:abc")
+                .setTsStart(eventTime - 100L)
+                .setTsEnd(eventTime)
+                .build();
+        RawKafkaRecord source = new RawKafkaRecord(
+                "flow.events.v1", 1, offset, eventTime + 500L,
+                "tenant-a:1:abc".getBytes(StandardCharsets.UTF_8),
+                flow.toByteArray(), Map.of());
+        return new ValidatedFlowInput(source, flow);
+    }
+}
