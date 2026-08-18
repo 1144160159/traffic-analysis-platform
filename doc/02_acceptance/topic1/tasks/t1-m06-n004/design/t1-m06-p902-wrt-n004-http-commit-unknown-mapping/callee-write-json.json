@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p902-wrt-n004-http-commit-unknown-mapping/candidate-manifest.json",
+    "manifest_sha256": "9883a687ba91821b5a054161ea63f4457144b78174086d514b11c29a0b7ef80f"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.25.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-P902-CALLEE-writeJSON",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/api/http_handler.go",
+    "package": "api",
+    "qualified_symbol": "api.writeJSON",
+    "declaration_kind": "FUNCTION",
+    "query": "writeJSON",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func writeJSON(w http.ResponseWriter, status int, value any)",
+    "candidate_blob_sha256": "c4817519ff5430395eddec5a793fc5e28d761ee24383380ec5cd797230171fae",
+    "source_span_sha256": "1e1bbf38ff530c8072b9029ba10c7917f0bcb6fc8fbe15149d8f72128cb83c4f",
+    "normalized_ast_sha256": "1e1bbf38ff530c8072b9029ba10c7917f0bcb6fc8fbe15149d8f72128cb83c4f",
+    "start": {
+      "byte_offset": 35194,
+      "line": 1028,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 35319,
+      "line": 1031,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "w.WriteHeader",
+        "line": 1029
+      },
+      {
+        "expression": "json.NewEncoder",
+        "line": 1030
+      },
+      {
+        "expression": "json.NewEncoder(w).Encode",
+        "line": 1030
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T08:30:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

@@ -1,0 +1,288 @@
+{
+  "run_id": "attack-chain-view-modes-r799-view-modes-final",
+  "generated_at": "2026-07-26T13:28:27.628Z",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224 -> 9222",
+  "browser": "Chrome/150.0.7871.182",
+  "route": "/attack-chains",
+  "source_visual_truth": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+  "api_summary": {
+    "status": 200,
+    "total": 8421829,
+    "first_chain_id": "attack-chain-demo-c2-20260726",
+    "first_phase_count": 6
+  },
+  "results": [
+    {
+      "mode": "泳道视图",
+      "screenshot": "evidence/ui-image-breakdowns/pages/attack-chains/implementation-r799-view-modes-final-swimlane.png",
+      "geometry": {
+        "mode": "泳道视图",
+        "selectedMode": "泳道视图",
+        "canvas": {
+          "left": 207.33334350585938,
+          "right": 1380.6667175292969,
+          "top": 190.6666717529297,
+          "bottom": 707.3333587646484,
+          "width": 1173.3333740234375,
+          "height": 516.6666870117188
+        },
+        "board": {
+          "left": 219.33334350585938,
+          "right": 1368.6667175292969,
+          "top": 200.6666717529297,
+          "bottom": 688.6666717529297,
+          "width": 1149.3333740234375,
+          "height": 488
+        },
+        "rail": {
+          "left": 1389.3333740234375,
+          "right": 1901.3333740234375,
+          "top": 124.66667175292969,
+          "bottom": 992.6666717529297,
+          "width": 512,
+          "height": 868
+        },
+        "bottom": {
+          "left": 206.6666717529297,
+          "right": 1381.3334197998047,
+          "top": 714,
+          "bottom": 964,
+          "width": 1174.666748046875,
+          "height": 250
+        },
+        "canvasClientWidth": 1173,
+        "canvasScrollWidth": 1173,
+        "bodyClientWidth": 1920,
+        "bodyScrollWidth": 1920,
+        "swimlaneHeaders": [
+          "攻击阶段",
+          "实体 / 资产",
+          "告警事件",
+          "证据锚点",
+          "处置动作"
+        ],
+        "swimlaneRows": 6,
+        "swimlaneArrows": 24,
+        "matrixHeaders": 0,
+        "matrixLabels": [],
+        "matrixCells": 0,
+        "visibleMode": "泳道视图"
+      },
+      "interaction": {
+        "selected": "true",
+        "scaleBefore": "1",
+        "scaleAfter": "1.08",
+        "boardBefore": {
+          "x": 219.33334350585938,
+          "y": 200.6666717529297,
+          "width": 1149.3334045410156,
+          "height": 488.00001525878906
+        },
+        "boardAfter": {
+          "x": 219.33334350585938,
+          "y": 200.6666717529297,
+          "width": 1224.7201232910156,
+          "height": 527.0400543212891
+        },
+        "narrow": {
+          "clientWidth": 1027,
+          "scrollWidth": 1044,
+          "overflowX": "auto",
+          "pageClientWidth": 1100,
+          "pageScrollWidth": 1100
+        }
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [
+          "Cannot read properties of null (reading 'disconnect')"
+        ],
+        "requests": []
+      },
+      "checks": [
+        {
+          "name": "泳道视图 is the selected and rendered view",
+          "passed": true
+        },
+        {
+          "name": "泳道视图 keeps the canvas, bottom panels and right rail visible",
+          "passed": true
+        },
+        {
+          "name": "泳道视图 phase selection state is interactive",
+          "passed": true
+        },
+        {
+          "name": "泳道视图 is backed by a six-phase database chain",
+          "passed": true
+        },
+        {
+          "name": "泳道视图 zoom changes the board geometry",
+          "passed": true
+        },
+        {
+          "name": "泳道视图 supports canvas-only horizontal scrolling at narrow width",
+          "passed": true
+        },
+        {
+          "name": "泳道视图 has no page-level horizontal overflow at 1920",
+          "passed": true
+        },
+        {
+          "name": "泳道视图 has no runtime errors",
+          "passed": true
+        },
+        {
+          "name": "swimlane has the five source-UI business columns",
+          "passed": true
+        },
+        {
+          "name": "swimlane has six database-backed phase rows",
+          "passed": true
+        },
+        {
+          "name": "swimlane arrows connect all five business columns",
+          "passed": true
+        }
+      ],
+      "result": "pass"
+    },
+    {
+      "mode": "矩阵视图",
+      "screenshot": "evidence/ui-image-breakdowns/pages/attack-chains/implementation-r799-view-modes-final-matrix.png",
+      "geometry": {
+        "mode": "矩阵视图",
+        "selectedMode": "矩阵视图",
+        "canvas": {
+          "left": 207.33334350585938,
+          "right": 1380.6667175292969,
+          "top": 190.6666717529297,
+          "bottom": 707.3333587646484,
+          "width": 1173.3333740234375,
+          "height": 516.6666870117188
+        },
+        "board": {
+          "left": 219.33334350585938,
+          "right": 1368.6667175292969,
+          "top": 200.6666717529297,
+          "bottom": 630.6666717529297,
+          "width": 1149.3333740234375,
+          "height": 430
+        },
+        "rail": {
+          "left": 1389.3333740234375,
+          "right": 1901.3333740234375,
+          "top": 124.66667175292969,
+          "bottom": 992.6666717529297,
+          "width": 512,
+          "height": 868
+        },
+        "bottom": {
+          "left": 206.6666717529297,
+          "right": 1381.3334197998047,
+          "top": 714,
+          "bottom": 964,
+          "width": 1174.666748046875,
+          "height": 250
+        },
+        "canvasClientWidth": 1173,
+        "canvasScrollWidth": 1173,
+        "bodyClientWidth": 1920,
+        "bodyScrollWidth": 1920,
+        "swimlaneHeaders": [],
+        "swimlaneRows": 0,
+        "swimlaneArrows": 0,
+        "matrixHeaders": 6,
+        "matrixLabels": [
+          "实体 / 资产",
+          "告警事件",
+          "证据锚点",
+          "处置动作"
+        ],
+        "matrixCells": 24,
+        "visibleMode": "矩阵视图"
+      },
+      "interaction": {
+        "selected": "true",
+        "scaleBefore": "1",
+        "scaleAfter": "1.08",
+        "boardBefore": {
+          "x": 219.33334350585938,
+          "y": 200.6666717529297,
+          "width": 1149.3334045410156,
+          "height": 430.00001525878906
+        },
+        "boardAfter": {
+          "x": 219.33334350585938,
+          "y": 200.6666717529297,
+          "width": 1241.2799377441406,
+          "height": 464.40003967285156
+        },
+        "narrow": {
+          "clientWidth": 1042,
+          "scrollWidth": 1044,
+          "overflowX": "auto",
+          "pageClientWidth": 1100,
+          "pageScrollWidth": 1100
+        }
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [
+          "Cannot read properties of null (reading 'disconnect')"
+        ],
+        "requests": []
+      },
+      "checks": [
+        {
+          "name": "矩阵视图 is the selected and rendered view",
+          "passed": true
+        },
+        {
+          "name": "矩阵视图 keeps the canvas, bottom panels and right rail visible",
+          "passed": true
+        },
+        {
+          "name": "矩阵视图 phase selection state is interactive",
+          "passed": true
+        },
+        {
+          "name": "矩阵视图 is backed by a six-phase database chain",
+          "passed": true
+        },
+        {
+          "name": "矩阵视图 zoom changes the board geometry",
+          "passed": true
+        },
+        {
+          "name": "矩阵视图 supports canvas-only horizontal scrolling at narrow width",
+          "passed": true
+        },
+        {
+          "name": "矩阵视图 has no page-level horizontal overflow at 1920",
+          "passed": true
+        },
+        {
+          "name": "矩阵视图 has no runtime errors",
+          "passed": true
+        },
+        {
+          "name": "matrix has six source-UI phase headers",
+          "passed": true
+        },
+        {
+          "name": "matrix has the four source-UI object lanes",
+          "passed": true
+        },
+        {
+          "name": "matrix has a complete 4 x 6 object-stage grid",
+          "passed": true
+        }
+      ],
+      "result": "pass"
+    }
+  ],
+  "result": "pass"
+}

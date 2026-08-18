@@ -1,0 +1,14 @@
+{
+  "artifact_kind": "DESIGN_CANDIDATE_MANIFEST",
+  "schema_version": "1.0.0",
+  "candidate_id": "DESIGN-T1-M06-N004-R3",
+  "implementation_candidate_commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+  "scope": "T1-M06-P903 gRPC commit-unknown mapping development-readiness design only",
+  "source_blob_sha256": {
+    "go/control-plane/internal/asset/api/grpc_handler.go": "16350f7c0be9fdea69f3ac4ec7e905405f08307f2cfad573aaad8e020b47abf4",
+    "go/control-plane/internal/asset/service/asset_service.go": "7e9c2eafef5fc9faa7cdd1175d4d8a12874cecee99652fb7e31d30633143a845",
+    "go/control-plane/pkg/proto/traffic/v1/asset_grpc.pb.go": "5a25ac8fd560c0a6328b763aff9863303c65f39a85fcf002707d5b881e5da1e8"
+  },
+  "formal_execution_status": "BLOCKED_UNTIL_SIGNED_OVERLAY",
+  "proof_ceiling": "DEVELOPMENT_READINESS_DESIGN_ONLY_NOT_EXECUTION_AUTHORIZATION"
+}

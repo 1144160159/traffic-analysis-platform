@@ -1,0 +1,102 @@
+{
+  "alternative_paths_visible": true,
+  "artifact_kind": "M09_ATTACK_CHAIN_SNAPSHOT_UI_TEST_RESULT",
+  "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_SNAPSHOT_REPOSITORY_API_AND_UI_BUNDLE",
+  "does_not_prove": [
+    "production rollout",
+    "Windows Chrome acceptance",
+    "visual pixel parity",
+    "shared-store migration",
+    "project completion"
+  ],
+  "evidence_drilldown_present": true,
+  "fabricated_recommendations": false,
+  "inputs": {
+    "bundle_check_sha256": "1805d17cccf1e677162bf826579bcec3f56394f00c1f79c7f80793169823decd",
+    "candidate_images": [
+      "traffic/attack-chain-repository-test:m09-n013-20260816-r1",
+      "traffic/attack-chain-api-test:m09-n013-20260816-r1",
+      "traffic/web-ui:m09-n013-attack-chain-snapshot-20260816-r1"
+    ],
+    "migration_sha256": "3a98e40e0d2160bc262086a00fff8514c6990e5c9ba65e05ecac97921c698d99",
+    "postgres_image": "docker.io/library/postgres:16-alpine",
+    "prerequisites_sha256": "2034eca47ffb60dfb1201967c63f7c7a79f009c4c6b0c35e0fa3a82edc07b725"
+  },
+  "kubernetes_dependency": {
+    "container_id": "containerd://2034c6eed558550ded92ff823dfc5463bd0a8f486a1f6827f1cdeb491a75f833",
+    "image": "docker.io/library/postgres:16-alpine",
+    "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "namespace": "databases",
+    "node": "8-2tb",
+    "pod_name": "m09-n013-chain-a8283363a1",
+    "pod_uid": "7cff37a7-a834-4a5d-ab87-5be018b95f9b",
+    "started_at": "2026-08-15T17:40:20Z"
+  },
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-15T17:40:26Z",
+      "container_id": "containerd://1b4e43514e8f7e5172aec3b07dabe19a6052a6caeb881e6a0b0e7ba90a0bb4c9",
+      "image": "docker.io/traffic/attack-chain-repository-test:m09-n013-20260816-r1",
+      "image_id": "sha256:8a7b18c0342f82ec61c77036d3aa025f0b412c0dcd5070bc5f9714552d1ff213",
+      "job_name": "m09-n013-chain-a8283363a1-repository",
+      "job_uid": "1827ef4d-44e2-4e48-abc2-308c9d5858da",
+      "node": "8-2tb",
+      "pod_name": "m09-n013-chain-a8283363a1-repository-rjknw",
+      "pod_uid": "f2bcca40-0b0c-4207-b955-87dcc4063eba",
+      "started_at": "2026-08-15T17:40:23Z"
+    },
+    {
+      "completed_at": "2026-08-15T17:40:30Z",
+      "container_id": "containerd://eb9fbe63433b7091b4cc093ae656c4d63ecc2dd7ae25442bd123a58547836bdf",
+      "image": "docker.io/traffic/attack-chain-api-test:m09-n013-20260816-r1",
+      "image_id": "sha256:b9a198efda8cb248e5d555fd72b734793cbe209abb4633a3b79d74e9587dad05",
+      "job_name": "m09-n013-chain-a8283363a1-api",
+      "job_uid": "d60f1a27-d1aa-4b49-992e-4d06acce58b4",
+      "node": "8-2tb",
+      "pod_name": "m09-n013-chain-a8283363a1-api-9xwdc",
+      "pod_uid": "4a43f2a8-e740-4dc6-8155-5f8f2c891a99",
+      "started_at": "2026-08-15T17:40:27Z"
+    },
+    {
+      "completed_at": "2026-08-15T17:40:34Z",
+      "container_id": "containerd://6df6979cdf753ae43d6f9fbb8b0f697ee0a810a24b6bd3b2786c0d9e89fa83ea",
+      "image": "docker.io/traffic/web-ui:m09-n013-attack-chain-snapshot-20260816-r1",
+      "image_id": "sha256:1f1026949556f7a24431740d29a6b97b50cf8956570de525b3c0ae2cd5ddc478",
+      "job_name": "m09-n013-chain-a8283363a1-web",
+      "job_uid": "a4673e3c-81ec-4c35-88f1-92c15f08e4b6",
+      "node": "8-2tb",
+      "pod_name": "m09-n013-chain-a8283363a1-web-vx2gf",
+      "pod_uid": "704a4706-fde5-4770-887e-a7c4a2b40a2d",
+      "started_at": "2026-08-15T17:40:31Z"
+    }
+  ],
+  "mock_enabled": false,
+  "postgres_oracle": {
+    "current_rows": 1,
+    "evidence_anchors": 3,
+    "graph_snapshots": 1,
+    "migration": 1,
+    "sentinel": "ephemeral-only",
+    "snapshots": 1
+  },
+  "production_applied": false,
+  "profile_id": "M09-N013-K8S-M07-SNAPSHOT-UI-V1",
+  "provenance_classes": [
+    "observed",
+    "derived",
+    "analyst"
+  ],
+  "run_id": "a8283363-a134-492d-983d-88e52835222f",
+  "run_scoped_resources_removed": true,
+  "shared_postgres_touched": false,
+  "source_target_explicit": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N013",
+  "test_output_sha256": {
+    "api": "8c441bf0a8e4e65f254f4417ae9fb4dcbda49e76c75eacb44c57ff9e725cec0b",
+    "repository": "54e566a18f6a87327d37d4cb8f0c80098fbb57366fe2ac83a46a09992c1fe57a",
+    "web": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+  },
+  "truncation_fail_visible": true,
+  "uncertainty_visible": true
+}

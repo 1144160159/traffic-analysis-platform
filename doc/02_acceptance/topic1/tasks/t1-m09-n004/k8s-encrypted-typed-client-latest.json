@@ -1,0 +1,28 @@
+{
+  "artifact_kind": "M09_ENCRYPTED_TYPED_CLIENT_TEST_RESULT",
+  "bundle_check_sha256": "5e868f9d869ec0814ce68c9e3d1289ab099f96ebe2809c08fef8a0cc2abd72bd",
+  "kubernetes": {
+    "completed_at": "2026-08-15T12:21:22Z",
+    "container_id": "containerd://1b89f0575c1d4c1d664d727a4e27b8685d89e0aa3d4e0284c064cd93d6ffd50c",
+    "image": "docker.io/traffic/web-ui:m09-n004-encrypted-typed-client-20260815-r1",
+    "image_id": "sha256:e80b90c9180e45671bfa6a0b525d197bc356f89432ebdc67533ee2e849a18bab",
+    "job_name": "m09-n004-client-a0bbff2e8a",
+    "job_uid": "9abaaa54-67f1-46a8-ad43-c7424a0acaf0",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m09-n004-client-a0bbff2e8a-wtvx8",
+    "pod_uid": "9d62b163-b106-4df0-8ba1-01cf8fac3ded",
+    "shared_clickhouse_touched": false,
+    "shared_flink_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_postgres_touched": false,
+    "started_at": "2026-08-15T12:21:19Z"
+  },
+  "production_applied": false,
+  "run_id": "a0bbff2e-8aae-434f-9613-f26f9c01d20c",
+  "run_scoped_resources_removed": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N004",
+  "test_output_sha256": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+}

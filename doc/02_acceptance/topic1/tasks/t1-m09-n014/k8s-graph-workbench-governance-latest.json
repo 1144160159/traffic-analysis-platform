@@ -1,0 +1,101 @@
+{
+  "artifact_kind": "M09_GRAPH_WORKBENCH_GOVERNANCE_TEST_RESULT",
+  "continuation_tenant_query_hmac_bound": true,
+  "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_NEBULAGRAPH_AND_IMMUTABLE_UI_BUNDLE",
+  "cross_tenant_edge_rejected": true,
+  "cycle_visited_set_exact": true,
+  "database_boundary_budgets": true,
+  "does_not_prove": [
+    "production rollout",
+    "Windows Chrome acceptance",
+    "visual pixel parity",
+    "global milestone completion",
+    "authorization to enable GRAPH_WORKBENCH_V2_ENABLED"
+  ],
+  "field_redaction_contract": true,
+  "inputs": {
+    "bundle_check_sha256": "b7ae74b0d97ad3ba0d8c78c50861f8787d48f75a548387d9432bfb16e4f4171f",
+    "candidate_images": [
+      "traffic/graph-workbench-test:m09-n014-20260816-r1",
+      "traffic/graph-workbench-api-test:m09-n014-20260816-r1",
+      "traffic/web-ui:m09-n014-graph-governance-20260816-r1"
+    ],
+    "source_sha256": {
+      "contracts/openapi/alignment-v1.openapi.json": "0121c4acd179f6ca6f2ea8fe011ed612cc3d24fe8e97af3bed195637a517c063",
+      "deployments/kubernetes/applications/go-services.yaml": "151dfdd127814635691f1cafbe2e56ee5a5a63c79bdd78e10fc53f78523a7bcd",
+      "go/control-plane/internal/graph/api/handler.go": "9d8daac96b565a5a645ce45db68673e4f9b7a844e329e46af0acbbfbc898c743",
+      "go/control-plane/internal/graph/api/workbench_governance.go": "93c2449417e1c963d1871c52f80fca2235a55d96bbe3da5fc2beaf194d270ff0",
+      "go/control-plane/internal/graph/config/config.go": "bc8732fc708603d9872648231e9e5569ef8fd5c4b1c33be0997410ba729e937d",
+      "go/control-plane/internal/graph/nebula/workbench_store.go": "bbeee7f5b16e5231e997d4b092d3575e9f4edfc2d3fbecd6ad08b87691b2a811",
+      "go/control-plane/internal/graph/query/graph_query.go": "d86fffc079ff868c27311c430ce0480cd1e36dd04a6ee92f41871508b5efc1e1",
+      "web/ui/src/pages/GraphEntityPage.tsx": "a71a0b5602556f2fad9804d6cc23dac392ed020d36993462b49d87b16005bd43"
+    }
+  },
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-15T18:13:22Z",
+      "container_id": "containerd://0d5980ad8568b3b34e9d0b3c514bac91dff91b11fac04ce5d21690e387761777",
+      "image": "docker.io/traffic/graph-workbench-test:m09-n014-20260816-r1",
+      "image_id": "sha256:07354cf3f31f2616ac004fcf6c0cd7eb2b9153aecae0721fe82617fd5270901d",
+      "job_name": "m09-n014-graph-3e8a6116fa-integration",
+      "job_uid": "482a91cc-0c19-4323-94ed-bb658a144d25",
+      "node": "8-2tb",
+      "pod_name": "m09-n014-graph-3e8a6116fa-integration-pjkpm",
+      "pod_uid": "bedbaee1-dd94-4890-9d36-b720cd07808a",
+      "started_at": "2026-08-15T18:13:19Z"
+    },
+    {
+      "completed_at": "2026-08-15T18:13:26Z",
+      "container_id": "containerd://b549f68df381f99b2829608c0f44ec71101e0ec95fe915551a1569ec199081ff",
+      "image": "docker.io/traffic/graph-workbench-test:m09-n014-20260816-r1",
+      "image_id": "sha256:07354cf3f31f2616ac004fcf6c0cd7eb2b9153aecae0721fe82617fd5270901d",
+      "job_name": "m09-n014-graph-3e8a6116fa-cleanup",
+      "job_uid": "a38cf654-488e-4263-b0b1-80205b1806fb",
+      "node": "8-2tb",
+      "pod_name": "m09-n014-graph-3e8a6116fa-cleanup-4h2xp",
+      "pod_uid": "bc6b8d67-833d-4e91-9a3a-ab77d6d79c3f",
+      "started_at": "2026-08-15T18:13:23Z"
+    },
+    {
+      "completed_at": "2026-08-15T18:13:30Z",
+      "container_id": "containerd://67103418c604aa088874eae97cc436236e1afe0d4331ae12c8825162732c49ac",
+      "image": "docker.io/traffic/graph-workbench-api-test:m09-n014-20260816-r1",
+      "image_id": "sha256:a62ba8a3c7804caab560b4a955b5259dfda6773b0d6b36193c8d83fe152bf00c",
+      "job_name": "m09-n014-graph-3e8a6116fa-api",
+      "job_uid": "b9fc3df6-043c-4032-bdb7-e76e5d58b813",
+      "node": "8-2tb",
+      "pod_name": "m09-n014-graph-3e8a6116fa-api-wgj5s",
+      "pod_uid": "2eb91a93-2359-47cb-ae77-2b0d69f0232b",
+      "started_at": "2026-08-15T18:13:27Z"
+    },
+    {
+      "completed_at": "2026-08-15T18:13:33Z",
+      "container_id": "containerd://aaca12d9c8a933f98ab61914dce903f156e85b118835a1e87b37fe57c4300cb2",
+      "image": "docker.io/traffic/web-ui:m09-n014-graph-governance-20260816-r1",
+      "image_id": "sha256:6a69179e96b8d69e1f48d5154558094dccefd0ed6cac8df0c6d1fc94e1f1d1c2",
+      "job_name": "m09-n014-graph-3e8a6116fa-web",
+      "job_uid": "ea1e96c9-38d4-4582-81e9-5e5087ed63f9",
+      "node": "8-2tb",
+      "pod_name": "m09-n014-graph-3e8a6116fa-web-8jfjj",
+      "pod_uid": "0c1326ac-7244-4ffe-8d43-b2a0b229deff",
+      "started_at": "2026-08-15T18:13:30Z"
+    }
+  ],
+  "mock_enabled": false,
+  "production_applied": false,
+  "profile_id": "M09-N014-K8S-NEBULAGRAPH-UI-V1",
+  "run_id": "3e8a6116-faf2-4aca-97a5-12590dc05bfd",
+  "run_scoped_kubernetes_resources_removed": true,
+  "run_scoped_nebulagraph_rows_removed": true,
+  "saved_view_server_command": "/v1/alerts/views",
+  "shared_nebulagraph_touched": true,
+  "status": "PASS",
+  "supernode_truncation_explicit": true,
+  "task_id": "T1-M09-N014",
+  "test_output_sha256": {
+    "api": "e5ee06ee18327a5b0ce4f73ae2649056873e636e15e84e7b0763c071ffb7de82",
+    "cleanup": "efc90936ff92be63f53100834eb2a3b4c72da4aa3665eb95aa0eb8f795c51212",
+    "integration": "cffe8c9d0b9dc5f28b3620c6ecdd102cc735f44be043a831bcd9df63f2727a21",
+    "web": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+  }
+}

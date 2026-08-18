@@ -1,0 +1,89 @@
+{
+  "artifact_kind": "M09_SYSTEM_HANDLER_COMPOSITION_TEST_RESULT",
+  "schema_version": "1.0.0",
+  "task_id": "T1-M09-N003",
+  "atomic_pr_id": "T1-M09-P005-REF-n003-s1",
+  "status": "PASS",
+  "scope": {
+    "composition_root": "go/control-plane/cmd/alert-service/main.go#newAlertSystemHandler",
+    "module": "encrypted traffic statistics only",
+    "runtime_state": "no route, worker, configuration, migration, event-version, or feature-flag change"
+  },
+  "candidate": {
+    "source_files": {
+      "go/control-plane/cmd/alert-service/main.go": "fa8233b513dc9d1aa550292a673a6c38ba1614ea86d77078d978fa97b5f140ba",
+      "go/control-plane/cmd/alert-service/system_handler_composition_test.go": "19f2a65a0681fd08378680049c94c1d1119e31b87910b0eb9a37f2a9ac525299",
+      "go/control-plane/internal/alert/api/encrypted_traffic_stats_service.go": "d1672f10b99f06e623d90a2982f223a77fd24dd08d7bb1fe99c2c5cdb99fc6e9",
+      "go/control-plane/internal/alert/api/handler_product_pages.go": "d2875c6619a5e4466f6fc1d432b4d414970d73506fc2700656f860514d2bfc3a"
+    },
+    "rollback_runbook": {
+      "path": "doc/07_alignment/runbooks/T1-M09-N003-system-handler-composition-rollback.md",
+      "sha256": "b5f807735da44eca54c28a88368f70331bb76bde2ccd73a3447af60e93ab7aff"
+    },
+    "kubernetes_runner": {
+      "path": "scripts/alignment/run_m09_system_handler_composition_k8s.py",
+      "sha256": "68a1a72fec5b6f79b4537ca4ee63ee3db536810580de3145cd8866cd30ffe9bb"
+    },
+    "test_image": {
+      "reference": "traffic/alert-service:m09-n003-system-handler-composition-20260815-r1",
+      "image_id": "sha256:ddae5481a32953b0439997b1e4b81aefc8aef9e63182a528804f1fb851aa12e6"
+    }
+  },
+  "characterized_invariants": [
+    "main constructs the encrypted-traffic stats service from the existing ClickHouse client",
+    "main injects that exact service through newAlertSystemHandler",
+    "the injected service receives authenticated tenant and exact time bounds through the real handler",
+    "the route method and JSON success envelope remain unchanged",
+    "no worker registry, startup ordering, or unrelated module wiring is moved"
+  ],
+  "local_validation": {
+    "composition_test": {
+      "command": "go test ./cmd/alert-service -run TestNewAlertSystemHandlerWiresEncryptedTrafficStatsSlice -count=1",
+      "status": "PASS"
+    },
+    "package_tests": {
+      "command": "go test ./cmd/alert-service ./internal/alert/api -count=1",
+      "status": "PASS"
+    },
+    "go_vet": {
+      "command": "go vet ./cmd/alert-service ./internal/alert/api",
+      "status": "PASS"
+    },
+    "diff_check": "PASS"
+  },
+  "kubernetes_validation": {
+    "run_id": "ec8f284b-7f71-4579-95f9-4ef3a1d0b6a1",
+    "namespace": "traffic-analysis",
+    "job_name": "m09-n003-wiring-ec8f284b7f",
+    "job_uid": "19d71662-4b66-4500-9985-af2af11b959c",
+    "pod_name": "m09-n003-wiring-ec8f284b7f-lcqml",
+    "pod_uid": "c1424e1a-4a5d-4626-aba0-f78b98608e35",
+    "node": "8-2tb",
+    "container_id": "containerd://63f6b5f7c98f46751fd4f39342a0aa091e61f775c1d96cf5bcaeac22eca9743b",
+    "image_id": "sha256:ddae5481a32953b0439997b1e4b81aefc8aef9e63182a528804f1fb851aa12e6",
+    "started_at": "2026-08-15T12:15:01Z",
+    "completed_at": "2026-08-15T12:15:04Z",
+    "test_pattern": "TestNewAlertSystemHandlerWiresEncryptedTrafficStatsSlice",
+    "test_output_sha256": "5ea55a7e01c95da8732427027cf426159d7b67fc83960e670a00eef59ff49a27",
+    "status": "PASS",
+    "run_scoped_resources_removed": true,
+    "production_applied": false,
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_flink_touched": false
+  },
+  "claim_boundary": {
+    "proves": [
+      "the current encrypted stats slice is explicitly assembled at the alert-service composition root",
+      "the covered startup wiring and handler behavior pass locally and in an isolated Kubernetes Job"
+    ],
+    "does_not_prove": [
+      "production rollout",
+      "shared ClickHouse behavior",
+      "any worker migration",
+      "M09 milestone completion"
+    ]
+  }
+}

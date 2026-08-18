@@ -1,0 +1,154 @@
+{
+  "artifact_kind": "M09_WHITELIST_GOVERNANCE_TEST_RESULT",
+  "broker_projection_ack": true,
+  "consumer_default_enabled": false,
+  "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_DRAFT_APPROVAL_EXPIRY_PROJECTION_ACK",
+  "detection_matcher_default_enabled": false,
+  "deterministic_rule_revision": true,
+  "does_not_prove": [
+    "production rollout",
+    "shared data migration",
+    "performance or rollback drill",
+    "Windows Chrome acceptance",
+    "authorization to enable whitelist producer or matcher",
+    "global milestone completion"
+  ],
+  "draft_from_fp_feedback": true,
+  "expiry_sweeper": true,
+  "inputs": {
+    "candidate_images": [
+      "traffic/whitelist-consumer-test:m09-n018-20260816-r1",
+      "traffic/whitelist-authority-test:m09-n018-20260816-r1",
+      "traffic/web-ui:m09-n022-alert-detail-css-20260816-r2"
+    ],
+    "governance_migration_sha256": "d197debde1cc494628eec04e22c2672886e1dc459c464bb6093752956c5637b0",
+    "prerequisites_sha256": "a5a98496a9e02a72bff6372c583f1e3ee447d393e1cbb38e51b4745585e9fbcb",
+    "projection_migration_sha256": "07eea99eb47771ade34084a2f21a6af1f10acfe5c3778b31207064a3b8662e5f",
+    "readiness_migration_sha256": "4462261034ca6b0acfb0e7ec7c60186ccdc3ea636f3bab6f83ab62a367793b9e",
+    "source_sha256": {
+      "contracts/events/kafka-json-events-v1.schema.json": "d8a0ed91cec27d54b01f586bb356f04b3afd1d10dbf43ead3c737d6a324fc9f2",
+      "contracts/openapi/alignment-v1.openapi.json": "38867eb7c364eba78e16574a188edcd41b9460bff341f12770b422e83c921494",
+      "deployments/kubernetes/applications/go-services.yaml": "62502c80b03271589f877e16c79aa3923bd40fa10fab62132c792c4689e5e204",
+      "go/control-plane/cmd/alert-service/main.go": "b02fa87e82fb478426b3f3e42b30f809d23b6323f8c7111a8891527a2bf1372f",
+      "go/control-plane/cmd/rule-manager/main.go": "dfac8526f3b7aa295f56efcbe0a6262b59c8de61848adb0b754c045b908a194d",
+      "go/control-plane/internal/alert/whitelist/command_atomic.go": "c7d7f13516e9b6700cdbc4d614fb320c0601a6e65c6cd5ee44a5de4d5ee7ebf2",
+      "go/control-plane/internal/alert/whitelist/handler.go": "ac5078b219cea4d0805a1c816a6df7c636155d71ea360c3212a7c764e8c6dfd1",
+      "go/control-plane/internal/alert/whitelist/producer_readiness.go": "e549ef03b1a0021168ce8086b7bee3920e24bbc4d61142618a43d4d8c3a5accb",
+      "go/control-plane/internal/alert/whitelist/whitelist.go": "068a6a43e3b9dfd9490f6d297a07e35275acff123cf70cb63f7843cc80c15c8e",
+      "go/control-plane/internal/rules/consumer/whitelist_rule_effect_consumer.go": "890627b3b77e351c0c23f66ebd81c7e7a94c8485b1683db17922a8d3de177ecd",
+      "web/ui/src/pages/WhitelistGovernancePage.tsx": "38509196279f9477965889c4c886435ed01295f627584d235ce195d4d2d016ee",
+      "web/ui/src/services/whitelistGovernanceApi.ts": "442c73dc21e8592b46398d9c00303e049bfda1a6c95600ba37124e103881fc63"
+    }
+  },
+  "kubernetes_dependencies": [
+    {
+      "container_id": "containerd://4a21a4d1faf246baf9d6f329e364b3149198258e51be8ff9bd3df551b3cbc56b",
+      "image": "docker.io/library/postgres:16-alpine",
+      "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n018-whitelist-a52db73e0a",
+      "pod_uid": "96ea7196-237f-41ab-9d6a-5cd8961eb505",
+      "started_at": "2026-08-15T22:45:04Z"
+    },
+    {
+      "container_id": "containerd://8b404a49b8bfb06d5704432ec3f8791fbec11230051213a1c1c049848700f060",
+      "image": "docker.io/redpandadata/redpanda:v24.1.12",
+      "image_id": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n018-whitelist-a52db73e0a-kafka",
+      "pod_uid": "0b9dbd8e-a4cd-4efa-9afd-fd8a658c9e3d",
+      "started_at": "2026-08-15T22:45:04Z"
+    }
+  ],
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-15T22:45:21Z",
+      "container_id": "containerd://d6db5da802b90aa9e54bd5dd512b270a8c9322ca1fe54ad759328c9e54ffbb1a",
+      "image": "docker.io/traffic/whitelist-consumer-test:m09-n018-20260816-r1",
+      "image_id": "sha256:e2579b68fe4e5e41551ed35ba12b6fa54ad5f3d9b886875da7f9b14bcc8f3e0c",
+      "job_name": "m09-n018-whitelist-a52db73e0a-integration",
+      "job_uid": "3e8ab865-8df1-4f8c-b07b-da7e2c4f774d",
+      "node": "8-2tb",
+      "pod_name": "m09-n018-whitelist-a52db73e0a-integration-ql8jk",
+      "pod_uid": "81b2b25f-7a4f-4665-84bf-d0ffb4dfeb19",
+      "started_at": "2026-08-15T22:45:08Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:45:25Z",
+      "container_id": "containerd://fd8f2093477de654f624a994753d8cdc5a68fce27bd9c6e5c2a4cdaccf965c4b",
+      "image": "docker.io/traffic/whitelist-consumer-test:m09-n018-20260816-r1",
+      "image_id": "sha256:e2579b68fe4e5e41551ed35ba12b6fa54ad5f3d9b886875da7f9b14bcc8f3e0c",
+      "job_name": "m09-n018-whitelist-a52db73e0a-consumer-unit",
+      "job_uid": "62f74c05-21b7-4823-b62a-85a13d4d58ea",
+      "node": "8-2tb",
+      "pod_name": "m09-n018-whitelist-a52db73e0a-consumer-unit-nhxm4",
+      "pod_uid": "8ea648fe-9f1c-4410-8b20-19a01bcda3ab",
+      "started_at": "2026-08-15T22:45:22Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:45:28Z",
+      "container_id": "containerd://ecbfd443c142ba43dfb90f568fb1da4b945d6bc3e2873765a56cd4d361fd24c9",
+      "image": "docker.io/traffic/whitelist-authority-test:m09-n018-20260816-r1",
+      "image_id": "sha256:1af2ba1d75d63024f42da75f4a8cda8619a042ff61b7dafef4d6948f36c3a91e",
+      "job_name": "m09-n018-whitelist-a52db73e0a-authority-unit",
+      "job_uid": "5a433f8f-8d49-47e2-9673-14f5a4dc7706",
+      "node": "8-2tb",
+      "pod_name": "m09-n018-whitelist-a52db73e0a-authority-unit-hqcqh",
+      "pod_uid": "4ba6d22c-7ec0-4e6b-acda-331a74b99714",
+      "started_at": "2026-08-15T22:45:25Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:45:32Z",
+      "container_id": "containerd://7c9cc1d25030008cdeae64c2b84501df2bfb9b29f8f86c74bfb46fb60ae7c633",
+      "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+      "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13",
+      "job_name": "m09-n018-whitelist-a52db73e0a-web",
+      "job_uid": "b527192b-a3a9-449a-8282-ef2375dc016f",
+      "node": "8-2tb",
+      "pod_name": "m09-n018-whitelist-a52db73e0a-web-xntgk",
+      "pod_uid": "1e7f7e0f-7278-40da-8e1f-92c85e86b44f",
+      "started_at": "2026-08-15T22:45:28Z"
+    }
+  ],
+  "mock_enabled": false,
+  "postgres_cleanup_oracle": {
+    "audit": 0,
+    "effects": 0,
+    "governance_migration": 1,
+    "history": 0,
+    "outbox": 0,
+    "projection": 0,
+    "projection_migration": 1,
+    "readiness": 0,
+    "readiness_migration": 1,
+    "sentinel": "ephemeral-only",
+    "tenants": 0,
+    "whitelist": 0
+  },
+  "producer_default_enabled": false,
+  "producer_readiness_join": true,
+  "production_applied": false,
+  "profile_id": "M09-N018-K8S-PG-KAFKA-UI-V1",
+  "real_network_blocking_executed": false,
+  "run_id": "a52db73e-0a2a-4207-9745-33346c9a1755",
+  "run_scoped_resources_removed": true,
+  "shared_kafka_touched": false,
+  "shared_postgres_touched": false,
+  "status": "PASS",
+  "task_id": "T1-M09-N018",
+  "test_output_sha256": {
+    "authority-unit": "7deeea1e7842fc86df787e1c9d3d1a103c3764d2ca8a7d5f8723a8a2a4ec4dac",
+    "consumer-unit": "a2e96c6bc9f0dfa54aad8710bc115359e618c68dd471cb3438e2b91b93f7cf32",
+    "integration": "7299a68ac0562db77a13c3634ae95d646ae77b5e2842c7d193e000620ebe2053",
+    "web": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+  },
+  "topic_receipt": {
+    "description_sha256": "67ea6e840d3f027d8d2f30c354ff47b64b589d3cd0fb30dd349034724ac28d4e",
+    "partitions": 3,
+    "replication_factor": 1,
+    "topic": "whitelist.events.v2"
+  },
+  "two_person_approval": true
+}

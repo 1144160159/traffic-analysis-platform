@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "FUNCTION_IMPLEMENTATION_DELTA",
+  "artifact_status": "DRAFT",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "candidate_manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d",
+  "primary_locator_id": "LOC-T1-M06-P007-UpsertAtomic",
+  "deltas": [
+    {
+      "delta_id": "DELTA-SOURCE-PRECEDENCE", "body_step_ids": ["B08"],
+      "before": "update calls mergeAssetGovernance, which only fills empty inputs and therefore permits any non-empty observation payload to overwrite governance fields",
+      "after": "branch on the two approved ActionID values before assigning the next record; observation update preserves every governance field and stale observation preserves every observation field",
+      "exact_code_actions": [
+        "reject an ActionID outside asset-upsert and asset-observation-upsert before the first authority write",
+        "for asset-upsert keep expected-revision CAS and apply the manual rows of ASSET-UPsert-SOURCE-PRECEDENCE-V1",
+        "for asset-observation-upsert copy governance fields from existing and copy observation fields only when observedAt is not older than existing.LastSeen",
+        "derive create defaults from the approved contract instead of trusting observation-supplied governance values",
+        "do not add a polymorphic Command abstraction; the selected design remains a direct transaction coordinator"
+      ],
+      "error_ids": ["ERR-REVISION-CONFLICT"],
+      "test_case_ids": ["TC-SOURCE-PRECEDENCE-PLANNED"],
+      "compatibility": "preserve the exported method signature and existing manual action semantics; the behavior change is intentionally fail-closed for observation governance writes",
+      "rollback": "restore the prior branch only before rollout; after a committed bad observation use a new expected-revision forward fix and retain history and audit"
+    },
+    {
+      "delta_id": "DELTA-JSONB-FAIL-CLOSED", "body_step_ids": ["B09"],
+      "before": "jsonObject in postgres.go converts Tags or Metadata marshal failure into an empty object, so UpsertAtomic cannot distinguish corrupt input from an intentional empty object",
+      "after": "UpsertAtomic serializes Tags and Metadata into checked local byte slices before INSERT or UPDATE and returns ERR-ASSET-WRITE without executing the authority statement when either serialization fails",
+      "exact_code_actions": [
+        "call json.Marshal for rec.Tags and rec.Metadata after B08 and before the branch SQL",
+        "bind the checked byte slices to both INSERT and UPDATE parameters instead of invoking jsonObject",
+        "wrap each error with a stable internal stage without placing payload or tenant identity in the public message"
+      ],
+      "error_ids": ["ERR-ASSET-WRITE"],
+      "test_case_ids": ["TC-CAS-CRASH-MATRIX-PLANNED"],
+      "compatibility": "the stored JSON representation remains an object and the SQL column contract is unchanged",
+      "rollback": "no database effect exists before serialization succeeds; code rollback restores the old encoder without deleting committed rows"
+    },
+    {
+      "delta_id": "DELTA-OLD-HISTORY-MARSHAL", "body_step_ids": ["B10"],
+      "before": "oldJSON, _ = json.Marshal(existing) discards the encoder error and can commit an update with an inaccurate nullable old_value",
+      "after": "capture the error from json.Marshal(existing), return ERR-HISTORY-MARSHAL and let deferred rollback remove the staged authority update",
+      "exact_code_actions": [
+        "replace the blank identifier with oldJSON, err = json.Marshal(existing)",
+        "return a wrapped stable history-encode error immediately when err is non-nil",
+        "retain the existing checked new-state marshal and ensure neither path reaches asset_events on failure"
+      ],
+      "error_ids": ["ERR-HISTORY-MARSHAL"],
+      "test_case_ids": ["TC-CAS-CRASH-MATRIX-PLANNED"],
+      "compatibility": "successful history JSON bytes remain unchanged; only previously silent invariant violations become explicit rollback",
+      "rollback": "deferred transaction rollback is the only data action; no compensating delete is allowed"
+    },
+    {
+      "delta_id": "DELTA-AUDIT-MARSHAL", "body_step_ids": ["B12"],
+      "before": "auditDetail, _ = json.Marshal(...) discards an audit encoder error and may insert an incomplete detail value",
+      "after": "capture the audit serialization error, return a stable audit-encode error and rollback authority, history and audit staging before outbox construction",
+      "exact_code_actions": [
+        "add ERR-AUDIT-MARSHAL to the function error algebra",
+        "replace the blank identifier with auditDetail, err := json.Marshal(...) and check err before ExecContext",
+        "add a fault test whose oracle reconciles zero rows across all five included effects"
+      ],
+      "error_ids": ["ERR-AUDIT-MARSHAL", "ERR-AUDIT-WRITE"],
+      "test_case_ids": ["TC-CAS-CRASH-MATRIX-PLANNED"],
+      "compatibility": "successful audit JSON bytes and audit table columns remain unchanged",
+      "rollback": "return before the audit INSERT and rely on the transaction rollback; never delete immutable audit after commit"
+    },
+    {
+      "delta_id": "DELTA-COMMIT-UNKNOWN", "body_step_ids": ["B05", "B15", "B16"],
+      "before": "both replay commit and new-write commit return fmt-wrapped generic errors; HTTP maps generic errors to 400 with err.Error and gRPC maps them to Internal with err.Error",
+      "after": "repository returns a typed commit-unknown sentinel carrying stage but no secret; HTTP and gRPC leaves map it to an unknown/pending receipt-recovery response and require the original tenant, idempotency key and payload hash",
+      "exact_code_actions": [
+        "declare ErrAssetCommitUnknown in atomic_upsert.go and wrap both tx.Commit error sites with errors.Is support",
+        "do not retry inside UpsertAtomic and do not generate a new idempotency key",
+        "in the independent HTTP leaf return a stable operation-unknown code and safe message without err.Error",
+        "in the independent gRPC leaf return Unavailable or an approved operation-unknown status without err.Error",
+        "the independent PostgreSQL TST-PRE leaf injects response loss and proves same-key convergence to one stored receipt"
+      ],
+      "error_ids": ["ERR-REPLAY-COMMIT-UNKNOWN", "ERR-COMMIT-UNKNOWN"],
+      "test_case_ids": ["TC-COMMIT-UNKNOWN-PLANNED"],
+      "compatibility": "revision and idempotency conflicts retain their existing stable conflict mappings; only ambiguous commit stops being misreported as definitive failure",
+      "rollback": "after an ambiguous commit query the original receipt; never issue a new intent or delete a possibly committed effect"
+    }
+  ],
+  "non_goals": [
+    "this delta does not modify Kafka publication or mark an outbox row published",
+    "this delta does not introduce per-field provenance storage or a migration",
+    "this delta does not claim its planned tests have run or that the WRT leaf is executable"
+  ],
+  "blockers": [
+    "ASSET-UPsert-SOURCE-PRECEDENCE-V1 is still PROPOSED_DOMAIN_REVIEW",
+    "HTTP, gRPC, test and real-broker changes require their own registered atomic leaves",
+    "Go 1.25.12 is locally available, but no signed candidate/profile/environment overlay or formal test receipt exists"
+  ],
+  "proof_ceiling": "IMPLEMENTATION_DELTA_DESIGN_ONLY_NOT_CODE_CHANGE_OR_EXECUTION_AUTHORIZATION"
+}

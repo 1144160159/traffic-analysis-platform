@@ -1,6 +1,6 @@
 # traffic-analysis-platform 文档索引与合并说明
 
-更新时间：2026-07-30
+更新时间：2026-08-16
 适用范围：课题一“园区网络流量智能检测与分析”的产品设计、技术设计、工程验收和试点交付材料。
 
 ## 1. 推荐阅读路径
@@ -8,9 +8,10 @@
 | 读者 | 先读 | 再读 | 目的 |
 |---|---|---|---|
 | 项目负责人/评审专家 | `01_design/课题一产品与技术总体设计.md` | `02_acceptance/README.md`、`03_review/专家深评整改清单.md`、`05_status/未开发项梳理-2026-06-19.md`、`05_status/代码实证状态核对-2026-06-19.md` | 快速掌握系统定位、指标闭环和验收缺口 |
-| 整改负责人/架构评审 | `07_alignment/前后端逻辑对齐整改大纲.md` | `07_alignment/前后端逻辑对齐整改报告-5万字完整版.md`、`07_alignment/编制基线清单-2026-07-30-10万字扩展版.md`、`07_alignment/README.md` | 按54项功能、48项技术、目标架构、路线、性能、验收和回滚组织整改 |
+| 整改负责人/架构评审 | `07_alignment/课题一主营业务流程闭环与中期详细设计对齐方案.md` | `07_alignment/课题一PR里程碑代码级详细设计.md`、`07_alignment/统一分析任务调度中心菜单与UI详细设计.md`、`07_alignment/前后端逻辑对齐整改大纲.md`、`07_alignment/前后端逻辑对齐整改报告-5万字完整版.md`、`07_alignment/编制基线清单-2026-07-30-10万字扩展版.md`、`07_alignment/README.md` | 先冻结统一Task/Plan/Run调度主链、六条活动业务流和中期Profile，再按M00–M13、父任务、原子PR执行包、函数合同、证据和回滚下沉；AUTO/MANUAL只作plan source，业务关闭不得由局部技术PASS推导 |
 | 产品/售前 | `01_design/课题一产品与技术总体设计.md` | `01_design/docx/面向园区网络的全流量采集分析系统-产品设计.docx`、`04_assets/generated/`、`04_assets/ui_suite_gpt_v1/` | 准备演示、试点、用户沟通和材料包装 |
-| 技术/研发 | `01_design/课题一产品与技术总体设计.md` | `01_design/docx/面向园区网络的全流量采集分析系统-技术设计.docx`、`agent.md`、`common/`、`proto/` | 对齐架构、数据链路、接口契约和实现边界 |
+| 技术/研发 | `01_design/课题一产品与技术总体设计.md` | `00_sources/external-engineering-standards/00_Project_Engineering_Constraints/README.md`、`01_design/docx/面向园区网络的全流量采集分析系统-技术设计.docx`、`agent.md`、`common/`、`proto/` | 对齐 UI、软件模式、数据库、架构、数据链路、接口契约和实现边界 |
+| 软件著作权材料负责人 | `08_software_copyright/README.md` | `08_software_copyright/00_九件软著组合规划与写作总纲.md`、九篇作品大纲、`08_software_copyright/10_材料一致性与交叉去重检查表.md` | 按九件非重叠作品形成说明书、架构图和源码归属冻结方案；当前仅为写作规划，不代表可以递交 |
 | Codex/自动化工程 | `01_design/Codex-Loop-Engineering-设计.md`、`01_design/自动开发Loop引擎设计.md` | `agent.md`、`scripts/codex_loop/README.md`、`02_acceptance/README.md`、`03_review/专家深评整改清单.md`、`05_status/代码实证状态核对-2026-06-19.md` | 建立自主开发、真实数据验证、K8s live 验证和证据沉淀闭环 |
 | 测试/验收 | `02_acceptance/README.md` | `05_status/代码实证状态核对-2026-06-19.md`、`05_status/未开发项梳理-2026-06-19.md`、`03_review/专家深评整改清单.md` | 区分 smoke、regression、acceptance、third-party 证据 |
 | 实施/SRE | `01_design/课题一产品与技术总体设计.md` | `05_status/未开发项梳理-2026-06-19.md`、`06_ops/基础设施实施进度.txt`、`deployments/` | 对齐现场部署、生产安全、HA 和可观测性 |
@@ -34,6 +35,9 @@
 | `07_alignment/编制基线清单-2026-07-30-10万字扩展版.md` | 当前主线 | 记录2.0版严格汉字统计、102项ID覆盖、输入来源、文件哈希与NOT_EXECUTED边界 |
 | `07_alignment/前端开发流程补充整改清单-2026-08-04.md` | 整改专项 | 将前端开发流程 PDF 的页面设计契约、真实业务事实、全状态矩阵、同视口 Design QA、可访问性和工程门禁映射到现有 canonical ID，并记录 Windows Chrome 六页抽查问题 |
 | `07_alignment/执行态差异清单-2026-08-07.md` | 整改专项 | 对照2026-07-30历史基线，记录会话019fb27f后的Git、canonical账本、候选哈希、证据边界和W0安全集成约束 |
+| `07_alignment/课题一主营业务流程闭环与中期详细设计对齐方案.md` | `DRAFT_ALIGNMENT_CANDIDATE / NOT_EXECUTED` | 以统一分析任务调度中心串联采集、特征、加密识别、恶意检测、机器摘要和可选人读报告；冻结AUTO/MANUAL只作plan source、schedule exact-plan绑定、BusinessPhase/ExecutionNode、FindingConclusion/RunClosure、RunScopeRouter重叠隔离和独立报告策略；不改变现有执行授权 |
+| `07_alignment/统一分析任务调度中心菜单与UI详细设计.md` | `DRAFT_UI_CONTRACT / UI_D1_EIGHT_PAGE_VISUAL_CANDIDATE / NOT_IMPLEMENTED` | 统一“任务调度”一级业务域及任务管理、调度管理、任务编排、运行监控、调度资源五个二级模块；已冻结页面职责、三步即时分析、FindingConclusion/证据状态、权限/API/函数合同和八张核心页面视觉候选，仍未实现、联调或浏览器验收 |
+| `07_alignment/课题一PR里程碑代码级详细设计.md` | 内部三视角设计基线持续加硬；1289/1289均有可领取的设计或绑定下一步；工程执行仍为`NOT_EXECUTED / EXECUTION NO-GO` | 包含M00–M13、212个父任务、每任务terminal TASK-IDX、30个关闭切片、1289个单类型原子PR、developer claim catalog、代码流程图、执行包/plan、逐任务/逐REQ closure、外部DAG、候选provenance、集成BOM和恢复矩阵。首批M00/M01七条父任务已拆为36张精确实现/证据卡，M06-N004新增19张非复用代码级闭环叶（连同既有P007/P008为21行）；当前614项直接目标、675项目标绑定，测试叶必须以结构化事件证明精确测试run+pass，零命中或SKIP不得PASS；`next_action_unclaimable=0`但`formal_execution_blocked=1289`；目标绑定不等于领域实现，结构或领取说明PASS也不等于正式候选、运行证据或发布授权 |
 | `MIGRATION_MAP.md` | 当前主线 | 记录旧路径到新路径的完整迁移映射 |
 
 ## 3. 支撑文档
@@ -42,6 +46,7 @@
 |---|---|---|
 | `00_sources/任务书.docx` | 保留原文 | 课题一指标和验收要求的原始依据 |
 | `00_sources/实施方案.docx` | 保留原文 | 多源异构融合、工程实施和阶段目标依据 |
+| `00_sources/external-engineering-standards/` | 当前约束基线 | UI/可访问性、完整GoF 23种设计模式及函数级代码单元合同、六类实际存储的学习台账、中文项目约束、速查清单和证据追溯矩阵；不等于实现或运行验收 |
 | `01_design/docx/面向园区网络的全流量采集分析系统-产品设计.docx` | 后续同步 | 正式 PRD 输出，后续从主设计稿同步更新 |
 | `01_design/docx/面向园区网络的全流量采集分析系统-技术设计.docx` | 后续同步 | 正式 SDD 输出，后续从主设计稿同步更新 |
 | `01_design/docx/面向园区网络的全流量采集分析系统-技术选型.docx` | 保留 | 技术栈和选型说明 |

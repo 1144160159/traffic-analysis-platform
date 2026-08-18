@@ -1,0 +1,17 @@
+{
+  "reference": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail.png",
+  "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r814.png",
+  "comparison": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r814-visual-compare/reference-vs-r814.png",
+  "difference": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r814-visual-compare/absolute-diff-enhanced.png",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "mae_0_255": 18.650401,
+  "normalized_mae": 0.073139,
+  "rmse_0_255": 42.116291,
+  "normalized_rmse": 0.165162,
+  "changed_channel_ratio": 0.981614,
+  "changed_pixel_ratio": 0.994836,
+  "interpretation": "Whole-frame metrics are diagnostic only: live data and the explicit user overrides (title-only header, right-aligned back action, no pagination total) intentionally differ from the original reference."
+}

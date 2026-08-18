@@ -1,0 +1,59 @@
+flowchart LR
+  User["用户 / 管理员 / 服务调用方"]:::external
+  IdP["Keycloak或其他OIDC Provider"]:::external
+  Cert["客户端证书"]:::external
+  Services["其他Go业务服务"]:::external
+
+  subgraph SW09["SW-09 多租户身份认证与审计软件"]
+    API["Auth Service API<br/>登录 / 刷新 / 退出 / Token / 设置"]:::own
+    OIDC["OIDC适配器<br/>State / Callback / Claims映射"]:::own
+    AuthSvc["认证服务<br/>用户同步与凭证验证"]:::own
+    JWT["JWT签发 / 校验 / 刷新 / 撤销"]:::own
+    Token["API Token创建 / 轮换 / 再生成 / 吊销"]:::own
+    RBAC["角色 / Scope / 租户隔离 / 权限模型"]:::own
+    Settings["租户安全与系统设置"]:::own
+    Repo["用户 / Token / 设置Repository"]:::own
+    Session["会话撤销 / 清理 / 轮换Worker"]:::own
+    UserEvent["用户设置事务Outbox"]:::own
+    Middleware["Auth Middleware与Claims适配器"]:::own
+    MTLS["mTLS证书身份验证器"]:::own
+    AuditPublisher["身份审计事件发布器"]:::own
+    Materializer["Audit Materializer<br/>幂等消费与持久化"]:::own
+  end
+
+  PG[("PostgreSQL<br/>tenant / user / role / token / identity audit")]:::external
+  Redis[("Redis<br/>OIDC State / Session / Revoke / Token Cache")]:::external
+  UserEvents["Kafka user.events.v1"]:::external
+  AuditEvents["Kafka audit.logs"]:::external
+  DLQ["Kafka Audit DLQ"]:::external
+  Credential["JWT / Refresh Token / API Token / Claims"]:::external
+
+  User --> API
+  API --> OIDC
+  OIDC <--> IdP
+  API --> AuthSvc
+  AuthSvc --> JWT
+  AuthSvc --> RBAC
+  API --> Token
+  API --> Settings
+  AuthSvc --> Repo --> PG
+  Token --> Repo
+  Settings --> Repo
+  JWT <--> Redis
+  OIDC <--> Redis
+  Session <--> Redis
+  Token --> Credential
+  JWT --> Credential
+
+  Settings --> UserEvent --> UserEvents
+  API --> AuditPublisher --> AuditEvents
+  AuditEvents --> Materializer --> PG
+  Materializer -->|"永久无效事件"| DLQ
+
+  Services --> Middleware
+  Middleware --> JWT
+  Cert --> MTLS --> Middleware
+
+  classDef own fill:#dbeafe,stroke:#2563eb,color:#172554;
+  classDef external fill:#f3f4f6,stroke:#6b7280,color:#111827;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;

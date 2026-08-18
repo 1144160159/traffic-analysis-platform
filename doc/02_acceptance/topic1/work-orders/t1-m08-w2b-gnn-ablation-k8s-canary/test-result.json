@@ -1,0 +1,124 @@
+{
+  "artifact_kind": "M08_GNN_BASELINE_ABLATION_K8S_CANARY_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": [
+    "T1-M08-N002",
+    "T1-M08-N004",
+    "T1-M08-N005",
+    "T1-M08-N006",
+    "T1-M08-N007"
+  ],
+  "milestone_state": "IMPLEMENTING",
+  "run_id": "0bf9bc6b-196f-4ad4-8017-b88fe0866a06",
+  "status": "PASS",
+  "executed_at": "2026-08-14T15:47:20Z",
+  "environment": {
+    "infrastructure": "kubernetes",
+    "namespace": "argo",
+    "node": "8-2tb",
+    "container_runtime": "containerd",
+    "storage": "emptyDir",
+    "synthetic_fixture": true,
+    "shared_clickhouse_touched": false,
+    "shared_minio_touched": false,
+    "argo_workflow_submitted": false,
+    "production_workflow_patched": false,
+    "production_applied": false
+  },
+  "candidate": {
+    "image": "docker.io/traffic/mlops-trainer:m08-governed-gnn-w2b-20260814-r4",
+    "image_config_sha256": "25fc54fd303fd6a76b80eea061ab3d78f6d15cdb4beb22cd6738223c22c3e018",
+    "containerd_manifest_sha256": "125684d30313b9421bbf9ab7fba864b619b8f632a929f2840308612da45b6091",
+    "source_sha256": {
+      "graph_governance.py": "1a047cc1778b6f5ac38d44cf907b7740e80a519add63a56eec8613724fc84d92",
+      "gnn_training.py": "1ced2859771e837e96c9a2f1f90216fe424455742fd68de33304dfca40555ac1",
+      "governed_evaluation.py": "4b452ec2aa3ff5f7f14e45b7f2ac054a9a3fbad09308f81f186edb9fcaafbbd9",
+      "train_model.py": "9d65215cfab740ecd855587dd602715a58f4f7fd62cd616193a6e4d024a8e4d5",
+      "m08_governed_canary.py": "517a2aa54abed088a1774303eb15b1bde0199bfa1770895e60ce2ceea5d0e75f",
+      "workflow_template": "f9d86b2488641f8bc59c9fb2fd60c6ed67322ec3693953793424555322570833"
+    }
+  },
+  "contracts": {
+    "graph_snapshot_manifest_schema_sha256": "2acf71b308739d76e87031e817a62dfa3b5d1985dca35224cd7d25a87577bfdd",
+    "training_run_manifest_schema_sha256": "6207991192b350e03fad2e11e9a25e459c1e81def2ef30aff3c5bba40840836e",
+    "evaluation_manifest_schema_sha256": "6e99f4d8af6c3520478427323c37b393327b7eaee44c6d33212fe174fd9936f2"
+  },
+  "lineage": {
+    "dataset_id": "2650c61c-2284-55fc-90a9-bdfb928c76c3",
+    "dataset_sha256": "ef14fe680c79ee22386b074d995d3261ccd2df3455ae37fee472e2c59d49175e",
+    "baseline_training_run_sha256": "bf2007230ed45c76d09f04901e2e1c51ed3a3d2509f7ddf83580fb338701d142",
+    "graph_snapshot_id": "1d34d53a-f3f4-5418-ab21-caf650c7f4c2",
+    "graph_snapshot_sha256": "a98469922d8b10c00900061e3a6dd74fc1656b6cf50f81713bcda25e21003828",
+    "gnn_training_run_sha256": "8a665a01f9b605b1e7e65fcad2b3ceaf19aa0a1dea5f760fe728a65df25a4145",
+    "evaluation_id": "bc0dfeb1-0a8f-5067-beb8-cd23aa04622d",
+    "evaluation_sha256": "5b99f6cc0b86326c111a1b0af7168f4bcc3e1a41deb033671deb04662e3217be"
+  },
+  "oracles": {
+    "split_row_counts": {
+      "train": 40,
+      "validation": 16,
+      "test": 16,
+      "open_set": 8
+    },
+    "graph_split_cross_edge_rejection": "PASS",
+    "graph_node_and_edge_artifact_rehash": "PASS",
+    "graph_as_of_and_source_watermark_check": "PASS",
+    "baseline_artifact_count": 5,
+    "gnn_artifact_count": 7,
+    "evaluation_artifact_count": 2,
+    "gnn_variants": [
+      "gnn_full",
+      "gnn_no_edges",
+      "gnn_no_sources"
+    ],
+    "ablation_reference_variant": "non_graph_baseline",
+    "graph_ablation_state": "EVALUATED",
+    "exact_event_population_required": true,
+    "known_attack_recall": 1.0,
+    "normal_false_positive_rate": 0.0,
+    "unknown_recall": 0.0,
+    "activation_authorized": false
+  },
+  "workflow": {
+    "entrypoint": "governed-dataset-training-evaluation",
+    "stages": [
+      ["extract-governed-dataset"],
+      ["train-approved-baseline", "train-gnn-suite"],
+      ["evaluate-governed-baseline"]
+    ],
+    "mirror_semantic_equality": "PASS",
+    "server_side_dry_run": "PASS",
+    "production_template_applied": false
+  },
+  "cleanup": {
+    "run_scoped_resources_removed": true,
+    "post_cleanup_label_query_count": 0,
+    "retained_kubernetes_resources": false
+  },
+  "regressions": [
+    {
+      "command": "python3 -m unittest scripts.test_dataset_governance scripts.test_governed_extract_data scripts.test_governed_train_model scripts.test_gnn_training scripts.test_governed_evaluation -v",
+      "working_directory": "mlops",
+      "status": "PASS",
+      "tests": 17
+    },
+    {
+      "command": "python3 -m unittest scripts.alignment.test_run_m08_governed_k8s_canary -v",
+      "status": "PASS",
+      "tests": 3
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f mlops/workflows/mlops-governed-training-template.yaml -o name",
+      "status": "PASS",
+      "objects": 1
+    }
+  ],
+  "limitations": [
+    "The canary proves the GCN implementation and four-variant ablation seam on a deterministic synthetic graph, not a production M07 graph snapshot population.",
+    "Unknown recall remains 0.0; the result is explicitly ineligible for activation or promotion.",
+    "Real ClickHouse extraction, M07 graph artifact export into MinIO and an actual Argo Workflow run are NOT_EXECUTED.",
+    "N008 explanation, N009-N018 lifecycle, M09-M13 and whole-project release gates remain NO-GO.",
+    "This is internal engineering evidence and is not a CNAS accuracy or false-positive-rate claim."
+  ],
+  "errors": []
+}

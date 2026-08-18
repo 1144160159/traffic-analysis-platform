@@ -1,0 +1,47 @@
+{
+  "artifact_kind": "FUNCTION_TEST_PLAN",
+  "schema_version": "1.0.0",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "candidate_manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+  "commands": [
+    {
+      "id": "TEST-UNIT-ATOMIC",
+      "command": "cd go/control-plane && go test ./internal/asset/repository -run 'TestUpsertAtomic' -count=1",
+      "oracle_ids": ["O-REPLAY", "O-CREATE-ATOMIC", "O-HISTORY-ROLLBACK"]
+    },
+    {
+      "id": "TEST-PG-ATOMIC",
+      "command": "cd go/control-plane && test -n \"$ASSET_ATOMIC_EPHEMERAL_PG_DSN\" && ASSET_ATOMIC_EPHEMERAL_PG_DSN=\"$ASSET_ATOMIC_EPHEMERAL_PG_DSN\" go test ./internal/asset/repository -run '^TestAssetAtomicUpsertPostgresIntegration$' -count=1 -v | tee /tmp/t1-m06-p007-pg.log && ! rg -n --fixed-strings -- '--- SKIP:' /tmp/t1-m06-p007-pg.log",
+      "oracle_ids": ["O-PG-EXACT-EFFECTS", "O-PG-REPLAY", "O-PG-CONFLICT", "O-PG-CAS"]
+    },
+    {
+      "id": "TEST-AUTHZ-TENANT",
+      "command": "cd go/control-plane && go test ./internal/asset/api -run '^TestAtomicAssetUpsertRejects(BodyTenantConflict|Viewer)BeforeDatabase$' -count=1",
+      "oracle_ids": ["O-TENANT-FAIL-CLOSED", "O-AUTHZ-FAIL-CLOSED"]
+    },
+    {
+      "id": "TEST-OUTBOX",
+      "command": "cd go/control-plane && go test ./internal/asset/repository -run '^TestAssetOutboxDispatcher' -count=1",
+      "oracle_ids": ["O-STABLE-ENVELOPE", "O-NO-ACK-PENDING", "O-COLLISION-DEAD"]
+    }
+  ],
+  "required_new_tests": [
+    {
+      "id": "TC-SOURCE-PRECEDENCE",
+      "target_file": "go/control-plane/internal/asset/repository/atomic_upsert_test.go",
+      "oracle": "passive observation cannot overwrite governance fields and older observed_at cannot regress observational facts"
+    },
+    {
+      "id": "TC-CRASH-MATRIX",
+      "target_file": "go/control-plane/internal/asset/repository/atomic_upsert_test.go",
+      "oracle": "failure after each durable write and before commit rolls back every included effect"
+    },
+    {
+      "id": "TC-COMMIT-UNKNOWN",
+      "target_file": "go/control-plane/internal/asset/repository/atomic_upsert_integration_test.go",
+      "oracle": "response loss or ambiguous commit is resolved with the same tenant and idempotency key; no second logical intent is created"
+    }
+  ],
+  "skip_policy": "any missing PostgreSQL or Kafka sentinel is BLOCKED evidence, never PASS",
+  "proof_ceiling": "TEST_PLAN_ONLY_NOT_TEST_RESULT_OR_EXECUTION_AUTHORIZATION"
+}

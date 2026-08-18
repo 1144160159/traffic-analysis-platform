@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN-T1-M06-P007-ROLLBACK-R1",
+  "plan_kind": "ROLLBACK",
+  "status": "DRAFT",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "candidate_manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d",
+  "profile_id": "PROFILE-T1-M06-AUTHORITY-TX-DESIGN-R1",
+  "owner": "role:go-asset-maintainer; identity unresolved",
+  "reviewers": ["role:postgres-transaction-reviewer; identity unresolved"],
+  "approvers": ["role:change-authority; identity unresolved"],
+  "content": {
+    "commands": [],
+    "fixtures": [],
+    "oracles": [],
+    "negative_cases": [],
+    "required_gates": ["G2", "G3"],
+    "environment_constraints": ["the rehearsal may run only on the candidate-bound ephemeral environment", "authority rows and immutable history or audit evidence must never be deleted by rollback"],
+    "output_artifacts": ["rollback rehearsal report", "authority and outbox reconciliation", "forward-fix decision if the commit boundary was crossed"],
+    "triggers": [
+      "same-key replay produces a second durable effect",
+      "tenant or authorization rejection reaches PostgreSQL",
+      "revision CAS overwrites a newer row",
+      "history, audit, outbox or ledger leaves the authority transaction",
+      "commit ambiguity is surfaced as a definitive failure"
+    ],
+    "steps": [
+      "stop or keep default-off the new intake path without deleting authority rows",
+      "restore only the previous compatible implementation at the authorized AST node",
+      "reconcile committed assets, history, audit, outbox and ledger rows by tenant and idempotency identity",
+      "after B15 use a forward fix and same-key receipt recovery; never compensate by deleting immutable facts",
+      "rerun tenant, idempotency, CAS, crash-matrix and broker-ACK oracles on the same candidate, profile and environment"
+    ],
+    "authority_data_handling": ["retain committed assets, asset_events, audit_logs and asset_upsert_requests", "repair authority state only with a new expected revision and auditable forward fix"],
+    "derived_data_handling": ["derived projections may be rebuilt from retained authority events after reconciliation"],
+    "inflight_handling": ["stop intake before code rollback", "resolve every commit-unknown request using the original tenant and idempotency key"],
+    "offset_savepoint_object_handling": ["Kafka offset and broker ACK state are owned by the separate outbox publisher leaf", "no object or savepoint is modified by this WRT rollback"],
+    "recovery_oracles": [
+      {"oracle_id": "O-ROLLBACK-NO-DELETE", "kind": "RECOVERY", "query_or_assertion": "compare authority row identities before and after rollback", "expected_result": "no committed authority, audit or immutable evidence row is deleted"},
+      {"oracle_id": "O-ROLLBACK-EXACT-REPLAY", "kind": "RECOVERY", "query_or_assertion": "retry every ambiguous intent with the original key", "expected_result": "each intent converges to one stored receipt and at most one logical revision"}
+    ],
+    "forward_fix_only": true,
+    "signals": [],
+    "queries": [],
+    "window": null,
+    "thresholds": [],
+    "stop_action": null,
+    "rollback_plan_id": null,
+    "oncall_owner": "role:asset-service-oncall; identity unresolved",
+    "proof_ceiling": "DESIGN_ONLY"
+  }
+}

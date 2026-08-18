@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p904-wrt-n004-asset-event-topic-rail/candidate-manifest.json",
+    "manifest_sha256": "dd6fae567196a77bfc165f562272c52147e4bc0003098dcbed11a786f07e4b72"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.25.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-P904-CALLER-Load",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/config/loader.go",
+    "package": "config",
+    "qualified_symbol": "config.Load",
+    "declaration_kind": "FUNCTION",
+    "query": "Load",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func Load() (*Config, error)",
+    "candidate_blob_sha256": "340861cc42111dc0e7d6401c8d899250d4845656f2c876ed3f600fb4304f500e",
+    "source_span_sha256": "f87542e22b1a0b66499a9214edeb8cca67e35a8723accdb15c86b3bb0dbfc267",
+    "normalized_ast_sha256": "6ed92decfe2cd67576cf04e994f507972dacc8a468e39735d5f1fef493ef6378",
+    "start": {
+      "byte_offset": 174,
+      "line": 12,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 500,
+      "line": 26,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "env.Parse",
+        "line": 14
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 15
+      },
+      {
+        "expression": "os.Getenv",
+        "line": 18
+      },
+      {
+        "expression": "cfg.validate",
+        "line": 21
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T08:30:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

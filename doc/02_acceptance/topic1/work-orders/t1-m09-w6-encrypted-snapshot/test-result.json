@@ -1,0 +1,38 @@
+{
+  "artifact_kind": "M09_ENCRYPTED_SNAPSHOT_TEST_RESULT",
+  "feature_flag_default": false,
+  "kubernetes": {
+    "completed_at": "2026-08-15T13:35:50Z",
+    "container_id": "containerd://a041e6443a68d96c909a2733c6ab2b38ab221da2391840adc434ddcbe6960c30",
+    "image": "docker.io/traffic/alert-service:m09-n007-encrypted-snapshot-20260815-r3",
+    "image_id": "sha256:e4ea67944a8e20653c822385c5cf76bc28346430351fd14e9c0c047f1b0c3a61",
+    "job_name": "m09-n007-encrypted-snapshot-d2a366723f",
+    "job_uid": "f305ecd5-b131-4842-b650-50da9b7a4244",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m09-n007-encrypted-snapshot-d2a366723f-ttllq",
+    "pod_uid": "cc7c8b76-294c-4122-9caa-520d14db479c",
+    "shared_clickhouse_read_only": true,
+    "shared_clickhouse_touched": false,
+    "shared_flink_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_postgres_touched": false,
+    "started_at": "2026-08-15T13:35:45Z"
+  },
+  "production_applied": false,
+  "resource_budgets": {
+    "maximum_evidence_refs": 1000,
+    "maximum_sessions": 500,
+    "maximum_window_seconds": 604800,
+    "response_bytes": 4194304,
+    "server_timeout_ms": 2000
+  },
+  "run_id": "d2a36672-3ff3-4d5b-bf64-758bb474f5a2",
+  "run_scoped_resources_removed": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N007",
+  "test_binary_sha256": "06d50444053b60bf1ad6cc58d17eca9f324edb398e313bf27db72872a9176288",
+  "test_output_sha256": "1c40521183ea9a0be7940fada73a7c4f66ed3a0044b229cf5485154cdb87e697",
+  "test_pattern": "TestEncryptedTraffic(Snapshot|Randomness|Indicators|FlowMetadata)"
+}

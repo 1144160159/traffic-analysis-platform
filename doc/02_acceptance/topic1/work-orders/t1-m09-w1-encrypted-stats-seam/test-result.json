@@ -1,0 +1,92 @@
+{
+  "artifact_kind": "M09_ENCRYPTED_STATS_SEAM_TEST_RESULT",
+  "schema_version": "1.0.0",
+  "task_id": "T1-M09-N002",
+  "atomic_pr_id": "T1-M09-P003-REF-n002-s1",
+  "status": "PASS",
+  "scope": {
+    "route": "GET /api/v1/encrypted-traffic/stats",
+    "change": "behavior-preserving handler/service seam extraction",
+    "runtime_state": "no route, permission, response, query, migration, event-version, or feature-flag change"
+  },
+  "candidate": {
+    "source_files": {
+      "go/control-plane/internal/alert/api/encrypted_traffic_stats_service.go": "55d6808fcebe5f971e73ec7f2c1074df7194e587dca94a41ed3e81c21fe71531",
+      "go/control-plane/internal/alert/api/encrypted_traffic_stats_service_test.go": "e4335671b0ea669ce24566cab0fd283c507c8c603b8dee048e56cbc52122b472",
+      "go/control-plane/internal/alert/api/handler_system.go": "45906ae3ff39c431db8155941e67c8064b8c95eef794637f8b3935623612ca06",
+      "go/control-plane/internal/alert/api/handler_product_pages.go": "4e4ca722edcd2ea16bf2779fbf0e20e0ce2fae8ff931bba3508de09223922baa",
+      "go/control-plane/internal/alert/api/handler_product_pages_test.go": "42208ed69ec27890c17dc97d5456d55a3002f816b242e7e4059980da836f029a"
+    },
+    "rollback_runbook": {
+      "path": "doc/07_alignment/runbooks/T1-M09-N002-encrypted-traffic-stats-seam-rollback.md",
+      "sha256": "ed1a3d09275bd6fdba763e0560f4091ac91b65d265e05ee1710c3c2d52ef6a75"
+    },
+    "kubernetes_runner": {
+      "path": "scripts/alignment/run_m09_encrypted_stats_seam_k8s.py",
+      "sha256": "88bb593e8180e9570c81b1d05d1b1a08ff63b6516e20581b3938d64b4360a6fa"
+    },
+    "test_image": {
+      "reference": "traffic/alert-service:m09-n002-encrypted-stats-20260815-r1",
+      "image_id": "sha256:7aa6d74bd8ace111d0d109383e3d9f8d042264b551fc0fd32ecfad5694490cfa"
+    }
+  },
+  "characterized_invariants": [
+    "authenticated tenant overrides an untrusted tenant_id query parameter",
+    "start_time and end_time are passed unchanged to the service boundary",
+    "success remains HTTP 200 with the existing JSON success envelope",
+    "required traffic.sessions read errors remain HTTP 500 with code INTERNAL",
+    "encrypted total remains tls plus quic plus ssh and ratio remains encrypted divided by observed",
+    "feature_fp discovery and enrichment failures remain optional and do not fail base statistics",
+    "ClickHouse query order and tenant/time arguments remain unchanged"
+  ],
+  "local_validation": {
+    "targeted_go_test": {
+      "command": "go test ./internal/alert/api -run 'Test(GetEncryptedTrafficStats|ClickHouseEncryptedTrafficStatsService|EncryptedTraffic)' -count=1",
+      "status": "PASS"
+    },
+    "package_go_test": {
+      "command": "go test ./internal/alert/api -count=1",
+      "status": "PASS"
+    },
+    "go_vet": {
+      "command": "go vet ./internal/alert/api",
+      "status": "PASS"
+    },
+    "diff_check": "PASS"
+  },
+  "kubernetes_validation": {
+    "run_id": "3f8a8937-aa4c-4ad5-b588-8dfc365931a1",
+    "namespace": "traffic-analysis",
+    "job_name": "m09-n002-stats-3f8a8937aa",
+    "job_uid": "eb0eae73-9a0d-4ebb-ac03-eb5d92a710bf",
+    "pod_name": "m09-n002-stats-3f8a8937aa-jhnfl",
+    "pod_uid": "86c95ed1-c52d-486a-9e64-ce9aed51165b",
+    "node": "8-2tb",
+    "container_id": "containerd://5ae02f10dbfdca18d2a627d55f85c3a3748e13d7c9627ce2fe1462b9fa813739",
+    "image_id": "sha256:7aa6d74bd8ace111d0d109383e3d9f8d042264b551fc0fd32ecfad5694490cfa",
+    "started_at": "2026-08-15T12:07:32Z",
+    "completed_at": "2026-08-15T12:09:44Z",
+    "test_pattern": "Test(GetEncryptedTrafficStats|ClickHouseEncryptedTrafficStatsService|EncryptedTraffic)",
+    "test_output_sha256": "94322920e09a15afa61492e294d22774db7d77b524bc444af52ccfda81297e51",
+    "status": "PASS",
+    "run_scoped_resources_removed": true,
+    "production_applied": false,
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_flink_touched": false
+  },
+  "claim_boundary": {
+    "proves": [
+      "the encrypted-traffic stats vertical slice is separated behind a tested service seam",
+      "the characterized local and isolated-Kubernetes behavior is equivalent for the covered cases"
+    ],
+    "does_not_prove": [
+      "production rollout",
+      "shared ClickHouse behavior",
+      "M09 milestone completion",
+      "encrypted traffic product correctness outside the stats route"
+    ]
+  }
+}

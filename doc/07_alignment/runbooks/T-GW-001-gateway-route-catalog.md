@@ -4,7 +4,7 @@
 
 本候选把 APISIX standalone 路由、REST OpenAPI 操作和 Kubernetes Service 收敛为一个版本化目录，固定每条路由的 trust zone、method/path、upstream、认证、scope、tenant 来源、请求限制、超时/重试、限流、CORS、缓存、WebSocket、审计、owner 和回滚语义。
 
-目录完整性通过不代表网关安全完成。当前候选明确记录现有 APISIX 路由缺少网关认证、限流、请求校验、body limit 和显式 timeout/retry；`production_applied=false`，不得把服务层返回 401 或管理 UI 能打开写成 T-GW-001 已关闭。
+目录完整性通过不代表网关生产发布完成。T1-M10-N006 候选已经物化 OIDC、限流、请求校验、body limit、request ID 和显式 timeout/retry，但 `production_applied=false`；live 集群仍是旧 57-route ConfigMap，且 OIDC Secret/CA 未就绪，不得把仓库零 gap 写成现场完成。
 
 ## 权威源
 
@@ -19,11 +19,11 @@
 
 ## 本轮已关闭的声明态问题
 
-1. 57 条 APISIX 路由全部登记，route ID 唯一；91 个 OpenAPI 操作均有路由覆盖。
+1. 58 条 APISIX 路由全部登记，route ID 唯一；143 个 OpenAPI 操作均有路由覆盖。
 2. 原缺失的 37 个 `x-required-scope` 已使用 IAM scope 真源补齐；校验器禁止再次缺失。
 3. `/minio/*` 的 `minio-proxy.minio.svc:9002` 原只有 Deployment、没有仓库 Service；现已在 `06-minio.yaml` 补齐 ClusterIP Service。
 4. APISIX admin API 必须保持 ClusterIP，公共 APISIX Service 不得暴露 9180；负向测试会阻断 NodePort/admin port 漂移。
-5. 未认证、未限流等现状不能被隐藏：受保护路由缺插件时必须保留 blocking gap。
+5. 52 条受保护 route 均声明 bearer-only OIDC、正数 body limit、请求校验和限流；全部 route 声明 `X-Request-ID`，全部 upstream 声明显式 timeout 与 `retries=0`。任何缺失都会重新形成 blocking gap。
 
 ## 仓库门禁
 
@@ -60,4 +60,4 @@ python3 scripts/alignment/capture_gateway_route_catalog.py \
 
 ## 关闭条件
 
-T-GW-001 只有在 blocking gap 清零、生产候选 bundle 与 route/plugin/upstream hash 对账、浏览器和 API 负例通过、跨组件 trace/audit 可证明、回滚演练及 T+0/T+1/T+3/T+7 观察完成后才能关闭。当前只可登记为 `IMPLEMENTING`。
+T-GW-001 只有在 blocking gap 清零、生产候选 bundle 与 route/plugin/upstream hash 对账、浏览器和 API 负例通过、跨组件 trace/audit 可证明、回滚演练及 T+0/T+1/T+3/T+7 观察完成后才能关闭。当前仓库策略可登记为 `IMPLEMENTED_DEFAULT_OFF`，live 发布仍为 `BLOCKED_ROUTE_DIFF`。

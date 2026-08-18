@@ -1,0 +1,295 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+    "manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.24.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-P007-UpsertAtomic",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/repository/atomic_upsert.go",
+    "package": "repository",
+    "qualified_symbol": "repository.(*AssetRepository).UpsertAtomic",
+    "declaration_kind": "METHOD",
+    "query": "(*AssetRepository).UpsertAtomic",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func (r *AssetRepository) UpsertAtomic(\n\tctx context.Context,\n\trec *config.AssetRecord,\n\tcommand config.AssetUpsertCommand,\n) (*config.AssetUpsertResult, error)",
+    "candidate_blob_sha256": "52548d4013434d66f3c7741b57c811179c04d850dcd3e2ab27d6c2d1db6167c7",
+    "source_span_sha256": "a3ad1ebaf3df27b4ec129047e359f3ab2a7f1df452bf8db644d0063812095c0a",
+    "normalized_ast_sha256": "d59c0101a8f67cd1921077e940a18354ad71c037c11873dc59d6cc143c2f318f",
+    "start": {
+      "byte_offset": 1208,
+      "line": 38,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 10978,
+      "line": 302,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "json.Marshal",
+        "line": 55
+      },
+      {
+        "expression": "command.ObservedAt.UTC",
+        "line": 63
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 67
+      },
+      {
+        "expression": "sha256.Sum256",
+        "line": 69
+      },
+      {
+        "expression": "hex.EncodeToString",
+        "line": 70
+      },
+      {
+        "expression": "r.db.BeginTx",
+        "line": 74
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 76
+      },
+      {
+        "expression": "tx.Rollback",
+        "line": 78
+      },
+      {
+        "expression": "tx.ExecContext",
+        "line": 82
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 86
+      },
+      {
+        "expression": "tx.QueryRowContext",
+        "line": 91
+      },
+      {
+        "expression": "tx.QueryRowContext(ctx, `\n\t\tSELECT request_hash,actor,asset_id::text,created,resulting_revision,\n\t\t       event_id::text,outbox_id,trace_id\n\t\tFROM asset_upsert_requests\n\t\tWHERE tenant_id=$1 AND idempotency_key=$2\n\t\tFOR UPDATE`,\n\trec.TenantID, command.IdempotencyKey,\n).Scan",
+        "line": 91
+      },
+      {
+        "expression": "tx.Commit",
+        "line": 107
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 108
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 113
+      },
+      {
+        "expression": "tx.ExecContext",
+        "line": 117
+      },
+      {
+        "expression": "fmt.Sprintf",
+        "line": 119
+      },
+      {
+        "expression": "len",
+        "line": 119
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 121
+      },
+      {
+        "expression": "findAssetByMACTx",
+        "line": 124
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 126
+      },
+      {
+        "expression": "time.Now",
+        "line": 129
+      },
+      {
+        "expression": "time.Now().UTC",
+        "line": 129
+      },
+      {
+        "expression": "command.ObservedAt.UTC",
+        "line": 130
+      },
+      {
+        "expression": "observedAt.IsZero",
+        "line": 131
+      },
+      {
+        "expression": "uuid.NewString",
+        "line": 137
+      },
+      {
+        "expression": "uuid.NewSHA1",
+        "line": 148
+      },
+      {
+        "expression": "uuid.NewSHA1(\n\tuuid.NameSpaceURL,\n\t[]byte(\"traffic.asset:\"+rec.TenantID+\":\"+rec.MACAddress),\n).String",
+        "line": 148
+      },
+      {
+        "expression": "[]byte",
+        "line": 150
+      },
+      {
+        "expression": "ensureAssetDefaults",
+        "line": 154
+      },
+      {
+        "expression": "tx.QueryRowContext",
+        "line": 158
+      },
+      {
+        "expression": "tx.QueryRowContext(ctx, `\n\t\t\tINSERT INTO assets (\n\t\t\t  asset_id,revision,display_code,tenant_id,asset_type,status,ip_address,\n\t\t\t  mac_address,hostname,vendor,os_type,source,vlan_id,switch_port,department,\n\t\t\t  campus,owner,criticality,tags,metadata,first_seen,last_seen\n\t\t\t) VALUES (\n\t\t\t  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22\n\t\t\t)\n\t\t\tRETURNING asset_id::text,revision`,\n\trec.AssetID, rec.Revision, rec.DisplayCode, rec.TenantID, rec.AssetType, rec.Status,\n\trec.IPAddress, rec.MACAddress, rec.Hostname, rec.Vendor, rec.OSType, rec.Source,\n\trec.VlanID, rec.SwitchPort, rec.Department, rec.Campus, rec.Owner, rec.Criticality,\n\tjsonObject(rec.Tags), jsonObject(rec.Metadata), rec.FirstSeen, rec.LastSeen,\n).Scan",
+        "line": 158
+      },
+      {
+        "expression": "jsonObject",
+        "line": 170
+      },
+      {
+        "expression": "jsonObject",
+        "line": 170
+      },
+      {
+        "expression": "mergeAssetGovernance",
+        "line": 183
+      },
+      {
+        "expression": "rec.LastSeen.Before",
+        "line": 185
+      },
+      {
+        "expression": "json.Marshal",
+        "line": 188
+      },
+      {
+        "expression": "tx.QueryRowContext",
+        "line": 189
+      },
+      {
+        "expression": "tx.QueryRowContext(ctx, `\n\t\t\tUPDATE assets\n\t\t\tSET display_code=$1,asset_type=$2,status=$3,ip_address=$4,hostname=$5,\n\t\t\t    vendor=$6,os_type=$7,source=$8,vlan_id=$9,switch_port=$10,\n\t\t\t    department=$11,campus=$12,owner=$13,criticality=$14,tags=$15,\n\t\t\t    metadata=$16,last_seen=$17,revision=revision+1,updated_at=now()\n\t\t\tWHERE tenant_id=$18 AND asset_id=$19 AND revision=$20\n\t\t\tRETURNING asset_id::text,revision`,\n\trec.DisplayCode, rec.AssetType, rec.Status, rec.IPAddress, rec.Hostname,\n\trec.Vendor, rec.OSType, rec.Source, rec.VlanID, rec.SwitchPort,\n\trec.Department, rec.Campus, rec.Owner, rec.Criticality,\n\tjsonObject(rec.Tags), jsonObject(rec.Metadata), rec.LastSeen,\n\trec.TenantID, existing.AssetID, effectiveExpectedRevision,\n).Scan",
+        "line": 189
+      },
+      {
+        "expression": "jsonObject",
+        "line": 200
+      },
+      {
+        "expression": "jsonObject",
+        "line": 200
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 208
+      },
+      {
+        "expression": "json.Marshal",
+        "line": 212
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 214
+      },
+      {
+        "expression": "tx.ExecContext",
+        "line": 224
+      },
+      {
+        "expression": "jsonBytesOrNil",
+        "line": 229
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 231
+      },
+      {
+        "expression": "json.Marshal",
+        "line": 234
+      },
+      {
+        "expression": "tx.ExecContext",
+        "line": 244
+      },
+      {
+        "expression": "strings.ReplaceAll",
+        "line": 250
+      },
+      {
+        "expression": "strings.ToUpper",
+        "line": 250
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 253
+      },
+      {
+        "expression": "json.Marshal",
+        "line": 256
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 272
+      },
+      {
+        "expression": "tx.QueryRowContext",
+        "line": 274
+      },
+      {
+        "expression": "tx.QueryRowContext(ctx, `\n\t\tINSERT INTO asset_event_outbox (\n\t\t  event_id,tenant_id,asset_id,aggregate_version,schema_version,\n\t\t  partition_key,event_type,payload,status,available_at\n\t\t) VALUES ($1,$2,$3,$4,2,$5,'traffic.asset.v2.AssetUpserted',$6,'pending',now())\n\t\tRETURNING outbox_id`,\n\tresult.EventID, rec.TenantID, result.AssetID, result.Revision,\n\trec.TenantID+\":\"+result.AssetID, payload,\n).Scan",
+        "line": 274
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 283
+      },
+      {
+        "expression": "tx.ExecContext",
+        "line": 286
+      },
+      {
+        "expression": "uuid.NewString",
+        "line": 291
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 295
+      },
+      {
+        "expression": "tx.Commit",
+        "line": 298
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 299
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T04:00:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

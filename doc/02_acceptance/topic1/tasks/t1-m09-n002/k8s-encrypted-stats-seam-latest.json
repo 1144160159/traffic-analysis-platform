@@ -1,0 +1,28 @@
+{
+  "artifact_kind": "M09_ENCRYPTED_STATS_SEAM_TEST_RESULT",
+  "kubernetes": {
+    "completed_at": "2026-08-15T23:12:52Z",
+    "container_id": "containerd://d7e8d438fee84d29646f9192155d01bd139c05e9e299ce1a9ca590c4e53c6d8c",
+    "image": "docker.io/traffic/alert-service:m09-n002-encrypted-stats-20260815-r1",
+    "image_id": "sha256:7aa6d74bd8ace111d0d109383e3d9f8d042264b551fc0fd32ecfad5694490cfa",
+    "job_name": "m09-n002-stats-c511100e15",
+    "job_uid": "8582ec51-55cb-47a9-b652-6c6631bfdb12",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m09-n002-stats-c511100e15-jkzgx",
+    "pod_uid": "75ed3be0-6643-4dcc-aaa2-71b3a59a4b90",
+    "shared_clickhouse_touched": false,
+    "shared_flink_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_postgres_touched": false,
+    "started_at": "2026-08-15T23:12:49Z"
+  },
+  "production_applied": false,
+  "run_id": "c511100e-159e-427c-8c58-8ff3e2546470",
+  "run_scoped_resources_removed": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N002",
+  "test_output_sha256": "94322920e09a15afa61492e294d22774db7d77b524bc444af52ccfda81297e51",
+  "test_pattern": "Test(GetEncryptedTrafficStats|ClickHouseEncryptedTrafficStatsService|EncryptedTraffic)"
+}

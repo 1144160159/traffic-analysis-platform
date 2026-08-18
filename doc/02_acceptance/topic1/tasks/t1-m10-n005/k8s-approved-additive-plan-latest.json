@@ -1,0 +1,76 @@
+{
+  "acceptance_status": "BLOCKED_UNAPPROVED",
+  "allowed_claims": [
+    "The N005 apply guard failed closed in a non-root read-only Kubernetes Job before starting a mutating client"
+  ],
+  "artifact_kind": "M10_APPROVED_ADDITIVE_PLAN_K8S_TEST_RESULT",
+  "authorization_decision": {
+    "artifact_kind": "M10_ADDITIVE_APPLY_AUTHORIZATION_DECISION",
+    "candidate_id": null,
+    "decision": "BLOCKED",
+    "mutating_client_started": false,
+    "plan_basis_sha256": "30bcc7e6430abc1d9af6889bf619740e7d573a7c6c47765f811bb4d0727aed0a",
+    "production_applied": false,
+    "reason_count": 4,
+    "reasons": [
+      "apply_allowed is not true",
+      "every artifact must be classified ADDITIVE_STATIC",
+      "plan retains blocking codes",
+      "plan status is not AUTHORIZED"
+    ],
+    "shared_infrastructure_touched": false,
+    "task_id": "T1-M10-N005"
+  },
+  "blocking_codes": [
+    "CURRENT_CANDIDATE_G1_RECEIPT_REQUIRED",
+    "DEPLOYABLE_CANDIDATE_REQUIRED",
+    "INDEPENDENT_RELEASE_APPROVAL_REQUIRED",
+    "N004_PREFLIGHT_G6_PASS_REQUIRED",
+    "NON_ADDITIVE_ARTIFACT_PRESENT"
+  ],
+  "candidate_id": null,
+  "does_not_prove": [
+    "any artifact is approved",
+    "G1 or G6 passed",
+    "replay was executed against a database or Kafka",
+    "half-failure recovery was exercised against shared infrastructure",
+    "production application is authorized"
+  ],
+  "engineering_status": "PASS",
+  "environment_kind": "KUBERNETES",
+  "kubernetes_job": {
+    "completed_at": "2026-08-16T02:06:34Z",
+    "container_id": "containerd://42a91a6a7541d7f7ebb4f85a1582eef2c77a3ffbbf10be91920cdd2c64a64315",
+    "image": "docker.io/traffic/m10-approved-additive-plan:m10-n005-20260816-r1",
+    "image_id": "sha256:3b4f3966ed4d0827827d39721db774b5fbbecccaa14918b18f3bc40e833f58d7",
+    "job_name": "m10-n005-additive-146fad8cf6",
+    "job_uid": "2b00a105-740b-4b77-9745-057d0ea57f94",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m10-n005-additive-146fad8cf6-dbpd8",
+    "pod_uid": "1335f871-4136-4cbb-b12e-3ee4652ce63d",
+    "started_at": "2026-08-16T02:06:30Z"
+  },
+  "plan_status": "BLOCKED_UNAPPROVED",
+  "production_applied": false,
+  "profile_id": "M10-N005-K8S-READONLY-FAIL-CLOSED-V1",
+  "required_gates": {
+    "G0": "BLOCKED_BY_N002",
+    "G1": "NOT_EXECUTED",
+    "G6": "BLOCKED"
+  },
+  "run_id": "146fad8c-f63e-4dfc-a6c4-62b1d2da02ee",
+  "run_scoped_resources_removed": true,
+  "shared_infrastructure_touched": false,
+  "source_sha256": {
+    "contracts/alignment/m10-approved-additive-plan.schema.json": "1e58b23f96b288578e7106333701979dcf2bd8fd31cbc576e609625f38c4a36b",
+    "deployments/releases/topic1/m10-approved-additive-plan.v1.json": "49eb8ebb7bb2038a295864f5d3bfbd0cd0951216781bc4a2805cdb0134e0b11f",
+    "scripts/alignment/Dockerfile.m10-approved-additive-plan": "8abf068237640fa9ae023b6a3df0e9b380f18ed7dd64d762ba56d72ed4e74d59",
+    "scripts/alignment/build_m10_approved_additive_plan.py": "ff7281f6afe45efb05bea4e8655d73812bd0cea2aef9dcb2d1b86eb80ac733fd",
+    "scripts/alignment/guard_m10_approved_additive_apply.py": "54d0feebc78fb562723b4f84d4f0ded86efb57d23140a8207e323a9fe8fbe3fd",
+    "scripts/alignment/run_m10_approved_additive_plan_k8s.py": "872e1e09a17e624854789901f7ca777c11050f2ca6b855aff8ef1564c513b70d",
+    "scripts/alignment/verify_m10_approved_additive_plan.py": "6f2a96366c43412fb4bc94e7f6f28e83c03ed07b5ba31a6295f451515d02604b"
+  },
+  "status": "PASS",
+  "task_id": "T1-M10-N005"
+}

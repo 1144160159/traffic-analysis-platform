@@ -1,0 +1,73 @@
+{
+  "acceptance_status": "BLOCKED_NO_DEPLOYABLE_CANDIDATE",
+  "allowed_claims": [
+    "The provenance guard reproduced the expected fail-closed result in a read-only Kubernetes Job"
+  ],
+  "artifact_kind": "M10_CANDIDATE_PROVENANCE_GUARD_TEST_RESULT",
+  "candidate_id": null,
+  "does_not_prove": [
+    "candidate provenance is complete",
+    "G0, G1, or G6 passed",
+    "a deployable candidate exists",
+    "production promotion is authorized"
+  ],
+  "engineering_status": "PASS",
+  "environment_kind": "KUBERNETES",
+  "excluded_binary_sha256": {
+    "go/control-plane/alert-service": "39d0960af62f46f285e3efa1c47720841750592a963a0a56201827f87efd9217",
+    "go/control-plane/deployments/docker/alert-service": "d2b11b59a83e8f6613617dfdf9151a00076cb4c5e85cb8cf72ebf23c77c90073"
+  },
+  "kubernetes_job": {
+    "completed_at": "2026-08-16T01:35:30Z",
+    "container_id": "containerd://e4f45c0cb7a9a916cb3a6eabf40bcb69fdef08f661218192e9101618f36ed6a9",
+    "image": "docker.io/traffic/m10-candidate-provenance:m10-n002-20260816-r1",
+    "image_id": "sha256:c200b0dffb19806dec5000de94302a437700555e3f910aeeaac9f8cc9970f716",
+    "job_name": "m10-n002-provenance-7d1a0d0a28",
+    "job_uid": "9735e173-b8d8-4279-89a6-2b5cfc238d76",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m10-n002-provenance-7d1a0d0a28-nhmss",
+    "pod_uid": "d93faa6e-cb9c-4482-9293-1502ecd77373",
+    "started_at": "2026-08-16T01:35:25Z"
+  },
+  "production_applied": false,
+  "profile_id": "M10-N002-K8S-READONLY-PROVENANCE-FAIL-CLOSED-V1",
+  "required_gates": {
+    "G0": "BLOCKED",
+    "G1": "NOT_EXECUTED",
+    "G6": "NOT_EXECUTED"
+  },
+  "run_id": "7d1a0d0a-28cb-4e46-b75f-d4ab7361f4d0",
+  "run_scoped_resources_removed": true,
+  "shared_infrastructure_touched": false,
+  "source_sha256": {
+    ".github/workflows/mlops-cd.yml": "0e6e76802f3a5bedc86b2ab286c9ad2e6685a869093945409acbf65ff2c89fb5",
+    "Makefile": "8e93f6e432a51f680a0ddf3156d6c4cdefc5aba4d35af6178657c821c932bdec",
+    "deployments/kubernetes/applications/go-services.yaml": "62502c80b03271589f877e16c79aa3923bd40fa10fab62132c792c4689e5e204",
+    "deployments/kubernetes/applications/probe-agent.yaml": "031450cb23fab853a9af25bef6b1f22409b1cbf5a3a0713692fca792c62ccae1",
+    "deployments/kubernetes/applications/web-ui.yaml": "ab956d2286aab8c5dc14d385e5d0989e74e973cd6e2f592e0a02d20dc37bf6e1",
+    "go/control-plane/deployments/docker/Dockerfile.alert-service.overlay": "6263a9253925ebc3c5afb733968a7804ba87c9f5d188578807a51411662ef1a3",
+    "go/control-plane/deployments/docker/Dockerfile.alert-service.prebuilt.overlay": "82e9a12f62630562d6706676351e5f6dc1090bc1c20b96092a3dc9530de2842a",
+    "scripts/alignment/Dockerfile.m10-candidate-provenance": "99aaae96bb73a8052fe227cd23ee029606cc9b8dfdf90e8973fd1a3038a03b00",
+    "scripts/alignment/candidate_snapshot.py": "0fe68cfadc598a5d87a24dddf9985607c2606b8287e95581a98fc87d613e1d43",
+    "scripts/alignment/capture_g0.py": "8015c68700ec24d5396355aad23c7faf6db6d6de318ec99c6a5a1c00e9ef32d4",
+    "scripts/alignment/run_m10_candidate_provenance_guard_k8s.py": "bcf5063bfa99c0e0b5e8f73347ccaee212bdbfa88af5cd5eb04f70b97434d538",
+    "scripts/alignment/verify_m10_candidate_provenance_k8s.py": "019037776c2d58ffb798b0c2cdce1fdf6f808bacdf273262c660382c11949875"
+  },
+  "status": "PASS",
+  "task_id": "T1-M10-N002",
+  "validation": {
+    "active_image_count": 11,
+    "blocking_codes": [
+      "EXCLUDED_PREBUILT_ACTIVE_SELECTOR_UNPROVEN",
+      "PROVENANCE_REGISTRATION_REQUIRED"
+    ],
+    "errors": [],
+    "excluded_prebuilt_count": 2,
+    "g0_status": "BLOCKED",
+    "g1_status": "NOT_EXECUTED",
+    "g6_status": "NOT_EXECUTED",
+    "guard_status": "BLOCKED",
+    "status": "PASS"
+  }
+}

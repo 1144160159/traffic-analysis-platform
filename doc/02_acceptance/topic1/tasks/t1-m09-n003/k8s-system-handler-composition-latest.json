@@ -1,0 +1,28 @@
+{
+  "artifact_kind": "M09_SYSTEM_HANDLER_COMPOSITION_TEST_RESULT",
+  "kubernetes": {
+    "completed_at": "2026-08-15T12:15:04Z",
+    "container_id": "containerd://63f6b5f7c98f46751fd4f39342a0aa091e61f775c1d96cf5bcaeac22eca9743b",
+    "image": "docker.io/traffic/alert-service:m09-n003-system-handler-composition-20260815-r1",
+    "image_id": "sha256:ddae5481a32953b0439997b1e4b81aefc8aef9e63182a528804f1fb851aa12e6",
+    "job_name": "m09-n003-wiring-ec8f284b7f",
+    "job_uid": "19d71662-4b66-4500-9985-af2af11b959c",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m09-n003-wiring-ec8f284b7f-lcqml",
+    "pod_uid": "c1424e1a-4a5d-4626-aba0-f78b98608e35",
+    "shared_clickhouse_touched": false,
+    "shared_flink_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_postgres_touched": false,
+    "started_at": "2026-08-15T12:15:01Z"
+  },
+  "production_applied": false,
+  "run_id": "ec8f284b-7f71-4579-95f9-4ef3a1d0b6a1",
+  "run_scoped_resources_removed": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N003",
+  "test_output_sha256": "5ea55a7e01c95da8732427027cf426159d7b67fc83960e670a00eef59ff49a27",
+  "test_pattern": "TestNewAlertSystemHandlerWiresEncryptedTrafficStatsSlice"
+}

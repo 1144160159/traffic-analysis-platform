@@ -1,0 +1,24 @@
+{
+  "artifact_kind": "FUNCTION_EVIDENCE_PLAN",
+  "schema_version": "1.0.0",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "required_artifacts": [
+    "candidate manifest and git clean/parent/range receipt",
+    "locator resolver receipt and function exact-set digest",
+    "unit test result with exact command and stdout digest",
+    "PostgreSQL integration result with before/after row counts for assets, asset_events, audit_logs, asset_event_outbox and asset_upsert_requests",
+    "negative case report with stable rejection codes",
+    "rollback drill result",
+    "signed execution overlay and required G2/G3 profile receipts"
+  ],
+  "identity_fields": [
+    "atomic_pr_id", "candidate_manifest_sha256", "profile_id", "environment_id", "run_id", "started_at", "finished_at"
+  ],
+  "forbidden_substitutions": [
+    "go test exit 0 cannot replace PostgreSQL effect reconciliation",
+    "Kafka integration SKIP cannot replace broker ACK evidence",
+    "design review cannot replace signed execution overlay",
+    "nonempty receipt ID cannot replace payload, role, candidate and effect-hash validation"
+  ],
+  "proof_ceiling": "EVIDENCE_PLAN_ONLY_NOT_GATE_PASS"
+}

@@ -1,0 +1,137 @@
+{
+  "run_id": "attack-chains-r781-final",
+  "generated_at": "2026-07-26T07:54:50.836Z",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224 -> 9222",
+  "browser": "Chrome/150.0.7871.182",
+  "route": "/attack-chains",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "screenshot": "evidence/ui-image-breakdowns/pages/attack-chains/implementation-r781-final.png",
+  "counts": {
+    "shell": 1,
+    "toolbar": 1,
+    "canvas": 1,
+    "phaseColumns": 6,
+    "evidenceRows": 6,
+    "recommendationRows": 6,
+    "matrixItems": 6,
+    "pathRows": 5
+  },
+  "geometry": {
+    "canvas": {
+      "x": 183.33334350585938,
+      "y": 207.33334350585938,
+      "width": 1197.3334045410156,
+      "height": 532.3333435058594
+    },
+    "rail": {
+      "x": 1389.3333740234375,
+      "y": 132.6666717529297,
+      "width": 512,
+      "height": 847.6667022705078
+    }
+  },
+  "document": {
+    "width": 1920,
+    "height": 1080
+  },
+  "selected_chain_text": "疑似 C2 隧道通信",
+  "attack_chain_resources": [
+    "http://10.0.5.8:30180/api/v1/attack-chains",
+    "http://10.0.5.8:30180/api/v1/attack-chains",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726",
+    "http://10.0.5.8:30180/api/v1/attack-chains"
+  ],
+  "api_summary": {
+    "attack_chains": {
+      "status": 200,
+      "count": 3,
+      "total": 8424123,
+      "first_id": "attack-chain-demo-c2-20260726",
+      "first_phase_count": 6
+    },
+    "campaigns": {
+      "status": 200,
+      "count": 3,
+      "total": 8424123,
+      "first_id": "attack-chain-demo-c2-20260726",
+      "first_phase_count": null
+    }
+  },
+  "interaction": {
+    "phase_selected": "true",
+    "filtered_evidence_rows": 1,
+    "filtered_recommendation_rows": 1,
+    "phase_cleared": "false",
+    "scale_before": "1",
+    "scale_after": "1.08",
+    "pcap_rows": 3
+  },
+  "errors": {
+    "responses": [],
+    "console": [],
+    "page": [],
+    "requests": []
+  },
+  "checks": [
+    {
+      "name": "Windows Chrome viewport is 1920x1080",
+      "passed": true
+    },
+    {
+      "name": "attack-chain business title is visible",
+      "passed": true
+    },
+    {
+      "name": "attack-chain canvas is visible",
+      "passed": true
+    },
+    {
+      "name": "right evidence and response rail is visible",
+      "passed": true
+    },
+    {
+      "name": "six API-driven attack phases are present",
+      "passed": true
+    },
+    {
+      "name": "six database-backed evidence anchors are present",
+      "passed": true
+    },
+    {
+      "name": "six response recommendations are present",
+      "passed": true
+    },
+    {
+      "name": "ATT&CK matrix follows phase count",
+      "passed": true
+    },
+    {
+      "name": "five key path rows are present",
+      "passed": true
+    },
+    {
+      "name": "phase selection filters the linked rail",
+      "passed": true
+    },
+    {
+      "name": "canvas zoom changes the rendered scale",
+      "passed": true
+    },
+    {
+      "name": "PCAP evidence tab filters database evidence",
+      "passed": true
+    },
+    {
+      "name": "no horizontal browser overflow",
+      "passed": true
+    },
+    {
+      "name": "no runtime errors",
+      "passed": true
+    }
+  ],
+  "result": "pass"
+}

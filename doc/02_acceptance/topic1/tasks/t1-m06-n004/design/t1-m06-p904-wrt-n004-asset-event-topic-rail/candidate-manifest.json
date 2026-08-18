@@ -1,0 +1,12 @@
+{
+  "artifact_kind": "DESIGN_CANDIDATE_MANIFEST",
+  "schema_version": "1.0.0",
+  "candidate_id": "DESIGN-T1-M06-N004-R4",
+  "implementation_candidate_commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+  "scope": "T1-M06-P904 asset event topic rail development-readiness design only",
+  "source_blob_sha256": {
+    "go/control-plane/internal/asset/config/loader.go": "340861cc42111dc0e7d6401c8d899250d4845656f2c876ed3f600fb4304f500e"
+  },
+  "formal_execution_status": "BLOCKED_UNTIL_SIGNED_OVERLAY",
+  "proof_ceiling": "DEVELOPMENT_READINESS_DESIGN_ONLY_NOT_EXECUTION_AUTHORIZATION"
+}

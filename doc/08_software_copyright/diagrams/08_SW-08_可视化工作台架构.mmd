@@ -1,0 +1,41 @@
+flowchart LR
+  User["浏览器用户"]:::external
+
+  subgraph SW08["SW-08 全流量安全运营可视化软件"]
+    Static["Vite构建与Nginx静态站点"]:::own
+    App["React App与AppShell"]:::own
+    Router["路由清单 / 懒加载 / 深链接"]:::own
+    Guard["客户端会话检查与路由可见性"]:::own
+    Pages["业务页面<br/>态势 / 采集 / 告警 / 资产 / 图谱 / 规则 / 模型 / 审计"]:::own
+    UI["Ant Design组件<br/>Drawer / Modal / 状态矩阵"]:::own
+    Chart["ECharts图表与拓扑视图"]:::own
+    Query["React Query<br/>加载 / 错误 / 重试 / 缓存"]:::own
+    API["Services API适配层<br/>DTO映射 / runtime decode / 错误归一化"]:::own
+    AuthStore["Token存储 / 请求附加 / OIDC回调"]:::own
+    WS["WebSocket实时事件客户端"]:::own
+    Tokens["Design Tokens / 响应式 / 可访问性样式"]:::own
+  end
+
+  APISIX["APISIX Gateway"]:::external
+  Backends["SW-03 / 04 / 05 / 06 / 09后端API"]:::external
+  Realtime["告警实时WebSocket"]:::external
+  AuthAPI["SW-09 Auth与OIDC API"]:::external
+  Browser["浏览器DOM / Canvas / 下载能力"]:::shared
+  Mock["开发依赖<br/>MSW，仅VITE_USE_MOCK=true"]:::shared
+
+  User --> Static --> App
+  App --> Router --> Guard --> Pages
+  Pages --> UI
+  Pages --> Chart
+  UI --> Tokens
+  Chart --> Tokens
+  Pages --> Query --> API --> APISIX --> Backends
+  Guard --> AuthStore --> APISIX
+  APISIX --> AuthAPI
+  Pages --> WS --> Realtime
+  App -.-> Browser
+  Mock -.-> API
+
+  classDef own fill:#dbeafe,stroke:#2563eb,color:#172554;
+  classDef external fill:#f3f4f6,stroke:#6b7280,color:#111827;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;

@@ -1,0 +1,81 @@
+{
+  "artifact_kind": "M07_CAMPAIGN_DUAL_RAIL_K8S_CANARY_TEST_RESULT",
+  "schema_version": 1,
+  "atomic_pr_id": "T1-M07-P051-TST-POST-n018-s16",
+  "parent_work_id": "T1-M07-N018",
+  "run_id": "b779f649-206d-48c6-98dc-4132d1770688",
+  "status": "PASS",
+  "executed_at": "2026-08-14T14:33:00Z",
+  "environment": {
+    "infrastructure": "kubernetes",
+    "node": "8-2tb",
+    "isolated_postgresql": true,
+    "postgresql_storage": "emptyDir",
+    "persistent_volume_attached": false,
+    "canonical_kafka_topics_used": true,
+    "shared_kafka_environment_touched": true,
+    "feature_production_deployment_patched": false,
+    "production_applied": false
+  },
+  "candidate": {
+    "image": "docker.io/traffic/alert-service:m07-campaign-rail-canary-20260814-r3",
+    "image_config_sha256": "d382005427a7f6a73762965146ca1f77199d3eeccfd2550ffb367255658542b9",
+    "containerd_manifest_sha256": "dc33e802253676c1521dfcea26e025f91665ed73c8a75bdc9cabb8dd8f642682",
+    "correlation_contract_sha256": "f4f564d6d22084c1202634af99fabe29067bd51f5748dfd30b9fd48f0541980b"
+  },
+  "kafka": {
+    "security_protocol": "SASL_SSL",
+    "topics": [
+      "campaigns.v1",
+      "campaign.events.v2",
+      "campaign.membership.events.v2"
+    ],
+    "consumer_groups": [
+      "alert-service-campaigns-proto-projection-v1",
+      "alert-service-campaign-event-projection-v2",
+      "alert-service-campaign-membership-projection-v2"
+    ],
+    "topic_partition_count": 6,
+    "topic_acl_preflight": "PASS",
+    "producer_acknowledgement": "all"
+  },
+  "oracles": {
+    "ready_receipts": 3,
+    "proto_inbox_applied": 1,
+    "json_projection_inbox": 2,
+    "json_delivery_receipts": 4,
+    "published_outboxes": 2,
+    "correlated_confidence_one": 1,
+    "exact_reconcile_runs": 3,
+    "processing_time_only_replay_kept_single_correlation": true,
+    "immutable_cep_window_replayed_across_wall_clock_boundary": true
+  },
+  "cleanup": {
+    "run_scoped_resources_removed": true,
+    "post_cleanup_label_query_count": 0,
+    "retained_resources": false
+  },
+  "regressions": [
+    {
+      "command": "go test ./... -count=1",
+      "working_directory": "go/control-plane",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m unittest scripts.alignment.test_run_m07_campaign_rail_k8s_canary scripts.alignment.test_sync_m07_campaign_rail_postgres_entrypoint -v",
+      "status": "PASS",
+      "tests": 8
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f deployments/kubernetes/applications/go-services.yaml -o name",
+      "status": "PASS",
+      "objects": 16
+    }
+  ],
+  "limitations": [
+    "This proves the isolated M07-N018 candidate chain on the current Kubernetes and Kafka infrastructure only.",
+    "It does not authorize or assert production alert-service or Flink feature-switch rollout.",
+    "It does not close M08-M13, whole-project browser, performance, HA/DR, rollback, observation-window or sign-off gates."
+  ],
+  "errors": []
+}

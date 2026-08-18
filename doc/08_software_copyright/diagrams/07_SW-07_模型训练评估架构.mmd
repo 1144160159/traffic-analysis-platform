@@ -1,0 +1,45 @@
+flowchart LR
+  Trigger["手动触发 / SW-06自动重训请求"]:::external
+  CH[("ClickHouse<br/>特征 / 告警反馈 / 标签")]:::external
+
+  subgraph SW07["SW-07 威胁检测模型训练评估软件"]
+    Workflow["WorkflowTemplate / CronWorkflow<br/>参数与步骤编排"]:::own
+    Extract["extract_data.py<br/>查询 / 预处理 / 分层切分"]:::own
+    Train["train_model.py<br/>模型训练与交叉验证"]:::own
+    Evaluate["evaluate_model.py<br/>指标计算与门禁"]:::own
+    Explain["explain_model.py<br/>特征解释"]:::own
+    ONNX["export_onnx.py<br/>模型转换与推理校验"]:::own
+    Register["register_model.py<br/>制品哈希 / 上传 / 登记客户端"]:::own
+  end
+
+  Argo["外部运行时<br/>Argo Workflows"]:::external
+  MinIO[("MinIO<br/>中间数据 / 模型 / 评估制品")]:::external
+  Registry["外部权威API<br/>SW-06 Rule Manager"]:::external
+  Reports["评估报告 / 解释报告 / ONNX"]:::external
+  Libs["共享依赖<br/>Python / Pandas / sklearn / 模型库"]:::shared
+
+  Trigger --> Argo --> Workflow
+  Workflow --> Extract
+  CH --> Extract
+  Extract --> Train --> Evaluate
+  Evaluate -->|"门禁通过"| Explain
+  Evaluate -->|"门禁通过"| ONNX
+  Train --> MinIO
+  Evaluate --> MinIO
+  Explain --> MinIO
+  ONNX --> MinIO
+  Evaluate --> Reports
+  Explain --> Reports
+  ONNX --> Reports
+  Evaluate -->|"通过后"| Register
+  Register --> MinIO
+  Register -->|"登记请求"| Registry
+  Libs -.-> Extract
+  Libs -.-> Train
+  Libs -.-> Evaluate
+  Libs -.-> Explain
+  Libs -.-> ONNX
+
+  classDef own fill:#dbeafe,stroke:#2563eb,color:#172554;
+  classDef external fill:#f3f4f6,stroke:#6b7280,color:#111827;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;

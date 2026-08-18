@@ -1,0 +1,103 @@
+{
+  "artifact_kind": "M09_OPENSEARCH_CURSOR_TEST_RESULT",
+  "backend_runtime_flag_enabled_in_production": false,
+  "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_OPENSEARCH_AND_IMMUTABLE_UI_BUNDLE",
+  "does_not_prove": [
+    "production rollout",
+    "72M-document performance",
+    "Windows Chrome acceptance",
+    "global milestone completion",
+    "authorization to enable either cursor runtime flag"
+  ],
+  "frontend_runtime_flag_enabled_in_production": false,
+  "inputs": {
+    "bundle_check_sha256": "5dd8bebd226e83bd38bb0abffa782c71c642a6338bcede14cf503fb6629f4bed",
+    "candidate_images": [
+      "traffic/alert-search-cursor-test:m09-n015-20260816-r1",
+      "traffic/web-ui:m09-n015-opensearch-cursor-20260816-r2"
+    ],
+    "source_sha256": {
+      "contracts/openapi/alignment-v1.openapi.json": "d41b880fbdc32600e38816a9355e21e76c71ca8f4745c7d104a0bba7475ab302",
+      "deployments/kubernetes/applications/go-services.yaml": "151dfdd127814635691f1cafbe2e56ee5a5a63c79bdd78e10fc53f78523a7bcd",
+      "deployments/kubernetes/applications/web-ui.yaml": "ab956d2286aab8c5dc14d385e5d0989e74e973cd6e2f592e0a02d20dc37bf6e1",
+      "go/control-plane/internal/alert/api/handler.go": "5cc6dc5b5eb584ce1bf9c8a989c7b5b9dd1124a77589eaf583cc5945b59b8b98",
+      "go/control-plane/internal/alert/config/config.go": "8815cb22cc32b6ade9ba821c1cc882269604af45085be095ed3642589649ecd7",
+      "go/control-plane/internal/alert/repository/alert_snapshot.go": "5f608d134800c3a22441b71e44b99575d80c63422d172842824329ae76b7cc92",
+      "go/control-plane/internal/alert/repository/opensearch.go": "d0aef9ccf7b2a697bb421bd9806e50c6d37923502f7355453396a2d14b90c806",
+      "go/control-plane/internal/alert/repository/opensearch_cursor.go": "7c31a00d6e03077242e8bd072b155e67f6a5e1e61baef5e4dd27e53fa4c57507",
+      "web/ui/src/pages/AlertTriagePage.tsx": "85928df9abbfecede9c4e02c062ddf97344fcfefaaae818737fda7dfde7cf500",
+      "web/ui/src/services/alertSearchCursorApi.ts": "a666f3396234e5a6473fe9f2a89f13d30d047d73b6a991cb76a3d0e43b3fbad2"
+    }
+  },
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-15T18:45:57Z",
+      "container_id": "containerd://b2860d9e546b6d06896ff239ce3ac32dd26601c0f579e65ed347942777adf9b9",
+      "image": "docker.io/traffic/alert-search-cursor-test:m09-n015-20260816-r1",
+      "image_id": "sha256:47f68a1224825bfc9a265cbee25b5b6fee8beac5a9e71153e0dd8d61f6559d0b",
+      "job_name": "m09-n015-os-4d99d81c61-integration",
+      "job_uid": "5145dbb5-5d04-45e8-abce-847dcca03cc6",
+      "node": "8-2tb",
+      "pod_name": "m09-n015-os-4d99d81c61-integration-fm6pk",
+      "pod_uid": "c9aec112-9f3f-4c7d-a582-3826d7835aee",
+      "started_at": "2026-08-15T18:45:54Z"
+    },
+    {
+      "completed_at": "2026-08-15T18:46:02Z",
+      "container_id": "containerd://fb42869fd50bfeb5461a617e24eb9cebe898f552799e9822d82c82c88db31d9f",
+      "image": "docker.io/traffic/alert-search-cursor-test:m09-n015-20260816-r1",
+      "image_id": "sha256:47f68a1224825bfc9a265cbee25b5b6fee8beac5a9e71153e0dd8d61f6559d0b",
+      "job_name": "m09-n015-os-4d99d81c61-cleanup",
+      "job_uid": "028079f5-dcb3-45bb-bc62-c52c49c3ac15",
+      "node": "8-2tb",
+      "pod_name": "m09-n015-os-4d99d81c61-cleanup-l4hbb",
+      "pod_uid": "0a5cd5e2-74b4-4e31-9ac2-68062e4d2851",
+      "started_at": "2026-08-15T18:45:58Z"
+    },
+    {
+      "completed_at": "2026-08-15T18:46:06Z",
+      "container_id": "containerd://631c93a9a55af096db19b21f795fa6965402e3bc292a5e46463617a6d1938662",
+      "image": "docker.io/traffic/alert-search-cursor-test:m09-n015-20260816-r1",
+      "image_id": "sha256:47f68a1224825bfc9a265cbee25b5b6fee8beac5a9e71153e0dd8d61f6559d0b",
+      "job_name": "m09-n015-os-4d99d81c61-unit",
+      "job_uid": "43fd942a-030c-4aec-a034-d2c8c5dc6f8a",
+      "node": "8-2tb",
+      "pod_name": "m09-n015-os-4d99d81c61-unit-phk4n",
+      "pod_uid": "834ee8f4-0b02-49b2-8dfb-df94beaa01bb",
+      "started_at": "2026-08-15T18:46:03Z"
+    },
+    {
+      "completed_at": "2026-08-15T18:46:11Z",
+      "container_id": "containerd://56b832c9839139f6dd60396cb1809c8d7ba59e1ff7405071f26a98b78676eb81",
+      "image": "docker.io/traffic/web-ui:m09-n015-opensearch-cursor-20260816-r1",
+      "image_id": "sha256:9d08c606541c2c013ec010d25e38311a4cb33d5f0ee87d888284a1f4f7eb260e",
+      "job_name": "m09-n015-os-4d99d81c61-web",
+      "job_uid": "e3898aca-b517-4f73-a9c9-0146b67e7e74",
+      "node": "8-2tb",
+      "pod_name": "m09-n015-os-4d99d81c61-web-8vkd2",
+      "pod_uid": "aec560a0-5416-4179-9d62-cffcd9e7b26c",
+      "started_at": "2026-08-15T18:46:06Z"
+    }
+  ],
+  "live_cursor_alias_switch_fails_closed": true,
+  "mock_enabled": false,
+  "opensearch_unavailable_fails_closed": true,
+  "pit_alias_switch_keeps_frozen_snapshot": true,
+  "production_applied": false,
+  "profile_id": "M09-N015-K8S-OPENSEARCH-PIT-UI-V1",
+  "run_id": "4d99d81c-619f-4885-97c5-ece81f61da94",
+  "run_scoped_indices_and_alias_removed": true,
+  "run_scoped_kubernetes_resources_removed": true,
+  "shared_opensearch_touched": true,
+  "source_target_watermark_present": true,
+  "stable_search_after_sort": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N015",
+  "tenant_query_size_hmac_bound": true,
+  "test_output_sha256": {
+    "cleanup": "3d0cb1334ed509cb75ce94db302bd228cb978e75e0288f16a7b8c47e329b2d11",
+    "integration": "316ff497f7024f398edc6fcb17901f6434fe1ef610a15afbde4105933f23a0d6",
+    "unit": "79d38a5b8dfb9761a79bbcb28ce3dbe9e50ba71d2a6140d5ba46fde8beadb982",
+    "web": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+  }
+}

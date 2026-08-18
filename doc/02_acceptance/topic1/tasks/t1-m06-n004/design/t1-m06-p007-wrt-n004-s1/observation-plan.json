@@ -1,0 +1,21 @@
+{
+  "artifact_kind": "FUNCTION_OBSERVATION_PLAN",
+  "schema_version": "1.0.0",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "windows": ["T+0", "T+1h", "T+24h", "T+72h", "T+7d"],
+  "metrics": [
+    "asset_upsert_total by stable outcome only",
+    "asset_upsert_conflict_total by conflict class only",
+    "asset_outbox_pending and asset_outbox_dead",
+    "asset_outbox_publish_latency_seconds",
+    "asset_projection_lag by bounded projection target"
+  ],
+  "forbidden_labels": ["tenant_id", "asset_id", "mac_address", "idempotency_key", "request_id", "trace_id"],
+  "stop_thresholds": [
+    "duplicate durable effect count greater than zero",
+    "cross-tenant effect count greater than zero",
+    "authority/outbox/ledger reconciliation mismatch greater than zero",
+    "dead outbox growth or projection lag exceeds the candidate-bound profile threshold"
+  ],
+  "proof_ceiling": "OBSERVATION_PLAN_ONLY_NOT_OBSERVATION_RESULT"
+}

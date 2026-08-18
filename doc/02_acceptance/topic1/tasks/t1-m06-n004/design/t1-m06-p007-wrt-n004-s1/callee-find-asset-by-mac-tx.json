@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+    "manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.24.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-CALLEE-findAssetByMACTx",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/repository/atomic_upsert.go",
+    "package": "repository",
+    "qualified_symbol": "repository.findAssetByMACTx",
+    "declaration_kind": "FUNCTION",
+    "query": "findAssetByMACTx",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func findAssetByMACTx(ctx context.Context, tx *sql.Tx, tenantID, mac string) (*config.AssetRecord, error)",
+    "candidate_blob_sha256": "52548d4013434d66f3c7741b57c811179c04d850dcd3e2ab27d6c2d1db6167c7",
+    "source_span_sha256": "a26daea4b5fe893ebd8573fab7953482c0755350d58e0b5b6244e37f8c8a6c12",
+    "normalized_ast_sha256": "a26daea4b5fe893ebd8573fab7953482c0755350d58e0b5b6244e37f8c8a6c12",
+    "start": {
+      "byte_offset": 10980,
+      "line": 304,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 11468,
+      "line": 315,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "tx.QueryRowContext",
+        "line": 305
+      },
+      {
+        "expression": "scanAsset",
+        "line": 314
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T04:00:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

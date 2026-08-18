@@ -1,0 +1,385 @@
+{
+  "accountable_task": "T1-M08-N018",
+  "allowed_claims": [
+    "exact-SHA evidence indexes the isolated Kubernetes engineering path from governed synthetic data through signed model package and internal Python/ONNX/Flink parity",
+    "default-off online ACK, canary, feedback, drift and rollback components have bounded engineering evidence"
+  ],
+  "artifact_kind": "M08_PROMOTION_EVALUATION",
+  "automatic_repair": false,
+  "candidate_id": null,
+  "current_candidate_manifest": null,
+  "current_evidence": {
+    "activation_outbox": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2f-model-shadow-activation-k8s-postgres-kafka/test-result.json",
+      "sha256": "cd5ac104ff776691d22bd11f4b88202aaf6f89c4bb5dab677e3136afbdf5381b"
+    },
+    "drift_candidate": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2e-model-drift-candidate-default-off/test-result.json",
+      "sha256": "44987cf1a4082b52381c75f5d59a0633d6b35a3cd03e738ecabeff8b6c29cb29"
+    },
+    "explanation": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2b-governed-explanation-k8s-canary/test-result.json",
+      "sha256": "6efc9b3a2ab14729513b96f353ad35c3e92434388d57e4737143040176d4ff31"
+    },
+    "feedback_consumer": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2d-model-feedback-consumer-ready/test-result.json",
+      "sha256": "0ba32a7ebbe32547bea1495fc9db4aec7a2e77204ab0c2a766470b0ff4c3fbbe"
+    },
+    "gnn_ablation": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2b-gnn-ablation-k8s-canary/test-result.json",
+      "sha256": "647460a26dadb231b7e3964632f35b3f6bbc0c165988b8eb3555c76875ed7169"
+    },
+    "governed_dataset": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2a-governed-k8s-canary/test-result.json",
+      "sha256": "d403c33f958d3b33d37b4b76d78a56c079d8ac6946858cd66427070e0e9db45c"
+    },
+    "inference_parity": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w4b-model-inference-parity-internal/test-result.json",
+      "sha256": "4637bb8c9eaa0b3d92814184da480b03e77e0249a4223df60c593a43f53e57b2"
+    },
+    "metadata_registration": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2d-model-metadata-registration-k8s-canary/test-result.json",
+      "sha256": "cf2a4c67ba2ca6e044257e98e4a7e355ababbcc5696de186be468a642fb16219"
+    },
+    "online_consumer_ack": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2e-model-consumer-shadow-k8s-canary/test-result.json",
+      "sha256": "c3d8e82a83dee6fad5bc3f01b86008be583ba3cae508433b2c0c8f8c1c92eecb"
+    },
+    "rollback": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w4a-model-rollback-v2/test-result.json",
+      "sha256": "8f6200aa6b5b26d187b17f61f84059b17785dbb6ed58342e17e34d6172cbcf10"
+    },
+    "shadow_observation": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w3-champion-challenger-shadow-k8s-canary/test-result.json",
+      "sha256": "f794e5116c4742be532e0bca02ac4125a7079bd6d6626c3c60ccae8d9d82df30"
+    },
+    "signed_model_package": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2c-model-export-k8s-canary/test-result.json",
+      "sha256": "94e86bee1ea78207cc48d6773221e8e04b2e1ae8b62b4f02af1501dfcc279bb8"
+    },
+    "tenant_canary": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w3-tenant-model-canary-default-off/test-result.json",
+      "sha256": "02eece16e02986f8496266600b0a1179fab8d097f21b7a3b608552a3c1d2d943"
+    },
+    "threshold_evaluation": {
+      "path": "doc/02_acceptance/topic1/work-orders/t1-m08-w2b-governed-evaluation-k8s-canary/test-result.json",
+      "sha256": "2ac89d3448b3434a6c8be9d2bf8e095c615a85c34a9de944d1efb6eb894345a8"
+    }
+  },
+  "engineering_errors": [],
+  "engineering_status": "PASS",
+  "environment_id": "existing-k8s-mixed-isolated",
+  "forbidden_claims": [
+    "CNAS evaluation passed",
+    "known-attack accuracy is at least 95 percent or false-positive rate is below 5 percent for production",
+    "unknown-attack detection quality is production-ready",
+    "one same-candidate production end-to-end run passed",
+    "M08 production activation or promotion is authorized",
+    "M08 or the whole project is complete"
+  ],
+  "production_applied": false,
+  "profile_id": "M08_ISOLATED_ENGINEERING_COMPONENT_INDEX_V1",
+  "promotion_allowed": false,
+  "promotion_blockers": [
+    {
+      "code": "CANDIDATE_MANIFEST_REQUIRED",
+      "detail": null,
+      "identity": "candidate-manifest"
+    },
+    {
+      "code": "PRODUCTION_APPLIED_REQUIRED",
+      "detail": false,
+      "identity": "manifest"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": false,
+        "observed": true,
+        "operator": "equals"
+      },
+      "identity": "governed_dataset/environment/synthetic_fixture"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "governed_dataset/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": false,
+        "observed": true,
+        "operator": "equals"
+      },
+      "identity": "gnn_ablation/environment/synthetic_fixture"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "gnn_ablation/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": false,
+        "observed": true,
+        "operator": "equals"
+      },
+      "identity": "threshold_evaluation/environment/synthetic_fixture"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "threshold_evaluation/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": 0,
+        "observed": 0.0,
+        "operator": "greater_than"
+      },
+      "identity": "threshold_evaluation/oracles/unknown_recall"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "threshold_evaluation/oracles/activation_authorized"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": false,
+        "observed": true,
+        "operator": "equals"
+      },
+      "identity": "explanation/environment/synthetic_fixture"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "explanation/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": false,
+        "observed": true,
+        "operator": "equals"
+      },
+      "identity": "signed_model_package/environment/synthetic_fixture"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "signed_model_package/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "signed_model_package/oracles/activation_authorized"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "signed_model_package/oracles/model_export_activation_authorized"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "metadata_registration/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "activation_outbox/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "activation_outbox/dependency_evidence/same_run_n010_event_to_n011_shadow_ack"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "online_consumer_ack/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "online_consumer_ack/kubernetes_consumer_canary/activation_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "shadow_observation/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": "PASS",
+        "observed": "NOT_STARTED",
+        "operator": "equals"
+      },
+      "identity": "shadow_observation/gates/n013_tenant_canary_observation_window"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": "PASS",
+        "observed": "BLOCKED",
+        "operator": "equals"
+      },
+      "identity": "shadow_observation/production_activation_status"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "tenant_canary/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": "PASS",
+        "observed": "BLOCKED",
+        "operator": "equals"
+      },
+      "identity": "tenant_canary/gates/n012_full_shadow_observation_window"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": "PASS",
+        "observed": "BLOCKED",
+        "operator": "equals"
+      },
+      "identity": "tenant_canary/production_activation_status"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "feedback_consumer/environment/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": "PASS",
+        "observed": "NOT_EXECUTED",
+        "operator": "equals"
+      },
+      "identity": "feedback_consumer/gates/real_kafka_consumer_receipt"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": "PASS",
+        "observed": "NOT_EXECUTED",
+        "operator": "equals"
+      },
+      "identity": "feedback_consumer/gates/real_clickhouse_prediction_lookup"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "drift_candidate/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "rollback/production_applied"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "rollback/rollback_runtime_enabled"
+    },
+    {
+      "code": "PROMOTION_ASSERTION",
+      "detail": {
+        "expected": true,
+        "observed": false,
+        "operator": "equals"
+      },
+      "identity": "rollback/activation_authorized"
+    }
+  ],
+  "promotion_status": "BLOCKED",
+  "schema_version": 1
+}

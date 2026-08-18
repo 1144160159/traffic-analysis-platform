@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN-T1-M06-P007-TEST-R1",
+  "plan_kind": "TEST",
+  "status": "DRAFT",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "candidate_manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d",
+  "profile_id": "PROFILE-T1-M06-AUTHORITY-TX-DESIGN-R1",
+  "owner": "role:go-asset-maintainer; identity unresolved",
+  "reviewers": [
+    "role:postgres-transaction-reviewer; identity unresolved",
+    "role:test-reliability-reviewer; identity unresolved"
+  ],
+  "approvers": ["role:multi-source-data-owner; identity unresolved"],
+  "content": {
+    "commands": [
+      "cd go/control-plane && go test ./internal/asset/repository -run 'TestUpsertAtomic' -count=1",
+      "cd go/control-plane && test -n \"$ASSET_ATOMIC_EPHEMERAL_PG_DSN\" && ASSET_ATOMIC_EPHEMERAL_PG_DSN=\"$ASSET_ATOMIC_EPHEMERAL_PG_DSN\" go test ./internal/asset/repository -run '^TestAssetAtomicUpsertPostgresIntegration$' -count=1 -v | tee /tmp/t1-m06-p007-pg.log && ! rg -n --fixed-strings -- '--- SKIP:' /tmp/t1-m06-p007-pg.log",
+      "cd go/control-plane && go test ./internal/asset/api -run '^TestAtomicAssetUpsertRejects(BodyTenantConflict|Viewer)BeforeDatabase$' -count=1",
+      "cd go/control-plane && go test ./internal/asset/repository -run '^TestAssetOutboxDispatcher' -count=1"
+    ],
+    "fixtures": [
+      {
+        "fixture_id": "FIXTURE-ATOMIC-UPsert-UNIT",
+        "path": "go/control-plane/internal/asset/repository/atomic_upsert_test.go",
+        "generator": null,
+        "content_sha256": "a3e35d73fee696a16f0a8c8ef43df964e184b06edf077dab40f145c358ae5bcb",
+        "schema_ref": null,
+        "tenant": "candidate-bound-test-tenant",
+        "time_properties": ["all fixture timestamps are explicit UTC values"],
+        "fault_properties": ["sqlmock failure points are deterministic and do not prove commit ambiguity"],
+        "oracle_ids": ["O-REPLAY-EXISTING", "O-CREATE-EXISTING", "O-HISTORY-ROLLBACK-EXISTING"],
+        "proof_ceiling": "G0"
+      },
+      {
+        "fixture_id": "FIXTURE-ATOMIC-UPsert-PG",
+        "path": "go/control-plane/internal/asset/repository/atomic_upsert_integration_test.go",
+        "generator": null,
+        "content_sha256": "db449544d99de91e4ffddad8bda7c42e1907e21054aeb6e7dc9804a357550bde",
+        "schema_ref": null,
+        "tenant": "per-run-ephemeral-tenant",
+        "time_properties": ["run identity and timestamps must be captured by the registered TST-PRE G1 leaf"],
+        "fault_properties": ["missing ASSET_ATOMIC_EPHEMERAL_PG_DSN is BLOCKED, never PASS"],
+        "oracle_ids": ["O-PG-EXISTING"],
+        "proof_ceiling": "G1"
+      }
+    ],
+    "oracles": [
+      {"oracle_id": "O-REPLAY-EXISTING", "kind": "CODE", "query_or_assertion": "TestUpsertAtomicExactReplayReturnsStoredResult", "expected_result": "same tenant, key and v1 request hash return the stored result without an additional write"},
+      {"oracle_id": "O-CREATE-EXISTING", "kind": "CODE", "query_or_assertion": "TestUpsertAtomicCreateCommitsAllDurableEffects", "expected_result": "the existing sqlmock test observes the expected create transaction statements; it does not prove live PostgreSQL durability"},
+      {"oracle_id": "O-HISTORY-ROLLBACK-EXISTING", "kind": "CODE", "query_or_assertion": "TestUpsertAtomicHistoryFailureRollsBackAsset", "expected_result": "the injected history error reaches rollback in the mock transaction"},
+      {"oracle_id": "O-PG-EXISTING", "kind": "PG", "query_or_assertion": "TestAssetAtomicUpsertPostgresIntegration completes without SKIP", "expected_result": "the currently implemented PostgreSQL assertions pass in an ephemeral database"},
+      {"oracle_id": "O-SOURCE-PRECEDENCE-PLANNED", "kind": "CODE", "query_or_assertion": "planned TestUpsertAtomicActionClassSourcePolicy", "expected_result": "observation actions cannot overwrite approved governance fields and an older observed_at cannot regress observation facts"},
+      {"oracle_id": "O-CRASH-MATRIX-PLANNED", "kind": "PG", "query_or_assertion": "planned fault injection after B09, B11, B12, B13 and B14 and during B15", "expected_result": "pre-commit failures expose none of the five effects; ambiguous commit converges by same-key receipt lookup"},
+      {"oracle_id": "O-COMMIT-UNKNOWN-PLANNED", "kind": "RECOVERY", "query_or_assertion": "planned response-loss and commit-ambiguity test", "expected_result": "the typed unknown result never creates a new logical intent or a second durable effect"},
+      {"oracle_id": "O-TOPIC-RAIL-PLANNED", "kind": "EVENT", "query_or_assertion": "planned independent config-rail negative test", "expected_result": "noncanonical asset event topics fail before the service starts"},
+      {"oracle_id": "O-BROKER-ACK-PLANNED", "kind": "KAFKA", "query_or_assertion": "planned independent real-broker TST-PRE G1 leaf", "expected_result": "outbox published_at is written only after a real broker ACK"}
+    ],
+    "negative_cases": [
+      "NEG-TENANT-BODY-CONFLICT", "NEG-VIEWER-WRITE", "NEG-SAME-KEY-DIFFERENT-PAYLOAD",
+      "NEG-STALE-REVISION", "NEG-PASSIVE-OVERWRITES-GOVERNANCE", "NEG-OLD-OBSERVATION-REGRESSES-FACT",
+      "NEG-HISTORY-WRITE-FAILURE", "NEG-AUDIT-WRITE-FAILURE", "NEG-OUTBOX-WRITE-FAILURE",
+      "NEG-LEDGER-WRITE-FAILURE", "NEG-COMMIT-UNKNOWN-NEW-KEY", "NEG-NONCANONICAL-ASSET-EVENT-TOPIC",
+      "NEG-BROKER-NO-ACK-MARKS-PUBLISHED"
+    ],
+    "required_gates": ["G0"],
+    "environment_constraints": [
+      "Go toolchain must report go1.25.12 and the immutable run must bind its go version; the current local upgrade removes the launch blocker but is not by itself acceptance evidence",
+      "ASSET_ATOMIC_EPHEMERAL_PG_DSN must name an authorized ephemeral PostgreSQL database and the command must reject SKIP output",
+      "real Kafka evidence belongs to the separate registered TST-PRE G1 leaf and cannot be substituted by this WRT plan"
+    ],
+    "output_artifacts": [
+      "candidate-bound unit-test report", "ephemeral PostgreSQL reconciliation report",
+      "negative-case report", "crash-matrix report", "real-broker ACK report from the independent TST-PRE G1 leaf"
+    ],
+    "triggers": [],
+    "steps": [],
+    "authority_data_handling": [],
+    "derived_data_handling": [],
+    "inflight_handling": [],
+    "offset_savepoint_object_handling": [],
+    "recovery_oracles": [],
+    "forward_fix_only": false,
+    "signals": [],
+    "queries": [],
+    "window": null,
+    "thresholds": [],
+    "stop_action": null,
+    "rollback_plan_id": "PLAN-T1-M06-P007-ROLLBACK-R1",
+    "oncall_owner": null,
+    "proof_ceiling": "G0"
+  }
+}

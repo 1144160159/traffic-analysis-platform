@@ -1,0 +1,14 @@
+{
+  "artifact_kind": "DESIGN_CANDIDATE_MANIFEST",
+  "schema_version": "1.0.0",
+  "candidate_id": "DESIGN-T1-M06-N004-R2",
+  "implementation_candidate_commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+  "scope": "T1-M06-P902 HTTP commit-unknown mapping development-readiness design only",
+  "source_blob_sha256": {
+    "go/control-plane/internal/asset/api/http_handler.go": "c4817519ff5430395eddec5a793fc5e28d761ee24383380ec5cd797230171fae",
+    "go/control-plane/internal/asset/api/auth.go": "c85422e199230fb412178241f6f6cb5875f0c320c541bc55e6ba8774e6d8fccb",
+    "go/control-plane/internal/asset/service/asset_service.go": "7e9c2eafef5fc9faa7cdd1175d4d8a12874cecee99652fb7e31d30633143a845"
+  },
+  "formal_execution_status": "BLOCKED_UNTIL_SIGNED_OVERLAY",
+  "proof_ceiling": "DEVELOPMENT_READINESS_DESIGN_ONLY_NOT_EXECUTION_AUTHORIZATION"
+}

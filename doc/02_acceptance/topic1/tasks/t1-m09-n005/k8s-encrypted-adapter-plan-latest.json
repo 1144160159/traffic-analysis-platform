@@ -1,0 +1,28 @@
+{
+  "artifact_kind": "M09_ENCRYPTED_ADAPTER_PLAN_TEST_RESULT",
+  "bundle_check_sha256": "c6ba3b40df70386fe7127d5f3d44d09fad09799c7437359ac61edc7d0b6421f3",
+  "kubernetes": {
+    "completed_at": "2026-08-15T12:34:56Z",
+    "container_id": "containerd://c0a84cad39af9e36237fdb6bd829f0078d5939e7d38d229878424f521c69b32b",
+    "image": "docker.io/traffic/web-ui:m09-n005-encrypted-adapter-plan-20260815-r1",
+    "image_id": "sha256:a8c992ac72ebc122b78309bcb4d849d7cf4af4694ec97a29b1bfd28399a67740",
+    "job_name": "m09-n005-adapter-f715ad58f2",
+    "job_uid": "bd673c84-d13c-494c-b344-356682afe581",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m09-n005-adapter-f715ad58f2-grpb9",
+    "pod_uid": "f185fd4d-04b1-4810-8902-54be42047300",
+    "shared_clickhouse_touched": false,
+    "shared_flink_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_postgres_touched": false,
+    "started_at": "2026-08-15T12:34:52Z"
+  },
+  "production_applied": false,
+  "run_id": "f715ad58-f2a1-41f0-bd00-acf28d9b1309",
+  "run_scoped_resources_removed": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N005",
+  "test_output_sha256": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+}

@@ -1,0 +1,65 @@
+{
+  "artifact_kind": "M09_PRODUCT_CONTRACT_TEST_RESULT",
+  "does_not_prove": [
+    "production rollout",
+    "same-candidate M09 integration",
+    "Windows Chrome acceptance",
+    "authorization to promote M09"
+  ],
+  "inputs": {
+    "candidate_image": "traffic/mlops-trainer:m08-governed-export-w2c-20260815-r10",
+    "source_sha256": {
+      "contracts/alignment/canonical-registry.json": "8afe68436bca1dabb2df294e1de9b98c84367d74f9b1228d26d900c60e1b7c3b",
+      "contracts/alignment/feature-contract-registry.v1.json": "cee9c8afc22ebeff4f966ee815681b0b66a16eafee9639f0a4b27462b4e66e3e",
+      "contracts/alignment/feature-contract.schema.json": "c2b2c1e216a559191917c570f63f46e22618796872ced97d8cb4c21ba66f2ea7",
+      "contracts/alignment/features/F-ENCRYPTED-001.json": "16d832b1539d8e7f9979feab9908f68963e8471e7a04f43d99e858d7714fc448",
+      "contracts/alignment/features/F-ENCRYPTED-002.json": "1aa011754c7d6765705c8d95301fcab79bf5cac29eafb11ddfe71e9e37613abc",
+      "contracts/alignment/features/F-FORENSICS-001.json": "882ee401feb57f3217e5e73a676cb238b72647e4d37f13a87a23bc3a9275253a",
+      "contracts/alignment/work-packages.json": "008bc48db78c115ed27497bf9e50ebee1019162d59bbb9e977b06b1bdf26a378",
+      "doc/07_alignment/runbooks/F-ENCRYPTED-001-rollback.md": "b46ca49b68df745059cc858554b19fc449b7a2a976d2424be10a8e4db3d206ec",
+      "doc/07_alignment/runbooks/F-ENCRYPTED-002-rollback.md": "2db44df56ca6801c7f07fd3c93cb1afdb040c054a8f3617d91e47609e17a1695",
+      "doc/07_alignment/runbooks/F-FORENSICS-001-rollback.md": "df70d179c277dd8c6256bea2e9d9e8de3d13d34388f039406c06f56fa2055681",
+      "scripts/alignment/validate_m09_product_contracts.py": "6d79077b67fa82694418ea21d9228774de4e406edacbb43a16b7546ba49bdec3"
+    }
+  },
+  "kubernetes": {
+    "completed_at": "2026-08-15T23:12:42Z",
+    "container_id": "containerd://d12adf3f472c61a5fb2688c73cb10baeeb738eefd79adc38b5388ba28ce5bd73",
+    "image": "docker.io/traffic/mlops-trainer:m08-governed-export-w2c-20260815-r10",
+    "image_id": "sha256:0b905ee9b358b7dfd44aa846883d1ba55b9c56f7ac2a1b96c1f9c3d77a71d61a",
+    "job_name": "m09-n001-contract-6030a045eb",
+    "job_uid": "3bd91dfb-7330-4b80-b647-808869819d7b",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m09-n001-contract-6030a045eb-8vjzn",
+    "pod_uid": "3b38a855-bd9e-4347-b482-5d7902627dbf",
+    "shared_clickhouse_touched": false,
+    "shared_flink_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_postgres_touched": false,
+    "started_at": "2026-08-15T23:12:39Z"
+  },
+  "production_applied": false,
+  "profile_id": "M09-N001-K8S-READONLY-PRODUCT-CONTRACT-V1",
+  "run_id": "6030a045-eb39-4af8-9015-80981236507b",
+  "run_scoped_resources_removed": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N001",
+  "validation": {
+    "artifact_kind": "M09_PRODUCT_CONTRACT_K8S_VALIDATION",
+    "canonical_owner_unique": true,
+    "contract_count": 3,
+    "contract_sha256": {
+      "F-ENCRYPTED-001": "16d832b1539d8e7f9979feab9908f68963e8471e7a04f43d99e858d7714fc448",
+      "F-ENCRYPTED-002": "1aa011754c7d6765705c8d95301fcab79bf5cac29eafb11ddfe71e9e37613abc",
+      "F-FORENSICS-001": "882ee401feb57f3217e5e73a676cb238b72647e4d37f13a87a23bc3a9275253a"
+    },
+    "feature_registry_catalog_sha256": "34f3c8a49a8a25d406b0fedeb6cb5a17ca4c7837740bd21d04258d3cab5ba322",
+    "production_applied": false,
+    "rollouts_default_off": true,
+    "schema_version": 1,
+    "status": "PASS",
+    "task_id": "T1-M09-N001"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+    "manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.24.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-CALLEE-mergeAssetGovernance",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/repository/postgres.go",
+    "package": "repository",
+    "qualified_symbol": "repository.mergeAssetGovernance",
+    "declaration_kind": "FUNCTION",
+    "query": "mergeAssetGovernance",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func mergeAssetGovernance(rec, existing *config.AssetRecord)",
+    "candidate_blob_sha256": "601170dcb15aa94f0cab70788dd1d6294460952fa725ceea45824011bba564ea",
+    "source_span_sha256": "a133bfb1ce15d93dacc4751d3f0995597ea3c2c71d31cccd3f0fbaafa1f677ea",
+    "normalized_ast_sha256": "a133bfb1ce15d93dacc4751d3f0995597ea3c2c71d31cccd3f0fbaafa1f677ea",
+    "start": {
+      "byte_offset": 1214,
+      "line": 54,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 1895,
+      "line": 83,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "ensureAssetDefaults",
+        "line": 82
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T04:00:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

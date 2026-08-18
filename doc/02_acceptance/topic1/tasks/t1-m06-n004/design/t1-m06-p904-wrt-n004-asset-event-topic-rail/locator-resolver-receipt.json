@@ -1,0 +1,151 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p904-wrt-n004-asset-event-topic-rail/candidate-manifest.json",
+    "manifest_sha256": "dd6fae567196a77bfc165f562272c52147e4bc0003098dcbed11a786f07e4b72"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.24.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-P904-Config-validate",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/config/loader.go",
+    "package": "config",
+    "qualified_symbol": "config.(*Config).validate",
+    "declaration_kind": "METHOD",
+    "query": "(*Config).validate",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func (c *Config) validate() error",
+    "candidate_blob_sha256": "340861cc42111dc0e7d6401c8d899250d4845656f2c876ed3f600fb4304f500e",
+    "source_span_sha256": "5c68da55fcdee7aaf7e41f723170ead7be8284ca86db3dea2fe09e848199da34",
+    "normalized_ast_sha256": "5c68da55fcdee7aaf7e41f723170ead7be8284ca86db3dea2fe09e848199da34",
+    "start": {
+      "byte_offset": 726,
+      "line": 34,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 4493,
+      "line": 111,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "fmt.Errorf",
+        "line": 36
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 39
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 42
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 45
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 48
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 51
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 54
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 57
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 60
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 63
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 66
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 69
+      },
+      {
+        "expression": "len",
+        "line": 72
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 73
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 76
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 79
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 82
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 85
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 89
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 93
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 96
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 99
+      },
+      {
+        "expression": "len",
+        "line": 103
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 104
+      },
+      {
+        "expression": "len",
+        "line": 106
+      },
+      {
+        "expression": "fmt.Errorf",
+        "line": 107
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T04:00:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

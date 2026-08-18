@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p903-wrt-n004-grpc-commit-unknown-mapping/candidate-manifest.json",
+    "manifest_sha256": "e2e5e7df20a47318885534134520dff8d1bbcb819ccac9d7271de24289f03762"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.25.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-P903-GRPC-UpsertAsset",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/api/grpc_handler.go",
+    "package": "api",
+    "qualified_symbol": "api.(*AssetHandler).UpsertAsset",
+    "declaration_kind": "METHOD",
+    "query": "(*AssetHandler).UpsertAsset",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func (h *AssetHandler) UpsertAsset(ctx context.Context, req *pb.UpsertAssetRequest) (*pb.UpsertAssetResponse, error)",
+    "candidate_blob_sha256": "16350f7c0be9fdea69f3ac4ec7e905405f08307f2cfad573aaad8e020b47abf4",
+    "source_span_sha256": "ad8d6966afec165066499154477bd73a5d36cd3172cf34cf33f8aafc4e7006ae",
+    "normalized_ast_sha256": "ad8d6966afec165066499154477bd73a5d36cd3172cf34cf33f8aafc4e7006ae",
+    "start": {
+      "byte_offset": 1982,
+      "line": 65,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 3242,
+      "line": 96,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "req.GetAsset",
+        "line": 66
+      },
+      {
+        "expression": "status.Error",
+        "line": 68
+      },
+      {
+        "expression": "h.assetUpsertCommandFromGRPC",
+        "line": 71
+      },
+      {
+        "expression": "protoToRecord",
+        "line": 75
+      },
+      {
+        "expression": "status.Error",
+        "line": 77
+      },
+      {
+        "expression": "h.svc.UpsertAssetAtomic",
+        "line": 84
+      },
+      {
+        "expression": "h.logError",
+        "line": 86
+      },
+      {
+        "expression": "zap.Error",
+        "line": 86
+      },
+      {
+        "expression": "zap.String",
+        "line": 86
+      },
+      {
+        "expression": "stderrors.Is",
+        "line": 87
+      },
+      {
+        "expression": "status.Error",
+        "line": 88
+      },
+      {
+        "expression": "stderrors.Is",
+        "line": 90
+      },
+      {
+        "expression": "status.Error",
+        "line": 91
+      },
+      {
+        "expression": "err.Error",
+        "line": 93
+      },
+      {
+        "expression": "status.Error",
+        "line": 93
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T08:30:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

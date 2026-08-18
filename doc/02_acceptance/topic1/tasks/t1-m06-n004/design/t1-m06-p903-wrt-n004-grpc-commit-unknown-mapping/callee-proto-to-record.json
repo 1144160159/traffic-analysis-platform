@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p903-wrt-n004-grpc-commit-unknown-mapping/candidate-manifest.json",
+    "manifest_sha256": "e2e5e7df20a47318885534134520dff8d1bbcb819ccac9d7271de24289f03762"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.25.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-P903-CALLEE-protoToRecord",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/api/grpc_handler.go",
+    "package": "api",
+    "qualified_symbol": "api.protoToRecord",
+    "declaration_kind": "FUNCTION",
+    "query": "protoToRecord",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func protoToRecord(a *pb.Asset) *config.AssetRecord",
+    "candidate_blob_sha256": "16350f7c0be9fdea69f3ac4ec7e905405f08307f2cfad573aaad8e020b47abf4",
+    "source_span_sha256": "9c256c7fdc90fc3837b53b78997561fa3e27c924614ec5b29ec657b914406581",
+    "normalized_ast_sha256": "9c256c7fdc90fc3837b53b78997561fa3e27c924614ec5b29ec657b914406581",
+    "start": {
+      "byte_offset": 12728,
+      "line": 349,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 13071,
+      "line": 362,
+      "column": 2
+    },
+    "calls": []
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T08:30:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

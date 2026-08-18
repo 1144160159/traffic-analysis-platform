@@ -1,0 +1,75 @@
+flowchart LR
+  Alerts["Kafka alerts.v1"]:::external
+  IntelFeed["外部威胁情报源"]:::external
+  Analyst["安全分析人员 / API客户端"]:::external
+
+  subgraph SW05["SW-05 威胁告警研判与安全运营服务软件"]
+    Consumer["告警Consumer<br/>校验 / 租户隔离 / 幂等"]:::own
+    Enrich["告警富化<br/>风险 / 情报 / 资产上下文"]:::own
+    Evidence["证据生成器与取证链接"]:::own
+    Dedup["去重与状态协调"]:::own
+    Projection["告警权威写入与多存储投影"]:::own
+    AlertAPI["告警研判API<br/>状态 / 指派 / 标签 / 关闭 / 重开"]:::own
+    Feedback["反馈与白名单事务Outbox"]:::own
+    Campaign["战役 / 攻击链 / 专题 / 成员关系"]:::own
+    Playbook["剧本建议 / 响应交接 / 补偿状态"]:::own
+    Report["报告与导出Worker"]:::own
+    Realtime["WebSocket与通知"]:::own
+    Threat["威胁情报导入与Feed调度"]:::own
+    Reconcile["投影修复 / 影子比对 / 成员回填"]:::own
+  end
+
+  CH[("ClickHouse<br/>告警 / 证据 / 战役 / 反馈事实")]:::external
+  OS[("OpenSearch<br/>告警检索投影")]:::external
+  PG[("PostgreSQL<br/>命令权威 / outbox / 投影债务 / 报告")]:::external
+  Redis[("Redis<br/>去重 / 缓存 / 实时协调")]:::external
+  Nebula[("NebulaGraph<br/>战役与攻击关系投影")]:::external
+  KFeedback["Kafka alert.feedback.v1"]:::external
+  KWhite["Kafka whitelist.events.v2"]:::external
+  KResponse["Kafka 响应 / 战役 / 专题事件"]:::external
+  KIntel["Kafka threat.intel.v1"]:::external
+  APIResult["REST / WebSocket / 报告结果"]:::external
+  Forensics["外部软件<br/>SW-04取证API"]:::shared
+  Graph["共享依赖<br/>SW-03图查询接口"]:::shared
+  Auth["共享依赖<br/>SW-09鉴权"]:::shared
+
+  Alerts --> Consumer --> Enrich
+  Enrich --> Evidence
+  Enrich --> Projection
+  Dedup <--> Consumer
+  Dedup <--> Redis
+  Projection --> CH
+  Projection --> OS
+  Projection --> PG
+
+  Analyst --> AlertAPI
+  AlertAPI --> CH
+  AlertAPI --> OS
+  AlertAPI --> Feedback
+  Feedback --> PG
+  Feedback --> KFeedback
+  Feedback --> KWhite
+
+  AlertAPI --> Campaign
+  Campaign --> PG
+  Campaign --> CH
+  Campaign --> Nebula
+  Campaign --> KResponse
+  AlertAPI --> Playbook --> KResponse
+  AlertAPI --> Report --> PG
+  AlertAPI --> Realtime --> APIResult
+
+  IntelFeed --> Threat --> PG
+  Threat --> KIntel
+  KIntel --> Enrich
+  Reconcile --> CH
+  Reconcile --> OS
+  Reconcile --> PG
+
+  Forensics -.-> Evidence
+  Graph -.-> Campaign
+  Auth -.-> AlertAPI
+
+  classDef own fill:#dbeafe,stroke:#2563eb,color:#172554;
+  classDef external fill:#f3f4f6,stroke:#6b7280,color:#111827;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;

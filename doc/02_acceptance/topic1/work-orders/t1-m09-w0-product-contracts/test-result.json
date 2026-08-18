@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "M09_PRODUCT_CONTRACTS_K8S_TEST_RESULT",
+  "task_id": "T1-M09-N001",
+  "work_order": "t1-m09-w0-product-contracts",
+  "recorded_at": "2026-08-15T11:50:37Z",
+  "task_state": "PRODUCT_CONTRACTS_IMPLEMENTED_AND_K8S_SCHEMA_VALIDATED_RUNTIME_NOT_STARTED",
+  "scoped_result": "PASS",
+  "milestone_state": "IMPLEMENTING",
+  "production_applied": false,
+  "environment_policy": {
+    "environment_execution": "existing Kubernetes cluster only",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "local_scope": "contract inventory, deterministic registry generation and mutation tests only",
+    "local_results_are_environment_acceptance": false
+  },
+  "contracts": {
+    "F-ENCRYPTED-001": {
+      "sha256": "16d832b1539d8e7f9979feab9908f68963e8471e7a04f43d99e858d7714fc448",
+      "owner": "encrypted-traffic-domain-owner",
+      "status": "draft",
+      "feature_flag": "ENCRYPTED_TRAFFIC_SNAPSHOT_V1_ENABLED",
+      "default_enabled": false,
+      "scope": "versioned explainable encrypted-traffic snapshot"
+    },
+    "F-ENCRYPTED-002": {
+      "sha256": "1aa011754c7d6765705c8d95301fcab79bf5cac29eafb11ddfe71e9e37613abc",
+      "owner": "encrypted-traffic-domain-owner",
+      "status": "draft",
+      "feature_flag": "ENCRYPTED_ACTION_JOBS_V1_ENABLED",
+      "default_enabled": false,
+      "scope": "durable typed encrypted-traffic action jobs"
+    },
+    "F-FORENSICS-001": {
+      "sha256": "882ee401feb57f3217e5e73a676cb238b72647e4d37f13a87a23bc3a9275253a",
+      "owner": "forensics-domain-owner",
+      "status": "draft",
+      "feature_flag": "FORENSICS_PIPELINE_V1_ENABLED",
+      "default_enabled": false,
+      "scope": "PCAP forensics job, restoration manifest, chain of custody and controlled download"
+    }
+  },
+  "contract_guards": [
+    "the three existing canonical IDs are reused and no parallel ID is created",
+    "canonical work-package ownership is checked independently of contract content",
+    "existing UI routes, action IDs and API operations are preserved",
+    "snapshot, action authority, state, permission, performance and rollback are explicit",
+    "encrypted transport is not classified as malicious by itself",
+    "zero, no sample, not computable, unavailable and forbidden remain distinct",
+    "accepted never means completed",
+    "forensics reuses the M03 versioned restoration interface and restored bytes are never executed",
+    "all three additive paths remain default-off"
+  ],
+  "registry": {
+    "canonical_feature_ids": 54,
+    "formal_contracts": 44,
+    "formal_contracts_valid": 44,
+    "standard_scope_formal_contracts": 38,
+    "remaining_backlog_contract_gaps": 10,
+    "catalog_sha256": "6dcfbde5ecec5d9d6322586ff3660f385fa9c49e0bb20a42b7c3a89fbc42065c",
+    "task_count": 212,
+    "atomic_pr_count": 1289,
+    "task_registry_structure": "PASS",
+    "formal_execution_state": "BLOCKED",
+    "promotion_state": "BLOCKED"
+  },
+  "kubernetes_validation": {
+    "run_id": "d6bdf7ac-4a84-4bd1-bc52-53ae19cdca93",
+    "job_name": "m09-n001-contract-d6bdf7ac4a",
+    "job_uid": "d289720c-7657-4a30-836f-a51a02f444f5",
+    "pod_name": "m09-n001-contract-d6bdf7ac4a-cbqbx",
+    "pod_uid": "e2f592d6-ea4b-495d-8f5c-ececd14a42c2",
+    "container_id": "containerd://55a1c1f2e51c4452792aebf324ef8697b407f39d56eaaeee56472a30542d151a",
+    "image": "docker.io/traffic/mlops-trainer:m08-governed-export-w2c-20260815-r10",
+    "image_id": "sha256:0b905ee9b358b7dfd44aa846883d1ba55b9c56f7ac2a1b96c1f9c3d77a71d61a",
+    "started_at": "2026-08-15T11:50:23Z",
+    "completed_at": "2026-08-15T11:50:26Z",
+    "draft_2020_12_schema_validation": "PASS",
+    "canonical_owner_unique": true,
+    "registry_hash_binding": "PASS",
+    "rollouts_default_off": true,
+    "raw_envelope_sha256": "850ed3acfd54f506814ff6b6dedc4dd66928ba0590045ee9470127cbdec8bde3",
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_flink_touched": false,
+    "status": "PASS"
+  },
+  "verification": {
+    "product_contract_tests": {
+      "command": "python3 -m unittest tests.alignment.test_m09_product_contracts -v",
+      "tests": 8,
+      "failures": 0,
+      "result": "PASS",
+      "environment_acceptance": false
+    },
+    "feature_registry_tests": {
+      "command": "python3 -m unittest tests.alignment.test_feature_contract_registry -v",
+      "tests": 14,
+      "failures": 0,
+      "result": "PASS",
+      "environment_acceptance": false
+    },
+    "feature_registry": {
+      "commands": [
+        "python3 scripts/alignment/build_feature_contract_registry.py --check",
+        "python3 scripts/alignment/verify_feature_contract_registry.py"
+      ],
+      "result": "PASS"
+    },
+    "task_registry": {
+      "command": "python3 scripts/alignment/build_topic1_task_registry.py --check",
+      "result": "STRUCTURE_PASS",
+      "execution_authorized": false
+    }
+  },
+  "source_sha256": {
+    "contracts/alignment/features/F-ENCRYPTED-001.json": "16d832b1539d8e7f9979feab9908f68963e8471e7a04f43d99e858d7714fc448",
+    "contracts/alignment/features/F-ENCRYPTED-002.json": "1aa011754c7d6765705c8d95301fcab79bf5cac29eafb11ddfe71e9e37613abc",
+    "contracts/alignment/features/F-FORENSICS-001.json": "882ee401feb57f3217e5e73a676cb238b72647e4d37f13a87a23bc3a9275253a",
+    "doc/07_alignment/runbooks/F-ENCRYPTED-001-rollback.md": "b46ca49b68df745059cc858554b19fc449b7a2a976d2424be10a8e4db3d206ec",
+    "doc/07_alignment/runbooks/F-ENCRYPTED-002-rollback.md": "2db44df56ca6801c7f07fd3c93cb1afdb040c054a8f3617d91e47609e17a1695",
+    "doc/07_alignment/runbooks/F-FORENSICS-001-rollback.md": "df70d179c277dd8c6256bea2e9d9e8de3d13d34388f039406c06f56fa2055681",
+    "contracts/alignment/feature-contract-registry.v1.json": "e57aedb89af9c7c3e9f61b810b9c809975d4d6c1a6be9fba84a6b3627cd34d51",
+    "scripts/alignment/verify_feature_contract_registry.py": "c3ea5ccb3896a554b6bc487afeb48e713e35d35a71a7b5c9fa51942d76af02b9",
+    "tests/alignment/test_feature_contract_registry.py": "b36a92907e9ff6a0be2e91d43192e12a23b66143eb6f497fee48ff826c367bca",
+    "scripts/alignment/validate_m09_product_contracts.py": "6d79077b67fa82694418ea21d9228774de4e406edacbb43a16b7546ba49bdec3",
+    "scripts/alignment/run_m09_product_contracts_k8s.py": "c052adaadd475eb6dad65df3e8d4a340eb7569dab7d2132ccc9040fe20a485a0",
+    "tests/alignment/test_m09_product_contracts.py": "0f73bb60c67c583d23a776617cd21b5822668a1a9869c7b91502cdddae1b511e",
+    "contracts/alignment/task-registry.v1.json": "4f4c80cf4fa0412a264d04d181c9e3404ee2b10e24871bb6a1c14087e822c65f",
+    "contracts/alignment/task-execution-overlay.template.v1.json": "7106e2aa9a9e73bb86329cfbf3fceee0fd5b224dd1e016cd4e9e3274e58901fb",
+    "contracts/alignment/developer-claim-package-catalog.v1.json": "7ffe153a62d473d6a38cff81c6643977b45c9a86500d525f795c55d9bc96c210"
+  },
+  "cleanup": {
+    "job_deleted": true,
+    "configmap_deleted": true,
+    "pod_deleted": true,
+    "absence_verified": true,
+    "shared_services_unchanged": true
+  },
+  "not_executed": [
+    "encrypted snapshot repository or API runtime",
+    "encrypted durable action-job runtime",
+    "forensics compatible-idle worker",
+    "forensics command writer or dispatcher",
+    "shared storage mutation",
+    "production rollout or observation"
+  ],
+  "limitations": [
+    "N001 establishes the product contracts and rollback boundaries only; N002 onward must implement the runtime slices.",
+    "Draft contracts are not OpenAPI bindings, runtime completion or feature closure.",
+    "The K8s Job validated immutable contract and registry inputs without touching shared services."
+  ],
+  "errors": []
+}

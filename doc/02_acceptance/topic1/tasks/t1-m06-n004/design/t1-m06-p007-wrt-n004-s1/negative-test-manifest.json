@@ -1,0 +1,23 @@
+{
+  "artifact_kind": "NEGATIVE_TEST_MANIFEST",
+  "schema_version": "1.0.0",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "candidate_manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+  "case_ids": [
+    "NEG-TENANT-BODY-CONFLICT",
+    "NEG-VIEWER-WRITE",
+    "NEG-SAME-KEY-DIFFERENT-PAYLOAD",
+    "NEG-STALE-REVISION",
+    "NEG-PASSIVE-OVERWRITES-GOVERNANCE",
+    "NEG-OLD-OBSERVATION-REGRESSES-FACT",
+    "NEG-HISTORY-WRITE-FAILURE",
+    "NEG-AUDIT-WRITE-FAILURE",
+    "NEG-OUTBOX-WRITE-FAILURE",
+    "NEG-LEDGER-WRITE-FAILURE",
+    "NEG-COMMIT-UNKNOWN-NEW-KEY",
+    "NEG-NONCANONICAL-ASSET-EVENT-TOPIC",
+    "NEG-BROKER-NO-ACK-MARKS-PUBLISHED"
+  ],
+  "required_outcome": "each negative is rejected with its stable oracle and no unauthorized durable effect",
+  "proof_ceiling": "NEGATIVE_CASE_DESIGN_ONLY_NOT_TEST_EXECUTION"
+}

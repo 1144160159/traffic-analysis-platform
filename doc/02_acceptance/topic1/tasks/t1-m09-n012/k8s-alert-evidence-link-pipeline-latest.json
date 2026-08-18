@@ -1,0 +1,124 @@
+{
+  "artifact_kind": "M09_ALERT_EVIDENCE_LINK_PIPELINE_TEST_RESULT",
+  "clickhouse_cleanup_oracle": {
+    "alert_evidence_links_v1_local": 0
+  },
+  "consumer_default_enabled": false,
+  "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_COMMAND_OUTBOX_KAFKA_CONSUMER_PROJECTION",
+  "dispatcher_default_enabled": false,
+  "does_not_prove": [
+    "production rollout",
+    "shared data migration",
+    "global task completion",
+    "Windows Chrome acceptance",
+    "performance or rollback drill"
+  ],
+  "inputs": {
+    "clickhouse_fixture_sha256": "2226247d3999c5d400320a8e7788689f745e7aa55871470535d65384be68c301",
+    "clickhouse_image": "docker.io/clickhouse/clickhouse-server:24.3-alpine",
+    "kafka_image": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+    "link_migration_sha256": "5605e84b1fb44b5d351c57fc419d8fafa44ea6c441458013619e48e4259eff98",
+    "manifest_migration_sha256": "3c06ce92284ef567ae4c2a2d5cad96c554c9c475a96a46b2123b66fca6fbf3fa",
+    "postgres_image": "docker.io/library/postgres:16-alpine",
+    "prerequisites_sha256": "eeb366c1ed28bfe5d86f905f6be30bee023c4083e07df631b5d515d8275c2669",
+    "test_images": [
+      "traffic/alert-evidence-link-api-test:m09-n012-20260816-r1",
+      "traffic/alert-evidence-link-consumer-test:m09-n012-20260816-r2"
+    ]
+  },
+  "kubernetes_dependencies": [
+    {
+      "container_id": "containerd://3e698e4821d84374aa0d4d679c38b46fe99c12dc383a1f139221c2e55e80eb29",
+      "image": "docker.io/library/postgres:16-alpine",
+      "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n012-evidence-c935dadf27",
+      "pod_uid": "82583474-dc01-4720-a3bf-c3e8c2ba02b6",
+      "started_at": "2026-08-15T17:24:32Z"
+    },
+    {
+      "container_id": "containerd://4613855e3145ff569e38a2c060a95732d085d24a31c1ed5a2a61af83c9eb226f",
+      "image": "docker.io/clickhouse/clickhouse-server:24.3-alpine",
+      "image_id": "docker.io/clickhouse/clickhouse-server@sha256:c3f166f4a80098480463d897a63f6867d24e3a7661fc1fe72e889788115a25f1",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n012-evidence-c935dadf27-ch",
+      "pod_uid": "5fd715d6-c85b-4f76-adc0-e3d420e154f9",
+      "started_at": "2026-08-15T17:24:32Z"
+    },
+    {
+      "container_id": "containerd://7526c7cb236083f1eaf9b946d68d9307c77f3f605b7c82cc8c88324e44180670",
+      "image": "docker.io/redpandadata/redpanda:v24.1.12",
+      "image_id": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n012-evidence-c935dadf27-kafka",
+      "pod_uid": "1624c55d-f705-432f-ac05-ebabe9689bc5",
+      "started_at": "2026-08-15T17:24:32Z"
+    }
+  ],
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-15T17:24:39Z",
+      "container_id": "containerd://e8634df756adf8577d7f8441f6edad08d283c380d20f4c6cdbdfab11cb2e8a3a",
+      "image": "docker.io/traffic/alert-evidence-link-api-test:m09-n012-20260816-r1",
+      "image_id": "sha256:c43b35938ee055366a5faea8c4386372852bffac7e2bff4b9e39c1bf392dae73",
+      "job_name": "m09-n012-evidence-c935dadf27-api",
+      "job_uid": "dae4af41-10f7-45c4-84b9-35bab831e9e6",
+      "node": "8-2tb",
+      "pod_name": "m09-n012-evidence-c935dadf27-api-xdfmx",
+      "pod_uid": "5cd61362-91f8-4980-8017-bc3fe3437c5a",
+      "started_at": "2026-08-15T17:24:36Z"
+    },
+    {
+      "completed_at": "2026-08-15T17:24:43Z",
+      "container_id": "containerd://f6c4e2c98eda9b744630d4e7bcaded0f234e16ae4ec36c80b17676279fd16809",
+      "image": "docker.io/traffic/alert-evidence-link-consumer-test:m09-n012-20260816-r2",
+      "image_id": "sha256:43f6e4b77fadc02ec83a0348e600b181e5e97d8436d28a031722945f8f0d500d",
+      "job_name": "m09-n012-evidence-c935dadf27-consumer",
+      "job_uid": "18dc2424-5cf6-4836-bbbe-777b9a2b6c94",
+      "node": "8-2tb",
+      "pod_name": "m09-n012-evidence-c935dadf27-consumer-68gfk",
+      "pod_uid": "ded49b1d-75b0-4d59-a04f-bdec97977c10",
+      "started_at": "2026-08-15T17:24:40Z"
+    }
+  ],
+  "postgres_cleanup_oracle": {
+    "audit": 0,
+    "commands": 0,
+    "deliveries": 0,
+    "inbox": 0,
+    "link_history": 0,
+    "link_migration": 1,
+    "links": 0,
+    "manifest_history": 0,
+    "manifest_migration": 1,
+    "manifests": 0,
+    "outbox": 0,
+    "sentinel": "ephemeral-only",
+    "tenants": 0,
+    "watermarks": 0
+  },
+  "production_applied": false,
+  "profile_id": "M09-N012-K8S-PG-REDPANDA-CLICKHOUSE-V1",
+  "run_id": "c935dadf-2752-4c4e-9627-fff7aa72ec74",
+  "run_scoped_resources_removed": true,
+  "shared_clickhouse_touched": false,
+  "shared_kafka_touched": false,
+  "shared_postgres_touched": false,
+  "status": "PASS",
+  "task_id": "T1-M09-N012",
+  "test_output_sha256": {
+    "api": "e06254daa476ab6675b190c9a3d989714bfe5bd86f25a0987af389b65aea80ec",
+    "consumer": "0338383f1754fd709a6180bb89097bfe6955d9c68e68a471dd490030abc835f2"
+  },
+  "topic_receipt": {
+    "description_sha256": "9ae87bdc15bace735635e23c7f98626db110239485bd60f1501e75e20e17b872",
+    "partitions": 6,
+    "replication_factor": 1,
+    "topic": "alert.evidence-links.v1",
+    "topic_list_sha256": "0f386144ad15927704c642208f84c3153f7cda629de65095b6badc0707ef98ea"
+  },
+  "writer_default_enabled": false
+}

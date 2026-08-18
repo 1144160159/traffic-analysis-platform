@@ -1,0 +1,124 @@
+{
+  "result": "pass",
+  "browser_backend": "Windows Chrome through Xshell CDP tunnel",
+  "browser": "Chrome/150.0.7871.182",
+  "comparison_contract": "Reference content is normalized to the fixed 1152x666 modal body crop; comparison images place reference left and implementation right.",
+  "fixed_modal_contract": {
+    "width": 1152,
+    "height": 720,
+    "tab_geometry_delta": 0
+  },
+  "results": [
+    {
+      "id": "pcap",
+      "status": "pass",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-pcap.png",
+      "source_original_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "normalized_source": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/pcap-source-normalized.png",
+      "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/pcap-business.png",
+      "comparison_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/pcap-comparison.png",
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/pcap-diff.png",
+      "compared_size": {
+        "width": 1152,
+        "height": 666
+      },
+      "channel_tolerance": 28,
+      "mismatch_pixels": 148022,
+      "pixel_mismatch_ratio": 0.19292990907574242,
+      "max_pixel_ratio": 0.35,
+      "mean_absolute_channel_delta": 14.450459139695251
+    },
+    {
+      "id": "session",
+      "status": "pass",
+      "source_image": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/target-business-r160-close-final.png",
+      "source_original_size": {
+        "width": 1152,
+        "height": 648
+      },
+      "normalized_source": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/session-source-normalized.png",
+      "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/session-business.png",
+      "comparison_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/session-comparison.png",
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/session-diff.png",
+      "compared_size": {
+        "width": 1152,
+        "height": 666
+      },
+      "channel_tolerance": 28,
+      "mismatch_pixels": 146945,
+      "pixel_mismatch_ratio": 0.19152616157824492,
+      "max_pixel_ratio": 0.35,
+      "mean_absolute_channel_delta": 15.331722781809587
+    },
+    {
+      "id": "logs",
+      "status": "pass",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-logs.png",
+      "source_original_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "normalized_source": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/logs-source-normalized.png",
+      "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/logs-business.png",
+      "comparison_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/logs-comparison.png",
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/logs-diff.png",
+      "compared_size": {
+        "width": 1152,
+        "height": 666
+      },
+      "channel_tolerance": 28,
+      "mismatch_pixels": 145119,
+      "pixel_mismatch_ratio": 0.18914617742742743,
+      "max_pixel_ratio": 0.35,
+      "mean_absolute_channel_delta": 14.955739159298187
+    },
+    {
+      "id": "graph-path",
+      "status": "pass",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-graph-path.png",
+      "source_original_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "normalized_source": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/graph-path-source-normalized.png",
+      "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/graph-path-business.png",
+      "comparison_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/graph-path-comparison.png",
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/graph-path-diff.png",
+      "compared_size": {
+        "width": 1152,
+        "height": 666
+      },
+      "channel_tolerance": 28,
+      "mismatch_pixels": 157533,
+      "pixel_mismatch_ratio": 0.20532642017017017,
+      "max_pixel_ratio": 0.35,
+      "mean_absolute_channel_delta": 17.662968524079634
+    },
+    {
+      "id": "files",
+      "status": "pass",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-files.png",
+      "source_original_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "normalized_source": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/files-source-normalized.png",
+      "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/files-business.png",
+      "comparison_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/files-comparison.png",
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/files-diff.png",
+      "compared_size": {
+        "width": 1152,
+        "height": 666
+      },
+      "channel_tolerance": 28,
+      "mismatch_pixels": 152939,
+      "pixel_mismatch_ratio": 0.19933866157824492,
+      "max_pixel_ratio": 0.35,
+      "mean_absolute_channel_delta": 15.750639962879546
+    }
+  ],
+  "timestamp": "2026-07-27T04:10:42.547Z"
+}

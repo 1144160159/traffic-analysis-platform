@@ -1,0 +1,82 @@
+flowchart LR
+  subgraph S1["SW-01 全流量采集与可信接入"]
+    Probe["probe-agent"]
+    Ingest["ingest-gateway"]
+    Probe --> Ingest
+  end
+  subgraph S2["SW-02 实时会话特征与威胁检测"]
+    Stream["8个非PCAP Flink业务Job"]
+  end
+  subgraph S3["SW-03 资产身份与关系图谱"]
+    Asset["asset-service"]
+    Graph["graph-service"]
+    Asset --> Graph
+  end
+  subgraph S4["SW-04 PCAP索引与取证"]
+    PcapIndex["flink-pcap-index-job"]
+    Forensics["forensics-service"]
+    PcapIndex --> Forensics
+  end
+  subgraph S5["SW-05 告警研判与安全运营"]
+    AlertOps["alert-service与投影/对账worker"]
+  end
+  subgraph S6["SW-06 规则与模型发布治理"]
+    RuleManager["rule-manager"]
+  end
+  subgraph S7["SW-07 模型训练评估"]
+    MLOps["Python训练评估工具链与Argo Workflow"]
+  end
+  subgraph S8["SW-08 安全运营可视化"]
+    UI["React Web UI"]
+  end
+  subgraph S9["SW-09 身份认证与审计"]
+    Auth["auth-service"]
+    Audit["audit-materializer"]
+    Auth --> Audit
+  end
+
+  Kafka[("Kafka")]:::external
+  PG[("PostgreSQL")]:::external
+  CH[("ClickHouse")]:::external
+  OS[("OpenSearch")]:::external
+  Nebula[("NebulaGraph")]:::external
+  MinIO[("MinIO")]:::external
+  APISIX["APISIX"]:::external
+  IdP["OIDC / Keycloak"]:::external
+  Proto["共享契约 proto/traffic/v1"]:::shared
+
+  Probe --> MinIO
+  Ingest --> Kafka
+  Kafka --> Stream
+  Stream --> Kafka
+  Stream --> CH
+  Kafka --> Asset
+  Asset --> PG
+  Graph --> Nebula
+  Kafka --> PcapIndex
+  PcapIndex --> CH
+  Forensics --> MinIO
+  Kafka --> AlertOps
+  AlertOps --> PG
+  AlertOps --> CH
+  AlertOps --> OS
+  RuleManager --> PG
+  RuleManager --> Kafka
+  MLOps --> MinIO
+  MLOps --> RuleManager
+  UI --> APISIX
+  APISIX --> Asset
+  APISIX --> Forensics
+  APISIX --> AlertOps
+  APISIX --> RuleManager
+  APISIX --> Auth
+  Auth --> IdP
+  Proto -.-> Ingest
+  Proto -.-> Stream
+  Proto -.-> Asset
+  Proto -.-> PcapIndex
+  Proto -.-> AlertOps
+  Proto -.-> RuleManager
+
+  classDef external fill:#f3f4f6,stroke:#6b7280,stroke-width:1px,stroke-dasharray:5 5,color:#374151;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;

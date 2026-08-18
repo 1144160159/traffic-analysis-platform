@@ -1,0 +1,141 @@
+{
+  "artifact_kind": "M08_MODEL_FEEDBACK_CONSUMER_READY_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": [
+    "T1-M08-N010",
+    "T1-M08-N014"
+  ],
+  "milestone_state": "IMPLEMENTING",
+  "task_state": "CODE_AND_ISOLATED_POSTGRES_CANARY_PASS_KAFKA_CONSUMER_DISABLED",
+  "scoped_evidence_status": "PASS",
+  "producer_enablement_status": "BLOCKED",
+  "captured_at": "2026-08-15T07:11:06Z",
+  "environment": {
+    "infrastructure": "existing kubernetes cluster",
+    "namespace": "traffic-analysis",
+    "node": "zeus-server",
+    "kubelet_version": "v1.29.15",
+    "container_runtime": "containerd://1.6.32",
+    "production_applied": false,
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_kafka_touched": false
+  },
+  "consumer_contract": {
+    "topic": "model.feedback.v1",
+    "consumer_group": "rule-manager-model-feedback-revision-v1",
+    "readiness": "consumer_only",
+    "producer_paths": [],
+    "producer_acl_grants": [],
+    "runtime_enabled": false,
+    "candidate_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "contract_sha256": "c60bdb3ed674853da641d2c613530195a1ed9db62ce48606c402870ab283c7d9",
+    "candidate_zero_digest_blocks_enabled_constructor": true,
+    "accepted_state_receipt_transactional": true
+  },
+  "source_sha256": {
+    "model-feedback-event.v1.schema.json": "c60bdb3ed674853da641d2c613530195a1ed9db62ce48606c402870ab283c7d9",
+    "model_feedback_revision_consumer.go": "ce8cde68d33c91f2ce5386fe4ee15e77930c172b094a80af957d20571c435120",
+    "model_feedback_revision_consumer_test.go": "6632cb71a7c0e6270b72632b4b81632306ae2f7160ddcfabe474ec180bd87ec2",
+    "rules-config.go": "cb2b54cc0ad61816e4ac00e02bd28366e606411e01527986c3db8dc1142817a0",
+    "rules-config_test.go": "87ea76d029f1b3e87f1947f1ba771eeaea2383c1090dddf46fee38e1884a8f60",
+    "rule-manager-main.go": "19057b5819661cd2903d23470675acc64f5703955bdbf8e354719970d6c8ce63",
+    "202608151430_m08_model_feedback_revision_inbox_v1.sql": "63fbeb288c779f7f634d62489de26579b3f72b96146d4fdecb2b4f63de78ea8e",
+    "sync_m08_model_feedback_postgres_entrypoint.py": "145be926d5ab5fe3f4fae164bfc6d0f62828d93e146270dd952328b9db1ebb12",
+    "test_sync_m08_model_feedback_postgres_entrypoint.py": "d4369f7fe1fa942b4e6f78e75daaa841c62a6b11a1a6cc387acea319c85e4da5",
+    "02-postgres-schema.yaml": "2089fd1457eaadf69b3838a2e389146f06ced70300cea1c7987305130dac8696",
+    "m08-model-feedback-postgres-canary.yaml": "475ca957f3ded8e2bf132a33e44f48f1f684b62cfa649eabe334c0fbcddb00ec",
+    "go-services.yaml": "5f1fe3b98a16a4d2c23855e85d5973baced5cee8e4e9047422282ef1e9d78f37",
+    "create-topics.sh": "be099b41eddfdaa0895a1c59c4ad6d2eb22db6cd8d395df83ac06834436c2626",
+    "01-kafka-topics.yaml": "ce7366fb2ddfab2448077f99c983cbaedb41288b2f2aad2f269498cb31667d69",
+    "kafka-topic-catalog.v1.json": "6abc6b1bcd22eba05d472db413114f4032dbdf5f7035642c2df2906776632a36",
+    "kafka-acl-catalog.v1.json": "6cf16f36ef5dbf439921a97bc5771cfc7e67553af338b6f09af9d3304896d51b",
+    "00-kafka-acl-plan.yaml": "7f1d63deec72b9c9ea13cee5b4cb44ff610bacf526ce156eb22ebcc67ab2ddd6",
+    "test_m08_model_feedback_consumer.py": "01947e738c206d1e83d64d0753a6d0cfe8db0e427079f32a0672f5247fe48e95"
+  },
+  "kubernetes_canary": {
+    "job_uid": "07f3c87d-76af-4d33-b55f-2e65aee90c84",
+    "pod_uid": "f2c89951-cbd5-4569-8169-bd891cfdc847",
+    "node": "zeus-server",
+    "started_at": "2026-08-15T07:09:33Z",
+    "completed_at": "2026-08-15T07:09:38Z",
+    "duration_seconds": 5,
+    "postgres_image": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "container_id": "containerd://ab8ba026709f999ffee5b9e5bc8f980a82a99d1a447d5f9c2e6072693d052ba7",
+    "tables": 4,
+    "required_columns": 63,
+    "accepted_receipts": 1,
+    "readiness_receipts": 1,
+    "invalid_revision_without_previous_event_id_rejected": true,
+    "status": "PASS"
+  },
+  "regressions": [
+    {
+      "command": "go test ./internal/rules/... ./cmd/rule-manager -count=1",
+      "working_directory": "go/control-plane",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m unittest tests.alignment.test_m08_model_feedback_consumer tests.alignment.test_kafka_acl_catalog tests.alignment.test_alignment_registry.AlignmentRegistryTest.test_kafka_topic_schema_and_implementation_catalog_is_complete -v",
+      "status": "PASS",
+      "tests": 19,
+      "failures": 0
+    },
+    {
+      "command": "python3 scripts/alignment/test_sync_m08_model_feedback_postgres_entrypoint.py -v",
+      "status": "PASS",
+      "tests": 4,
+      "failures": 0
+    },
+    {
+      "command": "python3 scripts/alignment/check_event_catalog.py && python3 scripts/alignment/generate_kafka_acl_plan.py --check-generated && python3 scripts/alignment/check_migrations.py",
+      "status": "PASS",
+      "canonical_topics": 45,
+      "postgres_migrations": 83
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f deployments/kubernetes/jobs/m08-model-feedback-postgres-canary.yaml -o name",
+      "status": "PASS"
+    },
+    {
+      "command": "kubectl apply --server-side --force-conflicts --dry-run=server -f deployments/kubernetes/init-jobs/01-kafka-topics.yaml -f deployments/kubernetes/init-jobs/02-postgres-schema.yaml -f deployments/kubernetes/applications/go-services.yaml -o name",
+      "status": "PASS_WITH_EXISTING_LAST_APPLIED_ANNOTATION_WARNINGS"
+    }
+  ],
+  "gates": {
+    "strict_event_schema": "PASS",
+    "tenant_prediction_model_rule_authority_binding": "PASS",
+    "duplicate_header_and_key_binding": "PASS",
+    "exact_replay_idempotency": "PASS",
+    "same_revision_different_hash_rejection": "PASS",
+    "out_of_order_revision_rejection": "PASS",
+    "retraction_terminal_state": "PASS",
+    "second_feedback_aggregate_for_prediction_rejection": "PASS",
+    "transactional_inbox_head_receipt": "PASS",
+    "candidate_contract_readiness_receipt": "PASS",
+    "permanent_error_dlq_ack_barrier": "PASS",
+    "runtime_default_off": "PASS",
+    "m09_n017_producer_absent": "PASS",
+    "real_kafka_consumer_receipt": "NOT_EXECUTED",
+    "real_clickhouse_prediction_lookup": "NOT_EXECUTED",
+    "production_enablement": "BLOCKED"
+  },
+  "cleanup": {
+    "canary_job_removed": true,
+    "canary_migration_configmap_removed": true,
+    "formal_rule_manager_rollout_unchanged": true,
+    "canonical_topic_not_created_by_this_run": true
+  },
+  "enablement_blockers": [
+    "The rule-manager candidate digest remains the all-zero sentinel and therefore cannot construct an enabled readiness projection.",
+    "No real Kafka model.feedback.v1 record has passed through the consumer and committed a source offset.",
+    "No live ClickHouse traffic.alerts_latest prediction lookup has been reconciled for the same tenant/model/rule identity.",
+    "M09-N017 is intentionally absent and has no producer ACL; producer enablement must wait for a candidate-bound real consumer receipt."
+  ],
+  "limitations": [
+    "The K8s canary proves the exact PostgreSQL migration, constraints and receipt shape in an isolated database on the existing cluster.",
+    "Go tests exercise the production decoder, authority checks and transaction code with controlled dependencies; they are not a live broker receipt.",
+    "This artifact does not claim M08-N014 production readiness, M09 feedback authority, training ingestion, M08 completion or model quality."
+  ],
+  "errors": []
+}

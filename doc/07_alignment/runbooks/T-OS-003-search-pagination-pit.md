@@ -2,7 +2,9 @@
 
 ## 1. 当前结论
 
-本手册对应 `T-OS-003` 与 `F-SEARCH-001`。仓库候选为 `IMPLEMENTING/PARTIAL`，`production_applied=false`；它不能证明生产已启用、真实深页身份一致、性能达标或专项关闭。
+本手册对应 `T-OS-003`、`F-SEARCH-001` 与 `T1-M09-N015`。仓库候选为 `IMPLEMENTING/PARTIAL`，`production_applied=false`；它不能证明生产已启用、生产规模性能达标、浏览器验收完成或专项关闭。
+
+2026-08-16 的 K8s run `4d99d81c-619f-4885-97c5-ece81f61da94` 已在现有 `middleware/opensearch` 上用两个 run-scoped 索引和一个 run-scoped alias 证明 live alias 漂移失败关闭、PIT alias 切换保持冻结快照、tenant 隔离、目标水位和 OpenSearch 不可用失败关闭；cleanup Job 随后证明这些索引和 alias 均已删除。该证据只绑定测试镜像与不可变 Web bundle，不是生产 alias、72M 数据集、APISIX 或 Windows Chrome 证据。
 
 2026-08-04 只读盘点显示，生产 `alerts` 索引约有 72,065,235 个文档，采样时活动 PIT 为 0，`alert-service` Deployment 中尚无 `OPENSEARCH_SEARCH_CURSOR_V1_ENABLED`。现有正式 API 使用 `from/size`，因此大页深度会放大协调节点堆、CPU、分片取回和网络成本。
 
@@ -24,9 +26,10 @@
 | partial 策略 | `allow_partial_search_results=false`，`timed_out=true` 或 failed shard 直接失败 |
 | 字段策略 | 固定 `_source` 和 sort allowlist，不暴露 wildcard/regexp query 类型 |
 | 权限 | `alert:read`；tenant 仅来自认证身份并进入 filter context |
-| 运行时开关 | `OPENSEARCH_SEARCH_CURSOR_V1_ENABLED=false` |
+| 后端运行时开关 | `OPENSEARCH_SEARCH_CURSOR_V1_ENABLED=false` |
+| 前端运行时开关 | `ALERT_SEARCH_CURSOR_V1_ENABLED=false` |
 
-游标使用从 Secret 注入的 `JWT_SECRET_KEY` 作为根密钥，但以 `traffic.alert.search.cursor.v1` 域分离后再做 HMAC-SHA256。签名声明绑定 tenant、规范化查询指纹、模式、页大小、排序值、PIT ID、快照时间和到期时间。跨租户、篡改、过期及变更筛选／排序／页大小／模式的游标在访问 OpenSearch 前拒绝。
+游标使用从 Secret 注入的 `JWT_SECRET_KEY` 作为根密钥，但以 `traffic.alert.search.cursor.v1` 域分离后再做 HMAC-SHA256。签名声明绑定 tenant、规范化查询指纹、解析后的物理索引集合 SHA、模式、页大小、排序值、PIT ID、快照时间和到期时间。跨租户、篡改、过期及变更筛选／排序／页大小／模式的游标在访问 OpenSearch 前拒绝。live 续页会重新解析 alias；物理集合变化即返回 stale cursor。PIT 首次创建前解析并冻结物理索引，续页只使用 PIT，因此批准的 alias 切换不会把 PIT 偷换到新索引。
 
 ## 3. API 旅程
 
@@ -43,6 +46,8 @@
 首页传 `cursor_mode=pit`。服务在已批准的 read alias 上创建 PIT，搜索请求不再携 index，而携 PIT ID、keep_alive 与 `search_after`。OpenSearch 可能轮换 PIT ID；服务把最新 ID 签入下一个 cursor。末页、显式关闭或首个查询失败时释放 PIT；关闭失败只允许依赖短 TTL 兜底并必须告警。
 
 客户端完成、取消或离开一致遍历时调用 `DELETE /v1/alerts/search/cursor`，body 为 `{"cursor":"..."}`。live cursor 是幂等 no-op；PIT cursor 关闭所属 tenant 的上下文。客户端永远不能直接提交或替换 PIT ID。
+
+告警页面在前端开关开启时只使用 PIT 顺序分页，缓存已经访问的页，禁止跳到未签发游标的页。重查、改变过滤器、改变页大小、刷新或离开页面时显式关闭当前 PIT 并从第一页建立新快照。响应必须同时带 `snapshot_id`、`as_of` 和 `opensearch.alerts.target_sha256`；缺少任一字段即显示失败，不回退 `/v1/alerts`、fixture 或前端拼装数据。
 
 ## 4. G2/G3 真实验证
 

@@ -5,6 +5,7 @@
 ## 触发条件
 
 - manifest 与 MinIO 对象的 size 或 SHA-256 不一致；
+- 完成任务在 `artifact_expires_at` 后仍返回下载地址，或下载端点未返回 `410 REPORT_EXPIRED`；
 - 报告跨租户可见、快照 revision 不一致或缺失章节被伪造为完整；
 - 队列持续增长、重试超过 5 次或资源预算越界；
 - 候选 bundle 与服务端契约版本不匹配。
@@ -22,9 +23,14 @@
 - `running` 任务通过 5 分钟 lease 回收，最多重试 5 次；
 - 已上传但未提交 manifest 的同名对象允许确定性覆盖；
 - 已完成对象仍按 manifest 校验后下载，若功能开关关闭则暂时不可下载。
+- 到期只撤销下载权限；PG job/history/watermark/manifest 继续可查，回滚不得删除这些审计事实。
 
 ## 恢复与验证
 
 重新开启前，至少验证 PG job/outbox/audit 原子性、MinIO size/SHA-256、跨租户负向用例、
 一次 lease 过期恢复，以及 Windows Chrome 的创建—轮询—下载 HAR。回滚本身不回退 migration，
 也不删除对象；恢复时只切换功能开关。
+
+候选默认必须保持 `ALERT_REPORT_JOBS_V1_ENABLED=false`；`ALERT_REPORT_ARTIFACT_TTL`
+只允许 `5m` 至 `720h`，默认 `24h`。改变 TTL 是下载授权策略变更，必须先验证存量任务的
+`artifact_expires_at` 展示与 410 行为，不能通过缩短 TTL 代替对象生命周期清理。

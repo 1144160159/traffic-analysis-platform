@@ -1,0 +1,154 @@
+{
+  "artifact_kind": "M09_RESPONSE_HANDOFF_TEST_RESULT",
+  "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_RESPONSE_HANDOFF",
+  "does_not_prove": [
+    "production rollout",
+    "shared data migration",
+    "production provider authorization",
+    "production traffic cleaning or blackhole routing",
+    "performance or rollback drill",
+    "Windows Chrome acceptance",
+    "authorization to enable alert response execution flags",
+    "global milestone completion"
+  ],
+  "dry_run_receipt": true,
+  "execution_flags_default_enabled": false,
+  "inputs": {
+    "candidate_images": [
+      "traffic/alert-response-handoff-test:m09-n020-20260816-r1",
+      "traffic/web-ui:m09-n022-alert-detail-css-20260816-r2"
+    ],
+    "postgres_schema_sha256": {
+      "00-init.sql": "f65308478c4e083462501e766f03cef71bc4192c7750ac9b78ec5cfcfcd6f2da",
+      "01-assets.sql": "bd4bdca2fdb9a66198b735d74e84f5363a734d18534e94021ca22f096365e29a",
+      "02-features-rules.sql": "b7245ec8579f49bc3eadebe20914b25a10e538544dff7a13133d3a2b13c75a83",
+      "03-models-deploy.sql": "44f605cf03a6cead6db742575adedfbbb9166c587bf08ea5d32952a0592eeb83",
+      "04-tasks-audit.sql": "86948134a35a3090cf61a9ac86bf0793c7938eefe770c6f30fada5c7eee54131",
+      "05-default-data.sql": "7c0146c0caa6553c0b5bd24b03a8c3039997992a2805f09d467cea2508c59e45",
+      "06-graph.sql": "7bb657b9a8c44732c8ebd750179383c2822e4d60c876c987b038d28d38f62cf2",
+      "07-campaign-impact-assets.sql": "2a8e1f1398efd367f7e957bfce74e98c051b57279a75ee58eac90389c4ff9a20",
+      "07-fusion-acceptance.sql": "64117cf75775db2432adc0a9cc2bf6fe1c0ec5881dc95132adecff5cf8c6fce8",
+      "08-behavior-baseline.sql": "e09ff79260118fa50f5bd19d601aed39e8b6090e9b55b85f07d93e71576df2c7",
+      "09-forensics-task-atomic.sql": "4bcb7b54d44b531e2f7aabebfe76183cdd83f1486ad50be6cc9a2dfe0601a7db",
+      "10-m03-file-restoration.sql": "a739ea711226a2ecf3c88d56fa59242b9af1f068d12f71f18f30ce90d1fab6c2",
+      "10-whitelist-governance-v2.sql": "636305dc07a0004934d6db0c8d48195c37710749f8bc1fbad6108d1cad6a9436",
+      "11-dashboard-task-v2.sql": "6b2674137ad61ba6d4f2a8cee59ca27ff1538cc79a405cce97c404759f557732",
+      "12-dashboard-task-execution-pipeline-v1.sql": "dfee7e45024c1cb161892c841c3100ad1ac09fad26ecef520b7743da71f94c68",
+      "13-dashboard-task-compensation-v1.sql": "150f6f7f72968e52538398bc42718eb5bc809e9b983f04d53b74241937c02cad",
+      "14-dashboard-task-dlq-receipt-v1.sql": "a09f55bde7680a347f34930217fb77ce733b55c1db5118e4b77a8633f17e5632",
+      "15-alert-response-external-executor-v1.sql": "f6b74a0466df905a36a4958e304f0296d708ec8ecc2aa307bf15967de2c8509b",
+      "16-alert-response-dlq-receipt-v1.sql": "8b9369dce1148bedfc25c8e3c2ba6942c60ccb090a21e0991feb4f2ec781ca79",
+      "17-alert-response-reconciliation-compensation-v1.sql": "e1dfb6aa7bcc11fba763f27f18200f430c5ab766b5f7f73874334e19b15d456f",
+      "18-alert-evidence-manifest-v1.sql": "f3a3c387da5aeb62c7cf4b4b25c71a695704db46d6d08ded06290a38bf3a0064",
+      "19-alert-batch-assignment-v1.sql": "ea1ff0bc72ee475384dfcb61f6ed0a76156fa62e61790027f817527f54d7f051",
+      "20-alert-batch-assignment-execution-v1.sql": "ce8b9200cbaf95542fcd9d4a7da34dd677287ba387f567e9c67efbb80d9552d2",
+      "21-alert-batch-assignment-compensation-v1.sql": "387d7bc837126af8a7977a7f59287fb10b66c78bb8057eba2a519d8b7bcb496d",
+      "22-rule-update-applied-ack-v1.sql": "501e0503f90c01f9fbe36d9fda283a5a2c71acaf7ca1bac2ac83391e1e9b1738",
+      "23-rule-version-rollback-v1.sql": "35554320459f972b47e1df8b46da8814b80e7d89343245520b36734552c14fd3"
+    },
+    "source_sha256": {
+      "contracts/openapi/alignment-v1.openapi.json": "38867eb7c364eba78e16574a188edcd41b9460bff341f12770b422e83c921494",
+      "go/control-plane/deployments/kubernetes/alert-service.yaml": "0153470d67f48faff7330f26899b84fcc1c5eca646ddedd1405d74246dbf0f9a",
+      "go/control-plane/internal/alert/api/handler_alert_actions.go": "01e5fc26d3e5888c8e6a4cb0c6eea6c906a9278d3add01fbb473514448cea1c5",
+      "go/control-plane/internal/alert/api/handler_alert_actions_test.go": "47ffeb5da79670234eba3ad4a1dc9aabf54b741fd7bb8e2196f074a9a8d6b515",
+      "go/control-plane/internal/alert/api/handler_alert_response_workflow_integration_test.go": "ad79744fdfc27242493326908f29d75b5d3ac00c17a83e7c9596bc722451fa8c",
+      "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go": "fca3096dcbb8a8f226c3f00416b76d93c1a7ac3ff42f72ef08ff0bf806962364",
+      "go/control-plane/internal/alert/consumer/alert_response_http_executor.go": "9190b6962d05b9e815b0c3b7fdf4b70a17133dbfe2bc23a1adbf87f9bcef7f6d",
+      "web/ui/src/pages/AlertDetailPage.tsx": "0dd104a095c025fd7ce1aecceca362512d988026063b60fe70fb009954a8ab99",
+      "web/ui/src/services/alertDetailActionApi.ts": "aa49b87e20f27abde833b4266caf3ac3d58e1529259e70a2a92789c769ff2adc"
+    }
+  },
+  "kubernetes_dependencies": [
+    {
+      "container_id": "containerd://a5f796aa68c774c58cdcd90b9689c7761fb537b54fded59877aa8572ce6eeb58",
+      "image": "docker.io/library/postgres:16-alpine",
+      "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n020-handoff-54207a03d0",
+      "pod_uid": "660251ce-c69e-4823-9415-f4e7c5493694",
+      "started_at": "2026-08-15T22:45:39Z"
+    }
+  ],
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-15T22:45:48Z",
+      "container_id": "containerd://16b1e7ad19ce7e899ad47354295049aea0f9c9cd3a1c739844307bfa513948a4",
+      "image": "docker.io/traffic/alert-response-handoff-test:m09-n020-20260816-r1",
+      "image_id": "sha256:cc290816679d418db1dff78d5601d99cf3d0a4541405e2cf0db7271d59bdacc9",
+      "job_name": "m09-n020-handoff-54207a03d0-api-integration",
+      "job_uid": "afdab006-4898-4a77-9fe8-8d58b6022eb7",
+      "node": "8-2tb",
+      "pod_name": "m09-n020-handoff-54207a03d0-api-integration-bvx9x",
+      "pod_uid": "3f6f2ce6-dc93-4987-a9ef-d013daa75298",
+      "started_at": "2026-08-15T22:45:45Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:45:51Z",
+      "container_id": "containerd://8491d0724f43a75c2d4b78a6fadf2d856c0b4929a6c11ec8ea9f40254e4f43a9",
+      "image": "docker.io/traffic/alert-response-handoff-test:m09-n020-20260816-r1",
+      "image_id": "sha256:cc290816679d418db1dff78d5601d99cf3d0a4541405e2cf0db7271d59bdacc9",
+      "job_name": "m09-n020-handoff-54207a03d0-consumer-integration",
+      "job_uid": "18f3839a-4e20-4b9c-9c4b-ff813c2e9a6a",
+      "node": "8-2tb",
+      "pod_name": "m09-n020-handoff-54207a03d0-consumer-integration-x9snf",
+      "pod_uid": "a615e9e0-68f5-4deb-ba9a-cdc8608ff7a4",
+      "started_at": "2026-08-15T22:45:48Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:45:55Z",
+      "container_id": "containerd://4ba682eff7c02822aba35bff60d5320cbd2a283f63a2f80a3297834910081bbc",
+      "image": "docker.io/traffic/alert-response-handoff-test:m09-n020-20260816-r1",
+      "image_id": "sha256:cc290816679d418db1dff78d5601d99cf3d0a4541405e2cf0db7271d59bdacc9",
+      "job_name": "m09-n020-handoff-54207a03d0-unit",
+      "job_uid": "0ade058a-72bc-443f-a03e-8279f801ced6",
+      "node": "8-2tb",
+      "pod_name": "m09-n020-handoff-54207a03d0-unit-7ps2q",
+      "pod_uid": "395787e7-63e6-4796-8904-5e6cc4e7c089",
+      "started_at": "2026-08-15T22:45:51Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:45:59Z",
+      "container_id": "containerd://aec135aeecef0886fb17cfd6d71b90ea38a30e7ff4c5bcb49fec5ba517378415",
+      "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+      "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13",
+      "job_name": "m09-n020-handoff-54207a03d0-web",
+      "job_uid": "0ed65b41-56e9-4794-bb1d-1494adc315d1",
+      "node": "8-2tb",
+      "pod_name": "m09-n020-handoff-54207a03d0-web-z6867",
+      "pod_uid": "9b83a04d-aa9c-4754-92c6-359497e2ba50",
+      "started_at": "2026-08-15T22:45:56Z"
+    }
+  ],
+  "mock_enabled": false,
+  "postgres_oracle": {
+    "actions": 6,
+    "audit": 5,
+    "blocked": 1,
+    "completed": 2,
+    "confirmed_external": 2,
+    "provider_receipts": 4,
+    "receipts": 4,
+    "sentinel": "alert-response-integration-v1",
+    "simulated": 1
+  },
+  "production_applied": false,
+  "profile_id": "M09-N020-K8S-PG-PROVIDER-RECEIPT-UI-V1",
+  "provider_receipt_persisted": true,
+  "provider_receipt_read_api": true,
+  "provider_receipt_visible_in_candidate_bundle": true,
+  "run_id": "54207a03-d01d-4a26-8391-e3235d2dad7f",
+  "run_scoped_resources_removed": true,
+  "shared_postgres_touched": false,
+  "status": "PASS",
+  "task_id": "T1-M09-N020",
+  "test_output_sha256": {
+    "api-integration": "f701491868dfe1cf5b6bfad39559a2c34b015ae3855a2a0bd5c94af5e28660ac",
+    "consumer-integration": "925f013f0fd4982c00c6437ee87c9adf837730020c9dd1b9e7f8702c7db27adf",
+    "unit": "9dcf76eaf17ad3a224b6e0c963cc3ae37e26f054530378e285dd3c8c1f378e72",
+    "web": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+  },
+  "topic_one_direct_blackhole_routing_owned": false,
+  "topic_one_direct_cleaning_owned": false,
+  "unconfigured_executor_fail_closed": true
+}

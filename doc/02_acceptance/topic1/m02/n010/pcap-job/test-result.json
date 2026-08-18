@@ -1,0 +1,66 @@
+{
+  "artifact_kind": "M02_PCAP_JOB_EPHEMERAL_TEST_RESULT",
+  "checks": [
+    {
+      "command": [
+        "mvn",
+        "-pl",
+        "flink-pcap-index-job",
+        "-am",
+        "test",
+        "-DskipITs",
+        "-Dtest=PcapIndexJobIntegrationTest",
+        "-Dsurefire.failIfNoSpecifiedTests=false"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2459471b1c6aedb47b1d75a74213d473f7968607af9e093aff3a62a88dd715e2",
+      "summary": [
+        "[WARNING] Tests run: 6, Failures: 0, Errors: 0, Skipped: 3, Time elapsed: 33.77 s -- in com.traffic.flink.pcap.PcapIndexJobIntegrationTest",
+        "[WARNING] Tests run: 6, Failures: 0, Errors: 0, Skipped: 3",
+        "[INFO] BUILD SUCCESS"
+      ]
+    },
+    {
+      "command": [
+        "mvn",
+        "-pl",
+        "flink-pcap-index-job",
+        "-am",
+        "test",
+        "-DskipITs",
+        "-Dtest=PcapIndexJobIntegrationTest",
+        "-Dsurefire.failIfNoSpecifiedTests=false"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "59efb520a697f9735cba40927596aaebead39094c46c0708e38a0b649a6271cf",
+      "summary": [
+        "[WARNING] Tests run: 6, Failures: 0, Errors: 0, Skipped: 3, Time elapsed: 23.64 s -- in com.traffic.flink.pcap.PcapIndexJobIntegrationTest",
+        "[WARNING] Tests run: 6, Failures: 0, Errors: 0, Skipped: 3",
+        "[INFO] BUILD SUCCESS"
+      ]
+    }
+  ],
+  "containers_removed": true,
+  "environment_id": "owned-loopback-redpanda-clickhouse-flink-minicluster",
+  "errors": [],
+  "images": {
+    "clickhouse": "clickhouse/clickhouse-server:24.3-alpine",
+    "kafka": "redpandadata/redpanda:v24.1.12"
+  },
+  "oracles": {
+    "checkpoint_before_sink_success_did_not_commit_offset": true,
+    "clickhouse_final_logical_projection_count": 1,
+    "late_event_time_record_reached_clickhouse": true,
+    "physical_replay_duplicate_detectable": true,
+    "raw_and_manifest_failures_reached_canonical_dlq": true,
+    "same_source_tuple_replayed_with_stable_projection_identity": true,
+    "savepoint_restored_stable_operator_route": true
+  },
+  "persistent_volume_attached": false,
+  "production_applied": false,
+  "profile_id": "M02-N010-PCAP-JOB-G1-EPHEMERAL-V1",
+  "run_id": "20260813-m02-n010-pcap-job-r6",
+  "schema_version": 1,
+  "shared_environment_touched": false,
+  "status": "PASS"
+}

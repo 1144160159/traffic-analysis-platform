@@ -1,0 +1,139 @@
+{
+  "artifact_kind": "M08_SIGNED_MODEL_EXPORT_K8S_CANARY_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": ["T1-M08-N006", "T1-M08-N007", "T1-M08-N008", "T1-M08-N009"],
+  "milestone_state": "IMPLEMENTING",
+  "run_id": "9b0da68a-b745-4bb0-b388-7c4dd1112a25",
+  "status": "PASS",
+  "executed_at": "2026-08-14T16:26:18Z",
+  "environment": {
+    "infrastructure": "kubernetes",
+    "namespace": "argo",
+    "node": "8-2tb",
+    "container_runtime": "containerd",
+    "storage": "emptyDir",
+    "synthetic_fixture": true,
+    "shared_clickhouse_touched": false,
+    "shared_minio_touched": false,
+    "argo_workflow_submitted": false,
+    "production_workflow_patched": false,
+    "production_applied": false
+  },
+  "candidate": {
+    "image": "docker.io/traffic/mlops-trainer:m08-governed-export-w2c-20260815-r10",
+    "image_config_sha256": "0b905ee9b358b7dfd44aa846883d1ba55b9c56f7ac2a1b96c1f9c3d77a71d61a",
+    "containerd_manifest_sha256": "13bfe995403cba61a2bc4a1762d733c31b1ab959ba0e291cf7d25a7ffc282793",
+    "source_sha256": {
+      "model_artifact_governance.py": "6047a99874dc54e3226c46773af354e8732db0f51b6194f2f87d577faad2017a",
+      "export_onnx.py": "506234fb3ca6ce97b62bb8b745a5e0ce3ecf67729df68025873c95164b39f46f",
+      "m08_governed_canary.py": "4bb068d4d22f84ddba8f6eda5930443a9ed85db4fdd3013120902b8c2ef3c097",
+      "k8s_runner.py": "fb1123a89739cacdea6dfb7f1ca101c4432422be02cf26be07a8a602ec7a1954",
+      "workflow_template": "9642ef89a9a478e7b77936d11bed443c3cd9ca941160b7a67a41c161af39d8fa",
+      "deployment_workflow_template": "0f30a078037a99fb4deb89879b725f1f23f962f9ae7bd981ed1e93849e93dc95"
+    },
+    "runtime_versions": {
+      "numpy": "1.26.3",
+      "pandas": "2.2.0",
+      "pyarrow": "15.0.0",
+      "scikit_learn": "1.4.0",
+      "onnx": "1.22.0",
+      "onnxmltools": "1.16.0",
+      "onnxruntime": "1.23.2",
+      "cryptography": "46.0.7"
+    }
+  },
+  "contracts": {
+    "dataset_manifest_schema_sha256": "30601912a2122f642d91888eb3e96b4feb00bdb1218f6cda93886efa837358b9",
+    "evaluation_manifest_schema_sha256": "6e99f4d8af6c3520478427323c37b393327b7eaee44c6d33212fe174fd9936f2",
+    "explanation_manifest_schema_sha256": "9a20815871e0613c0d04054db256745d8122564bb4f5003cb9b3be85fedfdc91",
+    "graph_snapshot_manifest_schema_sha256": "2acf71b308739d76e87031e817a62dfa3b5d1985dca35224cd7d25a87577bfdd",
+    "model_artifact_manifest_schema_sha256": "9815d1b2395a11bb68eb412305ad61ce2bbb5628332c50de3c956c6be302f8d6",
+    "training_run_manifest_schema_sha256": "6207991192b350e03fad2e11e9a25e459c1e81def2ef30aff3c5bba40840836e"
+  },
+  "lineage": {
+    "dataset_id": "30dcf263-9b4a-5a16-9fa7-f518e7574a80",
+    "dataset_sha256": "215b61a08cab20b4e9e494eb764fb3dafd7a6b22839c036eae7a83ef1a5ecb11",
+    "baseline_training_run_sha256": "9092209d813263f95c972303aa3e43a79f3280b9aaeb44d4d89188e2d3b6b8c4",
+    "graph_snapshot_id": "10b14837-084a-5bfa-ac5d-94ccb0115d5b",
+    "graph_snapshot_sha256": "e6b186aa52d4201de9a01fca809c8eef48bb6469c55217a52b1eb8c2a6336d3a",
+    "gnn_training_run_sha256": "88f120b1667c2990b36b71ceb4fb779f2daf9c6a0af0dcf7fd1d2e9c6b70c050",
+    "evaluation_id": "5769e194-bf16-5637-978b-c36f3045f9d0",
+    "evaluation_sha256": "efa79b854758466e962d453f957687e3d7c03e57c8f3e68c0f3af20a5b6df779",
+    "explanation_id": "8e76f21f-32c3-50f0-b746-809a4ccace41",
+    "explanation_sha256": "89f98d88c415bddb67335261b47913f6d33f1ac7c87a4b40f5b6cba823fa8981",
+    "model_package_id": "76c8debb-d938-596c-b14d-183d20799ef7",
+    "model_package_sha256": "f7b0b4bbfa680e747f2c32d96e8966f46b521224b8ec868b6dbf1908ed7778d7",
+    "model_signing_key_id": "ephemeral-canary/m08/9b0da68a-b745-4bb0-b388-7c4dd1112a25"
+  },
+  "oracles": {
+    "baseline_artifact_count": 5,
+    "gnn_artifact_count": 7,
+    "evaluation_artifact_count": 2,
+    "explanation_artifact_count": 3,
+    "model_export_artifact_count_including_manifest": 5,
+    "baseline_format": "onnx",
+    "baseline_runtime": "onnxruntime",
+    "onnx_probability_parity_tolerance": 0.00001,
+    "onnx_probability_parity": "PASS",
+    "gnn_format": "numpy_npz_v1",
+    "signature_algorithm": "ed25519",
+    "signature_verification": "PASS",
+    "bad_hash_rejection": "PASS",
+    "bad_schema_rejection": "PASS",
+    "object_replacement_rejection": "PASS",
+    "graph_version_incompatibility_rejection": "PASS",
+    "minio_conditional_create_header": "If-None-Match: *",
+    "known_attack_recall": 1.0,
+    "normal_false_positive_rate": 0.0,
+    "unknown_recall": 0.0,
+    "activation_authorized": false,
+    "model_export_activation_authorized": false
+  },
+  "workflow": {
+    "entrypoint": "governed-model-build",
+    "stages": [
+      ["extract-governed-dataset"],
+      ["train-approved-baseline", "train-gnn-suite"],
+      ["evaluate-governed-baseline"],
+      ["explain-governed-candidate"],
+      ["export-signed-model-package"]
+    ],
+    "signed_package_minio_writer_enabled": true,
+    "minio_object_prefix_content_addressed": true,
+    "mirror_semantic_equality": "PASS",
+    "server_side_dry_run": "PASS",
+    "production_template_applied": false
+  },
+  "cleanup": {
+    "run_scoped_resources_removed": true,
+    "post_cleanup_label_query_count": 0,
+    "retained_kubernetes_resources": false
+  },
+  "regressions": [
+    {
+      "command": "python3 -m unittest scripts.test_dataset_governance scripts.test_governed_extract_data scripts.test_governed_train_model scripts.test_gnn_training scripts.test_governed_evaluation scripts.test_governed_explanation scripts.test_governed_model_export -q",
+      "working_directory": "mlops",
+      "status": "PASS",
+      "tests": 19
+    },
+    {
+      "command": "python3 -m unittest scripts.alignment.test_run_m08_governed_k8s_canary -q",
+      "status": "PASS",
+      "tests": 3
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f deployments/kubernetes/argo-events/mlops-governed-training-template.yaml -o name",
+      "status": "PASS",
+      "objects": 1
+    }
+  ],
+  "limitations": [
+    "The Kubernetes canary used deterministic synthetic data and an ephemeral run-scoped signing key, not a production signing authority.",
+    "The content-addressed MinIO conditional writer was tested with a deterministic object-store double and the WorkflowTemplate passed server dry-run; a real shared MinIO write is NOT_EXECUTED.",
+    "An actual Argo Workflow submission and PostgreSQL model metadata registration are NOT_EXECUTED.",
+    "Unknown recall is 0.0; the candidate is explicitly ineligible for activation or promotion.",
+    "N010-N018, M09-M13 and whole-project release gates remain NO-GO.",
+    "This is internal engineering evidence and is not a production or CNAS quality claim."
+  ],
+  "errors": []
+}

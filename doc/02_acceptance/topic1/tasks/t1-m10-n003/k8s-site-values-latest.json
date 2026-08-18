@@ -1,0 +1,59 @@
+{
+  "acceptance_status": "PARTIAL_NO_DEPLOYABLE_CANDIDATE",
+  "allowed_claims": [
+    "The strict v1 site-values template passed the same validator in a read-only Kubernetes Job"
+  ],
+  "artifact_kind": "M10_SITE_VALUES_K8S_TEST_RESULT",
+  "candidate_id": null,
+  "contract_summary": {
+    "dependency_count": 8,
+    "secret_ref_count": 6,
+    "site_id": "site-cn-lab-01",
+    "tenant_count": 1
+  },
+  "does_not_prove": [
+    "a site-specific instance is approved",
+    "external dependencies are reachable",
+    "G6 rollback passed",
+    "a deployable candidate exists",
+    "production promotion is authorized"
+  ],
+  "engineering_status": "PASS",
+  "environment_kind": "KUBERNETES",
+  "kubernetes_job": {
+    "completed_at": "2026-08-16T02:30:47Z",
+    "container_id": "containerd://1a2820d7510b307f27e5a8d7eff2df6e0fc793d6bbccb9fc53d4fa51628bcd51",
+    "image": "docker.io/traffic/m10-site-values:m10-n003-20260816-r1",
+    "image_id": "sha256:f33cfe49f59a8d89a0aa8364a9ffe9f66ca4afe9db318b775105b67da4bbceae",
+    "job_name": "m10-n003-site-values-991db0fd03",
+    "job_uid": "5e91bb7c-4dc5-4988-98d7-73d8045231d7",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m10-n003-site-values-991db0fd03-l9hg8",
+    "pod_uid": "b6f1316d-84c2-4d67-ba30-80b90c653a84",
+    "started_at": "2026-08-16T02:30:44Z"
+  },
+  "production_applied": false,
+  "profile_id": "M10-N003-K8S-READONLY-SITE-VALUES-V1",
+  "required_gates": {
+    "G0": "BLOCKED_BY_N002",
+    "G6": "PARTIAL_READONLY_SCHEMA_VALIDATION"
+  },
+  "run_id": "991db0fd-03f9-4925-9c0b-7438e62b79a0",
+  "run_scoped_resources_removed": true,
+  "shared_infrastructure_touched": false,
+  "source_sha256": {
+    "contracts/alignment/m10-site-values.schema.json": "1882089660b6d21285bc7a044cea0df8ecadd8af831e9dfd4301412dc93b5ba9",
+    "deployments/kubernetes/site-values.v1.template.yaml": "81d9f44967794a34a09b933d2e77503e17dc1625efb085828989631674a99e0b",
+    "scripts/alignment/Dockerfile.m10-site-values": "4d335084d903dec2d63d018120ee15da4ced33fcaafab854a1653e17964f4974",
+    "scripts/alignment/run_m10_site_values_k8s.py": "7c006a8b0902152688ae89fb8308f2302fd7c9ae2a71b116084fca7a27c1c3c2",
+    "scripts/alignment/validate_m10_site_values.py": "3f61300ff685159b8b58e3ae78bea08f6d7f90f27c951c80c8a4ba2d1a347eb5"
+  },
+  "status": "PASS",
+  "task_id": "T1-M10-N003",
+  "validation": {
+    "errors": [],
+    "input": "/workspace/site-values.yaml",
+    "status": "PASS"
+  }
+}

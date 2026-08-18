@@ -1,0 +1,129 @@
+{
+  "artifact_kind": "M08_TENANT_MODEL_CANARY_DEFAULT_OFF_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": [
+    "T1-M08-N012",
+    "T1-M08-N013"
+  ],
+  "milestone_state": "IMPLEMENTING",
+  "task_state": "CODE_AND_DEFAULT_OFF_GUARDS_PASS_ACTIVATION_BLOCKED",
+  "scoped_evidence_status": "PASS",
+  "production_activation_status": "BLOCKED",
+  "captured_at": "2026-08-15T06:29:39Z",
+  "environment": {
+    "infrastructure": "existing kubernetes cluster",
+    "namespace": "traffic-analysis",
+    "cluster_nodes": [
+      {
+        "name": "8-2tb",
+        "ready": true,
+        "kubelet_version": "v1.29.15",
+        "container_runtime": "containerd://1.6.33"
+      },
+      {
+        "name": "zeus-server",
+        "ready": true,
+        "kubelet_version": "v1.29.15",
+        "container_runtime": "containerd://1.6.32"
+      }
+    ],
+    "server_side_dry_run": true,
+    "production_applied": false,
+    "shared_kafka_touched": false,
+    "shared_control_plane_touched": false
+  },
+  "policy": {
+    "enabled": false,
+    "rollout_percentage": 5,
+    "minimum_samples": 1000,
+    "maximum_samples": 100000,
+    "observation_window_seconds": 3600,
+    "policy_sha256": "cb473036ed44d4b96e04051d381fced3325800c7f2317042e8488982de1d971f",
+    "automatic_activation_allowed": false,
+    "automatic_rollback_on_terminal_stop": true,
+    "historical_shadow_observations_excluded_before_gray_started_at": true
+  },
+  "source_sha256": {
+    "tenant-model-canary-policy.schema.json": "61936e97aa3f5536b163aca24294b83fcea3d04e3dbfef92873db1f443899c0e",
+    "m08-tenant-model-canary.v1.json": "cb473036ed44d4b96e04051d381fced3325800c7f2317042e8488982de1d971f",
+    "policy.go": "bc81a8f517be0a0c9c9e00ab218047a66b400348f3aeb0b27e8708de71cbb3dc",
+    "policy_test.go": "c00d41a36494f1edf88ea63aa155d4db3b56f1913aeeb048dd1db7c1c4ca48bd",
+    "model-canary-controller-main.go": "04d3aa3b3b2deb17cb8ab9762f15622cbcd3be00dd0a0c13c733b86df1c24009",
+    "model-canary-controller-main_test.go": "c89b842ffeeb405af124b1bdbe1ae04547368ed54a3ef6669891ae8af8c74bbb",
+    "Dockerfile.model-canary-controller": "294a2f6f571a4c4c98fcb36ddc39029491a920d084a130771730b9a1a9947a71",
+    "m08-model-tenant-canary.yaml": "b450169881d834389354f6b1b6a1a55b4320b918ec34f688787f7f479cc39874",
+    "kafka-acl-catalog.v1.json": "3fc05f15386c5d90b7da814d50cc866524a789ae4784b31cf883d2d2219a1fcd",
+    "kafka-topic-catalog.v1.json": "c359a92e7897a568f1027c55c2125ae11d152f33cc23e92248fb55d18cdd7812",
+    "test_m08_tenant_model_canary.py": "adca8efc864729d218010d9d67e2e5b628d2850b5a1a6f65f8982f62430406c0",
+    "test_kafka_acl_catalog.py": "accd765d54642f8bb649848a9114e99b6c479741262ff6643d4308a5fcdfb32d",
+    "00-kafka-acl-plan.yaml": "477204229d574858c60c85f83fc79f1f070c97864fce0c787dff02d9f984390f",
+    "Makefile": "8e93f6e432a51f680a0ddf3156d6c4cdefc5aba4d35af6178657c821c932bdec"
+  },
+  "regressions": [
+    {
+      "command": "go test ./internal/rules/modelcanary ./cmd/model-canary-controller -count=1 -v",
+      "working_directory": "go/control-plane",
+      "status": "PASS",
+      "tests": 12,
+      "failures": 0
+    },
+    {
+      "command": "go test ./internal/rules/... ./cmd/model-canary-controller -count=1",
+      "working_directory": "go/control-plane",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m unittest tests.alignment.test_m08_tenant_model_canary tests.alignment.test_kafka_acl_catalog -v",
+      "status": "PASS",
+      "tests": 19,
+      "failures": 0
+    },
+    {
+      "command": "python3 scripts/alignment/check_event_catalog.py && python3 scripts/alignment/generate_kafka_acl_plan.py --check-generated",
+      "status": "PASS",
+      "canonical_topics": 44,
+      "principals": 21
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f deployments/kubernetes/jobs/m08-model-tenant-canary.yaml -o name",
+      "status": "PASS",
+      "objects": [
+        "configmap/m08-n013-model-tenant-canary-policy",
+        "job.batch/m08-n013-model-tenant-canary"
+      ]
+    }
+  ],
+  "gates": {
+    "policy_schema_and_exact_hash": "PASS",
+    "default_off_and_suspended": "PASS",
+    "immutable_image_sentinel": "PASS",
+    "kafka_topic_group_and_acl_binding": "PASS",
+    "threshold_and_minimum_window_evaluator": "PASS",
+    "historical_observation_replay_guard": "PASS",
+    "gray_percentage_and_start_time_binding": "PASS",
+    "rollback_without_automatic_activation": "PASS",
+    "kubernetes_server_side_admission": "PASS",
+    "n012_full_shadow_observation_window": "BLOCKED",
+    "approved_controller_image": "BLOCKED",
+    "site_https_control_plane_credentials": "BLOCKED",
+    "production_serving_cutover_adapter": "BLOCKED",
+    "production_activation": "BLOCKED"
+  },
+  "cluster_absence_checks": {
+    "job_m08_n013_model_tenant_canary": "ABSENT",
+    "configmap_m08_n012_shadow_observation_window_v1": "ABSENT",
+    "secret_model_canary_control_plane_credentials": "ABSENT"
+  },
+  "activation_blockers": [
+    "The N012 evidence is an isolated component canary and has no complete 1000-sample, 3600-second shadow_observation_window receipt.",
+    "The formal Job retains a non-runnable all-zero image digest until an immutable controller image is reviewed and approved.",
+    "The existing cluster has no model-canary-control-plane-credentials Secret containing a site-approved HTTPS base URL, bearer token and CA certificate.",
+    "The generic deployment gray transition is wired, but no approved runtime adapter yet proves that the gray event changes the Flink serving model for the selected tenant."
+  ],
+  "limitations": [
+    "This result proves N013 code, contracts, fail-closed policy and Kubernetes admission against the existing cluster.",
+    "No Job was created and no model-serving result, Kafka offset, deployment record or shared runtime resource was changed.",
+    "It is not a tenant canary execution, production activation, completed M08 milestone or model-quality claim."
+  ],
+  "errors": []
+}

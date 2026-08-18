@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "m02-partial-ack-20260813-01",
+  "status": "PASS",
+  "environment_id": "owned-loopback-redpanda",
+  "container": "codex-m02-partial-ack-f0e476377872",
+  "image": "redpandadata/redpanda:v24.1.12",
+  "topics": [
+    "m02.flow.events.v1",
+    "m02.pcap.index.v1",
+    "m02.session.events.v1"
+  ],
+  "loopback_only": true,
+  "shared_environment_touched": false,
+  "persistent_volume_attached": false,
+  "container_removed": true,
+  "test_output": "=== RUN   TestFlowPartialAckProducerRealKafka\n--- PASS: TestFlowPartialAckProducerRealKafka (9.14s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/queue\t9.148s",
+  "errors": [],
+  "test_output_sha256": "3c33d9dea67b885a69f9c785e7b2b4ee18a1689d9cb864a888388a750f7236ac"
+}

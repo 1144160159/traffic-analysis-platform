@@ -1,0 +1,56 @@
+{
+  "result": "pass",
+  "browser": "Chrome/150.0.7871.182",
+  "cdp_mapping": "127.0.0.1:9224 -> Windows 127.0.0.1:9222",
+  "button": {
+    "disabled": false,
+    "ariaLabel": "下载证据 AL-20260620-000123.pcap"
+  },
+  "asset_fields": {
+    "field_count": 10,
+    "truncated_count": 0,
+    "all_truncated_fields_have_full_title": true
+  },
+  "access_status": 201,
+  "access_result": {
+    "success": true,
+    "data": {
+      "audit_event": "ALERT_EVIDENCE_ACCESS_REQUESTED",
+      "content_type": "application/vnd.tcpdump.pcap",
+      "download_url": "/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-pcap/download?expires=1785135353&signature=673cbf8dada8597f5a288017fa1a30f86afc38232ec3caa9032b3c1b5d887229",
+      "evidence_id": "alert-detail-r802-pcap",
+      "expires_at": "2026-07-27T06:55:53Z",
+      "file_name": "c2-tunnel.pcap",
+      "job_id": "evidence-access-a47bff47-077f-46a2-b9e0-d7bdab806e97",
+      "size_bytes": 94,
+      "status": "recorded",
+      "target": "alert-detail-r802-pcap"
+    },
+    "meta": {
+      "request_id": "cb450a93-6f5d-4d22-9104-3faf0ea8616e",
+      "trace_id": "cb450a93-6f5d-4d22-9104-3faf0ea8616e"
+    },
+    "timestamp": "2026-07-27T06:50:53Z"
+  },
+  "file_status": 200,
+  "content_type": "application/vnd.tcpdump.pcap",
+  "content_disposition": "attachment; filename=\"c2-tunnel.pcap\"",
+  "file_bytes": 94,
+  "pcap_magic": "d4c3b2a1",
+  "valid_pcap_magic": true,
+  "browser_download_filename": "c2-tunnel.pcap",
+  "relevant_requests": [
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/access",
+      "post_data": "{\"action\":\"Request alert evidence access\",\"target\":\"AL-20260620-000123.pcap\",\"reason\":\"下载告警证据：AL-20260620-000123.pcap\",\"detail\":{\"action_id\":\"alert-evidence-access\",\"source\":\"alert-detail-inline-evidence\",\"requested_contract\":\"/v1/alerts/{id}/evidence/access\",\"executed_endpoint\":\"/v1/alerts/alert-detail-accept-r802/evidence/access\",\"evidence_id\":\"AL-20260620-000123.pcap\",\"access_mode\":\"download\",\"requested_file_name\":\"AL-20260620-000123.pcap\",\"evidence_kind\":\"PCAP\",\"signed_url_requested\":true}}"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-pcap/download?expires=1785135353&signature=673cbf8dada8597f5a288017fa1a30f86afc38232ec3caa9032b3c1b5d887229",
+      "post_data": null
+    }
+  ],
+  "console_errors": [],
+  "timestamp": "2026-07-27T06:51:01.831Z"
+}

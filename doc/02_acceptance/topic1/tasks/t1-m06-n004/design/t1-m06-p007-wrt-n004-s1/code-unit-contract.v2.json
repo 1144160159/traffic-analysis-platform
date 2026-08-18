@@ -1,0 +1,637 @@
+{
+  "schema_version": "2.0.0",
+  "artifact_kind": "CODE_UNIT_CONTRACT",
+  "artifact_status": "DRAFT",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "parent_work_id": "T1-M06-N004",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+    "manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d"
+  },
+  "design_scope": "FUNCTION_SET",
+  "outcome": {
+    "single_result": "同一PostgreSQL事务原子提交资产权威状态、history、audit、outbox与幂等回执，重试返回确定结果",
+    "non_goals": [
+      "不在本叶修改Kafka Topic配置或dispatcher发布逻辑",
+      "不在本叶新增数据库迁移或字段级provenance表",
+      "不把设计候选、单测通过或回执ID当作正式执行授权"
+    ]
+  },
+  "pattern_decision_ref": null,
+  "context_locators": [
+    {
+      "locator_id": "LOC-T1-M06-CALLER-UpsertAssetAtomic",
+      "locator_kind": "METHOD",
+      "target_state": "EXISTING",
+      "language": "go",
+      "path": "go/control-plane/internal/asset/service/asset_service.go",
+      "qualified_symbol": "service.(*AssetService).UpsertAssetAtomic",
+      "signature_before": "func (s *AssetService) UpsertAssetAtomic(ctx context.Context, rec *config.AssetRecord, command config.AssetUpsertCommand) (*config.AssetUpsertResult, error)",
+      "signature_after": "func (s *AssetService) UpsertAssetAtomic(ctx context.Context, rec *config.AssetRecord, command config.AssetUpsertCommand) (*config.AssetUpsertResult, error)",
+      "candidate_blob_sha256": "7e9c2eafef5fc9faa7cdd1175d4d8a12874cecee99652fb7e31d30633143a845",
+      "ast_node_sha256": "34c8c8230dd8415a9e2cd94b78f05c50d5dca96dc5db269a01d6ac51d84b3ca2",
+      "resolver_receipt_ref": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/caller-upsert-asset-atomic.json", "sha256": "f8641d35a3ebc0a00bbdcf4703030f6ffe08fbc066c21ca7b9355ff2e1e867a9"},
+      "created_by_atomic_pr_id": null,
+      "creation_reason": null,
+      "compatibility_entrypoint": null,
+      "activation_guard": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-findAssetByMACTx",
+      "locator_kind": "FUNCTION",
+      "target_state": "EXISTING",
+      "language": "go",
+      "path": "go/control-plane/internal/asset/repository/atomic_upsert.go",
+      "qualified_symbol": "repository.findAssetByMACTx",
+      "signature_before": "func findAssetByMACTx(ctx context.Context, tx *sql.Tx, tenantID, mac string) (*config.AssetRecord, error)",
+      "signature_after": "func findAssetByMACTx(ctx context.Context, tx *sql.Tx, tenantID, mac string) (*config.AssetRecord, error)",
+      "candidate_blob_sha256": "52548d4013434d66f3c7741b57c811179c04d850dcd3e2ab27d6c2d1db6167c7",
+      "ast_node_sha256": "a26daea4b5fe893ebd8573fab7953482c0755350d58e0b5b6244e37f8c8a6c12",
+      "resolver_receipt_ref": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/callee-find-asset-by-mac-tx.json", "sha256": "e92fd41a13252d654b31327f0702dd4fb7d822ff24f9654dffcaa3a77bcdf9c7"},
+      "created_by_atomic_pr_id": null,
+      "creation_reason": null,
+      "compatibility_entrypoint": null,
+      "activation_guard": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-jsonBytesOrNil", "locator_kind": "FUNCTION", "target_state": "EXISTING", "language": "go",
+      "path": "go/control-plane/internal/asset/repository/atomic_upsert.go", "qualified_symbol": "repository.jsonBytesOrNil",
+      "signature_before": "func jsonBytesOrNil(value []byte) any", "signature_after": "func jsonBytesOrNil(value []byte) any",
+      "candidate_blob_sha256": "52548d4013434d66f3c7741b57c811179c04d850dcd3e2ab27d6c2d1db6167c7", "ast_node_sha256": "fb80da025f80df6966057775769a1eb19ad384bfc027d9f8030f168bec9ef9be",
+      "resolver_receipt_ref": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/callee-json-bytes-or-nil.json", "sha256": "57050e8355ee5ed65f73949c3fc1103365a7c20e5cc55960573d547b2244ba90"},
+      "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint": null, "activation_guard": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-ensureAssetDefaults", "locator_kind": "FUNCTION", "target_state": "EXISTING", "language": "go",
+      "path": "go/control-plane/internal/asset/repository/postgres.go", "qualified_symbol": "repository.ensureAssetDefaults",
+      "signature_before": "func ensureAssetDefaults(rec *config.AssetRecord)", "signature_after": "func ensureAssetDefaults(rec *config.AssetRecord)",
+      "candidate_blob_sha256": "601170dcb15aa94f0cab70788dd1d6294460952fa725ceea45824011bba564ea", "ast_node_sha256": "c9f799016e8b9637f78d45ccafb9c82d0bfe7f8b6617c41ee1c02a57887cc9cb",
+      "resolver_receipt_ref": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/callee-ensure-asset-defaults.json", "sha256": "046ab0540e1f6e97a23d95007daa07ed13dbbb1ec9bb8a3985303de49c269024"},
+      "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint": null, "activation_guard": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-mergeAssetGovernance", "locator_kind": "FUNCTION", "target_state": "EXISTING", "language": "go",
+      "path": "go/control-plane/internal/asset/repository/postgres.go", "qualified_symbol": "repository.mergeAssetGovernance",
+      "signature_before": "func mergeAssetGovernance(rec, existing *config.AssetRecord)", "signature_after": "func mergeAssetGovernance(rec, existing *config.AssetRecord)",
+      "candidate_blob_sha256": "601170dcb15aa94f0cab70788dd1d6294460952fa725ceea45824011bba564ea", "ast_node_sha256": "a133bfb1ce15d93dacc4751d3f0995597ea3c2c71d31cccd3f0fbaafa1f677ea",
+      "resolver_receipt_ref": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/callee-merge-asset-governance.json", "sha256": "3bc3ccf494a8b768d4a71fa67557fde8abdf950a5027f929f344ae7a911a4412"},
+      "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint": null, "activation_guard": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-jsonObject", "locator_kind": "FUNCTION", "target_state": "EXISTING", "language": "go",
+      "path": "go/control-plane/internal/asset/repository/postgres.go", "qualified_symbol": "repository.jsonObject",
+      "signature_before": "func jsonObject(value map[string]any) []byte", "signature_after": "func jsonObject(value map[string]any) []byte",
+      "candidate_blob_sha256": "601170dcb15aa94f0cab70788dd1d6294460952fa725ceea45824011bba564ea", "ast_node_sha256": "d0153fd0433272c75eedf1572025439de73faaa51892fba32e4a37f310165a27",
+      "resolver_receipt_ref": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/callee-json-object.json", "sha256": "4e40f3397efe617100a8a905aabfbddaff1904e966152808125b899989315b6f"},
+      "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint": null, "activation_guard": null
+    }
+  ],
+  "code_units": [
+    {
+      "unit_id": "CU-T1-M06-P007-UpsertAtomic",
+      "profile_ref": "AUTHORITY_TX@1",
+      "kind": "method",
+      "change_kind": "modify",
+      "primary": true,
+      "locator": {
+        "locator_id": "LOC-T1-M06-P007-UpsertAtomic",
+        "locator_kind": "METHOD",
+        "target_state": "EXISTING",
+        "language": "go",
+        "path": "go/control-plane/internal/asset/repository/atomic_upsert.go",
+        "qualified_symbol": "repository.(*AssetRepository).UpsertAtomic",
+        "signature_before": "func (r *AssetRepository) UpsertAtomic(ctx context.Context, rec *config.AssetRecord, command config.AssetUpsertCommand) (*config.AssetUpsertResult, error)",
+        "signature_after": "func (r *AssetRepository) UpsertAtomic(ctx context.Context, rec *config.AssetRecord, command config.AssetUpsertCommand) (*config.AssetUpsertResult, error)",
+        "candidate_blob_sha256": "52548d4013434d66f3c7741b57c811179c04d850dcd3e2ab27d6c2d1db6167c7",
+        "ast_node_sha256": "d59c0101a8f67cd1921077e940a18354ad71c037c11873dc59d6cc143c2f318f",
+        "resolver_receipt_ref": {
+          "path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/locator-resolver-receipt.json",
+          "sha256": "6a46fd00f96ade934feb07b466a27e7a0e0f5f723c4b9fef975a62477542b7cd"
+        },
+        "created_by_atomic_pr_id": null,
+        "creation_reason": null,
+        "compatibility_entrypoint": null,
+        "activation_guard": null
+      },
+      "purpose": "作为唯一权威事务入口处理tenant内资产create/update/replay/conflict并写入全部耐久副作用",
+      "non_goals": [
+        "不发送Kafka消息",
+        "不修改Topic配置",
+        "不跨事务直接写OpenSearch、ClickHouse、NebulaGraph或Redis"
+      ],
+      "callers": [
+        {
+          "locator_id": "LOC-T1-M06-CALLER-UpsertAssetAtomic",
+          "condition": "service层完成tenant、action、reason、actor、trace和MAC规范化后调用",
+          "stage": "权威命令提交阶段",
+          "invocation": "sync"
+        }
+      ],
+      "callees": [
+        {
+          "locator_id": "LOC-T1-M06-CALLEE-findAssetByMACTx",
+          "condition": "幂等ledger未命中且取得tenant+MAC advisory lock后读取当前权威资产",
+          "failure_propagation": "除sql.ErrNoRows外包装为read authoritative asset并回滚",
+          "invocation": "sync"
+        },
+        {
+          "locator_id": "LOC-T1-M06-CALLEE-jsonBytesOrNil",
+          "condition": "update history has optional previous JSON bytes",
+          "failure_propagation": "infallible conversion returns nil only for empty previous payload",
+          "invocation": "sync"
+        },
+        {
+          "locator_id": "LOC-T1-M06-CALLEE-ensureAssetDefaults",
+          "condition": "create branch or governance merge must fill deterministic defaults",
+          "failure_propagation": "infallible in-memory mutation of working copy",
+          "invocation": "sync"
+        },
+        {
+          "locator_id": "LOC-T1-M06-CALLEE-mergeAssetGovernance",
+          "condition": "before-state only: update branch preserves existing governance values only when incoming values are empty; the approved action-class decision replaces this helper in the after-state",
+          "failure_propagation": "current permissive overwrite behavior is a before-state risk; after-state B08 applies the signed 22-field matrix directly",
+          "invocation": "sync"
+        },
+        {
+          "locator_id": "LOC-T1-M06-CALLEE-jsonObject",
+          "condition": "before-state only: assets write encodes Tags and Metadata JSONB arguments through this helper; DELTA-JSONB-FAIL-CLOSED removes both calls from the after-state",
+          "failure_propagation": "current fallback to empty object is a before-state risk; after-state performs checked serialization inside UpsertAtomic",
+          "invocation": "sync"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "ctx",
+          "type": "context.Context",
+          "unit_or_format": "Go cancellation/deadline context",
+          "range": "non-nil and request scoped",
+          "identity_semantics": "承载同一次受理意图的deadline与trace，不提供tenant真源",
+          "ownership": "borrowed; function does not retain",
+          "secret_classification": "INTERNAL"
+        },
+        {
+          "name": "rec",
+          "type": "*config.AssetRecord",
+          "unit_or_format": "tenant-scoped canonical asset candidate",
+          "range": "TenantID and normalized MAC required; revision recomputed in transaction",
+          "identity_semantics": "tenant_id+mac_address定义资产identity；asset_id仅作兼容/冲突检查",
+          "ownership": "input is copied before mutation; caller-owned object must not observe partial transaction state",
+          "secret_classification": "SENSITIVE"
+        },
+        {
+          "name": "command",
+          "type": "config.AssetUpsertCommand",
+          "unit_or_format": "versioned logical submission intent",
+          "range": "idempotency key, actor and trace non-empty; expected revision non-negative",
+          "identity_semantics": "tenant+idempotency_key+canonical request hash identifies one intent",
+          "ownership": "value copy",
+          "secret_classification": "SENSITIVE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "*config.AssetUpsertResult",
+          "unit_or_format": "typed authoritative transaction receipt",
+          "range": "asset_id, created, revision, event_id, outbox_id and trace_id bound to one commit",
+          "identity_semantics": "same tenant/key/hash/actor returns the stored result with IdempotentReplay=true",
+          "ownership": "newly allocated result owned by caller",
+          "secret_classification": "INTERNAL"
+        },
+        {
+          "name": "err",
+          "type": "error",
+          "unit_or_format": "stable sentinel or wrapped internal cause",
+          "range": "nil, revision conflict, idempotency conflict, or typed internal failure",
+          "identity_semantics": "commit unknown is not equivalent to authoritative failure",
+          "ownership": "immutable error chain",
+          "secret_classification": "INTERNAL"
+        }
+      ],
+      "preconditions": [
+        "service层已校验authenticated actor、tenant、action、reason、trace、idempotency key及MAC",
+        "rec.TenantID只能来自认证上下文与已比较的请求路径，不能信任冲突body值",
+        "schema迁移已提供assets、asset_events、audit_logs、asset_event_outbox、asset_upsert_requests和约束索引",
+        "本函数不接收可由调用方替换的Topic或event type"
+      ],
+      "postconditions": [
+        "成功时五类权威/审计/投递/回执副作用在同一PostgreSQL commit中可见",
+        "commit前任何失败均不留下五类副作用的子集",
+      "same key+same canonical payload+same actor返回原result且不新增实体/history/audit/outbox/ledger；replay成功与新提交成功是不同结果分支",
+        "same key+different payload或actor返回ErrAssetIdempotencyConflict",
+        "stale expected revision返回ErrAssetRevisionConflict且不覆盖新版本",
+        "outbox event type固定traffic.asset.v2.AssetUpserted，状态仅为pending，由dispatcher在broker ACK后推进"
+      ],
+      "pattern_roles": [],
+      "body_steps": [
+        {
+          "step_id": "B01",
+          "op": "normalize",
+          "guard": "always before transaction",
+          "reads": ["command.ActionID", "command.Reason", "rec"],
+          "writes": ["actionID", "reason", "requestAsset copy"],
+          "invokes": [],
+          "invariant_before": ["rec non-nil and service-level validation are caller preconditions; current repository implementation would panic on nil and this PR does not move the validation boundary"],
+          "invariant_after": ["defaults are explicit and requestAsset excludes server-owned revision/seen timestamps", "repository makes a shallow working copy before changing revision or timestamps"],
+          "error_ids": [],
+          "cancel_point": "BEFORE",
+          "oracle_ids": ["O-INPUT-COPY", "O-DEFAULTS"]
+        },
+        {
+          "step_id": "B02",
+          "op": "normalize",
+          "guard": "B01 complete",
+          "reads": ["tenant", "action", "expected revision", "actor", "reason", "history type", "observed_at", "requestAsset"],
+          "writes": ["canonical identity bytes", "requestHash"],
+          "invokes": ["json.Marshal", "sha256.Sum256", "hex.EncodeToString"],
+          "invariant_before": ["server-owned revision and first/last seen are excluded from intent hash"],
+          "invariant_after": ["same logical input under v1 encoding yields identical SHA-256"],
+          "error_ids": ["ERR-IDENTITY-MARSHAL"],
+          "cancel_point": "BEFORE",
+          "oracle_ids": ["O-HASH-DETERMINISTIC", "O-HASH-COMPATIBILITY"]
+        },
+        {
+          "step_id": "B03",
+          "op": "write",
+          "guard": "identity hash constructed",
+          "reads": ["ctx", "PostgreSQL connection"],
+          "writes": ["ReadCommitted transaction"],
+          "invokes": ["sql.DB.BeginTx", "sql.Tx.Rollback deferred"],
+          "invariant_before": ["no durable effect has occurred"],
+          "invariant_after": ["all subsequent durable writes share one transaction handle"],
+          "error_ids": ["ERR-BEGIN-TX"],
+          "cancel_point": "DURING_IO",
+          "oracle_ids": ["O-BEGIN-FAIL-NO-EFFECT"]
+        },
+        {
+          "step_id": "B04",
+          "op": "lock",
+          "guard": "transaction active",
+          "reads": ["tenant_id", "idempotency_key"],
+          "writes": ["transaction-scoped idempotency advisory lock"],
+          "invokes": ["pg_advisory_xact_lock(hashtextextended(identity,0))"],
+          "invariant_before": ["concurrent deliveries may race only before this lock"],
+          "invariant_after": ["one tenant+key ledger decision is serialized"],
+          "error_ids": ["ERR-IDEMPOTENCY-LOCK"],
+          "cancel_point": "DURING_IO",
+          "oracle_ids": ["O-IDEMPOTENCY-SERIALIZATION"]
+        },
+        {
+          "step_id": "B05",
+          "op": "read",
+          "guard": "idempotency lock held",
+          "reads": ["asset_upsert_requests tenant_id+idempotency_key FOR UPDATE"],
+          "writes": ["prior result or miss"],
+          "invokes": ["sql.Tx.QueryRowContext", "sql.Row.Scan"],
+          "invariant_before": ["no second decision for the same tenant+key can pass B04"],
+          "invariant_after": ["exact replay is separated from payload/actor conflict and first execution"],
+          "error_ids": ["ERR-IDEMPOTENCY-CONFLICT", "ERR-LEDGER-READ", "ERR-REPLAY-COMMIT-UNKNOWN"],
+          "cancel_point": "COMMIT_UNKNOWN",
+          "oracle_ids": ["O-REPLAY", "O-IDEMPOTENCY-CONFLICT", "O-REPLAY-NO-DUPLICATE"]
+        },
+        {
+          "step_id": "B06",
+          "op": "lock",
+          "guard": "ledger miss",
+          "reads": ["tenant_id", "canonical MAC"],
+          "writes": ["transaction-scoped asset identity advisory lock"],
+          "invokes": ["pg_advisory_xact_lock(hashtextextended(identity,0))"],
+          "invariant_before": ["first logical execution has no ledger row"],
+          "invariant_after": ["create/update decision for tenant+MAC is serialized"],
+          "error_ids": ["ERR-ASSET-LOCK"],
+          "cancel_point": "DURING_IO",
+          "oracle_ids": ["O-ASSET-IDENTITY-SERIALIZATION"]
+        },
+        {
+          "step_id": "B07",
+          "op": "read",
+          "guard": "asset identity lock held",
+          "reads": ["assets by tenant_id+mac_address FOR UPDATE"],
+          "writes": ["existing asset snapshot or create miss"],
+          "invokes": ["LOC-T1-M06-CALLEE-findAssetByMACTx"],
+          "invariant_before": ["tenant+MAC lock remains held"],
+          "invariant_after": ["state transition is based on a locked current authority row"],
+          "error_ids": ["ERR-ASSET-READ"],
+          "cancel_point": "DURING_IO",
+          "oracle_ids": ["O-TENANT-READ", "O-CURRENT-REVISION"]
+        },
+        {
+          "step_id": "B08",
+          "op": "decide",
+          "guard": "current snapshot known",
+          "reads": ["existing", "rec", "command.ExpectedRevision", "command.ResolveCurrentRevision", "command.ActionID", "command.ObservedAt"],
+          "writes": ["create/update branch", "effectiveExpectedRevision", "next asset", "event identity"],
+          "invokes": ["LOC-T1-M06-CALLEE-ensureAssetDefaults", "uuid.NewSHA1", "uuid.NewString"],
+          "invariant_before": ["only manual action may change governance fields", "observation is non-authoritative for governance"],
+          "invariant_after": ["stale revision and asset identity conflict are rejected", "older observation cannot reduce LastSeen"],
+          "error_ids": ["ERR-REVISION-CONFLICT", "ERR-IDEMPOTENCY-CONFLICT"],
+          "cancel_point": "NONE",
+          "oracle_ids": ["O-CREATE-DECISION", "O-UPDATE-DECISION", "O-SOURCE-PRECEDENCE", "O-OLD-OBSERVATION"]
+        },
+        {
+          "step_id": "B09",
+          "op": "write",
+          "guard": "transition decision accepted",
+          "reads": ["next asset", "effectiveExpectedRevision"],
+          "writes": ["assets row INSERT or revision CAS UPDATE"],
+          "invokes": ["encoding/json.Marshal", "sql.Tx.QueryRowContext", "sql.Row.Scan"],
+          "invariant_before": ["history, audit, outbox and ledger are not yet written"],
+          "invariant_after": ["next revision is materialized in current transaction only"],
+          "error_ids": ["ERR-REVISION-CONFLICT", "ERR-ASSET-WRITE"],
+          "cancel_point": "DURING_IO",
+          "oracle_ids": ["O-CAS", "O-ASSET-WRITE-ROLLBACK"]
+        },
+        {
+          "step_id": "B10",
+          "op": "normalize",
+          "guard": "authority row write succeeded",
+          "reads": ["previous snapshot", "next asset"],
+          "writes": ["oldJSON", "newJSON"],
+          "invokes": ["json.Marshal"],
+          "invariant_before": ["before-state对existing的json.Marshal错误被丢弃；after-state必须显式处理并在失败时回滚authority row"],
+          "invariant_after": ["oldJSON和newJSON均显式检查错误；任一编码失败由当前P007在B10回滚B09，不依赖后续叶"],
+          "error_ids": ["ERR-HISTORY-MARSHAL"],
+          "cancel_point": "NONE",
+          "oracle_ids": ["O-HISTORY-BYTES", "O-ASSET-WRITE-ROLLBACK"]
+        },
+        {
+          "step_id": "B11",
+          "op": "write",
+          "guard": "history payload serialized",
+          "reads": ["event_id", "asset_id", "tenant_id", "event_type", "revision", "oldJSON", "newJSON"],
+          "writes": ["asset_events row"],
+          "invokes": ["LOC-T1-M06-CALLEE-jsonBytesOrNil", "sql.Tx.ExecContext"],
+          "invariant_before": ["history and authority row share transaction"],
+          "invariant_after": ["immutable transition fact exists if and only if transaction commits"],
+          "error_ids": ["ERR-HISTORY-WRITE"],
+          "cancel_point": "DURING_IO",
+          "oracle_ids": ["O-HISTORY-ROLLBACK", "O-HISTORY-EXACTLY-ONCE"]
+        },
+        {
+          "step_id": "B12",
+          "op": "write",
+          "guard": "history write succeeded",
+          "reads": ["actor", "action_id", "reason", "request_id", "trace_id", "event_id", "result revision"],
+          "writes": ["audit_logs accepted row"],
+          "invokes": ["json.Marshal", "sql.Tx.ExecContext"],
+          "invariant_before": ["audit detail must not expose raw secrets", "before-state丢弃auditDetail json.Marshal错误"],
+          "invariant_after": ["after-state检查audit detail编码错误并在失败时回滚；成功insert与同一事务绑定"],
+          "error_ids": ["ERR-AUDIT-MARSHAL", "ERR-AUDIT-WRITE"],
+          "cancel_point": "DURING_IO",
+          "oracle_ids": ["O-AUDIT-ROLLBACK", "O-AUDIT-EXACTLY-ONCE"]
+        },
+        {
+          "step_id": "B13",
+          "op": "write",
+          "guard": "audit write succeeded",
+          "reads": ["next asset", "revision", "event_id", "trace_id", "reason", "observed_at"],
+          "writes": ["asset_event_outbox pending row"],
+          "invokes": ["json.Marshal", "sql.Tx.QueryRowContext", "sql.Row.Scan"],
+          "invariant_before": ["event_type is constant traffic.asset.v2.AssetUpserted", "partition key is tenant_id:asset_id"],
+          "invariant_after": ["outbox is pending and cannot claim broker publication"],
+          "error_ids": ["ERR-OUTBOX-MARSHAL", "ERR-OUTBOX-WRITE"],
+          "cancel_point": "DURING_IO",
+          "oracle_ids": ["O-STABLE-ENVELOPE", "O-OUTBOX-ROLLBACK", "O-PENDING-NOT-PUBLISHED"]
+        },
+        {
+          "step_id": "B14",
+          "op": "write",
+          "guard": "outbox row returned outbox_id",
+          "reads": ["tenant_id", "idempotency_key", "requestHash", "actor", "expected revision", "result"],
+          "writes": ["asset_upsert_requests stored result"],
+          "invokes": ["sql.Tx.ExecContext"],
+          "invariant_before": ["ledger result references the same event_id and outbox_id"],
+          "invariant_after": ["future exact replay can return the original result without repeating effects"],
+          "error_ids": ["ERR-LEDGER-WRITE"],
+          "cancel_point": "DURING_IO",
+          "oracle_ids": ["O-LEDGER-ROLLBACK", "O-REPLAY"]
+        },
+        {
+          "step_id": "B15",
+          "op": "write",
+          "guard": "all included effects staged",
+          "reads": ["transaction state"],
+          "writes": ["PostgreSQL commit"],
+          "invokes": ["sql.Tx.Commit"],
+          "invariant_before": ["authority, history, audit, outbox and ledger are complete in one transaction"],
+          "invariant_after": ["success means all effects visible; error may be commit unknown and requires same-key resolution"],
+          "error_ids": ["ERR-COMMIT-UNKNOWN"],
+          "cancel_point": "COMMIT_UNKNOWN",
+          "oracle_ids": ["O-CREATE-ATOMIC", "O-PG-EXACT-EFFECTS", "O-COMMIT-UNKNOWN-SAME-KEY"]
+        },
+        {
+          "step_id": "B16",
+          "op": "return",
+          "guard": "new execution commit or replay commit succeeded",
+          "reads": ["stored or newly committed result"],
+          "writes": [],
+          "invokes": [],
+          "invariant_before": ["result is bound to tenant, request hash, event and outbox identities"],
+          "invariant_after": ["caller receives a typed result; no projection or publication finality is claimed"],
+          "error_ids": [],
+          "cancel_point": "NONE",
+          "oracle_ids": ["O-RESULT-IDENTITY", "O-REPLAY"]
+        }
+      ],
+      "side_effects": [
+        {"effect_id": "EF-ASSET", "authority_kind": "AUTHORITY", "surface_kind": "TABLE", "locator": "postgres.public.assets tenant_id+asset_id", "body_step_id": "B09"},
+        {"effect_id": "EF-HISTORY", "authority_kind": "AUTHORITY", "surface_kind": "TABLE", "locator": "postgres.public.asset_events event_uuid", "body_step_id": "B11"},
+        {"effect_id": "EF-AUDIT", "authority_kind": "AUDIT", "surface_kind": "AUDIT", "locator": "postgres.public.audit_logs event_id", "body_step_id": "B12"},
+        {"effect_id": "EF-OUTBOX", "authority_kind": "AUTHORITY", "surface_kind": "TABLE", "locator": "postgres.public.asset_event_outbox event_id", "body_step_id": "B13"},
+        {"effect_id": "EF-LEDGER", "authority_kind": "AUTHORITY", "surface_kind": "TABLE", "locator": "postgres.public.asset_upsert_requests tenant_id+idempotency_key", "body_step_id": "B14"}
+      ],
+      "profile_contract": {
+        "profile": "AUTHORITY_TX",
+        "details": {
+          "authority": "PostgreSQL assets row plus immutable history/audit/outbox/ledger receipt",
+          "isolation": "ReadCommitted with deterministic transaction-scoped advisory locks for idempotency identity then asset identity",
+          "lock_order": "tenant+idempotency_key advisory lock -> ledger FOR UPDATE -> tenant+MAC advisory lock -> assets FOR UPDATE/CAS",
+          "idempotency_key": "tenant_id + command.idempotency_key",
+          "payload_hash": "SHA-256 of the compatibility-preserving assetUpsertIdentity v1 JSON encoding and actor comparison",
+          "included_effect_ids": ["EF-ASSET", "EF-HISTORY", "EF-AUDIT", "EF-OUTBOX", "EF-LEDGER"],
+          "commit_step": "B15",
+          "crash_matrix": [
+            "after B09 before B11: rollback EF-ASSET",
+            "after B11 before B12: rollback EF-ASSET+EF-HISTORY",
+            "after B12 before B13: rollback EF-ASSET+EF-HISTORY+EF-AUDIT",
+            "after B13 before B14: rollback EF-ASSET+EF-HISTORY+EF-AUDIT+EF-OUTBOX",
+            "after B14 before B15: rollback all staged effects",
+            "B15 returns unknown: do not create a new logical key; query/replay original tenant+key",
+            "after B15 before response: same-key retry returns stored result without duplicate effects"
+          ],
+          "commit_unknown_recovery": "return a typed ambiguous-commit cause to the service boundary and resolve via same tenant/idempotency key; never translate directly to definitive business failure or generate a new key"
+        }
+      },
+      "atomicity": {"applicability": "APPLICABLE", "reason": "五类耐久副作用必须同成同败", "details": {"contract": "B09+B11+B12+B13+B14 are included in the B03 transaction committed at B15"}},
+      "idempotency": {"applicability": "APPLICABLE", "reason": "网络重试和提交未知必须返回同一逻辑结果", "details": {"contract": "same tenant+key+hash+actor replays; any payload or actor mismatch conflicts; ledger retention follows authority retention"}},
+      "concurrency": {"applicability": "APPLICABLE", "reason": "同一幂等identity和同一tenant+MAC并发必须确定性串行化", "details": {"contract": "fixed two-stage advisory lock order plus row lock/CAS; no inverse lock acquisition is permitted"}},
+      "timeout_cancel": {"applicability": "APPLICABLE", "reason": "数据库I/O接受context取消但commit存在未知结果边界", "details": {"contract": "honor cancellation before/during I/O; after commit dispatch begins, resolve outcome with same key before retrying"}},
+      "errors": [
+        {"error_id": "ERR-IDENTITY-MARSHAL", "code": "ASSET_UPSERT_IDENTITY_ENCODE_FAILED", "retryable": false, "safe_message": "无法受理资产请求", "internal_cause": "canonical identity JSON serialization failed"},
+        {"error_id": "ERR-BEGIN-TX", "code": "ASSET_UPSERT_TX_UNAVAILABLE", "retryable": true, "safe_message": "资产服务暂不可用", "internal_cause": "PostgreSQL BeginTx failed"},
+        {"error_id": "ERR-IDEMPOTENCY-LOCK", "code": "ASSET_UPSERT_IDENTITY_LOCK_FAILED", "retryable": true, "safe_message": "资产请求暂未受理", "internal_cause": "idempotency advisory lock failed"},
+        {"error_id": "ERR-LEDGER-READ", "code": "ASSET_UPSERT_RECEIPT_READ_FAILED", "retryable": true, "safe_message": "无法确认资产请求状态", "internal_cause": "asset_upsert_requests read failed"},
+        {"error_id": "ERR-IDEMPOTENCY-CONFLICT", "code": "ASSET_UPSERT_IDEMPOTENCY_CONFLICT", "retryable": false, "safe_message": "相同请求标识已用于不同内容", "internal_cause": "same tenant/key has different hash, actor or asset identity"},
+        {"error_id": "ERR-REPLAY-COMMIT-UNKNOWN", "code": "ASSET_UPSERT_REPLAY_OUTCOME_UNKNOWN", "retryable": true, "safe_message": "资产请求结果待确认", "internal_cause": "ledger replay transaction commit returned ambiguous outcome"},
+        {"error_id": "ERR-ASSET-LOCK", "code": "ASSET_UPSERT_LOCK_FAILED", "retryable": true, "safe_message": "资产正在更新", "internal_cause": "asset identity advisory lock failed"},
+        {"error_id": "ERR-ASSET-READ", "code": "ASSET_UPSERT_READ_FAILED", "retryable": true, "safe_message": "无法读取资产当前状态", "internal_cause": "locked authority read failed"},
+        {"error_id": "ERR-REVISION-CONFLICT", "code": "ASSET_UPSERT_REVISION_CONFLICT", "retryable": false, "safe_message": "资产已被更新，请刷新后重试", "internal_cause": "expected revision or CAS differs from current authority revision"},
+        {"error_id": "ERR-ASSET-WRITE", "code": "ASSET_UPSERT_WRITE_FAILED", "retryable": true, "safe_message": "资产更新失败", "internal_cause": "assets insert/update failed"},
+        {"error_id": "ERR-HISTORY-MARSHAL", "code": "ASSET_UPSERT_HISTORY_ENCODE_FAILED", "retryable": false, "safe_message": "资产更新未提交", "internal_cause": "old or new history state serialization failed"},
+        {"error_id": "ERR-HISTORY-WRITE", "code": "ASSET_UPSERT_HISTORY_WRITE_FAILED", "retryable": true, "safe_message": "资产更新未提交", "internal_cause": "asset_events insert failed"},
+        {"error_id": "ERR-AUDIT-MARSHAL", "code": "ASSET_UPSERT_AUDIT_ENCODE_FAILED", "retryable": false, "safe_message": "资产更新未提交", "internal_cause": "audit detail serialization failed"},
+        {"error_id": "ERR-AUDIT-WRITE", "code": "ASSET_UPSERT_AUDIT_WRITE_FAILED", "retryable": true, "safe_message": "资产更新未提交", "internal_cause": "audit_logs insert failed"},
+        {"error_id": "ERR-OUTBOX-MARSHAL", "code": "ASSET_UPSERT_EVENT_ENCODE_FAILED", "retryable": false, "safe_message": "资产更新未提交", "internal_cause": "canonical asset event serialization failed"},
+        {"error_id": "ERR-OUTBOX-WRITE", "code": "ASSET_UPSERT_OUTBOX_WRITE_FAILED", "retryable": true, "safe_message": "资产更新未提交", "internal_cause": "asset_event_outbox insert failed"},
+        {"error_id": "ERR-LEDGER-WRITE", "code": "ASSET_UPSERT_RECEIPT_WRITE_FAILED", "retryable": true, "safe_message": "资产更新未提交", "internal_cause": "asset_upsert_requests insert failed"},
+        {"error_id": "ERR-COMMIT-UNKNOWN", "code": "ASSET_UPSERT_OUTCOME_UNKNOWN", "retryable": true, "safe_message": "资产请求结果待确认", "internal_cause": "PostgreSQL commit failed or response was lost after commit boundary"}
+      ],
+      "observability": {
+        "trace": ["asset.upsert with operation and stable outcome, no raw tenant/mac/key labels"],
+        "metrics": ["asset_upsert_total{outcome}", "asset_upsert_conflict_total{class}", "asset_upsert_duration_seconds"],
+        "logs": ["stable error code, operation_id, request_id and trace correlation; internal SQL cause only in protected logs"],
+        "receipts": ["AssetUpsertResult and asset_upsert_requests row"],
+        "forbidden_labels": ["tenant_id", "asset_id", "mac_address", "idempotency_key", "request_hash", "actor"]
+      },
+      "security": {"applicability": "APPLICABLE", "reason": "资产写入必须维持tenant与actor边界", "details": {"contract": "tenant derives from authenticated context before this seam; all reads/writes include tenant; safe errors do not expose SQL, payload hash or secrets"}},
+      "performance": {
+        "time_complexity": "O(1) rows and five bounded durable writes per command",
+        "space_complexity": "O(size of one asset JSON envelope)",
+        "io_bound": "one transaction, two advisory locks, one ledger read, one asset read, five writes and one commit",
+        "allocation_budget": "at most bounded asset/history/outbox JSON payloads; no unbounded collection",
+        "batch_page_depth_limit": "single asset command only",
+        "profile_requirement": "record p95/p99 latency, lock wait and outbox backlog under same-key and distinct-key concurrency profiles"
+      },
+      "compatibility": {"applicability": "APPLICABLE", "reason": "旧调用方、旧ledger hash和既有事件消费者必须持续工作", "details": {"contract": "keep exported signature and v1 canonical identity byte semantics; event FQN/schema/partition key remain stable; helpers are internal and removable"}},
+      "rollback": {
+        "entrypoint": "RB-T1-M06-P007-WRT-n004-s1",
+        "trigger": "any tenant, idempotency, revision, atomicity, event rail or receipt recovery oracle fails",
+        "steps": [
+          "stop new intake or retain default-off guard",
+          "restore only authorized AST nodes while keeping schema/data additive",
+          "reconcile committed rows by tenant+key and replay only pending canonical outbox rows",
+          "rerun exact unit, PostgreSQL, authorization and outbox checks"
+        ],
+        "irreversible_boundary": "B15 PostgreSQL commit",
+        "data_policy": "never delete authority, history, audit, outbox, ledger or immutable evidence; forward reconcile after commit",
+        "oracle_ids": ["O-PG-EXACT-EFFECTS", "O-REPLAY", "O-NO-ACK-PENDING"]
+      },
+      "tests": [
+        {
+          "case_id": "TC-EXACT-REPLAY-BASELINE", "kind": "replay", "design_status": "EXISTING_BASELINE", "execution_status": "BLOCKED",
+          "covers_steps": ["B03", "B04", "B05", "B16"],
+          "fixture_ref": "go/control-plane/internal/asset/repository/atomic_upsert_test.go#TestUpsertAtomicExactReplayReturnsStoredResult",
+          "oracle_ids": ["O-IDEMPOTENCY-SERIALIZATION", "O-REPLAY", "O-REPLAY-NO-DUPLICATE", "O-RESULT-IDENTITY"],
+          "evidence_ref": null,
+          "limitation": "existing sqlmock test covers replay statement ordering only; current execution is blocked by the Go 1.25.12 toolchain verification environment"
+        },
+        {
+          "case_id": "TC-CREATE-BASELINE", "kind": "success", "design_status": "EXISTING_BASELINE", "execution_status": "BLOCKED",
+          "covers_steps": ["B06", "B07", "B09", "B11", "B12", "B13", "B14"],
+          "fixture_ref": "go/control-plane/internal/asset/repository/atomic_upsert_test.go#TestUpsertAtomicCreateCommitsAllDurableEffects",
+          "oracle_ids": ["O-ASSET-IDENTITY-SERIALIZATION", "O-TENANT-READ", "O-ASSET-WRITE-ROLLBACK", "O-HISTORY-ROLLBACK", "O-AUDIT-ROLLBACK", "O-STABLE-ENVELOPE", "O-OUTBOX-ROLLBACK", "O-PENDING-NOT-PUBLISHED", "O-LEDGER-ROLLBACK"],
+          "evidence_ref": null,
+          "limitation": "the misleading legacy test name does not prove all durable effects in live PostgreSQL and does not cover source precedence, audit/history marshal errors or commit ambiguity"
+        },
+        {
+          "case_id": "TC-HISTORY-FAIL-BASELINE", "kind": "fault", "design_status": "EXISTING_BASELINE", "execution_status": "BLOCKED",
+          "covers_steps": ["B10", "B11"],
+          "fixture_ref": "go/control-plane/internal/asset/repository/atomic_upsert_test.go#TestUpsertAtomicHistoryFailureRollsBackAsset",
+          "oracle_ids": ["O-ASSET-WRITE-ROLLBACK", "O-HISTORY-ROLLBACK"],
+          "evidence_ref": null,
+          "limitation": "sqlmock proves the expected Rollback call after an asset_events error; it does not prove live database visibility"
+        },
+        {
+          "case_id": "TC-PG-INTEGRATION-BASELINE", "kind": "concurrency", "design_status": "EXISTING_BASELINE", "execution_status": "BLOCKED",
+          "covers_steps": ["B15"],
+          "fixture_ref": "go/control-plane/internal/asset/repository/atomic_upsert_integration_test.go#TestAssetAtomicUpsertPostgresIntegration",
+          "oracle_ids": ["O-CREATE-ATOMIC", "O-PG-EXACT-EFFECTS"],
+          "evidence_ref": null,
+          "limitation": "requires the sentinel-gated ephemeral PostgreSQL environment; it is not a commit-ambiguity fault-injection test and has not run for this candidate"
+        },
+        {
+          "case_id": "TC-INPUT-HASH-PLANNED", "kind": "compatibility", "design_status": "PLANNED_CHANGE", "execution_status": "NOT_RUN",
+          "covers_steps": ["B01", "B02", "B03"],
+          "fixture_ref": "planned independent REF/TST leaf#TestAssetUpsertIdentityV1GoldenAndBeginFailure",
+          "oracle_ids": ["O-INPUT-COPY", "O-DEFAULTS", "O-HASH-DETERMINISTIC", "O-HASH-COMPATIBILITY", "O-BEGIN-FAIL-NO-EFFECT"],
+          "evidence_ref": null,
+          "limitation": "not present in the current registered WRT write set; requires a separately registered test leaf"
+        },
+        {
+          "case_id": "TC-IDEMPOTENCY-CONFLICT-PLANNED", "kind": "negative", "design_status": "PLANNED_CHANGE", "execution_status": "NOT_RUN",
+          "covers_steps": ["B05"],
+          "fixture_ref": "planned independent TST leaf#TestUpsertAtomicSameKeyDifferentPayloadZeroWrite",
+          "oracle_ids": ["O-IDEMPOTENCY-CONFLICT"],
+          "evidence_ref": null,
+          "limitation": "the baseline integration test checks the returned sentinel but does not reconcile zero writes at this branch"
+        },
+        {
+          "case_id": "TC-SOURCE-PRECEDENCE-PLANNED", "kind": "negative", "design_status": "PLANNED_CHANGE", "execution_status": "NOT_RUN",
+          "covers_steps": ["B08"],
+          "fixture_ref": "planned independent REF/TST leaf#TestUpsertAtomicActionClassSourcePolicy",
+          "oracle_ids": ["O-CURRENT-REVISION", "O-CREATE-DECISION", "O-UPDATE-DECISION", "O-SOURCE-PRECEDENCE", "O-OLD-OBSERVATION"],
+          "evidence_ref": null,
+          "limitation": "blocked until the multi-source data owner approves the field-by-action matrix; current mergeAssetGovernance does not enforce the designed observation rule"
+        },
+        {
+          "case_id": "TC-CAS-CRASH-MATRIX-PLANNED", "kind": "fault", "design_status": "PLANNED_CHANGE", "execution_status": "NOT_RUN",
+          "covers_steps": ["B09", "B10", "B11", "B12", "B13", "B14"],
+          "fixture_ref": "planned independent TST-PRE leaf#TestUpsertAtomicCrashMatrix",
+          "oracle_ids": ["O-CAS", "O-HISTORY-BYTES", "O-HISTORY-EXACTLY-ONCE", "O-AUDIT-EXACTLY-ONCE", "O-OUTBOX-ROLLBACK", "O-LEDGER-ROLLBACK"],
+          "evidence_ref": null,
+          "limitation": "must inject each write failure independently and reconcile all five tables; the existing create test is not a substitute"
+        },
+        {
+          "case_id": "TC-COMMIT-UNKNOWN-PLANNED", "kind": "fault", "design_status": "PLANNED_CHANGE", "execution_status": "NOT_RUN",
+          "covers_steps": ["B15", "B16"],
+          "fixture_ref": "planned independent TST-PRE leaf#TestUpsertAtomicCommitUnknownSameKeyRecovery",
+          "oracle_ids": ["O-COMMIT-UNKNOWN-SAME-KEY", "O-RESULT-IDENTITY"],
+          "evidence_ref": null,
+          "limitation": "requires a typed repository error plus service/API unknown-state mapping and real PostgreSQL response-loss injection"
+        }
+      ]
+    }
+  ],
+  "sql_migration_design": null,
+  "call_flow": {
+    "nodes": ["LOC-T1-M06-P007-UpsertAtomic"],
+    "edges": [
+      {"from_locator_id": "LOC-T1-M06-P007-UpsertAtomic", "to_locator_or_effect_id": "LOC-T1-M06-CALLEE-findAssetByMACTx", "data_or_result": "locked current asset snapshot", "invocation": "sync", "condition": "ledger miss after both advisory lock stages"},
+      {"from_locator_id": "LOC-T1-M06-P007-UpsertAtomic", "to_locator_or_effect_id": "LOC-T1-M06-CALLEE-ensureAssetDefaults", "data_or_result": "deterministic create defaults", "invocation": "sync", "condition": "create decision requires default asset type/status/display code"},
+      {"from_locator_id": "LOC-T1-M06-P007-UpsertAtomic", "to_locator_or_effect_id": "LOC-T1-M06-CALLEE-jsonBytesOrNil", "data_or_result": "nullable previous-state JSON", "invocation": "sync", "condition": "history row is built for create or update"},
+      {"from_locator_id": "LOC-T1-M06-P007-UpsertAtomic", "to_locator_or_effect_id": "EF-ASSET", "data_or_result": "create or CAS update", "invocation": "sync", "condition": "transition accepted"},
+      {"from_locator_id": "LOC-T1-M06-P007-UpsertAtomic", "to_locator_or_effect_id": "EF-HISTORY", "data_or_result": "old and new authority JSON", "invocation": "sync", "condition": "authority write succeeded"},
+      {"from_locator_id": "LOC-T1-M06-P007-UpsertAtomic", "to_locator_or_effect_id": "EF-AUDIT", "data_or_result": "accepted audit detail", "invocation": "sync", "condition": "history write succeeded"},
+      {"from_locator_id": "LOC-T1-M06-P007-UpsertAtomic", "to_locator_or_effect_id": "EF-OUTBOX", "data_or_result": "pending canonical AssetUpserted event", "invocation": "sync", "condition": "audit write succeeded"},
+      {"from_locator_id": "LOC-T1-M06-P007-UpsertAtomic", "to_locator_or_effect_id": "EF-LEDGER", "data_or_result": "idempotent stored result", "invocation": "sync", "condition": "outbox row returned identity"}
+    ],
+    "generated_diagram_ref": null
+  },
+  "companions": [],
+  "contract_impact_refs": [],
+  "plan_refs": {
+    "test": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/test-plan-manifest.json", "sha256": "691a53b3affa0db47325bd9706fffce48f9d07857026e22721189ded324e858c"},
+    "evidence": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/evidence-plan-manifest.json", "sha256": "f18c18b9c62422dc745099afa3d6001ca2747093f83e3164635f2c4bdc35aace"},
+    "rollback": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/rollback-plan-manifest.json", "sha256": "1909a1d7042cd60870c4c99ac786606768df4236f69a3a58e062888af3193d6c"},
+    "observation": {"path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/observation-plan-manifest.json", "sha256": "bf0322276d12b6b5a204a1bba52b17e3d7f9f6ea213d14f2c61afb09380ad497"}
+  },
+  "claims": {
+    "allowed": ["CODE_UNIT_DESIGN_CANDIDATE"],
+    "forbidden": ["READY_BINDING", "EXECUTION_AUTHORIZED", "IMPLEMENTATION_COMPLETE", "PRODUCTION_ACCEPTED", "DEPLOYMENT_ACCEPTED"]
+  },
+  "review_status": "PENDING_FUNCTION_REVIEW",
+  "readiness": {
+    "status": "DRAFT",
+    "blockers": [
+      "pattern proposal and expert debate have not produced a trusted final ADR",
+      "ERR-COMMIT-UNKNOWN requires a new typed repository error plus separate service/HTTP/gRPC mapping leaves; current fmt-wrapped commit errors are not the designed protocol",
+      "caller/callee AST receipts exist, but receipt.calls to declared-call exact-set semantic comparison is not yet implemented",
+      "source precedence matrix requires domain-owner approval",
+      "topic rail validation and real-broker ACK proof must be separate new atomic leaves",
+      "dependency T1-M06-P031-IDX-n012-task-completion is not PASS",
+      "owner/reviewer/approver, clean candidate and signed execution overlay are unresolved"
+    ],
+    "proof_ceiling": "CODE_UNIT_DESIGN_CANDIDATE_ONLY_NOT_FUNCTION_COMPLETE_OR_EXECUTION_AUTHORIZATION"
+  }
+}

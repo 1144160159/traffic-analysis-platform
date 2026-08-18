@@ -1,0 +1,42 @@
+flowchart LR
+  Client["资产管理 / 图谱查询客户端"]:::external
+  Binding["Kafka asset.bindings.v1"]:::external
+  subgraph SW03["SW-03 资产身份与关系图谱分析软件"]
+    subgraph Asset["Asset Service"]
+      AAPI["资产HTTP/gRPC API"]:::own
+      ASvc["身份归并 / 来源裁决 / 发现"]:::own
+      Repo["Repository<br/>幂等 / revision / 事务"]:::own
+      Consumer["Binding Consumer"]:::own
+      Outbox["事务Outbox / Dispatcher"]:::own
+      Projection["资产事件投影Worker"]:::own
+    end
+    subgraph Graph["Graph Service"]
+      GAPI["实体 / 邻居 / 子图 / 路径API"]:::own
+      Query["租户受限图查询引擎"]:::own
+      Cache["缓存 / 预热 / 失效"]:::own
+      ClientAdapter["NebulaGraph适配器"]:::own
+    end
+  end
+  PG[("PostgreSQL 资产权威/history/outbox")]:::external
+  AssetEvent["Kafka asset.events.v2"]:::external
+  OS[("OpenSearch 资产搜索投影")]:::external
+  Nebula[("NebulaGraph 实体关系投影")]:::external
+  Redis[("Redis 图查询缓存")]:::external
+  CH[("ClickHouse 流量/告警事实")]:::external
+  Auth["共享依赖 SW-09 Claims"]:::shared
+
+  Client --> AAPI --> ASvc --> Repo --> PG
+  Binding --> Consumer --> ASvc
+  Repo --> Outbox --> AssetEvent --> Projection
+  Projection --> OS
+  Projection --> Nebula
+  Client --> GAPI --> Query --> ClientAdapter --> Nebula
+  Query --> CH
+  Query <--> Cache <--> Redis
+  Auth -.-> AAPI
+  Auth -.-> GAPI
+
+  classDef own fill:#dbeafe,stroke:#2563eb,color:#172554;
+  classDef external fill:#f3f4f6,stroke:#6b7280,color:#111827;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;
+

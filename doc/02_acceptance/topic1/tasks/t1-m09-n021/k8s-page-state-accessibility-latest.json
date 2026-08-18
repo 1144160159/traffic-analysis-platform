@@ -1,0 +1,77 @@
+{
+  "artifact_kind": "M09_PAGE_STATE_ACCESSIBILITY_TEST_RESULT",
+  "browser_evidence": false,
+  "coverage_status": "PASS_FOR_K8S_IMMUTABLE_BUNDLE_STATE_AND_RESPONSIVE_CONTRACT",
+  "does_not_prove": [
+    "Windows Chrome keyboard and screen-reader acceptance",
+    "pixel-level viewport equivalence",
+    "every product page migrated to the shared boundary",
+    "production rollout",
+    "authorization to promote M09",
+    "global milestone completion"
+  ],
+  "drawer_initial_focus_contract": true,
+  "drawer_return_focus_contract": true,
+  "inputs": {
+    "candidate_image": "traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+    "check_sha256": {
+      "responsive-contract": "8f0e98b8f19ea0247e9f37f01699be929d37211d8b86e0a6080958a3d062255a",
+      "state-semantics": "a7627fa3cbbd2994a44e56a1b972e814e8e0503195183555fabe41eb8e6ad2d1"
+    },
+    "source_sha256": {
+      "web/ui/src/components/PageStateBoundary.test.tsx": "0034ecfb43bc3faafd447f3b90bc62904af0fdb699b307f00e66d1b0ca6cd8ba",
+      "web/ui/src/components/PageStateBoundary.tsx": "cbc3889a768d4d0d5c0aa1d93a6e41ff753a4fd2396f4f56b88a25a1438d97e8",
+      "web/ui/src/components/pageState.ts": "9d5eeee963f6fe7e14711eb71cfcb4a4a128a4b8eefe0d5fdfa0073cc6e765c8",
+      "web/ui/src/components/useDrawerFocusReturn.test.tsx": "58022b04b3ab6c6e395a3b50bccb3df470eb8c10b0fbfab037086d7f2ac032b1",
+      "web/ui/src/components/useDrawerFocusReturn.ts": "1354e80cf3c7941c568da758912065fb50e3a8963369b9533a91d423377330e9",
+      "web/ui/src/main.tsx": "91166ec014b59bd79a94713bc376d05dcdb0cd605faa3322c5c6386e173a0505",
+      "web/ui/src/pages/AlertDetailPage.tsx": "0dd104a095c025fd7ce1aecceca362512d988026063b60fe70fb009954a8ab99",
+      "web/ui/src/pages/CampaignWorkbenchPage.tsx": "a5321b814d0e9a1b9ee20d9103e39b0bd44c2248bb836706e2c8fa13a1d7dee7",
+      "web/ui/src/styles/page-state.css": "bbb25505a59f514f2b243c8bfad646aa6771db8b5cbf64001561b67f637d1f23"
+    }
+  },
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-15T22:43:22Z",
+      "container_id": "containerd://fa577c7651450200c31ba64871135f6916bcfac99376c32d9a20edaadf55ab1a",
+      "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+      "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13",
+      "job_name": "m09-n021-page-state-c2c6fa96b4-state-semantics",
+      "job_uid": "7cce8f17-d190-4d03-aa9e-3e126d3d2bf2",
+      "node": "8-2tb",
+      "pod_name": "m09-n021-page-state-c2c6fa96b4-state-semantics-52dtd",
+      "pod_uid": "ead87d07-0f4c-4b6d-a4fa-acf44e95e993",
+      "started_at": "2026-08-15T22:43:18Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:43:26Z",
+      "container_id": "containerd://7dd731bdc2c2279b9cc5a69d62c2bad5efe0390c86226bc56872e6d28b3f2743",
+      "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+      "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13",
+      "job_name": "m09-n021-page-state-c2c6fa96b4-responsive-contract",
+      "job_uid": "79bfbf82-a9bd-4983-a305-278d5b5da2f6",
+      "node": "8-2tb",
+      "pod_name": "m09-n021-page-state-c2c6fa96b4-responsive-contract-lf2nk",
+      "pod_uid": "bfa09d1d-70b5-4e01-b19f-814903e76d89",
+      "started_at": "2026-08-15T22:43:23Z"
+    }
+  ],
+  "long_text_wrap_contract": true,
+  "mock_enabled": false,
+  "partial_preserves_available_content": true,
+  "production_applied": false,
+  "profile_id": "M09-N021-K8S-IMMUTABLE-UI-STATE-A11Y-V1",
+  "run_id": "c2c6fa96-b4dc-4b9e-9b0c-9cf3da7ed37d",
+  "run_scoped_resources_removed": true,
+  "shared_infrastructure_touched": false,
+  "six_page_states_present": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N021",
+  "test_output_sha256": {
+    "responsive-contract": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431",
+    "state-semantics": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+  },
+  "unavailable_does_not_render_fallback_children": true,
+  "viewport_1366_contract": true,
+  "viewport_1600_contract": true
+}

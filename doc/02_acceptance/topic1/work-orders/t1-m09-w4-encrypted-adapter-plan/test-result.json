@@ -1,0 +1,109 @@
+{
+  "artifact_kind": "M09_ENCRYPTED_ADAPTER_PLAN_TEST_RESULT",
+  "schema_version": "1.0.0",
+  "task_id": "T1-M09-N005",
+  "atomic_pr_id": "T1-M09-P009-REF-n005-s1",
+  "status": "PASS",
+  "scope": {
+    "page_id": "encrypted-traffic",
+    "migrated_surface": [
+      "one page API plan with five reads and seventeen actions",
+      "one page snapshot adapter and encrypted visualization builders",
+      "shared envelope, error, partial and source-watermark parsing tools"
+    ],
+    "runtime_state": "no endpoint, route, action, page rendering, feature-flag, or server-side change"
+  },
+  "candidate": {
+    "source_files": {
+      "web/ui/src/services/pageSnapshotEnvelope.ts": "cd531b75b65d7fb22cd3fb06db8aa72a11dd8b1239095dd2e28e7b3b516f6fb7",
+      "web/ui/src/services/pageSnapshotEnvelope.test.ts": "a50a37b756e4efb9629304182d336f43ad22f06ce6a43806532fdeb2df5162be",
+      "web/ui/src/services/encryptedTrafficSnapshotAdapter.ts": "7a52dec77c0f837e04a7c94ee88b43566ebb6f0bfd95dff430577dfa1d54d6cc",
+      "web/ui/src/services/encryptedTrafficPagePlan.ts": "de11afc19d9c816413346ac8b787b2bf52c4c7e7091263b3482c5dfb45177d3c",
+      "web/ui/src/services/encryptedTrafficPagePlan.test.ts": "1d98be31fbf09477472eaa7205e1f9ff374393c4301340df37fd9486e43dc135",
+      "web/ui/src/services/pageSnapshotAdapters.ts": "f43de4a07f83ef81305923a3d89c20a94a3a45e713431739f6cf5e23eb56a0e9",
+      "web/ui/src/services/pageSnapshotAdapters.test.ts": "dfcb03a6ceaaba0c1602acf20c2026ebd5bf9f2714d1e66dafc9c9d17b1479e8",
+      "web/ui/src/services/pageApiPlans.ts": "643d66168f2450f02e76cee963169b79490566004b494789932ba3b6d3f7918e",
+      "web/ui/src/routes/encryptedTrafficVisuals.test.ts": "dfa659074865ad96cd7fd810a2a550a32e757cb5a49245555aa817e139117bd0"
+    },
+    "rollback_runbook": {
+      "path": "doc/07_alignment/runbooks/T1-M09-N005-encrypted-adapter-plan-rollback.md",
+      "sha256": "a74789ec70b4a4c3dbfdf1963dd7589dbf5321cc82dd3ed075d9c96504490177"
+    },
+    "kubernetes_runner": {
+      "path": "scripts/alignment/run_m09_encrypted_adapter_plan_k8s.py",
+      "sha256": "29c52c520f751c5b960418664bb473ecdecac2d85d191f37ebfb6a7fae2f8b5f"
+    },
+    "test_image": {
+      "reference": "traffic/web-ui:m09-n005-encrypted-adapter-plan-20260815-r1",
+      "image_id": "sha256:a8c992ac72ebc122b78309bcb4d849d7cf4af4694ec97a29b1bfd28399a67740"
+    }
+  },
+  "characterized_invariants": [
+    "the legacy plan registry contains exactly one encrypted-traffic entry and references the extracted plan",
+    "the aggregate adapter contains no encrypted adapter or visual builder implementation",
+    "the dispatcher selects the extracted adapter for encrypted-traffic only",
+    "stats and five secondary endpoint order remains exact",
+    "all seventeen action ids, permissions, audit events and default action bodies remain exact",
+    "metrics, rows, timeline, evidence, egress empty states and evidence-center visuals remain covered by existing adapter tests",
+    "error, partial, missing_sections and string-valued source_watermarks remain beside recursively unwrapped data",
+    "date-sensitive whitelist characterization now uses a fixed clock instead of wall-clock drift"
+  ],
+  "local_validation": {
+    "vitest": {
+      "command": "npm test -- --run src/services/pageSnapshotEnvelope.test.ts src/services/encryptedTrafficPagePlan.test.ts src/services/encryptedTrafficApi.test.ts src/services/pageSnapshotAdapters.test.ts src/services/pageApiPlans.test.ts src/routes/encryptedTrafficVisuals.test.ts",
+      "status": "PASS",
+      "test_files": 6,
+      "tests": 64
+    },
+    "typescript": {
+      "command": "npx tsc --noEmit",
+      "status": "PASS"
+    },
+    "eslint": {
+      "command": "npx eslint <N005 changed TypeScript files>",
+      "status": "PASS"
+    },
+    "production_build": {
+      "command": "npm run build",
+      "status": "PASS",
+      "mock_runtime_guard": "PASS"
+    },
+    "duplicate_implementation_check": "PASS",
+    "diff_check": "PASS"
+  },
+  "kubernetes_validation": {
+    "run_id": "f715ad58-f2a1-41f0-bd00-acf28d9b1309",
+    "namespace": "traffic-analysis",
+    "job_name": "m09-n005-adapter-f715ad58f2",
+    "job_uid": "bd673c84-d13c-494c-b344-356682afe581",
+    "pod_name": "m09-n005-adapter-f715ad58f2-grpb9",
+    "pod_uid": "f185fd4d-04b1-4810-8902-54be42047300",
+    "node": "8-2tb",
+    "container_id": "containerd://c0a84cad39af9e36237fdb6bd829f0078d5939e7d38d229878424f521c69b32b",
+    "image_id": "sha256:a8c992ac72ebc122b78309bcb4d849d7cf4af4694ec97a29b1bfd28399a67740",
+    "started_at": "2026-08-15T12:34:52Z",
+    "completed_at": "2026-08-15T12:34:56Z",
+    "bundle_check_sha256": "c6ba3b40df70386fe7127d5f3d44d09fad09799c7437359ac61edc7d0b6421f3",
+    "test_output_sha256": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431",
+    "status": "PASS",
+    "run_scoped_resources_removed": true,
+    "production_applied": false,
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_flink_touched": false
+  },
+  "claim_boundary": {
+    "proves": [
+      "the encrypted page adapter and API plan are physically isolated and selected by the compatibility registries",
+      "the covered page behavior and production bundle pass local and isolated-Kubernetes validation"
+    ],
+    "does_not_prove": [
+      "production rollout",
+      "live APISIX or ClickHouse behavior",
+      "new encrypted snapshot contract implementation",
+      "M09 milestone completion"
+    ]
+  }
+}

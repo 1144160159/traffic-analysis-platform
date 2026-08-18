@@ -1,0 +1,174 @@
+{
+  "artifact_kind": "M08_MODEL_CONSUMER_SHADOW_K8S_CANARY_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": [
+    "T1-M08-N009",
+    "T1-M08-N010",
+    "T1-M08-N011"
+  ],
+  "milestone_state": "IMPLEMENTING",
+  "task_state": "PRJ_READY_ACTIVATION_BLOCKED",
+  "status": "PASS",
+  "executed_at": "2026-08-15T04:06:11Z",
+  "environment": {
+    "infrastructure": "kubernetes",
+    "namespace": "flink",
+    "consumer_node": "8-2tb",
+    "kafka_node": "zeus-server",
+    "container_runtime": "containerd",
+    "production_applied": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_postgres_touched": false,
+    "shared_flink_session_cluster_touched": false
+  },
+  "candidate": {
+    "image": "docker.io/traffic/flink-behavior-job:m08-model-shadow-n011-20260815-r6",
+    "image_config_sha256": "2a934e6dd0820ded3fb98c65c107accd79aa4a6468a86c02f58274e9f47a8c90",
+    "containerd_manifest_sha256": "9c4df0b047534f25316432f26da3a84cf24101361da83aca90683110b4420bbe",
+    "trainer_image_config_sha256": "09bf8a519489cc3907873c74ae48672a71157180e569d523a276926288c93d0a",
+    "source_sha256": {
+      "ModelUpdateConsumerJob.java": "0ff5b924c919da22be6db00c4075b3f3f1af53692b245cbf8f133e097090f864",
+      "GovernedModelConsumerCanaryMain.java": "6e32ad38f502060c2ebee4b631a88ba5e8706e6c2bc00009b09573faf548306c",
+      "ModelUpdateEvent.java": "59d211bf1d3cff4a5a4d35ff16278cf27005c44082df7ea855ea29ce5e8c138b",
+      "ModelConsumerProfile.java": "0d9ac60f6f2dedd6aef9005736d888939dc2f1d4d3cbd000155cd0f26f06509a",
+      "TrustedModelSigningKey.java": "79c8b7c4f34dff85ef1d76d157cf9fc02a881c113a9354e418cc249f7e2508e9",
+      "GovernedModelPackageLoader.java": "a372bd76b7a9b6ca76fb151137e9fd0ee60951afd4ed5f88e9a6968ac2eecdda",
+      "ModelUpdateBroadcastHandler.java": "37dfd50f3cb599b505b9fc0d4874bbb88ed8e6d336337cd52b593024a3c2a5da",
+      "ModelRegistry.java": "81b48578296b120f1fe65734a7769475b71a3b3e3425538b74ebee90e866c251",
+      "ModelConsumerReadinessSource.java": "19745e7c31d58a4111a330c05c52f9adfad5e93a4b3767e343625ecca1963b94",
+      "model_consumer_readiness.go": "9a876768a9c26a7be03578ca5695f554ffd204461a47dc9a7c7302d40ac80ead",
+      "model_shadow_ack.go": "c08e2ff6d5d5b23752a6a5fad99ad828548199800aee52e9b983072136c7f696",
+      "flink-behavior-model-consumer-job.yaml": "c5899c2bafa4a2852b6c01edebdbad25f53decedc3a72d6733ec0b10352346b2",
+      "flink-behavior-model-consumer-canary.yaml": "9895db075201ca5a452b74827daa460b865ab14fd1632f109d7d1978d37a4123",
+      "model-consumer-profile.v1.json": "a4c87af1923426a76a0ba9e81ff7dab7a281bc6805cefb9627a221f4c87e77ef",
+      "kafka-json-events-v1.schema.json": "d321ee9e050e03d53f0e834470c343c8bee79a98a2c16b0aa5a7fd527469374e",
+      "02-postgres-schema.yaml": "0ea066dc1426c3e68c06f714e10749f8292b05e99c3103e63735cdf53704d179"
+    }
+  },
+  "consumer_contract": {
+    "entry_class": "com.traffic.flink.behavior.ModelUpdateConsumerJob",
+    "runtime_contract": "traffic.behavior.inference.v1",
+    "runtime_version": "1.0.0",
+    "feature_schema_version": 1,
+    "graph_schema_version": 1,
+    "supported_model_formats": [
+      "onnx",
+      "numpy_npz_v1"
+    ],
+    "parallelism": 4,
+    "consumer_profile_sha256": "9acb4eb36b77d62f083f0d79b3001e93385037b9a0f0ef051803b949a395d7b9",
+    "profile_recomputed_from_runtime_schema_format_and_ed25519_trust_root": true,
+    "server_exact_deployment_and_profile_required": true,
+    "activation_enabled": false,
+    "serving_outputs_enabled": false,
+    "stable_operator_uids_registered": true,
+    "generic_kryo_compatibility_maps_forbidden": true
+  },
+  "kubernetes_consumer_canary": {
+    "run_id": "2ccb053f-60ea-41d5-aa00-e7e65a7350fe",
+    "event_id": "8bcfc271-9982-53a6-8340-de08dd77aa6e",
+    "job_uid": "570ba9d1-8e38-44d2-953f-f05c9014bd34",
+    "started_at": "2026-08-15T04:05:57Z",
+    "completed_at": "2026-08-15T04:06:11Z",
+    "duration_seconds": 14,
+    "kafka_image": "docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a",
+    "dataset_id": "1a0d68f1-120f-5292-b6d3-536918d285d4",
+    "dataset_sha256": "7a1ff5c34c58c06f2bfa0c6170b7eeb310341c83016dcd18072a75dc0fa726e5",
+    "graph_snapshot_id": "23d9a454-ec9f-54d2-94f8-3c0740628eaa",
+    "graph_snapshot_sha256": "cf4f4577fb71d24b641e86a406d479194196e094464f8e60371450845dcba5f9",
+    "model_package_id": "656992a5-e75c-5b59-aa1c-b081929c35c1",
+    "model_package_sha256": "7b8799a83f75a53a813503212e1e1aad0061b13cd4ad73c85400767d5bd797d6",
+    "known_attack_recall": 1.0,
+    "unknown_recall": 0.0,
+    "consumer_ready_subtasks": 4,
+    "shadow_ready_subtasks": 4,
+    "signature_validation_subtasks": 4,
+    "onnx_warmup_subtasks": 4,
+    "gnn_archive_validation_subtasks": 4,
+    "graph_schema_validation_subtasks": 4,
+    "activation_applied": false,
+    "serving_outputs_emitted": false,
+    "status": "PASS"
+  },
+  "postgres_quorum_tests": [
+    {
+      "run_id": "m08-n011-20260815-0110",
+      "command": "MODEL_SHADOW_ACK_TEST_POSTGRES_DSN=<isolated-k8s-postgres> go test ./internal/rules/service -run '^TestModelShadowAckPostgresExactQuorum$' -count=1 -v",
+      "status": "PASS",
+      "oracles": {
+        "three_of_four_creates_no_receipt": true,
+        "four_of_four_creates_exact_receipt": true,
+        "duplicate_does_not_downgrade": true,
+        "failed_subtask_creates_no_ready_receipt": true
+      }
+    },
+    {
+      "run_id": "m08-n011-readiness-pg-20260815-1208",
+      "command": "MODEL_CONSUMER_READY_TEST_POSTGRES_DSN=<isolated-k8s-postgres> go test ./internal/rules/service -run '^TestModelConsumerReadinessPostgresExactProfileQuorum$' -count=1 -v",
+      "status": "PASS",
+      "oracles": {
+        "three_of_four_creates_no_receipt": true,
+        "four_of_four_creates_exact_profile_receipt": true,
+        "duplicate_is_idempotent": true,
+        "profile_drift_rejected": true,
+        "receipt_ttl_bounded": true
+      }
+    }
+  ],
+  "negative_kubernetes_package_tests": {
+    "run_id": "d0e9aa40-02a8-4934-84cb-29972b3a43f3",
+    "graph_schema_incompatible_rejected": true,
+    "ed25519_signature_tamper_rejected": true,
+    "activation_applied": false,
+    "status": "PASS"
+  },
+  "regressions": [
+    {
+      "command": "mvn -q -pl flink-behavior-job -am -Dtest=ModelUpdateConsumerJobTest,ModelConsumerProfileTest,ModelConsumerReadinessTest,ModelUpdateBroadcastHandlerTest -Dsurefire.failIfNoSpecifiedTests=false test",
+      "status": "PASS",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "command": "go test ./internal/rules/service ./internal/rules/config ./cmd/rule-manager",
+      "working_directory": "go/control-plane",
+      "status": "PASS"
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f deployments/kubernetes/flink/flink-behavior-model-consumer-job.yaml",
+      "status": "PASS",
+      "objects": 1
+    }
+  ],
+  "diagnosed_and_fixed_during_canary": [
+    "The detection.mode=off branch previously returned before the model consumer could start; a dedicated consumer-only entry class now owns the N011 graph.",
+    "ModelUpdateEvent compatibility and metrics used generic Map<String,Object> Kryo state; they are now strongly typed Flink POJOs and covered by a type-info test.",
+    "Each broadcast subtask now owns a separate model cache namespace, preventing concurrent immutable-file cache collisions.",
+    "Readiness identifiers now use the project SHA-256 UUIDv8 utility and deployment identity is bound to the exact compatibility profile.",
+    "The runtime recomputes the profile from runtime, schemas, formats and Ed25519 trust root; Go accepts only the server-configured deployment/profile."
+  ],
+  "cleanup": {
+    "consumer_canary_job_removed": true,
+    "isolated_kafka_deployment_and_service_removed": true,
+    "contract_configmap_removed": true,
+    "readiness_postgres_pod_and_service_removed": true,
+    "shadow_ack_postgres_pod_and_service_removed": true,
+    "retained_kubernetes_resources": false
+  },
+  "activation_blockers": [
+    "Unknown/open-set recall is 0.0, so model activation and promotion remain NO-GO.",
+    "The production model-shadow-consumer-profile-v1 Secret and matching rule-manager expected profile have not been materialized or applied.",
+    "The production submission Job remains suspended and was only server-side dry-run validated.",
+    "N010 activation outbox writer/publisher remains disabled until this exact consumer profile is authorized and ready on the shared rail.",
+    "Champion/challenger observation, canary cutover, feedback, drift, retraining and rollback are subsequent M08 work and are not claimed here."
+  ],
+  "limitations": [
+    "The full consumer canary used deterministic synthetic data, an ephemeral Ed25519 key, local file-backed immutable artifacts and an isolated Kafka broker.",
+    "The Go quorum tests used isolated real Kubernetes PostgreSQL instances, not the shared production database.",
+    "No shared Kafka, MinIO, PostgreSQL, production Flink job or serving result was changed.",
+    "This is bounded N011 engineering evidence, not milestone completion or a CNAS quality claim."
+  ],
+  "errors": []
+}

@@ -1,0 +1,118 @@
+{
+  "approval_binds_event_ids": true,
+  "artifact_kind": "M09_RULE_MODEL_REVIEW_TEST_RESULT",
+  "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_EXACT_ACK_EXPANSION_GATE",
+  "does_not_prove": [
+    "production rollout",
+    "shared data migration",
+    "broker-generated rule/model ACK delivery",
+    "performance or rollback drill",
+    "Windows Chrome acceptance",
+    "authorization to enable DEPLOYMENT_RUNTIME_ACK_GATE_V1_ENABLED",
+    "global milestone completion"
+  ],
+  "event_drift_requires_reapproval": true,
+  "exact_rule_model_receipts": true,
+  "gray_projection_ack_required": true,
+  "inputs": {
+    "candidate_images": [
+      "traffic/rule-model-review-test:m09-n019-20260816-r2",
+      "traffic/web-ui:m09-n022-alert-detail-css-20260816-r2"
+    ],
+    "prerequisites_sha256": "a372310d2affecb72a8e8dee63e75fc0ecb6ed348b102218972e8656d7496a32",
+    "source_sha256": {
+      "deployments/kubernetes/applications/go-services.yaml": "62502c80b03271589f877e16c79aa3923bd40fa10fab62132c792c4689e5e204",
+      "go/control-plane/cmd/rule-manager/main.go": "dfac8526f3b7aa295f56efcbe0a6262b59c8de61848adb0b754c045b908a194d",
+      "go/control-plane/deployments/kubernetes/rule-manager.yaml": "d0fbc623c77fcd0386a71ca125b2fa4e4d1b24ccfc8c93bb5fe3e4643a53aad9",
+      "go/control-plane/internal/rules/config/config.go": "a54fbb9c5ab57370587f00e6fa59e11206abb6ba1d7607937fd7e87d44803e27",
+      "go/control-plane/internal/rules/model/deployment_runtime_gate.go": "3554348df5b81c9f0999a65a45032ca803a958f45207738f9709895918bad10d",
+      "go/control-plane/internal/rules/model/deployment_workbench.go": "76ff15f2f52abc851cdfd8e2623d9eabdefdac1895c03875978f32bfa03e11a5",
+      "go/control-plane/internal/rules/service/deployment_runtime_gate.go": "70c0610e2377d695b08b8df9b5863d19b163acebd8f2ec083c1b0f62ca3783e4",
+      "go/control-plane/internal/rules/service/deployment_runtime_gate_k8s_integration_test.go": "224e36afe8917d7b32044a768fcc849ba8ec2eabf2d857ceccb7e8686459bc07",
+      "go/control-plane/internal/rules/service/deployment_service.go": "6ec3aceb8f9ed5de5149d124d8df4429579b91842475587692b2d73ee63bac0a",
+      "web/ui/src/pages/DeploymentManagementWorkspace.tsx": "4e121afc64a09e1aef50dba177efb9379893f593781f76a05a210d2412475e91",
+      "web/ui/src/pages/deploymentManagementLogic.ts": "6573aef0b7882f85ab62c521edac0f51ce79dbe8441dbc9bfc70163e278a67cd",
+      "web/ui/src/services/api.ts": "801edd8f5c45e08dad81fbdd2754be6455b50fe33240e86f405dec3298de65b4"
+    }
+  },
+  "kubernetes_dependencies": [
+    {
+      "container_id": "containerd://f00f7c1ad386fcc9afef576097073fb1ed22ec34a57c825dffe2ad6c5f092655",
+      "image": "docker.io/library/postgres:16-alpine",
+      "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n019-review-384d9a9568",
+      "pod_uid": "45966cc8-cbab-413b-80b4-e9f75a6cd99f",
+      "started_at": "2026-08-15T22:44:15Z"
+    }
+  ],
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-15T22:44:20Z",
+      "container_id": "containerd://7a2d6a79d3b43cad98f22366ad60b043cb464d63fa89a66d8f2cb9ec544235b3",
+      "image": "docker.io/traffic/rule-model-review-test:m09-n019-20260816-r2",
+      "image_id": "sha256:c936fa4b95adc8749d24de503e5ea53f0684e5b1e17fe3adacd7aebc6fe216a0",
+      "job_name": "m09-n019-review-384d9a9568-integration",
+      "job_uid": "d0f7ba9a-5c52-4a01-aa24-1a166cfe59a1",
+      "node": "8-2tb",
+      "pod_name": "m09-n019-review-384d9a9568-integration-sghxm",
+      "pod_uid": "1677552a-0560-4b97-8ec2-55f2efa09b2d",
+      "started_at": "2026-08-15T22:44:17Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:44:24Z",
+      "container_id": "containerd://fde579c372a7cccedf9e52c922690f59cb7ab0e0410b10e0e714a4fc5c642cd3",
+      "image": "docker.io/traffic/rule-model-review-test:m09-n019-20260816-r2",
+      "image_id": "sha256:c936fa4b95adc8749d24de503e5ea53f0684e5b1e17fe3adacd7aebc6fe216a0",
+      "job_name": "m09-n019-review-384d9a9568-unit",
+      "job_uid": "bec1eb50-e788-46cd-9cd1-8ad5a1fa16db",
+      "node": "8-2tb",
+      "pod_name": "m09-n019-review-384d9a9568-unit-kf6mb",
+      "pod_uid": "7fe47e63-ea8d-4403-b33e-6bd4d20ca4ca",
+      "started_at": "2026-08-15T22:44:20Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:44:28Z",
+      "container_id": "containerd://249ccea9b59354510de6c1789f512c404d78c2066b9ef003bf66b6e194921c5d",
+      "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+      "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13",
+      "job_name": "m09-n019-review-384d9a9568-web",
+      "job_uid": "87104470-57a0-49fa-9629-862ff7d8130f",
+      "node": "8-2tb",
+      "pod_name": "m09-n019-review-384d9a9568-web-c5zlv",
+      "pod_uid": "aee7cfbb-5ca2-4bba-852e-05e644b582af",
+      "started_at": "2026-08-15T22:44:24Z"
+    }
+  ],
+  "mock_enabled": false,
+  "old_version_recoverable": true,
+  "partial_ack_stops_expansion": true,
+  "postgres_cleanup_oracle": {
+    "deployment_outbox": 0,
+    "deployment_projection": 0,
+    "deployments": 0,
+    "model_acks": 0,
+    "model_outbox": 0,
+    "model_versions": 0,
+    "rule_acks": 0,
+    "rule_outbox": 0,
+    "rule_versions": 0,
+    "sentinel": "ephemeral-only",
+    "tenants": 0
+  },
+  "production_applied": false,
+  "profile_id": "M09-N019-K8S-PG-ACK-GATE-UI-V1",
+  "run_id": "384d9a95-68dd-4eee-a9f5-81fc3a9c2d32",
+  "run_scoped_resources_removed": true,
+  "runtime_gate_default_enabled": false,
+  "shared_postgres_touched": false,
+  "status": "PASS",
+  "task_id": "T1-M09-N019",
+  "test_output_sha256": {
+    "integration": "6efd1865fdf8666668d95156581d69bd4969f9aac835f64e4888973cf47a1c90",
+    "unit": "fbbaa26a317bcf659ddea9bd8002d498e7c2162f480658aa8d2181b69d7b026a",
+    "web": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+  },
+  "ui_runtime_gate_present": true
+}

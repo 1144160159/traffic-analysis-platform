@@ -1,0 +1,124 @@
+{
+  "artifact_kind": "M09_FORENSICS_WORKER_TEST_RESULT",
+  "clickhouse_authority_rows": 1,
+  "inputs": {
+    "clickhouse_image": "docker.io/clickhouse/clickhouse-server:24.3-alpine",
+    "minio_image": "docker.io/minio/minio:latest",
+    "postgres_image": "docker.io/library/postgres:16-alpine",
+    "prerequisites_sha256": "099f89078ab6b3baae5e40dcb388dfeda9bb1e173eed52218afdfca3ac0a59d9",
+    "task_migration_sha256": "37613781c6644c37a5b59b24f2bf63333582e057aeb3c45b06f23fde40ec3c11",
+    "test_images": [
+      "traffic/forensics-worker-repository-test:m09-n010-20260815-r4",
+      "traffic/forensics-worker-index-test:m09-n010-20260815-r1",
+      "traffic/forensics-worker-s3-test:m09-n010-20260816-r3"
+    ],
+    "worker_migration_sha256": "ff41f4422c393c672bef9ed0f567e8d43a2322451042b99ff25e68cff30dee93"
+  },
+  "kubernetes": [
+    {
+      "completed_at": "2026-08-15T16:05:17Z",
+      "container_id": "containerd://467bee05b4c221adcc4ea9af3796ca218111383606e787c8c57a1d83f910d8be",
+      "image": "docker.io/minio/mc:latest",
+      "image_id": "docker.io/minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727",
+      "job_name": "m09-n010-worker-e4b59f947f-minio-init",
+      "job_uid": "baad1f48-6bb9-4102-89b1-5dd2bd2154f5",
+      "node": "8-2tb",
+      "pod_name": "m09-n010-worker-e4b59f947f-minio-init-gsqxd",
+      "pod_uid": "3ed3fc25-a20d-48ce-90ee-62034971684e",
+      "started_at": "2026-08-15T16:05:15Z"
+    },
+    {
+      "completed_at": "2026-08-15T16:05:21Z",
+      "container_id": "containerd://fd7951c114dd4b4fe5b54358d1acaf7687daff7232286119c413387eb673d152",
+      "image": "docker.io/traffic/forensics-worker-repository-test:m09-n010-20260815-r4",
+      "image_id": "docker.io/library/import-2026-08-15@sha256:b4f3d954fb22294125871fd080c2543a7c978b13f6db4415c8abaf59bb460cc4",
+      "job_name": "m09-n010-worker-e4b59f947f-repository",
+      "job_uid": "90870a5a-cbef-4e79-8b9d-5b38a5f5db5c",
+      "node": "8-2tb",
+      "pod_name": "m09-n010-worker-e4b59f947f-repository-z4lg7",
+      "pod_uid": "be012695-c7fa-4956-a1ed-401ab1785ead",
+      "started_at": "2026-08-15T16:05:18Z"
+    },
+    {
+      "completed_at": "2026-08-15T16:05:25Z",
+      "container_id": "containerd://2e5cdd3bc676165b98d44f612842313713ae9bd62ce2bbeef506455478fe323e",
+      "image": "docker.io/traffic/forensics-worker-index-test:m09-n010-20260815-r1",
+      "image_id": "docker.io/traffic/m09-n010-import@sha256:bdfa9d933fd62e99e73fecab7fe642f35011279c38e20c8183b70cc634f134af",
+      "job_name": "m09-n010-worker-e4b59f947f-index",
+      "job_uid": "02179968-845b-43b8-b3f0-83e8472ad5b2",
+      "node": "8-2tb",
+      "pod_name": "m09-n010-worker-e4b59f947f-index-5hx4j",
+      "pod_uid": "f36fd8af-3ea2-4b8b-9ca1-981ca7a60b03",
+      "started_at": "2026-08-15T16:05:22Z"
+    },
+    {
+      "completed_at": "2026-08-15T16:05:29Z",
+      "container_id": "containerd://2a6a7b1dba7498c9cd619aec2a785c0c1d882aab5f0835da75a8c04cb1a5bff9",
+      "image": "docker.io/traffic/forensics-worker-s3-test:m09-n010-20260816-r3",
+      "image_id": "docker.io/library/import-2026-08-16@sha256:e1908ea9293c6878bfee53da2e8358fa1d8c2ab561f10c7f9e4e77ec13042246",
+      "job_name": "m09-n010-worker-e4b59f947f-s3",
+      "job_uid": "8545a415-1e82-48b6-a433-437ef2dd5026",
+      "node": "8-2tb",
+      "pod_name": "m09-n010-worker-e4b59f947f-s3-xs5dn",
+      "pod_uid": "8d673877-25b0-4195-937f-bd1b7cbe72c9",
+      "started_at": "2026-08-15T16:05:26Z"
+    }
+  ],
+  "kubernetes_dependencies": [
+    {
+      "container_id": "containerd://60972ffb5127c99e42b94a79103fbc0b21caea73ec0a0cade3de00e9808986da",
+      "image": "docker.io/library/postgres:16-alpine",
+      "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n010-worker-e4b59f947f",
+      "pod_uid": "140cb74c-9019-464b-b08d-4a0365873a40",
+      "started_at": "2026-08-15T16:05:12Z"
+    },
+    {
+      "container_id": "containerd://a946e7505b759adeccb0d0a301a8a316dac7fb9cc79a928989e7b343fd89d2b0",
+      "image": "docker.io/clickhouse/clickhouse-server:24.3-alpine",
+      "image_id": "docker.io/clickhouse/clickhouse-server@sha256:c3f166f4a80098480463d897a63f6867d24e3a7661fc1fe72e889788115a25f1",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n010-worker-e4b59f947f-ch",
+      "pod_uid": "24aead25-ebf8-42c8-90c2-8347fe76e51b",
+      "started_at": "2026-08-15T16:05:12Z"
+    },
+    {
+      "container_id": "containerd://049ba9f92813af5e1ab9f5c178b9441c57f23d69aedd7c6b1dec9e626b2257d1",
+      "image": "docker.io/minio/minio:latest",
+      "image_id": "docker.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+      "namespace": "databases",
+      "node": "8-2tb",
+      "pod_name": "m09-n010-worker-e4b59f947f-minio",
+      "pod_uid": "61b73e9c-af8d-4aee-80d4-e947c9d13ebf",
+      "started_at": "2026-08-15T16:05:12Z"
+    }
+  ],
+  "postgres_oracle": {
+    "checkpoints": 0,
+    "manifests": 0,
+    "sentinel": "ephemeral-only",
+    "task_migration": 1,
+    "tasks": 0,
+    "worker_migration": 1
+  },
+  "production_applied": false,
+  "profile_id": "M09-N010-K8S-VERSIONED-WORKER-V1",
+  "run_id": "e4b59f94-7f15-432d-9c7a-c67f608f4af9",
+  "run_scoped_resources_removed": true,
+  "shared_clickhouse_touched": false,
+  "shared_minio_touched": false,
+  "shared_postgres_touched": false,
+  "status": "PASS",
+  "task_id": "T1-M09-N010",
+  "test_output_sha256": {
+    "index": "261ff0e25821a0d614394080655f9d1bafa4689775df0ad126cf46f4bac6ee68",
+    "minio_init": "6dc449a6842a171065a0c008809dfdd69d00ea4ee352bf3ba16ceef75ae18571",
+    "repository": "3dcd819e3ca35abfccc3e7dc73717471b551451f3b8f3d5d68bffb87d2d2910c",
+    "s3": "de70fac3cb0cbe0d7a57ab2b58457017ca4d2596e7485683b50750970cd26e55"
+  },
+  "worker_default_enabled": false,
+  "writer_default_enabled": false
+}

@@ -1,0 +1,255 @@
+{
+  "acceptance_status": "BLOCKED_CNI_ENFORCEMENT_MISSING",
+  "allowed_claims": [
+    "The checked-in N009 candidate is deterministic, API-valid, default-off, and blocked before apply because the observed CNI cannot enforce NetworkPolicy"
+  ],
+  "artifact_kind": "M10_NETWORK_POLICY_K8S_ENFORCEMENT_RESULT",
+  "atomic_pr_ids": [
+    "T1-M10-P021-OPS-n009-s1",
+    "T1-M10-P022-TST-POST-n009-s2"
+  ],
+  "blocking_codes": [
+    "APPROVED_EQUIVALENT_CONTROL_REQUIRED",
+    "AUTH_OIDC_NODEPORT_EXCEPTION_APPROVAL_REQUIRED",
+    "CNI_POLICY_ENFORCEMENT_REQUIRED",
+    "DEPLOYABLE_CANDIDATE_REQUIRED",
+    "N008_ACCEPTANCE_REQUIRED",
+    "REAL_UNAUTHORIZED_POD_PORT_EXTERNAL_NEGATIVE_TESTS_REQUIRED"
+  ],
+  "candidate": {
+    "applied_by_run": false,
+    "client_dry_run": "PASS",
+    "exception_approvals": [
+      {
+        "approval_status": "REQUIRED_NOT_APPROVED",
+        "exception_id": "EX-N009-AUTH-OIDC-NODEPORT",
+        "risk_owner_role": "site-release-sre-owner"
+      }
+    ],
+    "object_count": 10,
+    "policy_names": [
+      "m10-n009-default-deny",
+      "m10-n009-allow-alert-service",
+      "m10-n009-allow-asset-service",
+      "m10-n009-allow-auth-service",
+      "m10-n009-allow-forensics-service",
+      "m10-n009-allow-graph-service",
+      "m10-n009-allow-ingest-gateway",
+      "m10-n009-allow-rule-manager",
+      "m10-n009-allow-threat-intel-service",
+      "m10-n009-allow-web-ui"
+    ],
+    "present_in_target_namespace": []
+  },
+  "candidate_id": null,
+  "captured_at": "2026-08-16T04:32:36.360057Z",
+  "cluster": {
+    "cni_daemonsets": [
+      {
+        "desired": 2,
+        "images": [
+          "ghcr.io/flannel-io/flannel@sha256:5414132a5547ca336112dc00113530363aeeb7e8b59c1f6b8e5703c0ccb534e7"
+        ],
+        "markers": [
+          "flannel"
+        ],
+        "name": "kube-flannel-ds",
+        "namespace": "kube-flannel",
+        "ready": 2,
+        "resource_version": "15762397",
+        "uid": "8fdf4108-71d0-447f-a20c-45996486ff86"
+      }
+    ],
+    "context": "kubernetes-admin@kubernetes",
+    "live_network_policies": [
+      {
+        "name": "allow-database-runtime-traffic",
+        "namespace": "databases",
+        "resource_version": "5825566",
+        "uid": "f0e91948-081a-4d1a-b42c-b94b03b05d50"
+      },
+      {
+        "name": "default-deny-ingress-egress",
+        "namespace": "databases",
+        "resource_version": "5825565",
+        "uid": "ef5cadff-d405-420a-82ae-7362d7109b4d"
+      },
+      {
+        "name": "allow-flink-runtime-traffic",
+        "namespace": "flink",
+        "resource_version": "5825570",
+        "uid": "cc27df82-cca3-4ecc-9bf0-c5fa5247c2e5"
+      },
+      {
+        "name": "default-deny-ingress-egress",
+        "namespace": "flink",
+        "resource_version": "5825569",
+        "uid": "64d3307c-4de6-490d-bce0-c6c9c9cada66"
+      },
+      {
+        "name": "allow-apisix-dns-and-upstream-egress",
+        "namespace": "gateway",
+        "resource_version": "5825562",
+        "uid": "7e0e7c1d-54c7-4d97-84c1-2162c4abfc0b"
+      },
+      {
+        "name": "allow-apisix-public-http",
+        "namespace": "gateway",
+        "resource_version": "5825561",
+        "uid": "c51ee4ec-9ab5-4648-abd8-5d0089edaecf"
+      },
+      {
+        "name": "default-deny-ingress-egress",
+        "namespace": "gateway",
+        "resource_version": "5825560",
+        "uid": "a7649c8d-e768-4c40-b7b4-3cf3265e1f2b"
+      },
+      {
+        "name": "allow-keycloak-runtime-traffic",
+        "namespace": "iam",
+        "resource_version": "5825573",
+        "uid": "d14d702a-51e1-44a0-984f-cae4bcf6fb23"
+      },
+      {
+        "name": "default-deny-ingress-egress",
+        "namespace": "iam",
+        "resource_version": "5825572",
+        "uid": "92ae7525-5f85-4ec8-98e2-5b808385ac41"
+      },
+      {
+        "name": "allow-middleware-runtime-traffic",
+        "namespace": "middleware",
+        "resource_version": "5825564",
+        "uid": "f6cb351a-e6fe-4005-843f-19625b3550f7"
+      },
+      {
+        "name": "default-deny-ingress-egress",
+        "namespace": "middleware",
+        "resource_version": "5825563",
+        "uid": "fae88f97-e617-43ad-b8fa-b19df212b11a"
+      },
+      {
+        "name": "allow-minio-proxy-from-apisix",
+        "namespace": "minio",
+        "resource_version": "5825571",
+        "uid": "3c1d5c61-42ff-41f7-95b0-631c8bb9198d"
+      },
+      {
+        "name": "allow-minio-runtime-traffic",
+        "namespace": "minio",
+        "resource_version": "5825568",
+        "uid": "af799664-dfe1-4302-a910-9312a24c6525"
+      },
+      {
+        "name": "default-deny-ingress-egress",
+        "namespace": "minio",
+        "resource_version": "5825567",
+        "uid": "3ac1ac28-fc7f-4003-8102-e93b9515b5ae"
+      },
+      {
+        "name": "allow-apisix-to-control-plane",
+        "namespace": "traffic-analysis",
+        "resource_version": "5825557",
+        "uid": "0011b7ce-6b47-4274-a88a-8f03b56cab55"
+      },
+      {
+        "name": "allow-control-plane-egress-to-runtime",
+        "namespace": "traffic-analysis",
+        "resource_version": "5825559",
+        "uid": "e0596a24-6d3d-40a0-83b6-5cecb48e581c"
+      },
+      {
+        "name": "allow-dns-egress",
+        "namespace": "traffic-analysis",
+        "resource_version": "5825555",
+        "uid": "ab1b4bc0-7c0f-4bcb-811b-dd94b2dca4ea"
+      },
+      {
+        "name": "allow-probe-agent-to-ingest",
+        "namespace": "traffic-analysis",
+        "resource_version": "5825558",
+        "uid": "3f48b98d-7059-4eb8-9892-3a6026b3e9c8"
+      },
+      {
+        "name": "allow-same-namespace",
+        "namespace": "traffic-analysis",
+        "resource_version": "5825556",
+        "uid": "05bc38d2-1728-47ac-813d-e4f4fb7e4a56"
+      },
+      {
+        "name": "default-deny-ingress-egress",
+        "namespace": "traffic-analysis",
+        "resource_version": "5825554",
+        "uid": "a5ce6f58-f5f0-4681-97d4-25a59fdd7779"
+      }
+    ],
+    "live_network_policy_count": 20,
+    "network_policy_api_available": true,
+    "nodes": [
+      {
+        "name": "8-2tb",
+        "namespace": null,
+        "resource_version": "20694600",
+        "uid": "4fc3ca5b-41c2-473d-875e-98a871e0068c"
+      },
+      {
+        "name": "zeus-server",
+        "namespace": null,
+        "resource_version": "20694650",
+        "uid": "1a32085b-8b9d-415c-a384-2b6330cde53f"
+      }
+    ],
+    "policy_enforcement_cnis": [],
+    "server_version": "v1.29.15",
+    "target_namespace": {
+      "name": "traffic-analysis",
+      "namespace": null,
+      "resource_version": "1421949",
+      "uid": "18affabf-3bc5-49f2-a5d2-2927537e79aa"
+    }
+  },
+  "contract_sha256": "f1f7833a49141f36dbd2d54061bb07d908cc8d25e09b31965d4a6213a8383452",
+  "does_not_prove": [
+    "the current NetworkPolicy objects are enforced",
+    "the N009 candidate was applied",
+    "unauthorized pod, port, or external egress probes failed",
+    "the auth OIDC NodePort exception was approved",
+    "G3, G6, or production promotion passed"
+  ],
+  "engineering_status": "PASS",
+  "environment_kind": "KUBERNETES",
+  "generated_manifest_sha256": "3812edc04e9aed624e917ef937c74e42f9633309f3f671abb47a36044db5e77a",
+  "negative_probes": {
+    "external_egress": "NOT_EXECUTED_CNI_ENFORCEMENT_MISSING",
+    "unauthorized_pod": "NOT_EXECUTED_CNI_ENFORCEMENT_MISSING",
+    "unauthorized_port": "NOT_EXECUTED_CNI_ENFORCEMENT_MISSING"
+  },
+  "production_applied": false,
+  "profile_id": "M10-N009-K8S-MINIMUM-NETWORK-POLICY-V1",
+  "required_gates": {
+    "G0": "BLOCKED_BY_DEPLOYABLE_CANDIDATE",
+    "G2": "PASS_STATIC_AND_MUTATION_TESTS",
+    "G3": "BLOCKED_CNI_ENFORCEMENT_MISSING",
+    "G6": "BLOCKED_NOT_APPLIED"
+  },
+  "run_id": "6cdbc67b-4796-4a0a-8af3-a3faaf035822",
+  "run_scoped_resources_created": false,
+  "schema_version": 1,
+  "shared_infrastructure_touched": false,
+  "source_sha256": {
+    "contracts/alignment/m10-network-policy-k8s-result.schema.json": "5bc6a4e02e9056d76257a2f1f86ecddc599922997cf6ac9ede9a9bb4e630faca",
+    "contracts/security/m10-minimum-network-policy.schema.json": "eace353f5d3ee167df44d2b0921b852bfe564e81ff719f6b34ea6cf905aaeb2f",
+    "contracts/security/m10-minimum-network-policy.v1.json": "f1f7833a49141f36dbd2d54061bb07d908cc8d25e09b31965d4a6213a8383452",
+    "deployments/kubernetes/security/m10-minimum-network-policies.v1.yaml": "3812edc04e9aed624e917ef937c74e42f9633309f3f671abb47a36044db5e77a",
+    "doc/02_acceptance/topic1/tasks/t1-m10-n008/k8s-pki-rotation-negative-tests-latest.json": "8df45f5c8ec85e57f47acb229fcf5b7686a858475bb5ccade172a4fe5edaed62",
+    "doc/07_alignment/runbooks/T1-M10-N009-minimum-network-policy.md": "31424f2e5e449e75e274600f0123edb0705bcb4f4dee0dc7548e16224bd1eb23",
+    "scripts/alignment/build_m10_minimum_network_policy.py": "90503dd871d00c2fc41a382c150f25e171ad57c0cad4248992cb7cdb231cd02b",
+    "scripts/alignment/run_m10_network_policy_k8s.py": "f62f9a3f0002eb34da5b5b720a2c44a90e5d380f89844746b05db2afbf11de9c",
+    "scripts/alignment/verify_m10_minimum_network_policy.py": "203830c0979a5826c78ba510251d0f4808229ec8bf39c10078da0badd5f92c6b",
+    "scripts/alignment/verify_m10_network_policy_k8s.py": "6c58eaf41fd7f714e1eb777a7694fd850a2d5d298a7459386706abd7f4b0c43c",
+    "tests/alignment/test_m10_minimum_network_policy.py": "4f1000849d9154409bbbbc16221fb4e8fe978bc1dca7367f07df623002d52306",
+    "tests/alignment/test_m10_network_policy_k8s.py": "1697e78a9e7bfdbb81f3e6573d9b6d5831330a3aa15b8b63f5e8d917515dd738"
+  },
+  "status": "BLOCKED",
+  "task_id": "T1-M10-N009"
+}

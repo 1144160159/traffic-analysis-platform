@@ -1,0 +1,138 @@
+{
+  "artifact_kind": "M08_MODEL_METADATA_REGISTRATION_K8S_CANARY_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": ["T1-M08-N009", "T1-M08-N010"],
+  "milestone_state": "IMPLEMENTING",
+  "run_id": "b6e89af7-4ce8-4ebc-9008-5b1b94a86b47",
+  "status": "PASS",
+  "executed_at": "2026-08-14T16:50:30Z",
+  "environment": {
+    "infrastructure": "kubernetes",
+    "namespace": "argo",
+    "node": "8-2tb",
+    "container_runtime": "containerd",
+    "production_applied": false,
+    "shared_postgres_touched": false,
+    "shared_minio_touched": false,
+    "argo_workflow_submitted": false
+  },
+  "candidate": {
+    "image": "docker.io/traffic/mlops-trainer:m08-governed-registration-w2d-20260815-r11",
+    "source_bundle_sha256": "5501db5c504e4a3ac69c2d1a7e29902a6d5b1dbb78f78d4be10bd2d78b759dd5",
+    "image_config_sha256": "49fa62257eabd22b3f05c70eaf014a22eac754d08f070a6924eed8c9515a2a9e",
+    "containerd_manifest_sha256": "4f8b73049260b087ca5bef68e9faa5e4c5f8e2524891c24d6e6155f0b0326d73",
+    "source_sha256": {
+      "model_service.go": "8e706930a9efa36d0dd8d66486beb8d7a5b0f0715c8aca254857101a3f33e74b",
+      "model_registry.go": "f22421786ee0804e769b5ebff03e4a3f3fc8e846f5834d67cd76bf25f48deec6",
+      "model_repository.go": "59271e1619f609d5989ae5024520087c42bae2b77165372677c2962ae5e8c7fb",
+      "handler_models.go": "693fa092449149dc31c588fae2f2b33aab57e1188f4c837aeb0c45418f7c45ba",
+      "register_model.py": "41784a62f3a868dbaa7ceec689368c30bd852f494c78d549d549b87b590c97d4",
+      "m08_governed_canary.py": "a0ca54eaff6b850e77f18e49a8db8f53bf49c7bb49571d9d8946081e3ef3d527",
+      "k8s_runner.py": "8c277c942fc75b7c0066d9c52696bd24a7b6c6210eb464e5b0b9f7449cd507ad",
+      "postgres_schema.yaml": "38905e2f81cdde4c241391ae641d49585f50142b0721feba19687fe0b3978308",
+      "workflow_template": "51750819a0bba7119e2e69a0b5dd104e7f927b969923a0bdcb47a72648ce95b4",
+      "deployment_workflow_template": "1ffd17230d2a6f0ee602b5651197c5c99a3dafd72b742d6254f75abf90fdcd96"
+    }
+  },
+  "registration_contract": {
+    "schema_sha256": "409bab0da38b63bedd5a70d423673d60d8ef7a091388c960a1bd28b394ff2c64",
+    "idempotency_key_required": true,
+    "expected_revision": 0,
+    "stored_revision": 1,
+    "stored_status": "registered",
+    "package_hash_required": true,
+    "manifest_hash_required": true,
+    "evaluation_hash_required": true,
+    "explanation_hash_required": true,
+    "graph_snapshot_hash_required": true,
+    "signing_key_identity_required": true,
+    "activation_event_created": false,
+    "activation_authorized": false
+  },
+  "postgres_transaction_test": {
+    "run_id": "m08-n010-20260815-0045",
+    "database": "isolated ephemeral PostgreSQL pod and schema",
+    "command": "MODEL_REGISTRATION_TEST_POSTGRES_DSN=<ephemeral> go test ./internal/rules/service -run '^TestRegisterModelVersionPostgresAtomicity$' -count=1 -v",
+    "status": "PASS",
+    "oracles": {
+      "first_registration_model_rows": 1,
+      "first_registration_version_rows": 1,
+      "first_registration_audit_rows": 1,
+      "idempotent_replay_additional_rows": 0,
+      "conflicting_idempotency_reuse_rejected": true,
+      "audit_failure_rolls_back_version": true,
+      "model_update_outbox_rows": 0
+    },
+    "run_scoped_pod_and_service_removed": true
+  },
+  "lineage": {
+    "dataset_id": "673f4eba-77eb-5517-920e-f90f8efd8883",
+    "dataset_sha256": "d221e355ae25143ada76420f007d6acc5f8913df1055a987e95db0dfa743b9f7",
+    "baseline_training_run_sha256": "e1327f52ce643efd0b588ccf920a19f26cbb16a070b97d31b8d425b7bcbab190",
+    "gnn_training_run_sha256": "9b83bdd2b183501e77ca7698d1079f20ddf7f84d66e34488e564ed25ede57db3",
+    "graph_snapshot_id": "581380e6-1cf6-580c-8180-f8958c95fcb1",
+    "graph_snapshot_sha256": "badd557563d1139588f3b4f53bc7332eacc29efd26f379033e3414cec57872f1",
+    "evaluation_id": "0567aed0-abef-59cb-8fa2-b268066ae85f",
+    "evaluation_sha256": "0b3679901ef66f208b651318eb83fec233f6e3eacda3cc8e3d13884edc1332ac",
+    "explanation_id": "85b3fb64-504b-591d-9cb4-a1ad708ae21e",
+    "explanation_sha256": "aaa22b90faf877bc6519a39e804b8bb3ff5a7f5c9b52da3024f306fc8dd44b8c",
+    "model_package_id": "8f4480b8-3c15-53ca-a65f-aeb9f23f6703",
+    "model_package_sha256": "8192d937dd3d8f81ebfa9db1528b9853905ec1286d8048b2f98c3661810a841a",
+    "model_registration_receipt_id": "b569fc65-0034-5d33-90fb-def3cd97cccd",
+    "model_registration_receipt_sha256": "23c94b5d8d89f97d6ce2501689697551f932c1c09e1386bb2c663184039dcd9d",
+    "model_registration_request_sha256": "ab4359e939de13c114d58e360d511d32295db2d76849ba62456a08271cc035fb"
+  },
+  "workflow": {
+    "entrypoint": "governed-model-build",
+    "stages": [
+      ["extract-governed-dataset"],
+      ["train-approved-baseline", "train-gnn-suite"],
+      ["evaluate-governed-baseline"],
+      ["explain-governed-candidate"],
+      ["export-signed-model-package"],
+      ["register-model-metadata"]
+    ],
+    "registration_pod_has_public_key_only": true,
+    "registration_pod_has_kafka_credentials": false,
+    "auto_activate": false,
+    "mirror_semantic_equality": "PASS",
+    "server_side_dry_run": "PASS",
+    "production_template_applied": false
+  },
+  "regressions": [
+    {
+      "command": "go test ./internal/rules/model ./internal/rules/service ./internal/rules/repository ./internal/rules/api",
+      "working_directory": "go/control-plane",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m unittest mlops/scripts/test_governed_model_registration.py mlops/scripts/test_governed_model_export.py",
+      "status": "PASS",
+      "tests": 5
+    },
+    {
+      "command": "python3 -m unittest mlops/scripts/test_governed_model_registration.py scripts/alignment/test_run_m08_governed_k8s_canary.py",
+      "status": "PASS",
+      "tests": 7
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f deployments/kubernetes/argo-events/mlops-governed-training-template.yaml",
+      "status": "PASS",
+      "objects": 1
+    }
+  ],
+  "cleanup": {
+    "canary_job_and_configmap_removed": true,
+    "postgres_test_pod_and_service_removed": true,
+    "retained_kubernetes_resources": false
+  },
+  "limitations": [
+    "The signed-package Kubernetes canary used deterministic synthetic data, an ephemeral signing key and a synthetic object-storage receipt.",
+    "A real shared MinIO write, real rule-manager API call and actual Argo Workflow submission are NOT_EXECUTED.",
+    "The PostgreSQL transaction was tested against a real isolated Kubernetes PostgreSQL instance, not the shared production database.",
+    "Unknown recall is 0.0, so activation and promotion remain NO-GO.",
+    "N011 consumer readiness, activation outbox, ACK quorum, drift, retraining and rollback remain incomplete.",
+    "This is internal engineering evidence and is not a production or CNAS quality claim."
+  ],
+  "errors": []
+}

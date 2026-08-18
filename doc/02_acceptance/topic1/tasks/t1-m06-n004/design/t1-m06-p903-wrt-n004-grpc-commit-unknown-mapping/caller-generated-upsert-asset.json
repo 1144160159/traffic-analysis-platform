@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p903-wrt-n004-grpc-commit-unknown-mapping/candidate-manifest.json",
+    "manifest_sha256": "e2e5e7df20a47318885534134520dff8d1bbcb819ccac9d7271de24289f03762"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.25.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-P903-CALLER-generated-UpsertAsset",
+    "language": "go",
+    "path": "go/control-plane/pkg/proto/traffic/v1/asset_grpc.pb.go",
+    "package": "trafficv1",
+    "qualified_symbol": "trafficv1._AssetService_UpsertAsset_Handler",
+    "declaration_kind": "FUNCTION",
+    "query": "_AssetService_UpsertAsset_Handler",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func _AssetService_UpsertAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error)",
+    "candidate_blob_sha256": "5a25ac8fd560c0a6328b763aff9863303c65f39a85fcf002707d5b881e5da1e8",
+    "source_span_sha256": "0aa305d7724f78f6d5e8d0edb273465453df635d5ea68e3e2bd6458b8a048ace",
+    "normalized_ast_sha256": "0aa305d7724f78f6d5e8d0edb273465453df635d5ea68e3e2bd6458b8a048ace",
+    "start": {
+      "byte_offset": 7497,
+      "line": 157,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 8148,
+      "line": 173,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "new",
+        "line": 158
+      },
+      {
+        "expression": "dec",
+        "line": 159
+      },
+      {
+        "expression": "srv.(AssetServiceServer).UpsertAsset",
+        "line": 163
+      },
+      {
+        "expression": "srv.(AssetServiceServer).UpsertAsset",
+        "line": 170
+      },
+      {
+        "expression": "interceptor",
+        "line": 172
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T08:30:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

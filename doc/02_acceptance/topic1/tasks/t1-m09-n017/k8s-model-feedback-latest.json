@@ -1,0 +1,115 @@
+{
+  "artifact_kind": "M09_MODEL_FEEDBACK_TEST_RESULT",
+  "authority_runtime_flag_enabled_in_candidate_manifest": false,
+  "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_POSTGRES_AND_IMMUTABLE_UI_BUNDLE",
+  "does_not_prove": [
+    "real Kafka consumer receipt",
+    "producer broker ACK",
+    "MLOps training execution",
+    "production rollout",
+    "large feedback queue performance",
+    "Windows Chrome acceptance",
+    "authorization to enable MODEL_FEEDBACK_REVISION_PRODUCER_V1_ENABLED",
+    "global milestone completion"
+  ],
+  "idempotent_replay_single_revision": true,
+  "inputs": {
+    "bundle_check_sha256": "ec486db43d2aabd843e725ff7bd9f1de0dba66cd7b4b551e1e574d515a351d01",
+    "candidate_images": [
+      "traffic/model-feedback-test:m09-n017-20260816-r5",
+      "traffic/web-ui:m09-n022-alert-detail-css-20260816-r2"
+    ],
+    "source_sha256": {
+      "contracts/events/kafka-acl-catalog.v1.json": "ec175c8bf73c75bfe5184daf9c225e4bb3e462ecb334768fa861a30589618b06",
+      "contracts/events/kafka-topic-catalog.v1.json": "f7202bf4666e09b5d064a4fccce2911ea7be333013ba033bd275d323c804c8ab",
+      "contracts/events/model-feedback-event.v1.schema.json": "c60bdb3ed674853da641d2c613530195a1ed9db62ce48606c402870ab283c7d9",
+      "contracts/openapi/alignment-v1.openapi.json": "38867eb7c364eba78e16574a188edcd41b9460bff341f12770b422e83c921494",
+      "deployments/kubernetes/applications/go-services.yaml": "62502c80b03271589f877e16c79aa3923bd40fa10fab62132c792c4689e5e204",
+      "go/control-plane/cmd/alert-service/main.go": "b02fa87e82fb478426b3f3e42b30f809d23b6323f8c7111a8891527a2bf1372f",
+      "go/control-plane/internal/alert/api/handler.go": "a2f31329477d95bda8b9ea32028a5b34786a12688c6375fd9de029942d23bb21",
+      "go/control-plane/internal/alert/api/handler_feedback.go": "9ed823510c5c79dff5c32d2a718603f5ca14b2b323e360cd705d8950d5fe52de",
+      "go/control-plane/internal/alert/api/handler_feedback_outbox.go": "38c102d1d098a0214550d6fda50acfcdc9484442be064c77a59bc96c9c034548",
+      "go/control-plane/internal/alert/api/handler_feedback_transaction.go": "b3baa6ee28eb38ff9c53d9e45f749e0d17ecb5f8881c42fb2c83105f51d0019a",
+      "go/control-plane/internal/alert/api/handler_model_feedback_revision.go": "5b365622858fa5f4e7f72a8657b2b1649166b47d58dc7eec86a3f319a4bdb216",
+      "go/control-plane/internal/alert/api/model_feedback_readiness.go": "e325396707642f2d8544b02c4191c7e238e8f08df3a16f7a2482c4be507fc667",
+      "web/ui/src/pages/AlertDetailPage.tsx": "0dd104a095c025fd7ce1aecceca362512d988026063b60fe70fb009954a8ab99",
+      "web/ui/src/services/alertDetailApi.ts": "ead40379cdba90b9df9aef4230fd8a8117002419a4b885c704ce69dc13db0ca3"
+    }
+  },
+  "k8s_consumer_schema_present": false,
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-15T22:43:53Z",
+      "container_id": "containerd://156f15df1bdadf3aed190caa0fd608c62ff905bf8fc1581fa82c2a920b51c289",
+      "image": "docker.io/traffic/model-feedback-test:m09-n017-20260816-r5",
+      "image_id": "sha256:5a2108d0ba4fd425b2c2186604ec04bda9969b13366fb1d7024cea010bed4f6b",
+      "job_name": "m09-n017-feedback-4c0a77edd4-integration",
+      "job_uid": "bc8bd150-7f7a-4610-8853-b71394f4daec",
+      "node": "8-2tb",
+      "pod_name": "m09-n017-feedback-4c0a77edd4-integration-jfgjc",
+      "pod_uid": "740b7efa-c88b-4ca6-9de0-69bcf4f5f1a8",
+      "started_at": "2026-08-15T22:43:51Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:43:57Z",
+      "container_id": "containerd://ae2d644f0d72aadbe9d0d23fd43c758c9cf728d69a410329cbfc2adbe8b942e7",
+      "image": "docker.io/traffic/model-feedback-test:m09-n017-20260816-r5",
+      "image_id": "sha256:5a2108d0ba4fd425b2c2186604ec04bda9969b13366fb1d7024cea010bed4f6b",
+      "job_name": "m09-n017-feedback-4c0a77edd4-cleanup",
+      "job_uid": "041d0dfa-a413-457a-b880-0c0a69653bd3",
+      "node": "8-2tb",
+      "pod_name": "m09-n017-feedback-4c0a77edd4-cleanup-cg85s",
+      "pod_uid": "f1f97d01-da98-4c8b-89ea-164092f52743",
+      "started_at": "2026-08-15T22:43:54Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:44:01Z",
+      "container_id": "containerd://33765447faf811daa57869f59d8ed812fdda2f62699b3da112924ba97c95cd06",
+      "image": "docker.io/traffic/model-feedback-test:m09-n017-20260816-r5",
+      "image_id": "sha256:5a2108d0ba4fd425b2c2186604ec04bda9969b13366fb1d7024cea010bed4f6b",
+      "job_name": "m09-n017-feedback-4c0a77edd4-unit",
+      "job_uid": "a9452cd1-2c29-44d3-a670-a0607776840e",
+      "node": "8-2tb",
+      "pod_name": "m09-n017-feedback-4c0a77edd4-unit-928dq",
+      "pod_uid": "210e1eb3-37c8-4241-a4d3-5aba9d9f088b",
+      "started_at": "2026-08-15T22:43:58Z"
+    },
+    {
+      "completed_at": "2026-08-15T22:44:06Z",
+      "container_id": "containerd://f8775f93aacd908c7534c338f503cbe2f4e4f213139f21de9bf33197c6f92a1d",
+      "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+      "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13",
+      "job_name": "m09-n017-feedback-4c0a77edd4-web",
+      "job_uid": "09a1a3ac-9a2a-4ade-81c9-d96ef3a264a0",
+      "node": "8-2tb",
+      "pod_name": "m09-n017-feedback-4c0a77edd4-web-fp5x6",
+      "pod_uid": "d085e2d6-b556-428c-adc9-3c95ef13fb53",
+      "started_at": "2026-08-15T22:44:02Z"
+    }
+  ],
+  "mock_enabled": false,
+  "postgres_feedback_audit_outbox_atomic": true,
+  "producer_outbox_rows_remain_unpublished": true,
+  "producer_runtime_flag_enabled_in_candidate_manifest": false,
+  "production_applied": false,
+  "profile_id": "M09-N017-K8S-POSTGRES-UI-V1",
+  "readiness_gate_failed_closed_on_missing_schema": true,
+  "readiness_receipt_join_logic_verified_with_k8s_fixture": false,
+  "real_kafka_consumer_receipt_observed": false,
+  "revision_chain_traceable": true,
+  "run_id": "4c0a77ed-d4c6-49a1-9b28-8e6a93150446",
+  "run_scoped_kubernetes_resources_removed": true,
+  "run_scoped_postgres_rows_removed": true,
+  "shared_postgres_touched": true,
+  "stale_and_terminal_conflicts_rejected": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N017",
+  "tenant_bound_prediction_aggregate": true,
+  "test_output_sha256": {
+    "cleanup": "b9eba92c0e6113fb19e864e1108c0af3469890920b73285e4739f3c7adff7937",
+    "integration": "fd53adfc20e3d8d7b510b804414eda1f5abb61d3f93dd55f89217f7e2d0da7d5",
+    "unit": "eab73ff50fde3099e1dc8b6051bd8100a8184847303813f9db7176235383d026",
+    "web": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+  },
+  "zero_candidate_rejected": true
+}

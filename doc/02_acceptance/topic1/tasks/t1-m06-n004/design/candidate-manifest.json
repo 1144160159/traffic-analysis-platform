@@ -1,0 +1,19 @@
+{
+  "artifact_kind": "DESIGN_CANDIDATE_MANIFEST",
+  "schema_version": "1.0.0",
+  "candidate_id": "DESIGN-T1-M06-N004-R1",
+  "implementation_candidate_commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+  "scope": "T1-M06-N004 development-readiness design only",
+  "source_blob_sha256": {
+    "go/control-plane/internal/asset/repository/atomic_upsert.go": "52548d4013434d66f3c7741b57c811179c04d850dcd3e2ab27d6c2d1db6167c7",
+    "go/control-plane/internal/asset/repository/atomic_upsert_test.go": "a3e35d73fee696a16f0a8c8ef43df964e184b06edf077dab40f145c358ae5bcb",
+    "go/control-plane/internal/asset/repository/atomic_upsert_integration_test.go": "db449544d99de91e4ffddad8bda7c42e1907e21054aeb6e7dc9804a357550bde",
+    "go/control-plane/internal/asset/repository/postgres.go": "601170dcb15aa94f0cab70788dd1d6294460952fa725ceea45824011bba564ea",
+    "go/control-plane/internal/asset/service/asset_service.go": "7e9c2eafef5fc9faa7cdd1175d4d8a12874cecee99652fb7e31d30633143a845",
+    "go/control-plane/internal/asset/config/config.go": "ebab4be9914de13654e3efd514a0753fcee72236d9ee03a6ad1cf0f0cb890079",
+    "go/control-plane/internal/asset/repository/outbox_dispatcher.go": "d6e6104789819289cad19d2c94b339d42ae281c73a8c0fc3c94fe23bc796b716",
+    "deployments/postgres/migrations/202607310015_asset_atomic_upsert_v2.sql": "6c6a3017e379f661f8d4e4ee52767bae841646107af2a5e39605e8f4274987d0"
+  },
+  "formal_execution_status": "BLOCKED_UNTIL_SIGNED_OVERLAY",
+  "proof_ceiling": "DEVELOPMENT_READINESS_DESIGN_ONLY_NOT_EXECUTION_AUTHORIZATION"
+}

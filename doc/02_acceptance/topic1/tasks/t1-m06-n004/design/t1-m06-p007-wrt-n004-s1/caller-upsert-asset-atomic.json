@@ -1,0 +1,151 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+    "manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.24.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-CALLER-UpsertAssetAtomic",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/service/asset_service.go",
+    "package": "service",
+    "qualified_symbol": "service.(*AssetService).UpsertAssetAtomic",
+    "declaration_kind": "METHOD",
+    "query": "(*AssetService).UpsertAssetAtomic",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func (s *AssetService) UpsertAssetAtomic(\n\tctx context.Context,\n\trec *config.AssetRecord,\n\tcommand config.AssetUpsertCommand,\n) (*config.AssetUpsertResult, error)",
+    "candidate_blob_sha256": "7e9c2eafef5fc9faa7cdd1175d4d8a12874cecee99652fb7e31d30633143a845",
+    "source_span_sha256": "5630a167d0810c32310ba01d603e1560d88f64db4aa14aae618dd78f8cbd3d6b",
+    "normalized_ast_sha256": "34c8c8230dd8415a9e2cd94b78f05c50d5dca96dc5db269a01d6ac51d84b3ca2",
+    "start": {
+      "byte_offset": 4786,
+      "line": 146,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 7334,
+      "line": 201,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "strings.TrimSpace",
+        "line": 151
+      },
+      {
+        "expression": "errors.New",
+        "line": 152
+      },
+      {
+        "expression": "strings.TrimSpace",
+        "line": 154
+      },
+      {
+        "expression": "errors.New",
+        "line": 155
+      },
+      {
+        "expression": "len",
+        "line": 157
+      },
+      {
+        "expression": "len",
+        "line": 157
+      },
+      {
+        "expression": "errors.New",
+        "line": 158
+      },
+      {
+        "expression": "errors.New",
+        "line": 161
+      },
+      {
+        "expression": "errors.New",
+        "line": 167
+      },
+      {
+        "expression": "strings.TrimSpace",
+        "line": 169
+      },
+      {
+        "expression": "errors.New",
+        "line": 170
+      },
+      {
+        "expression": "errors.New",
+        "line": 173
+      },
+      {
+        "expression": "errors.New",
+        "line": 176
+      },
+      {
+        "expression": "command.ObservedAt.After",
+        "line": 178
+      },
+      {
+        "expression": "time.Now",
+        "line": 178
+      },
+      {
+        "expression": "time.Now().UTC",
+        "line": 178
+      },
+      {
+        "expression": "time.Now().UTC().Add",
+        "line": 178
+      },
+      {
+        "expression": "errors.New",
+        "line": 179
+      },
+      {
+        "expression": "strings.TrimSpace",
+        "line": 181
+      },
+      {
+        "expression": "strings.TrimSpace",
+        "line": 181
+      },
+      {
+        "expression": "errors.New",
+        "line": 182
+      },
+      {
+        "expression": "normalizeMAC",
+        "line": 184
+      },
+      {
+        "expression": "uuid.Parse",
+        "line": 186
+      },
+      {
+        "expression": "errors.New",
+        "line": 187
+      },
+      {
+        "expression": "s.ouiCache.LookupVendor",
+        "line": 191
+      },
+      {
+        "expression": "s.repo.UpsertAtomic",
+        "line": 196
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T04:00:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

@@ -1,0 +1,107 @@
+{
+  "artifact_kind": "M09_ALERT_SNAPSHOT_REPOSITORY_TEST_RESULT",
+  "schema_version": "1.0.0",
+  "task_id": "T1-M09-N006",
+  "atomic_pr_ids": [
+    "T1-M09-P011-WRT-n006-s1",
+    "T1-M09-P012-PRJ-n006-s2"
+  ],
+  "status": "PASS",
+  "scope": {
+    "read_path": "POST /api/v1/alerts/search",
+    "authority_order": [
+      "OpenSearch selects and orders candidate alert ids only",
+      "ClickHouse supplies alert facts and fails closed when unavailable",
+      "PostgreSQL supplies newer analyst state and projection receipts"
+    ],
+    "runtime_state": "the production composition root installs the repository; no production deployment was changed"
+  },
+  "candidate": {
+    "source_files": {
+      "go/control-plane/internal/alert/repository/alert_snapshot.go": "2580e9a3f7535539ab4a262001f37b019696aac54985ef119cc52f9142ce5d8e",
+      "go/control-plane/internal/alert/repository/alert_snapshot_test.go": "b20a75478064065a2ef57c46999598f26b00a3c241ce2e63c508252bd83cd049",
+      "go/control-plane/internal/alert/repository/clickhouse.go": "322a9457e3f2d4ec9252e39d9a5f561cc6e5d38ef007a5afa158292f9711e2af",
+      "go/control-plane/internal/alert/repository/opensearch.go": "653a29ccd8cd85e307b0df3e075477667c181306518bb1f7b114a85a43a26b70",
+      "go/control-plane/internal/alert/service/alert_service.go": "1463e22538f2bed1e755fa0b719d9c22c2e091162d34b1f69ccf1c8adc7759b9",
+      "go/control-plane/internal/alert/api/handler.go": "8c78464e5faeea6f524aafb3293b1b8e3a70447dabe869c9354d7a59502a06e0",
+      "go/control-plane/internal/alert/api/handler_search_cursor_test.go": "ca3ce5a4d089f63f87ef7dcd2f888e8f2d820ac74f746596b05df76b5b7d8e88",
+      "go/control-plane/cmd/alert-service/main.go": "270d27c46bbc61377cc61ee70a0c43e937f121b300e5b88e5dcd16cca0c76b09"
+    },
+    "rollback_runbook": {
+      "path": "doc/07_alignment/runbooks/T1-M09-N006-alert-snapshot-repository-rollback.md",
+      "sha256": "9680a77ef00c15f20c205700daaef5c090afb380e43819eaafb4c3d91063193a"
+    },
+    "kubernetes_runner": {
+      "path": "scripts/alignment/run_m09_alert_snapshot_repository_k8s.py",
+      "sha256": "f7a97cc9f1b0e768edb00a823359691e4cc822f684fca67a7c608458599f8088"
+    },
+    "test_image": {
+      "reference": "traffic/alert-service:m09-n006-alert-snapshot-20260815-r2",
+      "image_id": "sha256:08778367b574ac81e84b8db07b99fa7aba0f46ad098fb7d600e2b9ae2620ab60",
+      "test_binary_sha256": "5449c51cf926a5c3e7888644f555981222d97fa0c955ae47d589771d55746551"
+    }
+  },
+  "characterized_invariants": [
+    "OpenSearch documents are never returned as authoritative alert facts",
+    "an OpenSearch-only document is classified as extra and omitted from the alert list",
+    "OpenSearch and PostgreSQL receipt digest or version drift is classified as stale",
+    "a missing PostgreSQL projection receipt is classified as missing",
+    "newer PostgreSQL analyst state overrides ClickHouse status and assignee while retaining ClickHouse network and detection facts",
+    "PostgreSQL metadata failure yields an explicit partial response, while ClickHouse authority failure fails closed",
+    "tenant id, candidate ids and target index version bind the PostgreSQL metadata query",
+    "the OpenSearch source filter requests canonical updated_at rather than the non-existent updated_ts field",
+    "cursor contract metadata preserves partial, missing_sections and all source_watermarks"
+  ],
+  "local_validation": {
+    "scoped_tests": {
+      "command": "go test ./internal/alert/repository ./internal/alert/api ./internal/alert/service ./cmd/alert-service -count=1",
+      "status": "PASS"
+    },
+    "alert_module_tests": {
+      "command": "go test ./internal/alert/... -count=1",
+      "status": "PASS"
+    },
+    "go_vet": {
+      "command": "go vet ./internal/alert/repository ./internal/alert/api ./internal/alert/service ./cmd/alert-service",
+      "status": "PASS"
+    },
+    "runner_syntax": "PASS",
+    "diff_check": "PASS"
+  },
+  "kubernetes_validation": {
+    "run_id": "e2515d00-454f-426f-b572-a4a951b84c69",
+    "namespace": "traffic-analysis",
+    "job_name": "m09-n006-snapshot-e2515d0045",
+    "job_uid": "d7608072-b548-4748-ba6b-caf40c4bc1dd",
+    "pod_name": "m09-n006-snapshot-e2515d0045-6fq4s",
+    "pod_uid": "46923c18-9fcf-4fe4-b85b-aa80ffb18149",
+    "node": "8-2tb",
+    "container_id": "containerd://3d6a7270c6c77aba5d4f8e2bbc169e0537e690bb707f112a58ea234fe0e571f3",
+    "image_id": "sha256:08778367b574ac81e84b8db07b99fa7aba0f46ad098fb7d600e2b9ae2620ab60",
+    "started_at": "2026-08-15T13:03:54Z",
+    "completed_at": "2026-08-15T13:03:57Z",
+    "test_pattern": "Test(AlertSnapshot|AlertSearchProjection|PostgresAlertSnapshot)",
+    "test_output_sha256": "ada90a20a6a07c0a8bb670f73e35a13426b835287e85376b3fd30c5a039e5af9",
+    "status": "PASS",
+    "run_scoped_resources_removed": true,
+    "production_applied": false,
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_opensearch_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_flink_touched": false
+  },
+  "claim_boundary": {
+    "proves": [
+      "the alert search read path enforces the designed CH, OS and PG authority boundaries in code",
+      "missing, stale, extra, partial and source-watermark behavior passes local and isolated-Kubernetes contract tests"
+    ],
+    "does_not_prove": [
+      "production rollout",
+      "live shared ClickHouse, OpenSearch or PostgreSQL reconciliation",
+      "APISIX latency or browser behavior",
+      "M09 milestone completion"
+    ]
+  }
+}

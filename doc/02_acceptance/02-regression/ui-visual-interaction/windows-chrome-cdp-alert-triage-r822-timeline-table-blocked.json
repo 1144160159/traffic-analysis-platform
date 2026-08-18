@@ -1,0 +1,43 @@
+{
+  "result": "blocked",
+  "scope": "alert center triage timeline axis and ten-row table scroll policy",
+  "revision": "r822",
+  "route": "/alerts",
+  "production": {
+    "image": "docker.io/traffic/web-ui:alert-center-timeline-r822",
+    "image_id": "sha256:012ce800499623564c58cadc570c0460a825ca69acce2d2ced90ebba33ed9689",
+    "image_digest": "sha256:2a18cb9a0027a9a5a530ba3ef426e15163eca928be14179ec5510c77f49d91f6",
+    "deployment_generation": 1036,
+    "observed_generation": 1036,
+    "ready": "1/1",
+    "pod_restarts": 0,
+    "node": "zeus-server",
+    "runtime_use_mock": false
+  },
+  "completed_checks": {
+    "frontend_unit_tests": "18/18 alert center plus alert detail regression tests passed after the final logic hardening",
+    "frontend_build": "passed",
+    "git_diff_check": "passed",
+    "production_css_contains_timeline_axis": true,
+    "production_css_contains_table_viewport": true,
+    "layout_static_review": "axis and table policy passed",
+    "logic_static_review": "first independent review findings repaired; main-thread final review passed",
+    "acceptance_script_review": "P0=0 P1=0 P2=0"
+  },
+  "pending_browser_gate": {
+    "script": "tests/e2e/ui_alert_triage_timeline_table_windows_cdp_acceptance.mjs",
+    "browser": "Windows Chrome 150",
+    "cdp_mapping": "127.0.0.1:9224 -> Windows 127.0.0.1:9222",
+    "required_viewports": [
+      "2560x1080",
+      "1600x720"
+    ],
+    "blocked_reason": "Current execution policy denies Node network access to 127.0.0.1:9224 with connect EPERM, so the production screenshot and DOM geometry gate could not run.",
+    "expected_evidence": [
+      "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-triage-r822-timeline-table.json",
+      "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-triage-r822-timeline-table.png",
+      "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-triage-r822-timeline-table-constrained.png"
+    ]
+  },
+  "timestamp": "2026-07-27T16:57:05+08:00"
+}

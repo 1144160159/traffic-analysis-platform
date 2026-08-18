@@ -1,0 +1,190 @@
+{
+  "artifact_kind": "M08_MODEL_ROLLBACK_V2_TEST_RESULT",
+  "schema_version": 1,
+  "task_id": "T1-M08-N016",
+  "work_order": "t1-m08-w4a-model-rollback-v2",
+  "recorded_at": "2026-08-15T10:01:17Z",
+  "task_state": "CODE_AND_ISOLATED_K8S_POSTGRES_GO_AND_SAVEPOINT_HARNESS_PASS_PRODUCTION_ROLLBACK_NOT_EXECUTED",
+  "scoped_result": "PASS",
+  "production_applied": false,
+  "rollback_runtime_enabled": false,
+  "activation_authorized": false,
+  "environment_policy": {
+    "environment_execution": "existing Kubernetes cluster only",
+    "namespace": "traffic-analysis",
+    "node": "zeus-server",
+    "local_scope": "static checks, compilation and unit or Flink harness tests only",
+    "local_results_are_environment_acceptance": false
+  },
+  "implementation": {
+    "go_control_plane": [
+      "strict tenant-bound HTTP rollback command with optimistic active-version and revision identity",
+      "serializable transaction and advisory lock",
+      "immediately previous immutable artifact enforcement",
+      "exact unexpired consumer deployment and profile readiness",
+      "durable schema-v2 rollback outbox before any serving-pointer change",
+      "exact subtask ACK quorum before the atomic active-version switch",
+      "partial failure and timeout compensation to the frozen source artifact",
+      "queryable rollback receipt plus authoritative active-version endpoint",
+      "dead outbox reconciliation without false completion"
+    ],
+    "flink_data_plane": [
+      "rollback attempt and compensation use the hot-reload path",
+      "artifact digest and warmup receipt are checkpointed",
+      "savepoint replay re-emits the exact successful ACK",
+      "consumer deployment and profile mismatch fails before model loading",
+      "ACK identity comes from the local runtime profile"
+    ],
+    "postgres_guards": [
+      "RECOVERED requires exact attempt quorum and active_switched=true",
+      "FAILED_RESTORED requires exact compensation quorum",
+      "partial ACK cannot claim a serving-pointer switch",
+      "rollback identity is immutable",
+      "rollback receipts are append-only",
+      "only one rollback may be in flight for a tenant and model"
+    ],
+    "api_contract": {
+      "command": "POST /api/v1/models/{id}/versions/{version}/rollback",
+      "receipt": "GET /api/v1/models/{id}/rollbacks/{job_id}",
+      "final_version": "GET /api/v1/models/{id}/versions/active",
+      "strict_request_fields": [
+        "action_id",
+        "reason",
+        "expected_active_version",
+        "expected_active_revision"
+      ],
+      "unknown_request_fields_rejected": true
+    },
+    "default_off": {
+      "MODEL_ROLLBACK_V2_ENABLED": "false",
+      "MODEL_ROLLBACK_ACK_TIMEOUT": "2m"
+    }
+  },
+  "kubernetes_isolated_postgres_canary": {
+    "job_name": "m08-n016-model-rollback-postgres-canary",
+    "job_uid": "775398f3-f6cb-4d11-a1d6-fb57889ae2ea",
+    "pod_name": "m08-n016-model-rollback-postgres-canary-pkz2z",
+    "pod_uid": "9f3bcb5a-04ff-4b34-b042-a72bf20e5925",
+    "container_id": "containerd://e438780a88fbaf27f3e98e2881c86c156f2b2983ed06e1dba7d80290f6d54ac9",
+    "started_at": "2026-08-15T09:19:42Z",
+    "completed_at": "2026-08-15T09:19:47Z",
+    "result": {
+      "migration": "PASS",
+      "partial_ack_kept_active": "model-v2",
+      "failed_attempt_restored": "model-v2",
+      "exact_quorum_final_active": "model-v1",
+      "partial_false_recovery_rejected": true,
+      "immutable_identity_rewrite_rejected": true,
+      "receipt_delete_rejected": true
+    },
+    "shared_postgres_touched": false,
+    "shared_kafka_touched": false,
+    "shared_flink_touched": false,
+    "status": "PASS"
+  },
+  "kubernetes_backed_go_postgres_integration": {
+    "postgres_pod": "m08-n016-go-postgres",
+    "pod_uid": "b315a6cd-5abb-4d66-8192-48f1b6534755",
+    "container_id": "containerd://be9ba98e760826a3fd6f0ecd78a315b23ff0b4e5cde9aa89f5609af36feb43a3",
+    "started_at": "2026-08-15T09:24:55Z",
+    "test": "TestModelRollbackV2PostgresExactQuorumAndCompensation",
+    "assertions": [
+      "first ACK produces PARTIAL and keeps model-v2 active",
+      "exact second ACK produces RECOVERED and activates model-v1",
+      "a later partial failure enters COMPENSATING and keeps model-v3 active",
+      "exact compensation quorum produces FAILED_RESTORED and keeps model-v3 active"
+    ],
+    "status": "PASS"
+  },
+  "verification": {
+    "go": {
+      "command": "go test ./internal/rules/... ./cmd/rule-manager -count=1",
+      "result": "PASS"
+    },
+    "flink_harness": {
+      "command": "mvn -pl flink-behavior-job -am -Dtest=ModelUpdateBroadcastHandlerTest -Dsurefire.failIfNoSpecifiedTests=false test",
+      "tests": 9,
+      "failures": 0,
+      "result": "PASS",
+      "environment_acceptance": false
+    },
+    "targeted_alignment_and_sync": {
+      "command": "python3 -m unittest tests.alignment.test_m08_model_rollback_v2 scripts.alignment.test_sync_m08_model_rollback_postgres_entrypoint",
+      "tests": 10,
+      "failures": 0,
+      "result": "PASS"
+    },
+    "openapi": {
+      "command": "python3 scripts/alignment/check_openapi.py",
+      "operations": 120,
+      "result": "PASS"
+    },
+    "migration_catalog": {
+      "command": "python3 scripts/alignment/check_migrations.py",
+      "postgres_migrations": 85,
+      "clickhouse_migrations": 10,
+      "result": "PASS"
+    },
+    "kubernetes_server_dry_run": {
+      "resources": [
+        "deployments/kubernetes/jobs/m08-model-rollback-postgres-canary.yaml",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "deployments/kubernetes/applications/go-services.yaml"
+      ],
+      "result": "PASS",
+      "warnings": "existing kubectl last-applied field-manager migration warnings only"
+    }
+  },
+  "source_sha256": {
+    "go/control-plane/internal/rules/service/model_rollback_v2.go": "1e4d23441af0252dd2415504624b82d6c181d581b1992a3d8f4d8a19e46d7ec7",
+    "go/control-plane/internal/rules/service/model_rollback_v2_test.go": "ca13004931c3a83a963f8c839563e1ab9e755806b050369413a3d4776f4f02e5",
+    "go/control-plane/internal/rules/service/model_rollback_v2_postgres_integration_test.go": "0a0258266e976d8461d5fb71e9bc4fa78a8013ac97d18f7174d59a828fc25090",
+    "go/control-plane/internal/rules/service/model_service.go": "bad323f64d2a9df878fdfccdce1a2de9fdc58060fd99f0e3e5c9cb3c7a39619e",
+    "go/control-plane/internal/rules/api/handler.go": "9960abe7340c6e18834742d785ac109417eaedb2e2333ccb28fc76ecdb4900fd",
+    "go/control-plane/internal/rules/api/handler_models.go": "1b8c08b087e95c78e7efb04355849bc81fc63c7e197d6e09356359768ee494a7",
+    "go/control-plane/internal/rules/api/model_rollback_request_test.go": "9b5dfa9d937e0729b7559409696d146f07e1f614f5869bac19dbfa5e63368f82",
+    "go/control-plane/internal/rules/config/config.go": "97b1b7036c4ed95202b1de93f60bc9d57cc08db39bfd897c76b21149a8d87a8e",
+    "go/control-plane/cmd/rule-manager/main.go": "38889392231f8df820a10ffeda834d5a869e8728d13148ff5199c366ce4b196e",
+    "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/ModelUpdateBroadcastHandler.java": "a0cc4c3cc6014a430076f5af61314f41a6877952d5ec13ff15958a5acd680545",
+    "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/model/ModelUpdateEvent.java": "caf11070cffe1572ccddb970394cc18d6634a390f5fa019a2759e06e37bec070",
+    "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/model/ModelUpdateAppliedAck.java": "7183786fb4569b4d1b84c2516381dd8720e40590f921ab7e920fe209b3b414c2",
+    "java/flink-jobs/flink-behavior-job/src/test/java/com/traffic/flink/behavior/detector/ModelUpdateBroadcastHandlerTest.java": "f0b9de2d0b53d117358a907eb269131162e912facd18aad702d6ad0e104756b5",
+    "deployments/postgres/migrations/202608151900_m08_model_rollback_v2.sql": "441737c68a29f18a9a487490403e8c2a5e84f6896a816ad7af503ebe86460138",
+    "scripts/alignment/sync_m08_model_rollback_postgres_entrypoint.py": "f358a2f9963e990b803c6b0db70ec178a6f9a036dea4aef591820692662d0818",
+    "scripts/alignment/test_sync_m08_model_rollback_postgres_entrypoint.py": "8145c78d49fea7e6cda648eb4815e06215818d2863f23e43dc76696efa6d7292",
+    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "cad99a5df2becec28d2d7169ca3406b4b4a6055cfb9877bfdae648eee8458233",
+    "deployments/kubernetes/applications/go-services.yaml": "a4b58ffab316ff09358a3321882cdc99b2ffe8dcf4515fef883429f64eda9498",
+    "deployments/kubernetes/jobs/m08-model-rollback-postgres-canary.yaml": "3b6b8147b6d2e8737b57ccaf14e11b06b145b4708aba0eac88c484a73309282a",
+    "contracts/openapi/alignment-v1.openapi.json": "42a8dcd149a13a8c7f7d495bd330a9b4b114fd40db8d45b78bfd801103f4df85",
+    "tests/alignment/test_m08_model_rollback_v2.py": "5715200a1d0bcfc54d8a246ad748f0f0dd7de37bf7ccea0a04b697e197230711"
+  },
+  "cleanup": {
+    "canary_job_deleted": true,
+    "canary_configmap_deleted": true,
+    "integration_postgres_pod_deleted": true,
+    "absence_verified": true,
+    "shared_services_unchanged": true
+  },
+  "production_activation_blockers": [
+    "the deployed rule-manager and Flink behavior job are not built from this candidate",
+    "the shared PostgreSQL database does not have the N014, N015 and N016 migrations",
+    "no real Kafka rollback attempt or compensation event has been consumed by the candidate Flink deployment",
+    "no live Flink savepoint upgrade and restore has re-emitted the candidate rollback ACK",
+    "no immutable candidate image digests, production rollback authorization or observation window are bound"
+  ],
+  "not_executed": [
+    "shared PostgreSQL migration",
+    "candidate rule-manager deployment",
+    "candidate Flink deployment",
+    "real Kafka rollback and ACK flow",
+    "live savepoint upgrade or restore",
+    "production model rollback",
+    "production prediction recovery observation"
+  ],
+  "limitations": [
+    "Kubernetes evidence proves the exact PostgreSQL migration and Go transaction behavior against isolated cluster-hosted PostgreSQL, not the shared database.",
+    "The Flink savepoint result is a real operator harness snapshot and restore test executed locally; it is not an environment rollout claim.",
+    "This artifact closes the N016 code and isolated-infrastructure scope only; it does not claim M08 production completion."
+  ],
+  "errors": []
+}

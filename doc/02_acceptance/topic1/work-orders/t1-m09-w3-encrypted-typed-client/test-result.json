@@ -1,0 +1,101 @@
+{
+  "artifact_kind": "M09_ENCRYPTED_TYPED_CLIENT_TEST_RESULT",
+  "schema_version": "1.0.0",
+  "task_id": "T1-M09-N004",
+  "atomic_pr_id": "T1-M09-P007-REF-n004-s1",
+  "status": "PASS",
+  "scope": {
+    "domain": "encrypted-traffic",
+    "migrated_surface": [
+      "time-range parameter builder",
+      "egress action typed client",
+      "evidence action typed client",
+      "shared Axios transport without behavior change"
+    ],
+    "compatibility_barrel": "web/ui/src/services/api.ts",
+    "runtime_state": "no route, API contract, adapter, plan, page import, or feature-flag change"
+  },
+  "candidate": {
+    "source_files": {
+      "web/ui/src/services/api.ts": "24d9b3f8ff6e6962fcff79dc916987ca0dba7b5c5ba2b95acb420d791015d967",
+      "web/ui/src/services/httpClient.ts": "2ba500a5f7a9e4f84d5c1081ce7c8052feee8320eb0295f2b5b5da8570dbe190",
+      "web/ui/src/services/encryptedTrafficApi.ts": "82d660671e2a314e6889ed11853baf3b9b6c6175f01023174e757c2eb3808d1c",
+      "web/ui/src/services/encryptedTrafficApi.test.ts": "9f3d3aadb9a4b42a2054f21d30794f5b2a2650b71edaa3a8fcaac86383b70c6d",
+      "web/ui/src/routes/encryptedTrafficVisuals.test.ts": "722c13de2e83ed21395417aa7e680d6f5c52a446d00f53b1f8cde32126528d9a"
+    },
+    "rollback_runbook": {
+      "path": "doc/07_alignment/runbooks/T1-M09-N004-encrypted-typed-client-rollback.md",
+      "sha256": "e8962a49d3e7b04ba92ea8ca4c79f5dd6398fe807136f13747445b3a86a75b61"
+    },
+    "kubernetes_runner": {
+      "path": "scripts/alignment/run_m09_encrypted_typed_client_k8s.py",
+      "sha256": "6bcf847c4f97f73f4e9a19b58e2e3f1f47260f283a5687f2418eac41b24b7c78"
+    },
+    "test_image": {
+      "reference": "traffic/web-ui:m09-n004-encrypted-typed-client-20260815-r1",
+      "image_id": "sha256:e80b90c9180e45671bfa6a0b525d197bc356f89432ebdc67533ee2e849a18bab"
+    }
+  },
+  "characterized_invariants": [
+    "existing @/services/api names remain exported",
+    "egress action endpoint, plan default action, target and data_mode remain exact",
+    "evidence action endpoint, plan default action, target and data_mode remain exact",
+    "nested data and flat legacy action responses remain supported",
+    "one-hour, 24-hour and seven-day start/end calculations remain exact",
+    "Authorization injection and 401 token cleanup remain on the shared Axios instance",
+    "page snapshot adapter and API plan are not migrated in this task"
+  ],
+  "local_validation": {
+    "vitest": {
+      "command": "npm test -- --run src/services/encryptedTrafficApi.test.ts src/routes/encryptedTrafficVisuals.test.ts",
+      "status": "PASS",
+      "test_files": 2,
+      "tests": 5
+    },
+    "eslint": {
+      "command": "npx eslint src/services/encryptedTrafficApi.ts src/services/encryptedTrafficApi.test.ts src/services/httpClient.ts src/services/api.ts src/routes/encryptedTrafficVisuals.test.ts",
+      "status": "PASS"
+    },
+    "production_build": {
+      "command": "npm run build",
+      "status": "PASS",
+      "mock_runtime_guard": "PASS"
+    },
+    "diff_check": "PASS"
+  },
+  "kubernetes_validation": {
+    "run_id": "a0bbff2e-8aae-434f-9613-f26f9c01d20c",
+    "namespace": "traffic-analysis",
+    "job_name": "m09-n004-client-a0bbff2e8a",
+    "job_uid": "9abaaa54-67f1-46a8-ad43-c7424a0acaf0",
+    "pod_name": "m09-n004-client-a0bbff2e8a-wtvx8",
+    "pod_uid": "9d62b163-b106-4df0-8ba1-01cf8fac3ded",
+    "node": "8-2tb",
+    "container_id": "containerd://1b89f0575c1d4c1d664d727a4e27b8685d89e0aa3d4e0284c064cd93d6ffd50c",
+    "image_id": "sha256:e80b90c9180e45671bfa6a0b525d197bc356f89432ebdc67533ee2e849a18bab",
+    "started_at": "2026-08-15T12:21:19Z",
+    "completed_at": "2026-08-15T12:21:22Z",
+    "bundle_check_sha256": "5e868f9d869ec0814ce68c9e3d1289ab099f96ebe2809c08fef8a0cc2abd72bd",
+    "test_output_sha256": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431",
+    "status": "PASS",
+    "run_scoped_resources_removed": true,
+    "production_applied": false,
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_flink_touched": false
+  },
+  "claim_boundary": {
+    "proves": [
+      "the current encrypted action client slice is typed and isolated behind a compatibility barrel",
+      "the built candidate contains both encrypted action endpoints and no production mock worker"
+    ],
+    "does_not_prove": [
+      "production rollout",
+      "live APISIX action execution",
+      "snapshot adapter migration",
+      "M09 milestone completion"
+    ]
+  }
+}

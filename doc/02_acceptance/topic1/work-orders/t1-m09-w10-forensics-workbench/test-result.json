@@ -1,0 +1,58 @@
+{
+  "accepted_is_completed": false,
+  "api_test_pattern": "Test(TaskCommandAdmission|NormalizeResultKey|NormalizeForensicsPurpose|VerifyPCAPRejectsMalformed)",
+  "artifact_kind": "M09_FORENSICS_WORKBENCH_TEST_RESULT",
+  "bundle_check_sha256": "3bc6e677c7e9a1173be45f1962121e6f81d12af22b68afc45c1fc64f996a4927",
+  "exact_object_version_visible": true,
+  "kubernetes": [
+    {
+      "completed_at": "2026-08-15T16:06:30Z",
+      "container_id": "containerd://721a6f1dc6c7cf9a88845fa624031705e636b8a67ecd2125a800fa317071e334",
+      "image": "docker.io/traffic/web-ui:m09-n011-forensics-workbench-20260815-r1",
+      "image_id": "docker.io/library/import-2026-08-15@sha256:4ec961189377cd4fd6fa3b58ffc9586e0e2a30ddf8c930ec9fd7d7aa5ccd89f4",
+      "job_name": "m09-n011-forensics-ui-e6b226fa1e",
+      "job_uid": "d5f22e17-6dc8-41a3-a180-89c365a64f97",
+      "namespace": "traffic-analysis",
+      "node": "8-2tb",
+      "pod_name": "m09-n011-forensics-ui-e6b226fa1e-vlnkx",
+      "pod_uid": "6c04736a-4f56-4a64-b131-45a3f7407d04",
+      "shared_clickhouse_touched": false,
+      "shared_flink_touched": false,
+      "shared_kafka_touched": false,
+      "shared_minio_touched": false,
+      "shared_postgres_touched": false,
+      "started_at": "2026-08-15T16:06:27Z"
+    },
+    {
+      "completed_at": "2026-08-15T16:06:34Z",
+      "container_id": "containerd://5dc1a04d768388f2b11cae5080cdde1761e202e30c93c608a8275678e2d7b45b",
+      "image": "docker.io/traffic/forensics-api-test:m09-n011-20260816-r1",
+      "image_id": "docker.io/library/import-2026-08-16@sha256:42ba42a5218d3996859e0b96c6b5d6a1c0a0ece1ce6e07ceeef6480c74c6ffea",
+      "job_name": "m09-n011-forensics-api-e6b226fa1e",
+      "job_uid": "993eae80-e735-43c3-8eda-59e153228ded",
+      "namespace": "traffic-analysis",
+      "node": "8-2tb",
+      "pod_name": "m09-n011-forensics-api-e6b226fa1e-svjpd",
+      "pod_uid": "82fffe53-6f78-44ad-a395-9bb38e5055a1",
+      "shared_clickhouse_touched": false,
+      "shared_flink_touched": false,
+      "shared_kafka_touched": false,
+      "shared_minio_touched": false,
+      "shared_postgres_touched": false,
+      "started_at": "2026-08-15T16:06:31Z"
+    }
+  ],
+  "mock_enabled": false,
+  "partial_is_terminal_and_distinct": true,
+  "production_applied": false,
+  "purpose_bound_download": true,
+  "refresh_recovery_query_key": "job_id",
+  "run_id": "e6b226fa-1e3a-4dd1-b167-de6da80d011b",
+  "run_scoped_resources_removed": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N011",
+  "test_output_sha256": {
+    "api_contract": "c6ef90de7e115a148ad352bf21729697eac067f6083bc403e075507ed244289a",
+    "web_bundle": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431"
+  }
+}

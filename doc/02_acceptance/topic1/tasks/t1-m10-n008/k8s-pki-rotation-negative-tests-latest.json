@@ -1,0 +1,146 @@
+{
+  "acceptance_status": "BLOCKED_NOT_ENABLED",
+  "allowed_claims": [
+    "The bound N008 atomic PKI candidate passed declared fail-closed TLS tests on both Kubernetes nodes"
+  ],
+  "artifact_kind": "M10_PKI_ROTATION_K8S_NEGATIVE_TEST_RESULT",
+  "atomic_pr_ids": [
+    "T1-M10-P018-OPS-n008-s1",
+    "T1-M10-P019-TST-POST-n008-s2"
+  ],
+  "blocking_codes": [
+    "APPROVED_ISSUER_AND_OFFLINE_ROOT_CUSTODY_REQUIRED",
+    "DEPLOYABLE_CANDIDATE_REQUIRED",
+    "LIVE_REVOCATION_AND_ROLLBACK_REQUIRED",
+    "N007_AUTHZ_ENABLEMENT_REQUIRED",
+    "PER_PROBE_UNIQUE_CERTIFICATE_REQUIRED",
+    "TLS_ROTATION_RUNTIME_ENABLEMENT_REQUIRED",
+    "TWO_CONSECUTIVE_LIVE_ROTATIONS_REQUIRED"
+  ],
+  "build_toolchain": "go version go1.25.12 linux/amd64",
+  "candidate_id": null,
+  "catalog_counts": {
+    "blocking_gaps": 19,
+    "certificate_domains": 5,
+    "domains_partial_or_default_off": 5,
+    "plaintext_dependencies": 4,
+    "production_plaintext_gaps": 3,
+    "transport_guards": 23,
+    "transport_guards_passing": 23
+  },
+  "does_not_prove": [
+    "an approved issuer or offline root custody exists",
+    "the N008 runtime flag or live Secret was changed",
+    "per-probe certificates were issued",
+    "two consecutive live rotations or live rollback passed",
+    "G6 or production promotion is authorized"
+  ],
+  "engineering_status": "PASS",
+  "environment_kind": "KUBERNETES",
+  "fail_closed_dimensions": [
+    "wrong_ca",
+    "expired_certificate",
+    "san_mismatch",
+    "revoked_serial",
+    "interrupted_rotation",
+    "dual_trust_cutover"
+  ],
+  "kubernetes_jobs": [
+    {
+      "identity": {
+        "completed_at": "2026-08-16T04:09:24Z",
+        "container_id": "containerd://1300a221ac2ba6b1bed1174aecea6006b177d0355f81ed274352c3cd48d66aba",
+        "image": "docker.io/traffic-analysis/m10-pki-tests:n008-20260816-v1",
+        "image_id": "sha256:99c4f60d5a6d4eb6293fce06d32c26d624687a127fefc8b55091aad0936b9195",
+        "job_name": "m10-n008-pki-8053e32c92-1",
+        "job_uid": "c6138e0d-9b1d-4732-8590-52edfb8182fc",
+        "namespace": "traffic-analysis",
+        "node": "8-2tb",
+        "pod_name": "m10-n008-pki-8053e32c92-1-7f4t8",
+        "pod_uid": "0a75f6f9-b92c-40bc-9848-c5cdd161fd78",
+        "started_at": "2026-08-16T04:09:21Z"
+      },
+      "result": {
+        "fail_closed_dimensions": [
+          "wrong_ca",
+          "expired_certificate",
+          "san_mismatch",
+          "revoked_serial",
+          "interrupted_rotation",
+          "dual_trust_cutover"
+        ],
+        "profile_id": "M10-N008-K8S-ATOMIC-PKI-ROTATION-V1",
+        "status": "PASS",
+        "test_groups": 1,
+        "top_level_tests": 4
+      }
+    },
+    {
+      "identity": {
+        "completed_at": "2026-08-16T04:09:23Z",
+        "container_id": "containerd://4b18c087974369f14e23f53e3f94bcce0daea2ba1c7f33e5dd09191cecdee49d",
+        "image": "docker.io/traffic-analysis/m10-pki-tests:n008-20260816-v1",
+        "image_id": "sha256:99c4f60d5a6d4eb6293fce06d32c26d624687a127fefc8b55091aad0936b9195",
+        "job_name": "m10-n008-pki-8053e32c92-2",
+        "job_uid": "c8263ae9-0979-4b3c-a1f5-1eb9dbdc4aee",
+        "namespace": "traffic-analysis",
+        "node": "zeus-server",
+        "pod_name": "m10-n008-pki-8053e32c92-2-jqm4c",
+        "pod_uid": "f91e422f-ffe9-4dff-81fc-c7b8c762344f",
+        "started_at": "2026-08-16T04:09:21Z"
+      },
+      "result": {
+        "fail_closed_dimensions": [
+          "wrong_ca",
+          "expired_certificate",
+          "san_mismatch",
+          "revoked_serial",
+          "interrupted_rotation",
+          "dual_trust_cutover"
+        ],
+        "profile_id": "M10-N008-K8S-ATOMIC-PKI-ROTATION-V1",
+        "status": "PASS",
+        "test_groups": 1,
+        "top_level_tests": 4
+      }
+    }
+  ],
+  "pki_catalog_sha256": "ef88e9045bcb589f24dd64148eb79d57100108f8ba0716b5ddc2d7b3177c04db",
+  "production_applied": false,
+  "profile_id": "M10-N008-K8S-ATOMIC-PKI-ROTATION-V1",
+  "required_gates": {
+    "G0": "BLOCKED_BY_DEPLOYABLE_CANDIDATE",
+    "G2": "PASS_UNIT_AND_K8S_SELF_TEST",
+    "G3": "PASS_CROSS_NODE_SELF_TEST",
+    "G6": "BLOCKED_NOT_ENABLED"
+  },
+  "run_id": "8053e32c-9237-4efb-8022-b327770423ae",
+  "run_scoped_resources_removed": true,
+  "schema_version": 1,
+  "shared_infrastructure_touched": false,
+  "source_sha256": {
+    "contracts/alignment/m10-pki-rotation-k8s-result.schema.json": "8bb906b6803dc5bb7b01bbb114e077b57f30fcbd30646e5d75bc59aa33cf92b2",
+    "contracts/security/pki-catalog.v1.json": "f89218740b2b0d20a26180be7ff1e87c20f593a233488e960cd1c67613f5ca65",
+    "deployments/kubernetes/applications/go-services.yaml": "5c4f87714eece46eb38a0afea7713d46e16291bd86007ed843c8a73be87e5c5f",
+    "deployments/kubernetes/applications/probe-agent.yaml": "031450cb23fab853a9af25bef6b1f22409b1cbf5a3a0713692fca792c62ccae1",
+    "deployments/kubernetes/deploy.sh": "930513d06653b27d0a82471a705b05c8a172ff2d0cfa90d1f7cb0b4aa8163858",
+    "doc/02_acceptance/topic1/tasks/t1-m10-n007/k8s-authz-negative-tests-latest.json": "e695833c36c45b4fb30220a25256982f6888074ec7fd54cbac93d9c61177d9be",
+    "doc/07_alignment/runbooks/T1-M10-N008-pki-rotation.md": "ba641a71e9d26705c35a8a780337ce8f5e24c850873983cfaacc7ab8fbc1df28",
+    "go/control-plane/cmd/ingest-gateway/main.go": "13c795ff6130e91cba82a11f56a29b911a9f0ec9001d8483afa005b7144d32b0",
+    "go/control-plane/internal/common/pki/reloader.go": "5d56c3c384be12f6f6132ebd7c40e9395477f1688a352ed3b674d2d6fba208d7",
+    "go/control-plane/internal/common/pki/reloader_test.go": "7c41c4b75612798bfd5373984610e18c291f4c796ad220356a2836c95986f6ed",
+    "go/control-plane/internal/ingest/config/config.go": "a0323bf60decf73f52f19853f58c3d0283ec0203adde6f776e70fe40498e6897",
+    "go/control-plane/internal/ingest/config/config_test.go": "3c550ba8c5b9fc1f264f825cbae03486e3eb51bed6b0bff26eebd04af00d514e",
+    "rust/probe-agent/probe-agent/src/sender/grpc.rs": "eb22346330395251bd45e95699045b4409454f31dd78f9a2246270ec43eec57c",
+    "rust/probe-agent/scripts/generate-mtls-certs.sh": "fc0aeccdd6bf192575b33e442e68c65b82416607e27dfd6723864bba43c7c79c",
+    "scripts/alignment/Dockerfile.m10-pki-prebuilt": "b03134ec24ba35c4739f6d182ca572cf727a8f9fb01a28e2609f914028e05fed",
+    "scripts/alignment/build_pki_catalog.py": "939922878e22bdd811bd101a61f7af6a8bfa58d6b15305751225d739076891a0",
+    "scripts/alignment/run_m10_pki_rotation_k8s.py": "c264d5437275eb42d2c13b5c39043fcef01a8ff524921db0c0debcbc31f7bb48",
+    "scripts/alignment/run_m10_pki_test_binary.sh": "cb5b739db5e4022c6a55c60ede8f176e109afe1358b1081f23aa337ce20bea4c",
+    "scripts/alignment/verify_m10_pki_rotation_k8s.py": "cd2e3c1b2170bbecbf20a12d533c070a7b768b7655ecfc89c2f57b9b4e1bbe02",
+    "scripts/alignment/verify_pki_catalog.py": "e22624b6c66804f3acc175adeaaf0b729f7057bdb4c84325ed061535433acae4",
+    "tests/alignment/test_m10_pki_rotation_k8s.py": "469a926a27e6fc73c6aeda77cd06fec3fdd6d6aff53899eb600e51c85e1a20f0"
+  },
+  "status": "PASS",
+  "task_id": "T1-M10-N008"
+}

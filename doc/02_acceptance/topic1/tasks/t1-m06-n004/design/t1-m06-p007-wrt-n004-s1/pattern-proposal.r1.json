@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "PATTERN_DECISION_PROPOSAL",
+  "artifact_status": "DRAFT",
+  "proposal_id": "PROP-T1-M06-P007-WRT-n004-s1-r1",
+  "decision_id": "PAT-T1-M06-P007-WRT-n004-s1",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+    "manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d"
+  },
+  "catalog_ref": {
+    "artifact_kind": "GOF_PATTERN_CATALOG",
+    "path": "contracts/alignment/gof-pattern-catalog.v1.json",
+    "sha256": "2476689e8dcfaa5ee994114096eeaf1c1716e5fea609e85c7e9a5de1fe696fea"
+  },
+  "design_scope": "FUNCTION_SET",
+  "applicability": "APPLICABLE",
+  "trigger_evidence": ["TRANSACTION_BOUNDARY", "CROSS_STORE_SIDE_EFFECT"],
+  "problem_evidence": [
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/locator-resolver-receipt.json",
+      "symbol_or_pointer": "repository.(*AssetRepository).UpsertAtomic",
+      "sha256": "6a46fd00f96ade934feb07b466a27e7a0e0f5f723c4b9fef975a62477542b7cd"
+    }
+  ],
+  "change_axis": "事务内字段裁决、幂等重放、提交未知恢复与本地耐久outbox顺序会变化；接收者集合和运行时多态不变化",
+  "stable_contract": "保持导出方法签名、v1请求hash字节、revision CAS、事件FQN/schema/partition key以及五个PostgreSQL效果的同事务边界",
+  "invariants": [
+    "同tenant和idempotency key的相同请求只返回原回执，不重复任何耐久效果",
+    "提交前任一错误对五个PostgreSQL效果均为零可见；提交未知只能用原key恢复",
+    "outbox只记录待发布事实，本叶不把broker投递或投影收敛算作成功",
+    "任何新增抽象都必须有真实变化轴和参与者，不得把AssetUpsertCommand DTO改名为GoF Command"
+  ],
+  "options": [
+    {
+      "option_id": "OPT-DIRECT-TX-OUTBOX",
+      "implementation_form": "DIRECT",
+      "selected_designs": [],
+      "distributed_constraint_ids": ["PROJECT-TRANSACTIONAL-OUTBOX"],
+      "primary_distributed_constraint_id": "PROJECT-TRANSACTIONAL-OUTBOX",
+      "participant_bindings": [],
+      "invariants": [
+        "UpsertAtomic保持唯一事务协调入口并显式执行B01至B16",
+        "asset_event_outbox与authority、history、audit、ledger同事务写入且状态为pending"
+      ],
+      "failure_semantics": "错误在提交前回滚全部效果；提交返回错误为unknown并要求原tenant、key与payload hash查询回执",
+      "complexity": {
+        "new_files": 0,
+        "new_types": 1,
+        "additional_call_hops": 0,
+        "hot_path_allocations": "only checked JSON buffers already required by persistence",
+        "cognitive_cost": "one explicit transaction coordinator with a typed commit-unknown sentinel and no polymorphic dispatch"
+      },
+      "compatibility_and_rollback": "保持现有公开签名、hash和事件合同；代码回滚只在提交前恢复旧实现，提交后用新revision前向修复",
+      "negative_test_ids": ["NEG-PASSIVE-OVERWRITES-GOVERNANCE", "NEG-COMMIT-UNKNOWN-NEW-KEY", "NEG-OUTBOX-WRITE-FAILURE"],
+      "adoption_predicate": "直接实现以零额外调用跳满足同一变化轴，并保留项目事务outbox约束",
+      "rejection_predicate": "若未来出现两个以上可替换事务执行器或统一排队和补偿调用合同，则重新评估Command"
+    },
+    {
+      "option_id": "OPT-NATIVE-COMMAND-TX-OUTBOX",
+      "implementation_form": "NATIVE_LANGUAGE",
+      "selected_designs": [
+        {
+          "pattern_id": "GOF-BEH-02",
+          "implementation_form": "NATIVE_LANGUAGE",
+          "selection_role": "PRIMARY",
+          "participant_bindings": [
+            {
+              "participant_role": "Receiver",
+              "exact_symbol": "repository.(*AssetRepository).UpsertAtomic",
+              "locator_id": "LOC-T1-M06-P007-UpsertAtomic"
+            }
+          ]
+        }
+      ],
+      "distributed_constraint_ids": ["PROJECT-TRANSACTIONAL-OUTBOX"],
+      "primary_distributed_constraint_id": "PROJECT-TRANSACTIONAL-OUTBOX",
+      "participant_bindings": [],
+      "invariants": [
+        "Command参与者必须包含真实Invoker和至少两个受同一稳定接口调度的ConcreteCommand",
+        "outbox仍只存提交后的事实而不是待执行命令"
+      ],
+      "failure_semantics": "Invoker、Receiver和回执必须共享幂等与提交未知协议，网络取消不得伪装成业务取消",
+      "complexity": {
+        "new_files": 2,
+        "new_types": 3,
+        "additional_call_hops": 1,
+        "hot_path_allocations": "at least one interface or handler object per accepted command unless optimized",
+        "cognitive_cost": "adds Invoker and command dispatch ownership across config, service, repository and inactive-asset flows"
+      },
+      "compatibility_and_rollback": "需要跨越本WRT授权文件建立兼容适配器；必须单独跨路径PR且default-off，本叶不得采用",
+      "negative_test_ids": ["NEG-COMMAND-WITHOUT-INVOKER", "NEG-DTO-RENAMED-AS-COMMAND", "NEG-COMMAND-CROSSES-UNAUTHORIZED-PATHS"],
+      "adoption_predicate": "Upsert与Inactive等至少两个命令确需通过同一多态Invoker排队、调度或补偿",
+      "rejection_predicate": "当前只有固定service到repository同步调用、DTO和PG ledger重放，缺少Invoker、替换实现、队列或undo轴"
+    }
+  ],
+  "option_set_sha256": "c5545e22b09a6836c5c3c19d1e32ceaa232aec1624e01ebcf7f90b8bb786c2ea",
+  "negative_test_manifest_ref": {
+    "artifact_kind": "NEGATIVE_TEST_MANIFEST",
+    "path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/negative-test-manifest.json",
+    "sha256": "c56b71ea5540d93966668a5c5619bead48cab3774b24a10d564141cc220e918c"
+  },
+  "readiness": {
+    "status": "DRAFT",
+    "blockers": [
+      "multi-source data owner has not approved the source-precedence contract",
+      "six required review roles and the adjudicator have not produced signed debate receipts",
+      "Command option is incomplete by construction and is expected to be rejected or deferred"
+    ],
+    "proof_ceiling": "PATTERN_PROPOSAL_ONLY_NOT_REVIEW_OR_EXECUTION"
+  }
+}

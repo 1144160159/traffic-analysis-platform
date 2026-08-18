@@ -1,0 +1,72 @@
+flowchart LR
+  Operator["规则 / 模型 / 发布管理员"]:::external
+  MLOpsClient["SW-07模型登记客户端"]:::external
+  FeedbackTopic["Kafka alert.feedback.v1"]:::external
+  WhiteTopic["Kafka whitelist.events.v2"]:::external
+  AppliedTopic["Kafka model-update-applied.v1"]:::external
+
+  subgraph SW06["SW-06 检测规则与模型发布治理软件"]
+    API["Rule Manager API"]:::own
+    RBAC["领域RBAC与审批检查"]:::own
+    RuleSvc["规则版本 / 审核 / 发布服务"]:::own
+    ModelSvc["模型登记 / 版本 / 激活服务"]:::own
+    Deploy["部署审批 / 灰度 / 回滚状态机"]:::own
+    Repo["规则 / 模型 / 部署Repository"]:::own
+    Outbox["事务Outbox与Publisher"]:::own
+    ACK["模型应用ACK聚合与一致性校验"]:::own
+    FeedbackInbox["反馈Inbox与训练数据投影"]:::own
+    WhiteEffect["白名单效果Consumer"]:::own
+    Orchestrator["Go MLOps Orchestrator<br/>治理判断 / 审计意图 / 工作流提交"]:::own
+    Validator["规则表达式校验与发布预检"]:::own
+  end
+
+  PG[("PostgreSQL<br/>规则 / 模型 / 审批 / 部署 / outbox")]:::external
+  Redis[("Redis<br/>缓存与限流")]:::external
+  CH[("ClickHouse<br/>反馈 / 质量指标 / 评估输入")]:::external
+  RuleUpdates["Kafka rule.updates"]:::external
+  ModelUpdates["Kafka model-updates"]:::external
+  ModelActions["Kafka model-actions.v1"]:::external
+  DeployEvents["Kafka deployment.events.v1"]:::external
+  AuditEvents["Kafka audit.logs"]:::external
+  Argo["外部运行时<br/>Argo Workflows API"]:::external
+  Flink["外部软件<br/>SW-02规则 / 行为Job"]:::external
+  Auth["共享依赖<br/>SW-09 Claims与鉴权中间件"]:::shared
+
+  Operator --> API
+  MLOpsClient --> API
+  API --> RBAC
+  API --> Validator
+  API --> RuleSvc
+  API --> ModelSvc
+  API --> Deploy
+
+  RuleSvc --> Repo
+  ModelSvc --> Repo
+  Deploy --> Repo
+  Repo --> PG
+  Repo --> Outbox
+  Outbox --> RuleUpdates
+  Outbox --> ModelUpdates
+  Outbox --> ModelActions
+  Outbox --> DeployEvents
+  Outbox --> AuditEvents
+
+  RuleUpdates --> Flink
+  ModelUpdates --> Flink
+  Flink --> AppliedTopic
+  AppliedTopic --> ACK --> ModelSvc
+
+  FeedbackTopic --> FeedbackInbox
+  FeedbackInbox --> PG
+  FeedbackInbox --> CH
+  WhiteTopic --> WhiteEffect --> RuleSvc
+
+  CH --> Orchestrator
+  PG --> Orchestrator
+  Orchestrator -->|"提交 / 查询 / 停止 / 重试"| Argo
+  Redis <--> RuleSvc
+  Auth -.-> API
+
+  classDef own fill:#dbeafe,stroke:#2563eb,color:#172554;
+  classDef external fill:#f3f4f6,stroke:#6b7280,color:#111827;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;

@@ -1,0 +1,678 @@
+{
+  "acceptance_status": "BLOCKED",
+  "allowed_claims": [
+    "The declared read-only site preflight executed across every current Kubernetes node"
+  ],
+  "artifact_kind": "M10_SITE_PREFLIGHT_RESULT",
+  "candidate_id": null,
+  "does_not_prove": [
+    "the application candidate was deployed",
+    "performance or HA acceptance passed",
+    "the site is promotion-ready",
+    "production promotion is authorized"
+  ],
+  "engineering_status": "PASS",
+  "environment_kind": "KUBERNETES",
+  "evaluation": {
+    "blocking_codes": [
+      "NIC_CAPACITY_BELOW_SITE_QUOTA",
+      "SECRET_OR_CA_REFERENCE_MISSING",
+      "TLS_CERTIFICATE_UNOBSERVED"
+    ],
+    "capacity": {
+      "clock_skew_ms": 69,
+      "fastest_active_nic_mbps_by_node": [
+        10000,
+        1000
+      ],
+      "free_disk_gib": 97989.78,
+      "logical_processors": 224,
+      "memory_gib": 2518.059,
+      "nodes": 2
+    },
+    "status": "BLOCKED",
+    "warnings": []
+  },
+  "kubernetes_jobs": [
+    {
+      "completed_at": "2026-08-16T02:30:58Z",
+      "container_id": "containerd://8bdc94e0cacf977666b0f3832658f7fa1718993748036467512bd3a02c6409c9",
+      "image": "docker.io/traffic/m10-site-preflight:m10-n004-20260816-r1",
+      "image_id": "sha256:f6020711b7754ec39693d5c63fc695d74e30ba5bba214a1f49c0a97338eb90bf",
+      "job_name": "m10-n004-preflight-964f34fe42-0",
+      "job_uid": "ae52fb42-e214-4b02-a353-40f41ffb2893",
+      "node": "8-2tb",
+      "pod_name": "m10-n004-preflight-964f34fe42-0-gdw7s",
+      "pod_uid": "0760a334-20d0-4fae-8477-19069c706c31",
+      "started_at": "2026-08-16T02:30:53Z"
+    },
+    {
+      "completed_at": "2026-08-16T02:30:57Z",
+      "container_id": "containerd://df9505ba48c17c508b464110eba7ef045ecac6fe88fcc4048a5bdcdcf2f72b8b",
+      "image": "docker.io/traffic/m10-site-preflight:m10-n004-20260816-r1",
+      "image_id": "sha256:f6020711b7754ec39693d5c63fc695d74e30ba5bba214a1f49c0a97338eb90bf",
+      "job_name": "m10-n004-preflight-964f34fe42-1",
+      "job_uid": "3a520f63-5263-4fa7-8726-6bbb90ca2d83",
+      "node": "zeus-server",
+      "pod_name": "m10-n004-preflight-964f34fe42-1-5s6m7",
+      "pod_uid": "1ad194e1-dcf3-4986-89b6-d5776c196b46",
+      "started_at": "2026-08-16T02:30:53Z"
+    }
+  ],
+  "nodes": [
+    {
+      "clock": {
+        "clocksource": "tsc"
+      },
+      "cpu": {
+        "logical_processors": 112
+      },
+      "dependencies": [
+        {
+          "addresses": [
+            "10.110.72.242"
+          ],
+          "certificate": {
+            "days_remaining": 777.643,
+            "not_after": "2028-10-01T17:56:46+00:00",
+            "status": "PASS",
+            "subject_alt_names": [
+              "kafka-bootstrap.middleware.svc",
+              "kafka-bootstrap.middleware.svc.cluster.local",
+              "kafka-headless.middleware.svc",
+              "kafka-headless.middleware.svc.cluster.local",
+              "kafka-0.kafka-headless.middleware.svc.cluster.local",
+              "kafka-1.kafka-headless.middleware.svc.cluster.local",
+              "kafka-2.kafka-headless.middleware.svc.cluster.local"
+            ]
+          },
+          "dns": "kafka-bootstrap.middleware.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "kafka",
+          "port": 9092,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        },
+        {
+          "addresses": [
+            "10.244.0.89",
+            "10.244.1.62"
+          ],
+          "certificate": null,
+          "dns": "clickhouse-replica.middleware.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "clickhouse",
+          "port": 8123,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": false
+        },
+        {
+          "addresses": [
+            "10.100.81.222"
+          ],
+          "certificate": {
+            "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)",
+            "status": "BLOCKED"
+          },
+          "dns": "postgres-primary.databases.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "postgres",
+          "port": 5432,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        },
+        {
+          "addresses": [
+            "10.99.107.63"
+          ],
+          "certificate": null,
+          "dns": "redis-master.databases.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "redis",
+          "port": 6379,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": false
+        },
+        {
+          "addresses": [
+            "10.111.104.115"
+          ],
+          "certificate": {
+            "error": "SSLError: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1016)",
+            "status": "BLOCKED"
+          },
+          "dns": "minio.minio.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "minio",
+          "port": 9000,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        },
+        {
+          "addresses": [
+            "10.98.196.133"
+          ],
+          "certificate": {
+            "error": "SSLError: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1016)",
+            "status": "BLOCKED"
+          },
+          "dns": "opensearch.middleware.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "opensearch",
+          "port": 9200,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        },
+        {
+          "addresses": [
+            "10.104.246.216"
+          ],
+          "certificate": null,
+          "dns": "nebula-graph.middleware.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "nebula",
+          "port": 9669,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": false
+        },
+        {
+          "addresses": [
+            "10.101.174.52"
+          ],
+          "certificate": {
+            "days_remaining": 777.068,
+            "not_after": "2028-10-01T04:09:30+00:00",
+            "status": "PASS",
+            "subject_alt_names": [
+              "keycloak",
+              "keycloak.iam",
+              "keycloak.iam.svc",
+              "keycloak.iam.svc.cluster.local"
+            ]
+          },
+          "dns": "keycloak.iam.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "keycloak",
+          "port": 8443,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        }
+      ],
+      "disk": {
+        "free_gib": 1599.358,
+        "observed": true,
+        "path": "/home/data",
+        "total_gib": 2718.541
+      },
+      "memory": {
+        "total_gib": 2015.029
+      },
+      "nics": [
+        {
+          "name": "br0",
+          "operstate": "up",
+          "speed_mbps": 1000
+        },
+        {
+          "name": "ens8f0",
+          "operstate": "up",
+          "speed_mbps": 10000
+        },
+        {
+          "name": "ens8f1",
+          "operstate": "up",
+          "speed_mbps": 10000
+        },
+        {
+          "name": "ens9f0",
+          "operstate": "up",
+          "speed_mbps": 1000
+        },
+        {
+          "name": "ens9f1",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "ens9f2",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "ens9f3",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "virbr0",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "virbr0-nic",
+          "operstate": "down",
+          "speed_mbps": -1
+        }
+      ],
+      "node": "8-2tb",
+      "numa": {
+        "nodes": [
+          "node0",
+          "node1"
+        ]
+      },
+      "observed_at_epoch_ms": 1786847454786,
+      "status": "PASS"
+    },
+    {
+      "clock": {
+        "clocksource": "tsc"
+      },
+      "cpu": {
+        "logical_processors": 112
+      },
+      "dependencies": [
+        {
+          "addresses": [
+            "10.110.72.242"
+          ],
+          "certificate": {
+            "days_remaining": 777.643,
+            "not_after": "2028-10-01T17:56:46+00:00",
+            "status": "PASS",
+            "subject_alt_names": [
+              "kafka-bootstrap.middleware.svc",
+              "kafka-bootstrap.middleware.svc.cluster.local",
+              "kafka-headless.middleware.svc",
+              "kafka-headless.middleware.svc.cluster.local",
+              "kafka-0.kafka-headless.middleware.svc.cluster.local",
+              "kafka-1.kafka-headless.middleware.svc.cluster.local",
+              "kafka-2.kafka-headless.middleware.svc.cluster.local"
+            ]
+          },
+          "dns": "kafka-bootstrap.middleware.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "kafka",
+          "port": 9092,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        },
+        {
+          "addresses": [
+            "10.244.0.89",
+            "10.244.1.62"
+          ],
+          "certificate": null,
+          "dns": "clickhouse-replica.middleware.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "clickhouse",
+          "port": 8123,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": false
+        },
+        {
+          "addresses": [
+            "10.100.81.222"
+          ],
+          "certificate": {
+            "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)",
+            "status": "BLOCKED"
+          },
+          "dns": "postgres-primary.databases.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "postgres",
+          "port": 5432,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        },
+        {
+          "addresses": [
+            "10.99.107.63"
+          ],
+          "certificate": null,
+          "dns": "redis-master.databases.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "redis",
+          "port": 6379,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": false
+        },
+        {
+          "addresses": [
+            "10.111.104.115"
+          ],
+          "certificate": {
+            "error": "SSLError: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1016)",
+            "status": "BLOCKED"
+          },
+          "dns": "minio.minio.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "minio",
+          "port": 9000,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        },
+        {
+          "addresses": [
+            "10.98.196.133"
+          ],
+          "certificate": {
+            "error": "SSLError: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1016)",
+            "status": "BLOCKED"
+          },
+          "dns": "opensearch.middleware.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "opensearch",
+          "port": 9200,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        },
+        {
+          "addresses": [
+            "10.104.246.216"
+          ],
+          "certificate": null,
+          "dns": "nebula-graph.middleware.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "nebula",
+          "port": 9669,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": false
+        },
+        {
+          "addresses": [
+            "10.101.174.52"
+          ],
+          "certificate": {
+            "days_remaining": 777.068,
+            "not_after": "2028-10-01T04:09:30+00:00",
+            "status": "PASS",
+            "subject_alt_names": [
+              "keycloak",
+              "keycloak.iam",
+              "keycloak.iam.svc",
+              "keycloak.iam.svc.cluster.local"
+            ]
+          },
+          "dns": "keycloak.iam.svc.cluster.local",
+          "dns_error": null,
+          "dns_status": "PASS",
+          "id": "keycloak",
+          "port": 8443,
+          "tcp_error": null,
+          "tcp_status": "PASS",
+          "tls": true
+        }
+      ],
+      "disk": {
+        "free_gib": 96390.422,
+        "observed": true,
+        "path": "/home/data",
+        "total_gib": 122446.57
+      },
+      "memory": {
+        "total_gib": 503.03
+      },
+      "nics": [
+        {
+          "name": "ens8f0",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "ens8f1",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "ens9f0",
+          "operstate": "up",
+          "speed_mbps": 1000
+        },
+        {
+          "name": "ens9f1",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "ens9f2",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "ens9f3",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "virbr0",
+          "operstate": "down",
+          "speed_mbps": -1
+        },
+        {
+          "name": "virbr0-nic",
+          "operstate": "down",
+          "speed_mbps": -1
+        }
+      ],
+      "node": "zeus-server",
+      "numa": {
+        "nodes": [
+          "node0",
+          "node1"
+        ]
+      },
+      "observed_at_epoch_ms": 1786847454717,
+      "status": "PASS"
+    }
+  ],
+  "production_applied": false,
+  "profile_id": "M10-N004-K8S-READONLY-SITE-PREFLIGHT-V1",
+  "rbac_checks": [
+    {
+      "allowed": true,
+      "namespace": null,
+      "resource": "nodes",
+      "verb": "get"
+    },
+    {
+      "allowed": true,
+      "namespace": "traffic-analysis",
+      "resource": "secrets",
+      "verb": "get"
+    },
+    {
+      "allowed": true,
+      "namespace": "traffic-analysis",
+      "resource": "deployments.apps",
+      "verb": "create"
+    },
+    {
+      "allowed": true,
+      "namespace": "traffic-analysis",
+      "resource": "deployments.apps",
+      "verb": "patch"
+    },
+    {
+      "allowed": true,
+      "namespace": "traffic-analysis",
+      "resource": "jobs.batch",
+      "verb": "delete"
+    }
+  ],
+  "required_gates": {
+    "G0": "BLOCKED_BY_N002",
+    "G6": "BLOCKED"
+  },
+  "run_id": "964f34fe-420c-404a-ba29-67e24f343a7b",
+  "run_scoped_resources_removed": true,
+  "secret_ref_checks": [
+    {
+      "key": "ca.crt",
+      "key_exists": false,
+      "name": "postgres-client-tls",
+      "namespace": "databases",
+      "secret_exists": false
+    },
+    {
+      "key": "ca.crt",
+      "key_exists": false,
+      "name": "traffic-platform-ca",
+      "namespace": "gateway",
+      "secret_exists": false
+    },
+    {
+      "key": "tls.crt",
+      "key_exists": true,
+      "name": "keycloak-tls",
+      "namespace": "iam",
+      "secret_exists": true
+    },
+    {
+      "key": "ca.crt",
+      "key_exists": true,
+      "name": "kafka-client-tls",
+      "namespace": "middleware",
+      "secret_exists": true
+    },
+    {
+      "key": "kafka.truststore.p12",
+      "key_exists": true,
+      "name": "kafka-client-tls",
+      "namespace": "middleware",
+      "secret_exists": true
+    },
+    {
+      "key": "ca.crt",
+      "key_exists": false,
+      "name": "minio-client-tls",
+      "namespace": "minio",
+      "secret_exists": false
+    },
+    {
+      "key": "password",
+      "key_exists": true,
+      "name": "kafka-alert-service-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": true
+    },
+    {
+      "key": "username",
+      "key_exists": true,
+      "name": "kafka-alert-service-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": true
+    },
+    {
+      "key": "accesskey",
+      "key_exists": false,
+      "name": "minio-alert-service-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": false
+    },
+    {
+      "key": "secretkey",
+      "key_exists": false,
+      "name": "minio-alert-service-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": false
+    },
+    {
+      "key": "ca.crt",
+      "key_exists": false,
+      "name": "opensearch-client-tls",
+      "namespace": "traffic-analysis",
+      "secret_exists": false
+    },
+    {
+      "key": "CLICKHOUSE_PASSWORD",
+      "key_exists": true,
+      "name": "traffic-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": true
+    },
+    {
+      "key": "JWT_SECRET",
+      "key_exists": true,
+      "name": "traffic-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": true
+    },
+    {
+      "key": "OIDC_CLIENT_SECRET",
+      "key_exists": true,
+      "name": "traffic-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": true
+    },
+    {
+      "key": "PG_PASSWORD",
+      "key_exists": true,
+      "name": "traffic-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": true
+    },
+    {
+      "key": "POSTGRES_DSN",
+      "key_exists": true,
+      "name": "traffic-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": true
+    },
+    {
+      "key": "REDIS_PASSWORD",
+      "key_exists": true,
+      "name": "traffic-credentials",
+      "namespace": "traffic-analysis",
+      "secret_exists": true
+    },
+    {
+      "key": "ca.crt",
+      "key_exists": false,
+      "name": "traffic-platform-ca",
+      "namespace": "traffic-analysis",
+      "secret_exists": false
+    }
+  ],
+  "shared_infrastructure_touched": false,
+  "site_values_sha256": "81d9f44967794a34a09b933d2e77503e17dc1625efb085828989631674a99e0b",
+  "source_sha256": {
+    "contracts/alignment/m10-site-values.schema.json": "1882089660b6d21285bc7a044cea0df8ecadd8af831e9dfd4301412dc93b5ba9",
+    "deployments/kubernetes/site-values.v1.template.yaml": "81d9f44967794a34a09b933d2e77503e17dc1625efb085828989631674a99e0b",
+    "scripts/alignment/Dockerfile.m10-site-preflight": "2e53a9d89be9482f5c327aa4f0e814f9478ff56376f3a8454baa8b7b1604c076",
+    "scripts/alignment/run_m10_site_preflight_k8s.py": "c6c9952b54c8230c9ef7f142f03faecf7692b17219bd6a158c3b48b0a94a7013",
+    "scripts/alignment/validate_m10_site_values.py": "3f61300ff685159b8b58e3ae78bea08f6d7f90f27c951c80c8a4ba2d1a347eb5"
+  },
+  "status": "PASS",
+  "task_id": "T1-M10-N004"
+}

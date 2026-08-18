@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "M08_PROMOTION_INDEX_NO_GO_TEST_RESULT",
+  "task_id": "T1-M08-N018",
+  "work_order": "t1-m08-p038-idx-n018-s1",
+  "recorded_at": "2026-08-15T10:48:54Z",
+  "task_state": "ENGINEERING_EVIDENCE_INDEX_PASS_PRODUCTION_PROMOTION_BLOCKED_NO_GO",
+  "scoped_result": "PASS",
+  "milestone_state": "IMPLEMENTING",
+  "engineering_status": "PASS",
+  "promotion_status": "BLOCKED",
+  "promotion_allowed": false,
+  "production_applied": false,
+  "environment_policy": {
+    "environment_execution": "existing Kubernetes cluster only",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "local_scope": "static checks, compilation and mutation unit tests only",
+    "local_results_are_environment_acceptance": false
+  },
+  "implementation": {
+    "exact_evidence_bindings": 14,
+    "binding_contract": "path plus SHA-256 with repository-bound path resolution",
+    "separate_decisions": [
+      "engineering evidence reproducibility",
+      "same-candidate production promotion authorization"
+    ],
+    "mutation_guards": [
+      "missing evidence exact set",
+      "evidence hash drift",
+      "artifact-kind mismatch",
+      "engineering assertion mismatch",
+      "missing frozen candidate manifest",
+      "cross-candidate profile or environment receipt",
+      "zero unknown recall",
+      "broadened allowed claims",
+      "removed forbidden claims",
+      "hidden manifest fields"
+    ],
+    "immutable_current_index": "doc/02_acceptance/topic1/work-orders/t1-m08-p038-idx-n018-s1/current-index.json",
+    "release_pointer": "contracts/releases/topic1/t1-m08-release-pointer.json",
+    "release_pointer_status": "NO_GO",
+    "automatic_repair": false
+  },
+  "kubernetes_validation": {
+    "run_id": "95a48ec5-583d-4241-89e6-b1955fa85762",
+    "job_name": "m08-n018-index-95a48ec558",
+    "job_uid": "d195fd91-cf2c-4bee-908c-3e471e14fc5e",
+    "pod_name": "m08-n018-index-95a48ec558-4w67m",
+    "pod_uid": "844729e3-f134-454d-b072-9e8bd5c27c34",
+    "container_id": "containerd://0acaf88007874b85e21b46c2f439ebe6c774ad91e7ea008e6035f7d14af99d99",
+    "image": "docker.io/traffic/mlops-trainer:m08-governed-export-w2c-20260815-r10",
+    "image_id": "sha256:0b905ee9b358b7dfd44aa846883d1ba55b9c56f7ac2a1b96c1f9c3d77a71d61a",
+    "started_at": "2026-08-15T10:48:41Z",
+    "completed_at": "2026-08-15T10:48:44Z",
+    "schema_validation": "PASS",
+    "fresh_evaluation_matches_persisted_index": true,
+    "evidence_count": 14,
+    "engineering_error_count": 0,
+    "promotion_blocker_count": 34,
+    "engineering_status": "PASS",
+    "promotion_status": "BLOCKED",
+    "promotion_allowed": false,
+    "promotion_input_sha256": "0ce144937fba2757997fd1ab06b9dc5109ee30506a790161dd141ba1cd442c40",
+    "current_index_sha256": "1bdd15374b6112ccb1023b47c82459de8c7c5ea9c9e178ab94f0f2a3d0d9428c",
+    "release_pointer_sha256": "d36452a130ce8c3ef6786653ce409831ac3ff81a867f93784770233ce3d29260",
+    "raw_envelope_sha256": "47b78e3b4e16bc02479e491834a6a51eacadc0024fdd929574cef7ae978998d7",
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_flink_touched": false,
+    "status": "PASS"
+  },
+  "current_blockers": [
+    "no frozen same-candidate implementation manifest is bound",
+    "the indexed runs use synthetic or isolated component profiles and production_applied=false",
+    "the governed evaluation observed unknown_recall=0.0 and did not authorize activation",
+    "the N010 event and N011 exact ACK quorum were not exercised in one production-profile run",
+    "the required shadow and tenant canary observation windows were not executed",
+    "real Kafka feedback and live ClickHouse prediction reconciliation were not executed",
+    "the drift candidate was not produced from the shared production data plane",
+    "the rollback runtime and production rollback rehearsal were not executed"
+  ],
+  "allowed_claims": [
+    "exact-SHA evidence indexes the isolated Kubernetes engineering path from governed synthetic data through signed model package and internal Python/ONNX/Flink parity",
+    "default-off online ACK, canary, feedback, drift and rollback components have bounded engineering evidence"
+  ],
+  "forbidden_claims": [
+    "CNAS evaluation passed",
+    "known-attack accuracy is at least 95 percent or false-positive rate is below 5 percent for production",
+    "unknown-attack detection quality is production-ready",
+    "one same-candidate production end-to-end run passed",
+    "M08 production activation or promotion is authorized",
+    "M08 or the whole project is complete"
+  ],
+  "verification": {
+    "mutation_and_repository_binding_tests": {
+      "command": "python3 -m unittest tests.alignment.test_m08_promotion -v",
+      "tests": 10,
+      "failures": 0,
+      "result": "PASS",
+      "environment_acceptance": false
+    },
+    "python_compile": {
+      "command": "python3 -m py_compile scripts/alignment/evaluate_m08_promotion.py scripts/alignment/validate_m08_promotion_artifacts.py scripts/alignment/run_m08_promotion_index_k8s.py tests/alignment/test_m08_promotion.py",
+      "result": "PASS",
+      "environment_acceptance": false
+    },
+    "local_jsonschema": {
+      "result": "NOT_EXECUTED",
+      "reason": "the workspace Python environment does not install jsonschema",
+      "substitute_environment_claim": false
+    },
+    "kubernetes_jsonschema_and_exact_index": {
+      "runner": "scripts/alignment/run_m08_promotion_index_k8s.py",
+      "result": "PASS"
+    }
+  },
+  "source_sha256": {
+    "contracts/alignment/m08-promotion-gate.v1.json": "bd72e00a28fe838faea81d4abfd1288b0f53174c7b0efd69c8075022f522da4e",
+    "contracts/alignment/m08-promotion-manifest.schema.json": "d977d6f0810c92ad15689b1e73635184863db49c85db894aab53135d4497b658",
+    "contracts/alignment/m08-release-pointer.schema.json": "0cbf9dfc40e71d9954f18b9a8db9502c00252662389c8c5fba9fce028f00cf2f",
+    "contracts/releases/topic1/t1-m08-release-pointer.json": "d36452a130ce8c3ef6786653ce409831ac3ff81a867f93784770233ce3d29260",
+    "scripts/alignment/evaluate_m08_promotion.py": "c720a11f8aa08f6c6e6d3a5de95382999a87a8a82f1eee6a9d2197b8237d18df",
+    "scripts/alignment/validate_m08_promotion_artifacts.py": "4c064440ffb2073aa4121b8bca8f733e50d1465f6e285bdb75f5fb0eb0524f7e",
+    "scripts/alignment/run_m08_promotion_index_k8s.py": "d8b3c542b3c2005520279e83eb76ff7cbcd0845bfb4be0bc1eb30aee5da00d7f",
+    "tests/alignment/test_m08_promotion.py": "56737131bfa4c858f7ed67d4dc56704c948ddcfd2bbb0101c60b5cb64623c133",
+    "doc/02_acceptance/topic1/work-orders/t1-m08-p038-idx-n018-s1/promotion-input.json": "0ce144937fba2757997fd1ab06b9dc5109ee30506a790161dd141ba1cd442c40",
+    "doc/02_acceptance/topic1/work-orders/t1-m08-p038-idx-n018-s1/current-index.json": "1bdd15374b6112ccb1023b47c82459de8c7c5ea9c9e178ab94f0f2a3d0d9428c"
+  },
+  "cleanup": {
+    "job_deleted": true,
+    "configmap_deleted": true,
+    "pod_deleted": true,
+    "absence_verified": true,
+    "shared_services_unchanged": true
+  },
+  "not_executed": [
+    "production candidate freeze",
+    "shared data-plane training and evaluation",
+    "same-run production model update and consumer ACK",
+    "production shadow observation window",
+    "tenant canary",
+    "production feedback and drift loop",
+    "production rollback rehearsal",
+    "CNAS evaluation or attestation"
+  ],
+  "limitations": [
+    "N018 indexes immutable existing evidence and computes a gate; it does not create missing runtime evidence.",
+    "The K8s Job validates the evidence files and schemas in isolation and does not prove any shared service path.",
+    "The NO_GO pointer is the required result for the current evidence state and is not a completed M08 promotion."
+  ],
+  "errors": []
+}

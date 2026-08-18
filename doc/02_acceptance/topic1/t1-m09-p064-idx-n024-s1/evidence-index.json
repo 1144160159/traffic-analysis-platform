@@ -1,0 +1,164 @@
+{
+  "accountable_task": "T1-M09-N024",
+  "artifact_kind": "M09_EVIDENCE_INDEX",
+  "assembly_id": "ac11577a22b436c337bd045a22a6b5a74ee52b75a772af0244f3453c5abfea32",
+  "atomic_pr_id": "T1-M09-P064-IDX-n024-s1",
+  "blocking_codes": [
+    "SAME_CANDIDATE_MANIFEST_REQUIRED",
+    "WINDOWS_CHROME_SEVEN_JOURNEYS_REQUIRED",
+    "CROSS_STORAGE_TRACE_FINAL_EFFECT_REQUIRED",
+    "PRODUCTION_APPLIED_REQUIRED"
+  ],
+  "bom": {
+    "path": "contracts/alignment/m09-integrated-bom.v1.json",
+    "sha256": "91bac6e61e436276b0108764e49827670061340731b8bfa01cbd9cc57e058e2b"
+  },
+  "candidate_id": null,
+  "closure": {
+    "candidate_manifest_hash_count": 0,
+    "complete_cross_storage_traces": 0,
+    "component_count": 23,
+    "component_evidence_exact_hash": true,
+    "dependency_edges_closed": true,
+    "production_applied": false,
+    "same_candidate_manifest": false,
+    "verified_windows_journeys": 0
+  },
+  "component_evidence": [
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n001/k8s-product-contract-latest.json",
+      "sha256": "8d515ad82f50356e7f72ce7ef8012a5e1e009c85122863582fdadb634b3570d1",
+      "task_id": "T1-M09-N001"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n002/k8s-encrypted-stats-seam-latest.json",
+      "sha256": "f7dfa062351dd776bcd47f89af2aec8b84d5ca5d4c83113d7040d3fa9741d8c3",
+      "task_id": "T1-M09-N002"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n003/k8s-system-handler-composition-latest.json",
+      "sha256": "897523be8d1f4a3dec206645f803f1e64df01341158c92257fb9a34adf08476c",
+      "task_id": "T1-M09-N003"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n004/k8s-encrypted-typed-client-latest.json",
+      "sha256": "80a1dcbf36389b4f499d600d7c35f65d309246e0cd214ad8652c7cbc0fb96d14",
+      "task_id": "T1-M09-N004"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n005/k8s-encrypted-adapter-plan-latest.json",
+      "sha256": "1088ddd2b7b9baebbbe0e4cd4a0905496598a8af0f3deb10f52ca0de392708f8",
+      "task_id": "T1-M09-N005"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n006/k8s-alert-snapshot-repository-latest.json",
+      "sha256": "edc5e1e4b57ba13cc6763607d523540e424840752925e94dc1dfc16a2e01c008",
+      "task_id": "T1-M09-N006"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n007/k8s-encrypted-snapshot-latest.json",
+      "sha256": "e40ef5cfdfbfab2b758c9a4ee124f9f08641c2376d2b0190203d9401c31697a5",
+      "task_id": "T1-M09-N007"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n008/k8s-encrypted-snapshot-ui-latest.json",
+      "sha256": "efc5e0cb93a0db92fc50d699e7cd7848845397072eef4340f0d49f2242a72b00",
+      "task_id": "T1-M09-N008"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n009/k8s-forensics-task-command-latest.json",
+      "sha256": "36f23bdcc7825f145d61980b7c42613ed390c68b5cca42823865bb26d48ae557",
+      "task_id": "T1-M09-N009"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n010/k8s-forensics-worker-latest.json",
+      "sha256": "1a775b2e3f839a3084754f299c0ec94ef407e88df4131d997d4324c6517586a9",
+      "task_id": "T1-M09-N010"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n011/k8s-forensics-workbench-latest.json",
+      "sha256": "c5e6df81e688ee6eeeb8e05f0ebbbbebf358b5b4a50757c6dcbadfa637c33b81",
+      "task_id": "T1-M09-N011"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n012/k8s-alert-evidence-link-pipeline-latest.json",
+      "sha256": "4b723b9b9a9485b76eb482b1c9f5fe0c15bab3afe36c386e43cef8dbde6defdc",
+      "task_id": "T1-M09-N012"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n013/k8s-attack-chain-snapshot-ui-latest.json",
+      "sha256": "ad268b6933f278550ebb02f79c546437ee3b2ee299c975c7bd765ad40852a1b0",
+      "task_id": "T1-M09-N013"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n014/k8s-graph-workbench-governance-latest.json",
+      "sha256": "53828f3d785b7dd947b9889c2742d6ab940340bda8e964a9a7922d75c1868f26",
+      "task_id": "T1-M09-N014"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n015/k8s-opensearch-cursor-latest.json",
+      "sha256": "4d6968b15d582e762502663e0e0a1992cf4bcb0281df2d01a01eca60694f5b9d",
+      "task_id": "T1-M09-N015"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n016/k8s-alert-report-latest.json",
+      "sha256": "5a162fa21c8b25f79ad139a1ef1e0c7529cf50bd36d328fe82caa60ca01b2c53",
+      "task_id": "T1-M09-N016"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n017/k8s-model-feedback-latest.json",
+      "sha256": "7548ac8c848f193db66e91ae21fc698a8503f692ea83a00a0deaa5aea14869e8",
+      "task_id": "T1-M09-N017"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n018/k8s-whitelist-governance-latest.json",
+      "sha256": "5308a8a778b984fa178534bb2ebe1476052c58c8fa99a535498b6c3b6dcfb2a6",
+      "task_id": "T1-M09-N018"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n019/k8s-rule-model-review-latest.json",
+      "sha256": "2ca52813384832bf48c549b482cb9efae832922e66c9f6eff8b52ac5111f23e0",
+      "task_id": "T1-M09-N019"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n020/k8s-response-handoff-latest.json",
+      "sha256": "eec3349bb284650d91f2a0fc6526a2f67b8362b4bfd070f347c1efa02b2cf22f",
+      "task_id": "T1-M09-N020"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n021/k8s-page-state-accessibility-latest.json",
+      "sha256": "0c63756635826e704da3a7fdbfc5e09dbc190dc9c0a77d3394fe8095a7538676",
+      "task_id": "T1-M09-N021"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n022/k8s-css-refactor-latest.json",
+      "sha256": "d37243a0f2b45f91fdbe269d84d0db3f4df324183b22101967ddb8c35e582d01",
+      "task_id": "T1-M09-N022"
+    },
+    {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n023/k8s-journey-evidence-latest.json",
+      "sha256": "fb9758c9f83efc67e80567a4b19208d914473ed301477626d7539ce2b3b62f25",
+      "task_id": "T1-M09-N023"
+    }
+  ],
+  "does_not_prove": [
+    "new runtime evidence",
+    "one same-candidate M09 end-to-end journey",
+    "designated Windows Chrome acceptance",
+    "authorization to promote M09",
+    "M09 or project completion"
+  ],
+  "engineering_status": "PASS",
+  "environment_id": "existing-k8s-run-scoped-mixed-candidates",
+  "journey_input": {
+    "path": "doc/02_acceptance/topic1/tasks/t1-m09-n023/journey-evidence-input.json",
+    "sha256": "a58326b85845dedf919f1b10595085c12c0bf73d5076ff34a730cb1921fa09cc"
+  },
+  "milestone_id": "T1-M09",
+  "production_applied": false,
+  "profile_id": "M09_K8S_COMPONENT_EVIDENCE_INDEX_V1",
+  "promotion_allowed": false,
+  "promotion_status": "BLOCKED",
+  "schema_version": 1,
+  "status": "ASSEMBLED"
+}

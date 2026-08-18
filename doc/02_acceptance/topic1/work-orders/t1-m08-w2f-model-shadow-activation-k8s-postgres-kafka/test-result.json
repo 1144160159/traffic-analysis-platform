@@ -1,0 +1,119 @@
+{
+  "artifact_kind": "M08_MODEL_SHADOW_ACTIVATION_K8S_POSTGRES_KAFKA_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": ["T1-M08-N010", "T1-M08-N011"],
+  "milestone_state": "IMPLEMENTING",
+  "task_state": "CODE_AND_ISOLATED_COMPONENT_PASS_NOT_PRODUCTION_ACTIVATED",
+  "status": "PASS",
+  "executed_at": "2026-08-15T04:48:31Z",
+  "environment": {
+    "infrastructure": "kubernetes",
+    "namespace": "flink",
+    "postgres_pod": "m08-n010-shadow-pg-20260815-1247",
+    "postgres_node": "8-2tb",
+    "postgres_image": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "kafka_pod": "m08-n010-shadow-kafka-20260815-1247",
+    "kafka_node": "zeus-server",
+    "kafka_image": "docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a",
+    "topic": "m08-n010-shadow-model-updates-20260815-1247h",
+    "production_applied": false,
+    "shared_postgres_touched": false,
+    "shared_kafka_touched": false,
+    "temporary_resources_removed": true
+  },
+  "source_sha256": {
+    "model_shadow_activation.go": "e3e4e8e98232b00b505492973429f7d05186fb4c9bb72978ed612bf444a0fe2c",
+    "model_shadow_activation_test.go": "f90bdb3eb963411ab99ad081bd2a80f511433f51a3bdff0153de6ab9f85c316e",
+    "model_service.go": "2f9f355129fbcea95e542f0535ef311add35c9ba5f1e7443f8bcc88328dc029c",
+    "handler_models.go": "96ac03fd66c281be37fc6d240fca06cec1acdb6020eeb2abd343d75e069beb97",
+    "config.go": "f2673fd9170dab79996b20639d2983bf2869592513e71177a27a373a50f3b1b4",
+    "main.go": "754cb668a207e75701e8f261e95db1b01645a829603a4e58ee706a47d06b386c",
+    "register_model.py": "0cba5b0573f5e89a39259ab87358d0c0ed2ebffcd74b9166f4948279224dcb9c",
+    "test_governed_model_registration.py": "f88272160f731f50c535e7e957079bb0febc2b68b9f6b5f26a729d00435ffb57",
+    "model-shadow-activation.schema.json": "9bb5d736b511f49f67bae6df34677e19d7d0847ea87e78ab56bf09873912b390",
+    "kafka-json-events-v1.schema.json": "d321ee9e050e03d53f0e834470c343c8bee79a98a2c16b0aa5a7fd527469374e",
+    "03-models-deploy.sql": "44f605cf03a6cead6db742575adedfbbb9166c587bf08ea5d32952a0592eeb83",
+    "postgres_merged.sql": "4b6ed22c701690ab3a69a6acf72cebd0584922bcf5dd83d3ba83d1663631411e",
+    "02-postgres-schema.yaml": "0ea066dc1426c3e68c06f714e10749f8292b05e99c3103e63735cdf53704d179",
+    "go-services.yaml": "785e567b870f0560d4fb7ad5b339c76a0c8b16dd73a562654042924bf9b6e9a9"
+  },
+  "writer_contract": {
+    "endpoint": "POST /api/v1/models/{id}/versions/{version}/shadow-activation",
+    "status_endpoint": "GET /api/v1/models/{id}/versions/{version}/shadow-activation/{request_id}",
+    "governance_version": "model-shadow-activation.v1",
+    "event_schema_version": 2,
+    "event_action": "shadow-load",
+    "idempotency_key_required": true,
+    "expected_revision_required": true,
+    "model_level_aggregate_revision": true,
+    "independent_approver_required": true,
+    "exact_non_expired_consumer_ready_receipt_required": true,
+    "metadata_hash_and_runtime_compatibility_required": true,
+    "model_status_changed": false,
+    "champion_changed": false,
+    "serving_activated": false,
+    "legacy_direct_activation_blocked_for_governed_packages": true
+  },
+  "default_off_contract": {
+    "MODEL_SHADOW_ACTIVATION_V1_ENABLED": false,
+    "MODEL_SHADOW_PUBLISHER_V1_ENABLED": false,
+    "writer_and_publisher_authority_separated": true,
+    "server_side_manifest_dry_run": "PASS"
+  },
+  "postgres_transaction_matrix": {
+    "registered_candidate_and_active_champion_unchanged": "PASS",
+    "schema_v2_outbox_and_command_and_audit_atomic": "PASS",
+    "same_key_same_request_returns_same_request_and_event": "PASS",
+    "same_key_different_request_rejected": "PASS",
+    "stale_expected_revision_rejected": "PASS",
+    "self_approval_rejected": "PASS",
+    "expired_consumer_ready_receipt_rejected": "PASS",
+    "audit_failure_rolls_back_outbox_command_and_revision": "PASS",
+    "shadow_ack_failure_reported_without_serving_claim": "PASS",
+    "publisher_disabled_does_not_claim_shadow_outbox": "PASS"
+  },
+  "kafka_publication_matrix": {
+    "production_like_precreated_topic_required": true,
+    "missing_topic_negative_result": "Unknown Topic Or Partition; outbox returned to pending with retry delay",
+    "project_kafka_publisher_used": true,
+    "broker_ack_required_before_published": true,
+    "outbox_status_after_ack": "published",
+    "record_read_back_from_broker": true,
+    "partition_key_equals_model_id": true,
+    "event_id_header_matches_payload_and_outbox": true,
+    "schema_version": 2,
+    "action": "shadow-load",
+    "aggregate_revision": 1,
+    "result": "PASS"
+  },
+  "ddl_validation": {
+    "kubernetes_init_surface": "POSTGRES_PARSE_PASS",
+    "common_sql_surface": "POSTGRES_PARSE_PASS",
+    "docker_merged_surface": "POSTGRES_PARSE_PASS",
+    "validated_in_isolated_kubernetes_postgres": true
+  },
+  "tests": {
+    "go_packages": [
+      "./internal/rules/service",
+      "./internal/rules/api",
+      "./internal/rules/config",
+      "./cmd/rule-manager"
+    ],
+    "python_test_file": "mlops/scripts/test_governed_model_registration.py",
+    "python_tests_passed": 7,
+    "real_component_test": "TestPrepareModelShadowActivationPostgresAtomicContract",
+    "real_component_result": "PASS"
+  },
+  "dependency_evidence": {
+    "n011_consumer_canary": "doc/02_acceptance/topic1/work-orders/t1-m08-w2e-model-consumer-shadow-k8s-canary/test-result.json",
+    "n011_exact_four_subtask_shadow_ready": true,
+    "same_run_n010_event_to_n011_shadow_ack": false,
+    "composition_note": "N010 real PostgreSQL plus broker publication and N011 real four-subtask shadow loading are independently PASS; a single-run production-profile activation remains default-off."
+  },
+  "remaining_blocks": [
+    "both production switches remain false",
+    "the formal consumer profile secret and production deployment are not activated by this run",
+    "the N010-published event and N011 shadow ACK were not exercised in one shared end-to-end run",
+    "known evaluation still has unknown recall 0.0, so canary or serving promotion remains NO-GO"
+  ]
+}

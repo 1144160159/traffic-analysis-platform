@@ -1,0 +1,27 @@
+{
+  "artifact_kind": "FUNCTION_ROLLBACK_PLAN",
+  "schema_version": "1.0.0",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "trigger": [
+    "same-key replay produces a second durable effect",
+    "tenant or authorization negative reaches PostgreSQL",
+    "revision CAS overwrites a newer row",
+    "history, audit, outbox or ledger is outside the authority transaction",
+    "unknown commit is surfaced as a definitive failure",
+    "asset event reaches a noncanonical topic"
+  ],
+  "steps": [
+    "stop the new intake path or keep it default-off; do not delete authority rows",
+    "restore the prior compatible function implementation at the authorized AST nodes only",
+    "retain and reconcile any committed asset, history, audit, outbox and ledger rows by tenant and idempotency identity",
+    "replay pending outbox rows only through the canonical asset.events.v2 publisher",
+    "rerun tenant, idempotency, CAS, crash-matrix and broker-ACK oracles on the same candidate/profile/environment"
+  ],
+  "irreversible_boundary": "PostgreSQL commit; after this point use same-key receipt recovery and reconciliation, not destructive rollback",
+  "success_oracles": [
+    "no authority row, audit fact or immutable evidence is deleted",
+    "prior compatible path passes all required negative and reconciliation checks",
+    "pending and published outbox states agree with real broker ACK outcomes"
+  ],
+  "proof_ceiling": "ROLLBACK_PLAN_ONLY_NOT_ROLLBACK_REHEARSAL"
+}

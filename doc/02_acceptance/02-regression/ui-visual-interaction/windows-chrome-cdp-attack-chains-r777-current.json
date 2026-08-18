@@ -1,0 +1,93 @@
+{
+  "run_id": "attack-chains-r777-current",
+  "generated_at": "2026-07-26T06:32:19.272Z",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224 -> 9222",
+  "browser": "Chrome/150.0.7871.182",
+  "route": "/attack-chains",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "screenshot": "evidence/ui-image-breakdowns/pages/attack-chains/implementation-r777-current.png",
+  "counts": {
+    "shell": 1,
+    "toolbar": 1,
+    "canvas": 1,
+    "phaseColumns": 0,
+    "evidenceRows": 0,
+    "recommendationRows": 0,
+    "matrixItems": 0,
+    "pathRows": 1
+  },
+  "geometry": {
+    "canvas": {
+      "x": 183.33334350585938,
+      "y": 233.33334350585938,
+      "width": 1171.3334045410156,
+      "height": 520.0000305175781
+    },
+    "rail": {
+      "x": 1363.3333740234375,
+      "y": 196.6666717529297,
+      "width": 528,
+      "height": 812.0000152587891
+    }
+  },
+  "document": {
+    "width": 1920,
+    "height": 1080
+  },
+  "errors": {
+    "responses": [],
+    "console": [],
+    "page": [],
+    "requests": []
+  },
+  "checks": [
+    {
+      "name": "Windows Chrome viewport is 1920x1080",
+      "passed": true
+    },
+    {
+      "name": "attack-chain business title is visible",
+      "passed": true
+    },
+    {
+      "name": "attack-chain canvas is visible",
+      "passed": true
+    },
+    {
+      "name": "right evidence and response rail is visible",
+      "passed": true
+    },
+    {
+      "name": "phase nodes are API driven and present",
+      "passed": false
+    },
+    {
+      "name": "evidence anchors are present",
+      "passed": false
+    },
+    {
+      "name": "response recommendations are present",
+      "passed": false
+    },
+    {
+      "name": "ATT&CK matrix follows phase count",
+      "passed": true
+    },
+    {
+      "name": "path detail rows are present",
+      "passed": true
+    },
+    {
+      "name": "no horizontal browser overflow",
+      "passed": true
+    },
+    {
+      "name": "no runtime errors",
+      "passed": true
+    }
+  ],
+  "result": "fail"
+}

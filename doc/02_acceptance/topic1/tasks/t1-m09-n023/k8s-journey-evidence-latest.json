@@ -1,0 +1,59 @@
+{
+  "artifact_kind": "M09_WINDOWS_JOURNEY_EVIDENCE_AGGREGATION_RESULT",
+  "coverage_status": "PARTIAL",
+  "does_not_prove": [
+    "designated Windows Chrome journey acceptance",
+    "production rollout",
+    "cross-storage final facts absent from a verified journey receipt",
+    "authorization to promote M09",
+    "global milestone completion"
+  ],
+  "inputs": {
+    "candidate_image": "traffic/m09-journey-evidence-test:m09-n023-20260816-r1",
+    "source_sha256": {
+      "contracts/alignment/m09-journey-evidence.v1.json": "794ac4b8f68ec803573180f067fa5de5cd3642e28e9fe1afeea7b2ebb29ccffd",
+      "doc/02_acceptance/topic1/tasks/t1-m09-n023/journey-evidence-input.json": "a58326b85845dedf919f1b10595085c12c0bf73d5076ff34a730cb1921fa09cc",
+      "scripts/alignment/Dockerfile.m09-journey-evidence": "77e2cbd31612f7d713d779a0a3a2f40b454ca1f589fc3ac80ed6647816aee6e1",
+      "scripts/alignment/run_m09_journey_evidence_k8s.py": "0ca328b1980eedd0db23571657b14140716a7318a189ae9d8b6c23f8cc522adb",
+      "scripts/alignment/verify_m09_journey_evidence.py": "df5dabd613a1b87fa099ecda81b3137a3f906c1a09e618a2f8a22a390cadce8a"
+    }
+  },
+  "kubernetes_job": {
+    "completed_at": "2026-08-15T23:06:39Z",
+    "container_id": "containerd://cb5f966f1c75bad7d7bcef3418f94a9756c8c311594cc1fc736f0615498f1c66",
+    "image": "docker.io/traffic/m09-journey-evidence-test:m09-n023-20260816-r1",
+    "image_id": "sha256:472cc54139e0046eead8e9d3d62876291a89a0fa376a1ac993f41ab5765e693e",
+    "job_name": "m09-n023-journeys-7062f88ba1",
+    "job_uid": "ef2e3abc-cb43-47b3-80bc-01028faeefc3",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m09-n023-journeys-7062f88ba1-6vwm5",
+    "pod_uid": "d6e2a4cf-665a-4aa2-a950-9b5e03ce82b8",
+    "started_at": "2026-08-15T23:06:36Z"
+  },
+  "production_applied": false,
+  "profile_id": "M09-N023-K8S-READONLY-EVIDENCE-AGGREGATOR-V1",
+  "run_id": "7062f88b-a1a2-471d-ad0d-6f586da7a21f",
+  "run_scoped_resources_removed": true,
+  "shared_clickhouse_touched": false,
+  "shared_kafka_touched": false,
+  "shared_minio_touched": false,
+  "shared_nebulagraph_touched": false,
+  "shared_postgres_touched": false,
+  "status": "PASS",
+  "task_id": "T1-M09-N023",
+  "validation": {
+    "blocked_journey_count": 7,
+    "blockers": [
+      "designated Windows Chrome evidence has not been captured"
+    ],
+    "coverage_status": "PARTIAL",
+    "errors": [],
+    "journey_count": 7,
+    "production_applied": false,
+    "promotion_eligible": false,
+    "status": "PASS",
+    "task_id": "T1-M09-N023",
+    "verified_journey_count": 0
+  }
+}

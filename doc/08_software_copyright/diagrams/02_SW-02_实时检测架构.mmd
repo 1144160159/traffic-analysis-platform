@@ -1,0 +1,60 @@
+flowchart LR
+  Flow["Kafka flow.events.v1"]:::external
+  Device["Kafka device.logs.v1"]:::external
+  User["Kafka user.events.v1"]:::external
+  RuleUpdate["Kafka rule.updates"]:::external
+  ModelUpdate["Kafka model-updates"]:::external
+  ModelStore[("MinIO 已发布模型")]:::external
+  subgraph SW02["SW-02 实时会话特征与威胁检测引擎软件"]
+    Session["Session Job<br/>会话窗口 / 迟到处理"]:::own
+    Feature["Feature Job<br/>统计 / 时序 / 协议特征"]:::own
+    Rule["Rule Job<br/>广播规则 / 条件匹配"]:::own
+    Behavior["Behavior Job<br/>模型加载 / 推理 / ACK"]:::own
+    Alert["Alert Generator Job<br/>去重 / 告警与证据"]:::own
+    CEP["CEP Job<br/>阶段 / 战役关联"]:::own
+    Log["Log Job<br/>设备日志处理"]:::own
+    UserJob["User Behavior Job<br/>用户行为异常"]:::own
+    Common["手写flink-common<br/>配置 / 序列化 / 确定性ID"]:::own
+  end
+  SessionOut["Kafka session.events.v1"]:::external
+  FeatureOut["Kafka feature.stat.v1"]:::external
+  Detection["Kafka detections.*"]:::external
+  AlertOut["Kafka alerts.v1"]:::external
+  Campaign["Kafka campaigns.v1"]:::external
+  CH[("ClickHouse 分析事实")]:::external
+  OS[("OpenSearch 搜索投影")]:::external
+  Checkpoint[("MinIO checkpoint/savepoint")]:::external
+  Proto["共享Protobuf Java类"]:::shared
+  Flink["Apache Flink / RocksDB"]:::shared
+
+  Flow --> Session --> SessionOut --> Feature --> FeatureOut
+  FeatureOut --> Rule --> Detection
+  FeatureOut --> Behavior --> Detection
+  RuleUpdate --> Rule
+  ModelUpdate --> Behavior
+  ModelStore --> Behavior
+  Detection --> Alert --> AlertOut --> CEP --> Campaign
+  Device --> Log --> OS
+  User --> UserJob --> AlertOut
+  Session --> CH
+  Feature --> CH
+  Rule --> CH
+  Behavior --> CH
+  Alert --> CH
+  CEP --> CH
+  Common -.-> Session
+  Common -.-> Feature
+  Common -.-> Rule
+  Common -.-> Behavior
+  Common -.-> Alert
+  Common -.-> CEP
+  Common -.-> Log
+  Common -.-> UserJob
+  Proto -.-> Common
+  Flink -.-> Common
+  Flink -.-> Checkpoint
+
+  classDef own fill:#dbeafe,stroke:#2563eb,color:#172554;
+  classDef external fill:#f3f4f6,stroke:#6b7280,color:#111827;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;
+

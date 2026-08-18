@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "LOCATOR_RESOLUTION_RECEIPT",
+  "status": "RESOLVED",
+  "proof_level": "LANGUAGE_AST",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+    "manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d"
+  },
+  "resolver": {
+    "resolver_id": "traffic-go-ast-locator@1",
+    "engine": "go/parser",
+    "engine_version": "go1.24.12",
+    "source_path": "scripts/alignment/go_ast_locator/main.go",
+    "source_sha256": "42882f0ac3b9b06d78c2842ce7ee5ed83e657fa66dfea3c1a6cdced6c2304b3d"
+  },
+  "locator": {
+    "locator_id": "LOC-T1-M06-CALLEE-jsonObject",
+    "language": "go",
+    "path": "go/control-plane/internal/asset/repository/postgres.go",
+    "package": "repository",
+    "qualified_symbol": "repository.jsonObject",
+    "declaration_kind": "FUNCTION",
+    "query": "jsonObject",
+    "match_strategy": "EXACT_RECEIVER_QUALIFIED_OR_PACKAGE_FUNCTION",
+    "signature": "func jsonObject(value map[string]any) []byte",
+    "candidate_blob_sha256": "601170dcb15aa94f0cab70788dd1d6294460952fa725ceea45824011bba564ea",
+    "source_span_sha256": "d0153fd0433272c75eedf1572025439de73faaa51892fba32e4a37f310165a27",
+    "normalized_ast_sha256": "d0153fd0433272c75eedf1572025439de73faaa51892fba32e4a37f310165a27",
+    "start": {
+      "byte_offset": 15914,
+      "line": 398,
+      "column": 1
+    },
+    "end": {
+      "byte_offset": 16104,
+      "line": 407,
+      "column": 2
+    },
+    "calls": [
+      {
+        "expression": "len",
+        "line": 399
+      },
+      {
+        "expression": "[]byte",
+        "line": 400
+      },
+      {
+        "expression": "json.Marshal",
+        "line": 402
+      },
+      {
+        "expression": "[]byte",
+        "line": 404
+      }
+    ]
+  },
+  "ambiguity_count": 1,
+  "resolved_at": "2026-08-12T04:00:00Z",
+  "proof_ceiling": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"
+}

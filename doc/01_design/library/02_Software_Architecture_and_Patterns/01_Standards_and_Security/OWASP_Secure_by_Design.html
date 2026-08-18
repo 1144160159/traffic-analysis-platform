@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+
+
+
+
+<meta name="description" content="The OWASP Secure-by-Design Framework provides practical guidance to embed security into software architecture from the start—long before code is written.">
+<meta property="og:description" content="The OWASP Secure-by-Design Framework provides practical guidance to embed security into software architecture from the start—long before code is written.">
+<meta property="og:title" content="OWASP Secure by Design Framework | OWASP Foundation">
+<meta property="og:url" content="https://owasp.org/www-project-secure-by-design-framework/">
+<meta property="og:locale" content="en_US">
+
+<!-- should probably look at using article at some point for www-community at least -->
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://owasp.org/www--site-theme/favicon.ico" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-XSS-Protection" content="1; mode=block">
+
+
+<link rel="canonical" href="https://owasp.org/www-project-secure-by-design-framework/" />
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-4531126-1"></script> -->
+<!-- <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-4531126-1');
+</script> -->
+<!-- Google Analytics -->
+
+
+<script src="https://owasp.org/www--site-theme/assets/js/js.cookie.min.js"></script>
+<script>
+  if(Cookies.get('cookies-ok') == 'true' && window.ga === undefined)
+  {
+    window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+    ga('create', 'UA-4531126-1', 'auto');
+    ga('send', 'pageview');
+  }
+  else if (Cookies.get('cookies-ok') == 'true')
+  {
+    ga('send', 'pageview');
+  }
+
+  function handleOutboundLinkClicks(event) {
+    var href = '';
+    if(event.target.href == undefined)
+      href = event.target.parentElement.href;
+    else
+      href = event.target.href
+  if(Cookies.get('cookies-ok') == 'true'){  
+    
+    ga('send', 'event', {
+      eventCategory: 'Outbound Link',
+      eventAction: 'click',
+      eventLabel: href,
+      transport: 'beacon'
+    });
+  }
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+<!-- End Google Analytics -->
+<link rel="stylesheet" href="https://owasp.org/www--site-theme/assets/css/styles.css">
+<link rel="shortcut icon" type="images/x-icon" href="https://owasp.org/www--site-theme/favicon.ico">
+
+<script src="https://owasp.org/www--site-theme/assets/js/jquery-3.7.1.min.js"></script>
+<script src="https://owasp.org/www--site-theme/assets/js/util.js"></script>
+<script src="https://owasp.org/www--site-theme/assets/js/yaml.min.js"></script>
+<script src="https://owasp.org/www--site-theme/assets/js/kjua.min.js"></script>
+<title>OWASP Secure by Design Framework | OWASP Foundation</title>
+
+    <link rel="stylesheet" href="/www-project-secure-by-design-framework/assets/css/mxgraph-responsive.css">
+    <script type="text/javascript">
+      $(function(){
+        var baseurl = "https://github.com/OWASP/www-project-secure-by-design-framework/blob/master/";
+        var path = "index.md";
+        $('.repo').html('<a href=' + baseurl + path + '><div class="reset-3c756112--menuItemIcon-206eb252" style="float: left;"><svg preserveAspectRatio="xMidYMid meet" height="1em" width="1em" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 438.549 438.549" stroke="none" class="icon-7f6730be--text-3f89f380"><g><path d="M409.132 114.573c-19.608-33.596-46.205-60.194-79.798-79.8-33.598-19.607-70.277-29.408-110.063-29.408-39.781 0-76.472 9.804-110.063 29.408-33.596 19.605-60.192 46.204-79.8 79.8C9.803 148.168 0 184.854 0 224.63c0 47.78 13.94 90.745 41.827 128.906 27.884 38.164 63.906 64.572 108.063 79.227 5.14.954 8.945.283 11.419-1.996 2.475-2.282 3.711-5.14 3.711-8.562 0-.571-.049-5.708-.144-15.417a2549.81 2549.81 0 0 1-.144-25.406l-6.567 1.136c-4.187.767-9.469 1.092-15.846 1-6.374-.089-12.991-.757-19.842-1.999-6.854-1.231-13.229-4.086-19.13-8.559-5.898-4.473-10.085-10.328-12.56-17.556l-2.855-6.57c-1.903-4.374-4.899-9.233-8.992-14.559-4.093-5.331-8.232-8.945-12.419-10.848l-1.999-1.431c-1.332-.951-2.568-2.098-3.711-3.429-1.142-1.331-1.997-2.663-2.568-3.997-.572-1.335-.098-2.43 1.427-3.289 1.525-.859 4.281-1.276 8.28-1.276l5.708.853c3.807.763 8.516 3.042 14.133 6.851 5.614 3.806 10.229 8.754 13.846 14.842 4.38 7.806 9.657 13.754 15.846 17.847 6.184 4.093 12.419 6.136 18.699 6.136 6.28 0 11.704-.476 16.274-1.423 4.565-.952 8.848-2.383 12.847-4.285 1.713-12.758 6.377-22.559 13.988-29.41-10.848-1.14-20.601-2.857-29.264-5.14-8.658-2.286-17.605-5.996-26.835-11.14-9.235-5.137-16.896-11.516-22.985-19.126-6.09-7.614-11.088-17.61-14.987-29.979-3.901-12.374-5.852-26.648-5.852-42.826 0-23.035 7.52-42.637 22.557-58.817-7.044-17.318-6.379-36.732 1.997-58.24 5.52-1.715 13.706-.428 24.554 3.853 10.85 4.283 18.794 7.952 23.84 10.994 5.046 3.041 9.089 5.618 12.135 7.708 17.705-4.947 35.976-7.421 54.818-7.421s37.117 2.474 54.823 7.421l10.849-6.849c7.419-4.57 16.18-8.758 26.262-12.565 10.088-3.805 17.802-4.853 23.134-3.138 8.562 21.509 9.325 40.922 2.279 58.24 15.036 16.18 22.559 35.787 22.559 58.817 0 16.178-1.958 30.497-5.853 42.966-3.9 12.471-8.941 22.457-15.125 29.979-6.191 7.521-13.901 13.85-23.131 18.986-9.232 5.14-18.182 8.85-26.84 11.136-8.662 2.286-18.415 4.004-29.263 5.146 9.894 8.562 14.842 22.077 14.842 40.539v60.237c0 3.422 1.19 6.279 3.572 8.562 2.379 2.279 6.136 2.95 11.276 1.995 44.163-14.653 80.185-41.062 108.068-79.226 27.88-38.161 41.825-81.126 41.825-128.906-.01-39.771-9.818-76.454-29.414-110.049z"></path></g></svg><span style="padding-left:8px;">Edit on GitHub</span></div></a>');
+      });
+    </script>
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script src="/www-project-secure-by-design-framework/assets/js/mxgraph-responsive.js" defer></script>
+  </head>
+  <body class="base-grid col-sidebar">
+
+    <div id="blocker"></div>
+
+    <noscript>For full functionality of this site it is necessary to enable JavaScript. Here are the <a href="http://turnonjs.com/"> instructions how to enable JavaScript in your web browser</a>.</noscript>
+    <header role="banner">
+  <div id="banner" class="notice" aria-label="announcement">
+</div>
+
+
+
+
+<style>
+  #banner img {
+    max-width: 30em;
+  }
+
+  @media (max-width: 1131px) {
+    #banner img {
+      max-width: 30em;
+    }
+  }
+
+  @media (max-width: 800px) {
+    #banner img {
+      max-width: 20em;
+    }
+  }
+
+  @media (max-width: 600px) {
+    #banner img {
+      max-width: 20em;
+    }
+  }
+
+  @media (max-width: 450px) {
+    #banner img {
+      max-width: 250px;
+    }
+  }
+</style>
+
+<script type="text/javascript">
+  $(function () {
+    var bannerdata = [];
+    banneryaml = YAML.load('https://owasp.org/www-project-secure-by-design-framework/assets/sitedata/banner-data.yml');
+    $.each(banneryaml, function (index) {
+      bannerdata.push(this);
+    });
+
+    if (bannerdata.length > 0) {
+      var htmlstring = "";
+      var usebanner = null;
+      var defbanner = null;
+      var checkdate = new Date(); //local time but who cares about the time?
+      bannerdata.forEach(data => {
+        if (data.start) {
+          var start = data.start;
+
+          if (data.start <= checkdate) {
+            if (data.end) {
+
+              var end = data.end;
+              if (checkdate < end) {
+                usebanner = data;
+              }
+            }
+            else
+              usebanner = data;
+          }
+        }
+        else {
+          defbanner = data;
+        }
+      });
+
+      if (defbanner && !usebanner)
+        usebanner = defbanner;
+      if (usebanner) {
+        htmlstring = usebanner.text;
+        htmlstring += "<a href='#' id='close-banner' aria-label='close announcement' style='float:right;'><i class='fa fa-times'></i></a>";
+
+        $("#banner").html(htmlstring);
+        $("#banner").removeClass("notice");
+        $("#banner").addClass(usebanner.type);
+
+        $("#close-banner").click(function() {
+          $(this).closest("#banner").remove();
+            Cookies.set('banner-seen', 'true', { expires: 7 });
+        });
+      }
+    }
+  });
+</script>
+  <div id="popup" class="notice" aria-label="announcement">
+   
+</div>
+
+
+
+
+<style>
+  #banner img {
+    max-width: 30em;
+  }
+
+  @media (max-width: 1131px) {
+    #banner img {
+      max-width: 30em;
+    }
+  }
+
+  @media (max-width: 800px) {
+    #banner img {
+      max-width: 20em;
+    }
+    #popup {
+      visibility: hidden;
+    }
+  }
+
+  @media (max-width: 600px) {
+    #popup {
+      visibility: hidden;
+    }
+    #banner img {
+      max-width: 20em;
+    }
+  }
+
+  @media (max-width: 450px) {
+    #banner img {
+      max-width: 250px;
+    }
+    #popup {
+      visibility: hidden;
+    }
+  }
+</style>
+
+<script type="text/javascript">
+  $(function () {
+    var popdata = [];
+    $("#popup").hide();
+    popyaml = YAML.load('https://owasp.org/www-project-secure-by-design-framework/assets/sitedata/popup-data.yml');
+    $.each(popyaml, function (index) {
+      popdata.push(this);
+    });
+
+    if (popdata.length > 0) {
+      var htmlstring = "";
+      var usepop = null;
+      var defpop = null;
+      var checkdate = new Date(); //local time but who cares about the time?
+      popdata.forEach(data => {
+        if (data.start) {
+          var start = data.start;
+
+          if (data.start <= checkdate) {
+            if (data.end) {
+
+              var end = data.end;
+              if (checkdate < end) {
+                usepop = data;
+              }
+            }
+            else
+              usepop = data;
+          }
+        }
+        else {
+          defpop = data;
+        }
+      });
+
+      if (defpop && !usepop)
+        usepop = defpop;
+      if (usepop) {
+        htmlstring = usepop.text;
+        htmlstring += "<a href='#' id='close-popup' aria-label='close announcement' style='float:right;'><i class='fa fa-times'></i></a>";
+
+        $("#popup").html(htmlstring);
+        $("#popup").removeClass("notice");
+        $("#popup").addClass(usepop.type);
+        
+        if( Cookies.get('popup-seen')!='true')
+        {
+          $("#popup").show();
+        }
+
+        $("#close-popup").click(function() {
+          $(this).closest("#popup").remove();
+            Cookies.set('popup-seen', 'true', { expires: 7 });
+        });
+      }
+    }
+  });
+</script>
+  <div class="header-wrapper" aria-label="main navigation">
+    <nav class="alt-nav">
+      <a href="#" class="menu-toggler" aria-hidden="true">
+        <i class="fa fa-bars"></i>
+      </a>
+      <a href="https://owasp.org/" class="alt-logo" aria-label="go to homepage">
+          <img src="https://owasp.org/assets/images/logo.png" alt="OWASP logo">
+      </a>
+      <div id="overlay" class="remove-el">
+
+      </div>
+      <!-- jekyll menu stuff -->
+    </nav>
+    
+    <nav class="top-nav" role="navigation" aria-label="primary navigation">
+      <a href="https://owasp.org/" class="desktop-logo" aria-label="go to homepage">
+        <img src="https://owasp.org/assets/images/logo.png" alt="">
+      </a>
+      <!-- jekyll menu stuff -->
+      <div id="midmenu" class="top-nav"></div>
+      
+      
+
+      <div class="interactive-wrapper">                
+        <div class="nav-button" aria-label="donate to or join OWASP">
+        
+          <a href="https://owasp.org/store" class="cta-button white inset"><i class="fa fa-shopping-cart" aria-hidden="true"></i> Store</a>
+          <a href="https://owasp.org/donate?reponame=www-project-secure-by-design-framework&title=OWASP+Secure+by+Design+Framework" class="cta-button green">Donate</a>
+          <a href="https://owasp.glueup.com/organization/6727/memberships" class="cta-button">Join</a>
+        </div>
+      </div>
+    </nav>
+    <div id='disclaimer-container'>
+<div id="disclaimer">
+    <p>This website uses cookies to analyze our traffic and only share that information with our analytics partners.</p><a class="disclaimerOK">Accept</a>
+</div>
+<div id="close-disclaimer">x</div>
+</div>
+  </div>
+  <div class="mobile" style="width:100%;display: flex; justify-content: space-evenly;align-items: center;padding: 8px; background-color: #98afc7;">
+    <div><a href="https://owasp.org/store" class="cta-button white inset"><i class="fa fa-shopping-cart" aria-hidden="true"></i>Store</a></div>
+    <div><a href="https://owasp.org/donate?reponame=www-project-secure-by-design-framework&title=OWASP+Secure+by+Design+Framework" class="cta-button green">Donate</a></div>
+    <div><a href="https://owasp.glueup.com/organization/6727/memberships" class="cta-button">Join</a></div>
+  </div>
+
+
+
+<script type="text/javascript">
+  $(function(){
+      
+      url = $(location).attr('href');
+      if(url.includes('www2'))
+      {
+        url = url.replace(/www2./, '');
+        $(location).attr('href',url);
+        return;
+      }
+    // this works to get data from a json file NOT in data
+      $.getJSON("https://owasp.org/www--site-theme/assets/sitedata/menus.json", function(data) {
+         var listr = "<ul aria-label='header menu'>";
+         
+         var mlistr = "<ul class='mobile-menu hide-el' role='navigation' aria-label='mobile primary navigation'>";
+
+          mlistr += "<li><a href='#' class='menu-toggler' aria-hidden='true'><i class='fa fa-times'></i></a></li>";
+          mlistr += "<li>";
+          mlistr += "<form role='search' method='get' action='https://owasp.org/search'>";   
+          mlistr += "<div class='search-div'>";
+          mlistr += "<input id='searchString' aria-label='search input' name='searchString' class='search-bar' type='search' placeholder='Search OWASP.org' required='true'>";
+          mlistr += "<button id='search-button' aria-label='search button' type='submit' class='fa fa-search' style='padding-left: 8px;'></button></div></form>";
+          mlistr += "</li>";
+          $.each(data.menus, function (ndx, menu){
+              listr += "<li><a href='" + menu.url + "'>" + menu.title + "</a>";
+              searchitem = issearch(menu.title);
+              if(!menu.items && !searchitem)
+              {
+                  mlistr += "<li><a href='" + menu.url + "'>" + menu.title + "</a>";
+              }
+              
+              if(menu.items){
+                  listr += "<ul class='dropdown-menu'>";
+                  if(!searchitem) {
+                    mlistr += "<button class='accordion'>" + menu.title + "</button>";
+                    mlistr += "<div class='panel'>";
+                    mlistr += "<ul>";
+                  }
+                $.each(menu.items, function(ndx, item){
+                
+                  if(item.separator)
+                  {
+                      listr += "<li class='separator'>";
+                      if(!searchitem)
+                        mlistr += "<li class='separator'>";
+                  }
+                  else
+                  {
+                      listr += "<li>";
+                      if(!searchitem)
+                        mlistr += "<li>";
+                  }
+                  listr += "<a href='" + item.url + "'";
+                  if(!searchitem)
+                    mlistr += "<a href='" + item.url + "'";
+                  if(item.opentab)
+                  {
+                    listr += " target='_blank' rel='noopener noreferrer'";
+                    if(!searchitem)
+                      mlistr += " target='_blank' rel='noopener noreferrer'";
+                  }
+
+                  listr += ">" + item.title + "</a></li>";
+                  if(!searchitem)
+                    mlistr += ">" + item.title + "</a></li>";
+                });
+                listr += "</ul>";
+                if(!searchitem){
+                  mlistr += "</ul>";
+                  mlistr += "</div>";
+                }
+              }
+              
+              listr += "</li>";
+              if(!searchitem)
+                mlistr += "</li>";
+          });
+          listr += "</ul>";
+          mlistr += "<li><a href='https://owasp.org/donate'>MAKE A DONATION</a></li>";
+          mlistr += "<li><a href='https://owasp.org/membership'>BECOME A MEMBER</a></li>";
+          mlistr += "<li><a href='https://owasp.org/sitemap'>SITEMAP</a></li>";
+          mlistr += "</ul>";
+          
+          //$('.desktop-logo').after(listr);
+          $('#midmenu').html(listr);
+          $('#overlay').after(mlistr);
+
+          $(".accordion").click(function () {
+              $(this).toggleClass("active");
+              if($(this).next('.panel').css('display') == 'block'){
+                $(this).next('.panel').css('display', 'none');
+              }
+              else {
+                $(this).next('.panel').css('display', 'block');
+              }
+            });
+            $(".menu-toggler").click(function() {
+              $(".mobile-menu").toggleClass('hide-el');
+            });
+      });
+    });
+
+    function issearch(title) {
+      return title.indexOf('fa fa-search') > -1;
+    }
+  </script>
+</header>
+
+
+
+    <main role="main">
+      <div class="main-wrapper">
+        
+  
+  
+  
+  
+  
+  
+  
+
+
+<nav class="sub-nav" role="navigation" aria-label="navigate page tabs">
+  <ul role="tablist">
+      <li>
+          
+          
+          
+          <a href="#div-main" id="main-link" class="tab-link current" role="tab" aria-selected="true" aria-controls="main">Main</a>
+     </li>
+    
+      
+        <li>
+            <a href="#div-process" id="process-link" class="tab-link" role="tab" aria-selected="false" aria-controls="process">Process</a>
+        </li>
+      
+    
+      
+        <li>
+            <a href="#div-principles" id="principles-link" class="tab-link" role="tab" aria-selected="false" aria-controls="principles">Principles</a>
+        </li>
+      
+    
+      
+        <li>
+            <a href="#div-checklist" id="checklist-link" class="tab-link" role="tab" aria-selected="false" aria-controls="checklist">Checklist</a>
+        </li>
+      
+    
+      
+        <li>
+            <a href="#div-catalog" id="catalog-link" class="tab-link" role="tab" aria-selected="false" aria-controls="catalog">Catalog</a>
+        </li>
+      
+    
+      
+        <li>
+            <a href="#div-community" id="community-link" class="tab-link" role="tab" aria-selected="false" aria-controls="community">Community</a>
+        </li>
+      
+    
+  </ul>
+</nav>
+<script type='text/javascript'>
+  $(function() {
+    if(window.location.href.indexOf('#') != -1)
+     {
+        divid = window.location.href.substring(window.location.href.indexOf('#'))
+        secid = divid;
+        if(divid.indexOf('div-') >= 0)
+        {
+          $('.tab-link').each(function () {
+            divid = '#sec-' + $(this).attr('id').toLowerCase().replace('-link', '');
+            $(divid).addClass('tab-hidden'); 
+            $(this).removeClass('current');
+          });
+
+          secid = secid.replace('div-', 'sec-');
+          $(secid).removeClass('tab-hidden');
+          linkid = "#" + secid.substring(secid.indexOf('-') + 1) + "-link";
+          $(linkid).addClass('current'); 
+          
+        }
+        
+     }
+  });
+
+  $('.tab-link').click(function (e) {
+    e.preventDefault();
+    
+    $('.tab-link').each(function () {
+      $(this).removeClass('current');
+      divid = '#sec-' + $(this).attr('id').toLowerCase().replace('-link', '');
+      $(divid).addClass('tab-hidden'); 
+    });
+
+     divid = '#sec-' + $(this).attr('id').toLowerCase().replace('-link', '');
+     $(this).addClass('current');
+     $(divid).removeClass('tab-hidden');
+     return false;
+  });
+</script>
+
+
+
+
+        <h1 class="page-title">OWASP Secure by Design Framework</h1>
+        <div id="main" class="page-body tab" role="tabpanel" aria-labelledby="main-link" tabindex="0">
+          
+          <section id='sec-main' class='page-body'>
+          <p>Draft Version 0.5.0 – Initial Community Review (August 2025)</p>
+
+<h2 id="-introduction">🔹 Introduction</h2>
+
+<p>Secure-by-Design (SbD) is a foundational approach in the software development lifecycle that ensures security is engineered into applications and services from the outset, making them resilient to threats and aligned with both regulatory and organizational policies.</p>
+
+<p>This framework delivers structured, actionable guidance for embedding security during the architecture and system <strong>design phase</strong> of the SDLC—long before code is written. It closes the gap between high-level security requirements and code-level verification standards, enabling teams to design systems where security is a built-in foundation rather than an afterthought.</p>
+
+<p>By applying these practices early, you not only reduce vulnerabilities and costly rework, but also create systems that are inherently more reliable, maintainable, and easier to verify.</p>
+
+<h3 id="-scope">◽ Scope</h3>
+
+<p>This framework focuses exclusively on <strong>design-time decisions</strong>—the architectural and systemic choices that determine how security is built into a solution. It is intended for:</p>
+
+<ul>
+  <li><strong>System and product architects</strong> who own solution design</li>
+  <li><strong>Product engineers</strong> evolving architecture through agile iterations</li>
+  <li><strong>Security engineers</strong> who review or advise during design</li>
+</ul>
+
+<p>It does <strong>not</strong> cover secure coding practices (e.g., OWASP Top 10, ASVS), implementation-phase testing or scanning, or the threat-modeling methodology itself, which follows design. The guidance here is about shaping secure architecture before development begins, ensuring that implementation work starts from a secure foundation.</p>
+
+<h3 id="-project-deliverables">◽ Project Deliverables</h3>
+
+<ul>
+  <li><strong>Structured Secure-by-Design Framework</strong> – a comprehensive, principle-driven guide for design-phase security.</li>
+  <li><strong>Design-Phase Security Checklist</strong> – actionable review tool for architects and engineers to validate designs.</li>
+  <li><strong>Best-Practice Guides</strong> – covering microservices, resilience, service-to-service interactions, and security architecture patterns.</li>
+  <li><strong>Secure API &amp; Messaging Guidance</strong> – practical recommendations for HTTP, gRPC, Kafka, AMQP, and event-driven designs.</li>
+  <li><strong>Reference Implementations &amp; Real-World Examples</strong> – illustrating how principles are applied in practice.</li>
+  <li><strong>OWASP-Hosted Presentations &amp; Training Materials</strong></li>
+</ul>
+
+<h3 id="-why-this-project-matters">◽ Why This Project Matters</h3>
+
+<p>Security flaws introduced during system design are often the most costly and complex to remediate—sometimes requiring fundamental architectural changes that ripple through the entire product. By embedding <strong>Secure-by-Design</strong> practices early, we prevent these issues before they materialize, avoiding expensive rework and reducing risk exposure.</p>
+
+<p>Modern systems are increasingly distributed, API-driven, and interconnected. This complexity amplifies potential attack surfaces, dependency risks, and failure modes. Without intentional, principle-based design, security controls become inconsistent, bolt-on, and fragile—leaving gaps that can be exploited.</p>
+
+<p>This project provides a structured, repeatable, and scalable way to align architecture decisions with proven security principles. It empowers:</p>
+
+<ul>
+  <li><strong>Architects and engineers</strong> to make informed design choices with security built in.</li>
+  <li><strong>AppSec teams</strong> to engage earlier, influencing system shape rather than reacting to flaws.</li>
+  <li><strong>Organizations</strong> to meet regulatory and customer trust expectations without slowing delivery.</li>
+</ul>
+
+<p>In short, it shifts security from reactive gatekeeping to proactive enablement, making it part of the natural flow of product design and evolution.</p>
+
+<h3 id="-relationship-to-other-owasp-projects">◽ Relationship to Other OWASP Projects</h3>
+
+<p>Secure-by-Design does not exist in isolation—it is a critical link between other OWASP security practices across the entire SDLC. As shown in the diagram, the process begins in the <strong>Planning</strong> phase, where formal security requirements are established (e.g., via <a href="https://owasp.org/www-project-application-security-verification-standard/">OWASP ASVS</a> requirements mapping). These define the baseline protections the system must meet. In the <strong>Design</strong> phase, the SbD framework applies structured principles, architectural patterns, and specific controls to address those requirements before any code is written. For high-risk or business-critical projects, an optional <a href="https://owasp.org/www-community/Threat_Modeling"><strong>Threat Modeling</strong></a> checkpoint follows to validate that chosen SbD controls mitigate the most critical threats and leave no significant risks unaddressed.</p>
+
+<p>The lifecycle then flows into <strong>Development</strong>, where teams follow <a href="https://owasp.org/www-project-application-security-verification-standard/">OWASP ASVS</a> and other secure-coding standards to ensure implementation faithfully reflects the secure design. In the <strong>Test</strong> phase, security verification confirms that all layers—design, code, configuration, and deployment—work together as intended before release. This alignment embeds security at every stage, with SbD providing the architectural backbone that other OWASP practices reinforce. The result: systems that are secure by construction, not by retrofit.</p>
+
+<p><img src="/www-project-secure-by-design-framework/assets/images/Owasp_secure-by-design_sdlc_integration.png" alt="End-to-End Security Integration in the SDLC" /></p>
+
+<p style="text-align: center; margin-top: -10px">End-to-End Security Integration in the SDLC</p>
+
+<h4 id="-security-requirements">➤ Security Requirements</h4>
+
+<ul>
+  <li><strong>Scope:</strong> Defined at the earliest possible stage (Planning) and tracked throughout the lifecycle.</li>
+  <li><strong>Comparison:</strong> Security requirements define <em>what</em> protections the system must deliver; Secure-by-Design prescribes <em>how</em> to embed those protections into the architecture.</li>
+  <li><strong>How They Work Together:</strong> Security requirements set explicit objectives (e.g., confidentiality, integrity, availability, privacy, compliance). SbD provides a disciplined method to translate each requirement into one or more architectural controls, ensuring every requirement is addressed in the blueprint before code is written.</li>
+  <li><strong>Focus:</strong> Requirements specify the “must-haves” (e.g., MFA, data encryption, retention limits). SbD maps these to concrete design elements and vetted patterns—such as least-privilege zones, encrypted channels, and circuit breakers—so the protections are enforced at an architectural level.</li>
+  <li><strong>Outcome:</strong>
+    <ul>
+      <li><strong>Security Requirements:</strong> A vetted, testable list of statements.</li>
+      <li><strong>SbD:</strong> A hardened architecture—data-flow and component diagrams annotated with controls—ready for secure implementation.</li>
+    </ul>
+  </li>
+  <li><strong>Methodology:</strong>
+    <ul>
+      <li><strong>Security Requirements:</strong> Elicit from stakeholders (business, legal, compliance, operations), map from regulations (GDPR, PCI-DSS) and standards, incorporate results of risk/threat analyses, and rank by impact. Update whenever designs change or new risks emerge.</li>
+      <li><strong>SbD:</strong> Apply core principles (least privilege, defense in depth, secure defaults), select vetted patterns, and validate using a design-time checklist to ensure coverage of all requirements.</li>
+    </ul>
+  </li>
+  <li><strong>Documentation:</strong>
+    <ul>
+      <li><strong>Security Requirements:</strong> Captured in a formal Security Requirements Specification (SRS) and compliance/risk traceability matrix.</li>
+      <li><strong>SbD Artifacts:</strong> Architecture Decision Records (ADRs), annotated diagrams referencing specific patterns, and completed SbD checklists.</li>
+    </ul>
+  </li>
+  <li><strong>Example:</strong>
+    <ul>
+      <li><strong>Security Requirement:</strong> “All users must authenticate with at least two factors (password + OTP) before accessing any dashboard or API”.</li>
+    </ul>
+  </li>
+  <li><strong>SbD Implementation:</strong>
+    <ul>
+      <li>Place an OAuth2/OpenID Connect Identity Provider (IdP) in front of all services.</li>
+      <li>Configure MFA enforcement at first login and every 30 days thereafter.</li>
+      <li>Route all user logins through an API Gateway that validates and forwards JWT tokens to downstream services.</li>
+      <li>Document the IdP trust boundary in architecture diagrams; no service accepts credentials directly.</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="-owasp-threat-modeling">➤ OWASP Threat Modeling</h4>
+
+<ul>
+  <li><strong>Scope:</strong> Conducted after an initial design is complete, focusing on post-design risk analysis.</li>
+  <li><strong>Comparison:</strong> Threat Modeling assumes you already have an architecture to analyze; SbD creates that architecture with embedded controls from the outset.</li>
+  <li><strong>How They Work Together:</strong> By applying SbD first, threat modeling becomes faster and more targeted—identifying edge-case scenarios and advanced threats rather than exposing fundamental design flaws that require costly redesigns.</li>
+  <li><strong>Purpose:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Integrates security principles and proven patterns during design to proactively prevent classes of vulnerabilities.</li>
+      <li><strong>Threat Modeling:</strong> Evaluates an existing design from an attacker’s perspective, identifying potential threats and determining mitigation strategies.</li>
+    </ul>
+  </li>
+  <li><strong>Focus:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Principle- and pattern-driven, emphasizing service isolation, least privilege, data protection, and system resilience.</li>
+      <li><strong>Threat Modeling:</strong> Risk- and adversary-driven, focusing on attack vectors, likelihood/impact analysis, and specific threat mitigations.</li>
+    </ul>
+  </li>
+  <li><strong>Outcome:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Hardened architecture with built-in controls aligned to policies and standards.</li>
+      <li><strong>Threat Modeling:</strong> Threat models, risk assessments, and updated mitigation plans for the implemented design.</li>
+    </ul>
+  </li>
+  <li><strong>Methodology:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Apply principles like least privilege and secure defaults as part of architecture creation.</li>
+      <li><strong>Threat Modeling:</strong> Use techniques such as STRIDE, DREAD, and attack trees to systematically identify and evaluate threats.</li>
+    </ul>
+  </li>
+  <li><strong>Documentation:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Architecture diagrams, design specifications, and security requirement mappings.</li>
+      <li><strong>Threat Modeling:</strong> Threat model diagrams, risk registers, and revised security requirements.</li>
+    </ul>
+  </li>
+  <li><strong>Examples:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Define clear service boundaries, enforce TLS/mTLS, design resilient failure modes.</li>
+      <li><strong>Threat Modeling:</strong> Analyze authentication workflows, assess third-party integrations, trace sensitive data flows for potential exposure points.</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="-owasp-asvs">➤ OWASP ASVS</h4>
+
+<ul>
+  <li><strong>Scope:</strong> ASVS is a secure-coding and verification standard applied primarily during the Development and Testing phases to ensure implementations meet agreed-upon security controls.</li>
+  <li><strong>Comparison:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Focuses on <em>design-time</em>—embedding security into architecture before code is written.</li>
+      <li><strong>ASVS:</strong> Focuses on <em>implementation-time</em>—verifying that the code, configuration, and deployed system meet specific security requirements.</li>
+    </ul>
+  </li>
+  <li><strong>How They Work Together:</strong>
+    <ul>
+      <li>SbD produces a hardened blueprint that specifies which controls must be implemented. ASVS provides the verification criteria to confirm those controls are correctly implemented and effective in the running system.</li>
+    </ul>
+  </li>
+  <li><strong>Purpose:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Prevents security gaps by addressing them in architecture and design.</li>
+      <li><strong>ASVS:</strong> Detects implementation gaps or misconfigurations through structured verification.</li>
+    </ul>
+  </li>
+  <li><strong>Focus:</strong>
+    <ul>
+      <li><strong>SbD:</strong> High-level design controls (e.g., service isolation, mTLS enforcement, input validation at the gateway).</li>
+      <li><strong>ASVS:</strong> Detailed verification of implementation aspects (e.g., code correctly validates tokens, TLS configuration resists downgrade attacks, input sanitization is robust).</li>
+    </ul>
+  </li>
+  <li><strong>Outcome:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Annotated architecture and design artifacts with mapped security controls.</li>
+      <li><strong>ASVS:</strong> A verified application meeting security control requirements at the implementation level.</li>
+    </ul>
+  </li>
+  <li><strong>Methodology:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Apply design principles and patterns; capture decisions in ADRs and diagrams.</li>
+      <li><strong>ASVS:</strong> Test and review the application against ASVS’s tiered verification levels (V1–V14 categories). Use automated scanning where applicable but rely heavily on manual verification for logic and security workflows.</li>
+    </ul>
+  </li>
+  <li><strong>Documentation:</strong>
+    <ul>
+      <li><strong>SbD:</strong> ADRs, architecture diagrams, control-to-requirement mapping.</li>
+      <li><strong>ASVS:</strong> Verification reports, test results, defect logs, and remediation tracking.</li>
+    </ul>
+  </li>
+  <li><strong>Examples:</strong>
+    <ul>
+      <li><strong>SbD:</strong> Specify that all sensitive data at rest must be encrypted using AES-256 and managed keys in KMS.</li>
+      <li><strong>ASVS:</strong> Verify that the database schema uses encrypted storage, the KMS integration is correctly configured, keys are rotated according to policy, and no sensitive data is stored unencrypted in logs or caches.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="-key-differentiators">◽ Key Differentiators</h3>
+
+<ul>
+  <li><strong>Proactive by Design</strong>: Embeds controls before code is written.</li>
+  <li><strong>Pattern‑Centric</strong>: Goes beyond abstract principles by providing concrete, reusable patterns for microservices, APIs, messaging, and integration scenarios.</li>
+  <li><strong>Checklist‑Driven</strong>: Offers a concise (≤ 40-item) control-oriented design checklist to enable fast, consistent reviews across teams.</li>
+  <li><strong>Extensible</strong>: Built for growth, with a modular structure that supports community contributions, reference architectures, and integration with future automation or tooling.</li>
+</ul>
+
+<h3 id="-what-is-a-securebydesign-review">◽ What Is a Secure‑by‑Design Review?</h3>
+
+<p>A <strong>Secure-by-Design (SbD) Review</strong> is a structured assessment of an application’s architecture and design, performed <em>before development begins</em>, to ensure that security is engineered into the system from the outset.<br />
+ It systematically examines components, data flows, interfaces, dependencies, and trust boundaries to verify that required security controls are built directly into the architectural blueprint.</p>
+
+<p><strong>Typical outcomes include:</strong></p>
+
+<ul>
+  <li>Annotated architecture and data-flow diagrams clearly showing applied controls, trust zones, and security-relevant boundaries.</li>
+  <li>A completed SbD review checklist (see section SbD Review Checklist) summarizing implemented controls, residual risks, and gaps.</li>
+  <li>Architecture Decision Records (ADRs) and a prioritized set of action items to address identified gaps.</li>
+  <li>Risk-based recommendation on whether to run a Threat Modeling exercise before development begins.</li>
+</ul>
+
+<h3 id="-when-and-how-should-it-be-considered">◽ When and How Should It Be Considered?</h3>
+
+<p>SbD Reviews should be performed early and iteratively—during the Planning and Design phases, at the start of major epics, and whenever there is a significant architectural change (e.g., new external exposure, introduction of sensitive data, adoption of novel technology, or Tier-1 impact).</p>
+
+<p><strong>Run an SbD Review whenever:</strong></p>
+
+<ul>
+  <li>The architecture introduces new trust boundaries or external integrations.</li>
+  <li>The system will handle regulated or sensitive data.</li>
+  <li>The change could materially affect resilience, scalability, or security posture.</li>
+</ul>
+
+<p>The <strong>review process</strong>, participant roles, and hand-off mechanics are described in <strong>Section Secure-by-Design Process</strong>.</p>
+
+<h3 id="-expected-benefits">◽ Expected Benefits</h3>
+
+<p>By applying this framework and running Secure-by-Design reviews, teams can:</p>
+
+<ul>
+  <li><strong>Enhance Security Posture</strong> – Reduce attack surface and eliminate entire classes of flaws early.</li>
+  <li><strong>Ensure Compliance</strong> – Align architectures with legal, regulatory, and internal security requirements from the outset.</li>
+  <li><strong>Improve Reliability</strong> – Design systems that are robust, scalable, and able to degrade gracefully under failure conditions.</li>
+  <li><strong>Facilitate Collaboration</strong> – Use the SbD Review Checklist as a concise hand-off artifact for rapid, targeted AppSec feedback.</li>
+  <li><strong>Streamline Development</strong> – Identify issues during design to minimize costly rework; produce auditable artifacts (diagrams, ADRs, checklists, threat models) with clear traceability from requirements to implemented controls.</li>
+</ul>
+
+<hr />
+
+<h2 id="-sbd-process">🔹 SbD Process</h2>
+
+<p>The Secure-by-Design Process is the operational playbook for applying Secure-by-Design during the design phase and engaging with AppSec efficiently without creating bottlenecks. It describes the end-to-end process, what a design review examines, when to escalate (risk-based triggers), how the SbD Review Checklist fits into the workflow, and the mechanics for handing off to AppSec. See the <strong>Process tab</strong> for the complete content.</p>
+
+<hr />
+
+<h2 id="-sbd-principles--recommendations">🔹 SbD Principles &amp; Recommendations</h2>
+
+<p>SbD Principles &amp; Recommendations provide authoritative design-time guidance for building systems that are secure by construction. It is organized into six domains (core principles, architecture &amp; service design, data management &amp; protection, reliability &amp; resilience, access control &amp; secure communication, monitoring/testing/incident readiness) and translates the project’s security requirements into concrete, architect-level controls, and provides actionable, design‑time recommendations that architects and product teams apply while shaping systems. See the <strong>Principles tab</strong> for the full content.</p>
+
+<hr />
+
+<h2 id="-sbd-review-checklist">🔹 SbD Review Checklist</h2>
+
+<p>The SbD Review Checklist is a condensed, control-oriented tool for self-review and for communicating with AppSec. It ensures the security requirements are verified before implementation. Each item abstracts key recommendations from the principles into a Yes/No/N-A decision with justification. The full checklist appears on the <strong>Checklist tab</strong>.</p>
+
+<hr />
+
+<h2 id="-sbd-best-practices-patterns--reference-architectures">🔹 SbD Best Practices, Patterns &amp; Reference Architectures</h2>
+
+<p>This is a living catalog of Secure-by-Design examples you can study and reuse. It illustrates how the Section Principles &amp; Recommendations appear in real designs (trust boundaries, authN/Z, data protection, resilience, observability) without product‑specific noise. See the <strong>Catalog tab</strong> for the full content—reference architectures, reusable patterns, and contribution instructions.</p>
+
+<hr />
+
+<h2 id="-links">🔹 Links</h2>
+
+<p>Download the full <a href="https://github.com/OWASP/www-project-secure-by-design-framework/blob/main/resources/docs/OWASP-Secure-by-Design-Framework-v0.5.pdf?raw=true">Secure-by-Design Framework (PDF)</a> for easy offline use.</p>
+
+          </section>
+          
+
+          
+          
+          
+          
+          
+          
+          <section id='sec-process' class='page-body tab-hidden'>
+            
+            
+            
+            
+            
+            
+<hr />
+
+<h2 id="sbd-process">SbD Process</h2>
+
+<p>The Secure-by-Design Process is the operational playbook for applying Secure-by-Design during the design phase and engaging with AppSec efficiently—without creating bottlenecks. It describes the end-to-end process, what a design review examines, when to escalate, how the SbD Review Checklist fits into the workflow, and the mechanics for handing off to AppSec.</p>
+
+<p>Two complementary tools underpin the process:</p>
+
+<ul>
+  <li><strong>SbD Principles &amp; Recommendations</strong> – The full guidance across all domains (architecture, data, resilience, access control, monitoring). Used actively during design. <em>(See Tab Principals).</em></li>
+  <li><strong>SbD Review Checklist</strong> – A concise Yes/No/N-A questionnaire capturing the most critical controls, used for self-review and as the communication bridge to AppSec. <em>(See tab Checklist).</em></li>
+</ul>
+
+<p>Each team designates a <strong>Security Champion</strong> as the primary security contact. They own the checklist, coordinate any required AppSec engagement, and ensure that design artifacts remain complete, accurate, and in sync with the implemented architecture.</p>
+
+<h3 id="-process-overview">◽ Process Overview</h3>
+
+<ol>
+  <li><strong>Capture Security Requirements (Planning)</strong>
+    <ul>
+      <li>Define <em>what must be true</em> (CIA, privacy, compliance) in the SRS/backlog with traceability.</li>
+    </ul>
+  </li>
+  <li><strong>Draft High‑Level Architecture (Design)</strong>
+    <ul>
+      <li>Sketch components, trust zones, data flows, external dependencies, and assumptions.</li>
+    </ul>
+  </li>
+  <li><strong>Apply SbD Principles &amp; Patterns</strong>
+    <ul>
+      <li>Select patterns (service isolation, mTLS, idempotency, circuit breakers, schema governance) that satisfy the requirements.</li>
+      <li>Consider the recommendations detailed in the Principals tab.</li>
+      <li><em>Security Champion involved for early alignment.</em></li>
+    </ul>
+  </li>
+  <li><strong>Complete the SbD Review Checklist</strong>
+    <ul>
+      <li>Answer Yes/No/N‑A for each control and add comments/links to ADRs, diagrams, and policies. (Detailed in the Checklist tab)</li>
+      <li><em>Security Champion facilitates completeness and clarity.</em></li>
+    </ul>
+  </li>
+  <li><strong>Internal Peer Review</strong>
+    <ul>
+      <li>Another architect/engineer reviews the design + checklist; unresolved “No” items become actions.</li>
+    </ul>
+  </li>
+  <li><strong>Risk Triage</strong>
+    <ul>
+      <li>Low / Normal Risk → Proceed to development (step 8).</li>
+      <li>High / Critical Risk → Ping AppSec (attach the checklist + security requirements + diagrams).</li>
+      <li><em>Security Champion</em> — acts as the point of contact with AppSec.</li>
+    </ul>
+  </li>
+  <li><strong>Optional Threat Modeling &amp; AppSec Review (when triggered)</strong>
+    <ul>
+      <li>If risk triggers are met, the product team performs a lightweight or full threat model (methods like STRIDE) before development, with AppSec support if needed.</li>
+      <li>AppSec reviews the checklist and threat model, focusing on “No”/“N-A” items with high impact, and recommends mitigations.</li>
+    </ul>
+  </li>
+  <li><strong>Finalize Design Artifacts</strong>
+    <ul>
+      <li>Update diagrams, ADRs, checklist status, and (if applicable) threat model.</li>
+    </ul>
+  </li>
+  <li><strong>Handoff to Development</strong>
+    <ul>
+      <li>Ensure the design and checklist are part of the dev onboarding pack.</li>
+    </ul>
+  </li>
+  <li><strong>Design‑Drift Watch</strong>
+    <ul>
+      <li>For any major change (new data type, new exposure, new tech), repeat steps 3–8.</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="-what-the-securebydesign-review-covers">◽ What the Secure‑by‑Design Review Covers</h3>
+
+<p>A Secure-by-Design review evaluates the architecture and high-level design of a system against a curated set of domains from the SbD Principles &amp; Recommendations.</p>
+
+<p>The review inspects the following domains:</p>
+
+<ul>
+  <li><strong>Core Secure Design Principles:</strong> Confirmation that foundational principles—such as least privilege, defense in depth, secure defaults, and zero-trust boundaries—are explicitly applied in the architecture.</li>
+  <li><strong>Architecture &amp; Service Design:</strong> Assessment of service boundaries, trust zones, inter-service communication methods, integration points, and scalability/resilience patterns.</li>
+  <li><strong>Data Management &amp; Protection:</strong> Verification of data classification, ownership, encryption (in transit/at rest), retention/deletion policies, and auditability mechanisms.</li>
+  <li><strong>Reliability &amp; Resilience:</strong> Evaluation of fault tolerance, error handling, failover, backoff/retry policies, bulkhead and circuit-breaker patterns, and performance safeguards.</li>
+  <li><strong>Access Control &amp; Secure Communication:</strong> Review of authentication and authorization approaches (user/service), secure channel enforcement (TLS/mTLS), secret/key management, and policy enforcement mechanisms.</li>
+  <li><strong>Monitoring, Testing &amp; Incident Readiness:</strong> Confirmation that observability, logging, metrics, and incident response capabilities are designed in from the start, with sufficient detail to detect, investigate, and recover from security events.</li>
+</ul>
+
+<h3 id="-risk-based-escalation--threat-modeling">◽ Risk-Based Escalation &amp; Threat Modeling</h3>
+
+<p>The Secure-by-Design process is designed to be lightweight for most changes, but specific risk triggers require escalation to a Threat Modelin<strong>g</strong> activity—either facilitated by AppSec or performed with their guidance. Threat Modeling provides a deeper, attacker-oriented review to validate that the proposed architecture’s controls adequately mitigate the most critical risks.</p>
+
+<p><strong>Escalation Triggers</strong> (any one of these should prompt a threat model before development begins):</p>
+
+<ul>
+  <li><strong>Sensitive or Regulated Data:</strong> Handling personally identifiable information (PII), payment card data (PCI), health records (PHI), or other regulated datasets.</li>
+  <li><strong>New External Exposure:</strong> Introducing new public-facing interfaces—such as APIs, message endpoints, or event streams—that may require abuse-case and misuse-case analysis.</li>
+  <li><strong>Novel Technologies or Patterns:</strong> Adopting new frameworks, infrastructure components, or architectural patterns (e.g., a message broker not previously used, a new orchestration platform, or emerging protocols) that lack established security baselines in your environment.</li>
+  <li><strong>High-Business-Impact Services (Tier-1):</strong> Delivering or significantly modifying critical services whose compromise would have severe operational, financial, or reputational consequences.</li>
+</ul>
+
+<p>When triggered, the Threat Modeling session:</p>
+
+<ul>
+  <li>Starts with the current SbD-hardened architecture as input,</li>
+  <li>Analyzes potential attack vectors and abuse scenarios,</li>
+  <li>Validates that existing controls sufficiently reduce risk,</li>
+  <li>Identifies additional mitigations if needed.</li>
+</ul>
+
+<p>Outputs typically include an updated threat model diagram, a prioritized risk register, and action items to address uncovered gaps—feeding back into the SbD artifacts (ADRs, diagrams, checklists).</p>
+
+<h3 id="-sbd-review-checklist--usage">◽ SbD Review Checklist — Usage</h3>
+
+<p>It’s a quick, control‑oriented snapshot that communicates what’s in place and what needs work, enabling fast AppSec team triage. Refer to tab Review Checklist, for more details.</p>
+
+<p>Each row includes: <em>(a)</em> control name, <em>(b)</em> Yes/No/N‑A, <em>(c)</em> comment “how/where implemented” with links (ADR‑IDs, diagram anchors, policy refs), <em>(d)</em> evidence link (optional).</p>
+
+<p><strong>When to complete.</strong></p>
+
+<ul>
+  <li>Before any AppSec request.</li>
+  <li>On major design change (new trust boundary, sensitive data, new external exposure, novel tech).</li>
+</ul>
+
+          </section>
+          
+          
+          
+          <section id='sec-principles' class='page-body tab-hidden'>
+            
+            
+            
+            
+            
+            
+<hr />
+
+<h2 id="sbd-principles--recommendations">SbD Principles &amp; Recommendations</h2>
+
+<p>The Secure-by-Design Principles &amp; Recommendations provide detailed, design-time guidance for building security directly into system architecture. This content focuses exclusively on decisions made during the design phase—well before coding or testing begins.</p>
+
+<p>It does <strong>not</strong> cover secure coding standards (such as OWASP ASVS), automated scanning, or vulnerability triage. Instead, it presents architecture-level controls that eliminate entire classes of flaws—for example, applying least privilege, enforcing strong isolation, ensuring idempotency, maintaining disciplined schema management, and using mutual TLS (mTLS).</p>
+
+<p>These principles form the foundation for the Secure-by-Design review process and are applied across domains such as architecture, data protection, resilience, access control, and monitoring.</p>
+
+<p><strong>How to Use:</strong></p>
+
+<ul>
+  <li>Start at the domain relevant to your current design decision and record decisions as ADRs and on architecture/data-flow diagrams.</li>
+  <li>For each recommendation: review the Rationale, apply the Control, consider the Implementation Notes, and capture Evidence.</li>
+  <li>Use the SbD Review Checklist (detailed in Checklist tab) to summarize what you’ve applied (Yes/No/N-A + justification) for internal review and to communicate with AppSec when needed.</li>
+  <li>For concrete, end-to-end examples that implement these controls, see catalug tab.</li>
+</ul>
+
+<p>The guidance is organized into six domains as follows.</p>
+
+<h3 id="domain-1---core-secure-design-principles">Domain 1 - Core Secure Design Principles</h3>
+
+<ul>
+  <li><strong>Least Privilege</strong> — Minimize permissions for users, services, pipelines, and tools; deny-by-default; narrowly scope tokens/roles; time-bound access.</li>
+  <li><strong>Defense in Depth</strong> — Layer network isolation, authN/Z, input validation, encryption, rate-limiting, monitoring, and alerting so one failure isn’t fatal.</li>
+  <li><strong>Secure Defaults</strong> — Enable TLS, private networking, strict security headers, safe cipher suites, and hardened baselines by default.</li>
+  <li><strong>Zero-Trust &amp; Explicit Boundaries</strong> — Treat all networks and callers as untrusted; authenticate and authorize every call; make trust zones explicit on diagrams.</li>
+  <li><strong>Fail Secure / Graceful Degradation</strong> — Prefer safe failure (deny) to insecure success; avoid leaking internals in errors; design partial modes.</li>
+  <li><strong>Simplicity &amp; Minimized Attack Surface</strong> — Reduce components, open ports, conditional paths; favor small, cohesive interfaces over sprawling ones.</li>
+  <li><strong>Observability by Design</strong> — Emit structured logs, traces, and security events with correlation/trace IDs; standardize logging libraries.</li>
+  <li><strong>Contract-First &amp; Versioned Interfaces</strong> — Define OpenAPI/AsyncAPI/Avro/Protobuf up front; validate at edges; version breaking changes.</li>
+  <li><strong>Automation &amp; Repeatability</strong> — Use IaC and policy-as-code; template security configurations; enforce in CI (linting, drift checks).</li>
+</ul>
+
+<hr />
+
+<h3 id="domain-2---architecture--service-design">Domain 2 - Architecture &amp; Service Design</h3>
+
+<h4 id="service-design--boundaries">Service Design &amp; Boundaries</h4>
+
+<ul>
+  <li>Align services to domain boundaries (DDD); each owns its data and business logic—others use its API/events. Avoid shared write databases.</li>
+  <li>Eliminate circular dependencies; refactor to reduce coupling; prefer pub/sub over chatty RPC to reduce tight coupling.</li>
+  <li>Keep services right-sized (cohesive, independently deployable); avoid nano-services and accidental monoliths.</li>
+  <li>Document dependencies, SLOs, and data ownership in READMEs/runbooks.</li>
+  <li>Centralize shared business logic where appropriate (avoid duplication; prevent inconsistent enforcement).</li>
+  <li>Document dependencies, SLOs, and data ownership in READMEs/runbooks so on-call knows what breaks what.</li>
+</ul>
+
+<h4 id="trust-zones--network-isolation">Trust Zones / Network Isolation</h4>
+
+<ul>
+  <li>Place workloads in isolated trust zones; allow direct access only within a zone.</li>
+  <li>Force cross-zone access via Integration Services (API gateway/mesh/bus) where policies are enforced and traffic is observable.</li>
+  <li>Use a unified addressing/DNS scheme for external references; intra-zone shortcuts are OK but don’t leak outside.</li>
+  <li>Keep addressing and data-access methods consistent across environments to reduce “works in dev only” issues.</li>
+</ul>
+
+<h4 id="cross-zone-integration-services">Cross-Zone Integration Services</h4>
+
+<ul>
+  <li>Route HTTP/gRPC through an API gateway: enforce authN/Z, rate-limits, schema validation, and request logging.</li>
+  <li>Use a message bus (Kafka/AMQP/Redis streams) for async cross-zone communication; centralize policies, ACLs, and auditing.</li>
+  <li>Treat Integration Services as shared, governed assets with strict access controls and owner approval.</li>
+</ul>
+
+<h4 id="inter-service-communication">Inter-Service Communication</h4>
+
+<ul>
+  <li>Use a service mesh with mTLS for identity + encryption between services; it removes the need to manage certs in each app.</li>
+  <li>Standardize client libraries for retries, timeouts, circuit-breakers, and idempotency.</li>
+  <li>Avoid long synchronous chains across many services (N services in a line). Break chains with queues/events to absorb spikes and failures.</li>
+</ul>
+
+<h4 id="messaging-infrastructure">Messaging Infrastructure</h4>
+
+<ul>
+  <li>Choose log-based (e.g., Kafka-class) vs message-based (e.g., AMQP/Redis) deliberately; document the trade-off (replay vs simplicity).</li>
+  <li>Configure durability (persistence, replication, backups) and topic/queue retention by data sensitivity.</li>
+  <li>Monitor throughput, lag, latency, and resource usage; plan capacity/partitioning ahead of load.</li>
+  <li>Define DLQ behavior to route messages that cannot be processed after retries; and monitor and alert on growth; have a triage/replay playbook workflow.</li>
+</ul>
+
+<h4 id="api--event-design--schema-management">API &amp; Event Design / Schema Management</h4>
+
+<ul>
+  <li>Separate internal vs global schemas/topics; establish enterprise naming (e.g., OrderCreated_v1).</li>
+  <li>Specify required/optional fields and constraints; standardize on JSON/Avro/Protobuf so tooling works everywhere.</li>
+  <li>Plan backward/forward compatibility; version breaking changes; publish deprecation timelines.</li>
+  <li>Validate and sanitize all inbound inputs at the first hop; reject unknown fields; use approved libraries.</li>
+  <li>Design events to be multi-consumer safe (self-contained context, idempotent consumption).</li>
+  <li>Notify impacted consumers on breaking changes via an agreed process (owners list, subscriptions, or catalogs).</li>
+</ul>
+
+<h4 id="legacy-systems-integration">Legacy Systems Integration</h4>
+
+<ul>
+  <li>Add an anti-corruption layer to translate old models/protocols; keep legacy assumptions from leaking into new services.</li>
+  <li>Replace legacy components incrementally (strangler pattern) with measurable milestones.</li>
+</ul>
+
+<h4 id="scalability--startup-resilience">Scalability &amp; Startup Resilience</h4>
+
+<ul>
+  <li>Design for horizontal scale; set autoscaling triggers and a minimum replica count (so you don’t scale to zero by mistake).</li>
+  <li>Start safely when dependencies aren’t ready: timeouts, retries with backoff, and feature flags.</li>
+  <li>Warm caches or precompute hot data to reduce cold-start latency.</li>
+</ul>
+
+<h4 id="service-discovery">Service Discovery</h4>
+
+<ul>
+  <li>Centralize discovery (DNS/mesh registry) and pin service identities (SPIFFE/SVID-class in meshes) to know who is who.</li>
+  <li>Publish service contracts in catalogs (OpenAPI/AsyncAPI) so teams can find and integrate safely.</li>
+</ul>
+
+<hr />
+
+<h3 id="domain-3---data-management--protection">Domain 3 - Data Management &amp; Protection</h3>
+
+<h4 id="data-ownership--domain-modeling">Data Ownership &amp; Domain Modeling</h4>
+
+<ul>
+  <li>Each service must own its data store (write access). Others read via API or subscribed events. Prevents tight coupling and “stealth joins”.</li>
+  <li>Maintain data dictionaries and owners; update when schemas evolve.</li>
+</ul>
+
+<h4 id="idempotency">Idempotency</h4>
+
+<ul>
+  <li>Make handlers idempotent; tolerate retries and duplicates (repeated deliveries) without side-effects.</li>
+  <li>Use stable identifiers and store processed IDs/checksums to suppress duplicates.</li>
+  <li>Provide exactly-once effects through idempotent operations + dedupe, not broker magic.</li>
+</ul>
+
+<h4 id="transaction-management">Transaction Management</h4>
+
+<ul>
+  <li>Prefer local ACID transactions within a service where possible to avoid partial updates before cross-service workflows.</li>
+  <li>For multi-service workflows or long-running transactions, use Sagas (orchestration/choreography).</li>
+  <li>Avoid distributed transactions such as 2-phase commit (2PC)—it’s complex and brittle at scale.</li>
+  <li>Define compensating actions (for rollback) next to the happy path.</li>
+</ul>
+
+<h4 id="data-consistency">Data Consistency</h4>
+
+<ul>
+  <li>Embrace eventual consistency; document staleness windows and reconciliation jobs.</li>
+  <li>Design UI/UX to show “processing”/“pending” states and offer retry or manual resolve.</li>
+  <li>Consider event sourcing when you need full history/audit or state reconstruction.</li>
+</ul>
+
+<h4 id="data-classification--protection">Data Classification &amp; Protection</h4>
+
+<ul>
+  <li>Classify data (public/internal/confidential/restricted) with a named owner; review periodically.</li>
+  <li>Apply appropriate security controls based on data classification (e.g., encryption for sensitive, RBAC for confidential/restricted).</li>
+  <li>Encrypt in transit and at rest using approved algorithms; centralize key management/rotation; separate duties.</li>
+  <li>Minimize data collection to business necessity; document rationale/lawful basis where applicable.</li>
+</ul>
+
+<h4 id="data-retention--deletion-policies">Data Retention &amp; Deletion Policies</h4>
+
+<ul>
+  <li>Set retention periods + secure deletion/archival for data class; meet regulatory/contractual obligations.</li>
+  <li>Periodically purge unnecessary data; verify deletion propagates to backups/replicas.</li>
+</ul>
+
+<h4 id="environment-consistent-data-access-methods">Environment-Consistent Data Access Methods</h4>
+
+<ul>
+  <li>Standardize connection methods and secrets retrieval across environments.</li>
+  <li>Avoid environment-specific quirks that break portability and security.</li>
+</ul>
+
+<h4 id="auditability--data-lineage">Auditability &amp; Data Lineage</h4>
+
+<ul>
+  <li>Record who/what/when for sensitive data changes; Track lineage from source to sink.</li>
+  <li>Log schema changes and approvals; catalog datasets and owners.</li>
+</ul>
+
+<hr />
+
+<h3 id="domain-4---reliability--resilience">Domain 4 - Reliability &amp; Resilience</h3>
+
+<h3 id="error-handling">Error Handling</h3>
+
+<ul>
+  <li>Use retries with exponential backoff + jitter; cap attempts; avoid retry storms.</li>
+  <li>Return safe, standardized errors (no stack traces or secrets). Document error models.</li>
+</ul>
+
+<h4 id="asynchronous-communication-semantics">Asynchronous Communication Semantics</h4>
+
+<ul>
+  <li>Decide ordering requirements; use keys/partitions or total ordering where needed.</li>
+  <li>Select delivery semantics (at-least-once vs exactly-once trade-offs); document choices.</li>
+  <li>Set ack/retry/visibility timeouts per queue/topic; define DLQ policies and a replay process.</li>
+  <li>Design Integration Services for high availability and cross-zone error handling so shared layers don’t propagate failures.</li>
+  <li>Explicitly accept and design for timing delays that may affect outcomes (latency/timeout windows).</li>
+</ul>
+
+<h4 id="isolation-patterns">Isolation Patterns</h4>
+
+<ul>
+  <li>Apply circuit breakers to failing dependencies to prevent cascading failures when a dependent service is down; bulkheads to isolate pools/threads so one spike doesn’t sink the ship.</li>
+  <li>Provide fallbacks (cached data, default responses) or degrade non-critical features instead of cascading failure.</li>
+</ul>
+
+<h4 id="race-conditions--concurrency-controls">Race Conditions &amp; Concurrency Controls</h4>
+
+<ul>
+  <li>Use distributed locks (e.g., Redis-class) or atomic ops for shared-state updates.</li>
+  <li>Require Idempotency-Key for all mutating endpoints; on same key+payload → return stored response; same key+different payload → 409 Conflict.</li>
+  <li>Combine with rate-limits and DB uniqueness/optimistic concurrency to handle concurrent modifications safely within a service..</li>
+</ul>
+
+<h4 id="timeouts-health-checks--service-availability">Timeouts, Health Checks &amp; Service Availability</h4>
+
+<ul>
+  <li>Set timeouts for all calls; include liveness/readiness probes; enable auto-restart.</li>
+  <li>Design degraded modes when dependencies are down; prefer partial functionality (queue-and-replay, read-only, feature flags).</li>
+  <li>Define explicit failover/redundancy (active-passive, multi-AZ/region) strategies for critical paths.</li>
+</ul>
+
+<h4 id="scalability-resource-quotas--rate-limiting">Scalability, Resource Quotas &amp; Rate Limiting</h4>
+
+<ul>
+  <li>Define CPU/mem/IO quotas and autoscaling policies; prevent noisy-neighbor issues.</li>
+  <li>Enforce gateway/mesh rate limits (per endpoint, per client) with bursts and sensible defaults.</li>
+</ul>
+
+<h4 id="performance-optimization--caching">Performance Optimization &amp; Caching</h4>
+
+<ul>
+  <li>Cache on client/service/CDN for hot paths; define eviction and invalidation rules.</li>
+  <li>Apply back-pressure and queue sizing for spikes; shed load gracefully. Set minimum quotas so the service can operate even under platform caps (in case, platform configurations may limit resource usage to prevent overconsumption by a single service).</li>
+</ul>
+
+<h4 id="dependency--third-party-risk-management">Dependency &amp; Third-Party Risk Management</h4>
+
+<ul>
+  <li>Evaluate external services/OSS (license, support, vulnerability posture); follow onboarding policy.</li>
+  <li>Track components; monitor for CVEs; pin versions; plan exit strategies.</li>
+</ul>
+
+<h4 id="deployment--release-management">Deployment &amp; Release Management</h4>
+
+<ul>
+  <li>Prefer canary/blue-green; set guardrail metrics; test rollback paths regularly.</li>
+  <li>Use feature flags for progressive delivery and kill switches for fast disable.</li>
+</ul>
+
+<h4 id="decommissioning--disposal">Decommissioning &amp; Disposal</h4>
+
+<ul>
+  <li>Retire DNS, CI/CD, storage, credentials; wipe data securely; verify no residual access.</li>
+</ul>
+
+<h4 id="supply-chain-integrity--artifact-provenance">Supply Chain Integrity &amp; Artifact Provenance</h4>
+
+<ul>
+  <li>Use signed, scanned artifacts from trusted registries; enforce provenance checks in CI.</li>
+  <li>Generate/retain SBOMs (e.g., CycloneDX); gate builds on policy compliance.</li>
+</ul>
+
+<hr />
+
+<h3 id="domain-5---access-control--secure-communication">Domain 5 - Access Control &amp; Secure Communication</h3>
+
+<h4 id="secure-communication--service-identity">Secure Communication &amp; Service Identity</h4>
+
+<ul>
+  <li>Enforce TLS/mTLS for all service communications; automate cert issuance/rotation (mesh SDS-style).</li>
+  <li>Pin service identities (SPIFFE/SVID-class) for workload-to-workload trust (to prove who is calling whom).</li>
+</ul>
+
+<h4 id="authentication">Authentication</h4>
+
+<ul>
+  <li>Centralize user auth with OIDC/OAuth2 IdP; enforce MFA for privileged paths.</li>
+  <li>Prefer short-lived tokens and workload identities over long-lived static secrets.</li>
+</ul>
+
+<h4 id="authorization--permissions">Authorization &amp; Permissions</h4>
+
+<ul>
+  <li>Implement RBAC/ABAC; document “who/what can call which APIs or publish/consume events”.</li>
+  <li>Centralize authorization policies (gateway/mesh where possible) using policy-as-code for consistency.</li>
+  <li>Govern shared Integration Services with strict access lists (ACLs) and approvals.</li>
+  <li>Externalize business rules (configs/policies) instead of hard-coding.</li>
+  <li>Periodically review and right-size permissions for users, services, pipelines, tools.</li>
+</ul>
+
+<h4 id="configuration-security--secretkey-management">Configuration Security &amp; Secret/Key Management</h4>
+
+<ul>
+  <li>Store secrets in a secret manager; rotate keys/certs regularly; audit access. Avoid secrets in env vars/logs.</li>
+  <li>Use dynamic/ephemeral credentials when available.</li>
+</ul>
+
+<h4 id="compliance--regulatory-requirements">Compliance &amp; Regulatory Requirements</h4>
+
+<ul>
+  <li>Map controls to GDPR/PCI DSS/etc; document compensating controls where needed.</li>
+  <li>Maintain evidence (policies, DPA, DPIA) as part of design artifacts.</li>
+</ul>
+
+<h4 id="identity--access-management">Identity &amp; Access Management</h4>
+
+<ul>
+  <li>Define roles and separation of duties; protect log/admin path; least privilege everywhere.</li>
+</ul>
+
+<h4 id="least-privilege-for-tooling--pipelines">Least Privilege for Tooling &amp; Pipelines</h4>
+
+<ul>
+  <li>Restrict CI/CD, VCS apps, chat-ops, and integrations to minimal scopes; require approvals for sensitive actions.</li>
+  <li>Protect signing keys/runners; isolate build environments.</li>
+</ul>
+
+<hr />
+
+<h3 id="domain-6---monitoring--incident-readiness">Domain 6 - Monitoring &amp; Incident Readiness</h3>
+
+<h4 id="logging--observability">Logging &amp; Observability</h4>
+
+<ul>
+  <li>Emit structured logs with correlation/trace IDs; centralize ingestion and retention.</li>
+  <li>Log administrative and operational access; restrict access; protect logs from tampering and over-exposure.</li>
+</ul>
+
+<h4 id="metrics-dashboards--slos">Metrics, Dashboards &amp; SLOs</h4>
+
+<ul>
+  <li>Track latency, error rate, saturation, and key business KPIs. Build health dashboards.</li>
+  <li>Monitor event flows (queue sizes, lag, DLQ volume); alert on anomalies.</li>
+</ul>
+
+<h4 id="security-testing--verification">Security Testing &amp; Verification</h4>
+
+<ul>
+  <li>Plan ASVS-aligned verification; include negative tests from threat modeling.</li>
+  <li>Validate SbD controls (isolation tests, mTLS handshake checks, authorization denials, rate-limit behavior).</li>
+</ul>
+
+<h4 id="documentation--knowledge-sharing">Documentation &amp; Knowledge Sharing</h4>
+
+<ul>
+  <li>Publish OpenAPI/AsyncAPI and event schemas; maintain catalogs.</li>
+  <li>Keep runbooks and ADRs up to date; document data ownership and dependencies.</li>
+</ul>
+
+<h4 id="incident-response--recovery">Incident Response &amp; Recovery</h4>
+
+<ul>
+  <li>Maintain a formal Incident Response plan (roles, comms, evidence handling); rehearse with tabletops.</li>
+  <li>Detect suspicious patterns: repeated failed logins, unusual 403 rates, anomalous access to sensitive endpoints, geo-improbable logins, unexpected config/file changes.</li>
+  <li>Feed lessons learned back into security requirements, patterns, ADRs, and the checklist.</li>
+</ul>
+
+<h4 id="audit--retention">Audit &amp; Retention</h4>
+
+<ul>
+  <li>Retain audit logs per policy (e.g., ≥12 months with a searchable window).</li>
+  <li>Ensure tamper-evidence and chain-of-custody for security logs.</li>
+</ul>
+
+<h3 id="-links">◽ Links</h3>
+
+<p>You can also <a href="https://github.com/OWASP/www-project-secure-by-design-framework/blob/main/resources/docs/OWASP-Secure-by-Design-Framework-v0.5.pdf?raw=true">download the full Secure-by-Design Framework (PDF)</a> for easy offline use.</p>
+
+          </section>
+          
+          
+          
+          <section id='sec-checklist' class='page-body tab-hidden'>
+            
+            
+            
+            
+            
+            
+<hr />
+
+<h2 id="sbd-review-checklist">SbD Review Checklist</h2>
+
+<p>The Secure-by-Design checklist set is a practical tool for embedding security requirements into the design phase of the software development lifecycle and for ensuring those requirements are verified before implementation. It serves as a clear, concise mechanism for product teams to self‑assess their designs, capture evidence, and internally document their security posture—without introducing unnecessary delays. These checklists are intended primarily for internal team self‑review and as a shared communication tool with the AppSec team in high‑risk projects.</p>
+
+<p>Checklists translate the framework’s principles and recommendations (tab Principals) into actionable, reviewable controls. They ensure that security‑critical aspects are consistently considered, documented, and validated across all projects, regardless of the team’s size, experience, or technology stack. When used systematically, they reduce rework, strengthen the security posture, and enable efficient, scalable collaboration within the team and, where appropriate, with AppSec.</p>
+
+<p>SbD Review Checklist defines the structure, intended usage, and governance of Secure‑by‑Design checklists, clarifying how they fit into the design process and how they can be maintained alongside other project artefacts.</p>
+
+<h3 id="-intended-use-and-timing">◽ Intended Use and Timing</h3>
+
+<p>The SbD review checklist is completed by the product team during the design phase—ideally before high-level design sign-off or epic kickoff—and is refreshed whenever the design changes in a way that could alter the system’s security characteristics. Typical triggers include new integrations, exposure to untrusted networks, handling of sensitive data, adoption of new technologies, or changes to core workflows.</p>
+
+<p>Begin with the full checklist during detailed design sessions—either from the outset of design work or as a dedicated security refinement step—to systematically think through applicable recommendations listed in tab Principal and update the design accordingly. Capture your considerations and decisions either directly within the design artefacts or in a separate security notes document; for internal peer review, assurance, and historical record.</p>
+
+<p>Once these detailed considerations have been addressed, complete the SbD review checklist to summarize them into a clear, high-level mapping against the security requirements identified earlier. This becomes the main descriptive summary of applied considerations, along with any gaps to address later, and is stored with the project’s artefacts for ongoing reference. Where the project is high‑risk, this document can also support discussions with the AppSec to request guidance or additional assurance. See Escalation and risk thresholds.</p>
+
+<h3 id="-checklist-structure">◽ Checklist Structure</h3>
+
+<p>Each checklist entry contains:</p>
+
+<ul>
+  <li><strong>ID</strong> – Unique identifier for traceability.</li>
+  <li><strong>Control Statement</strong> – The security control or question to be addressed.</li>
+  <li><strong>Status</strong> – <em>Yes / No / N-A</em>.</li>
+  <li><strong>Justification</strong> – Stable links to ADRs, diagrams, configurations, relevant policy references, or including brief explanations or justifications where relevant.</li>
+  <li><strong>Severity</strong> – High, Medium, or Low if the control is not implemented.</li>
+  <li><strong>Comment</strong> – Supplementary notes for any status value, including clarification, additional context, or rationale for “N-A” and “No”.</li>
+</ul>
+
+<h3 id="-sbd-review-checklist">◽ SbD Review Checklist</h3>
+
+<p>This checklist defines the minimum set of controls that every design is expected to address. A Xlsx version is available <a href="https://github.com/OWASP/www-project-secure-by-design-framework/blob/main/resources/artifacts/OWASP-SbD-Review-Checklist.xlsx?raw=true">here</a>. Each item abstracts key recommendations from tab Principal, streamlined to support a Yes/No/N-A decision backed by evidence. For each control, teams record <em>Status</em>, <em>Justification</em>, <em>Severity</em>, and <em>Comments</em>. Items marked (Critical) are generally required to be Yes at design sign-off, or to have an approved, time-bound mitigation plan in place.</p>
+
+<h4 id="a-architecture--service-design">A. Architecture &amp; Service Design</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Control Statement</th>
+      <th>Critical</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AS-01</td>
+      <td>Trust zones (logical network “Spaces”) are enforced; cross‑zone traffic flows only via governed integration layers (gateway/bus).</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>AS-02</td>
+      <td>Service addressing &amp; discovery are unified and consistent across environments; intra‑zone shortcuts are not used externally.</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>AS-03</td>
+      <td>Service boundaries are clear; no circular dependencies; services are right‑sized; each service owns its data.</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>AS-04</td>
+      <td>Architecture avoids long synchronous chains; event‑driven or queued handoffs are used where appropriate.</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>AS-05</td>
+      <td>API/event contracts are defined and versioned; consumers are notified before breaking changes take effect.</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>AS-06</td>
+      <td>Messaging has durability (persistence/replication/retention) with a defined DLQ strategy and triage.</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>AS-07</td>
+      <td>Startup resilience: services handle missing dependencies; autoscaling defined with minimum replicas.</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>AS-08</td>
+      <td>Legacy integrations are isolated behind an anti‑corruption layer; migration path is defined.</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="b-data-management--protection">B. Data Management &amp; Protection</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">ID</th>
+      <th style="text-align: left">Control Statement</th>
+      <th style="text-align: left">Critical</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">DM-01</td>
+      <td style="text-align: left">Data are classified with named owners; controls are proportional to classification.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">DM-02</td>
+      <td style="text-align: left">Encryption in transit (TLS/mTLS) and at rest with managed keys and rotation is designed in.</td>
+      <td style="text-align: left">Yes</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">DM-03</td>
+      <td style="text-align: left">Handlers and workflows are idempotent; duplicate detection/suppression is in place where needed.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">DM-04</td>
+      <td style="text-align: left">Cross‑service transactions use Sagas/compensations; 2PC is avoided; prefer intra‑service ACID first.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">DM-05</td>
+      <td style="text-align: left">Retention/deletion policies exist per data class; minimization is applied to collection/storage.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">DM-06</td>
+      <td style="text-align: left">Consistency model is documented; UX handles staleness/conflicts; event‑sourcing considered where appropriate.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="c-reliability--resilience">C. Reliability &amp; Resilience</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">ID</th>
+      <th style="text-align: left">Control Statement</th>
+      <th style="text-align: left">Critical</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">RR-01</td>
+      <td style="text-align: left">Retries use exponential backoff + jitter; default exception handling and safe error models exist.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">RR-02</td>
+      <td style="text-align: left">Circuit breakers/bulkheads protect dependencies; non‑critical features have fallback/degraded modes.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">RR-03</td>
+      <td style="text-align: left">Asynchronous semantics are defined: ordering, delivery guarantees, ack/visibility timeouts; DLQs are monitored.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">RR-04</td>
+      <td style="text-align: left">Shared integration layers (gateway/bus) are high‑availability and contain errors to prevent cross‑zone failure propagation.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">RR-05</td>
+      <td style="text-align: left">All mutating endpoints enforce an Idempotency‑Key; concurrency controls (locks/optimistic concurrency) are in place.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">RR-06</td>
+      <td style="text-align: left">Timeouts on all calls; health probes; explicit failover/multi‑AZ strategies for critical paths.</td>
+      <td style="text-align: left">Yes</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">RR-07</td>
+      <td style="text-align: left">Quotas and autoscaling are defined; rate‑limits enforced at edges; minimum capacity documented.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">RR-08</td>
+      <td style="text-align: left">Caching/CDN/back‑pressure patterns are applied where appropriate; performance guardrails are defined.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="d-access-control--secure-communication">D. Access Control &amp; Secure Communication</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">ID</th>
+      <th style="text-align: left">Control Statement</th>
+      <th style="text-align: left">Critical</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">AC-01</td>
+      <td style="text-align: left">All communications use TLS/mTLS; service identity is verified (e.g., mesh‑issued certs).</td>
+      <td style="text-align: left">Yes</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">AC-02</td>
+      <td style="text-align: left">Central IdP (OIDC/OAuth2) is used; MFA enforced on privileged/admin paths; tokens are short‑lived.</td>
+      <td style="text-align: left">Yes</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">AC-03</td>
+      <td style="text-align: left">RBAC/ABAC governs APIs and publish/consume on messaging; least privilege is applied.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">AC-04</td>
+      <td style="text-align: left">Authorization is centralized at gateway/mesh via policy‑as‑code; shared integration services are governed.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">AC-05</td>
+      <td style="text-align: left">Secrets are stored in a secret manager; keys/certs rotate automatically; no secrets in code/logs.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">AC-06</td>
+      <td style="text-align: left">Applicable regulatory controls (e.g., privacy/financial) are identified with evidence of design alignment.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">AC-07</td>
+      <td style="text-align: left">Least privilege extends to CI/CD, VCS apps, chat‑ops, and third‑party tooling; periodic reviews are scheduled.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="e-monitoring-testing--incident-readiness">E. Monitoring, Testing &amp; Incident Readiness</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">ID</th>
+      <th style="text-align: left">Control Statement</th>
+      <th style="text-align: left">Critical</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">MT-01</td>
+      <td style="text-align: left">Structured centralized logs with correlation/trace IDs; administrative access is logged.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">MT-02</td>
+      <td style="text-align: left">Metrics/SLOs and dashboards cover service health and event‑flow anomalies; alerts are actionable.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">MT-03</td>
+      <td style="text-align: left">ASVS‑aligned security tests and negative tests from threat‑modeling are planned in the test strategy.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">MT-04</td>
+      <td style="text-align: left">SbD controls are verifiable in test (isolation, mTLS, authZ denials, rate‑limit behavior).</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">MT-05</td>
+      <td style="text-align: left">OpenAPI/AsyncAPI and event catalogs are published; ADRs/runbooks are current.</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">MT-06</td>
+      <td style="text-align: left">A documented Incident Response plan (roles, comms, evidence handling) exists and is rehearsed.</td>
+      <td style="text-align: left">Yes</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">MT-07</td>
+      <td style="text-align: left">Audit log retention ≥12 months with tamper‑evidence and a searchable hot window is defined.</td>
+      <td style="text-align: left">Yes</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="-escalation--risk-thresholds">◽ Escalation &amp; Risk Thresholds</h3>
+
+<p>If any critical control is No, or the overall risk score exceeds your team’s threshold, engage AppSec before development proceeds. Critical controls typically include those related to trust boundaries, encryption in transit/at rest, authentication and authorization, and incident readiness.</p>
+
+<p><strong>Suggested scoring:</strong> Yes = 0, N-A = 0 (with justification), No (Low) = 1, No (Med) = 2, No (High) = 4.<br />
+<strong>Escalate when:</strong> any critical = No, or total score ≥ 6, or any trigger from §2.4 applies (new external exposure, sensitive data, novel tech, Tier‑1 impact).<br />
+<strong>Review scope:</strong> AppSec team reviews the checklist and linked evidence, advises on mitigations, and may request deeper verification or threat modeling.</p>
+
+<h3 id="-governance-and-maintenance">◽ Governance and Maintenance</h3>
+
+<p>Checklists are version-controlled alongside design documentation in the project repository and remain internal to the team unless explicitly shared for external review.<br />
+ Changes to checklist scope or content follow a documented change-control process, with major changes triggering a version increment and minor editorial changes noted in a changelog.<br />
+Automation is encouraged: repository or CI/CD pipelines can enforce the presence of an up-to-date checklist, verify that all items are answered, and warn when “No” responses lack associated tickets or follow-up actions.</p>
+
+<h3 id="-links">◽ Links</h3>
+
+<p>You can also <a href="https://github.com/OWASP/www-project-secure-by-design-framework/blob/main/resources/artifacts/OWASP-SbD-Review-Checklist.xlsx?raw=true">download the checklist as a Xlsx file</a> for easy offline use and integration into your team’s workflows.</p>
+
+          </section>
+          
+          
+          
+          <section id='sec-catalog' class='page-body tab-hidden'>
+            
+            
+            
+            
+            
+            
+<hr />
+
+<h2 id="sbd-catalog-best-practices-patterns--reference-architectures">SbD Catalog; Best Practices, Patterns &amp; Reference Architectures</h2>
+
+<p>The Secure-by-Design Catalog is a practical, growing library of examples that show how to embed security directly into system architecture. It includes both end-to-end reference architectures and smaller, reusable design patterns.</p>
+
+<p>Each entry links to a self-contained case with its own README, diagrams, design notes, and—where applicable—runnable assets such as Terraform/Helm manifests, mock services, and test data. These examples demonstrate how the framework’s principles are applied in real designs so teams can adapt them with confidence.</p>
+
+<p>The catalog is <strong>opinionated but minimal</strong>: its goal is to highlight how key controls—such as trust boundaries, authentication and authorization, data protection, resilience, and observability—are put into practice, without drowning readers in product-specific detail. As a community-extensible resource, new examples and improvements are always welcome.</p>
+
+<h3 id="-reference-architectures-sample-cases">◽ Reference Architectures (sample cases)</h3>
+
+<p>End-to-end sample systems.</p>
+
+<ul>
+  <li>Samples list will be updated.</li>
+</ul>
+
+<h3 id="-atomic-patterns-library-reusable-building-blocks">◽ Atomic Patterns Library (reusable building blocks)</h3>
+
+<p>Smaller, focused patterns you can drop into many designs.</p>
+
+<ul>
+  <li>Samples list will be updated.</li>
+</ul>
+
+<h3 id="-contribution">◽ Contribution</h3>
+
+<p>We welcome community contributions to the Secure-by-Design Best Practices, Patterns &amp; Reference Architectures. If you would like to add a new sample pattern or reference case, please review the <a href="https://github.com/OWASP/www-project-secure-by-design-framework?tab=contributing-ov-file">Contributing Guidelines</a>.</p>
+
+<p>If you are contributing specifically to the Catalog, please also ensure your submission considers the following additional points:</p>
+
+<ul>
+  <li>Each case should include a README with overview, diagram, controls spotlight, design notes/ADRs, sample SbD review checklist, and operational notes.</li>
+  <li>Trust boundaries must be explicit, with clear enforcement points.</li>
+  <li>Secure defaults should be applied throughout (TLS, least privilege, validation at first hop).</li>
+  <li>Include a completed SbD review checklist (see Section 4 SbD Review Checklist in the main doc for reference).</li>
+</ul>
+
+<h3 id="-disclaimer">◽ Disclaimer</h3>
+
+<p>Samples are <strong>educational</strong>. Always validate against your project’s security requirements, threat model, and regulatory context. Adapt configs and policies before deploying to production.</p>
+
+          </section>
+          
+          
+          
+          <section id='sec-community' class='page-body tab-hidden'>
+            
+            
+            
+            
+            
+            
+<hr />
+
+<h2 id="contribution">Contribution</h2>
+
+<p>This project is community-driven, and contributions are encouraged! If you’d like to propose improvements or add to the Principlas, Catalog of best practices, or etc., please review the <a href="https://github.com/OWASP/www-project-secure-by-design-framework?tab=contributing-ov-file">Contributing Guidelines</a>.</p>
+
+<h2 id="acknowledgments">Acknowledgments</h2>
+
+<p>This project is enriched by valuable feedback and review contributions from peers and collaborators, including:</p>
+
+<ul>
+  <li>Vishnu Kamat</li>
+  <li>Sherif Clinch</li>
+  <li>Ivan Iushkevich</li>
+  <li>Elina Dinipour</li>
+  <li>Megan Pentecost</li>
+  <li>Yanki Yilmaz</li>
+  <li>Ekemini Bassey</li>
+  <li>Helen Humphries</li>
+  <li>Zetasha Sheikh</li>
+  <li>Yuliia Oliinyk</li>
+</ul>
+
+<p>We thank everyone who has supported the effort through reviewing drafts, sharing insights, or providing input. Additional contributors will be acknowledged here as the project continues to evolve.</p>
+
+<h2 id="license">License</h2>
+
+<p>The OWASP Secure-by-Design Framework is released under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0). You are free to share and adapt the material under the terms of this license. More detials <a href="https://github.com/OWASP/www-project-secure-by-design-framework?tab=License-1-ov-file">here</a>.</p>
+
+          </section>
+          
+          
+       </div>
+       <hr>
+       <div class="repo">
+       </div>
+
+          <div class="github-buttons">
+    <a class="github-button" href="https://github.com/owasp/www-project-secure-by-design-framework/subscription" data-icon="octicon-eye" data-size="large" data-show-count="true" aria-label="Watch on GitHub">Watch</a>
+    <a class="github-button" href="https://github.com/owasp/www-project-secure-by-design-framework" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star on GitHub">Star</a>
+ </div>
+
+          <div class="sidebar" role="complementary">
+    
+
+    
+    
+       
+
+
+
+  
+  <div class='owasp-sidebar-top'>
+    <strong>The OWASP<sup>&reg;</sup> Foundation</strong> works to improve the security of software through its community-led open source software projects, 
+     hundreds of chapters worldwide, tens of thousands of members, and by hosting local and global conferences.
+</div>
+
+
+  
+  
+  <h3 id="secure-by-design-framework">Secure by Design Framework</h3>
+
+<ul>
+  <li>Status: Incubator Project</li>
+  <li>Type: Documentation / Framework</li>
+  <li>Current Version: 0.5.0 (Community Draft)</li>
+  <li>Classification: Builder • Defender</li>
+</ul>
+
+<h3 id="source">Source</h3>
+
+<ul>
+  <li><a href="https://github.com/OWASP/www-project-secure-by-design-framework">GitHub Repository</a></li>
+</ul>
+
+<h3 id="downloads-draft-050">Downloads (Draft 0.5.0)</h3>
+
+<ul>
+  <li><a href="https://github.com/OWASP/www-project-secure-by-design-framework/blob/main/resources/docs/OWASP-Secure-by-Design-Framework-v0.5.pdf?raw=true">PDF</a></li>
+  <li><a href="https://github.com/OWASP/www-project-secure-by-design-framework/blob/main/resources/docs/OWASP-Secure-by-Design-Framework-v0.5.docx?raw=true">Docx</a></li>
+  <li><a href="https://github.com/OWASP/www-project-secure-by-design-framework/blob/main/resources/artifacts/OWASP-SbD-Review-Checklist.xlsx?raw=true">Review Checklist Xlsx</a></li>
+</ul>
+
+<h3 id="change-log">Change Log</h3>
+
+<ul>
+  <li><a href="https://github.com/OWASP/www-project-secure-by-design-framework/blob/main/CHANGELOG.md">Project Changelog</a>
+<!-- * (looking to add co-leads as project grows) --></li>
+</ul>
+
+<!-- ### Social Links
+Join the discussion on OWASP Slack (#secure-by-design) -->
+
+<!-- Follow the project on Twitter at: @OWASP_Secure_by_Design -->
+
+  
+  
+  
+  
+  <h3 id="leaders">Leaders</h3>
+
+<ul>
+  <li><a href="/cdn-cgi/l/email-protection#61120818004f090015000c0821060c00080d4f020e0c">Siamak Hatami</a></li>
+</ul>
+
+
+  
+
+  <div class='owasp-sidebar-bottom'>
+   <h3>Upcoming OWASP Global Events</h3>
+   <div id='global-event-div'>
+
+   </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="text/javascript">
+   var events = [];
+   $(function () {
+      eventsyml = YAML.load('https://owasp.org/assets/sitedata/events.yml');
+
+      $.each(eventsyml, function (index) {
+         if (this.category == 'Global') {
+            for (e in this.events) {
+               events.push(this.events[e]);
+            }
+         }
+      });
+
+      if (events.length > 0) {
+         var htmlstring = "<ul>";
+         for (evnt in events) {
+            if (events[evnt].url)
+               htmlstring += '<li><a href="' + events[evnt].url
+            else
+               htmlstring += '<li><a href="https://owasp.org/events/'
+
+            htmlstring += '" target="_blank rel="noopener">' + events[evnt].name + '</a>';
+
+            if (typeof events[evnt].dates === 'undefined') {
+               events[evnt].dates = 'TBA';
+            }
+
+            htmlstring += "<ul><li style='list-style-type: circle;margin-top: 0px;padding:0px;margin-left:16px;'>" + events[evnt].dates + "</li></ul></li>";
+         }
+         htmlstring += "</ul>";
+
+         $("#global-event-div").html(htmlstring);
+      }
+   });
+</script>
+
+  <!--<div>
+    <h3>OWASP News & Opinions</h3>
+    <ul>
+    	
+    </ul>	
+  </div>-->
+</div>
+
+      </div>
+    </main>
+    <footer>
+  
+  <section class="member">
+
+  <script type="text/javascript">
+    var members = [];
+    var plat_indices = [];
+    var gold_indices = [];
+    var other_indices = [];
+
+    function get_next_member(members, indexUsed){
+      // random 6
+      // 0 to 2 = Platinum (.2 > Other)
+      // 3 to 4 = Gold (.1 > Other)
+      // 5 = Other  
+      member = null;
+      chosenIndex = -1;
+      var pick = Math.floor(Math.random() * 100);      
+      var randomIndex = -1;
+      if(pick < 44){
+        // pick a platinum member
+        randomIndex = Math.floor(Math.random() * plat_indices.length);
+        pIndex = plat_indices[randomIndex];            
+        cycleIndex = randomIndex
+        while(chosenIndex == -1)
+        {
+          randomIndex++;
+          if(indexUsed.indexOf(pIndex)== -1){
+            chosenIndex = pIndex;
+            
+          }else if(randomIndex >= plat_indices.length){
+            randomIndex = 0;
+            
+          }
+          if (randomIndex == cycleIndex){ // we could not find a plat member not already in the list....            
+            break;
+          }
+        }
+      }
+      if (chosenIndex == -1 && pick < 77) {
+        // pick a gold member
+        randomIndex = Math.floor(Math.random() * gold_indices.length);
+        pIndex = gold_indices[randomIndex];            
+        cycleIndex = randomIndex
+        while(chosenIndex == -1)
+        {
+          randomIndex++;
+          if(indexUsed.indexOf(pIndex)== -1){
+            chosenIndex = pIndex;
+            
+          }else if(randomIndex >= gold_indices.length){
+            randomIndex = 0;
+            
+          }
+          if (randomIndex == cycleIndex){ // we could not find a plat member not already in the list....            
+            break;
+          }
+        }
+      }
+      if (chosenIndex == -1){
+        // pick an other member
+        randomIndex = Math.floor(Math.random() * other_indices.length);
+        pIndex = other_indices[randomIndex];            
+        cycleIndex = randomIndex
+        while(chosenIndex == -1)
+        {
+          randomIndex++;
+          if(indexUsed.indexOf(pIndex)== -1){
+            chosenIndex = pIndex;
+            
+          }else if(randomIndex >= other_indices.length){
+            randomIndex = 0;
+            
+          }
+          if (randomIndex == cycleIndex){ // we could not find a plat member not already in the list....            
+            break;
+          }
+        }
+      }    
+      if(chosenIndex >= 0){          
+        member = members[chosenIndex];
+        indexUsed.push(chosenIndex);
+        var membertype = 'not a member';
+        if(member.member && (member.membertype == 1 || !member.membertype))
+          membertype = 'silver member';
+        else if(member.member && member.membertype == 2)
+          membertype = 'platinum member';
+        else if(member.member && member.membertype == 3)
+          membertype = 'gold member';
+        else if(member.member && member.membertype)
+          membertype = member.membertype;        
+      }
+      return member;      
+    }
+
+    $(function() {  
+      var corp_members = YAML.load('https://owasp.org/assets/sitedata/corp_members.yml');
+      $.each(corp_members, function (index) {
+          index = members.push(this) - 1;  
+          if(this.member && this.membertype == 3)
+            gold_indices.push(index);
+          else if (this.member && this.membertype == 2)
+            plat_indices.push(index);
+          else
+            other_indices.push(index);        
+        });
+
+        var indexUsed = [];
+
+        var counter = 0;
+        var numberOfImages = 9;
+        var member = get_next_member(members, indexUsed);
+        htmlstring = '<h2>Spotlight: ' + member["name"] + '</h2>';
+        htmlstring += '<a href="'+ member["url"] + '" rel="sponsored nopener noreferrer" target="_blank" onclick="handleOutboundLinkClicks(event);"><img src="https://owasp.org' + member["image"] + '" alt="image" /></a>';
+        htmlstring += '<p>' + member["description"] + '</p>';
+        $(".member-spotlight").html(htmlstring);
+
+        if(members.length > 0)
+        {
+          var htmlstring = "";
+          while (counter < numberOfImages)
+          {
+            member = get_next_member(members, indexUsed)
+            if (member)
+            {
+                counter++;
+                htmlstring += '<a href="'+ member["url"] + '" class="member-logo" rel="sponsored noopener noreferrer" target="_blank" onclick="handleOutboundLinkClicks(event);"><img src="https://owasp.org' + member["image"] + '" alt="image"/></a>';                                
+            }
+          }
+
+          $("#corp_member_div").html(htmlstring);
+         
+          
+        }
+    });
+  </script>
+  <div class="member-wrapper">
+    <section class="member-spotlight">
+    </section>
+    <section class="member-list">
+      <h2>Corporate Supporters</h2>
+      <div id="corp_member_div">
+      </div>
+      <div class="member-cta">
+        <a class="callout-link" href="https://owasp.org/supporters">Become a corporate supporter</a>
+      </div>
+    </section>
+  </div>
+</section>
+
+  
+  <section class="footer-wrapper">
+    <section class="social">
+<a href="https://github.com/OWASP/" aria-label="github organization" target="_blank" rel="noopener noreferrer"><i class="fa fa-lg fa-github"></i></a>
+<a href="https://owasp.org/slack/invite" aria-label="slack group" target="_blank" rel="noopener noreferrer"><i class="fa fa-lg fa-slack"></i></a>
+<a href="https://www.facebook.com/OWASPFoundation" aria-label="facebook group" target="_blank" rel="noopener noreferrer"><i class="fa fa-lg fa-facebook-square"></i></a>
+<!-- Mastodon Icon will not load; FA instance is too old. Use the SVG instead-->
+<a href="https://infosec.exchange/@owasp" aria-label="mastodon account" target="_blank" rel="me"><svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M433 179.1c0-97.2-63.7-125.7-63.7-125.7-62.5-28.7-228.6-28.4-290.5 0 0 0-63.7 28.5-63.7 125.7 0 115.7-6.6 259.4 105.6 289.1 40.5 10.7 75.3 13 103.3 11.4 50.8-2.8 79.3-18.1 79.3-18.1l-1.7-36.9s-36.3 11.4-77.1 10.1c-40.4-1.4-83-4.4-89.6-54a102.5 102.5 0 0 1 -.9-13.9c85.6 20.9 158.7 9.1 178.8 6.7 56.1-6.7 105-41.3 111.2-72.9 9.8-49.8 9-121.5 9-121.5zm-75.1 125.2h-46.6v-114.2c0-49.7-64-51.6-64 6.9v62.5h-46.3V197c0-58.5-64-56.6-64-6.9v114.2H90.2c0-122.1-5.2-147.9 18.4-175 25.9-28.9 79.8-30.8 103.8 6.1l11.6 19.5 11.6-19.5c24.1-37.1 78.1-34.8 103.8-6.1 23.7 27.3 18.4 53 18.4 175z"/></svg></a>
+<!-- Twitter X Icon will not load; I suspect another dependency (Jekyll?) is using an older version that is conflicting. So use the SVG instead-->
+<a href="https://twitter.com/owasp" aria-label="twitter account" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/></svg></a>
+<a href="https://www.linkedin.com/company/owasp/" aria-label="linkedin account" target="_blank" rel="noopener noreferrer"><i class="fa fa-lg fa-linkedin"></i></a>
+<a href="https://www.youtube.com/user/OWASPGLOBAL" aria-label="youtube account" target="_blank" rel="noopener noreferrer"><i class="fa fa-lg fa-youtube-square"></i></a>
+</section>
+
+    <nav class="bot-nav" role="navigation" aria-label="secondary navigation">
+      <ul>
+        <li><a href="https://owasp.org/">HOME</a></li>
+        <li><a href="https://owasp.org/projects/">PROJECTS</a></li>
+        <li><a href="https://owasp.org/chapters/">CHAPTERS</a></li>
+        <li><a href="https://owasp.org/events/">EVENTS</a></li>
+        <li><a href="https://owasp.org/about/">ABOUT</a></li>
+        <li><a href="https://owasp.org/www-policy/operational/privacy">PRIVACY</a></li>
+        <li><a href="https://owasp.org/sitemap/">SITEMAP</a></li>
+        <li><a href="https://owasp.org/contact/">CONTACT</a></li>
+      </ul>
+    </nav>
+    <p class="disclaimer">
+      OWASP, the OWASP logo, and Global AppSec are registered trademarks and AppSec Days, AppSec California, AppSec Cali, SnowFROC, OWASP Boston Application Security Conference, and LASCON are trademarks of the OWASP Foundation, Inc. Unless otherwise specified, all content on the site is Creative Commons Attribution-ShareAlike v4.0 and provided without warranty of service or accuracy. For more information, please refer to our <a href="https://policy.owasp.org/operational/general-disclaimer.html">General Disclaimer</a>. OWASP does not endorse or recommend commercial products or services, allowing our community to remain vendor neutral with the collective wisdom of the best minds in software security worldwide. Copyright 2026, OWASP Foundation, Inc.
+    </p>
+  </section>
+</footer>
+
+  </body>
+</html>
+
+

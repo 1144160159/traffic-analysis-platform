@@ -1,0 +1,105 @@
+{
+  "artifact_kind": "M08_GOVERNED_KNOWN_OPEN_SET_EVALUATION_K8S_CANARY_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": [
+    "T1-M08-N006",
+    "T1-M08-N007"
+  ],
+  "milestone_state": "IMPLEMENTING",
+  "run_id": "02ff5f4d-43b4-4fb7-9b43-57b7a45279f7",
+  "status": "PASS",
+  "executed_at": "2026-08-14T15:30:00Z",
+  "environment": {
+    "infrastructure": "kubernetes",
+    "namespace": "argo",
+    "node": "8-2tb",
+    "container_runtime": "containerd",
+    "storage": "emptyDir",
+    "synthetic_fixture": true,
+    "shared_clickhouse_touched": false,
+    "shared_minio_touched": false,
+    "argo_workflow_submitted": false,
+    "production_workflow_patched": false,
+    "production_applied": false
+  },
+  "candidate": {
+    "image": "docker.io/traffic/mlops-trainer:m08-governed-w2b-20260814-r3",
+    "image_config_sha256": "c1f6dfba829c9fcb3eafdf362dba7d6b7cac5aabd57a05963808a5e13ecdab1f",
+    "containerd_manifest_sha256": "ccf711f0ec896d1ed38c01c3c833fdad316153cfa6cce58888f2aeef5bc06b9d",
+    "source_sha256": {
+      "governed_evaluation.py": "37bed6859292244e8cf2cfc5da94d6fbd220a2dfdbd9737b74f4af185f9f4615",
+      "evaluate_model.py": "1c487c121d395031c8faa3ef214cd062e4fa1dbb76f7a91c074ffa10084ac8a9",
+      "m08_governed_canary.py": "ffd893127dcb7d12ed482c684a5dc40def6161320935029cc7f3b7e054bda4d2",
+      "workflow_template": "58c6458cfccb7105b1557909d45704e12a6bcbb11e9dd8f134e3f4dd8ec069b0"
+    }
+  },
+  "contracts": {
+    "governed_evaluation_method_sha256": "047aaed8d3dcd60a5426cef9c1bde6470fa3957c788e5f004d734a0795383b65",
+    "evaluation_manifest_schema_sha256": "39ecadd26e6e31b8c40438ac2ce06bd96eb718f4bf62f937f0a9bf3afb7b88b1"
+  },
+  "lineage": {
+    "dataset_id": "b8315f2d-cb69-5db9-9585-18e23a72799e",
+    "dataset_sha256": "005fd23873ac388bdc09ebf38e8d8c04ccbe1a4728a774b2265897d779c7daa4",
+    "training_run_sha256": "17facfbaaace5f10d4da2268f699f84997f478882ba6348e8a327f6b890e52db",
+    "evaluation_id": "c420093b-bfa3-5ff3-ab2e-b4442df629cb",
+    "evaluation_sha256": "1ec5e5bc8a9c957860896cc038c0ff65c7658c8acb593f1ba4fce66c82cfb7a7"
+  },
+  "oracles": {
+    "split_row_counts": {
+      "train": 40,
+      "validation": 16,
+      "test": 16,
+      "open_set": 8
+    },
+    "training_artifact_count": 5,
+    "evaluation_artifact_count": 2,
+    "threshold_selected_from": "validation",
+    "classification_threshold": 0.5,
+    "known_attack_recall": 1.0,
+    "normal_false_positive_rate": 0.0,
+    "unknown_recall": 0.0,
+    "confidence_interval_method": "deterministic percentile bootstrap",
+    "per_class_macro_micro_metrics_present": true,
+    "calibration_metrics_present": true,
+    "activation_authorized": false,
+    "graph_ablation_state": "NOT_EXECUTED",
+    "negative_graph_gain_preservation_unit_test": "PASS"
+  },
+  "cleanup": {
+    "run_scoped_resources_removed": true,
+    "post_cleanup_label_query_count": 0,
+    "retained_kubernetes_resources": false
+  },
+  "regressions": [
+    {
+      "command": "python3 -m unittest scripts.test_dataset_governance scripts.test_governed_extract_data scripts.test_governed_train_model scripts.test_governed_evaluation -v",
+      "working_directory": "mlops",
+      "status": "PASS",
+      "tests": 14
+    },
+    {
+      "command": "python3 -m unittest scripts.alignment.test_run_m08_governed_k8s_canary -v",
+      "status": "PASS",
+      "tests": 3
+    },
+    {
+      "command": "python3 scripts/test_mlops.py",
+      "working_directory": "mlops",
+      "status": "PASS",
+      "tests": 24
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f mlops/workflows/mlops-governed-training-template.yaml -o name",
+      "status": "PASS",
+      "objects": 1
+    }
+  ],
+  "limitations": [
+    "The 1.0 known recall and 0.0 normal false-positive rate are deterministic synthetic canary observations, not product or CNAS claims.",
+    "The observed unknown recall is 0.0 and is intentionally retained; this candidate is not eligible for activation or promotion.",
+    "The graph-ablation evaluator code is tested against exact-population positive and negative deltas, but actual GNN/full/no-edge/no-source artifacts are NOT_EXECUTED.",
+    "Real ClickHouse extraction, graph snapshot training, MinIO persistence and an actual Argo Workflow run are NOT_EXECUTED.",
+    "N008 explanation, N009-N018 lifecycle, M09-M13 and whole-project release gates remain NO-GO."
+  ],
+  "errors": []
+}

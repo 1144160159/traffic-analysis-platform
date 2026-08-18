@@ -1,0 +1,46 @@
+flowchart LR
+  Meta["Kafka pcap.index.v1"]:::external
+  User["取证人员 / 上层业务"]:::external
+  Raw[("MinIO 原始PCAP对象<br/>由SW-01生成")]:::external
+  subgraph SW04["SW-04 流量证据索引与PCAP取证软件"]
+    subgraph IndexJob["PCAP Index Flink Job"]
+      Source["元数据Source"]:::own
+      Validate["字段/时间/大小校验"]:::own
+      Sink["ClickHouse批量Sink"]:::own
+      DLQAdapter["无效元数据侧输出"]:::own
+    end
+    subgraph Forensics["Forensics Service"]
+      API["查询 / 任务 / 下载API"]:::own
+      IndexClient["PCAP索引查询"]:::own
+      TaskRepo["任务Repository<br/>幂等 / 租约 / 状态机"]:::own
+      Worker["异步任务Worker"]:::own
+      Cutter["范围读取 / 解压 / BPF裁剪"]:::own
+      Verify["结果SHA-256 / 统计"]:::own
+      ObjectClient["租户隔离对象客户端"]:::own
+      Audit["下载/任务审计适配器"]:::own
+    end
+  end
+  CH[("ClickHouse pcap_index")]:::external
+  PG[("PostgreSQL 取证任务/receipt")]:::external
+  Result[("MinIO 取证结果对象")]:::external
+  DLQ["Kafka dlq.pcap-index-job"]:::external
+  AuditTopic["Kafka audit.logs"]:::external
+  Auth["共享依赖 SW-09鉴权"]:::shared
+  Common["共享JAR flink-common"]:::shared
+
+  Meta --> Source --> Validate
+  Validate -->|"有效"| Sink --> CH
+  Validate -->|"无效"| DLQAdapter --> DLQ
+  User --> API --> IndexClient --> CH
+  API --> TaskRepo --> PG
+  API --> Worker --> Cutter --> Verify --> ObjectClient --> Result
+  Cutter --> ObjectClient
+  Raw --> ObjectClient
+  API --> Audit --> AuditTopic
+  Auth -.-> API
+  Common -.-> Source
+
+  classDef own fill:#dbeafe,stroke:#2563eb,color:#172554;
+  classDef external fill:#f3f4f6,stroke:#6b7280,color:#111827;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;
+

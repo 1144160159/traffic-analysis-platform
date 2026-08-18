@@ -1,0 +1,28 @@
+{
+  "artifact_kind": "M09_ALERT_SNAPSHOT_REPOSITORY_TEST_RESULT",
+  "kubernetes": {
+    "completed_at": "2026-08-15T13:03:57Z",
+    "container_id": "containerd://3d6a7270c6c77aba5d4f8e2bbc169e0537e690bb707f112a58ea234fe0e571f3",
+    "image": "docker.io/traffic/alert-service:m09-n006-alert-snapshot-20260815-r2",
+    "image_id": "sha256:08778367b574ac81e84b8db07b99fa7aba0f46ad098fb7d600e2b9ae2620ab60",
+    "job_name": "m09-n006-snapshot-e2515d0045",
+    "job_uid": "d7608072-b548-4748-ba6b-caf40c4bc1dd",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m09-n006-snapshot-e2515d0045-6fq4s",
+    "pod_uid": "46923c18-9fcf-4fe4-b85b-aa80ffb18149",
+    "shared_clickhouse_touched": false,
+    "shared_flink_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_postgres_touched": false,
+    "started_at": "2026-08-15T13:03:54Z"
+  },
+  "production_applied": false,
+  "run_id": "e2515d00-454f-426f-b572-a4a951b84c69",
+  "run_scoped_resources_removed": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N006",
+  "test_output_sha256": "ada90a20a6a07c0a8bb670f73e35a13426b835287e85376b3fd30c5a039e5af9",
+  "test_pattern": "Test(AlertSnapshot|AlertSearchProjection|PostgresAlertSnapshot)"
+}

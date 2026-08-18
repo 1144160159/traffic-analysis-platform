@@ -1,0 +1,187 @@
+{
+  "artifact_kind": "M08_CHAMPION_CHALLENGER_SHADOW_K8S_CANARY_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": [
+    "T1-M08-N010",
+    "T1-M08-N011",
+    "T1-M08-N012"
+  ],
+  "milestone_state": "IMPLEMENTING",
+  "task_state": "CODE_AND_ISOLATED_K8S_COMPONENT_PASS_PRODUCTION_DISABLED",
+  "scoped_evidence_status": "PASS",
+  "production_activation_status": "BLOCKED",
+  "captured_at": "2026-08-15T05:59:10Z",
+  "environment": {
+    "infrastructure": "existing kubernetes cluster",
+    "namespace": "flink",
+    "canary_node": "8-2tb",
+    "cluster_nodes_ready": [
+      "8-2tb",
+      "zeus-server"
+    ],
+    "flink_session_cluster": {
+      "jobmanager_statefulset_ready": "1/1",
+      "taskmanager_statefulset_ready": "2/2",
+      "operator_installed": false
+    },
+    "container_runtime": "containerd",
+    "production_applied": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_flink_session_cluster_touched": false
+  },
+  "candidate": {
+    "behavior_image": "traffic/flink-behavior-job:m08-champion-challenger-n012-20260815-r2",
+    "behavior_image_id": "sha256:e220ae6ec85339e5b88406b348b89509c804cbb0d68367941095b153df5f4d34",
+    "trainer_image": "traffic/mlops-trainer:m08-champion-challenger-n012-20260815-r2",
+    "trainer_image_id": "sha256:6fc3b6b5704092953286b646e595b7a6c2521ecfda6bdd82929aba7aeb6747a7",
+    "flink_behavior_jar_sha256": "2f8e0af6ee67aeab5644e42384c3cb305cd3dc3e23c0b3756a3b684b091543a0",
+    "model_package_sha256": "5a01ace18657fdab6391f4196713876073f757185287c6b3bd57333c19dc9602",
+    "source_sha256": {
+      "champion-challenger-observation.schema.json": "c59eda6a362d41198a16000a20fb3801ffdddaa6b61012e36d7142744cc76d94",
+      "kafka-acl-catalog.v1.json": "31d222112dd5dbc459a0c966332c21485c641534b7caf6c5b8d5a8dd018228b6",
+      "kafka-topic-catalog.v1.json": "36921d36c0c3a6b1fc6ad961bedb672374d9d93770152ed90e8a9bd422bbefbc",
+      "state-recovery.v1.json": "3685902e78f5a9b547a6fd21236c992c56af19c615681888c473bd078b019d63",
+      "job-registry.v1.json": "8ee0f1fd81f8b13f0f67d04b1913b613df66101d18f5903541721144962d7c24",
+      "verify_flink_state_recovery.py": "ee65c9da6b5ce81f8898004f90922635b35b80c7c376b06a67d4aec074263f94",
+      "test_flink_state_recovery.py": "351eb44b9652519c2ac7369a29136bb2d1649835f978946aa6a5a5f667c03cfc",
+      "flink-behavior-champion-challenger-shadow-job.yaml": "a60775bb14abc997d8bba9b44eb44606239de2b0cae8bf69c8f529ff7f8e38f4",
+      "flink-behavior-champion-challenger-canary.yaml": "e3ecad8c3406c5667cefa19da82812557c2732dd8ea508cd277c602c21513794",
+      "ProtoTypeSerializer.java": "a0ee6229c620fd664247e4687a9986c3b03ab0c8c4857fd6017d86e6dc088e97",
+      "BehaviorDetectionJob.java": "f6486996690a6036c6b7b479b0795a24de1411739ba170c3c152b0f7edb89c2e",
+      "ChampionChallengerShadowCanaryMain.java": "2fd34ce8c7e7d02389b4fb2ef428d12fa65eb4edb6ca86fd460eb3310a2f703d",
+      "ChampionChallengerShadowFunction.java": "3d8a1b096c70349671ffb93d18be1c53a25b8788396f1b5143fb4d32aef00768",
+      "m08_governed_canary.py": "8229d65a2cf120295984af12e10b8f44a8690e14c77a37f6a9ef96dd906bbfad"
+    }
+  },
+  "runtime_contract": {
+    "entry_class": "com.traffic.flink.behavior.BehaviorDetectionJob",
+    "canary_entry_class": "com.traffic.flink.behavior.ChampionChallengerShadowCanaryMain",
+    "feature_consumer_group": "flink-behavior-job-champion-challenger-features",
+    "model_update_consumer_group": "flink-behavior-job-champion-challenger-model-updates",
+    "observation_topic": "model-shadow-observations.v1",
+    "observation_only": true,
+    "serving_result_source": "champion",
+    "activation_ack_authority": false,
+    "detection_output_authority": false,
+    "clickhouse_sink_present": false,
+    "dlq_sink_present": false,
+    "stable_operator_uids_registered": [
+      "champion-challenger-shadow-observer",
+      "champion-challenger-shadow-observation-sink"
+    ],
+    "default_enabled": false,
+    "formal_submission_suspended": true
+  },
+  "kubernetes_canary": {
+    "run_id": "d8c5b55d-c4dc-4dde-9e62-56cb1ffb0e47",
+    "job_uid": "0dd0c35d-96a3-415e-9e41-4ea3b0d46718",
+    "pod_uid": "86f893ed-4bec-4032-afdf-3dcc14d9095e",
+    "node": "8-2tb",
+    "started_at": "2026-08-15T05:51:05Z",
+    "completed_at": "2026-08-15T05:51:39Z",
+    "duration_seconds": 34,
+    "kafka_image": "docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a",
+    "observation_id": "a20a860e88dd26fbe0e1f573d2c966b2d00143da5fe0b23d2fca21994bae34a1",
+    "observation_status": "compared",
+    "serving_result_source": "champion",
+    "challenger_package_sha256": "5a01ace18657fdab6391f4196713876073f757185287c6b3bd57333c19dc9602",
+    "champion_score_numeric": true,
+    "challenger_score_numeric": true,
+    "activation_ack_emitted": false,
+    "detection_emitted": false,
+    "clickhouse_sink_present": false,
+    "dlq_sink_present": false,
+    "status": "PASS"
+  },
+  "regressions": [
+    {
+      "command": "mvn -pl flink-common,flink-behavior-job -am test",
+      "working_directory": "java/flink-jobs",
+      "status": "PASS",
+      "flink_common_tests": 37,
+      "flink_behavior_tests": 127,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "command": "python3 scripts/alignment/verify_flink_state_recovery.py && python3 scripts/alignment/verify_flink_job_registry.py && python3 -m unittest tests.alignment.test_flink_state_recovery tests.alignment.test_flink_job_registry -v",
+      "status": "PASS",
+      "canonical_flink_jobs": 9,
+      "canonical_operator_uids": 136,
+      "auxiliary_operator_uids": 5,
+      "tests": 11,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "command": "python3 scripts/alignment/check_event_catalog.py && python3 scripts/alignment/generate_kafka_acl_plan.py --check-generated && python3 -m unittest tests.alignment.test_alignment_registry.AlignmentRegistryTest.test_kafka_topic_schema_and_implementation_catalog_is_complete tests.alignment.test_kafka_acl_catalog -v",
+      "status": "PASS",
+      "canonical_topics": 44,
+      "tests": 14,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f deployments/kubernetes/flink/flink-behavior-champion-challenger-shadow-job.yaml -o name",
+      "status": "PASS",
+      "objects": 1
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f deployments/kubernetes/flink/flink-behavior-champion-challenger-canary.yaml -o name",
+      "status": "PASS",
+      "objects": 3
+    }
+  ],
+  "fail_closed_findings": [
+    {
+      "stage": "fixture_generation",
+      "finding": "The first Kubernetes run rejected a feature-column order mismatch before Flink inference.",
+      "fix": "The feature_stat_v1 fixture now signs and emits the sorted runtime column order [bps, pps].",
+      "forbidden_output_emitted": false
+    },
+    {
+      "stage": "flink_state_serialization",
+      "finding": "The second Kubernetes run exposed reflective Kryo failure while serializing a Protobuf FeatureStat community_id.",
+      "fix": "ProtoTypeSerializer now checkpoints length-delimited protobuf wire bytes with a class-bound serializer snapshot; nested request records retain protobuf bytes instead of reflective Kryo object graphs.",
+      "forbidden_output_emitted": false
+    }
+  ],
+  "gates": {
+    "signed_candidate_package_loaded": "PASS",
+    "exact_feature_vector_compared": "PASS",
+    "champion_serving_result_unchanged": "PASS",
+    "challenger_score_observed": "PASS",
+    "timeout_error_overload_paths_unit_tested": "PASS",
+    "activation_ack_suppressed": "PASS",
+    "detections_clickhouse_and_dlq_absent": "PASS",
+    "kafka_topic_schema_and_acl_contract": "PASS",
+    "flink_state_recovery_contract": "PASS",
+    "production_default_off_and_suspended": "PASS",
+    "production_activation": "BLOCKED",
+    "n013_tenant_canary_observation_window": "NOT_STARTED"
+  },
+  "cleanup": {
+    "canary_job_removed": true,
+    "isolated_kafka_deployment_removed": true,
+    "isolated_kafka_service_removed": true,
+    "contract_configmap_removed": true,
+    "retained_kubernetes_resources": false,
+    "formal_production_job_absent": true
+  },
+  "activation_blockers": [
+    "The production model-shadow-consumer-profile-v1 Secret is absent from the flink namespace.",
+    "The formal submission requires an approved immutable behavior image digest before it may be unsuspended.",
+    "Owner, reviewer and approver identities for production activation are unresolved.",
+    "The N013 tenant canary policy, stop thresholds and production observation window have not been executed.",
+    "The deterministic fixture has unknown_recall=0.0 and cannot support a model-quality or CNAS claim."
+  ],
+  "limitations": [
+    "The canary used the existing Kubernetes infrastructure but isolated Kafka and synthetic signed data.",
+    "No shared Kafka, MinIO, ClickHouse, production Flink session job or serving output was changed.",
+    "Server-side dry-run proves manifest admission only; it is not production activation evidence.",
+    "This artifact proves bounded N012 implementation and isolated K8s execution, not completion of M08."
+  ],
+  "errors": []
+}

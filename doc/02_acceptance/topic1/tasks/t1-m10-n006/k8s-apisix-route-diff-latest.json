@@ -1,0 +1,199 @@
+{
+  "acceptance_status": "BLOCKED_ROUTE_DIFF",
+  "allowed_claims": [
+    "The 58-route candidate is fully materialized and the current Kubernetes route/workload diff was captured read-only"
+  ],
+  "artifact_kind": "M10_APISIX_ROUTE_DIFF_RESULT",
+  "atomic_pr_id": "T1-M10-P013-OPS-n006-s1",
+  "blocking_codes": [
+    "GATEWAY_OIDC_CA_SECRET_REQUIRED",
+    "GATEWAY_OIDC_CLIENT_SECRET_REQUIRED",
+    "LIVE_GATEWAY_WORKLOAD_POLICY_DIFF",
+    "LIVE_ROUTE_SET_OR_CONTENT_DIFF",
+    "N005_APPLY_AUTHORIZATION_REQUIRED"
+  ],
+  "candidate": {
+    "catalog_sha256": "5e31ff80a261039a6db3ce3a4dff0d74b24659563db72d3ed320801f439444b9",
+    "policy_counts": {
+      "declared_services": 64,
+      "gap_counts": {},
+      "protected_routes": 52,
+      "protected_routes_with_gateway_auth": 52,
+      "route_ids": 58,
+      "routes": 58,
+      "routes_with_blocking_gaps": 0
+    },
+    "rendered_apisix_sha256": "132766bc4416b5b92e0bf2f1db3a1858a1ac3d748fa1c4d99f25459c482ee5a9",
+    "route_count": 58,
+    "workload_policy": {
+      "ca_mount": "/etc/traffic-platform-ca",
+      "ca_secret": "traffic-platform-ca",
+      "oidc_secret_env": true,
+      "policy_complete": true,
+      "ssl_cert_file": "/etc/traffic-platform-ca/ca.crt"
+    }
+  },
+  "candidate_id": null,
+  "does_not_prove": [
+    "the candidate was applied",
+    "OIDC login works",
+    "route diff is zero",
+    "G6 rollback passed",
+    "production promotion is authorized"
+  ],
+  "engineering_status": "PASS",
+  "environment_kind": "KUBERNETES",
+  "live": {
+    "configmap_resource_version": "6169114",
+    "configmap_uid": "6caa9f39-b081-479d-a832-3fa1c13b5ca0",
+    "rendered_apisix_sha256": "7ec73cd52560c30b8fc285e365644200f252834a90d453db1f584e5753d3ad78",
+    "route_count": 57,
+    "statefulset_generation": 34,
+    "statefulset_resource_version": "15762424",
+    "statefulset_uid": "4812211b-449e-4218-8bbb-1afeea00161c",
+    "workload_policy": {
+      "ca_mount": null,
+      "ca_secret": null,
+      "oidc_secret_env": false,
+      "policy_complete": false,
+      "ssl_cert_file": null
+    }
+  },
+  "production_applied": false,
+  "required_gates": {
+    "G0": "BLOCKED_BY_N002",
+    "G1": "PASS_REPOSITORY_POLICY_ONLY",
+    "G6": "BLOCKED"
+  },
+  "rollback_baseline": {
+    "previous_configmap_resource_version": "6169114",
+    "previous_configmap_uid": "6caa9f39-b081-479d-a832-3fa1c13b5ca0",
+    "previous_rendered_apisix_sha256": "7ec73cd52560c30b8fc285e365644200f252834a90d453db1f584e5753d3ad78",
+    "previous_statefulset_generation": 34,
+    "strategy": "restore_previous_configmap_content_hash_and_statefulset_template_then_rollout_status"
+  },
+  "route_diff": {
+    "candidate_count": 58,
+    "changed_ids": [
+      "1",
+      "10",
+      "101",
+      "102",
+      "103",
+      "104",
+      "105",
+      "106",
+      "107",
+      "108",
+      "109",
+      "11",
+      "110",
+      "111",
+      "112",
+      "113",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "2",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "3",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "4",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "extra_live_ids": [],
+    "live_count": 57,
+    "missing_live_ids": [
+      "45"
+    ],
+    "unchanged_ids": [],
+    "zero_diff": false
+  },
+  "schema_version": 1,
+  "secret_key_observation": {
+    "traffic_credentials": {
+      "exists": true,
+      "keys": [
+        "APISIX_ADMIN_KEY"
+      ],
+      "name": "traffic-credentials",
+      "namespace": "gateway",
+      "resource_version": "5996855",
+      "uid": "783d3e2f-cbfa-4178-bc36-ccb4e6f936e9"
+    },
+    "traffic_platform_ca": {
+      "exists": false,
+      "keys": [],
+      "name": "traffic-platform-ca",
+      "namespace": "gateway",
+      "resource_version": null,
+      "uid": null
+    },
+    "values_captured": false
+  },
+  "shared_infrastructure_touched": false,
+  "source_sha256": {
+    "contracts/alignment/m10-apisix-route-diff.schema.json": "b523d65bbd882d24ff84a35a6b52f487a6c5a75424c12e3bf2730672b99a1cea",
+    "contracts/gateway/route-catalog.v1.json": "da624f3bb1bd16ab397fcd1b1f89fced48f1b4c03cfd6611c0e464bec47bb076",
+    "deployments/kubernetes/configmaps/apisix-routes.yaml": "fa960953bfd002bd6f226505b9dbb56ae5a59fa6d95587ba35c1ee64979a9c9a",
+    "deployments/kubernetes/infrastructure/08-gateway.yaml": "152d5eda43f8ba214b49c0aaae93a3156dfc749ebd76bcb46ddb212fdd85811d",
+    "deployments/releases/topic1/m10-deployable-candidate-closure.v1.json": "910d1c22f302cb4d40b3d97e3a31cd9d3522b2c9befd2d15421eec144587a1f3",
+    "doc/02_acceptance/topic1/tasks/t1-m10-n005/k8s-approved-additive-plan-latest.json": "525e1fdb5f8ae0fe415bc247594fec6b36c730649f671fe4f73f40b27aef8eca",
+    "scripts/alignment/build_gateway_route_catalog.py": "afb0ddc6ac3991adfb0e5a2f1130493455c5a029feb6ca7dad9732959a899d4c",
+    "scripts/alignment/capture_m10_apisix_route_diff.py": "52686b9ea6762d94af5a2dcfcf9064a1d0c1c217b850a71ddf45d22d5b0f47c4",
+    "scripts/alignment/materialize_m10_apisix_routes.py": "711ecac7ef9b55e6fee3315e2899ca5aa71fe0be041a00c63fa4b7c3e8a1ac6a",
+    "scripts/alignment/verify_gateway_route_catalog.py": "697afd7f7cb516fd02b13a2605d0a7d85373d47e6c8c7236a3b1e367b9286841",
+    "scripts/alignment/verify_m10_apisix_route_diff.py": "7a938588e90e4582779c2b13f94d852ac03398e6942b46e71ae930422487c482"
+  },
+  "status": "PASS",
+  "task_id": "T1-M10-N006",
+  "workload_diff": {
+    "candidate": {
+      "ca_mount": "/etc/traffic-platform-ca",
+      "ca_secret": "traffic-platform-ca",
+      "oidc_secret_env": true,
+      "policy_complete": true,
+      "ssl_cert_file": "/etc/traffic-platform-ca/ca.crt"
+    },
+    "live": {
+      "ca_mount": null,
+      "ca_secret": null,
+      "oidc_secret_env": false,
+      "policy_complete": false,
+      "ssl_cert_file": null
+    },
+    "matches": false
+  }
+}

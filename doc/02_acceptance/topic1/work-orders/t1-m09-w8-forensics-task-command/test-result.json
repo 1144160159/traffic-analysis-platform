@@ -1,0 +1,42 @@
+{
+  "artifact_kind": "M09_FORENSICS_TASK_COMMAND_TEST_RESULT",
+  "compatible_worker_required": true,
+  "inputs": {
+    "migration_sha256": "37613781c6644c37a5b59b24f2bf63333582e057aeb3c45b06f23fde40ec3c11",
+    "postgres_image": "docker.io/library/postgres:16-alpine",
+    "prerequisites_sha256": "099f89078ab6b3baae5e40dcb388dfeda9bb1e173eed52218afdfca3ac0a59d9"
+  },
+  "kubernetes": {
+    "completed_at": "2026-08-15T14:21:36Z",
+    "container_id": "containerd://c7cb1c4f295d2333c402434f1995bbe31b9dd492eb1cdcfbfeb8e81c776eb31f",
+    "image": "docker.io/traffic/forensics-task-test:m09-n009-20260815-r3",
+    "image_id": "sha256:aad739620d817f5ec03d64aac81f031e2e055745eaa32f046be9eeb163996f03",
+    "job_name": "m09-n009-forensics-fe28daae30",
+    "job_uid": "66bbc9e8-6b91-4cd1-b1b3-5549fb4a3207",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "pod_name": "m09-n009-forensics-fe28daae30-s4frx",
+    "pod_uid": "7bba0e03-fa8d-4715-b58e-3d4761f701a9",
+    "shared_clickhouse_touched": false,
+    "shared_kafka_touched": false,
+    "shared_minio_touched": false,
+    "shared_postgres_touched": false,
+    "started_at": "2026-08-15T14:21:33Z"
+  },
+  "postgres_oracle": {
+    "migration_count": 1,
+    "remaining_history": 0,
+    "remaining_outbox": 0,
+    "remaining_requests": 0,
+    "remaining_tasks": 0,
+    "sentinel": "ephemeral-only"
+  },
+  "production_applied": false,
+  "run_id": "fe28daae-309f-4c19-aebe-2545619ffd47",
+  "run_scoped_resources_removed": true,
+  "status": "PASS",
+  "task_id": "T1-M09-N009",
+  "test_output_sha256": "d0bdc7a6598efe0b30e55c6a803631593113898fb45a6ca0dd10c35735e65982",
+  "test_pattern": "^TestForensicsTaskCommandAtomicEphemeralPostgres$",
+  "writer_default_enabled": false
+}

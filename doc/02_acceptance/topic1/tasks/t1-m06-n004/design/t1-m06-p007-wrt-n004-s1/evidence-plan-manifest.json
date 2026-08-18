@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN-T1-M06-P007-EVIDENCE-R1",
+  "plan_kind": "EVIDENCE",
+  "status": "DRAFT",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "candidate_manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d",
+  "profile_id": "PROFILE-T1-M06-AUTHORITY-TX-DESIGN-R1",
+  "owner": "role:evidence-custodian; identity unresolved",
+  "reviewers": ["role:postgres-transaction-reviewer; identity unresolved"],
+  "approvers": ["role:topic1-evidence-approver; identity unresolved"],
+  "content": {
+    "commands": [
+      "python3 scripts/alignment/validate_m06_n004_design_pilot.py",
+      "python3 scripts/alignment/build_topic1_task_registry.py --check",
+      "python3 scripts/alignment/build_pr_design_application_catalog.py --check"
+    ],
+    "fixtures": [],
+    "oracles": [
+      {"oracle_id": "O-EVIDENCE-IDENTITY", "kind": "AUDIT", "query_or_assertion": "every report binds atomic_pr_id, candidate manifest, profile, environment, run and command digest", "expected_result": "no unbound or cross-candidate artifact is accepted"},
+      {"oracle_id": "O-EVIDENCE-EFFECTS", "kind": "PG", "query_or_assertion": "reconcile assets, asset_events, audit_logs, asset_event_outbox and asset_upsert_requests by tenant, event and idempotency identity", "expected_result": "the expected exactly-one or zero-effect predicate holds for each executed case"}
+    ],
+    "negative_cases": ["NEG-EVIDENCE-SKIP-AS-PASS", "NEG-EVIDENCE-UNBOUND-RECEIPT", "NEG-EVIDENCE-CROSS-CANDIDATE"],
+    "required_gates": ["G0", "G1", "G2", "G3"],
+    "environment_constraints": ["evidence runs require a signed profile and environment identity before execution", "design artifacts and historical test output are not current runtime evidence"],
+    "output_artifacts": ["test report with stdout digest", "PostgreSQL effect reconciliation", "negative-case report", "rollback rehearsal report", "task evidence index from the future terminal leaf"],
+    "triggers": [],
+    "steps": [],
+    "authority_data_handling": [],
+    "derived_data_handling": [],
+    "inflight_handling": [],
+    "offset_savepoint_object_handling": [],
+    "recovery_oracles": [],
+    "forward_fix_only": false,
+    "signals": [],
+    "queries": [],
+    "window": null,
+    "thresholds": [],
+    "stop_action": null,
+    "rollback_plan_id": "PLAN-T1-M06-P007-ROLLBACK-R1",
+    "oncall_owner": null,
+    "proof_ceiling": "DESIGN_ONLY"
+  }
+}

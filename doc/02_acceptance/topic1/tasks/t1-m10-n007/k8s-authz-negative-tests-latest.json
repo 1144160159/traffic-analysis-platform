@@ -1,0 +1,146 @@
+{
+  "acceptance_status": "BLOCKED_NOT_ENABLED",
+  "allowed_claims": [
+    "The bound N007 authorization candidate passed the declared fail-closed Go tests on both Kubernetes nodes"
+  ],
+  "artifact_kind": "M10_AUTHZ_K8S_NEGATIVE_TEST_RESULT",
+  "atomic_pr_ids": [
+    "T1-M10-P015-OPS-n007-s1",
+    "T1-M10-P016-TST-POST-n007-s2"
+  ],
+  "blocking_codes": [
+    "AUTHZ_POLICY_RUNTIME_ENABLEMENT_REQUIRED",
+    "DEPLOYABLE_CANDIDATE_REQUIRED",
+    "N006_ROUTE_MATERIALIZATION_REQUIRED",
+    "POST_ENABLE_LIVE_NEGATIVE_TESTS_REQUIRED"
+  ],
+  "build_toolchain": "go version go1.25.12 linux/amd64",
+  "candidate_id": null,
+  "does_not_prove": [
+    "the N006 gateway candidate was applied",
+    "live Keycloak tokens were exercised",
+    "live service endpoints rejected every negative case",
+    "G6 rollback passed",
+    "production promotion is authorized"
+  ],
+  "engineering_status": "PASS",
+  "environment_kind": "KUBERNETES",
+  "fail_closed_dimensions": [
+    "missing_token",
+    "expired_token",
+    "scope_escalation",
+    "cross_tenant",
+    "guessed_object_id",
+    "field_escalation"
+  ],
+  "kubernetes_jobs": [
+    {
+      "identity": {
+        "completed_at": "2026-08-16T03:46:55Z",
+        "container_id": "containerd://e1f1f935fe6f19558c742d3a952e4c57067abf34980e465e4ecaf3131914ec71",
+        "image": "docker.io/traffic-analysis/m10-authz-tests:n007-20260816-v2",
+        "image_id": "sha256:9be90f7e84c515b91419d8b1f2ba0e811df7c874c87349b747ba77bdd2244628",
+        "job_name": "m10-n007-authz-ac3db8352d-1",
+        "job_uid": "dffc9a06-dddf-4ef6-9b9f-792773c262ca",
+        "namespace": "traffic-analysis",
+        "node": "8-2tb",
+        "pod_name": "m10-n007-authz-ac3db8352d-1-8pqdt",
+        "pod_uid": "71417f4e-cf9a-4d67-a874-f24625f677c0",
+        "started_at": "2026-08-16T03:46:52Z"
+      },
+      "result": {
+        "fail_closed_dimensions": [
+          "missing_token",
+          "expired_token",
+          "scope_escalation",
+          "cross_tenant",
+          "guessed_object_id",
+          "field_escalation"
+        ],
+        "profile_id": "M10-N007-K8S-FAIL-CLOSED-AUTHZ-V1",
+        "status": "PASS",
+        "test_groups": 5,
+        "top_level_tests": 16
+      }
+    },
+    {
+      "identity": {
+        "completed_at": "2026-08-16T03:46:55Z",
+        "container_id": "containerd://d5d392cecf291daeaa181ecf72e31f29e6b84ea5a114a0bf4e868fedbb5c7b0b",
+        "image": "docker.io/traffic-analysis/m10-authz-tests:n007-20260816-v2",
+        "image_id": "sha256:9be90f7e84c515b91419d8b1f2ba0e811df7c874c87349b747ba77bdd2244628",
+        "job_name": "m10-n007-authz-ac3db8352d-2",
+        "job_uid": "cc2ec4ac-bbbe-4ec6-9f2a-fd8a1b4613d5",
+        "namespace": "traffic-analysis",
+        "node": "zeus-server",
+        "pod_name": "m10-n007-authz-ac3db8352d-2-t8pqv",
+        "pod_uid": "fd27831b-5032-4a35-8c7d-099b5fc68374",
+        "started_at": "2026-08-16T03:46:52Z"
+      },
+      "result": {
+        "fail_closed_dimensions": [
+          "missing_token",
+          "expired_token",
+          "scope_escalation",
+          "cross_tenant",
+          "guessed_object_id",
+          "field_escalation"
+        ],
+        "profile_id": "M10-N007-K8S-FAIL-CLOSED-AUTHZ-V1",
+        "status": "PASS",
+        "test_groups": 5,
+        "top_level_tests": 16
+      }
+    }
+  ],
+  "policy_counts": {
+    "operations": 143,
+    "operations_without_authorized_role": 0,
+    "operations_without_scope": 0,
+    "registered_scopes": 79,
+    "roles": 4,
+    "roles_with_cross_tenant": 0,
+    "roles_with_wildcards": 0
+  },
+  "policy_sha256": "f524135c1fddb39ff01208ec6944b6a14757e8d977b8d53ada10a47463a4ec99",
+  "production_applied": false,
+  "profile_id": "M10-N007-K8S-FAIL-CLOSED-AUTHZ-V1",
+  "required_gates": {
+    "G0": "BLOCKED_BY_N002",
+    "G2": "PASS_UNIT_AND_K8S_SELF_TEST",
+    "G3": "PASS_CROSS_NODE_SELF_TEST",
+    "G6": "BLOCKED_NOT_ENABLED"
+  },
+  "run_id": "ac3db835-2d40-4dfc-bc45-c4ca5aee6e73",
+  "run_scoped_resources_removed": true,
+  "schema_version": 1,
+  "shared_infrastructure_touched": false,
+  "source_sha256": {
+    "contracts/alignment/m10-authz-k8s-result.schema.json": "b63b952e8114db074dec10da2faadda32016702ebe8e717919783787ab5527f8",
+    "contracts/alignment/m10-authz-policy.schema.json": "803313cf0c6d4f6be71b2827f63dcb7d25a977c4e260806d0c33bd3f8e91513c",
+    "contracts/authz/m10-minimal-role-policy.v1.json": "a58676ace7d88279aac14729087c42ebacb01ee58710601174430da935379f65",
+    "doc/02_acceptance/topic1/tasks/t1-m10-n006/k8s-apisix-route-diff-latest.json": "e1f2d1f404c9f4a614aa0cc8b9974eda81abaa240f63794fe8916a58f68b4353",
+    "go/control-plane/cmd/graph-service/auth_middleware_test.go": "a156c9b943acd5fc30d91a047dfb99cf28b6b404395422b962acec59b5982d2f",
+    "go/control-plane/internal/asset/api/auth.go": "6d3aa565ea9c583440434f1d0b46024f10d0f3aed9dd9fcb0dcf1888865ffeb7",
+    "go/control-plane/internal/asset/api/auth_test.go": "4662ecf2232a963d22455be8f4e04e99cd0ce03e5225ab451ff2e0a00fa51401",
+    "go/control-plane/internal/auth/model/role_policy_contract_test.go": "046787ab543336e075c9625b6ae7e0af0b16d0359db2ab7dc3177b61986565b7",
+    "go/control-plane/internal/auth/model/user.go": "9c3a39e782acff1a069da246ec28c5377e0f172d9f9ee4dbdb58e170fb4a5070",
+    "go/control-plane/internal/auth/service/auth_service.go": "f72e87055c60be18c3747c80f0c1717eca6a246cb49107af02038ee4c0fc31df",
+    "go/control-plane/internal/auth/service/auth_service_role_policy_test.go": "08787fe00252f7ba725c2b9178d833f44db355b93b189e61ccada054b6313f33",
+    "go/control-plane/internal/common/httpx/auth.go": "8c6514cbdaeb25ec73ecb650ea2d2d22a8166d78bea902f19ddbc68ac627d8b4",
+    "go/control-plane/internal/common/httpx/authorization.go": "98bd4eaf420dfa70d955340edab8ce5d75bd7ef9fdf7967cfb22d6a949e6bae6",
+    "go/control-plane/internal/common/httpx/authorization_test.go": "eb68a7f9297de4637391d34d41e17248d3760439075a64f11db481f4d0062d7d",
+    "go/control-plane/internal/common/httpx/tenant.go": "bb53c7fd93ad6e46897477511bd6750eff6ec7cb4b80ecdab330328292de013f",
+    "scripts/alignment/Dockerfile.m10-authz-prebuilt": "b805fedfef4d60cb2938c4a3a3d0208dbf131146ced91cb8fb28fdf14dd6234d",
+    "scripts/alignment/Dockerfile.m10-authz-tests": "4b53ab0be7da8d89ccc6e1a9c4d0b7bd2a62a7ad1a8c24283c7a62850d74005d",
+    "scripts/alignment/build_m10_authz_policy.py": "b63702dec73d4bf9258cd7fbee92c03988a356d4d1cc157f4a59b2fde59ab60f",
+    "scripts/alignment/run_m10_authz_k8s.py": "ec3393dd2d681e48038c579015017425e3871e1b86ee8d616866e2244eb26b3d",
+    "scripts/alignment/run_m10_authz_test_binaries.sh": "f9b196a9492969a1e74a5ccdd5c5af8964d71dc1e21756151465d86ec42d6c8b",
+    "scripts/alignment/verify_m10_authz_k8s.py": "ce2d58595ecb3d3efe6d441aafe22a51601cdb7002cb7ec5b9edff1921a9eb96",
+    "scripts/alignment/verify_m10_authz_policy.py": "b10d5b98a8216a653170d51ebd4e85e434d5ecd8a9919db49784009995e6504b",
+    "tests/alignment/test_m10_authz_k8s.py": "805316e7fb6e92b11b879e8f600a8d052879b1fd764db4599132a80f8b36f3dd",
+    "tests/alignment/test_m10_authz_policy.py": "54defb4a3ab2ca57a9ce9a076c6b3f0be8bc66e745424c4ffed5b9742ff94bf4"
+  },
+  "status": "PASS",
+  "task_id": "T1-M10-N007"
+}

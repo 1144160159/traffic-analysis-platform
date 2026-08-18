@@ -1,0 +1,204 @@
+{
+  "artifact_kind": "M08_MODEL_DRIFT_CANDIDATE_DEFAULT_OFF_TEST_RESULT",
+  "schema_version": 1,
+  "task_id": "T1-M08-N015",
+  "work_order": "t1-m08-w2e-model-drift-candidate-default-off",
+  "recorded_at": "2026-08-15T07:41:38Z",
+  "task_state": "CODE_AND_ISOLATED_POSTGRES_CANARY_PASS_PRODUCTION_ACTIVATION_BLOCKED",
+  "scoped_result": "PASS",
+  "production_applied": false,
+  "automatic_candidate_enabled": false,
+  "activation_authorized": false,
+  "implementation": {
+    "policy": {
+      "version": "model-drift-candidate.v1",
+      "required_features": [
+        "bps",
+        "iat_mean_ms",
+        "pktlen_mean",
+        "pps"
+      ],
+      "candidate_triggers": [
+        "psi_threshold_exceeded",
+        "false_positive_rate_threshold_exceeded"
+      ],
+      "blocked_signals": [
+        "missing watermark",
+        "stale watermark",
+        "future watermark",
+        "insufficient feature samples",
+        "insufficient adjudicated feedback",
+        "partial feature quality",
+        "missing required feature distribution"
+      ],
+      "threshold_boundary": "strictly_greater_than",
+      "activation_authorized": false
+    },
+    "runtime_path": [
+      "rule-manager default-off scheduler",
+      "tenant plus active model resolution",
+      "ClickHouse fixed-bin feature distributions",
+      "PostgreSQL N014 ADJUDICATED feedback head",
+      "deterministic policy and signal hashes",
+      "append-only drift evaluation receipt",
+      "one candidate request per active baseline model version",
+      "durable audit intent",
+      "exact candidate-only Argo workflow identity",
+      "workflow submitted receipt"
+    ],
+    "workflow_guards": {
+      "candidate_only": true,
+      "auto_activate": false,
+      "exact_identity_on_conflict": true,
+      "registered_model_activation_forbidden": true
+    },
+    "postgres_guards": [
+      "BLOCKED and NO_ACTION evaluations cannot create a candidate",
+      "inactive model versions cannot create a candidate",
+      "evaluation receipts cannot be updated or deleted",
+      "candidate identity fields cannot change",
+      "WORKFLOW_SUBMITTED cannot transition backward",
+      "approval_state is fixed to NOT_REQUESTED",
+      "activation_authorized is fixed to false"
+    ]
+  },
+  "kubernetes_isolated_postgres_canary": {
+    "namespace": "traffic-analysis",
+    "node": "zeus-server",
+    "image": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "job_uid": "693670e3-f284-4586-ad0e-f198d60988cf",
+    "pod_name": "m08-n015-model-drift-postgres-canary-xnnj2",
+    "pod_uid": "cd673295-2bbc-4c32-bd85-d96050e6a720",
+    "container_id": "containerd://19a3bfc593c750960e1f4193ff0f0222cf1b0f3fd43da1394501640a5c9cc186",
+    "started_at": "2026-08-15T07:40:01Z",
+    "completed_at": "2026-08-15T07:40:05Z",
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_argo_touched": false,
+    "result": {
+      "migration": "PASS",
+      "tables": 2,
+      "columns": 39,
+      "candidate_receipts": 1,
+      "blocked_candidate_rejected": true,
+      "inactive_baseline_rejected": true,
+      "activation_bypass_rejected": true,
+      "append_only_rejected": true
+    },
+    "cleanup": {
+      "job_deleted": true,
+      "configmap_deleted": true,
+      "absence_verified": true,
+      "recoverable_from_repository": true
+    }
+  },
+  "live_kubernetes_read_only_observations": {
+    "observed_at": "2026-08-15T07:35:37Z",
+    "clickhouse": {
+      "table": "traffic.feature_stat",
+      "total_rows": 217230054,
+      "current_24h_rows": 0,
+      "watermark": "2026-08-06 00:21:06.197",
+      "feature_sets": [
+        "v1"
+      ],
+      "required_quality_columns_present": [],
+      "required_quality_columns_missing": [
+        "availability",
+        "is_partial",
+        "missing_fields",
+        "source_watermark_ms"
+      ],
+      "disposition": "BLOCKED_STALE_AND_SCHEMA_INCOMPLETE"
+    },
+    "postgresql": {
+      "model_feedback_revision_head": null,
+      "model_feedback_consumer_readiness_receipt": null,
+      "model_drift_evaluation_receipt": null,
+      "model_retrain_candidate_request": null,
+      "disposition": "BLOCKED_REQUIRED_MIGRATIONS_NOT_APPLIED"
+    },
+    "argo": {
+      "workflow_template": "mlops-training-template",
+      "resource_version": "15886734",
+      "auto_activate": "false",
+      "candidate_identity_parameters_present": false,
+      "disposition": "BLOCKED_TEMPLATE_NOT_CURRENT_CANDIDATE"
+    },
+    "rule_manager": {
+      "MLOPS_AUTOMATIC_CANDIDATE_V1_ENABLED": null,
+      "MODEL_FEEDBACK_REVISION_CONSUMER_V1_ENABLED": null,
+      "disposition": "BLOCKED_CURRENT_DEPLOYMENT_NOT_CANDIDATE"
+    }
+  },
+  "verification": {
+    "go": {
+      "command": "go test ./internal/rules/... ./cmd/rule-manager -count=1",
+      "result": "PASS"
+    },
+    "targeted_alignment": {
+      "tests": 37,
+      "result": "PASS"
+    },
+    "migration_catalog": {
+      "postgres_migrations": 84,
+      "clickhouse_migrations": 10,
+      "result": "PASS"
+    },
+    "kubernetes_server_dry_run": {
+      "resources": [
+        "deployments/kubernetes/applications/go-services.yaml",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "deployments/kubernetes/argo-events/mlops-training-template.yaml",
+        "deployments/kubernetes/jobs/m08-model-drift-postgres-canary.yaml"
+      ],
+      "result": "PASS",
+      "warnings": "existing kubectl last-applied field-manager migration warnings only"
+    },
+    "broader_alignment_observation": {
+      "command": "python3 -m unittest including tests/alignment/test_alignment_registry.py",
+      "result": "FAIL_OUTSIDE_N015_SCOPE",
+      "failure": "current alert-service source lacks the registry test fragment Campaign target projection requires the campaign event V2 pipeline",
+      "n015_related_failure": false
+    }
+  },
+  "source_sha256": {
+    "go/control-plane/internal/rules/modeldrift/policy.go": "7426bc9dfe8182fc13f4f9825808b0dab5c21dd3c7195dc0c0b324710d26a462",
+    "go/control-plane/internal/rules/modeldrift/policy_test.go": "583f989bb7fccaf41a1ae8402291472b76be91b58af2f2b26a77fafacaeaa8e0",
+    "go/control-plane/internal/rules/service/mlops_drift_candidate.go": "697ffbb0067b050895270bf166c80de9764b1bbdd5e3f793b26b0a9c0f9328b9",
+    "go/control-plane/internal/rules/service/mlops_drift_candidate_test.go": "f8b505b94ec1151dec54093d047561803ed968a72f91d8a939a14905a72a66bd",
+    "go/control-plane/internal/rules/service/mlops_orchestrator.go": "71b41286babe73e6608d198a58edd8d823715d11d76676ce5ed1d75e8556b34c",
+    "go/control-plane/cmd/rule-manager/main.go": "aa2e4d86b98960a23f0dc58b351b2e4fc1c943434b9164a17c2a221e3cfe800c",
+    "go/control-plane/cmd/rule-manager/main_test.go": "bfd9bffdf0e0685812310a43f6119d77e32109d0fc6faae74b9e3fa30ed853e3",
+    "deployments/postgres/migrations/202608151700_m08_model_drift_candidate_v1.sql": "d9e88dc7b41a360dd81fcb99e8bdc2e6852f3689ff549a123f7ef7ff05d16ac5",
+    "scripts/alignment/sync_m08_model_drift_postgres_entrypoint.py": "aa406a8c69af7e0c7a06071aba9e1d4c43b31ff15dfb480c2737f4376c8d80c2",
+    "scripts/alignment/test_sync_m08_model_drift_postgres_entrypoint.py": "adf8078d6373f31cf34268d2d56d5767f0c7af56ab03b1c36868abc1bc169630",
+    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "a9b1c29ce38d7d372e5a89cf37063cada70801e474734710f0dbf07f4f94392b",
+    "deployments/kubernetes/jobs/m08-model-drift-postgres-canary.yaml": "6f7a180179fd789e173c5553f85d7d85ff0d89908e7b64828df77b6009337f5c",
+    "deployments/kubernetes/applications/go-services.yaml": "f640964d28aa971b6c14da640956f4c04fc56efe204506127f252d962759fc0f",
+    "deployments/kubernetes/argo-events/mlops-training-template.yaml": "3fd7081611aa467cc5b343748b0c6b05b848ad30f46bf60f52fa01ec3b6b6362",
+    "mlops/workflows/mlops-workflow-template.yaml": "316e96aebb78040cbf06ce12f056ff07aebec2b6133187839fb6761367ce3aad",
+    "tests/alignment/test_m08_model_drift_candidate.py": "3464b43be42aa1ec630760fc41da281b3ddd25ba1e4f990f556a00e591efe391",
+    "tests/alignment/test_m08_model_feedback_consumer.py": "bde092a8f552276bc78fc01a314e5afece4c693bed312add36190c62cba152b2"
+  },
+  "production_activation_blockers": [
+    "N014 and N015 PostgreSQL migrations are not applied to the shared database",
+    "N014 consumer readiness receipt has not been produced by a real Kafka event",
+    "ClickHouse feature quality columns are absent in the live table",
+    "ClickHouse feature watermark is stale and the current 24 hour sample count is zero",
+    "the deployed rule-manager is not the N014/N015 candidate and both feature flags are absent",
+    "the deployed Argo template lacks exact drift candidate identity parameters",
+    "no approved immutable rule-manager or MLOps trainer image digest is bound",
+    "no production rollout approval or observation window is authorized"
+  ],
+  "not_executed": [
+    "shared PostgreSQL migration",
+    "shared ClickHouse schema migration",
+    "real N014 Kafka feedback receipt",
+    "real drift evaluation receipt",
+    "real retrain candidate request",
+    "real Argo candidate workflow submission",
+    "model training, registration, shadow loading, canary activation or serving activation"
+  ],
+  "errors": []
+}

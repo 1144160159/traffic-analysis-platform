@@ -1,0 +1,169 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_status": "DRAFT_BINDING",
+  "atomic_pr_id": "T1-M06-P007-WRT-n004-s1",
+  "parent_work_id": "T1-M06-N004",
+  "pr_type": "WRT",
+  "candidate_manifest_path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/candidate-manifest.json",
+  "candidate_manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d",
+  "profile_id": "PROFILE-T1-M06-AUTHORITY-TX-DESIGN-R1",
+  "bom_transition_ref": null,
+  "responsibility": {
+    "owner": "role:multi-source-data-owner; identity unresolved",
+    "reviewers": ["role:go-language-owner; identity unresolved", "role:postgres-reliability-reviewer; identity unresolved"],
+    "approvers": ["role:topic1-change-authority; identity unresolved"]
+  },
+  "outcome": {
+    "single_result": "在repository.(*AssetRepository).UpsertAtomic的一个PostgreSQL事务中提交同revision的asset、history、audit、pending outbox与幂等回执，并把提交未知保留为可用原key恢复的未知结果",
+    "non_goals": [
+      "不在本叶修改HTTP或gRPC错误映射",
+      "不在本叶修改Kafka topic配置、dispatcher或真实broker状态",
+      "不在本叶修改测试文件或声称任何测试已经运行",
+      "不在本叶新增数据库迁移或字段级provenance存储"
+    ]
+  },
+  "selected_targets": [
+    {
+      "locator_id": "LOC-T1-M06-P007-UpsertAtomic",
+      "locator_kind": "go_symbol",
+      "path": "go/control-plane/internal/asset/repository/atomic_upsert.go",
+      "target_state": "EXISTING",
+      "symbol_or_pointer": "repository.(*AssetRepository).UpsertAtomic",
+      "signature": "func (r *AssetRepository) UpsertAtomic(ctx context.Context, rec *config.AssetRecord, command config.AssetUpsertCommand) (*config.AssetUpsertResult, error)",
+      "role": "primary authority transaction coordinator; only writable production AST node",
+      "production_surface": true,
+      "candidate_blob_sha256": "52548d4013434d66f3c7741b57c811179c04d850dcd3e2ab27d6c2d1db6167c7",
+      "created_by_atomic_pr_id": null,
+      "creation_reason": null,
+      "compatibility_entrypoint_locator_id": "LOC-T1-M06-CALLER-UpsertAssetAtomic",
+      "activation_guard_locator_id": null
+    }
+  ],
+  "context_locators": [
+    {
+      "locator_id": "LOC-T1-M06-CALLER-UpsertAssetAtomic", "locator_kind": "go_symbol", "path": "go/control-plane/internal/asset/service/asset_service.go", "target_state": "EXISTING",
+      "symbol_or_pointer": "service.(*AssetService).UpsertAssetAtomic", "signature": "func (s *AssetService) UpsertAssetAtomic(ctx context.Context, rec *config.AssetRecord, command config.AssetUpsertCommand) (*config.AssetUpsertResult, error)",
+      "role": "read-only validated service caller and compatibility entrypoint", "production_surface": true, "candidate_blob_sha256": "7e9c2eafef5fc9faa7cdd1175d4d8a12874cecee99652fb7e31d30633143a845",
+      "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint_locator_id": null, "activation_guard_locator_id": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-findAssetByMACTx", "locator_kind": "go_symbol", "path": "go/control-plane/internal/asset/repository/atomic_upsert.go", "target_state": "EXISTING",
+      "symbol_or_pointer": "repository.findAssetByMACTx", "signature": "func findAssetByMACTx(ctx context.Context, tx *sql.Tx, tenantID, mac string) (*config.AssetRecord, error)",
+      "role": "read-only locked authority lookup callee", "production_surface": true, "candidate_blob_sha256": "52548d4013434d66f3c7741b57c811179c04d850dcd3e2ab27d6c2d1db6167c7",
+      "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint_locator_id": null, "activation_guard_locator_id": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-jsonBytesOrNil", "locator_kind": "go_symbol", "path": "go/control-plane/internal/asset/repository/atomic_upsert.go", "target_state": "EXISTING",
+      "symbol_or_pointer": "repository.jsonBytesOrNil", "signature": "func jsonBytesOrNil(value []byte) any", "role": "read-only nullable history adapter callee", "production_surface": true,
+      "candidate_blob_sha256": "52548d4013434d66f3c7741b57c811179c04d850dcd3e2ab27d6c2d1db6167c7", "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint_locator_id": null, "activation_guard_locator_id": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-ensureAssetDefaults", "locator_kind": "go_symbol", "path": "go/control-plane/internal/asset/repository/postgres.go", "target_state": "EXISTING",
+      "symbol_or_pointer": "repository.ensureAssetDefaults", "signature": "func ensureAssetDefaults(rec *config.AssetRecord)", "role": "read-only design context for create defaults", "production_surface": true,
+      "candidate_blob_sha256": "601170dcb15aa94f0cab70788dd1d6294460952fa725ceea45824011bba564ea", "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint_locator_id": null, "activation_guard_locator_id": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-mergeAssetGovernance", "locator_kind": "go_symbol", "path": "go/control-plane/internal/asset/repository/postgres.go", "target_state": "EXISTING",
+      "symbol_or_pointer": "repository.mergeAssetGovernance", "signature": "func mergeAssetGovernance(rec, existing *config.AssetRecord)", "role": "read-only before-state context; permissive behavior is replaced inside the primary function", "production_surface": true,
+      "candidate_blob_sha256": "601170dcb15aa94f0cab70788dd1d6294460952fa725ceea45824011bba564ea", "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint_locator_id": null, "activation_guard_locator_id": null
+    },
+    {
+      "locator_id": "LOC-T1-M06-CALLEE-jsonObject", "locator_kind": "go_symbol", "path": "go/control-plane/internal/asset/repository/postgres.go", "target_state": "EXISTING",
+      "symbol_or_pointer": "repository.jsonObject", "signature": "func jsonObject(value map[string]any) []byte", "role": "read-only before-state context; silent fallback is removed from the primary after-state", "production_surface": true,
+      "candidate_blob_sha256": "601170dcb15aa94f0cab70788dd1d6294460952fa725ceea45824011bba564ea", "created_by_atomic_pr_id": null, "creation_reason": null, "compatibility_entrypoint_locator_id": null, "activation_guard_locator_id": null
+    }
+  ],
+  "allowed_paths": ["go/control-plane/internal/asset/repository/atomic_upsert.go"],
+  "contract_impacts": [
+    {
+      "contract_id": "IMPACT-T1-M06-P007-INTERNAL-BEHAVIOR",
+      "contract_kind": "NONE",
+      "version": null,
+      "change": "no OpenAPI, Proto, Kafka, DDL or UI contract changes are authorized by this WRT leaf; source precedence is a separately approved internal domain contract",
+      "runtime_enablement": false,
+      "locator_id": "LOC-T1-M06-P007-UpsertAtomic",
+      "operation_id": null,
+      "proto_fqn": null,
+      "field_numbers": [],
+      "topic": null,
+      "key_contract": null,
+      "schema_ref": "contracts/alignment/asset-upsert-source-precedence.v1.json",
+      "route_id": null
+    }
+  ],
+  "transaction": {
+    "authority_write_point": "PostgreSQL public.assets plus immutable public.asset_events, public.audit_logs, public.asset_event_outbox and public.asset_upsert_requests in one sql.Tx",
+    "isolation": "READ COMMITTED plus deterministic transaction-scoped advisory locks and revision CAS",
+    "locks": [
+      "first tenant_id+idempotency_key advisory lock then ledger FOR UPDATE",
+      "second tenant_id+canonical MAC advisory lock then assets FOR UPDATE",
+      "future code must not reverse this order"
+    ],
+    "idempotency_key": "PostgreSQL asset_upsert_requests unique identity (tenant_id,idempotency_key) bound to v1 canonical request SHA-256",
+    "revision_rule": "create requires expected revision zero; update uses the approved current revision and revision=revision+1 CAS; stale revisions write nothing",
+    "commit_order": ["assets", "asset_events", "audit_logs", "asset_event_outbox pending", "asset_upsert_requests", "COMMIT"],
+    "crash_points": [
+      {"crash_point_id":"CP-B09", "before_or_after":"after assets statement before history", "authority_state":"transaction-local next asset", "side_effect_state":"history, audit, outbox and ledger absent", "recovery_action":"rollback transaction", "allowed_response":"definitive failure only after rollback is known"},
+      {"crash_point_id":"CP-B11", "before_or_after":"after history before audit", "authority_state":"transaction-local asset and history", "side_effect_state":"audit, outbox and ledger absent", "recovery_action":"rollback transaction", "allowed_response":"definitive failure only after rollback is known"},
+      {"crash_point_id":"CP-B12", "before_or_after":"after audit before outbox", "authority_state":"transaction-local asset, history and audit", "side_effect_state":"outbox and ledger absent", "recovery_action":"rollback transaction", "allowed_response":"definitive failure only after rollback is known"},
+      {"crash_point_id":"CP-B13", "before_or_after":"after pending outbox before ledger", "authority_state":"all facts except receipt are transaction-local", "side_effect_state":"no broker publication and no receipt", "recovery_action":"rollback transaction", "allowed_response":"definitive failure only after rollback is known"},
+      {"crash_point_id":"CP-B14", "before_or_after":"after ledger before COMMIT", "authority_state":"all five effects transaction-local", "side_effect_state":"nothing visible outside transaction", "recovery_action":"rollback transaction", "allowed_response":"definitive failure only after rollback is known"},
+      {"crash_point_id":"CP-B15", "before_or_after":"during COMMIT", "authority_state":"committed or not committed is unknown to caller", "side_effect_state":"all five effects are either visible together or absent", "recovery_action":"query with original tenant, idempotency key and request hash", "allowed_response":"unknown or pending only; never definitive failure"},
+      {"crash_point_id":"CP-B16", "before_or_after":"after COMMIT before response", "authority_state":"all five effects committed", "side_effect_state":"response lost and outbox still pending", "recovery_action":"same-key exact replay returns stored result", "allowed_response":"original stored result with IdempotentReplay true"}
+    ]
+  },
+  "migration": null,
+  "security": {
+    "tenant_source": "authenticated or trusted-source tenant supplied and validated by service.(*AssetService).UpsertAssetAtomic; repository includes it in every lock and SQL predicate",
+    "actions": ["asset-upsert", "asset-observation-upsert"],
+    "scopes": ["asset:discover:write or the trusted internal observation/discovery authority determined by the caller"],
+    "object_tenant_predicates": ["assets.tenant_id=command tenant", "every history, audit, outbox and ledger row uses the same tenant"],
+    "redactions": ["never expose SQL, raw payload, idempotency key, MAC or tenant as a public error detail or metric label"]
+  },
+  "error_mappings": [
+    {"source_error":"repository.ErrAssetRevisionConflict", "transport_status":"existing HTTP 409 and gRPC Aborted", "error_code":"ASSET_UPSERT_REVISION_CONFLICT", "retry_policy":"refresh authority revision and create a new explicit intent", "ui_state":"conflict"},
+    {"source_error":"repository.ErrAssetIdempotencyConflict", "transport_status":"existing HTTP 409 and gRPC AlreadyExists", "error_code":"ASSET_UPSERT_IDEMPOTENCY_CONFLICT", "retry_policy":"do not retry with the same key and different payload", "ui_state":"conflict"},
+    {"source_error":"planned repository.ErrAssetCommitUnknown", "transport_status":"owned by separate HTTP and gRPC mapping leaves", "error_code":"ASSET_UPSERT_OUTCOME_UNKNOWN", "retry_policy":"reuse the original key and payload and resolve the receipt; never generate a new intent", "ui_state":"transport_unknown"}
+  ],
+  "design_refs": {
+    "code_unit_contract": {
+      "artifact_kind": "CODE_UNIT_CONTRACT",
+      "path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/code-unit-contract.v2.json",
+    "sha256": "338cc9d636ac73857040cd46267f5dee682466422994d22b121c14f7e0e346fd"
+    },
+    "implementation_delta": {
+      "artifact_kind": "FUNCTION_IMPLEMENTATION_DELTA",
+      "path": "doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/implementation-delta.v1.json",
+      "sha256": "20fc48f7140c53450a202109192298e7d6c7d5c08ad09e43c2ac3347f4d0a78b"
+    },
+    "source_precedence_contract": {
+      "artifact_kind": "ASSET_UPSERT_SOURCE_PRECEDENCE",
+      "path": "contracts/alignment/asset-upsert-source-precedence.v1.json",
+    "sha256": "677641f65a6dd7c02543f783ffceb4551f11bf83e21baa80199d0eb0025f0630"
+    }
+  },
+  "plan_refs": {
+    "test": {"plan_id":"PLAN-T1-M06-P007-TEST-R1", "path":"doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/test-plan-manifest.json", "sha256":"691a53b3affa0db47325bd9706fffce48f9d07857026e22721189ded324e858c"},
+    "evidence": {"plan_id":"PLAN-T1-M06-P007-EVIDENCE-R1", "path":"doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/evidence-plan-manifest.json", "sha256":"f18c18b9c62422dc745099afa3d6001ca2747093f83e3164635f2c4bdc35aace"},
+    "rollback": {"plan_id":"PLAN-T1-M06-P007-ROLLBACK-R1", "path":"doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/rollback-plan-manifest.json", "sha256":"1909a1d7042cd60870c4c99ac786606768df4236f69a3a58e062888af3193d6c"},
+    "observation": {"plan_id":"PLAN-T1-M06-P007-OBSERVATION-R1", "path":"doc/02_acceptance/topic1/tasks/t1-m06-n004/design/t1-m06-p007-wrt-n004-s1/observation-plan-manifest.json", "sha256":"bf0322276d12b6b5a204a1bba52b17e3d7f9f6ea213d14f2c61afb09380ad497"}
+  },
+  "claims": {
+    "allowed": ["candidate-bound DRAFT execution-package structure for design review only"],
+    "forbidden": ["READY_BINDING", "EXECUTION_AUTHORIZED", "IMPLEMENTATION_COMPLETE", "PRODUCTION_ACCEPTED", "DEPLOYMENT_ACCEPTED"]
+  },
+  "proof_ceiling": "DESIGN_STRUCTURE_ONLY",
+  "does_not_prove": ["implemented", "merged", "tested", "deployed", "accepted"],
+  "readiness": {
+    "status": "DRAFT",
+    "blockers": [
+      "dependency T1-M06-P031-IDX-n012-task-completion has no current PASS receipt",
+      "profile and environment identities are design labels and are not signed approvals",
+      "owner, reviewer and approver role identities are unresolved",
+      "pattern proposal is DRAFT and no trusted debate or final ADR exists",
+      "source-precedence contract is PROPOSED_DOMAIN_REVIEW",
+      "registered P901-P917 leaves have no reviewed code-unit/plan/evidence instances or PASS receipts",
+      "signed execution overlay and scoped execution acceptance receipt are absent"
+    ]
+  }
+}

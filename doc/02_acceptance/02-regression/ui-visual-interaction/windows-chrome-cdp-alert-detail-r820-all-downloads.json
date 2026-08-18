@@ -1,0 +1,235 @@
+{
+  "result": "pass",
+  "browser": "Chrome/150.0.7871.182",
+  "cdp_mapping": "127.0.0.1:9224 -> Windows 127.0.0.1:9222",
+  "runtime_config": {
+    "API_BASE_URL": "/api",
+    "WS_URL": "/ws/events",
+    "ARKIME_BASE_URL": "",
+    "AUTH_ENABLED": "true",
+    "USE_MOCK": "false",
+    "ALERT_DETAIL_API_ENABLED": "true",
+    "ENABLE_REALTIME": "true",
+    "SCREEN_ACCESS_MODE": "protected",
+    "DESKTOP_SMOKE_TOKEN_ENABLED": "true"
+  },
+  "real_alert_reads": [
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-hash/download?expires=1785137606&signature=b09c55f0ca3e457cfa85159e248d1a1f1b5f2ed9f801d04725f58c541f664afb",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-graph/download?expires=1785137610&signature=a203bfba3786882b822b731d3362a364e15c42f5665c42d93a9e2ca8ef63b490",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-log/download?expires=1785137614&signature=85aa9bb83c6dcb28b132daf40f845dd0c8dd6c746f63cbb1513268d6159da83b",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-session-2/download?expires=1785137618&signature=db57d4dad4dc075e49e71768664dace890ee3936cc0205bfc876c42916dd4887",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-session/download?expires=1785137622&signature=c9efff6c35190515474ab936161929d0c8bea865f507a9e101cdba9a894f607f",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-pcap/download?expires=1785137626&signature=f3f0bbe4163010b86baf6eb554397a99eb74c9c9152f0cb5e32e0e0caf19882c",
+      "status": 200
+    }
+  ],
+  "downloads": [
+    {
+      "aria_label": "下载证据 alert-detail-r802-hash",
+      "evidence_id": "alert-detail-r802-hash",
+      "access_status": 201,
+      "file_status": 200,
+      "file_name": "hash.txt",
+      "content_type": "text/plain; charset=utf-8",
+      "content_disposition": "attachment; filename=\"hash.txt\"",
+      "bytes": 65,
+      "magic": "31613262"
+    },
+    {
+      "aria_label": "下载证据 alert-detail-r802-graph",
+      "evidence_id": "alert-detail-r802-graph",
+      "access_status": 201,
+      "file_status": 200,
+      "file_name": "path-alert-detail-r802.json",
+      "content_type": "application/json",
+      "content_disposition": "attachment; filename=\"path-alert-detail-r802.json\"",
+      "bytes": 178,
+      "magic": "7b227061"
+    },
+    {
+      "aria_label": "下载证据 alert-detail-r802-log",
+      "evidence_id": "alert-detail-r802-log",
+      "access_status": 201,
+      "file_status": 200,
+      "file_name": "ids-alert-detail-r802.log",
+      "content_type": "text/plain; charset=utf-8",
+      "content_disposition": "attachment; filename=\"ids-alert-detail-r802.log\"",
+      "bytes": 103,
+      "magic": "32303236"
+    },
+    {
+      "aria_label": "下载证据 alert-detail-r802-session-2",
+      "evidence_id": "alert-detail-r802-session-2",
+      "access_status": 201,
+      "file_status": 200,
+      "file_name": "session-heartbeat.json",
+      "content_type": "application/json",
+      "content_disposition": "attachment; filename=\"session-heartbeat.json\"",
+      "bytes": 137,
+      "magic": "7b227365"
+    },
+    {
+      "aria_label": "下载证据 alert-detail-r802-session",
+      "evidence_id": "alert-detail-r802-session",
+      "access_status": 201,
+      "file_status": 200,
+      "file_name": "session-primary.json",
+      "content_type": "application/json",
+      "content_disposition": "attachment; filename=\"session-primary.json\"",
+      "bytes": 132,
+      "magic": "7b227365"
+    },
+    {
+      "aria_label": "下载证据 alert-detail-r802-pcap",
+      "evidence_id": "alert-detail-r802-pcap",
+      "access_status": 201,
+      "file_status": 200,
+      "file_name": "c2-tunnel.pcap",
+      "content_type": "application/vnd.tcpdump.pcap",
+      "content_disposition": "attachment; filename=\"c2-tunnel.pcap\"",
+      "bytes": 94,
+      "magic": "d4c3b2a1"
+    }
+  ],
+  "audit_rows": [
+    {
+      "action": "ALERT_EVIDENCE_DOWNLOADED",
+      "object_id": "alert-detail-r802-pcap",
+      "result": "success",
+      "bytes": "94",
+      "created_at": "2026-07-27T07:28:48.099385+00:00"
+    },
+    {
+      "action": "ALERT_EVIDENCE_DOWNLOADED",
+      "object_id": "alert-detail-r802-session",
+      "result": "success",
+      "bytes": "132",
+      "created_at": "2026-07-27T07:28:43.647387+00:00"
+    },
+    {
+      "action": "ALERT_EVIDENCE_DOWNLOADED",
+      "object_id": "alert-detail-r802-session-2",
+      "result": "success",
+      "bytes": "137",
+      "created_at": "2026-07-27T07:28:39.787262+00:00"
+    },
+    {
+      "action": "ALERT_EVIDENCE_DOWNLOADED",
+      "object_id": "alert-detail-r802-log",
+      "result": "success",
+      "bytes": "103",
+      "created_at": "2026-07-27T07:28:35.919201+00:00"
+    },
+    {
+      "action": "ALERT_EVIDENCE_DOWNLOADED",
+      "object_id": "alert-detail-r802-graph",
+      "result": "success",
+      "bytes": "178",
+      "created_at": "2026-07-27T07:28:32.209432+00:00"
+    },
+    {
+      "action": "ALERT_EVIDENCE_DOWNLOADED",
+      "object_id": "alert-detail-r802-hash",
+      "result": "success",
+      "bytes": "65",
+      "created_at": "2026-07-27T07:28:28.469886+00:00"
+    }
+  ],
+  "generic_axios_toast_count": 0,
+  "relevant_requests": [
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/access",
+      "post_data": "{\"action\":\"Request alert evidence access\",\"target\":\"alert-detail-r802-hash\",\"reason\":\"下载告警证据：alert-detail-r802-hash\",\"detail\":{\"action_id\":\"alert-evidence-access\",\"source\":\"alert-detail-inline-evidence\",\"requested_contract\":\"/v1/alerts/{id}/evidence/access\",\"executed_endpoint\":\"/v1/alerts/alert-detail-accept-r802/evidence/access\",\"evidence_id\":\"alert-detail-r802-hash\",\"access_mode\":\"download\",\"requested_file_name\":\"alert-detail-r802-hash\",\"evidence_kind\":\"hash 清单 / 附件\",\"signed_url_requested\":true}}"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-hash/download?expires=1785137606&signature=b09c55f0ca3e457cfa85159e248d1a1f1b5f2ed9f801d04725f58c541f664afb",
+      "post_data": null
+    },
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/access",
+      "post_data": "{\"action\":\"Request alert evidence access\",\"target\":\"alert-detail-r802-graph\",\"reason\":\"下载告警证据：alert-detail-r802-graph\",\"detail\":{\"action_id\":\"alert-evidence-access\",\"source\":\"alert-detail-inline-evidence\",\"requested_contract\":\"/v1/alerts/{id}/evidence/access\",\"executed_endpoint\":\"/v1/alerts/alert-detail-accept-r802/evidence/access\",\"evidence_id\":\"alert-detail-r802-graph\",\"access_mode\":\"download\",\"requested_file_name\":\"alert-detail-r802-graph\",\"evidence_kind\":\"图谱路径\",\"signed_url_requested\":true}}"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-graph/download?expires=1785137610&signature=a203bfba3786882b822b731d3362a364e15c42f5665c42d93a9e2ca8ef63b490",
+      "post_data": null
+    },
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/access",
+      "post_data": "{\"action\":\"Request alert evidence access\",\"target\":\"alert-detail-r802-log\",\"reason\":\"下载告警证据：alert-detail-r802-log\",\"detail\":{\"action_id\":\"alert-evidence-access\",\"source\":\"alert-detail-inline-evidence\",\"requested_contract\":\"/v1/alerts/{id}/evidence/access\",\"executed_endpoint\":\"/v1/alerts/alert-detail-accept-r802/evidence/access\",\"evidence_id\":\"alert-detail-r802-log\",\"access_mode\":\"download\",\"requested_file_name\":\"alert-detail-r802-log\",\"evidence_kind\":\"日志\",\"signed_url_requested\":true}}"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-log/download?expires=1785137614&signature=85aa9bb83c6dcb28b132daf40f845dd0c8dd6c746f63cbb1513268d6159da83b",
+      "post_data": null
+    },
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/access",
+      "post_data": "{\"action\":\"Request alert evidence access\",\"target\":\"alert-detail-r802-session-2\",\"reason\":\"下载告警证据：alert-detail-r802-session-2\",\"detail\":{\"action_id\":\"alert-evidence-access\",\"source\":\"alert-detail-inline-evidence\",\"requested_contract\":\"/v1/alerts/{id}/evidence/access\",\"executed_endpoint\":\"/v1/alerts/alert-detail-accept-r802/evidence/access\",\"evidence_id\":\"alert-detail-r802-session-2\",\"access_mode\":\"download\",\"requested_file_name\":\"alert-detail-r802-session-2\",\"evidence_kind\":\"Session\",\"signed_url_requested\":true}}"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-session-2/download?expires=1785137618&signature=db57d4dad4dc075e49e71768664dace890ee3936cc0205bfc876c42916dd4887",
+      "post_data": null
+    },
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/access",
+      "post_data": "{\"action\":\"Request alert evidence access\",\"target\":\"alert-detail-r802-session\",\"reason\":\"下载告警证据：alert-detail-r802-session\",\"detail\":{\"action_id\":\"alert-evidence-access\",\"source\":\"alert-detail-inline-evidence\",\"requested_contract\":\"/v1/alerts/{id}/evidence/access\",\"executed_endpoint\":\"/v1/alerts/alert-detail-accept-r802/evidence/access\",\"evidence_id\":\"alert-detail-r802-session\",\"access_mode\":\"download\",\"requested_file_name\":\"alert-detail-r802-session\",\"evidence_kind\":\"Session\",\"signed_url_requested\":true}}"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-session/download?expires=1785137622&signature=c9efff6c35190515474ab936161929d0c8bea865f507a9e101cdba9a894f607f",
+      "post_data": null
+    },
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/access",
+      "post_data": "{\"action\":\"Request alert evidence access\",\"target\":\"alert-detail-r802-pcap\",\"reason\":\"下载告警证据：alert-detail-r802-pcap\",\"detail\":{\"action_id\":\"alert-evidence-access\",\"source\":\"alert-detail-inline-evidence\",\"requested_contract\":\"/v1/alerts/{id}/evidence/access\",\"executed_endpoint\":\"/v1/alerts/alert-detail-accept-r802/evidence/access\",\"evidence_id\":\"alert-detail-r802-pcap\",\"access_mode\":\"download\",\"requested_file_name\":\"alert-detail-r802-pcap\",\"evidence_kind\":\"PCAP\",\"signed_url_requested\":true}}"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence/alert-detail-r802-pcap/download?expires=1785137626&signature=f3f0bbe4163010b86baf6eb554397a99eb74c9c9152f0cb5e32e0e0caf19882c",
+      "post_data": null
+    }
+  ],
+  "console_errors": [],
+  "timestamp": "2026-07-27T07:28:48.476Z"
+}

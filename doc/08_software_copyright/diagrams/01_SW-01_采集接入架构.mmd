@@ -1,0 +1,43 @@
+flowchart LR
+  NIC["镜像口 / TAP / SPAN"]:::external
+  FILE["离线PCAP"]:::external
+  CTRL["控制指令"]:::external
+  subgraph SW01["SW-01 全流量采集与可信接入软件"]
+    subgraph Probe["Rust Probe Agent"]
+      Capture["capture<br/>AF_XDP / AF_PACKET / Offline"]:::own
+      Parser["parser<br/>L2-L4 / DNS / DHCP / ARP"]:::own
+      Aggregate["aggregator<br/>分区流表 / Community ID"]:::own
+      Sender["sender<br/>批量 / 背压 / 重试 / 缓存"]:::own
+      Archive["archiver<br/>轮转 / spool / journal / 上传"]:::own
+      Control["控制执行器<br/>Heartbeat / Operation ACK"]:::own
+    end
+    subgraph Gateway["Go Ingest Gateway"]
+      GRPC["gRPC接入处理器"]:::own
+      Trust["mTLS / Token / tenant / 限流"]:::own
+      Durable["Kafka耐久生产<br/>Required ACKs=all"]:::own
+      Registry["探针注册与状态"]:::own
+      Bridge["控制命令与ACK桥"]:::own
+    end
+  end
+  Kafka["Kafka<br/>flow/session/pcap-index事件"]:::external
+  MinIO[("MinIO PCAP对象")]:::external
+  PG[("PostgreSQL 探针注册")]:::external
+  Redis[("Redis 去重/限流/控制")]:::external
+  Proto["共享契约 proto/traffic/v1"]:::shared
+
+  NIC --> Capture
+  FILE --> Capture
+  Capture --> Parser --> Aggregate --> Sender --> GRPC --> Trust --> Durable --> Kafka
+  Capture --> Archive --> MinIO
+  Archive -->|"PCAP元数据"| Sender
+  CTRL --> Bridge --> Control -->|"ACK"| Bridge
+  GRPC --> Registry --> PG
+  Trust <--> Redis
+  Bridge <--> Redis
+  Proto -.-> Sender
+  Proto -.-> GRPC
+
+  classDef own fill:#dbeafe,stroke:#2563eb,color:#172554;
+  classDef external fill:#f3f4f6,stroke:#6b7280,color:#111827;
+  classDef shared fill:#fef3c7,stroke:#d97706,color:#78350f;
+

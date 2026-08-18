@@ -1,23 +1,23 @@
 {
-  "run_id": "20260725-topic-domain-r758-r757",
+  "run_id": "20260729-topic-panel-r855-r858-final",
   "result": "pass",
   "apisix": "http://10.0.5.8:30180",
   "tenant": "default",
   "other_tenant": "tenant-b",
-  "view_id": "6109809a-ffa2-4674-bbe2-e977ce4a5c2e",
-  "subscription_id": "e95bef11-37b1-49bb-89df-9290c0f75898",
-  "topic_action_id": "7357e479-f523-4f8a-8d70-c880b48fc24f",
-  "report_export_id": "7a1cecb3-d2e8-4de7-ab43-69ca92681278",
-  "evidence_export_id": "532c502e-fb7d-44c1-864b-938e4c123ace",
-  "report": "doc/02_acceptance/runs/20260725-topic-domain-r758-r757/live-topic-governance-preflight-20260725-topic-domain-r758-r757.ndjson",
-  "local_report": "doc/02_acceptance/runs/20260725-topic-domain-r758-r757/local-report.md",
-  "total": 48,
-  "passed": 48,
+  "view_id": "0d99b5a3-7bd3-474d-ba7e-08e2e8f3ea96",
+  "subscription_id": "48a378d6-e4e7-4712-be90-a2779cb6882c",
+  "topic_action_id": "829232d4-f671-4fdf-b098-0c147e2b6fa0",
+  "report_export_id": "b190cc03-33ff-4e1a-bf0e-07633ed3a683",
+  "evidence_export_id": "2cdc6a05-13f0-48ec-91be-7b662c8157d5",
+  "report": "doc/02_acceptance/runs/20260729-topic-panel-r855-r858-final/live-topic-governance-preflight-20260729-topic-panel-r855-r858-final.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260729-topic-panel-r855-r858-final/local-report.md",
+  "total": 52,
+  "passed": 52,
   "blockers": 0,
   "warnings": 0,
   "checks": [
     {
-      "ts": "2026-07-25T04:25:54+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "contract",
       "name": "frontend topic governance contract present",
       "severity": "info",
@@ -27,17 +27,17 @@
       "artifact": "web/ui/src/services/pageApiPlans.ts"
     },
     {
-      "ts": "2026-07-25T04:25:55+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "api",
       "name": "topic tunnel page readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"protocols\":[{\"protocol\":\"SSH_LONG_LIVED\",\"count\":42,\"total_bytes\":21133366372}],\"summary\":{\"active_users\":1,\"high_risk_users\":1,\"protocol_count\":1,\"session_count\":42,\"total_bytes\":21133366372},\"time_range\":{\"end\":1784924754818,\"start\":1784838354818},\"topic\":\"tunnel\",\"updated_at\":1784924755287,\"users\":[{\"ip\":\"10.0.3.15\",\"dst_ip\":\"10.0.5.8\",\"count\":42,\"protocol\":\"SSH_LONG_LIVED\",\"risk\":\"high\",\"total_bytes\":21133366372,\"last_seen\":1784923683199}]},\"meta\":{\"request_id\":\"f202ce63-bf1e-4013-89e5-e3516030575f\",\"trace_id\":\"f202ce63-bf1e-4013-89e5-e3516030575f\"},\"timestamp\":\"2026-07-24T20:25:55Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"certificate_anomalies\":[{\"label\":\"JA3 黑名单\",\"percent\":39.4,\"sample\":\"771.9d...cb7d\",\"status\":\"risk\",\"value\":28},{\"label\":\"自签名证书\",\"percent\":25.4,\"sample\":\"Self-Signed/CN=*\",\"status\":\"warn\",\"value\":18},{\"label\":\"证书过期\",\"percent\":16.9,\"sample\":\"expired / 2024-…\",\"status\":\"warn\",\"value\":12},{\"label\":\"域名不匹配\",\"percent\":18.3,\"sample\":\"example.com\",\"status\":\"warn\",\"value\":13}],\"data_mode\":\"simulated\",\"destination_distribution\":[{\"asn\":\"AS15169\",\"label\":\"美国 (US)\",\"traffic_gb\":28,\"value\":2134},{\"asn\":\"AS133481\",\"label\":\"新加坡 (SG)\",\"traffic_gb\":16.5,\"value\":1421},{\"asn\":\"AS3320\",\"label\":\"德国 (DE)\",\"traffic_gb\":9.2,\"value\":1098},{\"asn\":\"AS6830\",\"label\":\"荷兰 (NL)\",\"traffic_gb\":6.4,\"value\":987},{\"asn\":\"AS4760\",\"label\":\"香港 (HK)\",\"traffic_gb\":3.6,\"value\":652}],\"events\":[{\"count\":18,\"dst_ip\":\"203.0.113.45(SG)\",\"event_id\":\"TN-20260620-0001\",\"evidence_type\":\"PCAP\",\"ip\":\"10.12.8.45\",\"last_seen\":1781919000000,\"phase\":\"横向移动\",\"protocol\":\"SSH\",\"risk\":\"critical\",\"risk_action\":\"PCAP / Session / 证书 / 回溯路径 / 审计日志\",\"time_window\":\"06-19 22:14:32 ~ 22:18:47\",\"total_bytes\":19542101197},{\"count\":15,\"dst_ip\":\"1",
       "artifact": "topic-tunnel.json"
     },
     {
-      "ts": "2026-07-25T04:25:55+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "assert",
       "name": "topic tunnel response shape",
       "severity": "info",
@@ -47,17 +47,17 @@
       "artifact": "topic-tunnel.json"
     },
     {
-      "ts": "2026-07-25T04:25:55+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "api",
       "name": "topic exfil page readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"destinations\":[{\"dst_ip\":\"20.205.243.166\",\"session_count\":17,\"upload_bytes\":6345981,\"total_bytes\":6576772,\"src_count\":1,\"last_seen\":1784916125456,\"risk\":\"low\"},{\"dst_ip\":\"2606:4700:3033::ac43:dcdd\",\"session_count\":4,\"upload_bytes\":763559,\"total_bytes\":24830736,\"src_count\":1,\"last_seen\":1784860654865,\"risk\":\"low\"},{\"dst_ip\":\"34.120.177.193\",\"session_count\":1152,\"upload_bytes\":424714,\"total_bytes\":2215360,\"src_count\":1,\"last_seen\":1784924286245,\"risk\":\"high\"},{\"dst_ip\":\"47.100.39.122\",\"session_count\":290,\"upload_bytes\":387521,\"total_bytes\":1727301,\"src_count\":1,\"last_seen\":1784924600389,\"risk\":\"high\"},{\"dst_ip\":\"47.100.254.175\",\"session_count\":283,\"upload_bytes\":383043,\"total_bytes\":1668596,\"src_count\":1,\"last_seen\":1784924405502,\"risk\":\"high\"},{\"dst_ip\":\"101.132.188.159\",\"session_count\":292,\"upload_bytes\":381572,\"total_bytes\":1716204,\"src_count\":1,\"last_seen\":1784924345335,\"risk\":\"high\"},{\"dst_ip\":\"47.100.115.205\",\"session_count\":272,\"upload_bytes\":372376,\"total_bytes\":1625382,\"src_count\":1,\"last_seen\":1784924170365,\"risk\":\"high\"},{\"dst_ip\":\"47.117.168.252\",\"session_count\":282,\"upload_bytes\":372236,\"total_bytes\":1657316,\"src_count\":1,\"last_seen\":178492417035",
+      "detail": "{\"success\":true,\"data\":{\"data_mode\":\"simulated\",\"destinations\":[{\"asn\":\"AS16509\",\"dst_ip\":\"52.216.43.18\",\"last_seen\":1781920800000,\"region\":\"美国\",\"risk\":\"critical\",\"session_count\":29,\"src_count\":8,\"total_bytes\":112000000000,\"upload_bytes\":104000000000},{\"asn\":\"AS54113\",\"dst_ip\":\"185.199.110.153\",\"last_seen\":1781917200000,\"region\":\"美国\",\"risk\":\"high\",\"session_count\":24,\"src_count\":7,\"total_bytes\":93000000000,\"upload_bytes\":87000000000},{\"asn\":\"AS13335\",\"dst_ip\":\"103.21.244.16\",\"last_seen\":1781913600000,\"region\":\"新加坡\",\"risk\":\"high\",\"session_count\":21,\"src_count\":6,\"total_bytes\":78000000000,\"upload_bytes\":71000000000},{\"asn\":\"AS14061\",\"dst_ip\":\"46.101.77.14\",\"last_seen\":1781910000000,\"region\":\"德国\",\"risk\":\"medium\",\"session_count\":18,\"src_count\":5,\"total_bytes\":64000000000,\"upload_bytes\":58000000000},{\"asn\":\"AS63949\",\"dst_ip\":\"139.162.81.42\",\"last_seen\":1781906400000,\"region\":\"日本\",\"risk\":\"medium\",\"session_count\":15,\"src_count\":4,\"total_bytes\":49000000000,\"upload_bytes\":44000000000}],\"events\":[{\"data_type\":\"源代码\",\"dst_ip\":\"52.216.43.18\",\"dst_port\":443,\"dst_region\":\"美国\",\"event_id\":\"EXF-20260620-001\",\"last_seen\":1781919900000,\"protocol\":\"HTTPS\",\"risk\":\"critical",
       "artifact": "topic-exfil.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "assert",
       "name": "topic exfil response shape",
       "severity": "info",
@@ -67,17 +67,17 @@
       "artifact": "topic-exfil.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "api",
       "name": "topic apt page readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"campaigns\":[{\"tenant_id\":\"default\",\"campaign_id\":\"campaign-exfil-default-1783876075253-d150e2f8\",\"ts_start\":1783876075253,\"ts_end\":1783876381144,\"entities\":[\"ip:cid:1:w2O8mv\",\"ip:cid:8UbanKB0N+7tqd0/hSj9s=\"],\"alerts\":[\"alert-default-1783876075253-0d76b99c\",\"alert-default-1783876381144-4cff87d3\"],\"score\":0.6000000238418579,\"summary\":\"检测到数据外泄攻击链：主机 cid:1:w2O8mv 进行了 1 次大量数据传输，最终通过外部通道传输至 cid:8UbanKB0N+7tqd0/hSj9s=\",\"event_id\":\"5d0e9030-159c-4813-bfab-8975ef6ad4e3\",\"ingest_ts\":1783876628535,\"campaign_type\":\"data_exfiltration\",\"attack_phases\":[\"collection\",\"exfiltration\",\"command_and_control\"],\"rule_ids\":[],\"model_ids\":[\"v1.0\"],\"activity_status\":\"closed\",\"status\":\"contained\",\"assignee\":\"sec_analyst\",\"state_version\":90,\"workbench_updated_at\":\"2026-07-24T19:45:28.803973Z\"},{\"tenant_id\":\"default\",\"campaign_id\":\"campaign-exfil-default-1783876075253-8d49e12f\",\"ts_start\":1783876075253,\"ts_end\":1783876381144,\"entities\":[\"ip:cid:1:w2O8mv\",\"ip:cid:8UbanKB0N+7tqd0/hSj9s=\"],\"alerts\":[\"alert-default-1783876075253-0d76b99c\",\"alert-default-1783876381144-4cff87d3\"],\"score\":0.7000000476837158,\"summary\":\"检�",
+      "detail": "{\"success\":true,\"data\":{\"campaigns\":[{\"activity_status\":\"active\",\"alerts\":[\"ALT-001\",\"ALT-002\",\"ALT-003\",\"ALT-004\",\"ALT-005\",\"ALT-006\",\"ALT-007\",\"ALT-008\",\"ALT-009\",\"ALT-010\",\"ALT-011\",\"ALT-012\"],\"attack_phases\":[\"初始访问\",\"执行\",\"持久化\",\"横向移动\",\"外传\"],\"campaign_id\":\"APT-CN-2026\",\"campaign_type\":\"targeted\",\"entities\":[\"10.20.11.31\",\"研发文件服务器\",\"域控-01\"],\"score\":0.94,\"status\":\"active\",\"ts_end\":1781920800000,\"ts_start\":1779415200000},{\"activity_status\":\"active\",\"alerts\":[\"ALT-021\",\"ALT-022\",\"ALT-023\",\"ALT-024\",\"ALT-025\",\"ALT-026\",\"ALT-027\",\"ALT-028\",\"ALT-029\"],\"attack_phases\":[\"侦察\",\"初始访问\",\"执行\",\"横向移动\"],\"campaign_id\":\"TEMP.HAWK\",\"campaign_type\":\"espionage\",\"entities\":[\"10.20.18.77\",\"邮件网关\",\"数据库-02\"],\"score\":0.87,\"status\":\"investigating\",\"ts_end\":1781917200000,\"ts_start\":1779847200000},{\"activity_status\":\"active\",\"alerts\":[\"ALT-031\",\"ALT-032\",\"ALT-033\",\"ALT-034\",\"ALT-035\",\"ALT-036\",\"ALT-037\"],\"attack_phases\":[\"侦察\",\"执行\",\"持久化\"],\"campaign_id\":\"UNKNOWN-07\",\"campaign_type\":\"unknown\",\"entities\":[\"10.20.33.118\",\"堡垒机-03\",\"API网关\"],\"score\":0.79,\"status\":\"open\",\"ts_end\":1781913600000,\"ts_start\":1780279",
       "artifact": "topic-apt.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "assert",
       "name": "topic apt response shape",
       "severity": "info",
@@ -87,17 +87,17 @@
       "artifact": "topic-apt.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "api",
       "name": "topic saved views readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":2,\"views\":[{\"view_id\":\"af005cc3-b8ad-4d5a-9429-2bd949f12367\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260725-topic-domain-r754\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1784921850183231839\",\"created_by\":\"42620c57-fc23-48ba-8baa-062b37ebca5b\",\"created_at\":1784921850067,\"updated_at\":1784921850181},{\"view_id\":\"105e481b-bd4c-4137-81c6-9dec6f6cba62\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260630-topic-governance-preflight-r2\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1782793983316355173\",\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983201,\"updated_at\":1782793983313}]},\"meta\":{\"request_id\":\"45ead21f-31f0-49e3-a97e-0e705412ea52\",\"trace_id\":\"45ead21f-31f0-49e3-a97e-0e705412ea52\"},\"timestamp\":\"2026-07-24T20:25:56Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"total\":144,\"views\":[{\"view_id\":\"171be8ac-515e-4653-87e0-68dc8e04a6cb\",\"tenant_id\":\"default\",\"topic\":\"apt\",\"name\":\"当前专题视图-2026-07-28\",\"filters\":{\"active_pages\":[],\"active_tabs\":[\"APT/战役专题\",\"ATT\\u0026CK阶段覆盖\"],\"captured_at\":\"2026-07-28T23:27:39.159Z\",\"fullscreen\":false,\"route\":\"/topics?topic=apt\\u0026tab=apt\\u0026allControlsTs=1785281245854\",\"selections\":[\"阶段：全部\",\"状态：全部\"],\"source\":\"topic-workbench\",\"target\":\"campaign-20260620-apt01\",\"topic\":\"apt\",\"values\":[]},\"visibility\":\"private\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1785281275660203919\",\"created_by\":\"6a1b9d32-5d13-4ead-a4ae-1f911fde4eec\",\"created_at\":1785281261254,\"updated_at\":1785281276732},{\"view_id\":\"bf0dae99-2471-441e-9756-c23504b22f50\",\"tenant_id\":\"default\",\"topic\":\"apt\",\"name\":\"当前专题视图-2026-07-28\",\"filters\":{\"active_pages\":[],\"active_tabs\":[\"APT/战役专题\",\"ATT\\u0026CK阶段覆盖\"],\"captured_at\":\"2026-07-28T23:25:45.517Z\",\"fullscreen\":false,\"route\":\"/topics?topic=apt\\u0026tab=apt\\u0026allControlsTs=1785281141355\",\"selections\":[\"阶段：全部\",\"状态：全部\"],\"source\":\"topic-workbench\",\"target\":\"apt\",\"topic\":\"apt\",\"v",
       "artifact": "topic-views-before.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "assert",
       "name": "topic saved views response shape",
       "severity": "info",
@@ -107,17 +107,17 @@
       "artifact": "topic-views-before.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "api",
       "name": "topic subscriptions readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"subscriptions\":[{\"subscription_id\":\"1081c626-fc2d-4ec5-80f7-03fdbac7fd5f\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260725-topic-domain-r754\"],\"enabled\":false,\"created_by\":\"42620c57-fc23-48ba-8baa-062b37ebca5b\",\"created_at\":1784921851131,\"updated_at\":1784921851240,\"detail\":{}},{\"subscription_id\":\"e688a990-3053-455e-9c0a-e21c1851c30a\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260630-topic-governance-preflight-r2\"],\"enabled\":false,\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983787,\"updated_at\":1782793983897,\"detail\":{}}],\"total\":2},\"meta\":{\"request_id\":\"b2bd65f7-d756-4e4b-ac1e-0ec6d0417583\",\"trace_id\":\"b2bd65f7-d756-4e4b-ac1e-0ec6d0417583\"},\"timestamp\":\"2026-07-24T20:25:56Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"subscriptions\":[{\"subscription_id\":\"d01f9179-e695-464e-9f3a-be3a5fb7323d\",\"tenant_id\":\"default\",\"topic\":\"apt\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"sec_analyst\"],\"enabled\":true,\"created_by\":\"6a1b9d32-5d13-4ead-a4ae-1f911fde4eec\",\"created_at\":1785281271902,\"updated_at\":1785281271902,\"detail\":{}},{\"subscription_id\":\"8e6f996d-9583-4deb-a312-31cc8921c64a\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"sec_analyst\"],\"enabled\":true,\"created_by\":\"6a1b9d32-5d13-4ead-a4ae-1f911fde4eec\",\"created_at\":1785281128044,\"updated_at\":1785281128044,\"detail\":{}},{\"subscription_id\":\"77cff6a8-e30c-4ae7-b293-59ccee6608c9\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"sec_analyst\"],\"enabled\":true,\"created_by\":\"6a1b9d32-5d13-4ead-a4ae-1f911fde4eec\",\"created_at\":1785281044338,\"updated_at\":1785281044338,\"detail\":{}},{\"subscription_id\":\"08af52ac-9a4c-4eb3-9c26-beea46a54257\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"sec_analyst\"],\"enabled\":tru",
       "artifact": "topic-subscriptions-before.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
       "phase": "assert",
       "name": "topic subscriptions response shape",
       "severity": "info",
@@ -127,17 +127,37 @@
       "artifact": "topic-subscriptions-before.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:13+08:00",
+      "phase": "api",
+      "name": "topic scope readable before mutation",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"scope_name\":\"默认专题范围\",\"included_assets\":[],\"excluded_assets\":[],\"risk_levels\":[],\"time_window\":\"7d\",\"updated_by\":\"6a1b9d32-5d13-4ead-a4ae-1f911fde4eec\",\"updated_at\":1785281029989,\"detail\":{\"source\":\"topic-workbench\",\"target\":\"tunnel-20260620-01\"}},\"meta\":{\"request_id\":\"c8a637a4-f37c-46d7-b054-6e46b2f9941c\",\"trace_id\":\"c8a637a4-f37c-46d7-b054-6e46b2f9941c\"},\"timestamp\":\"2026-07-28T23:28:13Z\"} ",
+      "artifact": "topic-scope-before.json"
+    },
+    {
+      "ts": "2026-07-29T07:28:13+08:00",
+      "phase": "assert",
+      "name": "topic scope response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.topic == \"tunnel\"",
+      "artifact": "topic-scope-before.json"
+    },
+    {
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "api",
       "name": "admin can save topic view",
       "severity": "info",
       "passed": true,
       "status": "201",
-      "detail": "{\"data\":{\"view_id\":\"6109809a-ffa2-4674-bbe2-e977ce4a5c2e\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260725-topic-domain-r758-r757\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":false,\"created_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"created_at\":1784924756620,\"updated_at\":1784924756620},\"success\":true} ",
+      "detail": "{\"data\":{\"view_id\":\"0d99b5a3-7bd3-474d-ba7e-08e2e8f3ea96\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260729-topic-panel-r855-r858-final\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":false,\"created_by\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"created_at\":1785281293993,\"updated_at\":1785281293993},\"success\":true} ",
       "artifact": "topic-view-create.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "assert",
       "name": "created topic view has identity",
       "severity": "info",
@@ -147,17 +167,17 @@
       "artifact": "topic-view-create.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "api",
       "name": "admin can share favorite topic view",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"view_id\":\"6109809a-ffa2-4674-bbe2-e977ce4a5c2e\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260725-topic-domain-r758-r757\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1784924756739024678\",\"created_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"created_at\":1784924756620,\"updated_at\":1784924756737},\"meta\":{\"request_id\":\"deb021b6-dbac-4808-ac3b-ede995059128\",\"trace_id\":\"deb021b6-dbac-4808-ac3b-ede995059128\"},\"timestamp\":\"2026-07-24T20:25:56Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"view_id\":\"0d99b5a3-7bd3-474d-ba7e-08e2e8f3ea96\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260729-topic-panel-r855-r858-final\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1785281294105110827\",\"created_by\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"created_at\":1785281293993,\"updated_at\":1785281294105},\"meta\":{\"request_id\":\"58761684-649f-4e00-be7e-c458c4372d5e\",\"trace_id\":\"58761684-649f-4e00-be7e-c458c4372d5e\"},\"timestamp\":\"2026-07-28T23:28:14Z\"} ",
       "artifact": "topic-view-share.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "assert",
       "name": "topic view share response",
       "severity": "info",
@@ -167,37 +187,37 @@
       "artifact": "topic-view-share.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "api",
       "name": "other tenant cannot update topic view",
       "severity": "info",
       "passed": true,
       "status": "404",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"topic view not found\"},\"meta\":{\"request_id\":\"132724ae-d660-48cf-9614-edbb078e5320\",\"trace_id\":\"132724ae-d660-48cf-9614-edbb078e5320\"},\"timestamp\":\"2026-07-24T20:25:56Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"topic view not found\"},\"meta\":{\"request_id\":\"882c4312-3265-414f-a038-176473943454\",\"trace_id\":\"882c4312-3265-414f-a038-176473943454\"},\"timestamp\":\"2026-07-28T23:28:14Z\"} ",
       "artifact": "topic-view-other-tenant.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "api",
       "name": "viewer cannot save topic view",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:write required\"},\"meta\":{\"request_id\":\"17f89f86-e3fd-4eff-bd5c-987e5abc27b7\",\"trace_id\":\"17f89f86-e3fd-4eff-bd5c-987e5abc27b7\"},\"timestamp\":\"2026-07-24T20:25:56Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:write required\"},\"meta\":{\"request_id\":\"52be6beb-2f56-4ad8-9794-4bdb0c7ff686\",\"trace_id\":\"52be6beb-2f56-4ad8-9794-4bdb0c7ff686\"},\"timestamp\":\"2026-07-28T23:28:14Z\"} ",
       "artifact": "topic-view-viewer.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "api",
       "name": "audit log page API has topic view save event",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"logs\":[{\"log_id\":\"audit-20260724202556.631300926\",\"tenant_id\":\"default\",\"user_id\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"action\":\"TOPIC_VIEW_SAVED\",\"resource_type\":\"topic_saved_view\",\"resource_id\":\"6109809a-ffa2-4674-bbe2-e977ce4a5c2e\",\"details\":{\"favorite\":true,\"name\":\"codex topic view 20260725-topic-domain-r758-r757\",\"topic\":\"tunnel\",\"visibility\":\"team\"},\"ip_address\":\"10.244.0.0\",\"user_agent\":\"curl/7.79.1\",\"request_id\":\"\",\"trace_id\":\"\",\"result\":\"success\",\"risk\":\"low\",\"timestamp\":1784924756630}],\"retention\":{\"retention_days\":365,\"archived_until\":1753388756946,\"archive_location\":\"archive-audit\",\"integrity_rate\":0,\"masked_rate\":100,\"last_checked_at\":1784495668075},\"summary\":{\"today\":1,\"failed\":0,\"high_risk\":0,\"exports\":0,\"pcap_access\":0,\"integrity_rate\":0},\"total\":1,\"trails\":[{\"log_id\":\"audit-20260724202556.631300926\",\"tenant_id\":\"default\",\"user_id\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"action\":\"TOPIC_VIEW_SAVED\",\"resource_type\":\"topic_saved_view\",\"resource_id\":\"6109809a-ffa2-4674-bbe2-e977ce4a5c2e\",\"details\":{\"favorite\":true,\"name\":\"codex topic view 20260725-topic-domain-r758-r757\",\"topic\":\"tunnel\",\"visibility\":\"team\"},\"ip_address\":\"10.244.0.0\",\"user_age",
+      "detail": "{\"success\":true,\"data\":{\"logs\":[{\"log_id\":\"audit-48141f50-1b8f-4429-bbf8-ad04165be79b\",\"tenant_id\":\"default\",\"user_id\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"action\":\"TOPIC_VIEW_SAVED\",\"resource_type\":\"topic_saved_view\",\"resource_id\":\"0d99b5a3-7bd3-474d-ba7e-08e2e8f3ea96\",\"details\":{\"api_path\":\"/api/v1/topics/views\",\"favorite\":true,\"name\":\"codex topic view 20260729-topic-panel-r855-r858-final\",\"request_id\":\"8f7d303a-0a5f-42a6-9cae-335ece872148\",\"result\":\"success\",\"topic\":\"tunnel\",\"trace_id\":\"8f7d303a-0a5f-42a6-9cae-335ece872148\",\"visibility\":\"team\"},\"ip_address\":\"10.244.0.0\",\"user_agent\":\"curl/7.79.1\",\"request_id\":\"8f7d303a-0a5f-42a6-9cae-335ece872148\",\"trace_id\":\"8f7d303a-0a5f-42a6-9cae-335ece872148\",\"result\":\"success\",\"risk\":\"low\",\"timestamp\":1785281293993}],\"retention\":{\"retention_days\":365,\"archived_until\":1753745294346,\"archive_location\":\"archive-audit\",\"integrity_rate\":0,\"masked_rate\":100,\"last_checked_at\":1784495668075},\"summary\":{\"today\":1,\"failed\":0,\"high_risk\":0,\"exports\":0,\"pcap_access\":0,\"integrity_rate\":0},\"total\":1,\"trails\":[{\"log_id\":\"audit-48141f50-1b8f-4429-bbf8-ad04165be79b\",\"tenant_id\":\"default\",\"user_id\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"action\":\"TOPIC_VI",
       "artifact": "topic-audit-view-saved.json"
     },
     {
-      "ts": "2026-07-25T04:25:56+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "assert",
       "name": "audit log contains topic view save event",
       "severity": "info",
@@ -207,7 +227,7 @@
       "artifact": "topic-audit-view-saved.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "postgres",
       "name": "topic saved view persisted in PostgreSQL",
       "severity": "info",
@@ -217,17 +237,17 @@
       "artifact": "pg-topic-view-count.txt"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "api",
       "name": "admin can update topic scope",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"scope_name\":\"codex scope 20260725-topic-domain-r758-r757\",\"included_assets\":[\"core-switch\",\"border-fw\"],\"excluded_assets\":[],\"risk_levels\":[\"high\",\"critical\"],\"time_window\":\"24h\",\"updated_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"updated_at\":1784924757171,\"detail\":{\"reason\":\"codex live topic governance preflight\"}},\"meta\":{\"request_id\":\"225739dd-15db-4e5a-86e7-8eef9c413199\",\"trace_id\":\"225739dd-15db-4e5a-86e7-8eef9c413199\"},\"timestamp\":\"2026-07-24T20:25:57Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"scope_name\":\"codex scope 20260729-topic-panel-r855-r858-final\",\"included_assets\":[\"core-switch\",\"border-fw\"],\"excluded_assets\":[],\"risk_levels\":[\"high\",\"critical\"],\"time_window\":\"24h\",\"updated_by\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"updated_at\":1785281294597,\"detail\":{\"reason\":\"codex live topic governance preflight\"}},\"meta\":{\"request_id\":\"3b53bc66-5bbe-4535-9ccb-647ca727f42a\",\"trace_id\":\"3b53bc66-5bbe-4535-9ccb-647ca727f42a\"},\"timestamp\":\"2026-07-28T23:28:14Z\"} ",
       "artifact": "topic-scope-update.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "assert",
       "name": "topic scope update response",
       "severity": "info",
@@ -237,17 +257,17 @@
       "artifact": "topic-scope-update.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "api",
       "name": "admin can submit topic action",
       "severity": "info",
       "passed": true,
       "status": "202",
-      "detail": "{\"data\":{\"action\":\"extract_pcap\",\"action_id\":\"7357e479-f523-4f8a-8d70-c880b48fc24f\",\"created_at\":1784924757258,\"data_mode\":\"live\",\"label\":\"提取隧道 PCAP\",\"requested_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"status\":\"queued\",\"target\":\"10.12.8.45\",\"tenant_id\":\"default\",\"topic\":\"tunnel\"},\"success\":true} ",
+      "detail": "{\"data\":{\"action\":\"extract_pcap\",\"action_id\":\"829232d4-f671-4fdf-b098-0c147e2b6fa0\",\"business_effect\":{\"data_mode\":\"live\",\"evidence_ref\":\"topic/tunnel/pcap/10.12.8.45\",\"message\":\"已生成取证任务与证据引用；任务已持久化，等待执行器处理\",\"operation\":\"extract_pcap\",\"result_type\":\"business_result\",\"state\":\"queued\"},\"created_at\":1785281294688,\"data_mode\":\"live\",\"label\":\"提取隧道 PCAP\",\"requested_by\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"status\":\"queued\",\"target\":\"10.12.8.45\",\"tenant_id\":\"default\",\"topic\":\"tunnel\"},\"success\":true} ",
       "artifact": "topic-action-create.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "assert",
       "name": "created topic action has durable identity",
       "severity": "info",
@@ -257,17 +277,17 @@
       "artifact": "topic-action-create.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "api",
       "name": "viewer cannot submit topic action",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:write required\"},\"meta\":{\"request_id\":\"8541a59f-4af7-4821-96e1-1ded4e8cd333\",\"trace_id\":\"8541a59f-4af7-4821-96e1-1ded4e8cd333\"},\"timestamp\":\"2026-07-24T20:25:57Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:write required\"},\"meta\":{\"request_id\":\"b53df1dd-7cbf-42ad-ad37-9aec89e59878\",\"trace_id\":\"b53df1dd-7cbf-42ad-ad37-9aec89e59878\"},\"timestamp\":\"2026-07-28T23:28:14Z\"} ",
       "artifact": "topic-action-viewer.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:14+08:00",
       "phase": "postgres",
       "name": "topic action persisted in PostgreSQL",
       "severity": "info",
@@ -277,17 +297,17 @@
       "artifact": "pg-topic-action-count.txt"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "topic action audit is queryable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"logs\":[{\"log_id\":\"audit-09365162-b033-488f-babd-6958e0d5ce2b\",\"tenant_id\":\"default\",\"user_id\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"action\":\"TOPIC_ACTION_REQUESTED\",\"resource_type\":\"topic_action\",\"resource_id\":\"7357e479-f523-4f8a-8d70-c880b48fc24f\",\"details\":{\"action\":\"extract_pcap\",\"api_path\":\"/api/v1/topics/tunnel/actions\",\"data_mode\":\"live\",\"label\":\"提取隧道 PCAP\",\"request_id\":\"abda9264-5637-46b5-9194-9aa3cb4b3e43\",\"result\":\"success\",\"target\":\"10.12.8.45\",\"topic\":\"tunnel\",\"trace_id\":\"abda9264-5637-46b5-9194-9aa3cb4b3e43\"},\"ip_address\":\"10.244.0.1\",\"user_agent\":\"curl/7.79.1\",\"request_id\":\"abda9264-5637-46b5-9194-9aa3cb4b3e43\",\"trace_id\":\"abda9264-5637-46b5-9194-9aa3cb4b3e43\",\"result\":\"success\",\"risk\":\"low\",\"timestamp\":1784924757258}],\"retention\":{\"retention_days\":365,\"archived_until\":1753388757564,\"archive_location\":\"archive-audit\",\"integrity_rate\":0,\"masked_rate\":100,\"last_checked_at\":1784495668075},\"summary\":{\"today\":1,\"failed\":0,\"high_risk\":0,\"exports\":0,\"pcap_access\":0,\"integrity_rate\":0},\"total\":1,\"trails\":[{\"log_id\":\"audit-09365162-b033-488f-babd-6958e0d5ce2b\",\"tenant_id\":\"default\",\"user_id\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"action\":\"TOP",
+      "detail": "{\"success\":true,\"data\":{\"logs\":[{\"log_id\":\"audit-d4a0550f-6ede-475b-98de-23855c828c08\",\"tenant_id\":\"default\",\"user_id\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"action\":\"TOPIC_ACTION_REQUESTED\",\"resource_type\":\"topic_action\",\"resource_id\":\"829232d4-f671-4fdf-b098-0c147e2b6fa0\",\"details\":{\"action\":\"extract_pcap\",\"api_path\":\"/api/v1/topics/tunnel/actions\",\"business_effect\":{\"data_mode\":\"live\",\"evidence_ref\":\"topic/tunnel/pcap/10.12.8.45\",\"message\":\"已生成取证任务与证据引用；任务已持久化，等待执行器处理\",\"operation\":\"extract_pcap\",\"result_type\":\"business_result\",\"state\":\"queued\"},\"business_status\":\"queued\",\"data_mode\":\"live\",\"label\":\"提取隧道 PCAP\",\"request_id\":\"c4edd590-fe92-4afc-8734-8d8de92dd853\",\"result\":\"success\",\"target\":\"10.12.8.45\",\"topic\":\"tunnel\",\"trace_id\":\"c4edd590-fe92-4afc-8734-8d8de92dd853\"},\"ip_address\":\"10.244.0.1\",\"user_agent\":\"curl/7.79.1\",\"request_id\":\"c4edd590-fe92-4afc-8734-8d8de92dd853\",\"trace_id\":\"c4edd590-fe92-4afc-8734-8d8de92dd853\",\"result\":\"success\",\"risk\":\"low\",\"timestamp\":1785281294688}],\"retention\":{\"retention_days\":365,\"archived_until\":1753745295004,\"archive_location\":\"archive-audit\",\"integrity_rate\":0,\"masked_rate\":100,\"las",
       "artifact": "topic-action-audit.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "assert",
       "name": "topic action audit persisted atomically",
       "severity": "info",
@@ -297,17 +317,17 @@
       "artifact": "topic-action-audit.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "admin can create topic subscription",
       "severity": "info",
       "passed": true,
       "status": "201",
-      "detail": "{\"data\":{\"subscription_id\":\"e95bef11-37b1-49bb-89df-9290c0f75898\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260725-topic-domain-r758-r757\"],\"enabled\":true,\"created_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"created_at\":1784924757671,\"updated_at\":1784924757671,\"detail\":{}},\"success\":true} ",
+      "detail": "{\"data\":{\"subscription_id\":\"48a378d6-e4e7-4712-be90-a2779cb6882c\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260729-topic-panel-r855-r858-final\"],\"enabled\":true,\"created_by\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"created_at\":1785281295110,\"updated_at\":1785281295110,\"detail\":{}},\"success\":true} ",
       "artifact": "topic-subscription-create.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "assert",
       "name": "created topic subscription has identity",
       "severity": "info",
@@ -317,17 +337,17 @@
       "artifact": "topic-subscription-create.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "admin can disable topic subscription",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"subscription_id\":\"e95bef11-37b1-49bb-89df-9290c0f75898\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260725-topic-domain-r758-r757\"],\"enabled\":false,\"created_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"created_at\":1784924757671,\"updated_at\":1784924757783,\"detail\":{}},\"meta\":{\"request_id\":\"00b9ccc7-ed8c-4d06-ac0a-e910960d8be5\",\"trace_id\":\"00b9ccc7-ed8c-4d06-ac0a-e910960d8be5\"},\"timestamp\":\"2026-07-24T20:25:57Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"subscription_id\":\"48a378d6-e4e7-4712-be90-a2779cb6882c\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260729-topic-panel-r855-r858-final\"],\"enabled\":false,\"created_by\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"created_at\":1785281295110,\"updated_at\":1785281295225,\"detail\":{}},\"meta\":{\"request_id\":\"119398ab-be74-430e-b30c-f55f3090acb5\",\"trace_id\":\"119398ab-be74-430e-b30c-f55f3090acb5\"},\"timestamp\":\"2026-07-28T23:28:15Z\"} ",
       "artifact": "topic-subscription-disable.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "assert",
       "name": "topic subscription disable response",
       "severity": "info",
@@ -337,27 +357,27 @@
       "artifact": "topic-subscription-disable.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "other tenant cannot update topic subscription",
       "severity": "info",
       "passed": true,
       "status": "404",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"topic subscription not found\"},\"meta\":{\"request_id\":\"077fe464-b536-4a5d-a204-91647dd397e7\",\"trace_id\":\"077fe464-b536-4a5d-a204-91647dd397e7\"},\"timestamp\":\"2026-07-24T20:25:57Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"topic subscription not found\"},\"meta\":{\"request_id\":\"6dc0446e-7c62-4239-81b9-f7c7f05b22ed\",\"trace_id\":\"6dc0446e-7c62-4239-81b9-f7c7f05b22ed\"},\"timestamp\":\"2026-07-28T23:28:15Z\"} ",
       "artifact": "topic-subscription-other-tenant.json"
     },
     {
-      "ts": "2026-07-25T04:25:57+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "viewer cannot create topic subscription",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:write required\"},\"meta\":{\"request_id\":\"55f27b3f-611a-4e7d-b0f7-7344766e969d\",\"trace_id\":\"55f27b3f-611a-4e7d-b0f7-7344766e969d\"},\"timestamp\":\"2026-07-24T20:25:57Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:write required\"},\"meta\":{\"request_id\":\"e6c4201e-a042-4f17-800c-f1ec4672ff2c\",\"trace_id\":\"e6c4201e-a042-4f17-800c-f1ec4672ff2c\"},\"timestamp\":\"2026-07-28T23:28:15Z\"} ",
       "artifact": "topic-subscription-viewer.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "postgres",
       "name": "topic subscription persisted in PostgreSQL",
       "severity": "info",
@@ -367,17 +387,17 @@
       "artifact": "pg-topic-subscription-count.txt"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "admin can export topic report",
       "severity": "info",
       "passed": true,
       "status": "202",
-      "detail": "{\"data\":{\"export_id\":\"7a1cecb3-d2e8-4de7-ab43-69ca92681278\",\"tenant_id\":\"default\",\"topic\":\"apt\",\"export_type\":\"report\",\"status\":\"completed\",\"parameters\":{\"format\":\"json\",\"time_range\":{\"end\":1784924758053,\"start\":1784838358053}},\"result\":{\"audit_required\":true,\"file_key\":\"topics/apt/report-1784924758.json\",\"retention_days\":30,\"summary\":\"apt topic operational report\"},\"generated_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"generated_at\":1784924758051},\"success\":true} ",
+      "detail": "{\"data\":{\"export_id\":\"b190cc03-33ff-4e1a-bf0e-07633ed3a683\",\"tenant_id\":\"default\",\"topic\":\"apt\",\"export_type\":\"report\",\"status\":\"completed\",\"parameters\":{\"data_mode\":\"simulated\",\"format\":\"json\",\"simulation_id\":\"topic-apt-ui-v2\",\"simulation_version\":\"ui-suite-gpt-v2\",\"time_range\":{\"end\":1785281295493,\"start\":1785194895493}},\"result\":{\"audit_required\":true,\"content_base64\":\"ewogICJhcnRpZmFjdF90eXBlIjogInRvcGljX3JlcG9ydCIsCiAgImdlbmVyYXRlZF9hdCI6ICIyMDI2LTA3LTI4VDIzOjI4OjE1LjQ5ODg5NTcwMloiLAogICJnZW5lcmF0ZWRfYnkiOiAiOTgxZmZkMDgtYzcwMy00NGYyLTg3MjgtMGQ2ZDIzMzU5YzczIiwKICAicGFyYW1ldGVycyI6IHsKICAgICJkYXRhX21vZGUiOiAic2ltdWxhdGVkIiwKICAgICJmb3JtYXQiOiAianNvbiIsCiAgICAic2ltdWxhdGlvbl9pZCI6ICJ0b3BpYy1hcHQtdWktdjIiLAogICAgInNpbXVsYXRpb25fdmVyc2lvbiI6ICJ1aS1zdWl0ZS1ncHQtdjIiLAogICAgInRpbWVfcmFuZ2UiOiB7CiAgICAgICJlbmQiOiAxNzg1MjgxMjk1NDkzLAogICAgICAic3RhcnQiOiAxNzg1MTk0ODk1NDkzCiAgICB9CiAgfSwKICAic2NoZW1hX3ZlcnNpb24iOiAxLAogICJzbmFwc2hvdCI6IHsKICAgICJjYW1wYWlnbnMiOiBbCiAgICAgIHsKICAgICAgICAiYWN0aXZpdHlfc3RhdHVzIjogImFjdGl2ZSIsCiAgICAgICAgImFsZXJ0cyI6IFsKICAgICAgICAgICJBTFQtMDAxIiwKICAgICAgICAgICJBTFQtMDAyIiwKICAgICAgICAgICJBTFQtMDAzIiwKICAgICAgICAgICJBTFQtMDA0IiwKICAgICAgICAgICJBTFQtMDA1IiwKI",
       "artifact": "topic-report-export.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "assert",
       "name": "topic report export response",
       "severity": "info",
@@ -387,17 +407,17 @@
       "artifact": "topic-report-export.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "admin can export topic evidence package",
       "severity": "info",
       "passed": true,
       "status": "202",
-      "detail": "{\"data\":{\"export_id\":\"532c502e-fb7d-44c1-864b-938e4c123ace\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"export_type\":\"evidence_package\",\"status\":\"completed\",\"parameters\":{\"format\":\"json\",\"time_range\":{\"end\":1784924758163,\"start\":1784838358163}},\"result\":{\"audit_required\":true,\"file_key\":\"topics/exfil/evidence_package-1784924758.json\",\"retention_days\":30,\"summary\":\"exfil topic evidence package with source APIs, filters and audit trail\"},\"generated_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"generated_at\":1784924758161},\"success\":true} ",
+      "detail": "{\"data\":{\"export_id\":\"2cdc6a05-13f0-48ec-91be-7b662c8157d5\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"export_type\":\"evidence_package\",\"status\":\"completed\",\"parameters\":{\"data_mode\":\"simulated\",\"format\":\"json\",\"simulation_id\":\"topic-exfil-ui-v2\",\"simulation_version\":\"ui-suite-gpt-v2\",\"time_range\":{\"end\":1785281295631,\"start\":1785194895631}},\"result\":{\"audit_required\":true,\"content_base64\":\"ewogICJhcnRpZmFjdF90eXBlIjogInRvcGljX2V2aWRlbmNlX3BhY2thZ2UiLAogICJnZW5lcmF0ZWRfYXQiOiAiMjAyNi0wNy0yOFQyMzoyODoxNS42MzY1MDI2MDFaIiwKICAiZ2VuZXJhdGVkX2J5IjogIjk4MWZmZDA4LWM3MDMtNDRmMi04NzI4LTBkNmQyMzM1OWM3MyIsCiAgInBhcmFtZXRlcnMiOiB7CiAgICAiZGF0YV9tb2RlIjogInNpbXVsYXRlZCIsCiAgICAiZm9ybWF0IjogImpzb24iLAogICAgInNpbXVsYXRpb25faWQiOiAidG9waWMtZXhmaWwtdWktdjIiLAogICAgInNpbXVsYXRpb25fdmVyc2lvbiI6ICJ1aS1zdWl0ZS1ncHQtdjIiLAogICAgInRpbWVfcmFuZ2UiOiB7CiAgICAgICJlbmQiOiAxNzg1MjgxMjk1NjMxLAogICAgICAic3RhcnQiOiAxNzg1MTk0ODk1NjMxCiAgICB9CiAgfSwKICAic2NoZW1hX3ZlcnNpb24iOiAxLAogICJzbmFwc2hvdCI6IHsKICAgICJkYXRhX21vZGUiOiAic2ltdWxhdGVkIiwKICAgICJkZXN0aW5hdGlvbnMiOiBbCiAgICAgIHsKICAgICAgICAiYXNuIjogIkFTMTY1MDkiLAogICAgICAgICJkc3RfaXAiOiAiNTIuMjE2LjQzLjE4IiwKICAgICAgICAibGFzdF9zZWVuIjogMTc4MTkyMDgwMDAwMCwKICAgICAgICAicmV",
       "artifact": "topic-evidence-package-export.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "assert",
       "name": "topic evidence package export response",
       "severity": "info",
@@ -407,27 +427,27 @@
       "artifact": "topic-evidence-package-export.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "viewer cannot export topic report",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:export required\"},\"meta\":{\"request_id\":\"7ebccd32-9c45-4a73-ba7e-7eb619338077\",\"trace_id\":\"7ebccd32-9c45-4a73-ba7e-7eb619338077\"},\"timestamp\":\"2026-07-24T20:25:58Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:export required\"},\"meta\":{\"request_id\":\"8f62f542-69db-43d7-8b73-356effb2852a\",\"trace_id\":\"8f62f542-69db-43d7-8b73-356effb2852a\"},\"timestamp\":\"2026-07-28T23:28:15Z\"} ",
       "artifact": "topic-report-export-viewer.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "topic saved views list includes created view",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":3,\"views\":[{\"view_id\":\"6109809a-ffa2-4674-bbe2-e977ce4a5c2e\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260725-topic-domain-r758-r757\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1784924756739024678\",\"created_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"created_at\":1784924756620,\"updated_at\":1784924756737},{\"view_id\":\"af005cc3-b8ad-4d5a-9429-2bd949f12367\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260725-topic-domain-r754\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1784921850183231839\",\"created_by\":\"42620c57-fc23-48ba-8baa-062b37ebca5b\",\"created_at\":1784921850067,\"updated_at\":1784921850181},{\"view_id\":\"105e481b-bd4c-4137-81c6-9dec6f6cba62\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260630-topic-governance-preflight-r2\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1782793983316355173\",\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983201,\"",
+      "detail": "{\"success\":true,\"data\":{\"total\":101,\"views\":[{\"view_id\":\"0d99b5a3-7bd3-474d-ba7e-08e2e8f3ea96\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260729-topic-panel-r855-r858-final\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1785281294105110827\",\"created_by\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"created_at\":1785281293993,\"updated_at\":1785281294105},{\"view_id\":\"08169374-1b02-4615-ac40-9a638c4a07aa\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"当前专题视图-2026-07-28\",\"filters\":{\"active_pages\":[],\"active_tabs\":[\"加密隧道专题\"],\"captured_at\":\"2026-07-28T23:23:49.824Z\",\"fullscreen\":false,\"route\":\"/topics?topic=tunnel\\u0026tab=tunnel\\u0026allControlsTs=1785281014594\",\"selections\":[\"证据：全部\",\"阶段：全部\",\"风险：全部\"],\"source\":\"topic-workbench\",\"target\":\"tunnel-20260620-01\",\"topic\":\"tunnel\",\"values\":[]},\"visibility\":\"private\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1785281048444538440\",\"created_by\":\"6a1b9d32-5d13-4ead-a4ae-1f911fde4eec\",\"created_at\":1785281031914,\"updated_at\":1785281049718},{\"view_id\":\"e65ef652-e56b-4d1d-91f3-aae4490f559c\",\"tenant_",
       "artifact": "topic-views-after.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "assert",
       "name": "created topic view appears in list",
       "severity": "info",
@@ -437,17 +457,17 @@
       "artifact": "topic-views-after.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "api",
       "name": "topic subscriptions list includes created subscription",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"subscriptions\":[{\"subscription_id\":\"e95bef11-37b1-49bb-89df-9290c0f75898\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260725-topic-domain-r758-r757\"],\"enabled\":false,\"created_by\":\"8ac6d493-52f5-4517-813e-c138d5d248fd\",\"created_at\":1784924757671,\"updated_at\":1784924757783,\"detail\":{}},{\"subscription_id\":\"1081c626-fc2d-4ec5-80f7-03fdbac7fd5f\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260725-topic-domain-r754\"],\"enabled\":false,\"created_by\":\"42620c57-fc23-48ba-8baa-062b37ebca5b\",\"created_at\":1784921851131,\"updated_at\":1784921851240,\"detail\":{}},{\"subscription_id\":\"e688a990-3053-455e-9c0a-e21c1851c30a\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260630-topic-governance-preflight-r2\"],\"enabled\":false,\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983787,\"updated_at\":1782793983897,\"detail\":{}}],\"total\":3},\"meta\":{\"request_id\":\"63590b33-0f14-4984-9067-468067063b7b\",\"trace_id\":\"63590b33-0f14-",
+      "detail": "{\"success\":true,\"data\":{\"subscriptions\":[{\"subscription_id\":\"48a378d6-e4e7-4712-be90-a2779cb6882c\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260729-topic-panel-r855-r858-final\"],\"enabled\":false,\"created_by\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"created_at\":1785281295110,\"updated_at\":1785281295225,\"detail\":{}},{\"subscription_id\":\"8e6f996d-9583-4deb-a312-31cc8921c64a\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"sec_analyst\"],\"enabled\":true,\"created_by\":\"6a1b9d32-5d13-4ead-a4ae-1f911fde4eec\",\"created_at\":1785281128044,\"updated_at\":1785281128044,\"detail\":{}},{\"subscription_id\":\"23c5e1cc-8c45-4a3c-8c56-36c334bc0c4c\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"sec_analyst\"],\"enabled\":true,\"created_by\":\"3b7b8b62-1e59-4bcc-87d2-641f0fd875f8\",\"created_at\":1785278736950,\"updated_at\":1785278736950,\"detail\":{}},{\"subscription_id\":\"4507012c-9280-4173-adb3-01c729b5beb7\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"rec",
       "artifact": "topic-subscriptions-after.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:15+08:00",
       "phase": "assert",
       "name": "created topic subscription appears in list",
       "severity": "info",
@@ -457,7 +477,7 @@
       "artifact": "topic-subscriptions-after.json"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:16+08:00",
       "phase": "postgres",
       "name": "topic scope persisted in PostgreSQL",
       "severity": "info",
@@ -467,7 +487,7 @@
       "artifact": "pg-topic-scope-count.txt"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:16+08:00",
       "phase": "postgres",
       "name": "topic report export persisted in PostgreSQL",
       "severity": "info",
@@ -477,7 +497,7 @@
       "artifact": "pg-topic-report-export-count.txt"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:16+08:00",
       "phase": "postgres",
       "name": "topic evidence package export persisted in PostgreSQL",
       "severity": "info",
@@ -487,14 +507,34 @@
       "artifact": "pg-topic-evidence-export-count.txt"
     },
     {
-      "ts": "2026-07-25T04:25:58+08:00",
+      "ts": "2026-07-29T07:28:16+08:00",
       "phase": "postgres",
       "name": "topic governance audit persisted",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "23",
+      "detail": "1954",
       "artifact": "pg-topic-audit-count.txt"
+    },
+    {
+      "ts": "2026-07-29T07:28:16+08:00",
+      "phase": "api",
+      "name": "topic scope restored after mutation",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"scope_name\":\"默认专题范围\",\"included_assets\":[],\"excluded_assets\":[],\"risk_levels\":[],\"time_window\":\"7d\",\"updated_by\":\"981ffd08-c703-44f2-8728-0d6d23359c73\",\"updated_at\":1785281296461,\"detail\":{\"restored_by\":\"live-topic-governance-preflight\",\"source\":\"topic-workbench\",\"target\":\"tunnel-20260620-01\"}},\"meta\":{\"request_id\":\"465d50ce-5962-422f-873b-748089a19ced\",\"trace_id\":\"465d50ce-5962-422f-873b-748089a19ced\"},\"timestamp\":\"2026-07-28T23:28:16Z\"} ",
+      "artifact": "topic-scope-restore.json"
+    },
+    {
+      "ts": "2026-07-29T07:28:16+08:00",
+      "phase": "assert",
+      "name": "topic scope restoration response",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true\n   and .data.scope_name == $expected.scope_name\n   and .data.included_assets == $expected.included_assets\n   and .data.excluded_assets == $expected.excluded_assets\n   and .data.risk_levels == $expected.risk_levels\n   and .data.time_window == $expected.time_window",
+      "artifact": "topic-scope-restore.json"
     }
   ]
 }

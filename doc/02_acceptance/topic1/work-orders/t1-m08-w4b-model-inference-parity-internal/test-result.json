@@ -1,0 +1,181 @@
+{
+  "artifact_kind": "M08_MODEL_INFERENCE_PARITY_INTERNAL_TEST_RESULT",
+  "schema_version": 1,
+  "task_id": "T1-M08-N017",
+  "work_order": "t1-m08-w4b-model-inference-parity-internal",
+  "recorded_at": "2026-08-15T10:34:36Z",
+  "task_state": "CODE_AND_ISOLATED_K8S_INTERNAL_PARITY_PASS_SHARED_FLINK_AND_PRODUCTION_NOT_EXECUTED",
+  "scoped_result": "PASS",
+  "claim_scope": "INTERNAL_ENGINEERING_ONLY",
+  "cnas_claim_authorized": false,
+  "production_promotion_authorized": false,
+  "production_applied": false,
+  "environment_policy": {
+    "environment_execution": "existing Kubernetes cluster only",
+    "namespace": "traffic-analysis",
+    "node": "8-2tb",
+    "local_scope": "static checks, compilation and unit tests only",
+    "local_results_are_environment_acceptance": false
+  },
+  "implementation": {
+    "profile": [
+      "deterministic 64-sample synthetic internal profile",
+      "exact production feature order: bps, iat_mean_ms, pktlen_mean, pps",
+      "2 warmup iterations and 8 measured iterations",
+      "512 measured inferences per route",
+      "zero decision mismatch and explicit pairwise score tolerances"
+    ],
+    "python_route": "native XGBoost probability inference",
+    "onnx_route": "the same exported artifact through Python ONNX Runtime",
+    "flink_route": "real Flink local DataStream using production FeatureStatVectorizer and GovernedModelPackageLoader",
+    "identity_guards": [
+      "candidate SHA-256",
+      "profile SHA-256",
+      "model artifact SHA-256",
+      "feature-column SHA-256",
+      "sample-set SHA-256",
+      "exact sample ID set"
+    ],
+    "immutable_receipts": true,
+    "deterministic_onnx_graph_name": "m08-model-inference-parity-v1"
+  },
+  "kubernetes_run": {
+    "run_id": "36d7d5b0-b26d-4b3f-95f6-f3886693d228",
+    "result_id": "65bd29a6-0718-5a36-80e1-c1a1ed836352",
+    "result_sha256": "7a9c8c2f293087e1f8084a02fb161900a092f938925791e3c886e4f0b86ec51a",
+    "job_name": "m08-n017-parity-36d7d5b0b2",
+    "job_uid": "d1d1cd62-4160-46c4-8bcf-98bbdc5d794e",
+    "pod_name": "m08-n017-parity-36d7d5b0b2-zv794",
+    "pod_uid": "170aeb08-a6b4-4c3d-ae7e-a8a8cce2a73b",
+    "started_at": "2026-08-15T10:33:41Z",
+    "completed_at": "2026-08-15T10:33:53Z",
+    "candidate_sha256": "af936f533a908ad63e2d85ab85b2b14b72f81a3a92ce22923da4c3cda50bf8ba",
+    "model_artifact_sha256": "0747515dcbe0080bc60a7281a5b3b3661c8475dbf6c607db06d6a797010c85f6",
+    "feature_columns_sha256": "3b698c49efd8e8a3ab40db4ba5a84a83602621feca78ca183b5ac912b7cbab91",
+    "sample_set_sha256": "8def93fdd1d899336e5112b4aca6156d4c3802dfb2b2544b0dbe81fa373ce7e2",
+    "python_image": "traffic/mlops-trainer:m08-governed-export-w2c-20260815-r10",
+    "python_image_id": "sha256:0b905ee9b358b7dfd44aa846883d1ba55b9c56f7ac2a1b96c1f9c3d77a71d61a",
+    "flink_image": "traffic/flink-behavior-job:m08-inference-parity-n017-20260815-r1",
+    "flink_image_id": "sha256:af936f533a908ad63e2d85ab85b2b14b72f81a3a92ce22923da4c3cda50bf8ba",
+    "container_ids": {
+      "prepare-python-and-onnx": "containerd://d4a7c8d05645c25daf594521c69eb8f51a6b4480b04cffb4ef45aa128f0fd478",
+      "run-flink-route": "containerd://9b9b7267ee8d4770a48b85e1e12a351e9678ddc3b2f409338be4f4476b76b520",
+      "finalize-parity": "containerd://a8bf7b063e35a785f994e4b40c2a2358b9a0d10d0b1f75934d3e6b170fce9756"
+    },
+    "shared_postgres_touched": false,
+    "shared_clickhouse_touched": false,
+    "shared_kafka_touched": false,
+    "shared_flink_touched": false,
+    "status": "PASS"
+  },
+  "parity": {
+    "decision_mismatches": 0,
+    "python_to_onnx": {
+      "max_absolute_score_error": 6.239861249923706e-08,
+      "tolerance": 1e-05,
+      "status": "PASS"
+    },
+    "onnx_to_flink": {
+      "max_absolute_score_error": 2.858657832671696e-08,
+      "tolerance": 1e-06,
+      "status": "PASS"
+    },
+    "python_to_flink": {
+      "max_absolute_score_error": 6.264562177685229e-08,
+      "tolerance": 1e-05,
+      "status": "PASS"
+    }
+  },
+  "performance": {
+    "python": {
+      "p99_inference_latency_ms": 0.164211,
+      "throughput_per_second": 7028.361428819206,
+      "peak_rss_bytes": 328609792,
+      "status": "PASS"
+    },
+    "onnx": {
+      "p99_inference_latency_ms": 0.027782,
+      "throughput_per_second": 59418.52014926118,
+      "peak_rss_bytes": 356679680,
+      "status": "PASS"
+    },
+    "flink": {
+      "p99_inference_latency_ms": 0.064133,
+      "throughput_per_second": 160.80660371313428,
+      "peak_rss_bytes": 343887872,
+      "status": "PASS"
+    },
+    "budgets": {
+      "p99_inference_latency_ms_lt": 100,
+      "throughput_per_second_gt": 10,
+      "peak_rss_bytes_lt": 2147483648
+    }
+  },
+  "verification": {
+    "alignment": {
+      "command": "python3 -m unittest tests.alignment.test_m08_model_inference_parity -v",
+      "tests": 6,
+      "failures": 0,
+      "result": "PASS",
+      "environment_acceptance": false
+    },
+    "flink_unit": {
+      "command": "mvn -q -Dtest=ModelInferenceParityMainTest,ModelUpdateBroadcastHandlerTest test",
+      "tests": 12,
+      "failures": 0,
+      "result": "PASS",
+      "environment_acceptance": false
+    },
+    "python_compile": {
+      "command": "python3 -m py_compile scripts/alignment/run_m08_model_inference_parity_k8s.py mlops/scripts/model_inference_parity.py",
+      "result": "PASS",
+      "environment_acceptance": false
+    },
+    "deterministic_export_repeat": {
+      "executions": 2,
+      "onnx_sha256": "0747515dcbe0080bc60a7281a5b3b3661c8475dbf6c607db06d6a797010c85f6",
+      "native_model_sha256": "b307444226e4fbe69a1b9d472b745bd291d44ff9751e406d55207b1b86651daf",
+      "result": "PASS",
+      "environment_acceptance": false
+    },
+    "raw_kubernetes_envelope_sha256": "03edba4fdfce5b84890e67c07e75f7fdb4d7de40696023d4824f1caa5b50f76d"
+  },
+  "source_sha256": {
+    "contracts/mlops/model-inference-parity-profile.schema.json": "cc1219bf39ff8744c94fb30de9591508f1030560c673292b74e567e0c8c34a9a",
+    "contracts/mlops/model-inference-parity-result.schema.json": "aad0ef4781404afc951a4b4a62a9fb18059a624129c26f2069ee0d92919ed466",
+    "contracts/mlops/m08-model-inference-parity-internal.v1.json": "7a2416d0748aa0c95946e92bb6d71d896080af160f632774e88c899ad0cf396e",
+    "mlops/scripts/model_inference_parity.py": "ef1ac41f90a1f449e81face873a2b527b601346ec80dc3c2f407067960a8411f",
+    "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/ModelInferenceParityMain.java": "c9f92d423a6f062f27e8e0688332c5445f576d96d2f272dc6186e60bc835dd18",
+    "java/flink-jobs/flink-behavior-job/src/test/java/com/traffic/flink/behavior/detector/ModelInferenceParityMainTest.java": "21c1d55ed02e1fc2c1e5bfe87402f99c002cb5e9f482c9807f6095fc18cd8f8c",
+    "scripts/alignment/run_m08_model_inference_parity_k8s.py": "7c3a62c498e38a8b4081f03a8503077279d6fd5e6a78230d1280b333f6d499c7",
+    "tests/alignment/test_m08_model_inference_parity.py": "530cecf81c464df4500bdabf03ec194fa8b0bf6905c151065e061d06d2c80df6"
+  },
+  "cleanup": {
+    "job_deleted": true,
+    "configmap_deleted": true,
+    "pod_deleted": true,
+    "absence_verified": true,
+    "shared_services_unchanged": true
+  },
+  "diagnostic_history": [
+    {
+      "symptom": "the initial candidate attempted to create /var/log/flink through the image log4j configuration on a read-only root filesystem",
+      "fix": "select the image's console-only Flink log4j configuration explicitly",
+      "product_or_shared_data_touched": false,
+      "retained_as_acceptance_evidence": false
+    }
+  ],
+  "not_executed": [
+    "shared Flink deployment",
+    "production traffic replay",
+    "production model activation",
+    "production latency or throughput observation",
+    "CNAS accuracy or false-positive-rate evaluation"
+  ],
+  "limitations": [
+    "The profile is deterministic synthetic engineering input and is not representative production traffic.",
+    "The Flink route uses production inference functions in a Kubernetes-hosted local DataStream Job, not the shared Flink cluster.",
+    "The result cannot authorize activation, production promotion, or any CNAS accuracy or false-positive-rate claim."
+  ],
+  "errors": []
+}

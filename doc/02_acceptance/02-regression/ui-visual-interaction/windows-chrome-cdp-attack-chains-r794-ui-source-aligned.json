@@ -1,0 +1,501 @@
+{
+  "run_id": "attack-chains-r794-ui-source-aligned",
+  "generated_at": "2026-07-26T11:17:57.920Z",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224 -> 9222",
+  "browser": "Chrome/150.0.7871.182",
+  "route": "/attack-chains",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "screenshot": "evidence/ui-image-breakdowns/pages/attack-chains/implementation-r794-ui-source-aligned.png",
+  "counts": {
+    "shell": 1,
+    "toolbar": 1,
+    "canvas": 1,
+    "phaseColumns": 6,
+    "evidenceRows": 3,
+    "recommendationRows": 6,
+    "matrixItems": 6,
+    "pathRows": 3
+  },
+  "geometry": {
+    "canvas": {
+      "x": 183.33334350585938,
+      "y": 198.6666717529297,
+      "width": 1182.0000305175781,
+      "height": 626.6667022705078
+    },
+    "rail": {
+      "x": 1374,
+      "y": 132.6666717529297,
+      "width": 512,
+      "height": 868.0000152587891
+    },
+    "canvas_alignment": {
+      "laneCenters": [
+        {
+          "left": 183.33334350585938,
+          "right": 298.6666793823242,
+          "top": 208.6666717529297,
+          "bottom": 272.6666717529297,
+          "width": 115.33333587646484,
+          "height": 64,
+          "centerX": 241.0000114440918,
+          "centerY": 240.6666717529297
+        },
+        {
+          "left": 183.33334350585938,
+          "right": 298.6666793823242,
+          "top": 310.66668701171875,
+          "bottom": 438.66668701171875,
+          "width": 115.33333587646484,
+          "height": 128,
+          "centerX": 241.0000114440918,
+          "centerY": 374.66668701171875
+        },
+        {
+          "left": 183.33334350585938,
+          "right": 298.6666793823242,
+          "top": 482.66668701171875,
+          "bottom": 556.6666870117188,
+          "width": 115.33333587646484,
+          "height": 74,
+          "centerX": 241.0000114440918,
+          "centerY": 519.6666870117188
+        },
+        {
+          "left": 183.33334350585938,
+          "right": 298.6666793823242,
+          "top": 600.6666870117188,
+          "bottom": 674.6666870117188,
+          "width": 115.33333587646484,
+          "height": 74,
+          "centerX": 241.0000114440918,
+          "centerY": 637.6666870117188
+        },
+        {
+          "left": 183.33334350585938,
+          "right": 298.6666793823242,
+          "top": 718.6666870117188,
+          "bottom": 792.6666870117188,
+          "width": 115.33333587646484,
+          "height": 74,
+          "centerX": 241.0000114440918,
+          "centerY": 755.6666870117188
+        }
+      ],
+      "iconAndTextGroups": [
+        {
+          "left": 318,
+          "right": 417.7604179382324,
+          "top": 224.5,
+          "bottom": 256.8333339691162,
+          "width": 99.76041793823242,
+          "height": 32.33333396911621,
+          "centerX": 367.8802089691162,
+          "centerY": 240.6666669845581
+        },
+        {
+          "left": 347.5520935058594,
+          "right": 419.5520935058594,
+          "top": 362.46875,
+          "bottom": 426.8645839691162,
+          "width": 72,
+          "height": 64.39583396911621,
+          "centerX": 383.5520935058594,
+          "centerY": 394.6666669845581
+        },
+        {
+          "left": 334.28125,
+          "right": 432.8125,
+          "top": 536,
+          "bottom": 583.3333339691162,
+          "width": 98.53125,
+          "height": 47.33333396911621,
+          "centerX": 383.546875,
+          "centerY": 559.6666669845581
+        },
+        {
+          "left": 326.10418701171875,
+          "right": 440.98960876464844,
+          "top": 674,
+          "bottom": 721.3333339691162,
+          "width": 114.88542175292969,
+          "height": 47.33333396911621,
+          "centerX": 383.5468978881836,
+          "centerY": 697.6666669845581
+        },
+        {
+          "left": 333.7708435058594,
+          "right": 433.3229293823242,
+          "top": 812,
+          "bottom": 859.3333339691162,
+          "width": 99.55208587646484,
+          "height": 47.33333396911621,
+          "centerX": 383.5468864440918,
+          "centerY": 835.6666669845581
+        }
+      ],
+      "centerDeltas": [
+        0.00000476837158203125,
+        19.999979972839355,
+        39.999979972839355,
+        59.999979972839355,
+        79.99997997283936
+      ],
+      "verticalGroups": [
+        {
+          "before": {
+            "left": 311.3333435058594,
+            "right": 455.7708435058594,
+            "top": 212.6666717529297,
+            "bottom": 268.6666717529297,
+            "width": 144.4375,
+            "height": 56,
+            "centerX": 383.5520935058594,
+            "centerY": 240.6666717529297
+          },
+          "arrow": {
+            "left": 374.5520935058594,
+            "right": 392.5520935058594,
+            "top": 292.66668701171875,
+            "bottom": 310.66668701171875,
+            "width": 18,
+            "height": 18,
+            "centerX": 383.5520935058594,
+            "centerY": 301.66668701171875
+          },
+          "after": {
+            "left": 311.3333435058594,
+            "right": 455.7708435058594,
+            "top": 330.66668701171875,
+            "bottom": 458.66668701171875,
+            "width": 144.4375,
+            "height": 128,
+            "centerX": 383.5520935058594,
+            "centerY": 394.66668701171875
+          },
+          "clear": true
+        },
+        {
+          "before": {
+            "left": 311.3333435058594,
+            "right": 455.7708435058594,
+            "top": 330.66668701171875,
+            "bottom": 458.66668701171875,
+            "width": 144.4375,
+            "height": 128,
+            "centerX": 383.5520935058594,
+            "centerY": 394.66668701171875
+          },
+          "arrow": {
+            "left": 374.5520935058594,
+            "right": 392.5520935058594,
+            "top": 481.66668701171875,
+            "bottom": 499.66668701171875,
+            "width": 18,
+            "height": 18,
+            "centerX": 383.5520935058594,
+            "centerY": 490.66668701171875
+          },
+          "after": {
+            "left": 311.3333435058594,
+            "right": 455.7708435058594,
+            "top": 525.6666870117188,
+            "bottom": 593.6666870117188,
+            "width": 144.4375,
+            "height": 68,
+            "centerX": 383.5520935058594,
+            "centerY": 559.6666870117188
+          },
+          "clear": true
+        },
+        {
+          "before": {
+            "left": 311.3333435058594,
+            "right": 455.7708435058594,
+            "top": 525.6666870117188,
+            "bottom": 593.6666870117188,
+            "width": 144.4375,
+            "height": 68,
+            "centerX": 383.5520935058594,
+            "centerY": 559.6666870117188
+          },
+          "arrow": {
+            "left": 374.5520935058594,
+            "right": 392.5520935058594,
+            "top": 619.6666870117188,
+            "bottom": 637.6666870117188,
+            "width": 18,
+            "height": 18,
+            "centerX": 383.5520935058594,
+            "centerY": 628.6666870117188
+          },
+          "after": {
+            "left": 311.3333435058594,
+            "right": 455.7708435058594,
+            "top": 663.6666870117188,
+            "bottom": 731.6666870117188,
+            "width": 144.4375,
+            "height": 68,
+            "centerX": 383.5520935058594,
+            "centerY": 697.6666870117188
+          },
+          "clear": true
+        },
+        {
+          "before": {
+            "left": 311.3333435058594,
+            "right": 455.7708435058594,
+            "top": 663.6666870117188,
+            "bottom": 731.6666870117188,
+            "width": 144.4375,
+            "height": 68,
+            "centerX": 383.5520935058594,
+            "centerY": 697.6666870117188
+          },
+          "arrow": {
+            "left": 374.5520935058594,
+            "right": 392.5520935058594,
+            "top": 757.6666870117188,
+            "bottom": 775.6666870117188,
+            "width": 18,
+            "height": 18,
+            "centerX": 383.5520935058594,
+            "centerY": 766.6666870117188
+          },
+          "after": {
+            "left": 311.3333435058594,
+            "right": 455.7708435058594,
+            "top": 801.6666870117188,
+            "bottom": 869.6666870117188,
+            "width": 144.4375,
+            "height": 68,
+            "centerX": 383.5520935058594,
+            "centerY": 835.6666870117188
+          },
+          "clear": true
+        }
+      ],
+      "horizontalArrows": [
+        {
+          "left": 460.7708435058594,
+          "right": 482.7708435058594,
+          "centerY": 374.66668701171875,
+          "aligned": false
+        },
+        {
+          "left": 637.21875,
+          "right": 659.21875,
+          "centerY": 374.66668701171875,
+          "aligned": false
+        },
+        {
+          "left": 813.6666870117188,
+          "right": 835.6666870117188,
+          "centerY": 374.66668701171875,
+          "aligned": false
+        },
+        {
+          "left": 990.1041870117188,
+          "right": 1012.1041870117188,
+          "centerY": 374.66668701171875,
+          "aligned": false
+        },
+        {
+          "left": 1166.5521240234375,
+          "right": 1188.5521240234375,
+          "centerY": 374.66668701171875,
+          "aligned": false
+        }
+      ],
+      "horizontalArrowCount": 5,
+      "verticalArrowCount": 24
+    }
+  },
+  "document": {
+    "width": 1920,
+    "height": 1080
+  },
+  "selected_chain_text": "疑似 C2 隧道通信",
+  "attack_chain_resources": [
+    "http://10.0.5.8:30180/api/v1/attack-chains",
+    "http://10.0.5.8:30180/api/v1/attack-chains",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/evidence",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/paths",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/recommendations",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/evidence",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/paths",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/recommendations",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/evidence",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/evidence",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/paths",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/recommendations",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/recommendations",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/recommendations",
+    "http://10.0.5.8:30180/api/v1/attack-chains/attack-chain-demo-c2-20260726/recommendations",
+    "http://10.0.5.8:30180/api/v1/attack-chains"
+  ],
+  "api_summary": {
+    "attack_chains": {
+      "status": 200,
+      "count": 3,
+      "total": 8422984,
+      "first_id": "attack-chain-demo-c2-20260726",
+      "first_phase_count": 6
+    },
+    "campaigns": {
+      "status": 200,
+      "count": 3,
+      "total": 8422984,
+      "first_id": "attack-chain-demo-c2-20260726",
+      "first_phase_count": null
+    }
+  },
+  "interaction": {
+    "phase_selected": "true",
+    "filtered_evidence_rows": 1,
+    "filtered_recommendation_rows": 1,
+    "phase_cleared": "false",
+    "scale_before": "1",
+    "scale_after": "1.08",
+    "pcap_rows": 3,
+    "pcap_total": "共 3 条",
+    "all_evidence_total": "共 6 条",
+    "evidence_pagination": {
+      "first_page": [
+        "dns-20260726-1412.pcap",
+        "web-20260726-1414.pcap",
+        "sysmon-4688.log"
+      ],
+      "second_page": [
+        "sysmon-10.log",
+        "tls-session-141511.json",
+        "exfil-20260726-1438.pcap"
+      ],
+      "changed": true
+    },
+    "path_pagination": {
+      "first_page": [
+        "侦察203.0.113.45端口扫描探测dns-20260726-1412.pcap阻断 203.0.113.45已确认",
+        "初始访问FW-01Web 漏洞利用web-20260726-1414.pcap加固入口 FW-01已确认",
+        "执行WEB-SRV-01恶意命令执行sysmon-4688.log阻断 WEB-SRV-01已确认"
+      ],
+      "second_page": [
+        "横向移动DC-SRV-01凭证窃取与横向移动sysmon-10.log阻断 DC-SRV-01已确认",
+        "C2 通信c2.example.comC2 隧道通信tls-session-141511.json阻断 c2.example.com已确认",
+        "数据外传198.51.100.27数据外传尝试exfil-20260726-1438.pcap阻断 198.51.100.27已确认"
+      ],
+      "changed": true
+    },
+    "recommendation_tabs": {
+      "block": {
+        "rows": 6,
+        "first": "1 中 203.0.113.45 阻断扫描源 203.0.113.45 低影响"
+      },
+      "isolate": {
+        "rows": 6,
+        "first": "1 中 203.0.113.45 隔离扫描源关联会话 中等影响"
+      },
+      "allowlist": {
+        "rows": 6,
+        "first": "1 低 203.0.113.45 复核扫描源临时白名单 需审批"
+      },
+      "playbook": {
+        "rows": 6,
+        "first": "1 中 203.0.113.45 执行扫描源封禁剧本 自动化"
+      }
+    }
+  },
+  "errors": {
+    "responses": [],
+    "console": [],
+    "page": [],
+    "requests": []
+  },
+  "checks": [
+    {
+      "name": "Windows Chrome viewport is 1920x1080",
+      "passed": true
+    },
+    {
+      "name": "attack-chain business title is visible",
+      "passed": true
+    },
+    {
+      "name": "attack-chain canvas is visible",
+      "passed": true
+    },
+    {
+      "name": "right evidence and response rail is visible",
+      "passed": true
+    },
+    {
+      "name": "six API-driven attack phases are present",
+      "passed": true
+    },
+    {
+      "name": "database-backed evidence page contains three rows",
+      "passed": true
+    },
+    {
+      "name": "six response recommendations are present",
+      "passed": true
+    },
+    {
+      "name": "ATT&CK matrix follows phase count",
+      "passed": true
+    },
+    {
+      "name": "database-backed path page contains three rows",
+      "passed": true
+    },
+    {
+      "name": "phase selection filters the linked rail",
+      "passed": true
+    },
+    {
+      "name": "canvas zoom changes the rendered scale",
+      "passed": true
+    },
+    {
+      "name": "PCAP evidence tab filters database evidence",
+      "passed": true
+    },
+    {
+      "name": "evidence anchors use backend pagination",
+      "passed": true
+    },
+    {
+      "name": "path details use backend pagination",
+      "passed": true
+    },
+    {
+      "name": "all recommendation tabs use distinct database rows",
+      "passed": true
+    },
+    {
+      "name": "five icon-and-text groups align to their left label centerlines",
+      "passed": false
+    },
+    {
+      "name": "vertical bidirectional arrows stay between rows",
+      "passed": true
+    },
+    {
+      "name": "horizontal arrows stay centered between entity columns",
+      "passed": false
+    },
+    {
+      "name": "no horizontal browser overflow",
+      "passed": true
+    },
+    {
+      "name": "no runtime errors",
+      "passed": true
+    }
+  ],
+  "result": "fail"
+}

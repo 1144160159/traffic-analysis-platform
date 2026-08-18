@@ -1,0 +1,139 @@
+{
+  "artifact_kind": "M08_GOVERNED_EXPLANATION_K8S_CANARY_TEST_RESULT",
+  "schema_version": 1,
+  "parent_work_ids": [
+    "T1-M08-N002",
+    "T1-M08-N004",
+    "T1-M08-N005",
+    "T1-M08-N006",
+    "T1-M08-N007",
+    "T1-M08-N008"
+  ],
+  "milestone_state": "IMPLEMENTING",
+  "run_id": "2a4405e2-f30a-4489-9fbc-a346257d8fb5",
+  "status": "PASS",
+  "executed_at": "2026-08-14T15:59:04Z",
+  "environment": {
+    "infrastructure": "kubernetes",
+    "namespace": "argo",
+    "node": "8-2tb",
+    "container_runtime": "containerd",
+    "storage": "emptyDir",
+    "synthetic_fixture": true,
+    "shared_clickhouse_touched": false,
+    "shared_minio_touched": false,
+    "argo_workflow_submitted": false,
+    "production_workflow_patched": false,
+    "production_applied": false
+  },
+  "candidate": {
+    "image": "docker.io/traffic/mlops-trainer:m08-governed-explanation-w2b-20260814-r5",
+    "image_config_sha256": "6fda10750fca4c6cb8beca692f1fb6649877417dcfc83d20025c2ee14088215e",
+    "containerd_manifest_sha256": "55d6ca9cb3b90d424d92cdb76e2193cd8aa54c941e0f8be9f4543054cef17652",
+    "source_sha256": {
+      "dataset_governance.py": "8812eb70b0500ddffeca019686d0840a12a572ee192d2f136ea710b3d50d9d76",
+      "graph_governance.py": "1a047cc1778b6f5ac38d44cf907b7740e80a519add63a56eec8613724fc84d92",
+      "train_model.py": "9d65215cfab740ecd855587dd602715a58f4f7fd62cd616193a6e4d024a8e4d5",
+      "gnn_training.py": "1ced2859771e837e96c9a2f1f90216fe424455742fd68de33304dfca40555ac1",
+      "governed_evaluation.py": "962e638baf9438d095be834765b78894a8c930f8a7dbf536b67a31e9b60d639e",
+      "governed_explanation.py": "3799ddd2b02e85b711b1feb5a1ca80aa19929336cec60c0e99868f8ae80cdeac",
+      "m08_governed_canary.py": "45a3f854b981a7fe3ca1f993d426149466f486a7f1d5552e9bb5a06ca2a14e85",
+      "k8s_runner.py": "3f8689efe0ba2ee4901800c54b75bc40432af011339c8b8cd7f60ac91df07be3",
+      "workflow_template": "6542fca2ad0acd88581b9d735db71b280518a734967373f61459a5172790eb4e",
+      "deployment_workflow_template": "ef0ea95efdbd257884fe784d7fe9c7870d6e74234e0aec67c577dea42bba853a"
+    }
+  },
+  "contracts": {
+    "dataset_manifest_schema_sha256": "30601912a2122f642d91888eb3e96b4feb00bdb1218f6cda93886efa837358b9",
+    "evaluation_manifest_schema_sha256": "6e99f4d8af6c3520478427323c37b393327b7eaee44c6d33212fe174fd9936f2",
+    "explanation_manifest_schema_sha256": "9a20815871e0613c0d04054db256745d8122564bb4f5003cb9b3be85fedfdc91",
+    "graph_snapshot_manifest_schema_sha256": "2acf71b308739d76e87031e817a62dfa3b5d1985dca35224cd7d25a87577bfdd",
+    "training_run_manifest_schema_sha256": "6207991192b350e03fad2e11e9a25e459c1e81def2ef30aff3c5bba40840836e"
+  },
+  "lineage": {
+    "dataset_id": "9e904b32-721e-570c-b3ed-d78745c16eab",
+    "dataset_sha256": "801c6915568b4ac752f2f9286209f0716aecbf64b5fce2d8653a9e0de01073a2",
+    "baseline_training_run_sha256": "625128367d1fc93fd97744c30e4effac856551cb860b67fcd8dabbaf45d8c95a",
+    "graph_snapshot_id": "b0276798-0fe8-5743-8a78-1210d5364ece",
+    "graph_snapshot_sha256": "dc46b06927bb2cdf3ae19b6d290552872d687abc7a990aeaf6d48ac90e80b37c",
+    "gnn_training_run_sha256": "140b10621413c03a10dfd30771f10dff637ea441eded7bc4065d0ef692ab794e",
+    "evaluation_id": "f47520fc-ada7-56dc-9b30-b2ac2332d9f1",
+    "evaluation_sha256": "764fd67fe571465dd5e8d0983d5eea245afac97e8a665f2fefd1ec425e423799",
+    "explanation_id": "2a607536-64b9-5f3b-9387-e17a553d6e6b",
+    "explanation_sha256": "86cd19ed61e196264bd676c060fb2f4fd2576f6185e2309f9bc6e2e28fa35906"
+  },
+  "oracles": {
+    "split_row_counts": {
+      "train": 40,
+      "validation": 16,
+      "test": 16,
+      "open_set": 8
+    },
+    "baseline_artifact_count": 5,
+    "gnn_artifact_count": 7,
+    "evaluation_artifact_count": 2,
+    "explanation_artifact_count": 3,
+    "graph_ablation_state": "EVALUATED",
+    "explanation_methods": {
+      "baseline": "xgboost_pred_contribs",
+      "gnn_node": "feature_mean_occlusion",
+      "gnn_edge": "single_edge_occlusion",
+      "gnn_path": "ranked_one_hop_evidence_edges"
+    },
+    "known_attack_recall": 1.0,
+    "normal_false_positive_rate": 0.0,
+    "unknown_recall": 0.0,
+    "activation_authorized": false,
+    "explanation_activation_authorized": false
+  },
+  "workflow": {
+    "entrypoint": "governed-dataset-training-evaluation-explanation",
+    "stages": [
+      ["extract-governed-dataset"],
+      ["train-approved-baseline", "train-gnn-suite"],
+      ["evaluate-governed-baseline"],
+      ["explain-governed-candidate"]
+    ],
+    "mirror_semantic_equality": "PASS",
+    "server_side_dry_run": "PASS",
+    "production_template_applied": false
+  },
+  "cleanup": {
+    "run_scoped_resources_removed": true,
+    "post_cleanup_label_query_count": 0,
+    "retained_kubernetes_resources": false
+  },
+  "regressions": [
+    {
+      "command": "python3 -m unittest scripts.test_dataset_governance scripts.test_governed_extract_data scripts.test_governed_train_model scripts.test_gnn_training scripts.test_governed_evaluation scripts.test_governed_explanation -q",
+      "working_directory": "mlops",
+      "status": "PASS",
+      "tests": 18
+    },
+    {
+      "command": "python3 -m unittest scripts.alignment.test_run_m08_governed_k8s_canary -q",
+      "status": "PASS",
+      "tests": 3
+    },
+    {
+      "command": "python3 scripts/test_mlops.py",
+      "working_directory": "mlops",
+      "status": "PASS",
+      "tests": 24
+    },
+    {
+      "command": "kubectl apply --dry-run=server -f deployments/kubernetes/argo-events/mlops-governed-training-template.yaml",
+      "status": "PASS",
+      "objects": 1
+    }
+  ],
+  "limitations": [
+    "The canary proves immutable baseline, GCN, evaluation and explanation lineage on a deterministic synthetic fixture, not on production data.",
+    "Unknown recall is 0.0; the candidate is explicitly ineligible for activation or promotion.",
+    "Real ClickHouse extraction, M07 graph export into MinIO and an actual Argo Workflow submission are NOT_EXECUTED.",
+    "The WorkflowTemplate passed server-side dry-run but was not applied to the production namespace.",
+    "N009-N018 lifecycle work, M09-M13 and whole-project release gates remain NO-GO.",
+    "This is internal engineering evidence and is not a CNAS accuracy or false-positive-rate claim."
+  ],
+  "errors": []
+}

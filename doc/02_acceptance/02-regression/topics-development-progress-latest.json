@@ -1,0 +1,97 @@
+{
+  "result": "pass",
+  "updated_at": "2026-07-28T17:25:00+08:00",
+  "session_id": "019f7330-4db3-7062-8a8e-8d2a9a09c5b0",
+  "fixed_surface": ["专题面板", "加密隧道专题", "数据外传专题", "APT 战役专题"],
+  "database": {
+    "table": "topic_panel_simulations",
+    "seed": "scripts/seed_topic_panel_simulations.postgres.sql",
+    "event_counts": {"tunnel": 128, "exfil": 128, "apt": 156}
+  },
+  "backend_image": "docker.io/traffic/alert-service:topic-panel-r850",
+  "frontend_image": "docker.io/traffic/web-ui:topic-panel-r851",
+  "checks": {
+    "go_alert_api": "pass",
+    "topic_business_effect_unit": "pass",
+    "web_targeted_unit_tests": {"result": "pass", "passed": 50, "total": 50},
+    "web_build": "pass",
+    "windows_chrome": "pass",
+    "latest_tunnel_controls": {
+      "result": "pass",
+      "passed": 88,
+      "total": 88,
+      "evidence": "evidence/ui-image-breakdowns/pages/topics-all-controls-topic-panel-r851-final3-tunnel.json",
+      "distinct_row_actions": ["extract_pcap", "inspect_session", "inspect_certificate", "trace_path", "write_audit"]
+    },
+    "responsive": {
+      "viewports": ["1920x1080", "1600x900", "1366x768", "1920x1300"],
+      "left_rail_overlap_area": 0,
+      "clipped_rail_text": 0,
+      "horizontal_overflow": 0,
+      "tunnel_middle_board_height_px": {"1920x1080": 381, "1920x1300": 381},
+      "table_scroll_policy": {
+        "1920x1080": {"visible_rows": 10, "client_height": 134, "scroll_height": 270, "internal_scroll": true},
+        "1920x1300": {"visible_rows": 10, "client_height": 354, "scroll_height": 354, "internal_scroll": false}
+      }
+    },
+    "unified_dynamic_graphs": {
+      "component": "TopicTopologyGraph",
+      "topics": ["tunnel", "exfil", "apt"],
+      "solid_and_dashed_edges": true,
+      "zoom_pan_fit": true,
+      "api_driven": true,
+      "tunnel_impact_surface": {
+        "revision": "topic-panel-r851",
+        "layers": ["asset_group", "probe", "high_risk_source", "protocol", "proxy", "external_endpoint"],
+        "nodes": 20,
+        "links": 26,
+        "impact_highlights": 3,
+        "controls_evidence": "topics-all-controls-topic-panel-r851-final3-tunnel.json",
+        "unified_card_scaling": true,
+        "card_box_surrounds_text": true
+      }
+    },
+    "postgres_actor_audit": {
+      "result": "pass",
+      "actor_ids": ["9757259a-326f-44ff-a9d4-da4eef5b19e4", "a51bcac1-b616-4b06-a8ee-b9a8060ab75b"],
+      "topic_actions": 65,
+      "topic_exports": 20,
+      "topic_saved_views": 6,
+      "topic_scope_overrides": 3,
+      "topic_subscriptions": 3,
+      "audit_rows": 106,
+      "actions_with_business_effect": 65,
+      "exports_with_artifact_hash": 20
+    },
+    "product_http_errors": 0,
+    "page_errors": 0,
+    "request_failures": 0,
+    "console_errors": 0
+  },
+  "visual_review": {
+    "revision": "topic-panel-r851",
+    "reference": "the three UI images supplied in the current user turn",
+    "legacy_ratio_gate_rejected": true,
+    "reviewed_regions": ["metadata", "kpis", "topology", "analysis", "evidence_table", "right_rail", "report_preview"],
+    "responsive_viewports": ["1920x1080", "1600x900", "1366x768", "1920x1300"],
+    "diagnostic_metrics": {
+      "channel_tolerance": 90,
+      "full_frame_mismatch_ratio": 0.09658275462962963,
+      "business_region_mismatch_ratio": 0.10230046216960066,
+      "evidence": "evidence/ui-image-breakdowns/pages/topics-visual-compare-topic-panel-r851-final2.json"
+    }
+  },
+  "deployment": {
+    "backend_generation": 261,
+    "backend_observed_generation": 261,
+    "frontend_generation": 1065,
+    "frontend_observed_generation": 1065,
+    "ready": 1,
+    "frontend_source_digest": "7e6eacb0610e67a97aab781d4bc150adfa43aaced040c3667ede08b4491d6f55",
+    "frontend_image_manifest_digest": "sha256:46d92e778d6d74388865b8322d4cb7f19a62becbf997c06a5506905fcd30203c",
+    "frontend_image_id": "sha256:5d7874f6f97ae9940f21f5ec9c9051f324dcdb4d874b5557263d605c1d95325e",
+    "backend_source_digest": "6585a1f8175eb05157da7529447d4dc50571710a3944f216682578ff1e36d99c",
+    "backend_image_manifest_digest": "sha256:4f9f5dbe5694ec7ecb799299a9673e917868b17f6c19b9e915805fcccfc7855d",
+    "backend_image_id": "sha256:9820cad9e390003189bebd0ea8758bc83b9210fbbe30d5258286e84d646b7395"
+  }
+}

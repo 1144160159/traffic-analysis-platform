@@ -1,0 +1,790 @@
+{
+  "result": "pass",
+  "browser_backend": "Windows Chrome through Xshell CDP tunnel",
+  "browser": "Chrome/150.0.7871.182",
+  "cdp_mapping": "127.0.0.1:9224 -> Windows 127.0.0.1:9222",
+  "route": "http://10.0.5.8:30180/alerts/alert-detail-accept-r802?windowsCdpAlertDetailR802=1785125367180#codex_smoke_token=<redacted>",
+  "alert_id": "alert-detail-accept-r802",
+  "data_mode": "real ClickHouse alert/evidence fixture plus PostgreSQL persisted actions",
+  "echart_risk_ring": {
+    "canvas_count": 1,
+    "series_type": "gauge",
+    "series_value": "92",
+    "width": 116,
+    "height": 116
+  },
+  "return_navigation": {
+    "visible": true,
+    "destination": "/alerts"
+  },
+  "edit_surface": {
+    "ant_drawer_count": 0,
+    "modal": {
+      "width": 520,
+      "height": 502,
+      "viewport_width": 1920,
+      "viewport_height": 1080,
+      "center_offset_x": 0,
+      "center_offset_y": 0
+    },
+    "content_sized": true
+  },
+  "persisted_label": "数据库模拟-r802-1785125373834",
+  "persisted_label_visible_after_refetch": true,
+  "write_api_status": {
+    "label_update": 200,
+    "report_export": 201,
+    "response_action": 201,
+    "feedback": 201
+  },
+  "first_response_action": {
+    "label": "隔离主机高危",
+    "confirm_disabled": false,
+    "response_url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/response-actions"
+  },
+  "report_export": {
+    "confirm_disabled": false,
+    "response_url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/investigation-notes"
+  },
+  "evidence_navigation": {
+    "ant_drawer_count": 0,
+    "ant_modal_count": 1,
+    "focus_page_visible": true,
+    "modal": {
+      "width": 1152,
+      "height": 720,
+      "viewport_width": 1920,
+      "viewport_height": 1080,
+      "center_offset_x": 0,
+      "center_offset_y": 0
+    },
+    "content_sized": true,
+    "close_icon_visible": true,
+    "footer_close_visible": true,
+    "max_tab_geometry_delta": 0,
+    "typography_consistent_across_tabs": true,
+    "tab_content_consistent_across_tabs": true,
+    "typography_contract": {
+      "title": {
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "font_size": "20px",
+        "font_weight": "700",
+        "line_height": "20px",
+        "letter_spacing": "normal"
+      },
+      "tab": {
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "font_size": "13px",
+        "font_weight": "400",
+        "line_height": "13px",
+        "letter_spacing": "normal"
+      },
+      "header": {
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "font_size": "14px",
+        "font_weight": "400",
+        "line_height": "16.8px",
+        "letter_spacing": "normal"
+      },
+      "body": {
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "font_size": "13px",
+        "font_weight": "400",
+        "line_height": "16.64px",
+        "letter_spacing": "normal"
+      },
+      "footer": null
+    },
+    "tab_results": [
+      {
+        "view": "all",
+        "url": "http://10.0.5.8:30180/alerts/alert-detail-accept-r802?evidenceView=all",
+        "visible": true,
+        "modal": {
+          "width": 1152,
+          "height": 720,
+          "viewport_width": 1920,
+          "viewport_height": 1080,
+          "center_offset_x": 0,
+          "center_offset_y": 0
+        },
+        "layout": {
+          "x": 385,
+          "y": 181,
+          "width": 1151,
+          "height": 665,
+          "scroll_width": 1151,
+          "scroll_height": 665,
+          "client_width": 1151,
+          "client_height": 665,
+          "horizontal_overflow": 0,
+          "vertical_overflow": 0
+        },
+        "typography": {
+          "title": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "20px",
+            "font_weight": "700",
+            "line_height": "20px",
+            "letter_spacing": "normal"
+          },
+          "tab": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "13px",
+            "letter_spacing": "normal"
+          },
+          "header": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "400",
+            "line_height": "16.8px",
+            "letter_spacing": "normal"
+          },
+          "body": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "16.64px",
+            "letter_spacing": "normal"
+          },
+          "footer": null
+        },
+        "tab_strip": {
+          "scroll_left": 0,
+          "scroll_width": 1125,
+          "client_width": 1125,
+          "clipped_left": false,
+          "clipped_right": false,
+          "labels": [
+            "全部 6",
+            "PCAP 1",
+            "Session 2",
+            "日志 1",
+            "图谱路径 1",
+            "文件 1"
+          ]
+        },
+        "full_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/all-1920.png",
+        "business_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/all-business.png"
+      },
+      {
+        "view": "pcap",
+        "url": "http://10.0.5.8:30180/alerts/alert-detail-accept-r802?evidenceView=pcap",
+        "visible": true,
+        "modal": {
+          "width": 1152,
+          "height": 720,
+          "viewport_width": 1920,
+          "viewport_height": 1080,
+          "center_offset_x": 0,
+          "center_offset_y": 0
+        },
+        "layout": {
+          "x": 385,
+          "y": 181,
+          "width": 1151,
+          "height": 665,
+          "scroll_width": 1151,
+          "scroll_height": 665,
+          "client_width": 1151,
+          "client_height": 665,
+          "horizontal_overflow": 0,
+          "vertical_overflow": 0
+        },
+        "typography": {
+          "title": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "20px",
+            "font_weight": "700",
+            "line_height": "20px",
+            "letter_spacing": "normal"
+          },
+          "tab": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "13px",
+            "letter_spacing": "normal"
+          },
+          "header": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "400",
+            "line_height": "16.8px",
+            "letter_spacing": "normal"
+          },
+          "body": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "16.64px",
+            "letter_spacing": "normal"
+          },
+          "footer": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "500",
+            "line_height": "17.92px",
+            "letter_spacing": "normal"
+          }
+        },
+        "tab_strip": {
+          "scroll_left": 0,
+          "scroll_width": 1123,
+          "client_width": 1123,
+          "clipped_left": false,
+          "clipped_right": false,
+          "labels": [
+            "全部 6",
+            "PCAP 1",
+            "Session 2",
+            "日志 1",
+            "图谱路径 1",
+            "文件 1"
+          ]
+        },
+        "full_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/pcap-1920.png",
+        "business_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/pcap-business.png"
+      },
+      {
+        "view": "session",
+        "url": "http://10.0.5.8:30180/alerts/alert-detail-accept-r802?evidenceView=session",
+        "visible": true,
+        "modal": {
+          "width": 1152,
+          "height": 720,
+          "viewport_width": 1920,
+          "viewport_height": 1080,
+          "center_offset_x": 0,
+          "center_offset_y": 0
+        },
+        "layout": {
+          "x": 385,
+          "y": 181,
+          "width": 1151,
+          "height": 665,
+          "scroll_width": 1151,
+          "scroll_height": 665,
+          "client_width": 1151,
+          "client_height": 665,
+          "horizontal_overflow": 0,
+          "vertical_overflow": 0
+        },
+        "typography": {
+          "title": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "20px",
+            "font_weight": "700",
+            "line_height": "20px",
+            "letter_spacing": "normal"
+          },
+          "tab": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "13px",
+            "letter_spacing": "normal"
+          },
+          "header": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "400",
+            "line_height": "16.8px",
+            "letter_spacing": "normal"
+          },
+          "body": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "16.64px",
+            "letter_spacing": "normal"
+          },
+          "footer": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "500",
+            "line_height": "17.92px",
+            "letter_spacing": "normal"
+          }
+        },
+        "tab_strip": {
+          "scroll_left": 0,
+          "scroll_width": 1123,
+          "client_width": 1123,
+          "clipped_left": false,
+          "clipped_right": false,
+          "labels": [
+            "全部 6",
+            "PCAP 1",
+            "Session 2",
+            "日志 1",
+            "图谱路径 1",
+            "文件 1"
+          ]
+        },
+        "full_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/session-1920.png",
+        "business_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/session-business.png"
+      },
+      {
+        "view": "logs",
+        "url": "http://10.0.5.8:30180/alerts/alert-detail-accept-r802?evidenceView=logs",
+        "visible": true,
+        "modal": {
+          "width": 1152,
+          "height": 720,
+          "viewport_width": 1920,
+          "viewport_height": 1080,
+          "center_offset_x": 0,
+          "center_offset_y": 0
+        },
+        "layout": {
+          "x": 385,
+          "y": 181,
+          "width": 1151,
+          "height": 665,
+          "scroll_width": 1151,
+          "scroll_height": 665,
+          "client_width": 1151,
+          "client_height": 665,
+          "horizontal_overflow": 0,
+          "vertical_overflow": 0
+        },
+        "typography": {
+          "title": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "20px",
+            "font_weight": "700",
+            "line_height": "20px",
+            "letter_spacing": "normal"
+          },
+          "tab": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "13px",
+            "letter_spacing": "normal"
+          },
+          "header": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "400",
+            "line_height": "16.8px",
+            "letter_spacing": "normal"
+          },
+          "body": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "16.64px",
+            "letter_spacing": "normal"
+          },
+          "footer": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "500",
+            "line_height": "17.92px",
+            "letter_spacing": "normal"
+          }
+        },
+        "tab_strip": {
+          "scroll_left": 0,
+          "scroll_width": 1123,
+          "client_width": 1123,
+          "clipped_left": false,
+          "clipped_right": false,
+          "labels": [
+            "全部 6",
+            "PCAP 1",
+            "Session 2",
+            "日志 1",
+            "图谱路径 1",
+            "文件 1"
+          ]
+        },
+        "full_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/logs-1920.png",
+        "business_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/logs-business.png"
+      },
+      {
+        "view": "graph-path",
+        "url": "http://10.0.5.8:30180/alerts/alert-detail-accept-r802?evidenceView=graph-path",
+        "visible": true,
+        "modal": {
+          "width": 1152,
+          "height": 720,
+          "viewport_width": 1920,
+          "viewport_height": 1080,
+          "center_offset_x": 0,
+          "center_offset_y": 0
+        },
+        "layout": {
+          "x": 385,
+          "y": 181,
+          "width": 1151,
+          "height": 665,
+          "scroll_width": 1151,
+          "scroll_height": 665,
+          "client_width": 1151,
+          "client_height": 665,
+          "horizontal_overflow": 0,
+          "vertical_overflow": 0
+        },
+        "typography": {
+          "title": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "20px",
+            "font_weight": "700",
+            "line_height": "20px",
+            "letter_spacing": "normal"
+          },
+          "tab": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "13px",
+            "letter_spacing": "normal"
+          },
+          "header": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "400",
+            "line_height": "16.8px",
+            "letter_spacing": "normal"
+          },
+          "body": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "16.64px",
+            "letter_spacing": "normal"
+          },
+          "footer": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "500",
+            "line_height": "17.92px",
+            "letter_spacing": "normal"
+          }
+        },
+        "tab_strip": {
+          "scroll_left": 0,
+          "scroll_width": 1123,
+          "client_width": 1123,
+          "clipped_left": false,
+          "clipped_right": false,
+          "labels": [
+            "全部 6",
+            "PCAP 1",
+            "Session 2",
+            "日志 1",
+            "图谱路径 1",
+            "文件 1"
+          ]
+        },
+        "full_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/graph-path-1920.png",
+        "business_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/graph-path-business.png"
+      },
+      {
+        "view": "files",
+        "url": "http://10.0.5.8:30180/alerts/alert-detail-accept-r802?evidenceView=files",
+        "visible": true,
+        "modal": {
+          "width": 1152,
+          "height": 720,
+          "viewport_width": 1920,
+          "viewport_height": 1080,
+          "center_offset_x": 0,
+          "center_offset_y": 0
+        },
+        "layout": {
+          "x": 385,
+          "y": 181,
+          "width": 1151,
+          "height": 665,
+          "scroll_width": 1151,
+          "scroll_height": 665,
+          "client_width": 1151,
+          "client_height": 665,
+          "horizontal_overflow": 0,
+          "vertical_overflow": 0
+        },
+        "typography": {
+          "title": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "20px",
+            "font_weight": "700",
+            "line_height": "20px",
+            "letter_spacing": "normal"
+          },
+          "tab": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "13px",
+            "letter_spacing": "normal"
+          },
+          "header": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "400",
+            "line_height": "16.8px",
+            "letter_spacing": "normal"
+          },
+          "body": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "13px",
+            "font_weight": "400",
+            "line_height": "16.64px",
+            "letter_spacing": "normal"
+          },
+          "footer": {
+            "font_family": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+            "font_size": "14px",
+            "font_weight": "500",
+            "line_height": "17.92px",
+            "letter_spacing": "normal"
+          }
+        },
+        "tab_strip": {
+          "scroll_left": 0,
+          "scroll_width": 1123,
+          "client_width": 1123,
+          "clipped_left": false,
+          "clipped_right": false,
+          "labels": [
+            "全部 6",
+            "PCAP 1",
+            "Session 2",
+            "日志 1",
+            "图谱路径 1",
+            "文件 1"
+          ]
+        },
+        "full_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/files-1920.png",
+        "business_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-evidence/files-business.png"
+      }
+    ],
+    "action_status": 201,
+    "closed_to_alert_detail": true,
+    "browser_back_keeps_evidence_closed": true
+  },
+  "responsive_1600": {
+    "viewport_width": 1600,
+    "document_scroll_width": 1600,
+    "horizontal_overflow": 0,
+    "main_rail_overlap": false,
+    "screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805-1600.png"
+  },
+  "api_requests": [
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "PUT",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/labels"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/investigation-notes"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/response-actions"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/investigation-notes"
+    }
+  ],
+  "api_responses": [
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "PUT",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/labels"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "POST",
+      "status": 201,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/investigation-notes"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "POST",
+      "status": 201,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/response-actions"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "POST",
+      "status": 201,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/feedback"
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/evidence"
+    },
+    {
+      "method": "POST",
+      "status": 201,
+      "url": "http://10.0.5.8:30180/api/v1/alerts/alert-detail-accept-r802/investigation-notes"
+    }
+  ],
+  "bad_responses": [],
+  "console_errors": [],
+  "ignored_browser_extension_errors": [
+    {
+      "text": "grm ERROR [lib.tracking.telemetry] ░░ cs.unhandled Error: crypto.randomUUID is not a function\n    at w.csUnhandled (chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:1506592)\n    at Object.next (chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:346015)\n    at e.next (chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:1867633)\n    at t._next (chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:1867237)\n    at t.next (chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:1866855)\n    at chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:1897251\n    at a._next (chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:1879035)\n    at t.next (chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:1866855)\n    at chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:1894752\n    at a._next (chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js:2:1879035)",
+      "url": "chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js"
+    },
+    {
+      "text": "crypto.randomUUID is not a function",
+      "url": "chrome-extension://browser-profile"
+    }
+  ],
+  "page_errors": [],
+  "screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r805.png",
+  "timestamp": "2026-07-27T04:10:17.888Z"
+}
