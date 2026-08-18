@@ -85,7 +85,7 @@ func (h *Handler) verifyCaptcha(ctx context.Context, captchaID, captchaCode stri
 	captchaID = strings.TrimSpace(captchaID)
 	captchaCode = strings.ToUpper(strings.TrimSpace(captchaCode))
 	if captchaID == "" || captchaCode == "" {
-		return errors.New(errors.ErrCodeMissingParameter, "captcha is required")
+		return errors.New(errors.ErrCodeUnauthorized, "captcha is required")
 	}
 
 	key := captchaKey(captchaID)
@@ -97,7 +97,7 @@ func (h *Handler) verifyCaptcha(ctx context.Context, captchaID, captchaCode stri
 	_ = h.redisClient.Delete(ctx, key)
 
 	if expected == "" || !strings.EqualFold(expected, captchaCode) {
-		return errors.New(errors.ErrCodeInvalidParameter, "captcha is invalid or expired")
+		return errors.New(errors.ErrCodeUnauthorized, "captcha is invalid or expired")
 	}
 	return nil
 }

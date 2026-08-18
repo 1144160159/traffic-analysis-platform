@@ -9,6 +9,8 @@
 package model
 
 import (
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -108,23 +110,7 @@ type Session struct {
 
 // DefaultRoleScopes 默认角色权限映射（使用统一的 Scope）
 var DefaultRoleScopes = map[string][]string{
-	"admin": {
-		ScopeAlertRead, ScopeAlertWrite, ScopeAlertExport,
-		ScopePlaybookRead, ScopePlaybookWrite, ScopePlaybookDrill, ScopePlaybookApprove, ScopePlaybookExport,
-		ScopeRuleRead, ScopeRuleWrite, ScopeRuleDelete,
-		ScopePcapRead, ScopePcapDownload, ScopePcapCut,
-		ScopeGraphRead,
-		ScopeAssetRead, ScopeAssetDiscover, ScopeAssetExport, ScopeAssetGovern,
-		ScopeScreenView,
-		ScopeAdminAll,
-		ScopeTokenRead, ScopeTokenWrite,
-		ScopeDeployRead, ScopeDeployCreate, ScopeDeployActivate, ScopeDeployRollback,
-		ScopeDataQualityRead, ScopeDataQualityWrite,
-		ScopeComplianceRead, ScopeComplianceWrite, ScopeComplianceExport, ScopeComplianceFinalize, ScopeComplianceRemediate,
-		ScopeAuditRead, ScopeAuditWrite, ScopeAuditExport,
-		ScopeUserRead, ScopeUserWrite, ScopeUserDelete,
-		ScopeAll,
-	},
+	"admin": leastPrivilegeAdminScopes(),
 	"analyst": {
 		ScopeAlertRead, ScopeAlertWrite, ScopeAlertExport,
 		ScopePlaybookRead, ScopePlaybookWrite, ScopePlaybookDrill, ScopePlaybookExport,
@@ -136,7 +122,9 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeDataQualityRead,
 		ScopeComplianceRead,
 		ScopeAuditRead, ScopeAuditWrite, ScopeAuditExport,
+		ScopeAnalysisRead, ScopeAnalysisWrite,
 	},
+	"super_admin": leastPrivilegeAdminScopes(),
 	"viewer": {
 		ScopeAlertRead,
 		ScopePlaybookRead,
@@ -147,6 +135,7 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeDataQualityRead,
 		ScopeComplianceRead,
 		ScopeAuditRead,
+		ScopeAnalysisRead,
 	},
 	"operator": {
 		ScopeAlertRead, ScopeAlertWrite,
@@ -160,7 +149,36 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeDataQualityRead, ScopeDataQualityWrite,
 		ScopeComplianceRead, ScopeComplianceWrite, ScopeComplianceExport, ScopeComplianceRemediate,
 		ScopeAuditRead,
+		ScopeAnalysisRead,
 	},
+}
+
+// leastPrivilegeAdminScopes grants every currently registered concrete scope,
+// but never a wildcard or cross-tenant capability. A newly introduced scope
+// therefore requires an explicit catalog change and cannot be inherited via
+// an old token's "*" grant.
+func leastPrivilegeAdminScopes() []string {
+	scopes := make([]string, 0, len(AllValidScopes))
+	seen := make(map[string]struct{}, len(AllValidScopes))
+	for _, scope := range AllValidScopes {
+		// 仅 admin:* 通配随 admin 角色隐含(判定合一);其余域通配(alert:* 等)
+		// 与 ScopeAll、admin:cross-tenant 一律除外(显式授权原则)。
+		if scope == ScopeAll || scope == ScopeAdminCrossTenant ||
+			(strings.HasSuffix(scope, ":*") && scope != ScopeAdminAll) {
+			continue
+		}
+		if _, ok := seen[scope]; ok {
+			continue
+		}
+		seen[scope] = struct{}{}
+		scopes = append(scopes, scope)
+	}
+	if _, ok := seen[ScopeAdminAll]; !ok {
+		seen[ScopeAdminAll] = struct{}{}
+		scopes = append(scopes, ScopeAdminAll)
+	}
+	sort.Strings(scopes)
+	return scopes
 }
 
 // =============================================================================
@@ -204,6 +222,7 @@ func GetScopesForRoles(roles []string) []string {
 	for scope := range scopeSet {
 		scopes = append(scopes, scope)
 	}
+	sort.Strings(scopes)
 
 	return scopes
 }

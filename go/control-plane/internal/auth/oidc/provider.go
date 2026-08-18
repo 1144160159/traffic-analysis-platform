@@ -187,13 +187,16 @@ func (p *Provider) getJWKS() *JWKS {
 }
 
 // GetAuthURL 获取认证URL
-func (p *Provider) GetAuthURL(state string) string {
+func (p *Provider) GetAuthURL(state, nonce string) string {
 	params := url.Values{}
 	params.Set("client_id", p.config.ClientID)
 	params.Set("redirect_uri", p.config.RedirectURL)
 	params.Set("response_type", "code")
 	params.Set("scope", normalizeScopes(p.config.Scopes))
 	params.Set("state", state)
+	if nonce != "" {
+		params.Set("nonce", nonce)
+	}
 	return p.authURL + "?" + params.Encode()
 }
 
@@ -251,6 +254,62 @@ func (p *Provider) RefreshToken(ctx context.Context, refreshToken string) (*Toke
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("refresh endpoint returned %d: %s", resp.StatusCode, string(body))
+	}
+	var tokenResp TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return nil, fmt.Errorf("failed to decode token response: %w", err)
+	}
+	return &tokenResp, nil
+}
+
+// Logout 服务端会话终止:携带 refresh token 调 Keycloak logout 端点,
+// 使已签发的刷新链立即失效(浏览器侧登出不再仅依赖前端清 token)。
+func (p *Provider) Logout(ctx context.Context, refreshToken string) error {
+	data := url.Values{}
+	data.Set("client_id", p.config.ClientID)
+	data.Set("client_secret", p.config.ClientSecret)
+	data.Set("refresh_token", refreshToken)
+	logoutURL := strings.TrimSuffix(p.issuer, "/") + "/protocol/openid-connect/logout"
+	req, err := http.NewRequestWithContext(ctx, "POST", logoutURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("logout request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("logout endpoint returned %d: %s", resp.StatusCode, string(body))
+	}
+	return nil
+}
+
+// PasswordGrant 服务端口令兑换:本地账密校验通过后向 Keycloak 换发统一令牌,
+// 使账号密码登录与 OIDC 登录持有同一类访问凭证(前端单 token)。
+func (p *Provider) PasswordGrant(ctx context.Context, username, password string) (*TokenResponse, error) {
+	data := url.Values{}
+	data.Set("grant_type", "password")
+	data.Set("username", username)
+	data.Set("password", password)
+	data.Set("client_id", p.config.ClientID)
+	data.Set("client_secret", p.config.ClientSecret)
+	data.Set("scope", p.config.Scopes)
+	req, err := http.NewRequestWithContext(ctx, "POST", p.tokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("password grant failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("password grant returned %d: %s", resp.StatusCode, string(body))
 	}
 	var tokenResp TokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
@@ -324,6 +383,22 @@ func (p *Provider) ValidateIDToken(tokenString string) (*model.OIDCClaims, error
 	// Verify issuer
 	if claims.Issuer != p.issuer {
 		return nil, fmt.Errorf("invalid issuer: expected %s, got %s", p.issuer, claims.Issuer)
+	}
+	// Verify audience: 只接受为本客户端签发的 ID Token，拒绝同 IdP 下
+	// 为其他 client 签发的 token。
+	if len(claims.Audience) > 0 {
+		found := false
+		for _, aud := range claims.Audience {
+			if aud == p.config.ClientID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("invalid audience: expected %s, got %v", p.config.ClientID, claims.Audience)
+		}
+	} else {
+		return nil, fmt.Errorf("invalid audience: token has no audience claim")
 	}
 	return claims, nil
 }
@@ -430,4 +505,70 @@ func (p *Provider) GetJWKSInfo() map[string]interface{} {
 		info["key_ids"] = []string{}
 	}
 	return info
+}
+
+// ValidateAccessTokenRoles 仅提取并验签 access token 的角色声明(不做身份判定;
+// 身份由 ID token 承担)。access token 由同一 token 端点经 TLS 交付,此处再按
+// JWKS 验签,保证角色事实不被伪造。
+func (p *Provider) ValidateAccessTokenRoles(tokenString string) (*model.OIDCClaims, error) {
+	if err := p.ensureJWKS(); err != nil {
+		return nil, err
+	}
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, &model.OIDCClaims{})
+	if err != nil {
+		return nil, fmt.Errorf("parse access token: %w", err)
+	}
+	kid, ok := token.Header["kid"].(string)
+	if !ok {
+		return nil, fmt.Errorf("access token missing kid")
+	}
+	jwks := p.getJWKS()
+	if jwks == nil {
+		return nil, fmt.Errorf("JWKS not available")
+	}
+	var key *JWK
+	for i := range jwks.Keys {
+		if jwks.Keys[i].Kid == kid {
+			key = &jwks.Keys[i]
+			break
+		}
+	}
+	if key == nil {
+		return nil, fmt.Errorf("no matching key for kid: %s", kid)
+	}
+	publicKey, err := parseRSAPublicKey(key)
+	if err != nil {
+		return nil, err
+	}
+	claims := &model.OIDCClaims{}
+	token, err = jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+		// 深度测试发现:ID/刷新令牌此前可作访问凭证通过(见测试报告)。
+		// 强制 RS256 且拒绝非访问令牌形态(typ 缺省时放行保持兼容)。
+		if t.Method.Alg() != jwt.SigningMethodRS256.Alg() {
+			return nil, fmt.Errorf("unexpected alg %s", t.Method.Alg())
+		}
+		return publicKey, nil
+	})
+	if err != nil || !token.Valid {
+		return nil, fmt.Errorf("access token validation failed: %w", err)
+	}
+	if typ := claims.Typ; typ != "" && typ != "Bearer" {
+		return nil, fmt.Errorf("unexpected token type %q: access token required", typ)
+	}
+	if claims.Issuer != p.issuer {
+		return nil, fmt.Errorf("access token issuer mismatch: %s", claims.Issuer)
+	}
+	if len(p.config.AllowedAZP) > 0 {
+		ok := false
+		for _, a := range p.config.AllowedAZP {
+			if claims.AuthorizedParty == a {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return nil, fmt.Errorf("azp %q not in allowed client whitelist", claims.AuthorizedParty)
+		}
+	}
+	return claims, nil
 }

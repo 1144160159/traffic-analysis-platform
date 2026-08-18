@@ -71,6 +71,14 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 			http.Error(w, "Invalid token type: only access tokens are allowed", http.StatusUnauthorized)
 			return
 		}
+		if strings.TrimSpace(claims.UserID.String()) == "" || strings.TrimSpace(claims.TenantID) == "" {
+			http.Error(w, "Verified user and tenant identity required", http.StatusUnauthorized)
+			return
+		}
+		if err := httpx.ValidateRequestTenant(r, claims.TenantID); err != nil {
+			http.Error(w, "Cross-tenant access denied", http.StatusForbidden)
+			return
+		}
 
 		// Add claims to context
 		ctx := context.WithValue(r.Context(), ContextKeyClaims, claims)

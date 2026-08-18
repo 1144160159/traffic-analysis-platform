@@ -677,9 +677,10 @@ func (r *TokenRepository) ValidateToken(ctx context.Context, tokenHash string) (
 		return nil, errors.New(errors.ErrCodeMissingParameter, "token_hash is required")
 	}
 
-	// 修复 #24：尝试从 Redis 缓存获取
+	// 修复 #24：尝试从 Redis 缓存获取（使用完整 hash 作 key，避免前缀碰撞
+	// 导致不同 token 命中同一缓存返回错误权限）
 	if r.redisClient != nil {
-		cacheKey := "token_valid:" + tokenHash[:16] // 使用 hash 前缀作为 key
+		cacheKey := "token_valid:" + tokenHash
 		cachedTokenID, err := r.redisClient.Client().Get(ctx, cacheKey).Result()
 		if err == nil && cachedTokenID != "" {
 			// 缓存命中，获取完整 Token
@@ -716,9 +717,9 @@ func (r *TokenRepository) ValidateToken(ctx context.Context, tokenHash string) (
 		return nil, errors.New(errors.ErrCodeTokenExpired, "Token has expired")
 	}
 
-	// 修复 #24：写入 Redis 缓存
+	// 修复 #24：写入 Redis 缓存（完整 hash key）
 	if r.redisClient != nil {
-		cacheKey := "token_valid:" + tokenHash[:16]
+		cacheKey := "token_valid:" + tokenHash
 		ttl := 5 * time.Minute
 		if token.ExpiresAt != nil {
 			remaining := time.Until(*token.ExpiresAt)
@@ -810,6 +811,69 @@ func (r *TokenRepository) UpdateScopes(ctx context.Context, tokenID uuid.UUID, s
 		zap.Strings("scopes", scopes))
 
 	return nil
+}
+
+// GetActiveByTokenPrefixMatch 取"明文凭证以存储前缀开头"的活跃 Token
+// (P2-c 统一中间件校验用):不猜测历史前缀长度(新格式 8 位/旧格式 14-16 位
+// 均兼容),bcrypt 比对负责最终确认;表行数极小,LIKE 扫描可接受。
+func (r *TokenRepository) GetActiveByTokenPrefixMatch(ctx context.Context, tokenString string) ([]*model.APIToken, error) {
+	if tokenString == "" {
+		return nil, nil
+	}
+	query := `
+		SELECT
+			token_id, tenant_id, user_id, name, description, token_type,
+			token_hash, token_prefix, scopes, status, expires_at,
+			last_used_at, usage_count, created_by, created_at, updated_at,
+			revoked_at, rotation_enabled, rotation_interval, last_rotated_at,
+			previous_token_id, COALESCE(ip_whitelist, '[]'::jsonb), COALESCE(metadata, '{}'::jsonb), COALESCE(probe_id, '')
+		FROM api_tokens
+		WHERE $1 LIKE token_prefix || '%'
+		  AND status = 'active'
+		  AND (expires_at IS NULL OR expires_at > NOW())
+		ORDER BY created_at DESC
+		LIMIT 20
+	`
+	rows, err := r.db.QueryContext(ctx, query, tokenString)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to query tokens by prefix match")
+	}
+	defer rows.Close()
+
+	var tokens []*model.APIToken
+	for rows.Next() {
+		token := &model.APIToken{}
+		if err := rows.Scan(
+			&token.TokenID,
+			&token.TenantID,
+			&token.UserID,
+			&token.Name,
+			&token.Description,
+			&token.TokenType,
+			&token.TokenHash,
+			&token.TokenPrefix,
+			&token.Scopes,
+			&token.Status,
+			&token.ExpiresAt,
+			&token.LastUsedAt,
+			&token.UsageCount,
+			&token.CreatedBy,
+			&token.CreatedAt,
+			&token.UpdatedAt,
+			&token.RevokedAt,
+			&token.RotationEnabled,
+			&token.RotationInterval,
+			&token.LastRotatedAt,
+			&token.PreviousTokenID,
+			&token.IPWhitelist,
+			&token.Metadata,
+			&token.ProbeID,
+		); err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to scan token by prefix")
+		}
+		tokens = append(tokens, token)
+	}
+	return tokens, rows.Err()
 }
 
 // ==================== 轮转相关方法 ====================
@@ -1350,8 +1414,12 @@ func (r *TokenRepository) CleanupExpiredSessions(ctx context.Context, before tim
 			break
 		}
 
-		// 短暂休眠，避免持续锁表
-		time.Sleep(100 * time.Millisecond)
+		// 短暂休眠，避免持续锁表（ctx 感知，取消时立即退出）
+		select {
+		case <-ctx.Done():
+			return totalDeleted, ctx.Err()
+		case <-time.After(100 * time.Millisecond):
+		}
 	}
 
 	if totalDeleted > 0 {

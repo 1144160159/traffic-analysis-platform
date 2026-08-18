@@ -111,6 +111,12 @@ const (
 	ScopeScreenView = "screen:view"
 )
 
+// 分析调度权限(深度测试新增:analysis API 面此前无逐操作判定)
+const (
+	ScopeAnalysisRead  = "analysis:read"
+	ScopeAnalysisWrite = "analysis:write"
+)
+
 // 管理员权限
 const (
 	ScopeAdminRead        = "admin:read"
@@ -254,6 +260,8 @@ var AllValidScopes = []string{
 	ScopeAssetGovern,
 	ScopeAssetAll,
 	ScopeScreenView,
+	ScopeAnalysisRead,
+	ScopeAnalysisWrite,
 
 	ScopeAdminRead,
 	ScopeAdminWrite,
@@ -362,6 +370,8 @@ func GetAllScopeInfos() []ScopeInfo {
 		{Name: ScopeAssetGovern, Description: "Create, approve and execute tenant asset governance work orders", Category: "asset"},
 		{Name: ScopeAssetAll, Description: "All asset-domain permissions", Category: "asset"},
 		{Name: ScopeScreenView, Description: "View readonly situational screen", Category: "screen"},
+		{Name: ScopeAnalysisRead, Description: "Read analysis schedules, runs, reports and resources", Category: "analysis"},
+		{Name: ScopeAnalysisWrite, Description: "Create and mutate analysis triggers, plans, schedules and task definitions", Category: "analysis"},
 
 		{Name: ScopeAdminRead, Description: "Read tenant administration settings", Category: "admin"},
 		{Name: ScopeAdminWrite, Description: "Modify tenant administration settings", Category: "admin"},

@@ -207,6 +207,48 @@ func (s *TokenRotationService) rotateToken(ctx context.Context, token *model.API
 	// 保存旧 token hash（用于宽限期）
 	oldTokenHash := token.TokenHash
 
+	// 安全加固：自动轮转必须存在可用的通知渠道，且通知必须先成功。
+	// 新明文 token 只经通知渠道投递（仓库只存 hash），一旦通知失败而轮转
+	// 已提交，用户在宽限期后将永久丢失访问权。因此通知成功是轮转的前置条件
+	// （fail-closed）；通知重试仍失败则中止本轮轮转，旧 token 保持有效。
+	if s.notifier == nil {
+		s.logger.Error("Token rotation skipped: no notification channel configured",
+			zap.String("token_id", token.TokenID.String()),
+			zap.String("tenant_id", token.TenantID))
+		if s.auditLogger != nil {
+			s.auditLogger.Log(ctx, &audit.AuditEvent{
+				EventType:    audit.EventTypeTokenCreate,
+				TenantID:     token.TenantID,
+				UserID:       "system",
+				Action:       "token_rotate_skipped",
+				ResourceType: "api_token",
+				ResourceID:   token.TokenID.String(),
+				Result:       audit.ResultFailure,
+				ErrorMsg:     "token rotation skipped because no notification channel is configured",
+			})
+		}
+		return errors.New(errors.ErrCodeConfigError,
+			"token rotation requires a notification channel (notifier not configured)")
+	}
+	if err := s.notifyTokenRotation(ctx, token, plainToken); err != nil {
+		s.logger.Error("Token rotation aborted: failed to deliver new token",
+			zap.String("token_id", token.TokenID.String()),
+			zap.Error(err))
+		if s.auditLogger != nil {
+			s.auditLogger.Log(ctx, &audit.AuditEvent{
+				EventType:    audit.EventTypeTokenCreate,
+				TenantID:     token.TenantID,
+				UserID:       "system",
+				Action:       "token_rotate_aborted",
+				ResourceType: "api_token",
+				ResourceID:   token.TokenID.String(),
+				Result:       audit.ResultFailure,
+				ErrorMsg:     "token rotation aborted because new token delivery failed: " + err.Error(),
+			})
+		}
+		return errors.Wrap(err, errors.ErrCodeInternal, "token rotation aborted: new token delivery failed")
+	}
+
 	// 修复 #29：使用事务保护更新操作
 	// 注意：这里需要 TokenRepository 支持事务，如果不支持则回退到非事务模式
 	if err := s.rotateTokenWithTransaction(ctx, token, oldTokenHash, newTokenHash, tokenPrefix); err != nil {
@@ -236,18 +278,13 @@ func (s *TokenRotationService) rotateToken(ctx context.Context, token *model.API
 		zap.String("token_id", token.TokenID.String()),
 		zap.Duration("grace_period", s.gracePeriod))
 
-	// 通知用户新 token
-	s.notifyTokenRotation(ctx, token, plainToken)
-
 	return nil
 }
 
-// notifyTokenRotation 通知用户 token 已轮转
-func (s *TokenRotationService) notifyTokenRotation(ctx context.Context, token *model.APIToken, plainToken string) {
+// notifyTokenRotation 通知用户 token 已轮转（带有限重试，失败返回错误）。
+func (s *TokenRotationService) notifyTokenRotation(ctx context.Context, token *model.APIToken, plainToken string) error {
 	if s.notifier == nil {
-		s.logger.Debug("Notifier not configured, skipping token rotation notification",
-			zap.String("token_id", token.TokenID.String()))
-		return
+		return errors.New(errors.ErrCodeConfigError, "notifier is not configured")
 	}
 
 	subject := "API Token Rotated — Action Required"
@@ -261,11 +298,27 @@ func (s *TokenRotationService) notifyTokenRotation(ctx context.Context, token *m
 		token.Name, plainToken, token.TokenID.String(), token.ExpiresAt.Format(time.RFC3339),
 	)
 
-	if err := s.notifier.Send(ctx, token.UserID.String(), subject, body); err != nil {
-		s.logger.Warn("Failed to send token rotation notification",
-			zap.String("token_id", token.TokenID.String()),
-			zap.Error(err))
+	const maxAttempts = 3
+	var lastErr error
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		if err := s.notifier.Send(ctx, token.UserID.String(), subject, body); err == nil {
+			return nil
+		} else {
+			lastErr = err
+			s.logger.Warn("Failed to send token rotation notification, retrying",
+				zap.String("token_id", token.TokenID.String()),
+				zap.Int("attempt", attempt+1),
+				zap.Error(err))
+			if attempt < maxAttempts-1 {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-time.After(time.Duration(attempt+1) * time.Second):
+				}
+			}
+		}
 	}
+	return errors.Wrap(lastErr, errors.ErrCodeInternal, "failed to send token rotation notification after retries")
 }
 
 // rotateTokenWithTransaction 在事务中执行轮转（修复 #29）

@@ -13,9 +13,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +31,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/authz"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
@@ -87,6 +90,12 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	// Protected routes
 	protected := r.PathPrefix("/api/v1/auth").Subrouter()
 	protected.Use(h.authMiddleware.Authenticate)
+	// P2 契约解释器:AUTHZ_CONTRACT_MODE=shadow|enforce 时对命中 m10 契约的
+	// 操作(/v1/auth/me PATCH、/v1/auth/me/password POST、/v1/auth/scopes GET)
+	// 按 required_scope 逐操作判定;未命中契约的路径原样放行。
+	if mode := strings.TrimSpace(os.Getenv("AUTHZ_CONTRACT_MODE")); mode == "enforce" || mode == "shadow" {
+		protected.Use(authz.EnforceContract(contractPrincipalProvider, mode, nil, h.logger))
+	}
 	protected.HandleFunc("/logout", h.Logout).Methods("POST")
 	protected.HandleFunc("/me", h.GetCurrentUser).Methods("GET")
 	protected.HandleFunc("/scopes", h.GetScopeCatalog).Methods("GET")
@@ -99,6 +108,23 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 
 	// Health
 	r.HandleFunc("/health", h.HealthCheck).Methods("GET")
+}
+
+// contractPrincipalProvider 将 auth-service 自有认证层(判定合一 P1:
+// HMAC 应用 token 与 Keycloak 访问 token 同一 ValidateToken 入口)产出的
+// claims 适配为契约解释器的判定主体。
+func contractPrincipalProvider(r *http.Request) *authz.Principal {
+	claims := middleware.GetClaims(r.Context())
+	if claims == nil {
+		return nil
+	}
+	return &authz.Principal{
+		Subject:     claims.UserID.String(),
+		Username:    claims.Username,
+		TenantID:    claims.TenantID,
+		Roles:       claims.Roles,
+		Permissions: claims.Permissions,
+	}
 }
 
 // GetScopeCatalog exposes the versioned IAM scope authority for administrative
@@ -272,6 +298,17 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	if err := h.authService.Logout(r.Context(), claims.SessionID); err != nil {
 		h.logger.Error("Logout failed", zap.Error(err))
 		// 不阻止登出流程，继续返回成功
+	}
+	// 服务端终止 KC 刷新链:请求体可携带 refresh_token(前端存储的 KC 刷新令牌)。
+	if r.Body != nil {
+		var body struct {
+			RefreshToken string `json:"refresh_token"`
+		}
+		if err := json.NewDecoder(io.LimitReader(r.Body, 16<<10)).Decode(&body); err == nil && strings.TrimSpace(body.RefreshToken) != "" {
+			if err := h.authService.LogoutWithKCSession(r.Context(), body.RefreshToken); err != nil {
+				h.logger.Warn("KC session termination failed during logout", zap.Error(err))
+			}
+		}
 	}
 
 	// 记录登出审计日志
@@ -536,10 +573,31 @@ func (h *Handler) OIDCLogin(w http.ResponseWriter, r *http.Request) {
 		tenantID = "default"
 	}
 
+	// 安全加固：OIDC 租户白名单校验，拒绝客户端任意指定租户。
+	// 未配置 ALLOWED_TENANTS 时仅允许默认租户（保守 fail-closed）。
+	if err := h.authService.ValidateOIDCTenant(tenantID); err != nil {
+		h.logger.Warn("OIDC login rejected for disallowed tenant",
+			zap.String("tenant_id", tenantID))
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
+			"OIDC login is not allowed for this tenant", httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+
+	// 生成 nonce：绑定本次登录会话，ID token 必须回显（OIDC 抗重放）
+	nonceBytes := make([]byte, 16)
+	if _, err := rand.Read(nonceBytes); err != nil {
+		h.logger.Error("Failed to generate OIDC nonce", zap.Error(err))
+		errors.WriteErrorWithStatus(w, http.StatusInternalServerError, errors.ErrCodeInternal,
+			"Failed to generate nonce", httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+	nonce := hex.EncodeToString(nonceBytes)
+
 	stateData := map[string]string{
 		"tenant_id": tenantID,
 		"redirect":  r.URL.Query().Get("redirect"),
 		"client_ip": httpx.GetClientIP(r),
+		"nonce":     nonce,
 	}
 	stateJSON, _ := json.Marshal(stateData)
 
@@ -552,7 +610,7 @@ func (h *Handler) OIDCLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authURL := h.authService.GetOIDCAuthURL(state)
+	authURL := h.authService.GetOIDCAuthURL(state, nonce)
 	if authURL == "" {
 		errors.WriteErrorWithStatus(w, http.StatusNotImplemented, errors.ErrCodeOIDCError,
 			"OIDC is not configured", httpx.GetTraceID(r.Context()), r.URL.Path)
@@ -647,6 +705,7 @@ func (h *Handler) OIDCCallback(w http.ResponseWriter, r *http.Request) {
 	tenantID := stateData["tenant_id"]
 	redirectURL := stateData["redirect"]
 	clientIP := stateData["client_ip"]
+	expectedNonce := stateData["nonce"]
 
 	meta := repository.UserCommandMetadata{
 		TenantID: tenantID, ActionID: repository.UserOIDCSyncAction,
@@ -654,7 +713,7 @@ func (h *Handler) OIDCCallback(w http.ResponseWriter, r *http.Request) {
 		IdempotencyKey: "oidc-callback-" + state, TraceID: httpx.GetTraceID(r.Context()),
 		SourceIP: httpx.GetClientIP(r), UserAgent: r.UserAgent(),
 	}
-	resp, err := h.authService.HandleOIDCCallback(r.Context(), code, tenantID, meta)
+	resp, err := h.authService.HandleOIDCCallback(r.Context(), code, tenantID, expectedNonce, meta)
 	if err != nil {
 		h.logger.Error("OIDC callback failed", zap.Error(err))
 
@@ -720,7 +779,18 @@ func buildOIDCRedirectURL(rawRedirect, requestHost string, resp *service.LoginRe
 	if err != nil {
 		return "", fmt.Errorf("parse redirect fragment: %w", err)
 	}
+	// 回调重定向片段只携带前端必需令牌;控制 Location 大小(网关响应头缓冲限制,
+	// 多枚 JWT 已触发 "upstream sent too big header" → 502)。
+	// OIDC 流程:仅 KC access(access_token 键,前端统一令牌)+ KC refresh。
+	if resp.KCAccessToken != "" {
+		fragment.Set("access_token", resp.KCAccessToken)
+		fragment.Set("kc_refresh_token", resp.KCRefreshToken)
+		target.Fragment = fragment.Encode()
+		return target.String(), nil
+	}
+	// 账号密码登录回调路径(无 KC 令牌):保留原字段。
 	fragment.Set("access_token", resp.AccessToken)
+	// 账号密码登录回调路径(无 KC 令牌):保留原字段。
 	if resp.RefreshToken != "" {
 		fragment.Set("refresh_token", resp.RefreshToken)
 	}

@@ -9,14 +9,19 @@ package model
 import (
 	"strings"
 
-	"time"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"time"
 )
 
 // OIDCClaims OIDC ID Token Claims
 type OIDCClaims struct {
 	jwt.RegisteredClaims
+
+	// Typ 令牌形态声明(access token=Bearer;ID=ID;刷新=Refresh)。
+	Typ string `json:"typ,omitempty"`
+	// AuthorizedParty azp 声明(签发令牌的客户端 ID)。
+	AuthorizedParty string `json:"azp,omitempty"`
 
 	// 标准 OIDC Claims
 	Subject           string `json:"sub"`
@@ -27,6 +32,8 @@ type OIDCClaims struct {
 	GivenName         string `json:"given_name"`
 	FamilyName        string `json:"family_name"`
 	Locale            string `json:"locale"`
+	// Nonce 登录会话绑定值（OIDC 规范要求回显，用于防重放/CSRF）
+	Nonce string `json:"nonce,omitempty"`
 
 	// Keycloak 特有 Claims
 	RealmAccess    *RealmAccess              `json:"realm_access,omitempty"`

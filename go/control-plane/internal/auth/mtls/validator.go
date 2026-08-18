@@ -8,8 +8,10 @@ package mtls
 import (
 	"crypto/x509"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -68,9 +70,15 @@ func (v *CertificateValidator) ValidateCertificate(cert *x509.Certificate) error
 		return errors.New(errors.ErrCodeMTLSRequired, "Client certificate required")
 	}
 
-	// 验证证书是否过期
-	if err := cert.VerifyHostname(""); err == nil {
-		// 证书未过期
+	// 验证证书有效期（修复：原先的 VerifyHostname("") 是空操作，不检查过期）
+	now := time.Now()
+	if now.Before(cert.NotBefore) {
+		return errors.Newf(errors.ErrCodeUnauthorized,
+			"Client certificate is not yet valid: not_before=%s", cert.NotBefore.Format(time.RFC3339))
+	}
+	if now.After(cert.NotAfter) {
+		return errors.Newf(errors.ErrCodeUnauthorized,
+			"Client certificate is expired: not_after=%s", cert.NotAfter.Format(time.RFC3339))
 	}
 
 	// 验证 Organization
@@ -103,6 +111,17 @@ func (v *CertificateValidator) ValidateCertificate(cert *x509.Certificate) error
 		}
 	}
 
+	// 验证 CRL（仅当显式启用时；启用后无 CRL 可用一律 fail-closed）
+	if v.validateCRL {
+		revoked, err := v.isCertRevoked(cert)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrCodeUnauthorized, "CRL validation failed")
+		}
+		if revoked {
+			return errors.New(errors.ErrCodeUnauthorized, "Client certificate is revoked")
+		}
+	}
+
 	v.logger.Debug("Client certificate validated",
 		zap.String("cn", cert.Subject.CommonName),
 		zap.Strings("orgs", cert.Subject.Organization),
@@ -110,6 +129,47 @@ func (v *CertificateValidator) ValidateCertificate(cert *x509.Certificate) error
 		zap.Strings("dns_names", cert.DNSNames))
 
 	return nil
+}
+
+// isCertRevoked 通过证书的 CRL 分发点检查证书是否被吊销（fail-closed）。
+func (v *CertificateValidator) isCertRevoked(cert *x509.Certificate) (bool, error) {
+	if len(cert.CRLDistributionPoints) == 0 {
+		return false, errors.New(errors.ErrCodeUnauthorized,
+			"CRL validation enabled but certificate has no CRL distribution points")
+	}
+	client := &http.Client{Timeout: 10 * time.Second}
+	revokedSerials := make(map[string]struct{})
+	var lastErr error
+	for _, dp := range cert.CRLDistributionPoints {
+		resp, err := client.Get(dp)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		crlBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, 32<<20))
+		resp.Body.Close()
+		if readErr != nil {
+			lastErr = readErr
+			continue
+		}
+		crl, parseErr := x509.ParseRevocationList(crlBytes)
+		if parseErr != nil {
+			lastErr = parseErr
+			continue
+		}
+		for _, entry := range crl.RevokedCertificateEntries {
+			revokedSerials[entry.SerialNumber.String()] = struct{}{}
+		}
+		// 至少成功解析一个 CRL 即可判定
+		lastErr = nil
+		break
+	}
+	if lastErr != nil {
+		return false, errors.Wrap(lastErr, errors.ErrCodeUnauthorized,
+			"failed to fetch or parse CRL from any distribution point")
+	}
+	_, revoked := revokedSerials[cert.SerialNumber.String()]
+	return revoked, nil
 }
 
 // ExtractTenantID 从证书中提取租户ID

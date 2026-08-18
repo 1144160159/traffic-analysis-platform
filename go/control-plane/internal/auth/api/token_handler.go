@@ -92,6 +92,7 @@ type CreateTokenRequest struct {
 	Name         string   `json:"name"`
 	Description  string   `json:"description,omitempty"`
 	Scopes       []string `json:"scopes"`
+	IPWhitelist  []string `json:"ip_whitelist,omitempty"`
 	ProbeID      string   `json:"probe_id,omitempty"`
 	ExpiresInSec *int64   `json:"expires_in_sec,omitempty"` // 过期时间（秒）
 }
@@ -147,6 +148,7 @@ func (h *TokenHandler) CreateToken(w http.ResponseWriter, r *http.Request) {
 		Name:        req.Name,
 		Description: req.Description,
 		Scopes:      req.Scopes,
+		IPWhitelist: req.IPWhitelist,
 		ProbeID:     req.ProbeID,
 		CreatedBy:   claims.UserID,
 	}

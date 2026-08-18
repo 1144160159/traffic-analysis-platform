@@ -1,6 +1,30 @@
 package model
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+func TestAdminRoleUsesOnlyCurrentConcreteTenantBoundScopes(t *testing.T) {
+	adminScopes := GetScopesForRoles([]string{"admin"})
+	actual := make(map[string]struct{}, len(adminScopes))
+	for _, scope := range adminScopes {
+		// P1 判定合一:admin 角色补发 admin:* 通配(唯一允许的域通配);
+		// ScopeAll(*) 与 admin:cross-tenant 依旧禁止,其他域通配(alert:* 等)也不允许。
+		if scope == ScopeAll || scope == ScopeAdminCrossTenant || (strings.HasSuffix(scope, ":*") && scope != ScopeAdminAll) {
+			t.Fatalf("admin role contains non-minimal scope %q", scope)
+		}
+		actual[scope] = struct{}{}
+	}
+	for _, scope := range AllValidScopes {
+		if scope == ScopeAll || scope == ScopeAdminCrossTenant || strings.HasSuffix(scope, ":*") {
+			continue
+		}
+		if _, ok := actual[scope]; !ok {
+			t.Fatalf("admin role is missing registered concrete scope %q", scope)
+		}
+	}
+}
 
 func TestScreenViewScopeIsValidAndDocumented(t *testing.T) {
 	valid, invalid := ValidateScopes([]string{ScopeScreenView})

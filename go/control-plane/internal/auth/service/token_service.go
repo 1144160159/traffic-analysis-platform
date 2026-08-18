@@ -11,10 +11,12 @@ package service
 
 import (
 	"context"
+	stderrors "errors"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
@@ -120,6 +122,7 @@ type CreateTokenRequest struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description,omitempty"`
 	Scopes      []string          `json:"scopes"`
+	IPWhitelist []string          `json:"ip_whitelist,omitempty"`
 	ExpiresIn   *time.Duration    `json:"expires_in,omitempty"`
 	ProbeID     string            `json:"probe_id,omitempty"`
 	Metadata    map[string]string `json:"metadata,omitempty"`
@@ -133,6 +136,7 @@ type CreateTokenResponse struct {
 	TokenPrefix string     `json:"token_prefix"`
 	Name        string     `json:"name"`
 	Scopes      []string   `json:"scopes"`
+	IPWhitelist []string   `json:"ip_whitelist,omitempty"`
 	ProbeID     string     `json:"probe_id,omitempty"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
 	CreatedAt   time.Time  `json:"created_at"`
@@ -220,6 +224,7 @@ func (s *TokenService) CreateToken(ctx context.Context, req *CreateTokenRequest)
 		TokenHash:   tokenHash,
 		TokenPrefix: tokenPrefix,
 		Scopes:      model.StringSlice(validScopes),
+		IPWhitelist: model.StringSlice(req.IPWhitelist),
 		Status:      model.TokenStatusActive,
 		ExpiresAt:   expiresAt,
 		CreatedBy:   &req.CreatedBy,
@@ -263,16 +268,23 @@ func (s *TokenService) CreateToken(ctx context.Context, req *CreateTokenRequest)
 		TokenPrefix: tokenPrefix,
 		Name:        token.Name,
 		Scopes:      validScopes,
+		IPWhitelist: req.IPWhitelist,
 		ProbeID:     req.ProbeID,
 		ExpiresAt:   expiresAt,
 		CreatedAt:   token.CreatedAt,
 	}, nil
 }
 
-// isUniqueViolation 检查是否是唯一约束冲突
+// isUniqueViolation 检查是否是唯一约束冲突。
+// 优先用 PostgreSQL 错误码 23505 判定（类型安全），无法解出 pq.Error 时
+// 才回退字符串匹配（兼容包装链被吞的情况）。
 func isUniqueViolation(err error) bool {
 	if err == nil {
 		return false
+	}
+	var pqErr *pq.Error
+	if stderrors.As(err, &pqErr) {
+		return pqErr.Code == pq.ErrorCode("23505")
 	}
 	// PostgreSQL unique violation error code: 23505
 	errMsg := err.Error()

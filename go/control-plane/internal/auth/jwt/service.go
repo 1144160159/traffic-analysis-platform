@@ -30,6 +30,8 @@ type Config struct {
 	AccessTokenTTL  time.Duration `env:"JWT_ACCESS_TOKEN_TTL" envDefault:"15m"`
 	RefreshTokenTTL time.Duration `env:"JWT_REFRESH_TOKEN_TTL" envDefault:"168h"` // 7 days
 	Issuer          string        `env:"JWT_ISSUER" envDefault:"traffic-auth-service"`
+	// SessionRevocationFailOpen 会话撤销检查降级策略。默认 false = Fail-Secure。
+	SessionRevocationFailOpen bool `env:"SESSION_REVOCATION_FAIL_OPEN" envDefault:"false"`
 }
 
 // Service JWT 服务
@@ -291,14 +293,16 @@ func (s *Service) isSessionRevoked(sessionID string) bool {
 			}
 		}
 
-		// 修复 #19：重试失败后进入降级模式
-		s.logger.Error("Session revocation check failed after retries, entering degraded mode (allowing access)",
+		// 重试失败后进入降级模式。策略由 SESSION_REVOCATION_FAIL_OPEN 控制：
+		// 默认 Fail-Secure（拒绝访问，返回 true）；显式配置 true 才 Fail-Open。
+		if s.config.SessionRevocationFailOpen {
+			s.logger.Error("Session revocation check failed after retries, entering degraded mode (allowing access)",
+				zap.String("session_id", sessionID))
+			return false // 显式配置的 Fail-Open：允许访问
+		}
+		s.logger.Error("Session revocation check failed after retries, failing secure (denying access)",
 			zap.String("session_id", sessionID))
-
-		// 降级策略：允许访问（可配置）
-		// 生产环境可通过环境变量 SESSION_REVOCATION_FAIL_OPEN=true 控制
-		// 默认为 Fail-Secure（返回 true），但可配置为 Fail-Open（返回 false）
-		return false // 降级模式：允许访问
+		return true // 默认 Fail-Secure：拒绝访问
 	}
 
 	// 两者都不可用，记录严重错误

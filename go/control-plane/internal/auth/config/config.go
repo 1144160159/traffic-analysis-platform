@@ -148,6 +148,9 @@ type JWTConfig struct {
 	ClockSkew       time.Duration `env:"CLOCK_SKEW" envDefault:"30s"`
 	PrivateKeyFile  string        `env:"PRIVATE_KEY_FILE"`
 	PublicKeyFile   string        `env:"PUBLIC_KEY_FILE"`
+	// SessionRevocationFailOpen 会话撤销检查在 Redis 与 PostgreSQL 均失败后的
+	// 降级策略。默认 false = Fail-Secure（拒绝访问）；显式设置 true 才允许访问。
+	SessionRevocationFailOpen bool `env:"SESSION_REVOCATION_FAIL_OPEN" envDefault:"false"`
 }
 
 // OIDCConfig OIDC 配置
@@ -158,6 +161,12 @@ type OIDCConfig struct {
 	ClientSecret string `env:"CLIENT_SECRET"`
 	RedirectURL  string `env:"REDIRECT_URL"`
 	Scopes       string `env:"SCOPES" envDefault:"openid,profile,email"`
+	// AllowedTenants 允许通过 OIDC 登录进入的租户白名单（逗号分隔）。
+	// 留空时只允许 "default" 租户，防止客户端任意指定 tenant_id 提权。
+	AllowedTenants []string `env:"ALLOWED_TENANTS" envSeparator:","`
+	// AllowedAZP 客户端白名单(非空时强制 access token azp 声明命中,
+	// 防任意客户端令牌混用业务面)。
+	AllowedAZP []string `env:"ALLOWED_AZP" envSeparator:","`
 }
 
 // TokenConfig API Token 配置

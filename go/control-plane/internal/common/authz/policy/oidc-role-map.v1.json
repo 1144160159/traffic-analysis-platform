@@ -1,0 +1,24 @@
+{
+ "schema_version": 1,
+ "artifact_kind": "oidc-role-map",
+ "description": "Keycloak OIDC 领域/客户端角色 -> 平台内部角色的唯一映射契约(ADR-3)。运行时(共享中间件与 auth-service)必须按此契约解释角色,不得各自硬编码;Keycloak 实际角色与发布流程校验(ensure-keycloak-traffic-ui-client.sh)。",
+ "role_prefix": "traffic-",
+ "default_role": "viewer",
+ "mapping": {
+  "traffic-admin": {
+   "internal_role": "admin"
+  },
+  "traffic-analyst": {
+   "internal_role": "analyst"
+  },
+  "traffic-viewer": {
+   "internal_role": "viewer"
+  },
+  "traffic-operator": {
+   "internal_role": "operator"
+  },
+  "traffic-super-admin": {
+   "internal_role": "super_admin"
+  }
+ }
+}
