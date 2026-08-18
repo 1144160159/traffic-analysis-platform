@@ -8,6 +8,10 @@
 import os
 import sys
 import json
+import platform
+import re
+import uuid
+from importlib import metadata as importlib_metadata
 import pandas as pd
 import numpy as np
 import xgboost as xgb
@@ -25,7 +29,21 @@ from typing import Tuple, Dict, Any, List
 import joblib
 import warnings
 
-warnings.filterwarnings('ignore')
+from dataset_governance import (
+    canonical_json_sha256,
+    sha256_file,
+    validate_dataset_manifest_identity,
+    validate_split_isolation,
+    write_json_exclusive,
+)
+
+# 禁止模块级全局吞掉 warning（代码审查 H40 收敛项）：已知噪音在调用点用
+# catch_warnings 局部抑制，避免掩盖数据/API 兼容问题。
+_DEPRECATION_WARNINGS = (
+    UserWarning,
+    FutureWarning,
+    DeprecationWarning,
+)
 
 # 配置日志
 logging.basicConfig(
@@ -115,6 +133,185 @@ def load_training_data(data_path: str, metadata_path: str) -> Tuple[pd.DataFrame
     logger.info("=" * 80)
     
     return X, y, feature_cols
+
+
+def load_governed_training_data(
+    data_dir: str,
+) -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series, List[str], Dict[str, Any]]:
+    """Load and re-hash the immutable dataset before training."""
+    root = os.path.abspath(data_dir)
+    manifest_path = os.path.join(root, 'dataset-manifest.json')
+    metadata_path = os.path.join(root, 'metadata.json')
+    for path in (manifest_path, metadata_path):
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f"Governed dataset artifact not found: {path}")
+    with open(manifest_path, 'r', encoding='utf-8') as handle:
+        manifest = json.load(handle)
+    with open(metadata_path, 'r', encoding='utf-8') as handle:
+        metadata = json.load(handle)
+    validate_dataset_manifest_identity(manifest)
+    if not metadata.get('governed_dataset') or metadata.get('schema_version') != 2:
+        raise ValueError("metadata is not a governed dataset v2 artifact")
+    if manifest['artifacts'].get('metadata') != sha256_file(metadata_path):
+        raise ValueError("metadata artifact hash does not match dataset manifest")
+    feature_cols = list(manifest['features']['columns'])
+    if metadata.get('feature_columns') != feature_cols:
+        raise ValueError("metadata feature columns drift from dataset manifest")
+    if canonical_json_sha256(feature_cols) != manifest['features']['columns_sha256']:
+        raise ValueError("feature column hash does not match dataset manifest")
+
+    frames: dict[str, pd.DataFrame] = {}
+    for name, split in manifest['splits'].items():
+        path = os.path.join(root, f'{name}.parquet')
+        if not os.path.isfile(path) or manifest['artifacts'].get(name) != sha256_file(path):
+            raise ValueError(f"{name} artifact hash does not match dataset manifest")
+        frame = pd.read_parquet(path, engine='pyarrow')
+        if len(frame) != split['row_count']:
+            raise ValueError(f"{name} row count does not match dataset manifest")
+        event_ids_sha = canonical_json_sha256(sorted(frame['event_id'].astype(str)))
+        if event_ids_sha != split['event_ids_sha256']:
+            raise ValueError(f"{name} event identity set does not match dataset manifest")
+        missing = sorted(set(feature_cols + ['label']) - set(frame.columns))
+        if missing:
+            raise ValueError(f"{name} is missing governed training columns: {missing}")
+        frames[name] = frame
+    if 'train' not in frames or 'validation' not in frames:
+        raise ValueError("governed training requires pre-isolated train and validation splits")
+    holdout_families = (
+        set(frames['open_set']['attack_family'].astype(str))
+        if 'open_set' in frames else set()
+    )
+    validate_split_isolation(frames, holdout_attack_families=holdout_families)
+
+    from dataset_governance import canonical_rows_sha256
+    reconstructed = pd.concat([frames[name] for name in sorted(frames)], ignore_index=True)
+    if len(reconstructed) != manifest['source']['row_count'] or \
+            canonical_rows_sha256(reconstructed) != manifest['source']['canonical_rows_sha256']:
+        raise ValueError("split artifacts do not reconstruct the immutable source dataset")
+    train, validation = frames['train'], frames['validation']
+    if train['label'].nunique() < 2 or validation['label'].nunique() < 2:
+        raise ValueError("train and validation must each contain at least two labels")
+    return (
+        train[feature_cols].copy(), train['label'].copy(),
+        validation[feature_cols].copy(), validation['label'].copy(),
+        feature_cols, manifest,
+    )
+
+
+def train_xgboost_governed(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_validation: pd.DataFrame,
+    y_validation: pd.Series,
+    *,
+    seed: int,
+    cpu_limit: int,
+    params: Dict[str, Any] | None = None,
+) -> xgb.XGBClassifier:
+    """Train only on pre-isolated splits; never create a random validation."""
+    if seed < 0 or cpu_limit < 1:
+        raise ValueError("seed and cpu_limit must be explicit positive training controls")
+    if y_train.nunique() != 2 or y_validation.nunique() != 2:
+        raise ValueError("governed XGBoost requires two labels in train and validation")
+    negative, positive = int((y_train == 0).sum()), int((y_train == 1).sum())
+    if positive == 0:
+        raise ValueError("governed XGBoost has no positive training samples")
+    model_params: Dict[str, Any] = {
+        'max_depth': 6,
+        'learning_rate': 0.1,
+        'n_estimators': 200,
+        'objective': 'binary:logistic',
+        'eval_metric': 'logloss',
+        'scale_pos_weight': negative / positive,
+        'subsample': 0.8,
+        'colsample_bytree': 0.8,
+        'min_child_weight': 1,
+        'gamma': 0,
+        'reg_alpha': 0,
+        'reg_lambda': 1,
+        'random_state': seed,
+        'n_jobs': cpu_limit,
+        'tree_method': 'hist',
+        'grow_policy': 'depthwise',
+        'max_bin': 256,
+    }
+    if params:
+        forbidden = {'random_state', 'n_jobs', 'objective'} & set(params)
+        if forbidden:
+            raise ValueError(f"governed parameters cannot override {sorted(forbidden)}")
+        model_params.update(params)
+    model = xgb.XGBClassifier(**model_params)
+    major = int(xgb.__version__.split('.')[0])
+    if len(X_validation) >= 10:
+        if major >= 3:
+            model.set_params(early_stopping_rounds=20)
+            model.fit(X_train, y_train, eval_set=[(X_validation, y_validation)], verbose=False)
+        else:
+            model.fit(X_train, y_train, eval_set=[(X_validation, y_validation)],
+                      early_stopping_rounds=20, verbose=False)
+    else:
+        model.fit(X_train, y_train, eval_set=[(X_validation, y_validation)], verbose=False)
+    return model
+
+
+def build_training_run_manifest(
+    *,
+    run_id: str,
+    dataset_manifest: Dict[str, Any],
+    algorithm: str,
+    seed: int,
+    model: Any,
+    trainer_image_digest: str,
+    cpu_limit: str,
+    memory_limit: str,
+    gpu_limit: int,
+    artifact_paths: Dict[str, str],
+    code_path: str = __file__,
+) -> Dict[str, Any]:
+    parsed_run_id = uuid.UUID(run_id)
+    if str(parsed_run_id) != run_id:
+        raise ValueError("TRAIN_RUN_ID must be a canonical lowercase UUID")
+    if not re.fullmatch(r'sha256:[0-9a-f]{64}', trainer_image_digest):
+        raise ValueError("TRAINER_IMAGE_DIGEST must be sha256:<lowercase digest>")
+    if not cpu_limit.strip() or not memory_limit.strip() or gpu_limit < 0:
+        raise ValueError("training resource limits must be explicit")
+    artifacts = {name: sha256_file(path) for name, path in sorted(artifact_paths.items())}
+    dependencies = {
+        'python': platform.python_version(),
+        'numpy': np.__version__,
+        'pandas': pd.__version__,
+        'scikit_learn': importlib_metadata.version('scikit-learn'),
+        'xgboost': xgb.__version__,
+        'lightgbm': lgb.__version__,
+    }
+    def safe_parameter(value: Any) -> Any:
+        if isinstance(value, np.generic):
+            value = value.item()
+        if isinstance(value, float) and (np.isnan(value) or np.isinf(value)):
+            return 'NaN' if np.isnan(value) else ('Infinity' if value > 0 else '-Infinity')
+        if isinstance(value, dict):
+            return {str(key): safe_parameter(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [safe_parameter(item) for item in value]
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        return str(value)
+
+    meaning = {
+        'run_id': run_id,
+        'dataset_id': dataset_manifest['dataset_id'],
+        'dataset_sha256': dataset_manifest['dataset_sha256'],
+        'graph_snapshot': dataset_manifest.get('graph_snapshot'),
+        'algorithm': algorithm,
+        'seed': seed,
+        'parameters': safe_parameter(model.get_params()),
+        'code_sha256': sha256_file(code_path),
+        'trainer_image_digest': trainer_image_digest,
+        'dependencies': dependencies,
+        'resources': {'cpu_limit': cpu_limit, 'memory_limit': memory_limit, 'gpu_limit': gpu_limit},
+        'artifacts': artifacts,
+    }
+    return {'schema_version': 1, 'state': 'trained', **meaning, 'run_sha256': canonical_json_sha256(meaning)}
 
 
 def train_xgboost(X: pd.DataFrame, y: pd.Series, params: Dict[str, Any] = None) -> xgb.XGBClassifier:
@@ -497,6 +694,75 @@ def evaluate_on_training_set(model, X: pd.DataFrame, y: pd.Series, output_dir: s
     return train_metrics
 
 
+def strict_training_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None or value.strip() == '':
+        return default
+    normalized = value.strip().lower()
+    if normalized not in {'true', 'false'}:
+        raise ValueError(f"{name} must be explicitly true or false")
+    return normalized == 'true'
+
+
+def required_training_env(name: str) -> str:
+    value = os.getenv(name, '').strip()
+    if not value:
+        raise ValueError(f"{name} is required for governed training")
+    return value
+
+
+def run_governed_training(model_type: str, data_dir: str, output_dir: str) -> Dict[str, Any]:
+    if model_type != 'xgboost':
+        raise ValueError("governed v1 currently requires the approved non-graph XGBoost baseline")
+    seed = int(required_training_env('TRAIN_SEED'))
+    cpu_limit_text = required_training_env('TRAIN_CPU_LIMIT')
+    cpu_limit = int(cpu_limit_text)
+    memory_limit = required_training_env('TRAIN_MEMORY_LIMIT')
+    gpu_limit = int(required_training_env('TRAIN_GPU_LIMIT'))
+    custom_params_text = os.getenv('TRAIN_MODEL_PARAMS_JSON', '').strip()
+    custom_params = json.loads(custom_params_text) if custom_params_text else None
+    if custom_params is not None and not isinstance(custom_params, dict):
+        raise ValueError("TRAIN_MODEL_PARAMS_JSON must be a JSON object")
+
+    X_train, y_train, X_validation, y_validation, feature_cols, dataset_manifest = \
+        load_governed_training_data(data_dir)
+    model = train_xgboost_governed(
+        X_train, y_train, X_validation, y_validation,
+        seed=seed, cpu_limit=cpu_limit, params=custom_params,
+    )
+    targets = [
+        os.path.join(output_dir, name) for name in
+        ('model.json', 'feature_importance.json', 'feature_columns.json', 'train_config.json',
+         'train_metrics.json', 'training-run-manifest.json')
+    ]
+    for target in targets:
+        if os.path.exists(target):
+            raise FileExistsError(f"refusing to overwrite immutable training artifact: {target}")
+    model_path = save_model(model, output_dir, model_type, feature_cols)
+    evaluate_on_training_set(model, X_train, y_train, output_dir)
+    artifact_paths = {
+        'model': model_path,
+        'feature_importance': os.path.join(output_dir, 'feature_importance.json'),
+        'feature_columns': os.path.join(output_dir, 'feature_columns.json'),
+        'train_config': os.path.join(output_dir, 'train_config.json'),
+        'train_metrics': os.path.join(output_dir, 'train_metrics.json'),
+    }
+    manifest = build_training_run_manifest(
+        run_id=required_training_env('TRAIN_RUN_ID'),
+        dataset_manifest=dataset_manifest,
+        algorithm=model_type,
+        seed=seed,
+        model=model,
+        trainer_image_digest=required_training_env('TRAINER_IMAGE_DIGEST'),
+        cpu_limit=cpu_limit_text,
+        memory_limit=memory_limit,
+        gpu_limit=gpu_limit,
+        artifact_paths=artifact_paths,
+    )
+    write_json_exclusive(os.path.join(output_dir, 'training-run-manifest.json'), manifest)
+    return manifest
+
+
 def main():
     """主函数"""
     
@@ -504,6 +770,7 @@ def main():
     model_type = os.getenv('MODEL_TYPE', 'xgboost').lower()
     data_dir = os.getenv('DATA_DIR', '/data')
     output_dir = os.getenv('OUTPUT_DIR', '/output')
+    governed_v1 = strict_training_flag('MLOPS_DATASET_GOVERNANCE_V1_ENABLED', False)
     
     logger.info("")
     logger.info("=" * 80)
@@ -514,9 +781,15 @@ def main():
     logger.info(f"  - Model Type: {model_type}")
     logger.info(f"  - Data Directory: {data_dir}")
     logger.info(f"  - Output Directory: {output_dir}")
+    logger.info(f"  - Dataset Governance v1: {governed_v1}")
     logger.info("")
     
     try:
+        if governed_v1:
+            manifest = run_governed_training(model_type, data_dir, output_dir)
+            logger.info("Governed training complete: run_id=%s run_sha256=%s",
+                        manifest['run_id'], manifest['run_sha256'])
+            return
         # 1. 加载数据
         logger.info("Step 1: Loading training data...")
         train_path = os.path.join(data_dir, 'train.parquet')

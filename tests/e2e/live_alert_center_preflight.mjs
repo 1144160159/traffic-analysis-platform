@@ -106,12 +106,14 @@ try {
   const statsTotal = Number(stats?.total ?? -1);
   const cardinalityDrift = Math.abs(listTotal - statsTotal);
   // The projection is fed continuously. Two sequential FINAL queries can observe a
-  // handful of late-arriving rows even with a fixed event-time window, so gate on
-  // a tiny absolute drift while preserving the separate exact table invariant.
-  checks.push({ name: 'list and stats use the same latest-alert cardinality', pass: cardinalityDrift <= 20, list_total: listTotal, stats_total: statsTotal, observed_drift: cardinalityDrift, allowed_drift: 20 });
+  // small number of late-arriving rows even with a fixed event-time window, so gate
+  // on a tight absolute drift (env-overridable) while preserving the exact table
+  // invariant; the default is deliberately stricter than the historical 20-row slack.
+  const allowedCardinalityDrift = Number(process.env.ALERT_CARDINALITY_DRIFT_ALLOWED ?? 10);
+  checks.push({ name: 'list and stats use the same latest-alert cardinality', pass: cardinalityDrift <= allowedCardinalityDrift, list_total: listTotal, stats_total: statsTotal, observed_drift: cardinalityDrift, allowed_drift: allowedCardinalityDrift });
   const projection = latestProjectionCardinality();
   const projectionDrift = Math.abs(Number(projection.raw_unique) - Number(projection.latest_unique));
-  checks.push({ name: 'latest projection reconciles with raw distinct alerts', pass: projectionDrift <= 20 && Number(projection.latest_rows) === Number(projection.latest_unique), raw_unique: Number(projection.raw_unique), latest_rows: Number(projection.latest_rows), latest_unique: Number(projection.latest_unique), observed_drift: projectionDrift, allowed_drift: 20 });
+  checks.push({ name: 'latest projection reconciles with raw distinct alerts', pass: projectionDrift <= allowedCardinalityDrift && Number(projection.latest_rows) === Number(projection.latest_unique), raw_unique: Number(projection.raw_unique), latest_rows: Number(projection.latest_rows), latest_unique: Number(projection.latest_unique), observed_drift: projectionDrift, allowed_drift: allowedCardinalityDrift });
   const normalizedStatus = String(rows[0]?.status ?? '').replace(/^ALERT_STATUS_/i, '').toLowerCase();
   if (normalizedStatus) {
     const filtered = await request('canonical status alias filter', `/alerts?limit=10&offset=0&status=${encodeURIComponent(normalizedStatus)}&start_time=${startTime}&end_time=${endTime}`);
@@ -149,6 +151,9 @@ try {
   checks.push({ name: 'response action returns durable approval job', pass: Boolean(responseAction?.job_id) && responseAction?.status === 'pending_approval' && responseAction?.outbox_status === 'pending_retry', job_id: responseAction?.job_id ?? '', initial_outbox_status: responseAction?.outbox_status });
   const responseStatus = await waitForPublishedOutbox(alertId, responseAction.job_id);
 	checks.push({ name: 'background outbox worker publishes pending action', pass: responseStatus?.job_id === responseAction.job_id && responseStatus?.status === 'pending_approval' && responseStatus?.outbox_published === true && Number(responseStatus?.outbox_attempts) >= 1, outbox_published: responseStatus?.outbox_published, outbox_attempts: responseStatus?.outbox_attempts, outbox_last_error: responseStatus?.outbox_last_error });
+  // 治理边界:该测试向 live 写入持久化 saved view 与 TP feedback;后端 /alerts/views
+  // 仅提供 POST/GET(无 DELETE,已核对 handler.go),无法自动清理,所有写入均带
+  // run_id=requestId 供人工对账回收,禁止在无清理机制前高频执行。
   const savedViewEnvelope = await request('durable saved view', '/alerts/views', { method: 'POST', body: JSON.stringify({ action: '保存告警视图', target: '高危优先', reason: 'r651 live preflight confirmed', detail: { filters: { status: normalizedStatus || '全部状态', destination: rows[0]?.dst_ip || '' }, time_window: [startTime, endTime], run_id: requestId } }) });
   const savedView = savedViewEnvelope?.data ?? {};
   checks.push({ name: 'saved view returns durable view id', pass: Boolean(savedView?.view_id), view_id: savedView?.view_id ?? '' });

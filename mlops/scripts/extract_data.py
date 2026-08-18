@@ -14,6 +14,16 @@ import logging
 import json
 from typing import Dict, Any
 
+from dataset_governance import (
+    ExtractionScope,
+    build_dataset_manifest,
+    parse_utc,
+    sha256_file,
+    split_by_time_and_validate,
+    validate_extracted_frame,
+    write_json_exclusive,
+)
+
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
@@ -209,7 +219,297 @@ def extract_features_with_labels(client, feature_set_id, lookback_days, tenant_i
         raise
 
 
+def build_governed_extraction_query() -> str:
+    """Return the parameterized, stable-order M08 v1 extraction query."""
+    return """
+        WITH labeled_alerts AS (
+            SELECT tenant_id, alert_id, label, created_at, user_id, alert_type,
+                   model_version, rule_version
+            FROM traffic.alert_feedback
+            WHERE tenant_id = %(tenant_id)s
+              AND label IN ('TP', 'FP')
+              AND created_at <= %(as_of)s
+        ),
+        alert_session_mapping AS (
+            SELECT a.tenant_id, a.alert_id, a.community_id, a.session_id,
+                   a.alert_type, toString(a.severity) AS severity_str, a.score,
+                   la.label, la.user_id, la.model_version, la.rule_version
+            FROM traffic.alerts AS a
+            GLOBAL INNER JOIN labeled_alerts AS la
+              ON a.alert_id = la.alert_id AND a.tenant_id = la.tenant_id
+            WHERE a.tenant_id = %(tenant_id)s
+        )
+        SELECT
+            fs.tenant_id, fs.event_id, '' AS probe_id, fs.run_id,
+            fs.feature_set_id, fs.community_id, fs.object_id, fs.object_type,
+            toUnixTimestamp(fs.ts) AS ts, toUnixTimestamp(fs.ingest_ts) AS ingest_ts,
+            fs.protocol, fs.duration_ms, fs.pps, fs.bps, fs.up_down_ratio,
+            fs.pktlen_mean, fs.pktlen_std, fs.iat_mean_ms, fs.iat_std_ms,
+            fs.active_mean_ms, fs.idle_mean_ms, fs.tcp_flag_syn_cnt,
+            fs.tcp_flag_ack_cnt, fs.tcp_init_win_bytes_fwd,
+            fs.tcp_init_win_bytes_bwd,
+            CASE WHEN asm.label = 'TP' THEN 1 WHEN asm.label = 'FP' THEN 0 ELSE NULL END AS label,
+            asm.alert_type, asm.severity_str, asm.score AS alert_score,
+            asm.model_version, asm.rule_version, asm.user_id AS labeled_by
+        FROM traffic.feature_stat AS fs
+        GLOBAL INNER JOIN alert_session_mapping AS asm
+          ON fs.community_id = asm.community_id AND fs.tenant_id = asm.tenant_id
+        WHERE fs.tenant_id = %(tenant_id)s
+          AND fs.feature_set_id = %(feature_set_id)s
+          AND fs.ts >= %(window_from)s AND fs.ts < %(window_through)s
+          AND fs.ts <= %(source_watermark)s
+          AND fs.ingest_ts <= %(as_of)s
+          AND asm.label IS NOT NULL
+        ORDER BY fs.ts, fs.event_id
+        LIMIT %(limit)s
+        SETTINGS max_threads = 1, max_block_size = 2048
+    """
+
+
+def extract_governed_features_with_labels(client, scope: ExtractionScope) -> pd.DataFrame:
+    """Extract a bounded snapshot; max_rows+1 detects rather than truncates."""
+    params = {
+        'tenant_id': scope.tenant_id,
+        'feature_set_id': scope.feature_set_id,
+        'window_from': scope.window_from,
+        'window_through': scope.window_through,
+        'source_watermark': scope.source_watermark,
+        'as_of': scope.as_of,
+        'limit': scope.max_rows + 1,
+    }
+    frame = client.query_dataframe(build_governed_extraction_query(), params=params)
+    validate_extracted_frame(frame, scope)
+    return frame
+
+
+def load_isolation_scope(path: str, frame: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+    """Join a governed, one-row-per-event isolation sidecar.
+
+    The current ClickHouse feature table does not own site, PCAP or graph
+    identities.  Those identities therefore must come from an immutable
+    upstream manifest instead of being guessed from run_id/evidence_ids.
+    """
+    sidecar_path = os.path.abspath(path)
+    if not os.path.isfile(sidecar_path):
+        raise FileNotFoundError(f"Isolation scope not found: {sidecar_path}")
+    if sidecar_path.endswith('.parquet'):
+        sidecar = pd.read_parquet(sidecar_path, engine='pyarrow')
+    elif sidecar_path.endswith('.json'):
+        sidecar = pd.read_json(sidecar_path)
+    else:
+        raise ValueError("ISOLATION_SCOPE_PATH must be .parquet or .json")
+    required = {'event_id', 'entity_id', 'site_id', 'pcap_id', 'attack_family'}
+    missing = sorted(required - set(sidecar.columns))
+    if missing:
+        raise ValueError(f"isolation scope is missing columns: {missing}")
+    if sidecar['event_id'].astype(str).duplicated().any():
+        raise ValueError("isolation scope contains duplicate event_id")
+    optional = [column for column in ('graph_node_ids', 'graph_edge_ids') if column in sidecar.columns]
+    joined = frame.merge(sidecar[sorted(required) + optional], on='event_id', how='left', validate='one_to_one')
+    for column in required - {'event_id'}:
+        if joined[column].isna().any() or joined[column].astype(str).str.strip().eq('').any():
+            raise ValueError(f"isolation scope does not cover every extracted event: {column}")
+    if len(joined) != len(frame):
+        raise ValueError("isolation scope join changed the source row count")
+    return joined, sha256_file(sidecar_path)
+
+
+def ml_feature_columns(frame: pd.DataFrame) -> list[str]:
+    exclude = {
+        'label', 'tenant_id', 'event_id', 'community_id', 'ts', 'ingest_ts',
+        'alert_type', 'severity_str', 'object_id', 'object_type', 'probe_id',
+        'run_id', 'feature_set_id', 'alert_score', 'model_version',
+        'rule_version', 'labeled_by', 'entity_id', 'site_id', 'pcap_id',
+        'attack_family', 'graph_node_ids', 'graph_edge_ids',
+    }
+    return sorted(column for column in frame.columns if column not in exclude)
+
+
+def split_and_save_governed(
+    frame: pd.DataFrame,
+    output_dir: str,
+    *,
+    scope: ExtractionScope,
+    train_through: str,
+    validation_through: str,
+    holdout_attack_families: list[str],
+    label_schema_version: str,
+    label_revision_sha256: str,
+    isolation_scope_path: str,
+    isolation_scope_sha256: str,
+    graph_snapshot_manifest_path: str = '',
+    preprocessing_notes: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
+    splits = split_by_time_and_validate(
+        frame,
+        train_through=train_through,
+        validation_through=validation_through,
+        holdout_attack_families=holdout_attack_families,
+    )
+    output = os.path.abspath(output_dir)
+    os.makedirs(output, exist_ok=True)
+    split_paths = {name: os.path.join(output, f'{name}.parquet') for name in splits}
+    metadata_path = os.path.join(output, 'metadata.json')
+    manifest_path = os.path.join(output, 'dataset-manifest.json')
+    for path in [*split_paths.values(), metadata_path, manifest_path]:
+        if os.path.exists(path):
+            raise FileExistsError(f"refusing to overwrite immutable dataset artifact: {path}")
+    for name, split in splits.items():
+        split.to_parquet(split_paths[name], index=False, compression='snappy', engine='pyarrow')
+
+    feature_columns = ml_feature_columns(frame)
+    metadata = {
+        'schema_version': 2,
+        'governed_dataset': True,
+        'tenant_id': scope.tenant_id,
+        'feature_set_id': scope.feature_set_id,
+        'feature_columns': feature_columns,
+        'total_features': len(feature_columns),
+        'split_samples': {name: len(split) for name, split in splits.items()},
+        'train_samples': len(splits['train']),
+        'test_samples': len(splits['test']),
+        'label_schema_version': label_schema_version,
+        'label_revision_sha256': label_revision_sha256,
+        'isolation_scope_sha256': isolation_scope_sha256,
+        'scope': scope.manifest_scope(),
+        # 插补/清洗规则可追溯（代码审查 H40 收敛项）：preprocess 的决策写入
+        # metadata，禁止静默 fillna 后不落账。
+        'preprocessing': dict(preprocessing_notes) if preprocessing_notes else None,
+    }
+    write_json_exclusive(metadata_path, metadata)
+    artifacts = {**split_paths, 'metadata': metadata_path, 'isolation_scope': isolation_scope_path}
+
+    graph_snapshot = None
+    if graph_snapshot_manifest_path:
+        with open(graph_snapshot_manifest_path, 'r', encoding='utf-8') as handle:
+            graph = json.load(handle)
+        graph_as_of = parse_utc(graph.get('as_of', ''), 'graph_snapshot.as_of')
+        if graph_as_of > scope.as_of:
+            raise ValueError("graph snapshot reads future edges after dataset as_of")
+        graph_snapshot = {
+            'snapshot_id': str(graph.get('snapshot_id', '')).strip(),
+            'manifest_sha256': sha256_file(graph_snapshot_manifest_path),
+        }
+        if not graph_snapshot['snapshot_id']:
+            raise ValueError("graph snapshot_id is required")
+        artifacts['graph_snapshot_manifest'] = graph_snapshot_manifest_path
+
+    manifest = build_dataset_manifest(
+        scope=scope,
+        source_frame=frame,
+        splits=splits,
+        feature_columns=feature_columns,
+        artifact_paths=artifacts,
+        label_schema_version=label_schema_version,
+        label_revision_sha256=label_revision_sha256,
+        graph_snapshot=graph_snapshot,
+    )
+    write_json_exclusive(manifest_path, manifest)
+    return manifest
+
+
+def strict_env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None or value.strip() == '':
+        return default
+    normalized = value.strip().lower()
+    if normalized not in {'true', 'false'}:
+        raise ValueError(f"{name} must be explicitly true or false")
+    return normalized == 'true'
+
+
+def required_env(name: str) -> str:
+    value = os.getenv(name, '').strip()
+    if not value:
+        raise ValueError(f"{name} is required when MLOPS_DATASET_GOVERNANCE_V1_ENABLED=true")
+    return value
+
+
+def detect_label_conflicts(frame: pd.DataFrame) -> None:
+    """Detect community-level label conflicts caused by alert→feature fan-out.
+
+    标注粒度说明（代码审查 H40 收敛项）：本提取以 community_id 级联 alert 标注
+    到 feature 行。当同一 community_id 命中多条 TP/FP 反馈且标签不一致时，同一
+    feature 事件会被放大为多行甚至冲突标签。governed 路径随后要求 event_id
+    唯一（validate_extracted_frame），这里先给出精确的冲突诊断而非笼统报错。
+    更优的 1:1 口径（alert_id/event_id 一对一标注）应在提取层保证，见
+    run_governed_extraction 注释。
+    """
+    if frame.empty or 'community_id' not in frame.columns or 'label' not in frame.columns:
+        return
+    grouped = frame.groupby('community_id', dropna=False)['label']
+    conflict_groups = []
+    for community, labels in grouped:
+        unique = {int(value) for value in labels.unique() if pd.notna(value)}
+        if len(unique) > 1:
+            conflict_groups.append((str(community), sorted(unique)))
+    if conflict_groups:
+        sample = conflict_groups[:20]
+        raise ValueError(
+            f"community_id label conflict detected for {len(conflict_groups)} communities "
+            f"(e.g. {sample}); feature rows are amplified by the alert join and receive "
+            f"conflicting labels. Fix the annotation granularity to alert/event 1:1 "
+            f"before extracting a governed dataset"
+        )
+
+
+def run_governed_extraction(client, feature_set_id: str, tenant_id: str, output_dir: str) -> Dict[str, Any]:
+    holdouts = [
+        item.strip()
+        for item in required_env('OPEN_SET_ATTACK_FAMILIES').split(',')
+        if item.strip()
+    ]
+    if not holdouts:
+        raise ValueError(
+            'OPEN_SET_ATTACK_FAMILIES must contain at least one held-out family '
+            'when MLOPS_DATASET_GOVERNANCE_V1_ENABLED=true'
+        )
+    scope = ExtractionScope.create(
+        tenant_id=tenant_id,
+        feature_set_id=feature_set_id,
+        window_from=required_env('DATASET_WINDOW_FROM'),
+        window_through=required_env('DATASET_WINDOW_THROUGH'),
+        source_watermark=required_env('DATASET_SOURCE_WATERMARK'),
+        as_of=required_env('DATASET_AS_OF'),
+        max_rows=int(required_env('MAX_EXTRACT_ROWS')),
+    )
+    extracted = extract_governed_features_with_labels(client, scope)
+    # 标注粒度：先做 community 级冲突诊断，再合并隔离 sidecar；冲突会使
+    # event_id 唯一性校验失败，这里先给出精确报错。
+    detect_label_conflicts(extracted)
+    frame, isolation_sha = load_isolation_scope(required_env('ISOLATION_SCOPE_PATH'), extracted)
+    validate_extracted_frame(frame, scope)
+    frame, preprocessing_notes = preprocess_data(frame)
+    return split_and_save_governed(
+        frame,
+        output_dir,
+        scope=scope,
+        train_through=required_env('DATASET_TRAIN_THROUGH'),
+        validation_through=required_env('DATASET_VALIDATION_THROUGH'),
+        holdout_attack_families=holdouts,
+        label_schema_version=required_env('LABEL_SCHEMA_VERSION'),
+        label_revision_sha256=required_env('LABEL_REVISION_SHA256'),
+        isolation_scope_path=required_env('ISOLATION_SCOPE_PATH'),
+        isolation_scope_sha256=isolation_sha,
+        graph_snapshot_manifest_path=os.getenv('GRAPH_SNAPSHOT_MANIFEST', '').strip(),
+        preprocessing_notes=preprocessing_notes,
+    )
+
+
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Legacy-compatible preprocessing entry point (returns the frame only)."""
+    return _preprocess(df, None)
+
+
+def preprocess_data_with_notes(df: pd.DataFrame) -> tuple[pd.DataFrame, Dict[str, Any]]:
+    """Governed preprocessing: returns the frame plus an auditable record of the
+    imputation/cleaning decisions applied (代码审查 H40 收敛项：插补规则必须可
+    追溯，禁止静默 fillna 后不落账)。"""
+    notes: Dict[str, Any] = {}
+    return _preprocess(df, notes), notes
+
+
+def _preprocess(df: pd.DataFrame, notes: Dict[str, Any] | None) -> pd.DataFrame:
     """
     数据预处理（严格数据质量控制）
     """
@@ -237,14 +537,18 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     
     # 数值列填充 0
     numeric_cols = df.select_dtypes(include=[np.number]).columns
+    imputed_numeric = sorted(str(column) for column in missing_summary.index if column in numeric_cols)
     df[numeric_cols] = df[numeric_cols].fillna(0)
     
     # 字符串列填充空字符串
-    string_cols = df.select_dtypes(include=['object']).columns
+    string_cols = df.select_dtypes(include=['object', 'str']).columns
+    imputed_string = sorted(str(column) for column in missing_summary.index if column in string_cols)
     df[string_cols] = df[string_cols].fillna('')
     
     # 3. 处理无穷大值
     logger.info("Replacing infinity values with 0...")
+    before_inf = df.select_dtypes(include=[np.number])
+    inf_cols = sorted(str(column) for column in before_inf.columns if np.isinf(before_inf[column]).any())
     df = df.replace([np.inf, -np.inf], 0)
     
     # 4. 移除重复（基于 event_id）
@@ -279,7 +583,9 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
                     ['tenant_id', 'event_id', 'community_id', 'label', 'ts', 
                      'ingest_ts', 'alert_type', 'severity_str', 'object_id', 
                      'object_type', 'probe_id', 'run_id', 'feature_set_id',
-                     'model_version', 'rule_version', 'labeled_by']]
+                     'model_version', 'rule_version', 'labeled_by', 'entity_id',
+                     'site_id', 'pcap_id', 'attack_family', 'graph_node_ids',
+                     'graph_edge_ids']]
     
     outlier_summary = {}
     for col in feature_cols:
@@ -315,6 +621,19 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"  Final samples: {final_count}")
     logger.info(f"  Removed: {initial_count - final_count}")
     logger.info("=" * 80)
+
+    if notes is not None:
+        notes.update({
+            'na_strategy': 'zero_for_numeric_empty_string_for_string',
+            'inf_strategy': 'zero',
+            'dedup_by': 'event_id_keep_first',
+            'initial_rows': int(initial_count),
+            'final_rows': int(final_count),
+            'removed_duplicate_rows': int(dedup_count),
+            'imputed_numeric_columns': imputed_numeric,
+            'imputed_string_columns': imputed_string,
+            'inf_replaced_columns': inf_cols,
+        })
     
     return df
 
@@ -421,6 +740,7 @@ def main():
     tenant_id = os.getenv('TENANT_ID', 'campus-net')
     output_dir = os.getenv('OUTPUT_DIR', '/output')
     test_size = float(os.getenv('TEST_SIZE', '0.2'))
+    governed_v1 = strict_env_flag('MLOPS_DATASET_GOVERNANCE_V1_ENABLED', False)
     
     logger.info("")
     logger.info("=" * 80)
@@ -433,12 +753,20 @@ def main():
     logger.info(f"  - Tenant ID: {tenant_id}")
     logger.info(f"  - Output Directory: {output_dir}")
     logger.info(f"  - Test Size: {test_size}")
+    logger.info(f"  - Dataset Governance v1: {governed_v1}")
     logger.info("")
     
     try:
         # 1. 连接 ClickHouse
         logger.info("Step 1: Connecting to ClickHouse...")
         client = connect_clickhouse()
+
+        if governed_v1:
+            logger.info("\nRunning immutable M08 dataset-governance v1 path...")
+            manifest = run_governed_extraction(client, feature_set_id, tenant_id, output_dir)
+            logger.info("Governed dataset snapshot complete: dataset_id=%s sha256=%s",
+                        manifest['dataset_id'], manifest['dataset_sha256'])
+            return
         
         # 2. 提取数据
         logger.info("\nStep 2: Extracting features and labels...")

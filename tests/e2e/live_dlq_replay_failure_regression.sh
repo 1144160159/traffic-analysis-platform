@@ -114,7 +114,7 @@ redis_exec() {
 wait_http() {
   local url="$1"
   for _ in $(seq 1 30); do
-    if curl --noproxy '*' -fsS "$url" >/dev/null 2>&1; then
+    if curl --noproxy '*' -fsS --connect-timeout 3 --max-time 5 "$url" >/dev/null 2>&1; then
       return 0
     fi
     sleep 0.2

@@ -19,6 +19,7 @@ AUTHORITY_PATHS = {
     "ingest_server_configuration": ROOT / "go/control-plane/internal/ingest/config/config.go",
     "ingest_production_guard": ROOT / "go/control-plane/internal/ingest/config/loader.go",
     "ingest_tls_listener": ROOT / "go/control-plane/cmd/ingest-gateway/main.go",
+    "ingest_atomic_rotation": ROOT / "go/control-plane/internal/common/pki/reloader.go",
     "probe_transport_guard": ROOT / "rust/probe-agent/probe-agent/src/config.rs",
     "probe_grpc_transport": ROOT / "rust/probe-agent/probe-agent/src/sender/grpc.rs",
     "go_workload_bindings": ROOT / "deployments/kubernetes/applications/go-services.yaml",
@@ -61,6 +62,7 @@ def build_catalog() -> dict[str, Any]:
     probe_config = _text("rust/probe-agent/probe-agent/src/config.rs")
     ingest_loader = _text("go/control-plane/internal/ingest/config/loader.go")
     ingest_main = _text("go/control-plane/cmd/ingest-gateway/main.go")
+    ingest_rotation = _text("go/control-plane/internal/common/pki/reloader.go")
     go_workloads = _text("deployments/kubernetes/applications/go-services.yaml")
     probe_workload = _text("deployments/kubernetes/applications/probe-agent.yaml")
     kafka = _text("deployments/kubernetes/infrastructure/01-kafka.yaml")
@@ -108,7 +110,7 @@ def build_catalog() -> dict[str, Any]:
             "renewal_guard_days": 30,
             "server_minimum_tls": "TLS1.3",
             "production_required": True,
-            "rotation_mode": "stop_before_expiry_then_controlled_dual_trust_rotation",
+            "rotation_mode": "default_off_atomic_manifest_dual_trust_crl_reload",
             "status": "PARTIAL",
             "blocking_gaps": [
                 "per_probe_certificate_identity_missing",
@@ -268,6 +270,53 @@ def build_catalog() -> dict[str, Any]:
             "tls.RequireAndVerifyClientCert" in ingest_main
         ),
         "ingest_server_minimum_tls13": "MinVersion:   tls.VersionTLS13" in ingest_main,
+        "ingest_rotation_binds_all_material_by_manifest": all(
+            token in ingest_rotation
+            for token in (
+                "CertificateSHA256",
+                "PrivateKeySHA256",
+                "TrustSHA256",
+                "RevocationSHA256",
+                "digest does not match generation manifest",
+            )
+        ),
+        "ingest_rotation_checks_expiry_san_and_revocation": all(
+            token in ingest_rotation
+            for token in (
+                "MinimumRemaining",
+                "ServerDNSNames",
+                "ClientDNSNames",
+                "client certificate is revoked",
+                "issuer has no current revocation list",
+            )
+        ),
+        "ingest_rotation_publishes_only_valid_snapshot": all(
+            token in ingest_rotation
+            for token in (
+                "config, err := r.buildTLSConfig(material)",
+                "r.current.Store(&snapshot",
+                "Invalid candidates",
+            )
+        ),
+        "ingest_rotation_is_workload_default_off": all(
+            token in go_workloads
+            for token in (
+                'name: TLS_ROTATION_V1_ENABLED, value: "false"',
+                'name: TLS_GENERATION_MANIFEST_FILE',
+                'name: TLS_CRL_FILE',
+                'name: TLS_SERVER_DNS_NAMES',
+                'name: TLS_CLIENT_DNS_NAMES',
+            )
+        ),
+        "probe_generator_emits_crl_and_atomic_manifest": all(
+            token in probe_generator
+            for token in (
+                "openssl ca -gencrl",
+                "client-crl.pem",
+                "generation.json",
+                '"revocation_sha256"',
+            )
+        ),
         "ingest_workload_declares_production_mtls": all(
             token in go_workloads
             for token in (
@@ -381,6 +430,8 @@ def build_catalog() -> dict[str, Any]:
                 "ingest production startup requires mTLS token auth and full config validation",
                 "probe leaf profile has bounded validity SAN EKU and key permissions",
                 "existing probe certificates fail deploy readiness within the renewal window",
+                "default-off ingest rotation binds certificate key trust CRL and generation before atomic publish",
+                "repository handshakes reject wrong CA expiry SAN mismatch revocation and interrupted rotation",
                 "MinIO server and three client namespaces have an expand-only redacted TLS material contract",
             ],
             "remaining": [

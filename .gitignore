@@ -72,3 +72,16 @@ __pycache__/
 /rust/probe-agent/probe-agent/config.yaml
 /go/control-plane/*.bin
 /go/control-plane/deployments/docker/alert-service
+# 本地构建产物(禁止入库)
+/go/control-plane/alert-service
+/go/control-plane/analysis-service
+/go/control-plane/asset-service
+/go/control-plane/forensics-service
+/go/control-plane/graph-service
+/go/control-plane/ingest-gateway
+/go/control-plane/nebula-http-gateway
+/go/control-plane/report-worker
+/go/control-plane/rule-manager
+/go/control-plane/threat-intel-service
+/go/control-plane/audit-materializer
+/go/control-plane/auth-service

@@ -40,6 +40,16 @@ message MacIpBinding {
   string tenant_id = 3;
   int64 observed_at = 4;     // unix ms
   string source = 5;         // arp or dhcp
+  // Stable probe-local identity. Retries must retain this value and payload.
+  string observation_id = 6;
+  // Authenticated gateway identity; a non-empty mismatching value is rejected.
+  string probe_id = 7;
+  // Observation scope. Empty remains compatible with untagged legacy traffic.
+  string vlan_id = 8;
+  // Packet/parser identity used for audit correlation, not as Kafka authority.
+  string source_event_id = 9;
+  // Additive payload contract revision. New probe uploads use value 1.
+  uint32 schema_version = 10;
 }
 
 service AssetService {

@@ -15,6 +15,7 @@ from verify_flink_nine_jobs import EXPECTED_TASKS  # noqa: E402
 
 
 IMAGE = "docker.io/traffic/flink-session@sha256:" + "1" * 64
+CANDIDATE_SHA256 = "4" * 64
 
 
 class FlinkApplicationClusterMigrationTest(unittest.TestCase):
@@ -120,6 +121,91 @@ class FlinkApplicationClusterMigrationTest(unittest.TestCase):
             other = f"kafka-{job['id']}-credentials"
             if other != selected:
                 self.assertNotIn(other, serialized)
+
+    def test_m03_shadow_uses_candidate_group_and_disables_external_writes(self) -> None:
+        docs = list(yaml.safe_load_all(render(
+            self.job_id,
+            IMAGE,
+            self.savepoints,
+            activation_mode="shadow",
+            candidate_sha256=CANDIDATE_SHA256,
+        )))
+        launcher = next(doc for doc in docs if doc["metadata"]["name"] == "migrate-flink-session-job-shadow-" + CANDIDATE_SHA256[:12])
+        self.assertEqual(
+            "shadow", launcher["metadata"]["annotations"]["traffic.openai.com/deployment-activation"]
+        )
+        self.assertEqual(
+            CANDIDATE_SHA256,
+            launcher["metadata"]["annotations"]["traffic.openai.com/candidate-sha256"],
+        )
+        command = launcher["spec"]["template"]["spec"]["containers"][0]["command"]
+        self.assertEqual("shadow", command[command.index("--deployment.activation.mode") + 1])
+        self.assertEqual(
+            CANDIDATE_SHA256,
+            command[command.index("--deployment.candidate.sha256") + 1],
+        )
+        self.assertEqual(
+            "flink-session-job-shadow-" + CANDIDATE_SHA256[:12],
+            command[command.index("--consumer.group") + 1],
+        )
+        self.assertIn(
+            "-Dkubernetes.cluster-id=flink-app-session-shadow-" + CANDIDATE_SHA256[:12],
+            command,
+        )
+        self.assertIn(
+            "-Dstate.checkpoints.dir=s3://flink-checkpoints/checkpoints/application-clusters/flink-session-job/shadow-" + CANDIDATE_SHA256[:12],
+            command,
+        )
+
+    def test_m03_production_uses_canonical_consumer_group(self) -> None:
+        docs = list(yaml.safe_load_all(render(
+            self.job_id,
+            IMAGE,
+            self.savepoints,
+            activation_mode="production",
+            candidate_sha256=CANDIDATE_SHA256,
+        )))
+        command = docs[-2]["spec"]["template"]["spec"]["containers"][0]["command"]
+        self.assertEqual("flink-session-job", command[command.index("--consumer.group") + 1])
+
+    def test_m03_rollback_job_uses_pinned_previous_image_and_unique_revision(self) -> None:
+        previous = "docker.io/traffic/flink-session@sha256:" + "9" * 64
+        docs = list(yaml.safe_load_all(render(
+            self.job_id,
+            IMAGE,
+            self.savepoints,
+            activation_mode="production",
+            candidate_sha256=CANDIDATE_SHA256,
+            rollback_image=previous,
+        )))
+        rollback = next(doc for doc in docs if doc["metadata"]["name"] == "rollback-flink-session-job-production-" + CANDIDATE_SHA256[:12])
+        self.assertEqual(
+            previous,
+            rollback["spec"]["template"]["spec"]["containers"][0]["image"],
+        )
+
+    def test_activation_rejects_missing_digest_legacy_digest_and_non_m03_shadow(self) -> None:
+        with self.assertRaisesRegex(ValueError, "require a lowercase candidate"):
+            render(self.job_id, IMAGE, self.savepoints, activation_mode="shadow")
+        with self.assertRaisesRegex(ValueError, "must not carry"):
+            render(
+                self.job_id,
+                IMAGE,
+                self.savepoints,
+                activation_mode="legacy",
+                candidate_sha256=CANDIDATE_SHA256,
+            )
+        non_m03 = "flink-rule-job"
+        savepoints = copy.deepcopy(self.savepoints)
+        savepoints["savepoints"][non_m03] = savepoints["savepoints"].pop(self.job_id)
+        with self.assertRaisesRegex(ValueError, "limited to the M03"):
+            render(
+                non_m03,
+                IMAGE,
+                savepoints,
+                activation_mode="shadow",
+                candidate_sha256=CANDIDATE_SHA256,
+            )
 
     def test_renderer_rejects_mutable_image_and_untrusted_savepoint(self) -> None:
         for image in ("traffic/flink:latest", "${FLINK_IMAGE}", "traffic/flink@sha256:ABC"):

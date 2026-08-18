@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "contract_id": "m06-four-source-fixture-matrix-v1",
+  "accountable_task": "T1-M06-N013",
+  "state": "pre_enable_fixture_only_not_promotion_evidence",
+  "runtime_change": false,
+  "candidate_files": [
+    "tests/fixtures/m06/four-source-matrix.v1.json",
+    "scripts/alignment/run_m06_four_source_preflight.py",
+    "java/flink-jobs/flink-session-job/src/test/java/com/traffic/flink/session/source/FlowEventParseFunctionTest.java",
+    "java/flink-jobs/flink-session-job/src/test/java/com/traffic/flink/session/source/FlowLatenessFunctionTest.java",
+    "go/control-plane/internal/asset/consumer/asset_projection_event_test.go",
+    "java/flink-jobs/flink-log-job/src/test/java/com/traffic/flink/log/source/DeviceLogParseFunctionTest.java",
+    "java/flink-jobs/flink-log-job/src/test/java/com/traffic/flink/log/source/DeviceLogEventTimeFunctionTest.java",
+    "java/flink-jobs/flink-user-behavior-job/src/test/java/com/traffic/flink/behavior/user/UserEventParseFunctionTest.java",
+    "java/flink-jobs/flink-user-behavior-job/src/test/java/com/traffic/flink/behavior/user/UserEventTimeFunctionTest.java"
+  ],
+  "sources": {
+    "flow": {
+      "command": ["mvn", "-q", "-pl", "flink-session-job", "-am", "-DfailIfNoTests=false", "-Dsurefire.failIfNoSpecifiedTests=false", "-Dtest=FlowEventParseFunctionTest,FlowLatenessFunctionTest", "test"],
+      "workdir": "java/flink-jobs",
+      "cases": [
+        {"case_id": "flow-positive", "kind": "positive", "source_tuple": "flow.events.v1:0:1", "mutation": "none", "test_file": "java/flink-jobs/flink-session-job/src/test/java/com/traffic/flink/session/source/FlowEventParseFunctionTest.java", "selector": "parsesValidFlowEvent", "expected": "accepted"},
+        {"case_id": "flow-permission", "kind": "permission_negative", "source_tuple": "flow.events.v1:0:1", "mutation": "tenant header tenant-b for tenant-a body", "test_file": "java/flink-jobs/flink-session-job/src/test/java/com/traffic/flink/session/source/FlowEventParseFunctionTest.java", "selector": "tenantHeaderMismatchIsRejected", "expected": "ENVELOPE_MISMATCH"},
+        {"case_id": "flow-bad", "kind": "bad_message", "source_tuple": "flow.events.v1:2:33", "mutation": "invalid protobuf bytes", "test_file": "java/flink-jobs/flink-session-job/src/test/java/com/traffic/flink/session/source/FlowEventParseFunctionTest.java", "selector": "invalidProtobufBytesBecomeCanonicalDeadLetter", "expected": "BAD_SCHEMA"},
+        {"case_id": "flow-replay", "kind": "replay", "source_tuple": "flow.events.v1:1:0+1", "mutation": "same event identity and payload at another offset", "test_file": "java/flink-jobs/flink-session-job/src/test/java/com/traffic/flink/session/source/FlowLatenessFunctionTest.java", "selector": "acceptedDuplicateConflictAndStrictLateAreExclusive", "expected": "duplicate"}
+      ]
+    },
+    "asset": {
+      "command": ["go", "test", "./internal/asset/consumer", "-run", "^TestAssetProjection"],
+      "workdir": "go/control-plane",
+      "cases": [
+        {"case_id": "asset-positive", "kind": "positive", "source_tuple": "asset.events.v2:3:42", "mutation": "none", "test_file": "go/control-plane/internal/asset/consumer/asset_projection_event_test.go", "selector": "TestAssetProjectionEventConsumerAcceptsAuthoritativeEvent", "expected": "accepted"},
+        {"case_id": "asset-permission", "kind": "permission_negative", "source_tuple": "asset.events.v2:3:42", "mutation": "trace and authority headers do not match body", "test_file": "go/control-plane/internal/asset/consumer/asset_projection_event_test.go", "selector": "TestAssetProjectionEventConsumerValidatesKafkaIdentity", "expected": "envelope_rejected"},
+        {"case_id": "asset-bad", "kind": "bad_message", "source_tuple": "asset.events.v2:2:7", "mutation": "malformed JSON payload", "test_file": "go/control-plane/internal/asset/consumer/asset_projection_event_test.go", "selector": "TestAssetProjectionMalformedPayloadIsPermanent", "expected": "permanent_error"},
+        {"case_id": "asset-replay", "kind": "replay", "source_tuple": "asset.events.v2:9:999", "mutation": "same event identity and canonical payload at another offset", "test_file": "go/control-plane/internal/asset/consumer/asset_projection_event_test.go", "selector": "TestAssetProjectionEventConsumerExactReplayDoesNotDuplicate", "expected": "duplicate"}
+      ]
+    },
+    "device_log": {
+      "command": ["mvn", "-q", "-pl", "flink-log-job", "-am", "-DfailIfNoTests=false", "-Dsurefire.failIfNoSpecifiedTests=false", "-Dtest=DeviceLogParseFunctionTest,DeviceLogEventTimeFunctionTest", "test"],
+      "workdir": "java/flink-jobs",
+      "cases": [
+        {"case_id": "device-log-positive", "kind": "positive", "source_tuple": "device.logs.v1:2:41", "mutation": "none", "test_file": "java/flink-jobs/flink-log-job/src/test/java/com/traffic/flink/log/source/DeviceLogParseFunctionTest.java", "selector": "acceptsStrictEnvelopeAndRetainsSourceTuple", "expected": "accepted"},
+        {"case_id": "device-log-permission", "kind": "permission_negative", "source_tuple": "device.logs.v1:2:41", "mutation": "tenant-b header for tenant-a body", "test_file": "java/flink-jobs/flink-log-job/src/test/java/com/traffic/flink/log/source/DeviceLogParseFunctionTest.java", "selector": "tenantDeviceKeyAndHeadersMustAgreeWithBody", "expected": "ENVELOPE_MISMATCH"},
+        {"case_id": "device-log-bad", "kind": "bad_message", "source_tuple": "device.logs.v1:2:41", "mutation": "corrupt or unknown protobuf", "test_file": "java/flink-jobs/flink-log-job/src/test/java/com/traffic/flink/log/source/DeviceLogParseFunctionTest.java", "selector": "corruptAndUnknownProtobufAreRejectedAsBadSchema", "expected": "BAD_SCHEMA"},
+        {"case_id": "device-log-replay", "kind": "replay", "source_tuple": "device.logs.v1:1:1+2", "mutation": "same event identity and payload at another offset", "test_file": "java/flink-jobs/flink-log-job/src/test/java/com/traffic/flink/log/source/DeviceLogEventTimeFunctionTest.java", "selector": "duplicateAndEventIdentityConflictAreExclusive", "expected": "duplicate"}
+      ]
+    },
+    "user_behavior": {
+      "command": ["mvn", "-q", "-pl", "flink-user-behavior-job", "-am", "-DfailIfNoTests=false", "-Dsurefire.failIfNoSpecifiedTests=false", "-Dtest=UserEventParseFunctionTest,UserEventTimeFunctionTest", "test"],
+      "workdir": "java/flink-jobs",
+      "cases": [
+        {"case_id": "user-positive", "kind": "positive", "source_tuple": "user.events.v1:3:17", "mutation": "none", "test_file": "java/flink-jobs/flink-user-behavior-job/src/test/java/com/traffic/flink/behavior/user/UserEventParseFunctionTest.java", "selector": "strictEnvelopeRetainsSourceTuple", "expected": "accepted"},
+        {"case_id": "user-permission", "kind": "permission_negative", "source_tuple": "user.events.v1:3:17", "mutation": "tenant or key header does not match body", "test_file": "java/flink-jobs/flink-user-behavior-job/src/test/java/com/traffic/flink/behavior/user/UserEventParseFunctionTest.java", "selector": "corruptUnknownDuplicateHeaderAndEnvelopeMismatchFailClosed", "expected": "ENVELOPE_MISMATCH"},
+        {"case_id": "user-bad", "kind": "bad_message", "source_tuple": "user.events.v1:3:17", "mutation": "corrupt or unknown protobuf", "test_file": "java/flink-jobs/flink-user-behavior-job/src/test/java/com/traffic/flink/behavior/user/UserEventParseFunctionTest.java", "selector": "corruptUnknownDuplicateHeaderAndEnvelopeMismatchFailClosed", "expected": "BAD_SCHEMA"},
+        {"case_id": "user-replay", "kind": "replay", "source_tuple": "user.events.v1:1:0+1", "mutation": "same event identity and payload at another offset", "test_file": "java/flink-jobs/flink-user-behavior-job/src/test/java/com/traffic/flink/behavior/user/UserEventTimeFunctionTest.java", "selector": "acceptedDuplicateConflictAndStrictLateAreExclusive", "expected": "duplicate"}
+      ]
+    }
+  },
+  "claim_boundary": {
+    "proves": ["four source implementations pass the exact pre-enable fixture matrix for positive permission-negative malformed and replay cases"],
+    "does_not_prove": ["any external source connector exists", "any candidate image is published", "the Kubernetes cluster has run these fixtures", "real broker offsets or target facts reconcile", "M06 promotion is authorized"]
+  }
+}

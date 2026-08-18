@@ -50,7 +50,15 @@ run_proto() {
 }
 
 run_k8s_health() {
-  kctl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
+  local unhealthy
+  # 仅列出非 Running/Succeeded 的 pod;存在任何异常 pod 即门禁失败,禁止假阳性通过。
+  unhealthy="$(kctl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded -o name 2>/dev/null | grep -v '^$' || true)"
+  if [[ -n "${unhealthy}" ]]; then
+    echo "ERROR: unhealthy pods detected:" >&2
+    echo "${unhealthy}" >&2
+    return 1
+  fi
+  echo "k8s health check: all pods Running or Succeeded"
 }
 
 run_live() {

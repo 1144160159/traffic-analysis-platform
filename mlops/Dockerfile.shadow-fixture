@@ -1,0 +1,7 @@
+FROM traffic/mlops-trainer:m08-governed-registration-w2d-20260815-r11
+
+ARG SOURCE_REVISION=unknown
+LABEL org.opencontainers.image.revision=${SOURCE_REVISION} \
+      org.opencontainers.image.title="M08 N011 governed shadow fixture"
+
+COPY scripts/m08_governed_canary.py /app/scripts/m08_governed_canary.py

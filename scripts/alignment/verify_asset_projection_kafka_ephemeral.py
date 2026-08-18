@@ -13,6 +13,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from run_exact_go_tests import run_exact_go_tests
+
 
 ROOT = Path(__file__).resolve().parents[2]
 POSTGRES_IMAGE = "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20"
@@ -21,6 +23,66 @@ TOPIC = "asset.events.v2"
 SENTINEL_TABLE = "codex_ephemeral_asset_projection_kafka_sentinel"
 SENTINEL_VALUE = "ephemeral-only"
 PASSWORD = "codex-asset-projection-kafka-ephemeral-only"
+TEST_SOURCE = ROOT / "go/control-plane/internal/asset/consumer/asset_projection_real_kafka_integration_test.go"
+REQUIRED_TEST_SOURCE_MARKERS = (
+    "func TestAssetProjectionRealKafkaDurableInbox",
+    "func TestAssetProjectionKafkaPublishFailureKeepsOutboxPending",
+)
+EXPECTED_ORACLE_MARKERS = {
+    "TestAssetProjectionRealKafkaDurableInbox": {
+        "ACK_BEFORE_PUBLISHED", "HEADERS_PAYLOAD", "DURABLE_INBOX_OFFSET",
+        "EXACT_REPLAY_IDEMPOTENT",
+    },
+    "TestAssetProjectionKafkaPublishFailureKeepsOutboxPending": {
+        "PUBLISH_FAILURE_PENDING",
+    },
+}
+
+
+def collect_oracle_markers(events: list[dict[str, Any]]) -> dict[str, list[str]]:
+    observed = {test: [] for test in EXPECTED_ORACLE_MARKERS}
+    prefix = "TOPIC1_ORACLE PASS "
+    for event in events:
+        test = event.get("Test")
+        output = event.get("Output")
+        if test not in observed or not isinstance(output, str) or prefix not in output:
+            continue
+        observed[test].append(output.split(prefix, 1)[1].strip())
+    for test, expected in EXPECTED_ORACLE_MARKERS.items():
+        markers = observed[test]
+        if set(markers) != expected or len(markers) != len(expected):
+            raise ValueError(
+                f"real-broker oracle exact-set mismatch for {test}: "
+                f"expected={sorted(expected)} observed={markers}"
+            )
+    return {test: sorted(markers) for test, markers in observed.items()}
+
+
+def derive_oracle_flags(oracle_results: dict[str, list[str]]) -> dict[str, bool]:
+    observed = {marker for markers in oracle_results.values() for marker in markers}
+    required = {
+        "broker_ack_before_outbox_published_verified": "ACK_BEFORE_PUBLISHED",
+        "headers_and_payload_consumed_verified": "HEADERS_PAYLOAD",
+        "durable_inbox_offset_verified": "DURABLE_INBOX_OFFSET",
+        "exact_replay_idempotent_verified": "EXACT_REPLAY_IDEMPOTENT",
+        "publish_failure_remains_pending_verified": "PUBLISH_FAILURE_PENDING",
+    }
+    flags = {field: marker in observed for field, marker in required.items()}
+    if not all(flags.values()):
+        raise ValueError(f"real-broker oracle flags are incomplete: {flags}")
+    return flags
+
+
+def require_candidate_sources(candidate_manifest: Path, sources: list[Path]) -> None:
+    payload = json.loads(candidate_manifest.read_text(encoding="utf-8"))
+    declared = payload.get("source_blob_sha256")
+    if not isinstance(declared, dict):
+        raise ValueError("candidate manifest lacks source_blob_sha256")
+    for source in sources:
+        relative = source.relative_to(ROOT).as_posix()
+        actual = hashlib.sha256(source.read_bytes()).hexdigest()
+        if declared.get(relative) != actual:
+            raise ValueError(f"candidate manifest does not bind current source: {relative}")
 
 
 def run(
@@ -62,13 +124,40 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--candidate-manifest", type=Path, required=True)
+    parser.add_argument("--profile-id", required=True)
+    parser.add_argument("--environment-id", required=True)
     args = parser.parse_args()
     postgres_container, kafka_container = names(args.run_id)
     kafka_port = loopback_port()
+    candidate_manifest = (ROOT / args.candidate_manifest).resolve()
+    if not candidate_manifest.is_relative_to(ROOT) or not candidate_manifest.is_file():
+        raise SystemExit(f"unsafe or missing candidate manifest: {args.candidate_manifest}")
+    bound_sources = [
+        TEST_SOURCE,
+        ROOT / "go/control-plane/internal/asset/repository/outbox_dispatcher.go",
+    ]
+    require_candidate_sources(candidate_manifest, bound_sources)
     result: dict[str, Any] = {
         "schema_version": 1,
+        "artifact_kind": "ASSET_PROJECTION_KAFKA_EPHEMERAL_TEST_RESULT",
+        "subject_pr_id": "T1-M06-P908-TST-PRE-n004-asset-event-real-broker-ack",
         "run_id": args.run_id,
         "status": "FAIL",
+        "candidate_manifest": {
+            "path": candidate_manifest.relative_to(ROOT).as_posix(),
+            "sha256": hashlib.sha256(candidate_manifest.read_bytes()).hexdigest(),
+        },
+        "profile_id": args.profile_id,
+        "environment_id": args.environment_id,
+        "source_blob_sha256": {
+            path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in bound_sources
+        },
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "exact_runner_sha256": hashlib.sha256(
+            (ROOT / "scripts/alignment/run_exact_go_tests.py").read_bytes()
+        ).hexdigest(),
         "postgres_container": postgres_container,
         "kafka_container": kafka_container,
         "postgres_image": POSTGRES_IMAGE,
@@ -84,6 +173,7 @@ def main() -> int:
         "headers_and_payload_consumed_verified": False,
         "durable_inbox_offset_verified": False,
         "exact_replay_idempotent_verified": False,
+        "publish_failure_remains_pending_verified": False,
         "loopback_only": True,
         "persistent_volume_attached": False,
         "shared_environment_touched": False,
@@ -91,7 +181,12 @@ def main() -> int:
         "postgres_container_removed": False,
         "kafka_container_removed": False,
         "test_output": "",
+        "exact_test_events": {},
+        "oracle_results": {},
+        "test_source_sha256": None,
+        "required_test_source_markers": list(REQUIRED_TEST_SOURCE_MARKERS),
         "errors": [],
+        "proof_ceiling": "OWNED_EPHEMERAL_KAFKA_G1_ONLY_NOT_PRODUCTION_ACCEPTANCE",
     }
     postgres_created = False
     kafka_created = False
@@ -189,27 +284,32 @@ def main() -> int:
         if not postgres_port.isdigit():
             raise RuntimeError(f"invalid loopback PostgreSQL port mapping: {port_output!r}")
 
+        test_source = TEST_SOURCE.read_text(encoding="utf-8")
+        missing_markers = [marker for marker in REQUIRED_TEST_SOURCE_MARKERS if marker not in test_source]
+        if missing_markers:
+            raise RuntimeError(f"real-broker fixture lacks required after-state oracle markers: {missing_markers}")
+        result["test_source_sha256"] = hashlib.sha256(TEST_SOURCE.read_bytes()).hexdigest()
+
         test_env = os.environ.copy()
         test_env["ASSET_PROJECTION_EPHEMERAL_PG_DSN"] = (
             f"postgres://postgres:{PASSWORD}@127.0.0.1:{postgres_port}/traffic_platform?sslmode=disable"
         )
         test_env["ASSET_PROJECTION_EPHEMERAL_KAFKA_BROKER"] = f"127.0.0.1:{kafka_port}"
         test_env["ASSET_PROJECTION_EPHEMERAL_KAFKA_SENTINEL"] = SENTINEL_VALUE
-        completed = run(
-            [
-                "go", "-C", "go/control-plane", "test", "./internal/asset/consumer",
-                "-run", "^TestAssetProjectionRealKafkaDurableInbox$", "-count=1", "-v",
+        completed, events, exact_counts = run_exact_go_tests(
+            go_root=ROOT / "go/control-plane",
+            package="./internal/asset/consumer",
+            test_names=[
+                "TestAssetProjectionRealKafkaDurableInbox",
+                "TestAssetProjectionKafkaPublishFailureKeepsOutboxPending",
             ],
             env=test_env,
-            check=False,
         )
-        result["test_output"] = completed.stdout.decode(errors="replace").strip()
-        if completed.returncode != 0:
-            raise RuntimeError(f"asset Kafka projection integration exited {completed.returncode}")
-        result["broker_ack_before_outbox_published_verified"] = True
-        result["headers_and_payload_consumed_verified"] = True
-        result["durable_inbox_offset_verified"] = True
-        result["exact_replay_idempotent_verified"] = True
+        result["test_output"] = completed.stdout.strip()
+        result["exact_test_events"] = exact_counts
+        oracle_results = collect_oracle_markers(events)
+        result["oracle_results"] = oracle_results
+        result.update(derive_oracle_flags(oracle_results))
         result["status"] = "PASS"
     except Exception as exc:
         result["errors"] = [str(exc)]

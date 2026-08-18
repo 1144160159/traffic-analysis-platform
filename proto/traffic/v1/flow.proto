@@ -36,6 +36,10 @@ message FlowEvent {
   ActiveIdleStats active_stats = 20;
   ActiveIdleStats idle_stats = 21;
   uint32 subflow_count = 22;
+  // Additive identity algorithm revision. Zero means the legacy algorithm;
+  // revision 2 is the canonical capture-event-time identity contract.
+  uint32 identity_revision = 23;
+  TrafficFeatureObservation feature_observation = 24;
 }
 
 // FlowBatch 流事件批次

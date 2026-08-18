@@ -21,6 +21,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+try:
+    import yaml
+except ImportError:  # pyyaml is pinned in mlops/requirements.txt; keep tests importable.
+    yaml = None
+
 
 REQUIRED_CONTRACT_FILES = [
     "README.md",
@@ -77,6 +82,28 @@ ATTACK_LABELS = {
     "botnet",
     "exploit",
 }
+
+
+def load_label_schema(package_dir: Path) -> Optional[Dict[str, str]]:
+    """Load label-schema.yaml and build alias -> canonical category mapping.
+
+    The schema is the authority for which ground-truth values are allowed
+    (allowed_ground_truth).  Unrecognized labels must be reported as invalid,
+    never silently treated as an attack or as normal (code-review H40).
+    """
+    path = package_dir / "label-schema.yaml"
+    if not path.is_file() or yaml is None:
+        return None
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    allowed = (payload or {}).get("files", {}).get("labels.csv", {}).get("allowed_ground_truth", {})
+    alias_map: Dict[str, str] = {}
+    for category, spec in (allowed or {}).items():
+        for alias in (spec or {}).get("aliases", []) or []:
+            alias_map[str(alias).strip().lower()] = str(category).strip().lower()
+    return alias_map or None
 
 
 @dataclass(frozen=True)
@@ -170,7 +197,14 @@ def load_threshold(path: Optional[Path]) -> Optional[float]:
     return None
 
 
-def normalize_truth(row: Dict[str, str]) -> Tuple[bool, str, bool, bool]:
+def normalize_truth(row: Dict[str, str], schema_alias_map: Optional[Dict[str, str]] = None) -> Tuple[bool, str, bool, bool]:
+    """Normalize a ground-truth label.
+
+    Unrecognized or empty labels are returned as category "invalid" and are
+    never silently treated as an attack or as normal (code-review H40).  When
+    label-schema.yaml is present, its allowed_ground_truth aliases are the
+    authority.
+    """
     label = (
         row.get("ground_truth")
         or row.get("truth")
@@ -180,18 +214,42 @@ def normalize_truth(row: Dict[str, str]) -> Tuple[bool, str, bool, bool]:
     ).strip().lower()
     is_unknown = parse_bool(row.get("is_unknown", "")) or "unknown" in label
     is_encrypted = parse_bool(row.get("is_encrypted", "")) or "encrypted" in label
+    if not label:
+        return False, "invalid", is_unknown, is_encrypted
+    if schema_alias_map is not None:
+        category = schema_alias_map.get(label)
+        if category is None:
+            return False, "invalid", is_unknown, is_encrypted
+        if category == "normal":
+            return False, "normal", is_unknown, is_encrypted
+        if is_unknown:
+            return True, "unknown_attack", True, is_encrypted
+        if is_encrypted:
+            return True, "encrypted_attack", False, True
+        return True, category, False, False
+    # Fallback when no schema is available: keep the legacy sets but still
+    # reject unknown values instead of treating them as attacks.
     if label in NORMAL_LABELS:
         return False, "normal", is_unknown, is_encrypted
-    if label in ATTACK_LABELS or label:
+    if label in ATTACK_LABELS:
         if is_unknown:
             return True, "unknown_attack", True, is_encrypted
         if is_encrypted:
             return True, "encrypted_attack", False, True
         return True, "known_attack", False, False
-    return False, "normal", is_unknown, is_encrypted
+    return False, "invalid", is_unknown, is_encrypted
 
 
-def normalize_prediction(row: Dict[str, str], locked_threshold: Optional[float]) -> Tuple[bool, str]:
+def normalize_prediction(
+    row: Dict[str, str],
+    locked_threshold: Optional[float],
+    schema_alias_map: Optional[Dict[str, str]] = None,
+) -> Tuple[bool, str]:
+    """Normalize a prediction label.
+
+    A missing label/score combination is "invalid", never "normal", and an
+    unrecognized label is "invalid", never an attack (code-review H40).
+    """
     label = (
         row.get("prediction")
         or row.get("predicted_label")
@@ -210,11 +268,14 @@ def normalize_prediction(row: Dict[str, str], locked_threshold: Optional[float])
         if "encrypted" in label:
             return True, "encrypted_attack"
         return True, "attack"
+    if schema_alias_map is not None and label in schema_alias_map:
+        category = schema_alias_map[label]
+        return category != "normal", category
     if not label and score is not None and threshold is not None:
         return score >= threshold, "attack" if score >= threshold else "normal"
     if label:
-        return True, label
-    return False, "normal"
+        return False, "invalid"
+    return False, "invalid"
 
 
 def wilson_interval(successes: int, total: int, z: float = 1.96) -> Dict[str, Optional[float]]:
@@ -280,6 +341,7 @@ def compute_metrics(
     labels: List[Dict[str, str]],
     predictions: List[Dict[str, str]],
     locked_threshold: Optional[float],
+    schema_alias_map: Optional[Dict[str, str]] = None,
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]], List[Dict[str, Any]]]:
     label_by_id = map_by_sample_id(labels)
     prediction_by_id = map_by_sample_id(predictions)
@@ -290,10 +352,24 @@ def compute_metrics(
     pred_family = Counter()
     family_matrix: Dict[str, Counter] = defaultdict(Counter)
     stratum_counters: Dict[str, Counter] = defaultdict(Counter)
+    invalid_truth_ids: List[str] = []
+    invalid_prediction_ids: List[str] = []
 
     for sample_id in common_ids:
-        truth_attack, truth_label, is_unknown, is_encrypted = normalize_truth(label_by_id[sample_id])
-        pred_attack, pred_label = normalize_prediction(prediction_by_id[sample_id], locked_threshold)
+        truth_attack, truth_label, is_unknown, is_encrypted = normalize_truth(
+            label_by_id[sample_id], schema_alias_map
+        )
+        pred_attack, pred_label = normalize_prediction(
+            prediction_by_id[sample_id], locked_threshold, schema_alias_map
+        )
+        # Unrecognized labels are invalid and must fail the gate; they are never
+        # counted as an attack or as normal (code-review H40).
+        if truth_label == "invalid" or pred_label == "invalid":
+            if truth_label == "invalid":
+                invalid_truth_ids.append(sample_id)
+            if pred_label == "invalid":
+                invalid_prediction_ids.append(sample_id)
+            continue
         truth_family[truth_label] += 1
         pred_family[pred_label] += 1
         family_matrix[truth_label][pred_label] += 1
@@ -341,6 +417,8 @@ def compute_metrics(
         "matched_sample_count": len(common_ids),
         "unmatched_label_count": len(set(label_by_id) - set(prediction_by_id)),
         "extra_prediction_count": len(set(prediction_by_id) - set(label_by_id)),
+        "invalid_truth_label_count": len(invalid_truth_ids),
+        "invalid_prediction_label_count": len(invalid_prediction_ids),
         "confusion_matrix": {
             "tn": binary["tn"],
             "fp": binary["fp"],
@@ -433,8 +511,12 @@ def write_markdown_report(path: Path, summary: Dict[str, Any]) -> None:
             [
                 f"- Samples matched: {metrics['matched_sample_count']}",
                 f"- Confusion matrix: TN={metrics['confusion_matrix']['tn']}, FP={metrics['confusion_matrix']['fp']}, FN={metrics['confusion_matrix']['fn']}, TP={metrics['confusion_matrix']['tp']}",
-                f"- Detection rate: {format_rate(metrics['detection_rate'])}",
-                f"- False-positive rate: {format_rate(metrics['false_positive_rate'])}",
+                # H41 口径对齐：预警准确率(任务书)按签字方法以 Detection rate
+                # (TP/(TP+FN)) 的 95% Wilson 下界承载；Accuracy (TP+TN)/total
+                # 同时输出供透明对照，但不参与门禁判定。
+                f"- Accuracy (diagnostic, not gating): {format_rate(metrics['accuracy'])}",
+                f"- Detection rate (预警准确率, gating): {format_rate(metrics['detection_rate'])}",
+                f"- False-positive rate (误报率, gating): {format_rate(metrics['false_positive_rate'])}",
                 f"- Unknown recall: {format_rate(metrics['unknown_recall'])}",
                 f"- Encrypted attack detection rate: {format_rate(metrics['encrypted_attack_detection_rate'])}",
             ]
@@ -483,6 +565,71 @@ def evaluate_package(package_dir: Path, output_dir: Path, run_id: str, threshold
     checks: List[Dict[str, Any]] = []
     artifacts = {name: find_artifact(package_dir, candidates) for name, candidates in ACTUAL_ARTIFACT_CANDIDATES.items()}
     inventory = inventory_package(package_dir)
+    inventory_by_path = {entry["path"]: entry for entry in inventory}
+
+    # 冻结基线 hash 比对（代码审查 H40 收敛项）：若包内存在
+    # frozen-baseline-inventory.json，则以其中记录的 sha256 为冻结基线，
+    # 任何文件 hash 漂移即 blocker；缺失时给出 warn（当前"冻结"仍依赖外部
+    # git，不允许假装脚本自身 fail-closed）。
+    frozen_path = package_dir / "frozen-baseline-inventory.json"
+    if frozen_path.is_file():
+        try:
+            frozen_entries = json.loads(frozen_path.read_text(encoding="utf-8"))
+            baseline_map = {
+                str(entry.get("path", "")): str(entry.get("sha256", ""))
+                for entry in frozen_entries
+                if isinstance(entry, dict) and entry.get("path")
+            }
+            baseline_valid = bool(baseline_map)
+        except (ValueError, TypeError):
+            baseline_map, baseline_valid = {}, False
+        add_check(
+            checks,
+            "integrity",
+            "frozen baseline inventory is a valid path->sha256 map",
+            "blocker",
+            baseline_valid,
+            "ok" if baseline_valid else "invalid",
+            f"{len(baseline_map)} frozen entries" if baseline_valid else "frozen-baseline-inventory.json is unparsable or empty",
+            "frozen-baseline-inventory.json",
+        )
+        if baseline_valid:
+            mismatched = sorted(
+                path for path, sha in baseline_map.items()
+                if path in inventory_by_path and inventory_by_path[path]["sha256"] != sha
+            )
+            add_check(
+                checks,
+                "integrity",
+                "all package files match the frozen baseline hashes",
+                "blocker",
+                not mismatched,
+                "ok" if not mismatched else "drifted",
+                "hashes match frozen baseline" if not mismatched else f"drifted={mismatched}",
+                "frozen-baseline-inventory.json",
+            )
+            uncovered = sorted(path for path in baseline_map if path not in inventory_by_path)
+            add_check(
+                checks,
+                "integrity",
+                "frozen baseline inventory covers its recorded files",
+                "warn",
+                not uncovered,
+                "ok" if not uncovered else "missing",
+                "all recorded files present" if not uncovered else f"missing={uncovered}",
+                "frozen-baseline-inventory.json",
+            )
+    else:
+        add_check(
+            checks,
+            "integrity",
+            "frozen baseline inventory present",
+            "warn",
+            False,
+            "missing",
+            "no frozen-baseline-inventory.json; freezing currently relies on external git tracking",
+            "frozen-baseline-inventory.json",
+        )
 
     for required in REQUIRED_CONTRACT_FILES:
         path = package_dir / required
@@ -550,6 +697,32 @@ def evaluate_package(package_dir: Path, output_dir: Path, run_id: str, threshold
     metrics: Optional[Dict[str, Any]] = None
     matrix_rows: List[Dict[str, Any]] = []
     stratum_rows: List[Dict[str, Any]] = []
+
+    # 实际加载 label-schema.yaml 的 allowed_ground_truth 作为标签权威
+    # （代码审查 H40：schema 必须参与校验，不能只做存在性检查）。
+    schema_alias_map = load_label_schema(package_dir)
+    if schema_alias_map is None:
+        add_check(
+            checks,
+            "contract",
+            "label-schema.yaml parses and defines allowed_ground_truth",
+            "blocker",
+            False,
+            "invalid",
+            "label-schema.yaml is missing, unparsable, or lacks files.labels.csv.allowed_ground_truth",
+            "label-schema.yaml",
+        )
+    else:
+        add_check(
+            checks,
+            "contract",
+            "label-schema.yaml parses and defines allowed_ground_truth",
+            "info",
+            True,
+            "ok",
+            f"{len(schema_alias_map)} allowed aliases loaded",
+            "label-schema.yaml",
+        )
 
     locked_threshold = load_threshold(artifacts["threshold_lock"])
     if artifacts["threshold_lock"] is not None:
@@ -633,7 +806,32 @@ def evaluate_package(package_dir: Path, output_dir: Path, run_id: str, threshold
             "",
         )
 
-        metrics, matrix_rows, stratum_rows = compute_metrics(labels, predictions, locked_threshold)
+        metrics, matrix_rows, stratum_rows = compute_metrics(
+            labels, predictions, locked_threshold, schema_alias_map
+        )
+
+        invalid_truth = int(metrics.get("invalid_truth_label_count", 0))
+        invalid_pred = int(metrics.get("invalid_prediction_label_count", 0))
+        add_check(
+            checks,
+            "labels",
+            "no unrecognized ground-truth labels (invalid counted as blocker)",
+            "blocker",
+            invalid_truth == 0,
+            "ok" if invalid_truth == 0 else "invalid",
+            f"invalid_truth_labels={invalid_truth}",
+            "labels.csv",
+        )
+        add_check(
+            checks,
+            "predictions",
+            "no unrecognized prediction labels (silent normal/attack fallback forbidden)",
+            "blocker",
+            invalid_pred == 0,
+            "ok" if invalid_pred == 0 else "invalid",
+            f"invalid_prediction_labels={invalid_pred}",
+            "predictions.csv",
+        )
 
         truth_counts = metrics["truth_label_counts"]
         has_normal = truth_counts.get("normal", 0) > 0
@@ -726,6 +924,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-false-positive-rate", type=float, default=0.05)
     parser.add_argument("--min-unknown-recall", type=float, default=0.80)
     parser.add_argument("--fail-on-blockers", action="store_true")
+    parser.add_argument("--execution-spec-sha256", default="")
+    parser.add_argument("--emit-run-contract", default=None,
+                        help="write run-scoped evaluation contract JSON (analysis-service 消费)")
     return parser.parse_args()
 
 
@@ -742,6 +943,45 @@ def main() -> int:
         ),
     )
     print(json.dumps({"run_id": summary["run_id"], "result": summary["result"]}, ensure_ascii=True))
+
+    if args.emit_run_contract:
+        metrics = summary.get("metrics", {})
+        def lower_ci(v):
+            if isinstance(v, dict):
+                return float(v.get("lower") or 0.0)
+            if isinstance(v, (tuple, list)) and len(v) == 2:
+                return float(v[0] or 0.0)
+            return float(v or 0.0)
+        def upper_ci(v):
+            if isinstance(v, dict):
+                return float(v.get("upper") or 0.0)
+            if isinstance(v, (tuple, list)) and len(v) == 2:
+                return float(v[1] or 0.0)
+            return float(v or 0.0)
+        def point(v):
+            return lower_ci(v)
+        contract = {
+            "schema_version": "1",
+            "run_id": args.run_id,
+            "execution_spec_sha256": args.execution_spec_sha256,
+            "package_path": args.package_dir,
+            "accuracy": point(metrics.get("accuracy")),
+            "detection_rate": point(metrics.get("detection_rate")),
+            "false_positive_rate": point(metrics.get("false_positive_rate")),
+            "known_attack_recall": point(metrics.get("detection_rate")),
+            "unknown_recall": point(metrics.get("unknown_recall")),
+            "ci_lower_accuracy": lower_ci(metrics.get("accuracy")),
+            "ci_upper_fpr": upper_ci(metrics.get("false_positive_rate")),
+            "strata_complete": summary.get("strata_complete", False),
+            "invalid_labels": int(metrics.get("invalid_truth_label_count", 0)) + int(metrics.get("invalid_prediction_label_count", 0)),
+            "sample_count": int(metrics.get("total_samples", 0)),
+            "gate_passed": summary.get("result") == "pass",
+            "gate_reasons": [],
+            "generated_at_ms": int(dt.datetime.now(dt.timezone.utc).timestamp() * 1000),
+        }
+        out = Path(args.emit_run_contract)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(contract, ensure_ascii=True, indent=2))
     if args.fail_on_blockers and summary["result"] == "blocked":
         return 1
     return 0

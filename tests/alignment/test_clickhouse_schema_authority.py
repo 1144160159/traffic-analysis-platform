@@ -23,6 +23,8 @@ def copy_candidate(parent: Path) -> Path:
     required = [
         contract_relative.as_posix(),
         contract["migration_runner"],
+        contract["kubernetes_execution"]["renderer"],
+        contract["kubernetes_execution"]["manifest"],
         *[item["path"] for item in contract["legacy_schema_sources"]],
     ]
     required.extend(
@@ -66,7 +68,7 @@ class ClickHouseSchemaAuthorityTest(unittest.TestCase):
         result = verify(ROOT)
         self.assertEqual("PASS", result["status"], result)
         migration_paths = {item["path"] for item in result["migration_inventory"]}
-        self.assertEqual(7, result["migration_count"])
+        self.assertEqual(10, result["migration_count"])
         self.assertIn(
             "deployments/clickhouse/migrations/202608031600_sessions_daily_rollup_v1.sql",
             migration_paths,
@@ -75,9 +77,38 @@ class ClickHouseSchemaAuthorityTest(unittest.TestCase):
             "deployments/clickhouse/migrations/202608041300_alert_trace_correlation_v1.sql",
             migration_paths,
         )
-        self.assertEqual(12, result["legacy_source_count"])
+        self.assertIn(
+            "deployments/clickhouse/migrations/202608141600_m06_four_source_facts_v1.sql",
+            migration_paths,
+        )
+        self.assertEqual(14, result["legacy_source_count"])
         self.assertTrue(result["legacy_drift_detected"])
         self.assertFalse(result["production_applied"])
+        self.assertEqual(
+            "deployments/kubernetes/init-jobs/03a-clickhouse-authoritative-migrations.yaml",
+            result["kubernetes_manifest"],
+        )
+
+    def test_kubernetes_manifest_is_a_fresh_checksum_bound_candidate(self) -> None:
+        result = subprocess.run(
+            [
+                "python3",
+                str(ROOT / "scripts/clickhouse/render-kubernetes-migrations.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        manifest = (
+            ROOT
+            / "deployments/kubernetes/init-jobs/03a-clickhouse-authoritative-migrations.yaml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("traffic.sessions_local", manifest)
+        self.assertIn("traffic.analysis/production-applied: \"false\"", manifest)
+        self.assertIn("202608141600_m06_four_source_facts_v1.sql: |-", manifest)
 
     def test_on_cluster_migration_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

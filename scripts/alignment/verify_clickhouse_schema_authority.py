@@ -72,6 +72,38 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     if contract.get("execution_model") != "direct_each_node":
         errors.append("ClickHouse execution_model must remain direct_each_node")
 
+    kubernetes = contract.get("kubernetes_execution", {})
+    if kubernetes.get("production_applied") is not False:
+        errors.append("Kubernetes migration contract must not claim production apply")
+    renderer = root / str(kubernetes.get("renderer", ""))
+    manifest = root / str(kubernetes.get("manifest", ""))
+    if not renderer.is_file():
+        errors.append("ClickHouse Kubernetes migration renderer is missing")
+    else:
+        renderer_source = renderer.read_text(encoding="utf-8", errors="ignore")
+        for token in (
+            "traffic.sessions_local",
+            "production-applied",
+            "source-sha256",
+            "render-kubernetes-migrations.py",
+        ):
+            if token not in renderer_source:
+                errors.append(f"ClickHouse Kubernetes renderer missing token: {token}")
+    if not manifest.is_file():
+        errors.append("ClickHouse Kubernetes migration manifest is missing")
+    else:
+        manifest_source = manifest.read_text(encoding="utf-8", errors="ignore")
+        for token in (
+            "kind: ConfigMap",
+            "kind: Job",
+            "traffic.analysis/production-applied: \"false\"",
+            "traffic.sessions_local",
+            "CLICKHOUSE_HOSTS",
+            "run-migrations.sh",
+        ):
+            if token not in manifest_source:
+                errors.append(f"ClickHouse Kubernetes manifest missing token: {token}")
+
     migration_dir = root / str(contract.get("authoritative_migration_directory", ""))
     migrations = sorted(migration_dir.glob("*.sql")) if migration_dir.is_dir() else []
     migration_inventory: list[dict[str, Any]] = []
@@ -165,6 +197,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         "legacy_source_count": len(legacy_inventory),
         "legacy_drift_detected": drift_detected,
         "legacy_inventory": legacy_inventory,
+        "kubernetes_manifest": kubernetes.get("manifest"),
         "closure_blockers": contract.get("closure_blockers", []),
         "errors": errors,
     }

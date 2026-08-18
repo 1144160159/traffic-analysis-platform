@@ -183,6 +183,15 @@ def build_catalog() -> dict[str, Any]:
         upstream = _upstream(route, services)
         observed_auth = sorted(AUTH_PLUGINS & set(plugins))
         observed_rate_limit = sorted(RATE_LIMIT_PLUGINS & set(plugins))
+        client_control = plugins.get("client-control") or {}
+        request_id = plugins.get("request-id") or {}
+        body_bytes = client_control.get("max_body_size")
+        trace_header = request_id.get("header_name")
+        trace_implemented = (
+            trace_header == "X-Request-ID"
+            and request_id.get("include_in_response") is True
+            and request_id.get("algorithm") == "uuid"
+        )
         gaps: list[str] = []
         if auth_required and not observed_auth:
             gaps.append("gateway_authentication_missing")
@@ -194,12 +203,16 @@ def build_catalog() -> dict[str, Any]:
             gaps.append("gateway_request_validation_missing")
         if auth_required and "client-control" not in plugins:
             gaps.append("gateway_body_limit_missing")
+        elif auth_required and (not isinstance(body_bytes, int) or body_bytes <= 0):
+            gaps.append("gateway_body_limit_invalid")
         if zone not in {"public_web_ui"} and not observed_rate_limit:
             gaps.append("gateway_rate_limit_missing")
         if upstream and upstream["timeout"] is None:
             gaps.append("upstream_timeout_implicit")
         if upstream and upstream["retries"] is None:
             gaps.append("upstream_retry_implicit")
+        if not trace_implemented:
+            gaps.append("gateway_trace_header_missing")
         if upstream and any(not node["service_declared"] for node in upstream["nodes"]):
             gaps.append("upstream_service_not_declared")
 
@@ -223,9 +236,16 @@ def build_catalog() -> dict[str, Any]:
             },
             "tenant_source": tenant_source,
             "limits": {
-                "body_bytes": None,
+                "body_bytes": body_bytes,
                 "field_limits": "openapi_schema" if matched_operations else None,
                 "rate_limit_plugins": observed_rate_limit,
+            },
+            "trace": {
+                "plugin": "request-id" if request_id else None,
+                "header_name": trace_header,
+                "include_in_response": request_id.get("include_in_response"),
+                "algorithm": request_id.get("algorithm"),
+                "status": "implemented" if trace_implemented else "missing",
             },
             "cors": plugins.get("cors"),
             "cache": plugins.get("proxy-cache"),

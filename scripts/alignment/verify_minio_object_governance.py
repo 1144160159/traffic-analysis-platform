@@ -41,6 +41,7 @@ REQUIRED_CLASSES = {
     "flink_checkpoint",
     "flink_savepoint",
     "argo_artifact",
+    "restoration_evidence",
 }
 REQUIRED_BUCKET_FIELDS = {
     "bucket",
@@ -125,7 +126,12 @@ def governed_bootstrap_buckets(path: Path = LIFECYCLE) -> tuple[set[str], set[st
         for container in containers
         for argument in container.get("args") or []
     )
-    created = set(re.findall(r"mc\s+mb\s+--ignore-existing\s+local/([a-z0-9-]+)", script))
+    created = set(
+        re.findall(
+            r"mc\s+mb\s+--ignore-existing(?:\s+--[a-z0-9-]+)*\s+local/([a-z0-9-]+)",
+            script,
+        )
+    )
     verified = set(re.findall(r"mc\s+stat\s+local/([a-z0-9-]+)", script))
     return created, verified
 

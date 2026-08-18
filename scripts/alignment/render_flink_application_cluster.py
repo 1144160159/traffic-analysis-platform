@@ -20,6 +20,10 @@ IMAGE_RE = re.compile(r"^[a-z0-9][a-z0-9._/:~-]*@sha256:[0-9a-f]{64}$")
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 JOB_ID_RE = re.compile(r"^[0-9a-f]{32}$")
 SAVEPOINT_PREFIX = "s3://flink-checkpoints/savepoints/"
+M03_CONSUMER_GROUP_ARGUMENT = {
+    "flink-session-job": "--consumer.group",
+    "flink-feature-job": "--kafka.group.id",
+}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -145,6 +149,39 @@ def _savepoint_for(job_id: str, manifest: dict[str, Any], contract: dict[str, An
     return {"uri": uri, "sha256": digest, "source_job_id": source_job_id}
 
 
+def _activation_arguments(
+    job_id: str,
+    activation_mode: str,
+    candidate_sha256: str,
+) -> tuple[list[str], dict[str, str]]:
+    mode = activation_mode.strip().lower()
+    candidate = candidate_sha256.strip().lower()
+    if mode not in {"legacy", "shadow", "production"}:
+        raise ValueError("activation mode must be legacy, shadow or production")
+    annotations = {"traffic.openai.com/deployment-activation": mode}
+    if mode == "legacy":
+        if candidate:
+            raise ValueError("legacy activation must not carry a candidate sha256")
+        return [], annotations
+    group_argument = M03_CONSUMER_GROUP_ARGUMENT.get(job_id)
+    if group_argument is None:
+        raise ValueError("shadow and production activation are limited to the M03 Session/Feature jobs")
+    if not SHA_RE.fullmatch(candidate):
+        raise ValueError("shadow and production activation require a lowercase candidate sha256")
+    consumer_group = job_id
+    if mode == "shadow":
+        consumer_group = f"{job_id}-shadow-{candidate[:12]}"
+    annotations.update({
+        "traffic.openai.com/candidate-sha256": candidate,
+        "traffic.openai.com/consumer-group": consumer_group,
+    })
+    return [
+        "--deployment.activation.mode", mode,
+        "--deployment.candidate.sha256", candidate,
+        group_argument, consumer_group,
+    ], annotations
+
+
 def _pod_template(job: dict[str, Any], credential: dict[str, Any], contract: dict[str, Any]) -> str:
     empty_dir_size = contract["common_resources"]["local_rocksdb_empty_dir_size"]
     env = [
@@ -187,7 +224,14 @@ def _pod_template(job: dict[str, Any], credential: dict[str, Any], contract: dic
     return yaml.safe_dump(pod, sort_keys=False)
 
 
-def render(job_id: str, image: str, savepoint_manifest: dict[str, Any]) -> str:
+def render(
+    job_id: str,
+    image: str,
+    savepoint_manifest: dict[str, Any],
+    activation_mode: str = "legacy",
+    candidate_sha256: str = "",
+    rollback_image: str | None = None,
+) -> str:
     if not IMAGE_RE.fullmatch(image) or ":latest" in image or "${" in image:
         raise ValueError("application image must be a lowercase repository@sha256 digest")
     contract = load_json(CONTRACT_PATH)
@@ -202,6 +246,21 @@ def render(job_id: str, image: str, savepoint_manifest: dict[str, Any]) -> str:
     principals = {item["id"]: item for item in acl["principals"]}
     credential = principals[job["principal_id"]]["credential"]
     savepoint = _savepoint_for(job_id, savepoint_manifest, contract)
+    activation_arguments, activation_annotations = _activation_arguments(
+        job_id, activation_mode, candidate_sha256
+    )
+    previous_image = rollback_image or image
+    if not IMAGE_RE.fullmatch(previous_image) or ":latest" in previous_image or "${" in previous_image:
+        raise ValueError("rollback image must be a lowercase repository@sha256 digest")
+    activation = activation_annotations["traffic.openai.com/deployment-activation"]
+    resource_revision = "v1"
+    if activation != "legacy":
+        resource_revision = f"{activation}-{candidate_sha256[:12]}"
+    runtime_cluster_id = job["cluster_id"]
+    state_instance = job_id
+    if activation != "legacy":
+        runtime_cluster_id = f"{job['cluster_id']}-{resource_revision}"
+        state_instance = f"{job_id}/{resource_revision}"
     contract_digest = canonical_json_digest(contract)
     manifest_digest = canonical_json_digest(savepoint_manifest)
     annotations = {
@@ -210,27 +269,28 @@ def render(job_id: str, image: str, savepoint_manifest: dict[str, Any]) -> str:
         "traffic.openai.com/savepoint-sha256": savepoint["sha256"],
         "traffic.openai.com/source-job-id": savepoint["source_job_id"],
         "traffic.openai.com/migration-order": str(job["migration_order"]),
+        **activation_annotations,
     }
     sa_name = f"{job['cluster_id']}-runtime"
     role_name = "flink-application-cluster-runtime-v1"
-    pod_config_name = f"{job['cluster_id']}-pod-template-v1"
+    pod_config_name = f"{job['cluster_id']}-pod-template-{resource_revision}"
     jm = contract["common_resources"]["jobmanager"]
     tm = contract["common_resources"]["taskmanager"]
     state = contract["state"]
-    checkpoint_path = f"{state['checkpoint_root']}/{job_id}"
-    savepoint_path = f"{state['savepoint_root']}/{job_id}"
-    ha_path = f"{state['ha_root']}/{job['cluster_id']}"
-    job_result_path = f"{state['job_result_root']}/{job['cluster_id']}"
+    checkpoint_path = f"{state['checkpoint_root']}/{state_instance}"
+    savepoint_path = f"{state['savepoint_root']}/{state_instance}"
+    ha_path = f"{state['ha_root']}/{runtime_cluster_id}"
+    job_result_path = f"{state['job_result_root']}/{runtime_cluster_id}"
     command = [
         "/opt/flink/bin/flink", "run-application", "--target", "kubernetes-application",
-        f"-Dkubernetes.cluster-id={job['cluster_id']}",
+        f"-Dkubernetes.cluster-id={runtime_cluster_id}",
         "-Dkubernetes.namespace=flink",
         f"-Dkubernetes.container.image.ref={image}",
         f"-Dkubernetes.service-account={sa_name}",
         "-Dkubernetes.pod-template-file.default=/opt/traffic/pod-template/pod-template.yaml",
         "-Dkubernetes.rest-service.exposed.type=ClusterIP",
         "-Dhigh-availability.type=kubernetes",
-        f"-Dhigh-availability.cluster-id={job['cluster_id']}",
+        f"-Dhigh-availability.cluster-id={runtime_cluster_id}",
         f"-Dhigh-availability.storageDir={ha_path}",
         f"-Dkubernetes.jobmanager.replicas={jm['replicas']}",
         f"-Djob-result-store.storage-path={job_result_path}",
@@ -250,6 +310,7 @@ def render(job_id: str, image: str, savepoint_manifest: dict[str, Any]) -> str:
         f"-Dpipeline.max-parallelism={job['max_parallelism']}",
         "-c", job["main_class"], "-p", str(job["parallelism"]),
         "-s", savepoint["uri"], job["jar_uri"],
+        *activation_arguments,
     ]
     docs: list[dict[str, Any]] = [
         {"apiVersion": "v1", "kind": "ServiceAccount", "metadata": {"name": sa_name, "namespace": "flink", "annotations": annotations}},
@@ -275,7 +336,7 @@ def render(job_id: str, image: str, savepoint_manifest: dict[str, Any]) -> str:
         },
         {
             "apiVersion": "v1", "kind": "ConfigMap",
-            "metadata": {"name": f"{job['cluster_id']}-rollback-v1", "namespace": "flink", "annotations": annotations},
+            "metadata": {"name": f"{job['cluster_id']}-rollback-{resource_revision}", "namespace": "flink", "annotations": annotations},
             "immutable": True,
             "data": {
                 "source-cluster-id": contract["source_session_cluster_id"],
@@ -287,7 +348,7 @@ def render(job_id: str, image: str, savepoint_manifest: dict[str, Any]) -> str:
         },
         {
             "apiVersion": "batch/v1", "kind": "Job",
-            "metadata": {"name": f"migrate-{job_id}-v1", "namespace": "flink", "annotations": annotations},
+            "metadata": {"name": f"migrate-{job_id}-{resource_revision}", "namespace": "flink", "annotations": annotations},
             "spec": {
                 "backoffLimit": 0,
                 "ttlSecondsAfterFinished": 86400,
@@ -311,7 +372,7 @@ def render(job_id: str, image: str, savepoint_manifest: dict[str, Any]) -> str:
         },
         {
             "apiVersion": "batch/v1", "kind": "Job",
-            "metadata": {"name": f"rollback-{job_id}-v1", "namespace": "flink", "annotations": annotations},
+            "metadata": {"name": f"rollback-{job_id}-{resource_revision}", "namespace": "flink", "annotations": annotations},
             "spec": {
                 "suspend": True,
                 "backoffLimit": 0,
@@ -323,7 +384,7 @@ def render(job_id: str, image: str, savepoint_manifest: dict[str, Any]) -> str:
                         "restartPolicy": "Never",
                         "containers": [{
                             "name": "restore-session-cluster-job",
-                            "image": image,
+                            "image": previous_image,
                             "imagePullPolicy": "IfNotPresent",
                             "command": [
                                 "/opt/flink/bin/flink", "run", "--target", "kubernetes-session",
@@ -347,6 +408,13 @@ def main() -> int:
     parser.add_argument("--job-id")
     parser.add_argument("--image")
     parser.add_argument("--savepoint-manifest", type=Path)
+    parser.add_argument(
+        "--activation-mode",
+        choices=("legacy", "shadow", "production"),
+        default="legacy",
+    )
+    parser.add_argument("--candidate-sha256", default="")
+    parser.add_argument("--rollback-image")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--check-contract", action="store_true")
     args = parser.parse_args()
@@ -356,7 +424,14 @@ def main() -> int:
         return 0 if result["result"] == "pass" else 1
     if not args.job_id or not args.image or not args.savepoint_manifest:
         parser.error("--job-id, --image and --savepoint-manifest are required for rendering")
-    payload = render(args.job_id, args.image, load_json(args.savepoint_manifest))
+    payload = render(
+        args.job_id,
+        args.image,
+        load_json(args.savepoint_manifest),
+        args.activation_mode,
+        args.candidate_sha256,
+        args.rollback_image,
+    )
     if args.output:
         args.output.write_text(payload, encoding="utf-8")
     else:

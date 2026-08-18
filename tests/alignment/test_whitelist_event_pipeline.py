@@ -12,7 +12,7 @@ class WhitelistEventPipelineContractTests(unittest.TestCase):
             (ROOT / "contracts/events/kafka-topic-catalog.v1.json").read_text(encoding="utf-8")
         )
         topic = next(item for item in topics["topics"] if item["name"] == "whitelist.events.v2")
-        self.assertEqual("active", topic["readiness"])
+        self.assertEqual("producer_candidate_default_off", topic["readiness"])
         self.assertEqual("tenant_id+entry_id", topic["key_contract"])
         self.assertEqual("WhitelistLifecycleV2Json", topic["message_type"])
         self.assertEqual(
@@ -51,6 +51,14 @@ class WhitelistEventPipelineContractTests(unittest.TestCase):
             self.assertIn("WHITELIST_EVENT_PIPELINE_V2_ENABLED", source)
             self.assertIn('value: "false"', source)
 
+        alert = (ROOT / "deployments/kubernetes/applications/go-services.yaml").read_text(encoding="utf-8")
+        for flag in (
+            "WHITELIST_EVENT_CONSUMER_V2_ENABLED",
+            "WHITELIST_EVENT_PRODUCER_V2_ENABLED",
+            "WHITELIST_DETECTION_MATCHER_V2_ENABLED",
+        ):
+            self.assertIn(flag, alert)
+
     def test_projection_schema_is_present_in_every_postgres_entrypoint(self):
         for relative in (
             "deployments/postgres/migrations/202608071930_whitelist_rule_projection_v1.sql",
@@ -61,6 +69,16 @@ class WhitelistEventPipelineContractTests(unittest.TestCase):
             source = (ROOT / relative).read_text(encoding="utf-8")
             self.assertIn("whitelist_rule_projection", source)
             self.assertIn("202608071930", source)
+
+    def test_consumer_readiness_migration_is_in_runtime_entrypoints(self):
+        for relative in (
+            "deployments/postgres/migrations/202608161100_m09_whitelist_consumer_readiness_v2.sql",
+            "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+            "go/control-plane/deployments/docker/init/postgres_merged.sql",
+        ):
+            source = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn("whitelist_consumer_readiness_receipt", source)
+            self.assertIn("202608161100", source)
 
 
 if __name__ == "__main__":

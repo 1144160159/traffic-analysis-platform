@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# 临时文件统一放入专用目录,中断/异常退出时由 trap 清理,避免 /tmp 残留。
+TMP_CLEANUP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_CLEANUP_DIR"' EXIT
 
 APISIX="${APISIX:-http://10.0.5.8:30180}"
 TENANT="${TENANT:-default}"
@@ -110,7 +113,7 @@ curl_json() {
   local name="$1" path="$2" outfile="$3" filter="${4:-.success == true}"
   local err_file curl_out rc code latency api_seen ok detail
 
-  err_file="$(mktemp)"
+  err_file="$(mktemp "$TMP_CLEANUP_DIR"/err.XXXXXX)"
   set +e
   curl_out="$(curl --noproxy '*' -sS -m 20 -o "$outfile" -w '%{http_code} %{time_total}' \
     -H "Authorization: Bearer $TOKEN" \
@@ -147,7 +150,7 @@ ch_query() {
   local name="$1" query="$2" outfile="$3"
   local err_file rc ok detail
 
-  err_file="$(mktemp)"
+  err_file="$(mktemp "$TMP_CLEANUP_DIR"/err.XXXXXX)"
   set +e
   kctl -n "$CH_NAMESPACE" exec "$CH_POD" -c clickhouse -- clickhouse-client --query "$query" >"$outfile" 2>"$err_file"
   rc=$?

@@ -28,6 +28,15 @@
 **课题来源**: 泉城省实验室重大项目 QCL20250108
 **考核指标**: 预警准确率 ≥ 95%，误报率 < 5%（CNAS 第三方测试）
 
+> **指标口径（2026-08-16 对齐，仅澄清口径、不改数值）**：
+> "预警准确率 ≥ 95%"按事前签字方法由 **Detection rate `TP/(TP+FN)`（攻击召回，
+> 95% Wilson 置信下界 ≥ 0.95）** 承载；"误报率 < 5%" = `FP/(FP+TN)`（95% Wilson
+> 置信上界 ≤ 0.05）。Accuracy `(TP+TN)/total` 与 detection rate 双口径同时输出，
+> accuracy 仅作诊断对照、不参与门禁。公式定义见
+> `mlops/eval_packages/topic1_blind/metric-definition.md`；盲评执行见
+> `mlops/scripts/evaluate_blind_package.py`。任何一处口径歧义不得改变已签字公式
+> 的数值，也不得用单一 F1 替代合同指标（见 contracts/mlops/governed-evaluation-method.v1.json）。
+
 ### 1.2 核心数据链路
 
 ```

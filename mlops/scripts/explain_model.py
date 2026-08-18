@@ -82,7 +82,8 @@ def compute_shap(model, X, feature_cols, output_dir, sample_size=200):
                 shap_importance.append({
                     'feature': col,
                     'shap_importance': float(mean_abs_shap[i]),
-                    'rank': i + 1
+                    'rank': i + 1,
+                    'method': 'shap',
                 })
 
         # Sort by importance
@@ -116,9 +117,14 @@ def compute_shap(model, X, feature_cols, output_dir, sample_size=200):
 
         return shap_importance
 
-    except ImportError:
-        logger.warning("SHAP not installed. Install: pip install shap matplotlib")
-        # Fallback: use built-in XGBoost feature importance
+    except ImportError as exc:
+        # 代码审查 H40 收敛项：shap/matplotlib 已加入 requirements.txt；此处
+        # 回退仅保留给镜像缺依赖的异常环境，且必须明确声明产出的是 XGBoost
+        # 权重而非 SHAP 报告，禁止把 fallback 包装成"SHAP 报告已完成"。
+        logger.warning(
+            "SHAP/matplotlib unavailable (%s); producing XGBoost weight fallback "
+            "importance only — this is NOT a SHAP explanation report", exc
+        )
         importance = model.get_booster().get_score(importance_type='weight')
         result = []
         for i, col in enumerate(feature_cols):
@@ -126,7 +132,8 @@ def compute_shap(model, X, feature_cols, output_dir, sample_size=200):
             result.append({
                 'feature': col,
                 'xgboost_weight': float(importance.get(key, 0)),
-                'rank': i + 1
+                'rank': i + 1,
+                'method': 'xgboost_weight_fallback',
             })
         result.sort(key=lambda x: x['xgboost_weight'], reverse=True)
         with open(os.path.join(output_dir, 'shap_importance.json'), 'w') as f:
@@ -157,6 +164,26 @@ def compute_permutation_importance(model, X, y, feature_cols, output_dir):
 
 
 def main():
+    governed = os.getenv('MLOPS_GOVERNED_EXPLANATION_V1_ENABLED', '').strip().lower()
+    if governed not in {'', 'true', 'false'}:
+        raise ValueError('MLOPS_GOVERNED_EXPLANATION_V1_ENABLED must be explicitly true or false')
+    if governed == 'true':
+        from governed_explanation import run_governed_explanation
+        result = run_governed_explanation(
+            os.getenv('DATA_DIR', '/data'),
+            os.getenv('MODEL_DIR', '/model'),
+            os.getenv('GRAPH_DIR', '/graph'),
+            os.getenv('GNN_DIR', '/gnn'),
+            os.getenv('EVALUATION_DIR', '/evaluation'),
+            os.getenv('OUTPUT_DIR', '/output'),
+        )
+        print(json.dumps({
+            'status': 'PASS',
+            'explanation_id': result['explanation_id'],
+            'explanation_sha256': result['explanation_sha256'],
+            'activation_authorized': result['activation_authorized'],
+        }, sort_keys=True))
+        return
     parser = argparse.ArgumentParser(description='MLOps Model Explainability')
     parser.add_argument('--model', default='/model/model.json', help='Model file path')
     parser.add_argument('--data', default='/data/test.parquet', help='Test data path')
@@ -176,6 +203,7 @@ def main():
 
     # 2. SHAP analysis
     shap_result = compute_shap(model, X, feature_cols, args.output, args.sample_size)
+    shap_method = str(shap_result[0].get('method', 'shap')) if shap_result else 'none'
 
     # 3. Permutation importance (if labels available)
     if y is not None:
@@ -185,7 +213,7 @@ def main():
     report = {
         'model_path': args.model,
         'feature_count': len(feature_cols),
-        'shap_analysis': 'completed' if shap_result else 'fallback',
+        'shap_analysis': 'completed' if shap_method == 'shap' else shap_method,
         'top_features': shap_result[:5] if shap_result else [],
         'output_files': [f for f in os.listdir(args.output) if os.path.isfile(os.path.join(args.output, f))],
     }

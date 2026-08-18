@@ -77,7 +77,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     feature_java = (root / "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/calculator/FeatureCalculator.java").read_text(encoding="utf-8")
     for token in (
         '.setEventType("traffic.feature.stat.v1")', ".setTuple(session.getTuple())",
-        ".addAllEvidenceIds(session.getFlowIdsList())", '.setProducer("flink-feature-job")',
+        ".addAllEvidenceIds(evidenceIds)", '.setProducer("flink-feature-job")',
         ".setCausationId(sourceHeader.getEventId())",
     ):
         if token not in feature_java:
@@ -89,13 +89,23 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     )
     for relative in behavior_files:
         source = (root / relative).read_text(encoding="utf-8")
-        for token in (
-            '.setEventType("traffic.detection.behavior.v1")', ".setTuple(input.getTuple())",
-            ".addAllEvidenceIds(input.getEvidenceIdsList())", '.setProducer("flink-behavior-job")',
-            ".setIdempotencyKey(eventId)",
-        ):
-            if token not in source:
-                errors.append(f"{Path(relative).name} missing {token}")
+        if "BehaviorDetectionEventFactory.build(" not in source:
+            errors.append(f"{Path(relative).name} must delegate to the canonical behavior envelope factory")
+    behavior_factory = (
+        root / "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/BehaviorDetectionEventFactory.java"
+    ).read_text(encoding="utf-8")
+    for token in (
+        'EVENT_TYPE = "traffic.detection.behavior.v1"',
+        'PRODUCER = "flink-behavior-job"',
+        ".setEventType(EVENT_TYPE)",
+        ".setTuple(input.getTuple())",
+        ".addAllEvidenceIds(input.getEvidenceIdsList())",
+        ".setProducer(PRODUCER)",
+        ".setIdempotencyKey(eventId)",
+        'DeterministicId.uuid(',
+    ):
+        if token not in behavior_factory:
+            errors.append(f"BehaviorDetectionEventFactory.java missing {token}")
 
     consumer = (root / "go/control-plane/internal/alert/consumer/kafka_consumer.go").read_text(encoding="utf-8")
     for token in (
@@ -120,7 +130,8 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("probe-agent UUID dependency must enable deterministic v5 identities")
     for token in (
         "deterministic_flow_uuid", "Uuid::new_v5", 'event_type: "traffic.flow.v1"',
-        "aggregate_id: flow_id.clone()", "idempotency_key: event_id", 'producer: "probe-agent"',
+        "aggregate_id: identity.flow_id.clone()", "idempotency_key: identity.idempotency_key",
+        'producer: "probe-agent"',
     ):
         if token not in probe:
             errors.append(f"probe FlowEvent producer missing {token}")

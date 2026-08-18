@@ -1,0 +1,627 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: mlops-governed-training-template
+  namespace: argo
+  labels:
+    app: mlops-training
+    traffic.analysis/milestone: m08-w2d
+spec:
+  entrypoint: governed-model-build
+  serviceAccountName: argo-workflow
+  arguments:
+    parameters:
+    - name: trainer-image
+    - name: trainer-image-digest
+    - name: tenant-id
+    - name: feature-set-id
+    - name: dataset-window-from
+    - name: dataset-window-through
+    - name: dataset-source-watermark
+    - name: dataset-as-of
+    - name: dataset-train-through
+    - name: dataset-validation-through
+    - name: max-extract-rows
+      value: "100000"
+    - name: label-schema-version
+    - name: label-revision-sha256
+    - name: open-set-attack-families
+    - name: isolation-scope-key
+    - name: graph-snapshot-manifest-key
+    - name: graph-nodes-key
+    - name: graph-edges-key
+    - name: train-seed
+      value: "42"
+    - name: gnn-training-run-id
+    - name: gnn-train-seed
+      value: "43"
+    - name: gnn-hidden-size
+      value: "64"
+    - name: gnn-epochs
+      value: "500"
+    - name: gnn-learning-rate
+      value: "0.01"
+    - name: gnn-l2
+      value: "0.0001"
+    - name: gnn-patience
+      value: "30"
+    - name: gnn-source-ablation-kinds
+    - name: evaluation-bootstrap-seed
+      value: "314159"
+    - name: evaluation-bootstrap-rounds
+      value: "1000"
+    - name: evaluation-known-retention-target
+      value: "0.95"
+    - name: quality-gate-min-known-attack-recall
+      value: "0.95"
+    - name: quality-gate-max-false-positive-rate
+      value: "0.05"
+    - name: quality-gate-min-unknown-recall
+      value: "0.80"
+    # MinIO 信任边界：集群内网默认明文；离开集群前必须 MINIO_SECURE=true 并注入 CA。
+    - name: minio-secure
+      value: "false"
+    - name: minio-ca-file
+      value: ""
+    - name: explanation-max-events
+      value: "200"
+    - name: model-id
+    - name: model-version
+    - name: model-runtime-version
+      value: "1.0.0"
+    - name: model-signing-secret-name
+    - name: model-signing-key-id
+    - name: model-registry-url
+      value: http://rule-manager.traffic-analysis.svc:8084
+    - name: model-registration-api-secret-name
+      value: mlops-api-token
+    - name: model-registration-idempotency-key
+  templates:
+  - name: governed-model-build
+    steps:
+    - - name: extract-governed-dataset
+        template: extract-governed-dataset
+    - - name: train-approved-baseline
+        template: train-approved-baseline
+        arguments:
+          artifacts:
+          - name: train-data
+            from: "{{steps.extract-governed-dataset.outputs.artifacts.train-data}}"
+          - name: validation-data
+            from: "{{steps.extract-governed-dataset.outputs.artifacts.validation-data}}"
+          - name: test-data
+            from: "{{steps.extract-governed-dataset.outputs.artifacts.test-data}}"
+          - name: open-set-data
+            from: "{{steps.extract-governed-dataset.outputs.artifacts.open-set-data}}"
+          - name: metadata
+            from: "{{steps.extract-governed-dataset.outputs.artifacts.metadata}}"
+          - name: dataset-manifest
+            from: "{{steps.extract-governed-dataset.outputs.artifacts.dataset-manifest}}"
+      - name: train-gnn-suite
+        template: train-gnn-suite
+        arguments:
+          artifacts:
+          - {name: train-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.train-data}}"}
+          - {name: validation-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.validation-data}}"}
+          - {name: test-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.test-data}}"}
+          - {name: open-set-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.open-set-data}}"}
+          - {name: metadata, from: "{{steps.extract-governed-dataset.outputs.artifacts.metadata}}"}
+          - {name: dataset-manifest, from: "{{steps.extract-governed-dataset.outputs.artifacts.dataset-manifest}}"}
+    - - name: evaluate-governed-baseline
+        template: evaluate-governed-baseline
+        arguments:
+          artifacts:
+          - {name: train-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.train-data}}"}
+          - {name: validation-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.validation-data}}"}
+          - {name: test-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.test-data}}"}
+          - {name: open-set-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.open-set-data}}"}
+          - {name: metadata, from: "{{steps.extract-governed-dataset.outputs.artifacts.metadata}}"}
+          - {name: dataset-manifest, from: "{{steps.extract-governed-dataset.outputs.artifacts.dataset-manifest}}"}
+          - {name: model, from: "{{steps.train-approved-baseline.outputs.artifacts.model}}"}
+          - {name: training-run-manifest, from: "{{steps.train-approved-baseline.outputs.artifacts.training-run-manifest}}"}
+          - {name: gnn-full-predictions, from: "{{steps.train-gnn-suite.outputs.artifacts.gnn-full-predictions}}"}
+          - {name: gnn-no-edges-predictions, from: "{{steps.train-gnn-suite.outputs.artifacts.gnn-no-edges-predictions}}"}
+          - {name: gnn-no-sources-predictions, from: "{{steps.train-gnn-suite.outputs.artifacts.gnn-no-sources-predictions}}"}
+          - {name: gnn-training-run-manifest, from: "{{steps.train-gnn-suite.outputs.artifacts.gnn-training-run-manifest}}"}
+    - - name: evaluate-model-quality-gate
+        template: evaluate-model-quality-gate
+        arguments:
+          artifacts:
+          - {name: evaluation-manifest, from: "{{steps.evaluate-governed-baseline.outputs.artifacts.evaluation-manifest}}"}
+    - - name: explain-governed-candidate
+        template: explain-governed-candidate
+        arguments:
+          artifacts:
+          - {name: train-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.train-data}}"}
+          - {name: validation-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.validation-data}}"}
+          - {name: test-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.test-data}}"}
+          - {name: open-set-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.open-set-data}}"}
+          - {name: metadata, from: "{{steps.extract-governed-dataset.outputs.artifacts.metadata}}"}
+          - {name: dataset-manifest, from: "{{steps.extract-governed-dataset.outputs.artifacts.dataset-manifest}}"}
+          - {name: model, from: "{{steps.train-approved-baseline.outputs.artifacts.model}}"}
+          - {name: training-run-manifest, from: "{{steps.train-approved-baseline.outputs.artifacts.training-run-manifest}}"}
+          - {name: gnn-full-model, from: "{{steps.train-gnn-suite.outputs.artifacts.gnn-full-model}}"}
+          - {name: gnn-full-predictions, from: "{{steps.train-gnn-suite.outputs.artifacts.gnn-full-predictions}}"}
+          - {name: gnn-training-run-manifest, from: "{{steps.train-gnn-suite.outputs.artifacts.gnn-training-run-manifest}}"}
+          - {name: predictions, from: "{{steps.evaluate-governed-baseline.outputs.artifacts.predictions}}"}
+          - {name: evaluation-manifest, from: "{{steps.evaluate-governed-baseline.outputs.artifacts.evaluation-manifest}}"}
+    - - name: export-signed-model-package
+        template: export-signed-model-package
+        arguments:
+          artifacts:
+          - {name: test-data, from: "{{steps.extract-governed-dataset.outputs.artifacts.test-data}}"}
+          - {name: metadata, from: "{{steps.extract-governed-dataset.outputs.artifacts.metadata}}"}
+          - {name: dataset-manifest, from: "{{steps.extract-governed-dataset.outputs.artifacts.dataset-manifest}}"}
+          - {name: model, from: "{{steps.train-approved-baseline.outputs.artifacts.model}}"}
+          - {name: training-run-manifest, from: "{{steps.train-approved-baseline.outputs.artifacts.training-run-manifest}}"}
+          - {name: gnn-full-model, from: "{{steps.train-gnn-suite.outputs.artifacts.gnn-full-model}}"}
+          - {name: gnn-training-run-manifest, from: "{{steps.train-gnn-suite.outputs.artifacts.gnn-training-run-manifest}}"}
+          - {name: evaluation-manifest, from: "{{steps.evaluate-governed-baseline.outputs.artifacts.evaluation-manifest}}"}
+          - {name: explanation-manifest, from: "{{steps.explain-governed-candidate.outputs.artifacts.explanation-manifest}}"}
+    - - name: register-model-metadata
+        template: register-model-metadata
+        arguments:
+          artifacts:
+          - {name: baseline-onnx, from: "{{steps.export-signed-model-package.outputs.artifacts.baseline-onnx}}"}
+          - {name: gnn-model, from: "{{steps.export-signed-model-package.outputs.artifacts.gnn-model}}"}
+          - {name: inference-graph-schema, from: "{{steps.export-signed-model-package.outputs.artifacts.inference-graph-schema}}"}
+          - {name: compatibility-metadata, from: "{{steps.export-signed-model-package.outputs.artifacts.compatibility-metadata}}"}
+          - {name: model-artifact-manifest, from: "{{steps.export-signed-model-package.outputs.artifacts.model-artifact-manifest}}"}
+          - {name: model-package-storage-receipt, from: "{{steps.export-signed-model-package.outputs.artifacts.model-package-storage-receipt}}"}
+          - {name: evaluation-manifest, from: "{{steps.evaluate-governed-baseline.outputs.artifacts.evaluation-manifest}}"}
+
+  - name: extract-governed-dataset
+    inputs:
+      artifacts:
+      - name: isolation-scope
+        path: /tmp/governance/isolation-scope.parquet
+        s3:
+          key: "{{workflow.parameters.isolation-scope-key}}"
+      - name: graph-snapshot-manifest
+        path: /tmp/governance/graph-snapshot-manifest.json
+        s3: {key: "{{workflow.parameters.graph-snapshot-manifest-key}}"}
+    container:
+      image: "{{workflow.parameters.trainer-image}}"
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/extract_data.py"]
+      env:
+      - {name: MLOPS_DATASET_GOVERNANCE_V1_ENABLED, value: "true"}
+      - {name: FEATURE_SET_ID, value: "{{workflow.parameters.feature-set-id}}"}
+      - {name: TENANT_ID, value: "{{workflow.parameters.tenant-id}}"}
+      - {name: DATASET_WINDOW_FROM, value: "{{workflow.parameters.dataset-window-from}}"}
+      - {name: DATASET_WINDOW_THROUGH, value: "{{workflow.parameters.dataset-window-through}}"}
+      - {name: DATASET_SOURCE_WATERMARK, value: "{{workflow.parameters.dataset-source-watermark}}"}
+      - {name: DATASET_AS_OF, value: "{{workflow.parameters.dataset-as-of}}"}
+      - {name: DATASET_TRAIN_THROUGH, value: "{{workflow.parameters.dataset-train-through}}"}
+      - {name: DATASET_VALIDATION_THROUGH, value: "{{workflow.parameters.dataset-validation-through}}"}
+      - {name: MAX_EXTRACT_ROWS, value: "{{workflow.parameters.max-extract-rows}}"}
+      - {name: LABEL_SCHEMA_VERSION, value: "{{workflow.parameters.label-schema-version}}"}
+      - {name: LABEL_REVISION_SHA256, value: "{{workflow.parameters.label-revision-sha256}}"}
+      - {name: OPEN_SET_ATTACK_FAMILIES, value: "{{workflow.parameters.open-set-attack-families}}"}
+      - {name: ISOLATION_SCOPE_PATH, value: /tmp/governance/isolation-scope.parquet}
+      - {name: GRAPH_SNAPSHOT_MANIFEST, value: /tmp/governance/graph-snapshot-manifest.json}
+      - {name: OUTPUT_DIR, value: /tmp/dataset}
+      - {name: CLICKHOUSE_HOST, value: clickhouse-1.middleware.svc}
+      - {name: CLICKHOUSE_PORT, value: "9000"}
+      - {name: CLICKHOUSE_DB, value: traffic}
+      - {name: CLICKHOUSE_USER, value: default}
+      - name: CLICKHOUSE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: traffic-credentials
+            key: CLICKHOUSE_PASSWORD
+      resources:
+        requests: {cpu: "1", memory: 2Gi}
+        limits: {cpu: "2", memory: 4Gi}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: ["ALL"]}
+        runAsNonRoot: true
+        runAsUser: 1000
+    outputs:
+      artifacts:
+      - name: train-data
+        path: /tmp/dataset/train.parquet
+        s3: {key: "mlops/{{workflow.uid}}/dataset/train.parquet"}
+      - name: validation-data
+        path: /tmp/dataset/validation.parquet
+        s3: {key: "mlops/{{workflow.uid}}/dataset/validation.parquet"}
+      - name: test-data
+        path: /tmp/dataset/test.parquet
+        s3: {key: "mlops/{{workflow.uid}}/dataset/test.parquet"}
+      - name: open-set-data
+        path: /tmp/dataset/open_set.parquet
+        s3: {key: "mlops/{{workflow.uid}}/dataset/open_set.parquet"}
+      - name: metadata
+        path: /tmp/dataset/metadata.json
+        s3: {key: "mlops/{{workflow.uid}}/dataset/metadata.json"}
+      - name: dataset-manifest
+        path: /tmp/dataset/dataset-manifest.json
+        s3: {key: "mlops/{{workflow.uid}}/dataset/dataset-manifest.json"}
+
+  - name: train-approved-baseline
+    inputs:
+      artifacts:
+      - {name: train-data, path: /tmp/data/train.parquet}
+      - {name: validation-data, path: /tmp/data/validation.parquet}
+      - {name: test-data, path: /tmp/data/test.parquet}
+      - {name: open-set-data, path: /tmp/data/open_set.parquet}
+      - {name: metadata, path: /tmp/data/metadata.json}
+      - {name: dataset-manifest, path: /tmp/data/dataset-manifest.json}
+    container:
+      image: "{{workflow.parameters.trainer-image}}"
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/train_model.py"]
+      env:
+      - {name: MLOPS_DATASET_GOVERNANCE_V1_ENABLED, value: "true"}
+      - {name: MODEL_TYPE, value: xgboost}
+      - {name: DATA_DIR, value: /tmp/data}
+      - {name: OUTPUT_DIR, value: /tmp/model}
+      - {name: TRAIN_SEED, value: "{{workflow.parameters.train-seed}}"}
+      - {name: TRAIN_CPU_LIMIT, value: "2"}
+      - {name: TRAIN_MEMORY_LIMIT, value: 8Gi}
+      - {name: TRAIN_GPU_LIMIT, value: "0"}
+      - {name: TRAIN_RUN_ID, value: "{{workflow.uid}}"}
+      - {name: TRAINER_IMAGE_DIGEST, value: "{{workflow.parameters.trainer-image-digest}}"}
+      resources:
+        requests: {cpu: "1", memory: 4Gi}
+        limits: {cpu: "2", memory: 8Gi}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: ["ALL"]}
+        runAsNonRoot: true
+        runAsUser: 1000
+    outputs:
+      artifacts:
+      - name: model
+        path: /tmp/model/model.json
+        s3: {key: "mlops/{{workflow.uid}}/model/model.json"}
+      - name: feature-columns
+        path: /tmp/model/feature_columns.json
+        s3: {key: "mlops/{{workflow.uid}}/model/feature_columns.json"}
+      - name: feature-importance
+        path: /tmp/model/feature_importance.json
+        s3: {key: "mlops/{{workflow.uid}}/model/feature_importance.json"}
+      - name: train-config
+        path: /tmp/model/train_config.json
+        s3: {key: "mlops/{{workflow.uid}}/model/train_config.json"}
+      - name: train-metrics
+        path: /tmp/model/train_metrics.json
+        s3: {key: "mlops/{{workflow.uid}}/model/train_metrics.json"}
+      - name: training-run-manifest
+        path: /tmp/model/training-run-manifest.json
+        s3: {key: "mlops/{{workflow.uid}}/model/training-run-manifest.json"}
+
+  - name: train-gnn-suite
+    inputs:
+      artifacts:
+      - {name: train-data, path: /tmp/data/train.parquet}
+      - {name: validation-data, path: /tmp/data/validation.parquet}
+      - {name: test-data, path: /tmp/data/test.parquet}
+      - {name: open-set-data, path: /tmp/data/open_set.parquet}
+      - {name: metadata, path: /tmp/data/metadata.json}
+      - {name: dataset-manifest, path: /tmp/data/dataset-manifest.json}
+      - name: graph-snapshot-manifest
+        path: /tmp/graph/graph-snapshot-manifest.json
+        s3: {key: "{{workflow.parameters.graph-snapshot-manifest-key}}"}
+      - name: graph-nodes
+        path: /tmp/graph/nodes.parquet
+        s3: {key: "{{workflow.parameters.graph-nodes-key}}"}
+      - name: graph-edges
+        path: /tmp/graph/edges.parquet
+        s3: {key: "{{workflow.parameters.graph-edges-key}}"}
+    container:
+      image: "{{workflow.parameters.trainer-image}}"
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/gnn_training.py"]
+      env:
+      - {name: MLOPS_GNN_TRAINING_V1_ENABLED, value: "true"}
+      - {name: DATA_DIR, value: /tmp/data}
+      - {name: GRAPH_DIR, value: /tmp/graph}
+      - {name: OUTPUT_DIR, value: /tmp/gnn}
+      - {name: GNN_TRAIN_RUN_ID, value: "{{workflow.parameters.gnn-training-run-id}}"}
+      - {name: GNN_TRAIN_SEED, value: "{{workflow.parameters.gnn-train-seed}}"}
+      - {name: GNN_HIDDEN_SIZE, value: "{{workflow.parameters.gnn-hidden-size}}"}
+      - {name: GNN_EPOCHS, value: "{{workflow.parameters.gnn-epochs}}"}
+      - {name: GNN_LEARNING_RATE, value: "{{workflow.parameters.gnn-learning-rate}}"}
+      - {name: GNN_L2, value: "{{workflow.parameters.gnn-l2}}"}
+      - {name: GNN_PATIENCE, value: "{{workflow.parameters.gnn-patience}}"}
+      - {name: GNN_SOURCE_ABLATION_KINDS, value: "{{workflow.parameters.gnn-source-ablation-kinds}}"}
+      - {name: TRAINER_IMAGE_DIGEST, value: "{{workflow.parameters.trainer-image-digest}}"}
+      - {name: TRAIN_CPU_LIMIT, value: "2"}
+      - {name: TRAIN_MEMORY_LIMIT, value: 8Gi}
+      - {name: TRAIN_GPU_LIMIT, value: "0"}
+      resources:
+        requests: {cpu: "1", memory: 4Gi}
+        limits: {cpu: "2", memory: 8Gi}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: ["ALL"]}
+        runAsNonRoot: true
+        runAsUser: 1000
+    outputs:
+      artifacts:
+      - {name: gnn-full-model, path: /tmp/gnn/gnn_full-model.npz, s3: {key: "mlops/{{workflow.uid}}/gnn/gnn_full-model.npz"}}
+      - {name: gnn-no-edges-model, path: /tmp/gnn/gnn_no_edges-model.npz, s3: {key: "mlops/{{workflow.uid}}/gnn/gnn_no_edges-model.npz"}}
+      - {name: gnn-no-sources-model, path: /tmp/gnn/gnn_no_sources-model.npz, s3: {key: "mlops/{{workflow.uid}}/gnn/gnn_no_sources-model.npz"}}
+      - {name: gnn-full-predictions, path: /tmp/gnn/gnn_full.parquet, s3: {key: "mlops/{{workflow.uid}}/gnn/gnn_full.parquet"}}
+      - {name: gnn-no-edges-predictions, path: /tmp/gnn/gnn_no_edges.parquet, s3: {key: "mlops/{{workflow.uid}}/gnn/gnn_no_edges.parquet"}}
+      - {name: gnn-no-sources-predictions, path: /tmp/gnn/gnn_no_sources.parquet, s3: {key: "mlops/{{workflow.uid}}/gnn/gnn_no_sources.parquet"}}
+      - {name: gnn-suite-config, path: /tmp/gnn/gnn-suite-config.json, s3: {key: "mlops/{{workflow.uid}}/gnn/gnn-suite-config.json"}}
+      - {name: gnn-training-run-manifest, path: /tmp/gnn/gnn-training-run-manifest.json, s3: {key: "mlops/{{workflow.uid}}/gnn/gnn-training-run-manifest.json"}}
+
+  - name: evaluate-governed-baseline
+    inputs:
+      artifacts:
+      - {name: train-data, path: /tmp/data/train.parquet}
+      - {name: validation-data, path: /tmp/data/validation.parquet}
+      - {name: test-data, path: /tmp/data/test.parquet}
+      - {name: open-set-data, path: /tmp/data/open_set.parquet}
+      - {name: metadata, path: /tmp/data/metadata.json}
+      - {name: dataset-manifest, path: /tmp/data/dataset-manifest.json}
+      - {name: model, path: /tmp/model/model.json}
+      - {name: training-run-manifest, path: /tmp/model/training-run-manifest.json}
+      - {name: gnn-full-predictions, path: /tmp/graph/gnn_full.parquet}
+      - {name: gnn-no-edges-predictions, path: /tmp/graph/gnn_no_edges.parquet}
+      - {name: gnn-no-sources-predictions, path: /tmp/graph/gnn_no_sources.parquet}
+      - {name: gnn-training-run-manifest, path: /tmp/graph/gnn-training-run-manifest.json}
+    container:
+      image: "{{workflow.parameters.trainer-image}}"
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/evaluate_model.py"]
+      env:
+      - {name: MLOPS_GOVERNED_EVALUATION_V1_ENABLED, value: "true"}
+      - {name: DATA_DIR, value: /tmp/data}
+      - {name: MODEL_DIR, value: /tmp/model}
+      - {name: OUTPUT_DIR, value: /tmp/evaluation}
+      - {name: EVALUATION_BOOTSTRAP_SEED, value: "{{workflow.parameters.evaluation-bootstrap-seed}}"}
+      - {name: EVALUATION_BOOTSTRAP_ROUNDS, value: "{{workflow.parameters.evaluation-bootstrap-rounds}}"}
+      - {name: EVALUATION_KNOWN_RETENTION_TARGET, value: "{{workflow.parameters.evaluation-known-retention-target}}"}
+      - {name: EVALUATION_GATE_MIN_KNOWN_ATTACK_RECALL, value: "{{workflow.parameters.quality-gate-min-known-attack-recall}}"}
+      - {name: EVALUATION_GATE_MAX_FALSE_POSITIVE_RATE, value: "{{workflow.parameters.quality-gate-max-false-positive-rate}}"}
+      - {name: EVALUATION_GATE_MIN_UNKNOWN_RECALL, value: "{{workflow.parameters.quality-gate-min-unknown-recall}}"}
+      - {name: EVALUATOR_IMAGE_DIGEST, value: "{{workflow.parameters.trainer-image-digest}}"}
+      - {name: GRAPH_ABLATION_PREDICTIONS_DIR, value: /tmp/graph}
+      resources:
+        requests: {cpu: "1", memory: 2Gi}
+        limits: {cpu: "2", memory: 4Gi}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: ["ALL"]}
+        runAsNonRoot: true
+        runAsUser: 1000
+    outputs:
+      artifacts:
+      - name: predictions
+        path: /tmp/evaluation/governed-predictions.parquet
+        s3: {key: "mlops/{{workflow.uid}}/evaluation/governed-predictions.parquet"}
+      - name: evaluation-manifest
+        path: /tmp/evaluation/evaluation-manifest.json
+        s3: {key: "mlops/{{workflow.uid}}/evaluation/evaluation-manifest.json"}
+
+  - name: evaluate-model-quality-gate
+    inputs:
+      artifacts:
+      - {name: evaluation-manifest, path: /tmp/evaluation/evaluation-manifest.json}
+    container:
+      image: "{{workflow.parameters.trainer-image}}"
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/evaluate_quality_gate.py"]
+      args:
+      - "--manifest"
+      - /tmp/evaluation/evaluation-manifest.json
+      - "--min-known-attack-recall"
+      - "{{workflow.parameters.quality-gate-min-known-attack-recall}}"
+      - "--max-false-positive-rate"
+      - "{{workflow.parameters.quality-gate-max-false-positive-rate}}"
+      - "--min-unknown-recall"
+      - "{{workflow.parameters.quality-gate-min-unknown-recall}}"
+      env:
+      - {name: GATE_REPORT_PATH, value: /tmp/quality-gate-report.json}
+      resources:
+        requests: {cpu: "250m", memory: 256Mi}
+        limits: {cpu: "1", memory: 1Gi}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: ["ALL"]}
+        runAsNonRoot: true
+        runAsUser: 1000
+    outputs:
+      artifacts:
+      - name: quality-gate-report
+        path: /tmp/quality-gate-report.json
+        s3: {key: "mlops/{{workflow.uid}}/evaluation/quality-gate-report.json"}
+        archive: {none: {}}
+
+  - name: explain-governed-candidate
+    inputs:
+      artifacts:
+      - {name: train-data, path: /tmp/data/train.parquet}
+      - {name: validation-data, path: /tmp/data/validation.parquet}
+      - {name: test-data, path: /tmp/data/test.parquet}
+      - {name: open-set-data, path: /tmp/data/open_set.parquet}
+      - {name: metadata, path: /tmp/data/metadata.json}
+      - {name: dataset-manifest, path: /tmp/data/dataset-manifest.json}
+      - {name: model, path: /tmp/model/model.json}
+      - {name: training-run-manifest, path: /tmp/model/training-run-manifest.json}
+      - name: graph-snapshot-manifest
+        path: /tmp/graph/graph-snapshot-manifest.json
+        s3: {key: "{{workflow.parameters.graph-snapshot-manifest-key}}"}
+      - name: graph-nodes
+        path: /tmp/graph/nodes.parquet
+        s3: {key: "{{workflow.parameters.graph-nodes-key}}"}
+      - name: graph-edges
+        path: /tmp/graph/edges.parquet
+        s3: {key: "{{workflow.parameters.graph-edges-key}}"}
+      - {name: gnn-full-model, path: /tmp/gnn/gnn_full-model.npz}
+      - {name: gnn-full-predictions, path: /tmp/gnn/gnn_full.parquet}
+      - {name: gnn-training-run-manifest, path: /tmp/gnn/gnn-training-run-manifest.json}
+      - {name: predictions, path: /tmp/evaluation/governed-predictions.parquet}
+      - {name: evaluation-manifest, path: /tmp/evaluation/evaluation-manifest.json}
+    container:
+      image: "{{workflow.parameters.trainer-image}}"
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/explain_model.py"]
+      env:
+      - {name: MLOPS_GOVERNED_EXPLANATION_V1_ENABLED, value: "true"}
+      - {name: DATA_DIR, value: /tmp/data}
+      - {name: MODEL_DIR, value: /tmp/model}
+      - {name: GRAPH_DIR, value: /tmp/graph}
+      - {name: GNN_DIR, value: /tmp/gnn}
+      - {name: EVALUATION_DIR, value: /tmp/evaluation}
+      - {name: OUTPUT_DIR, value: /tmp/explanation}
+      - {name: EXPLANATION_MAX_EVENTS, value: "{{workflow.parameters.explanation-max-events}}"}
+      - {name: EXPLAINER_IMAGE_DIGEST, value: "{{workflow.parameters.trainer-image-digest}}"}
+      resources:
+        requests: {cpu: "1", memory: 2Gi}
+        limits: {cpu: "2", memory: 4Gi}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: ["ALL"]}
+        runAsNonRoot: true
+        runAsUser: 1000
+    outputs:
+      artifacts:
+      - name: event-explanations
+        path: /tmp/explanation/event-explanations.parquet
+        s3: {key: "mlops/{{workflow.uid}}/explanation/event-explanations.parquet"}
+      - name: model-card
+        path: /tmp/explanation/model-card.json
+        s3: {key: "mlops/{{workflow.uid}}/explanation/model-card.json"}
+      - name: explanation-manifest
+        path: /tmp/explanation/explanation-manifest.json
+        s3: {key: "mlops/{{workflow.uid}}/explanation/explanation-manifest.json"}
+
+  - name: export-signed-model-package
+    inputs:
+      artifacts:
+      - {name: test-data, path: /tmp/data/test.parquet}
+      - {name: metadata, path: /tmp/data/metadata.json}
+      - {name: dataset-manifest, path: /tmp/data/dataset-manifest.json}
+      - {name: model, path: /tmp/model/model.json}
+      - {name: training-run-manifest, path: /tmp/model/training-run-manifest.json}
+      - name: graph-snapshot-manifest
+        path: /tmp/graph/graph-snapshot-manifest.json
+        s3: {key: "{{workflow.parameters.graph-snapshot-manifest-key}}"}
+      - {name: gnn-full-model, path: /tmp/gnn/gnn_full-model.npz}
+      - {name: gnn-training-run-manifest, path: /tmp/gnn/gnn-training-run-manifest.json}
+      - {name: evaluation-manifest, path: /tmp/evaluation/evaluation-manifest.json}
+      - {name: explanation-manifest, path: /tmp/explanation/explanation-manifest.json}
+    container:
+      image: "{{workflow.parameters.trainer-image}}"
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/export_onnx.py"]
+      env:
+      - {name: MLOPS_GOVERNED_MODEL_EXPORT_V1_ENABLED, value: "true"}
+      - {name: DATA_DIR, value: /tmp/data}
+      - {name: MODEL_DIR, value: /tmp/model}
+      - {name: GRAPH_DIR, value: /tmp/graph}
+      - {name: GNN_DIR, value: /tmp/gnn}
+      - {name: EVALUATION_DIR, value: /tmp/evaluation}
+      - {name: EXPLANATION_DIR, value: /tmp/explanation}
+      - {name: OUTPUT_DIR, value: /tmp/export}
+      - {name: MODEL_EXPORT_TENANT_ID, value: "{{workflow.parameters.tenant-id}}"}
+      - {name: MODEL_EXPORT_MODEL_ID, value: "{{workflow.parameters.model-id}}"}
+      - {name: MODEL_EXPORT_VERSION, value: "{{workflow.parameters.model-version}}"}
+      - {name: MODEL_RUNTIME_VERSION, value: "{{workflow.parameters.model-runtime-version}}"}
+      - {name: MODEL_SIGNING_PRIVATE_KEY_FILE, value: /var/run/model-signing/private.pem}
+      - {name: MODEL_SIGNING_PUBLIC_KEY_FILE, value: /var/run/model-signing/public.pem}
+      - {name: MODEL_SIGNING_KEY_ID, value: "{{workflow.parameters.model-signing-key-id}}"}
+      - {name: MLOPS_MODEL_PACKAGE_MINIO_WRITE_ENABLED, value: "true"}
+      - {name: MINIO_ENDPOINT, value: minio.minio.svc:9000}
+      - {name: MINIO_SECURE, value: "{{workflow.parameters.minio-secure}}"}
+      - {name: MINIO_CA_FILE, value: "{{workflow.parameters.minio-ca-file}}"}
+      - {name: MINIO_BUCKET, value: traffic-models}
+      - name: MINIO_ACCESS_KEY
+        valueFrom: {secretKeyRef: {name: minio-mlops-model-writer-credentials, key: accesskey}}
+      - name: MINIO_SECRET_KEY
+        valueFrom: {secretKeyRef: {name: minio-mlops-model-writer-credentials, key: secretkey}}
+      volumeMounts:
+      - {name: model-signing-key, mountPath: /var/run/model-signing, readOnly: true}
+      - {name: model-export-tmp, mountPath: /tmp}
+      resources:
+        requests: {cpu: "1", memory: 2Gi}
+        limits: {cpu: "2", memory: 4Gi}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: ["ALL"]}
+        runAsNonRoot: true
+        runAsUser: 1000
+        readOnlyRootFilesystem: true
+    volumes:
+    - name: model-signing-key
+      secret:
+        secretName: "{{workflow.parameters.model-signing-secret-name}}"
+        items:
+        - {key: private.pem, path: private.pem, mode: 256}
+        - {key: public.pem, path: public.pem, mode: 292}
+    - {name: model-export-tmp, emptyDir: {sizeLimit: 2Gi}}
+    outputs:
+      artifacts:
+      - {name: baseline-onnx, path: /tmp/export/baseline-model.onnx, s3: {key: "mlops/{{workflow.uid}}/export/baseline-model.onnx"}}
+      - {name: gnn-model, path: /tmp/export/gnn-full-model.npz, s3: {key: "mlops/{{workflow.uid}}/export/gnn-full-model.npz"}}
+      - {name: inference-graph-schema, path: /tmp/export/inference-graph-schema.json, s3: {key: "mlops/{{workflow.uid}}/export/inference-graph-schema.json"}}
+      - {name: compatibility-metadata, path: /tmp/export/compatibility-metadata.json, s3: {key: "mlops/{{workflow.uid}}/export/compatibility-metadata.json"}}
+      - {name: model-artifact-manifest, path: /tmp/export/model-artifact-manifest.json, s3: {key: "mlops/{{workflow.uid}}/export/model-artifact-manifest.json"}}
+      - {name: model-package-storage-receipt, path: /tmp/export/model-package-storage-receipt.json, s3: {key: "mlops/{{workflow.uid}}/export/model-package-storage-receipt.json"}}
+
+  - name: register-model-metadata
+    inputs:
+      artifacts:
+      - {name: baseline-onnx, path: /tmp/package/baseline-model.onnx}
+      - {name: gnn-model, path: /tmp/package/gnn-full-model.npz}
+      - {name: inference-graph-schema, path: /tmp/package/inference-graph-schema.json}
+      - {name: compatibility-metadata, path: /tmp/package/compatibility-metadata.json}
+      - {name: model-artifact-manifest, path: /tmp/package/model-artifact-manifest.json}
+      - {name: model-package-storage-receipt, path: /tmp/package/model-package-storage-receipt.json}
+      - {name: evaluation-manifest, path: /tmp/evaluation/evaluation-manifest.json}
+    container:
+      image: "{{workflow.parameters.trainer-image}}"
+      imagePullPolicy: IfNotPresent
+      command: ["/bin/sh", "-c"]
+      args:
+      - |
+        set -eu
+        METRICS="$(python -c 'import json; print(json.dumps(json.load(open("/tmp/evaluation/evaluation-manifest.json"))["metrics"], separators=(",", ":")))')"
+        python /app/scripts/register_model.py \
+          --metrics "$METRICS" \
+          --model-id "{{workflow.parameters.model-id}}" \
+          --model-type onnx
+      env:
+      - {name: MLOPS_GOVERNED_MODEL_REGISTRATION_V1_ENABLED, value: "true"}
+      - {name: MODEL_PACKAGE_DIR, value: /tmp/package}
+      - {name: MODEL_SIGNING_PUBLIC_KEY_FILE, value: /var/run/model-signing-public/public.pem}
+      - {name: MODEL_REGISTRATION_RECEIPT_PATH, value: /tmp/registration/model-registration-receipt.json}
+      - {name: MODEL_REGISTRATION_IDEMPOTENCY_KEY, value: "{{workflow.parameters.model-registration-idempotency-key}}"}
+      - {name: MODEL_REGISTRATION_EVALUATION_MANIFEST, value: /tmp/evaluation/evaluation-manifest.json}
+      - {name: MODEL_REGISTRATION_MIN_KNOWN_ATTACK_RECALL, value: "{{workflow.parameters.quality-gate-min-known-attack-recall}}"}
+      - {name: MODEL_REGISTRATION_MAX_FALSE_POSITIVE_RATE, value: "{{workflow.parameters.quality-gate-max-false-positive-rate}}"}
+      - {name: MODEL_REGISTRATION_MIN_UNKNOWN_RECALL, value: "{{workflow.parameters.quality-gate-min-unknown-recall}}"}
+      - {name: MODEL_REGISTRY_URL, value: "{{workflow.parameters.model-registry-url}}"}
+      - {name: AUTO_ACTIVATE, value: "false"}
+      - name: API_TOKEN
+        valueFrom: {secretKeyRef: {name: "{{workflow.parameters.model-registration-api-secret-name}}", key: token}}
+      volumeMounts:
+      - {name: model-signing-public-key, mountPath: /var/run/model-signing-public, readOnly: true}
+      - {name: model-registration-tmp, mountPath: /tmp}
+      resources:
+        requests: {cpu: "250m", memory: 256Mi}
+        limits: {cpu: "1", memory: 1Gi}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: ["ALL"]}
+        runAsNonRoot: true
+        runAsUser: 1000
+        readOnlyRootFilesystem: true
+    volumes:
+    - name: model-signing-public-key
+      secret:
+        secretName: "{{workflow.parameters.model-signing-secret-name}}"
+        items:
+        - {key: public.pem, path: public.pem, mode: 292}
+    - {name: model-registration-tmp, emptyDir: {sizeLimit: 2Gi}}
+    outputs:
+      artifacts:
+      - name: model-registration-receipt
+        path: /tmp/registration/model-registration-receipt.json
+        s3: {key: "mlops/{{workflow.uid}}/registration/model-registration-receipt.json"}

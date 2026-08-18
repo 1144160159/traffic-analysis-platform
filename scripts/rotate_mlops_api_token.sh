@@ -9,12 +9,17 @@ traffic_namespace="${TRAFFIC_NAMESPACE:-traffic-analysis}"
 argo_namespace="${ARGO_NAMESPACE:-argo}"
 token_ttl_seconds="${MLOPS_TOKEN_TTL_SECONDS:-604800}"
 
+# 代理环境会致 kubectl TLS 超时,统一清理代理后调用(agent.md §3)。
+kctl() {
+  env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy kubectl "$@"
+}
+
 if ! [[ "$token_ttl_seconds" =~ ^[0-9]+$ ]] || (( token_ttl_seconds < 300 )); then
   echo "MLOPS_TOKEN_TTL_SECONDS must be an integer of at least 300" >&2
   exit 2
 fi
 
-jwt_secret_b64=$(kubectl -n "$traffic_namespace" get secret traffic-credentials -o jsonpath='{.data.JWT_SECRET}')
+jwt_secret_b64=$(kctl -n "$traffic_namespace" get secret traffic-credentials -o jsonpath='{.data.JWT_SECRET}')
 mlops_service_token=$(JWT_SECRET_B64="$jwt_secret_b64" TOKEN_TTL_SECONDS="$token_ttl_seconds" node - <<'NODE'
 const crypto = require('crypto');
 const now = Math.floor(Date.now() / 1000);
@@ -33,10 +38,10 @@ process.stdout.write(`${input}.${crypto.createHmac('sha256', key).update(input).
 NODE
 )
 
-kubectl -n "$argo_namespace" create secret generic mlops-api-token \
+kctl -n "$argo_namespace" create secret generic mlops-api-token \
   --from-literal=token="$mlops_service_token" \
-  --dry-run=client -o yaml | kubectl apply -f -
-kubectl -n "$argo_namespace" annotate secret mlops-api-token \
+  --dry-run=client -o yaml | kctl apply -f -
+kctl -n "$argo_namespace" annotate secret mlops-api-token \
   traffic.openai.com/rotated-at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   traffic.openai.com/rotation-window="${token_ttl_seconds}s" --overwrite
 

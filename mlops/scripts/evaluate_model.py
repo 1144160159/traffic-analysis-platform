@@ -28,7 +28,13 @@ import logging
 from typing import Tuple, Dict, Any
 import warnings
 
-warnings.filterwarnings('ignore')
+# 禁止模块级全局吞掉 warning：已知噪音在调用点用 catch_warnings 局部抑制，
+# 避免掩盖数据/API 兼容问题（代码审查 H40 收敛项）。
+_DEPRECATION_WARNINGS = (
+    UserWarning,
+    FutureWarning,
+    DeprecationWarning,
+)
 
 # 配置日志
 logging.basicConfig(
@@ -235,11 +241,14 @@ def evaluate_model(model, X: pd.DataFrame, y: pd.Series, model_type: str) -> Tup
         best_threshold_idx = 0
         best_threshold = 0.5
     
-    logger.info(f"\nBest Threshold Analysis (maximizing F1):")
+    logger.info(f"\nBest Threshold Analysis (diagnostic only; threshold must be locked BEFORE prediction):")
     logger.info(f"  - Threshold:  {best_threshold:.4f}")
     logger.info(f"  - Precision:  {precision_curve[best_threshold_idx]:.4f}")
     logger.info(f"  - Recall:     {recall_curve[best_threshold_idx]:.4f}")
     logger.info(f"  - F1 Score:   {f1_scores[best_threshold_idx]:.4f}")
+    logger.info("  ⚠  This threshold is selected on the test set and is NOT used to")
+    logger.info("     classify, gate or promote. Selection on test leaks tuning; the")
+    logger.info("     governed pipeline locks the threshold before prediction.")
     
     # 构建完整指标字典
     metrics = {
@@ -250,7 +259,7 @@ def evaluate_model(model, X: pd.DataFrame, y: pd.Series, model_type: str) -> Tup
         'f1_score': float(f1),
         'auc_roc': float(auc_roc),
         'auc_pr': float(auc_pr),
-        
+
         # 混淆矩阵
         'confusion_matrix': {
             'tn': int(tn),
@@ -258,17 +267,21 @@ def evaluate_model(model, X: pd.DataFrame, y: pd.Series, model_type: str) -> Tup
             'fn': int(fn),
             'tp': int(tp),
         },
-        
+
+        # 误报率（任务书口径 FP/(FP+TN)）
+        'false_positive_rate': float(fp / (fp + tn)) if (fp + tn) > 0 else 0.0,
+
         # 样本统计
         'test_samples': len(y),
         'positive_samples': int(y.sum()),
         'negative_samples': int((y == 0).sum()),
-        
+
         # 分类报告
         'classification_report': report,
-        
-        # 最佳阈值
+
+        # 最佳阈值（仅诊断：阈值必须在预测前冻结，禁止在 test 上选阈值用于门禁）
         'best_threshold': float(best_threshold),
+        'best_threshold_is_diagnostic_only': True,
         'best_threshold_metrics': {
             'precision': float(precision_curve[best_threshold_idx]),
             'recall': float(recall_curve[best_threshold_idx]),
@@ -333,6 +346,18 @@ def save_metrics(metrics: Dict[str, Any], output_dir: str):
         f.write(str(metrics['f1_score']))
     
     logger.info(f"  ✓ Saved F1 score: {f1_path}")
+
+    # 2b. Accuracy 与误报率(供 Argo Workflow 验收口径门禁:
+    # accuracy >= 0.95 且 false_positive_rate <= 0.05,与任务书口径一致)
+    accuracy_path = os.path.join(output_dir, 'accuracy.txt')
+    with open(accuracy_path, 'w') as f:
+        f.write(str(metrics['accuracy']))
+
+    fpr_path = os.path.join(output_dir, 'false_positive_rate.txt')
+    with open(fpr_path, 'w') as f:
+        f.write(str(metrics['false_positive_rate']))
+
+    logger.info(f"  ✓ Saved accuracy={metrics['accuracy']} fpr={metrics['false_positive_rate']}")
     
     # 3. 简化摘要
     summary = {
@@ -434,6 +459,47 @@ def generate_error_analysis(y_true: pd.Series, y_pred: np.ndarray, y_pred_proba:
 
 def main():
     """主函数"""
+
+    governed_value = os.getenv('MLOPS_GOVERNED_EVALUATION_V1_ENABLED', '').strip().lower()
+    if governed_value not in {'', 'true', 'false'}:
+        raise ValueError('MLOPS_GOVERNED_EVALUATION_V1_ENABLED must be explicitly true or false')
+    if governed_value == 'true':
+        from governed_evaluation import run_governed_evaluation
+        from evaluate_quality_gate import evaluate_manifest_gate
+        result = run_governed_evaluation(
+            os.getenv('DATA_DIR', '/data'),
+            os.getenv('MODEL_DIR', '/model'),
+            os.getenv('OUTPUT_DIR', '/output'),
+        )
+        # 质量门禁：基于 evaluation-manifest 的 95% CI 判定（预警准确率/误报率/
+        # unknown recall），不达标时本步骤 FAIL 并终止，禁止无条件 PASS。
+        min_kar = float(os.getenv('EVALUATION_GATE_MIN_KNOWN_ATTACK_RECALL', '0.95'))
+        max_fpr = float(os.getenv('EVALUATION_GATE_MAX_FALSE_POSITIVE_RATE', '0.05'))
+        min_uk = float(os.getenv('EVALUATION_GATE_MIN_UNKNOWN_RECALL', '0.80'))
+        passed, gate_checks = evaluate_manifest_gate(
+            result,
+            min_known_attack_recall=min_kar,
+            max_false_positive_rate=max_fpr,
+            min_unknown_recall=min_uk,
+        )
+        output = {
+            'status': 'PASS' if passed else 'FAIL',
+            'evaluation_id': result['evaluation_id'],
+            'evaluation_sha256': result['evaluation_sha256'],
+            'activation_authorized': result['activation_authorized'],
+            'graph_ablation_state': result['graph_ablations']['state'],
+            'quality_gate': gate_checks,
+        }
+        print(json.dumps(output, sort_keys=True))
+        if not passed:
+            sys.exit(1)
+        return
+    
+    # 旧版（legacy）路径：仅保留向后兼容，已显式废弃，生产必须走 governed 路径。
+    logger.warning(
+        "Legacy evaluation path is deprecated and does not participate in the "
+        "governed 95%/5% gate; enable MLOPS_GOVERNED_EVALUATION_V1_ENABLED=true"
+    )
     
     # 读取环境变量
     model_type = os.getenv('MODEL_TYPE', 'xgboost').lower()
@@ -504,12 +570,25 @@ def main():
         logger.info(f"  🎯 Best Threshold: {metrics['best_threshold']:.4f}")
         logger.info("")
         
-        # 检查部署条件
-        if metrics['f1_score'] >= min_f1_score:
-            logger.info(f"✅ Model MEETS deployment criteria (F1 {metrics['f1_score']:.4f} >= {min_f1_score})")
+        # 检查部署条件（legacy 路径，仅作向后兼容提示；正式门禁由 governed 路径承担）
+        min_accuracy = float(os.getenv('MIN_ACCURACY', '0.95'))
+        max_false_positive_rate = float(os.getenv('MAX_FALSE_POSITIVE_RATE', '0.05'))
+        cm = metrics['confusion_matrix']
+        accuracy_gate = metrics['accuracy'] >= min_accuracy
+        fpr = cm['fp'] / (cm['fp'] + cm['tn']) if (cm['fp'] + cm['tn']) > 0 else 0.0
+        fpr_gate = fpr <= max_false_positive_rate
+        f1_gate = metrics['f1_score'] >= min_f1_score
+        if accuracy_gate and fpr_gate and f1_gate:
+            logger.info(f"✅ Model MEETS legacy deployment criteria "
+                        f"(Accuracy {metrics['accuracy']:.4f} >= {min_accuracy}, "
+                        f"FPR {fpr:.4f} <= {max_false_positive_rate}, "
+                        f"F1 {metrics['f1_score']:.4f} >= {min_f1_score})")
             logger.info("   → Model will be registered and deployed")
         else:
-            logger.warning(f"⚠️  Model does NOT meet deployment criteria (F1 {metrics['f1_score']:.4f} < {min_f1_score})")
+            logger.warning(f"⚠️  Model does NOT meet legacy deployment criteria "
+                           f"(Accuracy {metrics['accuracy']:.4f} vs {min_accuracy}, "
+                           f"FPR {fpr:.4f} vs {max_false_positive_rate}, "
+                           f"F1 {metrics['f1_score']:.4f} vs {min_f1_score})")
             logger.warning("   → Model will NOT be registered")
         
         logger.info("")

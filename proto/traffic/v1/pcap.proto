@@ -27,6 +27,19 @@ message PcapIndexMeta {
   string bloom_filter_b64 = 13;
   repeated string community_ids = 14;
   int64 created_ts = 15;
+
+  // Object-store manifest fields are additive. Kafka source coordinates remain
+  // transport authority and MUST NOT be copied into this wire message.
+  string bucket = 16;
+  string object_version = 17;
+  string etag = 18;
+  uint64 original_size = 19;
+  uint64 stored_size = 20;
+  string compression = 21;
+  uint32 manifest_version = 22;
+  // Additive: total packet count observed in the archived capture window.
+  // Zero means the producer did not record a count (legacy wire-compatible).
+  uint64 packet_count = 23;
 }
 
 // PcapIndexBatch PCAP 索引批次

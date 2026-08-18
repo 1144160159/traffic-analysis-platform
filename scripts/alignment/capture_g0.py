@@ -157,6 +157,43 @@ def main() -> int:
 
     before = _git_snapshot()
     source_snapshot = build_snapshot()
+    provenance = source_snapshot.get("artifact_provenance", {})
+    if provenance.get("status") != "PASS":
+        after = _git_snapshot()
+        manifest = {
+            "schema_version": 1,
+            "run_id": args.run_id,
+            "gate": "G0",
+            "profile": args.profile,
+            "status": "BLOCKED",
+            "captured_at": datetime.now(timezone.utc).isoformat(),
+            "candidate_before": before,
+            "candidate_after": after,
+            "candidate_source": source_snapshot,
+            "commands": [],
+            "inventory_reference": None,
+            "blocking_stage": "candidate-artifact-provenance",
+            "blocking_codes": provenance.get("blocking_codes", []),
+            "scope": {
+                "included": ["pre-execution candidate artifact provenance guard"],
+                "excluded": ["all G0 commands because provenance failed closed"],
+            },
+            "g7_status": "OPEN",
+            "g8_status": "BLOCKED",
+        }
+        manifest_path = output / "manifest.json"
+        manifest_path.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        print(json.dumps({
+            "status": "BLOCKED",
+            "blocking_stage": manifest["blocking_stage"],
+            "blocking_codes": manifest["blocking_codes"],
+            "manifest": str(manifest_path),
+            "manifest_sha256": _sha256(manifest_path),
+        }, ensure_ascii=False, indent=2), flush=True)
+        return 2
     commands = {
         "full": FULL_COMMANDS,
         "probe-publisher": PROBE_PUBLISHER_COMMANDS,

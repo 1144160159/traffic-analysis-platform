@@ -12,7 +12,23 @@ from build_feature_contract_registry import OUTPUT, ROOT, _canonical_sha256, bui
 
 EXPECTED_FEATURES = 54
 EXPECTED_STANDARD_SCOPE_FEATURES = 38
-EXPECTED_BACKLOG_CONTRACT_GAPS = 16
+EXPECTED_BACKLOG_CONTRACT_GAPS = {
+    "F-COMPLIANCE-001",
+    "F-DEPLOY-001",
+    "F-MLOPS-001",
+    "F-NOTIFICATION-001",
+    "F-NOTIFY-001",
+    "F-PREF-001",
+    "F-PROBE-002",
+    "F-RULE-001",
+    "F-SCREEN-001",
+    "F-SETTINGS-001",
+}
+EXPECTED_M09_PRODUCT_OWNERS = {
+    "F-ENCRYPTED-001": "encrypted-traffic-domain-owner",
+    "F-ENCRYPTED-002": "encrypted-traffic-domain-owner",
+    "F-FORENSICS-001": "forensics-domain-owner",
+}
 EXPECTED_NON_DRAFT_OPENAPI_BINDING_GAPS: set[str] = set()
 EXPECTED_PILOTS = {"asset_vertical", "topic_snapshot_and_actions", "alert_query_and_actions"}
 
@@ -71,6 +87,7 @@ def verify() -> dict[str, Any]:
 
     formal = [item for item in features if item.get("formal_contract_present")]
     standard = [item for item in features if item.get("standard_24w_scope")]
+    by_feature_id = {item["feature_id"]: item for item in features}
     if len(standard) != EXPECTED_STANDARD_SCOPE_FEATURES:
         errors.append("standard-scope feature count drifted from 38")
     for entry in formal:
@@ -94,6 +111,17 @@ def verify() -> dict[str, Any]:
             errors.append(f"{entry.get('feature_id')}: missing formal contract gap was hidden")
     if any(item.get("priority") == "P0" and not item.get("formal_contract_present") for item in features):
         errors.append("all P0 feature IDs must have formal contracts")
+    for feature_id, owner in EXPECTED_M09_PRODUCT_OWNERS.items():
+        entry = by_feature_id.get(feature_id) or {}
+        contract = entry.get("formal_contract") or {}
+        if (
+            entry.get("accountable") != owner
+            or entry.get("formal_contract_present") is not True
+            or contract.get("validation_errors")
+        ):
+            errors.append(
+                f"{feature_id}: M09 product contract or canonical owner drifted"
+            )
 
     integrity = actual.get("integrity") or {}
     if integrity.get("duplicate_contract_ids"):
@@ -150,8 +178,10 @@ def verify() -> dict[str, Any]:
     if set(expected_coverage["non_draft_openapi_binding_gaps"]) != EXPECTED_NON_DRAFT_OPENAPI_BINDING_GAPS:
         errors.append("non-draft OpenAPI binding gaps changed without explicit W1 adjudication")
     if (
-        len(expected_coverage["missing_backlog_contracts"]) != EXPECTED_BACKLOG_CONTRACT_GAPS
-        or len(coverage.get("missing_backlog_contracts") or []) != EXPECTED_BACKLOG_CONTRACT_GAPS
+        set(expected_coverage["missing_backlog_contracts"])
+        != EXPECTED_BACKLOG_CONTRACT_GAPS
+        or set(coverage.get("missing_backlog_contracts") or [])
+        != EXPECTED_BACKLOG_CONTRACT_GAPS
     ):
         errors.append("repository evidence cannot hide or invent backlog contract gaps")
 

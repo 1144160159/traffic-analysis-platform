@@ -220,6 +220,8 @@ TLS_VALIDATION_BLOCKERS=0
 tmp_dir="$(mktemp -d)"
 cleanup() {
   rm -rf "$tmp_dir"
+  # 清理可能残留于 pod 内的 SCRAM 属性文件,避免凭证落盘于 pod。
+  kctl -n middleware exec kafka-0 -- rm -f /tmp/seed-broker-scram.properties /tmp/seed-client-scram.properties >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -280,16 +282,37 @@ broker_password="$(secret_value middleware traffic-credentials KAFKA_INTER_BROKE
 SCRAM_SEED_RC=0
 if [[ "$SEED_SCRAM" == "true" ]]; then
   set +e
-  kctl -n middleware exec kafka-0 -- /opt/kafka/bin/kafka-configs.sh \
-    --bootstrap-server kafka-bootstrap.middleware.svc:9092 \
-    --alter --add-config "SCRAM-SHA-512=[password=$broker_password]" \
-    --entity-type users --entity-name "$broker_username" >"$LOG_DIR/kafka-seed-broker-user.txt" 2>"$LOG_DIR/kafka-seed-broker-user.err"
-  broker_seed_rc=$?
-  kctl -n middleware exec kafka-0 -- /opt/kafka/bin/kafka-configs.sh \
-    --bootstrap-server kafka-bootstrap.middleware.svc:9092 \
-    --alter --add-config "SCRAM-SHA-512=[password=$client_password]" \
-    --entity-type users --entity-name "$client_username" >"$LOG_DIR/kafka-seed-client-user.txt" 2>"$LOG_DIR/kafka-seed-client-user.err"
-  client_seed_rc=$?
+  # SCRAM 凭证经 stdin 写入 pod 内属性文件(不进命令行/审计日志),随后用 --add-config-file 执行。
+  kctl -n middleware exec -i kafka-0 -- tee /tmp/seed-broker-scram.properties >/dev/null 2>&1 <<EOF
+SCRAM-SHA-512=[password=$broker_password]
+EOF
+  broker_write_rc=$?
+  if [[ "$broker_write_rc" -eq 0 ]]; then
+    kctl -n middleware exec kafka-0 -- /opt/kafka/bin/kafka-configs.sh \
+      --bootstrap-server kafka-bootstrap.middleware.svc:9092 \
+      --alter --add-config-file /tmp/seed-broker-scram.properties \
+      --entity-type users --entity-name "$broker_username" >"$LOG_DIR/kafka-seed-broker-user.txt" 2>"$LOG_DIR/kafka-seed-broker-user.err"
+    broker_seed_rc=$?
+    kctl -n middleware exec kafka-0 -- rm -f /tmp/seed-broker-scram.properties >/dev/null 2>&1 || true
+  else
+    broker_seed_rc=1
+    echo "failed to write broker scram properties into pod" >"$LOG_DIR/kafka-seed-broker-user.err"
+  fi
+  kctl -n middleware exec -i kafka-0 -- tee /tmp/seed-client-scram.properties >/dev/null 2>&1 <<EOF
+SCRAM-SHA-512=[password=$client_password]
+EOF
+  client_write_rc=$?
+  if [[ "$client_write_rc" -eq 0 ]]; then
+    kctl -n middleware exec kafka-0 -- /opt/kafka/bin/kafka-configs.sh \
+      --bootstrap-server kafka-bootstrap.middleware.svc:9092 \
+      --alter --add-config-file /tmp/seed-client-scram.properties \
+      --entity-type users --entity-name "$client_username" >"$LOG_DIR/kafka-seed-client-user.txt" 2>"$LOG_DIR/kafka-seed-client-user.err"
+    client_seed_rc=$?
+    kctl -n middleware exec kafka-0 -- rm -f /tmp/seed-client-scram.properties >/dev/null 2>&1 || true
+  else
+    client_seed_rc=1
+    echo "failed to write client scram properties into pod" >"$LOG_DIR/kafka-seed-client-user.err"
+  fi
   set -e
   if [[ "$broker_seed_rc" -ne 0 || "$client_seed_rc" -ne 0 ]]; then
     SCRAM_SEED_RC=1
@@ -326,10 +349,11 @@ rm -f "$LOG_DIR/kafka-scram-users-raw.txt"
 SCRAM_CLIENT_PRESENT=0
 SCRAM_BROKER_PRESENT=0
 if [[ "$SCRAM_DESCRIBE_RC" -eq 0 ]]; then
-  if rg -q "(^|[ \"'])${client_username}([ \"']|$)|SCRAM credential configs for user-principal '${client_username}'" "$LOG_DIR/kafka-scram-users.txt"; then
+  # 用户名按固定字符串匹配,禁止作为正则注入(agent.md §2 凭证/输入校验)。
+  if rg -F -q "SCRAM credential configs for user-principal '${client_username}'" "$LOG_DIR/kafka-scram-users.txt"; then
     SCRAM_CLIENT_PRESENT=1
   fi
-  if rg -q "(^|[ \"'])${broker_username}([ \"']|$)|SCRAM credential configs for user-principal '${broker_username}'" "$LOG_DIR/kafka-scram-users.txt"; then
+  if rg -F -q "SCRAM credential configs for user-principal '${broker_username}'" "$LOG_DIR/kafka-scram-users.txt"; then
     SCRAM_BROKER_PRESENT=1
   fi
 fi

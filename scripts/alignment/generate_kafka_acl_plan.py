@@ -19,7 +19,13 @@ GENERATED_IDENTITIES = ROOT / "deployments/kubernetes/security/generated-kafka-s
 GENERATED_SCRAM_BOOTSTRAP = ROOT / "deployments/kubernetes/init-jobs/00-kafka-service-principals.yaml"
 SAFE_VALUE = re.compile(r"^[A-Za-z0-9._:-]+$")
 SAFE_ENV = re.compile(r"^[A-Z][A-Z0-9_]+$")
+SAFE_MANIFEST = re.compile(r"^deployments/[A-Za-z0-9._/-]+\.ya?ml$")
 KINDS = {"service", "consumer", "flink_job", "external_producer", "replayer", "operator"}
+M03_SHADOW_GROUP_PREFIXES = {
+    "flink-session-job": "flink-session-job-shadow-",
+    "flink-feature-job": "flink-feature-job-shadow-",
+    "flink-log-job": "flink-log-job-shadow-",
+}
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -31,6 +37,8 @@ def validate_documents(acl: dict[str, Any], topics: dict[str, Any]) -> dict[str,
     policy = acl.get("policy") or {}
     if policy.get("resource_pattern_type") != "literal":
         errors.append("ACL resource_pattern_type must be literal")
+    if policy.get("consumer_group_prefix_pattern_type") != "prefixed":
+        errors.append("ACL consumer group prefix pattern type must be prefixed")
     if policy.get("forbid_wildcards") is not True:
         errors.append("ACL policy must forbid wildcards")
     forbidden = set(policy.get("forbidden_operations") or [])
@@ -81,6 +89,7 @@ def validate_documents(acl: dict[str, Any], topics: dict[str, Any]) -> dict[str,
             password_env = str(credential.get("password_env", ""))
             remote_property = str(credential.get("remote_password_property", ""))
             workload = str(credential.get("workload", ""))
+            external_secret_manifest = credential.get("external_secret_manifest")
             expected_username = kafka_principal.removeprefix("User:")
             expected_namespace = "flink" if item.get("kind") == "flink_job" else "traffic-analysis"
             if namespace != expected_namespace:
@@ -95,6 +104,15 @@ def validate_documents(acl: dict[str, Any], topics: dict[str, Any]) -> dict[str,
                 errors.append(f"workload principal {principal_id} remote property must match password env")
             if workload != principal_id:
                 errors.append(f"workload principal {principal_id} workload must match its id")
+            if external_secret_manifest is not None:
+                if (
+                    not isinstance(external_secret_manifest, str)
+                    or not SAFE_MANIFEST.fullmatch(external_secret_manifest)
+                    or not (ROOT / external_secret_manifest).is_file()
+                ):
+                    errors.append(
+                        f"workload principal {principal_id} has invalid external secret manifest"
+                    )
             deterministic_username = (
                 f"traffic-{principal_id.removesuffix('-job')}"
                 if item.get("kind") == "flink_job"
@@ -141,6 +159,7 @@ def validate_documents(acl: dict[str, Any], topics: dict[str, Any]) -> dict[str,
         for consumer in consumers:
             principal_id = str(consumer.get("principal", ""))
             groups = consumer.get("groups")
+            group_prefixes = consumer.get("group_prefixes", [])
             if principal_id not in principals:
                 errors.append(f"topic {topic} references unknown consumer {principal_id}")
             else:
@@ -154,6 +173,26 @@ def validate_documents(acl: dict[str, Any], topics: dict[str, Any]) -> dict[str,
             for group in groups:
                 if not isinstance(group, str) or not SAFE_VALUE.fullmatch(group) or "*" in group:
                     errors.append(f"topic {topic} consumer {principal_id} has unsafe group {group!r}")
+            if not isinstance(group_prefixes, list):
+                errors.append(f"topic {topic} consumer {principal_id} group_prefixes must be an array")
+                continue
+            if len(group_prefixes) != len(set(group_prefixes)):
+                errors.append(f"topic {topic} consumer {principal_id} repeats a group prefix")
+            expected_prefix = M03_SHADOW_GROUP_PREFIXES.get(principal_id)
+            if group_prefixes and group_prefixes != [expected_prefix]:
+                errors.append(
+                    f"topic {topic} consumer {principal_id} has unauthorized shadow group prefix"
+                )
+            for prefix in group_prefixes:
+                if (
+                    not isinstance(prefix, str)
+                    or not SAFE_VALUE.fullmatch(prefix)
+                    or "*" in prefix
+                    or not prefix.endswith("-shadow-")
+                ):
+                    errors.append(
+                        f"topic {topic} consumer {principal_id} has unsafe group prefix {prefix!r}"
+                    )
 
     missing = sorted(set(canonical) - set(bindings))
     extra = sorted(set(bindings) - set(canonical))
@@ -209,30 +248,33 @@ def validate_documents(acl: dict[str, Any], topics: dict[str, Any]) -> dict[str,
 def _grant_lines(acl: dict[str, Any]) -> list[str]:
     principals = {item["id"]: item["principal"] for item in acl["principals"]}
     policy = acl["policy"]
-    grants: set[tuple[str, str, str, str]] = set()
+    grants: set[tuple[str, str, str, str, str]] = set()
     producer_ids: set[str] = set()
     for binding in acl["topic_bindings"]:
         topic = binding["topic"]
         for principal_id in binding["producers"]:
             producer_ids.add(principal_id)
             for operation in policy["producer_topic_operations"]:
-                grants.add((principals[principal_id], "topic", topic, operation))
+                grants.add((principals[principal_id], "topic", topic, operation, "literal"))
         for consumer in binding["consumers"]:
             principal = principals[consumer["principal"]]
             for operation in policy["consumer_topic_operations"]:
-                grants.add((principal, "topic", topic, operation))
+                grants.add((principal, "topic", topic, operation, "literal"))
             for group in consumer["groups"]:
                 for operation in policy["consumer_group_operations"]:
-                    grants.add((principal, "group", group, operation))
+                    grants.add((principal, "group", group, operation, "literal"))
+            for prefix in consumer.get("group_prefixes", []):
+                for operation in policy["consumer_group_operations"]:
+                    grants.add((principal, "group", prefix, operation, "prefixed"))
     for principal_id in producer_ids:
         for operation in policy["producer_cluster_operations"]:
-            grants.add((principals[principal_id], "cluster", "kafka-cluster", operation))
+            grants.add((principals[principal_id], "cluster", "kafka-cluster", operation, "literal"))
 
     lines: list[str] = []
-    for principal, resource_type, resource, operation in sorted(grants):
+    for principal, resource_type, resource, operation, pattern in sorted(grants):
         resource_flag = "--cluster" if resource_type == "cluster" else f"--{resource_type} {resource}"
         lines.append(
-            f'apply_acl --allow-principal {principal} --operation {operation} {resource_flag}'
+            f'apply_{pattern}_acl --allow-principal {principal} --operation {operation} {resource_flag}'
         )
     return lines
 
@@ -247,14 +289,19 @@ BOOTSTRAP=${{1:?bootstrap server required}}
 CLIENT_CONFIG=${{2:?client properties required}}
 ACL_BIN=${{3:?kafka-acls.sh path required}}
 
-apply_acl() {{
+apply_literal_acl() {{
   "$ACL_BIN" --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \\
     --add --resource-pattern-type literal "$@"
 }}
 
+apply_prefixed_acl() {{
+  "$ACL_BIN" --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
+    --add --resource-pattern-type prefixed "$@"
+}}
+
 # Generated from contracts/events/kafka-acl-catalog.v1.json. Do not edit.
 {body}
-echo "Applied {len(lines)} literal least-privilege Kafka ACL grants."
+echo "Applied {len(lines)} literal/prefixed least-privilege Kafka ACL grants."
 '''
 
 
@@ -319,6 +366,8 @@ def render_service_identities(acl: dict[str, Any]) -> str:
         )
     for item in workloads:
         credential = item["credential"]
+        if credential.get("external_secret_manifest"):
+            continue
         username = item["principal"].removeprefix("User:")
         lines.extend(
             [

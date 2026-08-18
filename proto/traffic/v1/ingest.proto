@@ -9,6 +9,7 @@ package traffic.v1;
 import "traffic/v1/flow.proto";
 import "traffic/v1/session.proto";
 import "traffic/v1/pcap.proto";
+import "traffic/v1/asset.proto";
 
 option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
 option java_package = "com.traffic.proto.traffic.v1";
@@ -29,6 +30,11 @@ service IngestService {
   // 上报 PCAP 索引元数据
   rpc UploadPcapIndex(UploadPcapIndexRequest) returns (UploadPcapIndexResponse);
 
+  // Upload passive ARP/DHCP observations through the authenticated probe
+  // channel. The Gateway owns Kafka credentials and returns broker-scoped
+  // exact item results; probes never publish asset.bindings.v1 directly.
+  rpc UploadAssetBindings(UploadAssetBindingsRequest) returns (UploadAssetBindingsResponse);
+
   // 探针心跳与配置同步
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 
@@ -41,6 +47,8 @@ service IngestService {
 message UploadFlowsRequest {
   repeated FlowEvent events = 1;
   string compression = 2;
+  // Highest exact-set response revision the client can durably apply.
+  uint32 accepted_response_revision = 3;
 }
 
 message UploadFlowsResponse {
@@ -48,18 +56,51 @@ message UploadFlowsResponse {
   int32 rejected = 2;
   repeated string rejected_ids = 3;
   string message = 4;
+  // Additive exact-set acknowledgement. When present, there is exactly one
+  // result for every request input_index; old aggregate fields remain for
+  // wire compatibility but cannot override these dispositions.
+  repeated FlowItemResult item_results = 5;
+  uint32 response_revision = 6;
+}
+
+enum FlowItemDisposition {
+  FLOW_ITEM_DISPOSITION_UNSPECIFIED = 0;
+  // The exact message received the configured Kafka broker acknowledgement.
+  FLOW_ITEM_DISPOSITION_KAFKA_ACKED = 1;
+  // The same tenant/probe/event identity was already broker committed.
+  FLOW_ITEM_DISPOSITION_DUPLICATE_COMMITTED = 2;
+  // Deterministic validation failure; retrying identical bytes cannot help.
+  FLOW_ITEM_DISPOSITION_REJECTED_INVALID = 3;
+  // Broker or dependency reported a retryable failure before a durable ACK.
+  FLOW_ITEM_DISPOSITION_RETRYABLE = 4;
+  // The remote outcome is ambiguous; retry must preserve the same event ID.
+  FLOW_ITEM_DISPOSITION_OUTCOME_UNKNOWN = 5;
+}
+
+message FlowItemResult {
+  uint32 input_index = 1;
+  string event_id = 2;
+  FlowItemDisposition disposition = 3;
+  string reason_code = 4;
+  // The only currently approved durable acceptance barrier for FlowEvent.
+  string ack_scope = 5;
 }
 
 // ==================== Flow 流式上报 ====================
 
 message StreamFlowsRequest {
   FlowEvent event = 1;
+  uint32 accepted_response_revision = 2;
 }
 
 message StreamFlowsResponse {
   string event_id = 1;
   bool accepted = 2;
   string error = 3;
+  FlowItemDisposition disposition = 4;
+  string reason_code = 5;
+  string ack_scope = 6;
+  uint32 response_revision = 7;
 }
 
 // ==================== Session 上报 ====================
@@ -85,6 +126,42 @@ message UploadPcapIndexRequest {
 message UploadPcapIndexResponse {
   bool success = 1;
   string message = 2;
+}
+
+// ==================== Passive asset binding upload ====================
+
+message UploadAssetBindingsRequest {
+  string tenant_id = 1;
+  string probe_id = 2;
+  repeated MacIpBinding bindings = 3;
+  // Highest exact-set response revision the probe can durably apply.
+  uint32 accepted_response_revision = 4;
+}
+
+enum AssetBindingItemDisposition {
+  ASSET_BINDING_ITEM_DISPOSITION_UNSPECIFIED = 0;
+  ASSET_BINDING_ITEM_DISPOSITION_KAFKA_ACKED = 1;
+  ASSET_BINDING_ITEM_DISPOSITION_DUPLICATE_COMMITTED = 2;
+  ASSET_BINDING_ITEM_DISPOSITION_REJECTED_INVALID = 3;
+  ASSET_BINDING_ITEM_DISPOSITION_RETRYABLE = 4;
+  ASSET_BINDING_ITEM_DISPOSITION_OUTCOME_UNKNOWN = 5;
+}
+
+message AssetBindingItemResult {
+  uint32 input_index = 1;
+  string observation_id = 2;
+  AssetBindingItemDisposition disposition = 3;
+  string reason_code = 4;
+  // KAFKA_RECORD only after required-acks=all succeeds.
+  string ack_scope = 5;
+}
+
+message UploadAssetBindingsResponse {
+  int32 accepted = 1;
+  int32 rejected = 2;
+  repeated AssetBindingItemResult item_results = 3;
+  uint32 response_revision = 4;
+  string message = 5;
 }
 
 // ==================== 心跳 ====================
@@ -143,6 +220,31 @@ message ProbeOperationAck {
   bytes detail_json = 9;
 }
 
+// ProbeGroupReadinessReceiptV1 is a durable, cross-process statement about
+// one broker-owned consumer-group generation. It is not a process health
+// signal: receivers must validate the Kafka key and headers, the bounded
+// lease, and the monotonic owner epoch before it can authorize work.
+message ProbeGroupReadinessReceiptV1 {
+  string receipt_id = 1;
+  string consumer_group = 2;
+  string observed_topic = 3;
+  string member_id = 4;
+  int32 generation_id = 5;
+  int64 owner_epoch = 6;
+  ProbeGroupReadinessStateV1 state = 7;
+  int64 observed_at_ms = 8;
+  int64 expires_at_ms = 9;
+  string publisher_instance_id = 10;
+}
+
+enum ProbeGroupReadinessStateV1 {
+  PROBE_GROUP_READINESS_STATE_V1_UNSPECIFIED = 0;
+  PROBE_GROUP_READINESS_STATE_V1_ASSIGNED = 1;
+  PROBE_GROUP_READINESS_STATE_V1_READY = 2;
+  PROBE_GROUP_READINESS_STATE_V1_REVOKED = 3;
+  PROBE_GROUP_READINESS_STATE_V1_STOPPED = 4;
+}
+
 // ==================== 探针注册 ====================
 
 message RegisterProbeRequest {
@@ -171,6 +273,14 @@ message ProbeStatus {
   uint64 packets_dropped = 6;
   int64 uptime_seconds = 7;
   repeated InterfaceStatus interfaces = 10;
+  // Additive authority breakdown. The legacy packets_dropped field equals
+  // capture_allocation_drops + capture_kernel_drops and excludes parser,
+  // downstream queue, and sender failures.
+  uint64 capture_allocation_drops = 11;
+  uint64 capture_kernel_drops = 12;
+  uint64 capture_errors = 13;
+  uint64 capture_bytes = 14;
+  uint64 capture_counter_revision = 15;
 }
 
 message InterfaceStatus {
@@ -186,7 +296,6 @@ message InterfaceStatus {
   uint64 rx_crc_errors = 10;
   uint64 rx_dropped = 11;
   uint64 collisions = 12;
-  //uint64 tx_dropped = 13;
 }
 
 message ProbeConfig {

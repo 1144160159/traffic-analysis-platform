@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 set -u -o pipefail
 
+# 临时文件统一放入专用目录,中断/异常退出时由 trap 清理,避免 /tmp 残留。
+TMP_CLEANUP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_CLEANUP_DIR"' EXIT
+
 ROUNDS="${ROUNDS:-100}"
+if [[ ! "${ROUNDS}" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: ROUNDS must be a positive integer, got '${ROUNDS}'" >&2
+  exit 1
+fi
 APISIX="${APISIX:-http://10.0.5.8:30180}"
 TENANT="${TENANT:-default}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
@@ -42,7 +50,7 @@ need_cmd() {
 kctl() {
   local stderr_file rc
 
-  stderr_file="$(mktemp)"
+  stderr_file="$(mktemp "$TMP_CLEANUP_DIR"/stderr.XXXXXX)"
   env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy \
     "$KUBECTL" "$@" 2>"$stderr_file"
   rc=$?
@@ -113,8 +121,8 @@ http_check() {
   local auth_mode="${8:-auth}"
   local body_file err_file curl_out rc code latency detail ok
 
-  body_file="$(mktemp)"
-  err_file="$(mktemp)"
+  body_file="$(mktemp "$TMP_CLEANUP_DIR"/body.XXXXXX)"
+  err_file="$(mktemp "$TMP_CLEANUP_DIR"/err.XXXXXX)"
   local curl_args=(--noproxy '*' -sS -m "$CURL_TIMEOUT" -o "$body_file" -w "%{http_code} %{time_total}" -X "$method")
   curl_args+=(-H "X-Request-ID: live-100-$RUN_ID-$round-$name")
 
@@ -163,8 +171,8 @@ ui_check() {
   local route="$2"
   local body_file err_file curl_out rc code latency detail ok
 
-  body_file="$(mktemp)"
-  err_file="$(mktemp)"
+  body_file="$(mktemp "$TMP_CLEANUP_DIR"/body.XXXXXX)"
+  err_file="$(mktemp "$TMP_CLEANUP_DIR"/err.XXXXXX)"
   curl_out="$(curl --noproxy '*' -sS -m "$CURL_TIMEOUT" -o "$body_file" -w "%{http_code} %{time_total}" "$APISIX$route" 2>"$err_file")"
   rc=$?
 
@@ -192,8 +200,8 @@ asset_api_check() {
   local round="$1"
   local body_file err_file curl_out rc code latency detail ok
 
-  body_file="$(mktemp)"
-  err_file="$(mktemp)"
+  body_file="$(mktemp "$TMP_CLEANUP_DIR"/body.XXXXXX)"
+  err_file="$(mktemp "$TMP_CLEANUP_DIR"/err.XXXXXX)"
   curl_out="$(curl --noproxy '*' -sS -m "$CURL_TIMEOUT" -o "$body_file" -w "%{http_code} %{time_total}" \
     -H "Authorization: Bearer $TOKEN" \
     -H "X-Tenant-ID: $TENANT" \
@@ -347,8 +355,8 @@ flink_check() {
   local round="$1"
   local body_file err_file rc ok detail
 
-  body_file="$(mktemp)"
-  err_file="$(mktemp)"
+  body_file="$(mktemp "$TMP_CLEANUP_DIR"/body.XXXXXX)"
+  err_file="$(mktemp "$TMP_CLEANUP_DIR"/err.XXXXXX)"
   kctl -n "$FLINK_NAMESPACE" exec "$FLINK_JM_POD" -- curl -fsS http://localhost:8081/jobs/overview >"$body_file" 2>"$err_file"
   rc=$?
 
@@ -492,10 +500,28 @@ RETURNING asset_id;
 seed_notification_settings() {
   local payload
 
+  # 覆盖写 live 通知配置前先保存原值,脚本结束时尽力恢复,避免污染线上状态。
+  if curl --noproxy '*' -sS -m 15 -H "Authorization: Bearer $TOKEN" -H "X-Tenant-ID: $TENANT" \
+      "$APISIX/api/v1/notifications/settings" -o "$LOG_DIR/notification-settings-before.json" 2>/dev/null; then
+    jq -c '.' "$LOG_DIR/notification-settings-before.json" >"$LOG_DIR/notification-settings-before-payload.json" 2>/dev/null || true
+  fi
+
   payload="$(jq -nc \
     --arg ref "k8s://traffic-analysis/live-100-round-smoke" \
     '{enabled:true,min_severity:"medium",rate_limit_per_min:30,channels:{email:false,slack:false,webhook:false,wechat:false,dingtalk:false,feishu:false},secret_ref:$ref}')"
   http_check 0 "api:notifications-settings-put" "PUT" "/api/v1/notifications/settings" "200" "" "$payload"
+}
+
+# 尽力恢复 smoke 对线上通知配置的覆盖写;失败不改变 smoke 判定(仅记录)。
+restore_notification_settings() {
+  if [[ ! -s "$LOG_DIR/notification-settings-before-payload.json" ]]; then
+    return
+  fi
+  curl --noproxy '*' -sS -m 15 -X PUT \
+    -H "Authorization: Bearer $TOKEN" -H "X-Tenant-ID: $TENANT" -H 'Content-Type: application/json' \
+    -d @"$LOG_DIR/notification-settings-before-payload.json" \
+    "$APISIX/api/v1/notifications/settings" -o /dev/null \
+    || json_log "recovery" "restore live notification settings" "warn" false "restore_failed" "best-effort restore failed"
 }
 
 run_once_mutating_checks() {
@@ -624,9 +650,26 @@ need_cmd sed
 need_cmd grep
 need_cmd "$KUBECTL"
 
-JWT_SECRET="$(kctl -n traffic-analysis get secret traffic-credentials -o jsonpath='{.data.JWT_SECRET}' | base64 -d)"
-PG_PASSWORD="$(kctl -n traffic-analysis get secret traffic-credentials -o jsonpath='{.data.PG_PASSWORD}' | base64 -d)"
-TOKEN="$(make_token)"
+JWT_SECRET="$(kctl -n traffic-analysis get secret traffic-credentials -o jsonpath='{.data.JWT_SECRET}' | base64 -d)" || {
+  echo "ERROR: failed to read JWT_SECRET from secret traffic-credentials" >&2
+  exit 1
+}
+PG_PASSWORD="$(kctl -n traffic-analysis get secret traffic-credentials -o jsonpath='{.data.PG_PASSWORD}' | base64 -d)" || {
+  echo "ERROR: failed to read PG_PASSWORD from secret traffic-credentials" >&2
+  exit 1
+}
+if [[ -z "${JWT_SECRET}" ]]; then
+  echo "ERROR: JWT_SECRET is empty, refusing to run with a broken credential" >&2
+  exit 1
+fi
+if [[ -z "${PG_PASSWORD}" ]]; then
+  echo "ERROR: PG_PASSWORD is empty, refusing to run with a broken credential" >&2
+  exit 1
+fi
+TOKEN="$(make_token)" || {
+  echo "ERROR: make_token failed" >&2
+  exit 1
+}
 
 SMOKE_ASSET_ID="$(python3 - <<'PY'
 import uuid
@@ -680,6 +723,8 @@ for round in $(seq 1 "$ROUNDS"); do
     break
   fi
 done
+
+restore_notification_settings
 
 write_summary
 

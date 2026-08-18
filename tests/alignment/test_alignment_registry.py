@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -14,6 +15,7 @@ from compat_diff import compare  # noqa: E402
 from build_ledger import build_ledger  # noqa: E402
 from candidate_snapshot import build_snapshot  # noqa: E402
 from check_event_catalog import validate as validate_event_catalog  # noqa: E402
+import check_event_catalog  # noqa: E402
 from check_migrations import DDL_PATTERN  # noqa: E402
 from inventory import build_inventory  # noqa: E402
 from reconcile_kafka_topics import reconcile as reconcile_kafka_topics  # noqa: E402
@@ -24,12 +26,43 @@ class AlignmentRegistryTest(unittest.TestCase):
     def test_kafka_topic_schema_and_implementation_catalog_is_complete(self) -> None:
         result = validate_event_catalog()
         self.assertEqual("pass", result["result"], result)
-        self.assertEqual(36, result["counts"]["canonical_topics"])
-        self.assertEqual(7, result["counts"]["kubernetes_additional_topics"])
+        self.assertEqual(45, result["counts"]["canonical_topics"])
+        self.assertEqual(6, result["counts"]["kubernetes_additional_topics"])
         self.assertEqual(6, result["counts"]["observed_additional_topics"])
         self.assertEqual(
-            {"json-schema": 26, "protobuf": 10},
+            {"json-schema": 32, "protobuf": 13},
             result["counts"]["schema_kinds"],
+        )
+
+    def test_m03_session_feature_topic_contract_is_frozen_and_fail_closed(self) -> None:
+        catalog = json.loads(
+            (ROOT / "contracts/events/kafka-topic-catalog.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        contract = catalog["m03_session_feature_contract"]
+        self.assertEqual("session.events.v1", contract["session_topic"]["name"])
+        self.assertEqual("feature.stat.v1", contract["feature_topic"]["name"])
+        self.assertEqual(
+            ["traffic.v1.FeatureSeq", "traffic.v1.FeatureFingerprint"],
+            contract["embedded_feature_messages"],
+        )
+        self.assertEqual(
+            ["feature.stats.v1", "feature.fingerprint.v1"],
+            contract["unapproved_topic_names"],
+        )
+
+        contract["session_topic"]["producers"] = ["unowned-session-producer.java"]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            candidate = Path(tmpdir) / "catalog.json"
+            candidate.write_text(json.dumps(catalog), encoding="utf-8")
+            with mock.patch.object(check_event_catalog, "CATALOG", candidate):
+                result = check_event_catalog.validate()
+        self.assertEqual("blocked", result["result"])
+        self.assertTrue(
+            any("M03 frozen session_topic producers differs" in error
+                for error in result["errors"]),
+            result,
         )
 
     def test_live_kafka_reconcile_rejects_partition_drift(self) -> None:
@@ -1264,7 +1297,9 @@ class AlignmentRegistryTest(unittest.TestCase):
         self.assertIn("NewAssetProjectionEventConsumer", main_source)
         self.assertIn("NewAssetProjectionWorker", main_source)
         self.assertIn("CommitOnHandlerError: false", main_source)
-        self.assertIn("EnableDLQ:            false", main_source)
+        self.assertIn("EnableDLQ:            true", main_source)
+        self.assertIn("SetDLQAcknowledgementBarrier", main_source)
+        self.assertIn("CommitOnDLQSuccess:   true", main_source)
 
         go_services = (
             ROOT / "deployments/kubernetes/applications/go-services.yaml"

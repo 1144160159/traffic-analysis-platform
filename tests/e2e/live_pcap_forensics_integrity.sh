@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# 临时文件统一放入专用目录,中断/异常退出时由 trap 清理,避免 /tmp 残留。
+TMP_CLEANUP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_CLEANUP_DIR"' EXIT
 
 APISIX="${APISIX:-http://10.0.5.8:30180}"
 TENANT="${TENANT:-default}"
@@ -144,7 +147,7 @@ curl_json_check() {
   local name="$1" method="$2" path="$3" expected="$4" data="${5:-}" filter="${6:-}" token="${7:-}"
   local body_file err_file code rc ok detail
   body_file="$LOG_DIR/$RUN_SLUG-${name// /-}.json"
-  err_file="$(mktemp)"
+  err_file="$(mktemp "$TMP_CLEANUP_DIR"/err.XXXXXX)"
   local args=(--noproxy '*' -sS -m 20 -o "$body_file" -w '%{http_code}' -X "$method" -H "X-Tenant-ID: $TENANT")
   if [[ -n "$token" ]]; then
     args+=(-H "Authorization: Bearer $token")

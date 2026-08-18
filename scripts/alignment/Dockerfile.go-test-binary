@@ -1,0 +1,13 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+USER 0
+ARG IMAGE_TITLE="traffic-analysis Go contract tests"
+ARG IMAGE_VERSION="local"
+ARG SOURCE_REVISION="unknown"
+COPY --chown=1000:1000 alert-service /usr/local/bin/alert-service
+LABEL org.opencontainers.image.title=${IMAGE_TITLE} \
+      org.opencontainers.image.version=${IMAGE_VERSION} \
+      org.opencontainers.image.revision=${SOURCE_REVISION}
+USER 1000:1000
+ENTRYPOINT ["/usr/local/bin/alert-service"]

@@ -39,7 +39,7 @@ class ServiceIdentityCatalogTests(unittest.TestCase):
         result = verifier.verify()
         self.assertEqual("PASS", result["status"], result["errors"])
         self.assertEqual("PARTIAL", result["security_compliance"])
-        self.assertEqual(11, result["counts"]["workloads"])
+        self.assertEqual(12, result["counts"]["workloads"])
         self.assertEqual(0, result["counts"]["literal_secret_findings"])
 
     def test_external_diagnostic_output_path_is_rendered_without_crashing(self) -> None:

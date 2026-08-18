@@ -12,6 +12,17 @@ option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-
 option java_package = "com.traffic.proto.traffic.v1";
 option java_multiple_files = true;
 
+// SessionCompleteness distinguishes a usable complete session from an
+// explicitly partial or invalid observation. Zero remains the legacy/unknown
+// value so existing producers stay wire-compatible without claiming success.
+enum SessionCompleteness {
+  SESSION_COMPLETENESS_UNSPECIFIED = 0;
+  SESSION_COMPLETENESS_COMPLETE = 1;
+  SESSION_COMPLETENESS_PARTIAL = 2;
+  SESSION_COMPLETENESS_TRUNCATED = 3;
+  SESSION_COMPLETENESS_INVALID = 4;
+}
+
 // SessionEvent 双向会话事件
 message SessionEvent {
   EventHeader header = 1;
@@ -56,6 +67,23 @@ message SessionEvent {
   uint32 evidence_count = 40;
   repeated string flow_ids = 41;
   string end_reason = 42;
+  // Additive M03 identity and event-time contract. All timestamps are Unix
+  // epoch milliseconds; identity_version names the deterministic ID recipe.
+  string identity_version = 43;
+  uint64 session_version = 44;
+  int64 event_time_start_ms = 45;
+  int64 event_time_end_ms = 46;
+  repeated string source_event_ids = 47;
+  repeated string evidence_ids = 48;
+  SessionCompleteness completeness = 49;
+  repeated string missing_fields = 50;
+  TrafficFeatureObservation feature_observation = 51;
+  // Directional packet counts: forward = packets emitted in the initiator
+  // (client) direction, backward = responder (server) direction. Zero when the
+  // producer cannot attribute direction; both fields are additive (legacy
+  // producers stay wire-compatible with proto3 zero defaults).
+  uint64 packets_fwd = 52;
+  uint64 packets_bwd = 53;
 }
 
 // SessionBatch 会话事件批次

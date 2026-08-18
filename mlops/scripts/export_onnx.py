@@ -40,7 +40,7 @@ def export_to_onnx(model, n_features, output_path, model_type='xgboost', initial
     """Export model to ONNX format"""
     try:
         from onnxmltools import convert_xgboost, convert_lightgbm
-        from onnxconverter_common.data_types import FloatTensorType
+        from onnxmltools.convert.common.data_types import FloatTensorType
     except ImportError:
         logger.error("ONNX export deps missing. Install: pip install onnxmltools onnxruntime skl2onnx")
         return False
@@ -71,13 +71,15 @@ def export_to_onnx(model, n_features, output_path, model_type='xgboost', initial
 
 
 def validate_onnx(onnx_path, n_features):
-    """Validate ONNX model with a dummy inference"""
+    """Validate ONNX model with a deterministic dummy inference"""
     try:
         import onnxruntime as ort
         session = ort.InferenceSession(onnx_path)
 
         input_name = session.get_inputs()[0].name
-        dummy_input = np.random.randn(1, n_features).astype(np.float32)
+        # 固定随机种子保证校验输入可复现（代码审查 H40 收敛项）
+        rng = np.random.default_rng(0)
+        dummy_input = rng.standard_normal((1, n_features)).astype(np.float32)
         output = session.run(None, {input_name: dummy_input})
 
         logger.info(f"ONNX validation OK: output shape={output[0].shape}, dtype={output[0].dtype}")
@@ -91,6 +93,33 @@ def validate_onnx(onnx_path, n_features):
 
 
 def main():
+    governed = os.getenv('MLOPS_GOVERNED_MODEL_EXPORT_V1_ENABLED', '').strip().lower()
+    if governed not in {'', 'true', 'false'}:
+        raise ValueError('MLOPS_GOVERNED_MODEL_EXPORT_V1_ENABLED must be explicitly true or false')
+    if governed == 'true':
+        from model_artifact_governance import (
+            publish_export_package_from_environment,
+            run_governed_model_export,
+        )
+        manifest = run_governed_model_export(
+            os.getenv('DATA_DIR', '/data'),
+            os.getenv('MODEL_DIR', '/model'),
+            os.getenv('GRAPH_DIR', '/graph'),
+            os.getenv('GNN_DIR', '/gnn'),
+            os.getenv('EVALUATION_DIR', '/evaluation'),
+            os.getenv('EXPLANATION_DIR', '/explanation'),
+            os.getenv('OUTPUT_DIR', '/output'),
+        )
+        receipt = publish_export_package_from_environment(os.getenv('OUTPUT_DIR', '/output'))
+        print(json.dumps({
+            'status': 'PASS',
+            'package_id': manifest['package_id'],
+            'package_sha256': manifest['package_sha256'],
+            'artifact_count': len(manifest['artifacts']),
+            'activation_authorized': manifest['activation_authorized'],
+            'storage_state': receipt['state'] if receipt else 'NOT_WRITTEN',
+        }, sort_keys=True))
+        return
     parser = argparse.ArgumentParser(description='MLOps Model Export to ONNX')
     parser.add_argument('--model', required=True, help='Model file path (model.json / model.txt)')
     parser.add_argument('--model-type', default='xgboost', choices=['xgboost', 'lightgbm'],

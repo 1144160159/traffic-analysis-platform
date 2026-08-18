@@ -90,6 +90,12 @@ EXPECTED_SIGNALS = {
     "object_manifest",
 }
 EXPECTED_MEASUREMENT_STATES = {"measured", "unknown", "not_applicable", "error"}
+EXPECTED_SEMANTIC_AXES = {
+    "availability_status": {"arrived", "not_arrived", "unavailable", "not_applicable"},
+    "freshness_status": {"fresh", "stale", "unknown", "not_applicable"},
+    "completeness_status": {"complete", "partial", "unknown", "not_applicable"},
+    "value_status": {"zero", "nonzero", "none"},
+}
 
 
 def read(root: Path, relative: Path) -> str:
@@ -100,6 +106,17 @@ def require_tokens(errors: list[str], label: str, source: str, tokens: list[str]
     for token in tokens:
         if token not in source:
             errors.append(f"{label} missing token: {token}")
+
+
+def require_semantic_axes(errors: list[str], label: str, source: dict[str, Any]) -> None:
+    axes = source.get("semantic_axes")
+    if not isinstance(axes, dict) or set(axes) != set(EXPECTED_SEMANTIC_AXES):
+        errors.append(f"{label} semantic axis inventory is incomplete")
+        return
+    for axis, expected in EXPECTED_SEMANTIC_AXES.items():
+        values = axes.get(axis)
+        if not isinstance(values, list) or set(values) != expected or len(values) != len(expected):
+            errors.append(f"{label} {axis} values are incomplete or duplicated")
 
 
 def verify(root: Path = ROOT) -> dict[str, Any]:
@@ -120,6 +137,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("real handoff signal inventory is incomplete")
     if set(contract.get("measurement_states", [])) != EXPECTED_MEASUREMENT_STATES:
         errors.append("data-quality measurement state inventory is incomplete")
+    require_semantic_axes(errors, "data-quality control-plane contract", contract)
     if "executed" not in contract.get("repair_states", []):
         errors.append("repair state inventory must distinguish executing from executed")
     authority = contract.get("authority", {})
@@ -183,6 +201,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("dataset signal contract_id must be data-quality-dataset-signals-v1")
     if set(dataset_contract.get("measurement_states", [])) != EXPECTED_MEASUREMENT_STATES:
         errors.append("dataset signal contract measurement states are incomplete")
+    require_semantic_axes(errors, "dataset signal contract", dataset_contract)
     datasets = dataset_contract.get("datasets", [])
     if len(datasets) != 1 or datasets[0].get("dataset_id") != "flows_raw":
         errors.append("candidate dataset signal contract must define the flows_raw slice")
@@ -233,6 +252,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("Feature Contract must bind the versioned dataset signal contract")
     if set(feature.get("data", {}).get("measurement_states", [])) != EXPECTED_MEASUREMENT_STATES:
         errors.append("Feature Contract measurement states are incomplete")
+    require_semantic_axes(errors, "Feature Contract data", feature.get("data", {}))
     feature_api = feature.get("api", {})
     if feature_api.get("side_effects") != "none" or "last PostgreSQL-persisted collection" not in feature_api.get("read_semantics", ""):
         errors.append("Feature Contract must declare GET as a persisted, side-effect-free read")
@@ -379,6 +399,11 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
             "ClickHouseSinkCommitReader",
             "max(ingest_ts)",
             "SignalStatusNotApplicable",
+            "SignalAvailabilityNotArrived",
+            "SignalAvailabilityUnavailable",
+            "SignalCompletenessPartial",
+            "SignalValueZero",
+            "deriveSignalSemantics",
             "DefaultFlowDatasetContract",
         ],
     )
@@ -394,11 +419,19 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
             "tx.Commit()",
             'Status: "unknown"',
             "report.SourceWatermarks",
+            "appendUnavailableHandoffCheck",
+            "appendNotArrivedHandoffCheck",
+            "qualityCheckFromSignal",
         ],
     )
-    unknown_function = handoff_repository.split("func appendUnknownHandoffCheck", 1)
-    if len(unknown_function) != 2 or 'Status: "unknown"' not in unknown_function[1].split("\n}", 1)[0]:
-        errors.append("missing hand-off measurements must append an unknown check, never pass")
+    for function_name, availability in {
+        "appendUnavailableHandoffCheck": "SignalAvailabilityUnavailable",
+        "appendNotArrivedHandoffCheck": "SignalAvailabilityNotArrived",
+    }.items():
+        helper = handoff_repository.split(f"func {function_name}", 1)
+        body = helper[1].split("\n}", 1)[0] if len(helper) == 2 else ""
+        if 'Status: "unknown"' not in body or availability not in body:
+            errors.append(f"{function_name} must append typed unknown checks, never pass")
     if "INSERT INTO traffic.flows_raw" in handoff_repository or "INSERT INTO traffic.flows_raw" in handoff_signals:
         errors.append("signal collectors must remain read-only against source systems")
     positions = [
@@ -683,7 +716,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
             "24-data-quality-rule-evaluation-v1.sql: |",
             "25-data-quality-repair-lifecycle-v1.sql: |",
             "26-data-quality-replay-projection-v1.sql: |",
-            "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql 32-alert-response-reconciliation-compensation-v1.sql 33-alert-evidence-manifest-v1.sql 34-alert-batch-assignment-v1.sql 35-alert-batch-assignment-execution-v1.sql 36-alert-batch-assignment-compensation-v1.sql; do",
+            "22-data-quality-control-plane-v1.sql 23-data-quality-governance-v1.sql 24-data-quality-rule-evaluation-v1.sql 25-data-quality-repair-lifecycle-v1.sql 26-data-quality-replay-projection-v1.sql 27-dashboard-task-execution-pipeline-v1.sql 28-dashboard-task-compensation-v1.sql 29-dashboard-task-dlq-receipt-v1.sql 30-alert-response-external-executor-v1.sql 31-alert-response-dlq-receipt-v1.sql 32-alert-response-reconciliation-compensation-v1.sql 33-alert-evidence-manifest-v1.sql 34-alert-batch-assignment-v1.sql 35-alert-batch-assignment-execution-v1.sql 36-alert-batch-assignment-compensation-v1.sql 37-rule-update-applied-ack-v1.sql 38-rule-version-rollback-v1.sql 39-m07-fusion-snapshots-v1.sql; do",
         ],
     )
     deployment = read(root, ALERT_DEPLOYMENT)

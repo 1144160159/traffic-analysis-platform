@@ -16,10 +16,12 @@ ACL_PATH = ROOT / "contracts/events/kafka-acl-catalog.v1.json"
 UID_PATTERN = re.compile(r'\.uid\(\s*"([^"]+)"\s*\)')
 
 
-def _production_java_sources() -> list[Path]:
+def _production_java_sources(excluded: set[str]) -> list[Path]:
     sources = []
     for source in (ROOT / "java/flink-jobs").glob("*/src/main/java/**/*.java"):
         relative = source.relative_to(ROOT).as_posix()
+        if relative in excluded:
+            continue
         if relative.startswith(
             "java/flink-jobs/flink-common/src/main/java/com/traffic/proto/"
         ):
@@ -38,7 +40,13 @@ def verify(
     acl = acl or json.loads(ACL_PATH.read_text(encoding="utf-8"))
     errors: list[str] = []
 
-    production_sources = _production_java_sources()
+    excluded_non_production = set(
+        contract["identity"].get("excluded_non_production_sources") or []
+    )
+    for relative in excluded_non_production:
+        if not (ROOT / relative).is_file():
+            errors.append(f"excluded non-production source is missing: {relative}")
+    production_sources = _production_java_sources(excluded_non_production)
     forbidden_hits: list[dict[str, Any]] = []
     for source in production_sources:
         text = source.read_text(encoding="utf-8")
@@ -106,6 +114,34 @@ def verify(
             }
         )
 
+    auxiliary_uid_results = []
+    for job_id, auxiliary in (contract.get("auxiliary_required_uids") or {}).items():
+        relative = auxiliary.get("source", "")
+        expected = auxiliary.get("uids") or []
+        source = ROOT / relative
+        if not source.is_file():
+            errors.append(f"{job_id}: auxiliary main source is missing: {relative}")
+            continue
+        actual = UID_PATTERN.findall(source.read_text(encoding="utf-8"))
+        if len(actual) != len(set(actual)):
+            errors.append(f"{job_id}: duplicate auxiliary operator UID")
+        missing = sorted(set(expected) - set(actual))
+        unexpected = sorted(set(actual) - set(expected))
+        if missing or unexpected:
+            errors.append(
+                f"{job_id}: auxiliary UID drift missing={missing} unexpected={unexpected}"
+            )
+        auxiliary_uid_results.append(
+            {
+                "job_id": job_id,
+                "source": relative,
+                "required": len(expected),
+                "found": len(actual),
+                "missing": missing,
+                "unexpected": unexpected,
+            }
+        )
+
     buffer_results = []
     for buffer_contract in contract["checkpointed_buffers"]:
         relative = buffer_contract["source"]
@@ -148,7 +184,7 @@ def verify(
         / "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/LateUserEventRouter.java"
     ).read_text(encoding="utf-8")
     for token in (
-        "forBoundedOutOfOrderness",
+        business_time["watermark_factory_token"],
         business_time["watermark_config"],
         business_time["allowed_lateness_config"],
         business_time["durable_topic"],
@@ -197,10 +233,15 @@ def verify(
         "remediation_id": contract["remediation_id"],
         "status": "PASS" if not errors else "FAIL",
         "canonical_jobs": len(app_by_id),
-        "operator_uids": sum(item["found"] for item in uid_results),
+        "operator_uids": (
+            sum(item["found"] for item in uid_results)
+            + sum(item["found"] for item in auxiliary_uid_results)
+        ),
         "deterministic_sources": len(deterministic_sources),
         "checkpointed_buffers": buffer_results,
         "uid_results": uid_results,
+        "auxiliary_uid_results": auxiliary_uid_results,
+        "excluded_non_production_sources": sorted(excluded_non_production),
         "forbidden_hits": forbidden_hits,
         "errors": errors,
         "remaining_gates": contract["gate"]["remaining"],

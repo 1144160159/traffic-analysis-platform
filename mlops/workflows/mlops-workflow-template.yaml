@@ -32,8 +32,22 @@ spec:
       value: "1000"
     - name: min-f1-score
       value: "0.85"
+    - name: min-accuracy
+      value: "0.95"
+    - name: min-fpr
+      value: "0.05"
     - name: auto-activate
       value: "false"
+    - name: candidate-only
+      value: "false"
+    - name: baseline-model-version
+      value: ""
+    - name: drift-evaluation-id
+      value: ""
+    - name: drift-signal-sha256
+      value: ""
+    - name: drift-policy-sha256
+      value: ""
     - name: trigger
       value: manual
     - name: trigger-reason
@@ -77,7 +91,7 @@ spec:
             from: "{{steps.extract-data.outputs.artifacts.metadata}}"
     - - name: register-model
         template: register-model
-        when: "{{steps.evaluate-model.outputs.parameters.f1-score}} >= {{workflow.parameters.min-f1-score}}"
+        when: "{{steps.evaluate-model.outputs.parameters.f1-score}} >= {{workflow.parameters.min-f1-score}} && {{steps.evaluate-model.outputs.parameters.accuracy}} >= {{workflow.parameters.min-accuracy}} && {{steps.evaluate-model.outputs.parameters.fpr}} <= {{workflow.parameters.min-fpr}}"
         arguments:
           artifacts:
           - name: model-file
@@ -100,21 +114,26 @@ spec:
       - |
         set -eu
         mkdir -p /tmp/mlops
-        tenant_escaped=$(printf "%s" "$TENANT_ID" | sed "s/'/''/g")
-        days="$LOOKBACK_DAYS"
+        # 代码审查 H40 收敛项：禁止 shell 拼 SQL。改用 clickhouse-client 命名
+        # 参数（--param_tenant_id / --param_days），tenant 与窗口完全参数化，
+        # 消除 shell+SQL 双层注入面。
         query_error=false
         feedback_count=$(clickhouse-client \
           --host "$CLICKHOUSE_HOST" \
           --port "$CLICKHOUSE_PORT" \
           --user "$CLICKHOUSE_USER" \
           --password "$CLICKHOUSE_PASSWORD" \
-          --query "SELECT count() FROM traffic.alert_feedback WHERE tenant_id = '${tenant_escaped}' AND label IN ('TP','FP') AND created_at >= now() - INTERVAL ${days} DAY") || query_error=true
+          --param_tenant_id "$TENANT_ID" \
+          --param_days "$LOOKBACK_DAYS" \
+          --query "SELECT count() FROM traffic.alert_feedback WHERE tenant_id = {tenant_id:String} AND label IN ('TP','FP') AND created_at >= now() - INTERVAL {days:UInt32} DAY") || query_error=true
         feature_count=$(clickhouse-client \
           --host "$CLICKHOUSE_HOST" \
           --port "$CLICKHOUSE_PORT" \
           --user "$CLICKHOUSE_USER" \
           --password "$CLICKHOUSE_PASSWORD" \
-          --query "SELECT count() FROM traffic.feature_stat WHERE tenant_id = '${tenant_escaped}' AND ts >= now() - INTERVAL ${days} DAY") || query_error=true
+          --param_tenant_id "$TENANT_ID" \
+          --param_days "$LOOKBACK_DAYS" \
+          --query "SELECT count() FROM traffic.feature_stat WHERE tenant_id = {tenant_id:String} AND ts >= now() - INTERVAL {days:UInt32} DAY") || query_error=true
 
         if [ "$query_error" = "true" ]; then
           feedback_count=${feedback_count:-0}
@@ -292,6 +311,12 @@ spec:
       - name: f1-score
         valueFrom:
           path: /tmp/evaluation/f1_score.txt
+      - name: accuracy
+        valueFrom:
+          path: /tmp/evaluation/accuracy.txt
+      - name: fpr
+        valueFrom:
+          path: /tmp/evaluation/false_positive_rate.txt
       artifacts:
       - name: metrics
         path: /tmp/evaluation/metrics.json
@@ -343,6 +368,8 @@ spec:
         value: "{{workflow.parameters.auto-activate}}"
       - name: MINIO_ENDPOINT
         value: minio.minio.svc:9000
+      # MinIO 信任边界：集群内网默认明文；离开集群前必须 MINIO_SECURE=true
+      # 并注入 CA（register_model.load_minio_config 强制校验 CA）。
       - name: MINIO_SECURE
         value: "false"
       - name: MINIO_ACCESS_KEY

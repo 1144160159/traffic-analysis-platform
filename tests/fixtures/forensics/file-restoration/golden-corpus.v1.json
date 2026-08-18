@@ -1,0 +1,224 @@
+{
+  "schema_version": "1.0.0",
+  "corpus_id": "m03-file-restoration-golden-v1",
+  "contract_id": "traffic.file-restoration.v1",
+  "claim_boundary": {
+    "allowed": "production reassembly and extractor behavior for the exact approved profiles and fixed cases in this corpus",
+    "forbidden": [
+      "all application protocols are supported",
+      "restored content is safe",
+      "restored content may be executed or automatically opened",
+      "runtime activation is approved"
+    ]
+  },
+  "limits": {
+    "max_stream_bytes": 1024,
+    "max_object_bytes": 1024,
+    "max_part_count": 8,
+    "max_mime_depth": 3,
+    "max_expansion_ratio": 10
+  },
+  "cases": [
+    {
+      "case_id": "tcp-out-of-order-retransmission",
+      "stage": "reassembly",
+      "categories": ["out_of_order", "identical_retransmission", "source_proof"],
+      "input": {
+        "segments": [
+          {"sequence": 106, "payload": "world", "captured_length": 5, "original_length": 5, "packet_index": 3},
+          {"sequence": 100, "payload": "hello ", "captured_length": 6, "original_length": 6, "packet_index": 1},
+          {"sequence": 100, "payload": "hello ", "captured_length": 6, "original_length": 6, "packet_index": 2}
+        ]
+      },
+      "expected": {"status": "complete", "content": "hello world", "missing_ranges": [], "conflict_at": null, "truncated": false, "object_policy": "not_applicable"}
+    },
+    {
+      "case_id": "tcp-gap-no-invention",
+      "stage": "reassembly",
+      "categories": ["packet_loss", "no_invented_bytes"],
+      "input": {
+        "segments": [
+          {"sequence": 10, "payload": "abc", "captured_length": 3, "original_length": 3, "packet_index": 1},
+          {"sequence": 15, "payload": "fg", "captured_length": 2, "original_length": 2, "packet_index": 2}
+        ]
+      },
+      "expected": {"status": "partial", "content": "abc", "missing_ranges": [{"start": 13, "end": 15}], "conflict_at": null, "truncated": false, "object_policy": "not_applicable"}
+    },
+    {
+      "case_id": "tcp-unequal-overlap-corrupt",
+      "stage": "reassembly",
+      "categories": ["unequal_retransmission", "corrupt"],
+      "input": {
+        "segments": [
+          {"sequence": 10, "payload": "abcdef", "captured_length": 6, "original_length": 6, "packet_index": 1},
+          {"sequence": 13, "payload": "XYZ", "captured_length": 3, "original_length": 3, "packet_index": 2}
+        ]
+      },
+      "expected": {"status": "corrupt", "content": "", "missing_ranges": [], "conflict_at": 13, "truncated": false, "object_policy": "not_applicable"}
+    },
+    {
+      "case_id": "tcp-capture-truncated",
+      "stage": "reassembly",
+      "categories": ["capture_truncation"],
+      "input": {
+        "segments": [
+          {"sequence": 20, "payload": "visible", "captured_length": 7, "original_length": 20, "packet_index": 1}
+        ]
+      },
+      "expected": {"status": "truncated", "content": "visible", "missing_ranges": [], "conflict_at": null, "truncated": true, "object_policy": "not_applicable"}
+    },
+    {
+      "case_id": "tcp-stream-oversize",
+      "stage": "reassembly",
+      "categories": ["stream_limit", "oversize"],
+      "input": {
+        "max_stream_bytes": 4,
+        "segments": [
+          {"sequence": 20, "payload": "12345678", "captured_length": 8, "original_length": 8, "packet_index": 1}
+        ]
+      },
+      "expected": {"status": "oversize", "content": "", "missing_ranges": [], "conflict_at": null, "truncated": false, "object_policy": "not_applicable"}
+    },
+    {
+      "case_id": "http-content-length-path-traversal",
+      "stage": "extractor",
+      "categories": ["http1", "content_length", "path_traversal"],
+      "input": {
+        "profile_id": "http1-response-body-v1",
+        "server_to_client": {"status": "complete", "bytes": "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=../../evil.sh\r\n\r\nhello"}
+      },
+      "expected": {"status": "complete", "content": "hello", "sanitized_filename": "evil.sh", "content_encoding": "", "object_policy": "required", "inert": true}
+    },
+    {
+      "case_id": "http-chunked-content-encoding-inert",
+      "stage": "extractor",
+      "categories": ["http1", "chunked", "encoded_no_auto_decompress"],
+      "input": {
+        "profile_id": "http1-response-body-v1",
+        "server_to_client": {"status": "complete", "bytes": "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Encoding: gzip\r\n\r\n5\r\nhello\r\n6\r\n world\r\n0\r\n\r\n"}
+      },
+      "expected": {"status": "complete", "content": "hello world", "sanitized_filename": "restored.bin", "content_encoding": "gzip", "object_policy": "required", "inert": true}
+    },
+    {
+      "case_id": "http-conflicting-framing-corrupt",
+      "stage": "extractor",
+      "categories": ["http1", "contradictory_framing", "corrupt"],
+      "input": {
+        "profile_id": "http1-response-body-v1",
+        "server_to_client": {"status": "complete", "bytes": "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n"}
+      },
+      "expected": {"status": "corrupt", "content": "", "sanitized_filename": "", "content_encoding": "", "object_policy": "metadata_only", "inert": true}
+    },
+    {
+      "case_id": "http-websocket-unsupported",
+      "stage": "extractor",
+      "categories": ["http1", "websocket", "unsupported"],
+      "input": {
+        "profile_id": "http1-response-body-v1",
+        "server_to_client": {"status": "complete", "bytes": "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n\r\n"}
+      },
+      "expected": {"status": "unsupported", "content": "", "sanitized_filename": "", "content_encoding": "", "object_policy": "forbidden", "inert": true}
+    },
+    {
+      "case_id": "http-declared-oversize",
+      "stage": "extractor",
+      "categories": ["http1", "declared_oversize"],
+      "input": {
+        "profile_id": "http1-response-body-v1",
+        "server_to_client": {"status": "complete", "bytes": "HTTP/1.1 200 OK\r\nContent-Length: 2048\r\n\r\n"}
+      },
+      "expected": {"status": "oversize", "content": "", "sanitized_filename": "", "content_encoding": "", "object_policy": "metadata_only", "inert": true}
+    },
+    {
+      "case_id": "http-archive-remains-inert",
+      "stage": "extractor",
+      "categories": ["http1", "archive", "no_expansion", "no_execution"],
+      "input": {
+        "profile_id": "http1-response-body-v1",
+        "server_to_client": {"status": "complete", "bytes": "HTTP/1.1 200 OK\r\nContent-Length: 23\r\nContent-Type: application/zip\r\nContent-Disposition: attachment; filename=payload.zip\r\n\r\nPK-FAKE-ARCHIVE-CONTENT"}
+      },
+      "expected": {"status": "complete", "content": "PK-FAKE-ARCHIVE-CONTENT", "sanitized_filename": "payload.zip", "content_encoding": "", "object_policy": "required", "inert": true}
+    },
+    {
+      "case_id": "ftp-passive-retr-complete",
+      "stage": "extractor",
+      "categories": ["ftp", "passive", "path_traversal"],
+      "input": {
+        "profile_id": "ftp-passive-retr-v1",
+        "client_to_server": {"status": "complete", "bytes": "USER analyst\r\nPASV\r\nRETR ../../report.bin\r\n"},
+        "server_to_client": {"status": "complete", "bytes": "230 Login ok\r\n227 Entering Passive Mode (198,51,100,2,195,80)\r\n150 Opening data\r\n226 Transfer complete\r\n"},
+        "ftp_data_server_to_client": {"status": "complete", "bytes": "payload"},
+        "ftp_data_connections": 1,
+        "ftp_data_correlated": true,
+        "ftp_data_boundary_complete": true
+      },
+      "expected": {"status": "complete", "content": "payload", "sanitized_filename": "report.bin", "content_encoding": "", "object_policy": "required", "inert": true}
+    },
+    {
+      "case_id": "ftp-ambiguous-data-unsupported",
+      "stage": "extractor",
+      "categories": ["ftp", "ambiguous_data_connection", "unsupported"],
+      "input": {
+        "profile_id": "ftp-passive-retr-v1",
+        "client_to_server": {"status": "complete", "bytes": "PASV\r\nRETR report.bin\r\n"},
+        "server_to_client": {"status": "complete", "bytes": "227 Entering Passive Mode (198,51,100,2,195,80)\r\n150 Opening\r\n226 Done\r\n"},
+        "ftp_data_server_to_client": {"status": "complete", "bytes": "payload"},
+        "ftp_data_connections": 2,
+        "ftp_data_correlated": true,
+        "ftp_data_boundary_complete": true
+      },
+      "expected": {"status": "unsupported", "content": "", "sanitized_filename": "", "content_encoding": "", "object_policy": "forbidden", "inert": true}
+    },
+    {
+      "case_id": "ftp-tls-unsupported",
+      "stage": "extractor",
+      "categories": ["ftp", "encrypted", "unsupported"],
+      "input": {"profile_id": "ftp-passive-retr-v1", "ftp_tls_enabled": true},
+      "expected": {"status": "unsupported", "content": "", "sanitized_filename": "", "content_encoding": "", "object_policy": "forbidden", "inert": true}
+    },
+    {
+      "case_id": "smtp-base64-attachment-complete",
+      "stage": "extractor",
+      "categories": ["smtp", "mime", "base64", "path_traversal"],
+      "input": {
+        "profile_id": "smtp-data-mime-v1",
+        "client_to_server": {"status": "complete", "bytes": "DATA\r\nContent-Type: application/octet-stream\r\nContent-Disposition: attachment; filename=../../mail.bin\r\nContent-Transfer-Encoding: base64\r\n\r\naGVsbG8gYXR0YWNobWVudA==\r\n.\r\nQUIT\r\n"},
+        "server_to_client": {"status": "complete", "bytes": "354 End data with <CR><LF>.<CR><LF>\r\n250 accepted\r\n"}
+      },
+      "expected": {"status": "complete", "content": "hello attachment", "sanitized_filename": "mail.bin", "content_encoding": "", "object_policy": "required", "inert": true}
+    },
+    {
+      "case_id": "smtp-unknown-encoding-unsupported",
+      "stage": "extractor",
+      "categories": ["smtp", "bad_encoding", "unsupported"],
+      "input": {
+        "profile_id": "smtp-data-mime-v1",
+        "client_to_server": {"status": "complete", "bytes": "DATA\r\nContent-Type: text/plain\r\nContent-Transfer-Encoding: x-evil\r\n\r\nbody\r\n.\r\n"},
+        "server_to_client": {"status": "complete", "bytes": "354 go\r\n"}
+      },
+      "expected": {"status": "unsupported", "content": "", "sanitized_filename": "", "content_encoding": "", "object_policy": "forbidden", "inert": true}
+    },
+    {
+      "case_id": "smtp-missing-dot-truncated",
+      "stage": "extractor",
+      "categories": ["smtp", "truncated", "missing_terminator"],
+      "input": {
+        "profile_id": "smtp-data-mime-v1",
+        "client_to_server": {"status": "complete", "bytes": "DATA\r\nContent-Type: text/plain\r\n\r\nbody"},
+        "server_to_client": {"status": "complete", "bytes": "354 go\r\n"}
+      },
+      "expected": {"status": "truncated", "content": "", "sanitized_filename": "", "content_encoding": "", "object_policy": "metadata_only", "inert": true}
+    },
+    {
+      "case_id": "smtp-multipart-ambiguous-unsupported",
+      "stage": "extractor",
+      "categories": ["smtp", "multipart", "ambiguous_multiple_files", "unsupported"],
+      "input": {
+        "profile_id": "smtp-data-mime-v1",
+        "client_to_server": {"status": "complete", "bytes": "DATA\r\nContent-Type: multipart/mixed; boundary=x\r\n\r\n--x\r\nContent-Type: text/plain\r\n\r\none\r\n--x\r\nContent-Type: text/plain\r\n\r\ntwo\r\n--x--\r\n\r\n.\r\n"},
+        "server_to_client": {"status": "complete", "bytes": "354 go\r\n"}
+      },
+      "expected": {"status": "unsupported", "content": "", "sanitized_filename": "", "content_encoding": "", "object_policy": "forbidden", "inert": true}
+    }
+  ]
+}

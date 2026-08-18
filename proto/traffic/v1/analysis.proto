@@ -1,0 +1,500 @@
+// =============================================================================
+// FILE: proto/traffic/v1/analysis.proto
+// 统一分析任务调度中心核心主链契约(P0 合同冻结)
+//
+// 语义真源:doc/07_alignment/课题一主营业务流程闭环与中期详细设计对齐方案.md
+// §4/§7/§8。加法式演进:字段只追加,删除 reserved,enum 0=UNSPECIFIED。
+// =============================================================================
+
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.traffic.v1";
+option java_multiple_files = true;
+
+// ---------------------------------------------------------------------------
+// 枚举(0=UNSPECIFIED,unknown fail closed)
+// ---------------------------------------------------------------------------
+
+// 计划参数来源:只回答"计划参数由批准默认值还是授权人工覆盖准备",
+// 不决定触发方式、容量、拓扑(与 TriggerKind 正交)。
+enum PlanSource {
+  PLAN_SOURCE_UNSPECIFIED = 0;
+  PLAN_SOURCE_AUTO_DEFAULT = 1;
+  PLAN_SOURCE_MANUAL_CUSTOM = 2;
+}
+
+// 触发方式(与 PlanSource 正交,任一来源可绑定任一触发)。
+enum TriggerKind {
+  TRIGGER_KIND_UNSPECIFIED = 0;
+  TRIGGER_KIND_CONTINUOUS_WINDOW = 1;
+  TRIGGER_KIND_CRON_WINDOW = 2;
+  TRIGGER_KIND_EVENT_DRIVEN = 3;
+  TRIGGER_KIND_ON_DEMAND = 4;
+}
+
+// 数据源类型。
+enum SourceKind {
+  SOURCE_KIND_UNSPECIFIED = 0;
+  SOURCE_KIND_LIVE_STREAM_WINDOW = 1;
+  SOURCE_KIND_PROBE_CAPTURE_WINDOW = 2;
+  SOURCE_KIND_PCAP_REPLAY = 3;
+}
+
+// 调度类别。
+enum SchedulingClass {
+  SCHEDULING_CLASS_UNSPECIFIED = 0;
+  SCHEDULING_CLASS_BASELINE = 1;
+  SCHEDULING_CLASS_INTERACTIVE = 2;
+  SCHEDULING_CLASS_ACCEPTANCE = 3;
+}
+
+// 任务定义状态。
+enum TaskDefinitionState {
+  TASK_DEFINITION_STATE_UNSPECIFIED = 0;
+  TASK_DEFINITION_STATE_DRAFT = 1;
+  TASK_DEFINITION_STATE_VALIDATED = 2;
+  TASK_DEFINITION_STATE_ACTIVE = 3;
+  TASK_DEFINITION_STATE_SUSPENDED = 4;
+  TASK_DEFINITION_STATE_RETIRED = 5;
+}
+
+// 计划治理头状态(CAS 推进)。
+enum PlanGovernanceState {
+  PLAN_GOVERNANCE_STATE_UNSPECIFIED = 0;
+  PLAN_GOVERNANCE_STATE_DRAFT = 1;
+  PLAN_GOVERNANCE_STATE_VALIDATED = 2;
+  PLAN_GOVERNANCE_STATE_APPROVED = 3;
+  PLAN_GOVERNANCE_STATE_ACTIVE = 4;
+  PLAN_GOVERNANCE_STATE_RETIRED = 5;
+}
+
+// 调度激活头状态。
+enum ScheduleActivationState {
+  SCHEDULE_ACTIVATION_STATE_UNSPECIFIED = 0;
+  SCHEDULE_ACTIVATION_STATE_DRAFT = 1;
+  SCHEDULE_ACTIVATION_STATE_ACTIVE = 2;
+  SCHEDULE_ACTIVATION_STATE_PAUSED = 3;
+  SCHEDULE_ACTIVATION_STATE_RETIRED = 4;
+}
+
+// 触发实例状态。
+enum TriggerInstanceState {
+  TRIGGER_INSTANCE_STATE_UNSPECIFIED = 0;
+  TRIGGER_INSTANCE_STATE_PENDING_MATERIALIZATION = 1;
+  TRIGGER_INSTANCE_STATE_MATERIALIZED = 2;
+  TRIGGER_INSTANCE_STATE_SUPPRESSED = 3;
+  TRIGGER_INSTANCE_STATE_QUARANTINED = 4;
+}
+
+// Run 状态。
+enum RunState {
+  RUN_STATE_UNSPECIFIED = 0;
+  RUN_STATE_ACCEPTED = 1;
+  RUN_STATE_PREPARING = 2;
+  RUN_STATE_QUEUED = 3;
+  RUN_STATE_RUNNING = 4;
+  RUN_STATE_FINALIZING = 5;
+  RUN_STATE_SUCCEEDED = 6;
+  RUN_STATE_PARTIALLY_SUCCEEDED = 7;
+  RUN_STATE_FAILED = 8;
+  RUN_STATE_CANCEL_REQUESTED = 9;
+  RUN_STATE_CANCELLED = 10;
+}
+
+// 执行节点 attempt 状态。
+enum StageAttemptState {
+  STAGE_ATTEMPT_STATE_UNSPECIFIED = 0;
+  STAGE_ATTEMPT_STATE_PENDING = 1;
+  STAGE_ATTEMPT_STATE_DISPATCHED = 2;
+  STAGE_ATTEMPT_STATE_RUNNING = 3;
+  STAGE_ATTEMPT_STATE_SUCCEEDED = 4;
+  STAGE_ATTEMPT_STATE_PARTIAL = 5;
+  STAGE_ATTEMPT_STATE_FAILED = 6;
+  STAGE_ATTEMPT_STATE_CANCEL_REQUESTED = 7;
+  STAGE_ATTEMPT_STATE_CANCELLED = 8;
+  STAGE_ATTEMPT_STATE_SKIPPED = 9;
+}
+
+// 检测器对单个输入×required detector 的 typed outcome(无消息≠阴性)。
+enum DetectorDisposition {
+  DETECTOR_DISPOSITION_UNSPECIFIED = 0;
+  DETECTOR_DISPOSITION_POSITIVE = 1;
+  DETECTOR_DISPOSITION_NEGATIVE = 2;
+  DETECTOR_DISPOSITION_INCONCLUSIVE = 3;
+  DETECTOR_DISPOSITION_INCOMPATIBLE = 4;
+  DETECTOR_DISPOSITION_ERROR = 5;
+  DETECTOR_DISPOSITION_NOT_RUN = 6;
+}
+
+// Run 总体机器结论(与 DetectorDisposition 分层)。
+enum FindingConclusion {
+  FINDING_CONCLUSION_UNSPECIFIED = 0;
+  FINDING_CONCLUSION_THREAT_FOUND = 1;
+  FINDING_CONCLUSION_NO_THREAT_OBSERVED = 2;
+  FINDING_CONCLUSION_INCONCLUSIVE = 3;
+  FINDING_CONCLUSION_NO_DATA = 4;
+  FINDING_CONCLUSION_NOT_EVALUATED = 5;
+}
+
+// 风险严重度(只描述已观察发现,不参与 RunState/FindingConclusion 判定)。
+enum RiskSeverity {
+  RISK_SEVERITY_UNSPECIFIED = 0;
+  RISK_SEVERITY_CRITICAL = 1;
+  RISK_SEVERITY_HIGH = 2;
+  RISK_SEVERITY_MEDIUM = 3;
+  RISK_SEVERITY_LOW = 4;
+  RISK_SEVERITY_NONE = 5;
+  RISK_SEVERITY_UNKNOWN = 6;
+}
+
+// 完整性(与结论确定性正交)。
+enum Completeness {
+  COMPLETENESS_UNSPECIFIED = 0;
+  COMPLETENESS_COMPLETE = 1;
+  COMPLETENESS_PARTIAL = 2;
+  COMPLETENESS_INCOMPLETE = 3;
+  COMPLETENESS_UNKNOWN = 4;
+}
+
+// 证据完整性状态。
+enum IntegrityState {
+  INTEGRITY_STATE_UNSPECIFIED = 0;
+  INTEGRITY_STATE_VERIFIED = 1;
+  INTEGRITY_STATE_UNVERIFIED = 2;
+  INTEGRITY_STATE_FAILED = 3;
+}
+
+// 人读报告状态(独立于 RunState)。
+enum ReportState {
+  REPORT_STATE_UNSPECIFIED = 0;
+  REPORT_STATE_NOT_REQUESTED = 1;
+  REPORT_STATE_QUEUED = 2;
+  REPORT_STATE_GENERATING = 3;
+  REPORT_STATE_VERIFYING = 4;
+  REPORT_STATE_AVAILABLE = 5;
+  REPORT_STATE_FAILED = 6;
+  REPORT_STATE_CANCELLED = 7;
+}
+
+// provider/activation 模式(执行节点契约)。
+enum ProviderMode {
+  PROVIDER_MODE_UNSPECIFIED = 0;
+  PROVIDER_MODE_SHARED_STREAM = 1;
+  PROVIDER_MODE_DEDICATED_OPERATION = 2;
+  PROVIDER_MODE_AUTHORITY_LOCAL = 3;
+}
+
+enum ActivationMode {
+  ACTIVATION_MODE_UNSPECIFIED = 0;
+  ACTIVATION_MODE_PIPELINED_STREAM = 1;
+  ACTIVATION_MODE_AFTER_UPSTREAM_CLOSE = 2;
+  ACTIVATION_MODE_AUTHORITY_LOCAL = 3;
+}
+
+// ---------------------------------------------------------------------------
+// 业务对象
+// ---------------------------------------------------------------------------
+
+// 不可变计划修订。execution_spec_sha256 只覆盖规范化后的运行字段,
+// 不含 plan_source/selection_origins/created_by/created_at。
+message AnalysisPlanRevision {
+  string tenant_id = 1;
+  string task_definition_id = 2;
+  int64 plan_revision = 3;
+  PlanSource plan_source = 4;
+  SourceKind source_kind = 5;
+  string source_spec_json = 6;      // 采集源/窗口/限额(site 相关字段)
+  repeated string selected_feature_ids = 7;
+  string feature_set_id = 8;
+  string encrypted_recognition_model_ref = 9;
+  repeated string threat_detector_refs = 10;
+  repeated string rule_refs = 11;
+  string machine_summary_schema_ref = 12;
+  string stage_dag_json = 13;       // 五阶段 DAG(ExecutionNode exact-set)
+  string completion_policy_json = 14;
+  string resource_budget_json = 15;
+  int64 catalog_revision = 16;
+  repeated string selection_origins = 17;
+  string canonicalization_version = 18;
+  string execution_spec_sha256 = 19;
+  string plan_revision_sha256 = 20;
+  string created_by = 21;
+  int64 created_at_ms = 22;
+}
+
+// 不可变调度修订:精确绑定一个已批准 plan revision,不解析"当前 active plan"。
+message AnalysisScheduleRevision {
+  string tenant_id = 1;
+  string task_definition_id = 2;
+  int64 revision = 3;
+  int64 approved_plan_revision = 4;
+  string execution_spec_sha256 = 5;
+  TriggerKind trigger_kind = 6;
+  string timezone = 7;
+  string window_or_cron_json = 8;
+  int64 prepare_lead_time_ms = 9;
+  string misfire_policy = 10;       // MISFIRE_FAIL|MISFIRE_DELAY|MISFIRE_BOUNDED_REPLAY
+  string concurrency_policy = 11;   // FORBID_OVERLAP|ALLOW_OVERLAP
+  SchedulingClass scheduling_class = 12;
+  string resource_restrictions_json = 13;
+  string schedule_sha256 = 14;
+  ScheduleActivationState activation_state = 15;
+}
+
+// 一次确定性触发事实(物化后与 Task 一一对应)。
+message TriggerInstance {
+  string tenant_id = 1;
+  string trigger_instance_id = 2;
+  string identity_kind = 3;         // actor|schedule|event
+  string canonical_identity_hash = 4;
+  string request_sha256 = 5;
+  TriggerInstanceState state = 6;
+  string materialized_task_id = 7;
+  TriggerKind trigger_kind = 8;
+  string window_id = 9;
+  int64 created_at_ms = 10;
+}
+
+// 业务请求:绑定 definition/plan/trigger 与当前 Run。
+message AnalysisTask {
+  string tenant_id = 1;
+  string task_id = 2;
+  string task_definition_id = 3;
+  int64 plan_revision = 4;
+  string execution_spec_sha256 = 5;
+  int64 schedule_revision = 6;      // on-demand 时为 0
+  string trigger_instance_id = 7;
+  SchedulingClass effective_class = 8;
+  string effective_policy_sha256 = 9;
+  string current_run_id = 10;
+  int64 created_at_ms = 11;
+}
+
+// 一次有界执行尝试;整任务重试创建新 run,不覆写旧终态。
+message AnalysisRun {
+  string tenant_id = 1;
+  string run_id = 2;
+  string task_id = 3;
+  string execution_spec_sha256 = 4;
+  RunState state = 5;
+  Completeness completeness = 6;
+  IntegrityState integrity_state = 7;
+  FindingConclusion finding_conclusion = 8;
+  RiskSeverity risk_severity = 9;
+  int64 window_start_ms = 10;
+  int64 window_end_ms = 11;
+  int64 revision = 12;
+  int64 started_at_ms = 13;
+  int64 finalized_at_ms = 14;
+  int64 created_at_ms = 15;
+  string cancel_manifest_sha256 = 16;
+}
+
+// 执行节点 attempt(以 business_phase_id + execution_node_id 标识真实节点)。
+message AnalysisStageAttempt {
+  string tenant_id = 1;
+  string run_id = 2;
+  string stage_attempt_id = 3;
+  string business_phase_id = 4;     // S1..S5
+  string execution_node_id = 5;     // SESSIONIZATION|FEATURE_EXTRACTION|ENCRYPTED_RECOGNIZER|RULE_DETECTION|BEHAVIOR_DETECTION|DETECTION_AGGREGATE|RECONCILE|MACHINE_FINALIZATION
+  int32 attempt = 6;
+  StageAttemptState state = 7;
+  ProviderMode provider_mode = 8;
+  ActivationMode activation_mode = 9;
+  string fencing_token = 10;
+  int64 lease_expires_at_ms = 11;
+  int64 started_at_ms = 12;
+  int64 finished_at_ms = 13;
+  string skip_reason = 14;          // OPTIONAL_PREDICATE_FALSE|BLOCKED_BY_UPSTREAM_FAILURE|CANCELLED_BEFORE_DISPATCH|NOT_APPLICABLE_BY_PLAN
+}
+
+// 执行器提交的不可变事实。
+message AnalysisStageReceipt {
+  string tenant_id = 1;
+  string run_id = 2;
+  string execution_node_id = 3;
+  int32 attempt = 4;
+  string fencing_token = 5;
+  string provider = 6;
+  int64 input_count = 7;
+  int64 output_count = 8;
+  int64 error_count = 9;
+  int64 reject_count = 10;
+  int64 watermark_ms = 11;
+  string fence_json = 12;
+  string payload_hash = 13;
+  int64 received_at_ms = 14;
+}
+
+// 每个输入×detector 的 typed outcome。
+message AnalysisResult {
+  string tenant_id = 1;
+  string run_id = 2;
+  string input_identity = 3;
+  string detector_id = 4;
+  DetectorDisposition disposition = 5;
+  double score = 6;
+  repeated string labels = 7;
+  repeated string evidence_refs = 8;
+  int64 created_at_ms = 9;
+}
+
+// 机器总体摘要(与终态同事务冻结)。
+message MachineAnalysisSummary {
+  string tenant_id = 1;
+  string run_id = 2;
+  FindingConclusion finding_conclusion = 3;
+  RiskSeverity risk_severity = 4;
+  Completeness completeness = 5;
+  IntegrityState integrity_state = 6;
+  string scope_json = 7;
+  string key_findings_json = 8;
+  string limitations_json = 9;
+  string evidence_manifest_hash = 10;
+  string closure_manifest_hash = 11;
+  string canonical_sha256 = 12;
+  int64 created_at_ms = 13;
+}
+
+// 人读报告(独立 ReportState,失败不回退 Run)。
+message HumanReadableReport {
+  string tenant_id = 1;
+  string report_id = 2;
+  string run_id = 3;
+  string summary_sha256 = 4;
+  string template_revision = 5;
+  string locale = 6;
+  ReportState state = 7;
+  string object_key = 8;
+  string object_sha256 = 9;
+  int64 object_size = 10;
+  int64 created_at_ms = 11;
+  int64 updated_at_ms = 12;
+}
+
+// ---------------------------------------------------------------------------
+// API 请求/响应(核心端点,卷B §1.2)
+// ---------------------------------------------------------------------------
+
+message CreateTaskDefinitionRequest {
+  string tenant_id = 1;
+  string name = 2;
+  SchedulingClass default_scheduling_class = 3;
+  string owner = 4;
+}
+
+message CreatePlanRequest {
+  string tenant_id = 1;
+  string task_definition_id = 2;
+  PlanSource plan_source = 3;
+  SourceKind source_kind = 4;
+  string source_spec_json = 5;
+  repeated string selected_feature_ids = 6;
+  string encrypted_recognition_model_ref = 7;
+  repeated string threat_detector_refs = 8;
+  repeated string rule_refs = 9;
+  string completion_policy_json = 10;
+  string resource_budget_json = 11;
+}
+
+message CreateScheduleRequest {
+  string tenant_id = 1;
+  string task_definition_id = 2;
+  int64 approved_plan_revision = 3;
+  TriggerKind trigger_kind = 4;
+  string timezone = 5;
+  string window_or_cron_json = 6;
+  int64 prepare_lead_time_ms = 7;
+  string misfire_policy = 8;
+  string concurrency_policy = 9;
+  SchedulingClass scheduling_class = 10;
+  string resource_restrictions_json = 11;
+}
+
+// 即时分析触发(三步向导最终提交;default/custom 均为主业务链执行环节)。
+message SubmitTriggerRequest {
+  string tenant_id = 1;
+  string task_definition_id = 2;
+  PlanSource plan_source = 3;
+  string custom_overrides_json = 4; // custom 时才携带;覆盖项=探针/采集源/特征/识别模型/检测模型/规则/阈值
+  SourceKind source_kind = 5;
+  string source_spec_json = 6;      // PCAP_REPLAY 必填 object_ref+window
+  string client_idempotency_key = 7;
+}
+
+message SubmitTriggerResponse {
+  string task_id = 1;
+  string run_id = 2;
+  string status_url = 3;
+  string execution_spec_sha256 = 4;
+}
+
+message ListRunsRequest {
+  string tenant_id = 1;
+  string task_definition_id = 2;
+  RunState state = 3;
+  SchedulingClass scheduling_class = 4;
+  int64 window_start_ms = 5;
+  int64 window_end_ms = 6;
+  int32 limit = 7;
+  string cursor = 8;
+}
+
+message ListRunsResponse {
+  repeated AnalysisRun runs = 1;
+  string next_cursor = 2;
+  int64 total = 3;
+}
+
+message GetRunResponse {
+  AnalysisRun run = 1;
+  repeated AnalysisStageAttempt stages = 2;
+  MachineAnalysisSummary summary = 3;
+  HumanReadableReport report = 4;
+}
+
+message ListRunResultsRequest {
+  string tenant_id = 1;
+  string run_id = 2;
+  DetectorDisposition disposition = 3;
+  int32 limit = 4;
+  string cursor = 5;
+}
+
+message ListRunResultsResponse {
+  repeated AnalysisResult results = 1;
+  string next_cursor = 2;
+  int64 total = 3;
+}
+
+message CancelRunRequest {
+  string tenant_id = 1;
+  string run_id = 2;
+  string client_idempotency_key = 3;
+}
+
+message RetryRunRequest {
+  string tenant_id = 1;
+  string run_id = 2;
+  string client_idempotency_key = 3;
+}
+
+message RequestReportRequest {
+  string tenant_id = 1;
+  string run_id = 2;
+  string template_revision = 3;
+  string locale = 4;
+}
+
+// 通用回执。
+message AnalysisOperationReceipt {
+  string operation_id = 1;
+  string state = 2;                 // accepted|running|succeeded|failed|cancelled
+  int64 revision = 3;
+  string status_url = 4;
+  string error_code = 5;
+  string error_message = 6;
+}

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/schemas/m03-pcap-golden-manifest.v1.schema.json",
+  "title": "M03 deterministic parser PCAP corpus",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "corpus_id", "generator", "source", "blind_label_policy", "coverage", "fixtures"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "corpus_id": {"const": "m03-pcap-golden-v1"},
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"const": "scripts/testdata/generate_m03_pcap_golden.py"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "license", "custodian_role"],
+      "properties": {
+        "kind": {"const": "deterministic_synthetic"},
+        "license": {"const": "project_generated_test_fixture"},
+        "custodian_role": {"const": "traffic-parser-feature-owner"}
+      }
+    },
+    "blind_label_policy": {"type": "string", "minLength": 40},
+    "coverage": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"enum": ["normal", "attack_structure", "ipv6", "tls", "quic", "truncated", "large_flow", "empty"]},
+      "minItems": 8,
+      "maxItems": 8
+    },
+    "fixtures": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fixture_id", "relative_path", "category", "sha256", "size_bytes", "packet_count", "expected", "semantic_label"],
+        "properties": {
+          "fixture_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "relative_path": {"type": "string", "pattern": "^[a-z0-9-]+\\.pcap$"},
+          "category": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "size_bytes": {"type": "integer", "minimum": 24},
+          "packet_count": {"type": "integer", "minimum": 0},
+          "expected": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["decoded_count", "rejected_count", "aggregation_key_count", "protocols", "transport_statuses", "first_tuple"],
+            "properties": {
+              "decoded_count": {"type": "integer", "minimum": 0},
+              "rejected_count": {"type": "integer", "minimum": 0},
+              "aggregation_key_count": {"type": "integer", "minimum": 0},
+              "protocols": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 0, "maximum": 255}},
+              "transport_statuses": {"type": "array", "uniqueItems": true, "items": {"enum": ["decoded", "first_fragment", "unsupported"]}},
+              "first_tuple": {
+                "type": ["object", "null"],
+                "additionalProperties": false,
+                "required": ["src_ip", "dst_ip", "src_port", "dst_port", "protocol"],
+                "properties": {
+                  "src_ip": {"type": "string"}, "dst_ip": {"type": "string"},
+                  "src_port": {"type": "integer", "minimum": 0, "maximum": 65535},
+                  "dst_port": {"type": "integer", "minimum": 0, "maximum": 65535},
+                  "protocol": {"type": "integer", "minimum": 0, "maximum": 255}
+                }
+              }
+            }
+          },
+          "semantic_label": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["status", "blind_evaluation_eligible"],
+            "properties": {
+              "status": {"const": "synthetic_structure_not_ground_truth"},
+              "blind_evaluation_eligible": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  }
+}

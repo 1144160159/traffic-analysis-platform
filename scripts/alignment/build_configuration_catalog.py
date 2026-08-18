@@ -22,6 +22,7 @@ GO_ROOTS = (
 )
 FLINK_PROPERTIES = ROOT / "java/flink-jobs"
 KUBERNETES_GLOBS = (
+    "deployments/log-collectors/*.yaml",
     "deployments/kubernetes/applications/*.yaml",
     "deployments/kubernetes/flink/*.yaml",
     "deployments/kubernetes/infrastructure/*.yaml",

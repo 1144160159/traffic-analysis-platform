@@ -116,6 +116,8 @@ message AlertFeedback {
   string label = 5;
   string reason_code = 6;
   string comment = 7;
+  // Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+  // a future breaking-change migration should use `bool`.
   uint32 add_to_whitelist = 8;
   string alert_type = 9;
   string severity = 10;

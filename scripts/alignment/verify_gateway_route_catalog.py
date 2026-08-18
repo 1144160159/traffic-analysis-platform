@@ -25,6 +25,7 @@ REQUIRED_ROUTE_FIELDS = {
     "authorization",
     "tenant_source",
     "limits",
+    "trace",
     "cors",
     "cache",
     "websocket",
@@ -101,6 +102,13 @@ def verify() -> dict[str, Any]:
                     )
         if not route.get("owner") or not (route.get("rollback") or {}).get("strategy"):
             errors.append(f"route {route_id}: owner and rollback strategy are mandatory")
+        trace = route.get("trace") or {}
+        if trace.get("status") != "implemented" or trace.get("header_name") != "X-Request-ID":
+            errors.append(f"route {route_id}: X-Request-ID trace propagation is mandatory")
+        if authentication.get("required"):
+            body_bytes = (route.get("limits") or {}).get("body_bytes")
+            if not isinstance(body_bytes, int) or body_bytes <= 0:
+                errors.append(f"route {route_id}: positive body limit is mandatory")
 
     coverage = actual.get("openapi_coverage") or {}
     if coverage.get("uncovered_operation_ids"):

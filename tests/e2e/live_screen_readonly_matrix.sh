@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# 临时文件统一放入专用目录,中断/异常退出时由 trap 清理,避免 /tmp 残留。
+TMP_CLEANUP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_CLEANUP_DIR"' EXIT
 
 APISIX="${APISIX:-http://10.0.5.8:30180}"
 TENANT="${TENANT:-default}"
@@ -102,8 +105,8 @@ SCREEN_TOKEN="$(make_token codex-screen-readonly '["screen-viewer"]' '["screen:v
 curl_check() {
   local name="$1" method="$2" path="$3" mode="$4" expected="$5" data="${6:-}" filter="${7:-}"
   local body_file err_file code rc detail ok
-  body_file="$(mktemp)"
-  err_file="$(mktemp)"
+  body_file="$(mktemp "$TMP_CLEANUP_DIR"/body.XXXXXX)"
+  err_file="$(mktemp "$TMP_CLEANUP_DIR"/err.XXXXXX)"
   local args=(--noproxy '*' -sS -m 15 -o "$body_file" -w '%{http_code}' -X "$method" -H "X-Tenant-ID: $TENANT")
   case "$mode" in
     admin) args+=(-H "Authorization: Bearer $ADMIN_TOKEN") ;;
@@ -142,13 +145,33 @@ curl_check "screen token auth/me exposes only screen scope" "GET" "/api/v1/auth/
 curl_check "screen token can read dashboard stats for screen data" "GET" "/api/v1/dashboard/stats" "screen" "200" "" '.success == true'
 curl_check "screen token cannot list API tokens" "GET" "/api/v1/tokens" "screen" "403" "" ""
 
-ALERT_ID="$(curl --noproxy '*' -sS -m 15 -H "Authorization: Bearer $ADMIN_TOKEN" -H "X-Tenant-ID: $TENANT" "$APISIX/api/v1/alerts?limit=1" | jq -r '.data[0].alert_id // empty')"
+ALERT_JSON="$(curl --noproxy '*' -sS -m 15 -H "Authorization: Bearer $ADMIN_TOKEN" -H "X-Tenant-ID: $TENANT" "$APISIX/api/v1/alerts?limit=1")"
+ALERT_ID="$(jq -r '.data[0].alert_id // empty' <<<"$ALERT_JSON")"
+ALERT_ORIG_STATUS="$(jq -r '.data[0].status // empty' <<<"$ALERT_JSON")"
 if [[ -z "$ALERT_ID" ]]; then
   json_log "api" "load alert id for readonly write-deny check" false "000" "no live alert available"
   echo "no live alert available for screen readonly matrix" >&2
   exit 1
 fi
-curl_check "screen token cannot update alert status" "PUT" "/api/v1/alerts/$ALERT_ID/status" "screen" "403" '{"status":"assigned","reason":"screen readonly token should be denied"}' '(.message // "") | contains("alert:write")'
+# 写拒绝检查不得污染线上数据:期望 403;若 RBAC 回归返回 2xx,立即用管理员令牌回滚原状态。
+set +e
+deny_code="$(curl --noproxy '*' -sS -m 15 -o /dev/null -w '%{http_code}' -X PUT \
+  -H "Authorization: Bearer $SCREEN_TOKEN" -H "X-Tenant-ID: $TENANT" -H 'Content-Type: application/json' \
+  -d '{"status":"assigned","reason":"screen readonly token should be denied"}' \
+  "$APISIX/api/v1/alerts/$ALERT_ID/status")"
+set -e
+if [[ "$deny_code" == "403" ]]; then
+  json_log "api" "screen token cannot update alert status" true "403" "denied as expected"
+else
+  json_log "api" "screen token cannot update alert status" false "$deny_code" "unexpected code"
+  if [[ "$deny_code" =~ ^2 && -n "$ALERT_ORIG_STATUS" ]]; then
+    rollback_code="$(curl --noproxy '*' -sS -m 15 -o /dev/null -w '%{http_code}' -X PUT \
+      -H "Authorization: Bearer $ADMIN_TOKEN" -H "X-Tenant-ID: $TENANT" -H 'Content-Type: application/json' \
+      -d "{\"status\":\"$ALERT_ORIG_STATUS\",\"reason\":\"screen readonly matrix rollback after unexpected mutation\"}" \
+      "$APISIX/api/v1/alerts/$ALERT_ID/status")"
+    json_log "api" "rollback alert status after unexpected mutation" "$([[ "$rollback_code" =~ ^2 ]] && echo true || echo false)" "$rollback_code" "restored=$ALERT_ORIG_STATUS"
+  fi
+fi
 
 SCREEN_TOKEN="$SCREEN_TOKEN" APISIX="$APISIX" TENANT="$TENANT" REPORT="$REPORT" PLAYWRIGHT_NODE_MODULE="$PLAYWRIGHT_NODE_MODULE" PLAYWRIGHT_HEADLESS="$PLAYWRIGHT_HEADLESS" node <<'JS'
 const fs = require('node:fs');

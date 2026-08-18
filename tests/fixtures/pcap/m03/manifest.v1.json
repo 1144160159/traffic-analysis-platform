@@ -1,0 +1,246 @@
+{
+  "schema_version": "1.0.0",
+  "corpus_id": "m03-pcap-golden-v1",
+  "generator": {
+    "path": "scripts/testdata/generate_m03_pcap_golden.py",
+    "sha256": "28dd0b109fb03c8aa218cc9e8f1d347864b52d258573906892ae1b76737ddb16"
+  },
+  "source": {
+    "kind": "deterministic_synthetic",
+    "license": "project_generated_test_fixture",
+    "custodian_role": "traffic-parser-feature-owner"
+  },
+  "blind_label_policy": "categories describe exercised structures only and are forbidden as model or attack ground-truth labels",
+  "coverage": [
+    "normal",
+    "attack_structure",
+    "ipv6",
+    "tls",
+    "quic",
+    "truncated",
+    "large_flow",
+    "empty"
+  ],
+  "fixtures": [
+    {
+      "fixture_id": "normal-dns",
+      "relative_path": "normal-dns.pcap",
+      "category": "normal",
+      "sha256": "3bbf5f9f85296356eab690f6d620752b64594cc181206652dca4f133c9a00bbd",
+      "size_bytes": 222,
+      "packet_count": 2,
+      "expected": {
+        "decoded_count": 2,
+        "rejected_count": 0,
+        "aggregation_key_count": 1,
+        "protocols": [
+          17
+        ],
+        "transport_statuses": [
+          "decoded"
+        ],
+        "first_tuple": {
+          "src_ip": "192.0.2.20",
+          "dst_ip": "8.8.8.8",
+          "src_port": 53000,
+          "dst_port": 53,
+          "protocol": 17
+        }
+      },
+      "semantic_label": {
+        "status": "synthetic_structure_not_ground_truth",
+        "blind_evaluation_eligible": false
+      }
+    },
+    {
+      "fixture_id": "attack-scan-shape",
+      "relative_path": "attack-scan-shape.pcap",
+      "category": "attack_structure",
+      "sha256": "da582c1fad244c82f86f3b00695c3272ddaebc0f3961dc3ceddab58fb245b1b6",
+      "size_bytes": 1144,
+      "packet_count": 16,
+      "expected": {
+        "decoded_count": 16,
+        "rejected_count": 0,
+        "aggregation_key_count": 16,
+        "protocols": [
+          6
+        ],
+        "transport_statuses": [
+          "decoded"
+        ],
+        "first_tuple": {
+          "src_ip": "10.0.0.50",
+          "dst_ip": "10.0.0.1",
+          "src_port": 40020,
+          "dst_port": 20,
+          "protocol": 6
+        }
+      },
+      "semantic_label": {
+        "status": "synthetic_structure_not_ground_truth",
+        "blind_evaluation_eligible": false
+      }
+    },
+    {
+      "fixture_id": "ipv6-extension",
+      "relative_path": "ipv6-extension.pcap",
+      "category": "ipv6",
+      "sha256": "76786e3eab3d45d527ad5483ecde0b12d59ad09209fd698c0a8d5eb77e216aac",
+      "size_bytes": 118,
+      "packet_count": 1,
+      "expected": {
+        "decoded_count": 1,
+        "rejected_count": 0,
+        "aggregation_key_count": 1,
+        "protocols": [
+          17
+        ],
+        "transport_statuses": [
+          "decoded"
+        ],
+        "first_tuple": {
+          "src_ip": "2001:db8::1",
+          "dst_ip": "2001:db8::2",
+          "src_port": 5353,
+          "dst_port": 5353,
+          "protocol": 17
+        }
+      },
+      "semantic_label": {
+        "status": "synthetic_structure_not_ground_truth",
+        "blind_evaluation_eligible": false
+      }
+    },
+    {
+      "fixture_id": "tls-client-hello-shape",
+      "relative_path": "tls-client-hello-shape.pcap",
+      "category": "tls",
+      "sha256": "ecbb695c8dee60b1d53003b34ff8df89ec936fbc62adf8648bb90c0bb04acf48",
+      "size_bytes": 104,
+      "packet_count": 1,
+      "expected": {
+        "decoded_count": 1,
+        "rejected_count": 0,
+        "aggregation_key_count": 1,
+        "protocols": [
+          6
+        ],
+        "transport_statuses": [
+          "decoded"
+        ],
+        "first_tuple": {
+          "src_ip": "192.0.2.60",
+          "dst_ip": "198.51.100.60",
+          "src_port": 51000,
+          "dst_port": 443,
+          "protocol": 6
+        }
+      },
+      "semantic_label": {
+        "status": "synthetic_structure_not_ground_truth",
+        "blind_evaluation_eligible": false
+      }
+    },
+    {
+      "fixture_id": "quic-initial-shape",
+      "relative_path": "quic-initial-shape.pcap",
+      "category": "quic",
+      "sha256": "0cbe43c5516a809675b4a105f07d21de95439994fceaadcefeaf1423d6a23bf9",
+      "size_bytes": 98,
+      "packet_count": 1,
+      "expected": {
+        "decoded_count": 1,
+        "rejected_count": 0,
+        "aggregation_key_count": 1,
+        "protocols": [
+          17
+        ],
+        "transport_statuses": [
+          "decoded"
+        ],
+        "first_tuple": {
+          "src_ip": "192.0.2.70",
+          "dst_ip": "198.51.100.70",
+          "src_port": 52000,
+          "dst_port": 443,
+          "protocol": 17
+        }
+      },
+      "semantic_label": {
+        "status": "synthetic_structure_not_ground_truth",
+        "blind_evaluation_eligible": false
+      }
+    },
+    {
+      "fixture_id": "truncated-frame",
+      "relative_path": "truncated-frame.pcap",
+      "category": "truncated",
+      "sha256": "fc7d9db3847038c1dab6f61d381879c716f3beb486074e012e143468aac8bbaf",
+      "size_bytes": 64,
+      "packet_count": 1,
+      "expected": {
+        "decoded_count": 0,
+        "rejected_count": 1,
+        "aggregation_key_count": 0,
+        "protocols": [],
+        "transport_statuses": [],
+        "first_tuple": null
+      },
+      "semantic_label": {
+        "status": "synthetic_structure_not_ground_truth",
+        "blind_evaluation_eligible": false
+      }
+    },
+    {
+      "fixture_id": "large-bidirectional-flow",
+      "relative_path": "large-bidirectional-flow.pcap",
+      "category": "large_flow",
+      "sha256": "64fc874493510a42f1670a293bc4aadf864f66f75a8d072364fbe52fd11d48a5",
+      "size_bytes": 13080,
+      "packet_count": 128,
+      "expected": {
+        "decoded_count": 128,
+        "rejected_count": 0,
+        "aggregation_key_count": 1,
+        "protocols": [
+          6
+        ],
+        "transport_statuses": [
+          "decoded"
+        ],
+        "first_tuple": {
+          "src_ip": "192.0.2.30",
+          "dst_ip": "198.51.100.40",
+          "src_port": 49152,
+          "dst_port": 443,
+          "protocol": 6
+        }
+      },
+      "semantic_label": {
+        "status": "synthetic_structure_not_ground_truth",
+        "blind_evaluation_eligible": false
+      }
+    },
+    {
+      "fixture_id": "empty",
+      "relative_path": "empty.pcap",
+      "category": "empty",
+      "sha256": "acc530668c8bc60b2d229281130b1899bfc81d70fdada5c34b3236c628f739c8",
+      "size_bytes": 24,
+      "packet_count": 0,
+      "expected": {
+        "decoded_count": 0,
+        "rejected_count": 0,
+        "aggregation_key_count": 0,
+        "protocols": [],
+        "transport_statuses": [],
+        "first_tuple": null
+      },
+      "semantic_label": {
+        "status": "synthetic_structure_not_ground_truth",
+        "blind_evaluation_eligible": false
+      }
+    }
+  ]
+}

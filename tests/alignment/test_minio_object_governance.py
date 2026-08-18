@@ -23,11 +23,11 @@ class MinioObjectGovernanceTest(unittest.TestCase):
         result = MODULE.verify()
         self.assertEqual(result["status"], "PASS", result["errors"])
         self.assertFalse(result["production_applied"])
-        self.assertEqual(result["bucket_count"], 5)
-        self.assertEqual(result["object_class_count"], 8)
+        self.assertEqual(result["bucket_count"], 6)
+        self.assertEqual(result["object_class_count"], 9)
         self.assertEqual(
             result["governed_bootstrap_buckets"],
-            ["argo-artifacts", "flink-checkpoints", "pcap-archive", "report-artifacts", "traffic-models"],
+            ["argo-artifacts", "flink-checkpoints", "forensics-quarantine", "pcap-archive", "report-artifacts", "traffic-models"],
         )
         self.assertEqual(result["governed_bootstrap_buckets"], result["governed_bootstrap_verified_buckets"])
 

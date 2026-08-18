@@ -26,6 +26,11 @@ FILES = (
     "go/control-plane/cmd/alert-service/main.go",
     "deployments/kubernetes/applications/go-services.yaml",
     "doc/07_alignment/runbooks/T-OS-003-search-pagination-pit.md",
+    "web/ui/src/config/runtime.ts",
+    "web/ui/src/services/alertSearchCursorApi.ts",
+    "web/ui/src/pages/AlertTriagePage.tsx",
+    "deployments/kubernetes/applications/web-ui.yaml",
+    "doc/02_acceptance/topic1/tasks/t1-m09-n015/k8s-opensearch-cursor-latest.json",
 )
 
 
@@ -100,6 +105,28 @@ class OpenSearchSearchPaginationTest(unittest.TestCase):
             result = verify(candidate)
             self.assertEqual("FAIL", result["status"])
             self.assertTrue(any("tenant_id" in error for error in result["errors"]))
+
+    def test_physical_target_binding_removal_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            candidate = copy_candidate(Path(directory))
+            path = candidate / "go/control-plane/internal/alert/repository/opensearch_cursor.go"
+            path.write_text(path.read_text().replace("TargetSHA256", "RemovedTargetDigest"))
+            result = verify(candidate)
+            self.assertEqual("FAIL", result["status"])
+            self.assertTrue(any("TargetSHA256" in error for error in result["errors"]))
+
+    def test_ui_mock_fallback_or_default_on_flag_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            candidate = copy_candidate(Path(directory))
+            runtime = candidate / "web/ui/src/config/runtime.ts"
+            runtime.write_text(runtime.read_text().replace(
+                "runtime.ALERT_SEARCH_CURSOR_V1_ENABLED ?? import.meta.env.VITE_ALERT_SEARCH_CURSOR_V1_ENABLED,\n    false,",
+                "runtime.ALERT_SEARCH_CURSOR_V1_ENABLED ?? import.meta.env.VITE_ALERT_SEARCH_CURSOR_V1_ENABLED,\n    true,"))
+            client = candidate / "web/ui/src/services/alertSearchCursorApi.ts"
+            client.write_text(client.read_text().replace("throw new Error", "return fallbackSnapshot as never //"))
+            result = verify(candidate)
+            self.assertEqual("FAIL", result["status"])
+            self.assertTrue(any("Web cursor runtime" in error or "typed Web cursor client" in error for error in result["errors"]))
 
 
 if __name__ == "__main__":

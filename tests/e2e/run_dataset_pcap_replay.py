@@ -52,6 +52,8 @@ def main() -> int:
         item: dict[str, object] = {
             "path": str(pcap),
             "exists": pcap.is_file(),
+            "ground_truth_status": "unverified_not_for_blind_evaluation",
+            "license_status": "requires_dataset_custodian_confirmation",
         }
         if not pcap.is_file():
             item["result"] = "fail"
@@ -106,6 +108,7 @@ def main() -> int:
         "result": overall,
         "runner": "probe-agent PcapReplayer + PacketParser",
         "read_only_source": True,
+        "claim_scope": "bounded parser compatibility only; no attack label, detection quality, or license claim",
         "samples": results,
     }
     output_path = (repo / args.output).resolve()

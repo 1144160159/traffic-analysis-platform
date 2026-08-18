@@ -72,6 +72,42 @@ message ActiveIdleStats {
   float std_ms = 4;
 }
 
+// TransportSecurityProtocol names only a positively observed wire protocol.
+// Port numbers alone MUST NOT set this value or imply malicious traffic.
+enum TransportSecurityProtocol {
+  TRANSPORT_SECURITY_PROTOCOL_UNSPECIFIED = 0;
+  TRANSPORT_SECURITY_PROTOCOL_TLS = 1;
+  TRANSPORT_SECURITY_PROTOCOL_QUIC = 2;
+}
+
+// TrafficFeatureObservation is a bounded, additive carrier from packet capture
+// through sessionization to feature projection. It contains no raw payload:
+// byte histograms and hashes are sufficient for deterministic statistics while
+// raw_traffic_ref, when present, points to separately governed PCAP evidence.
+message TrafficFeatureObservation {
+  string schema_version = 1;
+  string algorithm_version = 2;
+  repeated sint32 signed_packet_lengths = 3;
+  repeated int64 packet_event_time_us = 4;
+  // Sixteen nibble buckets (0x0..0xf), bounded independently of flow size.
+  repeated uint64 payload_nibble_counts = 5;
+  uint64 payload_observed_bytes = 6;
+  bool sequence_truncated = 7;
+  TransportSecurityProtocol transport_security = 8;
+  string tls_version = 9;
+  string ja3 = 10;
+  string ja4 = 11;
+  string sni = 12;
+  string cert_sha256 = 13;
+  bool cert_is_self_signed = 14;
+  bool cert_is_self_signed_known = 15;
+  uint32 pubkey_len = 16;
+  bool pubkey_len_known = 17;
+  string quic_version = 18;
+  string raw_traffic_ref = 19;
+  repeated string missing_fields = 20;
+}
+
 // FlowDirection 流方向
 enum FlowDirection {
   FLOW_DIRECTION_UNSPECIFIED = 0;

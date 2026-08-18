@@ -19,7 +19,9 @@ from build_service_identity_catalog import (
 )
 
 
-EXPECTED_WORKLOADS = GO_SERVICE_NAMES | {"web-ui", "probe-agent", "flink-log-job"}
+EXPECTED_WORKLOADS = GO_SERVICE_NAMES | {
+    "web-ui", "probe-agent", "flink-log-job", "device-log-collector"
+}
 REQUIRED_WORKLOAD_FIELDS = {
     "workload_id",
     "name",
@@ -87,7 +89,7 @@ def verify() -> dict[str, Any]:
         if missing:
             errors.append(f"{name}: missing metadata {missing}")
         service_account = workload.get("service_account") or {}
-        if name in GO_SERVICE_NAMES | {"web-ui", "flink-log-job"}:
+        if name in GO_SERVICE_NAMES | {"web-ui", "flink-log-job", "device-log-collector"}:
             if service_account.get("name") in {None, "", "default"} or not service_account.get("declared"):
                 errors.append(f"{name}: dedicated ServiceAccount is required")
             if service_account.get("pod_token_automount") is not False:

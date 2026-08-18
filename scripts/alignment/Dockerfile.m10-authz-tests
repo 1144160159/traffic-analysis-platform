@@ -1,0 +1,22 @@
+ARG GO_BUILD_IMAGE=golang:1.25.12-alpine@sha256:56961d79ea8129efddcc0b8643fd8a5416b4e6228cfd477e3fd61deb2672c587
+ARG RUNTIME_IMAGE=debian:bookworm-slim@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639d36e7456b0b229241
+
+FROM ${GO_BUILD_IMAGE} AS build
+WORKDIR /src/go/control-plane
+COPY go/control-plane/go.mod go/control-plane/go.sum ./
+RUN go mod download
+COPY go/control-plane/ ./
+RUN mkdir -p /out \
+    && CGO_ENABLED=0 go test -c -o /out/httpx.test ./internal/common/httpx \
+    && CGO_ENABLED=0 go test -c -o /out/model.test ./internal/auth/model \
+    && CGO_ENABLED=0 go test -c -o /out/service.test ./internal/auth/service \
+    && CGO_ENABLED=0 go test -c -o /out/asset.test ./internal/asset/api \
+    && CGO_ENABLED=0 go test -c -o /out/graph.test ./cmd/graph-service
+
+FROM ${RUNTIME_IMAGE}
+COPY --from=build /out/ /opt/m10-authz/
+COPY --chmod=0555 scripts/alignment/run_m10_authz_test_binaries.sh /usr/local/bin/run-m10-authz-tests
+COPY contracts/authz/m10-minimal-role-policy.v1.json /workspace/contracts/authz/m10-minimal-role-policy.v1.json
+ENV M10_AUTHZ_POLICY_PATH=/workspace/contracts/authz/m10-minimal-role-policy.v1.json
+USER 65532:65532
+ENTRYPOINT ["/usr/local/bin/run-m10-authz-tests"]

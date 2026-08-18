@@ -31,10 +31,28 @@ class GatewayRouteCatalogTests(unittest.TestCase):
     def test_checked_in_catalog_matches_apisix_openapi_and_services(self) -> None:
         result = verifier.verify()
         self.assertEqual("PASS", result["status"], result["errors"])
-        self.assertEqual("PARTIAL", result["security_compliance"])
+        self.assertEqual("PASS", result["security_compliance"])
         self.assertEqual([], result["openapi_coverage"]["uncovered_operation_ids"])
         self.assertEqual([], result["openapi_coverage"]["operations_missing_required_scope"])
         self.assertGreaterEqual(result["counts"]["routes"], 50)
+
+    def test_every_route_has_request_id_and_explicit_upstream_policy(self) -> None:
+        catalog = build_catalog()
+        for route in catalog["routes"]:
+            self.assertEqual("implemented", route["trace"]["status"], route["route_id"])
+            if route["upstream"]:
+                self.assertIsInstance(route["upstream"]["timeout"], dict, route["route_id"])
+                self.assertEqual(0, route["upstream"]["retries"], route["route_id"])
+
+    def test_protected_routes_have_oidc_body_and_request_validation(self) -> None:
+        catalog = build_catalog()
+        for route in catalog["routes"]:
+            if not route["authentication"]["required"]:
+                continue
+            self.assertEqual(["openid-connect"], route["authentication"]["observed_plugins"], route["route_id"])
+            self.assertGreater(route["limits"]["body_bytes"], 0, route["route_id"])
+            self.assertIn("request-validation", route["plugins"], route["route_id"])
+            self.assertEqual("$ENV://APISIX_OIDC_CLIENT_SECRET", route["plugins"]["openid-connect"]["client_secret"])
 
     def test_every_upstream_has_a_declared_service(self) -> None:
         catalog = build_catalog()
@@ -49,12 +67,9 @@ class GatewayRouteCatalogTests(unittest.TestCase):
     def test_protected_route_cannot_hide_missing_gateway_auth(self) -> None:
         catalog = build_catalog()
         mutated = copy.deepcopy(catalog)
-        route = next(
-            item
-            for item in mutated["routes"]
-            if item["authentication"]["required"] and not item["authentication"]["observed_plugins"]
-        )
-        route["blocking_gaps"].remove("gateway_authentication_missing")
+        route = next(item for item in mutated["routes"] if item["authentication"]["required"])
+        route["authentication"]["observed_plugins"] = []
+        route["authentication"]["status"] = "missing"
         content = dict(mutated)
         content.pop("catalog_sha256")
         mutated["catalog_sha256"] = verifier._canonical_sha256(content)

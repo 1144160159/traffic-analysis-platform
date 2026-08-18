@@ -17,6 +17,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "contracts/security/service-identity-catalog.v1.json"
 WORKLOAD_SOURCES = (
+    ROOT / "deployments/log-collectors/device-logs.yaml",
     ROOT / "deployments/kubernetes/applications/go-services.yaml",
     ROOT / "deployments/kubernetes/applications/web-ui.yaml",
     ROOT / "deployments/kubernetes/applications/probe-agent.yaml",
@@ -28,6 +29,7 @@ CONFIG_AUTHORITY = ROOT / "contracts/configuration/configuration-catalog.v1.json
 IAM_AUTHORITY = ROOT / "go/control-plane/internal/auth/model/scopes.go"
 NETWORK_POLICY_AUTHORITY = ROOT / "deployments/kubernetes/security/00-network-policies.yaml"
 EXTERNAL_SECRET_SOURCES = (
+    ROOT / "deployments/log-collectors/device-logs-secret-ref.yaml",
     ROOT / "deployments/kubernetes/security/external-secrets-template.yaml",
     ROOT / "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
 )
@@ -60,6 +62,7 @@ OWNER = {
     "web-ui": "web-ui-owner",
     "probe-agent": "probe-domain-owner",
     "flink-log-job": "flink-data-owner",
+    "device-log-collector": "observability-data-quality-owner",
 }
 PRIVILEGED_EXCEPTIONS = {
     "probe-agent": {
@@ -106,7 +109,7 @@ def _pod_spec(document: dict[str, Any]) -> dict[str, Any]:
 
 def _service_accounts() -> dict[tuple[str, str], dict[str, Any]]:
     result: dict[tuple[str, str], dict[str, Any]] = {}
-    paths = [IDENTITY_SOURCE, *(ROOT / "deployments/kubernetes").rglob("*.yaml")]
+    paths = [IDENTITY_SOURCE, *WORKLOAD_SOURCES, *(ROOT / "deployments/kubernetes").rglob("*.yaml")]
     for path in sorted(set(paths)):
         for document in _documents(path):
             if document.get("kind") != "ServiceAccount":
@@ -317,10 +320,16 @@ def build_catalog() -> dict[str, Any]:
             if document.get("kind") not in {"Deployment", "StatefulSet", "DaemonSet", "Job", "CronJob"}:
                 continue
             metadata = document.get("metadata") or {}
-            name = str(metadata.get("name") or "")
+            manifest_name = str(metadata.get("name") or "")
             namespace = str(metadata.get("namespace") or "default")
             pod_spec = _pod_spec(document)
             service_account_name = str(pod_spec.get("serviceAccountName") or "default")
+            name = (
+                service_account_name
+                if service_account_name in OWNER
+                and manifest_name.startswith(service_account_name)
+                else manifest_name
+            )
             service_account = service_accounts.get((namespace, service_account_name))
             secret_refs = _secret_references(pod_spec, namespace)
             for reference in secret_refs:

@@ -78,6 +78,12 @@ def build_inventory(root: Path = ROOT) -> dict[str, object]:
     root = root.resolve()
     route_source = _read(root, "web/ui/src/routes/routeManifest.tsx")
     plan_source = _read(root, "web/ui/src/services/pageApiPlans.ts")
+    imported_page_plan_sources = [
+        path.read_text(encoding="utf-8", errors="ignore")
+        for path in sorted((root / "web/ui/src/services").glob("*PagePlan.ts"))
+        if path.name != "pageApiPlans.ts"
+    ]
+    plan_inventory_source = "\n".join([plan_source, *imported_page_plan_sources])
     scope_source = _read(root, "go/control-plane/internal/auth/model/scopes.go")
     openapi = json.loads(_read(root, "contracts/openapi/alignment-v1.openapi.json"))
     kafka_catalog = json.loads(_read(root, "contracts/events/kafka-topic-catalog.v1.json"))
@@ -98,7 +104,10 @@ def build_inventory(root: Path = ROOT) -> dict[str, object]:
         "export const allRoutes",
     )
 
-    action_ids = set(re.findall(r'^\s+id:\s*"([^"]+)"', plan_source, re.MULTILINE))
+    action_ids = set(re.findall(r'^\s+id:\s*["\']([^"\']+)["\']', plan_inventory_source, re.MULTILINE))
+    action_ids.update(
+        re.findall(r'\b[A-Za-z0-9_]*[Aa]ction\(\s*["\']([^"\']+)["\']', plan_inventory_source)
+    )
     for path in (root / "web/ui/src").rglob("*"):
         if path.suffix not in {".ts", ".tsx"}:
             continue
@@ -117,11 +126,11 @@ def build_inventory(root: Path = ROOT) -> dict[str, object]:
                 re.MULTILINE,
             )
         )
-    audit_events = set(re.findall(r'auditEvent:\s*"([A-Z][A-Z0-9_]+)"', plan_source))
+    audit_events = set(re.findall(r'''auditEvent:\s*["']([A-Z][A-Z0-9_]+)["']''', plan_inventory_source))
 
     required_ui_scopes: set[str] = set()
     accepted_ui_scopes: set[str] = set()
-    combined_ui_source = route_source + "\n" + plan_source
+    combined_ui_source = route_source + "\n" + plan_inventory_source
     for raw in re.findall(
         r'requiredScopes:\s*\[([^\]]*)\]',
         combined_ui_source,
@@ -140,23 +149,23 @@ def build_inventory(root: Path = ROOT) -> dict[str, object]:
     endpoint_paths = set(
         re.findall(
             r'["\']((?:/api)?/v1/[^"\']*|/ws(?:/[^"\']*)?)["\']',
-            plan_source,
+            plan_inventory_source,
         )
     )
     operation_pattern = re.compile(
-        r'id:\s*"(?P<id>[^"]+)"[\s\S]{0,700}?'
-        r'method:\s*"(?P<method>GET|POST|PUT|PATCH|DELETE)"[\s\S]{0,300}?'
-        r'endpoint:\s*"(?P<endpoint>[^"]+)"'
+        r'''id:\s*["'](?P<id>[^"']+)["'][\s\S]{0,700}?'''
+        r'''method:\s*["'](?P<method>GET|POST|PUT|PATCH|DELETE)["'][\s\S]{0,300}?'''
+        r'''endpoint:\s*["'](?P<endpoint>[^"']+)["']'''
     )
     api_operations = {
         f"{match.group('method')} {match.group('endpoint')}"
-        for match in operation_pattern.finditer(plan_source)
+        for match in operation_pattern.finditer(plan_inventory_source)
     }
-    for endpoint in re.findall(r'primary:\s*"([^"]+)"', plan_source):
+    for endpoint in re.findall(r'primary:\s*["\']([^"\']+)["\']', plan_inventory_source):
         api_operations.add(f"GET {endpoint}")
     for block in re.findall(
         r'(?:secondary|pageLoadSecondary):\s*\[([^\]]*)\]',
-        plan_source,
+        plan_inventory_source,
         re.MULTILINE,
     ):
         for endpoint in _quoted_values(block):

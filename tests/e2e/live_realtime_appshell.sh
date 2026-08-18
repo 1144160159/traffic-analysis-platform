@@ -185,6 +185,8 @@ function log(name, ok, status, detail) {
     await page.waitForTimeout(1000);
     const body = await page.locator('body').innerText({ timeout: 10_000 });
     const wsReady = socketFrames.some((frame) => frame.type === 'ready' && frame.tenant_id === tenant);
+    // 已知约束:后端 /ws/events 目前仅支持 query 令牌鉴权(token 进入网关访问日志)。
+    // 此断言仅验证"已授权连接确实携带令牌";后端支持 subprotocol/header 鉴权后应迁移。
     const wsEndpoint = sockets.some((socket) => socket.path === '/ws/events' && socket.hasToken && socket.tenantId === tenant);
     const hasDashboard = body.includes('仪表盘');
     const hasRealtimeConnected = body.includes('实时通道') && body.includes('已连接');

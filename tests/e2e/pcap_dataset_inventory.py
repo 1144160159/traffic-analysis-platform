@@ -18,7 +18,8 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def label_for(path: Path) -> str:
+def source_path_hints(path: Path) -> list[str]:
+    """Return non-authoritative path hints without creating ground truth."""
     lowered = str(path).lower()
     labels = [
         "benign",
@@ -38,8 +39,7 @@ def label_for(path: Path) -> str:
         "backdoor",
         "scan",
     ]
-    matches = [label for label in labels if label in lowered]
-    return ",".join(matches) if matches else "unclassified"
+    return [label for label in labels if label in lowered]
 
 
 def main() -> int:
@@ -65,13 +65,16 @@ def main() -> int:
             "limit": args.candidate_limit,
             "max_bytes": args.candidate_max_bytes,
             "ordering": "size_then_path",
+            "ground_truth": "never inferred from file or directory names",
         },
         "candidates": [
             {
                 "path": str(path),
                 "bytes": path.stat().st_size,
                 "sha256": sha256(path),
-                "label": label_for(path),
+                "source_path_hints": source_path_hints(path),
+                "ground_truth_status": "unverified_not_for_blind_evaluation",
+                "license_status": "requires_dataset_custodian_confirmation",
             }
             for path in candidates
         ],

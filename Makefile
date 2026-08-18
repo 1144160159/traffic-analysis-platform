@@ -110,7 +110,7 @@ docker-build-mlops: ## Build MLOps trainer image
 .PHONY: docker-build-go
 docker-build-go: ## Build all Go service images
 	mkdir -p $(GO_DIR)/bin
-	for svc in rule-manager alert-service auth-service graph-service asset-service ingest-gateway threat-intel-service audit-materializer; do \
+	for svc in rule-manager alert-service auth-service graph-service asset-service ingest-gateway threat-intel-service audit-materializer model-canary-controller; do \
 		(cd $(GO_DIR) && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/$$svc ./cmd/$$svc) ; \
 		docker build -t $(REGISTRY)/$$svc:$(TAG) \
 			-f $(GO_DIR)/deployments/docker/Dockerfile.runtime \
@@ -249,6 +249,9 @@ alignment-validate: ## Validate W0 registry, contracts, OpenAPI, migration and s
 	python scripts/alignment/generate_kafka_acl_plan.py --check-generated
 	python scripts/alignment/verify_kafka_dlq_commit_barrier.py
 	python scripts/alignment/verify_pcap_metadata_ack.py
+	python scripts/alignment/validate_m02_delivery_package.py --self-test
+	python scripts/alignment/validate_m02_external_activity_receipt_contract.py --self-test
+	python scripts/alignment/verify_m02_promotion_equivalence.py --self-test
 	python scripts/alignment/verify_asset_expand_guardrails.py
 	python scripts/alignment/verify_flink_state_recovery.py
 	python scripts/alignment/verify_flink_checkpoint_ha.py
@@ -321,7 +324,10 @@ alignment-verify-asset-projection-opensearch-g1: ## Verify F-ASSET-002 projectio
 .PHONY: alignment-verify-asset-projection-kafka-g1
 alignment-verify-asset-projection-kafka-g1: ## Verify F-ASSET-002 broker ACK and durable inbox in owned Kafka/PostgreSQL containers (RUN_ID required)
 	test -n "$(RUN_ID)"
-	python scripts/alignment/verify_asset_projection_kafka_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+	test -n "$(CANDIDATE_MANIFEST)"
+	test -n "$(PROFILE_ID)"
+	test -n "$(ENVIRONMENT_ID)"
+	python scripts/alignment/verify_asset_projection_kafka_ephemeral.py --run-id "$(RUN_ID)" --candidate-manifest "$(CANDIDATE_MANIFEST)" --profile-id "$(PROFILE_ID)" --environment-id "$(ENVIRONMENT_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
 .PHONY: alignment-verify-asset-export-minio-g1
 alignment-verify-asset-export-minio-g1: ## Verify F-ASSET-004 manifest, audit and outbox against owned MinIO/PostgreSQL containers (RUN_ID required)
@@ -663,6 +669,12 @@ alignment-test: alignment-generate-client alignment-validate ## Run alignment un
 	python -m unittest discover -s tests/alignment -v
 	cd $(GO_DIR) && go test ./internal/auth/model -count=1
 
+.PHONY: alignment-verify-m02-promotion-equivalence
+alignment-verify-m02-promotion-equivalence: ## Verify M02 delivery, external merge receipt, and pre/post-merge equivalence guards without moving a release pointer
+	python scripts/alignment/validate_m02_delivery_package.py --self-test
+	python scripts/alignment/validate_m02_external_activity_receipt_contract.py --self-test
+	python scripts/alignment/verify_m02_promotion_equivalence.py --self-test
+
 .PHONY: alignment-verify-flink-live
 alignment-verify-flink-live: ## Verify the canonical nine active Flink jobs; set FLINK_REST_ENDPOINT when outside cluster DNS
 	python scripts/alignment/verify_flink_nine_jobs.py --endpoint "$${FLINK_REST_ENDPOINT:-http://flink-jobmanager.flink.svc:8081}"
@@ -696,7 +708,7 @@ alignment-g0-evidence: ## Run and hash G0 alignment/full/Python logs; set RUN_ID
 # ============================ Full Pipeline ============================
 
 .PHONY: ci
-ci: go-vet go-build go-test-mlops python-lint python-test argo-lint ## Full CI pipeline (local)
+ci: go-vet go-build go-test-mlops python-lint python-test argo-lint ## CI pipeline (Go+Python 快速层);全语言门禁用 test-full,严禁把本目标当作全量 CI
 
 .PHONY: cd
 cd: docker-build-mlops docker-build-go argo-deploy k8s-update-configmap ## Full CD pipeline (local)

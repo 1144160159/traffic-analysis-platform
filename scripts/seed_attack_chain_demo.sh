@@ -74,21 +74,21 @@ env \
       (
         SELECT count()
         FROM traffic.alerts
-        WHERE tenant_id='default' AND campaign_id='attack-chain-demo-c2-20260726'
+        WHERE tenant_id='default' AND campaign_id='${campaign_id}'
       ) AS alert_rows,
       (
         SELECT count()
         FROM traffic.evidence
-        WHERE tenant_id='default' AND event_id='attack-chain-demo-c2-20260726'
+        WHERE tenant_id='default' AND event_id='${campaign_id}'
       ) AS evidence_rows,
       (
         SELECT count()
         FROM traffic.attack_chain_recommendations
-        WHERE tenant_id='default' AND campaign_id='attack-chain-demo-c2-20260726'
+        WHERE tenant_id='default' AND campaign_id='${campaign_id}'
       ) AS recommendation_rows,
       score
     FROM traffic.campaigns
-    WHERE tenant_id='default' AND campaign_id='attack-chain-demo-c2-20260726'
+    WHERE tenant_id='default' AND campaign_id='${campaign_id}'
     ORDER BY ts_end DESC
     LIMIT 1
     FORMAT PrettyCompact

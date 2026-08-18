@@ -36,10 +36,13 @@ class FeatureContractRegistryTests(unittest.TestCase):
         self.assertEqual("PASS", result["status"], result["errors"])
         self.assertEqual("STANDARD_SCOPE_COMPLETE_BACKLOG_PARTIAL", result["contract_coverage"])
         self.assertEqual(54, result["coverage"]["canonical_feature_ids"])
-        self.assertEqual(38, result["coverage"]["formal_contracts"])
+        self.assertEqual(44, result["coverage"]["formal_contracts"])
         self.assertEqual(38, result["coverage"]["standard_scope_features"])
         self.assertEqual([], result["coverage"]["missing_standard_scope_contracts"])
-        self.assertEqual(16, len(result["coverage"]["missing_backlog_contracts"]))
+        self.assertEqual(
+            verifier.EXPECTED_BACKLOG_CONTRACT_GAPS,
+            set(result["coverage"]["missing_backlog_contracts"]),
+        )
         self.assertEqual([], result["coverage"]["non_draft_openapi_binding_gaps"])
 
     def test_alert_and_probe_contracts_bind_exactly_to_openapi(self) -> None:
@@ -69,6 +72,20 @@ class FeatureContractRegistryTests(unittest.TestCase):
         result = self._verify_mutation(registry)
         self.assertEqual("FAIL", result["status"])
         self.assertTrue(any("accountable owner" in error for error in result["errors"]))
+
+    def test_m09_product_contract_owner_or_contract_cannot_drift(self) -> None:
+        registry = copy.deepcopy(build_registry())
+        encrypted = next(
+            item
+            for item in registry["features"]
+            if item["feature_id"] == "F-ENCRYPTED-001"
+        )
+        encrypted["accountable"] = "parallel-owner"
+        result = self._verify_mutation(registry)
+        self.assertEqual("FAIL", result["status"])
+        self.assertTrue(
+            any("M09 product contract" in error for error in result["errors"])
+        )
 
     def test_missing_contract_gap_cannot_be_hidden(self) -> None:
         registry = copy.deepcopy(build_registry())

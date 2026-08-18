@@ -30,6 +30,13 @@ class FlinkStateRecoveryContractTest(unittest.TestCase):
         self.assertEqual("PASS", result["status"], result)
         self.assertEqual(9, result["canonical_jobs"])
         self.assertGreaterEqual(result["operator_uids"], 80)
+        self.assertEqual(1, len(result["auxiliary_uid_results"]))
+        self.assertEqual(
+            [
+                "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/ChampionChallengerShadowCanaryMain.java"
+            ],
+            result["excluded_non_production_sources"],
+        )
         self.assertEqual(3, len(result["checkpointed_buffers"]))
         self.assertFalse(result["forbidden_hits"])
 
@@ -47,6 +54,15 @@ class FlinkStateRecoveryContractTest(unittest.TestCase):
         result = verify(self.contract, self.application, candidate)
         self.assertEqual("FAIL", result["status"])
         self.assertTrue(any("DLQ ACL" in error for error in result["errors"]))
+
+    def test_missing_auxiliary_uid_is_rejected(self) -> None:
+        candidate = copy.deepcopy(self.contract)
+        candidate["auxiliary_required_uids"][
+            "flink-behavior-model-shadow-consumer"
+        ]["uids"].append("missing-shadow-stateful-operator")
+        result = verify(candidate, self.application, self.acl)
+        self.assertEqual("FAIL", result["status"])
+        self.assertTrue(any("auxiliary UID drift" in error for error in result["errors"]))
 
 
 if __name__ == "__main__":

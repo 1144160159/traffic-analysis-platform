@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HOME=/tmp
+
+WORKDIR /workspace
+COPY scripts/alignment/build_m10_approved_additive_plan.py scripts/alignment/build_m10_approved_additive_plan.py
+COPY scripts/alignment/verify_m10_approved_additive_plan.py scripts/alignment/verify_m10_approved_additive_plan.py
+COPY scripts/alignment/guard_m10_approved_additive_apply.py scripts/alignment/guard_m10_approved_additive_apply.py
+COPY contracts/alignment/m10-approved-additive-plan.schema.json contracts/alignment/m10-approved-additive-plan.schema.json
+COPY deployments/releases/topic1/m10-approved-additive-plan.v1.json deployments/releases/topic1/m10-approved-additive-plan.v1.json
+COPY deployments/releases/topic1/m10-deployable-candidate-closure.v1.json deployments/releases/topic1/m10-deployable-candidate-closure.v1.json
+COPY doc/02_acceptance/topic1/tasks/t1-m10-n004/k8s-site-preflight-latest.json doc/02_acceptance/topic1/tasks/t1-m10-n004/k8s-site-preflight-latest.json
+COPY deployments/postgres/migrations/202608160030_m09_alert_evidence_links_v1.sql deployments/postgres/migrations/202608160030_m09_alert_evidence_links_v1.sql
+COPY deployments/clickhouse/migrations/202608160040_m09_alert_evidence_link_projection_v1.sql deployments/clickhouse/migrations/202608160040_m09_alert_evidence_link_projection_v1.sql
+COPY deployments/postgres/migrations/202608161100_m09_whitelist_consumer_readiness_v2.sql deployments/postgres/migrations/202608161100_m09_whitelist_consumer_readiness_v2.sql
+COPY contracts/events/kafka-topic-catalog.v1.json contracts/events/kafka-topic-catalog.v1.json
+COPY deployments/kubernetes/init-jobs/01-kafka-topics.yaml deployments/kubernetes/init-jobs/01-kafka-topics.yaml
+COPY deployments/kubernetes/init-jobs/00-kafka-acl-plan.yaml deployments/kubernetes/init-jobs/00-kafka-acl-plan.yaml
+
+USER 65532:65532
+ENTRYPOINT ["python3", "/workspace/scripts/alignment/guard_m10_approved_additive_apply.py"]

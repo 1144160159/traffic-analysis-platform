@@ -113,8 +113,6 @@ TypeScript/Web:
 - 运行时 mock 只能在 `VITE_USE_MOCK=true` 下启用。
 - 生产 Web UI nginx 代理指向 `apisix.gateway.svc:9080`; 本地 Vite 开发代理可指向真实 APISIX `10.0.5.8:30180`。
 - 桌面端 Modal 必须保持小尺寸，不得铺满或遮住整个浏览器业务区域；业务详情、证据和日志优先使用右侧窄 Drawer，并保持宿主页面上下文可见。验收专用 focus 路由不代表生产弹层形态。
-- 前端页面审计统一使用 Product Design，证据必须来自本轮实际截图并在保存后检查；每条发现绑定步骤或截图，同时区分可见 UX 问题、可访问性风险和截图无法证明的边界。
-- 前端问题执行解决即关闭：修复、定向测试、同一生产候选 bundle 重拍和相关交互/API/权限/错误态证据全部通过时立即标记 `CLOSED`；CLOSED 项不再进入后续开放清单、进度播报、难度排序或阻塞项，回归问题使用新的 occurrence ID。
 
 Proto:
 
@@ -207,13 +205,17 @@ Community ID 跨语言固定向量:
 - [ ] 批量写入、State TTL、缓存 key、索引或 N+1 查询是否检查过？
 - [ ] 使用了最小相关测试，并记录无法运行的检查？
 - [ ] 前端真实链路是否确认无 4xx/5xx、request failed、非 warning console/pageerror？
-- [ ] 前端审计是否使用 Product Design 本轮截图，已解决问题是否当轮 `CLOSED` 并从后续开放清单移除？
 
-## 9. Codex 命令完成后的连续响应
+## 9. Codex 命令完成握手
 
-- 命令工具返回 `session_id`、`cell_id` 或“仍在运行”时，必须继续轮询到明确终态；不得把一次中间 yield 当作完成。
-- 终态优先使用明确 `exit_code` 判断成功或失败。若工具只返回 `Script completed` 且不再提供可轮询 ID，则按已终止处理、说明退出码缺失并检查产物；不得为了补退出码而重跑命令。
-- 得到终态后，先用一句话向用户报告结果，再解释并继续当前任务；不得停在原始工具输出后。
-- 不得为确认状态而重跑已经完成的命令，尤其不得重复有副作用的写入、迁移、发布或删除。
-- 项目级 `.codex/hooks.json` 会调用 `scripts/codex_hooks/command_completion_guard.py` 注入上述提醒并写 metadata-only 完成日志；运行日志不得包含命令正文、stdout、stderr 或密钥。
-- hook 不自动启动子代理、第二个 Codex 进程或 `codex exec resume`。若 app-server 或模型采样链路本身冻结，应由产品侧线程心跳或用户新消息恢复，避免并发 turn 导致重复副作用。
+本节只处理“命令已经结束，但 Codex 没有继续后续分析或回复”，不用于绕过平台级回合中断。
+
+- 预计可能超过一次工具等待窗口的命令，必须以可轮询会话启动，不得放到无法收割结果的后台。
+- 工具返回 `session_id` 或 `cell_id` 后，必须立即进入轮询环：`session_id` 用 `write_stdin`，`cell_id` 用 `wait`，直到获得终态或明确终止。
+- 轮询期间即使没有新输出，也要持续收割会话；用户可见状态更新间隔不得超过 60 秒。
+- 收到 `exit_code` 或其他终态后，在发起下一个工具调用前，必须先向用户发送一条简短的“命令已完成”回执，并说明成功、失败或超时。
+- 在存在未收割的命令会话时，不得结束当前回合，也不得将“无新输出”判定为命令完成。
+- 工具返回终态后如果后续推理因平台 `turn_aborted` 中断，仓库内机制无法自行创建新回合；需要用户发送“继续执行”重新触发。
+- 项目级 `.codex/hooks.json` 使用 `PostToolUse(Bash)` 调用 `scripts/codex_hooks/command_completion_guard.py`：命令终态后写入 metadata-only 日志，并向下一次模型请求注入“报告结果并继续”的提醒。
+- hook 不保存命令正文、stdout 或 stderr，不重跑命令，也不启动子代理、第二个 Codex 进程或 `codex exec resume`，避免重复执行有副作用的操作。
+- 新增或变更的非托管 hook 必须在新会话中通过 `/hooks` 审核并信任后才会运行；已启动会话不能依赖该文件热加载。

@@ -29,7 +29,7 @@ require() {
   fi
 }
 
-curl --noproxy '*' -fsS "$BASE_URL/realms/master/.well-known/openid-configuration" -o "$DISCOVERY_JSON"
+curl --noproxy '*' -fsS -m 15 --connect-timeout 5 "$BASE_URL/realms/master/.well-known/openid-configuration" -o "$DISCOVERY_JSON"
 issuer="$(jq -r '.issuer // ""' "$DISCOVERY_JSON")"
 auth_endpoint="$(jq -r '.authorization_endpoint // ""' "$DISCOVERY_JSON")"
 token_endpoint="$(jq -r '.token_endpoint // ""' "$DISCOVERY_JSON")"
@@ -38,20 +38,20 @@ require "discovery issuer uses public gateway" "$([[ "$issuer" == "$BASE_URL/rea
 require "authorization endpoint uses public gateway" "$([[ "$auth_endpoint" == "$BASE_URL/realms/master/protocol/openid-connect/auth" ]] && echo true || echo false)"
 require "token endpoint uses public gateway" "$([[ "$token_endpoint" == "$BASE_URL/realms/master/protocol/openid-connect/token" ]] && echo true || echo false)"
 
-curl --noproxy '*' -fsS "$BASE_URL/login" -o "$LOGIN_HTML"
+curl --noproxy '*' -fsS -m 15 --connect-timeout 5 "$BASE_URL/login" -o "$LOGIN_HTML"
 index_asset="$(rg -o '/assets/index-[^" ]+\.js' "$LOGIN_HTML" | head -n1 || true)"
 require "login index asset present" "$([[ -n "$index_asset" ]] && echo true || echo false)"
-curl --noproxy '*' -fsS "$BASE_URL$index_asset" -o "$INDEX_JS"
+curl --noproxy '*' -fsS -m 15 --connect-timeout 5 "$BASE_URL$index_asset" -o "$INDEX_JS"
 login_chunk="$(rg -o 'LoginPage-[A-Za-z0-9_-]+\.js' "$INDEX_JS" | head -n1 || true)"
 callback_chunk="$(rg -o 'OidcCallbackPage-[A-Za-z0-9_-]+\.js' "$INDEX_JS" | head -n1 || true)"
 require "login lazy chunk present" "$([[ -n "$login_chunk" ]] && echo true || echo false)"
 require "oidc callback lazy chunk present" "$([[ -n "$callback_chunk" ]] && echo true || echo false)"
 
 if [[ -n "$login_chunk" ]]; then
-  curl --noproxy '*' -fsS "$BASE_URL/assets/$login_chunk" -o "$LOGIN_PAGE_JS"
+  curl --noproxy '*' -fsS -m 15 --connect-timeout 5 "$BASE_URL/assets/$login_chunk" -o "$LOGIN_PAGE_JS"
 fi
 if [[ -n "$callback_chunk" ]]; then
-  curl --noproxy '*' -fsS "$BASE_URL/assets/$callback_chunk" -o "$CALLBACK_PAGE_JS"
+  curl --noproxy '*' -fsS -m 15 --connect-timeout 5 "$BASE_URL/assets/$callback_chunk" -o "$CALLBACK_PAGE_JS"
 fi
 
 login_chunk_ok=false
@@ -71,16 +71,16 @@ from urllib.parse import quote
 print(quote("$redirect_url", safe=""))
 PY
 )"
-oidc_status="$(curl --noproxy '*' -sS -o /dev/null -D "$OIDC_HEADERS" -w '%{http_code}' "$oidc_start")"
+oidc_status="$(curl --noproxy '*' -sS -m 15 --connect-timeout 5 -o /dev/null -D "$OIDC_HEADERS" -w '%{http_code}' "$oidc_start")"
 oidc_location="$(awk 'tolower($1)=="location:"{print $2}' "$OIDC_HEADERS" | tr -d '\r' | tail -n1)"
 require "oidc login returns redirect" "$([[ "$oidc_status" == "302" && -n "$oidc_location" ]] && echo true || echo false)"
 require "oidc redirect points to public keycloak" "$([[ "$oidc_location" == "$BASE_URL/realms/master/protocol/openid-connect/auth"* ]] && echo true || echo false)"
 require "oidc redirect uses traffic-ui client" "$([[ "$oidc_location" == *"client_id=traffic-ui"* ]] && echo true || echo false)"
 
-keycloak_status="$(curl --noproxy '*' -sS -o "$KEYCLOAK_HTML" -D "$KEYCLOAK_HEADERS" -w '%{http_code}' "$oidc_location")"
+keycloak_status="$(curl --noproxy '*' -sS -m 15 --connect-timeout 5 -o "$KEYCLOAK_HTML" -D "$KEYCLOAK_HEADERS" -w '%{http_code}' "$oidc_location")"
 require "keycloak authorization page loads" "$([[ "$keycloak_status" == "200" ]] && echo true || echo false)"
 keycloak_login_form=false
-if rg -q 'Sign in to your account|Username or email|Password' "$KEYCLOAK_HTML"; then
+if rg -q 'kc-form-login|name=.username.|name=.password.|id=.username.|id=.password.' "$KEYCLOAK_HTML"; then
   keycloak_login_form=true
 fi
 keycloak_client_exists=false

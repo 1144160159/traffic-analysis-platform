@@ -37,6 +37,32 @@ class AssetProjectionKafkaEphemeralGuardTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "run_id is required"):
             MODULE.names(" ")
 
+    def test_oracle_markers_require_exact_per_test_set(self) -> None:
+        events = []
+        for test, markers in MODULE.EXPECTED_ORACLE_MARKERS.items():
+            for marker in markers:
+                events.append({"Test": test, "Output": f"TOPIC1_ORACLE PASS {marker}\n"})
+        actual = MODULE.collect_oracle_markers(events)
+        self.assertEqual(set(actual), set(MODULE.EXPECTED_ORACLE_MARKERS))
+        self.assertTrue(all(MODULE.derive_oracle_flags(actual).values()))
+
+    def test_missing_or_duplicate_oracle_marker_is_rejected(self) -> None:
+        events = []
+        for test, markers in MODULE.EXPECTED_ORACLE_MARKERS.items():
+            for marker in markers:
+                events.append({"Test": test, "Output": f"TOPIC1_ORACLE PASS {marker}\n"})
+        events.pop()
+        with self.assertRaisesRegex(ValueError, "oracle exact-set mismatch"):
+            MODULE.collect_oracle_markers(events)
+
+    def test_oracle_flags_cannot_be_self_reported_from_an_incomplete_set(self) -> None:
+        incomplete = {
+            "TestAssetProjectionRealKafkaDurableInbox": ["ACK_BEFORE_PUBLISHED"],
+            "TestAssetProjectionKafkaPublishFailureKeepsOutboxPending": [],
+        }
+        with self.assertRaisesRegex(ValueError, "oracle flags are incomplete"):
+            MODULE.derive_oracle_flags(incomplete)
+
 
 if __name__ == "__main__":
     unittest.main()

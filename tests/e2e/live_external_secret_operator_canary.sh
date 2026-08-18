@@ -193,23 +193,18 @@ else
 fi
 
 CANARY_TOKEN="traffic-platform-eso-canary-$RUN_ID"
+# 明文 canary token 不再落盘:dry-run 产物直接经管道 apply,避免中断时敏感文件残留。
 set +e
 kctl -n "$CANARY_NAMESPACE" create secret generic eso-canary-source \
   --from-literal=canary-token="$CANARY_TOKEN" \
-  --dry-run=client -o yaml >"$LOG_DIR/eso-canary-source-secret.rendered.yaml" 2>"$LOG_DIR/eso-canary-source-secret.render.err"
-SECRET_RENDER_RC=$?
-if [[ "$SECRET_RENDER_RC" -eq 0 ]]; then
-  kctl apply -f "$LOG_DIR/eso-canary-source-secret.rendered.yaml" >"$LOG_DIR/eso-canary-source-secret.apply.out" 2>"$LOG_DIR/eso-canary-source-secret.apply.err"
-  SOURCE_SECRET_APPLY_RC=$?
-else
-  SOURCE_SECRET_APPLY_RC=1
-fi
+  --dry-run=client -o yaml |
+  kctl apply -f - >"$LOG_DIR/eso-canary-source-secret.apply.out" 2>"$LOG_DIR/eso-canary-source-secret.apply.err"
+SOURCE_SECRET_APPLY_RC=$?
 set -e
-rm -f "$LOG_DIR/eso-canary-source-secret.rendered.yaml"
-if [[ "$SECRET_RENDER_RC" -eq 0 && "$SOURCE_SECRET_APPLY_RC" -eq 0 ]]; then
+if [[ "$SOURCE_SECRET_APPLY_RC" -eq 0 ]]; then
   json_log "live" "ExternalSecret canary source secret applied" "info" true "ok" "namespace=$CANARY_NAMESPACE secret=eso-canary-source" "eso-canary-source-secret.apply.out"
 else
-  json_log "live" "ExternalSecret canary source secret applied" "blocker" false "rc=$SECRET_RENDER_RC/$SOURCE_SECRET_APPLY_RC" "namespace=$CANARY_NAMESPACE secret=eso-canary-source" "eso-canary-source-secret.apply.err"
+  json_log "live" "ExternalSecret canary source secret applied" "blocker" false "rc=$SOURCE_SECRET_APPLY_RC" "namespace=$CANARY_NAMESPACE secret=eso-canary-source" "eso-canary-source-secret.apply.err"
 fi
 
 SECRETSTORE_READY=false

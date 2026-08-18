@@ -1,0 +1,15 @@
+ARG RUNTIME_IMAGE=debian:bookworm-slim@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639d36e7456b0b229241
+FROM ${RUNTIME_IMAGE}
+
+ARG GO_VERSION=go1.25.12
+ARG SOURCE_REVISION=working-tree
+COPY --chmod=0555 httpx.test model.test service.test asset.test graph.test /opt/m10-authz/
+COPY --chmod=0555 run_m10_authz_test_binaries.sh /usr/local/bin/run-m10-authz-tests
+COPY m10-minimal-role-policy.v1.json /workspace/contracts/authz/m10-minimal-role-policy.v1.json
+LABEL org.opencontainers.image.title="T1-M10-N007 authorization negative tests" \
+      org.opencontainers.image.version="n007-v1" \
+      org.opencontainers.image.revision=${SOURCE_REVISION} \
+      traffic.analysis/go-version=${GO_VERSION}
+ENV M10_AUTHZ_POLICY_PATH=/workspace/contracts/authz/m10-minimal-role-policy.v1.json
+USER 65532:65532
+ENTRYPOINT ["/usr/local/bin/run-m10-authz-tests"]

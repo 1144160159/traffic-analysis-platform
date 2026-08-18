@@ -30,6 +30,9 @@ kctl() {
   env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy "$KUBECTL" "$@"
 }
 
+# 凭证属性文件经 stdin 写入 pod,中断时也尽力清理,避免敏感信息残留于 pod 内。
+trap 'kctl -n middleware exec kafka-0 -- rm -f /tmp/kafka-rollout-client.properties >/dev/null 2>&1 || true' EXIT
+
 json_log() {
   local phase="$1" name="$2" severity="$3" passed="$4" status="$5" detail="${6:-}" artifact="${7:-}"
   jq -nc \
@@ -46,10 +49,15 @@ json_log() {
 
 wait_pod_count() {
   local namespace="$1" selector="$2" expected="$3" timeout_seconds="$4"
-  local deadline count
+  local deadline count rc
   deadline=$((SECONDS + timeout_seconds))
   while (( SECONDS < deadline )); do
+    # kubectl 自身失败必须视为错误,不得把"查询失败"误判为"pod 已缩到 0"。
     count="$(kctl -n "$namespace" get pods -l "$selector" --no-headers 2>/dev/null | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')"
+    rc=$?
+    if [[ "$rc" -ne 0 || -z "$count" ]]; then
+      return 2
+    fi
     if [[ "$count" == "$expected" ]]; then
       return 0
     fi
@@ -58,10 +66,12 @@ wait_pod_count() {
   return 1
 }
 
-kafka_secure_admin_config() {
-  cat <<'EOF'
-PROPS=/tmp/kafka-rollout-client.properties
-cat > "$PROPS" <<CLIENT_EOF
+secure_kafka_admin_cmd() {
+  local out="$1" err="$2" admin_cmd="$3"
+  local props_file="/tmp/kafka-rollout-client.properties"
+  set +e
+  # 凭证属性文件经 stdin 写入 pod(不进命令行/审计日志),命令结束后立即删除。
+  kctl -n middleware exec -i kafka-0 -- tee "$props_file" >/dev/null 2>&1 <<CLIENT_EOF
 security.protocol=SASL_SSL
 sasl.mechanism=SCRAM-SHA-512
 sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_INTER_BROKER_USERNAME}" password="${KAFKA_INTER_BROKER_PASSWORD}";
@@ -69,17 +79,15 @@ ssl.truststore.location=/etc/kafka/tls/kafka.truststore.p12
 ssl.truststore.type=PKCS12
 ssl.truststore.password=${KAFKA_TLS_TRUSTSTORE_PASSWORD}
 CLIENT_EOF
-EOF
-}
-
-secure_kafka_admin_cmd() {
-  local out="$1" err="$2" admin_cmd="$3"
-  set +e
-  kctl -n middleware exec kafka-0 -- bash -lc "set -euo pipefail
-$(kafka_secure_admin_config)
-$admin_cmd --bootstrap-server kafka-bootstrap.middleware.svc:9092 --command-config \"\$PROPS\"
-rm -f \"\$PROPS\"" >"$out" 2>"$err"
-  local rc=$?
+  local write_rc=$?
+  if [[ "$write_rc" -eq 0 ]]; then
+    kctl -n middleware exec kafka-0 -- bash -lc "$admin_cmd --bootstrap-server kafka-bootstrap.middleware.svc:9092 --command-config $props_file" >"$out" 2>"$err"
+    local rc=$?
+    kctl -n middleware exec kafka-0 -- rm -f "$props_file" >/dev/null 2>&1 || true
+  else
+    echo "failed to write kafka client properties into pod" >"$err"
+    local rc=1
+  fi
   set -e
   return "$rc"
 }

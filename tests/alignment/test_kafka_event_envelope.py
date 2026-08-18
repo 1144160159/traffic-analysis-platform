@@ -21,6 +21,7 @@ REQUIRED_FILES = (
     "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/calculator/FeatureCalculator.java",
     "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/BehaviorDetectorFunction.java",
     "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/SyncBehaviorDetector.java",
+    "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/BehaviorDetectionEventFactory.java",
     "go/control-plane/internal/alert/consumer/kafka_consumer.go",
     "go/control-plane/internal/alert/consumer/stable_id.go",
     "rust/probe-agent/Cargo.toml",
@@ -64,6 +65,21 @@ class KafkaEventEnvelopeTest(unittest.TestCase):
             self.assertEqual("FAIL", result["status"])
             self.assertTrue(any("Feature producer missing" in error for error in result["errors"]))
 
+    def test_behavior_factory_cannot_drop_evidence_propagation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            candidate = copy_candidate(Path(directory))
+            path = candidate / "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/BehaviorDetectionEventFactory.java"
+            path.write_text(
+                path.read_text(encoding="utf-8").replace(
+                    ".addAllEvidenceIds(input.getEvidenceIdsList())",
+                    ".clearEvidenceIds()",
+                ),
+                encoding="utf-8",
+            )
+            result = verify(candidate)
+            self.assertEqual("FAIL", result["status"])
+            self.assertTrue(any("BehaviorDetectionEventFactory.java missing" in error for error in result["errors"]))
+
     def test_consumer_empty_tuple_placeholder_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             candidate = copy_candidate(Path(directory))
@@ -78,7 +94,11 @@ class KafkaEventEnvelopeTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             candidate = copy_candidate(Path(directory))
             path = candidate / "rust/probe-agent/probe-agent/src/aggregator/eviction.rs"
-            source = path.read_text(encoding="utf-8").replace('event_id: event_id.clone()', 'event_id: uuid::Uuid::new_v4().to_string()')
+            source = path.read_text(encoding="utf-8").replace(
+                'event_id: identity.event_id.clone()',
+                'event_id: uuid::Uuid::new_v4().to_string()',
+                1,
+            )
             path.write_text(source, encoding="utf-8")
             result = verify(candidate)
             self.assertEqual("FAIL", result["status"])

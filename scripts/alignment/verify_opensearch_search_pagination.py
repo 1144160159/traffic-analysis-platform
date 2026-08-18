@@ -22,6 +22,11 @@ CONFIG = Path("go/control-plane/internal/alert/config/config.go")
 MAIN = Path("go/control-plane/cmd/alert-service/main.go")
 DEPLOYMENT = Path("deployments/kubernetes/applications/go-services.yaml")
 RUNBOOK = Path("doc/07_alignment/runbooks/T-OS-003-search-pagination-pit.md")
+WEB_RUNTIME = Path("web/ui/src/config/runtime.ts")
+WEB_CLIENT = Path("web/ui/src/services/alertSearchCursorApi.ts")
+WEB_PAGE = Path("web/ui/src/pages/AlertTriagePage.tsx")
+WEB_DEPLOYMENT = Path("deployments/kubernetes/applications/web-ui.yaml")
+K8S_EVIDENCE = Path("doc/02_acceptance/topic1/tasks/t1-m09-n015/k8s-opensearch-cursor-latest.json")
 
 
 def load_json(root: Path, relative: Path) -> dict[str, Any]:
@@ -33,6 +38,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     required = (
         CONTRACT, FEATURE, OPENAPI, REPOSITORY, CURSOR, REPOSITORY_TEST,
         HANDLER, HANDLER_TEST, SERVICE, CONFIG, MAIN, DEPLOYMENT, RUNBOOK,
+        WEB_RUNTIME, WEB_CLIENT, WEB_PAGE, WEB_DEPLOYMENT, K8S_EVIDENCE,
     )
     missing = [str(path) for path in required if not (root / path).is_file()]
     if missing:
@@ -63,6 +69,10 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     for guard in ("unknown_claims_rejected", "cross_tenant_replay_rejected", "query_drift_rejected"):
         if cursor.get(guard) is not True:
             errors.append(f"cursor guard must remain true: {guard}")
+    if "resolved_target_sha256" not in cursor.get("bound_claims", []):
+        errors.append("cursor must bind the resolved physical target digest")
+    if cursor.get("live_alias_target_drift_rejected_before_search") is not True or cursor.get("pit_alias_switch_preserves_frozen_shards") is not True:
+        errors.append("alias-switch live/PIT behavior is not explicit")
 
     guards = contract.get("query_guards", {})
     expected = {
@@ -112,7 +122,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("OpenAPI closeAlertSearchCursorV1 operation is missing")
     request_schema = openapi.get("components", {}).get("schemas", {}).get("AlertSearchRequest", {})
     properties = request_schema.get("properties", {})
-    for field in ("from", "size", "cursor", "cursor_mode", "sort_field", "sort_order"):
+    for field in ("from", "size", "cursor", "cursor_mode", "sort_field", "sort_order", "asset_ip", "rule_version", "model_version", "attack_phase", "min_score"):
         if field not in properties:
             errors.append(f"OpenAPI search request missing compatibility/additive field: {field}")
 
@@ -125,6 +135,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         'filter := []map[string]interface{}{{"term": map[string]interface{}{"tenant_id": query.TenantID}}}',
         "response.TimedOut || response.Shards.Failed > 0",
         "CloseSearchCursor", "bestEffortClosePIT", "context.WithoutCancel",
+        "resolveSearchTargets", "Indices.ResolveIndex", "claims.TargetSHA256",
     ):
         if token not in repository:
             errors.append(f"OpenSearch repository guard missing: {token}")
@@ -134,7 +145,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     cursor_code = (root / CURSOR).read_text(encoding="utf-8")
     for token in (
         "traffic.alert.search.cursor.v1", "hmac.Equal", "DisallowUnknownFields",
-        "QuerySHA256", "SnapshotUnixMilli", "ExpiresAtUnixSecond",
+        "QuerySHA256", "TargetSHA256", "SnapshotUnixMilli", "ExpiresAtUnixSecond",
         "claims.TenantID", "validSearchSortValues", "searchQuerySHA256",
     ):
         if token not in cursor_code:
@@ -168,13 +179,39 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     if "CursorSigningKey:   cfg.Auth.JWTSecretKey" not in main:
         errors.append("cursor signing must reuse the Secret-backed JWT root with domain separation")
 
+    web_runtime = (root / WEB_RUNTIME).read_text(encoding="utf-8")
+    web_client = (root / WEB_CLIENT).read_text(encoding="utf-8")
+    web_page = (root / WEB_PAGE).read_text(encoding="utf-8")
+    web_deployment = (root / WEB_DEPLOYMENT).read_text(encoding="utf-8")
+    if "enableAlertSearchCursorV1" not in web_runtime or "runtime.ALERT_SEARCH_CURSOR_V1_ENABLED ?? import.meta.env.VITE_ALERT_SEARCH_CURSOR_V1_ENABLED,\n    false," not in web_runtime:
+        errors.append("Web cursor runtime must remain default-off")
+    if 'ALERT_SEARCH_CURSOR_V1_ENABLED, value: "false"' not in web_deployment:
+        errors.append("Web deployment must explicitly keep cursor traversal disabled")
+    for token in ("fetchAlertSearchCursorSnapshot", "closeAlertSearchCursor", "opensearch.alerts.target_sha256", "throw new Error"):
+        if token not in web_client:
+            errors.append(f"typed Web cursor client guard missing: {token}")
+    for token in ("cursorSearchEnabled", "PIT 一致性分页", "restartSearchTraversal", "simple: cursorSearchEnabled"):
+        if token not in web_page:
+            errors.append(f"alert page cursor lifecycle guard missing: {token}")
+
     tests = (root / REPOSITORY_TEST).read_text(encoding="utf-8") + (root / HANDLER_TEST).read_text(encoding="utf-8")
     for token in (
         "TenantTamperAndQueryDrift", "PITCursorCreatesRotatesAndCloses", "FailsClosedOnTimeoutOrShardFailure",
         "LegacyCompatibilityAndEnabledShallowBound", "RejectsUnknownClaims", "RejectsUnboundedOrAmbiguousInput",
+        "LiveCursorFailsClosedAfterAliasSwitch",
     ):
         if token not in tests:
             errors.append(f"negative or compatibility test missing: {token}")
+
+    k8s = load_json(root, K8S_EVIDENCE)
+    if k8s.get("status") != "PASS" or k8s.get("production_applied") is not False:
+        errors.append("run-scoped Kubernetes OpenSearch evidence is not a non-production PASS")
+    for field in (
+        "live_cursor_alias_switch_fails_closed", "pit_alias_switch_keeps_frozen_snapshot",
+        "opensearch_unavailable_fails_closed", "run_scoped_indices_and_alias_removed",
+    ):
+        if k8s.get(field) is not True:
+            errors.append(f"Kubernetes OpenSearch evidence missing: {field}")
 
     return {
         "status": "PASS" if not errors else "FAIL",

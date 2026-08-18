@@ -1,0 +1,12 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HOME=/tmp
+
+WORKDIR /opt/provenance
+COPY scripts/alignment/candidate_snapshot.py ./candidate_snapshot.py
+COPY scripts/alignment/verify_m10_candidate_provenance_k8s.py ./verify_m10_candidate_provenance_k8s.py
+
+USER 65532:65532
+ENTRYPOINT ["python3", "/opt/provenance/verify_m10_candidate_provenance_k8s.py"]

@@ -90,7 +90,7 @@ expected = [
     item for item in catalog["principals"]
     if item.get("rollout_state") == "expand" and isinstance(item.get("credential"), dict)
 ]
-assert len(expected) == 18, len(expected)
+assert len(expected) == 19, len(expected)
 passwords = {}
 aggregate_expected = {}
 for item in expected:
@@ -107,6 +107,7 @@ for item in expected:
 assert len(set(passwords.values())) == len(expected)
 assert "traffic-audit-materializer" in passwords
 assert "traffic-flink-session" in passwords
+assert "traffic-device-log-collector" in passwords
 
 aggregate = state / "middleware/kafka-principal-credentials"
 aggregate_passwords = {path.name: path.read_text() for path in aggregate.iterdir()}
