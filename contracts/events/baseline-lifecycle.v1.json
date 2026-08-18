@@ -1,0 +1,24 @@
+{
+  "contract_version": 1,
+  "feature_id": "F-BASELINE-001",
+  "topic": "baseline.lifecycle.v1",
+  "consumer_group": "flink-user-behavior-baseline-v1",
+  "message_type": "BehaviorBaselineLifecycleV1Json",
+  "key_contract": "tenant_id+baseline_id",
+  "delivery": "postgres_transactional_outbox_with_exact_broker_receipt_and_checkpointed_consumer_state",
+  "invariants": [
+    "the outbox row and Kafka key, headers and strict JSON body identify the same tenant, baseline, version and event",
+    "candidate_sha256 is bound to the alert-service and Flink release candidate before dispatch",
+    "only baseline.activation.requested.v1 addressed to the configured consumer changes Flink baseline state",
+    "the immutable snapshot_sha256 and baseline_version are stored in checkpointed broadcast state before an ACK is committed",
+    "ambiguous Kafka publication remains OUTCOME_UNKNOWN and retries with the same event identity",
+    "unknown fields, duplicate headers, changed replay bytes and unapproved consumers fail closed"
+  ],
+  "rollout": {
+    "consumer_first": true,
+    "default_enabled": false,
+    "dispatcher_flag": "BEHAVIOR_BASELINE_LIFECYCLE_DISPATCHER_V1_ENABLED",
+    "flink_flag": "BASELINE_LIFECYCLE_ENABLED",
+    "candidate_binding": "BEHAVIOR_BASELINE_CANDIDATE_SHA256"
+  }
+}

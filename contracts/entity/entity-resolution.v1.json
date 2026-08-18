@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "contract_id": "entity-resolution-v1",
+  "status": "frozen_default_off",
+  "accountable_task": "T1-M06-N008",
+  "rule_version": "entity-resolution/v1",
+  "identity_roles": ["subject", "source", "destination", "device", "sensor", "account", "correlation"],
+  "tenant_boundary": {
+    "partition_key": "tenant_id",
+    "cross_tenant_action": "reject"
+  },
+  "source_rails": [
+    {"rail": "flow", "allowed_identifiers": ["ip", "probe_id", "community_id"], "anchor_authority": ["probe"]},
+    {"rail": "asset_authority", "allowed_identifiers": ["asset_id", "ip", "mac", "probe_id"], "anchor_authority": ["asset"]},
+    {"rail": "asset_binding", "allowed_identifiers": ["ip", "mac", "probe_id"], "anchor_authority": ["probe"]},
+    {"rail": "device_log", "allowed_identifiers": ["ip"], "anchor_authority": []},
+    {"rail": "user_behavior", "allowed_identifiers": ["user_id", "ip"], "anchor_authority": ["user"]},
+    {"rail": "probe_ingest", "allowed_identifiers": ["ip", "mac", "probe_id"], "anchor_authority": ["probe"]}
+  ],
+  "identifier_rules": [
+    {
+      "rule_id": "ER-ASSET-ID-EXACT",
+      "identifier": "asset_id",
+      "scope": "asset",
+      "normalization": "trim; preserve case; reject whitespace/control characters",
+      "confidence_ppm": 1000000,
+      "may_create_entity": true,
+      "ambiguity_action": "preserve_candidates_without_merge"
+    },
+    {
+      "rule_id": "ER-USER-ID-EXACT",
+      "identifier": "user_id",
+      "scope": "user",
+      "normalization": "trim; preserve case; reject whitespace/control characters",
+      "confidence_ppm": 1000000,
+      "may_create_entity": true,
+      "ambiguity_action": "preserve_candidates_without_merge"
+    },
+    {
+      "rule_id": "ER-PROBE-ID-EXACT",
+      "identifier": "probe_id",
+      "scope": "probe",
+      "normalization": "trim; preserve case; reject whitespace/control characters",
+      "confidence_ppm": 1000000,
+      "may_create_entity": true,
+      "ambiguity_action": "preserve_candidates_without_merge"
+    },
+    {
+      "rule_id": "ER-MAC-ASSET-TEMPORAL",
+      "identifier": "mac",
+      "scope": "asset",
+      "normalization": "IEEE 48-bit lower-case colon form",
+      "confidence_ppm": 950000,
+      "may_create_entity": false,
+      "ambiguity_action": "preserve_candidates_without_merge",
+      "max_link_age_ms": 2592000000
+    },
+    {
+      "rule_id": "ER-IP-ASSET-TEMPORAL",
+      "identifier": "ip",
+      "scope": "asset",
+      "normalization": "RFC 5952 IPv4 or IPv6 literal",
+      "confidence_ppm": 700000,
+      "may_create_entity": false,
+      "ambiguity_action": "preserve_candidates_without_merge",
+      "max_link_age_ms": 3600000
+    },
+    {
+      "rule_id": "ER-COMMUNITY-CORRELATION-ONLY",
+      "identifier": "community_id",
+      "scope": "correlation",
+      "normalization": "trim; preserve Community ID version prefix and digest",
+      "confidence_ppm": 400000,
+      "may_create_entity": false,
+      "ambiguity_action": "preserve_candidates_without_merge"
+    }
+  ],
+  "decision_states": ["accepted", "partial", "ambiguous", "conflict", "insufficient"],
+  "determinism": {
+    "resolution_id": "er1- + sha256(tenant_id NUL source_tuple)",
+    "decision_digest": "sha256 of canonical JSON result without decision_sha256",
+    "ordering": "UTF-8 lexical order after identifier normalization",
+    "duplicate_source_tuple": "same normalized observation is idempotent; different observation is conflict"
+  },
+  "rollout": {
+    "default_enabled": false,
+    "writes_external_store": false,
+    "rollback": "disable projector; preserve input facts and resolution results"
+  },
+  "claim_boundary": {
+    "proves": [
+      "deterministic tenant-scoped entity resolution decisions",
+      "time-bounded MAC and IP association with ambiguity preservation",
+      "rule-version and source-tuple provenance"
+    ],
+    "does_not_prove": [
+      "four real source producers are active",
+      "cross-source fusion improves detection",
+      "a database or graph projection has been deployed",
+      "an ambiguous identifier belongs to any candidate entity"
+    ]
+  }
+}

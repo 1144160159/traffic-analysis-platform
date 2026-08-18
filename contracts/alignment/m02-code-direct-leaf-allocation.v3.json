@@ -1,0 +1,317 @@
+{
+  "schema_version": "3.0.0",
+  "artifact_kind": "M02_CODE_DIRECT_HELPER_OWNER_ALLOCATION_LEDGER",
+  "artifact_status": "VERSIONED_PREVIEW_NOT_GLOBAL_REGISTRY",
+  "revision_id": "M02-CODE-DIRECT-V3",
+  "base_catalog": {
+    "path": "contracts/alignment/m02-code-direct-leaf-catalog.v2.json",
+    "sha256": "138277a3df27917c8248dcab863a767dca5ba61ca8730403d8086e7b93bedb44"
+  },
+  "source_design_refs": [
+    {
+      "path": "contracts/alignment/m02-partial-ack-function-design.v1.json",
+      "sha256": "a3aec2c4d5463794edfd2189bd6c885fe9df382d826350b46ba13be1e5bd66a2"
+    },
+    {
+      "path": "contracts/alignment/m02-pcap-metadata-receipt-function-design.v1.json",
+      "sha256": "d45b68ec6eac19589e3ddb8684ef8340fd9bb46efe9fa66f53065edd6c142fa8"
+    }
+  ],
+  "prior_leaf_field_freeze": {
+    "leaf_id_epoch": "T1-M02-P101-P506",
+    "field_names": [
+      "leaf_id", "atomic_pr_id", "parent_task_id", "leaf_number", "pr_type",
+      "phase", "write_locators", "target_state", "prerequisites_raw",
+      "single_outcome", "oracle_and_rollback", "depends_on_leaf_ids",
+      "depends_on_external_activities", "terminal_task_idx",
+      "formal_execution_status", "allowed_claim", "forbidden_claims"
+    ],
+    "ordered_leaf_projection_sha256": "760ea9dc6b7a51cbaeb1726ea66bbbf7a96e534d420f64ced3264496ff1a821c",
+    "status": "PASS_EXACT_FIELD_PRESERVATION"
+  },
+  "semantic_projection_sha256": "f9272d5f24064bcafdbed3a96c3f3cb7e44ba6cd4c315c651d079480180da2d5",
+  "allocation_epoch": "T1-M02-P507-P521",
+  "append_leaf_count": 15,
+  "trains": [
+    {
+      "train_id": "M02-V3-TRAIN-66",
+      "parent_task_id": "T1-M02-N007",
+      "gap_id": "GAP-M02-LOCAL-CACHE-APPLY-ACK-OWNER",
+      "owner_kind": "FUNCTION_OWNER",
+      "contract_id": "FC-M02-ACK-LocalCacheApplyAck",
+      "single_result": "give LocalCache::apply_ack one independent exact-set durable-state writer owner",
+      "steps": [
+        {
+          "leaf_id": "M02-N007-L11",
+          "atomic_pr_id": "T1-M02-P507-WRT-n007-l11",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/sender/retry.rs#LocalCache::apply_ack",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N001-L05", "M02-N007-L03"],
+          "single_outcome": "validate one ACK exact-set then atomically retain retryable items and commit terminal deletion plus quarantine",
+          "oracle_and_rollback": "mixed dispositions cannot delete retryable or unknown items; rollback stops new ACK application and preserves the WAL"
+        },
+        {
+          "leaf_id": "M02-N007-L12",
+          "atomic_pr_id": "T1-M02-P508-REF-n007-l12",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_partial_ack_apply_ack_test.rs#local_cache_apply_ack_exact_set",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N007-L11"],
+          "single_outcome": "freeze mixed ACK exact-set crash flush replay and quarantine fixtures",
+          "oracle_and_rollback": "the same response revision cannot delete an additional item on replay"
+        },
+        {
+          "leaf_id": "M02-N007-L13",
+          "atomic_pr_id": "T1-M02-P509-TST-PRE-n007-l13",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n007/local-cache-apply-ack-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n007/local-cache-apply-ack-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N007-L12"],
+          "single_outcome": "record the candidate-bound LocalCache ACK exact-set result",
+          "oracle_and_rollback": "discard output without mixed disposition crash and replay cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N007-L04", "M02-N007-L05", "M02-N007-L06"],
+      "terminal_leaf_id": "M02-N007-L10"
+    },
+    {
+      "train_id": "M02-V3-TRAIN-67",
+      "parent_task_id": "T1-M02-N008",
+      "gap_id": "GAP-M02-FLOW-IDENTITY-BINDER-OWNER",
+      "owner_kind": "FUNCTION_OWNER",
+      "contract_id": "FC-M02-ACK-BindFlowIdentity",
+      "single_result": "give authenticated FlowEvent identity binding one independent fail-closed function owner",
+      "steps": [
+        {
+          "leaf_id": "M02-N008-L24",
+          "atomic_pr_id": "T1-M02-P510-WRT-n008-l24",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/server/handler.go#server.bindFlowEventIdentity",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N001-L01"],
+          "single_outcome": "bind empty FlowEvent identity fields to authenticated tenant and probe while rejecting every mismatch before side effects",
+          "oracle_and_rollback": "nil or conflicting identity fails before dedup or Kafka; rollback requires an equivalent interceptor-enforced binding"
+        },
+        {
+          "leaf_id": "M02-N008-L25",
+          "atomic_pr_id": "T1-M02-P511-REF-n008-l25",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/server/handler_m02_contract_test.go#TestBindFlowEventIdentityMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L24"],
+          "single_outcome": "freeze nil empty matching and conflicting tenant probe identity fixtures",
+          "oracle_and_rollback": "every mismatch has zero producer and dedup effects"
+        },
+        {
+          "leaf_id": "M02-N008-L26",
+          "atomic_pr_id": "T1-M02-P512-TST-PRE-n008-l26",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n008/flow-identity-binding-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n008/flow-identity-binding-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N008-L25"],
+          "single_outcome": "record the candidate-bound FlowEvent identity binding result",
+          "oracle_and_rollback": "discard output without authenticated mismatch and zero-side-effect cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N008-L04", "M02-N008-L05"],
+      "terminal_leaf_id": "M02-N008-L10"
+    },
+    {
+      "train_id": "M02-V3-TRAIN-68",
+      "parent_task_id": "T1-M02-N008",
+      "gap_id": "GAP-M02-PCAP-IDEMPOTENCY-KEY-OWNER",
+      "owner_kind": "FUNCTION_OWNER",
+      "contract_id": "FC-M02-PCAP-RECEIPT-Key",
+      "single_result": "give PCAP metadata logical identity derivation one independent versioned pure-function owner",
+      "steps": [
+        {
+          "leaf_id": "M02-N008-L27",
+          "atomic_pr_id": "T1-M02-P513-WRT-n008-l27",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/queue/producer.go#pcapIdempotencyKey",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N001-L08", "M02-N001-L09", "M02-N001-L10"],
+          "single_outcome": "derive one versioned length-safe PCAP metadata key from complete authority fields or return an error",
+          "oracle_and_rollback": "same normalized identity returns the same key and version one stays readable for every durable fact"
+        },
+        {
+          "leaf_id": "M02-N008-L28",
+          "atomic_pr_id": "T1-M02-P514-REF-n008-l28",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/queue/producer_test.go#TestPcapIdempotencyKeyMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L27"],
+          "single_outcome": "freeze missing field separator ambiguity hash version and deterministic key fixtures",
+          "oracle_and_rollback": "no invalid or ambiguous authority tuple returns a key"
+        },
+        {
+          "leaf_id": "M02-N008-L29",
+          "atomic_pr_id": "T1-M02-P515-TST-PRE-n008-l29",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-idempotency-key-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-idempotency-key-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N008-L28"],
+          "single_outcome": "record the candidate-bound PCAP idempotency-key result",
+          "oracle_and_rollback": "discard output without deterministic and malformed identity cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N008-L06", "M02-N008-L07"],
+      "terminal_leaf_id": "M02-N008-L10"
+    },
+    {
+      "train_id": "M02-V3-TRAIN-69",
+      "parent_task_id": "T1-M02-N008",
+      "gap_id": "GAP-M02-PCAP-IDENTITY-BINDER-OWNER",
+      "owner_kind": "FUNCTION_OWNER",
+      "contract_id": "FC-M02-PCAP-RECEIPT-BindIdentity",
+      "single_result": "give PCAP authenticated metadata identity binding one independent fail-closed function owner",
+      "steps": [
+        {
+          "leaf_id": "M02-N008-L30",
+          "atomic_pr_id": "T1-M02-P516-WRT-n008-l30",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/server/handler.go#bindPcapIndexIdentity",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N001-L08", "M02-N001-L09"],
+          "single_outcome": "bind PCAP metadata to authenticated tenant probe and object receipt identity or reject before durable effects",
+          "oracle_and_rollback": "cross-tenant or receipt-payload conflict is rejected and strict identity binding is never rolled back"
+        },
+        {
+          "leaf_id": "M02-N008-L31",
+          "atomic_pr_id": "T1-M02-P517-REF-n008-l31",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/server/handler_m02_contract_test.go#TestBindPcapIndexIdentityMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L30"],
+          "single_outcome": "freeze nil empty matching conflicting and object-receipt identity fixtures",
+          "oracle_and_rollback": "every conflict fails before receipt ledger or Kafka effects"
+        },
+        {
+          "leaf_id": "M02-N008-L32",
+          "atomic_pr_id": "T1-M02-P518-TST-PRE-n008-l32",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-identity-binding-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-identity-binding-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N008-L31"],
+          "single_outcome": "record the candidate-bound PCAP identity binding result",
+          "oracle_and_rollback": "discard output without cross-authority and zero-side-effect cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N008-L07"],
+      "terminal_leaf_id": "M02-N008-L10"
+    },
+    {
+      "train_id": "M02-V3-TRAIN-70",
+      "parent_task_id": "T1-M02-N008",
+      "gap_id": "GAP-M02-PCAP-REQUEST-VALIDATOR-OWNER",
+      "owner_kind": "FUNCTION_OWNER",
+      "contract_id": "FC-M02-PCAP-RECEIPT-ValidateRequest",
+      "single_result": "give complete PCAP metadata request validation one independent canonical identity owner",
+      "steps": [
+        {
+          "leaf_id": "M02-N008-L33",
+          "atomic_pr_id": "T1-M02-P519-WRT-n008-l33",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/server/handler.go#validatePcapMetadataRequest",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N001-L08", "M02-N001-L09", "M02-N008-L27", "M02-N008-L30"],
+          "single_outcome": "validate one complete supported PCAP request and return its immutable canonical identity or an error",
+          "oracle_and_rollback": "partial manifest client-key mismatch or conflicting object identity always rejects; unknown versions never default"
+        },
+        {
+          "leaf_id": "M02-N008-L34",
+          "atomic_pr_id": "T1-M02-P520-REF-n008-l34",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/server/handler_m02_contract_test.go#TestValidatePcapMetadataRequestMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L33"],
+          "single_outcome": "freeze partial manifest version canonical marshal key mismatch and conflicting hash fixtures",
+          "oracle_and_rollback": "same canonical request produces the same immutable request identity"
+        },
+        {
+          "leaf_id": "M02-N008-L35",
+          "atomic_pr_id": "T1-M02-P521-TST-PRE-n008-l35",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-request-validation-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-request-validation-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N008-L34"],
+          "single_outcome": "record the candidate-bound PCAP request validation result",
+          "oracle_and_rollback": "discard output without partial version key and conflicting identity cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N008-L07"],
+      "terminal_leaf_id": "M02-N008-L10"
+    }
+  ],
+  "contract_owner_rebindings": [
+    {
+      "contract_id": "FC-M02-ACK-LocalCacheApplyAck",
+      "source_design": {"path": "contracts/alignment/m02-partial-ack-function-design.v1.json", "sha256": "a3aec2c4d5463794edfd2189bd6c885fe9df382d826350b46ba13be1e5bd66a2"},
+      "superseded_leaf_id": "M02-N007-L03",
+      "owner_leaf_id": "M02-N007-L11",
+      "owner_atomic_pr_id": "T1-M02-P507-WRT-n007-l11",
+      "exact_locator": "rust/probe-agent/probe-agent/src/sender/retry.rs#LocalCache::apply_ack",
+      "semantics": "APPEND_ONLY_OWNER_REBINDING_OLD_LEAF_FIELDS_UNCHANGED"
+    },
+    {
+      "contract_id": "FC-M02-ACK-BindFlowIdentity",
+      "source_design": {"path": "contracts/alignment/m02-partial-ack-function-design.v1.json", "sha256": "a3aec2c4d5463794edfd2189bd6c885fe9df382d826350b46ba13be1e5bd66a2"},
+      "superseded_leaf_id": "M02-N008-L04",
+      "owner_leaf_id": "M02-N008-L24",
+      "owner_atomic_pr_id": "T1-M02-P510-WRT-n008-l24",
+      "exact_locator": "go/control-plane/internal/ingest/server/handler.go#server.bindFlowEventIdentity",
+      "semantics": "APPEND_ONLY_OWNER_REBINDING_OLD_LEAF_FIELDS_UNCHANGED"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-RECEIPT-Key",
+      "source_design": {"path": "contracts/alignment/m02-pcap-metadata-receipt-function-design.v1.json", "sha256": "d45b68ec6eac19589e3ddb8684ef8340fd9bb46efe9fa66f53065edd6c142fa8"},
+      "superseded_leaf_id": "M02-N008-L06",
+      "owner_leaf_id": "M02-N008-L27",
+      "owner_atomic_pr_id": "T1-M02-P513-WRT-n008-l27",
+      "exact_locator": "go/control-plane/internal/ingest/queue/producer.go#pcapIdempotencyKey",
+      "semantics": "APPEND_ONLY_OWNER_REBINDING_OLD_LEAF_FIELDS_UNCHANGED"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-RECEIPT-BindIdentity",
+      "source_design": {"path": "contracts/alignment/m02-pcap-metadata-receipt-function-design.v1.json", "sha256": "d45b68ec6eac19589e3ddb8684ef8340fd9bb46efe9fa66f53065edd6c142fa8"},
+      "superseded_leaf_id": "M02-N008-L07",
+      "owner_leaf_id": "M02-N008-L30",
+      "owner_atomic_pr_id": "T1-M02-P516-WRT-n008-l30",
+      "exact_locator": "go/control-plane/internal/ingest/server/handler.go#bindPcapIndexIdentity",
+      "semantics": "APPEND_ONLY_OWNER_REBINDING_OLD_LEAF_FIELDS_UNCHANGED"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-RECEIPT-ValidateRequest",
+      "source_design": {"path": "contracts/alignment/m02-pcap-metadata-receipt-function-design.v1.json", "sha256": "d45b68ec6eac19589e3ddb8684ef8340fd9bb46efe9fa66f53065edd6c142fa8"},
+      "superseded_leaf_id": "M02-N008-L07",
+      "owner_leaf_id": "M02-N008-L33",
+      "owner_atomic_pr_id": "T1-M02-P519-WRT-n008-l33",
+      "exact_locator": "go/control-plane/internal/ingest/server/handler.go#validatePcapMetadataRequest",
+      "semantics": "APPEND_ONLY_OWNER_REBINDING_OLD_LEAF_FIELDS_UNCHANGED"
+    }
+  ],
+  "claims": {
+    "allowed": "P507-P521 helper ownership and support-train intent are allocated for v3 preview validation",
+    "forbidden": [
+      "GLOBAL_REGISTRY_SWITCHED", "TARGET_BINDING_COMPLETE", "FUNCTION_DESIGN_REVIEWED",
+      "IMPLEMENTED", "TEST_EXECUTED", "EXECUTION_AUTHORIZED", "M02_ACCEPTED"
+    ],
+    "proof_ceiling": "ALLOCATION_ONLY_NOT_GLOBAL_REGISTRATION_FUNCTION_REVIEW_IMPLEMENTATION_TEST_EXECUTION_AUTHORIZATION_OR_ACCEPTANCE"
+  }
+}

@@ -1,0 +1,516 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M01_EARLY_TRUST_TRAIN_ALLOCATION",
+  "artifact_status": "VERSIONED_PREVIEW_NOT_GLOBAL_REGISTRY",
+  "revision_id": "M01-EARLY-TRUST-V1",
+  "base_active_catalog_refs": [
+    {
+      "path": "contracts/alignment/task-registry.v1.json",
+      "sha256": "411be54ada25ba399fc4e14d1fb055986548a6c265c4b499254a5793249a23d0"
+    },
+    {
+      "path": "contracts/alignment/developer-claim-package-catalog.v1.json",
+      "sha256": "18aeedadba1504c02141185c0cc40e9237dd8c96665c5923009f9f99484ee883"
+    },
+    {
+      "path": "contracts/alignment/pr-design-application-catalog.v1.json",
+      "sha256": "486036113a9264679207d1bc19c58a62c3bf65b8c535e1f0c49230147192d03c"
+    },
+    {
+      "path": "contracts/alignment/task-execution-overlay.template.v1.json",
+      "sha256": "a606df1a2189c5b17fa114dfb860ad4224976cd1b5eb063dc101643b0618b503"
+    }
+  ],
+  "active_m01_projection_freeze": {
+    "atomic_id_epoch": "T1-M01-P001-P056",
+    "field_names": [
+      "atomic_pr_id",
+      "pr_type",
+      "parent_work_id",
+      "outcome",
+      "dependency_contracts",
+      "change_targets",
+      "required_gates",
+      "rollback",
+      "formal_execution_status",
+      "allowed_claim",
+      "forbidden_claim"
+    ],
+    "ordered_projection_sha256": "067326beae831a1a8b681067bbdefb581c56e0a81785644f69878026b4155fa2",
+    "status": "PASS_EXACT_ACTIVE_SOURCE_PRESERVATION"
+  },
+  "semantic_projection_sha256": "50ab2ad09914eb53acae3f0618ebd78f4ffcf041f37f10deb1d38a14985c321b",
+  "allocation_epoch": "T1-M01-P057-P066",
+  "append_leaf_count": 10,
+  "new_task": {
+    "task_id": "T1-M01-N015",
+    "milestone_id": "T1-M01",
+    "depends_on_task_ids": [
+      "T1-M01-N001"
+    ],
+    "single_result": "provide the independently protected trusted-verifier prerequisite required before P005 and P006",
+    "status": "DRAFT_PREVIEW_NOT_REGISTERED"
+  },
+  "train": {
+    "train_id": "M01-EARLY-TRUST-TRAIN-01",
+    "parent_task_id": "T1-M01-N015",
+    "gap_id": "GAP-M01-P006-TRUST-DEPENDENCY-CYCLE",
+    "single_result": "move the minimal complete trust stack before P005 without creating a P006 to P048 back-edge",
+    "steps": [
+      {
+        "atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+        "pr_type": "CTR",
+        "phase": "trusted-signature-contracts",
+        "primary_locator": "contracts/alignment/signature-trust-policy.schema.json#/",
+        "companion_locators": [
+          "contracts/alignment/signature-verification-request.schema.json#/",
+          "contracts/alignment/signature-verification-attestation.schema.json#/"
+        ],
+        "target_state": "PLANNED",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P002-IDX-n001-task-completion"
+        ],
+        "required_gates": [
+          "G0"
+        ],
+        "single_outcome": "policy, exact request and attestation schemas are versioned and forbid secret values and self-reported trust",
+        "oracle_and_rollback": "fail closed on any contract identity role purpose time policy candidate profile or environment drift; rollback restores unconditional hard-block mode and preserves immutable audit and evidence",
+        "terminal_task_idx": false,
+        "replaces_atomic_pr_id": "T1-M01-P032-CTR-n010-s1"
+      },
+      {
+        "atomic_pr_id": "T1-M01-P058-REF-n015-s2",
+        "pr_type": "REF",
+        "phase": "trusted-signature-fixture",
+        "primary_locator": "scripts/alignment/test_trusted_signature_verifier.py#main",
+        "companion_locators": [
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/payload-substitution.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/wrong-authority-role.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/certificate-time-revocation-eku.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/policy-fingerprint-drift.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/chain-root-algorithm-invalid.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-candidate-profile-environment-mismatch.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/cnas-scope-mismatch.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/verifier-transport-or-shape-failure.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/self-reported-pass-random-signature.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-replay.json#/",
+          "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-positive-run/tst-post/protected-positive-attestation.json#/"
+        ],
+        "target_state": "PLANNED",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P057-CTR-n015-s1"
+        ],
+        "required_gates": [
+          "G0"
+        ],
+        "single_outcome": "the dedicated runner implements all ten negative cases plus the protected positive case without embedding trust anchors",
+        "oracle_and_rollback": "fail closed on any contract identity role purpose time policy candidate profile or environment drift; rollback restores unconditional hard-block mode and preserves immutable audit and evidence",
+        "terminal_task_idx": false,
+        "replaces_atomic_pr_id": "T1-M01-P033-REF-n010-s2"
+      },
+      {
+        "atomic_pr_id": "T1-M01-P059-REF-n015-s3",
+        "pr_type": "REF",
+        "phase": "trusted-verifier-adapter",
+        "primary_locator": "scripts/alignment/verify_trusted_signature.py#verify_exact_payload",
+        "companion_locators": [],
+        "target_state": "PLANNED",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "required_gates": [
+          "G0"
+        ],
+        "single_outcome": "the adapter sends a bounded structured request, pins policy identity, enforces timeout/output limits and fails closed",
+        "oracle_and_rollback": "fail closed on any contract identity role purpose time policy candidate profile or environment drift; rollback restores unconditional hard-block mode and preserves immutable audit and evidence",
+        "terminal_task_idx": false,
+        "replaces_atomic_pr_id": "T1-M01-P034-REF-n010-s3"
+      },
+      {
+        "atomic_pr_id": "T1-M01-P060-REF-n015-s4",
+        "pr_type": "REF",
+        "phase": "trusted-verifier-wrapper",
+        "primary_locator": "scripts/alignment/build_topic1_task_registry.py#require_trusted_signature_verifier",
+        "companion_locators": [],
+        "target_state": "PLANNED",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P059-REF-n015-s3"
+        ],
+        "required_gates": [
+          "G0"
+        ],
+        "single_outcome": "the wrapper accepts the typed request instead of a context string and retains unconditional blocking when the protected verifier is unavailable",
+        "oracle_and_rollback": "fail closed on any contract identity role purpose time policy candidate profile or environment drift; rollback restores unconditional hard-block mode and preserves immutable audit and evidence",
+        "terminal_task_idx": false,
+        "replaces_atomic_pr_id": "T1-M01-P035-REF-n010-s4"
+      },
+      {
+        "atomic_pr_id": "T1-M01-P061-REF-n015-s5",
+        "pr_type": "REF",
+        "phase": "caller-candidate-artifact-refs",
+        "primary_locator": "scripts/alignment/build_topic1_task_registry.py#validate_candidate_artifact_refs",
+        "companion_locators": [],
+        "target_state": "PLANNED",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P060-REF-n015-s4"
+        ],
+        "required_gates": [
+          "G0"
+        ],
+        "single_outcome": "candidate-artifact-refs passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+        "oracle_and_rollback": "fail closed on any contract identity role purpose time policy candidate profile or environment drift; rollback restores unconditional hard-block mode and preserves immutable audit and evidence",
+        "terminal_task_idx": false,
+        "replaces_atomic_pr_id": "T1-M01-P036-REF-n010-s5"
+      },
+      {
+        "atomic_pr_id": "T1-M01-P062-REF-n015-s6",
+        "pr_type": "REF",
+        "phase": "caller-implementation-candidate",
+        "primary_locator": "scripts/alignment/build_topic1_task_registry.py#validate_implementation_candidate",
+        "companion_locators": [],
+        "target_state": "PLANNED",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P061-REF-n015-s5"
+        ],
+        "required_gates": [
+          "G0"
+        ],
+        "single_outcome": "implementation-candidate passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+        "oracle_and_rollback": "fail closed on any contract identity role purpose time policy candidate profile or environment drift; rollback restores unconditional hard-block mode and preserves immutable audit and evidence",
+        "terminal_task_idx": false,
+        "replaces_atomic_pr_id": "T1-M01-P037-REF-n010-s6"
+      },
+      {
+        "atomic_pr_id": "T1-M01-P063-OPS-n015-s7",
+        "pr_type": "OPS",
+        "phase": "trusted-verifier-protected-backend",
+        "primary_locator": "deployments/security/topic1-trusted-signature-verifier.yaml#/",
+        "companion_locators": [],
+        "target_state": "PLANNED",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P062-REF-n015-s6"
+        ],
+        "required_gates": [
+          "G6"
+        ],
+        "single_outcome": "the deployment stays default off, uses only secret references and pinned policy identity, and rollback restores hard-block mode",
+        "oracle_and_rollback": "fail closed on any contract identity role purpose time policy candidate profile or environment drift; rollback restores unconditional hard-block mode and preserves immutable audit and evidence",
+        "terminal_task_idx": false,
+        "replaces_atomic_pr_id": "T1-M01-P046-OPS-n010-s15"
+      },
+      {
+        "atomic_pr_id": "T1-M01-P064-TST-PRE-n015-s8",
+        "pr_type": "TST-PRE",
+        "phase": "trusted-signature-negative-run",
+        "primary_locator": "doc/02_acceptance/topic1/work-orders/t1-m01-p064-tst-pre-n015-s8/test-result.json",
+        "companion_locators": [
+          "doc/02_acceptance/topic1/work-orders/t1-m01-p064-tst-pre-n015-s8/case-report.json"
+        ],
+        "target_state": "PLANNED_OUTPUT",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P063-OPS-n015-s7"
+        ],
+        "required_gates": [
+          "G0",
+          "G1"
+        ],
+        "single_outcome": "all ten fail-closed cases record the expected rejection and no positive trust claim is emitted",
+        "oracle_and_rollback": "fail closed on any contract identity role purpose time policy candidate profile or environment drift; rollback restores unconditional hard-block mode and preserves immutable audit and evidence",
+        "terminal_task_idx": false,
+        "replaces_atomic_pr_id": "T1-M01-P045-TST-PRE-n010-s14"
+      },
+      {
+        "atomic_pr_id": "T1-M01-P065-TST-POST-n015-s9",
+        "pr_type": "TST-POST",
+        "phase": "trusted-signature-positive-run",
+        "primary_locator": "doc/02_acceptance/topic1/work-orders/t1-m01-p065-tst-post-n015-s9/test-result.json",
+        "companion_locators": [
+          "doc/02_acceptance/topic1/work-orders/t1-m01-p065-tst-post-n015-s9/case-report.json"
+        ],
+        "target_state": "PLANNED_OUTPUT",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P064-TST-PRE-n015-s8"
+        ],
+        "required_gates": [
+          "G2",
+          "G3"
+        ],
+        "single_outcome": "a protected verifier returns a cryptographically verifiable same-payload same-role same-policy attestation in the declared environment",
+        "oracle_and_rollback": "fail closed on any contract identity role purpose time policy candidate profile or environment drift; rollback restores unconditional hard-block mode and preserves immutable audit and evidence",
+        "terminal_task_idx": false,
+        "replaces_atomic_pr_id": "T1-M01-P047-TST-POST-n010-s16"
+      },
+      {
+        "atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion",
+        "pr_type": "IDX",
+        "phase": "task-completion",
+        "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m01-n015/completion-candidate.json",
+        "companion_locators": [
+          "doc/02_acceptance/topic1/tasks/t1-m01-n015/current-evidence-index.json"
+        ],
+        "target_state": "PLANNED_OUTPUT",
+        "prerequisite_atomic_pr_ids": [
+          "T1-M01-P065-TST-POST-n015-s9"
+        ],
+        "required_gates": [
+          "G0"
+        ],
+        "single_outcome": "materialize the exact N015 PASS completion candidate only after all nine early-trust leaves and dependency evidence resolve",
+        "oracle_and_rollback": "publish no N015 current index unless every declared leaf gate rollback and same-identity evidence is PASS; rollback preserves failed immutable evidence and the prior authoritative index",
+        "terminal_task_idx": true,
+        "replaces_atomic_pr_id": null
+      }
+    ],
+    "entry_dependency_atomic_pr_id": "T1-M01-P002-IDX-n001-task-completion",
+    "terminal_atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion"
+  },
+  "supersessions": [
+    {
+      "legacy_atomic_pr_id": "T1-M01-P032-CTR-n010-s1",
+      "replacement_atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P033-REF-n010-s2",
+      "replacement_atomic_pr_id": "T1-M01-P058-REF-n015-s2",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P034-REF-n010-s3",
+      "replacement_atomic_pr_id": "T1-M01-P059-REF-n015-s3",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P035-REF-n010-s4",
+      "replacement_atomic_pr_id": "T1-M01-P060-REF-n015-s4",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P036-REF-n010-s5",
+      "replacement_atomic_pr_id": "T1-M01-P061-REF-n015-s5",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P037-REF-n010-s6",
+      "replacement_atomic_pr_id": "T1-M01-P062-REF-n015-s6",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P046-OPS-n010-s15",
+      "replacement_atomic_pr_id": "T1-M01-P063-OPS-n015-s7",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P045-TST-PRE-n010-s14",
+      "replacement_atomic_pr_id": "T1-M01-P064-TST-PRE-n015-s8",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EQUIVALENT_NEW_ID_OUTPUT_SCOPE",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P047-TST-POST-n010-s16",
+      "replacement_atomic_pr_id": "T1-M01-P065-TST-POST-n015-s9",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EQUIVALENT_NEW_ID_OUTPUT_SCOPE",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    }
+  ],
+  "dependency_revisions": [
+    {
+      "atomic_pr_id": "T1-M01-P005-REF-n003-s1",
+      "prior_dependency_ids": [
+        "T1-M01-P002-IDX-n001-task-completion"
+      ],
+      "revised_dependency_ids": [
+        "T1-M01-P002-IDX-n001-task-completion",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "reason": "P005 runner implementation starts only after the protected trust prerequisite task is complete"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P006-TST-PRE-n003-s2",
+      "prior_dependency_ids": [
+        "T1-M01-P005-REF-n003-s1"
+      ],
+      "revised_dependency_ids": [
+        "T1-M01-P005-REF-n003-s1",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "reason": "P006 directly records the early trust terminal and must never depend on current P048"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P038-REF-n010-s7",
+      "prior_dependency_ids": [
+        "T1-M01-P037-REF-n010-s6"
+      ],
+      "revised_dependency_ids": [
+        "T1-M01-P031-IDX-n009-task-completion",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "reason": "remaining N010 caller migrations join the prior N009 chain and the completed early trust task"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P048-IDX-n010-task-completion",
+      "prior_dependency_ids": [
+        "T1-M01-P047-TST-POST-n010-s16"
+      ],
+      "revised_dependency_ids": [
+        "T1-M01-P044-REF-n010-s13",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "reason": "N010 completion joins its seven retained caller migrations with the N015 trust completion"
+    }
+  ],
+  "task_dependency_revisions": [
+    {
+      "task_id": "T1-M01-N003",
+      "prior_dependency_task_ids": [
+        "T1-M01-N001"
+      ],
+      "revised_dependency_task_ids": [
+        "T1-M01-N001",
+        "T1-M01-N015"
+      ]
+    },
+    {
+      "task_id": "T1-M01-N010",
+      "prior_dependency_task_ids": [
+        "T1-M01-N009"
+      ],
+      "revised_dependency_task_ids": [
+        "T1-M01-N009",
+        "T1-M01-N015"
+      ]
+    }
+  ],
+  "completion_revisions": [
+    {
+      "parent_task_id": "T1-M01-N003",
+      "terminal_atomic_pr_id": "T1-M01-P007-IDX-n003-task-completion",
+      "prior_member_atomic_pr_ids": [
+        "T1-M01-P005-REF-n003-s1",
+        "T1-M01-P006-TST-PRE-n003-s2"
+      ],
+      "revised_member_atomic_pr_ids": [
+        "T1-M01-P005-REF-n003-s1",
+        "T1-M01-P006-TST-PRE-n003-s2"
+      ],
+      "superseded_member_atomic_pr_ids": [],
+      "revised_dependency_task_idx_pr_ids": [
+        "T1-M01-P002-IDX-n001-task-completion",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "revised_terminal_direct_dependency_ids": [
+        "T1-M01-P006-TST-PRE-n003-s2"
+      ],
+      "revision_semantics": "EXISTING_TERMINAL_ID_PRESERVED_MEMBER_AND_DEPENDENCY_EXACT_SET_REVISED"
+    },
+    {
+      "parent_task_id": "T1-M01-N010",
+      "terminal_atomic_pr_id": "T1-M01-P048-IDX-n010-task-completion",
+      "prior_member_atomic_pr_ids": [
+        "T1-M01-P032-CTR-n010-s1",
+        "T1-M01-P033-REF-n010-s2",
+        "T1-M01-P034-REF-n010-s3",
+        "T1-M01-P035-REF-n010-s4",
+        "T1-M01-P036-REF-n010-s5",
+        "T1-M01-P037-REF-n010-s6",
+        "T1-M01-P038-REF-n010-s7",
+        "T1-M01-P039-REF-n010-s8",
+        "T1-M01-P040-REF-n010-s9",
+        "T1-M01-P041-REF-n010-s10",
+        "T1-M01-P042-REF-n010-s11",
+        "T1-M01-P043-REF-n010-s12",
+        "T1-M01-P044-REF-n010-s13",
+        "T1-M01-P045-TST-PRE-n010-s14",
+        "T1-M01-P046-OPS-n010-s15",
+        "T1-M01-P047-TST-POST-n010-s16"
+      ],
+      "revised_member_atomic_pr_ids": [
+        "T1-M01-P038-REF-n010-s7",
+        "T1-M01-P039-REF-n010-s8",
+        "T1-M01-P040-REF-n010-s9",
+        "T1-M01-P041-REF-n010-s10",
+        "T1-M01-P042-REF-n010-s11",
+        "T1-M01-P043-REF-n010-s12",
+        "T1-M01-P044-REF-n010-s13"
+      ],
+      "superseded_member_atomic_pr_ids": [
+        "T1-M01-P032-CTR-n010-s1",
+        "T1-M01-P033-REF-n010-s2",
+        "T1-M01-P034-REF-n010-s3",
+        "T1-M01-P035-REF-n010-s4",
+        "T1-M01-P036-REF-n010-s5",
+        "T1-M01-P037-REF-n010-s6",
+        "T1-M01-P046-OPS-n010-s15",
+        "T1-M01-P045-TST-PRE-n010-s14",
+        "T1-M01-P047-TST-POST-n010-s16"
+      ],
+      "revised_dependency_task_idx_pr_ids": [
+        "T1-M01-P031-IDX-n009-task-completion",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "revised_terminal_direct_dependency_ids": [
+        "T1-M01-P044-REF-n010-s13",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "revision_semantics": "EXISTING_TERMINAL_ID_PRESERVED_MEMBER_AND_DEPENDENCY_EXACT_SET_REVISED"
+    },
+    {
+      "parent_task_id": "T1-M01-N015",
+      "terminal_atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion",
+      "prior_member_atomic_pr_ids": [],
+      "revised_member_atomic_pr_ids": [
+        "T1-M01-P057-CTR-n015-s1",
+        "T1-M01-P058-REF-n015-s2",
+        "T1-M01-P059-REF-n015-s3",
+        "T1-M01-P060-REF-n015-s4",
+        "T1-M01-P061-REF-n015-s5",
+        "T1-M01-P062-REF-n015-s6",
+        "T1-M01-P063-OPS-n015-s7",
+        "T1-M01-P064-TST-PRE-n015-s8",
+        "T1-M01-P065-TST-POST-n015-s9"
+      ],
+      "superseded_member_atomic_pr_ids": [],
+      "revised_dependency_task_idx_pr_ids": [
+        "T1-M01-P002-IDX-n001-task-completion"
+      ],
+      "revised_terminal_direct_dependency_ids": [
+        "T1-M01-P065-TST-POST-n015-s9"
+      ],
+      "revision_semantics": "NEW_TASK_TERMINAL_AND_MEMBER_EXACT_SET"
+    }
+  ],
+  "claims": {
+    "allowed": "P057-P066 early-trust ownership supersession and dependency intent are statically allocated in preview",
+    "forbidden": [
+      "GLOBAL_REGISTRY_SWITCHED",
+      "FUNCTION_DESIGN_REVIEWED",
+      "IMPLEMENTED",
+      "FIXTURES_CREATED",
+      "DEPLOYED",
+      "TEST_EXECUTED",
+      "TRUST_PASS",
+      "P006_PASS",
+      "EXECUTION_AUTHORIZED",
+      "PARENT_COMPLETE",
+      "MILESTONE_COMPLETE",
+      "PRODUCTION_ACCEPTED"
+    ],
+    "proof_ceiling": "STATIC_PREVIEW_ALLOCATION_ONLY_NOT_GLOBAL_REGISTRATION_FUNCTION_REVIEW_IMPLEMENTATION_FIXTURE_CREATION_DEPLOYMENT_TEST_EXECUTION_TRUST_PASS_AUTHORIZATION_OR_ACCEPTANCE"
+  }
+}

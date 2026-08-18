@@ -1,0 +1,844 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M01_N003_IMPLEMENTATION_CANDIDATE_TEST_FUNCTION_DESIGN",
+  "artifact_status": "DRAFT_FUNCTION_AND_EVIDENCE_DESIGN_EXECUTION_BLOCKED",
+  "source_refs": [
+    {
+      "role": "ACTIVE_TASK_REGISTRY",
+      "path": "contracts/alignment/task-registry.v1.json",
+      "sha256": "411be54ada25ba399fc4e14d1fb055986548a6c265c4b499254a5793249a23d0"
+    },
+    {
+      "role": "ACTIVE_CLAIM_CATALOG",
+      "path": "contracts/alignment/developer-claim-package-catalog.v1.json",
+      "sha256": "18aeedadba1504c02141185c0cc40e9237dd8c96665c5923009f9f99484ee883"
+    },
+    {
+      "role": "ACTIVE_PR_DESIGN_CATALOG",
+      "path": "contracts/alignment/pr-design-application-catalog.v1.json",
+      "sha256": "486036113a9264679207d1bc19c58a62c3bf65b8c535e1f0c49230147192d03c"
+    },
+    {
+      "role": "FIXTURE_SCHEMA",
+      "path": "contracts/alignment/evidence-case-fixture.schema.json",
+      "sha256": "d98595f1f176c58bc60ab443a4c773595fc5b8560e9847f362786002233dd5f7"
+    },
+    {
+      "role": "CASE_REPORT_SCHEMA",
+      "path": "contracts/alignment/evidence-case-report.schema.json",
+      "sha256": "d9041cefca829f761d672224b1f69ef21af8e986655e085fa22d10661f91fcd8"
+    },
+    {
+      "role": "EVIDENCE_RUN_SCHEMA",
+      "path": "contracts/alignment/evidence-run-manifest.schema.json",
+      "sha256": "1437703a0110f3396bbb30cb8e991ae62e16be29a4aa29779d59ccaa62a86451"
+    },
+    {
+      "role": "IMPLEMENTATION_CANDIDATE_SCHEMA",
+      "path": "contracts/alignment/implementation-candidate.schema.json",
+      "sha256": "d5c65ba04a0d04af29d06808a276ac1ef0c8f5dd2140a25ec1dc339bd2879d89"
+    },
+    {
+      "role": "PROVENANCE_RECEIPT_SCHEMA",
+      "path": "contracts/alignment/candidate-artifact-provenance-receipt.schema.json",
+      "sha256": "c37fdf97b94c4275bffbae0b77d1e943562166f36b8b255b79c95961e0985e02"
+    },
+    {
+      "role": "ACTIVE_REGISTRY_BUILDER",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "sha256": "20c813744d54884707bc3f919c2053e883d81de877707418e6819d96726b454c"
+    },
+    {
+      "role": "EVIDENCE_MANIFEST_WRITER",
+      "path": "scripts/alignment/write_evidence_run_manifest.py",
+      "sha256": "16f3741a1dbc529f23347bbc4802cb0fbdfb0dc3534b332e2e9ee31ccdef7aca"
+    },
+    {
+      "role": "PREBUILT_OVERLAY",
+      "path": "go/control-plane/deployments/docker/Dockerfile.alert-service.prebuilt.overlay",
+      "sha256": "82e9a12f62630562d6706676351e5f6dc1090bc1c20b96092a3dc9530de2842a"
+    },
+    {
+      "role": "EARLY_TRUST_ALLOCATION_PREVIEW",
+      "path": "contracts/alignment/m01-early-trust-train-allocation.v1.json",
+      "sha256": "9bab6c55cf3e2ea44e1d5037ce9c37267ac804d0422d703d77f1a7fe78501d19"
+    },
+    {
+      "role": "EARLY_TRUST_CATALOG_PREVIEW",
+      "path": "contracts/alignment/m01-early-trust-train-catalog.v1.json",
+      "sha256": "051f0945243c9e842614580e8cabb34c7dd6a158d8e284dc600dd7efe8f85827"
+    }
+  ],
+  "leaf_contracts": [
+    {
+      "atomic_pr_id": "T1-M01-P005-REF-n003-s1",
+      "pr_type": "REF",
+      "design_scope": "SINGLE_FUNCTION_AND_FIXTURE_RECIPES",
+      "current_execution_status": "BLOCKED_UNTIL_SIGNED_OVERLAY",
+      "write_locators": [
+        "scripts/alignment/test_implementation_candidate.py#main",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/active-prebuilt-without-provenance.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/duplicate-prebuilt-path.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/binary-image-sha-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/builder-recipe-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/image-deployed-digest-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/supply-chain-artifact-missing.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/tracked-or-root-exclusion.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/self-reported-signature-pass.json#/"
+      ],
+      "read_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_implementation_candidate",
+        "scripts/alignment/build_topic1_task_registry.py#validate_candidate_artifact_refs",
+        "scripts/alignment/build_topic1_task_registry.py#candidate_tree_fingerprint",
+        "contracts/alignment/implementation-candidate.schema.json#/",
+        "contracts/alignment/candidate-artifact-provenance-receipt.schema.json#/"
+      ],
+      "responsibility": "实现一个直接单函数CLI并登记八个参数化mutation配方；只准备测试代码和夹具，不运行正式矩阵、不写证据、不改变候选或业务制品。",
+      "entry_conditions": [
+        "T1-M01-P002-IDX-n001-task-completion has one same-candidate PASS receipt",
+        "this function design has a signed review and the planned signature is accepted",
+        "one signed execution overlay authorizes only P005 exact write locators"
+      ],
+      "outputs": [
+        "scripts/alignment/test_implementation_candidate.py",
+        "eight registered fixture recipe JSON files",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p005-ref-n003-s1/claim-result.json"
+      ],
+      "allowed_claim": "runner and parameterized rejection fixtures are implemented and compile for this exact leaf after authorized execution",
+      "forbidden_claims": [
+        "P006_EXECUTED",
+        "CASE_PASS",
+        "IMPLEMENTATION_CANDIDATE_PASS",
+        "TRUST_VERIFIER_READY",
+        "PARENT_TASK_COMPLETE",
+        "MILESTONE_COMPLETE",
+        "PRODUCTION_AUTHORIZED"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P006-TST-PRE-n003-s2",
+      "pr_type": "TST-PRE",
+      "design_scope": "DOUBLE_EVIDENCE_ARTIFACT",
+      "current_execution_status": "BLOCKED_UNTIL_SIGNED_OVERLAY",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/test-result.json#/",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/case-report.json#/"
+      ],
+      "read_locators": [
+        "scripts/alignment/test_implementation_candidate.py#main",
+        "eight registered fixture recipe JSON files",
+        "contracts/alignment/evidence-case-report.schema.json#/",
+        "contracts/alignment/evidence-run-manifest.schema.json#/",
+        "one signed TEST plan and one exact execution package",
+        "one same-commit design candidate and implementation candidate"
+      ],
+      "responsibility": "在受签scope内只读执行八个负例，先形成逐例case report，再形成绑定runner、八夹具、case report、候选、计划和运行身份的G0 evidence manifest。",
+      "entry_conditions": [
+        "P005 has one exact PASS atomic receipt",
+        "the early protected trust bootstrap and implementation-candidate caller integration are PASS",
+        "candidate, profile, environment, run, execution package and approved TEST plan are exact inputs",
+        "one signed execution overlay authorizes only P006 and its two outputs"
+      ],
+      "outputs": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/case-report.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/test-result.json"
+      ],
+      "allowed_claim": "the exact eight negative implementation-candidate cases matched their registered G0 rejection oracles for one candidate/profile/environment/run",
+      "forbidden_claims": [
+        "POSITIVE_CANDIDATE_ATTESTATION",
+        "G1_RUNTIME_PASS",
+        "IMPLEMENTATION_CANDIDATE_ACCEPTED",
+        "PARENT_TASK_COMPLETE",
+        "MILESTONE_COMPLETE",
+        "PRODUCTION_APPLIED",
+        "PRODUCTION_AUTHORIZED"
+      ]
+    }
+  ],
+  "current_contract_findings": [
+    {
+      "finding_id": "M01-N003-DOR-01",
+      "severity": "P0",
+      "evidence": "The active P006 matrix command supplies only mode, result and case-report although evidence-run-manifest requires run, subject, execution-package, plan, candidate, profile, environment, time-window and gate identities.",
+      "consequence": "A conforming test-result cannot be produced without inventing identity or reading undeclared ambient state.",
+      "required_disposition": "Replace the generated command contract with the explicit argv exact-set in this design before P006 can be READY."
+    },
+    {
+      "finding_id": "M01-N003-DOR-02",
+      "severity": "P0",
+      "evidence": "validate_candidate_artifact_refs invokes require_trusted_signature_verifier before five registered mutations can reach their intended image or prebuilt semantic branches.",
+      "consequence": "A runner can falsely report the trust hard-block as success for multiple distinct cases without testing the named condition.",
+      "required_disposition": "Install the protected verifier and move its bootstrap plus implementation-candidate caller integration before P006; assert exact target error fragments."
+    },
+    {
+      "finding_id": "M01-N003-DOR-03",
+      "severity": "P0",
+      "evidence": "The active dependency chain already runs from P006 through P007 and the later M01 trains to P048, the current T1-M01-N010 terminal.",
+      "consequence": "Adding P048 directly as a P006 prerequisite creates a cycle rather than repairing the trust dependency.",
+      "required_disposition": "Split an early append-only trust prerequisite train after P002 and prohibit a P006-to-P048 back-edge."
+    },
+    {
+      "finding_id": "M01-N003-DOR-04",
+      "severity": "P0",
+      "evidence": "registered_case_fixture_payload currently emits an empty parameters object for every case although each case needs a distinct, reviewable mutation and branch oracle.",
+      "consequence": "The fixture hash proves only a case label and cannot prove which candidate field was mutated or which precondition was preserved.",
+      "required_disposition": "Version the fixture schema with a case-specific parameter union and generate the exact nonempty parameters listed in case_recipes."
+    },
+    {
+      "finding_id": "M01-N003-DOR-05",
+      "severity": "P0",
+      "evidence": "The active case schema stores a normalized rejection_code but does not store actual rejection text or run_id, while the declared oracle requires actual rejection and same-run binding.",
+      "consequence": "A report can self-assign the expected code without demonstrating which semantic branch rejected the candidate.",
+      "required_disposition": "Add run_id and actual_rejection to the case report contract and bind both into each canonical output hash."
+    },
+    {
+      "finding_id": "M01-N003-DOR-06",
+      "severity": "P1",
+      "evidence": "P006 currently declares G0 and G1 but produces one test-result manifest and executes only a static negative contract matrix.",
+      "consequence": "One run can be misread as satisfying two gates even though no runtime integration oracle is present.",
+      "required_disposition": "Constrain P006 to G0 only; any future G1 run must be a separate leaf, plan, run ID and manifest."
+    },
+    {
+      "finding_id": "M01-N003-DOR-07",
+      "severity": "P1",
+      "evidence": "validate_implementation_candidate and its Git/blob helpers are bound to the module-global repository root.",
+      "consequence": "A negative runner cannot safely exercise a detached temporary candidate without mutating global module state or the user worktree.",
+      "required_disposition": "The P037 caller-integration contract must accept one explicit immutable repo_root and thread it through all candidate blob and artifact checks."
+    }
+  ],
+  "dependency_analysis": {
+    "current_path_to_trust_owner": [
+      "T1-M01-P006-TST-PRE-n003-s2",
+      "T1-M01-P007-IDX-n003-task-completion",
+      "T1-M01-P013-CTR-n005-s1",
+      "T1-M01-P014-PRJ-n005-s2",
+      "T1-M01-P015-REF-n005-s3",
+      "T1-M01-P016-TST-PRE-n005-s4",
+      "T1-M01-P017-IDX-n005-task-completion",
+      "T1-M01-P018-CTR-n006-s1",
+      "T1-M01-P019-IDX-n006-task-completion",
+      "T1-M01-P020-CTR-n007-s1",
+      "T1-M01-P021-IDX-n007-task-completion",
+      "T1-M01-P022-CTR-n008-s1",
+      "T1-M01-P023-PRJ-n008-s2",
+      "T1-M01-P024-REF-n008-s3",
+      "T1-M01-P025-TST-PRE-n008-s4",
+      "T1-M01-P026-IDX-n008-task-completion",
+      "T1-M01-P027-CTR-n009-s1",
+      "T1-M01-P028-PRJ-n009-s2",
+      "T1-M01-P029-REF-n009-s3",
+      "T1-M01-P030-TST-PRE-n009-s4",
+      "T1-M01-P031-IDX-n009-task-completion",
+      "T1-M01-P032-CTR-n010-s1",
+      "T1-M01-P033-REF-n010-s2",
+      "T1-M01-P034-REF-n010-s3",
+      "T1-M01-P035-REF-n010-s4",
+      "T1-M01-P036-REF-n010-s5",
+      "T1-M01-P037-REF-n010-s6",
+      "T1-M01-P038-REF-n010-s7",
+      "T1-M01-P039-REF-n010-s8",
+      "T1-M01-P040-REF-n010-s9",
+      "T1-M01-P041-REF-n010-s10",
+      "T1-M01-P042-REF-n010-s11",
+      "T1-M01-P043-REF-n010-s12",
+      "T1-M01-P044-REF-n010-s13",
+      "T1-M01-P045-TST-PRE-n010-s14",
+      "T1-M01-P046-OPS-n010-s15",
+      "T1-M01-P047-TST-POST-n010-s16",
+      "T1-M01-P048-IDX-n010-task-completion"
+    ],
+    "direct_dependency_cycle_if_added": true,
+    "unreachable_before_trust_case_ids": [
+      "active-prebuilt-without-provenance",
+      "duplicate-prebuilt-path",
+      "binary-image-sha-mismatch",
+      "builder-recipe-mismatch",
+      "image-deployed-digest-mismatch"
+    ],
+    "reachable_before_trust_case_ids": [
+      "supply-chain-artifact-missing",
+      "tracked-or-root-exclusion",
+      "self-reported-signature-pass"
+    ],
+    "preview_resolution": {
+      "status": "VALIDATED_PREVIEW_NOT_REGISTERED",
+      "terminal_atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion",
+      "p005_dependency_ids": [
+        "T1-M01-P002-IDX-n001-task-completion",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "p006_dependency_ids": [
+        "T1-M01-P005-REF-n003-s1",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "candidate_dag": "PASS",
+      "global_switch_decision": "BLOCKED_PREVIEW_ONLY"
+    },
+    "selected_resolution": "Split the protected trust bootstrap and implementation-candidate caller integration into an append-only prerequisite train immediately after P002; make P005/P006 consume its terminal while leaving the remaining N010 caller migrations later, and never add a P006 dependency on the current P048 terminal.",
+    "prohibited_shortcuts": [
+      "do not monkeypatch module-global REPO_ROOT",
+      "do not mock require_trusted_signature_verifier",
+      "do not translate any ValueError into the case-specific expected code",
+      "do not use a self-reported PASS receipt or random signature",
+      "do not mutate the user worktree or formal candidate manifest"
+    ]
+  },
+  "function_contract": {
+    "contract_id": "FC-M01-N003-ImplementationCandidateMatrixMain",
+    "atomic_pr_id": "T1-M01-P005-REF-n003-s1",
+    "language": "python",
+    "path": "scripts/alignment/test_implementation_candidate.py",
+    "qualified_symbol": "main",
+    "signature_before": null,
+    "signature_after": "def main(argv: Sequence[str] | None = None) -> int:",
+    "selected_form": "DIRECT_SINGLE_FUNCTION_CLI",
+    "responsibility": "解析显式运行身份，在隔离临时Git候选上逐例调用真实implementation-candidate语义验证器，精确匹配目标错误后不可变写入case report和单一G0 evidence manifest。",
+    "cli_arguments": [
+      {"flag": "--mode", "required": true, "purpose": "must equal matrix; no implicit self-test or positive mode"},
+      {"flag": "--self-test", "required": false, "purpose": "mutually exclusive isolated harness self-test that writes no registered P006 evidence"},
+      {"flag": "--subject-pr-id", "required": true, "purpose": "bind the exact P006 evidence owner"},
+      {"flag": "--subject-work-id", "required": true, "purpose": "bind the exact T1-M01-N003 parent"},
+      {"flag": "--milestone-id", "required": true, "purpose": "bind the exact T1-M01 milestone"},
+      {"flag": "--run-id", "required": true, "purpose": "bind report and manifest to one immutable run"},
+      {"flag": "--gate-id", "required": true, "purpose": "must equal G0 for this static rejection matrix"},
+      {"flag": "--candidate-manifest", "required": true, "purpose": "same candidate verified by the negative matrix"},
+      {"flag": "--design-candidate-manifest", "required": true, "purpose": "same-commit design source identity"},
+      {"flag": "--profile-id", "required": true, "purpose": "bind the exact approved verification profile"},
+      {"flag": "--environment-id", "required": true, "purpose": "bind the candidate and evidence environment"},
+      {"flag": "--execution-package-sha256", "required": true, "purpose": "bind the signed atomic execution package"},
+      {"flag": "--plan", "required": true, "purpose": "load the approved TEST plan for P006 and G0"},
+      {"flag": "--time-window", "required": true, "purpose": "record the explicit bounded run interval"},
+      {"flag": "--fixture-root", "required": true, "purpose": "resolve only the registered eight recipe files"},
+      {"flag": "--result", "required": true, "purpose": "registered sibling G0 evidence manifest path"},
+      {"flag": "--case-report", "required": true, "purpose": "registered typed per-case report path"}
+    ],
+    "body_steps": [
+      "B01 parse argv without ambient environment fallbacks, reject unknown arguments and require exactly one of self-test or matrix mode",
+      "B02 in matrix mode require the exact P006 subject IDs and G0 gate; in self-test mode create only ephemeral inputs and prohibit result or case-report outputs",
+      "B03 resolve every input and output as a canonical repository-relative path and reject symlink or path escape",
+      "B04 load the active registry, claim catalog, fixture schema, case schema and evidence schema and verify their pinned hashes",
+      "B05 resolve P006 from the active claim catalog and require a signed overlay, PASS dependencies, exact output siblings and exact execution-package hash",
+      "B06 load the implementation and design candidate manifests, validate their schemas and require the same immutable commit and environment",
+      "B07 load the approved TEST plan and require P006, candidate, profile and G0 exact identity",
+      "B08 load exactly eight suite-owned fixture files, validate the case-specific parameter union and reject extra, missing or duplicate case IDs",
+      "B09 create one isolated temporary Git candidate from the declared commit without modifying the user worktree, formal manifest or external artifacts",
+      "B10 verify the unmutated candidate reaches the registered precondition checkpoint through the protected verifier before executing any mutation",
+      "B11 for each case deep-copy the manifest and apply only the registered mutation plus explicit subcase assertions",
+      "B12 call validate_implementation_candidate with the explicit temporary repo_root and capture only its typed semantic rejection",
+      "B13 fail the case when validation succeeds, rejects earlier, rejects later, or the actual error lacks the exact registered fragment",
+      "B14 normalize the registered code only after the exact actual rejection matches and hash case ID, fixture hash, mutation facts and actual rejection",
+      "B15 build one run-bound case report with all eight PASS oracle matches and positive_attestation null, then validate schema and exact-set semantics",
+      "B16 build one G0 evidence manifest binding runner, eight fixtures and the case report plus candidate, profile, environment, run, package and plan identities",
+      "B17 write case report first and manifest second using same-directory temporary files, fsync and atomic replace; equal-byte replay is idempotent and different bytes are rejected",
+      "B18 clean only the isolated temporary candidate and print a bounded negative-matrix summary without claiming positive candidate acceptance"
+    ],
+    "error_branches": [
+      "missing identity argument exits nonzero before any output file is opened",
+      "path escape, symlink or unregistered output exits nonzero without touching existing evidence",
+      "schema, source hash, execution package or plan drift exits nonzero before fixture execution",
+      "missing protected verifier or non-PASS prerequisite returns BLOCKED and cannot become a case PASS",
+      "fixture omission, duplicate, empty parameters or undeclared mutation returns BLOCKED",
+      "wrong semantic branch or generic earlier ValueError marks the case FAIL with the actual rejection preserved",
+      "candidate or design commit mismatch returns BLOCKED before temporary candidate construction",
+      "existing evidence with different bytes fails closed and preserves both historical files",
+      "temporary candidate cleanup failure is reported but cannot delete repository or evidence paths"
+    ],
+    "side_effects": [
+      "creates and removes one isolated temporary Git candidate outside the user worktree",
+      "writes only the registered case-report and test-result paths after all cases match",
+      "does not modify images, prebuilt binaries, candidate manifests, registry files or runtime state"
+    ],
+    "atomicity": "Each output uses a same-directory temporary file, file fsync, atomic replace and parent-directory fsync; case report precedes the manifest so no manifest can reference an absent report.",
+    "idempotency": "The canonical bytes for a fixed candidate/profile/environment/run are deterministic; an equal-byte replay is a no-op and any different existing byte sequence is an immutable-output conflict.",
+    "callers": [
+      "T1-M01-P006-TST-PRE-n003-s2 signed TEST execution"
+    ],
+    "callees": [
+      "build_topic1_task_registry.validate_against_schema",
+      "build_topic1_task_registry.validate_implementation_candidate",
+      "build_topic1_task_registry.validate_case_report_semantics",
+      "subprocess.run",
+      "tempfile.TemporaryDirectory",
+      "hashlib.sha256",
+      "Path.replace"
+    ],
+    "tests": [
+      "TC-M01-N003-01",
+      "TC-M01-N003-02",
+      "TC-M01-N003-03",
+      "TC-M01-N003-04",
+      "TC-M01-N003-05",
+      "TC-M01-N003-06",
+      "TC-M01-N003-07",
+      "TC-M01-N003-08"
+    ],
+    "rollback": "Remove only the unexecuted runner and fixture changes before P005 promotion, retain every historical FAIL/BLOCKED evidence artifact, and never hide or delete an active prebuilt artifact from the candidate fingerprint."
+  },
+  "case_recipes": [
+    {
+      "case_id": "active-prebuilt-without-provenance",
+      "test_id": "TC-M01-N003-01",
+      "execution_status": "NOT_RUN",
+      "expected_outcome": "BLOCKED",
+      "expected_rejection_code": "REJECT_ACTIVE_PREBUILT_WITHOUT_PROVENANCE",
+      "target_stage": "prebuilt-exclusion-exact-set",
+      "mutation_operator": "MUTATE_ACTIVE_PREBUILT_WITHOUT_PROVENANCE",
+      "required_fixture_parameters": ["excluded_path", "prebuilt_path", "referenced_by_active_build"],
+      "assertions": [
+        {
+          "assertion_id": "active-set-not-exact",
+          "mutation": "remove the matching external_or_prebuilt_artifacts row while retaining one active excluded path",
+          "expected_error_fragment": "active excluded artifact/prebuilt set is not exact"
+        }
+      ],
+      "oracle": "The protected verifier first accepts the unchanged provenance closure, then the exact active exclusion/prebuilt set check rejects the single declared mismatch.",
+      "false_positive_guards": [
+        "a trusted-signature hard block is not this case oracle",
+        "no other excluded path, digest, artifact hash or recipe field may change"
+      ]
+    },
+    {
+      "case_id": "duplicate-prebuilt-path",
+      "test_id": "TC-M01-N003-02",
+      "execution_status": "NOT_RUN",
+      "expected_outcome": "BLOCKED",
+      "expected_rejection_code": "REJECT_DUPLICATE_PREBUILT_PATH",
+      "target_stage": "prebuilt-path-identity",
+      "mutation_operator": "MUTATE_DUPLICATE_PREBUILT_PATH",
+      "required_fixture_parameters": ["source_index", "duplicate_path", "distinct_binary_sha256"],
+      "assertions": [
+        {
+          "assertion_id": "duplicate-path-distinct-row",
+          "mutation": "append a structurally distinct prebuilt row that reuses the declared path",
+          "expected_error_fragment": "repeats a prebuilt path/provenance identity"
+        }
+      ],
+      "oracle": "The fixture passes JSON uniqueItems because the rows differ, but semantic path identity rejects the duplicated prebuilt path at its exact branch.",
+      "false_positive_guards": [
+        "schema uniqueItems rejection is not accepted as the semantic oracle",
+        "active exclusion exact-set and all existing rows remain unchanged"
+      ]
+    },
+    {
+      "case_id": "binary-image-sha-mismatch",
+      "test_id": "TC-M01-N003-03",
+      "execution_status": "NOT_RUN",
+      "expected_outcome": "BLOCKED",
+      "expected_rejection_code": "REJECT_BINARY_IMAGE_SHA_MISMATCH",
+      "target_stage": "prebuilt-image-binary-closure",
+      "mutation_operator": "MUTATE_BINARY_IMAGE_SHA_MISMATCH",
+      "required_fixture_parameters": ["prebuilt_index", "binary_sha256", "image_internal_binary_sha256"],
+      "assertions": [
+        {
+          "assertion_id": "image-binary-differs",
+          "mutation": "change only image_internal_binary_sha256 away from the externally verified binary_sha256",
+          "expected_error_fragment": "prebuilt binary/image/SBOM provenance mismatch"
+        }
+      ],
+      "oracle": "All binary, SBOM, image and receipt hashes remain valid except the explicit image-internal versus external binary equality assertion.",
+      "false_positive_guards": [
+        "artifact-file hash validation must pass before the target branch",
+        "builder recipe and deployed digest must remain unchanged"
+      ]
+    },
+    {
+      "case_id": "builder-recipe-mismatch",
+      "test_id": "TC-M01-N003-04",
+      "execution_status": "NOT_RUN",
+      "expected_outcome": "BLOCKED",
+      "expected_rejection_code": "REJECT_BUILDER_RECIPE_MISMATCH",
+      "target_stage": "candidate-build-recipe-blob",
+      "mutation_operator": "MUTATE_BUILDER_RECIPE_MISMATCH",
+      "required_fixture_parameters": ["prebuilt_index", "build_recipe_path", "build_recipe_sha256"],
+      "assertions": [
+        {
+          "assertion_id": "recipe-hash-not-git-blob",
+          "mutation": "change only build_recipe_sha256 to a nonmatching digest while retaining the candidate recipe path",
+          "expected_error_fragment": "prebuilt build recipe is not a candidate Git blob"
+        }
+      ],
+      "oracle": "The candidate contains the declared recipe path, but recomputing its Git blob digest rejects the one mutated recipe hash.",
+      "false_positive_guards": [
+        "missing recipe path is not accepted as this hash-mismatch oracle",
+        "binary, image, SBOM and receipt identities remain unchanged"
+      ]
+    },
+    {
+      "case_id": "image-deployed-digest-mismatch",
+      "test_id": "TC-M01-N003-05",
+      "execution_status": "NOT_RUN",
+      "expected_outcome": "BLOCKED",
+      "expected_rejection_code": "REJECT_IMAGE_DEPLOYED_DIGEST_MISMATCH",
+      "target_stage": "immutable-deployed-image-digest",
+      "mutation_operator": "MUTATE_IMAGE_DEPLOYED_DIGEST_MISMATCH",
+      "required_fixture_parameters": ["image_index", "image_digest", "deployed_image_digest"],
+      "assertions": [
+        {
+          "assertion_id": "deployed-digest-not-attested",
+          "mutation": "change only deployed_image_digest in the selected image attestation",
+          "expected_error_fragment": "deployed image is not the attested immutable digest"
+        }
+      ],
+      "oracle": "The image-digest exact-set and attestation identities remain valid, then immutable deployed digest equality rejects the declared difference.",
+      "false_positive_guards": [
+        "image digest exact-set mismatch is an earlier wrong branch",
+        "prebuilt row and deployment manifest hashes remain unchanged"
+      ]
+    },
+    {
+      "case_id": "supply-chain-artifact-missing",
+      "test_id": "TC-M01-N003-06",
+      "execution_status": "NOT_RUN",
+      "expected_outcome": "BLOCKED",
+      "expected_rejection_code": "REJECT_SUPPLY_CHAIN_ARTIFACT_MISSING",
+      "target_stage": "supply-chain-artifact-exact-set",
+      "mutation_operator": "MUTATE_SUPPLY_CHAIN_ARTIFACT_MISSING",
+      "required_fixture_parameters": ["artifact_id", "artifact_sha256", "remove_from"],
+      "assertions": [
+        {
+          "assertion_id": "missing-ref-with-retained-hash",
+          "mutation": "remove one supply_chain_artifacts row while retaining its hash in supply_chain_artifact_hashes",
+          "expected_error_fragment": "supply-chain artifact identity/path/hash set is not exact"
+        }
+      ],
+      "oracle": "The exact-set comparison rejects one missing artifact reference before any external signature result can conceal it.",
+      "false_positive_guards": [
+        "the artifact hash remains present so the missing reference is the sole mutation",
+        "no file or provenance receipt is deleted from the fixture environment"
+      ]
+    },
+    {
+      "case_id": "tracked-or-root-exclusion",
+      "test_id": "TC-M01-N003-07",
+      "execution_status": "NOT_RUN",
+      "expected_outcome": "BLOCKED",
+      "expected_rejection_code": "REJECT_TRACKED_OR_ROOT_EXCLUSION",
+      "target_stage": "production-tree-exclusion-safety",
+      "mutation_operator": "MUTATE_TRACKED_OR_ROOT_EXCLUSION",
+      "required_fixture_parameters": ["tracked_path", "production_root", "subcase_order"],
+      "assertions": [
+        {
+          "assertion_id": "production-root-exclusion",
+          "mutation": "append one active exclusion equal to a required production source root",
+          "expected_error_fragment": "candidate exclusion is a production root or outside approved roots"
+        },
+        {
+          "assertion_id": "tracked-blob-exclusion",
+          "mutation": "in an independent subcase append one active exclusion for the declared tracked Git blob",
+          "expected_error_fragment": "tracked candidate blobs/directories cannot be removed from the production fingerprint"
+        }
+      ],
+      "oracle": "Both ordered subcases must hit their exact candidate_tree_fingerprint safety branches; passing only one does not satisfy this registered case.",
+      "false_positive_guards": [
+        "root and tracked mutations run in independent deep copies",
+        "source root exact-set and every unrelated exclusion remain unchanged"
+      ]
+    },
+    {
+      "case_id": "self-reported-signature-pass",
+      "test_id": "TC-M01-N003-08",
+      "execution_status": "NOT_RUN",
+      "expected_outcome": "BLOCKED",
+      "expected_rejection_code": "REJECT_SELF_REPORTED_SIGNATURE_PASS",
+      "target_stage": "protected-trust-verifier-boundary",
+      "mutation_operator": "MUTATE_SELF_REPORTED_SIGNATURE_PASS",
+      "required_fixture_parameters": ["receipt_path", "verification_status", "signature_artifact_sha256"],
+      "assertions": [
+        {
+          "assertion_id": "random-signature-cannot-pass",
+          "mutation": "replace one receipt signature artifact with arbitrary bytes and retain a self-reported verification status PASS",
+          "expected_error_fragment": "trusted cryptographic signature verification"
+        }
+      ],
+      "oracle": "The protected verifier rejects arbitrary signature bytes or unavailable trust regardless of a well-shaped receipt and self-reported PASS field.",
+      "false_positive_guards": [
+        "schema rejection alone is not the protected verifier oracle",
+        "a configured real verifier rejection must preserve its typed policy reason"
+      ]
+    }
+  ],
+  "evidence_contract": {
+    "current_command": "python3 scripts/alignment/test_implementation_candidate.py --mode matrix --result doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/test-result.json --case-report doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/case-report.json",
+    "current_command_status": "BLOCKED_COMMAND_MISSING_CANDIDATE_BINDING",
+    "corrected_command_argv": [
+      "python3",
+      "scripts/alignment/test_implementation_candidate.py",
+      "--mode",
+      "matrix",
+      "--subject-pr-id",
+      "T1-M01-P006-TST-PRE-n003-s2",
+      "--subject-work-id",
+      "T1-M01-N003",
+      "--milestone-id",
+      "T1-M01",
+      "--run-id",
+      "${RUN_ID}",
+      "--gate-id",
+      "G0",
+      "--candidate-manifest",
+      "${IMPLEMENTATION_CANDIDATE_MANIFEST}",
+      "--design-candidate-manifest",
+      "${DESIGN_CANDIDATE_MANIFEST}",
+      "--profile-id",
+      "${PROFILE_ID}",
+      "--environment-id",
+      "${ENVIRONMENT_ID}",
+      "--execution-package-sha256",
+      "${EXECUTION_PACKAGE_SHA256}",
+      "--plan",
+      "${APPROVED_TEST_PLAN}",
+      "--time-window",
+      "${TIME_WINDOW}",
+      "--fixture-root",
+      "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre",
+      "--result",
+      "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/test-result.json",
+      "--case-report",
+      "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/case-report.json"
+    ],
+    "gate_scope": "G0_ONLY_NEGATIVE_CONTRACT_MATRIX",
+    "artifacts": [
+      {
+        "path": "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/case-report.json",
+        "schema": "contracts/alignment/evidence-case-report.schema.json",
+        "required_identity_fields": [
+          "run_id",
+          "subject_pr_id",
+          "subject_work_id",
+          "subject_milestone_id",
+          "candidate_manifest_sha256",
+          "profile_id",
+          "environment_id"
+        ],
+        "semantic_role": "typed exact eight-case result; PASS means every registered negative oracle matched, not that the candidate is positively accepted"
+      },
+      {
+        "path": "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/test-result.json",
+        "schema": "contracts/alignment/evidence-run-manifest.schema.json",
+        "required_identity_fields": [
+          "run_id",
+          "subject_pr_id",
+          "subject_work_id",
+          "subject_milestone_id",
+          "execution_package_sha256",
+          "plan_id",
+          "plan_sha256",
+          "candidate_manifest_sha256",
+          "profile_id",
+          "environment_id",
+          "gate_id"
+        ],
+        "semantic_role": "single G0 evidence envelope binding runner, eight fixtures and case report to the authorized candidate and plan"
+      }
+    ],
+    "case_result_required_fields": [
+      "case_id",
+      "expected_outcome",
+      "actual_outcome",
+      "status",
+      "rejection_code",
+      "actual_rejection",
+      "input_sha256s",
+      "output_sha256s"
+    ],
+    "immutable_write_protocol": [
+      "canonical JSON encoding fixes key order, UTF-8 and one trailing newline",
+      "resolve outputs under the registered work-order directory without symlinks",
+      "write a same-directory temporary file with exclusive creation",
+      "flush and fsync the temporary file before atomic replace",
+      "fsync the parent directory after replacement",
+      "equal existing bytes are an idempotent replay and different bytes fail closed",
+      "write the case report before the evidence manifest that references it"
+    ],
+    "success_semantics": "PASS proves only that all eight registered negative mutations reached and matched their exact semantic rejection for this one authorized G0 run; it is not a positive candidate, G1, task, milestone, deployment or release attestation."
+  },
+  "required_registry_amendments": [
+    {
+      "amendment_id": "M01-N003-AMD-01",
+      "owner": "T1-M01 governance allocator",
+      "change": "Allocate an append-only early protected-trust prerequisite train after P002 and before P005; include implementation-candidate caller integration and do not create a P006-to-P048 back-edge.",
+      "acceptance_oracle": "The rebuilt atomic DAG is acyclic and P006 has a direct PASS dependency on the early trust terminal.",
+      "status": "PREVIEW_ALLOCATED_NOT_REGISTERED"
+    },
+    {
+      "amendment_id": "M01-N003-AMD-02",
+      "owner": "T1-M01-P037 caller-integration design",
+      "change": "Thread one explicit immutable repo_root through validate_implementation_candidate, candidate_tree_fingerprint, read_candidate_blob and external artifact validation.",
+      "acceptance_oracle": "A detached temporary candidate is validated without monkeypatching globals or reading the user worktree.",
+      "status": "REQUIRED_NOT_APPLIED"
+    },
+    {
+      "amendment_id": "M01-N003-AMD-03",
+      "owner": "fixture contract owner",
+      "change": "Version evidence-case-fixture with a discriminated case-specific nonempty parameters union for the exact eight M01-N003 cases.",
+      "acceptance_oracle": "Each case accepts its exact parameter keys and rejects empty, extra, missing or another case's parameter shape.",
+      "status": "REQUIRED_NOT_APPLIED"
+    },
+    {
+      "amendment_id": "M01-N003-AMD-04",
+      "owner": "case-report contract owner",
+      "change": "Add run_id and per-case actual_rejection to evidence-case-report and bind actual_rejection into the canonical output hash.",
+      "acceptance_oracle": "Cross-run reports and expected-code-only self reports fail the semantic checker.",
+      "status": "REQUIRED_NOT_APPLIED"
+    },
+    {
+      "amendment_id": "M01-N003-AMD-05",
+      "owner": "active registry builder owner",
+      "change": "Generate the corrected explicit runner argv, the eight nonempty fixture payloads and G0-only required gate for P006.",
+      "acceptance_oracle": "The active claim catalog reproduces the corrected argv exact-set, eight typed recipes and one G0 manifest requirement.",
+      "status": "REQUIRED_NOT_APPLIED"
+    },
+    {
+      "amendment_id": "M01-N003-AMD-06",
+      "owner": "P005 function review",
+      "change": "Adjudicate DIRECT_SINGLE_FUNCTION_CLI, approve the planned main signature and bind one trusted Python AST receipt after implementation.",
+      "acceptance_oracle": "The reviewed function exact-set contains only main and the eight JSON fixture roots owned by P005.",
+      "status": "REQUIRED_NOT_APPLIED"
+    },
+    {
+      "amendment_id": "M01-N003-AMD-07",
+      "owner": "P006 non-function review",
+      "change": "Approve the specialized double-evidence contract with case-report first, one G0 manifest second, immutable conflict behavior and no positive attestation.",
+      "acceptance_oracle": "The non-function review exact-set is two outputs and forbids G1, candidate acceptance and parent completion claims.",
+      "status": "REQUIRED_NOT_APPLIED"
+    },
+    {
+      "amendment_id": "M01-N003-AMD-08",
+      "owner": "implementation-candidate semantic validator owner",
+      "change": "Expose stable typed rejection identity or an exact target-stage result so the runner cannot derive a case-specific code from case_id plus a generic ValueError.",
+      "acceptance_oracle": "Every mutation is rejected by its registered stage and a wrong earlier or later rejection fails that case.",
+      "status": "REQUIRED_NOT_APPLIED"
+    }
+  ],
+  "sequencing": [
+    {
+      "order": 1,
+      "step_id": "SEQ-M01-N003-01",
+      "action": "Review and freeze this static function/evidence design against its pinned active sources.",
+      "entry_condition": "current source hashes match",
+      "exit_condition": "design validator and mutations pass",
+      "status": "DESIGNED"
+    },
+    {
+      "order": 2,
+      "step_id": "SEQ-M01-N003-02",
+      "action": "Allocate and review the early protected-trust prerequisite train without a back-edge to current P048.",
+      "entry_condition": "append-only ID allocation is reviewed",
+      "exit_condition": "preview DAG is acyclic and dependency is explicit; global registration and review remain pending",
+      "status": "DESIGNED_PREVIEW"
+    },
+    {
+      "order": 3,
+      "step_id": "SEQ-M01-N003-03",
+      "action": "Implement and independently verify the protected trust bootstrap plus implementation-candidate caller integration.",
+      "entry_condition": "early trust train has signed overlay",
+      "exit_condition": "protected positive and negative trust evidence is PASS",
+      "status": "BLOCKED"
+    },
+    {
+      "order": 4,
+      "step_id": "SEQ-M01-N003-04",
+      "action": "Version the fixture, case-report and typed rejection contracts and regenerate the active catalogs.",
+      "entry_condition": "contract owners approve additive changes",
+      "exit_condition": "all targeted schema and builder mutations pass",
+      "status": "BLOCKED"
+    },
+    {
+      "order": 5,
+      "step_id": "SEQ-M01-N003-05",
+      "action": "Issue signed P005 function review and exact planned write-scope overlay.",
+      "entry_condition": "P002 PASS and contract amendments are current",
+      "exit_condition": "P005 is READY for its exact locators",
+      "status": "BLOCKED"
+    },
+    {
+      "order": 6,
+      "step_id": "SEQ-M01-N003-06",
+      "action": "Implement only main and the eight fixture recipes, then compile and resolve the Python AST locator.",
+      "entry_condition": "P005 signed overlay is valid",
+      "exit_condition": "P005 exact receipt is PASS without test-run claims",
+      "status": "BLOCKED"
+    },
+    {
+      "order": 7,
+      "step_id": "SEQ-M01-N003-07",
+      "action": "Issue the P006 specialized evidence review, signed overlay, exact candidate, package and approved TEST plan.",
+      "entry_condition": "P005 and early trust terminal are PASS",
+      "exit_condition": "P006 is READY for one G0 run",
+      "status": "BLOCKED"
+    },
+    {
+      "order": 8,
+      "step_id": "SEQ-M01-N003-08",
+      "action": "Run the eight-case matrix and immutably write case-report then the single G0 evidence manifest.",
+      "entry_condition": "all P006 identities and dependencies are exact PASS",
+      "exit_condition": "both artifacts validate and exact semantic checker passes",
+      "status": "BLOCKED"
+    },
+    {
+      "order": 9,
+      "step_id": "SEQ-M01-N003-09",
+      "action": "Only after P006 PASS, assemble the parent completion candidate and current evidence index under P007.",
+      "entry_condition": "P006 exact G0 evidence is PASS",
+      "exit_condition": "P007 task bundle checker and signed index pass",
+      "status": "BLOCKED"
+    }
+  ],
+  "rollback": {
+    "triggers": [
+      "any source or schema hash drifts from the reviewed design",
+      "any case reaches a rejection branch other than its registered stage",
+      "any output path, candidate identity, plan or execution scope differs",
+      "the protected verifier is unavailable, stale or returns an untrusted shape"
+    ],
+    "steps": [
+      "stop before opening either final evidence output",
+      "remove only the isolated temporary candidate and same-run temporary files",
+      "preserve every existing case report, evidence manifest and FAIL or BLOCKED receipt",
+      "restore the prior active registry generation inputs without deleting append-only IDs",
+      "re-review the changed source, contract or trust policy before another signed run"
+    ],
+    "durable_evidence_policy": "Never overwrite different immutable evidence bytes, delete historical failures, clean the user worktree, hide a prebuilt artifact or rewrite a prior atomic ID.",
+    "oracle": "The prior active catalogs and evidence remain byte-identical, no production or candidate artifact changed, and the next run remains BLOCKED until a new signed exact scope exists."
+  },
+  "claims": {
+    "allowed": "P005/P006 function, fixture and evidence design plus current DoR blockers are statically specified",
+    "forbidden": [
+      "FUNCTION_DESIGN_REVIEWED",
+      "REGISTRY_AMENDED",
+      "P005_IMPLEMENTED",
+      "P006_EXECUTED",
+      "CASE_PASS",
+      "CANDIDATE_PASS",
+      "TRUST_READY",
+      "EXECUTION_AUTHORIZED",
+      "PARENT_COMPLETE",
+      "MILESTONE_COMPLETE",
+      "PRODUCTION_ACCEPTED"
+    ],
+    "proof_ceiling": "STATIC_DESIGN_ONLY_NOT_REGISTRY_AMENDMENT_FUNCTION_REVIEW_IMPLEMENTATION_TEST_EXECUTION_CANDIDATE_PASS_AUTHORIZATION_OR_ACCEPTANCE"
+  },
+  "validation": {
+    "schema": "PASS",
+    "source_hashes_exact": "PASS",
+    "leaf_exact_set": "PASS",
+    "case_exact_set": "PASS",
+    "function_body_steps_contiguous": "PASS",
+    "current_command_gap_reproduced": "PASS",
+    "trust_dependency_cycle_reproduced": "PASS",
+    "early_trust_preview_validated": "PASS_NOT_REGISTERED",
+    "not_run_claim_ceiling": "PASS",
+    "mutation_guards": {
+      "source_hash_drift": "PASS",
+      "case_omission": "PASS",
+      "false_case_execution": "PASS",
+      "missing_cli_binding": "PASS",
+      "noncontiguous_body_step": "PASS",
+      "false_dual_gate": "PASS",
+      "missing_actual_rejection": "PASS",
+      "dependency_cycle_denial": "PASS",
+      "preview_back_edge": "PASS",
+      "premature_ready": "PASS"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "contract_id": "traffic.campaign.json-v2.v1",
+  "schema_version": 1,
+  "accountable_task": "T1-M07-N018",
+  "state": "contract_ready_consumer_and_dispatcher_default_off",
+  "production_applied": false,
+  "encoding": {"kind": "json", "schema_version": 2, "protobuf_forbidden": true},
+  "streams": [
+    {
+      "rail_id": "aggregate_json_v2",
+      "topic": "campaign.events.v2",
+      "consumer_group": "alert-service-campaign-event-projection-v2",
+      "aggregate_type": "campaign",
+      "partition_key": "tenant_id + ':' + aggregate_id"
+    },
+    {
+      "rail_id": "membership_json_v2",
+      "topic": "campaign.membership.events.v2",
+      "consumer_group": "alert-service-campaign-membership-projection-v2",
+      "event_types": ["traffic.campaign.v2.AlertLinked", "traffic.campaign.v2.AlertUnlinked"],
+      "partition_key": "tenant_id + ':' + campaign_id"
+    }
+  ],
+  "required_body": [
+    "event_id", "event_type", "tenant_id", "partition_key", "trace_id", "schema_version"
+  ],
+  "required_header_body_equal": [
+    "event_id", "event_type", "tenant_id", "aggregate_id", "campaign_id",
+    "aggregate_version", "relation_revision", "schema_version", "trace_id"
+  ],
+  "durability": {
+    "consumer_offset_barrier": "PostgreSQL inbox, delivery and partition watermark commit before Kafka offset commit",
+    "dispatcher_ack_barrier": "broker ACK precedes published=true",
+    "same_event_different_payload": "permanent conflict",
+    "same_source_coordinate_different_event": "permanent conflict"
+  },
+  "rollout": {
+    "consumer_flag": "CAMPAIGN_EVENT_CONSUMER_V2_ENABLED",
+    "dispatcher_flag": "CAMPAIGN_EVENT_DISPATCHER_V2_ENABLED",
+    "deprecated_combined_flag": "CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
+    "defaults": {"consumer": false, "dispatcher": false},
+    "order": ["schema", "consumer", "consumer canary receipts", "dispatcher", "target projection"]
+  },
+  "compatibility": {
+    "protobuf_topic": "campaigns.v1",
+    "json_consumer_must_not_parse_protobuf": true,
+    "protobuf_consumer_must_not_parse_json": true
+  }
+}

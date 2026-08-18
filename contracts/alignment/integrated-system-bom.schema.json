@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/integrated-system-bom.schema.json",
+  "title": "Topic One integrated system bill of materials",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "bom_id", "system_requirement_id", "version", "status",
+    "candidate_manifest_sha256", "profile_id", "environment_id", "environment_manifest_sha256",
+    "predecessor_bom_sha256", "components", "dependency_edges", "routes", "topics",
+    "storage_dependencies", "ui_routes", "requirement_evidence_mapping", "model_bundle",
+    "install_package", "explicit_exclusions", "created_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "bom_id": {"type": "string", "pattern": "^T1-BOM-[A-Za-z0-9._-]+$"},
+    "system_requirement_id": {"const": "REQ-T1-SYS-001"},
+    "version": {"type": "string", "minLength": 1},
+    "status": {"enum": ["BOM_DRAFT", "ASSEMBLED", "DEPLOYED_VERIFIED", "CNAS_FROZEN", "CONTRACT_RELEASED", "RELEASED_OBSERVING", "STABLE", "SUPERSEDED", "FAILED"]},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "environment_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "predecessor_bom_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "components": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/component"}, "uniqueItems": true},
+    "dependency_edges": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/edge"}, "uniqueItems": true},
+    "routes": {"type": "array", "items": {"$ref": "#/$defs/route"}, "uniqueItems": true},
+    "topics": {"type": "array", "items": {"$ref": "#/$defs/topic"}, "uniqueItems": true},
+    "storage_dependencies": {"type": "array", "minItems": 6, "items": {"$ref": "#/$defs/storage"}, "uniqueItems": true},
+    "ui_routes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ui_route"}, "uniqueItems": true},
+    "requirement_evidence_mapping": {"type": "array", "minItems": 15, "maxItems": 15, "items": {"$ref": "#/$defs/requirement_evidence"}, "uniqueItems": true},
+    "model_bundle": {"$ref": "#/$defs/model_bundle"},
+    "install_package": {"$ref": "#/$defs/install_package"},
+    "explicit_exclusions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "created_at": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "component": {
+      "type": "object", "additionalProperties": false,
+      "required": ["component_id", "role", "source_path", "source_sha256", "image_digest", "deployed_image_digest", "sbom_sha256", "provenance_attestation_sha256", "config_sha256", "contract_sha256s", "schema_migration_sha256s", "model_sha256", "required"],
+      "properties": {
+        "component_id": {"type": "string", "minLength": 1},
+        "role": {"enum": ["probe", "ingest", "stream_processing", "control_plane", "web_ui", "model_training", "model_registry", "gateway", "storage", "observability", "installer"]},
+        "source_path": {"type": "string", "minLength": 1},
+        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "image_digest": {"type": ["string", "null"]},
+        "deployed_image_digest": {"type": ["string", "null"]},
+        "sbom_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "provenance_attestation_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "config_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "contract_sha256s": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "uniqueItems": true},
+        "schema_migration_sha256s": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "uniqueItems": true},
+        "model_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "required": {"type": "boolean"}
+      }
+    },
+    "edge": {
+      "type": "object", "additionalProperties": false,
+      "required": ["edge_id", "edge_type", "source_component", "target_component", "contract_id", "contract_sha256", "consumer_first_required"],
+      "properties": {
+        "edge_id": {"type": "string", "minLength": 1},
+        "edge_type": {"enum": ["http", "grpc", "topic", "storage", "artifact"]},
+        "source_component": {"type": "string", "minLength": 1},
+        "target_component": {"type": "string", "minLength": 1},
+        "contract_id": {"type": "string", "minLength": 1},
+        "contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "consumer_first_required": {"type": "boolean"}
+      }
+    },
+    "route": {
+      "type": "object", "additionalProperties": false,
+      "required": ["route_id", "source_component", "target_component", "operation_or_prefix", "auth_policy_sha256", "config_sha256"],
+      "properties": {
+        "route_id": {"type": "string", "minLength": 1},
+        "source_component": {"type": "string", "minLength": 1},
+        "target_component": {"type": "string", "minLength": 1},
+        "operation_or_prefix": {"type": "string", "minLength": 1},
+        "auth_policy_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "topic": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "key_contract", "payload_fqn", "schema_version", "producer", "consumers", "acl_sha256", "retention_sha256"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "key_contract": {"type": "string", "minLength": 1},
+        "payload_fqn": {"type": "string", "minLength": 1},
+        "schema_version": {"type": "string", "minLength": 1},
+        "producer": {"type": "string", "minLength": 1},
+        "consumers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "acl_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "retention_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "storage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["store", "object_or_table", "schema_sha256", "authority_owner", "rebuild_oracle_id", "retention_sha256"],
+      "properties": {
+        "store": {"enum": ["postgresql", "clickhouse", "opensearch", "nebulagraph", "redis", "minio"]},
+        "object_or_table": {"type": "string", "minLength": 1},
+        "schema_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "authority_owner": {"type": "string", "minLength": 1},
+        "rebuild_oracle_id": {"type": "string", "minLength": 1},
+        "retention_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "ui_route": {
+      "type": "object", "additionalProperties": false,
+      "required": ["route_id", "bundle_sha256", "required_operations", "required_actions", "journey_ids"],
+      "properties": {
+        "route_id": {"type": "string", "minLength": 1},
+        "bundle_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "required_operations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "required_actions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "journey_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "requirement_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requirement_id", "closure_manifest_sha256", "current_idx_manifest_sha256", "result"],
+      "properties": {
+        "requirement_id": {"type": "string", "pattern": "^REQ-T1-[A-Z0-9-]+$"},
+        "closure_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "current_idx_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "result": {"enum": ["NOT_STARTED", "IMPLEMENTING", "VERIFYING", "SATISFIED", "FAILED", "BLOCKED", "STALE", "SUPERSEDED"]}
+      }
+    },
+    "model_bundle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model_sha256", "feature_sha256", "threshold_sha256", "dataset_manifest_sha256", "registry_receipt_sha256", "runtime_ack_set_sha256"],
+      "properties": {
+        "model_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "feature_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "threshold_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "dataset_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "registry_receipt_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "runtime_ack_set_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "install_package": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_sha256", "preflight_plan_sha256", "upgrade_plan_sha256", "rollback_plan_sha256", "restore_plan_sha256"],
+      "properties": {
+        "manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "preflight_plan_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "upgrade_plan_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "rollback_plan_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "restore_plan_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

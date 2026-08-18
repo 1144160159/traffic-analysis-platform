@@ -1,0 +1,1347 @@
+{
+  "additional_topic_blockers": [
+    {
+      "producer_enablement_allowed": false,
+      "reason": "Legacy split stream has no authoritative producer/consumer contract.",
+      "state": "BLOCKED_UNVERSIONED_OR_UNOWNED",
+      "topic": "detections.behavior.v1"
+    },
+    {
+      "producer_enablement_allowed": false,
+      "reason": "Legacy split stream has no authoritative producer/consumer contract.",
+      "state": "BLOCKED_UNVERSIONED_OR_UNOWNED",
+      "topic": "detections.business.v1"
+    },
+    {
+      "producer_enablement_allowed": false,
+      "reason": "Legacy Flink DLQ is pending canonical replay ownership.",
+      "state": "BLOCKED_UNVERSIONED_OR_UNOWNED",
+      "topic": "dlq.cep-job"
+    },
+    {
+      "producer_enablement_allowed": false,
+      "reason": "Legacy Flink DLQ is pending canonical replay ownership.",
+      "state": "BLOCKED_UNVERSIONED_OR_UNOWNED",
+      "topic": "dlq.feature-job"
+    },
+    {
+      "producer_enablement_allowed": false,
+      "reason": "Legacy Flink DLQ is pending canonical replay ownership.",
+      "state": "BLOCKED_UNVERSIONED_OR_UNOWNED",
+      "topic": "dlq.rule-job"
+    },
+    {
+      "producer_enablement_allowed": false,
+      "reason": "L2 trigger ownership and schema are not versioned.",
+      "state": "BLOCKED_UNVERSIONED_OR_UNOWNED",
+      "topic": "l2.trigger.v1"
+    }
+  ],
+  "admission_contract": {
+    "assigned_partitions_minimum": 1,
+    "candidate_id": "REQUIRED_SHA256",
+    "consumer_state": "READY_IDLE_COMPATIBLE",
+    "consumer_writes_enabled": false,
+    "producer_only_topic": "DENY",
+    "producer_without_current_consumer_receipt": "DENY",
+    "ready_replicas_minimum": 1,
+    "receipt_candidate_binding": "EXACT",
+    "receipt_max_age_seconds": 300,
+    "receipt_tenant_binding": "EXACT",
+    "rollback_order": [
+      "STOP_PRODUCER_ADMISSION",
+      "DRAIN_IN_FLIGHT",
+      "KEEP_CONSUMER_READY",
+      "RECONCILE_OFFSETS_AND_AUTHORITY"
+    ],
+    "tenant_id": "REQUIRED_EXPLICIT_NO_WILDCARD",
+    "unknown_topic_or_principal": "DENY"
+  },
+  "allowed_claims": [
+    "an exact candidate and tenant producer action may be admitted only after all bound consumer groups have current idle-compatible receipts"
+  ],
+  "artifact_kind": "M10_CONSUMER_FIRST_ROLLOUT_POLICY",
+  "atomic_pr_id": "T1-M10-P024-OPS-n010-s1",
+  "counts": {
+    "additional_topic_blockers": 6,
+    "catalog_topics": 46,
+    "consumer_first_rails": 41,
+    "producer_only_blockers": 5,
+    "synchronous_authority_write_exceptions": 0
+  },
+  "dependency": {
+    "admission": "DENY_UNLESS_EXACT_PASS",
+    "observed_acceptance_status": "BLOCKED_CNI_ENFORCEMENT_MISSING",
+    "observed_run_id": "6cdbc67b-4796-4a0a-8af3-a3faaf035822",
+    "required_acceptance_status": "PASS",
+    "task_id": "T1-M10-N009"
+  },
+  "does_not_prove": [
+    "N009 passed",
+    "any consumer receipt exists in the site",
+    "any producer was enabled",
+    "a deployable M10 candidate exists"
+  ],
+  "exception_policy": {
+    "default": "DENY_UNREGISTERED",
+    "required_fields": [
+      "exception_id",
+      "authority",
+      "operation",
+      "tenant_scope",
+      "risk_owner",
+      "approval_id",
+      "expires_at",
+      "rollback"
+    ],
+    "wildcard_tenant_forbidden": true
+  },
+  "policy_id": "M10-N010-CONSUMER-FIRST-ROLLOUT-V1",
+  "policy_sha256": "57ef3cef1c76ead735b6ac400020aa7b46fe135193c3aaca0229c7af5ddab06b",
+  "producer_only_blockers": [
+    {
+      "producer_enablement_allowed": false,
+      "producers": [
+        "alert-service"
+      ],
+      "state": "BLOCKED_NO_CONSUMER",
+      "topic": "alert.saved-view.events.v1"
+    },
+    {
+      "producer_enablement_allowed": false,
+      "producers": [
+        "asset-service"
+      ],
+      "state": "BLOCKED_NO_CONSUMER",
+      "topic": "asset.discovery.events.v1"
+    },
+    {
+      "producer_enablement_allowed": false,
+      "producers": [
+        "asset-service"
+      ],
+      "state": "BLOCKED_NO_CONSUMER",
+      "topic": "asset.exports.v1"
+    },
+    {
+      "producer_enablement_allowed": false,
+      "producers": [
+        "alert-service"
+      ],
+      "state": "BLOCKED_NO_CONSUMER",
+      "topic": "dlq.probe.acks.v2"
+    },
+    {
+      "producer_enablement_allowed": false,
+      "producers": [
+        "alert-service"
+      ],
+      "state": "BLOCKED_NO_CONSUMER",
+      "topic": "notification.governance.events.v1"
+    }
+  ],
+  "production_applied": false,
+  "rails": [
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-batch-assignment-execution-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+batch_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "AlertBatchAssignmentLifecycleV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "alert.assignment.events.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-evidence-link-projection-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+alert_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "AlertEvidenceLinkLifecycleV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "alert.evidence-links.v1",
+      "topic_readiness": "consumer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "rule-manager",
+          "required_groups": [
+            "rule-manager-alert-feedback-projection-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+alert_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "AlertFeedbackExtendedV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "alert.feedback.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-response-execution-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+job_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "AlertResponseRequestedV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "alert.response.requested.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "flink-cep-job",
+          "required_groups": [
+            "flink-cep-job"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+community_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "flink-alert-generator-job"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.Alert",
+        "path": "proto/traffic/v1/alert.proto"
+      },
+      "topic": "alerts.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "asset-service",
+          "required_groups": [
+            "asset-service-bindings"
+          ]
+        }
+      ],
+      "key_contract": "utf8(tenant_id + ':' + canonical_mac_address)",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "ingest-gateway"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.MacIpBinding",
+        "path": "proto/traffic/v1/asset.proto"
+      },
+      "topic": "asset.bindings.v1",
+      "topic_readiness": "producer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "asset-service",
+          "required_groups": [
+            "asset-projection-v2"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+asset_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "asset-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "AssetUpsertedV2Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "asset.events.v2",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "audit-materializer",
+          "required_groups": [
+            "audit-consumer"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service",
+        "asset-service",
+        "auth-service",
+        "flink-log-job",
+        "flink-session-job",
+        "flink-user-behavior-job",
+        "forensics-service",
+        "graph-service",
+        "ingest-gateway",
+        "rule-manager"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "AuditEventV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "audit.logs",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-baseline-activation-acks-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+baseline_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "flink-user-behavior-job"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "BehaviorBaselineActivationAckV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "baseline.activation-acks.v1",
+      "topic_readiness": "consumer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "flink-user-behavior-job",
+          "required_groups": [
+            "flink-user-behavior-baseline-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+baseline_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "BehaviorBaselineLifecycleV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "baseline.lifecycle.v1",
+      "topic_readiness": "consumer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-campaign-event-projection-v2"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+campaign_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "CampaignAggregateLifecycleV2Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "campaign.events.v2",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-campaign-membership-projection-v2"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+campaign_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "CampaignMembershipLifecycleV2Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "campaign.membership.events.v2",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-campaigns-proto-projection-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+campaign_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "flink-cep-job"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.Campaign",
+        "path": "proto/traffic/v1/alert.proto"
+      },
+      "topic": "campaigns.v1",
+      "topic_readiness": "producer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-dashboard-task-execution-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+task_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "DashboardTaskLifecycleV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "dashboard.task.events.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "rule-manager",
+          "required_groups": [
+            "rule-manager-deployment-projection-v1"
+          ]
+        }
+      ],
+      "key_contract": "deployment_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "rule-manager"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "DeploymentEventV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "deployment.events.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service"
+          ]
+        },
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "flink-alert-generator-job",
+          "required_groups": [
+            "flink-alert-generator-job"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+community_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "flink-behavior-job",
+        "flink-rule-job"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.DetectionBehavior",
+        "path": "proto/traffic/v1/detection.proto"
+      },
+      "topic": "detections.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [
+            "flink-log-job-shadow-"
+          ],
+          "principal": "flink-log-job",
+          "required_groups": [
+            "flink-log-job"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+device_ip",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "device-log-collector"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.DeviceLog",
+        "path": "proto/traffic/v1/audit.proto"
+      },
+      "topic": "device.logs.v1",
+      "topic_readiness": "producer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-dlq-governance-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service",
+        "asset-service",
+        "audit-materializer",
+        "flink-alert-generator-job",
+        "flink-behavior-job",
+        "flink-feature-job",
+        "flink-log-job",
+        "flink-pcap-index-job",
+        "flink-rule-job",
+        "flink-session-job",
+        "flink-user-behavior-job",
+        "ingest-gateway",
+        "rule-manager"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "DLQMessageV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "dlq.v1",
+      "topic_readiness": "dlq"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "flink-behavior-job",
+          "required_groups": [
+            "flink-behavior-job",
+            "flink-behavior-job-champion-challenger-features"
+          ]
+        },
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "flink-rule-job",
+          "required_groups": [
+            "flink-rule-job"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+community_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "flink-feature-job"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.FeatureStat",
+        "path": "proto/traffic/v1/feature.proto"
+      },
+      "topic": "feature.stat.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [
+            "flink-session-job-shadow-"
+          ],
+          "principal": "flink-session-job",
+          "required_groups": [
+            "flink-session-job"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+community_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "ingest-gateway"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.FlowEvent",
+        "path": "proto/traffic/v1/flow.proto"
+      },
+      "topic": "flow.events.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-flow-replay-projection-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+community_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.FlowEvent",
+        "path": "proto/traffic/v1/flow.proto"
+      },
+      "topic": "flow.projection-replay.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-fusion-projection-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+job_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "FusionSourceSyncRequestedV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "fusion.commands.v1",
+      "topic_readiness": "consumer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "graph-service",
+          "required_groups": [
+            "graph-service-projection-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+projection_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "graph-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.GraphProjectionEvent",
+        "path": "proto/traffic/v1/graph.proto"
+      },
+      "topic": "graph.projections.v1",
+      "topic_readiness": "consumer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "rule-manager",
+          "required_groups": [
+            "rule-manager-model-action-execution-v1"
+          ]
+        }
+      ],
+      "key_contract": "model_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "rule-manager"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "ModelActionRequestedV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "model-actions.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "rule-manager",
+          "required_groups": [
+            "rule-manager-model-tenant-canary-v1"
+          ]
+        }
+      ],
+      "key_contract": "observation_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "flink-behavior-job"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "ChampionChallengerObservationV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "model-shadow-observations.v1",
+      "topic_readiness": "consumer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "rule-manager",
+          "required_groups": [
+            "rule-manager-model-applied-v1"
+          ]
+        }
+      ],
+      "key_contract": "event_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "flink-behavior-job"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "ModelUpdateAppliedAckV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "model-update-applied.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "flink-behavior-job",
+          "required_groups": [
+            "flink-behavior-job-champion-challenger-model-updates",
+            "flink-behavior-job-model-updates"
+          ]
+        }
+      ],
+      "key_contract": "model_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "rule-manager"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "ModelUpdateEventV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "model-updates",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "rule-manager",
+          "required_groups": [
+            "rule-manager-model-feedback-revision-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+feedback_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "ModelFeedbackAdjudicatedV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/model-feedback-event.v1.schema.json"
+      },
+      "topic": "model.feedback.v1",
+      "topic_readiness": "producer_candidate_default_off"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "flink-pcap-index-job",
+          "required_groups": [
+            "flink-pcap-index-job"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+probe_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "ingest-gateway"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.PcapIndexMeta",
+        "path": "proto/traffic/v1/pcap.proto"
+      },
+      "topic": "pcap.index.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-playbook-execution-projection-v2"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+execution_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "PlaybookExecutionLifecycleV2Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "playbook.execution.events.v2",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-probe-acks-v2"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+probe_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "ingest-gateway"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "ProbeOperationAgentAckV2Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "probe.acks.v2",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "ingest-gateway",
+          "required_groups": [
+            "ingest-gateway-probe-control-v2"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+probe_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "ProbeOperationRequestedV2Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "probe.control.v2",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-probe-event-projection-v2"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+probe_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "ProbeOperationLifecycleV2Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "probe.events.v2",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-probe-group-readiness-v1"
+          ]
+        }
+      ],
+      "key_contract": "consumer_group",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "ingest-gateway"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.ProbeGroupReadinessReceiptV1",
+        "path": "proto/traffic/v1/ingest.proto"
+      },
+      "topic": "probe.group-readiness.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "rule-manager",
+          "required_groups": [
+            "rule-manager-rule-applied-v1"
+          ]
+        }
+      ],
+      "key_contract": "event_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "flink-rule-job"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "RuleUpdateAppliedAckV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "rule-update-applied.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "flink-rule-job",
+          "required_groups": [
+            "flink-rule-job-rule"
+          ]
+        }
+      ],
+      "key_contract": "rule_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "rule-manager"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "RuleCommandV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "rule.updates",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [
+            "flink-feature-job-shadow-"
+          ],
+          "principal": "flink-feature-job",
+          "required_groups": [
+            "flink-feature-job"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+community_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "flink-session-job"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.SessionEvent",
+        "path": "proto/traffic/v1/session.proto"
+      },
+      "topic": "session.events.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-threat-intel-projection-v1"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id (legacy composite v1 keys accepted only for replay)",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "threat-intel-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "ThreatIntelV1Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "threat.intel.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "alert-service",
+          "required_groups": [
+            "alert-service-topic-action-projection-v2"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+topic",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "TopicActionLifecycleV2Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "traffic.topic.action.v2",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "flink-user-behavior-job",
+          "required_groups": [
+            "flink-user-behavior-job"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+user_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "auth-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "kind": "protobuf",
+        "message": "traffic.v1.UserEvent",
+        "path": "proto/traffic/v1/audit.proto"
+      },
+      "topic": "user.events.v1",
+      "topic_readiness": "active"
+    },
+    {
+      "consumers": [
+        {
+          "allowed_shadow_group_prefixes": [],
+          "principal": "rule-manager",
+          "required_groups": [
+            "rule-manager-whitelist-rule-effect-v2"
+          ]
+        }
+      ],
+      "key_contract": "tenant_id+entry_id",
+      "producer_enablement_allowed": "ONLY_AFTER_EXACT_RECEIPT_CLOSURE",
+      "producers": [
+        "alert-service"
+      ],
+      "required_sequence": [
+        "CONSUMER_DEPLOYED_IDLE_COMPATIBLE",
+        "CONSUMER_READY_RECEIPT_CURRENT",
+        "PRODUCER_TENANT_ENABLE"
+      ],
+      "schema": {
+        "definition": "WhitelistLifecycleV2Json",
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json"
+      },
+      "topic": "whitelist.events.v2",
+      "topic_readiness": "producer_candidate_default_off"
+    }
+  ],
+  "schema_version": 1,
+  "source_sha256": {
+    "contracts/events/kafka-acl-catalog.v1.json": "ec175c8bf73c75bfe5184daf9c225e4bb3e462ecb334768fa861a30589618b06",
+    "contracts/events/kafka-topic-catalog.v1.json": "f7202bf4666e09b5d064a4fccce2911ea7be333013ba033bd275d323c804c8ab",
+    "doc/02_acceptance/topic1/tasks/t1-m10-n009/k8s-network-policy-enforcement-latest.json": "ba9fa7407aed273579852147fff6e90bec2f85f669a6fbd547ae30c841ecf14c"
+  },
+  "status": "CANDIDATE_DEFAULT_OFF",
+  "synchronous_authority_write_exceptions": [],
+  "task_id": "T1-M10-N010"
+}

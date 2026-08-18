@@ -7,7 +7,7 @@
     {
       "domain": "cluster_secret_and_manual_issuer_workflow",
       "path": "deployments/kubernetes/deploy.sh",
-      "sha256": "bf4dc04e6a9945981ee924fa458727e4f984659c17c3196d281d8f1a291ede78"
+      "sha256": "930513d06653b27d0a82471a705b05c8a172ff2d0cfa90d1f7cb0b4aa8163858"
     },
     {
       "domain": "external_secret_rotation_metadata",
@@ -17,12 +17,17 @@
     {
       "domain": "gateway_and_keycloak_transport",
       "path": "deployments/kubernetes/infrastructure/08-gateway.yaml",
-      "sha256": "687eaa2a0e2c31a5a46e493208ea946c7f596336c875df2ec3e74c29ed18d289"
+      "sha256": "152d5eda43f8ba214b49c0aaae93a3156dfc749ebd76bcb46ddb212fdd85811d"
     },
     {
       "domain": "go_workload_bindings",
       "path": "deployments/kubernetes/applications/go-services.yaml",
-      "sha256": "5a90080c98ebc01e20a9e4cf9c66a34e0233410244a410ca1dbb0176f8000cca"
+      "sha256": "5c4f87714eece46eb38a0afea7713d46e16291bd86007ed843c8a73be87e5c5f"
+    },
+    {
+      "domain": "ingest_atomic_rotation",
+      "path": "go/control-plane/internal/common/pki/reloader.go",
+      "sha256": "5d56c3c384be12f6f6132ebd7c40e9395477f1688a352ed3b674d2d6fba208d7"
     },
     {
       "domain": "ingest_production_guard",
@@ -32,12 +37,12 @@
     {
       "domain": "ingest_server_configuration",
       "path": "go/control-plane/internal/ingest/config/config.go",
-      "sha256": "89012db97b50fdc4758698f34061994a4ad09715ff365b003924afdfaccd603b"
+      "sha256": "a0323bf60decf73f52f19853f58c3d0283ec0203adde6f776e70fe40498e6897"
     },
     {
       "domain": "ingest_tls_listener",
       "path": "go/control-plane/cmd/ingest-gateway/main.go",
-      "sha256": "0558e30f07e5280c42927f830d76d767e87c43919c3e0ca93f1d9cb914ec5d1b"
+      "sha256": "13c795ff6130e91cba82a11f56a29b911a9f0ec9001d8483afa005b7144d32b0"
     },
     {
       "domain": "kafka_broker_transport",
@@ -57,22 +62,22 @@
     {
       "domain": "probe_grpc_transport",
       "path": "rust/probe-agent/probe-agent/src/sender/grpc.rs",
-      "sha256": "45168c0b1f8bd96dac2c2b77a8b64fb586f4eb47f1e956d7b09a7fa786f658b3"
+      "sha256": "eb22346330395251bd45e95699045b4409454f31dd78f9a2246270ec43eec57c"
     },
     {
       "domain": "probe_leaf_certificate_profile",
       "path": "rust/probe-agent/scripts/generate-mtls-certs.sh",
-      "sha256": "126c332cdbf6d222bddc88bbd11dcf305d2dbcf9b72b46e62faaf80f21f53e1c"
+      "sha256": "fc0aeccdd6bf192575b33e442e68c65b82416607e27dfd6723864bba43c7c79c"
     },
     {
       "domain": "probe_transport_guard",
       "path": "rust/probe-agent/probe-agent/src/config.rs",
-      "sha256": "fad305ec12c957ecff1cc36556d40bdc9a643be653c1423a4d6dcba998b2f46d"
+      "sha256": "4da552f2e90ff850d40941ce79f70a0bafd308ffbcc0637e0b857d1a5637a4eb"
     },
     {
       "domain": "probe_workload_bindings",
       "path": "deployments/kubernetes/applications/probe-agent.yaml",
-      "sha256": "b7969b9001297d381f09a09c9a3b71bd8bd3ccfc8bfca0a599f9a04afff865f3"
+      "sha256": "031450cb23fab853a9af25bef6b1f22409b1cbf5a3a0713692fca792c62ccae1"
     }
   ],
   "policy": {
@@ -120,7 +125,7 @@
       "renewal_guard_days": 30,
       "server_minimum_tls": "TLS1.3",
       "production_required": true,
-      "rotation_mode": "stop_before_expiry_then_controlled_dual_trust_rotation",
+      "rotation_mode": "default_off_atomic_manifest_dual_trust_crl_reload",
       "status": "PARTIAL",
       "blocking_gaps": [
         "per_probe_certificate_identity_missing",
@@ -281,6 +286,11 @@
     "ingest_load_runs_full_validation": true,
     "ingest_server_requires_verified_client_certificate": true,
     "ingest_server_minimum_tls13": true,
+    "ingest_rotation_binds_all_material_by_manifest": true,
+    "ingest_rotation_checks_expiry_san_and_revocation": true,
+    "ingest_rotation_publishes_only_valid_snapshot": true,
+    "ingest_rotation_is_workload_default_off": true,
+    "probe_generator_emits_crl_and_atomic_manifest": true,
     "ingest_workload_declares_production_mtls": true,
     "probe_workload_declares_https_and_identity": true,
     "kafka_transport_uses_sasl_ssl": true,
@@ -338,8 +348,8 @@
   "counts": {
     "certificate_domains": 5,
     "domains_partial_or_default_off": 5,
-    "transport_guards": 18,
-    "transport_guards_passing": 18,
+    "transport_guards": 23,
+    "transport_guards_passing": 23,
     "plaintext_dependencies": 4,
     "production_plaintext_gaps": 3,
     "blocking_gaps": 19
@@ -351,6 +361,8 @@
       "ingest production startup requires mTLS token auth and full config validation",
       "probe leaf profile has bounded validity SAN EKU and key permissions",
       "existing probe certificates fail deploy readiness within the renewal window",
+      "default-off ingest rotation binds certificate key trust CRL and generation before atomic publish",
+      "repository handshakes reject wrong CA expiry SAN mismatch revocation and interrupted rotation",
       "MinIO server and three client namespaces have an expand-only redacted TLS material contract"
     ],
     "remaining": [
@@ -362,5 +374,5 @@
       "performance fault Windows Chrome independent G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "fcec2cea02c7e804282db25783bd2581d4cbc2064c21f4c202a726f37bcaeb1d"
+  "catalog_sha256": "ef88e9045bcb589f24dd64148eb79d57100108f8ba0716b5ddc2d7b3177c04db"
 }

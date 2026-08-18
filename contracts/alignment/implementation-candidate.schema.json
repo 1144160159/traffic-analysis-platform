@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/implementation-candidate.schema.json",
+  "title": "Implementation candidate identity closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "candidate_id", "implementation_candidate_commit",
+    "production_tree_content_sha256", "tree_hash_algorithm", "dirty_count", "source_roots", "excluded_paths",
+    "external_or_prebuilt_artifacts", "image_digests", "config_schema_migration_hashes",
+    "model_threshold_dataset_hashes", "supply_chain_artifact_hashes",
+    "runtime_artifact_hashes", "image_attestations", "config_schema_migration_artifacts",
+    "model_threshold_dataset_artifacts", "supply_chain_artifacts", "runtime_artifacts",
+    "delivery_artifacts", "environment_id", "created_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "candidate_id": {"type": "string", "minLength": 1},
+    "implementation_candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "production_tree_content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "tree_hash_algorithm": {"const": "sha256-canonical-path-mode-blobsha256-v1"},
+    "dirty_count": {"const": 0},
+    "source_roots": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+    "excluded_paths": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "reason", "referenced_by_active_build"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "referenced_by_active_build": {"type": "boolean"}
+        }
+      }
+    },
+    "external_or_prebuilt_artifacts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "binary_sha256", "source_or_builder_sha", "recipe_or_toolchain", "build_recipe_path", "build_recipe_sha256", "image_digest", "deployed_image_digest", "image_internal_binary_sha256", "sbom_or_attestation_path", "sbom_or_attestation_sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "source_or_builder_sha": {"type": "string", "minLength": 1},
+          "recipe_or_toolchain": {"type": "string", "minLength": 1},
+          "build_recipe_path": {"type": "string", "minLength": 1},
+          "build_recipe_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "image_digest": {"type": "string", "minLength": 1},
+          "deployed_image_digest": {"type": "string", "minLength": 1},
+          "image_internal_binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "sbom_or_attestation_path": {"type": "string", "minLength": 1},
+          "sbom_or_attestation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "image_digests": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "config_schema_migration_hashes": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "uniqueItems": true},
+    "model_threshold_dataset_hashes": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "uniqueItems": true},
+    "supply_chain_artifact_hashes": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "uniqueItems": true},
+    "runtime_artifact_hashes": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "uniqueItems": true},
+    "image_attestations": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["image_digest", "deployed_image_digest", "manifest_path", "manifest_sha256", "attestation_path", "attestation_sha256"],
+        "properties": {
+          "image_digest": {"type": "string", "minLength": 1},
+          "deployed_image_digest": {"type": "string", "minLength": 1},
+          "manifest_path": {"type": "string", "minLength": 1},
+          "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "attestation_path": {"type": "string", "minLength": 1},
+          "attestation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "config_schema_migration_artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact_ref"}, "uniqueItems": true},
+    "model_threshold_dataset_artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact_ref"}, "uniqueItems": true},
+    "supply_chain_artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact_ref"}, "uniqueItems": true},
+    "runtime_artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact_ref"}, "uniqueItems": true},
+    "delivery_artifacts": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["artifact_id", "path", "sha256"],
+        "properties": {
+          "artifact_id": {"enum": ["install-manifest", "preflight-plan", "upgrade-plan", "rollback-plan", "restore-plan"]},
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "environment_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "artifact_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "artifact_id", "artifact_role", "source_kind", "path", "sha256",
+        "provenance_receipt_path", "provenance_receipt_sha256"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "artifact_role": {"type": "string", "minLength": 1},
+        "source_kind": {"enum": ["CANDIDATE_GIT_BLOB", "TRUSTED_EXTERNAL_ARTIFACT"]},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "provenance_receipt_path": {"type": ["string", "null"]},
+        "provenance_receipt_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "properties": {
+        "config_schema_migration_artifacts": {"items": {"$ref": "#/$defs/artifact_ref"}},
+        "model_threshold_dataset_artifacts": {"items": {"$ref": "#/$defs/artifact_ref"}},
+        "supply_chain_artifacts": {"items": {"$ref": "#/$defs/artifact_ref"}},
+        "runtime_artifacts": {"items": {"$ref": "#/$defs/artifact_ref"}}
+      }
+    }
+  ]
+}

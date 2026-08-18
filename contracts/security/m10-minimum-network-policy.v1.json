@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "policy_id": "M10-N009-MINIMUM-NETWORK-POLICY-V1",
+  "task_id": "T1-M10-N009",
+  "status": "CANDIDATE_DEFAULT_OFF",
+  "production_applied": false,
+  "target_namespace": "traffic-analysis",
+  "cni_requirement": {
+    "api": "networking.k8s.io/v1",
+    "enforcement_required": true,
+    "yaml_objects_without_enforcement_do_not_pass": true,
+    "approved_equivalent_control": null
+  },
+  "dns_egress": {
+    "namespace": "kube-system",
+    "pod_selector": {"k8s-app": "kube-dns"},
+    "ports": [
+      {"protocol": "UDP", "port": 53},
+      {"protocol": "TCP", "port": 53}
+    ]
+  },
+  "forbidden": {
+    "destination_namespaces": ["kube-system"],
+    "destination_ports": [2379, 2380, 6443, 10250],
+    "cidrs": ["0.0.0.0/0", "::/0"],
+    "empty_allow_selectors": true,
+    "same_namespace_blanket_allow": true
+  },
+  "workloads": [
+    {
+      "workload_id": "ingest-gateway",
+      "pod_selector": {"app": "ingest-gateway"},
+      "ingress": [
+        {"from": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 8080}]},
+        {"from": {"namespace": "traffic-analysis", "pod_selector": {"app": "probe-agent"}}, "ports": [{"protocol": "TCP", "port": 50051}]},
+        {"from": {"namespace": "observability", "pod_selector": {"app": "victoria-metrics"}}, "ports": [{"protocol": "TCP", "port": 9091}]}
+      ],
+      "egress": [
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "kafka"}}, "ports": [{"protocol": "TCP", "port": 9092}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "postgres", "role": "primary"}}, "ports": [{"protocol": "TCP", "port": 5432}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "redis", "component": "sentinel"}}, "ports": [{"protocol": "TCP", "port": 26379}]}
+      ]
+    },
+    {
+      "workload_id": "auth-service",
+      "pod_selector": {"app": "auth-service"},
+      "ingress": [
+        {"from": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 8081}]},
+        {"from": {"namespace": "observability", "pod_selector": {"app": "victoria-metrics"}}, "ports": [{"protocol": "TCP", "port": 9092}]}
+      ],
+      "egress": [
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "kafka"}}, "ports": [{"protocol": "TCP", "port": 9092}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "postgres", "role": "primary"}}, "ports": [{"protocol": "TCP", "port": 5432}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "redis", "component": "sentinel"}}, "ports": [{"protocol": "TCP", "port": 26379}]},
+        {"to": {"ip_block": "10.0.5.8/32"}, "ports": [{"protocol": "TCP", "port": 30180}], "exception_id": "EX-N009-AUTH-OIDC-NODEPORT"}
+      ]
+    },
+    {
+      "workload_id": "alert-service",
+      "pod_selector": {"app": "alert-service"},
+      "ingress": [
+        {"from": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 8082}]},
+        {"from": {"namespace": "observability", "pod_selector": {"app": "victoria-metrics"}}, "ports": [{"protocol": "TCP", "port": 8082}]}
+      ],
+      "egress": [
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "kafka"}}, "ports": [{"protocol": "TCP", "port": 9092}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "clickhouse"}}, "ports": [{"protocol": "TCP", "port": 9000}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "opensearch"}}, "ports": [{"protocol": "TCP", "port": 9200}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "nebula", "component": "graph"}}, "ports": [{"protocol": "TCP", "port": 9669}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "postgres", "role": "primary"}}, "ports": [{"protocol": "TCP", "port": 5432}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "redis", "component": "sentinel"}}, "ports": [{"protocol": "TCP", "port": 26379}]},
+        {"to": {"namespace": "minio", "pod_selector": {"app": "minio"}}, "ports": [{"protocol": "TCP", "port": 9000}]}
+      ]
+    },
+    {
+      "workload_id": "asset-service",
+      "pod_selector": {"app": "asset-service"},
+      "ingress": [
+        {"from": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 8083}, {"protocol": "TCP", "port": 50053}]}
+      ],
+      "egress": [
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "kafka"}}, "ports": [{"protocol": "TCP", "port": 9092}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "clickhouse"}}, "ports": [{"protocol": "TCP", "port": 9000}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "opensearch"}}, "ports": [{"protocol": "TCP", "port": 9200}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "nebula", "component": "graph"}}, "ports": [{"protocol": "TCP", "port": 9669}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "postgres", "role": "primary"}}, "ports": [{"protocol": "TCP", "port": 5432}]},
+        {"to": {"namespace": "minio", "pod_selector": {"app": "minio"}}, "ports": [{"protocol": "TCP", "port": 9000}]}
+      ]
+    },
+    {
+      "workload_id": "rule-manager",
+      "pod_selector": {"app": "rule-manager"},
+      "ingress": [
+        {"from": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 8084}]}
+      ],
+      "egress": [
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "kafka"}}, "ports": [{"protocol": "TCP", "port": 9092}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "clickhouse"}}, "ports": [{"protocol": "TCP", "port": 9000}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "postgres", "role": "primary"}}, "ports": [{"protocol": "TCP", "port": 5432}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "redis", "component": "sentinel"}}, "ports": [{"protocol": "TCP", "port": 26379}]},
+        {"to": {"namespace": "argo", "pod_selector": {"app": "argo-server"}}, "ports": [{"protocol": "TCP", "port": 2746}]}
+      ]
+    },
+    {
+      "workload_id": "graph-service",
+      "pod_selector": {"app": "graph-service"},
+      "ingress": [
+        {"from": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 8085}]}
+      ],
+      "egress": [
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "kafka"}}, "ports": [{"protocol": "TCP", "port": 9092}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "clickhouse"}}, "ports": [{"protocol": "TCP", "port": 9000}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "nebula", "component": "graph"}}, "ports": [{"protocol": "TCP", "port": 9669}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "postgres", "role": "primary"}}, "ports": [{"protocol": "TCP", "port": 5432}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "redis", "component": "sentinel"}}, "ports": [{"protocol": "TCP", "port": 26379}]}
+      ]
+    },
+    {
+      "workload_id": "threat-intel-service",
+      "pod_selector": {"app": "threat-intel-service"},
+      "ingress": [
+        {"from": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 8087}]}
+      ],
+      "egress": [
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "kafka"}}, "ports": [{"protocol": "TCP", "port": 9092}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "postgres", "role": "primary"}}, "ports": [{"protocol": "TCP", "port": 5432}]}
+      ]
+    },
+    {
+      "workload_id": "forensics-service",
+      "pod_selector": {"app": "forensics-service"},
+      "ingress": [
+        {"from": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 8086}]}
+      ],
+      "egress": [
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "kafka"}}, "ports": [{"protocol": "TCP", "port": 9092}]},
+        {"to": {"namespace": "middleware", "pod_selector": {"app": "clickhouse"}}, "ports": [{"protocol": "TCP", "port": 9000}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "postgres", "role": "primary"}}, "ports": [{"protocol": "TCP", "port": 5432}]},
+        {"to": {"namespace": "databases", "pod_selector": {"app": "redis", "component": "sentinel"}}, "ports": [{"protocol": "TCP", "port": 26379}]},
+        {"to": {"namespace": "minio", "pod_selector": {"app": "minio"}}, "ports": [{"protocol": "TCP", "port": 9000}]}
+      ]
+    },
+    {
+      "workload_id": "web-ui",
+      "pod_selector": {"app": "web-ui"},
+      "ingress": [
+        {"from": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 80}]}
+      ],
+      "egress": [
+        {"to": {"namespace": "gateway", "pod_selector": {"app": "apisix"}}, "ports": [{"protocol": "TCP", "port": 9080}]}
+      ]
+    }
+  ],
+  "exceptions": [
+    {
+      "exception_id": "EX-N009-AUTH-OIDC-NODEPORT",
+      "workload_id": "auth-service",
+      "reason": "The current production manifest points OIDC_ISSUER_URL at the exact site NodePort instead of the in-cluster Keycloak Service.",
+      "scope": "10.0.5.8/32:30180/TCP",
+      "risk_owner_role": "site-release-sre-owner",
+      "approval_status": "REQUIRED_NOT_APPROVED",
+      "replacement": "Use https://keycloak.iam.svc:8443 with the approved CA and remove this exception."
+    }
+  ]
+}

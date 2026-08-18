@@ -1,0 +1,929 @@
+{
+  "schema_version": "1.1.0",
+  "source_document": "doc/07_alignment/课题一PR里程碑代码级详细设计.md",
+  "source_document_sha256": "dc878ba1ee50e4562872473cbab2d00c318de14d80264d141b37f38a1577df02",
+  "status": "DRAFT_DESIGN",
+  "milestone_count": 14,
+  "milestones": [
+    {
+      "milestone_id": "T1-M00",
+      "title": "任务书真源、边界和声明治理",
+      "status": "DRAFT",
+      "depends_on_milestones": [],
+      "requirement_ids": [
+        "REQ-T1-SYS-001",
+        "REQ-T1-EVI-001"
+      ],
+      "review_order": [
+        "T1-M00-N001",
+        "T1-M00-N002",
+        "T1-M00-N003",
+        "T1-M00-N004",
+        "T1-M00-N005",
+        "T1-M00-N007",
+        "T1-M00-N006",
+        "T1-M00-N008"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M00_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": false
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M01",
+      "title": "候选身份、基线、合同与早期护栏",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M00"
+      ],
+      "requirement_ids": [
+        "REQ-T1-SYS-001",
+        "REQ-T1-EVI-001"
+      ],
+      "review_order": [
+        "T1-M01-N002",
+        "T1-M01-N001",
+        "T1-M01-N003",
+        "T1-M01-N005",
+        "T1-M01-N006",
+        "T1-M01-N007",
+        "T1-M01-N008",
+        "T1-M01-N009",
+        "T1-M01-N010",
+        "T1-M01-N011",
+        "T1-M01-N004",
+        "T1-M01-N012",
+        "T1-M01-N013",
+        "T1-M01-N014"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M01_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": false
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M02",
+      "title": "实时/离线采集与PCAP耐久写链",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M01"
+      ],
+      "requirement_ids": [
+        "REQ-T1-DATA-CAPTURE-001",
+        "REQ-T1-EVI-001"
+      ],
+      "review_order": [
+        "T1-M02-N001",
+        "T1-M02-N002",
+        "T1-M02-N003",
+        "T1-M02-N009",
+        "T1-M02-N010",
+        "T1-M02-N004",
+        "T1-M02-N005",
+        "T1-M02-N006",
+        "T1-M02-N007",
+        "T1-M02-N008",
+        "T1-M02-N011",
+        "T1-M02-N012",
+        "T1-M02-N014",
+        "T1-M02-N013",
+        "T1-M02-N015",
+        "T1-M02-N016"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M02_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M03",
+      "title": "深度解析、会话、特征与离线文件还原",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M02"
+      ],
+      "requirement_ids": [
+        "REQ-T1-DATA-PARSE-001",
+        "REQ-T1-FILE-RESTORE-001",
+        "REQ-T1-ENCRYPTED-001"
+      ],
+      "review_order": [
+        "T1-M03-N001",
+        "T1-M03-N002",
+        "T1-M03-N011",
+        "T1-M03-N015",
+        "T1-M03-N008",
+        "T1-M03-N005",
+        "T1-M03-N006",
+        "T1-M03-N007",
+        "T1-M03-N009",
+        "T1-M03-N010",
+        "T1-M03-N003",
+        "T1-M03-N004",
+        "T1-M03-N016",
+        "T1-M03-N012",
+        "T1-M03-N017",
+        "T1-M03-N013",
+        "T1-M03-N014",
+        "T1-M03-N018"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M03_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M04",
+      "title": "已知攻击检测与中期预警准确率",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M03"
+      ],
+      "requirement_ids": [
+        "REQ-T1-DET-MIDTERM-001"
+      ],
+      "review_order": [
+        "T1-M04-N001",
+        "T1-M04-N002",
+        "T1-M04-N003",
+        "T1-M04-N008",
+        "T1-M04-N006",
+        "T1-M04-N004",
+        "T1-M04-N005",
+        "T1-M04-N007",
+        "T1-M04-N009",
+        "T1-M04-N010",
+        "T1-M04-N011",
+        "T1-M04-N012"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M04_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M05",
+      "title": "2026-10-30中期系统证据点",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M04"
+      ],
+      "requirement_ids": [
+        "REQ-T1-RELEASE-MIDTERM-001"
+      ],
+      "review_order": [
+        "T1-M05-N001",
+        "T1-M05-N002",
+        "T1-M05-N003",
+        "T1-M05-N004",
+        "T1-M05-N005",
+        "T1-M05-N006",
+        "T1-M05-N007",
+        "T1-M05-N008"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M05_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": true,
+        "postmerge_equivalence_required": true,
+        "observation_required": false
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M06",
+      "title": "四源接入、实体身份和事件时间",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M01",
+        "T1-M03"
+      ],
+      "requirement_ids": [
+        "REQ-T1-DATA-FOUR-SOURCE-001"
+      ],
+      "review_order": [
+        "T1-M06-N001",
+        "T1-M06-N002",
+        "T1-M06-N008",
+        "T1-M06-N016",
+        "T1-M06-N003",
+        "T1-M06-N005",
+        "T1-M06-N006",
+        "T1-M06-N007",
+        "T1-M06-N009",
+        "T1-M06-N011",
+        "T1-M06-N012",
+        "T1-M06-N004",
+        "T1-M06-N010",
+        "T1-M06-N013",
+        "T1-M06-N017",
+        "T1-M06-N015",
+        "T1-M06-N014",
+        "T1-M06-N018"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M06_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M07",
+      "title": "质量、三级融合、基准、图和攻击链",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M04",
+        "T1-M06"
+      ],
+      "requirement_ids": [
+        "REQ-T1-FUSION-001",
+        "REQ-T1-BASELINE-001",
+        "REQ-T1-ATTACKCHAIN-001"
+      ],
+      "review_order": [
+        "T1-M07-N001",
+        "T1-M07-N003",
+        "T1-M07-N002",
+        "T1-M07-N004",
+        "T1-M07-N005",
+        "T1-M07-N007",
+        "T1-M07-N006",
+        "T1-M07-N008",
+        "T1-M07-N010",
+        "T1-M07-N009",
+        "T1-M07-N011",
+        "T1-M07-N012",
+        "T1-M07-N013",
+        "T1-M07-N014",
+        "T1-M07-N015",
+        "T1-M07-N016",
+        "T1-M07-N017",
+        "T1-M07-N018",
+        "T1-M07-N019",
+        "T1-M07-N020"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M07_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M08",
+      "title": "已知/未知攻击AI、GNN与模型治理",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M03",
+        "T1-M06",
+        "T1-M07"
+      ],
+      "requirement_ids": [
+        "REQ-T1-AI-001",
+        "REQ-T1-GNN-001"
+      ],
+      "review_order": [
+        "T1-M08-N001",
+        "T1-M08-N002",
+        "T1-M08-N003",
+        "T1-M08-N004",
+        "T1-M08-N005",
+        "T1-M08-N006",
+        "T1-M08-N007",
+        "T1-M08-N008",
+        "T1-M08-N009",
+        "T1-M08-N010",
+        "T1-M08-N011",
+        "T1-M08-N012",
+        "T1-M08-N013",
+        "T1-M08-N014",
+        "T1-M08-N015",
+        "T1-M08-N016",
+        "T1-M08-N017",
+        "T1-M08-N018"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M08_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M09",
+      "title": "分析产品、证据、取证、反馈和typed UI",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M04",
+        "T1-M07",
+        "T1-M08"
+      ],
+      "requirement_ids": [
+        "REQ-T1-SYS-001",
+        "REQ-T1-EVI-001",
+        "REQ-T1-ENCRYPTED-001",
+        "REQ-T1-FILE-RESTORE-001"
+      ],
+      "review_order": [
+        "T1-M09-N001",
+        "T1-M09-N002",
+        "T1-M09-N003",
+        "T1-M09-N004",
+        "T1-M09-N005",
+        "T1-M09-N006",
+        "T1-M09-N007",
+        "T1-M09-N008",
+        "T1-M09-N010",
+        "T1-M09-N009",
+        "T1-M09-N011",
+        "T1-M09-N012",
+        "T1-M09-N013",
+        "T1-M09-N014",
+        "T1-M09-N015",
+        "T1-M09-N016",
+        "T1-M09-N017",
+        "T1-M09-N018",
+        "T1-M09-N019",
+        "T1-M09-N020",
+        "T1-M09-N021",
+        "T1-M09-N022",
+        "T1-M09-N023",
+        "T1-M09-N024"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M09_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M10",
+      "title": "最小现场部署、安全物化与限定恢复",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M01",
+        "T1-M09"
+      ],
+      "requirement_ids": [
+        "REQ-T1-SYS-DEPLOY-001"
+      ],
+      "review_order": [
+        "T1-M10-N001",
+        "T1-M10-N002",
+        "T1-M10-N003",
+        "T1-M10-N004",
+        "T1-M10-N005",
+        "T1-M10-N006",
+        "T1-M10-N007",
+        "T1-M10-N008",
+        "T1-M10-N009",
+        "T1-M10-N010",
+        "T1-M10-N012",
+        "T1-M10-N011",
+        "T1-M10-N013",
+        "T1-M10-N014",
+        "T1-M10-N015",
+        "T1-M10-N016"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_M10_MILESTONE_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M11",
+      "title": "冻结盲测与CNAS外部硬门",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M08",
+        "T1-M10"
+      ],
+      "requirement_ids": [
+        "REQ-T1-QUAL-001"
+      ],
+      "review_order": [
+        "T1-M11-N001",
+        "T1-M11-N002",
+        "T1-M11-N003",
+        "T1-M11-N004",
+        "T1-M11-N005",
+        "T1-M11-N006",
+        "T1-M11-N007",
+        "T1-M11-N008",
+        "T1-M11-N009",
+        "T1-M11-N010",
+        "T1-M11-N011",
+        "T1-M11-N012"
+      ],
+      "promotion_requirements": {
+        "profile": "PROPOSED_T1_CNAS_QUALITY_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": false,
+        "postmerge_equivalence_required": false,
+        "observation_required": false
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M12",
+      "title": "课题一系统合同最小发布",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M09",
+        "T1-M10",
+        "T1-M11"
+      ],
+      "requirement_ids": [
+        "REQ-T1-SYS-001",
+        "REQ-T1-QUAL-001"
+      ],
+      "review_order": [
+        "T1-M12-N002",
+        "T1-M12-N004",
+        "T1-M12-N001",
+        "T1-M12-N005",
+        "T1-M12-N003",
+        "T1-M12-N006",
+        "T1-M12-N007",
+        "T1-M12-N008"
+      ],
+      "promotion_requirements": {
+        "profile": "PROPOSED_T1_CONTRACT_PROFILE",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": true,
+        "postmerge_equivalence_required": true,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [
+        "REQ-T1-AI-001",
+        "REQ-T1-ATTACKCHAIN-001",
+        "REQ-T1-BASELINE-001",
+        "REQ-T1-DATA-CAPTURE-001",
+        "REQ-T1-DATA-FOUR-SOURCE-001",
+        "REQ-T1-DATA-PARSE-001",
+        "REQ-T1-DET-MIDTERM-001",
+        "REQ-T1-ENCRYPTED-001",
+        "REQ-T1-EVI-001",
+        "REQ-T1-FILE-RESTORE-001",
+        "REQ-T1-FUSION-001",
+        "REQ-T1-GNN-001",
+        "REQ-T1-QUAL-001",
+        "REQ-T1-SYS-001",
+        "REQ-T1-SYS-DEPLOY-001"
+      ],
+      "direct_or_indirect_requirement_waiver_count": 0
+    },
+    {
+      "milestone_id": "T1-M13",
+      "title": "整改收敛与自设强化工程门",
+      "status": "DRAFT",
+      "depends_on_milestones": [
+        "T1-M12"
+      ],
+      "requirement_ids": [
+        "REQ-T1-INTERNAL-STRENGTHENING-001"
+      ],
+      "review_order": [
+        "T1-M13-N001",
+        "T1-M13-N002",
+        "T1-M13-N003",
+        "T1-M13-N004",
+        "T1-M13-N005",
+        "T1-M13-N006",
+        "T1-M13-N007",
+        "T1-M13-N008",
+        "T1-M13-N009",
+        "T1-M13-N010",
+        "T1-M13-N011",
+        "T1-M13-N012",
+        "T1-M13-N013",
+        "T1-M13-N014",
+        "T1-M13-N015",
+        "T1-M13-N016",
+        "T1-M13-N017",
+        "T1-M13-N018",
+        "T1-M13-N019",
+        "T1-M13-N020"
+      ],
+      "promotion_requirements": {
+        "profile": "T1_REMEDIATION_AND_ENGINEERING_SPLIT_PROFILES",
+        "direct_idx_dependency_required": true,
+        "prom_has_no_production_change": true,
+        "premerge_equivalence_required": true,
+        "postmerge_equivalence_required": true,
+        "observation_required": true
+      },
+      "completion_checklist": {
+        "status": "BLOCKED",
+        "required_fields": [
+          "candidate identity closure",
+          "source-anchored requirements",
+          "claim class and allowed/forbidden claims",
+          "accountable/secondary/affected IDs",
+          "owner/reviewer/approver",
+          "DoR",
+          "parent task/atomic PR/external activity states",
+          "required gate/profile results",
+          "immutable evidence manifests",
+          "metric bindings",
+          "exit ceiling and exclusions",
+          "rollback surfaces and rehearsal runs",
+          "observation window",
+          "external blockers and approvals"
+        ],
+        "missing_fields": [
+          "named owner/reviewer/approver",
+          "clean candidate manifest",
+          "same-candidate gate evidence",
+          "executed rollback/observation evidence"
+        ]
+      },
+      "closure_requirement_ids": [],
+      "direct_or_indirect_requirement_waiver_count": 0
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "traffic.file-restoration.v1",
+  "requirement_id": "REQ-T1-FILE-RESTORE-001",
+  "status": "candidate_pending_forensics_security_acceptance_signature",
+  "runtime_default": "off",
+  "authority": {
+    "source_index": "traffic.v1.PcapIndexMeta plus immutable object receipt",
+    "session_identity": "traffic.v1.SessionEvent",
+    "restoration_manifest": "PostgreSQL restoration authority row plus immutable MinIO object manifest",
+    "pcap_cut_role": "source evidence selection only; a cut PCAP is never a restored file",
+    "required_approver_roles": ["traffic-parser-feature-owner", "forensics-owner", "security-owner"]
+  },
+  "approved_protocol_profiles": [
+    {
+      "profile_id": "http1-response-body-v1",
+      "application_protocol": "http/1.1",
+      "directions": ["server_to_client"],
+      "accepted_framing": ["content_length", "chunked_transfer_encoding", "connection_close_after_complete_headers"],
+      "content_encoding_policy": "store_wire_encoded_body_and_record_encoding_without_automatic_decompression",
+      "excluded": ["http2", "http3", "websocket", "multipart_range_reassembly", "ambiguous_or_conflicting_length_headers"],
+      "activation_status": "default_off_pending_approval"
+    },
+    {
+      "profile_id": "ftp-passive-retr-v1",
+      "application_protocol": "ftp",
+      "directions": ["server_to_client"],
+      "accepted_framing": ["control_session_with_pasv_or_epsv", "retr_command", "single_correlated_data_connection", "150_then_226_completion"],
+      "content_encoding_policy": "store_data_channel_octets_without_interpretation",
+      "excluded": ["active_mode", "multiple_ambiguous_data_connections", "upload_stor", "server_to_server_fxp", "tls_encrypted_control_or_data"],
+      "activation_status": "default_off_pending_approval"
+    },
+    {
+      "profile_id": "smtp-data-mime-v1",
+      "application_protocol": "smtp",
+      "directions": ["client_to_server"],
+      "accepted_framing": ["data_command_with_354_reply", "dot_terminated_message", "mime_singlepart", "mime_multipart_with_base64_or_quoted_printable_transfer_encoding"],
+      "content_encoding_policy": "decode_only_declared_base64_or_quoted_printable_with_bounded_output_and_retain_wire_hash",
+      "excluded": ["bdat_chunking", "nested_message_recursion", "encrypted_smime_payload", "unknown_transfer_encoding", "automatic_archive_expansion"],
+      "activation_status": "default_off_pending_approval"
+    }
+  ],
+  "unapproved_protocol_policy": {
+    "status": "unsupported",
+    "object_write": "forbidden",
+    "manifest_requirement": "record metadata-only terminal manifest with exact observed protocol and profile rejection reason",
+    "claim": "no protocol outside approved_protocol_profiles is restored"
+  },
+  "tcp_reassembly": {
+    "flow_selector": ["tenant_id", "probe_id", "session_id", "community_id", "flow_id", "five_tuple", "time_window"],
+    "container_selection": "traffic.sessions authorizes tenant/probe/session/community/primary-flow/time; manifest-v2 PCAP containers are selected by tenant, probe, and dual-unit-compatible time overlap before exact five-tuple filtering inside verified object bytes",
+    "canonical_direction": "same canonical A-to-B and B-to-A semantics as traffic.v1.FlowEvent identity_revision=2",
+    "ordering": "sequence_number_with_wraparound",
+    "duplicate_policy": "identical retransmission is deduplicated; overlapping unequal bytes are corrupt",
+    "gap_policy": "record exact missing sequence ranges and never fill bytes",
+    "capture_truncation_policy": "captured_len less than original_len marks affected application message truncated",
+    "event_time_policy": "source capture timestamps only; processing time is telemetry",
+    "source_proof": "every emitted byte maps to one or more source packet sequence and object byte ranges"
+  },
+  "terminal_statuses": ["complete", "partial", "truncated", "corrupt", "oversize", "unsupported"],
+  "terminal_status_decision": {
+    "precedence": ["unsupported", "oversize", "corrupt", "truncated", "partial", "complete"],
+    "rules": {
+      "complete": "approved profile framing completed, no source gaps or capture truncation, decoded length is within policy, and staged object SHA matches the committed receipt",
+      "partial": "approved framing is identifiable and visible bytes are coherent, but one or more TCP sequence ranges are missing; missing ranges are recorded and no bytes are invented",
+      "truncated": "a source record has captured_len below original_len or capture end occurs before the declared application boundary",
+      "corrupt": "overlapping retransmissions disagree, framing is contradictory, bounded decode fails, or staged and committed content hashes disagree",
+      "oversize": "declared or observed output exceeds tenant, task, protocol, expansion-ratio, part-count, or object-size limits",
+      "unsupported": "protocol, version, direction, transfer mode, framing, encoding, or encryption is outside the approved profile"
+    },
+    "object_policy": {
+      "complete": "required",
+      "partial": "optional_bounded_visible_bytes_with_missing_ranges",
+      "truncated": "optional_bounded_visible_bytes_with_truncation_offset",
+      "corrupt": "quarantine_only_never_downloadable_as_restored_file",
+      "oversize": "metadata_only_or_bounded_prefix_evidence",
+      "unsupported": "forbidden"
+    }
+  },
+  "manifest": {
+    "identity_fields": ["restoration_id", "tenant_id", "revision", "idempotency_key", "created_at", "completed_at"],
+    "source_fields": ["session_id", "community_id", "flow_ids", "pcap_index_ids", "source_object_receipts", "five_tuple", "direction", "capture_time_start", "capture_time_end", "packet_ranges", "tcp_sequence_ranges"],
+    "parser_fields": ["protocol_profile_id", "parser_name", "parser_version", "algorithm_version", "status", "status_reason", "missing_ranges", "truncation_offset"],
+    "file_fields": ["wire_filename", "sanitized_filename", "declared_mime_type", "detected_mime_type", "declared_size", "visible_size", "restored_size", "wire_sha256", "content_sha256"],
+    "object_fields": ["bucket", "object_key", "object_version", "etag", "size_bytes", "sha256", "receipt_observed_at", "retention_until", "legal_hold"],
+    "security_fields": ["executable", "automatic_open", "automatic_decompress", "quarantined", "download_authorization_scope", "malware_scan_status"],
+    "required_invariants": [
+      "tenant_id is present and matches every source and object authority record",
+      "content_sha256 is lowercase SHA-256 whenever an object is present",
+      "packet_ranges and tcp_sequence_ranges are sorted non-overlapping canonical ranges",
+      "complete requires one trusted object receipt and no missing_ranges",
+      "non-complete status never claims restored completeness",
+      "executable automatic_open and automatic_decompress are always false"
+    ]
+  },
+  "object_commit_protocol": {
+    "steps": [
+      "validate tenant-scoped request, approved profile, time window, quota, retention, and idempotency key",
+      "load only immutable PCAP objects whose tenant, bucket, key, version, size, and sha256 match the index receipt",
+      "reassemble bounded streams and classify one terminal status without executing payload bytes",
+      "stream an allowed object form to a tenant quarantine key while computing wire and content SHA-256",
+      "HEAD the exact bucket, key, version, size, etag, and checksum to obtain a trusted receipt",
+      "commit restoration manifest, terminal status, object receipt, audit fact, and outbox fact in one PostgreSQL transaction",
+      "make downloads eligible only after the committed manifest and tenant authorization both succeed"
+    ],
+    "crash_recovery": {
+      "before_object_receipt": "no authority manifest; retry same idempotency key or remove untrusted multipart upload",
+      "after_object_receipt_before_manifest": "record as orphan candidate and reconcile by exact tenant/key/version/hash; never expose",
+      "after_manifest_commit": "idempotent replay returns the existing revision and exact receipt without rewriting object bytes",
+      "manifest_without_object": "terminal integrity failure; block download and enqueue reconciliation"
+    }
+  },
+  "safety_limits": {
+    "required_config_keys": ["max_source_bytes", "max_stream_bytes", "max_object_bytes", "max_part_count", "max_mime_depth", "max_expansion_ratio", "task_timeout", "tenant_concurrency", "retention_duration"],
+    "path_policy": "wire filenames are metadata only; object keys derive from tenant and restoration identity, never from an untrusted path",
+    "archive_policy": "never automatically expand archives or nested message containers",
+    "execution_policy": "restored and quarantine objects are inert bytes and are never executed, rendered inline as active content, or passed to a shell",
+    "download_policy": "tenant-scoped authorization and immutable download audit are mandatory; corrupt objects are evidence-only"
+  },
+  "compatibility_and_rollout": {
+    "pcap_cut_api": "unchanged and explicitly separate from restoration",
+    "consumer_first": "deploy an idle manifest reader and status-aware UI before enabling a restoration writer",
+    "mixed_version": "unknown protocol profile or manifest field is preserved or rejected as unsupported; never guessed",
+    "rollback": "stop restoration admission, drain or quarantine active tasks, retain committed manifests and objects, disable worker, and keep PCAP cutting available",
+    "activation_gate": "all required approver signatures plus N016 implementation, N017 malicious corpus, tenant/object negative tests, and default-off deployment proof"
+  },
+  "claims": {
+    "allowed": "versioned default-off contract for bounded approved protocol restoration semantics",
+    "forbidden": ["PCAP cutting is file restoration", "all application protocols are supported", "restored content is safe", "M03 closes the forensics product", "runtime activation is approved"]
+  }
+}

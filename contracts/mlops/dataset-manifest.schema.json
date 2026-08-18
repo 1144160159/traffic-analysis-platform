@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/mlops/dataset-manifest.schema.json",
+  "title": "Traffic MLOps immutable dataset manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "tenant_id",
+    "feature_set_id",
+    "scope",
+    "source",
+    "labels",
+    "features",
+    "splits",
+    "artifacts",
+    "dataset_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "dataset_id": {"type": "string", "pattern": "^[0-9a-f-]{36}$"},
+    "tenant_id": {"type": "string", "minLength": 1, "not": {"pattern": "^(?i:unknown)$"}},
+    "feature_set_id": {"type": "string", "minLength": 1},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["window_from", "window_through", "as_of", "source_watermark", "max_rows"],
+      "properties": {
+        "window_from": {"type": "string", "format": "date-time"},
+        "window_through": {"type": "string", "format": "date-time"},
+        "as_of": {"type": "string", "format": "date-time"},
+        "source_watermark": {"type": "string", "format": "date-time"},
+        "max_rows": {"type": "integer", "minimum": 1, "maximum": 1000000}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tables", "row_count", "canonical_rows_sha256"],
+      "properties": {
+        "tables": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "row_count": {"type": "integer", "minimum": 1},
+        "canonical_rows_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "revision_sha256", "classes"],
+      "properties": {
+        "schema_version": {"type": "string", "minLength": 1},
+        "revision_sha256": {"$ref": "#/$defs/sha256"},
+        "classes": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": ["string", "integer"]}}
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["columns", "columns_sha256"],
+      "properties": {
+        "columns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "columns_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "graph_snapshot": {
+      "type": ["object", "null"],
+      "required": ["snapshot_id", "manifest_sha256"],
+      "properties": {
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "splits": {
+      "type": "object",
+      "minProperties": 2,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["row_count", "event_ids_sha256"],
+        "properties": {
+          "row_count": {"type": "integer", "minimum": 1},
+          "event_ids_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "minProperties": 2,
+      "additionalProperties": {"$ref": "#/$defs/sha256"}
+    },
+    "dataset_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

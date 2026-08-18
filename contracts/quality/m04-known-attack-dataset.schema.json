@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/quality/m04-known-attack-dataset.schema.json",
+  "title": "M04 frozen known-attack evaluation dataset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "dataset_id", "status", "split",
+    "taxonomy_scope", "profile_id", "environment_id", "analysis_unit",
+    "dedup_window", "label_arbitration", "candidate_hash", "model_hash",
+    "feature_hash", "threshold_hash", "taxonomy_sha256", "labels_sha256",
+    "frozen_at", "labels_released_at", "license", "custodian",
+    "custody_receipt", "samples"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M04_FROZEN_KNOWN_ATTACK_DATASET"},
+    "dataset_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+    "status": {"const": "FROZEN"},
+    "split": {"const": "EVALUATION"},
+    "taxonomy_scope": {"const": "KNOWN_ATTACK_AND_NORMAL_ONLY"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "analysis_unit": {"type": "string", "minLength": 1},
+    "dedup_window": {"type": "string", "minLength": 1},
+    "label_arbitration": {"type": "string", "minLength": 1},
+    "candidate_hash": {"$ref": "#/$defs/sha256"},
+    "model_hash": {"$ref": "#/$defs/sha256"},
+    "feature_hash": {"$ref": "#/$defs/sha256"},
+    "threshold_hash": {"$ref": "#/$defs/sha256"},
+    "taxonomy_sha256": {"$ref": "#/$defs/sha256"},
+    "labels_sha256": {"$ref": "#/$defs/sha256"},
+    "frozen_at": {"$ref": "#/$defs/rfc3339_utc"},
+    "labels_released_at": {"$ref": "#/$defs/rfc3339_utc"},
+    "license": {"type": "string", "minLength": 1},
+    "custodian": {"type": "string", "minLength": 1},
+    "custody_receipt": {"$ref": "#/$defs/artifact_ref"},
+    "samples": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/sample"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "rfc3339_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?Z$"
+    },
+    "artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_id", "entity_id", "window_start", "window_end", "stratum",
+        "label", "valid", "invalid_reason", "source_sha256"
+      ],
+      "properties": {
+        "sample_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,191}$"},
+        "entity_id": {"type": "string", "minLength": 1},
+        "window_start": {"$ref": "#/$defs/rfc3339_utc"},
+        "window_end": {"$ref": "#/$defs/rfc3339_utc"},
+        "stratum": {"type": "string", "minLength": 1},
+        "label": {"enum": ["known_attack", "normal"]},
+        "valid": {"type": "boolean"},
+        "invalid_reason": {"type": ["string", "null"]},
+        "source_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

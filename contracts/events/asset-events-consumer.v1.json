@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "contract_id": "asset-events-consumer-v1",
+  "state": "implementation_ready_not_deployed",
+  "accountable_tasks": ["T1-M06-N005", "T1-M06-N010", "T1-M06-N011", "T1-M06-N012"],
+  "topic": "asset.events.v2",
+  "consumer_group": "asset-projection-v2",
+  "value": {
+    "content_type": "application/json",
+    "event_type": "traffic.asset.v2.AssetUpserted",
+    "schema_version": 2,
+    "authoritative_history": "PostgreSQL asset_events",
+    "durable_inbox": "PostgreSQL asset_projection_inbox"
+  },
+  "identity": {
+    "key_encoding": "utf8(tenant_id + ':' + asset_id)",
+    "required_headers": [
+      "event_id", "event_type", "schema_version", "aggregate_version",
+      "tenant_id", "asset_id", "trace_id"
+    ],
+    "same_source_tuple_replay": "accepted idempotent retry",
+    "same_event_and_payload_new_source_tuple": "duplicate",
+    "same_event_or_aggregate_version_different_payload": "conflict"
+  },
+  "barriers": {
+    "accepted_or_duplicate": "durable inbox decision then append-only source-quality receipt before handler success and source offset commit",
+    "invalid_rejected_or_conflict": "permanent error only; canonical dlq.v1 broker ACK then append-only source-quality receipt then source offset commit",
+    "transient_failure": "database network and broker failures remain uncommitted and replayable",
+    "missing": "emitted by source-offset reconciliation rather than record classification"
+  },
+  "classification": {
+    "accepted": "new inbox row or replay of the same Kafka source tuple",
+    "duplicate": "same event and payload observed at another Kafka source tuple",
+    "rejected": "wrong topic duplicate headers or header/key/body mismatch",
+    "invalid": "invalid JSON or invalid AssetUpsertedV2 value",
+    "late": "previously unseen aggregate_version below the durable inbox maximum",
+    "conflict": "authoritative history or inbox identity collision"
+  },
+  "source_fact_projection": {
+    "contract": "contracts/clickhouse/four-source-facts.v1.json",
+    "postgres_expand": "deployments/postgres/migrations/202608141610_m06_asset_clickhouse_projection_v1.sql",
+    "table": "traffic.source_asset_facts_v1",
+    "enabled": false,
+    "target": "consumer.ClickHouseAssetProjection",
+    "source_version": "aggregate_version"
+  },
+  "rollout": {
+    "production_applied": false,
+    "rollback": "roll back the workload image while retaining append-only inbox, DLQ and audit receipt rows"
+  },
+  "claim_boundary": {
+    "proves": [
+      "consumer code enforces DLQ ACK before permanent-failure offset commit",
+      "success and DLQ paths persist deterministic source-quality receipts",
+      "same source retry remains receipt-idempotent"
+    ],
+    "does_not_prove": [
+      "the changed asset-service image is deployed",
+      "a real poison message and offset were reconciled in Kubernetes",
+      "OpenSearch, NebulaGraph, or ClickHouse projections are current"
+    ]
+  }
+}

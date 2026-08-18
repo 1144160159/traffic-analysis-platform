@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/pr-design-application-catalog.schema.json",
+  "title": "Per-atomic-PR design application and function-expansion catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_status", "source_claim_catalog_sha256", "entry_count", "entries", "summary", "proof_ceiling"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_status": {"const": "GENERATED_DESIGN_INVENTORY"},
+    "source_claim_catalog_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "entry_count": {"type": "integer", "minimum": 1},
+    "entries": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/entry"}},
+    "summary": {"type": "object"},
+    "proof_ceiling": {"const": "PR_DESIGN_CLASSIFICATION_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"}
+  },
+  "$defs": {
+    "entry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["atomic_pr_id", "parent_work_id", "milestone_id", "pr_type", "claim_mode", "formal_execution_status", "design_scope", "application_stage", "selected_form", "mode_decision", "non_binding_pattern_hints", "application_plan", "pattern_rationale", "target_locators", "required_code_units", "function_expansion_status", "next_design_action", "blockers", "allowed_claim", "forbidden_claims"],
+      "properties": {
+        "atomic_pr_id":{"type":"string","minLength":3},
+        "parent_work_id":{"type":"string","minLength":3},
+        "milestone_id":{"type":"string","minLength":3},
+        "pr_type":{"enum":["CTR","EXP","PRJ","WRT","UI","OPS","REF","TST-PRE","TST-POST","IDX","PROM"]},
+        "claim_mode":{"enum":["DIRECT_TARGET_BOUND","TARGET_BINDING"]},
+        "formal_execution_status":{"const":"BLOCKED_UNTIL_SIGNED_OVERLAY"},
+        "design_scope":{"enum":["FUNCTION_SET","NON_FUNCTION_CODE_UNIT","TARGET_BINDING_ONLY"]},
+        "application_stage":{"enum":["APPLICATION_CANDIDATE_READY_FOR_REVIEW","SPECIALIZED_PROPOSAL_PENDING_DEBATE","DIRECT_FUNCTION_DESIGN_CANDIDATE","SPECIALIZED_APPROVAL_CONTRACT_DEFINED","SPECIALIZED_RECONCILIATION_FUNCTION_DESIGN","SPECIALIZED_G2_G3_EVIDENCE_CONTRACT_DEFINED","APPLICATION_EXEMPTION_RECORDED","WAITING_TRUSTED_LOCATOR"]},
+        "selected_form":{"enum":["PENDING_REVIEW","DIRECT","NOT_APPLICABLE"]},
+        "application_plan": {"$ref": "#/$defs/application_plan"},
+        "mode_decision":{"enum":["REVIEW_0_TO_3_CANDIDATES_AGAINST_DIRECT","PROPOSE_DIRECT_WITH_DISTRIBUTED_CONSTRAINT","DIRECT_TYPED_HTTP_ERROR_MAPPING","DIRECT_TYPED_GRPC_ERROR_MAPPING","DIRECT_STARTUP_PREDICATE","DOMAIN_QUORUM_INDEX_NOT_OBJECT_COLLABORATION","DIRECT_TYPED_RECONCILIATION","EVIDENCE_RECONCILIATION_NOT_OBJECT_COLLABORATION","EXEMPT_NON_OBJECT_COLLABORATION","DEFER_UNTIL_TARGET_BINDING"]},
+        "non_binding_pattern_hints":{"type":"array","maxItems":3,"items":{"type":"string","pattern":"^(?:GOF-(?:CRE|STR|BEH)-[0-9]{2}|PROJECT-[A-Z0-9-]+)$"},"uniqueItems":true},
+        "pattern_rationale":{"type":"string","minLength":8},
+        "target_locators":{"type":"array","items":{"type":"object"}},
+        "required_code_units":{"type":"array","items":{"type":"string","minLength":3},"uniqueItems":true},
+        "function_expansion_status":{"enum":["REQUIRES_TRUSTED_AST_EXPANSION","CANDIDATE_BOUND_CODE_UNIT_DRAFT","CANDIDATE_BOUND_PRIMARY_AST","CANDIDATE_BOUND_APPROVAL_INDEX_PENDING_TRUST","PLANNED_EXACT_PYTHON_FUNCTION","AUTHORIZED_REAL_DEPENDENCY_RUN_PENDING","NON_FUNCTION_CONTRACT","BLOCKED_ON_TARGET_BINDING"]},
+        "next_design_action":{"type":"string","minLength":8},
+        "blockers":{"type":"array","items":{"type":"string","minLength":3},"uniqueItems":true},
+        "allowed_claim":{"enum":["PR_DESIGN_CLASSIFIED","PATTERN_APPLICATION_CANDIDATE_ONLY","NON_FUNCTION_EXEMPTION_ONLY"]},
+        "forbidden_claims":{"type":"array","minItems":4,"items":{"enum":["FUNCTION_DESIGN_COMPLETE","READY_BINDING","EXECUTION_AUTHORIZED","IMPLEMENTATION_COMPLETE","PRODUCTION_ACCEPTED"]},"uniqueItems":true}
+      }
+    },
+    "application_plan": {
+      "type": "object", "additionalProperties": false,
+      "required": ["direct_baseline", "candidate_role_mapping", "cost_dimensions", "rejection_proof", "removal_rule", "review_questions"],
+      "properties": {
+        "direct_baseline":{"type":"string","minLength":8},
+        "candidate_role_mapping":{"type":"array","maxItems":3,"items":{"type":"object"}},
+        "cost_dimensions":{"type":"array","minItems":1,"items":{"type":"string","minLength":3},"uniqueItems":true},
+        "rejection_proof":{"type":"string","minLength":8},
+        "removal_rule":{"type":"string","minLength":8},
+        "review_questions":{"type":"array","minItems":1,"items":{"type":"string","minLength":8},"uniqueItems":true}
+      }
+    }
+  }
+}

@@ -1,0 +1,558 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m01-n003-implementation-candidate-test-function-design.schema.json",
+  "title": "M01 N003 implementation-candidate rejection-matrix function and evidence design",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_kind",
+    "artifact_status",
+    "source_refs",
+    "leaf_contracts",
+    "current_contract_findings",
+    "dependency_analysis",
+    "function_contract",
+    "case_recipes",
+    "evidence_contract",
+    "required_registry_amendments",
+    "sequencing",
+    "rollback",
+    "claims",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M01_N003_IMPLEMENTATION_CANDIDATE_TEST_FUNCTION_DESIGN"},
+    "artifact_status": {"const": "DRAFT_FUNCTION_AND_EVIDENCE_DESIGN_EXECUTION_BLOCKED"},
+    "source_refs": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_ref"}
+    },
+    "leaf_contracts": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/leaf_contract"}
+    },
+    "current_contract_findings": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "dependency_analysis": {"$ref": "#/$defs/dependency_analysis"},
+    "function_contract": {"$ref": "#/$defs/function_contract"},
+    "case_recipes": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/case_recipe"}
+    },
+    "evidence_contract": {"$ref": "#/$defs/evidence_contract"},
+    "required_registry_amendments": {
+      "type": "array",
+      "minItems": 7,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/amendment"}
+    },
+    "sequencing": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/sequence_step"}
+    },
+    "rollback": {"$ref": "#/$defs/rollback"},
+    "claims": {"$ref": "#/$defs/claims"},
+    "validation": {"$ref": "#/$defs/validation"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "path", "sha256"],
+      "properties": {
+        "role": {
+          "enum": [
+            "ACTIVE_TASK_REGISTRY",
+            "ACTIVE_CLAIM_CATALOG",
+            "ACTIVE_PR_DESIGN_CATALOG",
+            "FIXTURE_SCHEMA",
+            "CASE_REPORT_SCHEMA",
+            "EVIDENCE_RUN_SCHEMA",
+            "IMPLEMENTATION_CANDIDATE_SCHEMA",
+            "PROVENANCE_RECEIPT_SCHEMA",
+            "ACTIVE_REGISTRY_BUILDER",
+            "EVIDENCE_MANIFEST_WRITER",
+            "PREBUILT_OVERLAY",
+            "EARLY_TRUST_ALLOCATION_PREVIEW",
+            "EARLY_TRUST_CATALOG_PREVIEW"
+          ]
+        },
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "leaf_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "atomic_pr_id",
+        "pr_type",
+        "design_scope",
+        "current_execution_status",
+        "write_locators",
+        "read_locators",
+        "responsibility",
+        "entry_conditions",
+        "outputs",
+        "allowed_claim",
+        "forbidden_claims"
+      ],
+      "properties": {
+        "atomic_pr_id": {
+          "enum": [
+            "T1-M01-P005-REF-n003-s1",
+            "T1-M01-P006-TST-PRE-n003-s2"
+          ]
+        },
+        "pr_type": {"enum": ["REF", "TST-PRE"]},
+        "design_scope": {"enum": ["SINGLE_FUNCTION_AND_FIXTURE_RECIPES", "DOUBLE_EVIDENCE_ARTIFACT"]},
+        "current_execution_status": {"const": "BLOCKED_UNTIL_SIGNED_OVERLAY"},
+        "write_locators": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 3},
+          "uniqueItems": true
+        },
+        "read_locators": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 3},
+          "uniqueItems": true
+        },
+        "responsibility": {"type": "string", "minLength": 20},
+        "entry_conditions": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string", "minLength": 8},
+          "uniqueItems": true
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 3},
+          "uniqueItems": true
+        },
+        "allowed_claim": {"type": "string", "minLength": 12},
+        "forbidden_claims": {
+          "type": "array",
+          "minItems": 5,
+          "items": {"type": "string", "minLength": 3},
+          "uniqueItems": true
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finding_id", "severity", "evidence", "consequence", "required_disposition"],
+      "properties": {
+        "finding_id": {"type": "string", "pattern": "^M01-N003-DOR-[0-9]{2}$"},
+        "severity": {"enum": ["P0", "P1"]},
+        "evidence": {"type": "string", "minLength": 20},
+        "consequence": {"type": "string", "minLength": 20},
+        "required_disposition": {"type": "string", "minLength": 20}
+      }
+    },
+    "dependency_analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_path_to_trust_owner",
+        "direct_dependency_cycle_if_added",
+        "unreachable_before_trust_case_ids",
+        "reachable_before_trust_case_ids",
+        "preview_resolution",
+        "selected_resolution",
+        "prohibited_shortcuts"
+      ],
+      "properties": {
+        "current_path_to_trust_owner": {
+          "type": "array",
+          "minItems": 5,
+          "items": {"type": "string", "pattern": "^T1-M01-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+          "uniqueItems": true
+        },
+        "direct_dependency_cycle_if_added": {"const": true},
+        "unreachable_before_trust_case_ids": {
+          "type": "array",
+          "minItems": 5,
+          "items": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "uniqueItems": true
+        },
+        "reachable_before_trust_case_ids": {
+          "type": "array",
+          "minItems": 3,
+          "items": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "uniqueItems": true
+        },
+        "preview_resolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status", "terminal_atomic_pr_id", "p005_dependency_ids",
+            "p006_dependency_ids", "candidate_dag", "global_switch_decision"
+          ],
+          "properties": {
+            "status": {"const": "VALIDATED_PREVIEW_NOT_REGISTERED"},
+            "terminal_atomic_pr_id": {"const": "T1-M01-P066-IDX-n015-task-completion"},
+            "p005_dependency_ids": {
+              "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+              "items": {"enum": ["T1-M01-P002-IDX-n001-task-completion", "T1-M01-P066-IDX-n015-task-completion"]}
+            },
+            "p006_dependency_ids": {
+              "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+              "items": {"enum": ["T1-M01-P005-REF-n003-s1", "T1-M01-P066-IDX-n015-task-completion"]}
+            },
+            "candidate_dag": {"const": "PASS"},
+            "global_switch_decision": {"const": "BLOCKED_PREVIEW_ONLY"}
+          }
+        },
+        "selected_resolution": {"type": "string", "minLength": 40},
+        "prohibited_shortcuts": {
+          "type": "array",
+          "minItems": 4,
+          "items": {"type": "string", "minLength": 8},
+          "uniqueItems": true
+        }
+      }
+    },
+    "cli_arg": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["flag", "required", "purpose"],
+      "properties": {
+        "flag": {"type": "string", "pattern": "^--[a-z0-9-]+$"},
+        "required": {"type": "boolean"},
+        "purpose": {"type": "string", "minLength": 8}
+      }
+    },
+    "function_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id",
+        "atomic_pr_id",
+        "language",
+        "path",
+        "qualified_symbol",
+        "signature_before",
+        "signature_after",
+        "selected_form",
+        "responsibility",
+        "cli_arguments",
+        "body_steps",
+        "error_branches",
+        "side_effects",
+        "atomicity",
+        "idempotency",
+        "callers",
+        "callees",
+        "tests",
+        "rollback"
+      ],
+      "properties": {
+        "contract_id": {"const": "FC-M01-N003-ImplementationCandidateMatrixMain"},
+        "atomic_pr_id": {"const": "T1-M01-P005-REF-n003-s1"},
+        "language": {"const": "python"},
+        "path": {"const": "scripts/alignment/test_implementation_candidate.py"},
+        "qualified_symbol": {"const": "main"},
+        "signature_before": {"type": "null"},
+        "signature_after": {"const": "def main(argv: Sequence[str] | None = None) -> int:"},
+        "selected_form": {"const": "DIRECT_SINGLE_FUNCTION_CLI"},
+        "responsibility": {"type": "string", "minLength": 30},
+        "cli_arguments": {
+          "type": "array",
+          "minItems": 13,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/cli_arg"}
+        },
+        "body_steps": {
+          "type": "array",
+          "minItems": 14,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^B[0-9]{2} .+"}
+        },
+        "error_branches": {
+          "type": "array",
+          "minItems": 8,
+          "items": {"type": "string", "minLength": 12},
+          "uniqueItems": true
+        },
+        "side_effects": {
+          "type": "array",
+          "minItems": 3,
+          "items": {"type": "string", "minLength": 8},
+          "uniqueItems": true
+        },
+        "atomicity": {"type": "string", "minLength": 30},
+        "idempotency": {"type": "string", "minLength": 30},
+        "callers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 3},
+          "uniqueItems": true
+        },
+        "callees": {
+          "type": "array",
+          "minItems": 5,
+          "items": {"type": "string", "minLength": 3},
+          "uniqueItems": true
+        },
+        "tests": {
+          "type": "array",
+          "minItems": 8,
+          "items": {"type": "string", "pattern": "^TC-M01-N003-[0-9]{2}$"},
+          "uniqueItems": true
+        },
+        "rollback": {"type": "string", "minLength": 30}
+      }
+    },
+    "case_assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assertion_id", "mutation", "expected_error_fragment"],
+      "properties": {
+        "assertion_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+        "mutation": {"type": "string", "minLength": 15},
+        "expected_error_fragment": {"type": "string", "minLength": 8}
+      }
+    },
+    "case_recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "test_id",
+        "execution_status",
+        "expected_outcome",
+        "expected_rejection_code",
+        "target_stage",
+        "mutation_operator",
+        "required_fixture_parameters",
+        "assertions",
+        "oracle",
+        "false_positive_guards"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+        "test_id": {"type": "string", "pattern": "^TC-M01-N003-[0-9]{2}$"},
+        "execution_status": {"const": "NOT_RUN"},
+        "expected_outcome": {"const": "BLOCKED"},
+        "expected_rejection_code": {"type": "string", "pattern": "^REJECT_[A-Z0-9_]+$"},
+        "target_stage": {"type": "string", "minLength": 3},
+        "mutation_operator": {"type": "string", "pattern": "^MUTATE_[A-Z0-9_]+$"},
+        "required_fixture_parameters": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "uniqueItems": true
+        },
+        "assertions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/case_assertion"},
+          "uniqueItems": true
+        },
+        "oracle": {"type": "string", "minLength": 30},
+        "false_positive_guards": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string", "minLength": 10},
+          "uniqueItems": true
+        }
+      }
+    },
+    "artifact_shape": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema", "required_identity_fields", "semantic_role"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "schema": {"type": "string", "minLength": 3},
+        "required_identity_fields": {
+          "type": "array",
+          "minItems": 4,
+          "items": {"type": "string", "minLength": 2},
+          "uniqueItems": true
+        },
+        "semantic_role": {"type": "string", "minLength": 20}
+      }
+    },
+    "evidence_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_command",
+        "current_command_status",
+        "corrected_command_argv",
+        "gate_scope",
+        "artifacts",
+        "case_result_required_fields",
+        "immutable_write_protocol",
+        "success_semantics"
+      ],
+      "properties": {
+        "current_command": {"type": "string", "minLength": 20},
+        "current_command_status": {"const": "BLOCKED_COMMAND_MISSING_CANDIDATE_BINDING"},
+        "corrected_command_argv": {
+          "type": "array",
+          "minItems": 25,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "gate_scope": {"const": "G0_ONLY_NEGATIVE_CONTRACT_MATRIX"},
+        "artifacts": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"$ref": "#/$defs/artifact_shape"},
+          "uniqueItems": true
+        },
+        "case_result_required_fields": {
+          "type": "array",
+          "minItems": 8,
+          "items": {"type": "string", "minLength": 3},
+          "uniqueItems": true
+        },
+        "immutable_write_protocol": {
+          "type": "array",
+          "minItems": 6,
+          "items": {"type": "string", "minLength": 12},
+          "uniqueItems": true
+        },
+        "success_semantics": {"type": "string", "minLength": 40}
+      }
+    },
+    "amendment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amendment_id", "owner", "change", "acceptance_oracle", "status"],
+      "properties": {
+        "amendment_id": {"type": "string", "pattern": "^M01-N003-AMD-[0-9]{2}$"},
+        "owner": {"type": "string", "minLength": 3},
+        "change": {"type": "string", "minLength": 25},
+        "acceptance_oracle": {"type": "string", "minLength": 25},
+        "status": {"enum": ["REQUIRED_NOT_APPLIED", "PREVIEW_ALLOCATED_NOT_REGISTERED"]}
+      }
+    },
+    "sequence_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "step_id", "action", "entry_condition", "exit_condition", "status"],
+      "properties": {
+        "order": {"type": "integer", "minimum": 1},
+        "step_id": {"type": "string", "pattern": "^SEQ-M01-N003-[0-9]{2}$"},
+        "action": {"type": "string", "minLength": 20},
+        "entry_condition": {"type": "string", "minLength": 10},
+        "exit_condition": {"type": "string", "minLength": 10},
+        "status": {"enum": ["DESIGNED", "DESIGNED_PREVIEW", "BLOCKED"]}
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["triggers", "steps", "durable_evidence_policy", "oracle"],
+      "properties": {
+        "triggers": {
+          "type": "array",
+          "minItems": 3,
+          "items": {"type": "string", "minLength": 10},
+          "uniqueItems": true
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 4,
+          "items": {"type": "string", "minLength": 12},
+          "uniqueItems": true
+        },
+        "durable_evidence_policy": {"type": "string", "minLength": 30},
+        "oracle": {"type": "string", "minLength": 30}
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed", "forbidden", "proof_ceiling"],
+      "properties": {
+        "allowed": {"const": "P005/P006 function, fixture and evidence design plus current DoR blockers are statically specified"},
+        "forbidden": {
+          "type": "array",
+          "minItems": 8,
+          "items": {"type": "string", "minLength": 3},
+          "uniqueItems": true
+        },
+        "proof_ceiling": {"const": "STATIC_DESIGN_ONLY_NOT_REGISTRY_AMENDMENT_FUNCTION_REVIEW_IMPLEMENTATION_TEST_EXECUTION_CANDIDATE_PASS_AUTHORIZATION_OR_ACCEPTANCE"}
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "source_hashes_exact",
+        "leaf_exact_set",
+        "case_exact_set",
+        "function_body_steps_contiguous",
+        "current_command_gap_reproduced",
+        "trust_dependency_cycle_reproduced",
+        "early_trust_preview_validated",
+        "not_run_claim_ceiling",
+        "mutation_guards"
+      ],
+      "properties": {
+        "schema": {"const": "PASS"},
+        "source_hashes_exact": {"const": "PASS"},
+        "leaf_exact_set": {"const": "PASS"},
+        "case_exact_set": {"const": "PASS"},
+        "function_body_steps_contiguous": {"const": "PASS"},
+        "current_command_gap_reproduced": {"const": "PASS"},
+        "trust_dependency_cycle_reproduced": {"const": "PASS"},
+        "early_trust_preview_validated": {"const": "PASS_NOT_REGISTERED"},
+        "not_run_claim_ceiling": {"const": "PASS"},
+        "mutation_guards": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_hash_drift",
+            "case_omission",
+            "false_case_execution",
+            "missing_cli_binding",
+            "noncontiguous_body_step",
+            "false_dual_gate",
+            "missing_actual_rejection",
+            "dependency_cycle_denial",
+            "preview_back_edge",
+            "premature_ready"
+          ],
+          "properties": {
+            "source_hash_drift": {"const": "PASS"},
+            "case_omission": {"const": "PASS"},
+            "false_case_execution": {"const": "PASS"},
+            "missing_cli_binding": {"const": "PASS"},
+            "noncontiguous_body_step": {"const": "PASS"},
+            "false_dual_gate": {"const": "PASS"},
+            "missing_actual_rejection": {"const": "PASS"},
+            "dependency_cycle_denial": {"const": "PASS"},
+            "preview_back_edge": {"const": "PASS"},
+            "premature_ready": {"const": "PASS"}
+          }
+        }
+      }
+    }
+  }
+}

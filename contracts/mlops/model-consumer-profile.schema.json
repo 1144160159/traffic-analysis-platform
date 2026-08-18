@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/mlops/model-consumer-profile.schema.json",
+  "title": "Governed model shadow consumer compatibility profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "entry_class",
+    "runtime_contract",
+    "runtime_version",
+    "feature_schema_version",
+    "graph_schema_version",
+    "supported_model_formats",
+    "signing_key_binding",
+    "activation_enabled",
+    "serving_outputs_enabled",
+    "profile_sha256_derivation"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract_id": {"const": "traffic.mlops.model-shadow-consumer-profile.v1"},
+    "entry_class": {"const": "com.traffic.flink.behavior.ModelUpdateConsumerJob"},
+    "runtime_contract": {"const": "traffic.behavior.inference.v1"},
+    "runtime_version": {"pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "feature_schema_version": {"type": "integer", "minimum": 1},
+    "graph_schema_version": {"type": "integer", "minimum": 1},
+    "supported_model_formats": {
+      "const": ["onnx", "numpy_npz_v1"]
+    },
+    "signing_key_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "fingerprint_algorithm", "runtime_secret_name", "public_key_key", "profile_sha256_key"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "fingerprint_algorithm": {"const": "sha256-x509-der"},
+        "runtime_secret_name": {"minLength": 1, "type": "string"},
+        "public_key_key": {"const": "public-key-pem-base64"},
+        "profile_sha256_key": {"const": "profile-sha256"}
+      }
+    },
+    "activation_enabled": {"const": false},
+    "serving_outputs_enabled": {"const": false},
+    "profile_sha256_derivation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "encoding", "field_order", "line_format", "terminal_newline"],
+      "properties": {
+        "algorithm": {"const": "sha256"},
+        "encoding": {"const": "utf-8"},
+        "field_order": {"type": "array", "minItems": 10, "items": {"type": "string"}},
+        "line_format": {"const": "key=value"},
+        "terminal_newline": {"const": true}
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "profile_id": "m08-model-inference-parity-internal.v1",
+  "claim_scope": "INTERNAL_ENGINEERING_ONLY",
+  "cnas_claim_authorized": false,
+  "production_promotion_authorized": false,
+  "feature_columns": [
+    "bps",
+    "iat_mean_ms",
+    "pktlen_mean",
+    "pps"
+  ],
+  "sample_count": 64,
+  "random_seed": 20260815,
+  "warmup_iterations": 2,
+  "measured_iterations": 8,
+  "flink_parallelism": 1,
+  "decision_threshold": 0.5,
+  "score_tolerances": {
+    "python_to_onnx": 0.00001,
+    "onnx_to_flink": 0.000001,
+    "python_to_flink": 0.00001,
+    "max_decision_mismatches": 0
+  },
+  "performance_budgets": {
+    "python": {
+      "max_p99_inference_latency_ms": 100,
+      "min_throughput_per_second": 10,
+      "max_peak_rss_bytes": 2147483648
+    },
+    "onnx": {
+      "max_p99_inference_latency_ms": 100,
+      "min_throughput_per_second": 10,
+      "max_peak_rss_bytes": 2147483648
+    },
+    "flink": {
+      "max_p99_inference_latency_ms": 100,
+      "min_throughput_per_second": 10,
+      "max_peak_rss_bytes": 2147483648
+    }
+  }
+}

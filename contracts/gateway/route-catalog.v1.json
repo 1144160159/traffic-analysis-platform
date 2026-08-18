@@ -5,10 +5,10 @@
   "production_applied": false,
   "authority": {
     "route_source": "deployments/kubernetes/configmaps/apisix-routes.yaml",
-    "route_source_sha256": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79",
-    "rendered_apisix_sha256": "bc1729d4bacca6ac81719f23dc22d1ce428a9d0ca7dfd895de7b2a7de70753fe",
+    "route_source_sha256": "fa960953bfd002bd6f226505b9dbb56ae5a59fa6d95587ba35c1ee64979a9c9a",
+    "rendered_apisix_sha256": "132766bc4416b5b92e0bf2f1db3a1858a1ac3d748fa1c4d99f25459c482ee5a9",
     "openapi_source": "contracts/openapi/alignment-v1.openapi.json",
-    "openapi_sha256": "608c229984c26da9a8e05ff908590558038a07f4f4a82d78cfad11fe55255f4a"
+    "openapi_sha256": "38867eb7c364eba78e16574a188edcd41b9460bff341f12770b422e83c921494"
   },
   "trust_zones": {
     "public_web_ui": "static application shell only; no business API authorization",
@@ -50,13 +50,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -65,9 +71,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -81,17 +96,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "115c97f6ad16d1afbbc798a59cf33269e6b7c1b33e786c508649f9f5a9d58758"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "91a806df10bfbdd39621fc81fb698765c73f7acdbbd0fc985983e4158b098594"
     },
     {
       "route_id": "2",
@@ -105,8 +157,10 @@
       "upstream": null,
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -115,9 +169,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -135,16 +198,54 @@
         "redirect": {
           "uri": "/nacos/",
           "ret_code": 301
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected"
-      ],
-      "source_sha256": "66cc07a6e398d24744e6bb49275a0f32de0b66292c8746a5a08775fb401759ab"
+      "blocking_gaps": [],
+      "source_sha256": "1a150d55f4cfe113b3dad9bffb4d51f5cbfe78f6ef3f248c4b43620f139f5991"
     },
     {
       "route_id": "3",
@@ -158,8 +259,10 @@
       "upstream": null,
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -168,9 +271,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -188,16 +300,54 @@
         "redirect": {
           "uri": "/flink/",
           "ret_code": 301
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected"
-      ],
-      "source_sha256": "ca7796ce490237dcbffca13e83bfb013ece828a618c20713bc1aa15782c30050"
+      "blocking_gaps": [],
+      "source_sha256": "4dda282d3a4fa6f305f6ed65e0aefb820ab6e8c447fc3c11cbc925d83f40030e"
     },
     {
       "route_id": "4",
@@ -223,13 +373,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -238,9 +394,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -254,17 +419,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "80c68ebc46c87d60afd302fe10adc096599d2bd9ea7e0bb11f0aae1a33599ca1"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "51e3af80b4da791dbba13974f9cc73e90d4305b75715a3625319e33adc603a70"
     },
     {
       "route_id": "5",
@@ -290,7 +492,16 @@
       "limits": {
         "body_bytes": null,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -308,12 +519,24 @@
         "redirect": {
           "uri": "/auth/",
           "ret_code": 301
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
         }
       },
-      "blocking_gaps": [
-        "gateway_rate_limit_missing"
-      ],
-      "source_sha256": "a43d85447ccb5fc0e0e4fbb3ab7e4156546aca0663117bac11d9a61622c4ecc8"
+      "blocking_gaps": [],
+      "source_sha256": "a214361d7169800b10cd188081e309e2228f4cf3a29a28db6ab3c1ca1b3baf90"
     },
     {
       "route_id": "6",
@@ -327,8 +550,10 @@
       "upstream": null,
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -337,9 +562,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -357,16 +591,54 @@
         "redirect": {
           "uri": "/streampark/",
           "ret_code": 301
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected"
-      ],
-      "source_sha256": "cc2acb347f536b55fcab166224ab140136c242d261ce28a11457eb756e59b797"
+      "blocking_gaps": [],
+      "source_sha256": "4c0a793c1ad479dfca2751e00fdf77acf48454c63afc8fc2bd324e2224a4191d"
     },
     {
       "route_id": "7",
@@ -380,8 +652,10 @@
       "upstream": null,
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -390,9 +664,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -410,16 +693,54 @@
         "redirect": {
           "uri": "/argo/",
           "ret_code": 301
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected"
-      ],
-      "source_sha256": "40f7c7f5a2a827d65598b25d6cd5406d6a3fb9bdbe07e734c1b9b190c8b175a7"
+      "blocking_gaps": [],
+      "source_sha256": "3a7f3f1a38dea949da5169c6e4c117a0ef9753e5c841e050505b4bb9677cf84f"
     },
     {
       "route_id": "8",
@@ -433,8 +754,10 @@
       "upstream": null,
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -443,9 +766,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -463,16 +795,54 @@
         "redirect": {
           "uri": "/nebula/",
           "ret_code": 301
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected"
-      ],
-      "source_sha256": "c3807457dd0e7ad66967388ba5aff2f041b098724a29f7dda802586b4d967dda"
+      "blocking_gaps": [],
+      "source_sha256": "65a08b7bb09e1c84f9898cb4279399b332fcac91b265fac2dc4aea42900ed374"
     },
     {
       "route_id": "9",
@@ -486,8 +856,10 @@
       "upstream": null,
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -496,9 +868,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -516,16 +897,54 @@
         "redirect": {
           "uri": "/minio/",
           "ret_code": 301
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected"
-      ],
-      "source_sha256": "2fae088d2d8264227aa55e6ec3e169c5844d70043abab9a5096a2e569858c9cb"
+      "blocking_gaps": [],
+      "source_sha256": "12488308d841cb0da223da0ec3d6e3eada3ecb397f58a9ffe585a172d55620cd"
     },
     {
       "route_id": "10",
@@ -551,13 +970,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -566,9 +991,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -582,17 +1016,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "9fd2ce407c7c497dcb8c8a6d0dd6f60bbaf01dbb20fb691f71089377a0c0135f"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "0da776e55a9dffb1452581dfd387ca7ae6f59f8d618d8d7553acfd8febc2a66c"
     },
     {
       "route_id": "11",
@@ -619,13 +1090,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -643,9 +1120,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -671,6 +1157,22 @@
           "operation_id": "getAlertBatchAssignment",
           "method": "GET",
           "path": "/api/v1/alerts/batches/assign/{batch_id}",
+          "feature_id": "F-ALERT-004",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createAlertBatchAssignmentCompensation",
+          "method": "POST",
+          "path": "/api/v1/alerts/batches/assign/{batch_id}/compensations",
+          "feature_id": "F-ALERT-004",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAlertBatchAssignmentCompensation",
+          "method": "GET",
+          "path": "/api/v1/alerts/batches/assign/{batch_id}/compensations/{request_id}",
           "feature_id": "F-ALERT-004",
           "required_scope": "alert:write",
           "compatibility_scopes": []
@@ -748,6 +1250,22 @@
           "compatibility_scopes": []
         },
         {
+          "operation_id": "unlinkAlertEvidence",
+          "method": "DELETE",
+          "path": "/api/v1/alerts/{id}/evidence-links/{evidence_id}",
+          "feature_id": "F-ALERT-005",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "linkAlertEvidence",
+          "method": "PUT",
+          "path": "/api/v1/alerts/{id}/evidence-links/{evidence_id}",
+          "feature_id": "F-ALERT-005",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
           "operation_id": "createAlertEvidenceAccess",
           "method": "POST",
           "path": "/api/v1/alerts/{id}/evidence/access",
@@ -761,6 +1279,22 @@
           "path": "/api/v1/alerts/{id}/evidence/{evidence_id}/download",
           "feature_id": "F-ALERT-005",
           "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAlertFeedbackHistory",
+          "method": "GET",
+          "path": "/api/v1/alerts/{id}/feedback",
+          "feature_id": "F-ALERT-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "adjudicateAlertFeedback",
+          "method": "POST",
+          "path": "/api/v1/alerts/{id}/feedback",
+          "feature_id": "F-ALERT-001",
+          "required_scope": "alert:write",
           "compatibility_scopes": []
         },
         {
@@ -844,16 +1378,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "b185f7035ad97384f130a886a49a84a52fccb5bbf38f8c35735ec4a6bded9958"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "dce9802e128b9251ac602e46930472835117d5ac54012fbbd9c7419fb7d29d97"
     },
     {
       "route_id": "12",
@@ -879,13 +1451,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -897,9 +1475,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -938,16 +1525,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "3e55f555a25b226e41b059e5a3f976c0c98d0e2ded1f32f17873c098bf7b2a55"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "18f01be3932d3e79567ffb9e1046207dbc954df0edbe048a4233006e3046a631"
     },
     {
       "route_id": "13",
@@ -973,13 +1598,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -990,9 +1621,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -1013,18 +1653,80 @@
           "feature_id": "F-GRAPH-001",
           "required_scope": "graph:read",
           "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getGraphProjectionStatus",
+          "method": "GET",
+          "path": "/api/v1/graph/projections/status",
+          "feature_id": "F-GRAPH-004",
+          "required_scope": "graph:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getGovernedGraphWorkbench",
+          "method": "GET",
+          "path": "/api/v1/graph/workbench",
+          "feature_id": "F-GRAPH-001",
+          "required_scope": "graph:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getGovernedGraphWorkbenchPath",
+          "method": "GET",
+          "path": "/api/v1/graph/workbench/path",
+          "feature_id": "F-GRAPH-002",
+          "required_scope": "graph:read",
+          "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "3c4e7e761a3395d9076247a8d7601a6be40f33250107bb667422da402e7a1f06"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "e6f3b7b9058feaf888fbf18f21e3e937e2ad0ee70b656536b2505df55f3c56cf"
     },
     {
       "route_id": "14",
@@ -1051,13 +1753,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -1066,9 +1774,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -1082,16 +1799,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "019e4b5e7cee650d3e37bb1fe7fd10d882d8828ddbcf601c9d5fa55275e7f84b"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "38d3c1b32f1f38abbcfe18f4c90bf001f99389d5345b0a10253119a2849647fa"
     },
     {
       "route_id": "15",
@@ -1118,13 +1873,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 120,
+          "read": 120
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -1133,9 +1894,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 268435456,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -1149,16 +1919,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "f516cff225e7fabf6c0aa493017e86d7aab9772b08bae5d859512d3359d883da"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 268435456
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "3f27a3d6c08f3a33a8beef4fc067bf4e0c4fc04a58ac50e1446717417e669b7d"
     },
     {
       "route_id": "16",
@@ -1185,13 +1993,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -1205,9 +2019,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -1422,16 +2245,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "9b77a2f5f3dff2a464cbc41b2314add675c9849cc2c8942e17d56c0ce48481f1"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "e21b9606b061079ac04cc90a7a12a3467d3e08c1c7224040545313dfd7f4c3c9"
     },
     {
       "route_id": "17",
@@ -1458,13 +2319,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -1476,9 +2343,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -1605,16 +2481,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "eeb322c509713395ccc21df5dd9ee014efd4034f5f5d799c9fec24be88c353d4"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "e46677661c1633836abde6a0de11eff8afafa32c85efa36f3dfc9a002e2226bc"
     },
     {
       "route_id": "18",
@@ -1641,13 +2555,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -1663,9 +2583,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -1768,16 +2697,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "826216d1862cef72cc5391e2ba817632639b4f86c4fc9769d5a834eb4d33db4a"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "63839776426e884285bcb8fb28af4f1b1efea08e1d6fe096e6470ec80d3a41f0"
     },
     {
       "route_id": "19",
@@ -1804,24 +2771,41 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
-        "required_scopes": [],
+        "required_scopes": [
+          "graph:read"
+        ],
         "operations_missing_scope": []
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
-        "field_limits": null,
-        "rate_limit_plugins": []
+        "body_bytes": 10485760,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -1834,17 +2818,96 @@
         "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
-      "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
+      "openapi_operations": [
+        {
+          "operation_id": "listAttackChains",
+          "method": "GET",
+          "path": "/api/v1/attack-chains",
+          "feature_id": "F-ATTACKCHAIN-001",
+          "required_scope": "graph:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAttackChainSnapshot",
+          "method": "GET",
+          "path": "/api/v1/attack-chains/{id}",
+          "feature_id": "F-ATTACKCHAIN-001",
+          "required_scope": "graph:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listAttackChainSnapshotEvidence",
+          "method": "GET",
+          "path": "/api/v1/attack-chains/{id}/evidence",
+          "feature_id": "F-ATTACKCHAIN-001",
+          "required_scope": "graph:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listAttackChainSnapshotPaths",
+          "method": "GET",
+          "path": "/api/v1/attack-chains/{id}/paths",
+          "feature_id": "F-ATTACKCHAIN-001",
+          "required_scope": "graph:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAttackChainSnapshotPhases",
+          "method": "GET",
+          "path": "/api/v1/attack-chains/{id}/phases",
+          "feature_id": "F-ATTACKCHAIN-001",
+          "required_scope": "graph:read",
+          "compatibility_scopes": []
+        }
       ],
-      "source_sha256": "b4c1e79aae84a4d91641e5d41cf9c8239edcbc30a15a4686852112c97fa47f57"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "f4385f25fbb5b302db62bc1b2c1dedddf462f37c781acbd4549ddbbc28cd8b5a"
     },
     {
       "route_id": "20",
@@ -1870,8 +2933,12 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": false,
@@ -1889,6 +2956,13 @@
         "field_limits": null,
         "rate_limit_plugins": []
       },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
+      },
       "cors": null,
       "cache": null,
       "websocket": false,
@@ -1901,12 +2975,15 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "b83a3aebad48610c7a182e34fd0e6abd6896a77d4bad9bf0ebecd7c439a45bbd"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "3ecfa22368e9782f768b9cf9153283f741a2b8d98cd33821ef7803c2b745c22d"
     },
     {
       "route_id": "21",
@@ -1933,24 +3010,43 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 120,
+          "read": 120
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
-        "required_scopes": [],
+        "required_scopes": [
+          "pcap:download",
+          "pcap:read",
+          "pcap:write"
+        ],
         "operations_missing_scope": []
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
-        "field_limits": null,
-        "rate_limit_plugins": []
+        "body_bytes": 1073741824,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -1963,17 +3059,120 @@
         "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
-      "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
+      "openapi_operations": [
+        {
+          "operation_id": "downloadPcapForensicsResult",
+          "method": "GET",
+          "path": "/api/v1/pcap/download/{key}",
+          "feature_id": "F-FORENSICS-001",
+          "required_scope": "pcap:download",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listPcapForensicsJobs",
+          "method": "GET",
+          "path": "/api/v1/pcap/jobs",
+          "feature_id": "F-FORENSICS-001",
+          "required_scope": "pcap:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "createPcapForensicsJob",
+          "method": "POST",
+          "path": "/api/v1/pcap/jobs",
+          "feature_id": "F-FORENSICS-001",
+          "required_scope": "pcap:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getPcapForensicsJob",
+          "method": "GET",
+          "path": "/api/v1/pcap/jobs/{id}",
+          "feature_id": "F-FORENSICS-001",
+          "required_scope": "pcap:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "cancelPcapForensicsJob",
+          "method": "POST",
+          "path": "/api/v1/pcap/jobs/{id}/cancel",
+          "feature_id": "F-FORENSICS-001",
+          "required_scope": "pcap:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "retryPcapForensicsJob",
+          "method": "POST",
+          "path": "/api/v1/pcap/jobs/{id}/retry",
+          "feature_id": "F-FORENSICS-001",
+          "required_scope": "pcap:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "presignPcapForensicsResult",
+          "method": "POST",
+          "path": "/api/v1/pcap/presign",
+          "feature_id": "F-FORENSICS-001",
+          "required_scope": "pcap:download",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "verifyPcapForensicsResult",
+          "method": "POST",
+          "path": "/api/v1/pcap/verify",
+          "feature_id": "F-FORENSICS-001",
+          "required_scope": "pcap:read",
+          "compatibility_scopes": []
+        }
       ],
-      "source_sha256": "d603b25523ce24d3f7b6d3aca59bbec8cb95239d3afe6e64cc57551c715cfc08"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 1073741824
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "1dc3f4ae2bc7c592d8c4503f88d76cb6e731ed4b1f74e32d49d66ddacc217b3d"
     },
     {
       "route_id": "22",
@@ -2000,13 +3199,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2015,9 +3220,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2031,16 +3245,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "9fdb7e963288d09baaf1602318d34e48f5192dedcd5e6a08b801be465d3d7a27"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "139befa5a5d8e247ab3d5779ae5a2da502b3e93963a56a16b563e7271f062657"
     },
     {
       "route_id": "23",
@@ -2067,13 +3319,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2085,9 +3343,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2142,16 +3409,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "15224fc5c896629584c4780a4a59ff122b93a8e687326105e8a5709d6eca35dc"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "32c99cbfff1f7ad1aed042cd526497edd2985606a63cfe23d8e87f1a59af1d48"
     },
     {
       "route_id": "24",
@@ -2178,13 +3483,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2197,9 +3508,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2238,16 +3558,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "26362c0481384146c430125257b4976da5935c288ab6b7369e54ab729e1d7440"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "ca78a53dfa26397186a113b6265c29bc2680f8cea3a9bca73ef50501f8bd4759"
     },
     {
       "route_id": "25",
@@ -2274,24 +3632,42 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
-        "required_scopes": [],
+        "required_scopes": [
+          "alert:read",
+          "alert:write"
+        ],
         "operations_missing_scope": []
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
-        "field_limits": null,
-        "rate_limit_plugins": []
+        "body_bytes": 10485760,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2304,17 +3680,128 @@
         "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
-      "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
+      "openapi_operations": [
+        {
+          "operation_id": "submitEncryptedTrafficEgressAction",
+          "method": "POST",
+          "path": "/api/v1/encrypted-traffic/egress-actions",
+          "feature_id": "F-ENCRYPTED-002",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getEncryptedTrafficEvidence",
+          "method": "GET",
+          "path": "/api/v1/encrypted-traffic/evidence",
+          "feature_id": "F-ENCRYPTED-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "submitEncryptedTrafficEvidenceAction",
+          "method": "POST",
+          "path": "/api/v1/encrypted-traffic/evidence-actions",
+          "feature_id": "F-ENCRYPTED-002",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getEncryptedExfiltrationAnalytics",
+          "method": "GET",
+          "path": "/api/v1/encrypted-traffic/exfiltration",
+          "feature_id": "F-ENCRYPTED-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listEncryptedTrafficJA3",
+          "method": "GET",
+          "path": "/api/v1/encrypted-traffic/ja3",
+          "feature_id": "F-ENCRYPTED-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "listEncryptedTrafficSessions",
+          "method": "GET",
+          "path": "/api/v1/encrypted-traffic/sessions",
+          "feature_id": "F-ENCRYPTED-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getEncryptedTrafficSnapshot",
+          "method": "GET",
+          "path": "/api/v1/encrypted-traffic/snapshot",
+          "feature_id": "F-ENCRYPTED-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getEncryptedTrafficStats",
+          "method": "GET",
+          "path": "/api/v1/encrypted-traffic/stats",
+          "feature_id": "F-ENCRYPTED-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getEncryptedTunnelAnalytics",
+          "method": "GET",
+          "path": "/api/v1/encrypted-traffic/tunnels",
+          "feature_id": "F-ENCRYPTED-001",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        }
       ],
-      "source_sha256": "67591acf2245d8f13577a71507076831f69cec52e99a3088312ba25d6f17026c"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "bb82c85aeed7e0914d45d200541a3dc945d202e66e75ef9f16a1652d10693c25"
     },
     {
       "route_id": "26",
@@ -2341,13 +3828,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2356,9 +3849,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2372,16 +3874,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "7d1030bf22d8062d3f288f9d3571084f55bb2451aa05524a20883b5d2eab0096"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "bb151aa7cb6c917697c69275a64b63726e3b2d228ad64793891662dd2559c210"
     },
     {
       "route_id": "27",
@@ -2408,24 +3948,41 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
-        "required_scopes": [],
+        "required_scopes": [
+          "alert:write"
+        ],
         "operations_missing_scope": []
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
-        "field_limits": null,
-        "rate_limit_plugins": []
+        "body_bytes": 10485760,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2438,17 +3995,96 @@
         "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
-      "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
+      "openapi_operations": [
+        {
+          "operation_id": "decideBehaviorBaselineApprovalV1",
+          "method": "POST",
+          "path": "/api/v1/baselines/{id}/approvals/{approval_id}/decision",
+          "feature_id": "F-BASELINE-001",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "requestBehaviorBaselineBuildV1",
+          "method": "POST",
+          "path": "/api/v1/baselines/{id}/builds",
+          "feature_id": "F-BASELINE-001",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "evaluateBehaviorBaselineV1",
+          "method": "POST",
+          "path": "/api/v1/baselines/{id}/evaluations",
+          "feature_id": "F-BASELINE-001",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "requestBehaviorBaselineRollbackV1",
+          "method": "POST",
+          "path": "/api/v1/baselines/{id}/rollbacks",
+          "feature_id": "F-BASELINE-001",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "requestBehaviorBaselineApprovalV1",
+          "method": "POST",
+          "path": "/api/v1/baselines/{id}/versions/{version}/approvals",
+          "feature_id": "F-BASELINE-001",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        }
       ],
-      "source_sha256": "eb5049eaa2d8f836b2939b315ce2cc8bb8578d64be3dc62acd37a9eec86d8dda"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "d44f1480173fc518156f0be2a18104f5a108ad38730f2ad9c688472e325e4ee7"
     },
     {
       "route_id": "28",
@@ -2475,13 +4111,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2490,9 +4132,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2506,16 +4157,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "3046a73d8a21b6ad10c18773edc85215e4534ba1b388577e19431c7694970259"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "ef9501f42fdf496e1fa12fcc007611d4fead046b09f0b7ec49d1c11ec5b40c5c"
     },
     {
       "route_id": "29",
@@ -2541,13 +4230,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2556,9 +4251,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2572,16 +4276,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "4a7e9794947a186eac7b2da683935126103abe10ea18fe10380d13f1bc7c35f6"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "23bfdd2f3f04d87d51318c3ccf5e799a940fb6d8706107bd8aec168ae6332f96"
     },
     {
       "route_id": "30",
@@ -2608,13 +4350,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2626,9 +4374,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2667,16 +4424,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "205beb433cd9a77f2e3f3395f06410892d578f4e079cbcad61f3a34cd352e904"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "b2fd1b32f0c22c55b63c2563e478e07170bc6f7c083a9900d83c108b09764b1a"
     },
     {
       "route_id": "31",
@@ -2703,13 +4498,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2718,9 +4519,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2734,16 +4544,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "744bcf9006ae4234ab97eeda395ccb39ac4d8059e6d3179ac689d2cbe48a6057"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "ee08e90d1bb7aea2d1b3a6568cb3043806eb17c13cbfa19f41c29e158bf8a234"
     },
     {
       "route_id": "32",
@@ -2770,13 +4618,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 120,
+          "read": 120
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2785,9 +4639,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 268435456,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2801,16 +4664,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "1ce628dd83dff57bc35db7e6eb47c7bee7a1ebd6ba5e0a3f95bd7e7dfbed5157"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 268435456
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "bd57eb3059449c4371b325768a7637b5cdb66df316deed4ccb43933bff9111d9"
     },
     {
       "route_id": "33",
@@ -2837,24 +4738,42 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
-        "required_scopes": [],
+        "required_scopes": [
+          "model:activate",
+          "model:read"
+        ],
         "operations_missing_scope": []
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
-        "field_limits": null,
-        "rate_limit_plugins": []
+        "body_bytes": 10485760,
+        "field_limits": "openapi_schema",
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2867,17 +4786,80 @@
         "authority": "deployments/kubernetes/configmaps/apisix-routes.yaml",
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
-      "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
+      "openapi_operations": [
+        {
+          "operation_id": "getGovernedModelRollbackReceiptV2",
+          "method": "GET",
+          "path": "/api/v1/models/{id}/rollbacks/{job_id}",
+          "feature_id": "F-MODEL-001",
+          "required_scope": "model:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getActiveModelVersion",
+          "method": "GET",
+          "path": "/api/v1/models/{id}/versions/active",
+          "feature_id": "F-MODEL-001",
+          "required_scope": "model:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "requestGovernedModelRollbackV2",
+          "method": "POST",
+          "path": "/api/v1/models/{id}/versions/{version}/rollback",
+          "feature_id": "F-MODEL-001",
+          "required_scope": "model:activate",
+          "compatibility_scopes": []
+        }
       ],
-      "source_sha256": "6c9632c8c4f3801ec5196b692b6b4635fc80faa3aba5c35e88e0411a8b0cf4bc"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "9b23889e2a8d382a145df46db9828be1b989decfcf12e7fe44f71fed45a0bda0"
     },
     {
       "route_id": "34",
@@ -2904,13 +4886,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2919,9 +4907,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -2935,16 +4932,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "d4a5bed9ad5881eb93c10c98e5cefdc451b7a77bae5dbdeebdfd1e24293292d4"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "cc10d313e28ce374fb83f71525390bccdb32eb4609cdb4dd1f9a96b312f1c26d"
     },
     {
       "route_id": "35",
@@ -2971,13 +5006,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -2986,9 +5027,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3002,16 +5052,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "d376620b014597b02c5b1c4fee122c7f10d025e66e5c88f6388b5c1e19433a90"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "4d8670b5325f1b128b5c2bdee7006d14053a785f2a606c9b6093fa95eb9f49f9"
     },
     {
       "route_id": "36",
@@ -3038,13 +5126,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3053,9 +5147,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3069,16 +5172,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "bc2b5e3b38d57d21f826abfd730ab3042fab5c43cdd2e46fdfa5c23f34c184e3"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "e1faef97564f5a8160222a23df6f6271080a52d772b9a8ecf8d88e23311fe1df"
     },
     {
       "route_id": "37",
@@ -3105,13 +5246,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3124,9 +5271,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3187,16 +5343,54 @@
           ]
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "189611c34e99428e90cf1e62a98c262503c63beb0e3a54fabdc064b6634adce6"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "5abc1bf00d671c6c1528cd8a9a06f94ec948c164c821df3840436e8626122a43"
     },
     {
       "route_id": "38",
@@ -3223,13 +5417,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3241,9 +5441,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3338,16 +5547,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "c82a850eea773004e620ba14287595dc7bba62808b649f315dac0178c49bafb8"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "21d38bc4600e9a16ce3d3c38f87f826c87f2c6cf13d9f8b3ae8731ccf98dc3d4"
     },
     {
       "route_id": "39",
@@ -3374,13 +5621,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3389,9 +5642,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3405,16 +5667,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "6564270ac7490310c93b7f0ca2fb2052d15c43ffb1b3066374b1c2391c61ecae"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "4a6464f957da21a22718648dbf889ab74f41b5bbf2e074f62293e4571be6dbe6"
     },
     {
       "route_id": "40",
@@ -3441,13 +5741,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3456,9 +5762,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3472,16 +5787,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "4d627712a653b76a53d7b273ede3142c384fccea5fa1af89cdbde855c51474c4"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "d996eef89d045809178a6ccc90fa52152a8b1800ea73382bde612781427dc6d8"
     },
     {
       "route_id": "41",
@@ -3508,13 +5861,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3523,9 +5882,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3539,16 +5907,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "6204614a5f75804faad1dbec08081f626401ca845ceb1a597e3fd24b6ce8922d"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "4ef71539c4c6c1091ebe07276c71f623e0a492caf476ec1204926e39ea9eadd5"
     },
     {
       "route_id": "42",
@@ -3575,13 +5981,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 3600
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3590,9 +6002,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 1048576,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3606,16 +6027,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "5118c6f8ebc8917b6ef1a66eb88fc12060dc85062f8d0ff30bb84ac29566bef4"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 1048576
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "4817d81d9db96a300be198c9ab8765a8aecc84e1b08e985e4ad5f94d38ab04e5"
     },
     {
       "route_id": "43",
@@ -3641,13 +6100,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3656,9 +6121,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3672,16 +6146,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "ff1c6978b30632c6f849d451f7161406cffcc385680b57ba332cb1feadd71e6a"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "0d77b44a2a513f9d26c8fe1d71b8675f34302264a7503a0b52111d709b902ac3"
     },
     {
       "route_id": "44",
@@ -3708,13 +6220,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3727,9 +6245,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3768,16 +6295,54 @@
           "compatibility_scopes": []
         }
       ],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "01e31079567a285ca5ecddf3a974aa0da14a6f4a623f20eac373870c18b6160f"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "fa7aca6215ab1dac53acf6d0cfd59fcf33bfce45d485d0a354aafc7c7ddb1560"
     },
     {
       "route_id": "45",
@@ -3804,13 +6369,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3821,9 +6392,18 @@
       },
       "tenant_source": "authenticated_tenant_claim",
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": "openapi_schema",
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3849,17 +6429,54 @@
       "plugins": {
         "proxy-rewrite": {
           "uri": "/internal/v1/audit/batches"
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 100,
+          "burst": 200,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "97c27bf2816a9eae904bd380593f890efec475389cd7f9a56697d06a252e20e8"
+      "blocking_gaps": [],
+      "source_sha256": "c20ea2d3131ca7bf8dc728c535f6e95df2d0cd33c54a9811e4979315ce3d3535"
     },
     {
       "route_id": "101",
@@ -3885,13 +6502,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3900,9 +6523,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3916,17 +6548,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "8b06000a7542b6d113a6d421ae58da7bdeb922d3929056476a99ba5ce469b826"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "162f0e88424efe190e5bd6b7524a9272ad8f6bf9662fb13b043943729915d4b7"
     },
     {
       "route_id": "102",
@@ -3952,13 +6621,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -3967,9 +6642,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -3989,18 +6673,54 @@
             "^/nacos(.*)",
             "/nacos$1"
           ]
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "e93cf9e37533419c065e71f60558028b9e9b3431ba1264e3b39f86073d9031da"
+      "blocking_gaps": [],
+      "source_sha256": "0f8e6d7f710ab941ae6c853010d60bee368aae038b90bfdb7508c5a96f399415"
     },
     {
       "route_id": "103",
@@ -4027,13 +6747,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -4042,9 +6768,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4064,18 +6799,54 @@
             "^/flink(.*)",
             "$1"
           ]
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "eff79b38953352b3f8fc750de556c21bd65fb33943c31cebea033fdb1a12669e"
+      "blocking_gaps": [],
+      "source_sha256": "43848451459e99d69080a3e0af9c526bc6a511d28172d04aee068fbe92683f0a"
     },
     {
       "route_id": "104",
@@ -4101,13 +6872,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -4116,9 +6893,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4132,17 +6918,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "ad80f3f0b9deeaa4563fbecea700a794e66de92efc2a08b2001aa78a617574e4"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "5efbb7972a76431c64ccc5ff1b81bb7f3a299b5c19be12dcc82b08b1f1be176d"
     },
     {
       "route_id": "105",
@@ -4168,8 +6991,12 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": false,
@@ -4185,7 +7012,16 @@
       "limits": {
         "body_bytes": null,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4205,14 +7041,24 @@
             "^/auth(.*)",
             "$1"
           ]
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
         }
       },
-      "blocking_gaps": [
-        "gateway_rate_limit_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "63932e41860b6d22933c6ac56f6599b17e2defe7b8cf9790e55eef371ed9ee29"
+      "blocking_gaps": [],
+      "source_sha256": "61ab9218a1b9acd05d707f67a7bb1d090b73e1140a14269336d4e36b62ec1e34"
     },
     {
       "route_id": "106",
@@ -4238,13 +7084,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -4253,9 +7105,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4275,18 +7136,54 @@
             "^/streampark(.*)",
             "$1"
           ]
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "e2ed7c3c25365b9d771a6ca2cfb939b929156c0a565bc83a901b219ed6d1d2b9"
+      "blocking_gaps": [],
+      "source_sha256": "b33fda5ef4a44352b4a3b0fa178dc77dedbebb697202defd71ad8ee29616de82"
     },
     {
       "route_id": "107",
@@ -4312,13 +7209,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -4327,9 +7230,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4349,18 +7261,54 @@
             "^/argo(.*)",
             "$1"
           ]
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "f6cf2047ae18a2d21ae3a1f8f486d610449895ca62dc9696eafc9a57f3a1de9d"
+      "blocking_gaps": [],
+      "source_sha256": "cc0088f001e96b284f39144c55f7c816b09832a226bf1bdbdfd530f2776b57ff"
     },
     {
       "route_id": "108",
@@ -4386,13 +7334,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -4401,9 +7355,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4423,18 +7386,54 @@
             "^/nebula(.*)",
             "$1"
           ]
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "3b8ef0a9a2e3478b09efad08bef265961e3dca96f2ec15761278c1a452a4def1"
+      "blocking_gaps": [],
+      "source_sha256": "0876e2e288a1aee837910ec9305f5567a263aad3a6018e25d49361a633f0db22"
     },
     {
       "route_id": "109",
@@ -4460,13 +7459,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -4475,9 +7480,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4497,18 +7511,54 @@
             "^/minio(.*)",
             "$1"
           ]
+        },
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
         }
       },
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "b047d535b75c2a8e37398ef8afdb692f2d0690813532bc5990e7027ddf7e8b17"
+      "blocking_gaps": [],
+      "source_sha256": "9f1e97b233fdd5f480e51e6fa87460e0eb0a789e0370d9317f921a5744201320"
     },
     {
       "route_id": "110",
@@ -4534,13 +7584,19 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 60,
+          "read": 60
+        },
+        "retries": 0
       },
       "authentication": {
         "required": true,
-        "observed_plugins": [],
-        "status": "missing"
+        "observed_plugins": [
+          "openid-connect"
+        ],
+        "status": "implemented"
       },
       "authorization": {
         "enforcement": "service_operation_scope",
@@ -4549,9 +7605,18 @@
       },
       "tenant_source": null,
       "limits": {
-        "body_bytes": null,
+        "body_bytes": 10485760,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4565,17 +7630,54 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_authentication_missing",
-        "gateway_body_limit_missing",
-        "gateway_rate_limit_missing",
-        "gateway_request_validation_missing",
-        "management_entry_not_gateway_protected",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "cfb9170369851e52cf4bd0600c65c498aafd8390e0d2bec3e502e469516d8de9"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        },
+        "openid-connect": {
+          "client_id": "traffic-ui",
+          "client_secret": "$ENV://APISIX_OIDC_CLIENT_SECRET",
+          "discovery": "https://keycloak.iam.svc:8443/realms/master/.well-known/openid-configuration",
+          "bearer_only": true,
+          "realm": "master",
+          "use_jwks": true,
+          "ssl_verify": true
+        },
+        "client-control": {
+          "max_body_size": 10485760
+        },
+        "request-validation": {
+          "header_schema": {
+            "type": "object",
+            "properties": {
+              "content-length": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "content-type": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": true
+          },
+          "rejected_code": 400,
+          "rejected_msg": "request headers violate the gateway contract"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "3f090bb8e69679b95ba59676eabf36ca66f2c2dde5d6b743bbff82657f2b5648"
     },
     {
       "route_id": "111",
@@ -4601,8 +7703,12 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": false,
@@ -4618,7 +7724,16 @@
       "limits": {
         "body_bytes": null,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4632,13 +7747,24 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_rate_limit_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "153fff5843c0e35c537b547501a518499596ccb121ce4141d3b5a5b9d193efe7"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "0340cd68fca77da9777aacfab26ab74b8ba7a5c133b96c62660abf96198f166f"
     },
     {
       "route_id": "112",
@@ -4664,8 +7790,12 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": false,
@@ -4681,7 +7811,16 @@
       "limits": {
         "body_bytes": null,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4695,13 +7834,24 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_rate_limit_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "c6def0816b954560acec91f227dac582b27fa7d2151d511dd969ab34b2fc30c0"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "28990969704b20d37643bce3c824d3fcfbf44b1110d1af8ea71fd82f8d9e094e"
     },
     {
       "route_id": "113",
@@ -4727,8 +7877,12 @@
             ]
           }
         ],
-        "timeout": null,
-        "retries": null
+        "timeout": {
+          "connect": 5,
+          "send": 30,
+          "read": 30
+        },
+        "retries": 0
       },
       "authentication": {
         "required": false,
@@ -4744,7 +7898,16 @@
       "limits": {
         "body_bytes": null,
         "field_limits": null,
-        "rate_limit_plugins": []
+        "rate_limit_plugins": [
+          "limit-req"
+        ]
+      },
+      "trace": {
+        "plugin": "request-id",
+        "header_name": "X-Request-ID",
+        "include_in_response": true,
+        "algorithm": "uuid",
+        "status": "implemented"
       },
       "cors": null,
       "cache": null,
@@ -4758,17 +7921,28 @@
         "strategy": "restore_previous_content_hash_and_restart_statefulset"
       },
       "openapi_operations": [],
-      "plugins": {},
-      "blocking_gaps": [
-        "gateway_rate_limit_missing",
-        "upstream_retry_implicit",
-        "upstream_timeout_implicit"
-      ],
-      "source_sha256": "04a887b768df67d30a662565748775595853423a12e4447a48d3e5e1efa8a238"
+      "plugins": {
+        "request-id": {
+          "header_name": "X-Request-ID",
+          "include_in_response": true,
+          "algorithm": "uuid"
+        },
+        "limit-req": {
+          "rate": 30,
+          "burst": 60,
+          "key": "remote_addr",
+          "key_type": "var",
+          "nodelay": true,
+          "rejected_code": 429,
+          "policy": "local"
+        }
+      },
+      "blocking_gaps": [],
+      "source_sha256": "17452ee97dab778bf59fe230d7da5d1a46f28ae965f1a6f26da8bfd91b9a705d"
     }
   ],
   "openapi_coverage": {
-    "operations": 104,
+    "operations": 143,
     "uncovered_operation_ids": [],
     "overlapping_operation_routes": {
       "acknowledgeProbeOperation": [
@@ -4790,18 +7964,10 @@
     "routes": 58,
     "route_ids": 58,
     "protected_routes": 52,
-    "protected_routes_with_gateway_auth": 0,
-    "routes_with_blocking_gaps": 58,
-    "declared_services": 62,
-    "gap_counts": {
-      "gateway_authentication_missing": 52,
-      "gateway_body_limit_missing": 52,
-      "gateway_rate_limit_missing": 57,
-      "gateway_request_validation_missing": 52,
-      "management_entry_not_gateway_protected": 18,
-      "upstream_retry_implicit": 51,
-      "upstream_timeout_implicit": 51
-    }
+    "protected_routes_with_gateway_auth": 52,
+    "routes_with_blocking_gaps": 0,
+    "declared_services": 64,
+    "gap_counts": {}
   },
   "acceptance": {
     "catalog_integrity_gate": "must_pass",
@@ -4815,5 +7981,5 @@
       "admin_api_external_exposure"
     ]
   },
-  "catalog_sha256": "0720e5502183fd5fc3134c7d7ad4ba34d599b0d4f334526869fa5ccefec63c5e"
+  "catalog_sha256": "5e31ff80a261039a6db3ce3a4dff0d74b24659563db72d3ed320801f439444b9"
 }

@@ -1,0 +1,3237 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M01_N015_EARLY_TRUST_FUNCTION_COMPLETE_STATIC_DESIGN",
+  "artifact_status": "STATIC_DESIGN_COMPLETE_REVIEW_IMPLEMENTATION_AND_EXECUTION_BLOCKED",
+  "source_refs": [
+    {
+      "role": "V2_ALLOCATION",
+      "path": "contracts/alignment/m01-early-trust-train-allocation.v2.json",
+      "sha256": "8591f573784181e82e1bd2ae139cd225cf5d11b7f267b1c2d85b47efb2f47104"
+    },
+    {
+      "role": "V2_CATALOG",
+      "path": "contracts/alignment/m01-early-trust-train-catalog.v2.json",
+      "sha256": "69a408355ef346e124ffd87331a7e1c6b98379ddf0a9b134ff47495f423acfad"
+    },
+    {
+      "role": "ACTIVE_BUILDER",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "sha256": "20c813744d54884707bc3f919c2053e883d81de877707418e6819d96726b454c"
+    },
+    {
+      "role": "FUNCTION_REVIEW_SCHEMA",
+      "path": "contracts/alignment/function-design-review-receipt.schema.json",
+      "sha256": "092c53b474fc7d50cddce5e999a4ecdafc2cb1440ddbf70929f1376e2f3ff40e"
+    },
+    {
+      "role": "NON_FUNCTION_REVIEW_SCHEMA",
+      "path": "contracts/alignment/non-function-design-exemption.schema.json",
+      "sha256": "e6e229492052b4f522f4494c1b1f8065620f81e664bdd56afd89c081263452c1"
+    }
+  ],
+  "design_scope": {
+    "parent_task_id": "T1-M01-N015",
+    "terminal_atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion",
+    "non_terminal_member_count": 36,
+    "function_leaf_count": 25,
+    "type_leaf_count": 3,
+    "non_function_leaf_count": 8,
+    "covered_atomic_pr_ids": [
+      "T1-M01-P057-CTR-n015-s1",
+      "T1-M01-P058-REF-n015-s2",
+      "T1-M01-P059-REF-n015-s3",
+      "T1-M01-P060-REF-n015-s4",
+      "T1-M01-P061-REF-n015-s5",
+      "T1-M01-P062-REF-n015-s6",
+      "T1-M01-P067-REF-n015-s10",
+      "T1-M01-P068-REF-n015-s11",
+      "T1-M01-P069-REF-n015-s12",
+      "T1-M01-P070-REF-n015-s13",
+      "T1-M01-P071-REF-n015-s14",
+      "T1-M01-P072-REF-n015-s15",
+      "T1-M01-P073-REF-n015-s16",
+      "T1-M01-P074-REF-n015-s17",
+      "T1-M01-P075-REF-n015-s18",
+      "T1-M01-P076-REF-n015-s19",
+      "T1-M01-P077-REF-n015-s20",
+      "T1-M01-P078-REF-n015-s21",
+      "T1-M01-P079-OPS-n015-s22",
+      "T1-M01-P080-TST-PRE-n015-s23",
+      "T1-M01-P081-TST-PRE-n015-s24",
+      "T1-M01-P082-OPS-n015-s25",
+      "T1-M01-P083-OPS-n015-s26",
+      "T1-M01-P084-TST-POST-n015-s27",
+      "T1-M01-P085-TST-POST-n015-s28",
+      "T1-M01-P086-WRT-n015-s29",
+      "T1-M01-P087-REF-n015-s30",
+      "T1-M01-P088-REF-n015-s31",
+      "T1-M01-P089-REF-n015-s32",
+      "T1-M01-P090-REF-n015-s33",
+      "T1-M01-P091-REF-n015-s34",
+      "T1-M01-P092-REF-n015-s35",
+      "T1-M01-P093-REF-n015-s36",
+      "T1-M01-P094-REF-n015-s37",
+      "T1-M01-P095-WRT-n015-s38",
+      "T1-M01-P096-WRT-n015-s39"
+    ],
+    "excluded_terminal_contract": "P066 uses the standard task-completion candidate and current-evidence-index contracts; no executable function is invented",
+    "current_execution_status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+  },
+  "data_contracts": [
+    {
+      "type_name": "CandidateRepository",
+      "purpose": "Immutable explicit repository identity used by every candidate read and Git command.",
+      "required_fields": [
+        "root: Path",
+        "git_dir: Path",
+        "identity_sha256: str"
+      ],
+      "invariants": [
+        "root is absolute canonical non-symlink directory",
+        "Git top-level equals root exactly"
+      ],
+      "secret_policy": "Contains paths and hashes only; no credentials or environment-derived secrets."
+    },
+    {
+      "type_name": "CandidateTrustContext",
+      "purpose": "Binds a trust decision to candidate profile environment purpose and policy.",
+      "required_fields": [
+        "candidate_commit: str",
+        "profile_id: str",
+        "environment_id: str",
+        "purpose: str",
+        "policy_fingerprint: str"
+      ],
+      "invariants": [
+        "all identity fields are non-empty and canonical",
+        "candidate commit is an immutable full object ID"
+      ],
+      "secret_policy": "Carries public identity metadata only and must never embed keys tokens or secret values."
+    },
+    {
+      "type_name": "SignatureVerificationRequest",
+      "purpose": "Complete domain-separated payload and signer material submitted to the protected verifier.",
+      "required_fields": [
+        "request_id: str",
+        "payload_sha256: str",
+        "candidate_commit: str",
+        "profile_id: str",
+        "environment_id: str",
+        "purpose: str",
+        "policy_fingerprint: str",
+        "nonce: str",
+        "issued_at: str",
+        "expires_at: str",
+        "certificate_chain: list[str]",
+        "signature: str",
+        "algorithm: str"
+      ],
+      "invariants": [
+        "canonical payload covers every identity field",
+        "validity interval is bounded and ordered",
+        "nonce is unique within policy purpose and environment"
+      ],
+      "secret_policy": "Certificates and signatures are public verification material; private keys and bearer credentials are forbidden."
+    },
+    {
+      "type_name": "SignatureVerificationAttestation",
+      "purpose": "Typed verifier result bound to every input identity and verified component digest.",
+      "required_fields": [
+        "request_id: str",
+        "status: str",
+        "payload_sha256: str",
+        "policy_fingerprint: str",
+        "signer_fingerprint: str",
+        "verified_roles: list[str]",
+        "replay_claim_id: str",
+        "verified_at: str"
+      ],
+      "invariants": [
+        "PASS contains no omitted request identity",
+        "REJECT and ERROR cannot be interpreted as PASS",
+        "attestation schema rejects unknown status values"
+      ],
+      "secret_policy": "Outputs fingerprints roles hashes and timestamps only; error text is redacted and no secret is serialized."
+    },
+    {
+      "type_name": "LoadedTrustPolicy",
+      "purpose": "Validated immutable policy with pinned anchors algorithms roles scopes and protected handles.",
+      "required_fields": [
+        "fingerprint: str",
+        "trust_anchors: tuple[bytes, ...]",
+        "allowed_algorithms: frozenset[str]",
+        "role_rules: Mapping[str, Any]",
+        "revocation_mode: str",
+        "secret_handles: tuple[SecretHandle, ...]"
+      ],
+      "invariants": [
+        "fingerprint equals exact policy bytes",
+        "revocation mode is hard fail",
+        "algorithms and roles contain no wildcard expansion"
+      ],
+      "secret_policy": "Only opaque SecretHandle values may be retained; raw resolved secret bytes are non-serializable and non-loggable."
+    },
+    {
+      "type_name": "VerifiedSignerAuthority",
+      "purpose": "Normalized signer certificate identity plus the exact roles and scopes authorized for one request.",
+      "required_fields": [
+        "signer_fingerprint: str",
+        "chain_fingerprints: tuple[str, ...]",
+        "verified_roles: frozenset[str]",
+        "verified_scopes: frozenset[str]",
+        "valid_until: datetime"
+      ],
+      "invariants": [
+        "chain terminates at a pinned anchor",
+        "roles and scopes are explicit policy members",
+        "valid_until does not exceed request or certificate expiry"
+      ],
+      "secret_policy": "Contains public certificate fingerprints and authorization labels only; key material is forbidden."
+    },
+    {
+      "type_name": "ReplayClaim",
+      "purpose": "Linearizable nonce claim that distinguishes first use exact retry and conflicting replay.",
+      "required_fields": [
+        "claim_id: str",
+        "claim_key_sha256: str",
+        "payload_sha256: str",
+        "disposition: str",
+        "expires_at: datetime"
+      ],
+      "invariants": [
+        "disposition is CREATED or IDEMPOTENT for accepted calls",
+        "one claim key cannot bind two payload identities",
+        "expiry is bounded by policy"
+      ],
+      "secret_policy": "Stores identity hashes and expiry only; request payload signature certificate and credentials are forbidden."
+    },
+    {
+      "type_name": "SignatureVerificationRuntime",
+      "purpose": "Immutable process runtime containing exact policy secret replay audit clock and server dependency handles.",
+      "required_fields": [
+        "policy: LoadedTrustPolicy",
+        "secret_resolver: SecretResolver",
+        "replay_store: ReplayStore",
+        "attestation_ledger: AttestationLedger",
+        "clock: Clock",
+        "runtime_id: str"
+      ],
+      "invariants": [
+        "runtime identity hashes public dependency identities",
+        "replay store and ledger are exclusive persistent durable handles",
+        "runtime never contains raw secret bytes",
+        "policy is loaded before readiness"
+      ],
+      "secret_policy": "Only opaque non-serializable secret handles are reachable; configuration logs and health output exclude raw values."
+    }
+  ],
+  "function_contracts": [
+    {
+      "contract_id": "FC-M01-N015-P058",
+      "atomic_pr_id": "T1-M01-P058-REF-n015-s2",
+      "path": "scripts/alignment/test_trusted_signature_verifier.py",
+      "qualified_symbol": "main",
+      "change_kind": "planned_create",
+      "companion_target_locators": [
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/payload-substitution.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/wrong-authority-role.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/certificate-time-revocation-eku.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/policy-fingerprint-drift.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/chain-root-algorithm-invalid.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-candidate-profile-environment-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/cnas-scope-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/verifier-transport-or-shape-failure.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/self-reported-pass-random-signature.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-replay.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-positive-run/tst-post/protected-positive-attestation.json#/"
+      ],
+      "signature_before": null,
+      "signature_after": "def main(argv: Sequence[str] | None = None) -> int",
+      "responsibility": "Run the immutable eleven-case positive and fail-closed verifier matrix without enabling a registry or runtime.",
+      "inputs": [
+        "validated CLI arguments",
+        "immutable fixture directory",
+        "expected case manifest"
+      ],
+      "outputs": [
+        "process exit code",
+        "in-memory per-case observations"
+      ],
+      "body_steps": [
+        "B01 parse only the documented fixture and endpoint arguments",
+        "B02 load the exact eleven fixture identities in deterministic order",
+        "B03 invoke verify_exact_payload once per case with bounded transport",
+        "B04 compare typed outcome and rejection code with the fixture oracle",
+        "B05 return zero only when one positive and ten negative cases exactly match"
+      ],
+      "error_branches": [
+        "unknown or duplicate case identity aborts the run",
+        "transport or response-shape failure is recorded as fail-closed",
+        "any expected-versus-actual drift returns a non-zero exit"
+      ],
+      "side_effects": [],
+      "security_boundary": "The runner never treats fixture self-reporting as authority and never emits secret material.",
+      "atomicity": "All cases are evaluated before a zero exit is possible.",
+      "idempotency": "The same immutable fixtures and endpoint response produce the same exit code.",
+      "callers": [
+        "P080 G0 evidence runner"
+      ],
+      "callees": [
+        "verify_exact_payload"
+      ],
+      "tests": [
+        "TC-M01-TRUST-01"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P059",
+      "atomic_pr_id": "T1-M01-P059-REF-n015-s3",
+      "path": "scripts/alignment/verify_trusted_signature.py",
+      "qualified_symbol": "verify_exact_payload",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def verify_exact_payload(request: SignatureVerificationRequest, *, endpoint: str, policy_fingerprint: str, timeout_seconds: float = 5.0, max_response_bytes: int = 262144) -> SignatureVerificationAttestation",
+      "responsibility": "Send one exact typed verification payload and accept only a bounded attestation bound to the request and policy.",
+      "inputs": [
+        "SignatureVerificationRequest",
+        "protected endpoint URL",
+        "pinned policy fingerprint",
+        "timeout and response byte bounds"
+      ],
+      "outputs": [
+        "SignatureVerificationAttestation",
+        "typed fail-closed exception"
+      ],
+      "body_steps": [
+        "B01 serialize the request using the request schema without dropping signed fields",
+        "B02 send one POST with explicit content type timeout and response size bound",
+        "B03 reject non-success status or a body that exceeds the byte bound",
+        "B04 parse and schema-check the attestation before reading PASS",
+        "B05 compare request payload policy candidate profile environment nonce and verifier identity",
+        "B06 return only the fully bound typed attestation"
+      ],
+      "error_branches": [
+        "timeout network or TLS failure rejects the request",
+        "HTTP or JSON shape failure rejects the response",
+        "policy request identity or payload binding mismatch rejects PASS",
+        "unknown attestation fields or algorithms reject the response"
+      ],
+      "side_effects": [],
+      "security_boundary": "Only a protected endpoint response with exact request binding can cross the local trust boundary.",
+      "atomicity": "No caller-visible PASS is returned before all response bindings succeed.",
+      "idempotency": "Retries reuse the same request identity and cannot create a different accepted payload.",
+      "callers": [
+        "test_trusted_signature_verifier.main",
+        "build_topic1_task_registry.require_trusted_signature_verifier"
+      ],
+      "callees": [
+        "HTTPS transport",
+        "signature-verification-attestation schema validator"
+      ],
+      "tests": [
+        "TC-M01-TRUST-02",
+        "TC-M01-TRUST-36"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P060",
+      "atomic_pr_id": "T1-M01-P060-REF-n015-s4",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "qualified_symbol": "require_trusted_signature_verifier",
+      "change_kind": "planned_modify",
+      "companion_target_locators": [],
+      "signature_before": "def require_trusted_signature_verifier(context: str) -> None",
+      "signature_after": "def require_trusted_signature_verifier(request: SignatureVerificationRequest, *, client: TrustedSignatureVerifier, context: str) -> SignatureVerificationAttestation",
+      "responsibility": "Replace the unconditional trust hard block with one typed verifier call while retaining fail-closed semantics.",
+      "inputs": [
+        "SignatureVerificationRequest",
+        "TrustedSignatureVerifier client",
+        "human-readable validation context"
+      ],
+      "outputs": [
+        "SignatureVerificationAttestation",
+        "contextual fail-closed exception"
+      ],
+      "body_steps": [
+        "B01 require a non-empty caller context and typed request",
+        "B02 invoke the injected verifier without ambient endpoint discovery",
+        "B03 require attestation status PASS and exact request identity",
+        "B04 translate verifier rejection into a stable contextual error",
+        "B05 return the attestation for the immediate authorization check only"
+      ],
+      "error_branches": [
+        "missing verifier injection preserves the hard block",
+        "typed verifier rejection is never converted to warning",
+        "attestation identity mismatch preserves the hard block"
+      ],
+      "side_effects": [],
+      "security_boundary": "The injected verifier is the only path from untrusted receipt bytes to a trust decision.",
+      "atomicity": "The hard block is lifted for one caller only after complete attestation validation.",
+      "idempotency": "Repeated validation of one immutable request returns the same binding or rejection.",
+      "callers": [
+        "validate_candidate_artifact_refs",
+        "BOM transition validator"
+      ],
+      "callees": [
+        "TrustedSignatureVerifier.verify_exact_payload"
+      ],
+      "tests": [
+        "TC-M01-TRUST-03"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P061",
+      "atomic_pr_id": "T1-M01-P061-REF-n015-s5",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "qualified_symbol": "validate_candidate_artifact_refs",
+      "change_kind": "planned_modify",
+      "companion_target_locators": [],
+      "signature_before": "def validate_candidate_artifact_refs(refs: list[dict[str, Any]], expected_hashes: list[str], candidate_commit: str, context: str) -> None",
+      "signature_after": "def validate_candidate_artifact_refs(refs: list[dict[str, Any]], expected_hashes: list[str], candidate_commit: str, context: str, *, repo_root: Path, verifier: TrustedSignatureVerifier, trust_context: CandidateTrustContext) -> None",
+      "responsibility": "Validate exact candidate artifact identity provenance hashes and trusted signatures using the explicit repository.",
+      "inputs": [
+        "artifact reference list",
+        "exact expected hash list",
+        "candidate commit",
+        "explicit repo_root",
+        "verifier and trust context"
+      ],
+      "outputs": [
+        "None on complete validation",
+        "typed identity provenance or trust rejection"
+      ],
+      "body_steps": [
+        "B01 reject duplicate artifact IDs paths hashes or cardinality drift",
+        "B02 read candidate blobs only through explicit-root helpers",
+        "B03 validate external artifact and provenance paths under the explicit root",
+        "B04 recompute signed provenance core and all payload/signature hashes",
+        "B05 build a typed verification request bound to candidate profile environment and purpose",
+        "B06 call require_trusted_signature_verifier and retain no partial success"
+      ],
+      "error_branches": [
+        "candidate blob absence or digest drift rejects the entire set",
+        "external provenance identity or receipt drift rejects the entire set",
+        "trusted signature rejection prevents caller progress",
+        "repository escape or symlink rejects before reading bytes"
+      ],
+      "side_effects": [],
+      "security_boundary": "Git blobs external artifacts and signatures remain untrusted until exact identity and verifier checks finish.",
+      "atomicity": "The reference set is accepted as a unit with no per-item PASS persisted early.",
+      "idempotency": "Immutable commit references and external hashes yield a stable accept or reject decision.",
+      "callers": [
+        "validate_implementation_candidate"
+      ],
+      "callees": [
+        "read_candidate_blob",
+        "load_hashed_json_artifact",
+        "validate_hashed_artifact",
+        "require_trusted_signature_verifier"
+      ],
+      "tests": [
+        "TC-M01-TRUST-04",
+        "TC-M01-TRUST-34"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P062",
+      "atomic_pr_id": "T1-M01-P062-REF-n015-s6",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "qualified_symbol": "validate_implementation_candidate",
+      "change_kind": "planned_modify",
+      "companion_target_locators": [],
+      "signature_before": "def validate_implementation_candidate(candidate: dict[str, Any], context: str) -> None",
+      "signature_after": "def validate_implementation_candidate(candidate: dict[str, Any], context: str, *, repo_root: Path, verifier: TrustedSignatureVerifier, trust_context: CandidateTrustContext) -> None",
+      "responsibility": "Validate a complete implementation candidate against one explicit repository and one trust context.",
+      "inputs": [
+        "implementation candidate object",
+        "explicit repo_root",
+        "TrustedSignatureVerifier",
+        "CandidateTrustContext"
+      ],
+      "outputs": [
+        "None on complete candidate validity",
+        "typed candidate rejection"
+      ],
+      "body_steps": [
+        "B01 resolve and verify the declared candidate commit in the explicit repository",
+        "B02 recompute the production tree fingerprint with explicit-root helpers",
+        "B03 validate config model supply-chain and runtime artifact sets",
+        "B04 validate prebuilt binary image SBOM and delivery artifact provenance",
+        "B05 bind every trusted signature request to candidate profile environment and purpose",
+        "B06 return only after all candidate categories and trust checks pass"
+      ],
+      "error_branches": [
+        "missing commit or tree fingerprint drift rejects the candidate",
+        "any artifact category mismatch rejects the candidate",
+        "prebuilt image or SBOM provenance mismatch rejects the candidate",
+        "trusted signature failure leaves the execution gate blocked"
+      ],
+      "side_effects": [],
+      "security_boundary": "Candidate content and all external supply-chain claims are hostile until rooted and verified.",
+      "atomicity": "No candidate category can authorize independently of the complete candidate validation.",
+      "idempotency": "One immutable candidate manifest and repository resolve to one deterministic decision.",
+      "callers": [
+        "task registry candidate validator"
+      ],
+      "callees": [
+        "resolve_candidate_repository",
+        "candidate_tree_fingerprint",
+        "validate_candidate_artifact_refs",
+        "require_trusted_signature_verifier"
+      ],
+      "tests": [
+        "TC-M01-TRUST-05",
+        "TC-M01-TRUST-34"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P067",
+      "atomic_pr_id": "T1-M01-P067-REF-n015-s10",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "qualified_symbol": "resolve_candidate_repository",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def resolve_candidate_repository(repo_root: Path) -> CandidateRepository",
+      "responsibility": "Resolve and freeze one caller-supplied repository root for all candidate Git and artifact operations.",
+      "inputs": [
+        "caller-supplied repo_root"
+      ],
+      "outputs": [
+        "CandidateRepository with canonical root and git_dir",
+        "typed unsafe repository rejection"
+      ],
+      "body_steps": [
+        "B01 require an absolute caller-supplied path",
+        "B02 resolve the path without accepting a missing final target",
+        "B03 reject symlinked or non-directory repository roots",
+        "B04 ask Git for the canonical top-level and git directory",
+        "B05 require Git top-level equality with the resolved caller path",
+        "B06 return immutable canonical repository metadata"
+      ],
+      "error_branches": [
+        "relative missing or symlink root is rejected",
+        "Git discovery failure is rejected with bounded diagnostics",
+        "nested checkout or top-level mismatch is rejected"
+      ],
+      "side_effects": [],
+      "security_boundary": "No ambient module constant current directory or environment variable may select candidate bytes.",
+      "atomicity": "Repository metadata is returned only after all canonical identity checks complete.",
+      "idempotency": "An unchanged repository root resolves to identical canonical metadata.",
+      "callers": [
+        "validate_implementation_candidate"
+      ],
+      "callees": [
+        "git rev-parse --show-toplevel",
+        "git rev-parse --git-dir"
+      ],
+      "tests": [
+        "TC-M01-TRUST-06",
+        "TC-M01-TRUST-34"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P068",
+      "atomic_pr_id": "T1-M01-P068-REF-n015-s11",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "qualified_symbol": "read_candidate_blob",
+      "change_kind": "planned_modify",
+      "companion_target_locators": [],
+      "signature_before": "def read_candidate_blob(candidate_commit: str, path: str) -> bytes | None",
+      "signature_after": "def read_candidate_blob(repo_root: Path, candidate_commit: str, path: str) -> bytes | None",
+      "responsibility": "Read exactly one Git blob from an explicit repository while distinguishing absence from command failure.",
+      "inputs": [
+        "explicit repo_root",
+        "immutable candidate commit",
+        "canonical repo-relative path"
+      ],
+      "outputs": [
+        "blob bytes or None for absence",
+        "typed Git command failure"
+      ],
+      "body_steps": [
+        "B01 validate commit syntax and canonical repo-relative path",
+        "B02 reject absolute traversal NUL and revision-separator path forms",
+        "B03 run git cat-file blob with argument separation under repo_root",
+        "B04 return stdout only on a successful blob read",
+        "B05 return None only for exact missing-object diagnostics",
+        "B06 raise a bounded error for every other Git failure"
+      ],
+      "error_branches": [
+        "unsafe path is rejected before Git invocation",
+        "missing object returns None without hiding other failures",
+        "permission corruption or invalid command failure raises an error"
+      ],
+      "side_effects": [],
+      "security_boundary": "Candidate-controlled path text cannot change the repository or Git revision expression.",
+      "atomicity": "The caller receives either the complete blob bytes None or an exception.",
+      "idempotency": "One commit and canonical path identify immutable blob bytes.",
+      "callers": [
+        "candidate_tree_fingerprint",
+        "validate_candidate_artifact_refs",
+        "delivery artifact validator"
+      ],
+      "callees": [
+        "git cat-file blob"
+      ],
+      "tests": [
+        "TC-M01-TRUST-07",
+        "TC-M01-TRUST-34"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P069",
+      "atomic_pr_id": "T1-M01-P069-REF-n015-s12",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "qualified_symbol": "load_hashed_json_artifact",
+      "change_kind": "planned_modify",
+      "companion_target_locators": [],
+      "signature_before": "def load_hashed_json_artifact(artifact_path: str, expected_sha256: str, schema_path: Path | None = None) -> dict[str, Any]",
+      "signature_after": "def load_hashed_json_artifact(repo_root: Path, artifact_path: str, expected_sha256: str, schema_path: Path | None = None) -> dict[str, Any]",
+      "responsibility": "Load one repository-scoped JSON object after exact digest and optional schema validation.",
+      "inputs": [
+        "explicit repo_root",
+        "canonical artifact path",
+        "expected SHA-256",
+        "optional schema path"
+      ],
+      "outputs": [
+        "validated JSON object",
+        "typed path digest JSON or schema rejection"
+      ],
+      "body_steps": [
+        "B01 resolve artifact and optional schema beneath repo_root",
+        "B02 reject symlink path escape missing or non-file targets",
+        "B03 read bytes once and compare the exact SHA-256",
+        "B04 decode JSON and require an object root",
+        "B05 validate against the optional repository-scoped schema",
+        "B06 return the validated object without rereading the file"
+      ],
+      "error_branches": [
+        "path escape symlink or missing file is rejected before parsing",
+        "digest mismatch is rejected before JSON use",
+        "JSON root or schema mismatch rejects the artifact"
+      ],
+      "side_effects": [],
+      "security_boundary": "Digest and repository containment precede deserialization of untrusted artifact bytes.",
+      "atomicity": "Only one read buffer is hashed parsed validated and returned.",
+      "idempotency": "Unchanged bytes expected hash and schema produce the same object.",
+      "callers": [
+        "validate_candidate_artifact_refs",
+        "candidate receipt validators"
+      ],
+      "callees": [
+        "SHA-256",
+        "validate_against_schema"
+      ],
+      "tests": [
+        "TC-M01-TRUST-08",
+        "TC-M01-TRUST-34"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P070",
+      "atomic_pr_id": "T1-M01-P070-REF-n015-s13",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "qualified_symbol": "validate_hashed_artifact",
+      "change_kind": "planned_modify",
+      "companion_target_locators": [],
+      "signature_before": "def validate_hashed_artifact(artifact_path: str, expected_sha256: str) -> None",
+      "signature_after": "def validate_hashed_artifact(repo_root: Path, artifact_path: str, expected_sha256: str) -> None",
+      "responsibility": "Validate one explicit-root artifact path and digest without exposing or parsing its contents.",
+      "inputs": [
+        "explicit repo_root",
+        "canonical artifact path",
+        "expected SHA-256"
+      ],
+      "outputs": [
+        "None on exact digest",
+        "typed containment presence or digest rejection"
+      ],
+      "body_steps": [
+        "B01 resolve the candidate path beneath repo_root",
+        "B02 reject symlink path escape and non-file targets",
+        "B03 validate the expected digest syntax",
+        "B04 read bytes once with bounded filesystem errors",
+        "B05 compare SHA-256 in constant-shape control flow",
+        "B06 return None only on exact equality"
+      ],
+      "error_branches": [
+        "unsafe or missing path is rejected",
+        "invalid expected digest is rejected",
+        "filesystem read or digest mismatch is rejected"
+      ],
+      "side_effects": [],
+      "security_boundary": "Untrusted paths cannot select bytes outside the explicit repository boundary.",
+      "atomicity": "No state is written and success denotes one complete digest comparison.",
+      "idempotency": "Unchanged path bytes and expected digest yield the same decision.",
+      "callers": [
+        "validate_candidate_artifact_refs",
+        "signature artifact validator"
+      ],
+      "callees": [
+        "SHA-256"
+      ],
+      "tests": [
+        "TC-M01-TRUST-09",
+        "TC-M01-TRUST-34"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P071",
+      "atomic_pr_id": "T1-M01-P071-REF-n015-s14",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "qualified_symbol": "candidate_tree_fingerprint",
+      "change_kind": "planned_modify",
+      "companion_target_locators": [],
+      "signature_before": "def candidate_tree_fingerprint(candidate_commit: str, source_roots: list[str], excluded_paths: list[dict[str, Any]]) -> str",
+      "signature_after": "def candidate_tree_fingerprint(repo_root: Path, candidate_commit: str, source_roots: list[str], excluded_paths: list[dict[str, Any]]) -> str",
+      "responsibility": "Derive a deterministic production-tree fingerprint from one explicit repository and immutable commit.",
+      "inputs": [
+        "explicit repo_root",
+        "candidate commit",
+        "exact production source roots",
+        "declared exclusions"
+      ],
+      "outputs": [
+        "canonical SHA-256 tree fingerprint",
+        "typed root exclusion or Git rejection"
+      ],
+      "body_steps": [
+        "B01 require the exact production-root set and canonical exclusion paths",
+        "B02 prove exclusions are inactive and not tracked at the candidate commit",
+        "B03 enumerate candidate blobs with git ls-tree under repo_root",
+        "B04 read each entry through explicit-root read_candidate_blob",
+        "B05 hash canonical path mode and blob SHA-256 records",
+        "B06 sort records and hash the canonical JSON projection"
+      ],
+      "error_branches": [
+        "source-root or exclusion drift rejects fingerprinting",
+        "tracked excluded content rejects fingerprinting",
+        "Git enumeration or disappearing entry rejects fingerprinting",
+        "an empty production tree rejects fingerprinting"
+      ],
+      "side_effects": [],
+      "security_boundary": "The explicit repository and immutable commit are part of the fingerprint trust boundary.",
+      "atomicity": "A fingerprint is returned only after every selected blob is read and hashed.",
+      "idempotency": "The same repository commit roots and exclusions produce one stable digest.",
+      "callers": [
+        "validate_implementation_candidate"
+      ],
+      "callees": [
+        "git cat-file",
+        "git ls-tree",
+        "read_candidate_blob"
+      ],
+      "tests": [
+        "TC-M01-TRUST-10",
+        "TC-M01-TRUST-34"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P072",
+      "atomic_pr_id": "T1-M01-P072-REF-n015-s15",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "canonicalize_verification_request",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def canonicalize_verification_request(request: SignatureVerificationRequest) -> bytes",
+      "responsibility": "Canonicalize every signed request identity field into one deterministic payload with domain separation.",
+      "inputs": [
+        "SignatureVerificationRequest"
+      ],
+      "outputs": [
+        "canonical UTF-8 payload bytes",
+        "typed schema or canonicalization rejection"
+      ],
+      "body_steps": [
+        "B01 validate request schema and reject unknown fields",
+        "B02 normalize only schema-designated textual encodings",
+        "B03 preserve candidate profile environment purpose nonce time and policy identity",
+        "B04 construct a versioned domain-separated canonical object",
+        "B05 serialize with sorted keys fixed separators and UTF-8",
+        "B06 return bytes and never a mutable object reference"
+      ],
+      "error_branches": [
+        "missing or unknown request field is rejected",
+        "non-canonical digest time or identifier encoding is rejected",
+        "unsupported canonicalization version is rejected"
+      ],
+      "side_effects": [],
+      "security_boundary": "No signed identity field may be omitted defaulted or transformed ambiguously.",
+      "atomicity": "Canonical bytes are produced only from one fully valid request.",
+      "idempotency": "Equivalent schema-valid input has one byte-for-byte canonical form.",
+      "callers": [
+        "verify_request"
+      ],
+      "callees": [
+        "signature-verification-request schema validator"
+      ],
+      "tests": [
+        "TC-M01-TRUST-11",
+        "TC-M01-TRUST-35"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P073",
+      "atomic_pr_id": "T1-M01-P073-REF-n015-s16",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "load_trust_policy",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def load_trust_policy(policy_path: Path, *, policy_fingerprint: str, secret_resolver: SecretResolver) -> LoadedTrustPolicy",
+      "responsibility": "Load one fingerprint-pinned trust policy and resolve secret values without putting them in outputs or logs.",
+      "inputs": [
+        "policy path",
+        "expected policy fingerprint",
+        "SecretResolver"
+      ],
+      "outputs": [
+        "LoadedTrustPolicy with protected handles",
+        "typed policy or secret-reference rejection"
+      ],
+      "body_steps": [
+        "B01 reject non-canonical or symlinked policy paths",
+        "B02 read and hash policy bytes before parsing",
+        "B03 require exact policy fingerprint and schema version",
+        "B04 validate anchors algorithms EKUs roles scopes and revocation policy",
+        "B05 resolve only declared secret references to protected handles",
+        "B06 return an immutable policy with no raw secret serialization"
+      ],
+      "error_branches": [
+        "path or fingerprint drift rejects the policy",
+        "unknown algorithm role scope or anchor rejects the policy",
+        "missing or over-broad secret reference rejects loading",
+        "revocation configuration that permits soft-fail is rejected"
+      ],
+      "side_effects": [],
+      "security_boundary": "Trust anchors and secret references are policy inputs; raw private or credential values never leave the resolver.",
+      "atomicity": "No partial policy is returned if any anchor rule or secret fails.",
+      "idempotency": "Pinned bytes and stable secret references produce the same policy identity.",
+      "callers": [
+        "verify_request"
+      ],
+      "callees": [
+        "signature-trust-policy schema validator",
+        "SecretResolver.resolve"
+      ],
+      "tests": [
+        "TC-M01-TRUST-12",
+        "TC-M01-TRUST-37"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P074",
+      "atomic_pr_id": "T1-M01-P074-REF-n015-s17",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "verify_certificate_chain",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def verify_certificate_chain(chain: Sequence[bytes], *, policy: LoadedTrustPolicy, verification_time: datetime) -> VerifiedSigner",
+      "responsibility": "Validate signer certificate path algorithm EKU validity and revocation state at an injected verification time.",
+      "inputs": [
+        "ordered certificate chain bytes",
+        "LoadedTrustPolicy",
+        "injected verification_time"
+      ],
+      "outputs": [
+        "VerifiedSigner",
+        "typed chain validity or revocation rejection"
+      ],
+      "body_steps": [
+        "B01 parse every certificate with strict DER handling and size bounds",
+        "B02 build a path only to a policy-pinned trust anchor",
+        "B03 enforce permitted key sizes signature algorithms and critical extensions",
+        "B04 check leaf EKU and issuer constraints for the requested verifier role",
+        "B05 check not-before not-after and policy clock skew",
+        "B06 require successful revocation evidence under the policy",
+        "B07 return normalized signer fingerprints and asserted roles"
+      ],
+      "error_branches": [
+        "parse path or anchor failure rejects the chain",
+        "weak key algorithm EKU or critical-extension mismatch rejects",
+        "expired not-yet-valid revoked or indeterminate revocation rejects",
+        "chain length or byte bounds reject resource abuse"
+      ],
+      "side_effects": [],
+      "security_boundary": "Caller-provided certificates do not become authority without a pinned path and hard-fail revocation result.",
+      "atomicity": "No signer identity is returned until the entire chain policy succeeds.",
+      "idempotency": "One chain policy and injected time yield a deterministic result.",
+      "callers": [
+        "verify_request"
+      ],
+      "callees": [
+        "cryptography X.509 path verifier",
+        "revocation provider"
+      ],
+      "tests": [
+        "TC-M01-TRUST-13"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P075",
+      "atomic_pr_id": "T1-M01-P075-REF-n015-s18",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "verify_detached_signature",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def verify_detached_signature(payload: bytes, signature: bytes, *, signer: VerifiedSigner, algorithm: str) -> str",
+      "responsibility": "Verify one detached signature over exact canonical bytes using only the algorithm and key approved for the signer.",
+      "inputs": [
+        "canonical payload bytes",
+        "detached signature bytes",
+        "VerifiedSigner",
+        "declared algorithm"
+      ],
+      "outputs": [
+        "payload SHA-256",
+        "typed algorithm or signature rejection"
+      ],
+      "body_steps": [
+        "B01 require the declared algorithm in signer and policy allowlists",
+        "B02 bind the signer public key type to the declared algorithm",
+        "B03 enforce payload and signature byte bounds",
+        "B04 invoke the cryptographic verifier over the exact payload bytes",
+        "B05 reject any alternate serialization retry or algorithm fallback",
+        "B06 return the payload SHA-256 after successful verification"
+      ],
+      "error_branches": [
+        "unknown downgraded or key-incompatible algorithm rejects",
+        "malformed or oversized signature rejects",
+        "cryptographic verification failure rejects without fallback"
+      ],
+      "side_effects": [],
+      "security_boundary": "Only the exact canonical request bytes are authenticated; no self-reported status is consulted.",
+      "atomicity": "The payload digest is returned only after one successful cryptographic verification.",
+      "idempotency": "The same key algorithm payload and signature always yield the same result.",
+      "callers": [
+        "verify_request"
+      ],
+      "callees": [
+        "policy-approved cryptographic verifier"
+      ],
+      "tests": [
+        "TC-M01-TRUST-14",
+        "TC-M01-TRUST-35"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P076",
+      "atomic_pr_id": "T1-M01-P076-REF-n015-s19",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "verify_authority_scope",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def verify_authority_scope(request: SignatureVerificationRequest, signer: VerifiedSigner, *, policy: LoadedTrustPolicy, now: datetime) -> VerifiedAuthority",
+      "responsibility": "Authorize verified signer roles and scopes for the exact request candidate environment purpose and time window.",
+      "inputs": [
+        "SignatureVerificationRequest",
+        "VerifiedSigner",
+        "LoadedTrustPolicy",
+        "injected current time"
+      ],
+      "outputs": [
+        "VerifiedAuthority",
+        "typed role scope identity or time rejection"
+      ],
+      "body_steps": [
+        "B01 derive required roles from request purpose and subject type",
+        "B02 match signer roles exactly without hierarchical wildcard expansion",
+        "B03 bind candidate commit profile and environment to request policy",
+        "B04 enforce request issuance expiry and maximum validity duration",
+        "B05 enforce CNAS accredited scope only when the request declares that boundary",
+        "B06 return the exact satisfied role and scope projection"
+      ],
+      "error_branches": [
+        "missing wrong or expired authority role rejects",
+        "candidate profile or environment mismatch rejects",
+        "purpose or time-window drift rejects",
+        "required CNAS scope mismatch rejects"
+      ],
+      "side_effects": [],
+      "security_boundary": "Cryptographic identity alone is insufficient; least-privilege authority is evaluated per request.",
+      "atomicity": "All required roles and conditional scopes succeed as one authorization decision.",
+      "idempotency": "The same request signer policy and injected time produce one decision.",
+      "callers": [
+        "verify_request"
+      ],
+      "callees": [
+        "LoadedTrustPolicy role and scope matcher"
+      ],
+      "tests": [
+        "TC-M01-TRUST-15",
+        "TC-M01-TRUST-37"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P077",
+      "atomic_pr_id": "T1-M01-P077-REF-n015-s20",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "claim_attestation_nonce",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def claim_attestation_nonce(store: ReplayStore, request: SignatureVerificationRequest, *, payload_sha256: str, expires_at: datetime) -> ReplayClaim",
+      "responsibility": "Atomically claim a policy-scoped attestation nonce and distinguish idempotent replay from conflicting reuse.",
+      "inputs": [
+        "ReplayStore",
+        "SignatureVerificationRequest",
+        "canonical payload SHA-256",
+        "claim expiry"
+      ],
+      "outputs": [
+        "ReplayClaim",
+        "typed conflicting replay rejection"
+      ],
+      "body_steps": [
+        "B01 derive a domain policy purpose environment and nonce claim key",
+        "B02 start one compare-and-set operation with bounded expiry",
+        "B03 store only payload digest request identity and expiry metadata",
+        "B04 return CREATED when no claim exists",
+        "B05 return IDEMPOTENT only when the existing payload identity exactly matches",
+        "B06 reject CONFLICT when any bound identity differs"
+      ],
+      "error_branches": [
+        "store timeout or unavailable state rejects verification",
+        "conflicting nonce reuse rejects the request",
+        "invalid or excessive expiry rejects before storage"
+      ],
+      "side_effects": [],
+      "security_boundary": "Replay state stores hashes and identities only and fails closed on unavailable atomic storage.",
+      "atomicity": "Nonce creation or comparison is one linearizable store operation.",
+      "idempotency": "Exact retries return the existing identical claim; substitutions are rejected.",
+      "callers": [
+        "verify_request"
+      ],
+      "callees": [
+        "ReplayStore.compare_and_set"
+      ],
+      "tests": [
+        "TC-M01-TRUST-16"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P078",
+      "atomic_pr_id": "T1-M01-P078-REF-n015-s21",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "verify_request",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def verify_request(request: SignatureVerificationRequest, *, policy_path: Path, secret_resolver: SecretResolver, replay_store: ReplayStore, now: datetime) -> SignatureVerificationAttestation",
+      "responsibility": "Orchestrate policy payload chain signature authority and replay checks into one fully bound attestation.",
+      "inputs": [
+        "SignatureVerificationRequest",
+        "policy path",
+        "SecretResolver",
+        "ReplayStore",
+        "injected current time"
+      ],
+      "outputs": [
+        "SignatureVerificationAttestation",
+        "stable fail-closed rejection"
+      ],
+      "body_steps": [
+        "B01 canonicalize and schema-validate the complete request",
+        "B02 load the fingerprint-pinned trust policy",
+        "B03 verify the certificate chain at the injected time",
+        "B04 verify the detached signature over exact canonical bytes",
+        "B05 verify role purpose candidate profile environment time and conditional scope",
+        "B06 atomically claim the attestation nonce",
+        "B07 construct an attestation containing every verified identity and component digest",
+        "B08 return PASS only after all prior steps complete"
+      ],
+      "error_branches": [
+        "any policy payload chain signature scope or replay error returns REJECT",
+        "internal dependency timeout or unavailable state returns ERROR not PASS",
+        "attestation construction or schema mismatch returns ERROR",
+        "no exception path persists or returns partial PASS"
+      ],
+      "side_effects": [],
+      "security_boundary": "This is the sole server trust-decision boundary and all dependencies are fail-closed and explicitly injected.",
+      "atomicity": "PASS is constructed only after all checks and the replay claim commit.",
+      "idempotency": "Exact retries return an equivalently bound attestation; substitutions cannot reuse the nonce.",
+      "callers": [
+        "protected verifier HTTP adapter"
+      ],
+      "callees": [
+        "canonicalize_verification_request",
+        "load_trust_policy",
+        "verify_certificate_chain",
+        "verify_detached_signature",
+        "verify_authority_scope",
+        "claim_attestation_nonce"
+      ],
+      "tests": [
+        "TC-M01-TRUST-17",
+        "TC-M01-TRUST-35",
+        "TC-M01-TRUST-36"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P087",
+      "atomic_pr_id": "T1-M01-P087-REF-n015-s30",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "resolve_secret_handle",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def resolve_secret_handle(reference: str, *, allowed_prefixes: frozenset[str]) -> SecretHandle",
+      "responsibility": "Resolve one allowlisted secret reference into an opaque non-serializable handle without exposing secret bytes.",
+      "inputs": [
+        "canonical secret reference",
+        "allowed reference prefixes"
+      ],
+      "outputs": [
+        "opaque SecretHandle",
+        "typed secret reference rejection"
+      ],
+      "body_steps": [
+        "B01 parse and canonicalize the provider and reference name",
+        "B02 reject inline values traversal wildcards and unapproved providers",
+        "B03 require one exact allowlisted prefix",
+        "B04 request an opaque handle from the configured provider",
+        "B05 verify the handle is non-serializable and has bounded lifetime",
+        "B06 return the handle without reading or logging its value"
+      ],
+      "error_branches": [
+        "inline relative wildcard or unknown reference rejects",
+        "provider unavailable or ambiguous version rejects",
+        "serializable or overlong handle rejects"
+      ],
+      "side_effects": [],
+      "security_boundary": "Secret bytes remain inside the provider and only opaque handles cross the runtime boundary.",
+      "atomicity": "A handle is returned only after reference and provider policy checks complete.",
+      "idempotency": "One versioned reference resolves to one stable handle identity during its lifetime.",
+      "callers": [
+        "serve",
+        "load_trust_policy"
+      ],
+      "callees": [
+        "configured SecretProvider.resolve_handle"
+      ],
+      "tests": [
+        "TC-M01-TRUST-18",
+        "TC-M01-TRUST-39"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P088",
+      "atomic_pr_id": "T1-M01-P088-REF-n015-s31",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "open_replay_store",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def open_replay_store(path: Path, *, schema_version: str, lock_timeout_seconds: float = 5.0) -> ReplayStore",
+      "responsibility": "Open a persistent exclusive atomic replay store with exact schema identity recovery and durability settings.",
+      "inputs": [
+        "canonical replay store path",
+        "expected schema version",
+        "lock timeout"
+      ],
+      "outputs": [
+        "exclusive ReplayStore",
+        "typed path lock migration or recovery rejection"
+      ],
+      "body_steps": [
+        "B01 reject relative symlink escaped or shared paths",
+        "B02 create or open the store with an exclusive process lock",
+        "B03 read and verify the durable schema and store identity",
+        "B04 recover committed claims and reject torn or incompatible records",
+        "B05 configure synchronous compare-and-set and bounded expiry cleanup",
+        "B06 return the locked store only after a read-write durability probe"
+      ],
+      "error_branches": [
+        "unsafe path or lock contention rejects startup",
+        "schema mismatch or torn recovery rejects startup",
+        "durability probe or filesystem failure rejects startup"
+      ],
+      "side_effects": [],
+      "security_boundary": "Replay protection never falls back to memory or an unlocked shared store.",
+      "atomicity": "Store open recovery lock and durability probe succeed as one startup gate.",
+      "idempotency": "Reopening an unchanged clean store yields the same identity and committed claims.",
+      "callers": [
+        "serve"
+      ],
+      "callees": [
+        "persistent key-value store open lock recover and fsync"
+      ],
+      "tests": [
+        "TC-M01-TRUST-19",
+        "TC-M01-TRUST-39",
+        "TC-M01-TRUST-40"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P089",
+      "atomic_pr_id": "T1-M01-P089-REF-n015-s32",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "append_attestation_record",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def append_attestation_record(ledger: AttestationLedger, request: SignatureVerificationRequest, attestation: SignatureVerificationAttestation, replay_claim: ReplayClaim) -> str",
+      "responsibility": "Append and durably synchronize one canonical request decision attestation and replay binding record.",
+      "inputs": [
+        "AttestationLedger",
+        "SignatureVerificationRequest",
+        "SignatureVerificationAttestation",
+        "ReplayClaim"
+      ],
+      "outputs": [
+        "durable record SHA-256",
+        "typed append or synchronization rejection"
+      ],
+      "body_steps": [
+        "B01 verify request attestation and replay claim identity equality",
+        "B02 canonicalize a versioned ledger record with no secret fields",
+        "B03 derive the record identity and reject conflicting existing content",
+        "B04 append framed checksum-protected bytes under the exclusive ledger lock",
+        "B05 flush file data and required parent metadata before success",
+        "B06 return the durable record digest only after synchronization"
+      ],
+      "error_branches": [
+        "identity or schema mismatch rejects before append",
+        "conflicting existing record rejects without overwrite",
+        "short write checksum flush or sync failure returns ERROR"
+      ],
+      "side_effects": [],
+      "security_boundary": "The ledger contains hashes public signer identity and decisions only and is never rewriteable.",
+      "atomicity": "A decision is externally visible only after a complete framed record is durable.",
+      "idempotency": "An exact duplicate returns the existing digest while conflicting content rejects.",
+      "callers": [
+        "handle_verify_request"
+      ],
+      "callees": [
+        "AttestationLedger.append_and_fsync"
+      ],
+      "tests": [
+        "TC-M01-TRUST-20",
+        "TC-M01-TRUST-39",
+        "TC-M01-TRUST-40"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P090",
+      "atomic_pr_id": "T1-M01-P090-REF-n015-s33",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "handle_verify_request",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def handle_verify_request(runtime: SignatureVerificationRuntime, body: bytes, *, now: datetime) -> HttpResponse",
+      "responsibility": "Handle one bounded verify request through schema domain verification durable ledger commit and typed HTTP response.",
+      "inputs": [
+        "SignatureVerificationRuntime",
+        "bounded request body",
+        "injected request time"
+      ],
+      "outputs": [
+        "HttpResponse",
+        "durable decision record"
+      ],
+      "body_steps": [
+        "B01 reject unsupported method content type encoding and oversized body",
+        "B02 parse JSON and schema-check one SignatureVerificationRequest",
+        "B03 invoke verify_request with runtime policy secret and replay dependencies",
+        "B04 append and fsync the resulting decision and replay binding",
+        "B05 map PASS REJECT and ERROR to closed response status and body shapes",
+        "B06 attach request decision and ledger digest headers without secret data"
+      ],
+      "error_branches": [
+        "transport body or schema failure returns a bounded client rejection",
+        "domain verification failure returns REJECT not PASS",
+        "ledger failure converts even a domain PASS to ERROR",
+        "response serialization failure emits a generic ERROR"
+      ],
+      "side_effects": [],
+      "security_boundary": "No PASS leaves the process before domain verification replay claim and durable audit commit.",
+      "atomicity": "The durable decision record precedes any externally visible PASS response.",
+      "idempotency": "Exact retried requests reuse replay and ledger identities and return equivalent responses.",
+      "callers": [
+        "VerifierServer verify route"
+      ],
+      "callees": [
+        "verify_request",
+        "append_attestation_record"
+      ],
+      "tests": [
+        "TC-M01-TRUST-21",
+        "TC-M01-TRUST-35",
+        "TC-M01-TRUST-36",
+        "TC-M01-TRUST-39",
+        "TC-M01-TRUST-40"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P091",
+      "atomic_pr_id": "T1-M01-P091-REF-n015-s34",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "handle_health_request",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def handle_health_request(runtime: SignatureVerificationRuntime) -> HttpResponse",
+      "responsibility": "Report liveness and readiness separately without exposing policy secret replay or ledger internals.",
+      "inputs": [
+        "SignatureVerificationRuntime"
+      ],
+      "outputs": [
+        "bounded HttpResponse",
+        "closed readiness reason code"
+      ],
+      "body_steps": [
+        "B01 confirm the process event loop is responsive",
+        "B02 check loaded policy fingerprint and validity without reloading it",
+        "B03 probe secret handles without reading values",
+        "B04 probe replay store lock schema and durable write capability",
+        "B05 probe attestation ledger append boundary without fake PASS",
+        "B06 return ready only when every required dependency is usable"
+      ],
+      "error_branches": [
+        "unloaded invalid or expired policy reports not ready",
+        "secret replay or ledger probe failure reports not ready",
+        "unknown dependency state reports not ready rather than degraded PASS"
+      ],
+      "side_effects": [],
+      "security_boundary": "Health output contains stable reason codes and public identities only and never secret paths or values.",
+      "atomicity": "Readiness is a single snapshot over all required dependency probes.",
+      "idempotency": "Unchanged runtime dependency state yields the same health response.",
+      "callers": [
+        "VerifierServer health routes",
+        "deployment probes"
+      ],
+      "callees": [
+        "runtime dependency health probes"
+      ],
+      "tests": [
+        "TC-M01-TRUST-22",
+        "TC-M01-TRUST-39"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P092",
+      "atomic_pr_id": "T1-M01-P092-REF-n015-s35",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "build_server",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def build_server(runtime: SignatureVerificationRuntime, *, listen: str, tls_context: SSLContext, limits: ServerLimits) -> VerifierServer",
+      "responsibility": "Build a bounded TLS server exposing only verify liveness and readiness routes over explicit runtime dependencies.",
+      "inputs": [
+        "SignatureVerificationRuntime",
+        "listen address",
+        "configured SSLContext",
+        "ServerLimits"
+      ],
+      "outputs": [
+        "unstarted VerifierServer",
+        "typed TLS route or limit rejection"
+      ],
+      "body_steps": [
+        "B01 validate loopback or approved listen address and fixed route set",
+        "B02 require TLS minimum version cipher and client-auth policy",
+        "B03 configure header body connection concurrency and timeout limits",
+        "B04 bind verify and health handlers with explicit runtime injection",
+        "B05 disable debug directory listing proxy trust and dynamic route loading",
+        "B06 return an unstarted server with staged shutdown hooks"
+      ],
+      "error_branches": [
+        "unsafe listen TLS or client-auth policy rejects",
+        "missing handler dependency or duplicate route rejects",
+        "invalid resource or timeout bounds reject"
+      ],
+      "side_effects": [],
+      "security_boundary": "The server surface is closed and TLS authenticated with no ambient proxy or plugin behavior.",
+      "atomicity": "No socket is opened until complete route TLS limit and runtime validation succeeds.",
+      "idempotency": "Equivalent immutable inputs build an equivalent unstarted server configuration.",
+      "callers": [
+        "serve"
+      ],
+      "callees": [
+        "handle_verify_request",
+        "handle_health_request",
+        "TLS HTTP server constructor"
+      ],
+      "tests": [
+        "TC-M01-TRUST-23",
+        "TC-M01-TRUST-36",
+        "TC-M01-TRUST-39"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P093",
+      "atomic_pr_id": "T1-M01-P093-REF-n015-s36",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "serve",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def serve(config: SignatureServiceConfig, *, shutdown: ShutdownSignal) -> int",
+      "responsibility": "Bootstrap validate and serve the protected verifier then stage shutdown with replay and audit durability preserved.",
+      "inputs": [
+        "SignatureServiceConfig",
+        "ShutdownSignal"
+      ],
+      "outputs": [
+        "process exit code",
+        "durable shutdown diagnostics"
+      ],
+      "body_steps": [
+        "B01 validate all canonical config paths identities and resource bounds",
+        "B02 resolve secret handles and load the fingerprint-pinned policy",
+        "B03 open the exclusive persistent replay store and attestation ledger",
+        "B04 construct SignatureVerificationRuntime and run readiness checks",
+        "B05 build bind and start the TLS server before declaring ready",
+        "B06 on shutdown stop admission drain in-flight requests flush ledger and replay state",
+        "B07 close locks and return zero only after graceful durable shutdown"
+      ],
+      "error_branches": [
+        "config policy secret store or ledger startup failure returns non-zero before readiness",
+        "bind TLS or readiness failure closes opened resources and returns non-zero",
+        "shutdown deadline flush or close failure returns non-zero and never claims graceful"
+      ],
+      "side_effects": [],
+      "security_boundary": "Startup and shutdown preserve fail-closed trust replay and audit guarantees across process restarts.",
+      "atomicity": "Readiness is published only after all dependencies and the listener are valid; shutdown orders admission before durability close.",
+      "idempotency": "Restarting with unchanged durable state recovers the same claims and policy identity without replay reset.",
+      "callers": [
+        "main",
+        "container process"
+      ],
+      "callees": [
+        "resolve_secret_handle",
+        "open_replay_store",
+        "load_trust_policy",
+        "build_server"
+      ],
+      "tests": [
+        "TC-M01-TRUST-24",
+        "TC-M01-TRUST-39",
+        "TC-M01-TRUST-40"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "FC-M01-N015-P094",
+      "atomic_pr_id": "T1-M01-P094-REF-n015-s37",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "main",
+      "change_kind": "planned_create",
+      "companion_target_locators": [],
+      "signature_before": null,
+      "signature_after": "def main(argv: Sequence[str] | None = None) -> int",
+      "responsibility": "Parse explicit service runtime arguments and invoke serve without accepting ambient trust or secret configuration.",
+      "inputs": [
+        "CLI argv",
+        "explicit policy secret replay ledger TLS and listen arguments"
+      ],
+      "outputs": [
+        "stable process exit code",
+        "redacted startup diagnostics"
+      ],
+      "body_steps": [
+        "B01 parse only documented required CLI arguments and reject unknown flags",
+        "B02 canonicalize config paths and immutable policy identity",
+        "B03 build SignatureServiceConfig without reading secret values",
+        "B04 install bounded termination signals and shutdown deadline",
+        "B05 invoke serve exactly once and propagate its exit code",
+        "B06 redact exception output and never retry with weaker defaults"
+      ],
+      "error_branches": [
+        "missing unknown duplicate or unsafe argument returns usage error",
+        "ambient environment fallback is rejected",
+        "serve exception or non-graceful shutdown returns non-zero"
+      ],
+      "side_effects": [],
+      "security_boundary": "Trust policy secrets TLS replay and ledger locations must be explicit and cannot come from attacker-controlled ambient state.",
+      "atomicity": "One validated CLI configuration starts at most one server runtime.",
+      "idempotency": "The same explicit configuration and durable state have the same startup decision.",
+      "callers": [
+        "Docker image entrypoint"
+      ],
+      "callees": [
+        "serve"
+      ],
+      "tests": [
+        "TC-M01-TRUST-25",
+        "TC-M01-TRUST-39"
+      ],
+      "rollback": "Restore the existing hard-block behavior and retain all externally produced immutable evidence.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    }
+  ],
+  "type_contracts": [
+    {
+      "contract_id": "TC-FC-M01-N015-P086",
+      "atomic_pr_id": "T1-M01-P086-WRT-n015-s29",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "SignatureVerificationRuntime",
+      "change_kind": "planned_create",
+      "declaration_after": "@dataclass(frozen=True, slots=True) class SignatureVerificationRuntime",
+      "companion_declarations": [],
+      "responsibility": "Own the complete immutable process dependency graph required for trustworthy HTTP verification readiness recovery and shutdown.",
+      "fields": [
+        "policy: LoadedTrustPolicy",
+        "secret_resolver: SecretResolver",
+        "replay_store: ReplayStore",
+        "attestation_ledger: AttestationLedger",
+        "clock: Clock",
+        "runtime_id: str",
+        "server_limits: ServerLimits"
+      ],
+      "invariants": [
+        "policy is valid and fingerprint pinned at construction",
+        "replay store is persistent exclusive and schema compatible",
+        "attestation ledger is append-only durable and schema compatible",
+        "secret resolver exposes opaque handles only",
+        "clock and resource limits are explicitly injected",
+        "runtime identity binds public dependency identities"
+      ],
+      "construction_rules": [
+        "construct only after all dependency startup probes pass",
+        "reject duplicate or mismatched runtime dependency identities",
+        "do not permit post-construction dependency replacement",
+        "close dependencies only through staged serve shutdown"
+      ],
+      "security_boundary": "The aggregate is the sole explicit bridge between process adapters and trust-domain functions and cannot carry secret bytes.",
+      "tests": [
+        "TC-M01-TRUST-39"
+      ],
+      "rollback": "Destroy the unactivated runtime and preserve the current hard block and durable stores.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "TC-FC-M01-N015-P095",
+      "atomic_pr_id": "T1-M01-P095-WRT-n015-s38",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "qualified_symbol": "CandidateRepository",
+      "change_kind": "planned_create",
+      "declaration_after": "@dataclass(frozen=True, slots=True) class CandidateRepository",
+      "companion_declarations": [
+        "@dataclass(frozen=True, slots=True) class CandidateTrustContext",
+        "class TrustedSignatureVerifier(Protocol)"
+      ],
+      "responsibility": "Define the compile-time candidate repository trust context and verifier client abstractions used by migrated registry validation callers.",
+      "fields": [
+        "CandidateRepository.root: Path",
+        "CandidateRepository.git_dir: Path",
+        "CandidateRepository.identity_sha256: str",
+        "CandidateTrustContext.candidate_commit: str",
+        "CandidateTrustContext.profile_id: str",
+        "CandidateTrustContext.environment_id: str",
+        "CandidateTrustContext.purpose: str",
+        "CandidateTrustContext.policy_fingerprint: str",
+        "TrustedSignatureVerifier.verify_exact_payload(...)"
+      ],
+      "invariants": [
+        "repository root is absolute canonical and immutable",
+        "candidate commit is a full immutable object ID",
+        "profile environment purpose and policy identity are mandatory",
+        "verifier protocol returns a typed attestation only",
+        "no ambient repository or endpoint selection is represented"
+      ],
+      "construction_rules": [
+        "construct repository only through resolve_candidate_repository",
+        "construct trust context from validated candidate and execution identity",
+        "inject verifier implementation at the caller boundary",
+        "reject empty wildcard or default identity fields"
+      ],
+      "security_boundary": "These types prevent ambient repository and verifier selection from bypassing explicit candidate and trust identity.",
+      "tests": [
+        "TC-M01-TRUST-41"
+      ],
+      "rollback": "Retain existing signatures and unconditional hard block until all migrated callers compile and review.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "TC-FC-M01-N015-P096",
+      "atomic_pr_id": "T1-M01-P096-WRT-n015-s39",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "qualified_symbol": "SignatureVerificationRequest",
+      "change_kind": "planned_create",
+      "declaration_after": "@dataclass(frozen=True, slots=True) class SignatureVerificationRequest",
+      "companion_declarations": [
+        "SignatureVerificationAttestation",
+        "LoadedTrustPolicy",
+        "VerifiedSigner",
+        "VerifiedAuthority",
+        "ReplayClaim",
+        "SecretHandle",
+        "SecretResolver",
+        "ReplayStore",
+        "AttestationLedger",
+        "HttpResponse",
+        "SSLContext",
+        "ServerLimits",
+        "VerifierServer",
+        "SignatureServiceConfig",
+        "Clock",
+        "ShutdownSignal"
+      ],
+      "responsibility": "Define every compile-time domain protocol configuration and adapter boundary required by the protected verifier service.",
+      "fields": [
+        "request and attestation exact identity fields",
+        "loaded policy anchor algorithm role and revocation fields",
+        "verified signer and authority projections",
+        "replay claim identity disposition and expiry",
+        "secret replay ledger clock and shutdown protocols",
+        "HTTP TLS server limits config and response types"
+      ],
+      "invariants": [
+        "all concrete dataclasses are frozen slotted and schema aligned",
+        "all protocols expose the minimum method surface",
+        "PASS attestation contains every request binding",
+        "secret handles cannot expose raw bytes",
+        "persistent store and ledger protocols require durable operations",
+        "HTTP and TLS types encode closed routes and resource bounds"
+      ],
+      "construction_rules": [
+        "declare concrete data before functions that consume it",
+        "use Protocol for injected I O clock and shutdown capabilities",
+        "avoid Any dictionary or ambient global substitutes at trust boundaries",
+        "version all durable and wire-visible declarations"
+      ],
+      "security_boundary": "The type set closes compile-time ambiguity across cryptography replay audit HTTP TLS configuration and shutdown seams.",
+      "tests": [
+        "TC-M01-TRUST-42"
+      ],
+      "rollback": "Remove the unimplemented type candidate and preserve schemas hard block and all active registries.",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    }
+  ],
+  "non_function_contracts": [
+    {
+      "contract_id": "NFC-M01-N015-P057",
+      "atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+      "surface_kind": "DECLARATIVE_CONTRACT",
+      "target_locators": [
+        "contracts/alignment/signature-trust-policy.schema.json#/",
+        "contracts/alignment/signature-verification-request.schema.json#/",
+        "contracts/alignment/signature-verification-attestation.schema.json#/"
+      ],
+      "input_contract": [
+        "versioned trust-policy fields",
+        "versioned verification request fields",
+        "versioned attestation fields"
+      ],
+      "output_contract": [
+        "strict JSON Schema validation",
+        "unknown-field and secret-field rejection"
+      ],
+      "oracles": [
+        "all signed identity fields are required",
+        "PASS is impossible without exact request binding",
+        "private keys tokens and raw secrets are forbidden"
+      ],
+      "security_constraints": [
+        "additionalProperties is false on trust-bearing objects",
+        "algorithms roles scopes and status use closed enums"
+      ],
+      "tests": [
+        "TC-M01-TRUST-26"
+      ],
+      "rollback": "Retain the prior schemas and hard block; do not migrate any producer or consumer.",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "NFC-M01-N015-P079",
+      "atomic_pr_id": "T1-M01-P079-OPS-n015-s22",
+      "surface_kind": "DEPLOYMENT_PACKAGE",
+      "target_locators": [
+        "deployments/security/topic1-trusted-signature-verifier.Dockerfile#$DOCUMENT",
+        "deployments/security/topic1-trusted-signature-verifier.requirements.lock#$DOCUMENT"
+      ],
+      "input_contract": [
+        "reviewed verifier source tree",
+        "digest-pinned base image and requirements lock"
+      ],
+      "output_contract": [
+        "non-root reproducible image recipe",
+        "externally buildable SBOM and provenance inputs"
+      ],
+      "oracles": [
+        "base image uses an immutable digest",
+        "runtime user is non-root and filesystem is read-only compatible",
+        "dependency lock contains exact hashes and no floating versions"
+      ],
+      "security_constraints": [
+        "no trust anchor credential or private key is copied into the image",
+        "build network and package inputs are explicit and auditable"
+      ],
+      "tests": [
+        "TC-M01-TRUST-27"
+      ],
+      "rollback": "Remove the unbuilt package candidate and retain the existing verifier hard block.",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "NFC-M01-N015-P080",
+      "atomic_pr_id": "T1-M01-P080-TST-PRE-n015-s23",
+      "surface_kind": "EVIDENCE_OUTPUT",
+      "target_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p080-tst-pre-n015-s23/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p080-tst-pre-n015-s23/case-report.json"
+      ],
+      "input_contract": [
+        "immutable candidate and design hashes",
+        "G0 static unit schema and eleven-case observations"
+      ],
+      "output_contract": [
+        "G0 test-result JSON",
+        "G0 per-case report JSON"
+      ],
+      "oracles": [
+        "one positive and ten negative cases are enumerated",
+        "every actual result is machine-derived and candidate-bound",
+        "status remains NOT_RUN until an authorized runner writes evidence"
+      ],
+      "security_constraints": [
+        "self-reported fixture PASS cannot satisfy an oracle",
+        "evidence contains hashes and redacted diagnostics only"
+      ],
+      "tests": [
+        "TC-M01-TRUST-28"
+      ],
+      "rollback": "Preserve immutable attempted evidence and leave G0 unsatisfied after candidate rollback.",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "NFC-M01-N015-P081",
+      "atomic_pr_id": "T1-M01-P081-TST-PRE-n015-s24",
+      "surface_kind": "EVIDENCE_OUTPUT",
+      "target_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p081-tst-pre-n015-s24/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p081-tst-pre-n015-s24/case-report.json"
+      ],
+      "input_contract": [
+        "isolated deployed candidate identity",
+        "G1 restart rotation expiry revocation and rollback observations"
+      ],
+      "output_contract": [
+        "G1 test-result JSON",
+        "G1 per-case report JSON"
+      ],
+      "oracles": [
+        "restart retains no unverified PASS",
+        "policy rotation and revocation become effective within bounds",
+        "rollback restores hard-block behavior without receipt loss"
+      ],
+      "security_constraints": [
+        "test secrets are referenced through approved secret storage",
+        "failure diagnostics never contain private keys or tokens"
+      ],
+      "tests": [
+        "TC-M01-TRUST-29"
+      ],
+      "rollback": "Preserve immutable G1 observations and restore the previously approved isolated revision.",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "NFC-M01-N015-P082",
+      "atomic_pr_id": "T1-M01-P082-OPS-n015-s25",
+      "surface_kind": "DEPLOYMENT_MANIFEST",
+      "target_locators": [
+        "deployments/security/topic1-trusted-signature-verifier.yaml#/$DOCUMENT"
+      ],
+      "input_contract": [
+        "external signed immutable image digest",
+        "approved namespace secret and policy references"
+      ],
+      "output_contract": [
+        "default-off verifier workload and service",
+        "NetworkPolicy health probes resources and rollback annotations"
+      ],
+      "oracles": [
+        "image reference is digest-only and supplied by the external receipt",
+        "replicas or activation gate defaults to off",
+        "network and secret access are least privilege"
+      ],
+      "security_constraints": [
+        "manifest contains references but no secret values",
+        "pod is non-root read-only and drops capabilities"
+      ],
+      "tests": [
+        "TC-M01-TRUST-30"
+      ],
+      "rollback": "Scale the candidate to zero and restore the last approved digest while preserving all evidence.",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "NFC-M01-N015-P083",
+      "atomic_pr_id": "T1-M01-P083-OPS-n015-s26",
+      "surface_kind": "EVIDENCE_OUTPUT",
+      "target_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p083-ops-n015-s26/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p083-ops-n015-s26/case-report.json"
+      ],
+      "input_contract": [
+        "authorized canary deployment identity",
+        "G6 health stop-threshold and rollback observations"
+      ],
+      "output_contract": [
+        "G6 test-result JSON",
+        "G6 per-case report JSON"
+      ],
+      "oracles": [
+        "canary identity equals the external image receipt",
+        "stop thresholds are evaluated before wider traffic",
+        "hard-block rollback is demonstrated and timed"
+      ],
+      "security_constraints": [
+        "deployment evidence excludes secret values",
+        "operator and environment identity are receipt-bound"
+      ],
+      "tests": [
+        "TC-M01-TRUST-31"
+      ],
+      "rollback": "Preserve the failed canary record and scale the verifier candidate to zero.",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "NFC-M01-N015-P084",
+      "atomic_pr_id": "T1-M01-P084-TST-POST-n015-s27",
+      "surface_kind": "EVIDENCE_OUTPUT",
+      "target_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p084-tst-post-n015-s27/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p084-tst-post-n015-s27/case-report.json"
+      ],
+      "input_contract": [
+        "protected endpoint candidate identity",
+        "G2 functional fault and authorization observations"
+      ],
+      "output_contract": [
+        "G2 test-result JSON",
+        "G2 per-case report JSON"
+      ],
+      "oracles": [
+        "positive request succeeds only with exact authority",
+        "all ten negative families fail closed",
+        "timeout malformed and unavailable dependencies never return PASS"
+      ],
+      "security_constraints": [
+        "test certificates are non-production and bounded",
+        "request and response logs are redacted and hash-bound"
+      ],
+      "tests": [
+        "TC-M01-TRUST-32"
+      ],
+      "rollback": "Preserve G2 results and disable endpoint routing before restoring the hard block.",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    },
+    {
+      "contract_id": "NFC-M01-N015-P085",
+      "atomic_pr_id": "T1-M01-P085-TST-POST-n015-s28",
+      "surface_kind": "EVIDENCE_OUTPUT",
+      "target_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p085-tst-post-n015-s28/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p085-tst-post-n015-s28/case-report.json"
+      ],
+      "input_contract": [
+        "request attestation replay and caller result ledgers",
+        "G3 reconciliation window and candidate identity"
+      ],
+      "output_contract": [
+        "G3 test-result JSON",
+        "G3 reconciliation case report JSON"
+      ],
+      "oracles": [
+        "request attestation replay and caller counts reconcile",
+        "every PASS maps to one exact replay claim",
+        "unexplained difference is exactly zero"
+      ],
+      "security_constraints": [
+        "reconciliation uses hashes rather than payload or secret values",
+        "late duplicate and conflicting replay are reported separately"
+      ],
+      "tests": [
+        "TC-M01-TRUST-33",
+        "TC-M01-TRUST-38"
+      ],
+      "rollback": "Preserve reconciliation evidence and keep the candidate disabled on any non-zero unexplained difference.",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "design_review_status": "REQUIRED_NOT_PERFORMED"
+    }
+  ],
+  "test_cases": [
+    {
+      "case_id": "TC-M01-TRUST-01",
+      "kind": "unit",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P058-REF-n015-s2"
+      ],
+      "injection": "run the immutable positive and ten-negative fixture manifest in shuffled filesystem order",
+      "oracle": "the runner uses manifest order and returns zero only for the exact eleven outcomes",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-02",
+      "kind": "negative",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P059-REF-n015-s3"
+      ],
+      "injection": "return timeout oversized body unknown field and request-binding substitutions from the endpoint",
+      "oracle": "every transport shape size and binding drift rejects without returning an attestation",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-03",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P060-REF-n015-s4"
+      ],
+      "injection": "omit the injected verifier and return REJECT ERROR or mismatched request identity",
+      "oracle": "the existing hard block remains effective and no caller progresses",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-04",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P061-REF-n015-s5"
+      ],
+      "injection": "substitute candidate blob external receipt payload signature and candidate identity independently",
+      "oracle": "the complete artifact reference set is rejected with no partial trusted member",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-05",
+      "kind": "integration",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P062-REF-n015-s6"
+      ],
+      "injection": "supply a missing commit changed tree artifact drift and invalid prebuilt provenance",
+      "oracle": "the candidate is rejected before any execution or promotion decision",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-06",
+      "kind": "negative",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P067-REF-n015-s10"
+      ],
+      "injection": "supply relative missing symlink nested and non-Git repository roots",
+      "oracle": "only one canonical top-level repository is returned and every ambient fallback is rejected",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-07",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P068-REF-n015-s11"
+      ],
+      "injection": "supply traversal revision-separator missing blob and Git corruption cases",
+      "oracle": "unsafe paths reject missing returns None and command failures remain errors",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-08",
+      "kind": "negative",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P069-REF-n015-s12"
+      ],
+      "injection": "supply symlink escape digest drift invalid JSON non-object root and schema drift",
+      "oracle": "bytes are never parsed before containment and digest pass and no invalid object is returned",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-09",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P070-REF-n015-s13"
+      ],
+      "injection": "supply path escape symlink invalid digest missing file and changed bytes",
+      "oracle": "only an exact explicit-root regular file digest returns None",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-10",
+      "kind": "replay",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P071-REF-n015-s14"
+      ],
+      "injection": "fingerprint the same commit from two detached worktrees then alter roots exclusions and one blob",
+      "oracle": "equivalent repositories match while every production selection or blob change alters or rejects the digest",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-11",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P072-REF-n015-s15"
+      ],
+      "injection": "permute keys and substitute each candidate profile environment purpose nonce time and policy field",
+      "oracle": "key order is stable and every signed identity substitution changes canonical bytes",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-12",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P073-REF-n015-s16"
+      ],
+      "injection": "supply policy hash drift wildcard roles soft-fail revocation and secret-value embedding",
+      "oracle": "all weakened policies reject and no raw secret reaches output or diagnostics",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-13",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P074-REF-n015-s17"
+      ],
+      "injection": "supply invalid root weak algorithm wrong EKU expiry revocation unknown-critical and oversized chains",
+      "oracle": "each invalid certificate family rejects at injected verification time",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-14",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P075-REF-n015-s18"
+      ],
+      "injection": "substitute payload signature key and algorithm including downgrade and fallback candidates",
+      "oracle": "only the exact allowed algorithm key payload and detached signature verify",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-15",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P076-REF-n015-s19"
+      ],
+      "injection": "substitute authority role purpose commit profile environment time and conditional CNAS scope",
+      "oracle": "every required identity and conditional scope mismatch rejects",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-16",
+      "kind": "replay",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P077-REF-n015-s20"
+      ],
+      "injection": "race exact duplicate and conflicting payload requests for one scoped nonce",
+      "oracle": "one claim is created exact retries are idempotent and conflicts reject linearly",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-17",
+      "kind": "integration",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P078-REF-n015-s21"
+      ],
+      "injection": "fault each dependency before and after its normal return and inspect the final attestation",
+      "oracle": "no fault path produces partial PASS and a complete path binds every verified component",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-18",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P087-REF-n015-s30"
+      ],
+      "injection": "supply inline wildcard traversal unapproved and unavailable secret references",
+      "oracle": "only one allowlisted versioned reference yields a non-serializable opaque handle",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-19",
+      "kind": "replay",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P088-REF-n015-s31"
+      ],
+      "injection": "open relative symlink locked incompatible torn and non-durable replay stores",
+      "oracle": "startup fails closed unless one exclusive persistent compatible durable store opens",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-20",
+      "kind": "replay",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P089-REF-n015-s32"
+      ],
+      "injection": "append identity-mismatched duplicate-conflict short-write and sync-failure decisions",
+      "oracle": "only exact duplicate is idempotent and no unsynced record can authorize PASS",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-21",
+      "kind": "integration",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P090-REF-n015-s33"
+      ],
+      "injection": "send wrong method type encoding oversized malformed reject pass and ledger-failure requests",
+      "oracle": "closed HTTP responses map exact decisions and ledger failure converts domain PASS to ERROR",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-22",
+      "kind": "negative",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P091-REF-n015-s34"
+      ],
+      "injection": "fault policy secret replay and ledger health dependencies independently",
+      "oracle": "readiness stays false for every required dependency failure and reveals no secret data",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-23",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P092-REF-n015-s35"
+      ],
+      "injection": "supply weak TLS open routes proxy trust unsafe listen and unbounded server limits",
+      "oracle": "server construction rejects every widened transport or route surface",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-24",
+      "kind": "rollback",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P093-REF-n015-s36"
+      ],
+      "injection": "fault each startup stage then terminate during admission drain replay and ledger flush",
+      "oracle": "readiness never precedes full startup and non-graceful shutdown never returns zero",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-25",
+      "kind": "negative",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P094-REF-n015-s37"
+      ],
+      "injection": "supply missing duplicate unknown ambient and unsafe CLI configuration",
+      "oracle": "CLI invokes serve once only for an explicit canonical complete configuration",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-26",
+      "kind": "compatibility",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P057-CTR-n015-s1"
+      ],
+      "injection": "validate positive and unknown missing secret algorithm role scope and status schema fixtures",
+      "oracle": "the three schemas accept only closed complete versioned trust objects",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-27",
+      "kind": "deployment",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P079-OPS-n015-s22"
+      ],
+      "injection": "inspect the planned Dockerfile and lock for floating inputs root user secret copies and non-repeatable installs",
+      "oracle": "all inputs are digest or hash pinned and the image contract is non-root and secret-free",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-28",
+      "kind": "integration",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P080-TST-PRE-n015-s23"
+      ],
+      "injection": "run the authorized G0 recipe against one immutable candidate and exact eleven-case manifest",
+      "oracle": "both G0 files bind the same candidate design cases runner and NOT_RUN-to-result transition",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-29",
+      "kind": "rollback",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P081-TST-PRE-n015-s24"
+      ],
+      "injection": "restart rotate expire revoke and roll back the verifier in the isolated G1 environment",
+      "oracle": "G1 records bounded convergence no stale PASS and durable evidence retention",
+      "gate_id": "G1",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-30",
+      "kind": "deployment",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P082-OPS-n015-s25"
+      ],
+      "injection": "render the manifest with absent mutable unsigned and valid externally signed image inputs",
+      "oracle": "only the external receipt digest renders and activation remains default off",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-31",
+      "kind": "rollback",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P083-OPS-n015-s26"
+      ],
+      "injection": "deploy one authorized canary then cross each stop threshold and invoke hard-block rollback",
+      "oracle": "G6 records identity health stop decision rollback timing and final zero activation",
+      "gate_id": "G6",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-32",
+      "kind": "integration",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P084-TST-POST-n015-s27"
+      ],
+      "injection": "exercise positive ten-negative timeout malformed and unavailable dependency requests on the protected endpoint",
+      "oracle": "G2 binds every result to candidate environment policy and exact rejection family",
+      "gate_id": "G2",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-33",
+      "kind": "reconciliation",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P085-TST-POST-n015-s28"
+      ],
+      "injection": "join request attestation replay claim and caller results including late duplicate and conflict",
+      "oracle": "G3 reports explained categories and exactly zero unexplained difference",
+      "gate_id": "G3",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-34",
+      "kind": "integration",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P061-REF-n015-s5",
+        "T1-M01-P062-REF-n015-s6",
+        "T1-M01-P067-REF-n015-s10",
+        "T1-M01-P068-REF-n015-s11",
+        "T1-M01-P069-REF-n015-s12",
+        "T1-M01-P070-REF-n015-s13",
+        "T1-M01-P071-REF-n015-s14"
+      ],
+      "injection": "execute all candidate reads from a detached explicit repository while the process current directory and module checkout differ",
+      "oracle": "every helper and caller reads only the supplied repository and produces the detached candidate fingerprint",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-35",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P072-REF-n015-s15",
+        "T1-M01-P075-REF-n015-s18",
+        "T1-M01-P078-REF-n015-s21",
+        "T1-M01-P090-REF-n015-s33"
+      ],
+      "injection": "replay a valid signature with one canonical request identity field substituted after signing",
+      "oracle": "canonical payload digest changes and the endpoint returns REJECT with no replay or PASS ledger record",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-36",
+      "kind": "negative",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P059-REF-n015-s3",
+        "T1-M01-P078-REF-n015-s21",
+        "T1-M01-P090-REF-n015-s33",
+        "T1-M01-P092-REF-n015-s35"
+      ],
+      "injection": "exceed request response chain signature timeout and server resource bounds independently",
+      "oracle": "client and server fail closed with bounded diagnostics and never return or persist PASS",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-37",
+      "kind": "security",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P073-REF-n015-s16",
+        "T1-M01-P076-REF-n015-s19"
+      ],
+      "injection": "toggle the request CNAS boundary and substitute accredited scope policy role and environment",
+      "oracle": "CNAS scope is enforced exactly when declared while ordinary requests cannot acquire its authority",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-38",
+      "kind": "reconciliation",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P085-TST-POST-n015-s28"
+      ],
+      "injection": "attempt to construct the preserved P066 completion before the exact P085 G3 result and dependency are accepted",
+      "oracle": "the terminal completion remains blocked until P085 is accepted and all 36 direct members are current",
+      "gate_id": "G3",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-39",
+      "kind": "integration",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P086-WRT-n015-s29",
+        "T1-M01-P087-REF-n015-s30",
+        "T1-M01-P088-REF-n015-s31",
+        "T1-M01-P089-REF-n015-s32",
+        "T1-M01-P090-REF-n015-s33",
+        "T1-M01-P091-REF-n015-s34",
+        "T1-M01-P092-REF-n015-s35",
+        "T1-M01-P093-REF-n015-s36",
+        "T1-M01-P094-REF-n015-s37"
+      ],
+      "injection": "bootstrap restart and gracefully terminate one runtime using persistent replay and audit state",
+      "oracle": "the runtime exact-set is complete readiness is truthful replay survives and audit flush precedes zero exit",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-40",
+      "kind": "rollback",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P088-REF-n015-s31",
+        "T1-M01-P089-REF-n015-s32",
+        "T1-M01-P090-REF-n015-s33",
+        "T1-M01-P093-REF-n015-s36"
+      ],
+      "injection": "kill the process at each replay claim ledger append response and shutdown boundary then restart",
+      "oracle": "no undurable PASS is exposed conflicts remain rejected and recovery reports every incomplete transition",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-41",
+      "kind": "compatibility",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P095-WRT-n015-s38",
+        "T1-M01-P060-REF-n015-s4",
+        "T1-M01-P061-REF-n015-s5",
+        "T1-M01-P062-REF-n015-s6",
+        "T1-M01-P067-REF-n015-s10"
+      ],
+      "injection": "type-check migrated candidate helpers against missing swapped ambient and structurally similar repository trust and verifier objects",
+      "oracle": "only the exact immutable repository trust context and verifier Protocol shapes compile and reach validation",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "case_id": "TC-M01-TRUST-42",
+      "kind": "compatibility",
+      "subject_atomic_pr_ids": [
+        "T1-M01-P096-WRT-n015-s39",
+        "T1-M01-P072-REF-n015-s15",
+        "T1-M01-P073-REF-n015-s16",
+        "T1-M01-P074-REF-n015-s17",
+        "T1-M01-P075-REF-n015-s18",
+        "T1-M01-P076-REF-n015-s19",
+        "T1-M01-P077-REF-n015-s20",
+        "T1-M01-P078-REF-n015-s21",
+        "T1-M01-P087-REF-n015-s30",
+        "T1-M01-P088-REF-n015-s31",
+        "T1-M01-P089-REF-n015-s32",
+        "T1-M01-P090-REF-n015-s33",
+        "T1-M01-P091-REF-n015-s34",
+        "T1-M01-P092-REF-n015-s35",
+        "T1-M01-P093-REF-n015-s36",
+        "T1-M01-P094-REF-n015-s37"
+      ],
+      "injection": "type-check every service function after removing renaming or widening each domain protocol config adapter clock and shutdown declaration",
+      "oracle": "the exact declaration set is compile complete while every omitted or ambiguous trust-boundary type fails",
+      "gate_id": "G0",
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "sequencing": [
+    {
+      "order": 1,
+      "atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+      "entry_condition": "accepted dependencies: T1-M01-P002-IDX-n001-task-completion",
+      "result": "static design target: policy, exact request and attestation schemas are versioned and forbid secret values and self-reported trust",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 2,
+      "atomic_pr_id": "T1-M01-P096-WRT-n015-s39",
+      "entry_condition": "accepted dependencies: T1-M01-P057-CTR-n015-s1",
+      "result": "static design target: define the complete typed service boundary for requests attestations policy authority replay secrets audit HTTP TLS config clock and shutdown",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 3,
+      "atomic_pr_id": "T1-M01-P058-REF-n015-s2",
+      "entry_condition": "accepted dependencies: T1-M01-P096-WRT-n015-s39",
+      "result": "static design target: the dedicated runner implements all ten negative cases plus the protected positive case without embedding trust anchors",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 4,
+      "atomic_pr_id": "T1-M01-P059-REF-n015-s3",
+      "entry_condition": "accepted dependencies: T1-M01-P058-REF-n015-s2",
+      "result": "static design target: the adapter sends a bounded structured request, pins policy identity, enforces timeout/output limits and fails closed",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 5,
+      "atomic_pr_id": "T1-M01-P095-WRT-n015-s38",
+      "entry_condition": "accepted dependencies: T1-M01-P059-REF-n015-s3",
+      "result": "static design target: define immutable candidate repository trust context and verifier client protocols used by every migrated caller",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 6,
+      "atomic_pr_id": "T1-M01-P060-REF-n015-s4",
+      "entry_condition": "accepted dependencies: T1-M01-P095-WRT-n015-s38",
+      "result": "static design target: the wrapper accepts the typed request instead of a context string and retains unconditional blocking when the protected verifier is unavailable",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 7,
+      "atomic_pr_id": "T1-M01-P067-REF-n015-s10",
+      "entry_condition": "accepted dependencies: T1-M01-P060-REF-n015-s4",
+      "result": "static design target: resolve one immutable canonical repository root without ambient global fallback",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 8,
+      "atomic_pr_id": "T1-M01-P068-REF-n015-s11",
+      "entry_condition": "accepted dependencies: T1-M01-P067-REF-n015-s10",
+      "result": "static design target: read one candidate Git blob from the explicit repository root with typed absent versus command failure",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 9,
+      "atomic_pr_id": "T1-M01-P069-REF-n015-s12",
+      "entry_condition": "accepted dependencies: T1-M01-P068-REF-n015-s11",
+      "result": "static design target: load one safe repository-scoped JSON artifact using explicit root exact hash and optional schema",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 10,
+      "atomic_pr_id": "T1-M01-P070-REF-n015-s13",
+      "entry_condition": "accepted dependencies: T1-M01-P069-REF-n015-s12",
+      "result": "static design target: validate one safe explicit-root artifact path and exact digest without following repository escapes",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 11,
+      "atomic_pr_id": "T1-M01-P071-REF-n015-s14",
+      "entry_condition": "accepted dependencies: T1-M01-P070-REF-n015-s13",
+      "result": "static design target: derive the production tree fingerprint only from the explicit repository and exact candidate commit",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 12,
+      "atomic_pr_id": "T1-M01-P061-REF-n015-s5",
+      "entry_condition": "accepted dependencies: T1-M01-P060-REF-n015-s4, T1-M01-P071-REF-n015-s14",
+      "result": "static design target: candidate-artifact-refs passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 13,
+      "atomic_pr_id": "T1-M01-P062-REF-n015-s6",
+      "entry_condition": "accepted dependencies: T1-M01-P061-REF-n015-s5",
+      "result": "static design target: implementation-candidate passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 14,
+      "atomic_pr_id": "T1-M01-P072-REF-n015-s15",
+      "entry_condition": "accepted dependencies: T1-M01-P062-REF-n015-s6, T1-M01-P096-WRT-n015-s39",
+      "result": "static design target: canonicalize one typed request while excluding no signed identity field",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 15,
+      "atomic_pr_id": "T1-M01-P073-REF-n015-s16",
+      "entry_condition": "accepted dependencies: T1-M01-P072-REF-n015-s15",
+      "result": "static design target: load the pinned policy and trust-anchor references without loading secret values into output",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 16,
+      "atomic_pr_id": "T1-M01-P074-REF-n015-s17",
+      "entry_condition": "accepted dependencies: T1-M01-P073-REF-n015-s16",
+      "result": "static design target: verify chain algorithm EKU validity and revocation state against the pinned policy",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 17,
+      "atomic_pr_id": "T1-M01-P075-REF-n015-s18",
+      "entry_condition": "accepted dependencies: T1-M01-P074-REF-n015-s17",
+      "result": "static design target: verify the detached signature over the exact canonical payload and reject algorithm downgrade",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 18,
+      "atomic_pr_id": "T1-M01-P076-REF-n015-s19",
+      "entry_condition": "accepted dependencies: T1-M01-P075-REF-n015-s18",
+      "result": "static design target: verify required role purpose candidate profile environment time window and optional CNAS scope",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 19,
+      "atomic_pr_id": "T1-M01-P077-REF-n015-s20",
+      "entry_condition": "accepted dependencies: T1-M01-P076-REF-n015-s19",
+      "result": "static design target: atomically claim one policy-scoped attestation nonce or return its exact replay receipt",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 20,
+      "atomic_pr_id": "T1-M01-P078-REF-n015-s21",
+      "entry_condition": "accepted dependencies: T1-M01-P077-REF-n015-s20",
+      "result": "static design target: orchestrate exact payload chain signature role scope and replay checks into one typed attestation",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 21,
+      "atomic_pr_id": "T1-M01-P086-WRT-n015-s29",
+      "entry_condition": "accepted dependencies: T1-M01-P078-REF-n015-s21",
+      "result": "static design target: define one immutable runtime aggregate for policy secret replay ledger audit and server dependencies",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 22,
+      "atomic_pr_id": "T1-M01-P087-REF-n015-s30",
+      "entry_condition": "accepted dependencies: T1-M01-P086-WRT-n015-s29",
+      "result": "static design target: resolve one allowlisted secret reference into an opaque handle without serializing its value",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 23,
+      "atomic_pr_id": "T1-M01-P088-REF-n015-s31",
+      "entry_condition": "accepted dependencies: T1-M01-P087-REF-n015-s30",
+      "result": "static design target: open one persistent exclusive atomic replay store and reject unsafe or incompatible state",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 24,
+      "atomic_pr_id": "T1-M01-P089-REF-n015-s32",
+      "entry_condition": "accepted dependencies: T1-M01-P088-REF-n015-s31",
+      "result": "static design target: append and fsync one canonical request decision and replay binding before exposing PASS",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 25,
+      "atomic_pr_id": "T1-M01-P090-REF-n015-s33",
+      "entry_condition": "accepted dependencies: T1-M01-P089-REF-n015-s32",
+      "result": "static design target: parse one bounded HTTP request invoke the domain verifier persist the decision and return a typed response",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 26,
+      "atomic_pr_id": "T1-M01-P091-REF-n015-s34",
+      "entry_condition": "accepted dependencies: T1-M01-P090-REF-n015-s33",
+      "result": "static design target: report readiness only after policy secret replay ledger and audit dependencies are usable",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 27,
+      "atomic_pr_id": "T1-M01-P092-REF-n015-s35",
+      "entry_condition": "accepted dependencies: T1-M01-P091-REF-n015-s34",
+      "result": "static design target: build a bounded TLS verifier server with only verify and health routes and explicit dependencies",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 28,
+      "atomic_pr_id": "T1-M01-P093-REF-n015-s36",
+      "entry_condition": "accepted dependencies: T1-M01-P092-REF-n015-s35",
+      "result": "static design target: bootstrap validate and serve the verifier with staged shutdown and durable replay audit flush",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 29,
+      "atomic_pr_id": "T1-M01-P094-REF-n015-s37",
+      "entry_condition": "accepted dependencies: T1-M01-P093-REF-n015-s36",
+      "result": "static design target: parse explicit runtime paths and start the protected verifier without ambient trust configuration",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 30,
+      "atomic_pr_id": "T1-M01-P079-OPS-n015-s22",
+      "entry_condition": "accepted dependencies: T1-M01-P094-REF-n015-s37",
+      "result": "static design target: define a non-root digest-pinnable verifier image package with no embedded trust anchors or secrets",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 31,
+      "atomic_pr_id": "T1-M01-P080-TST-PRE-n015-s23",
+      "entry_condition": "accepted dependencies: T1-M01-P079-OPS-n015-s22",
+      "result": "static design target: record the exact static unit schema and ten-case fail-closed matrix for one candidate",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 32,
+      "atomic_pr_id": "T1-M01-P081-TST-PRE-n015-s24",
+      "entry_condition": "accepted dependencies: T1-M01-P080-TST-PRE-n015-s23",
+      "result": "static design target: record isolated restart policy rotation expiry revocation and rollback compatibility evidence",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 33,
+      "atomic_pr_id": "T1-M01-P082-OPS-n015-s25",
+      "entry_condition": "accepted dependencies: T1-M01-P081-TST-PRE-n015-s24, EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN",
+      "result": "static design target: materialize a default-off digest-pinned deployment with secret references NetworkPolicy and rollback controls",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 34,
+      "atomic_pr_id": "T1-M01-P083-OPS-n015-s26",
+      "entry_condition": "accepted dependencies: T1-M01-P082-OPS-n015-s25",
+      "result": "static design target: record canary deployment health stop thresholds hard-block rollback and observation evidence",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 35,
+      "atomic_pr_id": "T1-M01-P084-TST-POST-n015-s27",
+      "entry_condition": "accepted dependencies: T1-M01-P083-OPS-n015-s26",
+      "result": "static design target: record protected endpoint functional and fault-path verification for one candidate and environment",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    },
+    {
+      "order": 36,
+      "atomic_pr_id": "T1-M01-P085-TST-POST-n015-s28",
+      "entry_condition": "accepted dependencies: T1-M01-P084-TST-POST-n015-s27",
+      "result": "static design target: record request attestation replay-ledger and caller-result reconciliation with unexplained diff zero",
+      "activation": "inactive until global registration review and signed execution authorization",
+      "status": "BLOCKED_PREVIEW_NOT_REGISTERED"
+    }
+  ],
+  "review_coverage": [
+    {
+      "atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+      "design_contract_id": "NFC-M01-N015-P057",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p057-ctr-n015-s1/non-function-design-exemption.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P058-REF-n015-s2",
+      "design_contract_id": "FC-M01-N015-P058",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p058-ref-n015-s2/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P059-REF-n015-s3",
+      "design_contract_id": "FC-M01-N015-P059",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p059-ref-n015-s3/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P060-REF-n015-s4",
+      "design_contract_id": "FC-M01-N015-P060",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p060-ref-n015-s4/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P061-REF-n015-s5",
+      "design_contract_id": "FC-M01-N015-P061",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p061-ref-n015-s5/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P062-REF-n015-s6",
+      "design_contract_id": "FC-M01-N015-P062",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p062-ref-n015-s6/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P067-REF-n015-s10",
+      "design_contract_id": "FC-M01-N015-P067",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p067-ref-n015-s10/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P068-REF-n015-s11",
+      "design_contract_id": "FC-M01-N015-P068",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p068-ref-n015-s11/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P069-REF-n015-s12",
+      "design_contract_id": "FC-M01-N015-P069",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p069-ref-n015-s12/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P070-REF-n015-s13",
+      "design_contract_id": "FC-M01-N015-P070",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p070-ref-n015-s13/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P071-REF-n015-s14",
+      "design_contract_id": "FC-M01-N015-P071",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p071-ref-n015-s14/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P072-REF-n015-s15",
+      "design_contract_id": "FC-M01-N015-P072",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p072-ref-n015-s15/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P073-REF-n015-s16",
+      "design_contract_id": "FC-M01-N015-P073",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p073-ref-n015-s16/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P074-REF-n015-s17",
+      "design_contract_id": "FC-M01-N015-P074",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p074-ref-n015-s17/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P075-REF-n015-s18",
+      "design_contract_id": "FC-M01-N015-P075",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p075-ref-n015-s18/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P076-REF-n015-s19",
+      "design_contract_id": "FC-M01-N015-P076",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p076-ref-n015-s19/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P077-REF-n015-s20",
+      "design_contract_id": "FC-M01-N015-P077",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p077-ref-n015-s20/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P078-REF-n015-s21",
+      "design_contract_id": "FC-M01-N015-P078",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p078-ref-n015-s21/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P079-OPS-n015-s22",
+      "design_contract_id": "NFC-M01-N015-P079",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p079-ops-n015-s22/non-function-design-exemption.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P080-TST-PRE-n015-s23",
+      "design_contract_id": "NFC-M01-N015-P080",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p080-tst-pre-n015-s23/non-function-design-exemption.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P081-TST-PRE-n015-s24",
+      "design_contract_id": "NFC-M01-N015-P081",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p081-tst-pre-n015-s24/non-function-design-exemption.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P082-OPS-n015-s25",
+      "design_contract_id": "NFC-M01-N015-P082",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p082-ops-n015-s25/non-function-design-exemption.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P083-OPS-n015-s26",
+      "design_contract_id": "NFC-M01-N015-P083",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p083-ops-n015-s26/non-function-design-exemption.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P084-TST-POST-n015-s27",
+      "design_contract_id": "NFC-M01-N015-P084",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p084-tst-post-n015-s27/non-function-design-exemption.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P085-TST-POST-n015-s28",
+      "design_contract_id": "NFC-M01-N015-P085",
+      "required_review_artifact_kind": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p085-tst-post-n015-s28/non-function-design-exemption.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P086-WRT-n015-s29",
+      "design_contract_id": "TC-FC-M01-N015-P086",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p086-wrt-n015-s29/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P087-REF-n015-s30",
+      "design_contract_id": "FC-M01-N015-P087",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p087-ref-n015-s30/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P088-REF-n015-s31",
+      "design_contract_id": "FC-M01-N015-P088",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p088-ref-n015-s31/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P089-REF-n015-s32",
+      "design_contract_id": "FC-M01-N015-P089",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p089-ref-n015-s32/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P090-REF-n015-s33",
+      "design_contract_id": "FC-M01-N015-P090",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p090-ref-n015-s33/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P091-REF-n015-s34",
+      "design_contract_id": "FC-M01-N015-P091",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p091-ref-n015-s34/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P092-REF-n015-s35",
+      "design_contract_id": "FC-M01-N015-P092",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p092-ref-n015-s35/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P093-REF-n015-s36",
+      "design_contract_id": "FC-M01-N015-P093",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p093-ref-n015-s36/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P094-REF-n015-s37",
+      "design_contract_id": "FC-M01-N015-P094",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p094-ref-n015-s37/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P095-WRT-n015-s38",
+      "design_contract_id": "TC-FC-M01-N015-P095",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p095-wrt-n015-s38/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    },
+    {
+      "atomic_pr_id": "T1-M01-P096-WRT-n015-s39",
+      "design_contract_id": "TC-FC-M01-N015-P096",
+      "required_review_artifact_kind": "FUNCTION_DESIGN_REVIEW_RECEIPT",
+      "expected_review_path": "doc/02_acceptance/topic1/design-reviews/t1-m01-p096-wrt-n015-s39/function-design-review.json",
+      "status": "MISSING_NOT_AUTHORED",
+      "blocking_reasons": [
+        "M01 v2 is a preview and is absent from the four active registries",
+        "reviewer adjudicator and accountable owner identities are not assigned",
+        "no signed candidate-bound review or exemption receipt exists"
+      ]
+    }
+  ],
+  "cross_cutting_invariants": [
+    "The v2 completion exact-set contains the 36 designed non-terminal members and preserves P066 as a non-executable terminal.",
+    "Every function contract owns exactly the catalog primary function locator and all catalog companion locators.",
+    "Every non-function contract owns exactly its declarative package manifest or evidence locator set.",
+    "Repository selection is explicit from validate_implementation_candidate through every Git blob hash and tree helper.",
+    "Candidate-controlled paths are canonical repository-relative paths and symlink or traversal escapes fail before byte reads.",
+    "A trusted PASS binds payload candidate commit profile environment purpose policy nonce validity and verifier identity.",
+    "Certificate chain algorithm EKU validity revocation authority role and conditional CNAS scope all fail closed.",
+    "Replay state is linearizable and distinguishes exact idempotent retry from conflicting nonce substitution.",
+    "Runtime readiness requires policy secret replay ledger and server health while shutdown stops admission before durable flush and close.",
+    "Secret values private keys credentials and bearer tokens are absent from schemas images manifests logs attestations and evidence.",
+    "The deployment image build sign and publish activity remains external and cannot be inferred from a Dockerfile or manifest.",
+    "G0 G1 G2 G3 and G6 each own one immutable evidence output pair and no pair asserts more than one gate.",
+    "Review artifacts evidence files implementation image signatures deployment and authorization remain absent until independently produced.",
+    "The four active registry artifacts remain byte-for-byte unchanged and formal execution stays blocked.",
+    "Rollback restores the current cryptographic hard block before traffic removal and never deletes immutable attempt evidence."
+  ],
+  "rollback": {
+    "entrypoint": "Any trust validation deployment or evidence mismatch",
+    "steps": [
+      "stop candidate verifier routing before changing caller behavior",
+      "scale the candidate verifier deployment to zero",
+      "restore the existing require_trusted_signature_verifier hard block",
+      "restore the last approved policy and image digest where applicable",
+      "retain request attestation replay claim and evidence artifacts",
+      "record the triggering invariant and candidate identity",
+      "re-run static validation before proposing another candidate"
+    ],
+    "durable_evidence_policy": "Attempted evidence and externally signed artifacts are immutable and never deleted or rewritten by rollback.",
+    "irreversible_boundary": "No irreversible boundary is authorized by this design; global switch deployment and acceptance require later signed decisions."
+  },
+  "claims": {
+    "allowed": "P057-P062 and P067-P096 function type and specialized non-function behavior is statically specified against v2 preview",
+    "forbidden": [
+      "GLOBAL_REGISTRY_SWITCHED",
+      "FUNCTION_DESIGN_REVIEWED",
+      "NON_FUNCTION_EXEMPTION_APPROVED",
+      "IMPLEMENTED",
+      "IMAGE_BUILT",
+      "IMAGE_SIGNED",
+      "DEPLOYED",
+      "TEST_EXECUTED",
+      "G0_PASS",
+      "G1_PASS",
+      "G2_PASS",
+      "G3_PASS",
+      "G6_PASS",
+      "TRUST_PASS",
+      "EXECUTION_AUTHORIZED",
+      "PARENT_COMPLETE",
+      "MILESTONE_COMPLETE",
+      "PRODUCTION_ACCEPTED"
+    ],
+    "proof_ceiling": "STATIC_FUNCTION_AND_NON_FUNCTION_DESIGN_ONLY_NOT_REVIEW_RECEIPT_GLOBAL_REGISTRATION_IMPLEMENTATION_IMAGE_BUILD_SIGNATURE_DEPLOYMENT_TEST_EXECUTION_TRUST_PASS_AUTHORIZATION_OR_ACCEPTANCE"
+  },
+  "validation": {
+    "schema": "PASS",
+    "source_hashes_exact": "PASS",
+    "member_exact_set": "PASS_36",
+    "function_exact_set": "PASS_25",
+    "type_exact_set": "PASS_3",
+    "non_function_exact_set": "PASS_8",
+    "function_signatures_exact": "PASS",
+    "body_steps_contiguous": "PASS",
+    "test_exact_set": "PASS_42_NOT_RUN",
+    "test_subject_coverage": "PASS_ALL_36",
+    "single_gate_evidence": "PASS",
+    "sequence_topological": "PASS",
+    "review_coverage_exact": "PASS_36_MISSING",
+    "no_review_fabrication": true,
+    "mutation_guards": {
+      "source_hash_drift": "PASS",
+      "member_omission": "PASS",
+      "function_omission": "PASS",
+      "type_omission": "PASS",
+      "non_function_omission": "PASS",
+      "signature_drift": "PASS",
+      "body_step_drift": "PASS",
+      "error_branch_omission": "PASS",
+      "test_omission": "PASS",
+      "uncovered_leaf": "PASS",
+      "wrong_gate": "PASS",
+      "sequence_inversion": "PASS",
+      "review_false_ready": "PASS",
+      "terminal_function_fabrication": "PASS",
+      "secret_policy_weakening": "PASS"
+    }
+  }
+}

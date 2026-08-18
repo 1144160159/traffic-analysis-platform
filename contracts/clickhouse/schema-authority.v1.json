@@ -6,6 +6,13 @@
   "production_applied": false,
   "authoritative_migration_directory": "deployments/clickhouse/migrations",
   "migration_runner": "scripts/clickhouse/run-migrations.sh",
+  "kubernetes_execution": {
+    "renderer": "scripts/clickhouse/render-kubernetes-migrations.py",
+    "manifest": "deployments/kubernetes/init-jobs/03a-clickhouse-authoritative-migrations.yaml",
+    "namespace": "middleware",
+    "baseline_readiness_table": "traffic.sessions_local",
+    "production_applied": false
+  },
   "execution_model": "direct_each_node",
   "migration_ledger": {
     "local_table": "traffic.alignment_schema_migrations_local",
@@ -19,7 +26,7 @@
   "legacy_schema_sources": [
     {
       "path": "common/sql/ch/00-all-tables.sql",
-      "sha256": "b2ad3129d5b130b1ebac09c9e8d613931f64495be36efa588d8fec3f7e09e15e",
+      "sha256": "d4307b2fc0ba78d5f5059a7a3dc557260b41fa90f9fffc152d389d11b9477b57",
       "disposition": "legacy_drift_blocked"
     },
     {
@@ -33,13 +40,23 @@
       "disposition": "legacy_drift_blocked"
     },
     {
+      "path": "common/sql/ch/04-m03-feature-seq-fingerprint-v1.sql",
+      "sha256": "d1ca7aa2221891466062a9cdcb9d596aaef1bc09d78c49ac7ff6372957946936",
+      "disposition": "legacy_drift_blocked"
+    },
+    {
+      "path": "common/sql/ch/05-m02-pcap-projection-v2.sql",
+      "sha256": "fbe6628f61daa4bb1089c53c54340a4e532c27da5d8931a20140c9e1a1dd3349",
+      "disposition": "legacy_drift_blocked"
+    },
+    {
       "path": "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml",
-      "sha256": "8ca1010db70655b9740a0b3bf2327f99838145bf15b20d109c98dcb976895c6b",
+      "sha256": "ba4bfa8e553f2dbc090c5a775a854d62ce4498704531ca807969a8b5fd77338b",
       "disposition": "legacy_kubernetes_entrypoint"
     },
     {
       "path": "go/control-plane/deployments/docker/init/clickhouse_merged.sql",
-      "sha256": "5e60ea14453ca59a901c46aadd49df7b8e6f077d0fbec9f758b3d7c9bc2663de",
+      "sha256": "3d5c71a1fd65d51c4c5979daffcee22df89164d2a28f88beb9e9fa41cfcf0871",
       "disposition": "legacy_docker_entrypoint"
     },
     {
@@ -59,12 +76,12 @@
     },
     {
       "path": "java/flink-jobs/flink-feature-job/deployments/docker/init-clickhouse.sql",
-      "sha256": "2980d3f424d97dc50e82d3da62c1ca610f387355b0693e5295e8bd10e4c073a7",
+      "sha256": "023706a1494c93194b08176ee2c3efa587464927a0b647e669d399355b40c4a3",
       "disposition": "legacy_component_fixture"
     },
     {
       "path": "java/flink-jobs/flink-pcap-index-job/deployments/docker/init-scripts/clickhouse/01-create-tables.sql",
-      "sha256": "6f2c41a876a22137497ab551defca6e9ef32c85751b2a1654fd1f2d9dc27858d",
+      "sha256": "25791501ea3b4563a5b85c92bfabb6e9f02497405b6ab1f30efa0d00f38a1bd2",
       "disposition": "legacy_component_fixture"
     },
     {
@@ -87,7 +104,7 @@
   "closure_blockers": [
     "capture immutable live system table and column baseline from every shard and replica",
     "model the production fact tables as ordered baseline migrations without destructive rewrites",
-    "replace Kubernetes Docker and component fixture DDL entrypoints with the same migration runner",
+    "retire the remaining legacy Kubernetes Docker and component fixture DDL entrypoints after compatibility cutover",
     "execute expand backfill shadow reconcile cutover and rollback with resource budgets",
     "prove shard replica materialized-view and deterministic projection reconciliation"
   ]

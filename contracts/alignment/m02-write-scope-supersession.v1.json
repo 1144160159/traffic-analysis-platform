@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M02_EFFECTIVE_WRITE_SCOPE_SUPERSESSION_LEDGER",
+  "artifact_status": "DESIGNED_NOT_REGISTERED",
+  "revision_id": "M02-WRITE-SCOPE-SUPERSESSION-V1",
+  "source_catalog": {
+    "path": "contracts/alignment/m02-code-direct-leaf-catalog.v2.json",
+    "sha256": "138277a3df27917c8248dcab863a767dca5ba61ca8730403d8086e7b93bedb44"
+  },
+  "source_allocation": {
+    "path": "contracts/alignment/m02-code-direct-leaf-allocation.v2.json",
+    "sha256": "fa12614bea34eafba3e11da28293ed318ee1a346023ecfb0c7a3bb9ce66748c2"
+  },
+  "ownership_boundary": {
+    "path": "contracts/alignment/m02-shared-locator-ownership.v1.json",
+    "sha256": "8500b7231e73e7115521c58133b79e55be66b46e1ca254bcdb6a6f51991d2477"
+  },
+  "supersessions": [
+    {
+      "supersession_id": "M02-P408-POLL-MANIFEST-WRITE-SCOPE-V1",
+      "predecessor_leaf_id": "M02-N004-L48",
+      "predecessor_atomic_pr_id": "T1-M02-P408-WRT-n004-l48",
+      "frozen_write_locators": [
+        "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#replay_delay",
+        "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#ManifestPcapReplayer::poll_manifest"
+      ],
+      "frozen_write_locator_exact_set_sha256": "6bab630299febd526a624fe1890dee2680190065af36643f4427672b96e945de",
+      "effective_write_locators": [
+        "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#replay_delay"
+      ],
+      "read_only_context_locators": [
+        "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#ManifestPcapReplayer::poll_manifest"
+      ],
+      "context_function_owner_leaf_id": "M02-N004-L21",
+      "context_function_owner_atomic_pr_id": "T1-M02-P165-WRT-n004-l21",
+      "integration_edge": {
+        "from": "M02-N004-L48",
+        "to": "M02-N004-L21",
+        "edge_kind": "APPENDED_TO_EXISTING"
+      },
+      "change_rule": "REMOVE_COMPANION_FROM_EFFECTIVE_WRITE_SCOPE_WITHOUT_MUTATING_FROZEN_P408_RECORD",
+      "activation_status": "BLOCKED_NOT_REGISTERED"
+    }
+  ],
+  "activation_policy": {
+    "decision": "BLOCKED_NOT_REGISTERED",
+    "required_evidence": [
+      "ONE_CLEAN_CANDIDATE_MANIFEST",
+      "P408_REPLAY_DELAY_EXACT_RUST_AST_RECEIPT",
+      "P165_POLL_MANIFEST_EXACT_RUST_AST_RECEIPT",
+      "P408_UNIFIED_FUNCTION_REVIEW_RECEIPT",
+      "P165_UNIFIED_FUNCTION_REVIEW_RECEIPT",
+      "FOUR_CANDIDATE_CATALOGS_APPLY_THE_SAME_SUPERSESSION_HASH"
+    ],
+    "activation_effect": "FUTURE_CANDIDATE_PACKAGES_USE_EFFECTIVE_WRITE_AND_READ_ONLY_CONTEXT_SETS_WHILE_FROZEN_HISTORY_REMAINS_BYTE_IDENTICAL",
+    "failure_rule": "ANY_MISSING_OR_HASH_MISMATCH_KEEPS_P408_UNCLAIMABLE_AND_ACTIVE_REGISTRIES_UNCHANGED"
+  },
+  "validation": {
+    "source_exact": "PASS",
+    "frozen_predecessor_exact": "PASS",
+    "scope_strictly_narrows": true,
+    "no_new_locator_introduced": true,
+    "context_owner_exact": "PASS",
+    "integration_edge_exact": "PASS",
+    "historical_artifacts_not_mutated": true,
+    "premature_activation_rejected": true,
+    "mutation_guards": {
+      "scope_widening": "PASS",
+      "context_omission": "PASS",
+      "owner_swap": "PASS",
+      "edge_reversal": "PASS",
+      "false_activation": "PASS",
+      "source_hash_drift": "PASS"
+    }
+  },
+  "proof_ceiling": "WRITE_SCOPE_SUPERSESSION_DESIGN_ONLY_NOT_REGISTERED_LOCATOR_RESOLVED_FUNCTION_REVIEWED_IMPLEMENTED_OR_AUTHORIZED"
+}

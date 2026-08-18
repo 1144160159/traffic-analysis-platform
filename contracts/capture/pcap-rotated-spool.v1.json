@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "M02-PCAP-ROTATED-SPOOL",
+  "activation_guard": {
+    "configuration_key": "archiver.durable_spool_enabled",
+    "default": false
+  },
+  "immutable_record_fields": [
+    "task_id",
+    "tenant_id",
+    "probe_id",
+    "capture_uuid",
+    "manifest_hash",
+    "object_key",
+    "canonical_local_path",
+    "original_size",
+    "stored_size",
+    "sha256",
+    "ts_start",
+    "ts_end",
+    "packet_count"
+  ],
+  "states": [
+    "ROTATED",
+    "SPOOLED",
+    "PENDING",
+    "OBJECT_WRITTEN",
+    "METADATA_ACCEPTED",
+    "CLEANUP_AUTHORIZED",
+    "DELETED",
+    "RETRY_WAIT",
+    "QUARANTINED"
+  ],
+  "transitions": [
+    {
+      "from": "ROTATED",
+      "event": "sync_temp_rename_noreplace_sync_parent",
+      "to": "SPOOLED",
+      "durability_barrier": "complete PCAP bytes are file-synced, atomically published, and the parent directory is fsynced"
+    },
+    {
+      "from": "SPOOLED",
+      "event": "record_spooled_pending_compare_and_swap_flush",
+      "to": "PENDING",
+      "durability_barrier": "the immutable record and PENDING state are flushed in sled before enqueue or buffer release"
+    },
+    {
+      "from": "PENDING",
+      "event": "trusted_object_receipt_compare_and_swap_flush",
+      "to": "OBJECT_WRITTEN",
+      "durability_barrier": "bucket key version etag stored size and sha256 are persisted with the state"
+    },
+    {
+      "from": "OBJECT_WRITTEN",
+      "event": "metadata_ack_compare_and_swap_flush",
+      "to": "METADATA_ACCEPTED",
+      "durability_barrier": "metadata acknowledgement is durable and bound to the retained object receipt"
+    },
+    {
+      "from": "METADATA_ACCEPTED",
+      "event": "claim_exact_revision_and_path_identity",
+      "to": "CLEANUP_AUTHORIZED",
+      "durability_barrier": "one cleanup claim records revision canonical path device inode and manifest before unlink"
+    },
+    {
+      "from": "CLEANUP_AUTHORIZED",
+      "event": "rename_unlink_sync_parent_record_tombstone",
+      "to": "DELETED",
+      "durability_barrier": "unlink and parent fsync precede a durable DELETED tombstone retaining the cleanup claim"
+    },
+    {
+      "from": "PENDING",
+      "event": "retryable_object_failure",
+      "to": "RETRY_WAIT",
+      "durability_barrier": "retry count error and PENDING resume state are compare-and-swap flushed"
+    },
+    {
+      "from": "OBJECT_WRITTEN",
+      "event": "retryable_metadata_failure",
+      "to": "RETRY_WAIT",
+      "durability_barrier": "retry count error OBJECT_WRITTEN resume state and the original object receipt remain durable"
+    },
+    {
+      "from": "RETRY_WAIT",
+      "event": "resume_exact_pending_phase",
+      "to": "PENDING",
+      "durability_barrier": "the preserved retry resume state is consumed by a compare-and-swap flush"
+    },
+    {
+      "from": "RETRY_WAIT",
+      "event": "resume_exact_metadata_phase",
+      "to": "OBJECT_WRITTEN",
+      "durability_barrier": "the preserved object receipt is required and no object PUT is allowed"
+    },
+    {
+      "from": "PENDING",
+      "event": "manifest_or_path_identity_conflict",
+      "to": "QUARANTINED",
+      "durability_barrier": "typed quarantine evidence is flushed and no remote write is made"
+    },
+    {
+      "from": "OBJECT_WRITTEN",
+      "event": "conflicting_object_receipt",
+      "to": "QUARANTINED",
+      "durability_barrier": "the first receipt is retained and the conflicting evidence is flushed"
+    }
+  ],
+  "forbidden_transitions": [
+    {"from": "PENDING", "to": "METADATA_ACCEPTED", "reason": "metadata cannot be accepted without a durable object receipt"},
+    {"from": "PENDING", "to": "CLEANUP_AUTHORIZED", "reason": "pending local evidence is never cleanup eligible"},
+    {"from": "OBJECT_WRITTEN", "to": "PENDING", "reason": "a durable object receipt never regresses to an upload state"},
+    {"from": "OBJECT_WRITTEN", "to": "CLEANUP_AUTHORIZED", "reason": "object storage success is not a metadata acknowledgement"},
+    {"from": "METADATA_ACCEPTED", "to": "DELETED", "reason": "deletion requires an exact durable cleanup claim"},
+    {"from": "DELETED", "to": "PENDING", "reason": "a deletion tombstone is terminal"},
+    {"from": "QUARANTINED", "to": "PENDING", "reason": "quarantined evidence requires an explicit repair contract"}
+  ],
+  "rejection_codes": [
+    "REJECT_INVALID_PCAP_RECORD",
+    "REJECT_SPOOL_BEFORE_JOURNAL_GAP",
+    "REJECT_SPOOL_IDENTITY_CONFLICT",
+    "REJECT_SPOOL_PATH_ESCAPE",
+    "REJECT_OBJECT_RECEIPT_NOT_DURABLE",
+    "REJECT_OBJECT_RECEIPT_CONFLICT",
+    "REJECT_METADATA_WITHOUT_OBJECT_RECEIPT",
+    "REJECT_CLEANUP_WITHOUT_EXACT_CLAIM",
+    "REJECT_CLEANUP_PATH_IDENTITY_DRIFT",
+    "REJECT_UNEXPLAINED_LOCAL_EVIDENCE_LOSS",
+    "REJECT_RETRY_RESUME_STATE_INVALID",
+    "REJECT_SHUTDOWN_ORDER_OR_DEADLINE"
+  ],
+  "invariants": [
+    "A sealed TripleBuffer lease is not reusable until both the spool file and PENDING journal record are durable.",
+    "Every immutable identity includes tenant probe capture UUID manifest hash object key size hash time range and packet count.",
+    "A durable spool contains exactly one PCAP global header followed only by complete packet records.",
+    "Every local path is canonicalized beneath the configured spool root and symlinks are rejected before read upload or unlink.",
+    "OBJECT_WRITTEN requires a trusted SDK or HEAD receipt bound to the same key size and sha256.",
+    "Recovery from OBJECT_WRITTEN and its RETRY_WAIT derivative performs metadata work only and never uploads the object again.",
+    "Age disk pressure or METADATA_ACCEPTED alone never authorizes deletion; only an exact durable cleanup claim does.",
+    "Startup recovery and cleanup interruption reconciliation complete before a durable capture admission permit is issued.",
+    "Graceful shutdown order is capture stop final seal journal flush buffer release producer close uploader drain recovery stop.",
+    "Legacy entries are decoded deterministically and never gain deletion authority from absent fields."
+  ]
+}

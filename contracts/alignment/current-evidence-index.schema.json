@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/current-evidence-index.schema.json",
+  "title": "Current same-candidate evidence index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "index_id", "candidate_manifest_sha256", "profile_id",
+    "environment_id", "generated_at", "evidence_runs", "superseded_run_ids",
+    "requirement_satisfaction_manifest_sha256s", "milestone_completion_candidate_sha256",
+    "bom_transition_manifest_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "index_id": {"type": "string", "minLength": 1},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "minLength": 1},
+    "evidence_runs": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["run_id", "subject_pr_id", "subject_work_id", "subject_milestone_id", "execution_package_sha256", "plan_kind", "plan_id", "plan_sha256", "bom_transition_sha256", "profile_id", "run_purpose", "gate_id", "artifacts", "manifest_path", "manifest_sha256", "result"],
+        "properties": {
+          "run_id": {"type": "string", "minLength": 1},
+          "subject_pr_id": {"type": "string", "minLength": 1},
+          "subject_work_id": {"type": "string", "minLength": 1},
+          "subject_milestone_id": {"type": "string", "minLength": 1},
+          "execution_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "plan_kind": {"enum": ["TEST", "EVIDENCE", "ROLLBACK", "OBSERVATION"]},
+          "plan_id": {"type": "string", "minLength": 1},
+          "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "bom_transition_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+          "profile_id": {"type": "string", "minLength": 1},
+          "run_purpose": {"enum": ["VERIFICATION", "ROLLBACK_REHEARSAL", "OBSERVATION", "RECONCILIATION", "EXTERNAL_ATTESTATION"]},
+          "gate_id": {"type": "string", "pattern": "^G[0-8]$"},
+          "artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence_artifact_ref"}, "uniqueItems": true},
+          "manifest_path": {"type": "string", "minLength": 1},
+          "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "result": {"enum": ["PASS", "FAIL", "BLOCKED"]}
+        }
+      }
+    },
+    "superseded_run_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "requirement_satisfaction_manifest_sha256s": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "uniqueItems": true},
+    "milestone_completion_candidate_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "bom_transition_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "evidence_artifact_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["direction", "artifact_id", "path", "sha256", "schema_ref"],
+      "properties": {
+        "direction": {"enum": ["INPUT", "OUTPUT"]},
+        "artifact_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "schema_ref": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "feature_id": "F-FUSION-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/fusion"],
+    "preserved_actions": ["fusion-conflict-resolve", "fusion-rule-update", "fusion-evidence-export"],
+    "preserved_api_operations": [
+      "GET /v1/fusion/workbench",
+      "GET /v1/fusion/stats",
+      "GET /v1/fusion/entities",
+      "GET /v1/fusion/value-report",
+      "POST /v1/fusion/conflicts/{id}/resolve",
+      "PATCH /v1/fusion/rules/{id}",
+      "POST /v1/fusion/evidence-packages"
+    ],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "fusion.three-level.workbench.v1",
+    "controls": [
+      {"control_id": "fusion-conflict-resolve", "action_id": "fusion-conflict-resolve"},
+      {"control_id": "fusion-rule-update", "action_id": "fusion-rule-update"},
+      {"control_id": "fusion-evidence-export", "action_id": "fusion-evidence-export"}
+    ],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "getFusionWorkbench",
+    "method": "GET",
+    "path": "/v1/fusion/workbench",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "command",
+    "levels": {
+      "data": "source normalization and entity alignment produce a canonical entity snapshot",
+      "feature": "closed-window aggregation produces a separate feature snapshot and ablation result",
+      "knowledge": "only closed authoritative facts are projected as versioned relations"
+    },
+    "states": ["pending", "resolved", "overridden", "revoked", "superseded", "failed"],
+    "source_priority": {
+      "asset_identity": ["postgresql.asset_authority", "authenticated_probe_binding", "device_log", "flow_observation"],
+      "user_identity": ["postgresql.user_authority", "authenticated_user_event", "device_log", "flow_observation"],
+      "threat_context": ["analyst_override", "signed_threat_intel", "rule_or_model_derivation"]
+    },
+    "conflict_types": ["identity_collision", "value_disagreement", "stale_source", "missing_source", "same_version_hash_collision", "tenant_mismatch"],
+    "invariants": [
+      "data, feature and knowledge fusion are separate versioned snapshots and are never returned as one implicit snapshot",
+      "every output binds tenant_id, source cursors, as_of, version, quality status, partial sources, provenance and rollback target",
+      "missing sources produce partial output and are never replaced with zero or another source's value",
+      "same source version with different canonical bytes is an identity collision and fails closed",
+      "manual override requires authenticated rule:write authority, expected revision, reason, immutable audit and an explicit superseded value",
+      "override revocation appends a new resolution version and restores the selected authority without deleting history",
+      "authoritative write-back is limited to the registered PostgreSQL owner and never treats OpenSearch or NebulaGraph as authority",
+      "feature-level value claims include a same-window single-source baseline and per-source ablation; no accuracy improvement is assumed",
+      "knowledge projection consumes only closed data and feature snapshots and preserves observed, derived and analyst provenance"
+    ],
+    "compensation": "disable the affected projection, restore the previous immutable resolution version, replay from the retained source cursor, and reconcile all derived targets without deleting source facts"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "nebulagraph", "minio"],
+    "migration": "deployments/postgres/migrations/202608141700_m07_fusion_snapshots_v1.sql; existing compatibility tables remain in common/sql/pg/00-init.sql",
+    "event_types": ["fusion.source-sync.requested.v1", "fusion.source-snapshot.closed.v1", "fusion.data-snapshot.closed.v1", "fusion.resolution.changed.v1", "fusion.feature-snapshot.closed.v1", "fusion.knowledge-projection.requested.v1"],
+    "consumer_contract": "contracts/events/fusion-source-sync.v1.json",
+    "persistent_objects": [
+      "fusion_source_sync_jobs",
+      "fusion_source_snapshots",
+      "fusion_source_entity_facts",
+      "fusion_source_relation_facts",
+      "fusion_snapshots",
+      "fusion_snapshot_sources",
+      "fusion_snapshot_entities",
+      "fusion_snapshot_relations",
+      "fusion_feature_metrics",
+      "fusion_feature_ablation_results",
+      "fusion_resolution_history",
+      "fusion_projection_outbox",
+      "fusion_projection_inbox",
+      "fusion_projection_readiness_history",
+      "fusion_projection_readiness_current",
+      "fusion_projection_watermarks"
+    ],
+    "source_watermarks": [
+      "source_id+topic+partition+offset",
+      "source_id+object_version+sha256",
+      "data_snapshot_id+version+canonical_sha256",
+      "feature_snapshot_id+window_end+canonical_sha256",
+      "knowledge_projection_id+source_version+projection_sha256"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["rule:write"],
+    "negative_tests": [
+      "cross-tenant source, entity, conflict, resolution, snapshot or provenance reference is rejected",
+      "manual override without expected revision and reason is rejected",
+      "the original override author cannot provide an independent promotion approval",
+      "a revoked override cannot erase its prior version, audit or provenance"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["four-source normalization", "entity conflict resolution", "closed-window feature aggregation", "per-source ablation", "knowledge projection replay"],
+    "stop_conditions": ["partial output is reported as complete, source cursor regresses, counts or hashes diverge, online P99 or resource budget exceeds the approved candidate"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 contract and compatibility inventory",
+      "G1 additive schema, state machine, revision and tenant isolation",
+      "G2 four-source data snapshot and deterministic replay",
+      "G3 closed-window feature snapshot and single-source ablation",
+      "G4 knowledge projection count, hash and provenance reconciliation",
+      "G5 K8s consumer-first canary, rollback and observation"
+    ],
+    "evidence": ["same candidate identity binds source manifests, three distinct snapshot identities, count/hash/watermark reconciliation, ablation report, audit/outbox rows and rollback receipts"]
+  },
+  "rollout": {
+    "feature_flag": "FUSION_V1_ENABLED",
+    "consumer_flag": "FUSION_PROJECTION_CONSUMER_V1_ENABLED",
+    "candidate_identity_env": "FUSION_CANDIDATE_SHA256",
+    "default": false,
+    "strategy": "canary",
+    "activation_order": ["migration-topic-acl", "consumer-assigned-ready-lease", "authority-writer-and-dispatcher", "count-hash-watermark-reconcile"],
+    "rollback_runbook": "doc/07_alignment/runbooks/F-FUSION-001-rollback.md"
+  }
+}

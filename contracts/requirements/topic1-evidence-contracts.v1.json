@@ -1,0 +1,218 @@
+{
+  "schema_version": "1.0.0",
+  "status": "DRAFT_PENDING_SIGNATURE",
+  "subject_requirements_sha256": "febef435d8da8794f6d70da018ec178096475179ad7fbbf0914451236b5fc18e",
+  "approval_intake": null,
+  "contracts": [
+    {
+      "requirement_id": "REQ-T1-SYS-001",
+      "required_gates": ["G0", "G2", "G3", "G5", "G6", "G8"],
+      "required_inputs": [
+        {"artifact_id": "contract-requirement-closures", "schema_ref": "contracts/alignment/requirement-satisfaction.schema.json", "semantic_role": "exact fifteen contract requirement closures"},
+        {"artifact_id": "implementation-candidate", "schema_ref": "contracts/alignment/implementation-candidate.schema.json", "semantic_role": "single immutable integrated candidate"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "integrated-system-bom", "schema_ref": "contracts/alignment/integrated-system-bom.schema.json", "semantic_role": "one connected deployable system BOM"},
+        {"artifact_id": "system-release-evidence-index", "schema_ref": "contracts/alignment/current-evidence-index.schema.json", "semantic_role": "same-candidate system evidence index"}
+      ],
+      "failure_semantics": ["missing component or disconnected rail blocks release", "cross-candidate evidence blocks satisfaction"]
+    },
+    {
+      "requirement_id": "REQ-T1-DATA-CAPTURE-001",
+      "required_gates": ["G0", "G1", "G2", "G3", "G4"],
+      "required_inputs": [
+        {"artifact_id": "approved-capture-profile", "schema_ref": "contracts/alignment/atomic-pr-plan-manifest.schema.json", "semantic_role": "approved realtime and offline capture matrix"},
+        {"artifact_id": "packet-source-manifest", "schema_ref": "proto/traffic/v1/pcap.proto#traffic.v1.PcapMetadata", "semantic_role": "offered packet and PCAP source identity"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "capture-drop-ledger", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "NIC kernel probe journal broker object drop attribution"},
+        {"artifact_id": "pcap-object-index-manifest", "schema_ref": "proto/traffic/v1/pcap.proto", "semantic_role": "PCAP object hash and indexed receipt closure"}
+      ],
+      "failure_semantics": ["unattributed loss blocks covered-profile claim", "broker ACK alone is not final capture closure"]
+    },
+    {
+      "requirement_id": "REQ-T1-DATA-PARSE-001",
+      "required_gates": ["G0", "G1", "G2", "G3"],
+      "required_inputs": [
+        {"artifact_id": "approved-protocol-matrix", "schema_ref": "contracts/alignment/atomic-pr-plan-manifest.schema.json", "semantic_role": "approved parser protocol and failure matrix"},
+        {"artifact_id": "capture-replay-fixtures", "schema_ref": "proto/traffic/v1/pcap.proto", "semantic_role": "immutable realtime and offline parser fixtures"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "session-feature-facts", "schema_ref": "proto/traffic/v1/feature.proto", "semantic_role": "versioned session and feature facts"},
+        {"artifact_id": "parser-parity-report", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "online offline and old new compatibility evidence"}
+      ],
+      "failure_semantics": ["unsupported protocol is explicit not silently successful", "offline online feature drift blocks satisfaction"]
+    },
+    {
+      "requirement_id": "REQ-T1-FILE-RESTORE-001",
+      "required_gates": ["G0", "G1", "G2", "G3", "G5"],
+      "required_inputs": [
+        {"artifact_id": "file-restore-session-index", "schema_ref": "proto/traffic/v1/session.proto", "semantic_role": "bounded application session and packet source"},
+        {"artifact_id": "file-restore-policy", "schema_ref": "contracts/alignment/atomic-pr-plan-manifest.schema.json", "semantic_role": "approved protocol size safety and retention policy"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "restored-file-object-manifest", "schema_ref": "proto/traffic/v1/pcap.proto", "semantic_role": "object metadata hash completeness and partial status"},
+        {"artifact_id": "file-download-audit-evidence", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "tenant permission and download audit journey"}
+      ],
+      "failure_semantics": ["PCAP cutting alone is not file restoration", "corrupt oversize or unsupported content remains explicit and non-executable"]
+    },
+    {
+      "requirement_id": "REQ-T1-ENCRYPTED-001",
+      "required_gates": ["G0", "G2", "G3", "G5"],
+      "required_inputs": [
+        {"artifact_id": "encrypted-flow-feature-contract", "schema_ref": "proto/traffic/v1/feature.proto", "semantic_role": "approved encrypted-flow statistical and side-channel feature contract"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "encrypted-analysis-snapshot", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "as-of version watermark availability model and rule explanation snapshot"},
+        {"artifact_id": "encrypted-ui-journey", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "authorized typed UI explanation journey"}
+      ],
+      "failure_semantics": ["encryption is not itself a malicious label", "missing provenance or partial state blocks complete snapshot claim"]
+    },
+    {
+      "requirement_id": "REQ-T1-DATA-FOUR-SOURCE-001",
+      "required_gates": ["G0", "G1", "G2", "G3"],
+      "required_inputs": [
+        {"artifact_id": "flow-source-events", "schema_ref": "proto/traffic/v1/flow.proto", "semantic_role": "real traffic source"},
+        {"artifact_id": "asset-source-events", "schema_ref": "proto/traffic/v1/asset.proto", "semantic_role": "real asset authority source"},
+        {"artifact_id": "device-log-source-events", "schema_ref": "proto/traffic/v1/audit.proto", "semantic_role": "real device log source"},
+        {"artifact_id": "user-behavior-source-events", "schema_ref": "proto/traffic/v1/audit.proto", "semantic_role": "real user behavior source"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "four-source-entity-watermark", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "tenant entity event-time quality and watermark closure"}
+      ],
+      "failure_semantics": ["fixture or seeded row cannot replace a real producer", "missing conflicting late and cross-tenant inputs remain explicit"]
+    },
+    {
+      "requirement_id": "REQ-T1-FUSION-001",
+      "required_gates": ["G0", "G2", "G3"],
+      "required_inputs": [
+        {"artifact_id": "four-source-canonical-window", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "same-window source facts with provenance"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "three-level-fusion-snapshot", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "data feature and knowledge fusion snapshot"},
+        {"artifact_id": "fusion-ablation-report", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "single-source versus multi-source reproducible ablation"}
+      ],
+      "failure_semantics": ["topic presence is not fusion", "unresolved authority conflict or watermark drift blocks satisfaction"]
+    },
+    {
+      "requirement_id": "REQ-T1-BASELINE-001",
+      "required_gates": ["G0", "G2", "G3", "G6"],
+      "required_inputs": [
+        {"artifact_id": "baseline-qualified-dataset", "schema_ref": "contracts/quality/topic1-metric-method.schema.json", "semantic_role": "qualified static and dynamic behavior samples"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "versioned-behavior-baseline", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "immutable baseline threshold and provenance"},
+        {"artifact_id": "baseline-rollback-observation", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "canary drift rollback and observation runs"}
+      ],
+      "failure_semantics": ["unqualified or contaminated samples block activation", "baseline drift without rollback blocks satisfaction"]
+    },
+    {
+      "requirement_id": "REQ-T1-ATTACKCHAIN-001",
+      "required_gates": ["G0", "G2", "G3", "G5"],
+      "required_inputs": [
+        {"artifact_id": "detection-fusion-graph-facts", "schema_ref": "proto/traffic/v1/campaign.proto", "semantic_role": "source-linked detection fusion and graph facts"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "campaign-attack-chain-snapshot", "schema_ref": "proto/traffic/v1/campaign.proto", "semantic_role": "time-ordered campaign chain and provenance"},
+        {"artifact_id": "attack-chain-replay-ui-evidence", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "replay graph reconciliation and UI drill-down"}
+      ],
+      "failure_semantics": ["seeded graph or UI-only composition is not chain restoration", "edge without source event blocks provenance claim"]
+    },
+    {
+      "requirement_id": "REQ-T1-AI-001",
+      "required_gates": ["G0", "G2", "G3", "G4", "G6"],
+      "required_inputs": [
+        {"artifact_id": "ai-dataset-feature-label-split", "schema_ref": "contracts/quality/topic1-metric-method.schema.json", "semantic_role": "leakage-controlled known and unknown training inputs"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "immutable-model-artifact", "schema_ref": "contracts/alignment/implementation-candidate.schema.json", "semantic_role": "registered model feature threshold and dataset lineage"},
+        {"artifact_id": "model-runtime-ack-rollback", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "consumer ACK shadow canary and rollback closure"}
+      ],
+      "failure_semantics": ["training metric is not contract quality", "leakage missing unknown holdout or partial activation blocks satisfaction"]
+    },
+    {
+      "requirement_id": "REQ-T1-GNN-001",
+      "required_gates": ["G0", "G2", "G3", "G4"],
+      "required_inputs": [
+        {"artifact_id": "versioned-graph-training-snapshot", "schema_ref": "proto/traffic/v1/campaign.proto", "semantic_role": "time and site isolated graph snapshot"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "gnn-model-and-baselines", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "GNN non-graph baseline and ablation artifacts"}
+      ],
+      "failure_semantics": ["graph leakage blocks result", "missing non-graph baseline or edge/source ablation blocks satisfaction"]
+    },
+    {
+      "requirement_id": "REQ-T1-DET-MIDTERM-001",
+      "required_gates": ["G0", "G2", "G3"],
+      "required_inputs": [
+        {"artifact_id": "signed-midterm-metric-method", "schema_ref": "contracts/quality/topic1-metric-method.schema.json", "semantic_role": "independently signed known-attack method"},
+        {"artifact_id": "frozen-known-attack-dataset", "schema_ref": "contracts/quality/topic1-metric-method.schema.json", "semantic_role": "held-out known attack evaluation set"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "midterm-raw-predictions", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "immutable prediction rows and counts"},
+        {"artifact_id": "midterm-metric-result", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "signed-method alert accuracy at least fifty percent"}
+      ],
+      "failure_semantics": ["unsigned formula or changed threshold blocks result", "unknown attack and final quality claims remain forbidden"]
+    },
+    {
+      "requirement_id": "REQ-T1-QUAL-001",
+      "required_gates": ["G0", "G2", "G3", "G8"],
+      "required_inputs": [
+        {"artifact_id": "signed-final-cnas-method", "schema_ref": "contracts/quality/topic1-metric-method.schema.json", "semantic_role": "signed final metric and threshold lock"},
+        {"artifact_id": "custodied-blind-dataset", "schema_ref": "contracts/alignment/external-activity-receipt.schema.json", "semantic_role": "sealed known and unknown blind dataset"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "cnas-raw-predictions-and-logs", "schema_ref": "contracts/alignment/external-activity-receipt.schema.json", "semantic_role": "independent raw execution output"},
+        {"artifact_id": "cnas-signed-attestation", "schema_ref": "contracts/alignment/external-activity-receipt.schema.json", "semantic_role": "accredited scope metric result and signed report"}
+      ],
+      "failure_semantics": ["quality below signed thresholds blocks release", "self-test template or self-signed report is not CNAS evidence"]
+    },
+    {
+      "requirement_id": "REQ-T1-EVI-001",
+      "required_gates": ["G0", "G2", "G3", "G5"],
+      "required_inputs": [
+        {"artifact_id": "cross-layer-source-facts", "schema_ref": "proto/traffic/v1/common.proto", "semantic_role": "stable tenant trace event and evidence identities"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "conclusion-source-evidence-manifest", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "conclusion to packet event model alert and UI provenance"},
+        {"artifact_id": "evidence-replay-reconciliation", "schema_ref": "contracts/alignment/current-evidence-index.schema.json", "semantic_role": "same-candidate replay and cross-storage reconciliation"}
+      ],
+      "failure_semantics": ["orphan conclusion or cross-candidate splice blocks evidence claim"]
+    },
+    {
+      "requirement_id": "REQ-T1-SYS-DEPLOY-001",
+      "required_gates": ["G0", "G2", "G3", "G6"],
+      "required_inputs": [
+        {"artifact_id": "assembled-system-bom", "schema_ref": "contracts/alignment/integrated-system-bom.schema.json", "semantic_role": "candidate-bound assembled BOM"},
+        {"artifact_id": "site-profile-and-secret-refs", "schema_ref": "contracts/alignment/implementation-candidate.schema.json", "semantic_role": "approved immutable site configuration"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "deployed-verified-bom", "schema_ref": "contracts/alignment/integrated-system-bom.schema.json", "semantic_role": "site materialized candidate and deployed digests"},
+        {"artifact_id": "site-security-rollback-restore-runs", "schema_ref": "contracts/alignment/evidence-run-manifest.schema.json", "semantic_role": "tenant security canary rollback and scoped recovery evidence"}
+      ],
+      "failure_semantics": ["digest config secret or tenant mismatch blocks deployment", "runbook existence alone is not G6"]
+    },
+    {
+      "requirement_id": "REQ-T1-RELEASE-MIDTERM-001",
+      "required_gates": ["G0", "G2", "G3", "G6"],
+      "required_inputs": [
+        {"artifact_id": "midterm-candidate-evidence-set", "schema_ref": "contracts/alignment/current-evidence-index.schema.json", "semantic_role": "M02 through M04 exact-candidate state and evidence"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "midterm-release-manifest", "schema_ref": "contracts/alignment/milestone-promotion-closure.schema.json", "semantic_role": "2026-10-30 system evidence package and explicit gaps"}
+      ],
+      "failure_semantics": ["missing or historical evidence blocks midterm promotion", "report submission is not project completion"]
+    },
+    {
+      "requirement_id": "REQ-T1-INTERNAL-STRENGTHENING-001",
+      "required_gates": ["G0", "G4", "G5", "G6", "G7"],
+      "required_inputs": [
+        {"artifact_id": "engineering-profile-contract", "schema_ref": "contracts/alignment/milestone-registry.schema.json", "semantic_role": "internal performance security HA and browser profile"}
+      ],
+      "required_outputs": [
+        {"artifact_id": "engineering-profile-evidence", "schema_ref": "contracts/alignment/current-evidence-index.schema.json", "semantic_role": "10x100G 512Mpps P95 full HA DR security and browser evidence"}
+      ],
+      "failure_semantics": ["failure does not rewrite the task-book contract profile", "internal targets never substitute CNAS evidence"]
+    }
+  ]
+}

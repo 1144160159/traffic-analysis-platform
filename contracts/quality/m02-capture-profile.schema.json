@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/quality/m02-capture-profile.schema.json",
+  "title": "M02 approved capture profile candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "profile_id", "profile_status",
+    "candidate_commit", "line_rate_gbps", "capture", "traffic", "measurement",
+    "environment", "stop_thresholds", "counter_attribution_ref", "approval"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M02_CAPTURE_PROFILE"},
+    "profile_id": {"type": "string", "pattern": "^M02-CAPTURE-[A-Z0-9-]+-V[0-9]+$"},
+    "profile_status": {"enum": ["PENDING_SIGNATURE", "APPROVED", "SUPERSEDED"]},
+    "candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "line_rate_gbps": {"type": "number", "minimum": 10},
+    "capture": {
+      "type": "object", "additionalProperties": false,
+      "required": ["interface_selector", "mode", "queue_count", "frame_size", "ring_size"],
+      "properties": {
+        "interface_selector": {"type": "string", "minLength": 1},
+        "mode": {"enum": ["XDP", "XDP_SKB", "XDP_OFFLOAD", "AF_PACKET"]},
+        "queue_count": {"type": "integer", "minimum": 1},
+        "frame_size": {"type": "integer", "minimum": 512},
+        "ring_size": {"type": "integer", "minimum": 64}
+      }
+    },
+    "traffic": {
+      "type": "object", "additionalProperties": false,
+      "required": ["generator", "packet_sizes_bytes", "duration_seconds", "offered_rate_source"],
+      "properties": {
+        "generator": {"type": "string", "minLength": 1},
+        "packet_sizes_bytes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 64, "maximum": 9216}},
+        "duration_seconds": {"type": "integer", "minimum": 60},
+        "offered_rate_source": {"enum": ["GENERATOR_TX_COUNTER", "MIRROR_INGRESS_COUNTER"]}
+      }
+    },
+    "measurement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["points", "clock_source", "max_counter_error_packets"],
+      "properties": {
+        "points": {
+          "type": "array", "uniqueItems": true,
+          "items": {"enum": ["GENERATOR_TX", "MIRROR_INGRESS", "NIC_RX", "PROBE_CAPTURE", "KAFKA_OFFSET", "MINIO_OBJECT", "CLICKHOUSE_INDEX"]},
+          "allOf": [
+            {"contains": {"const": "GENERATOR_TX"}}, {"contains": {"const": "NIC_RX"}},
+            {"contains": {"const": "PROBE_CAPTURE"}}, {"contains": {"const": "KAFKA_OFFSET"}},
+            {"contains": {"const": "MINIO_OBJECT"}}, {"contains": {"const": "CLICKHOUSE_INDEX"}}
+          ]
+        },
+        "clock_source": {"type": "string", "minLength": 1},
+        "max_counter_error_packets": {"type": "integer", "minimum": 0}
+      }
+    },
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["environment_id", "nic_model", "driver", "cpu_model", "kernel", "generator_identity"],
+      "properties": {
+        "environment_id": {"type": "string", "minLength": 1},
+        "nic_model": {"type": "string", "minLength": 1},
+        "driver": {"type": "string", "minLength": 1},
+        "cpu_model": {"type": "string", "minLength": 1},
+        "kernel": {"type": "string", "minLength": 1},
+        "generator_identity": {"type": "string", "minLength": 1}
+      }
+    },
+    "stop_thresholds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["system_attributable_drop_packets", "unexplained_difference_packets", "capture_error_count"],
+      "properties": {
+        "system_attributable_drop_packets": {"const": 0},
+        "unexplained_difference_packets": {"const": 0},
+        "capture_error_count": {"const": 0}
+      }
+    },
+    "counter_attribution_ref": {"const": "contracts/quality/m02-capture-counter-attribution.v1.json"},
+    "approval": {
+      "type": "object", "additionalProperties": false,
+      "required": ["activity_id", "required_authorities", "receipts"],
+      "properties": {
+        "activity_id": {"const": "EXT-T1-M02-N015-PROFILE-APPROVAL"},
+        "required_authorities": {
+          "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+          "prefixItems": [
+            {"const": "PROJECT_OWNER"},
+            {"const": "TEST_OWNER"},
+            {"const": "ACCEPTANCE_AUTHORITY"}
+          ],
+          "items": false
+        },
+        "receipts": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"profile_status": {"const": "PENDING_SIGNATURE"}}},
+      "then": {"properties": {"approval": {"properties": {"receipts": {"maxItems": 0}}}}}
+    },
+    {
+      "if": {"properties": {"profile_status": {"const": "APPROVED"}}},
+      "then": {"properties": {"approval": {"properties": {"receipts": {"minItems": 1}}}}}
+    }
+  ]
+}

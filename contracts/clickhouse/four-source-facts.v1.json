@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "contract_id": "m06-four-source-facts-v1",
+  "accountable_task": "T1-M06-N012",
+  "state": "implemented_candidate_ready_not_production_applied",
+  "production_applied": false,
+  "migration": "deployments/clickhouse/migrations/202608141600_m06_four_source_facts_v1.sql",
+  "kubernetes_migration": {
+    "renderer": "scripts/clickhouse/render-kubernetes-migrations.py",
+    "runner": "scripts/clickhouse/run-migrations.sh",
+    "manifest": "deployments/kubernetes/init-jobs/03a-clickhouse-authoritative-migrations.yaml",
+    "production_applied": false
+  },
+  "tables": {
+    "flow": "traffic.source_flow_facts_v1",
+    "asset": "traffic.source_asset_facts_v1",
+    "device_log": "traffic.source_device_log_facts_v1",
+    "user_behavior": "traffic.source_user_behavior_facts_v1"
+  },
+  "common_columns": [
+    "rail",
+    "tenant_id",
+    "aggregate_id",
+    "event_id",
+    "event_time_ms",
+    "ingest_time_ms",
+    "schema_version",
+    "source_topic",
+    "source_partition",
+    "source_offset",
+    "source_timestamp_ms",
+    "source_payload_sha256",
+    "source_version",
+    "projection_identity",
+    "source_quality_receipt_id",
+    "payload_base64",
+    "projection_hash",
+    "inserted_at"
+  ],
+  "writers": {
+    "flow": "com.traffic.flink.session.SessionJob#toFlowSourceFact",
+    "asset": "consumer.ClickHouseAssetProjection",
+    "device_log": "com.traffic.flink.log.LogJob#toDeviceLogSourceFact",
+    "user_behavior": "com.traffic.flink.behavior.user.UserBehaviorJob#toUserSourceFact"
+  },
+  "invariants": [
+    "only an accepted source record reaches a source-fact writer",
+    "projection identity excludes processing wall clock",
+    "original source bytes and Kafka coordinates are retained",
+    "same source version and projection hash is idempotent",
+    "same source version with another projection hash fails closed",
+    "an older version cannot replace a newer projection",
+    "the linked source-quality receipt identity is derived from the same source tuple",
+    "checkpoint or durable inbox progress cannot claim an unacknowledged ClickHouse write"
+  ],
+  "opensearch": {
+    "asset": {
+      "target_id": "asset_id",
+      "source_version": "aggregate_version",
+      "version_type": "external_gte"
+    },
+    "device_log": {
+      "target_id": "tenant_id + ':' + log_id",
+      "source_version": "kafka_offset + 1",
+      "version_type": "external_gte"
+    }
+  },
+  "activation": {
+    "flow_source_fact_enabled": false,
+    "asset_clickhouse_enabled": false,
+    "device_log_source_fact_enabled": false,
+    "user_behavior_source_fact_enabled": false,
+    "rollback": "disable the four writers, stop new projection leases, and retain ClickHouse facts, PostgreSQL inbox/watermarks, Kafka offsets, DLQ records, and audit receipts"
+  },
+  "claim_boundary": {
+    "proves": [
+      "additive DDL and source-fact writer code exist",
+      "deterministic identity and version guards have unit coverage",
+      "the checksum-enforcing migration Job is rendered for Kubernetes",
+      "Kubernetes manifests keep every new writer disabled by default"
+    ],
+    "does_not_prove": [
+      "the migration was applied to the Kubernetes ClickHouse cluster",
+      "candidate images were built or pushed",
+      "real broker offsets and ClickHouse rows reconcile",
+      "production aliases or consumer groups were promoted"
+    ]
+  }
+}

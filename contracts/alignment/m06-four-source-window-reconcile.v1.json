@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "contract_id": "m06-four-source-window-reconcile-v1",
+  "accountable_task": "T1-M06-N014",
+  "required_rails": ["flow", "asset", "device_log", "user_behavior"],
+  "canonical_topics": {
+    "flow": "flow.events.v1",
+    "asset": "asset.events.v2",
+    "device_log": "device.logs.v1",
+    "user_behavior": "user.events.v1"
+  },
+  "required_real_source_kinds": {
+    "flow": "authenticated_probe_capture",
+    "asset": "postgres_asset_authority",
+    "device_log": "network_device_syslog_connector",
+    "user_behavior": "authenticated_user_activity"
+  },
+  "required_targets": {
+    "flow": ["clickhouse"],
+    "asset": ["clickhouse", "opensearch"],
+    "device_log": ["clickhouse", "opensearch"],
+    "user_behavior": ["clickhouse"]
+  },
+  "required_producer_rail_acceptance": [
+    "asset-events",
+    "asset-bindings",
+    "device-logs"
+  ],
+  "quality_categories": [
+    "accepted",
+    "rejected",
+    "invalid",
+    "late",
+    "duplicate",
+    "conflict",
+    "missing"
+  ],
+  "invariants": [
+    "candidate profile environment tenant and closed time window are exact across all receipts",
+    "raw source fixture and PostgreSQL seed indicators are false",
+    "producer broker acknowledgement is true and topic partition offset key payload and trace bind every downstream receipt",
+    "accepted source version is Kafka offset plus one",
+    "watermark reaches the rail maximum accepted event time without exceeding the run window",
+    "target names are an exact set and every target receipt carries the same source tuple payload hash and source version",
+    "all three newly enabled producer rails have independent PASS receipts",
+    "consumer-only or missing-source rails fail visibly"
+  ],
+  "forbidden_claims": [
+    "four topics existing proves four real sources",
+    "fixture or database seed proves a real external source",
+    "four-source ingress and alignment proves fusion gain",
+    "a broker acknowledgement proves downstream target convergence"
+  ],
+  "implementation": "scripts/alignment/reconcile_m06_four_source_window.py",
+  "automatic_repair": false,
+  "production_applied": false
+}
+

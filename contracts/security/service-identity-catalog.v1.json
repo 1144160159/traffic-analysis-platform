@@ -7,17 +7,17 @@
     {
       "domain": "kubernetes_workload_identity",
       "path": "deployments/kubernetes/security/go-service-identities.v1.yaml",
-      "sha256": "acec8105c89d9077b7c26ae99af8029c98d950192f15524b26d46ebe2ac91002"
+      "sha256": "f55cecbe8e89f396deef2885f323a4f6a4ce2cd9e899b3b9b1e1e87167878dfc"
     },
     {
       "domain": "kafka_principal_acl",
       "path": "contracts/events/kafka-acl-catalog.v1.json",
-      "sha256": "2816db4026778ef92d478169513561ab51f1d93eefb06e053197a3cdd5731c57"
+      "sha256": "78ab506c34aaa885a278a7ac218e7470c23ea78444cb95307a6b0a62ccd193f4"
     },
     {
       "domain": "configuration_and_secret_binding",
       "path": "contracts/configuration/configuration-catalog.v1.json",
-      "sha256": "f31930ee034316b72af8368d6625e002faa193b331f6c47c23bf21bb06e332d7"
+      "sha256": "fdac08f8634cb88be84919c95c8756434852834d67351db9176541ee411ad9d1"
     },
     {
       "domain": "iam_scopes",
@@ -67,8 +67,10 @@
           "run_as_non_root": null,
           "run_as_user": null,
           "run_as_group": null,
-          "allow_privilege_escalation": null,
-          "capabilities_drop": [],
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
           "capabilities_add": [],
           "seccomp_profile": null,
           "privileged": false,
@@ -78,12 +80,57 @@
       ],
       "images": [
         {
-          "reference": "traffic/flink-log-job:log-job-20260629-r1",
+          "reference": "traffic/flink-log-job:m06-consumer-ready-b22f7583",
           "digest_pinned": false,
           "mutable_tag": true
         }
       ],
-      "secret_references": [],
+      "secret_references": [
+        {
+          "namespace": "flink",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "flink",
+          "secret_name": "kafka-flink-log-job-credentials",
+          "key": "password",
+          "consumer": "flink-log-job",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "flink",
+          "secret_name": "kafka-flink-log-job-credentials",
+          "key": "username",
+          "consumer": "flink-log-job",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "flink",
+          "secret_name": "traffic-credentials",
+          "key": "KAFKA_TLS_TRUSTSTORE_PASSWORD",
+          "consumer": "flink-log-job",
+          "binding": "env:KAFKA_SSL_TRUSTSTORE_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
       "literal_secret_findings": [],
       "duplicate_environment_bindings": [],
       "kafka_identity": {
@@ -1434,6 +1481,95 @@
         "container_security_context_incomplete",
         "runtime_image_not_digest_pinned"
       ]
+    },
+    {
+      "workload_id": "traffic-analysis/StatefulSet/device-log-collector",
+      "name": "device-log-collector",
+      "namespace": "traffic-analysis",
+      "kind": "StatefulSet",
+      "owner": "observability-data-quality-owner",
+      "source": "deployments/log-collectors/device-logs.yaml",
+      "service_account": {
+        "name": "device-log-collector",
+        "declared": true,
+        "source": "deployments/log-collectors/device-logs.yaml",
+        "pod_token_automount": false,
+        "account_token_automount": false,
+        "rbac_grants_expected": null,
+        "token_automount_exception": false
+      },
+      "containers": [
+        {
+          "name": "vector",
+          "run_as_non_root": true,
+          "run_as_user": 1000,
+          "run_as_group": 1000,
+          "allow_privilege_escalation": false,
+          "capabilities_drop": [
+            "ALL"
+          ],
+          "capabilities_add": [],
+          "seccomp_profile": "RuntimeDefault",
+          "privileged": false,
+          "privileged_exception": null,
+          "hardened": true
+        }
+      ],
+      "images": [
+        {
+          "reference": "docker.io/timberio/vector@sha256:aafeecfeac2cf9ff2f19d63ed405da1be3221b154bfceac30d07054f5148071e",
+          "digest_pinned": true,
+          "mutable_tag": false
+        }
+      ],
+      "secret_references": [
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-client-tls",
+          "key": "mounted_items_or_all",
+          "consumer": "pod",
+          "binding": "volume:kafka-client-tls",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/kubernetes/security/external-secrets-template.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-device-log-collector-credentials",
+          "key": "password",
+          "consumer": "vector",
+          "binding": "env:KAFKA_SASL_PASSWORD",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/log-collectors/device-logs-secret-ref.yaml",
+          "rotation_refresh_interval": "1h"
+        },
+        {
+          "namespace": "traffic-analysis",
+          "secret_name": "kafka-device-log-collector-credentials",
+          "key": "username",
+          "consumer": "vector",
+          "binding": "env:KAFKA_SASL_USERNAME",
+          "optional": false,
+          "external_secret_registered": true,
+          "external_secret_source": "deployments/log-collectors/device-logs-secret-ref.yaml",
+          "rotation_refresh_interval": "1h"
+        }
+      ],
+      "literal_secret_findings": [],
+      "duplicate_environment_bindings": [],
+      "kafka_identity": {
+        "principal_id": "device-log-collector",
+        "principal": "User:traffic-device-log-collector",
+        "kind": "external_producer",
+        "rollout_state": "expand",
+        "credential_namespace": "traffic-analysis",
+        "credential_secret": "kafka-device-log-collector-credentials"
+      },
+      "network_policy_authority": "deployments/kubernetes/security/00-network-policies.yaml",
+      "privileged_exception": null,
+      "blocking_gaps": []
     }
   ],
   "kafka_principals": [
@@ -1672,6 +1808,20 @@
       }
     },
     {
+      "id": "device-log-collector",
+      "principal": "User:traffic-device-log-collector",
+      "kind": "external_producer",
+      "rollout_state": "expand",
+      "credential": {
+        "namespace": "traffic-analysis",
+        "secret_name": "kafka-device-log-collector-credentials",
+        "password_env": "KAFKA_DEVICE_LOG_COLLECTOR_PASSWORD",
+        "remote_password_property": "KAFKA_DEVICE_LOG_COLLECTOR_PASSWORD",
+        "workload": "device-log-collector",
+        "external_secret_manifest": "deployments/log-collectors/device-logs-secret-ref.yaml"
+      }
+    },
+    {
       "id": "kafka-replayer",
       "principal": "User:traffic-kafka-replayer",
       "kind": "replayer",
@@ -1763,13 +1913,13 @@
       },
       {
         "path": "go/control-plane/internal/alert/api/handler.go",
-        "line": 1691,
+        "line": 1704,
         "kind": "request_header",
         "line_sha256": "1ff5d9fad7a5781e5b9afcf2b3687fb13ef8d8b2b2bed9d87f4efb236c47b54b"
       },
       {
         "path": "go/control-plane/internal/alert/api/handler.go",
-        "line": 1694,
+        "line": 1707,
         "kind": "query_parameter",
         "line_sha256": "ed36c0ae6054d246976bc41c7bf69588afbde0f33b0179b10cbed4d8b83085d2"
       },
@@ -1799,7 +1949,7 @@
       },
       {
         "path": "go/control-plane/internal/alert/api/handler_system.go",
-        "line": 2825,
+        "line": 3008,
         "kind": "query_parameter",
         "line_sha256": "65f50649b6420f4c5aa63a786035c3ebf9763b6535ad5402813604ab623fa0d8"
       },
@@ -1883,19 +2033,19 @@
       },
       {
         "path": "go/control-plane/internal/forensics/api/handler.go",
-        "line": 636,
+        "line": 810,
         "kind": "query_parameter",
         "line_sha256": "b250df657b61d63d320149ebc79d69404ace7f795523d0e63da0254510c1fb7c"
       },
       {
         "path": "go/control-plane/internal/forensics/api/handler.go",
-        "line": 1167,
+        "line": 1442,
         "kind": "query_parameter",
         "line_sha256": "b250df657b61d63d320149ebc79d69404ace7f795523d0e63da0254510c1fb7c"
       },
       {
         "path": "go/control-plane/internal/rules/api/handler.go",
-        "line": 178,
+        "line": 181,
         "kind": "request_header",
         "line_sha256": "1ff5d9fad7a5781e5b9afcf2b3687fb13ef8d8b2b2bed9d87f4efb236c47b54b"
       },
@@ -1910,16 +2060,16 @@
     "status": "PARTIAL"
   },
   "counts": {
-    "workloads": 11,
-    "dedicated_service_accounts": 11,
-    "workloads_with_token_automount_disabled": 10,
+    "workloads": 12,
+    "dedicated_service_accounts": 12,
+    "workloads_with_token_automount_disabled": 11,
     "approved_token_automount_exceptions": 1,
-    "hardened_or_approved_exception_containers": 9,
-    "containers": 11,
-    "secret_references": 68,
+    "hardened_or_approved_exception_containers": 10,
+    "containers": 12,
+    "secret_references": 75,
     "literal_secret_findings": 0,
     "unregistered_secret_references": 2,
-    "kafka_principals": 20,
+    "kafka_principals": 21,
     "shared_sensitive_credentials": 5,
     "tenant_untrusted_fallback_sites": 25,
     "workloads_with_blocking_gaps": 11,
@@ -1944,5 +2094,5 @@
       "wildcard_or_shared_kafka_principal"
     ]
   },
-  "catalog_sha256": "62cdfaa3b54bea5fa150fa455394df58cdbaf7b9c117acdba1b44e468a03bf67"
+  "catalog_sha256": "8da5dc28015d61cdc40fd86a98c3feb4f26ef4a128f56c89b86e2ddcf5abbc75"
 }

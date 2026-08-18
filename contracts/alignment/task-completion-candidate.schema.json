@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/task-completion-candidate.schema.json",
+  "title": "Parent task immutable completion candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "task_registry_sha256", "task_definition_sha256", "completion_contract_sha256",
+    "task_id", "milestone_id", "candidate_manifest_sha256", "profile_id", "environment_id",
+    "result", "terminal_task_idx_pr_id", "leaf_results", "dependency_task_indexes",
+    "interleaved_leaf_results", "external_results", "evidence_runs", "rollback_coverage",
+    "output_artifacts", "blockers", "claim_limits", "allowed_claim", "forbidden_claim",
+    "owner", "reviewers", "approvers", "created_at", "supersedes_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "task_registry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "task_definition_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "completion_contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "task_id": {"type": "string", "pattern": "^T1-M[0-9]{2}-N[0-9]{3}$"},
+    "milestone_id": {"type": "string", "pattern": "^T1-M[0-9]{2}$"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "result": {"enum": ["PASS", "BLOCKED"]},
+    "terminal_task_idx_pr_id": {"type": "string", "minLength": 1},
+    "leaf_results": {"type": "array", "items": {"$ref": "#/$defs/leaf_result"}, "uniqueItems": true},
+    "dependency_task_indexes": {"type": "array", "items": {"$ref": "#/$defs/task_index_ref"}, "uniqueItems": true},
+    "interleaved_leaf_results": {"type": "array", "items": {"$ref": "#/$defs/leaf_result"}, "uniqueItems": true},
+    "external_results": {"type": "array", "items": {"$ref": "#/$defs/external_result"}, "uniqueItems": true},
+    "evidence_runs": {"type": "array", "items": {"$ref": "#/$defs/evidence_run"}, "uniqueItems": true},
+    "rollback_coverage": {"type": "array", "items": {"$ref": "#/$defs/rollback_result"}, "uniqueItems": true},
+    "output_artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact_ref"}, "uniqueItems": true},
+    "blockers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "claim_limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requirement_satisfaction_allowed", "milestone_completion_allowed", "external_attestation_authoring_allowed"],
+      "properties": {
+        "requirement_satisfaction_allowed": {"const": false},
+        "milestone_completion_allowed": {"const": false},
+        "external_attestation_authoring_allowed": {"const": false}
+      }
+    },
+    "allowed_claim": {"type": "string", "minLength": 1},
+    "forbidden_claim": {"type": "string", "minLength": 1},
+    "owner": {"type": "string", "minLength": 1},
+    "reviewers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "approvers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "created_at": {"type": "string", "minLength": 1},
+    "supersedes_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"result": {"const": "PASS"}}},
+      "then": {"properties": {"blockers": {"maxItems": 0}}}
+    }
+  ],
+  "$defs": {
+    "hashed_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "leaf_result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["pr_id", "status", "candidate_manifest_sha256", "profile_id", "environment_id", "execution_package", "acceptance_receipt", "postmerge_result"],
+      "properties": {
+        "pr_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS", "BLOCKED"]},
+        "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {"type": "string", "minLength": 1},
+        "environment_id": {"type": "string", "minLength": 1},
+        "execution_package": {"$ref": "#/$defs/hashed_ref"},
+        "acceptance_receipt": {"$ref": "#/$defs/hashed_ref"},
+        "postmerge_result": {"anyOf": [{"$ref": "#/$defs/hashed_ref"}, {"type": "null"}]}
+      }
+    },
+    "task_index_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["task_id", "terminal_task_idx_pr_id", "candidate_manifest_sha256", "profile_id", "environment_id", "status", "index"],
+      "properties": {
+        "task_id": {"type": "string", "pattern": "^T1-M[0-9]{2}-N[0-9]{3}$"},
+        "terminal_task_idx_pr_id": {"type": "string", "minLength": 1},
+        "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {"type": "string", "minLength": 1},
+        "environment_id": {"type": "string", "minLength": 1},
+        "status": {"const": "PASS"},
+        "index": {"$ref": "#/$defs/hashed_ref"}
+      }
+    },
+    "external_result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["activity_id", "run_id", "instance_id", "status", "candidate_manifest_sha256", "profile_id", "receipt", "trusted_verification_receipt"],
+      "properties": {
+        "activity_id": {"type": "string", "minLength": 1},
+        "run_id": {"type": "string", "minLength": 1},
+        "instance_id": {"type": "string", "minLength": 1},
+        "status": {"const": "PASS"},
+        "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {"type": "string", "minLength": 1},
+        "receipt": {"$ref": "#/$defs/hashed_ref"},
+        "trusted_verification_receipt": {"$ref": "#/$defs/hashed_ref"}
+      }
+    },
+    "evidence_run": {
+      "type": "object", "additionalProperties": false,
+      "required": ["run_id", "subject_pr_id", "gate_id", "result", "candidate_manifest_sha256", "profile_id", "environment_id", "execution_package_sha256", "plan_id", "plan_sha256", "manifest"],
+      "properties": {
+        "run_id": {"type": "string", "minLength": 1},
+        "subject_pr_id": {"type": "string", "minLength": 1},
+        "gate_id": {"type": "string", "pattern": "^G[0-8]$"},
+        "result": {"const": "PASS"},
+        "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {"type": "string", "minLength": 1},
+        "environment_id": {"type": "string", "minLength": 1},
+        "execution_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "plan_id": {"type": "string", "minLength": 1},
+        "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "manifest": {"$ref": "#/$defs/hashed_ref"}
+      }
+    },
+    "rollback_result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["pr_id", "runbook_id", "coverage_mode", "plan_id", "plan_sha256", "run_id", "run_manifest", "result"],
+      "properties": {
+        "pr_id": {"type": "string", "minLength": 1},
+        "runbook_id": {"type": "string", "minLength": 1},
+        "coverage_mode": {"enum": ["EXECUTED_ROLLBACK", "NO_RUNTIME_CHANGE", "APPEND_ONLY_EXTERNAL_RECEIPT"]},
+        "plan_id": {"type": ["string", "null"]},
+        "plan_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "run_id": {"type": ["string", "null"]},
+        "run_manifest": {"anyOf": [{"$ref": "#/$defs/hashed_ref"}, {"type": "null"}]},
+        "result": {"const": "PASS"}
+      }
+    },
+    "artifact_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["direction", "artifact_id", "path", "sha256", "schema_ref"],
+      "properties": {
+        "direction": {"const": "OUTPUT"},
+        "artifact_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "schema_ref": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

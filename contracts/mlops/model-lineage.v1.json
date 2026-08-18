@@ -1,0 +1,63 @@
+{
+  "contract_id": "traffic.mlops.model-lineage.v1",
+  "schema_version": 1,
+  "accountable_tasks": [
+    "T1-M08-N001",
+    "T1-M08-N002"
+  ],
+  "state": "implementation_candidate_default_off",
+  "production_applied": false,
+  "authority": {
+    "feature_contract": "F-MODEL-001",
+    "metadata_store": "PostgreSQL model registry",
+    "artifact_store": "MinIO immutable versioned objects",
+    "deployment_receipt_store": "PostgreSQL model activation inbox and ACK ledger"
+  },
+  "lineage_order": [
+    "dataset_snapshot",
+    "feature_manifest",
+    "graph_snapshot",
+    "source_code",
+    "training_run",
+    "model_artifact",
+    "evaluation",
+    "model_version",
+    "deployment",
+    "feedback"
+  ],
+  "invariants": [
+    "every edge binds immutable IDs and SHA-256 digests",
+    "dataset event time and source watermark are at or before the coordinated as_of",
+    "graph snapshots exclude nodes and edges observed after as_of",
+    "metadata registration does not publish activation",
+    "activation requires a ready compatible consumer and durable ACK",
+    "feedback never rewrites the dataset, run, artifact or evaluation that produced a prediction",
+    "rollback selects a previous immutable model version and never mutates artifact bytes"
+  ],
+  "states": {
+    "model_version": [
+      "registered",
+      "validating",
+      "shadow",
+      "canary",
+      "active",
+      "rollback_pending",
+      "rolled_back",
+      "rejected"
+    ],
+    "training_run": [
+      "planned",
+      "extracting",
+      "split_validated",
+      "training",
+      "evaluating",
+      "exported",
+      "failed"
+    ]
+  },
+  "rollout": {
+    "dataset_governance_flag": "MLOPS_DATASET_GOVERNANCE_V1_ENABLED",
+    "default": false,
+    "activation_default": false
+  }
+}

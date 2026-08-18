@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m10-site-values.schema.json",
+  "title": "T1-M10 Kubernetes site values v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "global", "site", "tenants", "secretRefs", "verification"],
+  "properties": {
+    "apiVersion": {"const": "traffic.analysis.local/v1"},
+    "kind": {"const": "SiteValues"},
+    "metadata": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "contractVersion"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+        "contractVersion": {"const": 1}
+      }
+    },
+    "global": {
+      "type": "object", "additionalProperties": false,
+      "required": ["namespaces", "imagePolicy", "releasePackage"],
+      "properties": {
+        "namespaces": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "imagePolicy": {
+          "type": "object", "additionalProperties": false,
+          "required": ["requireDigestPinned", "forbidLatestTag"],
+          "properties": {"requireDigestPinned": {"const": true}, "forbidLatestTag": {"const": true}}
+        },
+        "releasePackage": {
+          "type": "object", "additionalProperties": false,
+          "required": ["requiredPaths"],
+          "properties": {"requiredPaths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}}
+        }
+      }
+    },
+    "site": {
+      "type": "object", "additionalProperties": false,
+      "required": ["siteId", "cluster", "storage", "network", "retention", "quota", "externalDependencies"],
+      "properties": {
+        "siteId": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", "not": {"enum": ["default", "public", "default-site"]}},
+        "cluster": {
+          "type": "object", "additionalProperties": false,
+          "required": ["kubernetesVersion", "minNodes", "cniProvider", "storageClass"],
+          "properties": {
+            "kubernetesVersion": {"type": "string"}, "minNodes": {"type": "integer", "minimum": 2},
+            "cniProvider": {"type": "string", "minLength": 1}, "storageClass": {"type": "string", "minLength": 1}
+          }
+        },
+        "storage": {"$ref": "#/$defs/stringMap"},
+        "network": {
+          "type": "object", "additionalProperties": false,
+          "required": ["clusterDomain", "ports", "caBundleSecretRef"],
+          "properties": {
+            "clusterDomain": {"type": "string", "pattern": "^[a-z0-9.-]+$"},
+            "ports": {"$ref": "#/$defs/portMap"},
+            "caBundleSecretRef": {"$ref": "#/$defs/secretKeyRef"}
+          }
+        },
+        "retention": {"$ref": "#/$defs/positiveIntegerMap"},
+        "quota": {"$ref": "#/$defs/positiveIntegerMap"},
+        "externalDependencies": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "dns", "port", "tls", "caSecretRef"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1}, "dns": {"type": "string", "minLength": 1},
+              "port": {"type": "integer", "minimum": 1, "maximum": 65535}, "tls": {"type": "boolean"},
+              "caSecretRef": {"anyOf": [{"$ref": "#/$defs/secretKeyRef"}, {"type": "null"}]}
+            }
+          }
+        }
+      }
+    },
+    "tenants": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["tenantId", "namespace", "retention", "quota", "secretRefNames"],
+        "properties": {
+          "tenantId": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", "not": {"enum": ["default", "public", "default-tenant"]}},
+          "namespace": {"type": "string", "minLength": 1},
+          "retention": {"$ref": "#/$defs/positiveIntegerMap"},
+          "quota": {"$ref": "#/$defs/positiveIntegerMap"},
+          "secretRefNames": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}
+        }
+      }
+    },
+    "secretRefs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["strategy", "required"],
+      "properties": {
+        "strategy": {"enum": ["ExternalSecret", "SealedSecret"]},
+        "required": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/namedSecretRef"}}
+      }
+    },
+    "verification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rejectUnknownFields", "rejectPlaintextSecrets", "rejectDefaultTenant"],
+      "properties": {
+        "rejectUnknownFields": {"const": true}, "rejectPlaintextSecrets": {"const": true}, "rejectDefaultTenant": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "stringMap": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}},
+    "positiveIntegerMap": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "integer", "minimum": 1}},
+    "portMap": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "integer", "minimum": 1, "maximum": 65535}},
+    "secretKeyRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["namespace", "name", "key"],
+      "properties": {"namespace": {"type": "string"}, "name": {"type": "string"}, "key": {"type": "string"}}
+    },
+    "namedSecretRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["refName", "namespace", "name", "keys"],
+      "properties": {
+        "refName": {"type": "string", "minLength": 1}, "namespace": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "keys": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

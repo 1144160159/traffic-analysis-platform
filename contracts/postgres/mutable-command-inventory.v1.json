@@ -321,8 +321,83 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 396,
-          "mutation_id": "sql-406978e446390dbd",
+          "line": 270,
+          "mutation_id": "sql-570d84f0dbb259c7",
+          "resolved_tables": [
+            "alert_assignment_compensation_requests"
+          ],
+          "role": "control_idempotency",
+          "table_expression": "alert_assignment_compensation_requests",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 279,
+          "mutation_id": "sql-7b5328f35338663d",
+          "resolved_tables": [
+            "alert_assignment_compensation_items"
+          ],
+          "role": "business",
+          "table_expression": "alert_assignment_compensation_items",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 288,
+          "mutation_id": "sql-fbcb0895f3963350",
+          "resolved_tables": [
+            "alert_assignment_compensation_item_history"
+          ],
+          "role": "history",
+          "table_expression": "alert_assignment_compensation_item_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 301,
+          "mutation_id": "sql-b9b620a78f22841a",
+          "resolved_tables": [
+            "alert_assignment_compensation_history"
+          ],
+          "role": "history",
+          "table_expression": "alert_assignment_compensation_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 316,
+          "mutation_id": "sql-ad664320fef9694b",
+          "resolved_tables": [
+            "alert_assignment_batch_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "alert_assignment_batch_outbox",
+          "verb": "INSERT INTO"
+        }
+      ],
+      "source": "go/control-plane/internal/alert/api/alert_batch_assignment_compensation_v1.go",
+      "source_facts": {
+        "has_audit_signal": false,
+        "has_direct_database_call": true,
+        "has_history_signal": true,
+        "has_idempotency_signal": true,
+        "has_outbox_signal": true,
+        "has_transaction_begin": true,
+        "uses_transaction_handle": true
+      },
+      "workload_class": "command_path"
+    },
+    {
+      "mutations": [
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 410,
+          "mutation_id": "sql-2a0ff2839d79d04d",
           "resolved_tables": [
             "alert_assignment_selections"
           ],
@@ -333,8 +408,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 407,
-          "mutation_id": "sql-0afabb573450a49c",
+          "line": 421,
+          "mutation_id": "sql-7d07d5975be3f586",
           "resolved_tables": [
             "alert_assignment_selection_requests"
           ],
@@ -345,8 +420,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 480,
-          "mutation_id": "sql-5468637e0fbca082",
+          "line": 494,
+          "mutation_id": "sql-d733d359638d124f",
           "resolved_tables": [
             "alert_assignment_batches"
           ],
@@ -357,8 +432,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 488,
-          "mutation_id": "sql-2c59c9d3b7b54cd4",
+          "line": 502,
+          "mutation_id": "sql-91cc0459e0ba1e90",
           "resolved_tables": [
             "alert_assignment_batch_items"
           ],
@@ -369,8 +444,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 493,
-          "mutation_id": "sql-9c982904f7d5384a",
+          "line": 507,
+          "mutation_id": "sql-f7355e810a0d0274",
           "resolved_tables": [
             "alert_assignment_batch_item_history"
           ],
@@ -381,8 +456,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 499,
-          "mutation_id": "sql-4d22ae22f690f731",
+          "line": 513,
+          "mutation_id": "sql-c7cd592995951484",
           "resolved_tables": [
             "alert_assignment_selections"
           ],
@@ -393,8 +468,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 503,
-          "mutation_id": "sql-073c67eee3663356",
+          "line": 517,
+          "mutation_id": "sql-9bf1583df78cf0bc",
           "resolved_tables": [
             "alert_assignment_batch_history"
           ],
@@ -405,8 +480,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 509,
-          "mutation_id": "sql-cf74b77607deeb2d",
+          "line": 523,
+          "mutation_id": "sql-3fae66374efad1f4",
           "resolved_tables": [
             "alert_assignment_batch_outbox"
           ],
@@ -417,8 +492,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 516,
-          "mutation_id": "sql-3f909991fd1e0956",
+          "line": 530,
+          "mutation_id": "sql-484f9173dc5509e3",
           "resolved_tables": [
             "alert_assignment_batch_requests"
           ],
@@ -429,8 +504,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 589,
-          "mutation_id": "sql-62170bd6097c437c",
+          "line": 604,
+          "mutation_id": "sql-06ac2f17b7592e45",
           "resolved_tables": [
             "audit_logs"
           ],
@@ -3042,8 +3117,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 453,
-          "mutation_id": "sql-477fd03e7e1dbc59",
+          "line": 454,
+          "mutation_id": "sql-faf4b971bbb8dbb4",
           "resolved_tables": [
             "probe_operation_outbox"
           ],
@@ -3056,6 +3131,57 @@
       "source_facts": {
         "has_audit_signal": true,
         "has_direct_database_call": true,
+        "has_history_signal": true,
+        "has_idempotency_signal": true,
+        "has_outbox_signal": true,
+        "has_transaction_begin": true,
+        "uses_transaction_handle": true
+      },
+      "workload_class": "command_path"
+    },
+    {
+      "mutations": [
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 16,
+          "mutation_id": "sql-b4558e3b5033189d",
+          "resolved_tables": [
+            "probe_operations"
+          ],
+          "role": "business",
+          "table_expression": "probe_operations",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 25,
+          "mutation_id": "sql-f249dd69b42fcf10",
+          "resolved_tables": [
+            "probe_operation_history"
+          ],
+          "role": "history",
+          "table_expression": "probe_operation_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 36,
+          "mutation_id": "sql-b149afd1d47237b0",
+          "resolved_tables": [
+            "probe_operation_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "probe_operation_outbox",
+          "verb": "INSERT INTO"
+        }
+      ],
+      "source": "go/control-plane/internal/alert/api/handler_probe_expiry.go",
+      "source_facts": {
+        "has_audit_signal": false,
+        "has_direct_database_call": false,
         "has_history_signal": true,
         "has_idempotency_signal": true,
         "has_outbox_signal": true,
@@ -3144,32 +3270,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 68,
-          "mutation_id": "sql-ec0cec5e603b8956",
-          "resolved_tables": [
-            "probe_operations"
-          ],
-          "role": "business",
-          "table_expression": "probe_operations",
-          "verb": "UPDATE"
-        },
-        {
-          "backend": "postgresql",
-          "dynamic_identifier": false,
-          "line": 75,
-          "mutation_id": "sql-e9a74facadd23d42",
-          "resolved_tables": [
-            "probe_operation_history"
-          ],
-          "role": "history",
-          "table_expression": "probe_operation_history",
-          "verb": "INSERT INTO"
-        },
-        {
-          "backend": "postgresql",
-          "dynamic_identifier": false,
-          "line": 93,
-          "mutation_id": "sql-616e6a8327c640ee",
+          "line": 152,
+          "mutation_id": "sql-77972426e1b4e825",
           "resolved_tables": [
             "probe_operation_outbox"
           ],
@@ -3180,8 +3282,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 174,
-          "mutation_id": "sql-8601ecfee914e2d0",
+          "line": 202,
+          "mutation_id": "sql-c878b9f6c47e6a78",
           "resolved_tables": [
             "probe_operation_outbox"
           ],
@@ -3192,8 +3294,20 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 192,
-          "mutation_id": "sql-85312ff423d248a6",
+          "line": 288,
+          "mutation_id": "sql-4e1da7d77717f7aa",
+          "resolved_tables": [
+            "probe_operation_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "probe_operation_outbox",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 309,
+          "mutation_id": "sql-f37e1eaa4403af38",
           "resolved_tables": [
             "probe_operations"
           ],
@@ -3204,8 +3318,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 205,
-          "mutation_id": "sql-2cc3f67ffc936825",
+          "line": 322,
+          "mutation_id": "sql-f092ebcefe1e55f1",
           "resolved_tables": [
             "probe_operation_history"
           ],
@@ -3216,8 +3330,20 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 225,
-          "mutation_id": "sql-6134789fbad76bcb",
+          "line": 357,
+          "mutation_id": "sql-9f85252fae3fa6b6",
+          "resolved_tables": [
+            "probe_operation_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "probe_operation_outbox",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 393,
+          "mutation_id": "sql-19bb2056df3b08fe",
           "resolved_tables": [
             "probe_operation_outbox"
           ],
@@ -4641,8 +4767,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 43,
-          "mutation_id": "sql-b1412eb4a04ad218",
+          "line": 53,
+          "mutation_id": "sql-f861270bf0de85a3",
           "resolved_tables": [
             "probe_operation_event_projection"
           ],
@@ -4653,8 +4779,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 82,
-          "mutation_id": "sql-039f1189ef506a79",
+          "line": 107,
+          "mutation_id": "sql-a9772b43151b5cca",
           "resolved_tables": [
             "probe_operation_state_projection"
           ],
@@ -4674,6 +4800,45 @@
         "uses_transaction_handle": true
       },
       "workload_class": "projection_consumer"
+    },
+    {
+      "mutations": [
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 44,
+          "mutation_id": "sql-24e49e22b8296288",
+          "resolved_tables": [
+            "probe_pipeline_readiness_epochs"
+          ],
+          "role": "business",
+          "table_expression": "probe_pipeline_readiness_epochs",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 81,
+          "mutation_id": "sql-1e6e26ffb365df0a",
+          "resolved_tables": [
+            "probe_pipeline_readiness_epochs"
+          ],
+          "role": "business",
+          "table_expression": "probe_pipeline_readiness_epochs",
+          "verb": "INSERT INTO"
+        }
+      ],
+      "source": "go/control-plane/internal/alert/api/probe_pipeline_readiness.go",
+      "source_facts": {
+        "has_audit_signal": false,
+        "has_direct_database_call": true,
+        "has_history_signal": false,
+        "has_idempotency_signal": false,
+        "has_outbox_signal": true,
+        "has_transaction_begin": true,
+        "uses_transaction_handle": true
+      },
+      "workload_class": "command_path"
     },
     {
       "mutations": [
@@ -4719,20 +4884,191 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 155,
-          "mutation_id": "sql-73fbcfc62550769d",
+          "line": 218,
+          "mutation_id": "sql-03c49a2be515e9bb",
           "resolved_tables": [
-            "alert_assignment_batch_outbox"
+            "alert_assignment_compensation_items"
           ],
-          "role": "outbox",
-          "table_expression": "alert_assignment_batch_outbox",
+          "role": "business",
+          "table_expression": "alert_assignment_compensation_items",
           "verb": "UPDATE"
         },
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 216,
-          "mutation_id": "sql-8c49564a33e59d8a",
+          "line": 233,
+          "mutation_id": "sql-f963af653fd008f9",
+          "resolved_tables": [
+            "alert_assignment_compensation_item_history"
+          ],
+          "role": "history",
+          "table_expression": "alert_assignment_compensation_item_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 245,
+          "mutation_id": "sql-478d5cbb4b369ac5",
+          "resolved_tables": [
+            "alert_assignment_states"
+          ],
+          "role": "business",
+          "table_expression": "alert_assignment_states",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 259,
+          "mutation_id": "sql-957b907f137458bf",
+          "resolved_tables": [
+            "alert_assignment_state_history"
+          ],
+          "role": "history",
+          "table_expression": "alert_assignment_state_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 278,
+          "mutation_id": "sql-b0176fff5c2967e7",
+          "resolved_tables": [
+            "alert_assignment_compensation_requests"
+          ],
+          "role": "control_idempotency",
+          "table_expression": "alert_assignment_compensation_requests",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 294,
+          "mutation_id": "sql-02f83bc7a0585e6d",
+          "resolved_tables": [
+            "alert_assignment_compensation_history"
+          ],
+          "role": "history",
+          "table_expression": "alert_assignment_compensation_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 311,
+          "mutation_id": "sql-677511ace12d8ae4",
+          "resolved_tables": [
+            "alert_assignment_batch_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "alert_assignment_batch_outbox",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 472,
+          "mutation_id": "sql-b8164fcd320d99ac",
+          "resolved_tables": [
+            "alert_assignment_compensation_items"
+          ],
+          "role": "business",
+          "table_expression": "alert_assignment_compensation_items",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 482,
+          "mutation_id": "sql-a6bc5a7fddc67cb6",
+          "resolved_tables": [
+            "alert_assignment_compensation_item_history"
+          ],
+          "role": "history",
+          "table_expression": "alert_assignment_compensation_item_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 491,
+          "mutation_id": "sql-8789d4265198788f",
+          "resolved_tables": [
+            "alert_assignment_compensation_projection_receipts"
+          ],
+          "role": "inbox_projection",
+          "table_expression": "alert_assignment_compensation_projection_receipts",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 506,
+          "mutation_id": "sql-06c52aa9e415af69",
+          "resolved_tables": [
+            "alert_assignment_states"
+          ],
+          "role": "business",
+          "table_expression": "alert_assignment_states",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 533,
+          "mutation_id": "sql-d06bdab827e542a6",
+          "resolved_tables": [
+            "alert_assignment_compensation_requests"
+          ],
+          "role": "control_idempotency",
+          "table_expression": "alert_assignment_compensation_requests",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 546,
+          "mutation_id": "sql-9d361acc1f1c514d",
+          "resolved_tables": [
+            "alert_assignment_compensation_history"
+          ],
+          "role": "history",
+          "table_expression": "alert_assignment_compensation_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 568,
+          "mutation_id": "sql-9dd2cdf5de5bfcbd",
+          "resolved_tables": [
+            "audit_logs"
+          ],
+          "role": "audit",
+          "table_expression": "audit_logs",
+          "verb": "INSERT INTO"
+        }
+      ],
+      "source": "go/control-plane/internal/alert/consumer/alert_batch_assignment_compensation_pipeline.go",
+      "source_facts": {
+        "has_audit_signal": true,
+        "has_direct_database_call": true,
+        "has_history_signal": true,
+        "has_idempotency_signal": true,
+        "has_outbox_signal": true,
+        "has_transaction_begin": true,
+        "uses_transaction_handle": true
+      },
+      "workload_class": "projection_consumer"
+    },
+    {
+      "mutations": [
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 169,
+          "mutation_id": "sql-facccd48aa0d6927",
           "resolved_tables": [
             "alert_assignment_batch_outbox"
           ],
@@ -4744,7 +5080,7 @@
           "backend": "postgresql",
           "dynamic_identifier": false,
           "line": 232,
-          "mutation_id": "sql-62dcf40af175c563",
+          "mutation_id": "sql-7d46afb4df9378fb",
           "resolved_tables": [
             "alert_assignment_batch_outbox"
           ],
@@ -4755,8 +5091,20 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 633,
-          "mutation_id": "sql-373d326c670ffa09",
+          "line": 248,
+          "mutation_id": "sql-7ea72b47a8556f90",
+          "resolved_tables": [
+            "alert_assignment_batch_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "alert_assignment_batch_outbox",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 673,
+          "mutation_id": "sql-b21c219bb723d017",
           "resolved_tables": [
             "alert_assignment_batch_items"
           ],
@@ -4767,8 +5115,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 646,
-          "mutation_id": "sql-e3522c9369138577",
+          "line": 686,
+          "mutation_id": "sql-bdda34a30f6f702a",
           "resolved_tables": [
             "alert_assignment_batch_item_history"
           ],
@@ -4779,8 +5127,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 659,
-          "mutation_id": "sql-d917b2c9662eeb51",
+          "line": 699,
+          "mutation_id": "sql-1a9b3b355145f6a6",
           "resolved_tables": [
             "alert_assignment_states"
           ],
@@ -4791,8 +5139,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 674,
-          "mutation_id": "sql-065ff25c2b17eba8",
+          "line": 714,
+          "mutation_id": "sql-ed5c6bd04266091a",
           "resolved_tables": [
             "alert_assignment_state_history"
           ],
@@ -4803,8 +5151,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 690,
-          "mutation_id": "sql-0f0ec2229b926890",
+          "line": 731,
+          "mutation_id": "sql-aa412b6fecab0862",
           "resolved_tables": [
             "alert_assignment_batches"
           ],
@@ -4815,8 +5163,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 704,
-          "mutation_id": "sql-6ba896e9918d9818",
+          "line": 745,
+          "mutation_id": "sql-22db397783a47b38",
           "resolved_tables": [
             "alert_assignment_batch_history"
           ],
@@ -4827,8 +5175,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 719,
-          "mutation_id": "sql-7a99a63828225306",
+          "line": 760,
+          "mutation_id": "sql-9f53f1fee67fcf6c",
           "resolved_tables": [
             "alert_assignment_batch_outbox"
           ],
@@ -4839,8 +5187,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 854,
-          "mutation_id": "sql-6d41e75640589dbd",
+          "line": 897,
+          "mutation_id": "sql-c1704e5450a0de33",
           "resolved_tables": [
             "alert_assignment_batch_items"
           ],
@@ -4851,8 +5199,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 861,
-          "mutation_id": "sql-4cb8875e3227cfb7",
+          "line": 904,
+          "mutation_id": "sql-0789a34c7cd3cdff",
           "resolved_tables": [
             "alert_assignment_batch_item_history"
           ],
@@ -4863,8 +5211,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 870,
-          "mutation_id": "sql-bb206de131bd9530",
+          "line": 913,
+          "mutation_id": "sql-fd4596d0b73d2e02",
           "resolved_tables": [
             "alert_assignment_projection_receipts"
           ],
@@ -4875,8 +5223,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 881,
-          "mutation_id": "sql-7690a1a6664b6fc8",
+          "line": 924,
+          "mutation_id": "sql-46963d2b953bc3bf",
           "resolved_tables": [
             "alert_assignment_states"
           ],
@@ -4887,8 +5235,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 909,
-          "mutation_id": "sql-8e2394977f827abb",
+          "line": 952,
+          "mutation_id": "sql-b4761c3d0c6066bb",
           "resolved_tables": [
             "alert_assignment_batches"
           ],
@@ -4899,8 +5247,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 920,
-          "mutation_id": "sql-6bed3bdcccc98edc",
+          "line": 963,
+          "mutation_id": "sql-c613b2115c1f5a23",
           "resolved_tables": [
             "alert_assignment_batch_history"
           ],
@@ -4911,8 +5259,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 961,
-          "mutation_id": "sql-8920fb3416dc04ac",
+          "line": 1005,
+          "mutation_id": "sql-55080bdc7a2b4e50",
           "resolved_tables": [
             "alert_assignment_batch_inbox"
           ],
@@ -4923,8 +5271,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 972,
-          "mutation_id": "sql-553cf6095145f729",
+          "line": 1016,
+          "mutation_id": "sql-d6cfbbf5feae92bb",
           "resolved_tables": [
             "audit_logs"
           ],
@@ -4935,8 +5283,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 1017,
-          "mutation_id": "sql-666ddf68a99372c8",
+          "line": 1061,
+          "mutation_id": "sql-dd773a1db1c72a8b",
           "resolved_tables": [
             "alert_assignment_batch_dlq_receipts"
           ],
@@ -4947,8 +5295,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 1042,
-          "mutation_id": "sql-b76b76d467370ee4",
+          "line": 1086,
+          "mutation_id": "sql-c30ca0dee2c1d34d",
           "resolved_tables": [
             "audit_logs"
           ],
@@ -4962,7 +5310,7 @@
         "has_audit_signal": true,
         "has_direct_database_call": true,
         "has_history_signal": true,
-        "has_idempotency_signal": false,
+        "has_idempotency_signal": true,
         "has_outbox_signal": true,
         "has_transaction_begin": true,
         "uses_transaction_handle": true
@@ -5562,8 +5910,8 @@
         {
           "backend": "clickhouse",
           "dynamic_identifier": false,
-          "line": 627,
-          "mutation_id": "sql-8c983eba84c8370a",
+          "line": 662,
+          "mutation_id": "sql-4b20172277ef9c31",
           "resolved_tables": [
             "traffic.alerts"
           ],
@@ -5574,8 +5922,8 @@
         {
           "backend": "clickhouse",
           "dynamic_identifier": false,
-          "line": 872,
-          "mutation_id": "sql-028386f3bb1ee2a3",
+          "line": 907,
+          "mutation_id": "sql-5bed159dc2570807",
           "resolved_tables": [
             "traffic.alerts"
           ],
@@ -8457,8 +8805,35 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 300,
-          "mutation_id": "sql-0759fd18bb51739d",
+          "line": 50,
+          "mutation_id": "sql-068d2f4b4ecd4022",
+          "resolved_tables": [
+            "kafka_dlq_acknowledgement_receipts"
+          ],
+          "role": "business",
+          "table_expression": "kafka_dlq_acknowledgement_receipts",
+          "verb": "INSERT INTO"
+        }
+      ],
+      "source": "go/control-plane/internal/common/kafka/postgres_dlq_barrier.go",
+      "source_facts": {
+        "has_audit_signal": false,
+        "has_direct_database_call": true,
+        "has_history_signal": false,
+        "has_idempotency_signal": false,
+        "has_outbox_signal": false,
+        "has_transaction_begin": false,
+        "uses_transaction_handle": false
+      },
+      "workload_class": "command_path"
+    },
+    {
+      "mutations": [
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 307,
+          "mutation_id": "sql-e5a589251505f330",
           "resolved_tables": [
             "audit_logs"
           ],
@@ -8559,6 +8934,153 @@
         "has_audit_signal": true,
         "has_direct_database_call": false,
         "has_history_signal": true,
+        "has_idempotency_signal": true,
+        "has_outbox_signal": true,
+        "has_transaction_begin": true,
+        "uses_transaction_handle": true
+      },
+      "workload_class": "command_path"
+    },
+    {
+      "mutations": [
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 492,
+          "mutation_id": "sql-d188591e5e6df79f",
+          "resolved_tables": [
+            "file_restoration_manifests"
+          ],
+          "role": "business",
+          "table_expression": "file_restoration_manifests",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 531,
+          "mutation_id": "sql-5695b050520b58d4",
+          "resolved_tables": [
+            "file_restoration_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "file_restoration_outbox",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 537,
+          "mutation_id": "sql-2f508074444f42db",
+          "resolved_tables": [
+            "file_restoration_audit"
+          ],
+          "role": "business",
+          "table_expression": "file_restoration_audit",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 548,
+          "mutation_id": "sql-66b2938fdfa7db7d",
+          "resolved_tables": [
+            "file_restoration_requests"
+          ],
+          "role": "control_idempotency",
+          "table_expression": "file_restoration_requests",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 562,
+          "mutation_id": "sql-b01ffc6bd2f2c19c",
+          "resolved_tables": [
+            "file_restoration_orphans"
+          ],
+          "role": "business",
+          "table_expression": "file_restoration_orphans",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 704,
+          "mutation_id": "sql-87ebe831e694dd2c",
+          "resolved_tables": [
+            "file_restoration_requests"
+          ],
+          "role": "control_idempotency",
+          "table_expression": "file_restoration_requests",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 735,
+          "mutation_id": "sql-9aa1b892a4e0eee4",
+          "resolved_tables": [
+            "file_restoration_requests"
+          ],
+          "role": "control_idempotency",
+          "table_expression": "file_restoration_requests",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 762,
+          "mutation_id": "sql-7f4b45e3eeebe182",
+          "resolved_tables": [
+            "file_restoration_requests"
+          ],
+          "role": "control_idempotency",
+          "table_expression": "file_restoration_requests",
+          "verb": "DELETE FROM"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 790,
+          "mutation_id": "sql-29a134e68c853663",
+          "resolved_tables": [
+            "file_restoration_orphans"
+          ],
+          "role": "business",
+          "table_expression": "file_restoration_orphans",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 865,
+          "mutation_id": "sql-2cb9be96994163a5",
+          "resolved_tables": [
+            "file_restoration_orphans"
+          ],
+          "role": "business",
+          "table_expression": "file_restoration_orphans",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 889,
+          "mutation_id": "sql-a5dff8b6c721a6d3",
+          "resolved_tables": [
+            "file_restoration_orphans"
+          ],
+          "role": "business",
+          "table_expression": "file_restoration_orphans",
+          "verb": "UPDATE"
+        }
+      ],
+      "source": "go/control-plane/internal/forensics/restoration/repository.go",
+      "source_facts": {
+        "has_audit_signal": false,
+        "has_direct_database_call": true,
+        "has_history_signal": false,
         "has_idempotency_signal": true,
         "has_outbox_signal": true,
         "has_transaction_begin": true,
@@ -10116,6 +10638,22 @@
   "remediation_id": "T-PG-002",
   "review_queue": [
     {
+      "business_mutation_count": 1,
+      "business_tables": [
+        "kafka_dlq_acknowledgement_receipts"
+      ],
+      "evidence_limit": "source-level signals only; inspect each command boundary before remediation",
+      "priority": "P0_REVIEW",
+      "reasons": [
+        "transaction_scope_unproven",
+        "audit_boundary_unproven",
+        "outbox_boundary_unproven",
+        "idempotency_boundary_unproven"
+      ],
+      "source": "go/control-plane/internal/common/kafka/postgres_dlq_barrier.go",
+      "workload_class": "command_path"
+    },
+    {
       "business_mutation_count": 8,
       "business_tables": [
         "alert_playbook_definitions",
@@ -10129,6 +10667,19 @@
         "idempotency_boundary_unproven"
       ],
       "source": "go/control-plane/internal/alert/api/advanced_repository.go",
+      "workload_class": "command_path"
+    },
+    {
+      "business_mutation_count": 1,
+      "business_tables": [
+        "alert_assignment_compensation_items"
+      ],
+      "evidence_limit": "source-level signals only; inspect each command boundary before remediation",
+      "priority": "P1_REVIEW",
+      "reasons": [
+        "audit_boundary_unproven"
+      ],
+      "source": "go/control-plane/internal/alert/api/alert_batch_assignment_compensation_v1.go",
       "workload_class": "command_path"
     },
     {
@@ -10176,6 +10727,19 @@
       "workload_class": "command_path"
     },
     {
+      "business_mutation_count": 1,
+      "business_tables": [
+        "probe_operations"
+      ],
+      "evidence_limit": "source-level signals only; inspect each command boundary before remediation",
+      "priority": "P1_REVIEW",
+      "reasons": [
+        "audit_boundary_unproven"
+      ],
+      "source": "go/control-plane/internal/alert/api/handler_probe_expiry.go",
+      "workload_class": "command_path"
+    },
+    {
       "business_mutation_count": 2,
       "business_tables": [
         "probe_operations",
@@ -10212,6 +10776,20 @@
         "idempotency_boundary_unproven"
       ],
       "source": "go/control-plane/internal/alert/api/handler_product_pages.go",
+      "workload_class": "command_path"
+    },
+    {
+      "business_mutation_count": 2,
+      "business_tables": [
+        "probe_pipeline_readiness_epochs"
+      ],
+      "evidence_limit": "source-level signals only; inspect each command boundary before remediation",
+      "priority": "P1_REVIEW",
+      "reasons": [
+        "audit_boundary_unproven",
+        "idempotency_boundary_unproven"
+      ],
+      "source": "go/control-plane/internal/alert/api/probe_pipeline_readiness.go",
       "workload_class": "command_path"
     },
     {
@@ -10331,6 +10909,21 @@
       "workload_class": "command_path"
     },
     {
+      "business_mutation_count": 6,
+      "business_tables": [
+        "file_restoration_audit",
+        "file_restoration_manifests",
+        "file_restoration_orphans"
+      ],
+      "evidence_limit": "source-level signals only; inspect each command boundary before remediation",
+      "priority": "P1_REVIEW",
+      "reasons": [
+        "audit_boundary_unproven"
+      ],
+      "source": "go/control-plane/internal/forensics/restoration/repository.go",
+      "workload_class": "command_path"
+    },
+    {
       "business_mutation_count": 7,
       "business_tables": [
         "model_action_jobs",
@@ -10416,7 +11009,7 @@
       "workload_class": "outbox_dispatcher"
     },
     {
-      "business_mutation_count": 2,
+      "business_mutation_count": 1,
       "business_tables": [
         "probe_operations"
       ],
@@ -10443,22 +11036,6 @@
       ],
       "source": "go/control-plane/internal/alert/api/notification_scheduler.go",
       "workload_class": "background_worker"
-    },
-    {
-      "business_mutation_count": 7,
-      "business_tables": [
-        "alert_assignment_batch_dlq_receipts",
-        "alert_assignment_batch_items",
-        "alert_assignment_batches",
-        "alert_assignment_states"
-      ],
-      "evidence_limit": "source-level signals only; inspect each command boundary before remediation",
-      "priority": "P2_REVIEW",
-      "reasons": [
-        "idempotency_boundary_unproven"
-      ],
-      "source": "go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go",
-      "workload_class": "projection_consumer"
     },
     {
       "business_mutation_count": 1,
@@ -10582,23 +11159,24 @@
   "summary": {
     "backend_counts": {
       "clickhouse": 16,
-      "postgresql": 692
+      "postgresql": 728
     },
-    "mutation_statements": 708,
+    "mutation_statements": 744,
     "postgres_role_counts": {
-      "audit": 87,
-      "business": 321,
-      "control_idempotency": 31,
-      "history": 79,
-      "inbox_projection": 47,
-      "outbox": 127
+      "audit": 88,
+      "business": 335,
+      "control_idempotency": 38,
+      "history": 86,
+      "inbox_projection": 48,
+      "outbox": 133
     },
     "review_priority_counts": {
-      "P1_REVIEW": 19,
-      "P2_REVIEW": 11
+      "P0_REVIEW": 1,
+      "P1_REVIEW": 23,
+      "P2_REVIEW": 10
     },
-    "review_queue": 30,
-    "source_files": 106,
+    "review_queue": 34,
+    "source_files": 112,
     "unclassified": 0
   },
   "table_role_overrides": {

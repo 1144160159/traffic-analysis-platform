@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "M08_RELEASE_POINTER_DECISION",
+  "milestone_id": "T1-M08",
+  "accountable_task": "T1-M08-N018",
+  "status": "NO_GO",
+  "milestone_state": "IMPLEMENTING",
+  "candidate_id": null,
+  "profile_id": "M08_ISOLATED_ENGINEERING_COMPONENT_INDEX_V1",
+  "environment_id": "existing-k8s-mixed-isolated",
+  "promotion_input": {
+    "path": "doc/02_acceptance/topic1/work-orders/t1-m08-p038-idx-n018-s1/promotion-input.json",
+    "sha256": "0ce144937fba2757997fd1ab06b9dc5109ee30506a790161dd141ba1cd442c40"
+  },
+  "current_index": {
+    "path": "doc/02_acceptance/topic1/work-orders/t1-m08-p038-idx-n018-s1/current-index.json",
+    "sha256": "1bdd15374b6112ccb1023b47c82459de8c7c5ea9c9e178ab94f0f2a3d0d9428c"
+  },
+  "engineering_status": "PASS",
+  "promotion_status": "BLOCKED",
+  "promotion_allowed": false,
+  "blocking_codes": [
+    "CANDIDATE_MANIFEST_REQUIRED",
+    "PRODUCTION_APPLIED_REQUIRED",
+    "PROMOTION_ASSERTION"
+  ],
+  "allowed_claims": [
+    "exact-SHA evidence indexes the isolated Kubernetes engineering path from governed synthetic data through signed model package and internal Python/ONNX/Flink parity",
+    "default-off online ACK, canary, feedback, drift and rollback components have bounded engineering evidence"
+  ],
+  "forbidden_claims": [
+    "CNAS evaluation passed",
+    "known-attack accuracy is at least 95 percent or false-positive rate is below 5 percent for production",
+    "unknown-attack detection quality is production-ready",
+    "one same-candidate production end-to-end run passed",
+    "M08 production activation or promotion is authorized",
+    "M08 or the whole project is complete"
+  ],
+  "production_applied": false,
+  "created_at": "2026-08-15T10:45:00Z",
+  "supersedes_sha256": null
+}

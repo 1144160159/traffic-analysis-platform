@@ -24,7 +24,7 @@
     {
       "domain": "flink_topology",
       "path": "deployments/kubernetes/infrastructure/07-flink.yaml",
-      "sha256": "79ba8d96ee26a072c680db02b1204d3697a2a44d4072192a794416e6e45de755"
+      "sha256": "3eee1fcfe97cfd11c6e62fa4b7ede9a75cfa64e8ed1878037f082edc53e21fd5"
     },
     {
       "domain": "kafka_topology",
@@ -489,5 +489,5 @@
       "external G8 HA site and third-party acceptance"
     ]
   },
-  "catalog_sha256": "5fc51ac017767b80fb95ad3be685e071a781279bb4bfa1d4bc2296fa5d67d65e"
+  "catalog_sha256": "935b1d289449e93b20855fea0c171eeb8f317908aec354385fc55db97f7cb260"
 }

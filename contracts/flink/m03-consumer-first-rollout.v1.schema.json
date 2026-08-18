@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.openai.com/contracts/flink/m03-consumer-first-rollout.v1.schema.json",
+  "title": "M03 Session and Feature consumer-first rollout plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "rollout_id",
+    "candidate_sha256",
+    "state_recovery_contract_sha256",
+    "savepoint_manifest_path",
+    "jobs",
+    "producer_scope",
+    "stages",
+    "rollback_steps"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "rollout_id": {"type": "string", "pattern": "^m03-[a-z0-9][a-z0-9-]{7,63}$"},
+    "candidate_sha256": {"$ref": "#/$defs/sha256"},
+    "state_recovery_contract_sha256": {"$ref": "#/$defs/sha256"},
+    "savepoint_manifest_path": {"type": "string", "minLength": 1},
+    "jobs": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {"$ref": "#/$defs/job"}
+    },
+    "producer_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "probe_ids", "event_contract_sha256", "initially_enabled"],
+      "properties": {
+        "tenant_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "probe_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 128}
+        },
+        "event_contract_sha256": {"$ref": "#/$defs/sha256"},
+        "initially_enabled": {"const": false}
+      }
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {"type": "string"}
+    },
+    "rollback_steps": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {"type": "string"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "image": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._/:~-]*@sha256:[0-9a-f]{64}$"
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_id", "image", "previous_image", "source_job_id", "expected_tasks"],
+      "properties": {
+        "job_id": {"enum": ["flink-session-job", "flink-feature-job"]},
+        "image": {"$ref": "#/$defs/image"},
+        "previous_image": {"$ref": "#/$defs/image"},
+        "source_job_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "expected_tasks": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

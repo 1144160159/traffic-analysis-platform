@@ -1,0 +1,864 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M01_EARLY_TRUST_TWO_STAGE_CANDIDATE_FREEZE_WORK_ORDER",
+  "artifact_status": "BLOCKED_IMPLEMENTATION_SOURCES_AND_CLEAN_WORKTREE",
+  "work_order_id": "M01-EARLY-TRUST-V2-CANDIDATE-FREEZE",
+  "source_refs": [
+    {
+      "role": "V2_ALLOCATION",
+      "path": "contracts/alignment/m01-early-trust-train-allocation.v2.json",
+      "sha256": "8591f573784181e82e1bd2ae139cd225cf5d11b7f267b1c2d85b47efb2f47104"
+    },
+    {
+      "role": "V2_CATALOG",
+      "path": "contracts/alignment/m01-early-trust-train-catalog.v2.json",
+      "sha256": "69a408355ef346e124ffd87331a7e1c6b98379ddf0a9b134ff47495f423acfad"
+    },
+    {
+      "role": "FUNCTION_DESIGN",
+      "path": "contracts/alignment/m01-early-trust-function-design.v1.json",
+      "sha256": "42cb53c2f0319d1e2873031b74aafd6a3f59c776e3ec44971fb5ae4065ef390b"
+    },
+    {
+      "role": "DESIGN_MANIFEST_SCHEMA",
+      "path": "contracts/alignment/design-candidate-manifest.schema.json",
+      "sha256": "47c712f9779a14d120b9c97bfc4aac04eafba84394c20a63157edb145f3b0fd5"
+    },
+    {
+      "role": "DESIGN_CANDIDATE_FREEZER",
+      "path": "scripts/alignment/freeze_m01_early_trust_design_candidate.py",
+      "sha256": "71e3ca5e4ae8de116a9272e7ab363b5a853e136fefb35b4cf36f4efadad173a1"
+    }
+  ],
+  "leaf_partition": {
+    "candidate_leaf_count": 84,
+    "planned_source_leaf_count": 55,
+    "planned_output_leaf_count": 29,
+    "planned_source_atomic_id_exact_set_sha256": "258379b7b06d81f4a022d02a204e698603502285ea91373c91764bccd9f07ef0",
+    "planned_output_atomic_id_exact_set_sha256": "0e8dd8d5b6ff68b06725fea96424ff63f4b02ed8f2c439478126b296f89c2639",
+    "planned_source_path_count": 81,
+    "planned_output_path_count": 54,
+    "path_overlap_count": 0,
+    "planned_source_path_exact_set_sha256": "f8425368b56964bab900b492b0842fa7a4f2f7ab0ebe75abd3e67267a0241d5a",
+    "partition_rule": "DESIGN_CANDIDATE_CONTAINS_ONLY_TARGET_STATE_PLANNED_GIT_BLOBS_PLANNED_OUTPUT_EVIDENCE_REMAINS_FOR_IMPLEMENTATION_CANDIDATE"
+  },
+  "design_candidate_stage": {
+    "stage_order": 1,
+    "candidate_id": "DESIGN-T1-M01-EARLY-TRUST-V2",
+    "expected_manifest_path": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/design-candidate-manifest.json",
+    "manifest_probe": {
+      "path": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/design-candidate-manifest.json",
+      "exists": false,
+      "sha256": null,
+      "status": "MISSING"
+    },
+    "required_source_inputs": [
+      {
+        "path": "contracts/alignment/common-response-protocol.v1.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P049-CTR-n011-s1"
+        ],
+        "exists": true,
+        "status": "PRESENT_UNVALIDATED"
+      },
+      {
+        "path": "contracts/alignment/feature-contract.schema.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P018-CTR-n006-s1"
+        ],
+        "exists": true,
+        "status": "PRESENT_UNVALIDATED"
+      },
+      {
+        "path": "contracts/alignment/schema-authority-registry.schema.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P027-CTR-n009-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "contracts/alignment/signature-trust-policy.schema.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P057-CTR-n015-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "contracts/alignment/signature-verification-attestation.schema.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P057-CTR-n015-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "contracts/alignment/signature-verification-request.schema.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P057-CTR-n015-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "contracts/alignment/topic1-contract-inventory.schema.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P013-CTR-n005-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "contracts/events/proto-topic-compatibility-matrix.schema.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P022-CTR-n008-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "contracts/openapi/alignment-v1.openapi.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P020-CTR-n007-s1"
+        ],
+        "exists": true,
+        "status": "PRESENT_UNVALIDATED"
+      },
+      {
+        "path": "contracts/release/candidate-identity.schema.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P003-CTR-n002-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "deployments/security/topic1-trusted-signature-verifier.Dockerfile",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P079-OPS-n015-s22"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "deployments/security/topic1-trusted-signature-verifier.requirements.lock",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P079-OPS-n015-s22"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "deployments/security/topic1-trusted-signature-verifier.yaml",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P082-OPS-n015-s25"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/build_proto_topic_compatibility_matrix.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P023-PRJ-n008-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/build_schema_authority_registry.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P028-PRJ-n009-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/build_topic1_contract_inventory.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P014-PRJ-n005-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/build_topic1_task_registry.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P038-REF-n010-s7",
+          "T1-M01-P039-REF-n010-s8",
+          "T1-M01-P040-REF-n010-s9",
+          "T1-M01-P041-REF-n010-s10",
+          "T1-M01-P042-REF-n010-s11",
+          "T1-M01-P043-REF-n010-s12",
+          "T1-M01-P044-REF-n010-s13",
+          "T1-M01-P060-REF-n015-s4",
+          "T1-M01-P061-REF-n015-s5",
+          "T1-M01-P062-REF-n015-s6",
+          "T1-M01-P067-REF-n015-s10",
+          "T1-M01-P068-REF-n015-s11",
+          "T1-M01-P069-REF-n015-s12",
+          "T1-M01-P070-REF-n015-s13",
+          "T1-M01-P071-REF-n015-s14",
+          "T1-M01-P095-WRT-n015-s38"
+        ],
+        "exists": true,
+        "status": "PRESENT_UNVALIDATED"
+      },
+      {
+        "path": "scripts/alignment/capture_g0.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P009-REF-n004-s2",
+          "T1-M01-P010-REF-n004-s3"
+        ],
+        "exists": true,
+        "status": "PRESENT_UNVALIDATED"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/active-prebuilt-without-provenance.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P005-REF-n003-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/binary-image-sha-mismatch.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P005-REF-n003-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/builder-recipe-mismatch.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P005-REF-n003-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/duplicate-prebuilt-path.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P005-REF-n003-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/image-deployed-digest-mismatch.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P005-REF-n003-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/self-reported-signature-pass.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P005-REF-n003-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/supply-chain-artifact-missing.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P005-REF-n003-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/tracked-or-root-exclusion.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P005-REF-n003-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/clean-worktree.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P008-REF-n004-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/exclusion-set-drift.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P008-REF-n004-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/moving-head.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P008-REF-n004-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/run-id-overwrite.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P008-REF-n004-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/source-roots-drift.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P008-REF-n004-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/tracked-dirty.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P008-REF-n004-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/untracked-dirty.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P008-REF-n004-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/wrong-parent.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P008-REF-n004-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/backlog-without-next-task.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P015-REF-n005-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/duplicate-canonical.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P015-REF-n005-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/exact-inventory.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P015-REF-n005-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/missing-canonical.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P015-REF-n005-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/missing-contract-path.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P015-REF-n005-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/nondeterministic-rebuild.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P015-REF-n005-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/wrong-canonical-kind.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P015-REF-n005-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/wrong-owner.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P015-REF-n005-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/consumer-only.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/duplicate-event-version.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/exact-compatible-matrix.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/incompatible-proto-fqn.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/missing-dlq.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/missing-key-contract.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/producer-before-consumer.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/producer-only.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/schema-without-topic.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/topic-without-schema.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/wildcard-acl.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/broken-predecessor.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/checksum-drift.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/duplicate-authority.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/exact-authority-registry.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/file-without-registry.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/init-migration-drift.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/non-reentrant-replay.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/registry-without-blob.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/runtime-ddl-callsite.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-candidate-profile-environment-mismatch.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-replay.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/certificate-time-revocation-eku.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/chain-root-algorithm-invalid.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/cnas-scope-mismatch.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/payload-substitution.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/policy-fingerprint-drift.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/self-reported-pass-random-signature.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/verifier-transport-or-shape-failure.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/wrong-authority-role.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-positive-run/tst-post/protected-positive-attestation.json",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/test_candidate_freeze.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P008-REF-n004-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/test_implementation_candidate.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P005-REF-n003-s1"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/test_proto_topic_compatibility_matrix.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P024-REF-n008-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/test_schema_authority_registry.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P029-REF-n009-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/test_topic1_contract_inventory.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P015-REF-n005-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/test_trusted_signature_verifier.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P058-REF-n015-s2"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/trusted_signature_service.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P072-REF-n015-s15",
+          "T1-M01-P073-REF-n015-s16",
+          "T1-M01-P074-REF-n015-s17",
+          "T1-M01-P075-REF-n015-s18",
+          "T1-M01-P076-REF-n015-s19",
+          "T1-M01-P077-REF-n015-s20",
+          "T1-M01-P078-REF-n015-s21",
+          "T1-M01-P086-WRT-n015-s29",
+          "T1-M01-P087-REF-n015-s30",
+          "T1-M01-P088-REF-n015-s31",
+          "T1-M01-P089-REF-n015-s32",
+          "T1-M01-P090-REF-n015-s33",
+          "T1-M01-P091-REF-n015-s34",
+          "T1-M01-P092-REF-n015-s35",
+          "T1-M01-P093-REF-n015-s36",
+          "T1-M01-P094-REF-n015-s37",
+          "T1-M01-P096-WRT-n015-s39"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      },
+      {
+        "path": "scripts/alignment/verify_trusted_signature.py",
+        "owner_atomic_pr_ids": [
+          "T1-M01-P059-REF-n015-s3"
+        ],
+        "exists": false,
+        "status": "MISSING"
+      }
+    ],
+    "required_source_count": 81,
+    "present_source_count": 5,
+    "missing_source_count": 76,
+    "freeze_preconditions": [
+      "all 81 planned source paths exist as regular Git blobs",
+      "candidate commit is exactly the isolated worktree HEAD commit",
+      "worktree has no tracked or untracked changes outside the target manifest",
+      "v2 catalog validates and the 55 plus 29 leaf partition remains exact",
+      "immutable target manifest is absent or already has byte-identical content"
+    ],
+    "status": "BLOCKED_SOURCE_AND_CLEAN_COMMIT_MISSING"
+  },
+  "implementation_candidate_stage": {
+    "stage_order": 2,
+    "expected_manifest_path": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/implementation-candidate.json",
+    "manifest_probe": {
+      "path": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/implementation-candidate.json",
+      "exists": false,
+      "sha256": null,
+      "status": "MISSING"
+    },
+    "depends_on": [
+      "DESIGN_CANDIDATE_FROZEN",
+      "PLANNED_OUTPUT_EVIDENCE_COMPLETE",
+      "EXTERNAL_VERIFIER_IMAGE_RECEIPT_VALID"
+    ],
+    "same_commit_rule": "IMPLEMENTATION_CANDIDATE_COMMIT_MUST_EQUAL_DESIGN_CANDIDATE_IMPLEMENTATION_COMMIT",
+    "required_schema_path": "contracts/alignment/implementation-candidate.schema.json",
+    "semantic_validator_path": "scripts/alignment/build_topic1_task_registry.py#validate_implementation_candidate",
+    "status": "BLOCKED_UPSTREAM_DESIGN_EVIDENCE_AND_IMAGE_RECEIPT"
+  },
+  "current_workspace": {
+    "eligibility_rule": "ISOLATED_CLEAN_GIT_WORKTREE_ONLY",
+    "required_dirty_count": 0,
+    "candidate_commit_must_equal_head": true,
+    "shared_worktree_not_designated": true,
+    "candidate_outputs_absent": true
+  },
+  "command_plan": [
+    {
+      "step_id": "verify-static-candidate-contract",
+      "run_when": "before candidate implementation starts and after any v2 catalog revision",
+      "working_directory": ".",
+      "argv": [
+        "python3",
+        "scripts/alignment/generate_m01_early_trust_candidate_freeze_work_order.py",
+        "--verify"
+      ],
+      "expected_effect": "recompute the exact two-stage scope and keep candidate creation blocked"
+    },
+    {
+      "step_id": "freeze-design-candidate",
+      "run_when": "only inside an isolated clean worktree after all 81 planned source blobs are committed",
+      "working_directory": ".",
+      "argv": [
+        "python3",
+        "scripts/alignment/freeze_m01_early_trust_design_candidate.py",
+        "--repo-root",
+        ".",
+        "--candidate-commit",
+        "<40-char-clean-head>",
+        "--write"
+      ],
+      "expected_effect": "create one immutable 81-source design candidate manifest or fail closed"
+    },
+    {
+      "step_id": "check-design-candidate",
+      "run_when": "after immutable design candidate creation and before review or external image execution",
+      "working_directory": ".",
+      "argv": [
+        "python3",
+        "scripts/alignment/freeze_m01_early_trust_design_candidate.py",
+        "--repo-root",
+        ".",
+        "--candidate-commit",
+        "<40-char-clean-head>",
+        "--check"
+      ],
+      "expected_effect": "recompute all candidate Git blob hashes and require byte-identical manifest content"
+    },
+    {
+      "step_id": "validate-final-implementation-candidate",
+      "run_when": "only after reviews planned-output evidence and external image receipt are complete on the same commit",
+      "working_directory": ".",
+      "argv": [
+        "python3",
+        "scripts/alignment/build_topic1_task_registry.py",
+        "--validate-only"
+      ],
+      "expected_effect": "invoke the registered implementation-candidate semantic validator without authorizing execution or registry switching"
+    }
+  ],
+  "blocking_reasons": [
+    "planned source inputs present 5/81 and missing 76/81",
+    "candidate execution requires a separately designated isolated clean Git worktree",
+    "candidate commit must equal that clean worktree HEAD with zero tracked or untracked changes",
+    "design candidate manifest is absent",
+    "all 36 candidate-bound design reviews and signatures are absent",
+    "planned-output evidence and external verifier image receipt are absent",
+    "implementation candidate manifest and execution authorization are absent"
+  ],
+  "validation": {
+    "schema": "PASS",
+    "source_hashes_exact": "PASS",
+    "leaf_partition_exact": "PASS_55_PLANNED_29_PLANNED_OUTPUT",
+    "source_path_exact_set": "PASS_81",
+    "owner_mapping_exact": "PASS",
+    "candidate_outputs_absent": true,
+    "candidate_workspace_policy_exact": true,
+    "stage_order_acyclic": "PASS_DESIGN_THEN_REVIEW_IMAGE_EVIDENCE_THEN_IMPLEMENTATION",
+    "no_candidate_review_receipt_or_authority_created": true,
+    "mutation_guards": {
+      "source_hash_drift": "PASS",
+      "leaf_partition_drift": "PASS",
+      "source_input_omission": "PASS",
+      "owner_mapping_drift": "PASS",
+      "workspace_policy_drift": "PASS",
+      "candidate_false_present": "PASS",
+      "stage_order_drift": "PASS",
+      "dependency_drift": "PASS",
+      "command_drift": "PASS",
+      "false_ready": "PASS"
+    }
+  },
+  "allowed_claim": "two-stage candidate scope source owners blockers and clean-worktree commands are derived",
+  "forbidden_claim": "candidate implementation review image receipt identity signature execution registry switch authorization or acceptance exists",
+  "proof_ceiling": "BLOCKED_TWO_STAGE_CANDIDATE_FREEZE_WORK_ORDER_ONLY"
+}

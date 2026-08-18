@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "artifact_kind": "PATTERN_PROPOSAL",
+  "artifact_status": "DRAFT",
+  "proposal_id": "PAT-STRATEGY-REPLAY-APPROVAL",
+  "atomic_pr_id": "T1-M10-P001-ATC-DLQ-APPROVAL",
+  "pattern_id": "GOF-BEH-STRATEGY",
+  "problem": "审批台账需要两个可替换实现(PG 权威/测试内存)且选择在装配期确定",
+  "change_axis": "审批存储后端(PG vs memory)",
+  "stable_contract": "ReplayApprovalStore: CreateApproval(ctx, ReplayApproval) error; GetApproval(ctx, tenant, id) (*ReplayApproval, error)",
+  "implementations": [
+    "PostgresReplayApprovalStore(生产唯一合法)",
+    "MemoryReplayApprovalStore(仅测试)"
+  ],
+  "applicability": "APPLICABLE",
+  "change_action": "ADOPT",
+  "selected_form": "GOF",
+  "failure_semantics": "PG 不可用 fail-closed 拒绝回放;memory 实现禁止生产装配",
+  "cost": "一个 2 方法接口;无额外抽象层",
+  "removal_rule": "仅剩单一生产实现且无测试隔离需求时改为 DIRECT",
+  "debate_required": true,
+  "debate_status": "NOT_EXECUTED",
+  "blockers": [
+    "红队答辩未执行(领域/语言/可靠性/安全/性能角色)",
+    "pattern-decision.schema.json 要求的 debate_receipt_ref 尚未产出"
+  ],
+  "readiness": "NOT_READY"
+}

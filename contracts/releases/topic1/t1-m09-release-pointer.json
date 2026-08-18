@@ -1,0 +1,42 @@
+{
+  "accountable_task": "T1-M09-N024",
+  "allowed_claims": [
+    "M09 has an exact-hash ASSEMBLED index for 23 bounded Kubernetes component evidence artifacts"
+  ],
+  "artifact_kind": "M09_RELEASE_POINTER_DECISION",
+  "assembly_id": "ac11577a22b436c337bd045a22a6b5a74ee52b75a772af0244f3453c5abfea32",
+  "atomic_pr_id": "T1-M09-P065-PROM-n024-s2",
+  "automatic_repair": false,
+  "blocking_codes": [
+    "SAME_CANDIDATE_MANIFEST_REQUIRED",
+    "WINDOWS_CHROME_SEVEN_JOURNEYS_REQUIRED",
+    "CROSS_STORAGE_TRACE_FINAL_EFFECT_REQUIRED",
+    "PRODUCTION_APPLIED_REQUIRED"
+  ],
+  "candidate_id": null,
+  "engineering_status": "PASS",
+  "environment_id": "existing-k8s-run-scoped-mixed-candidates",
+  "evidence_index": {
+    "path": "doc/02_acceptance/topic1/t1-m09-p064-idx-n024-s1/evidence-index.json",
+    "sha256": "6b0d607741ec2ba8c5687059ebae6479957a3cf55a95a5cf4fc784e1c5f5467c"
+  },
+  "forbidden_claims": [
+    "one same-candidate M09 end-to-end journey passed",
+    "designated Windows Chrome acceptance passed",
+    "M09 production activation or promotion is authorized",
+    "M09 or the whole project is complete"
+  ],
+  "integrated_bom": {
+    "path": "contracts/alignment/m09-integrated-bom.v1.json",
+    "sha256": "91bac6e61e436276b0108764e49827670061340731b8bfa01cbd9cc57e058e2b"
+  },
+  "milestone_id": "T1-M09",
+  "milestone_state": "IMPLEMENTING",
+  "production_applied": false,
+  "profile_id": "M09_K8S_COMPONENT_EVIDENCE_INDEX_V1",
+  "promotion_allowed": false,
+  "promotion_status": "BLOCKED",
+  "schema_version": 1,
+  "status": "NO_GO",
+  "supersedes_sha256": null
+}

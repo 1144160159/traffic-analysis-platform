@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis.local/contracts/mlops/model-shadow-activation.schema.json",
+  "title": "Governed model shadow activation command and receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request", "receipt"],
+  "properties": {
+    "request": {"$ref": "#/$defs/request"},
+    "receipt": {"$ref": "#/$defs/receipt"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_revision", "requested_by", "approval_reason"],
+      "properties": {
+        "expected_revision": {"type": "integer", "minimum": 0},
+        "requested_by": {"type": "string", "minLength": 1},
+        "approval_reason": {"type": "string", "minLength": 8, "maxLength": 1000}
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id", "event_id", "governance_version", "tenant_id", "model_id",
+        "model_version", "package_id", "package_sha256", "expected_revision",
+        "aggregate_revision", "requested_by", "approved_by", "approval_reason",
+        "request_sha256", "state", "serving_activated", "created_at"
+      ],
+      "properties": {
+        "request_id": {"type": "string", "format": "uuid"},
+        "event_id": {"type": "string", "format": "uuid"},
+        "governance_version": {"const": "model-shadow-activation.v1"},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "model_id": {"type": "string", "format": "uuid"},
+        "model_version": {"type": "string", "minLength": 1},
+        "package_id": {"type": "string", "minLength": 1},
+        "package_sha256": {"$ref": "#/$defs/sha256"},
+        "expected_revision": {"type": "integer", "minimum": 0},
+        "aggregate_revision": {"type": "integer", "minimum": 1},
+        "requested_by": {"type": "string", "minLength": 1},
+        "approved_by": {"type": "string", "minLength": 1},
+        "approval_reason": {"type": "string", "minLength": 8, "maxLength": 1000},
+        "request_sha256": {"$ref": "#/$defs/sha256"},
+        "state": {
+          "enum": ["outbox_pending", "outbox_processing", "published", "shadow_ready", "failed"]
+        },
+        "serving_activated": {"const": false},
+        "shadow_ready_expires_at": {"type": "string", "format": "date-time"},
+        "created_at": {"type": "string", "format": "date-time"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"state": {"const": "shadow_ready"}}},
+          "then": {"required": ["shadow_ready_expires_at"]}
+        }
+      ]
+    }
+  }
+}

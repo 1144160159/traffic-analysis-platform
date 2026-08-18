@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "contract_id": "m06-promotion-gate-v1",
+  "accountable_task": "T1-M06-N018",
+  "manifest_fields": [
+    "schema_version",
+    "artifact_kind",
+    "candidate_id",
+    "profile_id",
+    "environment_id",
+    "candidate_manifest",
+    "task_indexes",
+    "phase_acceptance",
+    "four_source_reconciliation",
+    "canary_rollbacks",
+    "allowed_claims",
+    "forbidden_claims",
+    "production_applied"
+  ],
+  "required_task_indexes": [
+    "T1-M06-N001",
+    "T1-M06-N002",
+    "T1-M06-N003",
+    "T1-M06-N004",
+    "T1-M06-N005",
+    "T1-M06-N006",
+    "T1-M06-N007",
+    "T1-M06-N008",
+    "T1-M06-N009",
+    "T1-M06-N010",
+    "T1-M06-N011",
+    "T1-M06-N012",
+    "T1-M06-N013",
+    "T1-M06-N016"
+  ],
+  "required_phase_acceptance": ["asset-events", "asset-bindings", "device-logs"],
+  "required_canary_rollbacks": ["asset-events", "asset-binding-ingest", "asset-binding-probe", "device-logs"],
+  "required_four_source_rails": ["flow", "asset", "device_log", "user_behavior"],
+  "allowed_claims": [
+    "four real sources independently ingest under one candidate profile and environment",
+    "canonical entity and event-time alignment is bounded to the reconciled window",
+    "source quality and target projection receipts reconcile for the bounded window"
+  ],
+  "forbidden_claims": [
+    "four-source ingress proves fusion gain",
+    "four-source ingress proves attack-chain completion",
+    "bounded canary proves production-wide readiness",
+    "fixture ephemeral or PostgreSQL seed evidence proves a real external source"
+  ],
+  "invariants": [
+    "candidate manifest hash is the candidate identity",
+    "all task indexes phase receipts reconciliation and rollback receipts share candidate profile and environment",
+    "every referenced artifact is repository-local immutable by exact SHA-256",
+    "PROM aggregates existing current evidence and never creates missing evidence or changes production resources"
+  ],
+  "implementation": "scripts/alignment/evaluate_m06_promotion.py",
+  "production_applied": false
+}

@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "contract_id": "flow-events-consumer-v1",
+  "state": "consumer_ready_shadow",
+  "accountable_tasks": ["T1-M06-N002", "T1-M06-N009", "T1-M06-N010", "T1-M06-N011", "T1-M06-N012"],
+  "topic": "flow.events.v1",
+  "value": {
+    "content_type": "application/x-protobuf",
+    "proto_file": "proto/traffic/v1/flow.proto",
+    "message_type": "traffic.v1.FlowEvent",
+    "maximum_protobuf_bytes": 1048576,
+    "unknown_fields_policy": "reject_to_dlq"
+  },
+  "identity": {
+    "key_encoding": "utf8(tenant_id + ':' + community_id)",
+    "required_headers": [
+      "tenant_id", "probe_id", "event_id", "run_id", "feature_set_id",
+      "community_id", "content_type", "proto_message_type",
+      "proto_schema_version", "proto_package", "event_ts", "ingest_ts", "kafka_ts"
+    ],
+    "duplicate_identity": "same tenant/community event_id and payload SHA-256",
+    "conflict_identity": "same tenant/community event_id with different payload SHA-256",
+    "state_ttl_days": 7
+  },
+  "time": {
+    "policy": "contracts/events/event-time-policy.v1.json",
+    "event_time": "FlowEvent.ts_end",
+    "ingest_time": "Kafka record timestamp",
+    "default_watermark_delay_ms": 5000,
+    "default_watermark_idleness_ms": 60000,
+    "default_allowed_lateness_ms": 0,
+    "default_future_skew_ms": 300000,
+    "late_boundary": "event_time < watermark - allowed_lateness_ms"
+  },
+  "barriers": {
+    "checkpoint_mode": "EXACTLY_ONCE",
+    "dlq": "canonical dlq.v1 in a candidate-bound Kafka checkpoint transaction",
+    "quality": "source-quality receipt on audit.logs in a distinct candidate-bound Kafka checkpoint transaction",
+    "offset": "no completed checkpoint when either DLQ or source-quality transaction fails"
+  },
+  "source_fact_projection": {
+    "contract": "contracts/clickhouse/four-source-facts.v1.json",
+    "table": "traffic.source_flow_facts_v1",
+    "enabled": false
+  },
+  "rollout": {
+    "projection_writes": false,
+    "consumer_group": "flink-session-job-shadow-<candidate_sha256_prefix12>",
+    "production_applied": false,
+    "candidate_digest": {
+      "algorithm": "sha256 of ordered lines sha256(file) two-spaces relative-path newline",
+      "files": [
+        "contracts/events/flow-events-consumer.v1.json",
+        "contracts/events/event-time-policy.v1.json",
+        "contracts/data-quality/source-quality-receipt.v1.json",
+        "contracts/clickhouse/four-source-facts.v1.json",
+        "deployments/clickhouse/migrations/202608141600_m06_four_source_facts_v1.sql",
+        "scripts/clickhouse/render-kubernetes-migrations.py",
+        "scripts/clickhouse/run-migrations.sh",
+        "deployments/kubernetes/init-jobs/03a-clickhouse-authoritative-migrations.yaml",
+        "contracts/events/kafka-acl-catalog.v1.json",
+        "contracts/events/kafka-topic-catalog.v1.json",
+        "deployments/kubernetes/init-jobs/00-kafka-acl-plan.yaml",
+        "deployments/kubernetes/security/go-service-identities.v1.yaml",
+        "java/flink-jobs/pom.xml",
+        "java/flink-jobs/flink-common/pom.xml",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/CanonicalDlqMessage.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/DeploymentActivation.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/RawKafkaRecord.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/RawKafkaRecordDeserializationSchema.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/eventtime/EventTimePolicy.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/sourcequality/SourceQualityReceipt.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/sourcefact/SourceFactClickHouseSink.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/sourcefact/SourceFactRecord.java",
+        "java/flink-jobs/flink-session-job/pom.xml",
+        "java/flink-jobs/flink-session-job/deployments/Dockerfile",
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/SessionJob.java",
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/SessionJobConfig.java",
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java",
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/source/FlowEventParseFunction.java",
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/source/FlowLatenessFunction.java",
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/source/ValidatedFlowInput.java",
+        "java/flink-jobs/flink-session-job/src/main/resources/session-job.properties",
+        "proto/traffic/v1/common.proto",
+        "proto/traffic/v1/flow.proto"
+      ]
+    },
+    "rollback": "cancel the candidate Flink job and retain isolated offsets, DLQ records and quality receipts"
+  },
+  "claim_boundary": {
+    "proves": [
+      "strict raw-record envelope validation",
+      "deterministic duplicate conflict and late classification",
+      "checkpoint-coupled DLQ and quality receipt code"
+    ],
+    "does_not_prove": [
+      "candidate image exists in a registry",
+      "Kubernetes job has been applied",
+      "real broker offsets or downstream projections are reconciled"
+    ]
+  }
+}

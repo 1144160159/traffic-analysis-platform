@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m02-implementation-candidate-closure.schema.json",
+  "title": "M02 implementation candidate closure checklist",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "source_catalog",
+    "source_allocation", "implementation_candidate_schema", "semantic_validator",
+    "candidate_manifest_path", "manifest_probe", "required_manifest_fields",
+    "delivery_artifact_contract", "early_trust_preview_inputs", "early_trust_candidate_freeze_inputs", "external_image_activity_inputs", "external_image_receipt_probe", "trusted_signature_inputs", "requirements",
+    "readiness_counts", "validation", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M02_IMPLEMENTATION_CANDIDATE_CLOSURE_CHECKLIST"},
+    "artifact_status": {"enum": ["BLOCKED_IMPLEMENTATION_CANDIDATE_INCOMPLETE", "READY_IMPLEMENTATION_CANDIDATE_INPUTS_EXACT_NOT_EXECUTION_AUTHORIZATION"]},
+    "source_catalog": {"$ref": "#/$defs/hash_ref"},
+    "source_allocation": {"$ref": "#/$defs/hash_ref"},
+    "implementation_candidate_schema": {"$ref": "#/$defs/hash_ref"},
+    "semantic_validator": {"$ref": "#/$defs/hash_ref"},
+    "candidate_manifest_path": {"const": "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json"},
+    "manifest_probe": {"$ref": "#/$defs/probe"},
+    "required_manifest_fields": {
+      "type": "array", "minItems": 22, "maxItems": 22, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "delivery_artifact_contract": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/delivery_artifact"}
+    },
+    "trusted_signature_inputs": {
+      "type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/probe"}
+    },
+    "early_trust_preview_inputs": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/probe"}
+    },
+    "early_trust_candidate_freeze_inputs": {
+      "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/probe"}
+    },
+    "external_image_activity_inputs": {
+      "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/probe"}
+    },
+    "external_image_receipt_probe": {"$ref": "#/$defs/probe"},
+    "requirements": {
+      "type": "array", "minItems": 11, "maxItems": 11, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/requirement"}
+    },
+    "readiness_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["READY", "PARTIAL", "MISSING", "INVALID"],
+      "properties": {
+        "READY": {"type": "integer", "minimum": 0, "maximum": 11},
+        "PARTIAL": {"type": "integer", "minimum": 0, "maximum": 11},
+        "MISSING": {"type": "integer", "minimum": 0, "maximum": 11},
+        "INVALID": {"type": "integer", "minimum": 0, "maximum": 11}
+      }
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "source_hashes_exact", "schema_required_fields_exact", "delivery_roles_exact",
+        "delivery_paths_exact", "early_trust_preview_exact", "early_trust_candidate_freeze_contract_exact", "external_image_activity_contract_exact", "requirement_exact_set", "no_missing_input_claimed_ready",
+        "mutation_guards"
+      ],
+      "properties": {
+        "source_hashes_exact": {"const": "PASS"},
+        "schema_required_fields_exact": {"const": "PASS"},
+        "delivery_roles_exact": {"const": "PASS"},
+        "delivery_paths_exact": {"const": "PASS"},
+        "early_trust_preview_exact": {"const": "PASS_NOT_GLOBAL_REGISTRY"},
+        "early_trust_candidate_freeze_contract_exact": {"const": "PASS_BLOCKED_NO_CANDIDATE"},
+        "external_image_activity_contract_exact": {"enum": ["PASS_RECEIPT_MISSING", "PASS_RECEIPT_VALID"]},
+        "requirement_exact_set": {"const": "PASS"},
+        "no_missing_input_claimed_ready": {"const": true},
+        "mutation_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "required_field_omission", "delivery_role_omission", "delivery_path_drift",
+            "requirement_omission", "manifest_false_ready", "signature_false_ready",
+            "validator_test_false_ready", "early_trust_preview_false_ready", "candidate_freeze_false_ready", "external_image_receipt_false_ready"
+          ],
+          "properties": {
+            "required_field_omission": {"const": "PASS"},
+            "delivery_role_omission": {"const": "PASS"},
+            "delivery_path_drift": {"const": "PASS"},
+            "requirement_omission": {"const": "PASS"},
+            "manifest_false_ready": {"const": "PASS"},
+            "signature_false_ready": {"const": "PASS"},
+            "validator_test_false_ready": {"const": "PASS"},
+            "early_trust_preview_false_ready": {"const": "PASS"},
+            "candidate_freeze_false_ready": {"const": "PASS"},
+            "external_image_receipt_false_ready": {"const": "PASS"}
+          }
+        }
+      }
+    },
+    "proof_ceiling": {"const": "IMPLEMENTATION_CANDIDATE_REQUIREMENT_CLOSURE_ONLY_NOT_CANDIDATE_CREATION_SUPPLY_CHAIN_ATTESTATION_SIGNATURE_VERIFICATION_IMPLEMENTATION_EXECUTION_SWITCH_OR_ACCEPTANCE"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "probe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "exists", "sha256", "status", "blocking_reasons"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "exists": {"type": "boolean"},
+        "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "status": {"enum": ["PRESENT", "MISSING", "INVALID"]},
+        "blocking_reasons": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "delivery_artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "path", "owner_leaf_id", "owner_atomic_pr_id", "exists", "status"],
+      "properties": {
+        "artifact_id": {"enum": ["install-manifest", "preflight-plan", "upgrade-plan", "rollback-plan", "restore-plan"]},
+        "path": {"type": "string", "minLength": 1},
+        "owner_leaf_id": {"const": "M02-N013-L11"},
+        "owner_atomic_pr_id": {"const": "T1-M02-P523-WRT-n013-l11"},
+        "exists": {"type": "boolean"},
+        "status": {"enum": ["PRESENT_UNVALIDATED", "MISSING"]}
+      }
+    },
+    "requirement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requirement_id", "authority_task_ids", "description", "required_fields", "required_paths", "status", "blocking_reasons", "next_action"],
+      "properties": {
+        "requirement_id": {"type": "string", "pattern": "^IC-M02-C(?:0[1-9]|1[01])$"},
+        "authority_task_ids": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^T1-M[0-9]{2}-N[0-9]{3}$"}
+        },
+        "description": {"type": "string", "minLength": 8},
+        "required_fields": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "required_paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "status": {"enum": ["READY", "PARTIAL", "MISSING", "INVALID"]},
+        "blocking_reasons": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "next_action": {"type": "string", "minLength": 8}
+      }
+    }
+  }
+}

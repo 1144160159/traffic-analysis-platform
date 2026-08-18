@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "contract_id": "asset-bindings-producer-v1",
+  "accountable_task": "T1-M06-N016",
+  "state": "contract_ready_producer_and_consumer_default_off",
+  "production_applied": false,
+  "transport": {
+    "probe_rpc": "traffic.v1.IngestService/UploadAssetBindings",
+    "gateway_topic": "asset.bindings.v1",
+    "gateway_is_only_kafka_producer": true,
+    "probe_direct_kafka_forbidden": true
+  },
+  "payload": {
+    "proto_file": "proto/traffic/v1/asset.proto",
+    "message": "traffic.v1.MacIpBinding",
+    "schema_version": 1,
+    "required_fields": ["mac_address", "ip_address", "tenant_id", "observed_at", "source", "observation_id", "probe_id", "schema_version"],
+    "allowed_sources": ["arp", "dhcp"],
+    "key_encoding": "utf8(tenant_id + ':' + canonical_mac_address)",
+    "required_headers": ["tenant_id", "probe_id", "observation_id", "event_id", "source", "schema_version", "content_type", "message_type"]
+  },
+  "identity": {
+    "authenticated_fields": ["tenant_id", "probe_id"],
+    "idempotency_scope": ["tenant_id", "probe_id", "observation_id"],
+    "source_tuple": ["topic", "partition", "offset"],
+    "same_identity_same_payload": "duplicate_committed",
+    "same_identity_different_payload": "conflict_dlq"
+  },
+  "acknowledgement": {
+    "response_revision": 1,
+    "terminal_success": ["KAFKA_ACKED", "DUPLICATE_COMMITTED"],
+    "retryable": ["RETRYABLE", "OUTCOME_UNKNOWN"],
+    "broker_required_acks": "all",
+    "consumer_offset_barrier": "commit only after asset authority transaction or durable canonical DLQ acknowledgement"
+  },
+  "rollout": {
+    "ingest_bridge_enabled": false,
+    "probe_sender_enabled": false,
+    "asset_binding_consumer_enabled": false,
+    "rollback": "disable probe admission then gateway writer then consumer; retain probe WAL, Kafka records, offsets, DLQ acknowledgements and PostgreSQL asset authority history"
+  },
+  "claim_boundary": {
+    "proves": ["additive wire contract and identity/ACK rules are frozen"],
+    "does_not_prove": ["generated clients are deployed", "a probe emitted a binding", "Kafka acknowledged a binding", "the asset consumer committed an offset"]
+  }
+}

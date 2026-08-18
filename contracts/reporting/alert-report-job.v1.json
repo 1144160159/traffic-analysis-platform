@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "contract_id": "alert-report-job.v1",
+  "task_id": "T1-M09-N016",
+  "feature_id": "F-ALERT-001",
+  "runtime": {
+    "feature_flag": "ALERT_REPORT_JOBS_V1_ENABLED",
+    "default_enabled": false,
+    "artifact_ttl_env": "ALERT_REPORT_ARTIFACT_TTL",
+    "artifact_ttl_default": "24h",
+    "artifact_ttl_minimum": "5m",
+    "artifact_ttl_maximum": "720h"
+  },
+  "authority": {
+    "job_and_manifest": "postgresql.alert_report_jobs",
+    "transitions": "postgresql.alert_report_job_history",
+    "events": "postgresql.alert_report_outbox",
+    "artifact": "minio.report-artifacts",
+    "tenant_source": "authenticated_identity",
+    "required_scope": "alert:export"
+  },
+  "freeze": {
+    "request_binding": ["tenant_id", "alert_id", "format", "snapshot_id", "Idempotency-Key"],
+    "snapshot_identity": "alert:{alert_id}:revision:{state_version}",
+    "persisted_before_acceptance": ["snapshot", "snapshot_sha256", "missing_sections", "source_watermarks"],
+    "sections": ["alert", "evidence", "assets", "response_actions", "audit_trail"],
+    "missing_section_policy": "explicit_partial_never_simulated",
+    "source_watermarks": [
+      "clickhouse.alerts.state_version",
+      "clickhouse.alerts.updated_at",
+      "clickhouse.alerts.rule_version",
+      "clickhouse.alerts.model_version",
+      "clickhouse.evidence.updated_at",
+      "postgresql.assets.updated_at",
+      "postgresql.alert_response_actions.updated_at",
+      "postgresql.audit_logs.created_at"
+    ]
+  },
+  "asynchronous_state_machine": {
+    "states": [
+      "accepted", "running", "cancel_requested", "completed", "partial", "failed",
+      "cancelled", "compensating", "compensated", "compensation_failed"
+    ],
+    "lease": "5m",
+    "maximum_attempts": 5,
+    "retry_backoff": "bounded_exponential_max_300s",
+    "terminal_success": ["completed"],
+    "terminal_non_success": ["partial", "failed", "cancelled", "compensated", "compensation_failed"]
+  },
+  "object": {
+    "key_template": "{safe_tenant_id}/alerts/{safe_alert_id}/{job_id}.{format}",
+    "formats": {
+      "json": "application/json",
+      "pdf": "application/pdf",
+      "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    },
+    "same_key_retry": true,
+    "maximum_download_bytes": 52428800,
+    "download_integrity": ["size_bytes", "artifact_sha256"]
+  },
+  "manifest": {
+    "manifest_version": 1,
+    "object_format_version": 1,
+    "fields": [
+      "status", "snapshot_sha256", "artifact_sha256", "size_bytes", "mime_type",
+      "artifact_expires_at", "artifact_expired"
+    ],
+    "states": ["pending", "available", "expired", "residual", "removed", "failed"],
+    "expired_behavior": {
+      "status_endpoint": "200_queryable_without_download_url",
+      "download_endpoint": "410_REPORT_EXPIRED",
+      "postgresql_history_retained": true
+    }
+  },
+  "failure_closure": {
+    "object_manifest_mismatch": "502_fail_closed",
+    "cross_tenant_read": "404",
+    "stale_snapshot": "409_SNAPSHOT_CONFLICT",
+    "cancel_cleanup_failure": "retry_then_partial",
+    "residual_object": "explicit_compensation_only"
+  },
+  "kubernetes_validation": {
+    "status": "PASS",
+    "environment": "existing_k8s_postgresql_minio",
+    "run_id": "346f8306-abef-46cd-9de2-84bd49c5ff37",
+    "evidence": "doc/02_acceptance/topic1/tasks/t1-m09-n016/k8s-alert-report-latest.json"
+  },
+  "closure": {
+    "status": "PARTIAL",
+    "production_applied": false,
+    "open_items": [
+      "large-report queue performance",
+      "Kafka outbox publication ACK",
+      "Windows Chrome create-status-download-expiry journey",
+      "canary rollout and observation"
+    ]
+  }
+}

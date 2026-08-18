@@ -64,6 +64,12 @@
     "not_applicable",
     "error"
   ],
+  "semantic_axes": {
+    "availability_status": ["arrived", "not_arrived", "unavailable", "not_applicable"],
+    "freshness_status": ["fresh", "stale", "unknown", "not_applicable"],
+    "completeness_status": ["complete", "partial", "unknown", "not_applicable"],
+    "value_status": ["zero", "nonzero", "none"]
+  },
   "dataset_signal_contract": "contracts/data-quality/dataset-signals.v1.json",
   "forbidden_formal_signals": [
     "clickhouse_insert_rate_as_kafka_lag",
@@ -109,6 +115,14 @@
       "explicit_not_applicable_business_version",
       "explicit_not_applicable_object_manifest"
     ],
+    "handoff_signal_semantics": {
+      "real_zero": "measured/arrived/fresh/complete/zero",
+      "never_arrived": "unknown/not_arrived/unknown/unknown/none",
+      "source_unavailable": "error/unavailable/unknown/unknown/none",
+      "stale": "measured/arrived/stale/complete/(zero|nonzero)",
+      "partial": "measured/arrived/(fresh|stale)/partial/(zero|nonzero)",
+      "gate_rule": "partial and stale never pass; stale never downgrades fail to warn"
+    },
     "collection_persistence": "postgresql.data_quality_watermarks",
     "read_path_has_no_write_side_effect": true,
     "api": "POST /v1/data-quality/baseline",

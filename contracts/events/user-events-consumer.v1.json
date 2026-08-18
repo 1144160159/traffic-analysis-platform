@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "contract_id": "user-events-consumer-v1",
+  "state": "consumer_ready_shadow",
+  "accountable_task": "T1-M06-N007",
+  "accountable_tasks": ["T1-M06-N007", "T1-M06-N012"],
+  "topic": "user.events.v1",
+  "value": {
+    "content_type": "application/x-protobuf",
+    "proto_file": "proto/traffic/v1/audit.proto",
+    "message_type": "traffic.v1.UserEvent",
+    "unknown_fields_policy": "reject_to_dlq"
+  },
+  "identity": {
+    "key_encoding": "utf8(tenant_id + ':' + user_id)",
+    "required_headers": ["tenant_id", "event_id", "event_type", "schema_version", "aggregate_version"],
+    "duplicate_identity": "same event_id and same payload SHA-256 is duplicate",
+    "conflict_identity": "same event_id and different payload SHA-256 is conflict"
+  },
+  "time": {
+    "policy": "contracts/events/event-time-policy.v1.json",
+    "event_time": "UserEvent.timestamp",
+    "ingest_time": "Kafka record timestamp",
+    "default_watermark_delay_ms": 30000,
+    "default_allowed_lateness_ms": 120000,
+    "default_future_skew_ms": 300000
+  },
+  "barriers": {
+    "checkpoint_mode": "EXACTLY_ONCE",
+    "dlq": "canonical dlq.v1 JSON in the source checkpoint transaction",
+    "quality": "source-quality receipt on audit.logs in the source checkpoint transaction",
+    "offset": "no completed checkpoint when DLQ or quality receipt publication fails"
+  },
+  "source_fact_projection": {
+    "contract": "contracts/clickhouse/four-source-facts.v1.json",
+    "table": "traffic.source_user_behavior_facts_v1",
+    "enabled": false
+  },
+  "rollout": {
+    "projection_writes": false,
+    "consumer_group": "flink-user-behavior-job-shadow-<candidate_sha256_prefix12>",
+    "production_applied": false,
+    "candidate_digest": {
+      "algorithm": "sha256 of ordered lines sha256(file) two-spaces relative-path newline",
+      "files": [
+        "contracts/events/user-events-consumer.v1.json",
+        "contracts/events/event-time-policy.v1.json",
+        "contracts/data-quality/source-quality-receipt.v1.json",
+        "contracts/clickhouse/four-source-facts.v1.json",
+        "deployments/clickhouse/migrations/202608141600_m06_four_source_facts_v1.sql",
+        "scripts/clickhouse/render-kubernetes-migrations.py",
+        "scripts/clickhouse/run-migrations.sh",
+        "deployments/kubernetes/init-jobs/03a-clickhouse-authoritative-migrations.yaml",
+        "contracts/events/kafka-acl-catalog.v1.json",
+        "contracts/events/kafka-topic-catalog.v1.json",
+        "deployments/kubernetes/init-jobs/00-kafka-acl-plan.yaml",
+        "java/flink-jobs/pom.xml",
+        "java/flink-jobs/flink-common/pom.xml",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/CanonicalDlqMessage.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/DeploymentActivation.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/RawKafkaRecord.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/RawKafkaRecordDeserializationSchema.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/eventtime/EventTimePolicy.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/sourcequality/SourceQualityReceipt.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/sourcefact/SourceFactClickHouseSink.java",
+        "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/sourcefact/SourceFactRecord.java",
+        "java/flink-jobs/flink-user-behavior-job/pom.xml",
+        "java/flink-jobs/flink-user-behavior-job/deployments/Dockerfile",
+        "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserBehaviorJob.java",
+        "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserEventParseFunction.java",
+        "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserEventTimeFunction.java",
+        "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/ValidatedUserEvent.java",
+        "proto/traffic/v1/audit.proto"
+      ]
+    },
+    "rollback": "cancel the shadow job and retain its isolated offsets, DLQ records and quality receipts"
+  },
+  "claim_boundary": {
+    "proves": ["raw source tuple retention", "strict user identity and event-time classification", "checkpoint-coupled DLQ and quality receipt code"],
+    "does_not_prove": ["candidate image exists in a registry", "Kubernetes job has been applied", "real Kafka offsets or ClickHouse are reconciled"]
+  }
+}

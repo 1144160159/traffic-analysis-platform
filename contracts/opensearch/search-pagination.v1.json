@@ -43,10 +43,12 @@
     "domain_separation": "traffic.alert.search.cursor.v1",
     "maximum_bytes": 8192,
     "ttl": "2m",
-    "bound_claims": ["tenant_id", "normalized_query_sha256", "cursor_mode", "page_size", "sort_values", "pit_id", "snapshot_at", "expires_at"],
+    "bound_claims": ["tenant_id", "normalized_query_sha256", "resolved_target_sha256", "cursor_mode", "page_size", "sort_values", "pit_id", "snapshot_at", "expires_at"],
     "unknown_claims_rejected": true,
     "cross_tenant_replay_rejected": true,
-    "query_drift_rejected": true
+    "query_drift_rejected": true,
+    "live_alias_target_drift_rejected_before_search": true,
+    "pit_alias_switch_preserves_frozen_shards": true
   },
   "query_guards": {
     "maximum_page_size": 200,
@@ -57,7 +59,7 @@
     "query_timeout": "2s",
     "allow_partial_search_results": false,
     "track_total_hits_up_to": 10000,
-    "source_field_allowlist": ["tenant_id", "alert_id", "fingerprint", "community_id", "session_id", "campaign_id", "src_ip", "dst_ip", "src_port", "dst_port", "protocol", "alert_type", "labels", "score", "severity", "first_seen", "last_seen", "count", "status", "assignee", "updated_ts", "model_version", "rule_version", "feature_set_id", "evidence_ids", "event_id"],
+    "source_field_allowlist": ["tenant_id", "alert_id", "fingerprint", "community_id", "session_id", "campaign_id", "src_ip", "dst_ip", "src_port", "dst_port", "protocol", "alert_type", "labels", "score", "severity", "first_seen", "last_seen", "count", "status", "assignee", "updated_at", "model_version", "rule_version", "feature_set_id", "evidence_ids", "event_id", "attack_phase", "state_version", "trace_id"],
     "sort_field_allowlist": ["last_seen", "first_seen", "score", "severity", "status", "alert_type", "alert_id"],
     "stable_tie_breaker": "alert_id",
     "tenant_and_permission_filter_context": true,
@@ -69,9 +71,19 @@
   "runtime_guards": {
     "feature_flag": "OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
     "feature_flag_default_enabled": false,
+    "frontend_feature_flag": "ALERT_SEARCH_CURSOR_V1_ENABLED",
+    "frontend_feature_flag_default_enabled": false,
     "legacy_route_preserved": true,
     "legacy_fields_preserved": true,
     "production_mutations_in_repository_candidate": []
+  },
+  "kubernetes_candidate_validation": {
+    "run_id": "4d99d81c-619f-4885-97c5-ece81f61da94",
+    "manifest": "doc/02_acceptance/topic1/tasks/t1-m09-n015/k8s-opensearch-cursor-latest.json",
+    "profile": "M09-N015-K8S-OPENSEARCH-PIT-UI-V1",
+    "shared_opensearch_touched": true,
+    "run_scoped_indices_and_alias_removed": true,
+    "production_applied": false
   },
   "observed_live_before_candidate": {
     "captured_at": "2026-08-04T01:10:14+08:00",
@@ -90,7 +102,7 @@
   ],
   "closure_blockers": [
     "candidate remains default-off and has not been built or deployed to a production canary",
-    "real OpenSearch search_after and PIT page-boundary reconciliation has not run",
+    "the run-scoped K8s OpenSearch test passed, but the production alias and 72M-document dataset have not been canaried",
     "fixed-scale cold and warm query profiles and approved P50/P95/P99 budgets are absent",
     "Windows Chrome production-bundle traversal, HAR and trace evidence is absent",
     "canary rollback and T+0/T+1/T+3/T+7 PIT resource observation are incomplete"

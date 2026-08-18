@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/alignment/asset-upsert-source-precedence-approval.schema.json",
+  "title": "Asset upsert source precedence approval current index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_kind",
+    "approval_id",
+    "atomic_pr_id",
+    "candidate_manifest_sha256",
+    "profile_id",
+    "environment_id",
+    "subject",
+    "semantic_validation_result",
+    "decision",
+    "required_roles",
+    "quorum",
+    "attestations",
+    "status",
+    "blockers",
+    "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "ASSET_UPSERT_SOURCE_PRECEDENCE_APPROVAL"},
+    "approval_id": {"pattern": "^APPROVAL-T1-M06-P917-[A-Z0-9-]+$"},
+    "atomic_pr_id": {"const": "T1-M06-P917-IDX-n004-source-precedence-approval"},
+    "candidate_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "profile_id": {"const": "T1-ASSET-SOURCE-PRECEDENCE-V1"},
+    "environment_id": {"type": "string", "minLength": 3},
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "contract_id", "action_exact_set", "field_exact_set_sha256"],
+      "properties": {
+        "path": {"const": "contracts/alignment/asset-upsert-source-precedence.v1.json"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "contract_id": {"const": "ASSET-UPsert-SOURCE-PRECEDENCE-V1"},
+        "action_exact_set": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"enum": ["asset-upsert", "asset-observation-upsert"]}
+        },
+        "field_exact_set_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "semantic_validation_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "status"],
+      "properties": {
+        "path": {"const": "doc/02_acceptance/topic1/work-orders/t1-m06-p916-tst-pre-n004-source-precedence-verification/test-result.json"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"const": "PASS"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_create_asset_type",
+        "observation_create_status",
+        "observation_create_criticality",
+        "stale_observation_revision_policy",
+        "provenance_scope"
+      ],
+      "properties": {
+        "observation_create_asset_type": {"const": "unknown"},
+        "observation_create_status": {"const": "active"},
+        "observation_create_criticality": {"const": 0},
+        "stale_observation_revision_policy": {"const": "ADVANCE_REVISION_PRESERVE_FACTS_AND_EMIT_ACCEPTED_AUDIT_EVENT"},
+        "provenance_scope": {"const": "ACTION_CLASS_V1_NO_PERSISTED_PER_FIELD_PROVENANCE"}
+      }
+    },
+    "required_roles": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {"enum": ["multi-source-data-owner", "asset-service-owner"]}
+    },
+    "quorum": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "distinct_signers"],
+      "properties": {
+        "required": {"const": 2},
+        "distinct_signers": {"const": 2}
+      }
+    },
+    "attestations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "signer_identity", "payload_sha256", "policy_id", "signature_receipt"],
+        "properties": {
+          "role": {"enum": ["multi-source-data-owner", "asset-service-owner"]},
+          "signer_identity": {"type": "string", "minLength": 3},
+          "payload_sha256": {"$ref": "#/$defs/sha256"},
+          "policy_id": {"const": "TOPIC1-DOMAIN-APPROVAL-V1"},
+          "signature_receipt": {"$ref": "#/$defs/hash_ref"}
+        }
+      }
+    },
+    "status": {"const": "APPROVED"},
+    "blockers": {"type": "array", "maxItems": 0},
+    "proof_ceiling": {"const": "DOMAIN_POLICY_APPROVAL_ONLY_NOT_IMPLEMENTATION_OR_EXECUTION_AUTHORIZATION"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hash_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(contracts|doc)/[^#]+\\.json$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

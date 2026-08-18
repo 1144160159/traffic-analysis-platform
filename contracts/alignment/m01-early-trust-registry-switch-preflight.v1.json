@@ -1,0 +1,559 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M01_EARLY_TRUST_FOUR_REGISTRY_ATOMIC_SWITCH_PREFLIGHT",
+  "artifact_status": "BLOCKED_PRE_SWITCH_PRECONDITIONS",
+  "revision_id": "M01-EARLY-TRUST-REGISTRY-SWITCH-PREFLIGHT-V1",
+  "source_refs": [
+    {
+      "role": "V1_ALLOCATION",
+      "path": "contracts/alignment/m01-early-trust-train-allocation.v1.json",
+      "sha256": "9bab6c55cf3e2ea44e1d5037ce9c37267ac804d0422d703d77f1a7fe78501d19"
+    },
+    {
+      "role": "V2_ALLOCATION",
+      "path": "contracts/alignment/m01-early-trust-train-allocation.v2.json",
+      "sha256": "8591f573784181e82e1bd2ae139cd225cf5d11b7f267b1c2d85b47efb2f47104"
+    },
+    {
+      "role": "V2_CATALOG",
+      "path": "contracts/alignment/m01-early-trust-train-catalog.v2.json",
+      "sha256": "69a408355ef346e124ffd87331a7e1c6b98379ddf0a9b134ff47495f423acfad"
+    },
+    {
+      "role": "FUNCTION_DESIGN",
+      "path": "contracts/alignment/m01-early-trust-function-design.v1.json",
+      "sha256": "42cb53c2f0319d1e2873031b74aafd6a3f59c776e3ec44971fb5ae4065ef390b"
+    },
+    {
+      "role": "REVIEW_WORK_ORDERS",
+      "path": "contracts/alignment/m01-early-trust-review-work-order-catalog.v1.json",
+      "sha256": "9d37989977d3ab058f1792fc6c2b4ca8d2eb822518652026f9b6c9aad7c577b2"
+    },
+    {
+      "role": "EXTERNAL_IMAGE_WORK_ORDER",
+      "path": "contracts/alignment/m01-verifier-image-build-sign-work-order.v1.json",
+      "sha256": "2da4b3e123ed4cc44da959877811dad2b5ad5d28d9f9775fcbb00b6e1ca7598d"
+    },
+    {
+      "role": "CANDIDATE_FREEZE_WORK_ORDER",
+      "path": "contracts/alignment/m01-early-trust-candidate-freeze-work-order.v1.json",
+      "sha256": "64ec78dfff39d62c57948fd8fd946fbb0f49f035379101cfe9a6087313e424fe"
+    },
+    {
+      "role": "TASK_REGISTRY_BUILDER",
+      "path": "scripts/alignment/build_topic1_task_registry.py",
+      "sha256": "20c813744d54884707bc3f919c2053e883d81de877707418e6819d96726b454c"
+    },
+    {
+      "role": "CLAIM_CATALOG_SCHEMA",
+      "path": "contracts/alignment/developer-claim-package.schema.json",
+      "sha256": "679a5e0c523afb327a4579d0d4955c29b0b0927e11c5a78664f8eb698724e557"
+    },
+    {
+      "role": "PR_DESIGN_CATALOG_BUILDER",
+      "path": "scripts/alignment/build_pr_design_application_catalog.py",
+      "sha256": "e0df57a684c7e3e7a4dc42f1d7e0b7ebb4aefd9b3ab38c6e27a1a00ad835ac14"
+    }
+  ],
+  "current_global_catalogs": [
+    {
+      "role": "TASK_REGISTRY",
+      "path": "contracts/alignment/task-registry.v1.json",
+      "sha256": "411be54ada25ba399fc4e14d1fb055986548a6c265c4b499254a5793249a23d0",
+      "atomic_pr_count": 1289,
+      "m01_atomic_pr_count": 56,
+      "atomic_id_exact_set_sha256": "78da8f6f819b447cf75b8eeb78d26b31c4b7543841de270a16c8e5220175884d",
+      "status": "ACTIVE_UNCHANGED"
+    },
+    {
+      "role": "CLAIM_CATALOG",
+      "path": "contracts/alignment/developer-claim-package-catalog.v1.json",
+      "sha256": "18aeedadba1504c02141185c0cc40e9237dd8c96665c5923009f9f99484ee883",
+      "atomic_pr_count": 1289,
+      "m01_atomic_pr_count": 56,
+      "atomic_id_exact_set_sha256": "78da8f6f819b447cf75b8eeb78d26b31c4b7543841de270a16c8e5220175884d",
+      "status": "ACTIVE_UNCHANGED"
+    },
+    {
+      "role": "PR_DESIGN_CATALOG",
+      "path": "contracts/alignment/pr-design-application-catalog.v1.json",
+      "sha256": "486036113a9264679207d1bc19c58a62c3bf65b8c535e1f0c49230147192d03c",
+      "atomic_pr_count": 1289,
+      "m01_atomic_pr_count": 56,
+      "atomic_id_exact_set_sha256": "78da8f6f819b447cf75b8eeb78d26b31c4b7543841de270a16c8e5220175884d",
+      "status": "ACTIVE_UNCHANGED"
+    },
+    {
+      "role": "EXECUTION_OVERLAY",
+      "path": "contracts/alignment/task-execution-overlay.template.v1.json",
+      "sha256": "a606df1a2189c5b17fa114dfb860ad4224976cd1b5eb063dc101643b0618b503",
+      "atomic_pr_count": 1289,
+      "m01_atomic_pr_count": 56,
+      "atomic_id_exact_set_sha256": "78da8f6f819b447cf75b8eeb78d26b31c4b7543841de270a16c8e5220175884d",
+      "status": "ACTIVE_UNCHANGED"
+    }
+  ],
+  "active_baseline": {
+    "global_atomic_pr_count": 1289,
+    "m01_atomic_pr_count": 56,
+    "global_atomic_id_exact_set_sha256": "78da8f6f819b447cf75b8eeb78d26b31c4b7543841de270a16c8e5220175884d",
+    "m01_atomic_id_exact_set_sha256": "8d09867b04098c12a8da25358919cdb05bd93e225a3e1c1e13b487e44589f3f0"
+  },
+  "candidate_projection": {
+    "removed_active_m01_atomic_pr_ids": [
+      "T1-M01-P032-CTR-n010-s1",
+      "T1-M01-P033-REF-n010-s2",
+      "T1-M01-P034-REF-n010-s3",
+      "T1-M01-P035-REF-n010-s4",
+      "T1-M01-P036-REF-n010-s5",
+      "T1-M01-P037-REF-n010-s6",
+      "T1-M01-P045-TST-PRE-n010-s14",
+      "T1-M01-P046-OPS-n010-s15",
+      "T1-M01-P047-TST-POST-n010-s16"
+    ],
+    "retained_active_m01_atomic_pr_ids": [
+      "T1-M01-P001-TST-PRE-n001-s1",
+      "T1-M01-P002-IDX-n001-task-completion",
+      "T1-M01-P003-CTR-n002-s1",
+      "T1-M01-P004-IDX-n002-task-completion",
+      "T1-M01-P005-REF-n003-s1",
+      "T1-M01-P006-TST-PRE-n003-s2",
+      "T1-M01-P007-IDX-n003-task-completion",
+      "T1-M01-P008-REF-n004-s1",
+      "T1-M01-P009-REF-n004-s2",
+      "T1-M01-P010-REF-n004-s3",
+      "T1-M01-P011-TST-PRE-n004-s4",
+      "T1-M01-P012-IDX-n004-task-completion",
+      "T1-M01-P013-CTR-n005-s1",
+      "T1-M01-P014-PRJ-n005-s2",
+      "T1-M01-P015-REF-n005-s3",
+      "T1-M01-P016-TST-PRE-n005-s4",
+      "T1-M01-P017-IDX-n005-task-completion",
+      "T1-M01-P018-CTR-n006-s1",
+      "T1-M01-P019-IDX-n006-task-completion",
+      "T1-M01-P020-CTR-n007-s1",
+      "T1-M01-P021-IDX-n007-task-completion",
+      "T1-M01-P022-CTR-n008-s1",
+      "T1-M01-P023-PRJ-n008-s2",
+      "T1-M01-P024-REF-n008-s3",
+      "T1-M01-P025-TST-PRE-n008-s4",
+      "T1-M01-P026-IDX-n008-task-completion",
+      "T1-M01-P027-CTR-n009-s1",
+      "T1-M01-P028-PRJ-n009-s2",
+      "T1-M01-P029-REF-n009-s3",
+      "T1-M01-P030-TST-PRE-n009-s4",
+      "T1-M01-P031-IDX-n009-task-completion",
+      "T1-M01-P038-REF-n010-s7",
+      "T1-M01-P039-REF-n010-s8",
+      "T1-M01-P040-REF-n010-s9",
+      "T1-M01-P041-REF-n010-s10",
+      "T1-M01-P042-REF-n010-s11",
+      "T1-M01-P043-REF-n010-s12",
+      "T1-M01-P044-REF-n010-s13",
+      "T1-M01-P048-IDX-n010-task-completion",
+      "T1-M01-P049-CTR-n011-s1",
+      "T1-M01-P050-IDX-n011-task-completion",
+      "T1-M01-P051-TST-PRE-n012-s1",
+      "T1-M01-P052-IDX-n012-task-completion",
+      "T1-M01-P053-IDX-n013-s1",
+      "T1-M01-P054-IDX-n013-task-completion",
+      "T1-M01-P055-PROM-n014-s1",
+      "T1-M01-P056-IDX-n014-task-completion"
+    ],
+    "added_candidate_m01_atomic_pr_ids": [
+      "T1-M01-P057-CTR-n015-s1",
+      "T1-M01-P058-REF-n015-s2",
+      "T1-M01-P059-REF-n015-s3",
+      "T1-M01-P060-REF-n015-s4",
+      "T1-M01-P061-REF-n015-s5",
+      "T1-M01-P062-REF-n015-s6",
+      "T1-M01-P066-IDX-n015-task-completion",
+      "T1-M01-P067-REF-n015-s10",
+      "T1-M01-P068-REF-n015-s11",
+      "T1-M01-P069-REF-n015-s12",
+      "T1-M01-P070-REF-n015-s13",
+      "T1-M01-P071-REF-n015-s14",
+      "T1-M01-P072-REF-n015-s15",
+      "T1-M01-P073-REF-n015-s16",
+      "T1-M01-P074-REF-n015-s17",
+      "T1-M01-P075-REF-n015-s18",
+      "T1-M01-P076-REF-n015-s19",
+      "T1-M01-P077-REF-n015-s20",
+      "T1-M01-P078-REF-n015-s21",
+      "T1-M01-P079-OPS-n015-s22",
+      "T1-M01-P080-TST-PRE-n015-s23",
+      "T1-M01-P081-TST-PRE-n015-s24",
+      "T1-M01-P082-OPS-n015-s25",
+      "T1-M01-P083-OPS-n015-s26",
+      "T1-M01-P084-TST-POST-n015-s27",
+      "T1-M01-P085-TST-POST-n015-s28",
+      "T1-M01-P086-WRT-n015-s29",
+      "T1-M01-P087-REF-n015-s30",
+      "T1-M01-P088-REF-n015-s31",
+      "T1-M01-P089-REF-n015-s32",
+      "T1-M01-P090-REF-n015-s33",
+      "T1-M01-P091-REF-n015-s34",
+      "T1-M01-P092-REF-n015-s35",
+      "T1-M01-P093-REF-n015-s36",
+      "T1-M01-P094-REF-n015-s37",
+      "T1-M01-P095-WRT-n015-s38",
+      "T1-M01-P096-WRT-n015-s39"
+    ],
+    "candidate_m01_atomic_pr_ids": [
+      "T1-M01-P001-TST-PRE-n001-s1",
+      "T1-M01-P002-IDX-n001-task-completion",
+      "T1-M01-P003-CTR-n002-s1",
+      "T1-M01-P004-IDX-n002-task-completion",
+      "T1-M01-P005-REF-n003-s1",
+      "T1-M01-P006-TST-PRE-n003-s2",
+      "T1-M01-P007-IDX-n003-task-completion",
+      "T1-M01-P008-REF-n004-s1",
+      "T1-M01-P009-REF-n004-s2",
+      "T1-M01-P010-REF-n004-s3",
+      "T1-M01-P011-TST-PRE-n004-s4",
+      "T1-M01-P012-IDX-n004-task-completion",
+      "T1-M01-P013-CTR-n005-s1",
+      "T1-M01-P014-PRJ-n005-s2",
+      "T1-M01-P015-REF-n005-s3",
+      "T1-M01-P016-TST-PRE-n005-s4",
+      "T1-M01-P017-IDX-n005-task-completion",
+      "T1-M01-P018-CTR-n006-s1",
+      "T1-M01-P019-IDX-n006-task-completion",
+      "T1-M01-P020-CTR-n007-s1",
+      "T1-M01-P021-IDX-n007-task-completion",
+      "T1-M01-P022-CTR-n008-s1",
+      "T1-M01-P023-PRJ-n008-s2",
+      "T1-M01-P024-REF-n008-s3",
+      "T1-M01-P025-TST-PRE-n008-s4",
+      "T1-M01-P026-IDX-n008-task-completion",
+      "T1-M01-P027-CTR-n009-s1",
+      "T1-M01-P028-PRJ-n009-s2",
+      "T1-M01-P029-REF-n009-s3",
+      "T1-M01-P030-TST-PRE-n009-s4",
+      "T1-M01-P031-IDX-n009-task-completion",
+      "T1-M01-P038-REF-n010-s7",
+      "T1-M01-P039-REF-n010-s8",
+      "T1-M01-P040-REF-n010-s9",
+      "T1-M01-P041-REF-n010-s10",
+      "T1-M01-P042-REF-n010-s11",
+      "T1-M01-P043-REF-n010-s12",
+      "T1-M01-P044-REF-n010-s13",
+      "T1-M01-P048-IDX-n010-task-completion",
+      "T1-M01-P049-CTR-n011-s1",
+      "T1-M01-P050-IDX-n011-task-completion",
+      "T1-M01-P051-TST-PRE-n012-s1",
+      "T1-M01-P052-IDX-n012-task-completion",
+      "T1-M01-P053-IDX-n013-s1",
+      "T1-M01-P054-IDX-n013-task-completion",
+      "T1-M01-P055-PROM-n014-s1",
+      "T1-M01-P056-IDX-n014-task-completion",
+      "T1-M01-P057-CTR-n015-s1",
+      "T1-M01-P058-REF-n015-s2",
+      "T1-M01-P059-REF-n015-s3",
+      "T1-M01-P060-REF-n015-s4",
+      "T1-M01-P061-REF-n015-s5",
+      "T1-M01-P062-REF-n015-s6",
+      "T1-M01-P066-IDX-n015-task-completion",
+      "T1-M01-P067-REF-n015-s10",
+      "T1-M01-P068-REF-n015-s11",
+      "T1-M01-P069-REF-n015-s12",
+      "T1-M01-P070-REF-n015-s13",
+      "T1-M01-P071-REF-n015-s14",
+      "T1-M01-P072-REF-n015-s15",
+      "T1-M01-P073-REF-n015-s16",
+      "T1-M01-P074-REF-n015-s17",
+      "T1-M01-P075-REF-n015-s18",
+      "T1-M01-P076-REF-n015-s19",
+      "T1-M01-P077-REF-n015-s20",
+      "T1-M01-P078-REF-n015-s21",
+      "T1-M01-P079-OPS-n015-s22",
+      "T1-M01-P080-TST-PRE-n015-s23",
+      "T1-M01-P081-TST-PRE-n015-s24",
+      "T1-M01-P082-OPS-n015-s25",
+      "T1-M01-P083-OPS-n015-s26",
+      "T1-M01-P084-TST-POST-n015-s27",
+      "T1-M01-P085-TST-POST-n015-s28",
+      "T1-M01-P086-WRT-n015-s29",
+      "T1-M01-P087-REF-n015-s30",
+      "T1-M01-P088-REF-n015-s31",
+      "T1-M01-P089-REF-n015-s32",
+      "T1-M01-P090-REF-n015-s33",
+      "T1-M01-P091-REF-n015-s34",
+      "T1-M01-P092-REF-n015-s35",
+      "T1-M01-P093-REF-n015-s36",
+      "T1-M01-P094-REF-n015-s37",
+      "T1-M01-P095-WRT-n015-s38",
+      "T1-M01-P096-WRT-n015-s39"
+    ],
+    "removed_count": 9,
+    "retained_count": 47,
+    "added_count": 37,
+    "candidate_m01_atomic_pr_count": 84,
+    "candidate_global_atomic_pr_count": 1317,
+    "candidate_global_atomic_id_exact_set_sha256": "1cd32a420ce4be5927d41eb2260dfc4022e420e62725c8aead68a290f1ac39fb",
+    "derivation": "1289_ACTIVE_MINUS_9_SUPERSEDED_PLUS_37_NEW_EQUALS_1317_CANDIDATE"
+  },
+  "task_transitions": [
+    {
+      "task_id": "T1-M01-N003",
+      "transition_kind": "REVISE_EXISTING",
+      "responsibility_boundary": "candidate provenance continues to consume the N015 trusted-verifier foundation",
+      "dependency_task_ids": [
+        "T1-M01-N001",
+        "T1-M01-N015"
+      ],
+      "member_atomic_pr_ids": [
+        "T1-M01-P005-REF-n003-s1",
+        "T1-M01-P006-TST-PRE-n003-s2"
+      ],
+      "terminal_atomic_pr_id": "T1-M01-P007-IDX-n003-task-completion",
+      "terminal_direct_dependency_ids": [
+        "T1-M01-P006-TST-PRE-n003-s2"
+      ],
+      "status": "PLANNED_BLOCKED_NOT_ACTIVE"
+    },
+    {
+      "task_id": "T1-M01-N010",
+      "transition_kind": "REVISE_EXISTING",
+      "responsibility_boundary": "caller migration leaves P038-P044 remain in N010 and consume the N015 trusted-verifier foundation",
+      "dependency_task_ids": [
+        "T1-M01-N009",
+        "T1-M01-N015"
+      ],
+      "member_atomic_pr_ids": [
+        "T1-M01-P038-REF-n010-s7",
+        "T1-M01-P039-REF-n010-s8",
+        "T1-M01-P040-REF-n010-s9",
+        "T1-M01-P041-REF-n010-s10",
+        "T1-M01-P042-REF-n010-s11",
+        "T1-M01-P043-REF-n010-s12",
+        "T1-M01-P044-REF-n010-s13"
+      ],
+      "terminal_atomic_pr_id": "T1-M01-P048-IDX-n010-task-completion",
+      "terminal_direct_dependency_ids": [
+        "T1-M01-P044-REF-n010-s13",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "status": "PLANNED_BLOCKED_NOT_ACTIVE"
+    },
+    {
+      "task_id": "T1-M01-N015",
+      "transition_kind": "ADD_NEW",
+      "responsibility_boundary": "trusted-verifier contracts domain runtime package deployment and gate evidence foundation only",
+      "dependency_task_ids": [
+        "T1-M01-N001"
+      ],
+      "member_atomic_pr_ids": [
+        "T1-M01-P057-CTR-n015-s1",
+        "T1-M01-P058-REF-n015-s2",
+        "T1-M01-P059-REF-n015-s3",
+        "T1-M01-P060-REF-n015-s4",
+        "T1-M01-P061-REF-n015-s5",
+        "T1-M01-P062-REF-n015-s6",
+        "T1-M01-P067-REF-n015-s10",
+        "T1-M01-P068-REF-n015-s11",
+        "T1-M01-P069-REF-n015-s12",
+        "T1-M01-P070-REF-n015-s13",
+        "T1-M01-P071-REF-n015-s14",
+        "T1-M01-P072-REF-n015-s15",
+        "T1-M01-P073-REF-n015-s16",
+        "T1-M01-P074-REF-n015-s17",
+        "T1-M01-P075-REF-n015-s18",
+        "T1-M01-P076-REF-n015-s19",
+        "T1-M01-P077-REF-n015-s20",
+        "T1-M01-P078-REF-n015-s21",
+        "T1-M01-P079-OPS-n015-s22",
+        "T1-M01-P080-TST-PRE-n015-s23",
+        "T1-M01-P081-TST-PRE-n015-s24",
+        "T1-M01-P082-OPS-n015-s25",
+        "T1-M01-P083-OPS-n015-s26",
+        "T1-M01-P084-TST-POST-n015-s27",
+        "T1-M01-P085-TST-POST-n015-s28",
+        "T1-M01-P086-WRT-n015-s29",
+        "T1-M01-P087-REF-n015-s30",
+        "T1-M01-P088-REF-n015-s31",
+        "T1-M01-P089-REF-n015-s32",
+        "T1-M01-P090-REF-n015-s33",
+        "T1-M01-P091-REF-n015-s34",
+        "T1-M01-P092-REF-n015-s35",
+        "T1-M01-P093-REF-n015-s36",
+        "T1-M01-P094-REF-n015-s37",
+        "T1-M01-P095-WRT-n015-s38",
+        "T1-M01-P096-WRT-n015-s39"
+      ],
+      "terminal_atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion",
+      "terminal_direct_dependency_ids": [
+        "T1-M01-P085-TST-POST-n015-s28"
+      ],
+      "status": "PLANNED_BLOCKED_NOT_ACTIVE"
+    }
+  ],
+  "future_catalogs": [
+    {
+      "role": "TASK_REGISTRY",
+      "expected_path": "contracts/alignment/candidates/m01-early-trust-v2/task-registry.candidate.json",
+      "status": "NOT_CREATED",
+      "expected_atomic_pr_count": 1317,
+      "expected_atomic_id_exact_set_sha256": "1cd32a420ce4be5927d41eb2260dfc4022e420e62725c8aead68a290f1ac39fb"
+    },
+    {
+      "role": "CLAIM_CATALOG",
+      "expected_path": "contracts/alignment/candidates/m01-early-trust-v2/developer-claim-package-catalog.candidate.json",
+      "status": "NOT_CREATED",
+      "expected_atomic_pr_count": 1317,
+      "expected_atomic_id_exact_set_sha256": "1cd32a420ce4be5927d41eb2260dfc4022e420e62725c8aead68a290f1ac39fb"
+    },
+    {
+      "role": "PR_DESIGN_CATALOG",
+      "expected_path": "contracts/alignment/candidates/m01-early-trust-v2/pr-design-application-catalog.candidate.json",
+      "status": "NOT_CREATED",
+      "expected_atomic_pr_count": 1317,
+      "expected_atomic_id_exact_set_sha256": "1cd32a420ce4be5927d41eb2260dfc4022e420e62725c8aead68a290f1ac39fb"
+    },
+    {
+      "role": "EXECUTION_OVERLAY",
+      "expected_path": "contracts/alignment/candidates/m01-early-trust-v2/task-execution-overlay.candidate.json",
+      "status": "NOT_CREATED",
+      "expected_atomic_pr_count": 1317,
+      "expected_atomic_id_exact_set_sha256": "1cd32a420ce4be5927d41eb2260dfc4022e420e62725c8aead68a290f1ac39fb"
+    }
+  ],
+  "preconditions": [
+    {
+      "check_id": "M01-SW-C01",
+      "description": "four active registry hashes and exact atomic ID sets remain frozen and identical",
+      "status": "PASS_STATIC",
+      "evidence": [
+        "contracts/alignment/task-registry.v1.json",
+        "contracts/alignment/developer-claim-package-catalog.v1.json",
+        "contracts/alignment/pr-design-application-catalog.v1.json",
+        "contracts/alignment/task-execution-overlay.template.v1.json"
+      ],
+      "blocking_reason": null
+    },
+    {
+      "check_id": "M01-SW-C02",
+      "description": "v2 allocation catalog design and set arithmetic are deterministic and internally exact",
+      "status": "PASS_STATIC",
+      "evidence": [
+        "contracts/alignment/m01-early-trust-train-allocation.v2.json",
+        "contracts/alignment/m01-early-trust-train-catalog.v2.json",
+        "contracts/alignment/m01-early-trust-function-design.v1.json"
+      ],
+      "blocking_reason": null
+    },
+    {
+      "check_id": "M01-SW-C03",
+      "description": "one immutable design candidate and one same-commit implementation candidate are frozen in two acyclic stages",
+      "status": "BLOCKED",
+      "evidence": [
+        "contracts/alignment/m01-early-trust-candidate-freeze-work-order.v1.json",
+        "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/design-candidate-manifest.json",
+        "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/implementation-candidate.json"
+      ],
+      "blocking_reason": "candidate freeze work order is BLOCKED_IMPLEMENTATION_SOURCES_AND_CLEAN_WORKTREE and both candidate manifests are absent"
+    },
+    {
+      "check_id": "M01-SW-C04",
+      "description": "all 36 candidate-bound design reviews are independently completed and signed",
+      "status": "BLOCKED",
+      "evidence": [
+        "contracts/alignment/m01-early-trust-review-work-order-catalog.v1.json"
+      ],
+      "blocking_reason": "36 review work orders remain BLOCKED_EXTERNAL_INPUTS"
+    },
+    {
+      "check_id": "M01-SW-C05",
+      "description": "external verifier image digest SBOM provenance and signature verification receipt are bound",
+      "status": "BLOCKED",
+      "evidence": [
+        "contracts/alignment/m01-verifier-image-build-sign-work-order.v1.json",
+        "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/receipt.json"
+      ],
+      "blocking_reason": "external image work order is BLOCKED_SOURCE_AND_EXTERNAL_AUTHORITY_INPUTS and receipt is absent"
+    },
+    {
+      "check_id": "M01-SW-C06",
+      "description": "future task claim PR-design and execution-overlay catalogs are generated from one candidate exact set",
+      "status": "BLOCKED",
+      "evidence": [
+        "contracts/alignment/candidates/m01-early-trust-v2/task-registry.candidate.json",
+        "contracts/alignment/candidates/m01-early-trust-v2/developer-claim-package-catalog.candidate.json",
+        "contracts/alignment/candidates/m01-early-trust-v2/pr-design-application-catalog.candidate.json",
+        "contracts/alignment/candidates/m01-early-trust-v2/task-execution-overlay.candidate.json"
+      ],
+      "blocking_reason": "all four future candidate catalog paths are intentionally absent"
+    },
+    {
+      "check_id": "M01-SW-C07",
+      "description": "named owners reviewers approvers and trusted signatures authorize the exact atomic switch",
+      "status": "BLOCKED",
+      "evidence": [
+        "contracts/alignment/task-execution-overlay.schema.json"
+      ],
+      "blocking_reason": "named identities approvals signed overlay and switch authorization are absent"
+    },
+    {
+      "check_id": "M01-SW-C08",
+      "description": "authorized atomic commit can validate and replace all four catalogs without partial visibility",
+      "status": "BLOCKED",
+      "evidence": [
+        "contracts/alignment/task-registry.v1.json",
+        "contracts/alignment/developer-claim-package-catalog.v1.json",
+        "contracts/alignment/pr-design-application-catalog.v1.json",
+        "contracts/alignment/task-execution-overlay.template.v1.json"
+      ],
+      "blocking_reason": "no authorized atomic switch candidate or protected merge receipt exists"
+    }
+  ],
+  "switch_protocol": {
+    "decision": "BLOCKED_PRECONDITIONS",
+    "atomic_steps": [
+      "freeze one immutable 81-source design candidate then one same-commit implementation candidate after review image and evidence closure",
+      "complete validate and independently sign all 36 candidate-bound design review receipts",
+      "bind the external verifier image digest SBOM provenance and signature verification receipt",
+      "generate four future catalogs from one reviewed candidate and exact 1317-ID set",
+      "validate four schemas hashes ID sets N010 N015 boundary dependencies and completion contracts",
+      "obtain named switch authorization and protected merge receipt for the exact candidate hashes",
+      "replace task claim PR-design and overlay catalogs in one atomic commit then rerun all gates"
+    ],
+    "failure_rule": "ANY_FAILED_PRECONDITION_OR_FOUR_CATALOG_DIVERGENCE_ABORTS_BEFORE_REPLACING_ANY_ACTIVE_FILE",
+    "rollback_rule": "RETAIN_ALL_FOUR_ACTIVE_FILES_AND_HASHES_UNCHANGED_UNTIL_ONE_AUTHORIZED_ATOMIC_COMMIT_CAN_REPLACE_THE_EXACT_SET",
+    "post_switch_execution_state": "DRAFT_DESIGN_AND_FORMAL_EXECUTION_STILL_BLOCKED_UNTIL_SIGNED_OVERLAY_AND_GATE_EVIDENCE"
+  },
+  "validation": {
+    "schema": "PASS",
+    "source_hashes_exact": "PASS",
+    "four_active_catalog_hashes_exact": "PASS",
+    "four_active_catalog_exact_set_equal": "PASS_1289",
+    "active_m01_exact_set": "PASS_56",
+    "removed_retained_added_partition_exact": "PASS_9_47_37",
+    "candidate_count_derivation": "PASS_1317",
+    "candidate_global_exact_set": "PASS",
+    "task_transition_exact_set": "PASS_N003_N010_N015",
+    "n010_n015_boundary_exact": "PASS_FOUNDATION_VS_CALLER_MIGRATION",
+    "future_catalogs_absent": true,
+    "candidate_freeze_work_order_blocked": "PASS_NO_CANDIDATE_PAIR",
+    "review_work_orders_blocked": "PASS_36_BLOCKED",
+    "external_image_work_order_blocked": "PASS_NO_RECEIPT",
+    "premature_switch_rejected": true,
+    "active_catalogs_unchanged": true,
+    "mutation_guards": {
+      "source_hash_drift": "PASS",
+      "active_catalog_hash_drift": "PASS",
+      "active_exact_set_drift": "PASS",
+      "removed_omission": "PASS",
+      "retained_drift": "PASS",
+      "added_omission": "PASS",
+      "candidate_hash_drift": "PASS",
+      "task_transition_omission": "PASS",
+      "n010_boundary_drift": "PASS",
+      "future_catalog_false_created": "PASS",
+      "candidate_freeze_false_ready": "PASS",
+      "review_work_order_hash_drift": "PASS",
+      "precondition_false_pass": "PASS",
+      "switch_false_ready": "PASS"
+    }
+  },
+  "proof_ceiling": "READ_ONLY_SWITCH_SET_MATH_AND_BLOCKER_PREFLIGHT_ONLY_NOT_FUTURE_REGISTRY_MATERIALIZATION_ATOMIC_SWITCH_CANDIDATE_IDENTITY_REVIEW_SIGNATURE_IMPLEMENTATION_TEST_EXECUTION_AUTHORIZATION_OR_ACCEPTANCE"
+}

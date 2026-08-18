@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/events/event-time-policy.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "status",
+    "accountable_task",
+    "unit",
+    "time_roles",
+    "boundaries",
+    "classification_order",
+    "wire_requirements",
+    "implementations",
+    "rollout",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract_id": {"const": "event-time-policy-v1"},
+    "status": {"const": "implemented_shared_library"},
+    "accountable_task": {"const": "T1-M06-N009"},
+    "unit": {"const": "unix_epoch_milliseconds"},
+    "time_roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_time", "ingest_time", "processing_time", "watermark", "as_of"],
+      "properties": {
+        "event_time": {"type": "string", "minLength": 1},
+        "ingest_time": {"type": "string", "minLength": 1},
+        "processing_time": {"type": "string", "minLength": 1},
+        "watermark": {"type": "string", "minLength": 1},
+        "as_of": {"type": "string", "minLength": 1}
+      }
+    },
+    "boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["late", "future", "clock_rollback", "watermark_uninitialized", "arithmetic"],
+      "properties": {
+        "late": {"type": "string"},
+        "future": {"type": "string"},
+        "clock_rollback": {"type": "string"},
+        "watermark_uninitialized": {"type": "integer"},
+        "arithmetic": {"const": "signed_int64_saturating"}
+      }
+    },
+    "classification_order": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    },
+    "wire_requirements": {"type": "object"},
+    "implementations": {"type": "object"},
+    "rollout": {"type": "object"},
+    "claim_boundary": {"type": "object"}
+  }
+}

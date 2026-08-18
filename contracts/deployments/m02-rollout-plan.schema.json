@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis.local/contracts/deployments/m02-rollout-plan.schema.json",
+  "title": "M02 consumer-first scoped canary rollout plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_kind",
+    "rollout_id",
+    "candidate_id",
+    "candidate_commit",
+    "candidate_manifest_path",
+    "delivery_package_sha256",
+    "profile_id",
+    "environment_id",
+    "execution_authorization",
+    "namespace",
+    "kafka_verification",
+    "scope",
+    "consumer_receipts",
+    "stages",
+    "stop_thresholds",
+    "observation",
+    "rollback"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_kind": {"const": "M02_SCOPED_CANARY_ROLLOUT_PLAN"},
+    "rollout_id": {"type": "string", "pattern": "^m02-canary-[a-z0-9][a-z0-9-]{2,63}$"},
+    "candidate_id": {"type": "string", "minLength": 8, "maxLength": 128},
+    "candidate_commit": {"type": "string", "minLength": 8, "maxLength": 64},
+    "candidate_manifest_path": {"type": "string", "pattern": "^doc/02_acceptance/topic1/.+\\.json$"},
+    "delivery_package_sha256": {"type": "string", "minLength": 8, "maxLength": 64},
+    "profile_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+    "environment_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+    "execution_authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "external_activity_id", "verifier_endpoint", "policy_fingerprint", "verification_requests"],
+      "properties": {
+        "status": {"enum": ["PENDING_EXTERNAL_APPROVAL", "APPROVED"]},
+        "external_activity_id": {"const": "EXT-T1-M02-N013-CANARY"},
+        "verifier_endpoint": {"type": ["string", "null"], "pattern": "^https://"},
+        "policy_fingerprint": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "verification_requests": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "path"],
+            "properties": {
+              "role": {"enum": ["PROJECT_OWNER", "TEST_OWNER", "ACCEPTANCE_AUTHORITY"]},
+              "path": {"type": "string", "pattern": "^doc/02_acceptance/topic1/.+\\.json$"}
+            }
+          }
+        }
+      }
+    },
+    "namespace": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+    "kafka_verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace", "pod", "container", "bootstrap_server"],
+      "properties": {
+        "namespace": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+        "pod": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+        "container": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+        "bootstrap_server": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9.]*[a-z0-9])?:[0-9]{2,5}$"}
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "probe_ids"],
+      "properties": {
+        "tenant_id": {"$ref": "#/$defs/exact_id"},
+        "probe_ids": {"type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": {"$ref": "#/$defs/exact_id"}}
+      }
+    },
+    "consumer_receipts": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["consumer", "path"],
+        "properties": {
+          "consumer": {"enum": ["flink-session-job", "flink-pcap-index-job"]},
+          "path": {"type": "string", "pattern": "^doc/02_acceptance/topic1/.+\\.json$"}
+        }
+      }
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+	  "uniqueItems": true,
+	  "items": {"$ref": "#/$defs/stage"}
+    },
+    "stop_thresholds": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric", "operator", "limit", "window_seconds", "query"],
+        "properties": {
+          "metric": {
+            "enum": [
+              "consumer_not_running",
+              "checkpoint_failures",
+              "kafka_produce_errors",
+              "dlq_permanent_records",
+              "capture_unexplained_difference",
+              "object_hash_mismatches",
+              "pcap_metadata_without_object"
+            ]
+          },
+          "operator": {"const": ">"},
+          "limit": {"type": "integer", "minimum": 0},
+          "window_seconds": {"type": "integer", "minimum": 30, "maximum": 3600},
+          "query": {"type": "string", "minLength": 8, "maxLength": 4096}
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_seconds", "poll_seconds", "prometheus_url"],
+      "properties": {
+        "minimum_seconds": {"type": "integer", "minimum": 300, "maximum": 86400},
+        "poll_seconds": {"type": "integer", "minimum": 5, "maximum": 60},
+        "prometheus_url": {"type": "string", "pattern": "^https?://"}
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preserve_consumers", "preserve_durable_data", "steps"],
+      "properties": {
+        "preserve_consumers": {"const": true},
+        "preserve_durable_data": {"const": true},
+        "steps": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+		  "uniqueItems": true,
+		  "items": {"enum": ["DISABLE_PROBE_PRODUCER", "DISABLE_GATEWAY_WRITERS", "RESTORE_IMAGE_CONFIG_ROUTE", "RECONCILE_OFFSETS_SPOOL_OBJECTS"]}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "exact_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{2,127}$", "not": {"pattern": "\\*"}},
+	"stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "action", "default_off", "success_barrier"],
+      "properties": {
+        "order": {"type": "integer", "minimum": 1, "maximum": 5},
+		"action": {"enum": ["VERIFY_TOPIC_ACL", "VERIFY_CONSUMERS_RUNNING", "ENABLE_GATEWAY_WRITERS", "ENABLE_PROBE_PRODUCER", "OBSERVE_AND_RECONCILE"]},
+        "default_off": {"const": true},
+        "success_barrier": {"type": "string", "minLength": 8}
+      }
+	}
+  }
+}

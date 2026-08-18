@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/quality/topic1-metric-method.schema.json",
+  "title": "Topic One stage-specific signed metric method registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_status", "methods"],
+  "properties": {
+    "schema_version": {"const": "2.0.0"},
+    "registry_status": {"enum": ["DRAFT", "ACTIVE", "SUPERSEDED"]},
+    "methods": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {"$ref": "#/$defs/method"}, "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "method": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "method_id", "stage", "method_status", "authority", "population", "metrics",
+        "threshold_lock", "signed_intake", "retest_policy"
+      ],
+      "properties": {
+        "method_id": {"enum": ["T1-MIDTERM-KNOWN-ALERT-METHOD", "T1-FINAL-CNAS-QUALITY-METHOD"]},
+        "stage": {"enum": ["MIDTERM", "FINAL"]},
+        "method_status": {"enum": ["PENDING_SIGNATURE", "SIGNED", "SUPERSEDED"]},
+        "authority": {"$ref": "#/$defs/authority"},
+        "population": {"$ref": "#/$defs/population"},
+        "metrics": {"type": "array", "minItems": 1, "maxItems": 2, "items": {"$ref": "#/$defs/metric"}, "uniqueItems": true},
+        "threshold_lock": {"$ref": "#/$defs/threshold_lock"},
+        "signed_intake": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/signed_intake"}]},
+        "retest_policy": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["project_owner", "algorithm_owner", "qa_owner", "acceptance_owner", "external_lab", "signature_set"],
+      "properties": {
+        "project_owner": {"type": ["string", "null"]},
+        "algorithm_owner": {"type": ["string", "null"]},
+        "qa_owner": {"type": ["string", "null"]},
+        "acceptance_owner": {"type": ["string", "null"]},
+        "external_lab": {"type": ["string", "null"]},
+        "signature_set": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "population": {
+      "type": "object", "additionalProperties": false,
+      "required": ["analysis_unit", "dedup_window", "classes", "abstain_policy", "invalid_sample_policy", "label_arbitration", "strata", "minimum_sample_rules"],
+      "properties": {
+        "analysis_unit": {"type": ["string", "null"]},
+        "dedup_window": {"type": ["string", "null"]},
+        "classes": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "abstain_policy": {"type": ["string", "null"]},
+        "invalid_sample_policy": {"type": ["string", "null"]},
+        "label_arbitration": {"type": ["string", "null"]},
+        "strata": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "minimum_sample_rules": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "metric": {
+      "type": "object", "additionalProperties": false,
+      "required": ["metric_id", "display_name", "stage", "operator", "target_percent", "formula_status", "signed_formula", "proposal_formulas", "does_not_equal"],
+      "properties": {
+        "metric_id": {"enum": ["T1-MIDTERM-ALERT-ACCURACY", "T1-FINAL-ALERT-ACCURACY", "T1-FINAL-FALSE-ALARM-RATE"]},
+        "display_name": {"type": "string", "minLength": 1},
+        "stage": {"enum": ["MIDTERM", "FINAL"]},
+        "operator": {"enum": [">=", "<"]},
+        "target_percent": {"type": "number"},
+        "formula_status": {"enum": ["UNRESOLVED", "SIGNED"]},
+        "signed_formula": {"type": ["string", "null"]},
+        "proposal_formulas": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "does_not_equal": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "threshold_lock": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "candidate_hash", "model_hash", "feature_hash", "threshold_hash", "dataset_manifest_hash"],
+      "properties": {
+        "status": {"enum": ["PENDING", "LOCKED"]},
+        "candidate_hash": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "model_hash": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "feature_hash": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "threshold_hash": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "dataset_manifest_hash": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "signed_intake": {
+      "type": "object", "additionalProperties": false,
+      "required": ["receipt_path", "receipt_sha256", "signed_at", "method_sha256", "signature_verification"],
+      "properties": {
+        "receipt_path": {"type": "string", "minLength": 1},
+        "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "signed_at": {"type": "string", "minLength": 1},
+        "method_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "signature_verification": {"const": "PASS"}
+      }
+    }
+  }
+}

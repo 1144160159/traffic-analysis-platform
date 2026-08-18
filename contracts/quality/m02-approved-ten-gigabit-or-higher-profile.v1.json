@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M02_CAPTURE_PROFILE",
+  "profile_id": "M02-CAPTURE-TEN-GIGABIT-V1",
+  "profile_status": "PENDING_SIGNATURE",
+  "candidate_commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+  "line_rate_gbps": 10,
+  "capture": {
+    "interface_selector": "PROFILE_APPROVAL_MUST_BIND_EXACT_PCI_INTERFACE",
+    "mode": "XDP",
+    "queue_count": 1,
+    "frame_size": 4096,
+    "ring_size": 4096
+  },
+  "traffic": {
+    "generator": "PROFILE_APPROVAL_MUST_BIND_GENERATOR_AND_CONFIG_DIGEST",
+    "packet_sizes_bytes": [64, 128, 512, 1518],
+    "duration_seconds": 300,
+    "offered_rate_source": "GENERATOR_TX_COUNTER"
+  },
+  "measurement": {
+    "points": ["GENERATOR_TX", "MIRROR_INGRESS", "NIC_RX", "PROBE_CAPTURE", "KAFKA_OFFSET", "MINIO_OBJECT", "CLICKHOUSE_INDEX"],
+    "clock_source": "PROFILE_APPROVAL_MUST_BIND_PTP_OR_EQUIVALENT_CLOCK",
+    "max_counter_error_packets": 0
+  },
+  "environment": {
+    "environment_id": "PENDING_PROFILE_APPROVAL",
+    "nic_model": "PENDING_PROFILE_APPROVAL",
+    "driver": "PENDING_PROFILE_APPROVAL",
+    "cpu_model": "PENDING_PROFILE_APPROVAL",
+    "kernel": "PENDING_PROFILE_APPROVAL",
+    "generator_identity": "PENDING_PROFILE_APPROVAL"
+  },
+  "stop_thresholds": {
+    "system_attributable_drop_packets": 0,
+    "unexplained_difference_packets": 0,
+    "capture_error_count": 0
+  },
+  "counter_attribution_ref": "contracts/quality/m02-capture-counter-attribution.v1.json",
+  "approval": {
+    "activity_id": "EXT-T1-M02-N015-PROFILE-APPROVAL",
+    "required_authorities": ["PROJECT_OWNER", "TEST_OWNER", "ACCEPTANCE_AUTHORITY"],
+    "receipts": []
+  }
+}

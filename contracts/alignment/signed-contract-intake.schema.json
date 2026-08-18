@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/signed-contract-intake.schema.json",
+  "title": "Requirements or metric-method signed intake receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "intake_id", "intake_type", "subject_path", "subject_body_sha256",
+    "authorities", "signed_payload_artifact", "signed_payload_sha256", "signature_artifacts",
+    "signed_at", "verification"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "intake_id": {"type": "string", "minLength": 1},
+    "intake_type": {"enum": ["REQUIREMENTS_APPROVAL", "METRIC_METHOD_SIGNATURE", "EVIDENCE_CONTRACT_SIGNATURE"]},
+    "subject_path": {"type": "string", "minLength": 1},
+    "subject_body_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "authorities": {
+      "type": "array", "minItems": 2, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "identity"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1},
+          "identity": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "signed_payload_artifact": {"type": "string", "minLength": 1},
+    "signed_payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signature_artifacts": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "sha256", "algorithm", "key_or_certificate_id"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "algorithm": {"type": "string", "minLength": 1},
+          "key_or_certificate_id": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "signed_at": {"type": "string", "minLength": 1},
+    "verification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "verifier", "verifier_version", "verified_at", "revocation_checked"],
+      "properties": {
+        "status": {"const": "PASS"},
+        "verifier": {"type": "string", "minLength": 1},
+        "verifier_version": {"type": "string", "minLength": 1},
+        "verified_at": {"type": "string", "minLength": 1},
+        "revocation_checked": {"const": true}
+      }
+    }
+  }
+}

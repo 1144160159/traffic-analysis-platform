@@ -1,0 +1,120 @@
+{
+  "schema_version": "4.0.0",
+  "artifact_kind": "M02_CODE_DIRECT_DELIVERY_PACKAGE_OWNER_ALLOCATION_LEDGER",
+  "artifact_status": "VERSIONED_PREVIEW_NOT_GLOBAL_REGISTRY",
+  "revision_id": "M02-CODE-DIRECT-V4",
+  "base_catalog": {
+    "path": "contracts/alignment/m02-code-direct-leaf-catalog.v3.json",
+    "sha256": "413694b2f8061972da85fb76401d25ab35d07aa405f77fc324841d132a81852e"
+  },
+  "source_contract_refs": [
+    {
+      "path": "contracts/alignment/implementation-candidate.schema.json",
+      "sha256": "d5c65ba04a0d04af29d06808a276ac1ef0c8f5dd2140a25ec1dc339bd2879d89"
+    }
+  ],
+  "prior_leaf_field_freeze": {
+    "leaf_id_epoch": "T1-M02-P101-P521",
+    "field_names": [
+      "leaf_id", "atomic_pr_id", "parent_task_id", "leaf_number", "pr_type",
+      "phase", "write_locators", "target_state", "prerequisites_raw",
+      "single_outcome", "oracle_and_rollback", "depends_on_leaf_ids",
+      "depends_on_external_activities", "terminal_task_idx",
+      "formal_execution_status", "allowed_claim", "forbidden_claims"
+    ],
+    "ordered_leaf_projection_sha256": "f4058eb319d2f9fcf98de259eaba3a1b6bcc51ab4b713d709fa8b10269d689ae",
+    "status": "PASS_EXACT_FIELD_PRESERVATION"
+  },
+  "semantic_projection_sha256": "490a930dd236322e7f59fc1ea625d884e66202c61e574890853a85c0c8a65b46",
+  "allocation_epoch": "T1-M02-P522-P525",
+  "append_leaf_count": 4,
+  "trains": [
+    {
+      "train_id": "M02-V4-TRAIN-71",
+      "parent_task_id": "T1-M02-N013",
+      "gap_id": "GAP-M02-IMPLEMENTATION-DELIVERY-ARTIFACT-OWNER",
+      "owner_kind": "DELIVERY_PACKAGE_OWNER",
+      "contract_id": "IC-M02-DELIVERY-ARTIFACT-EXACT-FIVE",
+      "single_result": "allocate one candidate-bound exact-five delivery package with independent schema validator and premerge evidence owners",
+      "steps": [
+        {
+          "leaf_id": "M02-N013-L10",
+          "atomic_pr_id": "T1-M02-P522-CTR-n013-l10",
+          "pr_type": "CTR",
+          "primary_locator": "contracts/alignment/m02-delivery-package.schema.json#/$defs/delivery_package",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N013-L01"],
+          "single_outcome": "define one strict exact-five candidate-bound delivery package contract",
+          "oracle_and_rollback": "reject missing extra duplicated cross-candidate or path-role-mismatched artifacts; rollback preserves the prior preview and creates no product files"
+        },
+        {
+          "leaf_id": "M02-N013-L11",
+          "atomic_pr_id": "T1-M02-P523-WRT-n013-l11",
+          "pr_type": "WRT",
+          "primary_locator": "deployments/releases/topic1/m02-install-manifest.v1.json#$DOCUMENT",
+          "companion_locators": [
+            "deployments/releases/topic1/m02-preflight-plan.v1.json#$DOCUMENT",
+            "deployments/releases/topic1/m02-upgrade-plan.v1.json#$DOCUMENT",
+            "deployments/releases/topic1/m02-rollback-plan.v1.json#$DOCUMENT",
+            "deployments/releases/topic1/m02-restore-plan.v1.json#$DOCUMENT"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N013-L10"],
+          "single_outcome": "materialize all five delivery artifacts as one exact-set for one implementation candidate commit",
+          "oracle_and_rollback": "all five Git blobs bind the same candidate and digest set or none may be claimed ready; rollback removes only the unpromoted candidate package"
+        },
+        {
+          "leaf_id": "M02-N013-L12",
+          "atomic_pr_id": "T1-M02-P524-REF-n013-l12",
+          "pr_type": "REF",
+          "primary_locator": "scripts/alignment/validate_m02_delivery_package.py#main",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N013-L11"],
+          "single_outcome": "validate exact roles paths candidate commit Git blobs digests and cross-file rollback coherence before canary or promotion checks",
+          "oracle_and_rollback": "a missing extra dirty untracked symlinked mutable or cross-commit artifact fails closed before any rollout action"
+        },
+        {
+          "leaf_id": "M02-N013-L13",
+          "atomic_pr_id": "T1-M02-P525-TST-PRE-n013-l13",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n013/delivery-package-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n013/delivery-package-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N013-L12"],
+          "single_outcome": "record candidate-bound positive and negative exact-five delivery-package validation evidence",
+          "oracle_and_rollback": "discard outputs unless omission duplication digest drift cross-commit symlink dirty-tree and rollback-reference cases all ran against the same candidate"
+        }
+      ],
+      "feed_source_leaf_id": "M02-N013-L12",
+      "feeds_existing_leaf_ids": ["M02-N013-L06", "M02-N016-L02"],
+      "terminal_leaf_id": "M02-N013-L09"
+    }
+  ],
+  "delivery_artifact_contract": {
+    "schema_owner_leaf_id": "M02-N013-L10",
+    "package_owner_leaf_id": "M02-N013-L11",
+    "validator_owner_leaf_id": "M02-N013-L12",
+    "test_owner_leaf_id": "M02-N013-L13",
+    "required_artifacts": [
+      {"artifact_role": "install-manifest", "path": "deployments/releases/topic1/m02-install-manifest.v1.json"},
+      {"artifact_role": "preflight-plan", "path": "deployments/releases/topic1/m02-preflight-plan.v1.json"},
+      {"artifact_role": "upgrade-plan", "path": "deployments/releases/topic1/m02-upgrade-plan.v1.json"},
+      {"artifact_role": "rollback-plan", "path": "deployments/releases/topic1/m02-rollback-plan.v1.json"},
+      {"artifact_role": "restore-plan", "path": "deployments/releases/topic1/m02-restore-plan.v1.json"}
+    ],
+    "atomicity": "ONE_WRT_LEAF_OWNS_ALL_FIVE_EXACT_PATHS"
+  },
+  "claims": {
+    "allowed": "P522-P525 delivery-package ownership and dependency intent are allocated for v4 preview validation",
+    "forbidden": [
+      "GLOBAL_REGISTRY_SWITCHED", "PRODUCT_ARTIFACTS_CREATED", "TARGET_BINDING_COMPLETE",
+      "FUNCTION_DESIGN_REVIEWED", "IMPLEMENTED", "TEST_EXECUTED",
+      "EXECUTION_AUTHORIZED", "M02_ACCEPTED"
+    ],
+    "proof_ceiling": "ALLOCATION_ONLY_NOT_GLOBAL_REGISTRATION_PRODUCT_ARTIFACT_CREATION_FUNCTION_REVIEW_IMPLEMENTATION_TEST_EXECUTION_AUTHORIZATION_OR_ACCEPTANCE"
+  }
+}

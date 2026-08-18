@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m02-external-input-work-order-catalog.schema.json",
+  "title": "M02 external evidence input developer work-order catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "source_refs", "contract_refs",
+    "external_prerequisites", "work_order_count", "work_order_kind_counts",
+    "work_order_status_counts", "work_order_exact_set_sha256", "work_orders",
+    "validation", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M02_EXTERNAL_INPUT_WORK_ORDER_CATALOG"},
+    "artifact_status": {"const": "BLOCKED_EXTERNAL_PREREQUISITES"},
+    "source_refs": {
+      "type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash_ref"}
+    },
+    "contract_refs": {
+      "type": "array", "minItems": 20, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash_ref"}
+    },
+    "external_prerequisites": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/external_prerequisite"}
+    },
+    "work_order_count": {"const": 923},
+    "work_order_kind_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["LOCATOR_RESOLUTION", "COMPATIBILITY_DEFAULT_OFF_REVIEW", "FUNCTION_OR_EXEMPTION_REVIEW", "RESPONSIBILITY_ASSIGNMENT"],
+      "properties": {
+        "LOCATOR_RESOLUTION": {"const": 269},
+        "COMPATIBILITY_DEFAULT_OFF_REVIEW": {"const": 213},
+        "FUNCTION_OR_EXEMPTION_REVIEW": {"const": 425},
+        "RESPONSIBILITY_ASSIGNMENT": {"const": 16}
+      }
+    },
+    "work_order_status_counts": {
+      "type": "object", "additionalProperties": {"type": "integer", "minimum": 0},
+      "properties": {}
+    },
+    "work_order_exact_set_sha256": {"$ref": "#/$defs/sha256"},
+    "work_orders": {
+      "type": "array", "minItems": 923, "maxItems": 923, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/work_order"}
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "source_hashes_exact", "expected_sets_derived", "work_order_ids_unique",
+        "output_paths_bound", "command_profiles_bound",
+        "no_external_identity_signature_candidate_receipt_or_decision_created", "mutation_guards"
+      ],
+      "properties": {
+        "source_hashes_exact": {"const": "PASS"},
+        "expected_sets_derived": {"const": "PASS"},
+        "work_order_ids_unique": {"const": "PASS"},
+        "output_paths_bound": {"const": "PASS"},
+        "command_profiles_bound": {"const": "PASS"},
+        "no_external_identity_signature_candidate_receipt_or_decision_created": {"const": true},
+        "mutation_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": ["work_order_omission", "prerequisite_omission", "preparation_command_drift", "resolver_command_drift", "output_path_drift", "owner_role_drift", "false_ready"],
+          "properties": {
+            "work_order_omission": {"const": "PASS"},
+            "prerequisite_omission": {"const": "PASS"},
+            "preparation_command_drift": {"const": "PASS"},
+            "resolver_command_drift": {"const": "PASS"},
+            "output_path_drift": {"const": "PASS"},
+            "owner_role_drift": {"const": "PASS"},
+            "false_ready": {"const": "PASS"}
+          }
+        }
+      }
+    },
+    "proof_ceiling": {
+      "const": "WORK_ORDER_ORCHESTRATION_ONLY_NOT_CANDIDATE_CREATION_IDENTITY_ASSIGNMENT_SIGNATURE_REVIEW_DECISION_LOCATOR_RECEIPT_IMPLEMENTATION_EXECUTION_REGISTRY_SWITCH_OR_ACCEPTANCE"
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "external_prerequisite": {
+      "type": "object", "additionalProperties": false,
+      "required": ["prerequisite_id", "authority_task_id", "description", "required_paths", "missing_paths", "status", "blocks_work_order_kinds", "next_actions", "preparation_command_plan"],
+      "properties": {
+        "prerequisite_id": {"type": "string", "pattern": "^M02-EXT-[A-Z0-9-]+$"},
+        "authority_task_id": {"type": ["string", "null"], "pattern": "^T1-M[0-9]{2}-N[0-9]{3}$"},
+        "description": {"type": "string", "minLength": 8},
+        "required_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "missing_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "status": {"enum": ["MISSING", "PARTIAL", "READY"]},
+        "blocks_work_order_kinds": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"$ref": "#/$defs/work_order_kind"}
+        },
+        "next_actions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 8}, "uniqueItems": true},
+        "preparation_command_plan": {"type": "array", "items": {"$ref": "#/$defs/command_step"}, "uniqueItems": true}
+      }
+    },
+    "work_order_kind": {
+      "enum": ["LOCATOR_RESOLUTION", "COMPATIBILITY_DEFAULT_OFF_REVIEW", "FUNCTION_OR_EXEMPTION_REVIEW", "RESPONSIBILITY_ASSIGNMENT"]
+    },
+    "command_step": {
+      "type": "object", "additionalProperties": false,
+      "required": ["step_id", "run_when", "working_directory", "argv", "expected_effect"],
+      "properties": {
+        "step_id": {"type": "string", "minLength": 1},
+        "run_when": {"type": "string", "minLength": 8},
+        "working_directory": {"type": "string", "minLength": 1},
+        "argv": {
+          "type": "array", "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "expected_effect": {"type": "string", "minLength": 8}
+      }
+    },
+    "details": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "locator", "locator_id", "path", "query", "resolver_profile", "source_file_exists",
+        "target_locators", "leaf_id", "review_surface", "static_contract_paths", "task_id"
+      ],
+      "properties": {
+        "locator": {"type": ["string", "null"]},
+        "locator_id": {"type": ["string", "null"]},
+        "path": {"type": ["string", "null"]},
+        "query": {"type": ["string", "null"]},
+        "resolver_profile": {"type": ["string", "null"]},
+        "source_file_exists": {"type": ["boolean", "null"]},
+        "target_locators": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "leaf_id": {"type": ["string", "null"]},
+        "review_surface": {"type": ["string", "null"]},
+        "static_contract_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "task_id": {"type": ["string", "null"]}
+      }
+    },
+    "work_order": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "work_order_id", "work_order_kind", "subject_id", "consumer_atomic_pr_ids",
+        "parent_task_ids", "owner_role", "details", "input_paths", "output_paths",
+        "command_plan", "aggregate_validation_argv", "prerequisite_ids", "status",
+        "blocking_reasons", "allowed_claim", "forbidden_claim", "proof_ceiling"
+      ],
+      "properties": {
+        "work_order_id": {"type": "string", "pattern": "^M02-EI-(?:LOC|CMP|REV|RSP)-[A-Z0-9-]+$"},
+        "work_order_kind": {"$ref": "#/$defs/work_order_kind"},
+        "subject_id": {"type": "string", "minLength": 1},
+        "consumer_atomic_pr_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "parent_task_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^T1-M02-N0(?:0[1-9]|1[0-6])$"}, "uniqueItems": true},
+        "owner_role": {"type": "string", "minLength": 3},
+        "details": {"$ref": "#/$defs/details"},
+        "input_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "output_paths": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "command_plan": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/command_step"}},
+        "aggregate_validation_argv": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}},
+        "prerequisite_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^M02-EXT-[A-Z0-9-]+$"}, "uniqueItems": true},
+        "status": {
+          "enum": [
+            "BLOCKED_DESIGN_CANDIDATE_MISSING",
+            "BLOCKED_PLANNED_PRODUCT_SOURCE_MISSING",
+            "BLOCKED_DESIGN_IMPLEMENTATION_REVIEW_AND_TRUSTED_SIGNATURE_MISSING",
+            "BLOCKED_NAMED_RESPONSIBILITY_AND_TRUSTED_SIGNATURE_MISSING"
+          ]
+        },
+        "blocking_reasons": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 8}, "uniqueItems": true},
+        "allowed_claim": {"const": "work order identity, exact inputs, output path and commands are derived"},
+        "forbidden_claim": {"const": "candidate, identity, signature, review approval, receipt, implementation, execution, registry switch or acceptance exists"},
+        "proof_ceiling": {"const": "DEVELOPER_WORK_ORDER_ONLY_BLOCKED_UNTIL_EXTERNAL_PREREQUISITES"}
+      }
+    }
+  }
+}

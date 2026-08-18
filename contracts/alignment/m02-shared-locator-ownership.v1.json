@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M02_SHARED_LOCATOR_SINGLE_WRITER_BOUNDARY",
+  "artifact_status": "BLOCKED_FROZEN_ALLOCATION_CONFORMANCE",
+  "decision_id": "M02-N004-P165-P408-POLL-MANIFEST-OWNER-V1",
+  "source_catalog": {
+    "path": "contracts/alignment/m02-code-direct-leaf-catalog.v2.json",
+    "sha256": "138277a3df27917c8248dcab863a767dca5ba61ca8730403d8086e7b93bedb44"
+  },
+  "source_allocation": {
+    "path": "contracts/alignment/m02-code-direct-leaf-allocation.v2.json",
+    "sha256": "fa12614bea34eafba3e11da28293ed318ee1a346023ecfb0c7a3bb9ce66748c2"
+  },
+  "shared_locator": "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#ManifestPcapReplayer::poll_manifest",
+  "current_occurrences": [
+    {
+      "leaf_id": "M02-N004-L21",
+      "atomic_pr_id": "T1-M02-P165-WRT-n004-l21",
+      "locator_role": "PRIMARY",
+      "single_outcome": "实现与trait无关的checked poll与entry切换，保持body/entry identity"
+    },
+    {
+      "leaf_id": "M02-N004-L48",
+      "atomic_pr_id": "T1-M02-P408-WRT-n004-l48",
+      "locator_role": "COMPANION",
+      "single_outcome": "derive checked replay delay from previous and current CaptureTimestamp plus ReplaySpeed"
+    }
+  ],
+  "dependency_evidence": {
+    "ordered_edge": {
+      "from": "M02-N004-L48",
+      "to": "M02-N004-L21",
+      "edge_kind": "APPENDED_TO_EXISTING",
+      "present": true
+    },
+    "helper_owner_depends_on_state_creator": false,
+    "finding": "ORDERING_EXISTS_BUT_DOES_NOT_GRANT_A_SECOND_FUNCTION_BODY_WRITER"
+  },
+  "required_single_writer_boundary": {
+    "function_body_owner": "T1-M02-P165-WRT-n004-l21",
+    "helper_owner": "T1-M02-P408-WRT-n004-l48",
+    "helper_integration_mode": "P165_CALLS_REPLAY_DELAY_INSIDE_ITS_OWN_POLL_MANIFEST_BODY",
+    "forbidden_for_helper_owner": [
+      "WRITE_POLL_MANIFEST_BODY",
+      "CREATE_MANIFEST_REPLAYER",
+      "ALTER_ENTRY_SWITCHING_OR_IDENTITY"
+    ]
+  },
+  "allocation_conformance": {
+    "status": "FAIL_CLOSED",
+    "blocking_facts": [
+      "P408_CURRENTLY_LISTS_POLL_MANIFEST_AS_A_WRITABLE_COMPANION",
+      "P408_DEPENDENCY_CLOSURE_DOES_NOT_CONTAIN_L17_MANIFEST_REPLAYER_CREATOR"
+    ]
+  },
+  "required_closure": [
+    "PRESERVE_FROZEN_P308_P485_PREFIX_AND_RECORD_A_NEW_APPEND_ONLY_SUPERSESSION_CONTRACT",
+    "REMOVE_POLL_MANIFEST_FROM_P408_WRITABLE_SCOPE_WITHOUT_REWRITING_FROZEN_HISTORY",
+    "BIND_P165_AND_P408_TO_ONE_CLEAN_CANDIDATE_WITH_EXACT_RUST_AST_RECEIPTS",
+    "OBTAIN_SIGNED_FUNCTION_REVIEWS_FOR_BOTH_ATOMIC_PRS"
+  ],
+  "validation": {
+    "source_exact": "PASS",
+    "occurrence_roles_exact": "PASS",
+    "ordered_edge_exact": "PASS",
+    "missing_dependency_proven": true,
+    "false_closure_rejected": true,
+    "mutation_guards": {
+      "owner_swap": "PASS",
+      "companion_omission": "PASS",
+      "edge_drift": "PASS",
+      "false_conformance": "PASS",
+      "missing_dependency_drift": "PASS"
+    }
+  },
+  "proof_ceiling": "STATIC_SINGLE_WRITER_BOUNDARY_ONLY_NOT_ALLOCATION_REWRITTEN_LOCATOR_RESOLVED_FUNCTION_REVIEWED_IMPLEMENTED_OR_AUTHORIZED"
+}

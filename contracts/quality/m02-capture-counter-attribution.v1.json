@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M02_CAPTURE_COUNTER_ATTRIBUTION",
+  "method_status": "PENDING_SIGNATURE",
+  "counter_revision": 1,
+  "units": {"packet_counters": "packets", "byte_counters": "captured_l2_bytes"},
+  "authorities": {
+    "offered_packets": "traffic generator TX counter bound by approved profile",
+    "mirror_ingress_packets": "mirror or tap ingress counter when present",
+    "nic_rx_packets": "kernel interface RX packet counter snapshot",
+    "captured_packets": "Probe metrics capture_snapshot.capture_packets committed once in main::run_capture",
+    "capture_allocation_drops": "AF_PACKET or capture-buffer allocation/write failures before PacketBatch ownership",
+    "capture_kernel_drops": "AF_XDP socket rx_dropped plus rx_ring_full, sampled as monotonic deltas",
+    "capture_errors": "Capturer.poll errors; parser, PCAP writer, queue, Kafka, object and index failures are excluded"
+  },
+  "formulas": {
+    "observed_ingress_loss_packets": "offered_packets - mirror_ingress_packets",
+    "nic_attributable_drop_packets": "mirror_ingress_packets - nic_rx_packets",
+    "system_attributable_drop_packets": "capture_allocation_drops + capture_kernel_drops",
+    "capture_counter_difference_packets": "nic_rx_packets - captured_packets - system_attributable_drop_packets",
+    "unexplained_difference_packets": "capture_counter_difference_packets - approved_counter_error_packets"
+  },
+  "invariants": [
+    "all counters are monotonic snapshots from one run identity and bounded observation window",
+    "captured_packets and captured_bytes have exactly one commit location in main::run_capture",
+    "capture_pps is derived from consecutive successful heartbeat snapshots and actual elapsed milliseconds",
+    "parser downstream queue sender Kafka object and index failures never increment capture drop counters",
+    "a run is invalid when any authoritative measurement point or signed profile receipt is missing",
+    "PASS requires system_attributable_drop_packets=0 and unexplained_difference_packets=0"
+  ],
+  "error_budget": {
+    "approved_counter_error_packets_source": "m02-capture-profile.measurement.max_counter_error_packets",
+    "default_without_signed_profile": null,
+    "unsigned_method_can_authorize_pass": false
+  }
+}

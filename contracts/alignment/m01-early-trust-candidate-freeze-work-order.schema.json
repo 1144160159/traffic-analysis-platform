@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m01-early-trust-candidate-freeze-work-order.schema.json",
+  "title": "M01 early-trust two-stage candidate freeze blocked work order",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "work_order_id",
+    "source_refs", "leaf_partition", "design_candidate_stage",
+    "implementation_candidate_stage", "current_workspace", "command_plan",
+    "blocking_reasons", "validation", "allowed_claim", "forbidden_claim",
+    "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M01_EARLY_TRUST_TWO_STAGE_CANDIDATE_FREEZE_WORK_ORDER"},
+    "artifact_status": {"const": "BLOCKED_IMPLEMENTATION_SOURCES_AND_CLEAN_WORKTREE"},
+    "work_order_id": {"const": "M01-EARLY-TRUST-V2-CANDIDATE-FREEZE"},
+    "source_refs": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_ref"}
+    },
+    "leaf_partition": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "candidate_leaf_count", "planned_source_leaf_count", "planned_output_leaf_count",
+        "planned_source_atomic_id_exact_set_sha256", "planned_output_atomic_id_exact_set_sha256",
+        "planned_source_path_count", "planned_output_path_count", "path_overlap_count",
+        "planned_source_path_exact_set_sha256", "partition_rule"
+      ],
+      "properties": {
+        "candidate_leaf_count": {"const": 84},
+        "planned_source_leaf_count": {"const": 55},
+        "planned_output_leaf_count": {"const": 29},
+        "planned_source_atomic_id_exact_set_sha256": {"const": "258379b7b06d81f4a022d02a204e698603502285ea91373c91764bccd9f07ef0"},
+        "planned_output_atomic_id_exact_set_sha256": {"const": "0e8dd8d5b6ff68b06725fea96424ff63f4b02ed8f2c439478126b296f89c2639"},
+        "planned_source_path_count": {"const": 81},
+        "planned_output_path_count": {"const": 54},
+        "path_overlap_count": {"const": 0},
+        "planned_source_path_exact_set_sha256": {"const": "f8425368b56964bab900b492b0842fa7a4f2f7ab0ebe75abd3e67267a0241d5a"},
+        "partition_rule": {"const": "DESIGN_CANDIDATE_CONTAINS_ONLY_TARGET_STATE_PLANNED_GIT_BLOBS_PLANNED_OUTPUT_EVIDENCE_REMAINS_FOR_IMPLEMENTATION_CANDIDATE"}
+      }
+    },
+    "design_candidate_stage": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "stage_order", "candidate_id", "expected_manifest_path", "manifest_probe",
+        "required_source_inputs", "required_source_count", "present_source_count",
+        "missing_source_count", "freeze_preconditions", "status"
+      ],
+      "properties": {
+        "stage_order": {"const": 1},
+        "candidate_id": {"const": "DESIGN-T1-M01-EARLY-TRUST-V2"},
+        "expected_manifest_path": {"const": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/design-candidate-manifest.json"},
+        "manifest_probe": {"$ref": "#/$defs/path_probe"},
+        "required_source_inputs": {
+          "type": "array", "minItems": 81, "maxItems": 81, "uniqueItems": true,
+          "items": {"$ref": "#/$defs/source_input"}
+        },
+        "required_source_count": {"const": 81},
+        "present_source_count": {"type": "integer", "minimum": 0, "maximum": 81},
+        "missing_source_count": {"type": "integer", "minimum": 0, "maximum": 81},
+        "freeze_preconditions": {
+          "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 12}
+        },
+        "status": {"const": "BLOCKED_SOURCE_AND_CLEAN_COMMIT_MISSING"}
+      }
+    },
+    "implementation_candidate_stage": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "stage_order", "expected_manifest_path", "manifest_probe", "depends_on",
+        "same_commit_rule", "required_schema_path", "semantic_validator_path", "status"
+      ],
+      "properties": {
+        "stage_order": {"const": 2},
+        "expected_manifest_path": {"const": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/implementation-candidate.json"},
+        "manifest_probe": {"$ref": "#/$defs/path_probe"},
+        "depends_on": {
+          "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+          "items": {"enum": [
+            "DESIGN_CANDIDATE_FROZEN",
+            "PLANNED_OUTPUT_EVIDENCE_COMPLETE",
+            "EXTERNAL_VERIFIER_IMAGE_RECEIPT_VALID"
+          ]}
+        },
+        "same_commit_rule": {"const": "IMPLEMENTATION_CANDIDATE_COMMIT_MUST_EQUAL_DESIGN_CANDIDATE_IMPLEMENTATION_COMMIT"},
+        "required_schema_path": {"const": "contracts/alignment/implementation-candidate.schema.json"},
+        "semantic_validator_path": {"const": "scripts/alignment/build_topic1_task_registry.py#validate_implementation_candidate"},
+        "status": {"const": "BLOCKED_UPSTREAM_DESIGN_EVIDENCE_AND_IMAGE_RECEIPT"}
+      }
+    },
+    "current_workspace": {
+      "type": "object", "additionalProperties": false,
+      "required": ["eligibility_rule", "required_dirty_count", "candidate_commit_must_equal_head", "shared_worktree_not_designated", "candidate_outputs_absent"],
+      "properties": {
+        "eligibility_rule": {"const": "ISOLATED_CLEAN_GIT_WORKTREE_ONLY"},
+        "required_dirty_count": {"const": 0},
+        "candidate_commit_must_equal_head": {"const": true},
+        "shared_worktree_not_designated": {"const": true},
+        "candidate_outputs_absent": {"const": true}
+      }
+    },
+    "command_plan": {
+      "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/command"}
+    },
+    "blocking_reasons": {
+      "type": "array", "minItems": 7, "maxItems": 7, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 12}
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "source_hashes_exact", "leaf_partition_exact", "source_path_exact_set",
+        "owner_mapping_exact", "candidate_outputs_absent", "candidate_workspace_policy_exact",
+        "stage_order_acyclic", "no_candidate_review_receipt_or_authority_created", "mutation_guards"
+      ],
+      "properties": {
+        "schema": {"const": "PASS"},
+        "source_hashes_exact": {"const": "PASS"},
+        "leaf_partition_exact": {"const": "PASS_55_PLANNED_29_PLANNED_OUTPUT"},
+        "source_path_exact_set": {"const": "PASS_81"},
+        "owner_mapping_exact": {"const": "PASS"},
+        "candidate_outputs_absent": {"const": true},
+        "candidate_workspace_policy_exact": {"const": true},
+        "stage_order_acyclic": {"const": "PASS_DESIGN_THEN_REVIEW_IMAGE_EVIDENCE_THEN_IMPLEMENTATION"},
+        "no_candidate_review_receipt_or_authority_created": {"const": true},
+        "mutation_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "source_hash_drift", "leaf_partition_drift", "source_input_omission",
+            "owner_mapping_drift", "workspace_policy_drift", "candidate_false_present",
+            "stage_order_drift", "dependency_drift", "command_drift", "false_ready"
+          ],
+          "properties": {
+            "source_hash_drift": {"const": "PASS"},
+            "leaf_partition_drift": {"const": "PASS"},
+            "source_input_omission": {"const": "PASS"},
+            "owner_mapping_drift": {"const": "PASS"},
+            "workspace_policy_drift": {"const": "PASS"},
+            "candidate_false_present": {"const": "PASS"},
+            "stage_order_drift": {"const": "PASS"},
+            "dependency_drift": {"const": "PASS"},
+            "command_drift": {"const": "PASS"},
+            "false_ready": {"const": "PASS"}
+          }
+        }
+      }
+    },
+    "allowed_claim": {"const": "two-stage candidate scope source owners blockers and clean-worktree commands are derived"},
+    "forbidden_claim": {"const": "candidate implementation review image receipt identity signature execution registry switch authorization or acceptance exists"},
+    "proof_ceiling": {"const": "BLOCKED_TWO_STAGE_CANDIDATE_FREEZE_WORK_ORDER_ONLY"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "path", "sha256"],
+      "properties": {
+        "role": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "path_probe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "exists", "sha256", "status"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "exists": {"type": "boolean"},
+        "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "status": {"enum": ["MISSING", "PRESENT_UNVALIDATED"]}
+      }
+    },
+    "source_input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "owner_atomic_pr_ids", "exists", "status"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "owner_atomic_pr_ids": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^T1-M01-P[0-9]{3}-[A-Z-]+-.+$"}
+        },
+        "exists": {"type": "boolean"},
+        "status": {"enum": ["MISSING", "PRESENT_UNVALIDATED"]}
+      }
+    },
+    "command": {
+      "type": "object", "additionalProperties": false,
+      "required": ["step_id", "run_when", "working_directory", "argv", "expected_effect"],
+      "properties": {
+        "step_id": {"type": "string", "minLength": 3},
+        "run_when": {"type": "string", "minLength": 12},
+        "working_directory": {"const": "."},
+        "argv": {
+          "type": "array", "minItems": 3, "uniqueItems": false,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "expected_effect": {"type": "string", "minLength": 12}
+      }
+    }
+  }
+}

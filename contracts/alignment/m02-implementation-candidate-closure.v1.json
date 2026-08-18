@@ -1,0 +1,521 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M02_IMPLEMENTATION_CANDIDATE_CLOSURE_CHECKLIST",
+  "artifact_status": "BLOCKED_IMPLEMENTATION_CANDIDATE_INCOMPLETE",
+  "source_catalog": {
+    "path": "contracts/alignment/m02-code-direct-leaf-catalog.v4.json",
+    "sha256": "5f87286688766b0ce6aae0c4c69e27f3696ecc1ef6ef21e2e4261fd9100c093e"
+  },
+  "source_allocation": {
+    "path": "contracts/alignment/m02-code-direct-leaf-allocation.v4.json",
+    "sha256": "e8d63398465607b9bb3bc140484fcffd2eccc6ffa3319bfbacf5d92f9caf73c0"
+  },
+  "implementation_candidate_schema": {
+    "path": "contracts/alignment/implementation-candidate.schema.json",
+    "sha256": "d5c65ba04a0d04af29d06808a276ac1ef0c8f5dd2140a25ec1dc339bd2879d89"
+  },
+  "semantic_validator": {
+    "path": "scripts/alignment/build_topic1_task_registry.py",
+    "sha256": "92fd5f93fa8cc3685cdd7ccb83c529b582df0cb1ab960dbcc6e8852c844e7569"
+  },
+  "candidate_manifest_path": "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json",
+  "manifest_probe": {
+    "path": "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json",
+    "exists": false,
+    "sha256": null,
+    "status": "MISSING",
+    "blocking_reasons": [
+      "required input is absent"
+    ]
+  },
+  "required_manifest_fields": [
+    "schema_version",
+    "candidate_id",
+    "implementation_candidate_commit",
+    "production_tree_content_sha256",
+    "tree_hash_algorithm",
+    "dirty_count",
+    "source_roots",
+    "excluded_paths",
+    "external_or_prebuilt_artifacts",
+    "image_digests",
+    "config_schema_migration_hashes",
+    "model_threshold_dataset_hashes",
+    "supply_chain_artifact_hashes",
+    "runtime_artifact_hashes",
+    "image_attestations",
+    "config_schema_migration_artifacts",
+    "model_threshold_dataset_artifacts",
+    "supply_chain_artifacts",
+    "runtime_artifacts",
+    "delivery_artifacts",
+    "environment_id",
+    "created_at"
+  ],
+  "delivery_artifact_contract": [
+    {
+      "artifact_id": "install-manifest",
+      "path": "deployments/releases/topic1/m02-install-manifest.v1.json",
+      "owner_leaf_id": "M02-N013-L11",
+      "owner_atomic_pr_id": "T1-M02-P523-WRT-n013-l11",
+      "exists": true,
+      "status": "PRESENT_UNVALIDATED"
+    },
+    {
+      "artifact_id": "preflight-plan",
+      "path": "deployments/releases/topic1/m02-preflight-plan.v1.json",
+      "owner_leaf_id": "M02-N013-L11",
+      "owner_atomic_pr_id": "T1-M02-P523-WRT-n013-l11",
+      "exists": true,
+      "status": "PRESENT_UNVALIDATED"
+    },
+    {
+      "artifact_id": "upgrade-plan",
+      "path": "deployments/releases/topic1/m02-upgrade-plan.v1.json",
+      "owner_leaf_id": "M02-N013-L11",
+      "owner_atomic_pr_id": "T1-M02-P523-WRT-n013-l11",
+      "exists": true,
+      "status": "PRESENT_UNVALIDATED"
+    },
+    {
+      "artifact_id": "rollback-plan",
+      "path": "deployments/releases/topic1/m02-rollback-plan.v1.json",
+      "owner_leaf_id": "M02-N013-L11",
+      "owner_atomic_pr_id": "T1-M02-P523-WRT-n013-l11",
+      "exists": true,
+      "status": "PRESENT_UNVALIDATED"
+    },
+    {
+      "artifact_id": "restore-plan",
+      "path": "deployments/releases/topic1/m02-restore-plan.v1.json",
+      "owner_leaf_id": "M02-N013-L11",
+      "owner_atomic_pr_id": "T1-M02-P523-WRT-n013-l11",
+      "exists": true,
+      "status": "PRESENT_UNVALIDATED"
+    }
+  ],
+  "early_trust_preview_inputs": [
+    {
+      "path": "contracts/alignment/m01-early-trust-train-allocation.v2.json",
+      "exists": true,
+      "sha256": "8591f573784181e82e1bd2ae139cd225cf5d11b7f267b1c2d85b47efb2f47104",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "contracts/alignment/m01-early-trust-train-catalog.v2.json",
+      "exists": true,
+      "sha256": "69a408355ef346e124ffd87331a7e1c6b98379ddf0a9b134ff47495f423acfad",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "contracts/alignment/m01-early-trust-function-design.v1.json",
+      "exists": true,
+      "sha256": "42cb53c2f0319d1e2873031b74aafd6a3f59c776e3ec44971fb5ae4065ef390b",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "contracts/alignment/m01-early-trust-review-work-order-catalog.v1.json",
+      "exists": true,
+      "sha256": "9d37989977d3ab058f1792fc6c2b4ca8d2eb822518652026f9b6c9aad7c577b2",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "contracts/alignment/m01-early-trust-registry-switch-preflight.v1.json",
+      "exists": true,
+      "sha256": "d6a36e66552b8691566957a4b616b4a3fed9170df20fad8d9b0edfab1e5a2e97",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    }
+  ],
+  "early_trust_candidate_freeze_inputs": [
+    {
+      "path": "contracts/alignment/m01-early-trust-candidate-freeze-work-order.schema.json",
+      "exists": true,
+      "sha256": "2d8b8773c6949b06ad216e63d9ae319c797bf9d9bfa5cffb47690c80b3709d21",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "contracts/alignment/m01-early-trust-candidate-freeze-work-order.v1.json",
+      "exists": true,
+      "sha256": "64ec78dfff39d62c57948fd8fd946fbb0f49f035379101cfe9a6087313e424fe",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "scripts/alignment/generate_m01_early_trust_candidate_freeze_work_order.py",
+      "exists": true,
+      "sha256": "6861f63f187c2d10a0f4bc3263938c4fd590dfe741fae86744655616ec843ded",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "scripts/alignment/freeze_m01_early_trust_design_candidate.py",
+      "exists": true,
+      "sha256": "71e3ca5e4ae8de116a9272e7ab363b5a853e136fefb35b4cf36f4efadad173a1",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    }
+  ],
+  "external_image_activity_inputs": [
+    {
+      "path": "contracts/alignment/m01-verifier-image-build-sign-receipt.schema.json",
+      "exists": true,
+      "sha256": "ebf31e9c9794e161e5e90f5e2bbe59403daf8b0f386ab02ac7631383eb527bcb",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "scripts/alignment/validate_m01_verifier_image_build_sign_receipt.py",
+      "exists": true,
+      "sha256": "db92781b90615ee20b16c46e911626ccea466378436b9da51af8c40f666d43dd",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "contracts/alignment/m01-verifier-image-build-sign-work-order.v1.json",
+      "exists": true,
+      "sha256": "2da4b3e123ed4cc44da959877811dad2b5ad5d28d9f9775fcbb00b6e1ca7598d",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    }
+  ],
+  "external_image_receipt_probe": {
+    "path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/receipt.json",
+    "exists": false,
+    "sha256": null,
+    "status": "MISSING",
+    "blocking_reasons": [
+      "required input is absent"
+    ]
+  },
+  "trusted_signature_inputs": [
+    {
+      "path": "contracts/alignment/signature-trust-policy.schema.json",
+      "exists": true,
+      "sha256": "15c10b0958901d8999d2cc8e066f35f3d63b252c9d519a89b48fa2da9e135273",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "contracts/alignment/signature-verification-request.schema.json",
+      "exists": true,
+      "sha256": "e978cda193d63674882abdf300aa760f236a306f05b26f091adac2962cdc239f",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "contracts/alignment/signature-verification-attestation.schema.json",
+      "exists": true,
+      "sha256": "f0730b95f68134d4edeac9e32c56e93c8994c57b99d1cb63e74126969c15cda0",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "scripts/alignment/verify_trusted_signature.py",
+      "exists": true,
+      "sha256": "e3f95f2adf884034732b94b2699cdd3e43a743df325e43c1898a814361b822c3",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "scripts/alignment/test_trusted_signature_verifier.py",
+      "exists": true,
+      "sha256": "c31a06d90e6b44e5ac3ec5b4f5a5e85c9d423e30d6fc7a14bdeefff1d78d8003",
+      "status": "PRESENT",
+      "blocking_reasons": []
+    },
+    {
+      "path": "deployments/security/topic1-trusted-signature-verifier.yaml",
+      "exists": false,
+      "sha256": null,
+      "status": "MISSING",
+      "blocking_reasons": [
+        "required input is absent"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "requirement_id": "IC-M02-C01",
+      "authority_task_ids": [
+        "T1-M01-N003"
+      ],
+      "description": "clean candidate commit and canonical production-tree fingerprint",
+      "required_fields": [
+        "implementation_candidate_commit",
+        "production_tree_content_sha256",
+        "tree_hash_algorithm",
+        "dirty_count",
+        "source_roots",
+        "excluded_paths"
+      ],
+      "required_paths": [
+        "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json"
+      ],
+      "status": "MISSING",
+      "blocking_reasons": [
+        "implementation candidate manifest is absent or invalid"
+      ],
+      "next_action": "produce one clean commit-bound tree fingerprint and pass the existing semantic validator"
+    },
+    {
+      "requirement_id": "IC-M02-C02",
+      "authority_task_ids": [
+        "T1-M01-N003"
+      ],
+      "description": "immutable image digest and deployed digest exact-set",
+      "required_fields": [
+        "image_digests",
+        "image_attestations"
+      ],
+      "required_paths": [
+        "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json"
+      ],
+      "status": "MISSING",
+      "blocking_reasons": [
+        "candidate-bound image digests and attestations are unavailable"
+      ],
+      "next_action": "build immutable images and bind every deployed digest to one attestation row"
+    },
+    {
+      "requirement_id": "IC-M02-C03",
+      "authority_task_ids": [
+        "T1-M01-N003"
+      ],
+      "description": "image-internal binary and external prebuilt artifact provenance closure",
+      "required_fields": [
+        "external_or_prebuilt_artifacts"
+      ],
+      "required_paths": [
+        "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json"
+      ],
+      "status": "MISSING",
+      "blocking_reasons": [
+        "binary recipe image and SBOM provenance cannot be inspected without a valid candidate"
+      ],
+      "next_action": "record binary hash builder recipe image-internal hash and SBOM or attestation for each prebuilt artifact"
+    },
+    {
+      "requirement_id": "IC-M02-C04",
+      "authority_task_ids": [
+        "T1-M01-N003"
+      ],
+      "description": "config schema and migration candidate Git-blob closure",
+      "required_fields": [
+        "config_schema_migration_hashes",
+        "config_schema_migration_artifacts"
+      ],
+      "required_paths": [
+        "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json"
+      ],
+      "status": "MISSING",
+      "blocking_reasons": [
+        "config schema and migration artifact closure is unavailable"
+      ],
+      "next_action": "bind every config schema and migration to the same candidate Git commit"
+    },
+    {
+      "requirement_id": "IC-M02-C05",
+      "authority_task_ids": [
+        "T1-M01-N003"
+      ],
+      "description": "model threshold and dataset artifact closure",
+      "required_fields": [
+        "model_threshold_dataset_hashes",
+        "model_threshold_dataset_artifacts"
+      ],
+      "required_paths": [
+        "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json"
+      ],
+      "status": "MISSING",
+      "blocking_reasons": [
+        "model threshold and dataset artifact closure is unavailable"
+      ],
+      "next_action": "declare exact candidate or trusted-external model threshold and dataset artifacts"
+    },
+    {
+      "requirement_id": "IC-M02-C06",
+      "authority_task_ids": [
+        "T1-M01-N003",
+        "T1-M01-N010"
+      ],
+      "description": "supply-chain artifact and provenance receipt closure",
+      "required_fields": [
+        "supply_chain_artifact_hashes",
+        "supply_chain_artifacts"
+      ],
+      "required_paths": [
+        "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json"
+      ],
+      "status": "MISSING",
+      "blocking_reasons": [
+        "supply-chain artifact closure is unavailable"
+      ],
+      "next_action": "collect trusted external attestations and bind their provenance receipts and hashes"
+    },
+    {
+      "requirement_id": "IC-M02-C07",
+      "authority_task_ids": [
+        "T1-M01-N003"
+      ],
+      "description": "runtime artifact closure for the same environment",
+      "required_fields": [
+        "runtime_artifact_hashes",
+        "runtime_artifacts",
+        "environment_id"
+      ],
+      "required_paths": [
+        "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json"
+      ],
+      "status": "MISSING",
+      "blocking_reasons": [
+        "runtime artifact and environment closure is unavailable"
+      ],
+      "next_action": "bind runtime artifacts and deployment environment to the candidate exact-set"
+    },
+    {
+      "requirement_id": "IC-M02-C08",
+      "authority_task_ids": [
+        "T1-M02-N013"
+      ],
+      "description": "exact-five candidate Git-blob delivery package",
+      "required_fields": [
+        "delivery_artifacts"
+      ],
+      "required_paths": [
+        "deployments/releases/topic1/m02-install-manifest.v1.json",
+        "deployments/releases/topic1/m02-preflight-plan.v1.json",
+        "deployments/releases/topic1/m02-upgrade-plan.v1.json",
+        "deployments/releases/topic1/m02-rollback-plan.v1.json",
+        "deployments/releases/topic1/m02-restore-plan.v1.json"
+      ],
+      "status": "PARTIAL",
+      "blocking_reasons": [
+        "delivery package present 5/5 and valid manifest=false"
+      ],
+      "next_action": "materialize install preflight upgrade rollback and restore files atomically under P523 and bind all five hashes"
+    },
+    {
+      "requirement_id": "IC-M02-C09",
+      "authority_task_ids": [
+        "T1-M01-N003"
+      ],
+      "description": "independent implementation-candidate validator mutation runner",
+      "required_fields": [],
+      "required_paths": [
+        "scripts/alignment/test_implementation_candidate.py",
+        "contracts/alignment/m01-n003-implementation-candidate-test-function-design.v1.json",
+        "contracts/alignment/m01-n003-implementation-candidate-test-function-design.schema.json",
+        "scripts/alignment/validate_m01_n003_implementation_candidate_test_function_design.py"
+      ],
+      "status": "MISSING",
+      "blocking_reasons": [
+        "self-test exit=1",
+        "test runner is absent",
+        "static design has eight NOT_RUN cases and required registry amendments; it is not runner implementation or execution evidence"
+      ],
+      "next_action": "review and apply the registered dependency/schema/command amendments, then authorize P005 to implement main plus eight fixtures and P006 to run one G0 negative matrix"
+    },
+    {
+      "requirement_id": "IC-M02-C10",
+      "authority_task_ids": [
+        "T1-M01-N015",
+        "T1-M01-N010"
+      ],
+      "description": "function-complete v2 early trust preview plus trusted signature verifier policy request attestation runtime and test closure",
+      "required_fields": [],
+      "required_paths": [
+        "contracts/alignment/m01-early-trust-train-allocation.v2.json",
+        "contracts/alignment/m01-early-trust-train-catalog.v2.json",
+        "contracts/alignment/m01-early-trust-function-design.v1.json",
+        "contracts/alignment/m01-early-trust-review-work-order-catalog.v1.json",
+        "contracts/alignment/m01-early-trust-registry-switch-preflight.v1.json",
+        "scripts/alignment/validate_m01_early_trust_function_design.py",
+        "contracts/alignment/m01-early-trust-candidate-freeze-work-order.schema.json",
+        "contracts/alignment/m01-early-trust-candidate-freeze-work-order.v1.json",
+        "scripts/alignment/generate_m01_early_trust_candidate_freeze_work_order.py",
+        "scripts/alignment/freeze_m01_early_trust_design_candidate.py",
+        "contracts/alignment/m01-verifier-image-build-sign-receipt.schema.json",
+        "scripts/alignment/validate_m01_verifier_image_build_sign_receipt.py",
+        "contracts/alignment/m01-verifier-image-build-sign-work-order.v1.json",
+        "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/receipt.json",
+        "contracts/alignment/signature-trust-policy.schema.json",
+        "contracts/alignment/signature-verification-request.schema.json",
+        "contracts/alignment/signature-verification-attestation.schema.json",
+        "scripts/alignment/verify_trusted_signature.py",
+        "scripts/alignment/test_trusted_signature_verifier.py",
+        "deployments/security/topic1-trusted-signature-verifier.yaml"
+      ],
+      "status": "PARTIAL",
+      "blocking_reasons": [
+        "early trust preview=self-test exit=1",
+        "early trust preview is not a global registry switch, implementation, protected deployment or trust PASS",
+        "function type and non-function reviews are 0/36 and all remain MISSING_NOT_AUTHORED",
+        "candidate freeze contract=candidate freeze work-order verify exit=1",
+        "external image activity contract=PASS_CONTRACT_ONLY",
+        "external image receipt=external verifier image build sign publish receipt is absent",
+        "trusted signature inputs present 5/6",
+        "test=self-test exit=2",
+        "wrapper=M02 implementation closure probe is blocked because an exact typed verification request and protected client were not supplied"
+      ],
+      "next_action": "claim the 36 blocked review work orders, obtain real candidate-bound signed receipts, satisfy the blocked four-registry preflight, atomically register effective v2 N015 members P057-P062/P067-P096 while retaining P063-P065 as historical superseded IDs, then obtain the external image receipt and implement protect and test the verifier before P005/P006"
+    },
+    {
+      "requirement_id": "IC-M02-C11",
+      "authority_task_ids": [
+        "T1-M02-N013",
+        "T1-M02-N016"
+      ],
+      "description": "same-commit design implementation and delivery closure before C07",
+      "required_fields": [
+        "candidate_id",
+        "implementation_candidate_commit",
+        "created_at"
+      ],
+      "required_paths": [
+        "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/design-candidate-manifest.json",
+        "doc/02_acceptance/topic1/m02/candidates/m02-code-direct-v4/implementation-candidate.json"
+      ],
+      "status": "MISSING",
+      "blocking_reasons": [
+        "same-commit closure unavailable: design=MISSING implementation=MISSING"
+      ],
+      "next_action": "submit the valid implementation candidate beside the v4 design manifest and rerun preflight exact binding"
+    }
+  ],
+  "readiness_counts": {
+    "READY": 0,
+    "PARTIAL": 2,
+    "MISSING": 9,
+    "INVALID": 0
+  },
+  "validation": {
+    "source_hashes_exact": "PASS",
+    "schema_required_fields_exact": "PASS",
+    "delivery_roles_exact": "PASS",
+    "delivery_paths_exact": "PASS",
+    "early_trust_preview_exact": "PASS_NOT_GLOBAL_REGISTRY",
+    "early_trust_candidate_freeze_contract_exact": "PASS_BLOCKED_NO_CANDIDATE",
+    "external_image_activity_contract_exact": "PASS_RECEIPT_MISSING",
+    "requirement_exact_set": "PASS",
+    "no_missing_input_claimed_ready": true,
+    "mutation_guards": {
+      "required_field_omission": "PASS",
+      "delivery_role_omission": "PASS",
+      "delivery_path_drift": "PASS",
+      "requirement_omission": "PASS",
+      "manifest_false_ready": "PASS",
+      "signature_false_ready": "PASS",
+      "validator_test_false_ready": "PASS",
+      "early_trust_preview_false_ready": "PASS",
+      "candidate_freeze_false_ready": "PASS",
+      "external_image_receipt_false_ready": "PASS"
+    }
+  },
+  "proof_ceiling": "IMPLEMENTATION_CANDIDATE_REQUIREMENT_CLOSURE_ONLY_NOT_CANDIDATE_CREATION_SUPPLY_CHAIN_ATTESTATION_SIGNATURE_VERIFICATION_IMPLEMENTATION_EXECUTION_SWITCH_OR_ACCEPTANCE"
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/mlops/explanation-manifest.schema.json",
+  "title": "Traffic MLOps governed explanation manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "explanation_id",
+    "state",
+    "dataset_id",
+    "dataset_sha256",
+    "baseline_training_run_sha256",
+    "gnn_training_run_sha256",
+    "evaluation_id",
+    "evaluation_sha256",
+    "graph_snapshot",
+    "baseline_model_sha256",
+    "gnn_model_sha256",
+    "explainer_code_sha256",
+    "explainer_image_digest",
+    "population",
+    "methods",
+    "calibration",
+    "limitations",
+    "artifacts",
+    "activation_authorized",
+    "explanation_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "explanation_id": {"type": "string", "format": "uuid"},
+    "state": {"const": "explained"},
+    "dataset_id": {"type": "string", "format": "uuid"},
+    "dataset_sha256": {"$ref": "#/$defs/sha256"},
+    "baseline_training_run_sha256": {"$ref": "#/$defs/sha256"},
+    "gnn_training_run_sha256": {"$ref": "#/$defs/sha256"},
+    "evaluation_id": {"type": "string", "format": "uuid"},
+    "evaluation_sha256": {"$ref": "#/$defs/sha256"},
+    "graph_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_id", "manifest_sha256"],
+      "properties": {
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "baseline_model_sha256": {"$ref": "#/$defs/sha256"},
+    "gnn_model_sha256": {"$ref": "#/$defs/sha256"},
+    "explainer_code_sha256": {"$ref": "#/$defs/sha256"},
+    "explainer_image_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "population": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["split", "available", "explained", "event_ids_sha256"],
+      "properties": {
+        "split": {"const": "test"},
+        "available": {"type": "integer", "minimum": 1},
+        "explained": {"type": "integer", "minimum": 1},
+        "event_ids_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "methods": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "gnn_node", "gnn_edge", "gnn_path"],
+      "properties": {
+        "baseline": {"const": "xgboost_pred_contribs"},
+        "gnn_node": {"const": "feature_mean_occlusion"},
+        "gnn_edge": {"const": "single_edge_occlusion"},
+        "gnn_path": {"const": "ranked_one_hop_evidence_edges"}
+      }
+    },
+    "calibration": {"type": "object", "minProperties": 2},
+    "limitations": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_explanations", "model_card"],
+      "properties": {
+        "event_explanations": {"$ref": "#/$defs/sha256"},
+        "model_card": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "activation_authorized": {"const": false},
+    "explanation_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

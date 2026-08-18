@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/alignment/asset-upsert-source-precedence-test-result.schema.json",
+  "title": "Candidate-bound P916 asset source-precedence semantic result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_kind", "schema_version", "subject_pr_id", "candidate_manifest",
+    "candidate_manifest_sha256", "profile_id", "environment_id", "run_id", "contract_path",
+    "contract_sha256", "asset_record_path", "asset_record_sha256", "validator_path",
+    "validator_sha256", "source_blob_sha256", "self_test", "cases", "result",
+    "proof_ceiling"
+  ],
+  "properties": {
+    "artifact_kind": {"const": "ASSET_SOURCE_PRECEDENCE_TEST_RESULT"},
+    "schema_version": {"const": "1.0.0"},
+    "subject_pr_id": {"const": "T1-M06-P916-TST-PRE-n004-source-precedence-verification"},
+    "candidate_manifest": {"$ref": "#/$defs/hash_ref"},
+    "candidate_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "profile_id": {"type": "string", "minLength": 3},
+    "environment_id": {"type": "string", "minLength": 3},
+    "run_id": {"type": "string", "minLength": 3},
+    "contract_path": {"const": "contracts/alignment/asset-upsert-source-precedence.v1.json"},
+    "contract_sha256": {"$ref": "#/$defs/sha256"},
+    "asset_record_path": {"const": "go/control-plane/internal/asset/config/config.go"},
+    "asset_record_sha256": {"$ref": "#/$defs/sha256"},
+    "validator_path": {"const": "scripts/alignment/validate_asset_upsert_source_precedence.py"},
+    "validator_sha256": {"$ref": "#/$defs/sha256"},
+    "source_blob_sha256": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go/control-plane/internal/asset/config/config.go"],
+      "properties": {
+        "go/control-plane/internal/asset/config/config.go": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "self_test": {"const": true},
+    "cases": {
+      "type": "array", "minItems": 5,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["case_id", "expected", "actual", "status"],
+        "properties": {
+          "case_id": {"type": "string", "minLength": 3},
+          "expected": {"enum": ["PASS", "REJECT"]},
+          "actual": {"enum": ["PASS", "REJECT"]},
+          "status": {"const": "PASS"}
+        }
+      }
+    },
+    "result": {"const": "PASS"},
+    "proof_ceiling": {"const": "SOURCE_PRECEDENCE_DESIGN_VALIDATION_ONLY_NOT_DOMAIN_APPROVAL_OR_EXECUTION_AUTHORIZATION"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

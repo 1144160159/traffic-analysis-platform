@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m01-early-trust-function-design.schema.json",
+  "title": "M01 N015 early-trust function-complete static design",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "source_refs",
+    "design_scope", "data_contracts", "function_contracts", "type_contracts", "non_function_contracts",
+    "test_cases", "sequencing", "review_coverage", "cross_cutting_invariants",
+    "rollback", "claims", "validation"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M01_N015_EARLY_TRUST_FUNCTION_COMPLETE_STATIC_DESIGN"},
+    "artifact_status": {"const": "STATIC_DESIGN_COMPLETE_REVIEW_IMPLEMENTATION_AND_EXECUTION_BLOCKED"},
+    "source_refs": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_ref"}
+    },
+    "design_scope": {"$ref": "#/$defs/design_scope"},
+    "data_contracts": {
+      "type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/data_contract"}
+    },
+    "function_contracts": {
+      "type": "array", "minItems": 25, "maxItems": 25, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/function_contract"}
+    },
+    "type_contracts": {
+      "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/type_contract"}
+    },
+    "non_function_contracts": {
+      "type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/non_function_contract"}
+    },
+    "test_cases": {
+      "type": "array", "minItems": 42, "maxItems": 42, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/test_case"}
+    },
+    "sequencing": {
+      "type": "array", "minItems": 36, "maxItems": 36, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/sequence_step"}
+    },
+    "review_coverage": {
+      "type": "array", "minItems": 36, "maxItems": 36, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/review_row"}
+    },
+    "cross_cutting_invariants": {
+      "type": "array", "minItems": 12, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 20}
+    },
+    "rollback": {"$ref": "#/$defs/rollback"},
+    "claims": {"$ref": "#/$defs/claims"},
+    "validation": {"$ref": "#/$defs/validation"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "path", "sha256"],
+      "properties": {
+        "role": {"enum": ["V2_ALLOCATION", "V2_CATALOG", "ACTIVE_BUILDER", "FUNCTION_REVIEW_SCHEMA", "NON_FUNCTION_REVIEW_SCHEMA"]},
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "design_scope": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "parent_task_id", "terminal_atomic_pr_id", "non_terminal_member_count",
+        "function_leaf_count", "type_leaf_count", "non_function_leaf_count", "covered_atomic_pr_ids",
+        "excluded_terminal_contract", "current_execution_status"
+      ],
+      "properties": {
+        "parent_task_id": {"const": "T1-M01-N015"},
+        "terminal_atomic_pr_id": {"const": "T1-M01-P066-IDX-n015-task-completion"},
+        "non_terminal_member_count": {"const": 36},
+        "function_leaf_count": {"const": 25},
+        "type_leaf_count": {"const": 3},
+        "non_function_leaf_count": {"const": 8},
+        "covered_atomic_pr_ids": {"type": "array", "minItems": 36, "maxItems": 36, "uniqueItems": true, "items": {"type": "string"}},
+        "excluded_terminal_contract": {"const": "P066 uses the standard task-completion candidate and current-evidence-index contracts; no executable function is invented"},
+        "current_execution_status": {"const": "BLOCKED_PREVIEW_NOT_REGISTERED"}
+      }
+    },
+    "data_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type_name", "purpose", "required_fields", "invariants", "secret_policy"],
+      "properties": {
+        "type_name": {"type": "string", "minLength": 3},
+        "purpose": {"type": "string", "minLength": 15},
+        "required_fields": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string"}},
+        "invariants": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 10}},
+        "secret_policy": {"type": "string", "minLength": 15}
+      }
+    },
+    "function_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "contract_id", "atomic_pr_id", "path", "qualified_symbol", "change_kind",
+        "companion_target_locators",
+        "signature_before", "signature_after", "responsibility", "inputs", "outputs",
+        "body_steps", "error_branches", "side_effects", "security_boundary",
+        "atomicity", "idempotency", "callers", "callees", "tests", "rollback",
+        "design_review_status"
+      ],
+      "properties": {
+        "contract_id": {"type": "string", "pattern": "^FC-M01-N015-[A-Za-z0-9-]+$"},
+        "atomic_pr_id": {"type": "string"},
+        "path": {"type": "string", "minLength": 3},
+        "qualified_symbol": {"type": "string", "minLength": 3},
+        "change_kind": {"enum": ["planned_create", "planned_modify"]},
+        "companion_target_locators": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+        "signature_before": {"type": ["string", "null"]},
+        "signature_after": {"type": "string", "minLength": 12},
+        "responsibility": {"type": "string", "minLength": 25},
+        "inputs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "outputs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "body_steps": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"type": "string", "pattern": "^B[0-9]{2} .+$"}},
+        "error_branches": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 12}},
+        "side_effects": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 8}},
+        "security_boundary": {"type": "string", "minLength": 25},
+        "atomicity": {"type": "string", "minLength": 15},
+        "idempotency": {"type": "string", "minLength": 15},
+        "callers": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "callees": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "tests": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^TC-M01-TRUST-[0-9]{2}$"}},
+        "rollback": {"type": "string", "minLength": 20},
+        "design_review_status": {"const": "REQUIRED_NOT_PERFORMED"}
+      }
+    },
+    "type_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "contract_id", "atomic_pr_id", "path", "qualified_symbol", "change_kind",
+        "declaration_after", "companion_declarations", "responsibility", "fields", "invariants", "construction_rules",
+        "security_boundary", "tests", "rollback", "design_review_status"
+      ],
+      "properties": {
+        "contract_id": {"type": "string", "pattern": "^TC-FC-M01-N015-[A-Za-z0-9-]+$"},
+        "atomic_pr_id": {"type": "string"},
+        "path": {"type": "string", "minLength": 3},
+        "qualified_symbol": {"type": "string", "minLength": 3},
+        "change_kind": {"const": "planned_create"},
+        "declaration_after": {"type": "string", "minLength": 12},
+        "companion_declarations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+        "responsibility": {"type": "string", "minLength": 25},
+        "fields": {"type": "array", "minItems": 6, "uniqueItems": true, "items": {"type": "string", "minLength": 5}},
+        "invariants": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"type": "string", "minLength": 15}},
+        "construction_rules": {"type": "array", "minItems": 4, "uniqueItems": true, "items": {"type": "string", "minLength": 15}},
+        "security_boundary": {"type": "string", "minLength": 25},
+        "tests": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^TC-M01-TRUST-[0-9]{2}$"}},
+        "rollback": {"type": "string", "minLength": 20},
+        "design_review_status": {"const": "REQUIRED_NOT_PERFORMED"}
+      }
+    },
+    "non_function_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "contract_id", "atomic_pr_id", "surface_kind", "target_locators",
+        "input_contract", "output_contract", "oracles", "security_constraints",
+        "tests", "rollback", "required_review_artifact_kind", "design_review_status"
+      ],
+      "properties": {
+        "contract_id": {"type": "string", "pattern": "^NFC-M01-N015-[A-Za-z0-9-]+$"},
+        "atomic_pr_id": {"type": "string"},
+        "surface_kind": {"enum": ["DECLARATIVE_CONTRACT", "DEPLOYMENT_PACKAGE", "DEPLOYMENT_MANIFEST", "EVIDENCE_OUTPUT"]},
+        "target_locators": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "input_contract": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 8}},
+        "output_contract": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 8}},
+        "oracles": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 12}},
+        "security_constraints": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 12}},
+        "tests": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^TC-M01-TRUST-[0-9]{2}$"}},
+        "rollback": {"type": "string", "minLength": 20},
+        "required_review_artifact_kind": {"const": "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT"},
+        "design_review_status": {"const": "REQUIRED_NOT_PERFORMED"}
+      }
+    },
+    "test_case": {
+      "type": "object", "additionalProperties": false,
+      "required": ["case_id", "kind", "subject_atomic_pr_ids", "injection", "oracle", "gate_id", "execution_status"],
+      "properties": {
+        "case_id": {"type": "string", "pattern": "^TC-M01-TRUST-[0-9]{2}$"},
+        "kind": {"enum": ["unit", "negative", "security", "replay", "compatibility", "integration", "reconciliation", "deployment", "rollback"]},
+        "subject_atomic_pr_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "injection": {"type": "string", "minLength": 15},
+        "oracle": {"type": "string", "minLength": 20},
+        "gate_id": {"enum": ["G0", "G1", "G2", "G3", "G6"]},
+        "execution_status": {"const": "NOT_RUN"}
+      }
+    },
+    "sequence_step": {
+      "type": "object", "additionalProperties": false,
+      "required": ["order", "atomic_pr_id", "entry_condition", "result", "activation", "status"],
+      "properties": {
+        "order": {"type": "integer", "minimum": 1},
+        "atomic_pr_id": {"type": "string"},
+        "entry_condition": {"type": "string", "minLength": 10},
+        "result": {"type": "string", "minLength": 15},
+        "activation": {"type": "string", "minLength": 15},
+        "status": {"const": "BLOCKED_PREVIEW_NOT_REGISTERED"}
+      }
+    },
+    "review_row": {
+      "type": "object", "additionalProperties": false,
+      "required": ["atomic_pr_id", "design_contract_id", "required_review_artifact_kind", "expected_review_path", "status", "blocking_reasons"],
+      "properties": {
+        "atomic_pr_id": {"type": "string"},
+        "design_contract_id": {"type": "string"},
+        "required_review_artifact_kind": {"enum": ["FUNCTION_DESIGN_REVIEW_RECEIPT", "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT"]},
+        "expected_review_path": {"type": "string", "minLength": 3},
+        "status": {"const": "MISSING_NOT_AUTHORED"},
+        "blocking_reasons": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 8}}
+      }
+    },
+    "rollback": {
+      "type": "object", "additionalProperties": false,
+      "required": ["entrypoint", "steps", "durable_evidence_policy", "irreversible_boundary"],
+      "properties": {
+        "entrypoint": {"type": "string", "minLength": 15},
+        "steps": {"type": "array", "minItems": 7, "uniqueItems": true, "items": {"type": "string", "minLength": 15}},
+        "durable_evidence_policy": {"type": "string", "minLength": 30},
+        "irreversible_boundary": {"type": "string", "minLength": 30}
+      }
+    },
+    "claims": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed", "forbidden", "proof_ceiling"],
+      "properties": {
+        "allowed": {"const": "P057-P062 and P067-P096 function type and specialized non-function behavior is statically specified against v2 preview"},
+        "forbidden": {"type": "array", "minItems": 14, "uniqueItems": true, "items": {"type": "string"}},
+        "proof_ceiling": {"const": "STATIC_FUNCTION_AND_NON_FUNCTION_DESIGN_ONLY_NOT_REVIEW_RECEIPT_GLOBAL_REGISTRATION_IMPLEMENTATION_IMAGE_BUILD_SIGNATURE_DEPLOYMENT_TEST_EXECUTION_TRUST_PASS_AUTHORIZATION_OR_ACCEPTANCE"}
+      }
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "source_hashes_exact", "member_exact_set", "function_exact_set", "type_exact_set",
+        "non_function_exact_set", "function_signatures_exact", "body_steps_contiguous",
+        "test_exact_set", "test_subject_coverage", "single_gate_evidence",
+        "sequence_topological", "review_coverage_exact", "no_review_fabrication",
+        "mutation_guards"
+      ],
+      "properties": {
+        "schema": {"const": "PASS"},
+        "source_hashes_exact": {"const": "PASS"},
+        "member_exact_set": {"const": "PASS_36"},
+        "function_exact_set": {"const": "PASS_25"},
+        "type_exact_set": {"const": "PASS_3"},
+        "non_function_exact_set": {"const": "PASS_8"},
+        "function_signatures_exact": {"const": "PASS"},
+        "body_steps_contiguous": {"const": "PASS"},
+        "test_exact_set": {"const": "PASS_42_NOT_RUN"},
+        "test_subject_coverage": {"const": "PASS_ALL_36"},
+        "single_gate_evidence": {"const": "PASS"},
+        "sequence_topological": {"const": "PASS"},
+        "review_coverage_exact": {"const": "PASS_36_MISSING"},
+        "no_review_fabrication": {"const": true},
+        "mutation_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "source_hash_drift", "member_omission", "function_omission", "type_omission", "non_function_omission",
+            "signature_drift", "body_step_drift", "error_branch_omission", "test_omission",
+            "uncovered_leaf", "wrong_gate", "sequence_inversion", "review_false_ready",
+            "terminal_function_fabrication", "secret_policy_weakening"
+          ],
+          "properties": {
+            "source_hash_drift": {"const": "PASS"},
+            "member_omission": {"const": "PASS"},
+            "function_omission": {"const": "PASS"},
+            "type_omission": {"const": "PASS"},
+            "non_function_omission": {"const": "PASS"},
+            "signature_drift": {"const": "PASS"},
+            "body_step_drift": {"const": "PASS"},
+            "error_branch_omission": {"const": "PASS"},
+            "test_omission": {"const": "PASS"},
+            "uncovered_leaf": {"const": "PASS"},
+            "wrong_gate": {"const": "PASS"},
+            "sequence_inversion": {"const": "PASS"},
+            "review_false_ready": {"const": "PASS"},
+            "terminal_function_fabrication": {"const": "PASS"},
+            "secret_policy_weakening": {"const": "PASS"}
+          }
+        }
+      }
+    }
+  }
+}

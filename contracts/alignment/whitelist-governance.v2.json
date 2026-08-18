@@ -1,0 +1,57 @@
+{
+  "contract_id": "T1-M09-N018-WHITELIST-GOVERNANCE-V2",
+  "task_id": "T1-M09-N018",
+  "status": "PARTIAL",
+  "scope": "FP-derived whitelist draft, independent approval, revocation, expiry, rule projection ACK and deterministic rule revision",
+  "event": {
+    "topic": "whitelist.events.v2",
+    "consumer_group": "rule-manager-whitelist-rule-effect-v2",
+    "schema_path": "contracts/events/kafka-json-events-v1.schema.json#/$defs/WhitelistLifecycleV2Json",
+    "canonical_definition_sha256": "d87787272d140c8529686ce45eef30f2a6345fb7f2e918a450399c8f698aad49",
+    "partition_key": "tenant_id+entry_id"
+  },
+  "runtime_rails": {
+    "consumer": "WHITELIST_EVENT_CONSUMER_V2_ENABLED",
+    "producer": "WHITELIST_EVENT_PRODUCER_V2_ENABLED",
+    "detection_matcher": "WHITELIST_DETECTION_MATCHER_V2_ENABLED",
+    "deprecated_ignored": "WHITELIST_EVENT_PIPELINE_V2_ENABLED",
+    "default": false,
+    "order": ["consumer", "broker projection readiness receipt", "producer", "projection reconcile", "detection matcher"]
+  },
+  "authorities": {
+    "command": "go/control-plane/internal/alert/whitelist/command_atomic.go#Repository.UpdateGovernedTx",
+    "expiry": "go/control-plane/internal/alert/whitelist/command_atomic.go#Repository.ExpireDue",
+    "producer_admission": "go/control-plane/internal/alert/whitelist/producer_readiness.go#VerifyProducerReadiness",
+    "projection": "go/control-plane/internal/rules/consumer/whitelist_rule_effect_consumer.go#PostgresWhitelistRuleProjection.ApplyWhitelistRuleProjection",
+    "api": "go/control-plane/internal/alert/whitelist/handler.go#Handler.Update",
+    "ui": "web/ui/src/pages/WhitelistGovernancePage.tsx#WhitelistGovernancePage"
+  },
+  "state_invariants": [
+    "draft/draft -> pending/pending -> active/approved -> disabled/approved",
+    "pending rejection terminates at disabled/rejected",
+    "creator cannot approve or reject",
+    "past expiry cannot be approved or assigned by an expiry command",
+    "one request cannot mix lifecycle, expiry and assignment",
+    "current version matches only after applied effective projection ACK",
+    "expiry stops matching before revoked projection ACK and retains history"
+  ],
+  "ack_contract": {
+    "readiness_table": "whitelist_consumer_readiness_receipt",
+    "required_joins": ["whitelist_rule_projection", "whitelist_rule_effects.status=applied"],
+    "ui_fields": ["rule_effect_status", "rule_desired_state", "rule_revision", "rule_ack_event_id", "rule_acknowledged_at", "rule_kafka_partition", "rule_kafka_offset", "rule_last_error"]
+  },
+  "safety": {
+    "network_blocking": false,
+    "raw_evidence_deleted": false,
+    "physical_whitelist_delete": false,
+    "producer_without_consumer_receipt": false
+  },
+  "latest_evidence": {
+    "path": "doc/02_acceptance/topic1/tasks/t1-m09-n018/k8s-whitelist-governance-latest.json",
+    "run_id": "a52db73e-0a2a-4207-9745-33346c9a1755",
+    "status": "PASS",
+    "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_DRAFT_APPROVAL_EXPIRY_PROJECTION_ACK",
+    "production_applied": false
+  },
+  "remaining": ["production rollout authorization", "performance and fault injection", "rollback rehearsal", "Windows Chrome lifecycle", "observation window"]
+}

@@ -1,0 +1,3291 @@
+{
+  "schema_version": "2.0.0",
+  "artifact_kind": "M02_CODE_DIRECT_LEAF_ALLOCATION_LEDGER",
+  "artifact_status": "VERSIONED_PREVIEW_NOT_GLOBAL_REGISTRY",
+  "revision_id": "M02-CODE-DIRECT-V2",
+  "base_catalog": {
+    "path": "contracts/alignment/m02-code-direct-leaf-catalog.v1.json",
+    "sha256": "29b7584696440bb70a8203f4ecbe4ae6574f1a785743562b94e87efbde73a703"
+  },
+  "source_design_refs": [
+    {
+      "path": "contracts/alignment/m02-partial-ack-function-design.v1.json",
+      "sha256": "a3aec2c4d5463794edfd2189bd6c885fe9df382d826350b46ba13be1e5bd66a2"
+    },
+    {
+      "path": "contracts/alignment/m02-pcap-spool-function-design.v1.json",
+      "sha256": "be2edbba0cf1b8e24258af3116ba852a2dcac046e34c7ba15d6b1c47c269c5cb"
+    },
+    {
+      "path": "contracts/alignment/m02-pcap-consumer-function-design.v1.json",
+      "sha256": "b397f3920f64318c585d65ece7a2fedd6ecbddc6bb25ff4df16085bfda215bb2"
+    },
+    {
+      "path": "contracts/alignment/m02-pcap-projection-function-design.v1.json",
+      "sha256": "dd2d67b1b4e924db65a270f8945325c5b7b5c2bed2d2ac6d2ed780d90a0ee277"
+    },
+    {
+      "path": "contracts/alignment/m02-pcap-metadata-receipt-function-design.v1.json",
+      "sha256": "d45b68ec6eac19589e3ddb8684ef8340fd9bb46efe9fa66f53065edd6c142fa8"
+    },
+    {
+      "path": "contracts/alignment/m02-capture-flow-identity-function-design.v1.json",
+      "sha256": "07e0b6292c14121ece0e3a60004fd3efd64f9164ad88dc05395c70d79d20b171"
+    },
+    {
+      "path": "contracts/alignment/m02-probe-control-ack-function-design.v1.json",
+      "sha256": "573ff7a4391fee55ba9eeceefa8cb0453646f7c1009a542e7f582e89f877b845"
+    }
+  ],
+  "semantic_projection_sha256": "7cf8b202c8004654e54d5ed52a5d085b2b1e20e30d85ef521604b70c79e0b621",
+  "allocation_epoch": "T1-M02-P308-P506",
+  "append_leaf_count": 199,
+  "trains": [
+    {
+      "train_id": "M02-V2-TRAIN-26",
+      "parent_task_id": "T1-M02-N006",
+      "gap_id": "M02-PCAP-GAP-04",
+      "owner_kind": "CONTRACT",
+      "single_result": "cleanup authority states are an additive journal contract independent from unlink behavior",
+      "steps": [
+        {
+          "leaf_id": "M02-N006-L30",
+          "atomic_pr_id": "T1-M02-P384-CTR-n006-l30",
+          "pr_type": "CTR",
+          "primary_locator": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs#UploadState",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N006-L10"],
+          "single_outcome": "add CLEANUP_AUTHORIZED and DELETED with explicit legacy mappings and forbidden transitions",
+          "oracle_and_rollback": "unknown or legacy state never authorizes deletion; rollback retains additive readable states"
+        },
+        {
+          "leaf_id": "M02-N006-L31",
+          "atomic_pr_id": "T1-M02-P385-REF-n006-l31",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_pcap_cleanup_state.rs#m02_pcap_cleanup_state_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N006-L30"],
+          "single_outcome": "freeze compatible state decode and illegal transition fixtures",
+          "oracle_and_rollback": "PENDING OBJECT_WRITTEN and METADATA_ACCEPTED do not imply cleanup authority"
+        },
+        {
+          "leaf_id": "M02-N006-L32",
+          "atomic_pr_id": "T1-M02-P386-TST-PRE-n006-l32",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-cleanup-state-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-cleanup-state-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N006-L31"],
+          "single_outcome": "record exact cleanup state contract result",
+          "oracle_and_rollback": "discard output without legacy journal decode cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N006-L20"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-27",
+      "parent_task_id": "T1-M02-N006",
+      "gap_id": "M02-PCAP-GAP-05",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "journal compare-and-set grants one revision-scoped cleanup claim before unlink",
+      "steps": [
+        {
+          "leaf_id": "M02-N006-L33",
+          "atomic_pr_id": "T1-M02-P387-WRT-n006-l33",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs#UploadJournal::claim_cleanup_authority",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N006-L15","M02-N006-L32"],
+          "single_outcome": "claim cleanup only from an exact expected revision and eligible terminal metadata state",
+          "oracle_and_rollback": "stale revision never grants a claim; rollback stops new claims and retains journal facts"
+        },
+        {
+          "leaf_id": "M02-N006-L34",
+          "atomic_pr_id": "T1-M02-P388-REF-n006-l34",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_pcap_cleanup_claim.rs#m02_pcap_cleanup_claim_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N006-L33"],
+          "single_outcome": "freeze stale concurrent and repeated cleanup claim fixtures",
+          "oracle_and_rollback": "at most one exact revision claim succeeds"
+        },
+        {
+          "leaf_id": "M02-N006-L35",
+          "atomic_pr_id": "T1-M02-P389-TST-PRE-n006-l35",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-cleanup-claim-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-cleanup-claim-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N006-L34"],
+          "single_outcome": "record exact cleanup claim result",
+          "oracle_and_rollback": "discard output without concurrent revision cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N006-L20"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-28",
+      "parent_task_id": "T1-M02-N006",
+      "gap_id": "M02-PCAP-GAP-06",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "journal records a durable deletion tombstone after an authorized unlink",
+      "steps": [
+        {
+          "leaf_id": "M02-N006-L36",
+          "atomic_pr_id": "T1-M02-P390-WRT-n006-l36",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs#UploadJournal::record_deleted",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N006-L33"],
+          "single_outcome": "persist DELETED tombstone for the exact cleanup claim and path identity",
+          "oracle_and_rollback": "an unlink cannot be undone; rollback preserves tombstone and prevents further deletion"
+        },
+        {
+          "leaf_id": "M02-N006-L37",
+          "atomic_pr_id": "T1-M02-P391-REF-n006-l37",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_pcap_delete_tombstone.rs#m02_pcap_delete_tombstone_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N006-L36"],
+          "single_outcome": "freeze unlink-before-tombstone crash and restart reconciliation fixtures",
+          "oracle_and_rollback": "startup recovery distinguishes missing authorized file from unexplained evidence loss"
+        },
+        {
+          "leaf_id": "M02-N006-L38",
+          "atomic_pr_id": "T1-M02-P392-TST-PRE-n006-l38",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-delete-tombstone-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-delete-tombstone-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N006-L37"],
+          "single_outcome": "record exact deletion tombstone result",
+          "oracle_and_rollback": "discard output without restart after unlink crash point"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N006-L20"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-29",
+      "parent_task_id": "T1-M02-N008",
+      "gap_id": "M02-PCAP-RECEIPT-GAP-02",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "Kafka writer returns a typed broker receipt bound to topic partition offset key event and attempt",
+      "steps": [
+        {
+          "leaf_id": "M02-N008-L15",
+          "atomic_pr_id": "T1-M02-P393-WRT-n008-l15",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/queue/producer.go#Producer.WritePcapIndex",
+          "companion_locators": ["go/control-plane/internal/common/kafka/producer.go#Producer.SendWithReceipt"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L06","M02-N008-L23"],
+          "single_outcome": "return a completion-correlated typed BrokerReceipt only after required ACK for the exact pcap metadata event and publish attempt",
+          "oracle_and_rollback": "concurrent attempts cannot exchange receipts; nil error without exact topic partition offset key event and attempt is outcome unknown"
+        },
+        {
+          "leaf_id": "M02-N008-L16",
+          "atomic_pr_id": "T1-M02-P394-REF-n008-l16",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/queue/producer_test.go#TestWritePcapIndexReceiptMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L15"],
+          "single_outcome": "freeze ACK timeout retry and receipt identity fixtures",
+          "oracle_and_rollback": "receipt exact fields include topic partition offset key event ID and publish attempt"
+        },
+        {
+          "leaf_id": "M02-N008-L17",
+          "atomic_pr_id": "T1-M02-P395-TST-PRE-n008-l17",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-kafka-receipt-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-kafka-receipt-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N008-L16"],
+          "single_outcome": "record exact typed broker receipt result",
+          "oracle_and_rollback": "discard output without broker ACK receipt fields"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N008-L10"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-30",
+      "parent_task_id": "T1-M02-N004",
+      "gap_id": "M02-FLOW-ID-GAP-14",
+      "owner_kind": "CONTRACT_AND_WRITER",
+      "single_result": "typed timestamp reaches PcapRecord FrameInfo and PacketBatch without a unitless adapter",
+      "steps": [
+        {
+          "leaf_id": "M02-N004-L36",
+          "atomic_pr_id": "T1-M02-P396-WRT-n004-l36",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#PcapReader::next_packet_checked",
+          "companion_locators": [
+            "rust/probe-agent/probe-agent/src/capture/mod.rs#PcapRecord",
+            "rust/probe-agent/probe-agent/src/capture/mod.rs#FrameInfo",
+            "rust/probe-agent/probe-agent/src/capture/mod.rs#PacketBatch"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L15","M02-N004-L29"],
+          "single_outcome": "return PcapRecord and store CaptureTimestamp in every FrameInfo and PacketBatch path",
+          "oracle_and_rollback": "no capture adapter exposes a unitless timestamp; rollback disables v2 capture routes"
+        },
+        {
+          "leaf_id": "M02-N004-L37",
+          "atomic_pr_id": "T1-M02-P397-REF-n004-l37",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_capture_timestamp_carrier.rs#m02_capture_timestamp_carrier_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L36"],
+          "single_outcome": "freeze offline live and batch carrier type fixtures",
+          "oracle_and_rollback": "compile and runtime fixtures reject every unitless timestamp construction"
+        },
+        {
+          "leaf_id": "M02-N004-L38",
+          "atomic_pr_id": "T1-M02-P398-TST-PRE-n004-l38",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n004/capture-timestamp-carrier-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n004/capture-timestamp-carrier-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N004-L37"],
+          "single_outcome": "record exact typed carrier result",
+          "oracle_and_rollback": "discard output without all capture modes"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N004-L26"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-31",
+      "parent_task_id": "T1-M02-N004",
+      "gap_id": "M02-FLOW-ID-GAP-15",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "AF_PACKET poll consumes timestamped frames through the production Capturer adapter",
+      "steps": [
+        {
+          "leaf_id": "M02-N004-L39",
+          "atomic_pr_id": "T1-M02-P399-WRT-n004-l39",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/capture/af_packet.rs#impl Capturer for AfPacketCapture::poll",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L32","M02-N004-L38"],
+          "single_outcome": "production poll returns PacketBatch whose every frame carries the approved timestamp",
+          "oracle_and_rollback": "dead timestamp helpers fail caller inventory; rollback disables timestamped AF_PACKET route"
+        },
+        {
+          "leaf_id": "M02-N004-L40",
+          "atomic_pr_id": "T1-M02-P400-REF-n004-l40",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_af_packet_poll_timestamp.rs#m02_af_packet_poll_timestamp_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L39"],
+          "single_outcome": "freeze production poll caller and batch timestamp fixtures",
+          "oracle_and_rollback": "every returned frame has kernel or classified degraded provenance"
+        },
+        {
+          "leaf_id": "M02-N004-L41",
+          "atomic_pr_id": "T1-M02-P401-TST-PRE-n004-l41",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n004/af-packet-poll-timestamp-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n004/af-packet-poll-timestamp-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N004-L40"],
+          "single_outcome": "record exact AF_PACKET poll timestamp result",
+          "oracle_and_rollback": "discard output without production caller coverage"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N004-L26"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-32",
+      "parent_task_id": "T1-M02-N004",
+      "gap_id": "M02-FLOW-ID-GAP-16",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "XDP monotonic timestamp is correlated to epoch within a bounded live correlation receipt",
+      "steps": [
+        {
+          "leaf_id": "M02-N004-L42",
+          "atomic_pr_id": "T1-M02-P402-WRT-n004-l42",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/capture/xdp.rs#ClockCorrelation::correlate_monotonic",
+          "companion_locators": ["rust/probe-agent/probe-agent/src/capture/xdp.rs#ClockCorrelationReceipt"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L29"],
+          "single_outcome": "convert MonotonicNs to CaptureTimestamp only with fresh bounded correlation",
+          "oracle_and_rollback": "restart NTP step stale correlation or error bound breach fails closed"
+        },
+        {
+          "leaf_id": "M02-N004-L43",
+          "atomic_pr_id": "T1-M02-P403-REF-n004-l43",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_xdp_clock_correlation.rs#m02_xdp_clock_correlation_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L42"],
+          "single_outcome": "freeze restart NTP step expiry and error-bound fixtures",
+          "oracle_and_rollback": "monotonic nanoseconds can never be interpreted directly as Unix epoch"
+        },
+        {
+          "leaf_id": "M02-N004-L44",
+          "atomic_pr_id": "T1-M02-P404-TST-PRE-n004-l44",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n004/xdp-clock-correlation-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n004/xdp-clock-correlation-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N004-L43"],
+          "single_outcome": "record exact XDP clock correlation result",
+          "oracle_and_rollback": "discard output without restart and NTP step cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N004-L26"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-33",
+      "parent_task_id": "T1-M02-N004",
+      "gap_id": "M02-FLOW-ID-GAP-17",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "XDP producer ABI and userspace poll carry and consume correlated descriptor timestamps",
+      "steps": [
+        {
+          "leaf_id": "M02-N004-L45",
+          "atomic_pr_id": "T1-M02-P405-WRT-n004-l45",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/ebpf/src/main.rs#emit_xdp_frame_metadata",
+          "companion_locators": [
+            "rust/probe-agent/probe-agent/src/capture/ring.rs#XdpDesc::metadata_headroom",
+            "rust/probe-agent/probe-agent/src/capture/xdp.rs#impl Capturer for XdpCapture::poll"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L35","M02-N004-L38","M02-N004-L44","M02-N004-L53"],
+          "single_outcome": "write shared ABI metadata at the frozen UMEM headroom offset with length and presence bounds then consume only a fresh correlated timestamp in production poll",
+          "oracle_and_rollback": "descriptor bounds placement presence ABI version or correlation mismatch fails closed; rollback disables timestamped XDP route"
+        },
+        {
+          "leaf_id": "M02-N004-L46",
+          "atomic_pr_id": "T1-M02-P406-REF-n004-l46",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_xdp_poll_timestamp.rs#m02_xdp_poll_timestamp_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L45"],
+          "single_outcome": "freeze ABI producer consumer correlation and production poll fixtures",
+          "oracle_and_rollback": "dead helper missing ABI field and direct ktime-as-epoch all fail"
+        },
+        {
+          "leaf_id": "M02-N004-L47",
+          "atomic_pr_id": "T1-M02-P407-TST-PRE-n004-l47",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n004/xdp-poll-timestamp-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n004/xdp-poll-timestamp-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N004-L46"],
+          "single_outcome": "record exact XDP poll timestamp result",
+          "oracle_and_rollback": "discard output without ABI and production caller coverage"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N004-L26"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-34",
+      "parent_task_id": "T1-M02-N004",
+      "gap_id": "M02-FLOW-ID-GAP-18",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "offline replay pacing uses typed capture timestamps and an explicit speed without unit confusion",
+      "steps": [
+        {
+          "leaf_id": "M02-N004-L48",
+          "atomic_pr_id": "T1-M02-P408-WRT-n004-l48",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#replay_delay",
+          "companion_locators": ["rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#ManifestPcapReplayer::poll_manifest"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L38"],
+          "single_outcome": "derive checked replay delay from previous and current CaptureTimestamp plus ReplaySpeed",
+          "oracle_and_rollback": "negative overflow or mixed precision duration fails closed; rollback disables paced v2 replay"
+        },
+        {
+          "leaf_id": "M02-N004-L49",
+          "atomic_pr_id": "T1-M02-P409-REF-n004-l49",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_replay_delay.rs#m02_replay_delay_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L48"],
+          "single_outcome": "freeze micro nano speed zero reorder and overflow pacing fixtures",
+          "oracle_and_rollback": "microsecond delta is never passed to Duration::from_nanos"
+        },
+        {
+          "leaf_id": "M02-N004-L50",
+          "atomic_pr_id": "T1-M02-P410-TST-PRE-n004-l50",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n004/replay-delay-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n004/replay-delay-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N004-L49"],
+          "single_outcome": "record exact replay pacing result",
+          "oracle_and_rollback": "discard output without precision and speed cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N004-L21"],
+      "terminal_leaf_id": "M02-N004-L26"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-35",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-19",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "ObservationScope is derived once from frame metadata and approved scope policy before sample construction",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L37",
+          "atomic_pr_id": "T1-M02-P411-WRT-n005-l37",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs#ObservationScope::try_from_frame",
+          "companion_locators": ["rust/probe-agent/probe-agent/src/config.rs#ScopePolicy"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L38","M02-N005-L15"],
+          "single_outcome": "derive immutable interface VLAN and QinQ observation scope without changing Community ID",
+          "oracle_and_rollback": "unknown scope revision fails closed; rollback disables scoped aggregation route"
+        },
+        {
+          "leaf_id": "M02-N005-L38",
+          "atomic_pr_id": "T1-M02-P412-REF-n005-l38",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_observation_scope.rs#m02_observation_scope_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N005-L37"],
+          "single_outcome": "freeze interface mirrored tap VLAN QinQ and unknown policy fixtures",
+          "oracle_and_rollback": "Community ID remains standard L3 identity"
+        },
+        {
+          "leaf_id": "M02-N005-L39",
+          "atomic_pr_id": "T1-M02-P413-TST-PRE-n005-l39",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/observation-scope-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n005/observation-scope-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N005-L38"],
+          "single_outcome": "record exact observation scope result",
+          "oracle_and_rollback": "discard output without overlapping-address scope cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-36",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-20",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "table update consumes FlowAggregationKey and FlowSample and owns event-time transition",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L40",
+          "atomic_pr_id": "T1-M02-P414-WRT-n005-l40",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/partitioned_flow_table.rs#PartitionedFlowTable::update",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N005-L18","M02-N005-L21","M02-N005-L24","M02-N005-L39"],
+          "single_outcome": "route a scoped aggregation key and apply one event-time state transition per sample",
+          "oracle_and_rollback": "stale time never repairs from wall clock; rollback drains or isolates active table revision"
+        },
+        {
+          "leaf_id": "M02-N005-L41",
+          "atomic_pr_id": "T1-M02-P415-REF-n005-l41",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_flow_table_update.rs#m02_flow_table_update_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N005-L40"],
+          "single_outcome": "freeze scoped partition event-time and concurrent update fixtures",
+          "oracle_and_rollback": "one sample causes exactly one state transition"
+        },
+        {
+          "leaf_id": "M02-N005-L42",
+          "atomic_pr_id": "T1-M02-P416-TST-PRE-n005-l42",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-table-update-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-table-update-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N005-L41"],
+          "single_outcome": "record exact table update result",
+          "oracle_and_rollback": "discard output without event-time and scope assertions"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N005-L06"],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-37",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-21",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "eviction runner consumes the selected clock and returns snapshots without wall-clock substitution",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L43",
+          "atomic_pr_id": "T1-M02-P417-WRT-n005-l43",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/eviction.rs#Eviction::run",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N005-L27","M02-N005-L30"],
+          "single_outcome": "run live idle or offline watermark and EOF eviction through one explicit clock input",
+          "oracle_and_rollback": "offline rollback disables route or performs EOF-only flush and never uses current wall time"
+        },
+        {
+          "leaf_id": "M02-N005-L44",
+          "atomic_pr_id": "T1-M02-P418-REF-n005-l44",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_eviction_run.rs#m02_eviction_run_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N005-L43"],
+          "single_outcome": "freeze live idle watermark EOF and snapshot rejection fixtures",
+          "oracle_and_rollback": "rejected snapshot returns RemovedFlow ownership"
+        },
+        {
+          "leaf_id": "M02-N005-L45",
+          "atomic_pr_id": "T1-M02-P419-TST-PRE-n005-l45",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/eviction-run-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n005/eviction-run-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N005-L44"],
+          "single_outcome": "record exact eviction runner result",
+          "oracle_and_rollback": "discard output without offline EOF and ownership return cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N005-L05"],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-38",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-09",
+      "owner_kind": "CONTRACT",
+      "single_result": "expiry has a distinct additive lifecycle event contract and cannot masquerade as acknowledged",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L48",
+          "atomic_pr_id": "T1-M02-P420-CTR-n012-l48",
+          "pr_type": "CTR",
+          "primary_locator": "go/control-plane/internal/alert/api/handler_probe_outbox.go#probeOperationExpiredEvent",
+          "companion_locators": ["go/control-plane/internal/alert/consumer/probe_operation_event_consumer.go#probeOperationLifecycleEvent"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L02"],
+          "single_outcome": "define OperationExpired as distinct from acknowledged failed and stale ACK outcomes",
+          "oracle_and_rollback": "old consumers reject unknown event until compatibility ships; rollback stops expiry emission"
+        },
+        {
+          "leaf_id": "M02-N012-L49",
+          "atomic_pr_id": "T1-M02-P421-REF-n012-l49",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/consumer/probe_operation_event_consumer_test.go#TestProbeOperationExpiredCompatibility",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L48"],
+          "single_outcome": "freeze producer consumer projection compatibility for expiry",
+          "oracle_and_rollback": "expiry projection never creates an Agent ACK receipt"
+        },
+        {
+          "leaf_id": "M02-N012-L50",
+          "atomic_pr_id": "T1-M02-P422-TST-PRE-n012-l50",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-expiry-contract-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-expiry-contract-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L49"],
+          "single_outcome": "record exact expiry lifecycle contract result",
+          "oracle_and_rollback": "discard output without old and new consumer matrix"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L07"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-39",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-10",
+      "owner_kind": "DATABASE_MIGRATION_AND_WRITER",
+      "single_result": "durable readiness epoch and outbox claim fence commit under one PostgreSQL transaction",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L51",
+          "atomic_pr_id": "T1-M02-P423-EXP-n012-l51",
+          "pr_type": "EXP",
+          "primary_locator": "deployments/postgres/migrations/202608131030_probe_pipeline_readiness_epoch_v1.sql#probe_pipeline_readiness_epochs",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L01"],
+          "single_outcome": "define readiness epoch lease revocation and claim-fence schema",
+          "oracle_and_rollback": "rollback drops readiness table only with dispatcher disabled and no active leases"
+        },
+        {
+          "leaf_id": "M02-N012-L52",
+          "atomic_pr_id": "T1-M02-P424-WRT-n012-l52",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/api/probe_pipeline_readiness.go#ProbePipelineReadinessStore.FenceClaim",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L51","M02-N012-L06","M02-N012-L07"],
+          "single_outcome": "validate live readiness epoch inside the same transaction and lock as each outbox claim",
+          "oracle_and_rollback": "revoked epoch cannot commit a later claim; rollback disables all dispatchers"
+        },
+        {
+          "leaf_id": "M02-N012-L53",
+          "atomic_pr_id": "T1-M02-P425-REF-n012-l53",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/api/probe_pipeline_readiness_test.go#TestReadinessFenceClaimMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L52"],
+          "single_outcome": "freeze revoke claim crash restart and stale epoch fixtures",
+          "oracle_and_rollback": "no TOCTOU exists between readiness check and claim commit"
+        },
+        {
+          "leaf_id": "M02-N012-L54",
+          "atomic_pr_id": "T1-M02-P426-TST-PRE-n012-l54",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-fence-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-fence-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L53"],
+          "single_outcome": "record exact readiness fence result",
+          "oracle_and_rollback": "discard output without concurrent revoke and claim"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-40",
+      "parent_task_id": "T1-M02-N001",
+      "gap_id": "M02-PCAP-RECEIPT-GAP-03",
+      "owner_kind": "CONTRACT",
+      "single_result": "UploadPcapIndex response distinguishes queued pending unknown and Kafka acknowledged receipt states",
+      "steps": [
+        {
+          "leaf_id": "M02-N001-L28",
+          "atomic_pr_id": "T1-M02-P427-CTR-n001-l28",
+          "pr_type": "CTR",
+          "primary_locator": "proto/traffic/v1/ingest.proto#traffic.v1.UploadPcapIndexResponse.receipt",
+          "companion_locators": [
+            "proto/traffic/v1/ingest.proto#traffic.v1.PcapKafkaReceipt",
+            "proto/traffic/v1/ingest.proto#traffic.v1.PcapReceiptState"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N001-L10"],
+          "single_outcome": "add PcapKafkaReceipt with frozen field numbers reserved policy receipt state and broker coordinates to UploadPcapIndexResponse",
+          "oracle_and_rollback": "ENQUEUED PENDING or OUTCOME_UNKNOWN never reports Kafka accepted; old field numbers stay reserved and rollback keeps the additive field readable"
+        },
+        {
+          "leaf_id": "M02-N001-L29",
+          "atomic_pr_id": "T1-M02-P428-REF-n001-l29",
+          "pr_type": "REF",
+          "primary_locator": "tests/alignment/test_m02_pcap_response_receipt.py#test_upload_pcap_response_receipt_compatibility",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N001-L28"],
+          "single_outcome": "freeze old client new client and Rust uploader response compatibility",
+          "oracle_and_rollback": "uploader stops retry only for exact KAFKA_ACKED identity"
+        },
+        {
+          "leaf_id": "M02-N001-L30",
+          "atomic_pr_id": "T1-M02-P429-TST-PRE-n001-l30",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n001/pcap-response-receipt-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n001/pcap-response-receipt-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N001-L29"],
+          "single_outcome": "record exact PCAP response receipt compatibility result",
+          "oracle_and_rollback": "discard output without legacy and Rust uploader cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N008-L07","M02-N011-L07"],
+      "terminal_leaf_id": "M02-N001-L24"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-01",
+      "parent_task_id": "T1-M02-N006",
+      "gap_id": "M02-PCAP-GAP-01",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "startup recovery establishes a bounded decision and supervisor before capture admission",
+      "steps": [
+        {
+          "leaf_id": "M02-N006-L21",
+          "atomic_pr_id": "T1-M02-P308-WRT-n006-l21",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/main.rs#run_pcap_startup_recovery_before_capture",
+          "companion_locators": [
+            "rust/probe-agent/probe-agent/src/main.rs#run_capture"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L17",
+            "M02-N006-L41"
+          ],
+          "single_outcome": "return one recovery-bounded CaptureAdmissionPermit before any capture latch can open",
+          "oracle_and_rollback": "mixed-state recovery decision and supervisor precede permit issue; rollback keeps admission closed"
+        },
+        {
+          "leaf_id": "M02-N006-L22",
+          "atomic_pr_id": "T1-M02-P309-REF-n006-l22",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_pcap_startup_recovery.rs#m02_pcap_startup_recovery_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L21"
+          ],
+          "single_outcome": "freeze startup ordering and recovery crash-window fixtures",
+          "oracle_and_rollback": "OBJECT_WRITTEN retries metadata only; delete test file to roll back"
+        },
+        {
+          "leaf_id": "M02-N006-L23",
+          "atomic_pr_id": "T1-M02-P310-TST-PRE-n006-l23",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-startup-recovery-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-startup-recovery-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L22"
+          ],
+          "single_outcome": "record exact startup recovery test result and run manifest",
+          "oracle_and_rollback": "accept only exact cases bound to candidate; discard unsigned evidence"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N006-L20"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-02",
+      "parent_task_id": "T1-M02-N006",
+      "gap_id": "M02-PCAP-GAP-02",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "cleanup deletes only revision-claimed CLEANUP_AUTHORIZED entries beneath canonical spool root",
+      "steps": [
+        {
+          "leaf_id": "M02-N006-L24",
+          "atomic_pr_id": "T1-M02-P311-WRT-n006-l24",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/archiver/disk_monitor.rs#DiskMonitor::cleanup_old_files",
+          "companion_locators": ["rust/probe-agent/probe-agent/src/archiver/disk_monitor.rs#CanonicalSpoolRoot::unlink_claimed"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L10",
+            "M02-N006-L15",
+            "M02-N006-L33",
+            "M02-N006-L36"
+          ],
+          "single_outcome": "delete only an exact cleanup claim beneath the canonical spool root and persist the deletion tombstone",
+          "oracle_and_rollback": "reject pending symlink path escape or stale claim before unlink; rollback stops later deletes and preserves tombstones but cannot restore an unlinked file"
+        },
+        {
+          "leaf_id": "M02-N006-L25",
+          "atomic_pr_id": "T1-M02-P312-REF-n006-l25",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_pcap_cleanup_authority.rs#m02_pcap_cleanup_authority_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L24"
+          ],
+          "single_outcome": "freeze mixed-age claim path symlink and rename-swap cleanup fixtures",
+          "oracle_and_rollback": "only an unconsumed CleanupClaim matching entry ID canonical path identity and expected revision permits unlink; AUTHORIZED state alone never deletes"
+        },
+        {
+          "leaf_id": "M02-N006-L26",
+          "atomic_pr_id": "T1-M02-P313-TST-PRE-n006-l26",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-cleanup-authority-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-cleanup-authority-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L25"
+          ],
+          "single_outcome": "record exact cleanup authority result and run manifest",
+          "oracle_and_rollback": "no deletion claim without candidate-bound receipt; discard incomplete run"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N006-L20"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-03",
+      "parent_task_id": "T1-M02-N006",
+      "gap_id": "M02-PCAP-GAP-03",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "one staged coordinator owns capture spool producer uploader and recovery shutdown order",
+      "steps": [
+        {
+          "leaf_id": "M02-N006-L27",
+          "atomic_pr_id": "T1-M02-P314-WRT-n006-l27",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/main.rs#stage_capture_spool_upload_shutdown",
+          "companion_locators": ["rust/probe-agent/probe-agent/src/main.rs#wait_for_shutdown"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L08",
+            "M02-N006-L16",
+            "M02-N006-L17",
+            "M02-N006-L23",
+            "M02-N006-L26"
+          ],
+          "single_outcome": "caller executes stop admission join capture and processor final seal and fsync journal fsync enqueue sealed refs producer close uploader and metadata drain resource release then receipt",
+          "oracle_and_rollback": "deadline returns a non-graceful receipt; process kill is classified by next startup recovery from durable journal state; rollback uses prior fail-closed shutdown"
+        },
+        {
+          "leaf_id": "M02-N006-L28",
+          "atomic_pr_id": "T1-M02-P315-REF-n006-l28",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_pcap_staged_shutdown.rs#m02_pcap_staged_shutdown_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L27"
+          ],
+          "single_outcome": "freeze strict order deadline kill final-seal-before-enqueue and producer-close-before-uploader-deadline fixtures",
+          "oracle_and_rollback": "false graceful is forbidden; killed process need not emit a receipt and next startup must classify the durable interruption"
+        },
+        {
+          "leaf_id": "M02-N006-L29",
+          "atomic_pr_id": "T1-M02-P316-TST-PRE-n006-l29",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-staged-shutdown-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-staged-shutdown-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L28"
+          ],
+          "single_outcome": "record exact staged shutdown result and run manifest",
+          "oracle_and_rollback": "graceful or deadline receipt proves only executed stages; kill evidence comes from next startup recovery and never requires the killed process to emit a receipt"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N006-L20"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-04",
+      "parent_task_id": "T1-M02-N008",
+      "gap_id": "M02-PCAP-RECEIPT-GAP-01",
+      "owner_kind": "DATABASE_MIGRATION_AND_WRITER",
+      "single_result": "PostgreSQL receipt and outbox authority turns one request identity into one reusable Kafka ACK receipt",
+      "steps": [
+        {
+          "leaf_id": "M02-N008-L11",
+          "atomic_pr_id": "T1-M02-P317-EXP-n008-l11",
+          "pr_type": "EXP",
+          "primary_locator": "deployments/postgres/migrations/202608131000_pcap_metadata_receipt_outbox_v1.sql#pcap_metadata_receipts",
+          "companion_locators": [
+            "deployments/postgres/migrations/202608131000_pcap_metadata_receipt_outbox_v1.sql#pcap_metadata_outbox"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N006-L09"
+          ],
+          "single_outcome": "define receipt outbox lease unique identity and ACK transition schema",
+          "oracle_and_rollback": "migration down path preserves source object journal; rollback drops only unused new tables"
+        },
+        {
+          "leaf_id": "M02-N008-L12",
+          "atomic_pr_id": "T1-M02-P318-WRT-n008-l12",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/server/pcap_receipt_store.go#PcapReceiptStore.EnqueueOrReplay",
+          "companion_locators": [
+            "go/control-plane/internal/ingest/server/pcap_receipt_store.go#PcapReceiptStore.MarkKafkaAcked",
+            "go/control-plane/internal/ingest/server/pcap_outbox_dispatcher.go#PcapMetadataOutboxDispatcher.publishOne"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N008-L11",
+            "M02-N008-L06",
+            "M02-N008-L15",
+            "M02-N001-L30",
+            "M02-N011-L01"
+          ],
+          "single_outcome": "implement transactional enqueue replay lease typed publish and broker receipt transition for exact object-manifest identity",
+          "oracle_and_rollback": "crash after broker ACK remains outcome unknown and replays the same event identity; rollback disables dispatcher and drops tables only when proven empty"
+        },
+        {
+          "leaf_id": "M02-N008-L13",
+          "atomic_pr_id": "T1-M02-P319-REF-n008-l13",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/server/pcap_metadata_receipt_test.go#TestPcapMetadataReceiptMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N008-L12",
+            "M02-N008-L06",
+            "M02-N008-L07"
+          ],
+          "single_outcome": "freeze concurrent replay crash-window and unique identity fixtures",
+          "oracle_and_rollback": "direct handler publish is forbidden; rollback removes test-only fixture"
+        },
+        {
+          "leaf_id": "M02-N008-L14",
+          "atomic_pr_id": "T1-M02-P320-TST-PRE-n008-l14",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-metadata-receipt-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-metadata-receipt-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N008-L13"
+          ],
+          "single_outcome": "record exact receipt outbox result and manifest",
+          "oracle_and_rollback": "no exactly-once claim; discard result without broker and database bindings"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N008-L07"
+      ],
+      "terminal_leaf_id": "M02-N008-L10"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-05",
+      "parent_task_id": "T1-M02-N001",
+      "gap_id": "M02-FLOW-ID-GAP-13",
+      "owner_kind": "CONTRACT",
+      "single_result": "FlowEvent additive identity revision distinguishes mixed producer identity semantics",
+      "steps": [
+        {
+          "leaf_id": "M02-N001-L25",
+          "atomic_pr_id": "T1-M02-P321-CTR-n001-l25",
+          "pr_type": "CTR",
+          "primary_locator": "proto/traffic/v1/flow.proto#traffic.v1.FlowEvent.identity_revision",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N001-L02"
+          ],
+          "single_outcome": "add identity revision with reserved-number compatibility policy",
+          "oracle_and_rollback": "descriptor must be additive; rollback keeps field readable and stops new revision emission"
+        },
+        {
+          "leaf_id": "M02-N001-L26",
+          "atomic_pr_id": "T1-M02-P322-REF-n001-l26",
+          "pr_type": "REF",
+          "primary_locator": "tests/alignment/test_m02_flow_identity_revision.py#test_flow_identity_revision_compatibility",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N001-L25"
+          ],
+          "single_outcome": "freeze old new producer consumer and replay compatibility fixtures",
+          "oracle_and_rollback": "unknown revision fails closed; rollback removes only unpublished assertions"
+        },
+        {
+          "leaf_id": "M02-N001-L27",
+          "atomic_pr_id": "T1-M02-P323-TST-PRE-n001-l27",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n001/flow-identity-revision-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n001/flow-identity-revision-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N001-L26"
+          ],
+          "single_outcome": "record exact identity revision compatibility result",
+          "oracle_and_rollback": "discard evidence not bound to generated descriptors"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N001-L24"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-06",
+      "parent_task_id": "T1-M02-N004",
+      "gap_id": "M02-FLOW-ID-GAP-01",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "typed capture timestamp preserves source precision and checked canonical epoch units",
+      "steps": [
+        {
+          "leaf_id": "M02-N004-L27",
+          "atomic_pr_id": "T1-M02-P324-WRT-n004-l27",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/capture/mod.rs#CaptureTimestamp::from_unix_parts",
+          "companion_locators": [
+            "rust/probe-agent/probe-agent/src/capture/mod.rs#CaptureTimestamp::epoch_micros"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N001-L27",
+            "M02-N004-L01"
+          ],
+          "single_outcome": "add typed checked capture timestamp and explicit precision metadata",
+          "oracle_and_rollback": "overflow is typed rejection; rollback retains adapter compatibility"
+        },
+        {
+          "leaf_id": "M02-N004-L28",
+          "atomic_pr_id": "T1-M02-P325-REF-n004-l28",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_capture_timestamp.rs#m02_capture_timestamp_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L27",
+            "M02-N004-L15"
+          ],
+          "single_outcome": "freeze nanosecond microsecond overflow and offline replay fixtures",
+          "oracle_and_rollback": "no unitless u64 API accepted; remove fixture on rollback"
+        },
+        {
+          "leaf_id": "M02-N004-L29",
+          "atomic_pr_id": "T1-M02-P326-TST-PRE-n004-l29",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n004/capture-timestamp-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n004/capture-timestamp-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L28"
+          ],
+          "single_outcome": "record exact typed timestamp result and manifest",
+          "oracle_and_rollback": "discard result without source precision cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N004-L26"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-07",
+      "parent_task_id": "T1-M02-N004",
+      "gap_id": "M02-FLOW-ID-GAP-02",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "AF_PACKET emits per-frame kernel timestamp or classified degradation",
+      "steps": [
+        {
+          "leaf_id": "M02-N004-L30",
+          "atomic_pr_id": "T1-M02-P327-WRT-n004-l30",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/capture/af_packet.rs#AfPacketCapture::recv_frames_with_timestamps",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L29"
+          ],
+          "single_outcome": "bind kernel ancillary timestamp to each captured frame",
+          "oracle_and_rollback": "missing ancillary data is explicit degradation; rollback disables path"
+        },
+        {
+          "leaf_id": "M02-N004-L31",
+          "atomic_pr_id": "T1-M02-P328-REF-n004-l31",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_af_packet_timestamp.rs#m02_af_packet_timestamp_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L30"
+          ],
+          "single_outcome": "freeze per-frame batch and degraded-mode fixtures",
+          "oracle_and_rollback": "batch receive time cannot masquerade as packet time"
+        },
+        {
+          "leaf_id": "M02-N004-L32",
+          "atomic_pr_id": "T1-M02-P329-TST-PRE-n004-l32",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n004/af-packet-timestamp-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n004/af-packet-timestamp-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L31"
+          ],
+          "single_outcome": "record exact AF_PACKET timestamp result",
+          "oracle_and_rollback": "discard output lacking kernel timestamp provenance"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N004-L26"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-08",
+      "parent_task_id": "T1-M02-N004",
+      "gap_id": "M02-FLOW-ID-GAP-03",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "XDP emits per-frame timestamp metadata or classified degradation",
+      "steps": [
+        {
+          "leaf_id": "M02-N004-L33",
+          "atomic_pr_id": "T1-M02-P330-WRT-n004-l33",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/capture/xdp.rs#XdpCapture::consume_rx_with_timestamps",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L29"
+          ],
+          "single_outcome": "purely bind an already decoded typed XDP CaptureTimestamp to FrameInfo without owning shared ABI parsing",
+          "oracle_and_rollback": "absent metadata is explicit degradation; rollback disables timestamped XDP path"
+        },
+        {
+          "leaf_id": "M02-N004-L34",
+          "atomic_pr_id": "T1-M02-P331-REF-n004-l34",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_xdp_timestamp.rs#m02_xdp_timestamp_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L33"
+          ],
+          "single_outcome": "freeze XDP timestamp parity and degraded-mode fixtures",
+          "oracle_and_rollback": "batch time substitution fails the oracle"
+        },
+        {
+          "leaf_id": "M02-N004-L35",
+          "atomic_pr_id": "T1-M02-P332-TST-PRE-n004-l35",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n004/xdp-timestamp-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n004/xdp-timestamp-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L34"
+          ],
+          "single_outcome": "record exact XDP timestamp result and manifest",
+          "oracle_and_rollback": "discard output without parity cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N004-L26"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-09",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-05",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "one checked decoder freezes VLAN IP extension and fragment disposition for all callers",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L10",
+          "atomic_pr_id": "T1-M02-P333-WRT-n005-l10",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/parser/mod.rs#PacketParser::decode_flow_fields",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L29"
+          ],
+          "single_outcome": "decode QinQ IPv4 options IPv6 extensions and fragment policy once",
+          "oracle_and_rollback": "malformed or non-first fragments are typed dispositions; rollback disables v2 fast and shadow identity routes"
+        },
+        {
+          "leaf_id": "M02-N005-L11",
+          "atomic_pr_id": "T1-M02-P334-REF-n005-l11",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_flow_decode.rs#m02_flow_decode_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L10"
+          ],
+          "single_outcome": "freeze IPv4 IPv6 VLAN extension and fragment fixtures",
+          "oracle_and_rollback": "fast and full decoded fields must match or fail closed"
+        },
+        {
+          "leaf_id": "M02-N005-L12",
+          "atomic_pr_id": "T1-M02-P335-TST-PRE-n005-l12",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-decode-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-decode-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L11"
+          ],
+          "single_outcome": "record exact decoder result and manifest",
+          "oracle_and_rollback": "discard result lacking malformed and fragment cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-10",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-04",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "one protocol-aware canonicalization authority returns tuple direction and one-way semantics",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L13",
+          "atomic_pr_id": "T1-M02-P336-WRT-n005-l13",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs#canonicalize_observation",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N001-L27",
+            "M02-N005-L12"
+          ],
+          "single_outcome": "canonicalize endpoints direction Community tuple and ICMP port-equivalent values",
+          "oracle_and_rollback": "first packet direction never enters stable key; rollback disables new identity revision"
+        },
+        {
+          "leaf_id": "M02-N005-L14",
+          "atomic_pr_id": "T1-M02-P337-REF-n005-l14",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_flow_canonicalization.rs#m02_flow_canonicalization_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L13"
+          ],
+          "single_outcome": "freeze reverse tuple ICMP one-way and port-equivalent fixtures",
+          "oracle_and_rollback": "paired ICMP request and reply share canonical identity with opposite direction while one-way errors never force reverse merge"
+        },
+        {
+          "leaf_id": "M02-N005-L15",
+          "atomic_pr_id": "T1-M02-P338-TST-PRE-n005-l15",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-canonicalization-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-canonicalization-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L14"
+          ],
+          "single_outcome": "record exact canonicalization result",
+          "oracle_and_rollback": "discard output without ICMP one-way coverage"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N005-L01",
+        "M02-N005-L02"
+      ],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-11",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-06",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "CaptureFrame decoded fields and observation scope become one immutable FlowSample",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L16",
+          "atomic_pr_id": "T1-M02-P339-WRT-n005-l16",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/parser/mod.rs#FlowSampleBuilder::build",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L29",
+            "M02-N005-L12",
+            "M02-N005-L15",
+            "M02-N005-L39"
+          ],
+          "single_outcome": "build one immutable sample shared by full fast and shadow routes",
+          "oracle_and_rollback": "invalid scope or timestamp returns typed error; rollback retains legacy carrier"
+        },
+        {
+          "leaf_id": "M02-N005-L17",
+          "atomic_pr_id": "T1-M02-P340-REF-n005-l17",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_flow_sample.rs#m02_flow_sample_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L16"
+          ],
+          "single_outcome": "freeze full fast sample equality and malformed input fixtures",
+          "oracle_and_rollback": "semantic sample equality excludes processing time"
+        },
+        {
+          "leaf_id": "M02-N005-L18",
+          "atomic_pr_id": "T1-M02-P341-TST-PRE-n005-l18",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-sample-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-sample-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L17"
+          ],
+          "single_outcome": "record exact FlowSample result",
+          "oracle_and_rollback": "discard output without both parser paths"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N005-L03",
+        "M02-N005-L04"
+      ],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-12",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-07",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "event-time transitions advance start end and direction clocks under one out-of-order policy",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L19",
+          "atomic_pr_id": "T1-M02-P342-WRT-n005-l19",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs#FlowValue::apply_event_time",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L18"
+          ],
+          "single_outcome": "apply start-min end-max and nonnegative direction IAT policy",
+          "oracle_and_rollback": "wall clock never repairs event time; rollback first drains or revision-isolates every active FlowTable before stopping revised identity emission"
+        },
+        {
+          "leaf_id": "M02-N005-L20",
+          "atomic_pr_id": "T1-M02-P343-REF-n005-l20",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_flow_event_time.rs#m02_flow_event_time_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L19"
+          ],
+          "single_outcome": "freeze reordered duplicate and historic PCAP event-time fixtures",
+          "oracle_and_rollback": "live and offline use supplied event time while eviction clocks differ"
+        },
+        {
+          "leaf_id": "M02-N005-L21",
+          "atomic_pr_id": "T1-M02-P344-TST-PRE-n005-l21",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-event-time-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-event-time-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L20"
+          ],
+          "single_outcome": "record exact event-time state result",
+          "oracle_and_rollback": "discard output using SystemTime as packet time"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-13",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-12",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "approved interface VLAN and QinQ scope controls aggregation without changing standard Community ID",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L22",
+          "atomic_pr_id": "T1-M02-P345-WRT-n005-l22",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs#FlowAggregationKey::new",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L15",
+            "M02-N005-L39"
+          ],
+          "single_outcome": "construct aggregation key from canonical tuple and explicit observation scope",
+          "oracle_and_rollback": "scope revision mismatch fails closed; rollback uses legacy scope behind flag"
+        },
+        {
+          "leaf_id": "M02-N005-L23",
+          "atomic_pr_id": "T1-M02-P346-REF-n005-l23",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_flow_aggregation_scope.rs#m02_flow_aggregation_scope_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L22"
+          ],
+          "single_outcome": "freeze overlapping address mirrored tap VLAN and QinQ fixtures",
+          "oracle_and_rollback": "Community ID stays L3 standard while aggregation isolation changes"
+        },
+        {
+          "leaf_id": "M02-N005-L24",
+          "atomic_pr_id": "T1-M02-P347-TST-PRE-n005-l24",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-aggregation-scope-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-aggregation-scope-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L23"
+          ],
+          "single_outcome": "record exact aggregation scope result",
+          "oracle_and_rollback": "discard output without overlapping observation fixtures"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-14",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-08",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "live eviction uses processing clock and offline eviction uses capture watermark plus EOF flush",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L25",
+          "atomic_pr_id": "T1-M02-P348-WRT-n005-l25",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/eviction.rs#EvictionClock::eviction_now",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L29",
+            "M02-N005-L21"
+          ],
+          "single_outcome": "select explicit live processing or offline watermark eviction clock",
+          "oracle_and_rollback": "clock mode mismatch fails closed; rollback disables offline route or permits only explicit end-of-input flush and never substitutes current wall time"
+        },
+        {
+          "leaf_id": "M02-N005-L26",
+          "atomic_pr_id": "T1-M02-P349-REF-n005-l26",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_flow_eviction_clock.rs#m02_flow_eviction_clock_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L25"
+          ],
+          "single_outcome": "freeze live idle offline watermark and end-of-input flush fixtures",
+          "oracle_and_rollback": "historical PCAP cannot be evicted by current wall time"
+        },
+        {
+          "leaf_id": "M02-N005-L27",
+          "atomic_pr_id": "T1-M02-P350-TST-PRE-n005-l27",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-eviction-clock-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-eviction-clock-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L26"
+          ],
+          "single_outcome": "record exact eviction clock result",
+          "oracle_and_rollback": "discard output lacking EOF flush"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-15",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-09",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "removed flow state becomes one internally consistent immutable snapshot or typed rejection",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L28",
+          "atomic_pr_id": "T1-M02-P351-WRT-n005-l28",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/eviction.rs#FlowSnapshot::try_from_removed",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L21",
+            "M02-N005-L24",
+            "M02-N005-L27"
+          ],
+          "single_outcome": "implement fn try_from_removed(removed: RemovedFlow) -> Result<FlowSnapshot, (SnapshotError, RemovedFlow)> and capture one consistent snapshot",
+          "oracle_and_rollback": "the ownership-returning signature is frozen; typed rejection returns RemovedFlow so no rejected snapshot loses a flow"
+        },
+        {
+          "leaf_id": "M02-N005-L29",
+          "atomic_pr_id": "T1-M02-P352-REF-n005-l29",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_flow_snapshot.rs#m02_flow_snapshot_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L28"
+          ],
+          "single_outcome": "freeze concurrent update and invariant violation fixtures",
+          "oracle_and_rollback": "no event emits from a torn snapshot"
+        },
+        {
+          "leaf_id": "M02-N005-L30",
+          "atomic_pr_id": "T1-M02-P353-TST-PRE-n005-l30",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-snapshot-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-snapshot-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L29"
+          ],
+          "single_outcome": "record exact immutable snapshot result",
+          "oracle_and_rollback": "discard output without concurrent mutation cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N005-L05"
+      ],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-16",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-10",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "identity context and immutable snapshot yield deterministic event and idempotency identities",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L31",
+          "atomic_pr_id": "T1-M02-P354-WRT-n005-l31",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/eviction.rs#FlowEventIdentity::derive",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N001-L27",
+            "M02-N005-L30"
+          ],
+          "single_outcome": "derive deterministic identities from canonical semantic projection and revision",
+          "oracle_and_rollback": "produced_at is excluded from identity; rollback stops new revision emission"
+        },
+        {
+          "leaf_id": "M02-N005-L32",
+          "atomic_pr_id": "T1-M02-P355-REF-n005-l32",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_flow_event_identity.rs#m02_flow_event_identity_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L31"
+          ],
+          "single_outcome": "freeze replay partition and produced_at exception fixtures",
+          "oracle_and_rollback": "semantic identity remains equal across replay and partition placement"
+        },
+        {
+          "leaf_id": "M02-N005-L33",
+          "atomic_pr_id": "T1-M02-P356-TST-PRE-n005-l33",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-event-identity-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n005/flow-event-identity-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L32"
+          ],
+          "single_outcome": "record exact FlowEvent identity result",
+          "oracle_and_rollback": "discard byte-equality claim that includes produced_at"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N005-L05"
+      ],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-17",
+      "parent_task_id": "T1-M02-N005",
+      "gap_id": "M02-FLOW-ID-GAP-11",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "Full Fast or Shadow routing is explicit and shadow commits at most one table update",
+      "steps": [
+        {
+          "leaf_id": "M02-N005-L34",
+          "atomic_pr_id": "T1-M02-P357-WRT-n005-l34",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs#PacketProcessor::process_batch",
+          "companion_locators": [
+            "rust/probe-agent/probe-agent/src/config.rs#ParserRoute"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N004-L41",
+            "M02-N004-L47",
+            "M02-N005-L03",
+            "M02-N005-L04",
+            "M02-N005-L18",
+            "M02-N005-L21",
+            "M02-N005-L24",
+            "M02-N005-L42"
+          ],
+          "single_outcome": "route parser mode compare shadow semantics and commit once",
+          "oracle_and_rollback": "shadow mismatch fails closed before table mutation; rollback selects full path"
+        },
+        {
+          "leaf_id": "M02-N005-L35",
+          "atomic_pr_id": "T1-M02-P358-REF-n005-l35",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_process_batch_route.rs#m02_process_batch_route_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L34"
+          ],
+          "single_outcome": "freeze full fast shadow mismatch and single-commit fixtures",
+          "oracle_and_rollback": "exactly one table mutation is observable"
+        },
+        {
+          "leaf_id": "M02-N005-L36",
+          "atomic_pr_id": "T1-M02-P359-TST-PRE-n005-l36",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n005/process-batch-route-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n005/process-batch-route-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N005-L35"
+          ],
+          "single_outcome": "record exact route and shadow result",
+          "oracle_and_rollback": "discard output lacking mismatch injection"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N005-L09"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-18",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-01",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "stable outbox event obtains typed broker receipt and durable published or outcome-unknown state",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L24",
+          "atomic_pr_id": "T1-M02-P360-WRT-n012-l24",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/api/handler_probe_outbox.go#SystemHandler.publishProbeOperationOutboxItem",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L15",
+            "M02-N012-L45",
+            "M02-N012-L58"
+          ],
+          "single_outcome": "persist broker receipt or outcome unknown after keyed publish",
+          "oracle_and_rollback": "never claim exactly once across ACK crash window; rollback stops claims"
+        },
+        {
+          "leaf_id": "M02-N012-L25",
+          "atomic_pr_id": "T1-M02-P361-REF-n012-l25",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/api/handler_probe_outbox_test.go#TestPublishProbeOperationOutboxReceiptMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L24"
+          ],
+          "single_outcome": "freeze ACK before receipt crash redelivery and collision fixtures",
+          "oracle_and_rollback": "same event identity is reused on retry"
+        },
+        {
+          "leaf_id": "M02-N012-L26",
+          "atomic_pr_id": "T1-M02-P362-TST-PRE-n012-l26",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-outbox-receipt-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-outbox-receipt-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L25"
+          ],
+          "single_outcome": "record exact probe outbox receipt result",
+          "oracle_and_rollback": "discard output without broker receipt binding"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N012-L16"
+      ],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-19",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-02",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "projection is replay-idempotent across Kafka offsets and rejects semantic collision",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L27",
+          "atomic_pr_id": "T1-M02-P363-WRT-n012-l27",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/api/probe_operation_projection.go#SystemHandler.ApplyProbeOperationProjection",
+          "companion_locators": ["go/control-plane/internal/common/kafka/consumer_single_message_commit_test.go#TestConsumeCommitFailureRetainsOffsetAndProcessedObserver"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L05"
+          ],
+          "single_outcome": "commit immutable event and latest state with semantic replay authority",
+          "oracle_and_rollback": "conflicting payload fails and offset stays uncommitted; rollback disables consumer"
+        },
+        {
+          "leaf_id": "M02-N012-L28",
+          "atomic_pr_id": "T1-M02-P364-REF-n012-l28",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/api/probe_operation_projection_test.go#TestApplyProbeOperationProjectionCrossOffsetReplay",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L27"
+          ],
+          "single_outcome": "freeze exact duplicate cross-offset and collision fixtures",
+          "oracle_and_rollback": "only semantic duplicate is idempotent"
+        },
+        {
+          "leaf_id": "M02-N012-L29",
+          "atomic_pr_id": "T1-M02-P365-TST-PRE-n012-l29",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-projection-replay-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-projection-replay-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L28"
+          ],
+          "single_outcome": "record exact projection replay result",
+          "oracle_and_rollback": "discard output without different-offset replay"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N012-L07"
+      ],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-20",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-03",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "ReceivedMessage envelope is validated and retained as one command delivery source receipt",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L30",
+          "atomic_pr_id": "T1-M02-P366-WRT-n012-l30",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/control/bridge.go#Router.RouteMessage",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L01",
+            "M02-N012-L08",
+            "M02-N012-L33"
+          ],
+          "single_outcome": "validate key headers body partition offset and route one envelope",
+          "oracle_and_rollback": "mismatch does not mutate cache; rollback disables command consumer"
+        },
+        {
+          "leaf_id": "M02-N012-L31",
+          "atomic_pr_id": "T1-M02-P367-REF-n012-l31",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/control/bridge_test.go#TestRouteMessageEnvelopeMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L30"
+          ],
+          "single_outcome": "freeze key header body and source offset mismatch fixtures",
+          "oracle_and_rollback": "cache record retains source receipt"
+        },
+        {
+          "leaf_id": "M02-N012-L32",
+          "atomic_pr_id": "T1-M02-P368-TST-PRE-n012-l32",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-route-message-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-route-message-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L31"
+          ],
+          "single_outcome": "record exact RouteMessage result",
+          "oracle_and_rollback": "discard output without envelope mismatch cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N012-L20"
+      ],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-21",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-04",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "Redis cache lists only unexpired commands and deletes only exact operation revision",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L33",
+          "atomic_pr_id": "T1-M02-P369-WRT-n012-l33",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/control/bridge.go#RedisCommandStore.List",
+          "companion_locators": [
+            "go/control-plane/internal/ingest/control/bridge.go#RedisCommandStore.DeleteIfRevision",
+            "go/control-plane/internal/ingest/control/bridge.go#RedisCommandStore.PutIfNewer"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L01"
+          ],
+          "single_outcome": "add expiry filtering compare-delete and PutIfNewer statuses INSERTED REPLAY SAME_REVISION_COLLISION or STALE_REVISION",
+          "oracle_and_rollback": "only INSERTED or exact REPLAY succeeds; collision is permanent and stale never deletes or replaces a newer command"
+        },
+        {
+          "leaf_id": "M02-N012-L34",
+          "atomic_pr_id": "T1-M02-P370-REF-n012-l34",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/control/bridge_test.go#TestRedisCommandStoreRevisionMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L33"
+          ],
+          "single_outcome": "freeze expiry stale ACK concurrent replace and replay fixtures",
+          "oracle_and_rollback": "Lua result and Redis state form the oracle"
+        },
+        {
+          "leaf_id": "M02-N012-L35",
+          "atomic_pr_id": "T1-M02-P371-TST-PRE-n012-l35",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-redis-revision-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-redis-revision-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L34"
+          ],
+          "single_outcome": "record exact Redis revision result",
+          "oracle_and_rollback": "discard output without stale ACK race"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N012-L08",
+        "M02-N012-L14"
+      ],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-22",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-05",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "only permanent contract errors reach DLQ while storage and transaction failures stay uncommitted",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L36",
+          "atomic_pr_id": "T1-M02-P372-WRT-n012-l36",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/consumer/probe_ack_consumer.go#classifyProbeAckError",
+          "companion_locators": [
+            "go/control-plane/cmd/alert-service/probe_operation_pipeline.go#newProbeAckConsumerConfig",
+            "go/control-plane/internal/common/kafka/consumer_single_message_commit_test.go#TestConsumeDLQAndBarrierFailuresRetainOffset"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L05"
+          ],
+          "single_outcome": "classify permanent errors and wire DLQPermanentOnly fail-closed config",
+          "oracle_and_rollback": "transient storage error remains uncommitted; rollback keeps consumer off"
+        },
+        {
+          "leaf_id": "M02-N012-L37",
+          "atomic_pr_id": "T1-M02-P373-REF-n012-l37",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/consumer/probe_ack_consumer_test.go#TestProbeAckErrorClassificationMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L36"
+          ],
+          "single_outcome": "freeze malformed collision transient PG and timeout fixtures",
+          "oracle_and_rollback": "only typed permanent errors commit after DLQ ACK"
+        },
+        {
+          "leaf_id": "M02-N012-L38",
+          "atomic_pr_id": "T1-M02-P374-TST-PRE-n012-l38",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-ack-error-classification-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-ack-error-classification-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L37"
+          ],
+          "single_outcome": "record exact error classification result",
+          "oracle_and_rollback": "discard output without transient database failure"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N012-L06",
+        "M02-N012-L18"
+      ],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-23",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-06",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "expiry state history and lifecycle outbox commit in one PostgreSQL transaction",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L39",
+          "atomic_pr_id": "T1-M02-P375-WRT-n012-l39",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/api/handler_probe_expiry.go#SystemHandler.expireProbeOperations",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L05",
+            "M02-N012-L15",
+            "M02-N012-L50",
+            "M02-N012-L62"
+          ],
+          "single_outcome": "expire eligible operations with history and lifecycle outbox atomically",
+          "oracle_and_rollback": "kill before commit changes nothing; rollback disables expiry worker"
+        },
+        {
+          "leaf_id": "M02-N012-L40",
+          "atomic_pr_id": "T1-M02-P376-REF-n012-l40",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/api/handler_probe_expiry_test.go#TestExpireProbeOperationsTransactionMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L39"
+          ],
+          "single_outcome": "freeze lease boundary kill-before-commit and duplicate expiry fixtures",
+          "oracle_and_rollback": "state history and outbox counts move together"
+        },
+        {
+          "leaf_id": "M02-N012-L41",
+          "atomic_pr_id": "T1-M02-P377-TST-PRE-n012-l41",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-expiry-transaction-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-expiry-transaction-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L40"
+          ],
+          "single_outcome": "record exact expiry transaction result",
+          "oracle_and_rollback": "discard output without transaction kill point"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N012-L16"
+      ],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-24",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-07",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "nonempty Kafka key always selects approved stable Hash balancer",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L42",
+          "atomic_pr_id": "T1-M02-P378-WRT-n012-l42",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/common/kafka/producer.go#NewKeyedProducer",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L01"
+          ],
+          "single_outcome": "construct keyed producer with stable Hash balancer independent of unrelated config",
+          "oracle_and_rollback": "empty key or weak config fails before publish; rollback retains disabled producer"
+        },
+        {
+          "leaf_id": "M02-N012-L43",
+          "atomic_pr_id": "T1-M02-P379-REF-n012-l43",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/common/kafka/producer_test.go#TestNewKeyedProducerStablePartitionMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L42"
+          ],
+          "single_outcome": "freeze partition stability weak config and empty key fixtures",
+          "oracle_and_rollback": "same key ordered partition ID set and hash policy produce the same partition; empty keys fail before publish"
+        },
+        {
+          "leaf_id": "M02-N012-L44",
+          "atomic_pr_id": "T1-M02-P380-TST-PRE-n012-l44",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/keyed-producer-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n012/keyed-producer-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L43"
+          ],
+          "single_outcome": "record exact keyed producer result",
+          "oracle_and_rollback": "discard output without partition topology binding"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N012-L14",
+        "M02-N012-L16",
+        "M02-N012-L20"
+      ],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-25",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-08",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "consumer readiness epochs durably gate dispatcher claims and revoke on consumer stop",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L45",
+          "atomic_pr_id": "T1-M02-P381-WRT-n012-l45",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/config/probe_pipeline_readiness.go#ProbePipelineReadinessReceipt",
+          "companion_locators": [
+            "go/control-plane/internal/alert/api/handler_probe_outbox.go#ProbeDispatcherGate.AllowClaim"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L06",
+            "M02-N012-L07",
+            "M02-N012-L54",
+            "M02-N012-L65"
+          ],
+          "single_outcome": "consume durable readiness epoch and atomically fence every outbox claim",
+          "oracle_and_rollback": "consumer stop revokes the epoch before another claim transaction can commit; rollback disables dispatcher"
+        },
+        {
+          "leaf_id": "M02-N012-L46",
+          "atomic_pr_id": "T1-M02-P382-REF-n012-l46",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/api/probe_pipeline_readiness_test.go#TestProbeDispatcherReadinessMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L45"
+          ],
+          "single_outcome": "freeze stale receipt consumer exit restart and claim race fixtures",
+          "oracle_and_rollback": "no claim succeeds on revoked epoch"
+        },
+        {
+          "leaf_id": "M02-N012-L47",
+          "atomic_pr_id": "T1-M02-P383-TST-PRE-n012-l47",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-gate-test-result.json",
+          "companion_locators": [
+            "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-gate-run-manifest.json"
+          ],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": [
+            "M02-N012-L46"
+          ],
+          "single_outcome": "record exact readiness gate result",
+          "oracle_and_rollback": "discard output without consumer-exit race"
+        }
+      ],
+      "feeds_existing_leaf_ids": [
+        "M02-N012-L16",
+        "M02-N012-L18"
+      ],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-41",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-11",
+      "owner_kind": "DATABASE_MIGRATION_AND_WRITER",
+      "single_result": "probe operation outbox stores an attempt-correlated broker receipt through the keyed producer writer",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L55",
+          "atomic_pr_id": "T1-M02-P430-EXP-n012-l55",
+          "pr_type": "EXP",
+          "primary_locator": "deployments/postgres/migrations/202608131100_probe_operation_outbox_broker_receipt_v1.sql#probe_operation_outbox",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L15"],
+          "single_outcome": "add publish_state broker_topic broker_partition broker_offset publish_attempt and acked_at then backfill legacy published and cut pending index and queries to one publish_state authority",
+          "oracle_and_rollback": "legacy published equals publish_state KAFKA_ACKED during compatibility and cannot diverge; PENDING OUTCOME_UNKNOWN and KAFKA_ACKED remain distinguishable"
+        },
+        {
+          "leaf_id": "M02-N012-L56",
+          "atomic_pr_id": "T1-M02-P431-WRT-n012-l56",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/common/kafka/producer.go#KeyedProducer.Send",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L42","M02-N012-L55","M02-N008-L23"],
+          "single_outcome": "return the exact attempt-correlated topic partition offset key and event receipt after required ACK",
+          "oracle_and_rollback": "completion multiplexing cannot cross-wire concurrent attempts; timeout without exact receipt is outcome unknown"
+        },
+        {
+          "leaf_id": "M02-N012-L57",
+          "atomic_pr_id": "T1-M02-P432-REF-n012-l57",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/common/kafka/producer_test.go#TestKeyedProducerBrokerReceiptMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L56"],
+          "single_outcome": "freeze concurrent attempt ACK timeout crash and durable receipt transition fixtures",
+          "oracle_and_rollback": "database receipt fields equal the broker completion for the same event and attempt"
+        },
+        {
+          "leaf_id": "M02-N012-L58",
+          "atomic_pr_id": "T1-M02-P433-TST-PRE-n012-l58",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-broker-receipt-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-broker-receipt-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L57"],
+          "single_outcome": "record exact schema writer and receipt correlation result",
+          "oracle_and_rollback": "discard output without migration and concurrent completion cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-42",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-12",
+      "owner_kind": "DATABASE_MIGRATION_AND_WRITER",
+      "single_result": "OperationExpired is admitted by the dispatcher and persisted by the projection contract",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L59",
+          "atomic_pr_id": "T1-M02-P434-EXP-n012-l59",
+          "pr_type": "EXP",
+          "primary_locator": "deployments/postgres/migrations/202608131110_probe_operation_expired_projection_v1.sql#probe_operation_event_projection_event_type_check",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L50"],
+          "single_outcome": "version the projection constraint to admit OperationAcknowledged and OperationExpired as distinct facts",
+          "oracle_and_rollback": "rollback first stops expiry emission and proves no OperationExpired row would be rejected"
+        },
+        {
+          "leaf_id": "M02-N012-L60",
+          "atomic_pr_id": "T1-M02-P435-WRT-n012-l60",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/api/handler_probe_outbox.go#SystemHandler.claimProbeOperationOutbox",
+          "companion_locators": ["go/control-plane/internal/alert/api/handler_probe_outbox.go#probeOperationEventTopic"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L48","M02-N012-L52","M02-N012-L59"],
+          "single_outcome": "claim whitelist and topic route admit OperationExpired while projection remains the existing ordered consumer owner and never constructs an Agent ACK receipt",
+          "oracle_and_rollback": "unknown lifecycle types fail closed and expiry never enters the acknowledged-only branch"
+        },
+        {
+          "leaf_id": "M02-N012-L61",
+          "atomic_pr_id": "T1-M02-P436-REF-n012-l61",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/consumer/probe_operation_event_consumer_test.go#TestProbeOperationExpiredProjectionMatrix",
+          "companion_locators": ["go/control-plane/internal/alert/api/handler_probe_outbox_test.go#TestProbeOperationExpiredDispatcherWhitelist"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L60"],
+          "single_outcome": "freeze migration dispatcher projection replay and unknown-event rejection fixtures",
+          "oracle_and_rollback": "expiry commits as expiry exactly once and never aliases acknowledged"
+        },
+        {
+          "leaf_id": "M02-N012-L62",
+          "atomic_pr_id": "T1-M02-P437-TST-PRE-n012-l62",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-expiry-projection-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-expiry-projection-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L61"],
+          "single_outcome": "record exact expiry schema routing and projection result",
+          "oracle_and_rollback": "discard output without both acknowledged and expired compatibility cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L16"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-43",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-13",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "the real consumer lifecycle issues renews and revokes the readiness lease that fences outbox claims",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L63",
+          "atomic_pr_id": "T1-M02-P438-WRT-n012-l63",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/api/probe_pipeline_readiness.go#ProbePipelineReadinessStore.IssueRenewRevoke",
+          "companion_locators": [
+            "go/control-plane/cmd/alert-service/probe_operation_pipeline.go#probeOperationConsumerReady",
+            "go/control-plane/cmd/alert-service/probe_operation_pipeline.go#probeOperationConsumerStopped"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L06","M02-N012-L07","M02-N012-L20","M02-N012-L54","M02-N012-L71"],
+          "single_outcome": "bind lease owner and epoch to consumer group ready renew and stop callbacks and revoke before shutdown returns",
+          "oracle_and_rollback": "a stale owner cannot renew revoke another owner or authorize a claim; rollback keeps dispatcher disabled"
+        },
+        {
+          "leaf_id": "M02-N012-L64",
+          "atomic_pr_id": "T1-M02-P439-REF-n012-l64",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/api/probe_pipeline_readiness_test.go#TestReadinessAuthorityLifecycleMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L63"],
+          "single_outcome": "freeze ready renew rebalance stop crash stale-owner and claim-race fixtures",
+          "oracle_and_rollback": "every successful claim names one live lease owner and epoch"
+        },
+        {
+          "leaf_id": "M02-N012-L65",
+          "atomic_pr_id": "T1-M02-P440-TST-PRE-n012-l65",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-authority-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-authority-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L64"],
+          "single_outcome": "record exact readiness authority lifecycle result",
+          "oracle_and_rollback": "discard output without real consumer ready and stop callbacks"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-44",
+      "parent_task_id": "T1-M02-N008",
+      "gap_id": "M02-PCAP-RECEIPT-GAP-04",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "ingest-gateway starts recovers and stops the default-off PCAP metadata outbox dispatcher",
+      "steps": [
+        {
+          "leaf_id": "M02-N008-L18",
+          "atomic_pr_id": "T1-M02-P441-WRT-n008-l18",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/server/pcap_outbox_dispatcher.go#PcapMetadataOutboxDispatcher.Run",
+          "companion_locators": [
+            "go/control-plane/cmd/ingest-gateway/main.go#initPcapMetadataOutboxDispatcher",
+            "go/control-plane/cmd/ingest-gateway/main.go#gracefulShutdown"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L12","M02-N008-L17"],
+          "single_outcome": "recover expired leases then run only behind an explicit default-off flag and stop claims before draining in-flight publishes",
+          "oracle_and_rollback": "PENDING rows resume after restart; rollback disables the flag and preserves every outbox row"
+        },
+        {
+          "leaf_id": "M02-N008-L19",
+          "atomic_pr_id": "T1-M02-P442-REF-n008-l19",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/server/pcap_outbox_dispatcher_test.go#TestPcapOutboxRuntimeLifecycleMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L18"],
+          "single_outcome": "freeze default-off startup expired-lease recovery restart and shutdown ordering fixtures",
+          "oracle_and_rollback": "no accepted PENDING record remains permanently undispatched after an enabled restart"
+        },
+        {
+          "leaf_id": "M02-N008-L20",
+          "atomic_pr_id": "T1-M02-P443-TST-PRE-n008-l20",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-outbox-runtime-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n008/pcap-outbox-runtime-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N008-L19"],
+          "single_outcome": "record exact PCAP outbox runtime lifecycle result",
+          "oracle_and_rollback": "discard output without crash restart and shutdown cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N008-L10"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-45",
+      "parent_task_id": "T1-M02-N004",
+      "gap_id": "M02-FLOW-ID-GAP-22",
+      "owner_kind": "CONTRACT",
+      "single_result": "one no-std shared XDP frame metadata ABI is the sole timestamp layout authority",
+      "steps": [
+        {
+          "leaf_id": "M02-N004-L51",
+          "atomic_pr_id": "T1-M02-P444-CTR-n004-l51",
+          "pr_type": "CTR",
+          "primary_locator": "rust/probe-agent/xdp-abi/src/lib.rs#XdpFrameMetadataV1",
+          "companion_locators": [
+            "rust/probe-agent/xdp-abi/Cargo.toml#package",
+            "rust/probe-agent/Cargo.toml#workspace.members",
+            "rust/probe-agent/probe-agent/Cargo.toml#dependencies.xdp-abi",
+            "rust/probe-agent/probe-agent/ebpf/Cargo.toml#dependencies.xdp-abi"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L29"],
+          "single_outcome": "create and wire one no-std shared crate and freeze repr C abi_version flags and ktime_ns fields with one endian version and UMEM placement policy",
+          "oracle_and_rollback": "eBPF and userspace import the same type; rollback disables timestamped XDP rather than decoding an unknown version"
+        },
+        {
+          "leaf_id": "M02-N004-L52",
+          "atomic_pr_id": "T1-M02-P445-REF-n004-l52",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/xdp-abi/tests/layout.rs#xdp_frame_metadata_v1_layout_and_bytes",
+          "companion_locators": ["rust/probe-agent/probe-agent/tests/m02_xdp_abi_cross_crate.rs#m02_xdp_abi_cross_crate_fixture"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N004-L51"],
+          "single_outcome": "freeze size alignment field offsets endian version and identical byte decoding across eBPF and userspace",
+          "oracle_and_rollback": "any layout or byte-fixture divergence fails before XDP activation"
+        },
+        {
+          "leaf_id": "M02-N004-L53",
+          "atomic_pr_id": "T1-M02-P446-TST-PRE-n004-l53",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n004/xdp-shared-abi-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n004/xdp-shared-abi-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N004-L52"],
+          "single_outcome": "record exact shared ABI layout and byte compatibility result",
+          "oracle_and_rollback": "discard output without both crate consumers"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N004-L26"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-46",
+      "parent_task_id": "T1-M02-N006",
+      "gap_id": "M02-PCAP-GAP-07",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "startup recovery reconciles the unlink-before-tombstone interruption without authorizing unexplained loss",
+      "steps": [
+        {
+          "leaf_id": "M02-N006-L39",
+          "atomic_pr_id": "T1-M02-P447-WRT-n006-l39",
+          "pr_type": "WRT",
+          "primary_locator": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs#UploadJournal::reconcile_cleanup_interruption",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N006-L35","M02-N006-L38"],
+          "single_outcome": "classify exact claimed missing file as DELETED or resume a still-present authorized deletion while all unexplained loss fails closed",
+          "oracle_and_rollback": "missing file without valid claim or with path identity mismatch blocks capture admission"
+        },
+        {
+          "leaf_id": "M02-N006-L40",
+          "atomic_pr_id": "T1-M02-P448-REF-n006-l40",
+          "pr_type": "REF",
+          "primary_locator": "rust/probe-agent/probe-agent/tests/m02_pcap_cleanup_interruption_recovery.rs#m02_cleanup_interruption_recovery_matrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N006-L39"],
+          "single_outcome": "freeze kill-after-unlink authorized-present missing-without-claim and path-mismatch restart fixtures",
+          "oracle_and_rollback": "only exact durable claim and canonical path identity permit monotonic recovery; startup admission integration is owned by P308"
+        },
+        {
+          "leaf_id": "M02-N006-L41",
+          "atomic_pr_id": "T1-M02-P449-TST-PRE-n006-l41",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-cleanup-interruption-recovery-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n006/pcap-cleanup-interruption-recovery-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N006-L40"],
+          "single_outcome": "record exact cleanup interruption recovery result",
+          "oracle_and_rollback": "discard output without reconciliation state assertions; P310 separately records startup capture-admission integration"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N006-L20"
+    }
+    ,
+    {
+      "train_id": "M02-V2-TRAIN-47",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-14",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "common Kafka generation consumers emit real assignment rebalance ready and stop receipts for every probe pipeline consumer group",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L66",
+          "atomic_pr_id": "T1-M02-P450-WRT-n012-l66",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/common/kafka/generation_consumer.go#GenerationConsumer.SetGroupLifecycleObserver",
+          "companion_locators": [
+            "go/control-plane/internal/common/kafka/generation_consumer.go#GroupLifecycleReceipt",
+            "go/control-plane/internal/common/kafka/generation_consumer.go#GenerationConsumer.emitGroupLifecycle"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L92"],
+          "single_outcome": "map generation-runner topic group member generation assignments owner epoch ready revoke and stop boundaries to ordered lifecycle receipts without inventing broker identity",
+          "oracle_and_rollback": "constructor start alone is never ready; rebalance or stop emits revocation before prior ownership can authorize a claim"
+        },
+        {
+          "leaf_id": "M02-N012-L67",
+          "atomic_pr_id": "T1-M02-P451-REF-n012-l67",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/common/kafka/consumer_group_lifecycle_test.go#TestGroupLifecycleReceiptMatrix",
+          "companion_locators": ["go/control-plane/cmd/ingest-gateway/probe_control_pipeline_test.go#TestProbeControlConsumerLifecycleReceipt"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L66"],
+          "single_outcome": "freeze assignment first fetch rebalance crash stop and cross-service command consumer fixtures",
+          "oracle_and_rollback": "all ACK lifecycle and command groups produce non-forgeable ordered readiness and revoke receipts"
+        },
+        {
+          "leaf_id": "M02-N012-L68",
+          "atomic_pr_id": "T1-M02-P452-TST-PRE-n012-l68",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-consumer-group-lifecycle-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-consumer-group-lifecycle-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L67"],
+          "single_outcome": "record exact real consumer-group lifecycle result",
+          "oracle_and_rollback": "discard output without ingest command consumer and rebalance cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L06","M02-N012-L07","M02-N012-L20"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-48",
+      "parent_task_id": "T1-M02-N008",
+      "gap_id": "M02-PCAP-RECEIPT-GAP-05",
+      "owner_kind": "CONTRACT",
+      "single_result": "one common BrokerReceipt contract is shared by PCAP and keyed producers",
+      "steps": [
+        {
+          "leaf_id": "M02-N008-L21",
+          "atomic_pr_id": "T1-M02-P453-CTR-n008-l21",
+          "pr_type": "CTR",
+          "primary_locator": "go/control-plane/internal/common/kafka/producer.go#BrokerReceipt",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L06","M02-N012-L42"],
+          "single_outcome": "freeze topic partition offset key event ID publish attempt and acknowledged-at fields with no nil-success state",
+          "oracle_and_rollback": "all producer adapters consume this one type; rollback disables receipt-returning routes rather than forking the contract"
+        },
+        {
+          "leaf_id": "M02-N008-L22",
+          "atomic_pr_id": "T1-M02-P454-REF-n008-l22",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/common/kafka/producer_test.go#TestBrokerReceiptContractMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N008-L21"],
+          "single_outcome": "freeze validation equality and concurrent attempt identity fixtures for both producer adapters",
+          "oracle_and_rollback": "a receipt missing any exact identity field is outcome unknown"
+        },
+        {
+          "leaf_id": "M02-N008-L23",
+          "atomic_pr_id": "T1-M02-P455-TST-PRE-n008-l23",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n008/common-broker-receipt-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n008/common-broker-receipt-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N008-L22"],
+          "single_outcome": "record exact shared BrokerReceipt contract result",
+          "oracle_and_rollback": "discard output without PCAP and keyed producer consumers"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N008-L10"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-49",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-15",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "ingest-gateway wires command consumer lifecycle and transports authenticated readiness receipts to alert authority",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L69",
+          "atomic_pr_id": "T1-M02-P456-WRT-n012-l69",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/cmd/ingest-gateway/probe_control_pipeline.go#wireProbeControlGroupLifecycle",
+          "companion_locators": [
+            "go/control-plane/cmd/ingest-gateway/main.go#initProbeControlPipeline",
+            "go/control-plane/internal/ingest/control/readiness_publisher.go#ProbeControlReadinessPublisher.Publish"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L68","M02-N012-L74","M02-N012-L77","M02-N012-L83","M02-N012-L95"],
+          "single_outcome": "ingest init wires the real command generation lifecycle observer to the default-off readiness publisher and emits contract-valid assignment ready revoke and stop receipts to the durable topic",
+          "oracle_and_rollback": "lost stale wrong-group wrong-source or replayed transport cannot authorize dispatcher claim while producer-first records remain durable for a later receiver and disabling the publisher leaves lease expiry fail closed"
+        },
+        {
+          "leaf_id": "M02-N012-L70",
+          "atomic_pr_id": "T1-M02-P457-REF-n012-l70",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/cmd/ingest-gateway/probe_control_pipeline_test.go#TestProbeControlReadinessTransportMatrix",
+          "companion_locators": ["go/control-plane/internal/alert/api/probe_pipeline_readiness_test.go#TestApplyRemoteReceiptFenceMatrix"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L69"],
+          "single_outcome": "freeze assignment ready revoke restart producer-first receiver-late network loss replay authentication and lease-expiry fixtures",
+          "oracle_and_rollback": "the claim fence opens only after the alert receiver consumes the durable record naming the same authenticated ingest consumer generation and epoch"
+        },
+        {
+          "leaf_id": "M02-N012-L71",
+          "atomic_pr_id": "T1-M02-P458-TST-PRE-n012-l71",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-command-readiness-transport-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-command-readiness-transport-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L70"],
+          "single_outcome": "record exact cross-process command readiness wiring and transport result",
+          "oracle_and_rollback": "discard output without real initProbeControlPipeline caller and transport-loss cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L20"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-50",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-16",
+      "owner_kind": "CONTRACT",
+      "single_result": "one versioned ProbeGroupReadinessReceiptV1 wire contract freezes readiness identity lease and revocation semantics",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L72",
+          "atomic_pr_id": "T1-M02-P459-CTR-n012-l72",
+          "pr_type": "CTR",
+          "primary_locator": "proto/traffic/v1/ingest.proto#traffic.v1.ProbeGroupReadinessReceiptV1",
+          "companion_locators": [
+            "go/control-plane/pkg/proto/traffic/v1/ingest.pb.go#ProbeGroupReadinessReceiptV1",
+            "rust/probe-agent/proto-gen/src/traffic.v1.rs#ProbeGroupReadinessReceiptV1",
+            "java/flink-jobs/flink-common/src/main/java/com/traffic/proto/traffic/v1/ProbeGroupReadinessReceiptV1.java#ProbeGroupReadinessReceiptV1",
+            "java/flink-jobs/flink-common/src/main/java/com/traffic/proto/traffic/v1/ProbeGroupReadinessReceiptV1OrBuilder.java#ProbeGroupReadinessReceiptV1OrBuilder"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L01"],
+          "single_outcome": "freeze receipt_id consumer_group observed_topic member_id generation_id owner_epoch state observed_at_ms expires_at_ms publisher_instance_id plus schema-version event-id and source-service headers with consumer_group Kafka key",
+          "oracle_and_rollback": "unknown state missing lease identity nonpositive generation expiry before observation or header body identity mismatch is rejected and additive fields remain readable after publisher rollback"
+        },
+        {
+          "leaf_id": "M02-N012-L73",
+          "atomic_pr_id": "T1-M02-P460-REF-n012-l73",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/pkg/proto/traffic/v1/probe_group_readiness_contract_test.go#TestProbeGroupReadinessReceiptV1Compatibility",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L72"],
+          "single_outcome": "freeze protobuf binary compatibility key header state generation owner epoch bounded lease and Go Rust Java generated descriptor parity fixtures",
+          "oracle_and_rollback": "golden bytes descriptor field numbers and three-language bindings remain stable while malformed or semantically incomplete receipts fail closed"
+        },
+        {
+          "leaf_id": "M02-N012-L74",
+          "atomic_pr_id": "T1-M02-P461-TST-PRE-n012-l74",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-group-readiness-contract-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-group-readiness-contract-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L73"],
+          "single_outcome": "record exact readiness wire compatibility result and three-language generated binding provenance",
+          "oracle_and_rollback": "discard output without descriptor hash golden bytes malformed receipt cases Go Rust Java parity Rust proto-gen compile gate flink-common Java compile gate and generator version"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-51",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-17",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "Kafka topic manifests freeze one durable readiness transport name partition retention key and message rail",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L75",
+          "atomic_pr_id": "T1-M02-P462-WRT-n012-l75",
+          "pr_type": "WRT",
+          "primary_locator": "common/kafka/create-topics.sh#probe.group-readiness.v1",
+          "companion_locators": [
+            "deployments/kubernetes/init-jobs/01-kafka-topics.yaml#probe.group-readiness.v1"
+          ],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L74"],
+          "single_outcome": "declare probe.group-readiness.v1 with fixed partitions retention bytes consumer_group key and ProbeGroupReadinessReceiptV1 message rail in both topic sources",
+          "oracle_and_rollback": "topic sources agree exactly and topic deletion is forbidden on rollback because retained producer-first facts may still be consumed"
+        },
+        {
+          "leaf_id": "M02-N012-L76",
+          "atomic_pr_id": "T1-M02-P463-REF-n012-l76",
+          "pr_type": "REF",
+          "primary_locator": "tests/alignment/test_alignment_registry.py#test_probe_readiness_transport_topic_manifests_stay_aligned",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L75"],
+          "single_outcome": "freeze topic name retention partitions key message and both topic-source exact sets",
+          "oracle_and_rollback": "missing topic source or topic retention partition key and message drift fails before deployment"
+        },
+        {
+          "leaf_id": "M02-N012-L77",
+          "atomic_pr_id": "T1-M02-P464-TST-PRE-n012-l77",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-group-readiness-transport-config-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-group-readiness-transport-config-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L76"],
+          "single_outcome": "record exact readiness topic manifest alignment result",
+          "oracle_and_rollback": "discard output without both rendered topic sources shell syntax and topic property checks"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-52",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-18",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "the alert readiness consumer exposes one generation adapter that applies retained or live remote leases with durable offset semantics",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L78",
+          "atomic_pr_id": "T1-M02-P465-WRT-n012-l78",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/consumer/probe_readiness_consumer.go#ProbeReadinessConsumer.StartGeneration",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L54","M02-N012-L74","M02-N012-L77","M02-N012-L83","M02-N012-L89","M02-N012-L92","M02-N012-L98","M02-N012-L101"],
+          "single_outcome": "an exported adapter runs the readiness handler through the common generation message processor so retained or live contract-valid receipts apply to the fenced authority and offsets commit only after success or durable permanent quarantine",
+          "oracle_and_rollback": "the adapter is callable across packages; retryable store failure and DLQ barrier failure never commit while invalid stale replayed revoked wrong-group or expired receipts cannot open claim admission"
+        },
+        {
+          "leaf_id": "M02-N012-L79",
+          "atomic_pr_id": "T1-M02-P466-REF-n012-l79",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/cmd/alert-service/probe_operation_pipeline_test.go#TestStartProbeReadinessConsumerMatrix",
+          "companion_locators": ["go/control-plane/internal/alert/consumer/probe_readiness_consumer_test.go#TestProbeReadinessConsumerEnvelopeMatrix"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L78"],
+          "single_outcome": "freeze exported adapter processor injection assignment retained producer-first record stop revoke contract mismatch lease expiry apply failure DLQ barrier and commit outcome-unknown fixtures",
+          "oracle_and_rollback": "receiver absence never opens claim admission and late receiver startup consumes an unexpired retained receipt without a publisher-side latch or premature offset commit"
+        },
+        {
+          "leaf_id": "M02-N012-L80",
+          "atomic_pr_id": "T1-M02-P467-TST-PRE-n012-l80",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-receiver-start-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-receiver-start-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L79"],
+          "single_outcome": "record exact alert readiness generation adapter and failure result",
+          "oracle_and_rollback": "discard output without exported adapter injected processor real broker assignment retained record stop revoke invalid envelope store DLQ barrier and commit outcome-unknown same-or-later recovery cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L18"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-53",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-19",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "least-privilege Kafka ACLs admit one readiness writer and one receiver group",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L81",
+          "atomic_pr_id": "T1-M02-P468-WRT-n012-l81",
+          "pr_type": "WRT",
+          "primary_locator": "deployments/kubernetes/init-jobs/00-kafka-acl-plan.yaml#probe.group-readiness.v1",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L77"],
+          "single_outcome": "grant traffic-ingest-gateway only describe and write on probe.group-readiness.v1 and traffic-alert-service only describe read on that topic plus its fixed readiness group with no wildcard or second writer",
+          "oracle_and_rollback": "ACL exact-set rejects wildcard extra principal wrong group or reversed direction and rollback revokes writer before reader without deleting retained records"
+        },
+        {
+          "leaf_id": "M02-N012-L82",
+          "atomic_pr_id": "T1-M02-P469-REF-n012-l82",
+          "pr_type": "REF",
+          "primary_locator": "tests/alignment/test_alignment_registry.py#test_probe_readiness_transport_acl_exact_set",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L81"],
+          "single_outcome": "freeze readiness topic group operation and principal ACL exact set plus forbidden wildcard cases",
+          "oracle_and_rollback": "only the ingest writer and alert receiver group survive exact-set comparison"
+        },
+        {
+          "leaf_id": "M02-N012-L83",
+          "atomic_pr_id": "T1-M02-P470-TST-PRE-n012-l83",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-group-readiness-acl-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-group-readiness-acl-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L82"],
+          "single_outcome": "record exact readiness Kafka ACL result",
+          "oracle_and_rollback": "discard output without principal topic group operation exact set and forbidden wildcard mutations"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-54",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-20",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "ingest readiness publisher code configuration is independently default off",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L84",
+          "atomic_pr_id": "T1-M02-P471-WRT-n012-l84",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/config/config.go#KafkaConfig.ProbeGroupReadinessTopic",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L83"],
+          "single_outcome": "add readiness topic and independent publisher-enabled false default to ingest code configuration with validation for an enabled empty topic",
+          "oracle_and_rollback": "absent environment leaves publisher off and invalid enabled configuration fails before process startup"
+        },
+        {
+          "leaf_id": "M02-N012-L85",
+          "atomic_pr_id": "T1-M02-P472-REF-n012-l85",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/config/config_test.go#TestProbeGroupReadinessPublisherConfigMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L84"],
+          "single_outcome": "freeze absent false explicit true empty topic and malformed code configuration fixtures",
+          "oracle_and_rollback": "publisher cannot become enabled by default or with an invalid topic"
+        },
+        {
+          "leaf_id": "M02-N012-L86",
+          "atomic_pr_id": "T1-M02-P473-TST-PRE-n012-l86",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-ingest-config-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-ingest-config-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L85"],
+          "single_outcome": "record exact ingest readiness publisher code configuration result",
+          "oracle_and_rollback": "discard output without absent false true empty topic and malformed configuration cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L19"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-55",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-21",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "alert readiness receiver code configuration is independently default off",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L87",
+          "atomic_pr_id": "T1-M02-P474-WRT-n012-l87",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/config/config.go#KafkaConfig.ProbeGroupReadinessTopic",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L83"],
+          "single_outcome": "add readiness topic fixed receiver group and independent consumer-enabled false default to alert code configuration with validation for enabled empty topic or group",
+          "oracle_and_rollback": "absent environment creates no receiver and invalid enabled topic or group fails before process startup"
+        },
+        {
+          "leaf_id": "M02-N012-L88",
+          "atomic_pr_id": "T1-M02-P475-REF-n012-l88",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/config/config_test.go#TestProbeGroupReadinessReceiverConfigMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L87"],
+          "single_outcome": "freeze absent false explicit true malformed empty topic and wrong-group code configuration fixtures",
+          "oracle_and_rollback": "receiver cannot become enabled by default or join an invalid group"
+        },
+        {
+          "leaf_id": "M02-N012-L89",
+          "atomic_pr_id": "T1-M02-P476-TST-PRE-n012-l89",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-alert-config-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-alert-config-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L88"],
+          "single_outcome": "record exact alert readiness receiver code configuration result",
+          "oracle_and_rollback": "discard output without absent false true empty topic malformed and wrong-group cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L17"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-56",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-22",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "common Kafka generation runner owns real member generation assignment revoke and stop boundaries",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L90",
+          "atomic_pr_id": "T1-M02-P477-WRT-n012-l90",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/common/kafka/generation_consumer.go#GenerationConsumer.Run",
+          "companion_locators": ["go/control-plane/internal/common/kafka/generation_consumer.go#NewGenerationConsumer"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L01"],
+          "single_outcome": "use kafka.ConsumerGroup.Next and Generation.Start to expose broker member ID generation ID assignments and cancellation-bounded revoke stop while partition handlers retain existing commit and retry policy",
+          "oracle_and_rollback": "no constructor or first fetch invents generation identity every started handler exits on generation cancellation and the next generation begins only after revocation completes"
+        },
+        {
+          "leaf_id": "M02-N012-L91",
+          "atomic_pr_id": "T1-M02-P478-REF-n012-l91",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/common/kafka/generation_consumer_test.go#TestGenerationConsumerLifecycleMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L90"],
+          "single_outcome": "freeze Next assignment Start handler cancellation revoke wait rejoin coordinator failure and close fixtures with real generation IDs",
+          "oracle_and_rollback": "member and generation values come from kafka Generation and no next generation overlaps an unfinished prior handler"
+        },
+        {
+          "leaf_id": "M02-N012-L92",
+          "atomic_pr_id": "T1-M02-P479-TST-PRE-n012-l92",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/kafka-generation-consumer-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/kafka-generation-consumer-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L91"],
+          "single_outcome": "record exact common Kafka real-generation lifecycle result",
+          "oracle_and_rollback": "discard output without broker generation member assignment cancellation rejoin and no-overlap cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-57",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-23",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "ingest aggregate and standalone deployments expose the same default-off readiness publisher environment",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L93",
+          "atomic_pr_id": "T1-M02-P480-WRT-n012-l93",
+          "pr_type": "WRT",
+          "primary_locator": "deployments/kubernetes/applications/go-services.yaml#ingest-gateway.KAFKA_PROBE_GROUP_READINESS_TOPIC",
+          "companion_locators": ["go/control-plane/deployments/kubernetes/ingest-gateway.yaml#KAFKA_PROBE_GROUP_READINESS_TOPIC"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L86"],
+          "single_outcome": "declare identical readiness topic and explicit publisher-enabled false values in aggregate and standalone ingest deployment manifests",
+          "oracle_and_rollback": "either manifest missing or enabling the publisher independently fails alignment and rollback restores false without removing the topic"
+        },
+        {
+          "leaf_id": "M02-N012-L94",
+          "atomic_pr_id": "T1-M02-P481-REF-n012-l94",
+          "pr_type": "REF",
+          "primary_locator": "tests/alignment/test_alignment_registry.py#test_probe_readiness_ingest_deploy_env_stay_aligned",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L93"],
+          "single_outcome": "freeze aggregate standalone topic flag duplicate and default-off deployment exact sets",
+          "oracle_and_rollback": "partial missing duplicate divergent or enabled-by-default deployment environment is rejected"
+        },
+        {
+          "leaf_id": "M02-N012-L95",
+          "atomic_pr_id": "T1-M02-P482-TST-PRE-n012-l95",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-ingest-deploy-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-ingest-deploy-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L94"],
+          "single_outcome": "record exact ingest readiness deployment alignment result",
+          "oracle_and_rollback": "discard output without aggregate standalone rendered environment and default-off mutation cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L20"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-58",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-24",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "alert aggregate and standalone deployments expose the same default-off readiness receiver environment",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L96",
+          "atomic_pr_id": "T1-M02-P483-WRT-n012-l96",
+          "pr_type": "WRT",
+          "primary_locator": "deployments/kubernetes/applications/go-services.yaml#alert-service.KAFKA_PROBE_GROUP_READINESS_TOPIC",
+          "companion_locators": ["go/control-plane/deployments/kubernetes/alert-service.yaml#KAFKA_PROBE_GROUP_READINESS_TOPIC"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L89"],
+          "single_outcome": "declare identical readiness topic group and explicit consumer-enabled false values in aggregate and standalone alert deployment manifests",
+          "oracle_and_rollback": "either manifest missing wrong group or enabling the receiver independently fails alignment and rollback restores false without deleting retained records"
+        },
+        {
+          "leaf_id": "M02-N012-L97",
+          "atomic_pr_id": "T1-M02-P484-REF-n012-l97",
+          "pr_type": "REF",
+          "primary_locator": "tests/alignment/test_alignment_registry.py#test_probe_readiness_alert_deploy_env_stay_aligned",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L96"],
+          "single_outcome": "freeze aggregate standalone topic group flag duplicate and default-off deployment exact sets",
+          "oracle_and_rollback": "partial missing duplicate divergent wrong-group or enabled-by-default deployment environment is rejected"
+        },
+        {
+          "leaf_id": "M02-N012-L98",
+          "atomic_pr_id": "T1-M02-P485-TST-PRE-n012-l98",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-alert-deploy-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-alert-deploy-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L97"],
+          "single_outcome": "record exact alert readiness deployment alignment result",
+          "oracle_and_rollback": "discard output without aggregate standalone rendered environment default-off and wrong-group mutation cases"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L18"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-59",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-25",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "the common generation processor preserves ReceivedMessage handler DLQ barrier and offset commit durability",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L99",
+          "atomic_pr_id": "T1-M02-P486-WRT-n012-l99",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/common/kafka/generation_consumer.go#GenerationMessageProcessor.ProcessPartition",
+          "companion_locators": ["go/control-plane/internal/common/kafka/generation_consumer.go#NewGenerationMessageProcessor"],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L36","M02-N012-L92"],
+          "single_outcome": "construct a fully injected processor then for each assigned partition fetch from its assigned offset build ReceivedMessage call the handler classify permanent errors run the durable DLQ acknowledgement barrier and request commit of offset plus one only after handler success or acknowledged permanent quarantine",
+          "oracle_and_rollback": "invalid config retryable handler DLQ send or barrier failure makes no commit request; CommitOffsets response loss is COMMIT_OUTCOME_UNKNOWN and emits no success observer while recovery may resume at the same or a later offset"
+        },
+        {
+          "leaf_id": "M02-N012-L100",
+          "atomic_pr_id": "T1-M02-P487-REF-n012-l100",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/common/kafka/generation_consumer_test.go#TestGenerationMessageProcessorDurabilityMatrix",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L99"],
+          "single_outcome": "freeze factory injection assigned fetch handler success retryable permanent DLQ send DLQ barrier commit outcome unknown observer cancellation and rebalance fixtures",
+          "oracle_and_rollback": "handler or durable quarantine fact precedes every commit request; ambiguous response suppresses success observation and semantic recovery is safe from the same or a later offset"
+        },
+        {
+          "leaf_id": "M02-N012-L101",
+          "atomic_pr_id": "T1-M02-P488-TST-PRE-n012-l101",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-generation-message-durability-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-generation-message-durability-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L100"],
+          "single_outcome": "record exact generation message processing and offset durability result",
+          "oracle_and_rollback": "discard output without injected factory real broker assigned fetch retryable DLQ send barrier commit response loss same-or-later-offset recovery and confirmed-only observer evidence"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-60",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-26",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "the alert ACK consumer exposes an exported generation adapter around its package-private handler",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L102",
+          "atomic_pr_id": "T1-M02-P489-WRT-n012-l102",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/consumer/probe_ack_consumer.go#ProbeAckConsumer.StartGeneration",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L38","M02-N012-L92","M02-N012-L101"],
+          "single_outcome": "the exported adapter accepts a configured processor and binds ProbeAckConsumer.handle through it to GenerationConsumer.Run without exposing the package-private handler to cmd callers",
+          "oracle_and_rollback": "retryable PostgreSQL or DLQ barrier errors make no commit request and permanent quarantine precedes commit; outcome unknown emits no success observer; rollback disables the generation adapter before legacy Start"
+        },
+        {
+          "leaf_id": "M02-N012-L103",
+          "atomic_pr_id": "T1-M02-P490-REF-n012-l103",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/consumer/probe_ack_consumer_test.go#TestProbeAckConsumerStartGeneration",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L102"],
+          "single_outcome": "freeze exported adapter assignment handler retryable permanent DLQ barrier commit cancellation and rollback fixtures",
+          "oracle_and_rollback": "the adapter is callable across packages and preserves the ACK consumer error taxonomy and offset durability"
+        },
+        {
+          "leaf_id": "M02-N012-L104",
+          "atomic_pr_id": "T1-M02-P491-TST-PRE-n012-l104",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-ack-generation-adapter-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-ack-generation-adapter-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L103"],
+          "single_outcome": "record exact ACK generation adapter result",
+          "oracle_and_rollback": "discard output without exported API injected processor real broker assignment retryable permanent DLQ barrier commit outcome-unknown same-or-later recovery and cancellation evidence"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L06"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-61",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-27",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "the alert lifecycle consumer exposes an exported generation adapter around its package-private handler",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L105",
+          "atomic_pr_id": "T1-M02-P492-WRT-n012-l105",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/alert/consumer/probe_operation_event_consumer.go#ProbeOperationEventConsumer.StartGeneration",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L29","M02-N012-L92","M02-N012-L101"],
+          "single_outcome": "the exported adapter accepts a configured processor and binds ProbeOperationEventConsumer.handle through it to GenerationConsumer.Run without exposing the package-private handler to cmd callers",
+          "oracle_and_rollback": "retryable projection or DLQ barrier errors make no commit request and permanent quarantine precedes commit; outcome unknown emits no success observer; rollback disables the generation adapter before legacy Start"
+        },
+        {
+          "leaf_id": "M02-N012-L106",
+          "atomic_pr_id": "T1-M02-P493-REF-n012-l106",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/alert/consumer/probe_operation_event_consumer_test.go#TestProbeOperationEventConsumerStartGeneration",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L105"],
+          "single_outcome": "freeze exported adapter assignment handler replay retryable permanent DLQ barrier commit cancellation and rollback fixtures",
+          "oracle_and_rollback": "the adapter is callable across packages and preserves lifecycle semantic replay plus offset durability"
+        },
+        {
+          "leaf_id": "M02-N012-L107",
+          "atomic_pr_id": "T1-M02-P494-TST-PRE-n012-l107",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-lifecycle-generation-adapter-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-lifecycle-generation-adapter-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L106"],
+          "single_outcome": "record exact lifecycle generation adapter result",
+          "oracle_and_rollback": "discard output without exported API injected processor real broker assignment cross-offset replay retryable DLQ barrier commit outcome-unknown same-or-later recovery and cancellation evidence"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L07"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-62",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-28",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "the ingest command router exposes an exported generation adapter around its package-local routing handler",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L108",
+          "atomic_pr_id": "T1-M02-P495-WRT-n012-l108",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/control/bridge.go#Router.StartGeneration",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L92","M02-N012-L101"],
+          "single_outcome": "the exported adapter accepts a configured processor and binds Router.Route through it to GenerationConsumer.Run without exposing package-local callbacks to cmd callers",
+          "oracle_and_rollback": "Redis retry or DLQ barrier failure makes no commit request and permanent quarantine precedes commit; outcome unknown emits no success observer; rollback disables the generation adapter before the legacy route"
+        },
+        {
+          "leaf_id": "M02-N012-L109",
+          "atomic_pr_id": "T1-M02-P496-REF-n012-l109",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/control/bridge_test.go#TestRouterStartGeneration",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L108"],
+          "single_outcome": "freeze exported adapter assignment route retryable permanent DLQ barrier commit cancellation and rollback fixtures",
+          "oracle_and_rollback": "the adapter is callable across packages and preserves ReceivedMessage validation cache durability and offset semantics"
+        },
+        {
+          "leaf_id": "M02-N012-L110",
+          "atomic_pr_id": "T1-M02-P497-TST-PRE-n012-l110",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-command-generation-adapter-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-command-generation-adapter-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L109"],
+          "single_outcome": "record exact command generation adapter result",
+          "oracle_and_rollback": "discard output without exported API injected processor real assignment route retryable DLQ barrier commit outcome-unknown same-or-later recovery and cancellation evidence"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L08"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-63",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-29",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "ingest renews the remote readiness lease only while the exact broker generation remains active",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L111",
+          "atomic_pr_id": "T1-M02-P498-WRT-n012-l111",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/internal/ingest/control/readiness_publisher.go#ProbeControlReadinessPublisher.RunRenewal",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L69","M02-N012-L74"],
+          "single_outcome": "a bounded timer republishes a fresh lease for the unchanged active generation before half TTL and cancellation rebalance revoke or publish failure stops renewal without issuing a false live lease",
+          "oracle_and_rollback": "one generation remains admitted beyond two TTLs through monotonic renewals; revoked or cancelled generations never renew and naturally expire fail closed"
+        },
+        {
+          "leaf_id": "M02-N012-L112",
+          "atomic_pr_id": "T1-M02-P499-REF-n012-l112",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/internal/ingest/control/readiness_publisher_test.go#TestProbeControlReadinessRenewalLifecycle",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L111"],
+          "single_outcome": "freeze stable generation multi-TTL renewal publish loss rebalance cancellation revoked generation and timer shutdown fixtures",
+          "oracle_and_rollback": "renewals preserve exact member generation owner epoch and stop before any successor generation becomes ready"
+        },
+        {
+          "leaf_id": "M02-N012-L113",
+          "atomic_pr_id": "T1-M02-P500-TST-PRE-n012-l113",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-renewal-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-readiness-renewal-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L112"],
+          "single_outcome": "record exact generation-bound readiness renewal result",
+          "oracle_and_rollback": "discard output without two-TTL liveness revoke cancellation publish-loss no-false-renewal and shutdown evidence"
+        }
+      ],
+      "feeds_existing_leaf_ids": [],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-64",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-30",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "alert startup cuts ACK lifecycle and readiness groups over through exported generation adapters with no same-group Reader",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L114",
+          "atomic_pr_id": "T1-M02-P501-WRT-n012-l114",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/cmd/alert-service/probe_operation_pipeline.go#startProbeAuthorityGenerationConsumers",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L17","M02-N012-L68","M02-N012-L80","M02-N012-L89","M02-N012-L92","M02-N012-L98","M02-N012-L104","M02-N012-L107"],
+          "single_outcome": "alert startup constructs GenerationConsumers plus fully injected message processors and calls only exported ACK lifecycle and readiness adapters while rejecting any enabled legacy Reader for those groups",
+          "oracle_and_rollback": "real assignments reach all three adapters; duplicate same-group old and new consumers fail before consumption; rollback disables dispatcher and generation cutover before restoring legacy paths"
+        },
+        {
+          "leaf_id": "M02-N012-L115",
+          "atomic_pr_id": "T1-M02-P502-REF-n012-l115",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/cmd/alert-service/probe_operation_pipeline_test.go#TestProbeAuthorityGenerationConsumerCutover",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L114"],
+          "single_outcome": "freeze config prerequisites exported adapter construction assignment no-dual-reader cancellation drain and rollback fixtures",
+          "oracle_and_rollback": "cmd never calls package-private handlers or owns common runner code and no Reader path is live for enabled groups"
+        },
+        {
+          "leaf_id": "M02-N012-L116",
+          "atomic_pr_id": "T1-M02-P503-TST-PRE-n012-l116",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-alert-generation-cutover-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-alert-generation-cutover-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L115"],
+          "single_outcome": "record exact alert generation-consumer cutover result",
+          "oracle_and_rollback": "discard output without compile real assignments three exported adapters no-dual-path cancellation drain and rollback evidence"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L18"],
+      "terminal_leaf_id": "M02-N012-L23"
+    },
+    {
+      "train_id": "M02-V2-TRAIN-65",
+      "parent_task_id": "T1-M02-N012",
+      "gap_id": "M02-PROBE-CTRL-GAP-31",
+      "owner_kind": "RUNTIME_WRITER",
+      "single_result": "ingest startup cuts the command group over through its exported generation adapter and binds renewal to the same generation",
+      "steps": [
+        {
+          "leaf_id": "M02-N012-L117",
+          "atomic_pr_id": "T1-M02-P504-WRT-n012-l117",
+          "pr_type": "WRT",
+          "primary_locator": "go/control-plane/cmd/ingest-gateway/probe_control_pipeline.go#startProbeCommandGenerationConsumer",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L19","M02-N012-L69","M02-N012-L86","M02-N012-L92","M02-N012-L95","M02-N012-L110","M02-N012-L113"],
+          "single_outcome": "ingest startup constructs one GenerationConsumer plus a fully injected message processor calls the exported Router adapter attaches lifecycle publication and renewal to that exact generation and rejects a legacy Reader for the group",
+          "oracle_and_rollback": "route observer and renewal share one broker generation; duplicate same-group paths fail before consumption; rollback cancels renewal drains generation then restores legacy startup"
+        },
+        {
+          "leaf_id": "M02-N012-L118",
+          "atomic_pr_id": "T1-M02-P505-REF-n012-l118",
+          "pr_type": "REF",
+          "primary_locator": "go/control-plane/cmd/ingest-gateway/probe_control_pipeline_test.go#TestProbeCommandGenerationConsumerCutover",
+          "companion_locators": [],
+          "target_state": "PLANNED",
+          "prerequisite_leaf_ids": ["M02-N012-L117"],
+          "single_outcome": "freeze config prerequisites exported adapter construction assignment route lifecycle renewal no-dual-reader cancellation drain and rollback fixtures",
+          "oracle_and_rollback": "cmd owns only composition and no common runner or package-local handler write surface"
+        },
+        {
+          "leaf_id": "M02-N012-L119",
+          "atomic_pr_id": "T1-M02-P506-TST-PRE-n012-l119",
+          "pr_type": "TST-PRE",
+          "primary_locator": "doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-ingest-generation-cutover-test-result.json",
+          "companion_locators": ["doc/02_acceptance/topic1/tasks/t1-m02-n012/probe-ingest-generation-cutover-run-manifest.json"],
+          "target_state": "PLANNED_OUTPUT",
+          "prerequisite_leaf_ids": ["M02-N012-L118"],
+          "single_outcome": "record exact ingest generation-consumer cutover result",
+          "oracle_and_rollback": "discard output without compile real assignment exported route lifecycle renewal no-dual-path cancellation drain and rollback evidence"
+        }
+      ],
+      "feeds_existing_leaf_ids": ["M02-N012-L20"],
+      "terminal_leaf_id": "M02-N012-L23"
+    }
+  ],
+  "claims": {
+    "allowed": "P308-P506 append-only identities and support-train intent are allocated for v2 preview validation",
+    "forbidden": [
+      "GLOBAL_REGISTRY_SWITCHED",
+      "TARGET_BINDING_COMPLETE",
+      "IMPLEMENTED",
+      "TEST_EXECUTED",
+      "M02_ACCEPTED"
+    ],
+    "proof_ceiling": "ALLOCATION_ONLY_NOT_GLOBAL_REGISTRATION_IMPLEMENTATION_TEST_EXECUTION_AUTHORIZATION_OR_ACCEPTANCE"
+  }
+}

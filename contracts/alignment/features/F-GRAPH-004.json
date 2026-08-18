@@ -26,13 +26,16 @@
       "node and edge VID are deterministic from tenant, entity type and canonical identity",
       "each relation records source event, aggregate version, validity interval, projection hash and revocation state",
       "projection consumes stable event identity idempotently, advances a durable watermark only after Nebula acknowledgement and supports bounded replay",
-      "full rebuild and incremental projection reconcile to the same node, edge and hash counts"
+      "full rebuild and incremental projection reconcile to the same node, edge and hash counts",
+      "closed-window reconcile classifies missing, stale and extra facts; repair may reapply only missing or stale authority facts and preserves target-only extras"
     ]
   },
   "data": {
     "authoritative_store": "postgresql",
     "read_models": ["postgresql", "clickhouse", "nebulagraph"],
-    "migration": "additive graph projection inbox, watermark, dead-letter and deterministic identity migration required",
+    "migration": "deployments/postgres/migrations/202608141900_m07_graph_projection_v1.sql plus deployments/postgres/migrations/202608142000_m07_graph_reconcile_v1.sql plus additive projected_entity_v1/projected_relation_v1 Nebula schema",
+    "event_contract": "contracts/events/graph-projection.v1.json",
+    "event_topic": "graph.projections.v1",
     "event_types": ["graph.entity.upserted.v1", "graph.relation.upserted.v1", "graph.relation.revoked.v1"],
     "source_watermarks": ["postgresql.graph_projection_inbox.offset", "clickhouse.graph_source_events.watermark", "nebulagraph.graph_projection.version"]
   },
@@ -56,6 +59,10 @@
   },
   "rollout": {
     "feature_flag": "GRAPH_CONTINUOUS_PROJECTION_V1_ENABLED",
+    "default": false,
+    "consumer_flag": "GRAPH_PROJECTION_CONSUMER_ENABLED",
+    "worker_flag": "GRAPH_PROJECTION_WORKER_ENABLED",
+    "defaults": {"consumer": false, "worker": false},
     "strategy": "shadow-read",
     "rollback_runbook": "doc/07_alignment/runbooks/F-GRAPH-004-rollback.md"
   }

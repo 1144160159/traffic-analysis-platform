@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/mlops/model-artifact-manifest.schema.json",
+  "title": "Traffic governed model artifact package manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "package_id", "state", "tenant_id", "model_id", "model_version",
+    "dataset_id", "dataset_sha256", "baseline_training_run_sha256",
+    "gnn_training_run_sha256", "evaluation_sha256", "explanation_sha256",
+    "graph_snapshot", "compatibility", "artifacts", "package_sha256", "signature",
+    "activation_authorized"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "package_id": {"type": "string", "format": "uuid"},
+    "state": {"const": "exported"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "model_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "model_version": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "dataset_id": {"type": "string", "format": "uuid"},
+    "dataset_sha256": {"$ref": "#/$defs/sha256"},
+    "baseline_training_run_sha256": {"$ref": "#/$defs/sha256"},
+    "gnn_training_run_sha256": {"$ref": "#/$defs/sha256"},
+    "evaluation_sha256": {"$ref": "#/$defs/sha256"},
+    "explanation_sha256": {"$ref": "#/$defs/sha256"},
+    "graph_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_id", "manifest_sha256", "schema_version"],
+      "properties": {
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"type": "integer", "minimum": 1}
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_contract", "runtime_version", "feature_set_id", "feature_schema_version",
+        "graph_schema_version", "baseline", "gnn"
+      ],
+      "properties": {
+        "runtime_contract": {"const": "traffic.behavior.inference.v1"},
+        "runtime_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "feature_set_id": {"type": "string", "minLength": 1},
+        "feature_schema_version": {"type": "integer", "minimum": 1},
+        "graph_schema_version": {"type": "integer", "minimum": 1},
+        "baseline": {
+          "type": "object", "additionalProperties": false,
+          "required": ["format", "input_name", "input_dtype", "input_shape", "feature_columns", "feature_columns_sha256", "output"],
+          "properties": {
+            "format": {"const": "onnx"},
+            "input_name": {"const": "float_input"},
+            "input_dtype": {"const": "float32"},
+            "input_shape": {"type": "array", "prefixItems": [{"const": null}, {"type": "integer", "minimum": 1}], "items": false},
+            "feature_columns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+            "feature_columns_sha256": {"$ref": "#/$defs/sha256"},
+            "output": {"const": "binary_attack_probability"}
+          }
+        },
+        "gnn": {
+          "type": "object", "additionalProperties": false,
+          "required": ["format", "architecture", "node_feature_columns", "edge_fields", "normalization", "output"],
+          "properties": {
+            "format": {"const": "numpy_npz_v1"},
+            "architecture": {"const": "two_layer_sparse_gcn"},
+            "node_feature_columns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+            "edge_fields": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+            "normalization": {"const": "symmetric_adjacency_with_self_loops"},
+            "output": {"const": "binary_attack_probability_per_node"}
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "minProperties": 4,
+      "additionalProperties": {"$ref": "#/$defs/artifact"}
+    },
+    "package_sha256": {"$ref": "#/$defs/sha256"},
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "public_key_sha256", "signed_payload_sha256", "value_base64"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$"},
+        "public_key_sha256": {"$ref": "#/$defs/sha256"},
+        "signed_payload_sha256": {"$ref": "#/$defs/sha256"},
+        "value_base64": {"type": "string", "pattern": "^[A-Za-z0-9+/]{86}==$"}
+      }
+    },
+    "activation_authorized": {"const": false}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sha256", "size_bytes", "media_type", "role"],
+      "properties": {
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "media_type": {"type": "string", "minLength": 1},
+        "role": {"enum": ["baseline_model", "gnn_model", "inference_graph_schema", "compatibility_metadata"]}
+      }
+    }
+  }
+}

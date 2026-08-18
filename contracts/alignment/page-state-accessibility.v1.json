@@ -1,0 +1,59 @@
+{
+  "contract_id": "T1-M09-N021-PAGE-STATE-ACCESSIBILITY-V1",
+  "task_id": "T1-M09-N021",
+  "status": "PARTIAL",
+  "scope": "shared page-state semantics, accessible Drawer focus lifecycle, long-text containment and 1366/1600 responsive constraints",
+  "state_machine": {
+    "states": ["loading", "empty", "partial", "unavailable", "conflict", "final"],
+    "precedence": [
+      "loading without data",
+      "conflict or unavailable without data",
+      "empty after a completed query",
+      "partial when usable data coexists with missing sections or a refresh error",
+      "final only when authoritative data is complete"
+    ],
+    "fallback_rule": "unavailable and conflict never render child business content as a fallback; partial preserves only already available authoritative content"
+  },
+  "accessibility": {
+    "loading_empty_partial_role": "status",
+    "unavailable_conflict_role": "alert",
+    "loading_aria_busy": true,
+    "drawer_initial_focus": "focus the explicit drawer heading after the open transition",
+    "drawer_return_focus": "return focus to the exact connected trigger after the close transition",
+    "keyboard": "Drawer retains Ant Design focus trap, Escape handling and close controls"
+  },
+  "responsive": {
+    "long_text": "overflow-wrap:anywhere with min-width:0 containment",
+    "viewports": [1366, 1600],
+    "drawer_width": "min(1200px, calc(100dvw - 48px))"
+  },
+  "authorities": {
+    "state_component": "web/ui/src/components/PageStateBoundary.tsx#PageStateBoundary",
+    "state_resolver": "web/ui/src/components/pageState.ts#resolvePageState",
+    "drawer_focus": "web/ui/src/components/useDrawerFocusReturn.ts#useDrawerFocusReturn",
+    "alert_detail": "web/ui/src/pages/AlertDetailPage.tsx#AlertDetailPage",
+    "campaign_drawer": "web/ui/src/pages/CampaignWorkbenchPage.tsx#CampaignDetailDrawerContent",
+    "styles": "web/ui/src/styles/page-state.css"
+  },
+  "current_route_adoption": [
+    "alert-detail page root",
+    "campaign workbench detail Drawer"
+  ],
+  "latest_evidence": {
+    "path": "doc/02_acceptance/topic1/tasks/t1-m09-n021/k8s-page-state-accessibility-latest.json",
+    "run_id": "c2c6fa96-b4dc-4b9e-9b0c-9cf3da7ed37d",
+    "status": "PASS",
+    "coverage_status": "PASS_FOR_K8S_IMMUTABLE_BUNDLE_STATE_AND_RESPONSIVE_CONTRACT",
+    "production_applied": false
+  },
+  "closure": {
+    "status": "PARTIAL",
+    "production_applied": false,
+    "open_items": [
+      "adopt the shared state boundary on remaining M09 product routes without changing their business contracts",
+      "run Windows Chrome keyboard, focus, ARIA and long-text journeys on the same candidate image",
+      "capture pixel comparison at 1366 and 1600 viewports",
+      "complete screen-reader review and the production observation window"
+    ]
+  }
+}

@@ -4,24 +4,107 @@
   "source_topic_catalog": "common/kafka/create-topics.sh",
   "deployment_topic_catalog": "deployments/kubernetes/init-jobs/01-kafka-topics.yaml",
   "compatibility_policy": "No topic, key or value contract may be removed in the remediation window. JSON contracts are backward-compatible within their named major version; Protobuf compatibility is enforced by buf.",
+  "m03_session_feature_contract": {
+    "session_topic": {
+      "name": "session.events.v1",
+      "key_contract": "tenant_id+community_id",
+      "message_type": "SessionEvent",
+      "schema_message": "traffic.v1.SessionEvent",
+      "producers": [
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/FeatureJob.java"
+      ]
+    },
+    "feature_topic": {
+      "name": "feature.stat.v1",
+      "key_contract": "tenant_id+community_id",
+      "message_type": "FeatureStat",
+      "schema_message": "traffic.v1.FeatureStat",
+      "producers": [
+        "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/sink/KafkaSinkFactory.java"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/RuleJob.java",
+        "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/BehaviorDetectionJob.java"
+      ]
+    },
+    "embedded_feature_messages": [
+      "traffic.v1.FeatureSeq",
+      "traffic.v1.FeatureFingerprint"
+    ],
+    "unapproved_topic_names": [
+      "feature.stats.v1",
+      "feature.fingerprint.v1"
+    ],
+    "new_topic_requires": "A separately approved versioned Kafka topic contract before producer or consumer code is enabled."
+  },
   "allowed_additional_topics": [
-    {"name": "detections.behavior.v1", "owner": "WP-25", "known_gap": "Legacy split detection stream is not yet mapped to the canonical detections.v1 consumer matrix."},
-    {"name": "detections.business.v1", "owner": "WP-25", "known_gap": "Legacy split detection stream is not yet mapped to the canonical detections.v1 consumer matrix."},
-    {"name": "campaigns.v1", "owner": "WP-07", "known_gap": "Campaign projection topic predates this catalog and lacks an authoritative payload schema."},
-    {"name": "l2.trigger.v1", "owner": "WP-25", "known_gap": "L2 trigger contract and owning consumer are not yet versioned."},
-    {"name": "dlq.feature-job", "owner": "WP-25", "known_gap": "Legacy Flink DLQ payload must converge on DLQMessageV1Json."},
-    {"name": "dlq.rule-job", "owner": "WP-25", "known_gap": "Legacy Flink DLQ payload must converge on DLQMessageV1Json."},
-    {"name": "dlq.cep-job", "owner": "WP-25", "known_gap": "Legacy Flink DLQ payload must converge on DLQMessageV1Json."}
+    {
+      "name": "detections.behavior.v1",
+      "owner": "WP-25",
+      "known_gap": "Legacy split detection stream is not yet mapped to the canonical detections.v1 consumer matrix."
+    },
+    {
+      "name": "detections.business.v1",
+      "owner": "WP-25",
+      "known_gap": "Legacy split detection stream is not yet mapped to the canonical detections.v1 consumer matrix."
+    },
+    {
+      "name": "l2.trigger.v1",
+      "owner": "WP-25",
+      "known_gap": "L2 trigger contract and owning consumer are not yet versioned."
+    },
+    {
+      "name": "dlq.feature-job",
+      "owner": "WP-25",
+      "known_gap": "Retained inactive compatibility topic. FeatureJob now writes canonical DLQMessageV1Json to dlq.v1; existing records still require governed retention or replay disposition."
+    },
+    {
+      "name": "dlq.rule-job",
+      "owner": "WP-25",
+      "known_gap": "Legacy Flink DLQ payload must converge on DLQMessageV1Json."
+    },
+    {
+      "name": "dlq.cep-job",
+      "owner": "WP-25",
+      "known_gap": "Legacy Flink DLQ payload must converge on DLQMessageV1Json."
+    }
   ],
   "observed_runtime_additional_topics": [
-    {"name": "alert.events.v1", "owner": "WP-07", "known_gap": "Live-only alert lifecycle topic is absent from both repository creation catalogs and lacks a versioned payload schema."},
-    {"name": "session.late.v1", "owner": "WP-25", "known_gap": "Live-only late-session stream is absent from both repository creation catalogs and lacks a versioned payload schema."},
-    {"name": "dlq.session.ch.v1", "owner": "WP-25", "known_gap": "Live-only ClickHouse session DLQ is absent from both repository creation catalogs and is not bound to the canonical DLQ schema."},
-    {"name": "dlq.pcap-index-job", "owner": "WP-25", "known_gap": "Live-only PCAP index DLQ is absent from both repository creation catalogs and is not bound to the canonical DLQ schema."}
+    {
+      "name": "alert.events.v1",
+      "owner": "WP-07",
+      "known_gap": "Live-only alert lifecycle topic is absent from both repository creation catalogs and lacks a versioned payload schema."
+    },
+    {
+      "name": "session.late.v1",
+      "owner": "WP-25",
+      "known_gap": "Live-only late-session stream is absent from both repository creation catalogs and lacks a versioned payload schema."
+    },
+    {
+      "name": "dlq.session.ch.v1",
+      "owner": "WP-25",
+      "known_gap": "Live-only ClickHouse session DLQ is absent from both repository creation catalogs and is not bound to the canonical DLQ schema."
+    },
+    {
+      "name": "dlq.pcap-index-job",
+      "owner": "WP-25",
+      "known_gap": "Live-only PCAP index DLQ is absent from both repository creation catalogs and is not bound to the canonical DLQ schema."
+    }
   ],
   "observed_environment_test_topics": [
-    {"name": "test-metadata", "owner": "QA", "known_gap": "Environment test topic is outside the release catalog and needs an explicit lifecycle owner before cleanup."},
-    {"name": "perf-test", "owner": "QA", "known_gap": "Performance test topic is outside the release catalog and needs an explicit lifecycle owner before cleanup."}
+    {
+      "name": "test-metadata",
+      "owner": "QA",
+      "known_gap": "Environment test topic is outside the release catalog and needs an explicit lifecycle owner before cleanup."
+    },
+    {
+      "name": "perf-test",
+      "owner": "QA",
+      "known_gap": "Performance test topic is outside the release catalog and needs an explicit lifecycle owner before cleanup."
+    }
   ],
   "topics": [
     {
@@ -31,10 +114,19 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+community_id",
       "message_type": "FlowEvent",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/flow.proto", "message": "traffic.v1.FlowEvent"},
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/flow.proto",
+        "message": "traffic.v1.FlowEvent"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/ingest/queue/producer.go"],
-      "consumers": ["java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/SessionJob.java"]
+      "producers": [
+        "go/control-plane/internal/ingest/queue/producer.go"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/SessionJob.java"
+      ],
+      "consumer_contract": "contracts/events/flow-events-consumer.v1.json"
     },
     {
       "name": "flow.projection-replay.v1",
@@ -43,10 +135,18 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+community_id",
       "message_type": "FlowEvent",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/flow.proto", "message": "traffic.v1.FlowEvent"},
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/flow.proto",
+        "message": "traffic.v1.FlowEvent"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/common/dataquality/repair_replay_driver.go"],
-      "consumers": ["go/control-plane/internal/common/dataquality/repair_projection_consumer.go"],
+      "producers": [
+        "go/control-plane/internal/common/dataquality/repair_replay_driver.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/common/dataquality/repair_projection_consumer.go"
+      ],
       "compatibility_note": "Dedicated bounded repair topic. It must never be configured as flow.events.v1; target and receipt commit atomically before Kafka offset acknowledgement."
     },
     {
@@ -56,10 +156,19 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+community_id",
       "message_type": "SessionEvent",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/session.proto", "message": "traffic.v1.SessionEvent"},
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/session.proto",
+        "message": "traffic.v1.SessionEvent"
+      },
       "readiness": "active",
-      "producers": ["java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java"],
-      "consumers": ["java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/FeatureJob.java"]
+      "producers": [
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/FeatureJob.java"
+      ],
+      "compatibility_note": "M03 preserves the v1 topic, tenant_id+community_id key and SessionEvent wire type while additive fields remain optional to legacy readers."
     },
     {
       "name": "feature.stat.v1",
@@ -68,13 +177,20 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+community_id",
       "message_type": "FeatureStat",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/feature.proto", "message": "traffic.v1.FeatureStat"},
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/feature.proto",
+        "message": "traffic.v1.FeatureStat"
+      },
       "readiness": "active",
-      "producers": ["java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/sink/KafkaSinkFactory.java"],
+      "producers": [
+        "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/sink/KafkaSinkFactory.java"
+      ],
       "consumers": [
         "java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/RuleJob.java",
         "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/BehaviorDetectionJob.java"
-      ]
+      ],
+      "compatibility_note": "M03 preserves the singular feature.stat.v1 topic and FeatureStat wire type. FeatureSeq and FeatureFingerprint remain versioned messages embedded by FeatureBatch; they do not authorize additional Kafka topics."
     },
     {
       "name": "detections.v1",
@@ -83,14 +199,21 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+community_id",
       "message_type": "DetectionBehavior",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/detection.proto", "message": "traffic.v1.DetectionBehavior"},
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/detection.proto",
+        "message": "traffic.v1.DetectionBehavior"
+      },
       "readiness": "active",
-      "producers": ["java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/sink/KafkaDetectionSinkFactory.java"],
+      "producers": [
+        "java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/sink/KafkaDetectionSinkFactory.java",
+        "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/sink/BehaviorKafkaSinkFactory.java"
+      ],
       "consumers": [
         "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/AlertGeneratorJob.java",
         "go/control-plane/internal/alert/consumer/kafka_consumer.go"
       ],
-      "compatibility_note": "The Go consumer also accepts DetectionBatch for the retained compatibility path; the active Flink stream emits DetectionBehavior."
+      "compatibility_note": "The Go consumer also accepts DetectionBatch for the retained compatibility path. RuleJob is the active producer; the optional frozen-profile BehaviorDetectionJob producer is default-off and emits the same DetectionBehavior/key contract only after explicit activation."
     },
     {
       "name": "alerts.v1",
@@ -99,10 +222,18 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+community_id",
       "message_type": "Alert",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/alert.proto", "message": "traffic.v1.Alert"},
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/alert.proto",
+        "message": "traffic.v1.Alert"
+      },
       "readiness": "active",
-      "producers": ["java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/sink/KafkaAlertSinkFactory.java"],
-      "consumers": ["java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/CepJob.java"]
+      "producers": [
+        "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/sink/KafkaAlertSinkFactory.java"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/CepJob.java"
+      ]
     },
     {
       "name": "alert.feedback.v1",
@@ -111,11 +242,40 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+alert_id",
       "message_type": "AlertFeedbackExtendedV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AlertFeedbackExtendedV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AlertFeedbackExtendedV1Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/alert/api/handler_feedback.go"],
-      "consumers": ["go/control-plane/internal/rules/consumer/alert_feedback_event_consumer.go"],
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_feedback.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/rules/consumer/alert_feedback_event_consumer.go"
+      ],
       "known_gap": "The producer transaction and PG inbox consumer are implemented; inbox-to-ClickHouse/model-training processing and live reconciliation remain open."
+    },
+    {
+      "name": "model.feedback.v1",
+      "partitions": 3,
+      "retention_ms": 604800000,
+      "retention_bytes": 134217728,
+      "key_contract": "tenant_id+feedback_id",
+      "message_type": "ModelFeedbackAdjudicatedV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/model-feedback-event.v1.schema.json",
+        "definition": "ModelFeedbackAdjudicatedV1Json"
+      },
+      "readiness": "producer_candidate_default_off",
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_model_feedback_revision.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/rules/consumer/model_feedback_revision_consumer.go"
+      ],
+      "known_gap": "The M09-N017 PostgreSQL authority, versioned outbox and producer candidate are implemented default-off. Startup requires a non-zero candidate hash plus an exact M08 consumer broker receipt; the current receipt, live offset commit and production enablement remain absent."
     },
     {
       "name": "alert.response.requested.v1",
@@ -124,13 +284,19 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+job_id",
       "message_type": "AlertResponseRequestedV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AlertResponseRequestedV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AlertResponseRequestedV1Json"
+      },
       "readiness": "active",
       "producers": [
         "go/control-plane/internal/alert/api/handler_alert_actions.go",
         "go/control-plane/internal/alert/api/handler_alert_response_workflow.go"
       ],
-      "consumers": ["go/control-plane/internal/alert/consumer/alert_response_event_consumer.go"],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go"
+      ],
       "known_gap": "Dry-run requests receive deterministic simulated receipts. Approved real events can use the default-off provider executor with stable idempotency, mandatory authority lookup and atomic PostgreSQL receipt/action/audit commit. Permanent poison events have a repository-owned PostgreSQL DLQ receipt/audit barrier after canonical DLQ acknowledgement and before source-offset commit. Approved-candidate rollout, real Kafka/source-offset fault evidence, asynchronous authority recheck and external compensation execution remain open."
     },
     {
@@ -140,13 +306,19 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+batch_id",
       "message_type": "AlertBatchAssignmentLifecycleV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AlertBatchAssignmentLifecycleV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AlertBatchAssignmentLifecycleV1Json"
+      },
       "readiness": "active",
       "producers": [
         "go/control-plane/internal/alert/api/alert_batch_assignment_v1.go",
         "go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go"
       ],
-      "consumers": ["go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go"],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/alert_batch_assignment_pipeline.go"
+      ],
       "known_gap": "The default-off pipeline has deterministic PostgreSQL intent, a strict independently idempotent consumer, ClickHouse projection receipts and a post-DLQ-ack source-tuple barrier. Release-candidate Kafka/ClickHouse reconciliation, compensation and G2-G6 evidence remain open."
     },
     {
@@ -156,9 +328,15 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+view_id",
       "message_type": "AlertSavedViewSavedV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AlertSavedViewSavedV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AlertSavedViewSavedV1Json"
+      },
       "readiness": "producer_only",
-      "producers": ["go/control-plane/internal/alert/api/handler_alert_saved_view_outbox.go"],
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_alert_saved_view_outbox.go"
+      ],
       "consumers": [],
       "known_gap": "The transactional producer is implemented; an independently idempotent downstream saved-view projection and live Kafka reconciliation remain open under T-PG-002."
     },
@@ -169,11 +347,19 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+entry_id",
       "message_type": "WhitelistLifecycleV2Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "WhitelistLifecycleV2Json"},
-      "readiness": "active",
-      "producers": ["go/control-plane/internal/alert/whitelist/outbox_dispatcher.go"],
-      "consumers": ["go/control-plane/internal/rules/consumer/whitelist_rule_effect_consumer.go"],
-      "known_gap": "Code, schema and least-privilege identities are implemented behind a default-off expand gate. Registry distribution, live Kafka/PG reconciliation, fault injection, rollback and observation remain required before rollout."
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "WhitelistLifecycleV2Json"
+      },
+      "readiness": "producer_candidate_default_off",
+      "producers": [
+        "go/control-plane/internal/alert/whitelist/outbox_dispatcher.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/rules/consumer/whitelist_rule_effect_consumer.go"
+      ],
+      "known_gap": "The M09-N018 consumer-first rail, broker projection readiness receipt and producer admission gate are implemented and proven in run-scoped Kubernetes. Production candidate rollout, reconciliation, fault injection, rollback and observation remain required; producer and matcher stay default-off."
     },
     {
       "name": "notification.governance.events.v1",
@@ -182,11 +368,39 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+rule_id",
       "message_type": "NotificationRuleLifecycleV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "NotificationRuleLifecycleV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "NotificationRuleLifecycleV1Json"
+      },
       "readiness": "producer_only",
-      "producers": ["go/control-plane/internal/alert/api/notification_governance_outbox.go"],
+      "producers": [
+        "go/control-plane/internal/alert/api/notification_governance_outbox.go"
+      ],
       "consumers": [],
       "known_gap": "Notification rule create and patch publish through a transactional outbox; templates, escalation policies, an idempotent consumer and live reconciliation remain open under T-PG-002."
+    },
+    {
+      "name": "campaigns.v1",
+      "partitions": 6,
+      "retention_ms": 259200000,
+      "retention_bytes": 268435456,
+      "key_contract": "tenant_id+campaign_id",
+      "message_type": "Campaign",
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/alert.proto",
+        "message": "traffic.v1.Campaign"
+      },
+      "readiness": "producer_candidate_default_off",
+      "producers": [
+        "java/flink-jobs/flink-cep-job/src/main/java/com/traffic/flink/cep/sink/KafkaSinkFactory.java"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/campaign_detection_consumer.go"
+      ],
+      "candidate_contract": "contracts/events/campaigns-protobuf.v1.json",
+      "known_gap": "The Protobuf producer and PostgreSQL consumer are implemented but remain default-off until the consumer-first K8s canary records a candidate-bound durable receipt."
     },
     {
       "name": "campaign.events.v2",
@@ -195,10 +409,18 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+campaign_id",
       "message_type": "CampaignAggregateLifecycleV2Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "CampaignAggregateLifecycleV2Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "CampaignAggregateLifecycleV2Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/alert/api/handler_campaign_outbox.go"],
-      "consumers": ["go/control-plane/internal/alert/consumer/campaign_event_consumer.go"],
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_campaign_outbox.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/campaign_event_consumer.go"
+      ],
       "known_gap": "PostgreSQL inbox, delivery positions and source watermarks are implemented; ClickHouse, OpenSearch and NebulaGraph target projectors remain explicitly pending."
     },
     {
@@ -208,11 +430,40 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+campaign_id",
       "message_type": "CampaignMembershipLifecycleV2Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "CampaignMembershipLifecycleV2Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "CampaignMembershipLifecycleV2Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/alert/api/handler_campaign_outbox.go"],
-      "consumers": ["go/control-plane/internal/alert/consumer/campaign_event_consumer.go"],
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_campaign_outbox.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/campaign_event_consumer.go"
+      ],
       "known_gap": "The same event_id intentionally correlates this relation stream with campaign.events.v2; consumer identity is (stream,event_id), and downstream target projectors remain pending."
+    },
+    {
+      "name": "alert.evidence-links.v1",
+      "partitions": 6,
+      "retention_ms": 604800000,
+      "retention_bytes": 134217728,
+      "key_contract": "tenant_id+alert_id",
+      "message_type": "AlertEvidenceLinkLifecycleV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AlertEvidenceLinkLifecycleV1Json"
+      },
+      "readiness": "consumer_candidate_default_off",
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_alert_evidence_link_outbox.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/alert_evidence_link_consumer.go"
+      ],
+      "known_gap": "The transactional writer, broker-receipted outbox, strict consumer inbox and ClickHouse projection are implemented; rollout stays default-off until a candidate-bound K8s consumer-first canary passes."
     },
     {
       "name": "playbook.execution.events.v2",
@@ -221,10 +472,18 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+execution_id",
       "message_type": "PlaybookExecutionLifecycleV2Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "PlaybookExecutionLifecycleV2Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "PlaybookExecutionLifecycleV2Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/alert/api/playbook_execution_outbox.go"],
-      "consumers": ["go/control-plane/internal/alert/consumer/playbook_execution_event_consumer.go"],
+      "producers": [
+        "go/control-plane/internal/alert/api/playbook_execution_outbox.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/playbook_execution_event_consumer.go"
+      ],
       "known_gap": "Broker-acknowledged outbox delivery and an idempotent PostgreSQL state projection are implemented; approved real-broker reconciliation and additional ClickHouse/OpenSearch/NebulaGraph projections remain open."
     },
     {
@@ -234,9 +493,15 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+topic",
       "message_type": "TopicActionLifecycleV2Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "TopicActionLifecycleV2Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "TopicActionLifecycleV2Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/alert/api/handler_topic_outbox.go"],
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_topic_outbox.go"
+      ],
       "consumers": [
         "go/control-plane/internal/alert/consumer/topic_action_event_consumer.go"
       ],
@@ -249,11 +514,107 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+task_id",
       "message_type": "DashboardTaskLifecycleV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "DashboardTaskLifecycleV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "DashboardTaskLifecycleV1Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/alert/api/dashboard_task_pipeline.go"],
-      "consumers": ["go/control-plane/internal/alert/api/dashboard_task_pipeline.go"],
+      "producers": [
+        "go/control-plane/internal/alert/api/dashboard_task_pipeline.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/api/dashboard_task_pipeline.go"
+      ],
       "known_gap": "The default-off owned G1 now covers execution and compensation authority lookup plus poison-message DLQ acknowledgement failure, source-offset retention, restart redelivery and PostgreSQL/audit materialization. Approved replicated Kafka, release-candidate provider effects and G2/G3 reconciliation remain open."
+    },
+    {
+      "name": "fusion.commands.v1",
+      "partitions": 6,
+      "retention_ms": 604800000,
+      "retention_bytes": 134217728,
+      "key_contract": "tenant_id+job_id",
+      "message_type": "FusionSourceSyncRequestedV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "FusionSourceSyncRequestedV1Json"
+      },
+      "readiness": "consumer_candidate_default_off",
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_fusion_outbox.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/fusion_projection_consumer.go"
+      ],
+      "consumer_contract": "contracts/events/fusion-source-sync.v1.json",
+      "known_gap": "The consumer, PostgreSQL inbox and source/data snapshot projector are repository-ready and default off. No candidate image, assigned K8s consumer generation, broker offset or four-source reconciliation has been accepted; the authority writer and dispatcher remain disabled."
+    },
+    {
+      "name": "baseline.lifecycle.v1",
+      "partitions": 3,
+      "retention_ms": 604800000,
+      "retention_bytes": 134217728,
+      "key_contract": "tenant_id+baseline_id",
+      "message_type": "BehaviorBaselineLifecycleV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "BehaviorBaselineLifecycleV1Json"
+      },
+      "readiness": "consumer_candidate_default_off",
+      "producers": [
+        "go/control-plane/internal/alert/baseline/lifecycle_outbox.go"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/baseline/BaselineLifecycleProcessFunction.java"
+      ],
+      "consumer_contract": "contracts/events/baseline-lifecycle.v1.json",
+      "known_gap": "The fail-closed PostgreSQL dispatcher and Flink staged/active checkpoint-state consumer are repository-ready and default off. No digest-bound candidate image, savepoint restore, assigned generation, broker receipt or live activation has been accepted."
+    },
+    {
+      "name": "baseline.activation-acks.v1",
+      "partitions": 3,
+      "retention_ms": 604800000,
+      "retention_bytes": 67108864,
+      "key_contract": "tenant_id+baseline_id",
+      "message_type": "BehaviorBaselineActivationAckV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "BehaviorBaselineActivationAckV1Json"
+      },
+      "readiness": "consumer_candidate_default_off",
+      "producers": [
+        "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/baseline/BaselineActivationAckKafkaSinkFactory.java"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/baseline_activation_ack_consumer.go"
+      ],
+      "consumer_contract": "contracts/events/baseline-activation-ack.v1.json",
+      "known_gap": "The exactly-once Flink producer, strict alert-service ACK consumer and all-target activation transaction are repository-ready and default off. No digest-bound candidate image, assigned generation, broker receipt, exact-set reconciliation or live activation has been accepted."
+    },
+    {
+      "name": "graph.projections.v1",
+      "partitions": 6,
+      "retention_ms": 604800000,
+      "retention_bytes": 268435456,
+      "key_contract": "tenant_id+projection_id",
+      "message_type": "GraphProjectionEvent",
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/graph.proto",
+        "message": "traffic.v1.GraphProjectionEvent"
+      },
+      "readiness": "consumer_candidate_default_off",
+      "producers": [
+        "go/control-plane/internal/graph/projection/publisher.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/graph/projection/inbox.go"
+      ],
+      "consumer_contract": "contracts/events/graph-projection.v1.json",
+      "known_gap": "The protobuf contract, durable PostgreSQL inbox, monotonic worker and NebulaGraph target are repository-ready and default off. No source publisher is wired, and no digest-bound consumer generation, Nebula acknowledgement, reconciliation window or canary has been accepted."
     },
     {
       "name": "probe.control.v2",
@@ -262,11 +623,43 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+probe_id",
       "message_type": "ProbeOperationRequestedV2Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "ProbeOperationRequestedV2Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "ProbeOperationRequestedV2Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/alert/api/handler_probe_outbox.go"],
-      "consumers": ["go/control-plane/internal/ingest/control/bridge.go"],
-      "edge_projection": {"path": "proto/traffic/v1/ingest.proto", "message": "traffic.v1.ProbeOperationCommand"}
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_probe_outbox.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/ingest/control/bridge.go"
+      ],
+      "edge_projection": {
+        "path": "proto/traffic/v1/ingest.proto",
+        "message": "traffic.v1.ProbeOperationCommand"
+      }
+    },
+    {
+      "name": "probe.group-readiness.v1",
+      "partitions": 3,
+      "retention_ms": 86400000,
+      "retention_bytes": 67108864,
+      "key_contract": "consumer_group",
+      "message_type": "ProbeGroupReadinessReceiptV1",
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/ingest.proto",
+        "message": "traffic.v1.ProbeGroupReadinessReceiptV1"
+      },
+      "readiness": "active",
+      "producers": [
+        "go/control-plane/internal/ingest/control/readiness_publisher.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/probe_readiness_consumer.go"
+      ],
+      "known_gap": ""
     },
     {
       "name": "probe.acks.v2",
@@ -275,11 +668,22 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+probe_id",
       "message_type": "ProbeOperationAgentAckV2Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "ProbeOperationAgentAckV2Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "ProbeOperationAgentAckV2Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/ingest/control/bridge.go"],
-      "consumers": ["go/control-plane/internal/alert/consumer/probe_ack_consumer.go"],
-      "edge_projection": {"path": "proto/traffic/v1/ingest.proto", "message": "traffic.v1.ProbeOperationAck"}
+      "producers": [
+        "go/control-plane/internal/ingest/control/bridge.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/probe_ack_consumer.go"
+      ],
+      "edge_projection": {
+        "path": "proto/traffic/v1/ingest.proto",
+        "message": "traffic.v1.ProbeOperationAck"
+      }
     },
     {
       "name": "dlq.probe.acks.v2",
@@ -288,9 +692,15 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+probe_id",
       "message_type": "DLQMessageV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "DLQMessageV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "DLQMessageV1Json"
+      },
       "readiness": "dlq",
-      "producers": ["go/control-plane/internal/common/kafka/dlq.go"],
+      "producers": [
+        "go/control-plane/internal/common/kafka/dlq.go"
+      ],
       "consumers": [],
       "known_gap": "Replay is exposed through governance APIs but no dedicated automatic replay consumer is bound to this topic."
     },
@@ -301,9 +711,15 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+probe_id",
       "message_type": "ProbeOperationLifecycleV2Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "ProbeOperationLifecycleV2Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "ProbeOperationLifecycleV2Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/alert/api/handler_probe_outbox.go"],
+      "producers": [
+        "go/control-plane/internal/alert/api/handler_probe_outbox.go"
+      ],
       "consumers": [
         "go/control-plane/internal/alert/consumer/probe_operation_event_consumer.go"
       ],
@@ -316,10 +732,18 @@
       "retention_bytes": 536870912,
       "key_contract": "tenant_id+probe_id",
       "message_type": "PcapIndexMeta",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/pcap.proto", "message": "traffic.v1.PcapIndexMeta"},
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/pcap.proto",
+        "message": "traffic.v1.PcapIndexMeta"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/ingest/queue/producer.go"],
-      "consumers": ["java/flink-jobs/flink-pcap-index-job/src/main/java/com/traffic/flink/pcap/PcapIndexJob.java"]
+      "producers": [
+        "go/control-plane/internal/ingest/queue/producer.go"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-pcap-index-job/src/main/java/com/traffic/flink/pcap/PcapIndexJob.java"
+      ]
     },
     {
       "name": "rule.updates",
@@ -328,10 +752,18 @@
       "retention_bytes": 134217728,
       "key_contract": "rule_id",
       "message_type": "RuleCommandV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "RuleCommandV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "RuleCommandV1Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/rules/publisher/kafka_publisher.go"],
-      "consumers": ["java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/RuleJob.java"],
+      "producers": [
+        "go/control-plane/internal/rules/publisher/kafka_publisher.go"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/RuleJob.java"
+      ],
       "compatibility_note": "The producer uses the JSON shape returned by converter.CommandToProto; this is not protobuf wire encoding."
     },
     {
@@ -341,10 +773,38 @@
       "retention_bytes": 134217728,
       "key_contract": "model_id",
       "message_type": "ModelUpdateEventV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "ModelUpdateEventV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "ModelUpdateEventV1Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/rules/service/model_service.go"],
-      "consumers": ["java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/BehaviorDetectionJob.java"]
+      "producers": [
+        "go/control-plane/internal/rules/service/model_service.go"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/BehaviorDetectionJob.java"
+      ]
+    },
+    {
+      "name": "rule-update-applied.v1",
+      "partitions": 4,
+      "retention_ms": 259200000,
+      "retention_bytes": 134217728,
+      "key_contract": "event_id",
+      "message_type": "RuleUpdateAppliedAckV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "RuleUpdateAppliedAckV1Json"
+      },
+      "readiness": "active",
+      "producers": [
+        "java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/RuleJob.java"
+      ],
+      "consumers": [
+        "go/control-plane/internal/rules/service/rule_applied_ack.go"
+      ]
     },
     {
       "name": "model-update-applied.v1",
@@ -353,10 +813,39 @@
       "retention_bytes": 134217728,
       "key_contract": "event_id",
       "message_type": "ModelUpdateAppliedAckV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "ModelUpdateAppliedAckV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "ModelUpdateAppliedAckV1Json"
+      },
       "readiness": "active",
-      "producers": ["java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/BehaviorDetectionJob.java"],
-      "consumers": ["go/control-plane/internal/rules/service/model_service.go"]
+      "producers": [
+        "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/BehaviorDetectionJob.java"
+      ],
+      "consumers": [
+        "go/control-plane/internal/rules/service/model_service.go"
+      ]
+    },
+    {
+      "name": "model-shadow-observations.v1",
+      "partitions": 6,
+      "retention_ms": 604800000,
+      "retention_bytes": 268435456,
+      "key_contract": "observation_id",
+      "message_type": "ChampionChallengerObservationV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "ChampionChallengerObservationV1Json"
+      },
+      "readiness": "consumer_candidate_default_off",
+      "producers": [
+        "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/sink/ChampionChallengerObservationKafkaSinkFactory.java"
+      ],
+      "consumers": [
+        "go/control-plane/cmd/model-canary-controller/main.go"
+      ],
+      "known_gap": "The N013 tenant controller is implemented default-off and the N012 observer producer remains default-off; a full shadow window, approved tenant, immutable controller image and production activation evidence remain open."
     },
     {
       "name": "model-actions.v1",
@@ -365,10 +854,18 @@
       "retention_bytes": 134217728,
       "key_contract": "model_id",
       "message_type": "ModelActionRequestedV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "ModelActionRequestedV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "ModelActionRequestedV1Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/rules/publisher/kafka_publisher.go"],
-      "consumers": ["go/control-plane/internal/rules/consumer/model_action_event_consumer.go"],
+      "producers": [
+        "go/control-plane/internal/rules/publisher/kafka_publisher.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/rules/consumer/model_action_event_consumer.go"
+      ],
       "known_gap": "The consumer durably materializes awaiting_executor and never treats Kafka delivery as business completion. Training, evaluation and feedback-ingest executors plus terminal provider receipts remain open."
     },
     {
@@ -378,9 +875,15 @@
       "retention_bytes": 268435456,
       "key_contract": "deployment_id",
       "message_type": "DeploymentEventV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "DeploymentEventV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "DeploymentEventV1Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/rules/publisher/kafka_publisher.go"],
+      "producers": [
+        "go/control-plane/internal/rules/publisher/kafka_publisher.go"
+      ],
       "consumers": [
         "go/control-plane/internal/rules/consumer/deployment_event_consumer.go"
       ],
@@ -393,10 +896,21 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id",
       "message_type": "AuditEventV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AuditEventV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AuditEventV1Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/common/audit/logger.go"],
-      "consumers": ["go/control-plane/internal/common/audit/consumer.go"],
+      "producers": [
+        "go/control-plane/internal/common/audit/logger.go",
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java",
+        "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/sink/LogSourceQualitySinkFactory.java",
+        "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserBehaviorJob.java"
+      ],
+      "consumers": [
+        "go/control-plane/internal/common/audit/consumer.go"
+      ],
       "compatibility_note": "The consumer retains traffic.v1.AuditLog and AuditLogBatch protobuf decoding for existing producers before trying the canonical JSON event."
     },
     {
@@ -404,13 +918,22 @@
       "partitions": 4,
       "retention_ms": 86400000,
       "retention_bytes": 134217728,
-      "key_contract": "tenant_id+mac",
+      "key_contract": "utf8(tenant_id + ':' + canonical_mac_address)",
       "message_type": "MacIpBinding",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/asset.proto", "message": "traffic.v1.MacIpBinding"},
-      "readiness": "consumer_only",
-      "producers": [],
-      "consumers": ["go/control-plane/internal/asset/consumer/binding_consumer.go"],
-      "known_gap": "No repository producer publishes passive ARP/DHCP bindings to this topic."
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/asset.proto",
+        "message": "traffic.v1.MacIpBinding"
+      },
+      "readiness": "producer_candidate_default_off",
+      "producers": [
+        "go/control-plane/internal/ingest/queue/producer.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/asset/consumer/binding_consumer.go"
+      ],
+      "producer_contract": "contracts/events/asset-bindings-producer.v1.json",
+      "known_gap": "The authenticated probe RPC and ingest-gateway publisher are implemented but default off; no live Kafka acknowledgement, consumer offset commit or asset authority reconciliation has been accepted."
     },
     {
       "name": "asset.events.v2",
@@ -419,10 +942,19 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+asset_id",
       "message_type": "AssetUpsertedV2Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AssetUpsertedV2Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AssetUpsertedV2Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/internal/asset/repository/outbox_dispatcher.go"],
-      "consumers": ["go/control-plane/internal/asset/consumer/asset_projection_event.go"],
+      "producers": [
+        "go/control-plane/internal/asset/repository/outbox_dispatcher.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/asset/consumer/asset_projection_event.go"
+      ],
+      "consumer_contract": "contracts/events/asset-events-consumer.v1.json",
       "known_gap": "The durable PostgreSQL inbox and idempotent OpenSearch/NebulaGraph projection worker are implemented. Live broker offsets, target reconciliation, migration rollout and observation remain gated."
     },
     {
@@ -432,9 +964,15 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+run_id",
       "message_type": "AssetDiscoveryLifecycleV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AssetDiscoveryLifecycleV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AssetDiscoveryLifecycleV1Json"
+      },
       "readiness": "producer_only",
-      "producers": ["go/control-plane/internal/asset/repository/discovery_outbox_dispatcher.go"],
+      "producers": [
+        "go/control-plane/internal/asset/repository/discovery_outbox_dispatcher.go"
+      ],
       "consumers": [],
       "known_gap": "Transactional outbox publishing is implemented; downstream lifecycle projection, live broker offsets, duplicate/partition fault evidence and observation remain gated."
     },
@@ -445,9 +983,15 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id+job_id",
       "message_type": "AssetExportLifecycleV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "AssetExportLifecycleV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AssetExportLifecycleV1Json"
+      },
       "readiness": "producer_only",
-      "producers": ["go/control-plane/internal/asset/repository/asset_export_outbox_dispatcher.go"],
+      "producers": [
+        "go/control-plane/internal/asset/repository/asset_export_outbox_dispatcher.go"
+      ],
       "consumers": [],
       "known_gap": "Transactional outbox publishing is implemented; downstream lifecycle projection, live broker offsets, duplicate/partition fault evidence and observation remain gated."
     },
@@ -458,11 +1002,20 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+device_ip",
       "message_type": "DeviceLog",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/audit.proto", "message": "traffic.v1.DeviceLog"},
-      "readiness": "consumer_only",
-      "producers": [],
-      "consumers": ["java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/LogJob.java"],
-      "known_gap": "No repository gateway producer emits DeviceLog protobuf records."
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/audit.proto",
+        "message": "traffic.v1.DeviceLog"
+      },
+      "readiness": "producer_candidate_default_off",
+      "producers": [
+        "deployments/log-collectors/device-logs.yaml"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/LogJob.java"
+      ],
+      "consumer_contract": "contracts/events/device-logs-producer.v1.json",
+      "known_gap": "A default-zero-replica Vector producer candidate, scoped SCRAM identity and durable disk buffer are repository-ready; approved site mapping, live source traffic, broker ACK/offset and fault evidence remain gated."
     },
     {
       "name": "user.events.v1",
@@ -471,13 +1024,20 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id+user_id",
       "message_type": "UserEvent",
-      "schema": {"kind": "protobuf", "path": "proto/traffic/v1/audit.proto", "message": "traffic.v1.UserEvent"},
+      "schema": {
+        "kind": "protobuf",
+        "path": "proto/traffic/v1/audit.proto",
+        "message": "traffic.v1.UserEvent"
+      },
       "readiness": "active",
       "producers": [
         "go/control-plane/internal/auth/repository/user_settings_outbox.go",
         "go/control-plane/internal/auth/repository/user_command_outbox.go"
       ],
-      "consumers": ["java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserBehaviorJob.java"],
+      "consumers": [
+        "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserBehaviorJob.java"
+      ],
+      "consumer_contract": "contracts/events/user-events-consumer.v1.json",
       "known_gap": "The transactional auth-service settings and user-command producers are repository-complete; release-candidate Kafka publication, Flink offset and ClickHouse reconciliation remain open."
     },
     {
@@ -487,10 +1047,18 @@
       "retention_bytes": 134217728,
       "key_contract": "tenant_id (legacy composite v1 keys accepted only for replay)",
       "message_type": "ThreatIntelV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "ThreatIntelV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "ThreatIntelV1Json"
+      },
       "readiness": "active",
-      "producers": ["go/control-plane/cmd/threat-intel-service/main.go"],
-      "consumers": ["go/control-plane/internal/alert/consumer/threat_intel_event_consumer.go"],
+      "producers": [
+        "go/control-plane/cmd/threat-intel-service/main.go"
+      ],
+      "consumers": [
+        "go/control-plane/internal/alert/consumer/threat_intel_event_consumer.go"
+      ],
       "known_gap": "Business rows, feed state, revision history, minimum audit, durable command replay and the event outbox now share one PostgreSQL transaction; the downstream consumer validates canonical or legacy v1 envelopes against authoritative PostgreSQL and records replayable identities/offsets. Current images, migrations 202607302330/202607302345/202608031550, live outbox delivery, offsets, projection and audit reconciliation remain open."
     },
     {
@@ -500,14 +1068,124 @@
       "retention_bytes": 268435456,
       "key_contract": "tenant_id",
       "message_type": "DLQMessageV1Json",
-      "schema": {"kind": "json-schema", "path": "contracts/events/kafka-json-events-v1.schema.json", "definition": "DLQMessageV1Json"},
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "DLQMessageV1Json"
+      },
       "readiness": "dlq",
       "producers": [
         "go/control-plane/internal/common/kafka/dlq.go",
-        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java"
+        "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/sink/KafkaSinkFactory.java",
+        "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/sink/DLQSinkFactory.java",
+        "java/flink-jobs/flink-pcap-index-job/src/main/java/com/traffic/flink/pcap/sink/DLQSinkFactory.java",
+        "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/sink/LogDlqSinkFactory.java"
       ],
-      "consumers": ["go/control-plane/internal/alert/api/handler_advanced.go"],
+      "consumers": [
+        "go/control-plane/internal/alert/api/handler_advanced.go"
+      ],
       "known_gap": "The dashboard owned G1 emits and decodes the canonical payload and persists its source tuple after DLQ acknowledgement; remaining non-dashboard and legacy Flink payload unification, approved replicated-broker failure injection and replay evidence remain open."
+    },
+    {
+      "name": "analysis.plan.events.v1",
+      "partitions": 3,
+      "replication_factor": 2,
+      "key": "tenant_id+execution_spec_sha256",
+      "purpose": "plan-global canonical spec (compact)",
+      "retention_ms": 86400000,
+      "message_type": "AnalysisExecutionSpecV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AnalysisExecutionSpecV1Json"
+      },
+      "readiness": "producer_only",
+      "producers": [
+        "go/control-plane/internal/analysis/service/run_event_relayer.go"
+      ],
+      "consumers": []
+    },
+    {
+      "name": "analysis.run.events.v1",
+      "partitions": 3,
+      "replication_factor": 2,
+      "key": "tenant_id+run_id",
+      "purpose": "RunSubscription/run 状态事件",
+      "retention_ms": 86400000,
+      "message_type": "AnalysisRunSubscriptionV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AnalysisRunSubscriptionV1Json"
+      },
+      "readiness": "active",
+      "producers": [
+        "go/control-plane/internal/analysis/service/run_event_relayer.go"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/router/RunRouterJob.java"
+      ]
+    },
+    {
+      "name": "analysis.envelopes.v1",
+      "partitions": 3,
+      "replication_factor": 2,
+      "key": "tenant_id+run_id+community_id",
+      "purpose": "run-scoped 分析信封",
+      "retention_ms": 86400000,
+      "message_type": "AnalysisFlowEnvelopeV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AnalysisFlowEnvelopeV1Json"
+      },
+      "readiness": "active",
+      "producers": [
+        "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/router/RunRouterJob.java"
+      ],
+      "consumers": [
+        "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/receipt/RunReceiptJob.java"
+      ]
+    },
+    {
+      "name": "analysis.receipts.v1",
+      "partitions": 3,
+      "replication_factor": 2,
+      "key": "tenant_id+run_id+execution_node_id+attempt",
+      "purpose": "StageReceipt/PlanReadyReceipt",
+      "retention_ms": 86400000,
+      "message_type": "AnalysisReceiptV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AnalysisReceiptV1Json"
+      },
+      "readiness": "active",
+      "producers": [
+        "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/receipt/RunReceiptJob.java"
+      ],
+      "consumers": [
+        "go/control-plane/internal/analysis/service/receipt_applier.go"
+      ]
+    },
+    {
+      "name": "analysis.report.requests.v1",
+      "partitions": 3,
+      "replication_factor": 2,
+      "key": "tenant_id+report_id",
+      "purpose": "人读报告请求 outbox 事件",
+      "retention_ms": 86400000,
+      "message_type": "AnalysisReportRequestV1Json",
+      "schema": {
+        "kind": "json-schema",
+        "path": "contracts/events/kafka-json-events-v1.schema.json",
+        "definition": "AnalysisReportRequestV1Json"
+      },
+      "readiness": "producer_only",
+      "producers": [
+        "go/control-plane/internal/analysis/service/run_event_relayer.go"
+      ],
+      "consumers": []
     }
   ]
 }

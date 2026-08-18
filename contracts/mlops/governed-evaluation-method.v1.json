@@ -1,0 +1,62 @@
+{
+  "contract_id": "traffic.mlops.governed-evaluation-method.v1",
+  "schema_version": 1,
+  "accountable_tasks": [
+    "T1-M08-N006",
+    "T1-M08-N007"
+  ],
+  "state": "implementation_candidate_default_off",
+  "production_applied": false,
+  "population_contract": {
+    "known": "pre-isolated test rows whose attack_family is present outside open_set",
+    "normal": "known test rows with binary label 0",
+    "known_attack": "known test rows with binary label 1",
+    "unknown_attack": "open_set rows whose attack_family is absent from train and validation and whose binary label is 1"
+  },
+  "threshold_contract": {
+    "classification_threshold": 0.5,
+    "abstain_score": "max(p_attack,1-p_attack)",
+    "abstain_threshold_source": "validation split only",
+    "test_or_open_set_threshold_tuning_forbidden": true
+  },
+  "metric_contract": {
+    "required": [
+      "known_attack_recall",
+      "normal_false_positive_rate",
+      "unknown_recall",
+      "known_retention",
+      "per_class",
+      "macro_f1",
+      "micro_f1",
+      "auc_roc",
+      "auc_pr",
+      "brier_score",
+      "expected_calibration_error"
+    ],
+    "confidence_intervals": "deterministic percentile bootstrap with recorded seed and rounds",
+    "single_f1_promotion_forbidden": true
+  },
+  "open_set_contract": {
+    "family_holdout_required": true,
+    "time_isolation_required": true,
+    "site_isolation_required": true,
+    "entity_and_graph_isolation_required": true,
+    "unknown_from_training_distribution_copy_forbidden": true
+  },
+  "graph_ablation_contract": {
+    "variants": [
+      "non_graph_baseline",
+      "gnn_full",
+      "gnn_no_edges",
+      "gnn_no_sources"
+    ],
+    "same_event_identity_and_labels_required": true,
+    "missing_variant_state": "NOT_EXECUTED",
+    "negative_or_zero_graph_gain_must_be_preserved": true
+  },
+  "rollout": {
+    "flag": "MLOPS_GOVERNED_EVALUATION_V1_ENABLED",
+    "default": false,
+    "activation_authorized": false
+  }
+}

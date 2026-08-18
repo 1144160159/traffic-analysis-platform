@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/gof-pattern-catalog.schema.json",
+  "title": "Traffic platform GoF 23 pattern decision catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "artifact_kind", "schema_version", "catalog_id", "source_refs", "pattern_count", "patterns", "evidence_boundary"],
+  "properties": {
+    "$schema": {"const": "./gof-pattern-catalog.schema.json"},
+    "artifact_kind": {"const": "GOF_PATTERN_CATALOG"},
+    "schema_version": {"const": "1.0.0"},
+    "catalog_id": {"const": "gof23-project-catalog.v1"},
+    "source_refs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"$ref": "#/$defs/hash_ref"},
+      "uniqueItems": true
+    },
+    "pattern_count": {"const": 23},
+    "patterns": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "GOF-CRE-01", "GOF-CRE-02", "GOF-CRE-03", "GOF-CRE-04", "GOF-CRE-05",
+        "GOF-STR-01", "GOF-STR-02", "GOF-STR-03", "GOF-STR-04", "GOF-STR-05", "GOF-STR-06", "GOF-STR-07",
+        "GOF-BEH-01", "GOF-BEH-02", "GOF-BEH-03", "GOF-BEH-04", "GOF-BEH-05", "GOF-BEH-06", "GOF-BEH-07", "GOF-BEH-08", "GOF-BEH-09", "GOF-BEH-10", "GOF-BEH-11"
+      ],
+      "properties": {
+        "GOF-CRE-01": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-CRE-01"}, "rule_ref":{"const":"GOF-CRE-01"}, "category":{"const":"CREATIONAL"}, "name_en":{"const":"Abstract Factory"}}}]},
+        "GOF-CRE-02": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-CRE-02"}, "rule_ref":{"const":"GOF-CRE-02"}, "category":{"const":"CREATIONAL"}, "name_en":{"const":"Builder"}}}]},
+        "GOF-CRE-03": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-CRE-03"}, "rule_ref":{"const":"GOF-CRE-03"}, "category":{"const":"CREATIONAL"}, "name_en":{"const":"Factory Method"}}}]},
+        "GOF-CRE-04": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-CRE-04"}, "rule_ref":{"const":"GOF-CRE-04"}, "category":{"const":"CREATIONAL"}, "name_en":{"const":"Prototype"}}}]},
+        "GOF-CRE-05": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-CRE-05"}, "rule_ref":{"const":"GOF-CRE-05"}, "category":{"const":"CREATIONAL"}, "name_en":{"const":"Singleton"}}}]},
+        "GOF-STR-01": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-STR-01"}, "rule_ref":{"const":"GOF-STR-01"}, "category":{"const":"STRUCTURAL"}, "name_en":{"const":"Adapter"}}}]},
+        "GOF-STR-02": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-STR-02"}}}]},
+        "GOF-STR-03": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-STR-03"}}}]},
+        "GOF-STR-04": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-STR-04"}}}]},
+        "GOF-STR-05": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-STR-05"}}}]},
+        "GOF-STR-06": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-STR-06"}}}]},
+        "GOF-STR-07": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-STR-07"}}}]},
+        "GOF-BEH-01": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-01"}, "rule_ref":{"const":"GOF-BEH-01"}, "category":{"const":"BEHAVIORAL"}, "name_en":{"const":"Chain of Responsibility"}}}]},
+        "GOF-BEH-02": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-02"}}}]},
+        "GOF-BEH-03": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-03"}}}]},
+        "GOF-BEH-04": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-04"}}}]},
+        "GOF-BEH-05": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-05"}}}]},
+        "GOF-BEH-06": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-06"}}}]},
+        "GOF-BEH-07": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-07"}}}]},
+        "GOF-BEH-08": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-08"}}}]},
+        "GOF-BEH-09": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-09"}}}]},
+        "GOF-BEH-10": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-10"}}}]},
+        "GOF-BEH-11": {"allOf": [{"$ref": "#/$defs/pattern"}, {"properties": {"pattern_id": {"const": "GOF-BEH-11"}}}]}
+      }
+    },
+    "evidence_boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "pattern": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pattern_id", "name_en", "name_zh", "category", "default_policy",
+        "rule_ref", "source_summary", "project_adaptation", "evidence_refs"
+      ],
+      "properties": {
+        "pattern_id": {"type": "string", "pattern": "^GOF-(CRE|STR|BEH)-[0-9]{2}$"},
+        "name_en": {"type": "string", "minLength": 1},
+        "name_zh": {"type": "string", "minLength": 1},
+        "category": {"enum": ["CREATIONAL", "STRUCTURAL", "BEHAVIORAL"]},
+        "default_policy": {"enum": ["CONDITIONAL", "CONSIDER_AT_BOUNDARY", "RESTRICTED", "DEFAULT_REJECT", "MUTABLE_STATE_REJECTED"]},
+        "rule_ref": {"type": "string", "pattern": "^GOF-(CRE|STR|BEH)-[0-9]{2}$"},
+        "source_summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["intent", "applicability", "participants", "collaboration", "consequences"],
+          "properties": {
+            "intent": {"type": "string", "minLength": 8},
+            "applicability": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 4}, "uniqueItems": true},
+            "participants": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 2}, "uniqueItems": true},
+            "collaboration": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 4}, "uniqueItems": true},
+            "consequences": {
+              "type": "object", "additionalProperties": false,
+              "required": ["benefits", "liabilities"],
+              "properties": {
+                "benefits": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 4}, "uniqueItems": true},
+                "liabilities": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 4}, "uniqueItems": true}
+              }
+            }
+          }
+        },
+        "project_adaptation": {
+          "type": "object", "additionalProperties": false,
+          "required": ["native_forms", "adoption_predicate", "function_obligations", "test_obligations", "blocking_misuse"],
+          "properties": {
+            "native_forms": {
+              "type": "object", "additionalProperties": false,
+              "required": ["go", "rust", "java_flink", "typescript_react"],
+              "properties": {
+                "go": {"type": "string", "minLength": 4},
+                "rust": {"type": "string", "minLength": 4},
+                "java_flink": {"type": "string", "minLength": 4},
+                "typescript_react": {"type": "string", "minLength": 4}
+              }
+            },
+            "adoption_predicate": {"type": "string", "minLength": 8},
+            "function_obligations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 4}, "uniqueItems": true},
+            "test_obligations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 4}, "uniqueItems": true},
+            "blocking_misuse": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 4}, "uniqueItems": true}
+          }
+        },
+        "evidence_refs": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 4}, "uniqueItems": true}
+      }
+    },
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path":{"type":"string","minLength":1},"sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"}}
+    }
+  }
+}

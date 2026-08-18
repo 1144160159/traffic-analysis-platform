@@ -1,0 +1,806 @@
+{
+  "schema_version": "2.0.0",
+  "artifact_kind": "M01_EARLY_TRUST_FUNCTION_COMPLETE_ALLOCATION",
+  "artifact_status": "VERSIONED_PREVIEW_NOT_GLOBAL_REGISTRY",
+  "revision_id": "M01-EARLY-TRUST-V2",
+  "base_preview_refs": [
+    {
+      "path": "contracts/alignment/m01-early-trust-train-catalog.v1.json",
+      "sha256": "051f0945243c9e842614580e8cabb34c7dd6a158d8e284dc600dd7efe8f85827"
+    },
+    {
+      "path": "contracts/alignment/m01-early-trust-train-allocation.v1.json",
+      "sha256": "9bab6c55cf3e2ea44e1d5037ce9c37267ac804d0422d703d77f1a7fe78501d19"
+    }
+  ],
+  "prior_candidate_freeze": {
+    "revision_id": "M01-EARLY-TRUST-V1",
+    "candidate_leaf_count": 57,
+    "candidate_leaf_projection_sha256": "cf974c556104d4c721e316eccc749023da34d9afef7e7adfc0d816e1d96202f6",
+    "status": "PASS_EXACT_V1_CANDIDATE_PRESERVATION"
+  },
+  "semantic_projection_sha256": "fdf73ba06cd597d61e02992c341d95c086b2b8639de1b5f78affeb3435e39975",
+  "allocation_epoch": "T1-M01-P067-P096",
+  "append_leaf_count": 30,
+  "function_gap_findings": [
+    {
+      "finding_id": "M01-TRUST-V2-GAP-01",
+      "severity": "P0",
+      "evidence": "v1 allocates an adapter and deployment YAML but no protected verifier server function owner",
+      "required_resolution": "allocate exact request policy chain signature scope replay and orchestration function owners"
+    },
+    {
+      "finding_id": "M01-TRUST-V2-GAP-02",
+      "severity": "P0",
+      "evidence": "validate_implementation_candidate needs an explicit repository root across four current global-root helpers",
+      "required_resolution": "allocate repository resolution blob load hash validation and tree fingerprint helpers before caller integration"
+    },
+    {
+      "finding_id": "M01-TRUST-V2-GAP-03",
+      "severity": "P0",
+      "evidence": "a deployment manifest cannot prove which image binary SBOM provenance or signature is deployed",
+      "required_resolution": "separate image package ownership and an external immutable build sign and publish receipt from manifest deployment"
+    },
+    {
+      "finding_id": "M01-TRUST-V2-GAP-04",
+      "severity": "P0",
+      "evidence": "v1 P064 combines G0 and G1 and v1 P065 combines G2 and G3 into one evidence output pair",
+      "required_resolution": "allocate one atomic leaf and one immutable result pair per gate G0 G1 G2 and G3"
+    },
+    {
+      "finding_id": "M01-TRUST-V2-GAP-05",
+      "severity": "P1",
+      "evidence": "v1 P063 owns a deployment YAML while claiming the G6 rollout and rollback result",
+      "required_resolution": "separate declarative manifest ownership from a G6 evidence leaf that consumes an external image receipt"
+    },
+    {
+      "finding_id": "M01-TRUST-V2-GAP-06",
+      "severity": "P0",
+      "evidence": "domain verification functions alone do not own the HTTP process secret resolution persistent replay audit durability health or staged shutdown seams",
+      "required_resolution": "allocate exact runtime type secret store audit HTTP health server bootstrap and CLI owners before packaging or G1 G3 evidence"
+    }
+  ],
+  "steps": [
+    {
+      "atomic_pr_id": "T1-M01-P067-REF-n015-s10",
+      "pr_type": "REF",
+      "phase": "candidate-repository-context",
+      "primary_locator": "scripts/alignment/build_topic1_task_registry.py#resolve_candidate_repository",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P060-REF-n015-s4"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "resolve one immutable canonical repository root without ambient global fallback",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P068-REF-n015-s11",
+      "pr_type": "REF",
+      "phase": "candidate-blob-reader",
+      "primary_locator": "scripts/alignment/build_topic1_task_registry.py#read_candidate_blob",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P067-REF-n015-s10"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "read one candidate Git blob from the explicit repository root with typed absent versus command failure",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P069-REF-n015-s12",
+      "pr_type": "REF",
+      "phase": "hashed-artifact-loader",
+      "primary_locator": "scripts/alignment/build_topic1_task_registry.py#load_hashed_json_artifact",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P068-REF-n015-s11"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "load one safe repository-scoped JSON artifact using explicit root exact hash and optional schema",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P070-REF-n015-s13",
+      "pr_type": "REF",
+      "phase": "hashed-artifact-validator",
+      "primary_locator": "scripts/alignment/build_topic1_task_registry.py#validate_hashed_artifact",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P069-REF-n015-s12"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "validate one safe explicit-root artifact path and exact digest without following repository escapes",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P071-REF-n015-s14",
+      "pr_type": "REF",
+      "phase": "candidate-tree-fingerprint",
+      "primary_locator": "scripts/alignment/build_topic1_task_registry.py#candidate_tree_fingerprint",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P070-REF-n015-s13"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "derive the production tree fingerprint only from the explicit repository and exact candidate commit",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P072-REF-n015-s15",
+      "pr_type": "REF",
+      "phase": "trusted-request-canonicalization",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#canonicalize_verification_request",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P062-REF-n015-s6",
+        "T1-M01-P096-WRT-n015-s39"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "canonicalize one typed request while excluding no signed identity field",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P073-REF-n015-s16",
+      "pr_type": "REF",
+      "phase": "trust-policy-loader",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#load_trust_policy",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P072-REF-n015-s15"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "load the pinned policy and trust-anchor references without loading secret values into output",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P074-REF-n015-s17",
+      "pr_type": "REF",
+      "phase": "certificate-chain-verifier",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#verify_certificate_chain",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P073-REF-n015-s16"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "verify chain algorithm EKU validity and revocation state against the pinned policy",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P075-REF-n015-s18",
+      "pr_type": "REF",
+      "phase": "signature-verifier",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#verify_detached_signature",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P074-REF-n015-s17"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "verify the detached signature over the exact canonical payload and reject algorithm downgrade",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P076-REF-n015-s19",
+      "pr_type": "REF",
+      "phase": "authority-scope-verifier",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#verify_authority_scope",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P075-REF-n015-s18"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "verify required role purpose candidate profile environment time window and optional CNAS scope",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P077-REF-n015-s20",
+      "pr_type": "REF",
+      "phase": "attestation-replay-guard",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#claim_attestation_nonce",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P076-REF-n015-s19"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "atomically claim one policy-scoped attestation nonce or return its exact replay receipt",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P078-REF-n015-s21",
+      "pr_type": "REF",
+      "phase": "verification-endpoint",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#verify_request",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P077-REF-n015-s20"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "orchestrate exact payload chain signature role scope and replay checks into one typed attestation",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P079-OPS-n015-s22",
+      "pr_type": "OPS",
+      "phase": "verifier-image-package",
+      "primary_locator": "deployments/security/topic1-trusted-signature-verifier.Dockerfile#$DOCUMENT",
+      "companion_locators": [
+        "deployments/security/topic1-trusted-signature-verifier.requirements.lock#$DOCUMENT"
+      ],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P094-REF-n015-s37"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "DEPLOYMENT_PACKAGE",
+      "single_outcome": "define a non-root digest-pinnable verifier image package with no embedded trust anchors or secrets",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P080-TST-PRE-n015-s23",
+      "pr_type": "TST-PRE",
+      "phase": "trusted-signature-g0",
+      "primary_locator": "doc/02_acceptance/topic1/work-orders/t1-m01-p080-tst-pre-n015-s23/test-result.json",
+      "companion_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p080-tst-pre-n015-s23/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "prerequisite_ids": [
+        "T1-M01-P079-OPS-n015-s22"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "EVIDENCE_OUTPUT",
+      "single_outcome": "record the exact static unit schema and ten-case fail-closed matrix for one candidate",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P081-TST-PRE-n015-s24",
+      "pr_type": "TST-PRE",
+      "phase": "trusted-signature-g1",
+      "primary_locator": "doc/02_acceptance/topic1/work-orders/t1-m01-p081-tst-pre-n015-s24/test-result.json",
+      "companion_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p081-tst-pre-n015-s24/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "prerequisite_ids": [
+        "T1-M01-P080-TST-PRE-n015-s23"
+      ],
+      "required_gates": [
+        "G1"
+      ],
+      "design_kind": "EVIDENCE_OUTPUT",
+      "single_outcome": "record isolated restart policy rotation expiry revocation and rollback compatibility evidence",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P082-OPS-n015-s25",
+      "pr_type": "OPS",
+      "phase": "verifier-deployment-manifest",
+      "primary_locator": "deployments/security/topic1-trusted-signature-verifier.yaml#/$DOCUMENT",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P081-TST-PRE-n015-s24",
+        "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "DEPLOYMENT_MANIFEST",
+      "single_outcome": "materialize a default-off digest-pinned deployment with secret references NetworkPolicy and rollback controls",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P083-OPS-n015-s26",
+      "pr_type": "OPS",
+      "phase": "verifier-deployment-g6",
+      "primary_locator": "doc/02_acceptance/topic1/work-orders/t1-m01-p083-ops-n015-s26/test-result.json",
+      "companion_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p083-ops-n015-s26/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "prerequisite_ids": [
+        "T1-M01-P082-OPS-n015-s25"
+      ],
+      "required_gates": [
+        "G6"
+      ],
+      "design_kind": "EVIDENCE_OUTPUT",
+      "single_outcome": "record canary deployment health stop thresholds hard-block rollback and observation evidence",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P084-TST-POST-n015-s27",
+      "pr_type": "TST-POST",
+      "phase": "trusted-signature-g2",
+      "primary_locator": "doc/02_acceptance/topic1/work-orders/t1-m01-p084-tst-post-n015-s27/test-result.json",
+      "companion_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p084-tst-post-n015-s27/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "prerequisite_ids": [
+        "T1-M01-P083-OPS-n015-s26"
+      ],
+      "required_gates": [
+        "G2"
+      ],
+      "design_kind": "EVIDENCE_OUTPUT",
+      "single_outcome": "record protected endpoint functional and fault-path verification for one candidate and environment",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P085-TST-POST-n015-s28",
+      "pr_type": "TST-POST",
+      "phase": "trusted-signature-g3",
+      "primary_locator": "doc/02_acceptance/topic1/work-orders/t1-m01-p085-tst-post-n015-s28/test-result.json",
+      "companion_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p085-tst-post-n015-s28/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "prerequisite_ids": [
+        "T1-M01-P084-TST-POST-n015-s27"
+      ],
+      "required_gates": [
+        "G3"
+      ],
+      "design_kind": "EVIDENCE_OUTPUT",
+      "single_outcome": "record request attestation replay-ledger and caller-result reconciliation with unexplained diff zero",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P086-WRT-n015-s29",
+      "pr_type": "WRT",
+      "phase": "trusted-runtime-types",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#SignatureVerificationRuntime",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P078-REF-n015-s21"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "TYPE_CONTRACT",
+      "single_outcome": "define one immutable runtime aggregate for policy secret replay ledger audit and server dependencies",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P087-REF-n015-s30",
+      "pr_type": "REF",
+      "phase": "trusted-secret-resolver",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#resolve_secret_handle",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P086-WRT-n015-s29"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "resolve one allowlisted secret reference into an opaque handle without serializing its value",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P088-REF-n015-s31",
+      "pr_type": "REF",
+      "phase": "trusted-replay-store",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#open_replay_store",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P087-REF-n015-s30"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "open one persistent exclusive atomic replay store and reject unsafe or incompatible state",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P089-REF-n015-s32",
+      "pr_type": "REF",
+      "phase": "trusted-attestation-writer",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#append_attestation_record",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P088-REF-n015-s31"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "append and fsync one canonical request decision and replay binding before exposing PASS",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P090-REF-n015-s33",
+      "pr_type": "REF",
+      "phase": "trusted-http-handler",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#handle_verify_request",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P089-REF-n015-s32"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "parse one bounded HTTP request invoke the domain verifier persist the decision and return a typed response",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P091-REF-n015-s34",
+      "pr_type": "REF",
+      "phase": "trusted-health-handler",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#handle_health_request",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P090-REF-n015-s33"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "report readiness only after policy secret replay ledger and audit dependencies are usable",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P092-REF-n015-s35",
+      "pr_type": "REF",
+      "phase": "trusted-server-builder",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#build_server",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P091-REF-n015-s34"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "build a bounded TLS verifier server with only verify and health routes and explicit dependencies",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P093-REF-n015-s36",
+      "pr_type": "REF",
+      "phase": "trusted-runtime-bootstrap",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#serve",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P092-REF-n015-s35"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "bootstrap validate and serve the verifier with staged shutdown and durable replay audit flush",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P094-REF-n015-s37",
+      "pr_type": "REF",
+      "phase": "trusted-service-cli",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#main",
+      "companion_locators": [],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P093-REF-n015-s36"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "FUNCTION",
+      "single_outcome": "parse explicit runtime paths and start the protected verifier without ambient trust configuration",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P095-WRT-n015-s38",
+      "pr_type": "WRT",
+      "phase": "trusted-candidate-types",
+      "primary_locator": "scripts/alignment/build_topic1_task_registry.py#CandidateRepository",
+      "companion_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#CandidateTrustContext",
+        "scripts/alignment/build_topic1_task_registry.py#TrustedSignatureVerifier"
+      ],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P059-REF-n015-s3"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "TYPE_CONTRACT",
+      "single_outcome": "define immutable candidate repository trust context and verifier client protocols used by every migrated caller",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P096-WRT-n015-s39",
+      "pr_type": "WRT",
+      "phase": "trusted-service-types",
+      "primary_locator": "scripts/alignment/trusted_signature_service.py#SignatureVerificationRequest",
+      "companion_locators": [
+        "scripts/alignment/trusted_signature_service.py#SignatureVerificationAttestation",
+        "scripts/alignment/trusted_signature_service.py#LoadedTrustPolicy",
+        "scripts/alignment/trusted_signature_service.py#VerifiedSigner",
+        "scripts/alignment/trusted_signature_service.py#VerifiedAuthority",
+        "scripts/alignment/trusted_signature_service.py#ReplayClaim",
+        "scripts/alignment/trusted_signature_service.py#SecretHandle",
+        "scripts/alignment/trusted_signature_service.py#SecretResolver",
+        "scripts/alignment/trusted_signature_service.py#ReplayStore",
+        "scripts/alignment/trusted_signature_service.py#AttestationLedger",
+        "scripts/alignment/trusted_signature_service.py#HttpResponse",
+        "scripts/alignment/trusted_signature_service.py#SSLContext",
+        "scripts/alignment/trusted_signature_service.py#ServerLimits",
+        "scripts/alignment/trusted_signature_service.py#VerifierServer",
+        "scripts/alignment/trusted_signature_service.py#SignatureServiceConfig",
+        "scripts/alignment/trusted_signature_service.py#Clock",
+        "scripts/alignment/trusted_signature_service.py#ShutdownSignal"
+      ],
+      "target_state": "PLANNED",
+      "prerequisite_ids": [
+        "T1-M01-P057-CTR-n015-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "design_kind": "TYPE_CONTRACT",
+      "single_outcome": "define the complete typed service boundary for requests attestations policy authority replay secrets audit HTTP TLS config clock and shutdown",
+      "oracle_and_rollback": "fail closed on identity policy trust time scope or payload drift; restore the prior hard-block path and preserve immutable failures receipts and externally produced artifacts"
+    }
+  ],
+  "external_activities": [
+    {
+      "activity_id": "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN",
+      "activity_kind": "EXTERNAL_BUILD_SIGN_AND_PUBLISH",
+      "depends_on_atomic_pr_ids": [
+        "T1-M01-P079-OPS-n015-s22"
+      ],
+      "required_outputs": [
+        "IMAGE_DIGEST",
+        "SBOM_SHA256",
+        "PROVENANCE_ATTESTATION",
+        "SIGNATURE_VERIFICATION_RECEIPT"
+      ],
+      "receipt_schema_path": "contracts/alignment/m01-verifier-image-build-sign-receipt.schema.json",
+      "receipt_validator_path": "scripts/alignment/validate_m01_verifier_image_build_sign_receipt.py",
+      "work_order_path": "contracts/alignment/m01-verifier-image-build-sign-work-order.v1.json",
+      "candidate_freeze_work_order_path": "contracts/alignment/m01-early-trust-candidate-freeze-work-order.v1.json",
+      "design_candidate_manifest_path": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/design-candidate-manifest.json",
+      "implementation_candidate_manifest_path": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/implementation-candidate.json",
+      "expected_receipt_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/receipt.json",
+      "bootstrap_policy_id": "M01-VERIFIER-BOOTSTRAP-PROTECTED-CI-2-OF-2-V1",
+      "status": "PENDING_NO_RECEIPT",
+      "owner_roles": [
+        "supply-chain-owner",
+        "security-owner"
+      ],
+      "proof_ceiling": "EXTERNAL_ACTIVITY_DECLARATION_ONLY_NOT_EXECUTED_SIGNED_OR_VERIFIED"
+    }
+  ],
+  "supersessions": [
+    {
+      "legacy_atomic_pr_id": "T1-M01-P063-OPS-n015-s7",
+      "replacement_atomic_pr_ids": [
+        "T1-M01-P083-OPS-n015-s26"
+      ],
+      "disposition": "SUPERSEDED_IN_V2_PREVIEW_V1_AND_ACTIVE_REGISTRIES_UNCHANGED",
+      "reason": "the v1 leaf combines a runtime or evidence responsibility now split into exact v2 owners",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P064-TST-PRE-n015-s8",
+      "replacement_atomic_pr_ids": [
+        "T1-M01-P080-TST-PRE-n015-s23",
+        "T1-M01-P081-TST-PRE-n015-s24"
+      ],
+      "disposition": "SUPERSEDED_IN_V2_PREVIEW_V1_AND_ACTIVE_REGISTRIES_UNCHANGED",
+      "reason": "the v1 leaf combines a runtime or evidence responsibility now split into exact v2 owners",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P065-TST-POST-n015-s9",
+      "replacement_atomic_pr_ids": [
+        "T1-M01-P084-TST-POST-n015-s27",
+        "T1-M01-P085-TST-POST-n015-s28"
+      ],
+      "disposition": "SUPERSEDED_IN_V2_PREVIEW_V1_AND_ACTIVE_REGISTRIES_UNCHANGED",
+      "reason": "the v1 leaf combines a runtime or evidence responsibility now split into exact v2 owners",
+      "historical_id_policy": "PRESERVED_NOT_REUSED"
+    }
+  ],
+  "dependency_revisions": [
+    {
+      "atomic_pr_id": "T1-M01-P061-REF-n015-s5",
+      "prior_dependency_ids": [
+        "T1-M01-P060-REF-n015-s4"
+      ],
+      "revised_dependency_ids": [
+        "T1-M01-P060-REF-n015-s4",
+        "T1-M01-P071-REF-n015-s14"
+      ],
+      "reason": "candidate artifact validation consumes explicit-root helpers before caller trust migration"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P058-REF-n015-s2",
+      "prior_dependency_ids": [
+        "T1-M01-P057-CTR-n015-s1"
+      ],
+      "revised_dependency_ids": [
+        "T1-M01-P096-WRT-n015-s39"
+      ],
+      "reason": "the test runner consumes the exact shared service request and attestation types"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P060-REF-n015-s4",
+      "prior_dependency_ids": [
+        "T1-M01-P059-REF-n015-s3"
+      ],
+      "revised_dependency_ids": [
+        "T1-M01-P095-WRT-n015-s38"
+      ],
+      "reason": "the wrapper consumes the exact candidate trust context and verifier client protocols"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P079-OPS-n015-s22",
+      "prior_dependency_ids": [
+        "T1-M01-P078-REF-n015-s21"
+      ],
+      "revised_dependency_ids": [
+        "T1-M01-P094-REF-n015-s37"
+      ],
+      "reason": "the image package must contain the runtime bootstrap and CLI after the domain verifier is complete"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion",
+      "prior_dependency_ids": [
+        "T1-M01-P065-TST-POST-n015-s9"
+      ],
+      "revised_dependency_ids": [
+        "T1-M01-P085-TST-POST-n015-s28"
+      ],
+      "reason": "N015 completion consumes the final single-gate G3 reconciliation leaf rather than a superseded combined leaf"
+    }
+  ],
+  "completion_revision": {
+    "parent_task_id": "T1-M01-N015",
+    "terminal_atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion",
+    "prior_member_atomic_pr_ids": [
+      "T1-M01-P057-CTR-n015-s1",
+      "T1-M01-P058-REF-n015-s2",
+      "T1-M01-P059-REF-n015-s3",
+      "T1-M01-P060-REF-n015-s4",
+      "T1-M01-P061-REF-n015-s5",
+      "T1-M01-P062-REF-n015-s6",
+      "T1-M01-P063-OPS-n015-s7",
+      "T1-M01-P064-TST-PRE-n015-s8",
+      "T1-M01-P065-TST-POST-n015-s9"
+    ],
+    "revised_member_atomic_pr_ids": [
+      "T1-M01-P057-CTR-n015-s1",
+      "T1-M01-P058-REF-n015-s2",
+      "T1-M01-P059-REF-n015-s3",
+      "T1-M01-P060-REF-n015-s4",
+      "T1-M01-P061-REF-n015-s5",
+      "T1-M01-P062-REF-n015-s6",
+      "T1-M01-P067-REF-n015-s10",
+      "T1-M01-P068-REF-n015-s11",
+      "T1-M01-P069-REF-n015-s12",
+      "T1-M01-P070-REF-n015-s13",
+      "T1-M01-P071-REF-n015-s14",
+      "T1-M01-P072-REF-n015-s15",
+      "T1-M01-P073-REF-n015-s16",
+      "T1-M01-P074-REF-n015-s17",
+      "T1-M01-P075-REF-n015-s18",
+      "T1-M01-P076-REF-n015-s19",
+      "T1-M01-P077-REF-n015-s20",
+      "T1-M01-P078-REF-n015-s21",
+      "T1-M01-P079-OPS-n015-s22",
+      "T1-M01-P080-TST-PRE-n015-s23",
+      "T1-M01-P081-TST-PRE-n015-s24",
+      "T1-M01-P082-OPS-n015-s25",
+      "T1-M01-P083-OPS-n015-s26",
+      "T1-M01-P084-TST-POST-n015-s27",
+      "T1-M01-P085-TST-POST-n015-s28",
+      "T1-M01-P086-WRT-n015-s29",
+      "T1-M01-P087-REF-n015-s30",
+      "T1-M01-P088-REF-n015-s31",
+      "T1-M01-P089-REF-n015-s32",
+      "T1-M01-P090-REF-n015-s33",
+      "T1-M01-P091-REF-n015-s34",
+      "T1-M01-P092-REF-n015-s35",
+      "T1-M01-P093-REF-n015-s36",
+      "T1-M01-P094-REF-n015-s37",
+      "T1-M01-P095-WRT-n015-s38",
+      "T1-M01-P096-WRT-n015-s39"
+    ],
+    "superseded_member_atomic_pr_ids": [
+      "T1-M01-P063-OPS-n015-s7",
+      "T1-M01-P064-TST-PRE-n015-s8",
+      "T1-M01-P065-TST-POST-n015-s9"
+    ],
+    "revised_terminal_direct_dependency_ids": [
+      "T1-M01-P085-TST-POST-n015-s28"
+    ],
+    "revision_semantics": "TERMINAL_ID_PRESERVED_FUNCTION_COMPLETE_MEMBERS_AND_SINGLE_GATE_EVIDENCE_REVISED"
+  },
+  "claims": {
+    "allowed": "P067-P096 repository core runtime adapter compile-time type packaging external-build deployment and single-gate evidence ownership are allocated in v2 preview",
+    "forbidden": [
+      "GLOBAL_REGISTRY_SWITCHED",
+      "FUNCTION_DESIGN_REVIEWED",
+      "IMPLEMENTED",
+      "IMAGE_BUILT",
+      "IMAGE_SIGNED",
+      "DEPLOYED",
+      "G0_PASS",
+      "G1_PASS",
+      "G2_PASS",
+      "G3_PASS",
+      "G6_PASS",
+      "TRUST_PASS",
+      "EXECUTION_AUTHORIZED",
+      "PARENT_COMPLETE",
+      "MILESTONE_COMPLETE",
+      "PRODUCTION_ACCEPTED"
+    ],
+    "proof_ceiling": "STATIC_V2_ALLOCATION_ONLY_NOT_GLOBAL_REGISTRATION_FUNCTION_REVIEW_IMPLEMENTATION_IMAGE_BUILD_SIGNATURE_DEPLOYMENT_TEST_EXECUTION_TRUST_PASS_AUTHORIZATION_OR_ACCEPTANCE"
+  }
+}

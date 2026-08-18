@@ -1,0 +1,63 @@
+{
+  "contract_id": "T1-M09-N022-ALERT-DETAIL-CSS-REFACTOR-V1",
+  "task_id": "T1-M09-N022",
+  "status": "PARTIAL",
+  "scope": {
+    "route": "/alerts/:alertId",
+    "implemented_slice": "response_and_feedback_components",
+    "source_stylesheet": "web/ui/src/styles/pages.css",
+    "domain_stylesheet": "web/ui/src/styles/alert-detail.css",
+    "entrypoint": "web/ui/src/main.tsx",
+    "route_wide_extraction_complete": false
+  },
+  "movement": {
+    "tokens": [
+      "--alert-detail-action-surface",
+      "--alert-detail-action-border",
+      "--alert-detail-action-radius",
+      "--alert-detail-action-risk",
+      "--alert-detail-action-warn",
+      "--alert-detail-action-info"
+    ],
+    "selector_prefixes": [
+      ".taf-alert-detail-response",
+      ".taf-alert-detail-feedback"
+    ],
+    "old_rules_removed_after_observation": true,
+    "stylesheet_loaded_after_pages_css": true,
+    "runtime_behavior_change": false
+  },
+  "visual_equivalence": {
+    "engine": "Kubernetes Chromium",
+    "viewports": [
+      {"width": 1366, "height": 900},
+      {"width": 1600, "height": 900}
+    ],
+    "computed_styles_equal": true,
+    "exact_pixel_diff_zero": true,
+    "baseline_image": "traffic/web-ui:m09-n022-baseline-pre-refactor-20260816-r1",
+    "candidate_image": "traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+    "visual_image": "traffic/css-visual-diff:m09-n022-20260816-r3"
+  },
+  "latest_evidence": {
+    "path": "doc/02_acceptance/topic1/tasks/t1-m09-n022/k8s-css-refactor-latest.json",
+    "run_id": "a1daf6e7-88e2-4f1f-826b-7e954fee2a66",
+    "status": "PASS",
+    "production_applied": false
+  },
+  "rollback": {
+    "trigger": "any computed-style or screenshot mismatch at a declared viewport",
+    "action": "restore the response and feedback rules to pages.css and remove the domain stylesheet import",
+    "data_migration_required": false
+  },
+  "closure": {
+    "status": "PARTIAL",
+    "production_applied": false,
+    "open_items": [
+      "extract remaining alert-detail and evidence selectors from pages.css in separately observed slices",
+      "run the complete alert-detail page journey in designated Windows Chrome",
+      "repeat viewport evidence for each later route slice",
+      "obtain M09 promotion authorization"
+    ]
+  }
+}

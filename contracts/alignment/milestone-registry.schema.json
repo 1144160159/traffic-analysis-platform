@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/milestone-registry.schema.json",
+  "title": "Topic One milestone review and promotion registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "source_document", "source_document_sha256", "status",
+    "milestone_count", "milestones"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.1.0"},
+    "source_document": {"type": "string", "minLength": 1},
+    "source_document_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {"enum": ["DRAFT_DESIGN", "ACCEPTED_DESIGN_BASELINE"]},
+    "milestone_count": {"const": 14},
+    "milestones": {
+      "type": "array", "minItems": 14, "maxItems": 14,
+      "items": {"$ref": "#/$defs/milestone"}
+    }
+  },
+  "$defs": {
+    "promotion_requirements": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "profile", "direct_idx_dependency_required", "prom_has_no_production_change",
+        "premerge_equivalence_required", "postmerge_equivalence_required", "observation_required"
+      ],
+      "properties": {
+        "profile": {"type": "string", "minLength": 1},
+        "direct_idx_dependency_required": {"const": true},
+        "prom_has_no_production_change": {"const": true},
+        "premerge_equivalence_required": {"type": "boolean"},
+        "postmerge_equivalence_required": {"type": "boolean"},
+        "observation_required": {"type": "boolean"}
+      }
+    },
+    "completion_checklist": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "required_fields", "missing_fields"],
+      "properties": {
+        "status": {"enum": ["BLOCKED", "PASS"]},
+        "required_fields": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+        "missing_fields": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "milestone": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "milestone_id", "title", "status", "depends_on_milestones", "requirement_ids",
+        "review_order", "promotion_requirements", "completion_checklist",
+        "closure_requirement_ids", "direct_or_indirect_requirement_waiver_count"
+      ],
+      "properties": {
+        "milestone_id": {"type": "string", "pattern": "^T1-M(?:0[0-9]|1[0-3])$"},
+        "title": {"type": "string", "minLength": 1},
+        "status": {"enum": ["DRAFT", "READY", "IMPLEMENTING", "VERIFYING", "OBSERVING", "BLOCKED", "CLOSED"]},
+        "depends_on_milestones": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^T1-M(?:0[0-9]|1[0-3])$"},
+          "uniqueItems": true
+        },
+        "requirement_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+        "review_order": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+        "promotion_requirements": {"$ref": "#/$defs/promotion_requirements"},
+        "completion_checklist": {"$ref": "#/$defs/completion_checklist"},
+        "closure_requirement_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "direct_or_indirect_requirement_waiver_count": {"const": 0}
+      }
+    }
+  }
+}

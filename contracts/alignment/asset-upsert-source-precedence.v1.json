@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "ASSET_UPSERT_SOURCE_PRECEDENCE",
+  "contract_id": "ASSET-UPsert-SOURCE-PRECEDENCE-V1",
+  "status": "PROPOSED_DOMAIN_REVIEW",
+  "owner_role": "multi-source-data-owner",
+  "candidate_manifest_sha256": "60f72dc1973e6abfa06f45f9a66e80b6c268700bd6cb0d84d1558f3c0d8dab2d",
+  "actions": ["asset-upsert", "asset-observation-upsert"],
+  "field_rules": [
+    {"field":"AssetID","class":"IDENTITY","create_manual":"accept non-empty UUID or derive deterministic tenant+MAC UUID","update_manual":"must be empty or equal current AssetID","create_observation":"derive deterministic tenant+MAC UUID unless an equal approved identity is supplied","update_observation":"must be empty or equal current AssetID","stale_observation":"preserve current AssetID","oracle_ids":["O-ASSET-ID-IMMUTABLE"]},
+    {"field":"TenantID","class":"IDENTITY","create_manual":"use authenticated tenant only","update_manual":"must equal authenticated and current tenant","create_observation":"use trusted source tenant only","update_observation":"must equal trusted source and current tenant","stale_observation":"preserve current tenant","oracle_ids":["O-TENANT-FAIL-CLOSED"]},
+    {"field":"MACAddress","class":"IDENTITY","create_manual":"use canonical non-empty MAC","update_manual":"must equal locked current MAC","create_observation":"use canonical non-empty MAC","update_observation":"must equal locked current MAC","stale_observation":"preserve current MAC","oracle_ids":["O-MAC-IDENTITY"]},
+    {"field":"DisplayCode","class":"GOVERNANCE","create_manual":"accept non-empty input or deterministic default","update_manual":"accept input under expected revision; empty preserves current","create_observation":"derive deterministic default; ignore incoming governance value","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-OBSERVATION-CANNOT-WRITE-GOVERNANCE"]},
+    {"field":"AssetType","class":"GOVERNANCE","create_manual":"accept input or approved default unknown","update_manual":"accept input under expected revision; empty preserves current","create_observation":"use approved default unknown","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-OBSERVATION-CANNOT-WRITE-GOVERNANCE"]},
+    {"field":"Status","class":"GOVERNANCE","create_manual":"accept input or approved default active","update_manual":"accept input under expected revision; empty preserves current","create_observation":"use approved default active","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-OBSERVATION-CANNOT-WRITE-GOVERNANCE"]},
+    {"field":"Department","class":"GOVERNANCE","create_manual":"accept input","update_manual":"accept input under expected revision; empty preserves current","create_observation":"store empty value","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-OBSERVATION-CANNOT-WRITE-GOVERNANCE"]},
+    {"field":"Campus","class":"GOVERNANCE","create_manual":"accept input","update_manual":"accept input under expected revision; empty preserves current","create_observation":"store empty value","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-OBSERVATION-CANNOT-WRITE-GOVERNANCE"]},
+    {"field":"Owner","class":"GOVERNANCE","create_manual":"accept input","update_manual":"accept input under expected revision; empty preserves current","create_observation":"store empty value","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-OBSERVATION-CANNOT-WRITE-GOVERNANCE"]},
+    {"field":"Criticality","class":"GOVERNANCE","create_manual":"accept validated input","update_manual":"accept validated input under expected revision","create_observation":"store approved default zero","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-OBSERVATION-CANNOT-WRITE-GOVERNANCE"]},
+    {"field":"Tags","class":"GOVERNANCE","create_manual":"accept JSON object after successful serialization","update_manual":"accept JSON object under expected revision; nil preserves current","create_observation":"store empty object","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-OBSERVATION-CANNOT-WRITE-GOVERNANCE","O-JSON-FAIL-CLOSED"]},
+    {"field":"Metadata","class":"GOVERNANCE","create_manual":"accept JSON object after successful serialization","update_manual":"accept JSON object under expected revision; nil preserves current","create_observation":"store empty object","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-OBSERVATION-CANNOT-WRITE-GOVERNANCE","O-JSON-FAIL-CLOSED"]},
+    {"field":"IPAddress","class":"OBSERVATION","create_manual":"accept validated input","update_manual":"accept input under expected revision","create_observation":"accept input at observed_at","update_observation":"accept only when observed_at is not older than current LastSeen","stale_observation":"preserve current value","oracle_ids":["O-STALE-OBSERVATION-PRESERVES-FACT"]},
+    {"field":"Hostname","class":"OBSERVATION","create_manual":"accept input","update_manual":"accept input under expected revision","create_observation":"accept input at observed_at","update_observation":"accept only when observed_at is not older than current LastSeen","stale_observation":"preserve current value","oracle_ids":["O-STALE-OBSERVATION-PRESERVES-FACT"]},
+    {"field":"Vendor","class":"OBSERVATION","create_manual":"accept input","update_manual":"accept input under expected revision","create_observation":"accept input at observed_at","update_observation":"accept only when observed_at is not older than current LastSeen","stale_observation":"preserve current value","oracle_ids":["O-STALE-OBSERVATION-PRESERVES-FACT"]},
+    {"field":"OSType","class":"OBSERVATION","create_manual":"accept input","update_manual":"accept input under expected revision","create_observation":"accept input at observed_at","update_observation":"accept only when observed_at is not older than current LastSeen","stale_observation":"preserve current value","oracle_ids":["O-STALE-OBSERVATION-PRESERVES-FACT"]},
+    {"field":"Source","class":"OBSERVATION","create_manual":"use validated manual source","update_manual":"accept input under expected revision","create_observation":"use trusted observation source","update_observation":"accept only when observed_at is not older than current LastSeen","stale_observation":"preserve current value","oracle_ids":["O-STALE-OBSERVATION-PRESERVES-FACT"]},
+    {"field":"VlanID","class":"OBSERVATION","create_manual":"accept input","update_manual":"accept input under expected revision","create_observation":"accept input at observed_at","update_observation":"accept only when observed_at is not older than current LastSeen","stale_observation":"preserve current value","oracle_ids":["O-STALE-OBSERVATION-PRESERVES-FACT"]},
+    {"field":"SwitchPort","class":"OBSERVATION","create_manual":"accept input","update_manual":"accept input under expected revision","create_observation":"accept input at observed_at","update_observation":"accept only when observed_at is not older than current LastSeen","stale_observation":"preserve current value","oracle_ids":["O-STALE-OBSERVATION-PRESERVES-FACT"]},
+    {"field":"Revision","class":"SERVER_MANAGED","create_manual":"set one","update_manual":"increment current revision by one using CAS","create_observation":"set one","update_observation":"increment current revision by one using CAS","stale_observation":"increment current revision by one using CAS while preserving every fact field; history, audit, outbox and ledger record the accepted stale observation","oracle_ids":["O-REVISION-CAS"]},
+    {"field":"FirstSeen","class":"SERVER_MANAGED","create_manual":"set accepted observed_at or server now","update_manual":"preserve current value","create_observation":"set accepted observed_at","update_observation":"preserve current value","stale_observation":"preserve current value","oracle_ids":["O-FIRST-SEEN-IMMUTABLE"]},
+    {"field":"LastSeen","class":"SERVER_MANAGED","create_manual":"set accepted observed_at or server now","update_manual":"set max current LastSeen and accepted observed_at","create_observation":"set accepted observed_at","update_observation":"set max current LastSeen and observed_at","stale_observation":"preserve current value","oracle_ids":["O-LAST-SEEN-MONOTONIC"]}
+  ],
+  "global_invariants": [
+    "tenant and canonical MAC identify one authority record and cannot be changed by an update",
+    "asset-observation-upsert never overwrites governance fields on an existing asset",
+    "an observed_at older than current LastSeen never replaces any observation field",
+    "every accepted change uses expected-revision CAS and writes history, audit, outbox and ledger in the same transaction",
+    "nil and empty semantics are field-specific and must not be inferred from zero values by a generic merge helper"
+  ],
+  "rejected_cases": [
+    "observation supplies a non-empty governance field and the stored value changes",
+    "stale observation regresses IP, host, vendor, OS, source, VLAN, port or LastSeen",
+    "tenant, MAC or existing AssetID changes during update",
+    "Tags or Metadata serialization failure is converted to an empty JSON object",
+    "unknown action is silently treated as manual authority"
+  ],
+  "approval_blockers": [
+    "P917 has not yet recorded two distinct trusted owner signatures over the frozen defaults and stale-observation revision policy"
+  ],
+  "proof_ceiling": "PROPOSED_DOMAIN_CONTRACT_ONLY_NOT_IMPLEMENTATION_OR_EXECUTION_AUTHORIZATION"
+}

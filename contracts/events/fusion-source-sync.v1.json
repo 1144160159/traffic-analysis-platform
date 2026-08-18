@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "contract_id": "fusion-source-sync-v1",
+  "state": "consumer_candidate_default_off",
+  "accountable_tasks": ["T1-M07-N004", "T1-M07-N005", "T1-M07-N007", "T1-M07-N006"],
+  "topic": "fusion.commands.v1",
+  "consumer_group": "alert-service-fusion-projection-v1",
+  "value": {
+    "content_type": "application/json",
+    "event_type": "fusion.source-sync.requested.v1",
+    "schema_version": 1,
+    "schema": "contracts/events/kafka-json-events-v1.schema.json#/$defs/FusionSourceSyncRequestedV1Json"
+  },
+  "identity": {
+    "key_encoding": "utf8(tenant_id + ':' + job_id)",
+    "required_headers": [
+      "event_id", "event_type", "schema_version", "aggregate_type", "aggregate_id",
+      "aggregate_version", "tenant_id", "job_id", "source_id", "trace_id", "target_topic"
+    ],
+    "same_event_same_sha256": "idempotent inbox replay",
+    "same_event_different_sha256": "identity conflict and permanent quarantine",
+    "same_source_version_different_sha256": "identity conflict; no snapshot or source offset advancement"
+  },
+  "projection": {
+    "source_tables": [
+      "traffic.source_flow_facts_v1",
+      "traffic.source_asset_facts_v1",
+      "traffic.source_device_log_facts_v1",
+      "traffic.source_user_behavior_facts_v1"
+    ],
+    "authority_tables": [
+      "fusion_source_sync_jobs",
+      "fusion_source_snapshots",
+      "fusion_source_entity_facts",
+      "fusion_source_relation_facts",
+      "fusion_snapshots",
+      "fusion_snapshot_sources",
+      "fusion_snapshot_entities",
+      "fusion_snapshot_relations",
+      "fusion_projection_inbox",
+      "fusion_projection_outbox"
+    ],
+    "levels": ["source", "data"],
+    "merge_algorithm": "strong-identifier-union-v1",
+    "confidence_semantics": "source coverage, never classification accuracy",
+    "missing_source_policy": "data snapshot is partial and names every missing or partial source; missing values are never replaced with zero"
+  },
+  "barriers": {
+    "success": "source snapshot, source facts, data snapshot, provenance, outbox, job result and inbox commit in one PostgreSQL transaction before source offset commit",
+    "deterministic_domain_failure": "failed job and failed inbox receipt commit before source offset commit",
+    "transient_failure": "Kafka source offset remains uncommitted",
+    "poison_event": "canonical dlq.v1 broker ACK precedes source offset commit"
+  },
+  "rollout": {
+    "consumer_flag": "FUSION_PROJECTION_CONSUMER_V1_ENABLED",
+    "consumer_default": false,
+    "authority_flag": "FUSION_V1_ENABLED",
+    "authority_default": false,
+    "order": [
+      "apply additive PostgreSQL migration and Kafka topic/ACL",
+      "start candidate consumer and record assigned-generation readiness",
+      "enable authority writer only after the readiness fence is current",
+      "reconcile source/data count, hash, watermarks and inbox/outbox"
+    ],
+    "production_applied": false,
+    "rollback": "disable the authority writer first, drain or stop the candidate consumer, retain jobs, inbox, snapshots and source offsets, then restore the prior image"
+  }
+}

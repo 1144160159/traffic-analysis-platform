@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m02-shared-locator-ownership.schema.json",
+  "title": "M02 ordered shared locator single-writer boundary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "decision_id",
+    "source_catalog", "source_allocation", "shared_locator", "current_occurrences",
+    "dependency_evidence", "required_single_writer_boundary", "allocation_conformance",
+    "required_closure", "validation", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M02_SHARED_LOCATOR_SINGLE_WRITER_BOUNDARY"},
+    "artifact_status": {"const": "BLOCKED_FROZEN_ALLOCATION_CONFORMANCE"},
+    "decision_id": {"const": "M02-N004-P165-P408-POLL-MANIFEST-OWNER-V1"},
+    "source_catalog": {"$ref": "#/$defs/hash_ref"},
+    "source_allocation": {"$ref": "#/$defs/hash_ref"},
+    "shared_locator": {"const": "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#ManifestPcapReplayer::poll_manifest"},
+    "current_occurrences": {
+      "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/occurrence"}
+    },
+    "dependency_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ordered_edge", "helper_owner_depends_on_state_creator", "finding"],
+      "properties": {
+        "ordered_edge": {
+          "type": "object", "additionalProperties": false,
+          "required": ["from", "to", "edge_kind", "present"],
+          "properties": {
+            "from": {"const": "M02-N004-L48"},
+            "to": {"const": "M02-N004-L21"},
+            "edge_kind": {"const": "APPENDED_TO_EXISTING"},
+            "present": {"const": true}
+          }
+        },
+        "helper_owner_depends_on_state_creator": {"const": false},
+        "finding": {"const": "ORDERING_EXISTS_BUT_DOES_NOT_GRANT_A_SECOND_FUNCTION_BODY_WRITER"}
+      }
+    },
+    "required_single_writer_boundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["function_body_owner", "helper_owner", "helper_integration_mode", "forbidden_for_helper_owner"],
+      "properties": {
+        "function_body_owner": {"const": "T1-M02-P165-WRT-n004-l21"},
+        "helper_owner": {"const": "T1-M02-P408-WRT-n004-l48"},
+        "helper_integration_mode": {"const": "P165_CALLS_REPLAY_DELAY_INSIDE_ITS_OWN_POLL_MANIFEST_BODY"},
+        "forbidden_for_helper_owner": {
+          "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+          "items": {"enum": ["WRITE_POLL_MANIFEST_BODY", "CREATE_MANIFEST_REPLAYER", "ALTER_ENTRY_SWITCHING_OR_IDENTITY"]}
+        }
+      }
+    },
+    "allocation_conformance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "blocking_facts"],
+      "properties": {
+        "status": {"const": "FAIL_CLOSED"},
+        "blocking_facts": {
+          "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+          "items": {
+            "enum": [
+              "P408_CURRENTLY_LISTS_POLL_MANIFEST_AS_A_WRITABLE_COMPANION",
+              "P408_DEPENDENCY_CLOSURE_DOES_NOT_CONTAIN_L17_MANIFEST_REPLAYER_CREATOR"
+            ]
+          }
+        }
+      }
+    },
+    "required_closure": {
+      "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
+      "items": {
+        "enum": [
+          "PRESERVE_FROZEN_P308_P485_PREFIX_AND_RECORD_A_NEW_APPEND_ONLY_SUPERSESSION_CONTRACT",
+          "REMOVE_POLL_MANIFEST_FROM_P408_WRITABLE_SCOPE_WITHOUT_REWRITING_FROZEN_HISTORY",
+          "BIND_P165_AND_P408_TO_ONE_CLEAN_CANDIDATE_WITH_EXACT_RUST_AST_RECEIPTS",
+          "OBTAIN_SIGNED_FUNCTION_REVIEWS_FOR_BOTH_ATOMIC_PRS"
+        ]
+      }
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_exact", "occurrence_roles_exact", "ordered_edge_exact", "missing_dependency_proven", "false_closure_rejected", "mutation_guards"],
+      "properties": {
+        "source_exact": {"const": "PASS"},
+        "occurrence_roles_exact": {"const": "PASS"},
+        "ordered_edge_exact": {"const": "PASS"},
+        "missing_dependency_proven": {"const": true},
+        "false_closure_rejected": {"const": true},
+        "mutation_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": ["owner_swap", "companion_omission", "edge_drift", "false_conformance", "missing_dependency_drift"],
+          "properties": {
+            "owner_swap": {"const": "PASS"},
+            "companion_omission": {"const": "PASS"},
+            "edge_drift": {"const": "PASS"},
+            "false_conformance": {"const": "PASS"},
+            "missing_dependency_drift": {"const": "PASS"}
+          }
+        }
+      }
+    },
+    "proof_ceiling": {"const": "STATIC_SINGLE_WRITER_BOUNDARY_ONLY_NOT_ALLOCATION_REWRITTEN_LOCATOR_RESOLVED_FUNCTION_REVIEWED_IMPLEMENTED_OR_AUTHORIZED"}
+  },
+  "$defs": {
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "occurrence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["leaf_id", "atomic_pr_id", "locator_role", "single_outcome"],
+      "properties": {
+        "leaf_id": {"enum": ["M02-N004-L21", "M02-N004-L48"]},
+        "atomic_pr_id": {"enum": ["T1-M02-P165-WRT-n004-l21", "T1-M02-P408-WRT-n004-l48"]},
+        "locator_role": {"enum": ["PRIMARY", "COMPANION"]},
+        "single_outcome": {"type": "string", "minLength": 8}
+      }
+    }
+  }
+}

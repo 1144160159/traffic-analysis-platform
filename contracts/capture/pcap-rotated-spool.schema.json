@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/capture/pcap-rotated-spool.schema.json",
+  "title": "Durable rotated PCAP spool state contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "activation_guard",
+    "immutable_record_fields",
+    "states",
+    "transitions",
+    "forbidden_transitions",
+    "rejection_codes",
+    "invariants"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "contract_id": {"const": "M02-PCAP-ROTATED-SPOOL"},
+    "activation_guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configuration_key", "default"],
+      "properties": {
+        "configuration_key": {"const": "archiver.durable_spool_enabled"},
+        "default": {"const": false}
+      }
+    },
+    "immutable_record_fields": {
+      "type": "array",
+      "minItems": 13,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "task_id",
+          "tenant_id",
+          "probe_id",
+          "capture_uuid",
+          "manifest_hash",
+          "object_key",
+          "canonical_local_path",
+          "original_size",
+          "stored_size",
+          "sha256",
+          "ts_start",
+          "ts_end",
+          "packet_count"
+        ]
+      }
+    },
+    "states": {
+      "type": "array",
+      "minItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "ROTATED",
+          "SPOOLED",
+          "PENDING",
+          "OBJECT_WRITTEN",
+          "METADATA_ACCEPTED",
+          "CLEANUP_AUTHORIZED",
+          "DELETED",
+          "RETRY_WAIT",
+          "QUARANTINED"
+        ]
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 10,
+      "items": {"$ref": "#/$defs/transition"}
+    },
+    "forbidden_transitions": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"$ref": "#/$defs/transition_pair"}
+    },
+    "rejection_codes": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "REJECT_INVALID_PCAP_RECORD",
+          "REJECT_SPOOL_BEFORE_JOURNAL_GAP",
+          "REJECT_SPOOL_IDENTITY_CONFLICT",
+          "REJECT_SPOOL_PATH_ESCAPE",
+          "REJECT_OBJECT_RECEIPT_NOT_DURABLE",
+          "REJECT_OBJECT_RECEIPT_CONFLICT",
+          "REJECT_METADATA_WITHOUT_OBJECT_RECEIPT",
+          "REJECT_CLEANUP_WITHOUT_EXACT_CLAIM",
+          "REJECT_CLEANUP_PATH_IDENTITY_DRIFT",
+          "REJECT_UNEXPLAINED_LOCAL_EVIDENCE_LOSS",
+          "REJECT_RETRY_RESUME_STATE_INVALID",
+          "REJECT_SHUTDOWN_ORDER_OR_DEADLINE"
+        ]
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "state": {
+      "enum": [
+        "ROTATED",
+        "SPOOLED",
+        "PENDING",
+        "OBJECT_WRITTEN",
+        "METADATA_ACCEPTED",
+        "CLEANUP_AUTHORIZED",
+        "DELETED",
+        "RETRY_WAIT",
+        "QUARANTINED"
+      ]
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "event", "to", "durability_barrier"],
+      "properties": {
+        "from": {"$ref": "#/$defs/state"},
+        "event": {"type": "string", "minLength": 1},
+        "to": {"$ref": "#/$defs/state"},
+        "durability_barrier": {"type": "string", "minLength": 1}
+      }
+    },
+    "transition_pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "reason"],
+      "properties": {
+        "from": {"$ref": "#/$defs/state"},
+        "to": {"$ref": "#/$defs/state"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

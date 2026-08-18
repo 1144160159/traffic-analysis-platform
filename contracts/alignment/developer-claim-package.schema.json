@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/developer-claim-package.schema.json",
+  "title": "Developer-claimable next action for every atomic PR",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "source_task_registry_sha256", "baseline_candidate_commit", "package_count",
+    "next_action_claimable_count", "direct_target_count",
+    "target_binding_count", "next_action_unclaimable_count",
+    "formal_execution_blocked_count", "packages"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.2.0"},
+    "source_task_registry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "baseline_candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "package_count": {"type": "integer", "minimum": 1},
+    "next_action_claimable_count": {"type": "integer", "minimum": 1},
+    "direct_target_count": {"type": "integer", "minimum": 0},
+    "target_binding_count": {"type": "integer", "minimum": 0},
+    "next_action_unclaimable_count": {"const": 0},
+    "formal_execution_blocked_count": {"type": "integer", "minimum": 1},
+    "packages": {"type": "array", "items": {"$ref": "#/$defs/package"}, "uniqueItems": true}
+  },
+  "$defs": {
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "path", "target_state", "surface_kind", "locator_kind",
+        "symbol_or_pointer", "symbol_state", "signature_before", "signature_after",
+        "candidate_blob_sha256", "selection_reason"
+      ],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "target_state": {"enum": ["EXISTING", "PLANNED", "PLANNED_OUTPUT"]},
+        "surface_kind": {"enum": ["SOURCE", "CONTRACT", "MIGRATION", "DEPLOYMENT", "TEST", "TEST_TOOL", "EVIDENCE", "TARGET_BINDING"]},
+        "locator_kind": {"enum": ["go_symbol", "rust_symbol", "java_symbol", "ts_symbol", "python_symbol", "proto_fqn", "sql_object", "json_pointer", "yaml_path", "file"]},
+        "symbol_or_pointer": {"type": ["string", "null"]},
+        "symbol_state": {"enum": ["EXISTING", "PLANNED", "NOT_APPLICABLE"]},
+        "signature_before": {"type": ["string", "null"]},
+        "signature_after": {"type": ["string", "null"]},
+        "candidate_blob_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "selection_reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "path", "artifact_kind"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "artifact_kind": {"enum": ["TARGET_BINDING", "EVIDENCE", "CURRENT_INDEX", "RELEASE_POINTER", "DERIVED_CONTRACT"]}
+      }
+    },
+    "dependency": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dependency_id", "dependency_kind", "required_status", "consumed_artifact", "blocking_mode"],
+      "properties": {
+        "dependency_id": {"type": "string", "minLength": 1},
+        "dependency_kind": {"enum": ["ATOMIC_PR", "EXTERNAL_ACTIVITY"]},
+        "required_status": {"enum": ["DECLARED", "PASS"]},
+        "consumed_artifact": {"enum": ["registry-leaf", "atomic-pr-receipt", "task-current-evidence-index", "external-activity-receipt"]},
+        "blocking_mode": {"enum": ["ASSIGNMENT_NONBLOCKING", "START_BLOCKED"]}
+      }
+    },
+    "outcome": {
+      "type": "object", "additionalProperties": false,
+      "required": ["result_id", "subject", "state_change", "acceptance_oracle", "non_goals"],
+      "properties": {
+        "result_id": {"type": "string", "minLength": 1},
+        "subject": {"type": "string", "minLength": 1},
+        "state_change": {"type": "string", "minLength": 1},
+        "acceptance_oracle": {"type": "string", "minLength": 1},
+        "non_goals": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "step": {
+      "type": "object", "additionalProperties": false,
+      "required": ["step_id", "action", "target_path", "expected_effect"],
+      "properties": {
+        "step_id": {"type": "string", "minLength": 1},
+        "action": {"type": "string", "minLength": 1},
+        "target_path": {"type": "string", "minLength": 1},
+        "expected_effect": {"type": "string", "minLength": 1}
+      }
+    },
+    "check": {
+      "type": "object", "additionalProperties": false,
+      "required": ["check_id", "command", "oracle", "evidence_output"],
+      "properties": {
+        "check_id": {"type": "string", "minLength": 1},
+        "command": {"type": "string", "minLength": 1},
+        "oracle": {"type": "string", "minLength": 1},
+        "evidence_output": {"type": "string", "minLength": 1}
+      }
+    },
+    "rollback": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runbook_id", "trigger", "steps", "oracle", "durable_data_policy"],
+      "properties": {
+        "runbook_id": {"type": "string", "minLength": 1},
+        "trigger": {"type": "string", "minLength": 1},
+        "steps": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "oracle": {"type": "string", "minLength": 1},
+        "durable_data_policy": {"type": "string", "minLength": 1}
+      }
+    },
+    "package": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "work_order_id", "source_task_registry_sha256", "baseline_candidate_commit", "atomic_pr_id",
+        "parent_work_id", "milestone_id", "pr_type", "claim_status",
+        "claim_mode", "direct_target_bound", "formal_execution_status",
+        "owner_role", "primary_id", "dependency_contracts", "outcome",
+        "change_targets", "read_context_paths", "generated_outputs",
+        "implementation_steps", "verification_checks", "rollback",
+        "required_gates", "allowed_claim", "forbidden_claim", "limits",
+        "implementation_blockers"
+      ],
+      "properties": {
+        "work_order_id": {"type": "string", "minLength": 1},
+        "source_task_registry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "baseline_candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "atomic_pr_id": {"type": "string", "minLength": 1},
+        "parent_work_id": {"type": "string", "minLength": 1},
+        "milestone_id": {"type": "string", "pattern": "^T1-M[0-9]{2}$"},
+        "pr_type": {"enum": ["CTR", "EXP", "PRJ", "WRT", "UI", "OPS", "REF", "TST-PRE", "TST-POST", "IDX", "PROM"]},
+        "claim_status": {"enum": ["DIRECT_TARGET_BOUND_CLAIMABLE", "TARGET_BINDING_CLAIMABLE"]},
+        "claim_mode": {"enum": ["DIRECT_TARGET_BOUND", "TARGET_BINDING"]},
+        "direct_target_bound": {"type": "boolean"},
+        "formal_execution_status": {"const": "BLOCKED_UNTIL_SIGNED_OVERLAY"},
+        "owner_role": {"type": "string", "minLength": 1},
+        "primary_id": {"type": "string", "minLength": 1},
+        "dependency_contracts": {"type": "array", "items": {"$ref": "#/$defs/dependency"}, "uniqueItems": true},
+        "outcome": {"$ref": "#/$defs/outcome"},
+        "change_targets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/target"}, "uniqueItems": true},
+        "read_context_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "generated_outputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact"}, "uniqueItems": true},
+        "implementation_steps": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/step"}, "uniqueItems": true},
+        "verification_checks": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/check"}, "uniqueItems": true},
+        "rollback": {"$ref": "#/$defs/rollback"},
+        "required_gates": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^G[0-8]$"}, "uniqueItems": true},
+        "allowed_claim": {"type": "string", "minLength": 1},
+        "forbidden_claim": {"type": "string", "minLength": 1},
+        "limits": {
+          "type": "object", "additionalProperties": false,
+          "required": ["max_handwritten_loc", "max_production_files", "max_expand_migrations", "max_event_or_api_versions"],
+          "properties": {
+            "max_handwritten_loc": {"type": "integer", "minimum": 1, "maximum": 800},
+            "max_production_files": {"type": "integer", "minimum": 1, "maximum": 25},
+            "max_expand_migrations": {"type": "integer", "minimum": 0, "maximum": 1},
+            "max_event_or_api_versions": {"type": "integer", "minimum": 0, "maximum": 1}
+          }
+        },
+        "implementation_blockers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    }
+  }
+}

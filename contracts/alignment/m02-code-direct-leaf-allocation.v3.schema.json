@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m02-code-direct-leaf-allocation.v3.schema.json",
+  "title": "M02 append-only helper-owner allocation ledger v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "revision_id",
+    "base_catalog", "source_design_refs", "prior_leaf_field_freeze",
+    "semantic_projection_sha256", "allocation_epoch", "append_leaf_count",
+    "trains", "contract_owner_rebindings", "claims"
+  ],
+  "properties": {
+    "schema_version": {"const": "3.0.0"},
+    "artifact_kind": {"const": "M02_CODE_DIRECT_HELPER_OWNER_ALLOCATION_LEDGER"},
+    "artifact_status": {"const": "VERSIONED_PREVIEW_NOT_GLOBAL_REGISTRY"},
+    "revision_id": {"const": "M02-CODE-DIRECT-V3"},
+    "base_catalog": {"$ref": "#/$defs/hash_ref"},
+    "source_design_refs": {
+      "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash_ref"}
+    },
+    "prior_leaf_field_freeze": {
+      "type": "object", "additionalProperties": false,
+      "required": ["leaf_id_epoch", "field_names", "ordered_leaf_projection_sha256", "status"],
+      "properties": {
+        "leaf_id_epoch": {"const": "T1-M02-P101-P506"},
+        "field_names": {
+          "type": "array", "minItems": 17, "maxItems": 17, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 2}
+        },
+        "ordered_leaf_projection_sha256": {"const": "760ea9dc6b7a51cbaeb1726ea66bbbf7a96e534d420f64ced3264496ff1a821c"},
+        "status": {"const": "PASS_EXACT_FIELD_PRESERVATION"}
+      }
+    },
+    "semantic_projection_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "allocation_epoch": {"const": "T1-M02-P507-P521"},
+    "append_leaf_count": {"const": 15},
+    "trains": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/train"}
+    },
+    "contract_owner_rebindings": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/rebinding"}
+    },
+    "claims": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed", "forbidden", "proof_ceiling"],
+      "properties": {
+        "allowed": {"const": "P507-P521 helper ownership and support-train intent are allocated for v3 preview validation"},
+        "forbidden": {
+          "type": "array", "minItems": 6, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "proof_ceiling": {"const": "ALLOCATION_ONLY_NOT_GLOBAL_REGISTRATION_FUNCTION_REVIEW_IMPLEMENTATION_TEST_EXECUTION_AUTHORIZATION_OR_ACCEPTANCE"}
+      }
+    }
+  },
+  "$defs": {
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "train": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "train_id", "parent_task_id", "gap_id", "owner_kind", "contract_id",
+        "single_result", "steps", "feeds_existing_leaf_ids", "terminal_leaf_id"
+      ],
+      "properties": {
+        "train_id": {"type": "string", "pattern": "^M02-V3-TRAIN-(?:66|67|68|69|70)$"},
+        "parent_task_id": {"enum": ["T1-M02-N007", "T1-M02-N008"]},
+        "gap_id": {"type": "string", "minLength": 8},
+        "owner_kind": {"const": "FUNCTION_OWNER"},
+        "contract_id": {"type": "string", "minLength": 8},
+        "single_result": {"type": "string", "minLength": 12},
+        "steps": {
+          "type": "array", "minItems": 3, "maxItems": 3,
+          "items": {"$ref": "#/$defs/step"}
+        },
+        "feeds_existing_leaf_ids": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^M02-N00[78]-L[0-9]{2}$"}
+        },
+        "terminal_leaf_id": {"enum": ["M02-N007-L10", "M02-N008-L10"]}
+      }
+    },
+    "step": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "leaf_id", "atomic_pr_id", "pr_type", "primary_locator",
+        "companion_locators", "target_state", "prerequisite_leaf_ids",
+        "single_outcome", "oracle_and_rollback"
+      ],
+      "properties": {
+        "leaf_id": {"type": "string", "pattern": "^M02-N00[78]-L[0-9]{2}$"},
+        "atomic_pr_id": {"type": "string", "pattern": "^T1-M02-P(?:50[7-9]|51[0-9]|52[01])-(?:WRT|REF|TST-PRE)-n00[78]-l[0-9]{2}$"},
+        "pr_type": {"enum": ["WRT", "REF", "TST-PRE"]},
+        "primary_locator": {"type": "string", "minLength": 3},
+        "companion_locators": {
+          "type": "array", "maxItems": 2, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "target_state": {"enum": ["PLANNED", "PLANNED_OUTPUT"]},
+        "prerequisite_leaf_ids": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^M02-N[0-9]{3}-L[0-9]{2,3}$"}
+        },
+        "single_outcome": {"type": "string", "minLength": 8},
+        "oracle_and_rollback": {"type": "string", "minLength": 8}
+      }
+    },
+    "rebinding": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "contract_id", "source_design", "superseded_leaf_id", "owner_leaf_id",
+        "owner_atomic_pr_id", "exact_locator", "semantics"
+      ],
+      "properties": {
+        "contract_id": {"type": "string", "minLength": 8},
+        "source_design": {"$ref": "#/$defs/hash_ref"},
+        "superseded_leaf_id": {"type": "string", "pattern": "^M02-N00[78]-L[0-9]{2}$"},
+        "owner_leaf_id": {"type": "string", "pattern": "^M02-N00[78]-L[0-9]{2}$"},
+        "owner_atomic_pr_id": {"type": "string", "pattern": "^T1-M02-P(?:507|510|513|516|519)-WRT-n00[78]-l[0-9]{2}$"},
+        "exact_locator": {"type": "string", "minLength": 3},
+        "semantics": {"const": "APPEND_ONLY_OWNER_REBINDING_OLD_LEAF_FIELDS_UNCHANGED"}
+      }
+    }
+  }
+}

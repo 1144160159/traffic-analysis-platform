@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/alignment/asset-projection-kafka-ephemeral-test-result.schema.json",
+  "title": "Candidate-bound asset projection real-broker G1 result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version", "artifact_kind", "subject_pr_id", "run_id", "status", "candidate_manifest",
+    "profile_id", "environment_id", "source_blob_sha256", "oracle_results",
+    "errors", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_kind": {"const": "ASSET_PROJECTION_KAFKA_EPHEMERAL_TEST_RESULT"},
+    "subject_pr_id": {"const": "T1-M06-P908-TST-PRE-n004-asset-event-real-broker-ack"},
+    "run_id": {"type": "string", "minLength": 3},
+    "status": {"const": "PASS"},
+    "candidate_manifest": {"$ref": "#/$defs/hash_ref"},
+    "profile_id": {"type": "string", "minLength": 3},
+    "environment_id": {"type": "string", "minLength": 3},
+    "source_blob_sha256": {"type": "object"},
+    "oracle_results": {"type": "object"},
+    "errors": {"type": "array", "maxItems": 0},
+    "proof_ceiling": {"type": "string", "minLength": 12}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

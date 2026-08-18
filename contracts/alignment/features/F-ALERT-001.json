@@ -5,13 +5,13 @@
   "compatibility": {
     "preserved_routes": ["/alerts", "/alerts/:alertId"],
     "preserved_actions": ["alert-report-export", "alert-report-cancel", "alert-report-compensate"],
-    "preserved_api_operations": ["GET /v1/alerts/{id}/reports/{job_id}", "GET /v1/alerts/{id}/reports/{job_id}/download", "POST /v1/alerts/{id}/reports/export", "POST /v1/alerts/{id}/reports/{job_id}/cancel", "POST /v1/alerts/{id}/reports/{job_id}/compensations"],
+    "preserved_api_operations": ["GET /v1/alerts/{id}/feedback", "POST /v1/alerts/{id}/feedback", "GET /v1/alerts/{id}/reports/{job_id}", "GET /v1/alerts/{id}/reports/{job_id}/download", "POST /v1/alerts/{id}/reports/export", "POST /v1/alerts/{id}/reports/{job_id}/cancel", "POST /v1/alerts/{id}/reports/{job_id}/compensations"],
     "strategy": "additive"
   },
   "ui": {
     "query_id": "alert.report.job",
     "controls": [{"control_id": "alert-detail-report-export", "action_id": "alert-report-export"}, {"control_id": "alert-detail-report-cancel", "action_id": "alert-report-cancel"}, {"control_id": "alert-detail-report-compensate", "action_id": "alert-report-compensate"}],
-    "states": ["loading", "accepted", "running", "cancel_requested", "success", "partial", "failed", "cancelled", "compensating", "compensated", "compensation_failed"]
+    "states": ["loading", "accepted", "running", "cancel_requested", "success", "partial", "failed", "cancelled", "compensating", "compensated", "compensation_failed", "artifact_expired"]
   },
   "api": {
     "operation_id": "createAlertReport",
@@ -27,7 +27,13 @@
     "invariants": [
       "report requests never write an investigation note as a substitute",
       "one deterministic report model freezes alert, evidence, timeline, asset, response and audit sections",
-      "missing sections are explicit and never filled with simulation content"
+      "missing sections are explicit and never filled with simulation content",
+      "manifest_version and object_format_version bind the immutable snapshot digest, artifact digest, size and MIME type",
+      "artifact expiry revokes only download authority; the PostgreSQL job, source watermarks and manifest remain queryable",
+      "a retry writes the same deterministic tenant/alert/job object key and cannot create a second logical artifact"
+      ,"model feedback binds the server-authoritative prediction, model and rule versions; one tenant-bound aggregate advances by compare-and-set label revision"
+      ,"feedback business state, audit and model.feedback.v1 outbox commit in one PostgreSQL transaction; retracted is terminal and every later revision links previous_event_id"
+      ,"the model feedback producer remains default-off until an exact non-zero consumer candidate and accepted broker receipt authorize startup"
     ],
     "states": ["accepted", "running", "cancel_requested", "completed", "partial", "failed", "cancelled", "compensating", "compensated", "compensation_failed"],
     "compensation": "cooperatively stop a running job and remove only its deterministic temporary object before committing cancelled; cleanup failure remains non-success and is retried"
@@ -37,7 +43,7 @@
     "read_models": ["postgresql", "clickhouse", "opensearch", "minio"],
     "migration": "deployments/postgres/migrations/202607301945_alert_report_jobs.sql",
     "event_types": ["traffic.alert.v2.AlertReportRequested", "traffic.alert.v2.AlertReportRunning", "traffic.alert.v2.AlertReportCancelRequested", "traffic.alert.v2.AlertReportCancelled", "traffic.alert.v2.AlertReportCompensationRequested", "traffic.alert.v2.AlertReportCompensated", "traffic.alert.v2.AlertReportCompleted"],
-    "source_watermarks": ["postgresql.alert_report_jobs.revision", "postgresql.alerts.revision", "clickhouse.detection_events.watermark", "opensearch.alerts.projection_version"]
+    "source_watermarks": ["postgresql.alert_report_jobs.revision", "clickhouse.alerts.state_version", "clickhouse.alerts.updated_at", "clickhouse.alerts.rule_version", "clickhouse.alerts.model_version", "clickhouse.evidence.updated_at", "postgresql.assets.updated_at", "postgresql.alert_response_actions.updated_at", "postgresql.audit_logs.created_at"]
   },
   "permissions": {
     "tenant_source": "authenticated_identity",
@@ -46,7 +52,7 @@
   },
   "performance": {
     "baseline_required": true,
-    "journeys": ["small alert report", "partial evidence report", "duplicate request reuse", "accepted cancel", "running cooperative cancel and object cleanup", "residual object compensation retry"],
+    "journeys": ["small alert report", "partial evidence report", "duplicate request reuse", "same-key object retry", "accepted cancel", "running cooperative cancel and object cleanup", "residual object compensation retry", "expired status remains queryable and download returns 410"],
     "stop_conditions": ["object manifest mismatch or report queue resource budget breach"]
   },
   "acceptance": {
@@ -54,7 +60,9 @@
     "evidence": ["HAR contains report endpoints and never investigation-notes; manifest sha256 matches downloaded object; cancelled jobs have history, outbox and audit with no residual object manifest"]
   },
   "rollout": {
-    "feature_flag": "alert_report_jobs_v1",
+    "feature_flag": "ALERT_REPORT_JOBS_V1_ENABLED",
+    "default_runtime_state": "off",
+    "artifact_ttl_env": "ALERT_REPORT_ARTIFACT_TTL",
     "strategy": "canary",
     "rollback_runbook": "doc/07_alignment/runbooks/F-ALERT-001-rollback.md"
   }

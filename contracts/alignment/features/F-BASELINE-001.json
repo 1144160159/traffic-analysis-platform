@@ -1,0 +1,100 @@
+{
+  "feature_id": "F-BASELINE-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/baselines"],
+    "preserved_actions": ["baseline-governance-action", "baseline-reset"],
+    "preserved_api_operations": [
+      "GET /v1/baselines",
+      "GET /v1/baselines/{id}",
+      "GET /v1/baselines/{id}/analytics",
+      "GET /v1/baselines/{id}/versions",
+      "GET /v1/baselines/{id}/actions",
+      "POST /v1/baselines/{id}/actions",
+      "POST /v1/baselines/{id}/reset",
+      "POST /v1/baselines/{id}/builds",
+      "POST /v1/baselines/{id}/versions/{version}/approvals",
+      "POST /v1/baselines/{id}/approvals/{approval_id}/decision",
+      "POST /v1/baselines/{id}/rollbacks",
+      "POST /v1/baselines/{id}/evaluations"
+    ],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "baseline.static-dynamic.snapshot.v1",
+    "controls": [
+      {"control_id": "baseline-governance-action", "action_id": "baseline-governance-action"},
+      {"control_id": "baseline-reset", "action_id": "baseline-reset"}
+    ],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed", "accepted", "running"]
+  },
+  "api": {
+    "operation_id": "requestBehaviorBaselineBuildV1",
+    "method": "POST",
+    "path": "/v1/baselines/{id}/builds",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision"
+  },
+  "domain": {
+    "kind": "command",
+    "states": ["learning", "frozen", "active", "retired", "failed"],
+    "baseline_kinds": {
+      "static": "versioned normative rules and approved thresholds",
+      "dynamic": "versioned statistics learned from an immutable eligible sample snapshot"
+    },
+    "invariants": [
+      "static normative baselines and dynamic behavior baselines have separate explicit kind and version identities",
+      "a definition moves learning to frozen only after sample eligibility, quality, minimum count, closed window and source watermark checks pass",
+      "activation requires an immutable frozen version, expected definition revision, independent approval and all target consumer acknowledgements",
+      "learning or failed versions are never used for online inference",
+      "an active version is immutable; rebuild creates a new version and never mutates the active snapshot",
+      "drift evaluation binds baseline version, as_of, window, thresholds, observed value, deviation, quality and evidence references",
+      "missing, expired or partial active baseline is fail-visible and never silently falls back to an unversioned statistic",
+      "retirement preserves history and the previous stable version for rollback"
+    ],
+    "compensation": "stop activation dispatch, restore the previous fully acknowledged immutable version, retain the failed candidate and reconcile every consumer acknowledgement"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "minio"],
+    "migration": "deployments/postgres/migrations/202608141800_m07_behavior_baseline_v1.sql; existing compatibility tables remain in common/sql/pg/08-behavior-baseline.sql",
+    "event_types": ["baseline.build.requested.v1", "baseline.version.frozen.v1", "baseline.version.failed.v1", "baseline.activation.requested.v1", "baseline.version.activated.v1", "baseline.version.retired.v1", "baseline.activation.acknowledged.v1"],
+    "persistent_objects": ["behavior_baseline_definitions_v1", "behavior_baseline_sample_snapshots_v1", "behavior_baseline_versions_v1", "behavior_baseline_build_jobs_v1", "behavior_baseline_approval_requests_v1", "behavior_baseline_activation_targets_v1", "behavior_baseline_ack_readiness_history_v1", "behavior_baseline_ack_readiness_current_v1", "behavior_baseline_lifecycle_history_v1", "behavior_baseline_lifecycle_outbox_v1", "behavior_baseline_command_receipts_v1", "behavior_baseline_drift_evaluations_v1"],
+    "source_watermarks": ["sample_snapshot_id+window_start+window_end+row_count+sha256", "baseline_id+kind+version+snapshot_sha256", "consumer_id+baseline_version+ack_sha256"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:write"],
+    "negative_tests": [
+      "cross-tenant definition, sample, version, approval or acknowledgement is rejected",
+      "the build requester cannot approve activation",
+      "expired approval, stale definition revision and partial target acknowledgement are rejected",
+      "an active or retired version cannot be mutated in place"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["static baseline freeze", "dynamic sample build", "drift evaluation", "consumer acknowledgement", "active version rollback"],
+    "stop_conditions": ["sample leakage or future data is observed, quality gate is partial, acknowledgement is incomplete, inference P99 or resource budget exceeds the approved candidate"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 contract and compatibility inventory",
+      "G1 state machine, authorization, revision and immutable-version tests",
+      "G2 real closed-window sample snapshot and deterministic rebuild",
+      "G3 consumer-first shadow inference with version and evidence",
+      "G4 all-target ACK activation and previous-version rollback",
+      "G5 K8s canary, failure injection and observation"
+    ],
+    "evidence": ["candidate-bound definition revision, sample manifest, baseline version hash, approvals, consumer ACK exact set, inference receipts, rollback receipt and observation window"]
+  },
+  "rollout": {
+    "feature_flag": "BEHAVIOR_BASELINE_V1_ENABLED",
+    "default": false,
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-BASELINE-001-rollback.md"
+  }
+}

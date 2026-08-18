@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis.local/contracts/mlops/model-inference-parity-result.schema.json",
+  "title": "Internal model inference parity result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "result_id",
+    "run_id",
+    "profile_id",
+    "profile_sha256",
+    "candidate_sha256",
+    "claim_scope",
+    "cnas_claim_authorized",
+    "production_promotion_authorized",
+    "model_artifact_sha256",
+    "feature_columns_sha256",
+    "sample_set_sha256",
+    "sample_count",
+    "routes",
+    "parity",
+    "gates",
+    "status",
+    "limitations",
+    "result_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "result_id": {"type": "string", "format": "uuid"},
+    "run_id": {"type": "string", "format": "uuid"},
+    "profile_id": {"type": "string"},
+    "profile_sha256": {"$ref": "#/$defs/sha256"},
+    "candidate_sha256": {"$ref": "#/$defs/sha256"},
+    "claim_scope": {"const": "INTERNAL_ENGINEERING_ONLY"},
+    "cnas_claim_authorized": {"const": false},
+    "production_promotion_authorized": {"const": false},
+    "model_artifact_sha256": {"$ref": "#/$defs/sha256"},
+    "feature_columns_sha256": {"$ref": "#/$defs/sha256"},
+    "sample_set_sha256": {"$ref": "#/$defs/sha256"},
+    "sample_count": {"type": "integer", "minimum": 32},
+    "routes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["python", "onnx", "flink"],
+      "properties": {
+        "python": {"$ref": "#/$defs/route"},
+        "onnx": {"$ref": "#/$defs/route"},
+        "flink": {"$ref": "#/$defs/route"}
+      }
+    },
+    "parity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["python_to_onnx", "onnx_to_flink", "python_to_flink", "decision_mismatches"],
+      "properties": {
+        "python_to_onnx": {"$ref": "#/$defs/comparison"},
+        "onnx_to_flink": {"$ref": "#/$defs/comparison"},
+        "python_to_flink": {"$ref": "#/$defs/comparison"},
+        "decision_mismatches": {"type": "integer", "minimum": 0}
+      }
+    },
+    "gates": {"type": "array", "items": {"$ref": "#/$defs/gate"}},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "limitations": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}},
+    "result_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_sha256", "engine", "engine_version", "measured_inferences", "latency_ms", "throughput_per_second", "cpu_seconds", "peak_rss_bytes"],
+      "properties": {
+        "receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "engine": {"type": "string", "minLength": 1},
+        "engine_version": {"type": "string", "minLength": 1},
+        "measured_inferences": {"type": "integer", "minimum": 1},
+        "latency_ms": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["p50", "p95", "p99", "max"],
+          "properties": {
+            "p50": {"type": "number", "minimum": 0},
+            "p95": {"type": "number", "minimum": 0},
+            "p99": {"type": "number", "minimum": 0},
+            "max": {"type": "number", "minimum": 0}
+          }
+        },
+        "throughput_per_second": {"type": "number", "exclusiveMinimum": 0},
+        "cpu_seconds": {"type": "number", "minimum": 0},
+        "peak_rss_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_absolute_score_error", "tolerance", "status"],
+      "properties": {
+        "max_absolute_score_error": {"type": "number", "minimum": 0},
+        "tolerance": {"type": "number", "exclusiveMinimum": 0},
+        "status": {"enum": ["PASS", "FAIL"]}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate", "status", "actual", "limit"],
+      "properties": {
+        "gate": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS", "FAIL"]},
+        "actual": {},
+        "limit": {}
+      }
+    }
+  }
+}

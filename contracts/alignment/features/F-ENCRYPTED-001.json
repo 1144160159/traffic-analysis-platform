@@ -1,0 +1,250 @@
+{
+  "feature_id": "F-ENCRYPTED-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": [
+      "/encrypted-traffic"
+    ],
+    "preserved_actions": [
+      "egress-evidence-lookup",
+      "egress-entity-graph"
+    ],
+    "preserved_api_operations": [
+      "GET /v1/encrypted-traffic/stats",
+      "GET /v1/encrypted-traffic/sessions",
+      "GET /v1/encrypted-traffic/ja3",
+      "GET /v1/encrypted-traffic/tunnels",
+      "GET /v1/encrypted-traffic/exfiltration",
+      "GET /v1/encrypted-traffic/evidence"
+    ],
+    "preserved_query_states": [
+      "loading",
+      "empty",
+      "success",
+      "partial",
+      "stale",
+      "forbidden",
+      "failed"
+    ],
+    "strategy": "compatibility-adapter"
+  },
+  "ui": {
+    "query_id": "encrypted-traffic.explainable-snapshot.v1",
+    "controls": [
+      {
+        "control_id": "egress-evidence-lookup",
+        "action_id": "egress-evidence-lookup"
+      },
+      {
+        "control_id": "egress-entity-graph",
+        "action_id": "egress-entity-graph"
+      }
+    ],
+    "states": [
+      "loading",
+      "empty",
+      "success",
+      "partial",
+      "stale",
+      "forbidden",
+      "failed"
+    ],
+    "required_sections": [
+      "flow_metadata",
+      "plaintext_visible",
+      "side_channel",
+      "raw_reference",
+      "randomness_statistics"
+    ],
+    "interpretation_rules": [
+      "encrypted transport is never presented as malicious by itself",
+      "zero, no_sample, not_computable, unavailable and forbidden are distinct display states",
+      "every risk statement displays source, rule or model version, contribution and limitation",
+      "field-level redaction is visible and never replaced with fabricated values"
+    ]
+  },
+  "api": {
+    "operation_id": "getEncryptedTrafficSnapshot",
+    "method": "GET",
+    "path": "/v1/encrypted-traffic/snapshot",
+    "response_envelope": "data-meta-error",
+    "async": false,
+    "request_contract": {
+      "required": [
+        "start_time",
+        "end_time"
+      ],
+      "optional": [
+        "asset_id",
+        "session_id",
+        "protocol",
+        "continuation"
+      ],
+      "tenant_override_allowed": false
+    },
+    "response_contract": {
+      "identity": [
+        "snapshot_id",
+        "tenant_id",
+        "as_of",
+        "window_start",
+        "window_end"
+      ],
+      "section_envelope": [
+        "availability",
+        "sample_count",
+        "source",
+        "source_watermark",
+        "rule_versions",
+        "model_versions",
+        "partial",
+        "missing_reasons",
+        "facts"
+      ]
+    }
+  },
+  "domain": {
+    "kind": "query",
+    "snapshot_sections": {
+      "flow_metadata": [
+        "transport",
+        "tls_version",
+        "cipher_suite",
+        "alpn",
+        "direction",
+        "bytes",
+        "packets"
+      ],
+      "plaintext_visible": [
+        "sni",
+        "certificate_subject",
+        "certificate_issuer",
+        "certificate_validity",
+        "ja3",
+        "ja3s",
+        "ja4"
+      ],
+      "side_channel": [
+        "packet_length_distribution",
+        "inter_arrival_distribution",
+        "burst_shape",
+        "direction_ratio",
+        "tunnel_indicators",
+        "exfiltration_indicators"
+      ],
+      "raw_reference": [
+        "session_id",
+        "event_ids",
+        "pcap_index_ids",
+        "evidence_refs"
+      ],
+      "randomness_statistics": [
+        "entropy_value",
+        "sample_bytes",
+        "method_id",
+        "method_version",
+        "computability"
+      ]
+    },
+    "availability_states": [
+      "available",
+      "zero",
+      "no_sample",
+      "not_computable",
+      "unavailable",
+      "forbidden"
+    ],
+    "invariants": [
+      "all sections share one tenant, time window, as_of and snapshot identity",
+      "ClickHouse session and feature facts remain authoritative while OpenSearch, when used, is a bounded search projection only",
+      "SNI, JA3 or certificate presence alone never creates a malicious verdict",
+      "every tunnel, exfiltration or anomaly statement binds its rule or model version and evidence references",
+      "entropy and randomness values bind sample size, method ID and method version; empty input is not numeric zero",
+      "source failure, no sample, not computable, field denial and a measured zero cannot collapse to the same value",
+      "each raw reference is tenant-bound and drillable only when the caller holds the field and object permission",
+      "partial or stale sources remain explicit in the top-level meta and the affected section"
+    ],
+    "compensation": "disable the snapshot adapter, restore the six legacy read endpoints, retain source facts and audit records, and invalidate only derived snapshot caches"
+  },
+  "data": {
+    "authoritative_store": "clickhouse",
+    "read_models": [
+      "clickhouse",
+      "postgresql",
+      "opensearch",
+      "minio"
+    ],
+    "migration": "additive snapshot contract only under T1-M09-N006/N007; legacy encrypted read endpoints remain available",
+    "event_types": [
+      "traffic.v1.FeatureStat",
+      "traffic.v1.SessionRecord",
+      "traffic.v1.PcapIndexMeta"
+    ],
+    "source_watermarks": [
+      "clickhouse.session_features.max_event_time+row_count+closed_window_sha256",
+      "clickhouse.sessions.max_end_time+row_count",
+      "clickhouse.pcap_index.max_end_time+row_count",
+      "opensearch.alias+pit_id+projection_watermark",
+      "postgresql.rule_revision+model_revision",
+      "minio.object_version+sha256"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": [
+      "alert:read"
+    ],
+    "field_permissions": {
+      "sni_and_certificate_identity": "alert:read",
+      "internal_and_external_ip": "alert:read",
+      "pcap_reference": "pcap:read",
+      "pcap_download": "pcap:download"
+    },
+    "negative_tests": [
+      "tenant query parameters cannot override the authenticated tenant",
+      "a caller without pcap:read sees an explicit forbidden raw_reference section and no object key",
+      "a caller without pcap:download cannot turn a reference into an object URL",
+      "OpenSearch results with a different tenant or stale projection watermark are rejected"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": [
+      "one-hour tenant snapshot with all sections",
+      "empty closed window",
+      "partial OpenSearch or MinIO dependency",
+      "session-to-PCAP evidence drilldown"
+    ],
+    "budgets": {
+      "maximum_window_seconds": 604800,
+      "maximum_sessions": 500,
+      "maximum_evidence_refs": 1000,
+      "response_bytes": 4194304,
+      "server_p99_ms": 2000
+    },
+    "stop_conditions": [
+      "response or dependency budget is exceeded without truncation, a source watermark is absent, or server P99 exceeds the approved candidate baseline"
+    ]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 canonical owner, ID, schema, route, action and legacy API inventory",
+      "G1 same-window snapshot identity, section shape and measured-zero versus no-sample semantics",
+      "G2 tenant and field-permission negatives including raw reference and download denial",
+      "G3 ClickHouse authority with PostgreSQL version, OpenSearch projection and MinIO reference reconciliation",
+      "G4 rule and model version change, dependency outage, partial result and stale watermark",
+      "G5 existing K8s candidate query, bounded performance, rollback and observation",
+      "G6 Windows Chrome live-default page states and evidence drilldown"
+    ],
+    "evidence": [
+      "candidate-bound request and response hashes, per-section source counts and watermarks, rule and model versions, permission negatives, dependency failures, performance profile, rollback receipt and browser journey"
+    ]
+  },
+  "rollout": {
+    "feature_flag": "ENCRYPTED_TRAFFIC_SNAPSHOT_V1_ENABLED",
+    "default": false,
+    "strategy": "shadow-read",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ENCRYPTED-001-rollback.md"
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/evidence-case-report.schema.json",
+  "title": "Typed exact-case report for one atomic verification PR",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "subject_pr_id", "subject_work_id", "subject_milestone_id",
+    "candidate_manifest_sha256", "profile_id", "environment_id", "runner_artifact",
+    "fixture_artifacts", "cases", "summary", "result", "positive_attestation"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "subject_pr_id": {"type": "string", "pattern": "^T1-M[0-9]{2}-P[0-9]{3}-(?:TST-PRE|TST-POST)-[a-z0-9-]+$"},
+    "subject_work_id": {"type": "string", "pattern": "^T1-M[0-9]{2}-N[0-9]{3}$"},
+    "subject_milestone_id": {"type": "string", "pattern": "^T1-M[0-9]{2}$"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "runner_artifact": {"$ref": "#/$defs/artifact"},
+    "fixture_artifacts": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/named_artifact"}
+    },
+    "cases": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/case"}
+    },
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["expected_case_count", "passed_case_count", "failed_case_count"],
+      "properties": {
+        "expected_case_count": {"type": "integer", "minimum": 1},
+        "passed_case_count": {"type": "integer", "minimum": 0},
+        "failed_case_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "result": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+    "positive_attestation": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "artifact", "policy_id", "policy_fingerprint_sha256", "candidate_manifest_sha256",
+            "profile_id", "environment_id", "verifier_role", "purpose"
+          ],
+          "properties": {
+            "artifact": {"$ref": "#/$defs/artifact"},
+            "policy_id": {"type": "string", "minLength": 1},
+            "policy_fingerprint_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "profile_id": {"type": "string", "minLength": 1},
+            "environment_id": {"type": "string", "minLength": 1},
+            "verifier_role": {"type": "string", "minLength": 1},
+            "purpose": {"const": "TRUSTED_SIGNATURE_TECHNICAL_POSITIVE"}
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "named_artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "path", "sha256"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "case": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "case_id", "expected_outcome", "actual_outcome", "status", "rejection_code",
+        "input_sha256s", "output_sha256s"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "expected_outcome": {"enum": ["PASS", "BLOCKED"]},
+        "actual_outcome": {"enum": ["PASS", "BLOCKED", "ERROR"]},
+        "status": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+        "rejection_code": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^REJECT_[A-Z0-9_]+$"}
+          ]
+        },
+        "input_sha256s": {
+          "type": "array", "minItems": 1, "maxItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        },
+        "output_sha256s": {
+          "type": "array", "minItems": 1, "maxItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  }
+}

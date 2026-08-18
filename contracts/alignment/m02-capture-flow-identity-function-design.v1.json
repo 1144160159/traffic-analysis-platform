@@ -1,0 +1,650 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M02_CAPTURE_FLOW_IDENTITY_FUNCTION_DESIGN",
+  "artifact_status": "CANDIDATE_BOUND_STATIC_DESIGN_BLOCKED_BY_MISSING_IDENTITY_ATOMIC_LEAVES",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "source_blob_sha256": {
+      "proto/traffic/v1/common.proto": "8239ef138c3f1441e5a6015e2b77a36d0930d9bee27820a1bfab0f919e4415ee",
+      "proto/traffic/v1/flow.proto": "62a47b5aa90333bfcf252eb7e99cc653fa4270f14f3f1b57130a73e3c5126ae2",
+      "rust/probe-agent/probe-agent/src/capture/mod.rs": "5606357c2c3b03d08d2a168ec8c5fe8c1dfbbc30dd400bd868f81eeca19b1cb9",
+      "rust/probe-agent/probe-agent/src/capture/af_packet.rs": "3794d01f2243da59cf4806fad83399cd1777544e2f5a2be247bd336ba12ae8e1",
+      "rust/probe-agent/probe-agent/src/capture/xdp.rs": "654e55db979cf2f8f860b698acffd959f91772dbf8968d7c5a51e1b455e8c9b9",
+      "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs": "e88ec6e0d141fe76987455ff915e6c6ad3c2df7cc7d2754613c6089b2a108d5b",
+      "rust/probe-agent/probe-agent/src/parser/mod.rs": "9dd1499d924aa5151c60feb037308e116bab5f1658c03adbabdb462996d00fce",
+      "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs": "ed358ab95d81e8426a8def6c45b2150e262bc62c490bae116cd1be36354497cb",
+      "rust/probe-agent/probe-agent/src/aggregator/community_id.rs": "e75bebc02fedd1e5a2ffd1308ee3d428f81d077d2c7ad0ed4f6163233020ad32",
+      "rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs": "cd95f58479f5036a9a6424c3a3a7e34864cabeee54c29632f411b0157dcd66ca",
+      "rust/probe-agent/probe-agent/src/aggregator/eviction.rs": "f1dc5eb7fc50f27fde8cc5973982e13e55e2b66dfed864ccecde665b7d097cff",
+      "rust/probe-agent/probe-agent/src/aggregator/partitioned_flow_table.rs": "e178367cd12dce803f9b6b928d1f1693eeb0ebc72e1547aacbeb792bff4fd9fc"
+    }
+  },
+  "preview_catalog_ref": {
+    "path": "contracts/alignment/m02-code-direct-leaf-catalog.v1.json",
+    "sha256": "29b7584696440bb70a8203f4ecbe4ae6574f1a785743562b94e87efbde73a703"
+  },
+  "leaf_bindings": [
+    {
+      "leaf_id": "M02-N001-L01",
+      "atomic_pr_id": "T1-M02-P101-CTR-n001-l01",
+      "role": "EVENT_HEADER_CONTRACT",
+      "locator": "proto/traffic/v1/common.proto#traffic.v1.EventHeader"
+    },
+    {
+      "leaf_id": "M02-N001-L02",
+      "atomic_pr_id": "T1-M02-P102-CTR-n001-l02",
+      "role": "FLOW_EVENT_CONTRACT",
+      "locator": "proto/traffic/v1/flow.proto#traffic.v1.FlowEvent"
+    },
+    {
+      "leaf_id": "M02-N004-L15",
+      "atomic_pr_id": "T1-M02-P159-WRT-n004-l15",
+      "role": "OFFLINE_TIMESTAMP",
+      "locator": "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs#PcapReader::next_packet_checked(&mut self) -> Result<Option<(Vec<u8>, u64)>>"
+    },
+    {
+      "leaf_id": "M02-N005-L01",
+      "atomic_pr_id": "T1-M02-P171-WRT-n005-l01",
+      "role": "CANONICAL_FLOW_KEY",
+      "locator": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs#FlowKey::new"
+    },
+    {
+      "leaf_id": "M02-N005-L02",
+      "atomic_pr_id": "T1-M02-P172-WRT-n005-l02",
+      "role": "COMMUNITY_ID",
+      "locator": "rust/probe-agent/probe-agent/src/aggregator/community_id.rs#compute_community_id"
+    },
+    {
+      "leaf_id": "M02-N005-L03",
+      "atomic_pr_id": "T1-M02-P173-WRT-n005-l03",
+      "role": "FULL_PATH_SAMPLE",
+      "locator": "rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs#PacketProcessor::process_packet"
+    },
+    {
+      "leaf_id": "M02-N005-L04",
+      "atomic_pr_id": "T1-M02-P174-WRT-n005-l04",
+      "role": "FAST_PATH_SAMPLE",
+      "locator": "rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs#PacketProcessor::process_packet_fast"
+    },
+    {
+      "leaf_id": "M02-N005-L05",
+      "atomic_pr_id": "T1-M02-P175-WRT-n005-l05",
+      "role": "FLOW_EVENT_BUILD",
+      "locator": "rust/probe-agent/probe-agent/src/aggregator/eviction.rs#Eviction::to_flow_event"
+    },
+    {
+      "leaf_id": "M02-N005-L06",
+      "atomic_pr_id": "T1-M02-P176-WRT-n005-l06",
+      "role": "STABLE_PARTITION",
+      "locator": "rust/probe-agent/probe-agent/src/aggregator/partitioned_flow_table.rs#PartitionedFlowTable::update"
+    }
+  ],
+  "current_static_findings": [
+    {
+      "finding_id": "M02-FLOW-ID-P0-01",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/capture/af_packet.rs",
+      "symbol": "AfPacketCapture::poll",
+      "evidence": "一次recvmmsg批次只读取一次SystemTime并把同一微秒值写给全部frame",
+      "consequence": "同批包的真实先后和IAT被压平，跨capture mode的统计不再逐包一致",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-02",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/capture/xdp.rs",
+      "symbol": "XdpCapture::poll",
+      "evidence": "一个XSK receive批次同样只生成一个SystemTime微秒值供所有descriptor复用",
+      "consequence": "XDP和AF_PACKET无法证明逐包时间及IAT等价，也不能表达时钟来源和精度",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-03",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs",
+      "symbol": "PcapReader::next_packet",
+      "evidence": "nanosecond PCAP返回epoch纳秒而live capture返回微秒，但FrameInfo只保存无单位u64",
+      "consequence": "FlowTable固定除以1000时把纳秒误当微秒，离线event时间和event_id发生数量级漂移",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-04",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs",
+      "symbol": "PcapReader::next_packet",
+      "evidence": "packet header字段固定用from_le_bytes读取，未使用global header的swap判定",
+      "consequence": "大端PCAP可产生错误时间与长度或被静默解释为EOF，离线identity不可验证",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-05",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs",
+      "symbol": "FlowKey::new",
+      "evidence": "FlowKey只按IP和port通用排序，而Community ID对ICMP request reply和error有协议专用映射",
+      "consequence": "同一ICMP会话可得到FlowKey方向与Community ID端点顺序不一致的双重身份",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-06",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs",
+      "symbol": "PacketProcessor::process_packet",
+      "evidence": "完整路径方向调用不含protocol参数的community_id::is_forward而FlowKey另行计算is_forward",
+      "consequence": "packet counters可能不遵循生成Community ID时的ICMP规范化方向",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-07",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/parser/mod.rs",
+      "symbol": "PacketParser::quick_five_tuple",
+      "evidence": "快速路径把任何IPv4或IPv6负载起始四字节解释为两个port，包括ICMP和非首分片",
+      "consequence": "ICMP type code和checksum被拼成伪端口，fast与full产生不同FlowKey和Community ID",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-08",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/parser/mod.rs",
+      "symbol": "PacketParser::quick_five_tuple",
+      "evidence": "IPv6快速路径固定transport_offset为40且不遍历extension headers",
+      "consequence": "携带扩展头的IPv6包会把扩展头字节当端口并写入错误flow",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-09",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs",
+      "symbol": "PacketProcessor::process_packet_fast",
+      "evidence": "fast路径独立提取five tuple TOS TCP flags和frame length，未复用完整解析的fragment VLAN和length语义",
+      "consequence": "同一frame双路径不能以一个canonical sample逐字段diff，统计和身份可能分叉",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-10",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs",
+      "symbol": "FlowTable::update_flow_value_with_time",
+      "evidence": "函数假定packet timestamp为微秒并在未来或一天前回退到当前SystemTime，同时无条件回写last_seen",
+      "consequence": "相同PCAP在不同执行时间可生成不同ts_start ts_end duration和event_id，乱序包还可使last_seen回拨",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-11",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/eviction.rs",
+      "symbol": "Eviction::to_flow_event",
+      "evidence": "输出tuple使用canonical端点和双向counter却把direction硬编码为c2s，event identity又直接吸收可漂移ts_start和ts_end",
+      "consequence": "事件声称未经推断的client server方向，且时间回退会破坏同run同输入的幂等重放",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-12",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/eviction.rs",
+      "symbol": "Eviction::run",
+      "evidence": "淘汰扫描始终使用live SystemTime与flow event time比较，没有offline watermark或end-of-input flush时钟",
+      "consequence": "历史PCAP的flow可立即全部过期或按执行机器时钟产生不同淘汰边界",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-13",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs",
+      "symbol": "FlowValue::default",
+      "evidence": "新FlowValue的start_time和last_seen在构造时直接取SystemTime，再由update路径有条件覆盖",
+      "consequence": "首次事件时间写入不是单一原子状态转移，离线和异常路径可残留处理时钟",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-14",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/eviction.rs",
+      "symbol": "Eviction::to_flow_event",
+      "evidence": "多个Atomic字段逐个Relaxed读取，没有revision或snapshot barrier，字段可来自不同并发时刻",
+      "consequence": "同一FlowEvent的identity window counters和统计不是可证明的一致快照",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-15",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/parser/mod.rs",
+      "symbol": "PacketParser::parse",
+      "evidence": "full parser对IPv4非首分片使用零端口，对IPv6 extension和fragment的语义又依赖etherparse切片结果，未形成显式统一policy",
+      "consequence": "full path自身尚无冻结的分片重组或拒绝边界，不能直接充当fast path oracle",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-16",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs",
+      "symbol": "FlowKey",
+      "evidence": "FlowKey不含interface queue VLAN sensor tap或observation scope，跨观测域相同五元组会合并",
+      "consequence": "多接口或重复镜像部署可把不同观测事实聚成一个flow并制造双计数",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-17",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs",
+      "symbol": "PacketProcessor::process_batch",
+      "evidence": "batch入口固定调用full process_packet，fast路径没有受控route或shadow single-commit seam",
+      "consequence": "设计中的fast fallback与diff gate没有真实owner，接线时可能双更新或绕过完整oracle",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-18",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs",
+      "symbol": "rate_limit_packet",
+      "evidence": "legacy replay把微秒timestamp delta传给Duration::from_nanos并使用首次调用前缓存的first_ts",
+      "consequence": "Original和Multiplier节拍缩短一千倍且批内首次基准更新不能作用于同批后续包",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-FLOW-ID-P0-19",
+      "severity": "P0",
+      "path": "proto/traffic/v1/flow.proto",
+      "symbol": "traffic.v1.FlowEvent",
+      "evidence": "设计回切要求区分identity revision，但当前FlowEvent没有identity_revision字段",
+      "consequence": "混合版本事件无法在消费者和reconcile中可靠区分，回滚方案不可执行",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    }
+  ],
+  "identity_state_machine": {
+    "states": [
+      "RAW_CAPTURED",
+      "TIME_CANONICAL",
+      "PARSED_FULL",
+      "PARSED_FAST",
+      "ENDPOINTS_CANONICAL",
+      "SAMPLE_CANONICAL",
+      "TABLE_UPDATED",
+      "EVICTION_READY",
+      "FLOW_EVENT_BUILT",
+      "IDENTITY_FROZEN",
+      "REPLAY_MATCHED",
+      "REJECTED",
+      "BLOCKED"
+    ],
+    "transitions": [
+      {"from": "RAW_CAPTURED", "event": "valid clock source and precision", "to": "TIME_CANONICAL", "barrier": "checked epoch microsecond conversion without processing clock fallback"},
+      {"from": "TIME_CANONICAL", "event": "full parse accepted", "to": "PARSED_FULL", "barrier": "bounded frame VLAN fragment and IPv6 extension validation"},
+      {"from": "TIME_CANONICAL", "event": "fast parse accepted", "to": "PARSED_FAST", "barrier": "same canonical extraction contract as full parse"},
+      {"from": "PARSED_FULL", "event": "protocol-aware normalization", "to": "ENDPOINTS_CANONICAL", "barrier": "Community ID v1 endpoint order"},
+      {"from": "PARSED_FAST", "event": "protocol-aware normalization", "to": "ENDPOINTS_CANONICAL", "barrier": "full and fast canonical endpoint exact equality"},
+      {"from": "ENDPOINTS_CANONICAL", "event": "sample fields frozen", "to": "SAMPLE_CANONICAL", "barrier": "tuple direction length flags TOS timestamp exact-set"},
+      {"from": "SAMPLE_CANONICAL", "event": "partition update committed", "to": "TABLE_UPDATED", "barrier": "canonical key and monotonic event-time policy"},
+      {"from": "TABLE_UPDATED", "event": "approved eviction reason", "to": "EVICTION_READY", "barrier": "immutable aggregate snapshot"},
+      {"from": "EVICTION_READY", "event": "event contract validation", "to": "FLOW_EVENT_BUILT", "barrier": "tenant probe run tuple direction counters and time present"},
+      {"from": "FLOW_EVENT_BUILT", "event": "canonical identity hash", "to": "IDENTITY_FROZEN", "barrier": "event and flow UUID namespace plus canonical source bytes"},
+      {"from": "IDENTITY_FROZEN", "event": "same input replay", "to": "REPLAY_MATCHED", "barrier": "byte-equivalent identity and statistical fields"},
+      {"from": "RAW_CAPTURED", "event": "bad precision endian frame or parse", "to": "REJECTED", "barrier": "stable reason and no table update"},
+      {"from": "SAMPLE_CANONICAL", "event": "missing atomic leaf or unsigned activation", "to": "BLOCKED", "barrier": "no production route switch"}
+    ],
+    "invariants": [
+      "all internal capture timestamps use checked epoch microseconds with explicit source precision",
+      "nanosecond PCAP conversion rejects overflow and records precision loss policy",
+      "processing wall clock never repairs a replay event timestamp",
+      "FlowKey and Community ID share one protocol-aware canonical endpoint result",
+      "packet direction is derived from that same endpoint result and not recalculated independently",
+      "full and fast parsing either emit the same FlowSample or an explicit unsupported result",
+      "ICMP and ICMPv6 never interpret checksum bytes as transport ports",
+      "IPv6 extension headers and fragmented packets follow one declared policy on both paths",
+      "last_seen is monotonic while per-direction IAT rejects negative deltas without swapping the stored prior sample",
+      "FlowEvent direction never claims client server roles absent an approved role inference contract",
+      "event_id and flow_id are deterministic for tenant probe run canonical tuple and event-time window",
+      "a rejected frame causes no flow-table update and no success counter"
+    ]
+  },
+  "direction_contract": {
+    "tuple_order": "protocol-aware canonical endpoint order shared by FlowKey and Community ID v1",
+    "packet_direction": "FORWARD means observed source endpoint equals canonical endpoint A; BACKWARD means endpoint B for reversible observations",
+    "one_way_policy": "unpaired ICMP and ICMPv6 messages carry one_way=true and are not forced into a reversible request reply pair",
+    "aggregate_direction": "FlowEvent.direction is bidirectional for a two-counter aggregate and never claims client/server inference",
+    "counter_meaning": "packets_fwd bytes_fwd and flags_fwd are canonical A-to-B; bwd fields are canonical B-to-A",
+    "compatibility_gate": "old c2s consumers require an explicit additive compatibility decision before activation"
+  },
+  "function_contracts": [
+    {
+      "contract_id": "FC-M02-FLOW-ID-PcapNextChecked",
+      "leaf_id": "M02-N004-L15",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/capture/pcap_offline.rs",
+      "qualified_symbol": "PcapReader::next_packet_checked",
+      "change_kind": "new_companion",
+      "signature_before": null,
+      "signature_after": "pub fn next_packet_checked(&mut self) -> Result<Option<PcapRecord>, PcapReadError>",
+      "responsibility": "按global header endian和precision解析typed record并保留source precision与精度损失，区分EOF与损坏",
+      "inputs": ["self.global_header endian precision snaplen", "self.data and current offset"],
+      "outputs": ["Result<Option<PcapRecord>, PcapReadError>"],
+      "body_steps": [
+        "B01 distinguish exact EOF from a truncated packet header",
+        "B02 decode all four packet header fields using the frozen file endian",
+        "B03 validate incl_len orig_len snaplen and remaining bounds before advancing",
+        "B04 construct CaptureTimestamp with checked epoch microseconds source precision and precision loss nanos",
+        "B05 advance only after validation and return PcapRecord with captured and original lengths"
+      ],
+      "error_branches": ["short header or payload returns stable truncation error", "invalid subsecond range or timestamp overflow rejects", "unsupported precision or length relation rejects"],
+      "atomicity": "reader offset advances past a record only when the complete record and timestamp validate",
+      "idempotency": "same immutable file bytes and starting offset produce the same result and next offset",
+      "callers": ["ManifestPcapReplayer::poll_manifest"],
+      "callees": ["read_u32_endian", "normalize_pcap_timestamp"],
+      "tests": ["TC-M02-FLOW-ID-01", "TC-M02-FLOW-ID-02", "TC-M02-FLOW-ID-03"],
+      "rollback": "disable manifest route and preserve source files offsets and rejection reports; legacy directory route remains explicit only"
+    },
+    {
+      "contract_id": "FC-M02-FLOW-ID-FlowKeyNew",
+      "leaf_id": "M02-N005-L01",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/flow_table.rs",
+      "qualified_symbol": "FlowKey::new",
+      "change_kind": "modify",
+      "signature_before": "pub fn new(src_ip: IpAddr, dst_ip: IpAddr, src_port: u16, dst_port: u16, protocol: u8) -> Self",
+      "signature_after": "pub fn new(identity: &CanonicalFlowIdentity, scope: &ObservationScope) -> Self",
+      "responsibility": "只消费已规范化且带observation scope的identity生成不含首包方向的aggregation key",
+      "inputs": ["observed source and destination endpoints", "IANA protocol number"],
+      "outputs": ["FlowKey without packet direction field"],
+      "body_steps": ["B01 verify canonical identity and observation scope revisions", "B02 select aggregation scope fields according to the frozen policy", "B03 hash canonical endpoint protocol and approved scope bytes", "B04 construct key without storing first packet direction", "B05 expose stable hash and canonical Community tuple only"],
+      "error_branches": ["mixed IP families reject", "unsupported ICMP type code mapping follows explicit nonpair policy", "invalid endpoint encoding rejects before hashing"],
+      "atomicity": "key fields and cached hash derive from one immutable CanonicalFlowIdentity and ObservationScope",
+      "idempotency": "reversed reversible endpoints under the same scope yield the same key while direction remains sample-local",
+      "callers": ["PacketProcessor::process_packet", "PacketProcessor::process_packet_fast"],
+      "callees": ["canonicalize_endpoints", "FlowKey::hash_canonical"],
+      "tests": ["TC-M02-FLOW-ID-04", "TC-M02-FLOW-ID-05", "TC-M02-FLOW-ID-06", "TC-M02-FLOW-ID-14"],
+      "rollback": "stop new identity producer before restoring old key semantics and retain all events tagged with the new identity revision"
+    },
+    {
+      "contract_id": "FC-M02-FLOW-ID-CommunityId",
+      "leaf_id": "M02-N005-L02",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/community_id.rs",
+      "qualified_symbol": "compute_community_id",
+      "change_kind": "modify",
+      "signature_before": "pub fn compute_community_id( src_ip: IpAddr, dst_ip: IpAddr, src_port: u16, dst_port: u16, protocol: u8, ) -> String",
+      "signature_after": "pub fn compute_community_id(tuple: &CommunityTuple) -> CommunityId",
+      "responsibility": "仅对已规范化的Community tuple执行v1序列化，保留ICMP reversible或one-way语义",
+      "inputs": ["tuple: &CommunityTuple including one_way"],
+      "outputs": ["CommunityId"],
+      "body_steps": ["B01 verify endpoint normalization revision", "B02 serialize seed addresses protocol padding and endpoint fields in network order", "B03 SHA1 hash exact bytes", "B04 base64 encode with v1 prefix"],
+      "error_branches": ["untrusted endpoint order cannot call this API", "unsupported protocol endpoint semantics are rejected by canonicalizer", "unpaired ICMP is not fabricated as a reversible pair"],
+      "atomicity": "the returned text and source bytes belong to the same immutable canonical endpoint instance",
+      "idempotency": "same CommunityTuple protocol seed and one-way policy always produce the same Community ID",
+      "callers": ["FlowKey::community_id"],
+      "callees": ["CanonicalEndpoints::community_id_bytes", "sha1::Sha1"],
+      "tests": ["TC-M02-FLOW-ID-04", "TC-M02-FLOW-ID-05", "TC-M02-FLOW-ID-13", "TC-M02-FLOW-ID-14"],
+      "rollback": "retain identity revision on emitted data and disable new producer; never recompute stored IDs in place"
+    },
+    {
+      "contract_id": "FC-M02-FLOW-ID-ProcessFull",
+      "leaf_id": "M02-N005-L03",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs",
+      "qualified_symbol": "PacketProcessor::process_packet",
+      "change_kind": "modify",
+      "signature_before": "fn process_packet(&mut self, data: &[u8], timestamp: u64)",
+      "signature_after": "fn process_packet(&mut self, frame: &CaptureFrame) -> Result<FlowUpdateOutcome, PacketProcessError>",
+      "responsibility": "把checked capture frame经完整解析转换为canonical FlowSample并只更新一次flow table",
+      "inputs": ["frame: &CaptureFrame"],
+      "outputs": ["Result<FlowUpdateOutcome, PacketProcessError>"],
+      "body_steps": ["B01 validate capture timestamp unit and immutable frame length", "B02 full parse VLAN fragments IPv4 IPv6 and transport", "B03 build FlowSample through the shared canonical builder", "B04 update flow table once with sample key direction and event time", "B05 account exactly one success skip or failure outcome"],
+      "error_branches": ["non-IP is an explicit skipped outcome", "malformed or unsupported extension and fragment policy rejects without update", "identity or time validation failure rejects without discovery side effects"],
+      "atomicity": "one accepted frame produces at most one flow update with matching metrics disposition",
+      "idempotency": "same frame identity and table starting state produce the same update arguments",
+      "callers": ["PacketProcessor::process_batch"],
+      "callees": ["PacketParser::parse", "FlowSampleBuilder::from_full", "PartitionedFlowTable::update"],
+      "tests": ["TC-M02-FLOW-ID-07", "TC-M02-FLOW-ID-08", "TC-M02-FLOW-ID-09", "TC-M02-FLOW-ID-10", "TC-M02-FLOW-ID-15"],
+      "rollback": "stop capture intake and drain current table before routing new frames to the old processor"
+    },
+    {
+      "contract_id": "FC-M02-FLOW-ID-ProcessFast",
+      "leaf_id": "M02-N005-L04",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs",
+      "qualified_symbol": "PacketProcessor::process_packet_fast",
+      "change_kind": "modify",
+      "signature_before": "pub fn process_packet_fast(&mut self, data: &[u8], timestamp: u64)",
+      "signature_after": "pub fn process_packet_fast(&mut self, frame: &CaptureFrame) -> Result<FlowUpdateOutcome, PacketProcessError>",
+      "responsibility": "仅对声明支持的帧快速提取并经同一FlowSample builder校验，其他帧显式回落完整解析",
+      "inputs": ["frame: &CaptureFrame"],
+      "outputs": ["Result<FlowUpdateOutcome, PacketProcessError>"],
+      "body_steps": ["B01 classify whether frame is eligible for fast extraction", "B02 parse eligible headers with checked offsets and protocol-specific endpoint semantics", "B03 call the shared canonical FlowSample builder", "B04 fall back to full parser for VLAN stack IPv6 extension ICMP or fragments outside the proven subset", "B05 update table once and expose parity counters"],
+      "error_branches": ["unknown extension or truncated header does not fabricate ports", "fallback failure returns the full parser rejection", "fast and shadow-full sample mismatch trips fail-closed canary"],
+      "atomicity": "fast or fallback path owns the frame exclusively and never performs two table updates",
+      "idempotency": "fast and full extraction of an eligible frame produce byte-equivalent FlowSample",
+      "callers": ["PacketProcessor fast route"],
+      "callees": ["PacketParser::quick_flow_fields", "FlowSampleBuilder::from_fast", "PacketProcessor::process_packet"],
+      "tests": ["TC-M02-FLOW-ID-07", "TC-M02-FLOW-ID-08", "TC-M02-FLOW-ID-09", "TC-M02-FLOW-ID-10", "TC-M02-FLOW-ID-16"],
+      "rollback": "disable fast route and preserve full parser; do not reinterpret events already emitted under the new identity revision"
+    },
+    {
+      "contract_id": "FC-M02-FLOW-ID-ToFlowEvent",
+      "leaf_id": "M02-N005-L05",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/eviction.rs",
+      "qualified_symbol": "Eviction::to_flow_event",
+      "change_kind": "modify",
+      "signature_before": "fn to_flow_event(&self, key: &FlowKey, value: &FlowValue, _now_ms: u64) -> FlowEvent",
+      "signature_after": "fn to_flow_event(&self, key: &FlowKey, value: &FlowValue, reason: EvictionReason) -> Result<FlowEvent, FlowEventBuildError>",
+      "responsibility": "从一致快照生成双向聚合FlowEvent并对canonical identity和event time做最终校验",
+      "inputs": ["key: &FlowKey", "value: &FlowValue", "reason: EvictionReason"],
+      "outputs": ["Result<FlowEvent, FlowEventBuildError>"],
+      "body_steps": ["B01 snapshot all atomic counters and times once", "B02 validate tenant probe run feature set and canonical tuple", "B03 compute stable flow and event source identity without processing clock repair", "B04 set aggregate direction bidirectional and preserve canonical A-to-B counters", "B05 validate EventHeader FlowEvent and derived statistics before return"],
+      "error_branches": ["missing identity or invalid time range rejects and quarantines snapshot", "counter overflow or nonfinite statistic rejects", "unapproved c2s compatibility mode cannot activate"],
+      "atomicity": "one immutable aggregate snapshot feeds identity header tuple counters and statistics",
+      "idempotency": "same config key value snapshot and identity revision produce the same canonical semantic projection; processing telemetry fields are explicitly excluded",
+      "callers": ["Eviction::evict_expired", "Eviction forced cleanup"],
+      "callees": ["deterministic_flow_uuid", "FlowEventValidator::validate"],
+      "tests": ["TC-M02-FLOW-ID-11", "TC-M02-FLOW-ID-12", "TC-M02-FLOW-ID-13", "TC-M02-FLOW-ID-15"],
+      "rollback": "stop eviction output and retain quarantined snapshots plus emitted identity revision; never rewrite stored event IDs"
+    },
+    {
+      "contract_id": "FC-M02-FLOW-ID-PartitionUpdate",
+      "leaf_id": "M02-N005-L06",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/aggregator/partitioned_flow_table.rs",
+      "qualified_symbol": "PartitionedFlowTable::update",
+      "change_kind": "modify",
+      "signature_before": "pub fn update(&self, key: &FlowKey, packet: &PacketInfo) -> UpdateResult",
+      "signature_after": "pub fn update(&self, sample: &FlowSample) -> Result<UpdateResult, FlowUpdateError>",
+      "responsibility": "以canonical sample的稳定hash选择分区并按明确乱序策略更新一个flow",
+      "inputs": ["sample: &FlowSample"],
+      "outputs": ["Result<UpdateResult, FlowUpdateError>"],
+      "body_steps": ["B01 verify sample key hash and direction revision", "B02 compute partition from stable canonical hash", "B03 apply monotonic start last-seen and per-direction IAT policy", "B04 update counters flags length and TOS under one sample", "B05 return new or updated with partition identity"],
+      "error_branches": ["timestamp outside approved source window rejects instead of using wall clock", "out-of-order sample follows explicit retain-last policy", "hash revision mismatch rejects before partition access"],
+      "atomicity": "partition selection and field update use the same immutable FlowSample",
+      "idempotency": "replay determinism is measured at event-build boundary; duplicate packet handling remains an explicit upstream policy",
+      "callers": ["PacketProcessor::process_packet", "PacketProcessor::process_packet_fast"],
+      "callees": ["PartitionedFlowTable::partition_for", "FlowTable::update_with_time"],
+      "tests": ["TC-M02-FLOW-ID-06", "TC-M02-FLOW-ID-10", "TC-M02-FLOW-ID-11", "TC-M02-FLOW-ID-12"],
+      "rollback": "stop producer threads and drain or version the active table before restoring the prior partition and time policy"
+    }
+  ],
+  "missing_atomic_leaves": [
+    {
+      "gap_id": "M02-FLOW-ID-GAP-01",
+      "required_locators": ["rust/probe-agent/probe-agent/src/capture/mod.rs#CaptureTimestamp::from_unix_parts", "rust/probe-agent/probe-agent/src/capture/mod.rs#CaptureTimestamp::epoch_micros"],
+      "single_result": "one typed checked capture timestamp preserves source precision precision loss and canonical epoch microseconds",
+      "reason": "N004-L15 owns an offline reader but not the shared time type consumed by all modes",
+      "resolution": "append one CaptureTimestamp WRT with overflow and precision REF TST before any producer adapter",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-02",
+      "required_locators": ["rust/probe-agent/probe-agent/src/capture/af_packet.rs#AfPacketCapture::recv_frames_with_timestamps"],
+      "single_result": "AF_PACKET returns per-frame kernel timestamps or an explicitly classified batch-receipt degradation",
+      "reason": "N004-L04 owns stats only and cannot change receive metadata production",
+      "resolution": "append one AF_PACKET timestamp producer WRT with ancillary clock and degraded-mode fixtures",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-03",
+      "required_locators": ["rust/probe-agent/probe-agent/src/capture/xdp.rs#XdpCapture::consume_rx_with_timestamps"],
+      "single_result": "XDP returns per-frame timestamp metadata or an explicitly classified batch-receipt degradation",
+      "reason": "N004-L05 owns stats only and cannot bind XDP or eBPF timestamp production",
+      "resolution": "append one XDP timestamp producer WRT and any required eBPF metadata companion with parity fixtures",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-04",
+      "required_locators": ["rust/probe-agent/probe-agent/src/aggregator/flow_table.rs#canonicalize_observation"],
+      "single_result": "one CanonicalFlowIdentity returns key inputs packet direction Community tuple and reversible or one-way ICMP status",
+      "reason": "N005-L01 and L02 are adapters and cannot independently own the shared normalization authority",
+      "resolution": "append one protocol-aware canonical observation WRT before FlowKey and Community ID adapters",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-05",
+      "required_locators": ["rust/probe-agent/probe-agent/src/parser/mod.rs#PacketParser::decode_flow_fields"],
+      "single_result": "one checked decoder freezes QinQ IPv4 options IPv6 extensions and first or non-first fragment disposition",
+      "reason": "full and fast callers cannot each improvise a different protocol and fragment policy",
+      "resolution": "append one decoder WRT plus malformed extension and fragment REF TST",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-06",
+      "required_locators": ["rust/probe-agent/probe-agent/src/parser/mod.rs#FlowSampleBuilder::build"],
+      "single_result": "CaptureFrame FlowFields and ObservationScope become one immutable canonical FlowSample",
+      "reason": "N005-L03 and L04 own callers but neither owns their common carrier builder",
+      "resolution": "append a separate FlowSample carrier and builder WRT before both path adapters",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-07",
+      "required_locators": ["rust/probe-agent/probe-agent/src/aggregator/flow_table.rs#FlowValue::apply_event_time"],
+      "single_result": "start end and per-direction prior timestamps advance under one explicit out-of-order policy without wall-clock repair",
+      "reason": "N005-L06 already combines partition and update routing and cannot also own the event-time state machine",
+      "resolution": "append one event-time transition WRT with start-min end-max and no-backward-IAT fixtures",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-08",
+      "required_locators": ["rust/probe-agent/probe-agent/src/aggregator/eviction.rs#EvictionClock::eviction_now"],
+      "single_result": "live eviction uses processing clock while offline eviction uses capture watermark and explicit end-of-input flush",
+      "reason": "N005-L05 converts removed values but does not own scan clock selection",
+      "resolution": "append one EvictionClock WRT and offline watermark EOF REF TST",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-09",
+      "required_locators": ["rust/probe-agent/probe-agent/src/aggregator/eviction.rs#FlowSnapshot::try_from_removed"],
+      "single_result": "a removed flow becomes one internally consistent immutable snapshot or a typed rejection",
+      "reason": "N005-L05 cannot mix atomic snapshot acquisition with event mapping and direction semantics",
+      "resolution": "append one FlowSnapshot WRT and concurrent-update consistency fixtures",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-10",
+      "required_locators": ["rust/probe-agent/probe-agent/src/aggregator/eviction.rs#FlowEventIdentity::derive"],
+      "single_result": "identity context and immutable snapshot yield deterministic flow event and idempotency identities",
+      "reason": "N005-L05 currently combines identity derivation with mapping and processing telemetry",
+      "resolution": "append one identity derivation WRT with canonical semantic projection replay fixtures",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-11",
+      "required_locators": ["rust/probe-agent/probe-agent/src/aggregator/packet_processor.rs#PacketProcessor::process_batch"],
+      "single_result": "Full Fast or Shadow routing is explicit and shadow comparison commits at most one table update",
+      "reason": "the fast function has no current caller and a caller string is not an atomic route owner",
+      "resolution": "append one process_batch route WRT with mismatch fail-closed and single-commit REF TST",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-12",
+      "required_locators": ["rust/probe-agent/probe-agent/src/aggregator/flow_table.rs#FlowAggregationKey::new"],
+      "single_result": "the approved observation scope decides whether interface VLAN and QinQ participate in aggregation while Community ID remains standard L3 identity",
+      "reason": "current FlowKey merges identical tuples observed on different interfaces or VLANs",
+      "resolution": "append one aggregation scope WRT plus overlapping-address and mirrored-tap fixtures",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    },
+    {
+      "gap_id": "M02-FLOW-ID-GAP-13",
+      "required_locators": ["proto/traffic/v1/flow.proto#traffic.v1.FlowEvent.identity_revision"],
+      "single_result": "FlowEvent carries an additive identity revision understood by producers consumers and reconcile",
+      "reason": "the rollback design cannot distinguish mixed identities using the current wire contract",
+      "resolution": "append a Proto contract leaf with generated-code compatibility consumer and replay support train",
+      "status": "BLOCKED_MISSING_APPEND_ONLY_ATOMIC_LEAF_AND_SUPPORT_TRAIN"
+    }
+  ],
+  "sequencing": [
+    {"order": 1, "leaf_id": "M02-N001-L01", "precondition": "existing additive envelope", "result": "time and producer identity semantics frozen", "activation": "contract review only"},
+    {"order": 2, "leaf_id": "M02-N001-L02", "precondition": "EventHeader contract", "result": "FlowEvent tuple direction counter and time semantics frozen", "activation": "consumer compatibility decision required"},
+    {"order": 3, "leaf_id": "M02-N004-L15", "precondition": "validated manifest and global header", "result": "checked endian and timestamp record reader", "activation": "after capture timestamp gap is assigned"},
+    {"order": 4, "leaf_id": "M02-N005-L01", "precondition": "canonical endpoint leaf assigned", "result": "one key and packet direction", "activation": "identity revision default off"},
+    {"order": 5, "leaf_id": "M02-N005-L02", "precondition": "canonical endpoints", "result": "Community ID from the same ordering", "activation": "cross-language vectors required"},
+    {"order": 6, "leaf_id": "M02-N005-L03", "precondition": "capture time and FlowSample builder reviewed", "result": "full path emits canonical sample", "activation": "shadow comparison before live"},
+    {"order": 7, "leaf_id": "M02-N005-L04", "precondition": "full path oracle exists", "result": "fast eligible set has exact parity or fallback", "activation": "diff zero gate"},
+    {"order": 8, "leaf_id": "M02-N005-L06", "precondition": "canonical sample immutable", "result": "stable partition and explicit event-time policy", "activation": "empty or version-migrated flow table"},
+    {"order": 9, "leaf_id": "M02-N005-L05", "precondition": "all identity and time predecessors reviewed", "result": "deterministic bidirectional FlowEvent", "activation": "consumer compatibility and replay gates pass"}
+  ],
+  "negative_tests": [
+    {"case_id": "TC-M02-FLOW-ID-01", "kind": "capture", "injection": "little and big endian microsecond PCAP with identical packets", "oracle": "checked reader returns identical bytes and epoch microseconds", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-02", "kind": "capture", "injection": "nanosecond PCAP around rounding and u64 overflow boundaries", "oracle": "approved conversion is deterministic and overflow rejects", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-03", "kind": "negative", "injection": "short header incl_len beyond remainder orig_len conflict and pcapng magic", "oracle": "stable rejection and no EOF success or reader over-advance", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-04", "kind": "cross_language", "injection": "TCP UDP IPv4 IPv6 reversed endpoint vectors in Rust Go and Java", "oracle": "canonical tuple Community ID and direction exact match", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-05", "kind": "cross_language", "injection": "ICMPv4 and ICMPv6 paired request reply unpaired error and same-IP vectors", "oracle": "paired messages share key and Community ID with opposite direction while one-way errors are never forced into a reversed pair", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-06", "kind": "property", "injection": "random endpoint reversal across protocols process restarts and power-of-two partition counts", "oracle": "canonical key hash is stable across reversal and restart; for each fixed count partition equals hash bitmask and direction flips only for reversible observations", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-07", "kind": "parser", "injection": "single VLAN stacked VLAN IPv4 options and ordinary TCP UDP", "oracle": "eligible fast sample equals full sample or explicitly falls back", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-08", "kind": "parser", "injection": "IPv6 hop routing destination fragment and authentication extensions", "oracle": "no extension byte is interpreted as port and both paths agree", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-09", "kind": "parser", "injection": "first and non-first IPv4 IPv6 fragments including ICMP", "oracle": "declared fragment policy is identical and never fabricates ports", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-10", "kind": "property", "injection": "same immutable frame through full and fast paths", "oracle": "canonical sample byte diff equals zero for supported set", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-11", "kind": "replay", "injection": "same manifest run and identity revision replayed at different wall-clock times", "oracle": "event_id flow_id idempotency_key and the canonical semantic projection excluding produced_at ingest_ts kafka_ts and flink_out_ts are identical", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-12", "kind": "fault", "injection": "out-of-order duplicate future and one-day-old capture timestamps", "oracle": "no processing-clock repair and monotonic policy yields explicit outcome", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-13", "kind": "compatibility", "injection": "legacy consumer expecting c2s receives bidirectional identity revision", "oracle": "activation remains blocked without additive compatibility decision", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-14", "kind": "cross_language", "injection": "official Community ID v1 vectors plus local ICMP edge vectors", "oracle": "all languages match frozen expected text and source bytes", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-15", "kind": "replay", "injection": "microsecond and nanosecond PCAP encode the same instants", "oracle": "normalized epoch_micros agree and each record preserves its source precision and exact precision-loss flag", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-16", "kind": "replay", "injection": "AF_PACKET XDP and offline adapters consume the same ordered frames under one injected fixture clock", "oracle": "FlowSample aggregate and identity agree without requiring real live SystemTime to equal a historical PCAP timestamp", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-17", "kind": "fault", "injection": "shadow full-fast mismatch during canary", "oracle": "route fails closed and performs exactly one or zero table commits never two", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-18", "kind": "parser", "injection": "two datagrams share addresses protocol and zero transport fields but carry different fragment identities", "oracle": "they do not collapse into one fabricated zero-port flow unless an approved reassembly identity proves equivalence", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-19", "kind": "property", "injection": "same L3 tuple appears on two VLANs interfaces and mirrored taps", "oracle": "aggregation follows the frozen ObservationScope decision and never changes Community ID standard bytes", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-20", "kind": "replay", "injection": "out-of-order packets arrive independently in both directions", "oracle": "start is minimum end is maximum and per-direction prior timestamps never move backward", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-21", "kind": "replay", "injection": "historical offline flow advances by capture watermark then reaches end of input", "oracle": "eviction follows watermark and explicit EOF flush rather than current wall clock", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-FLOW-ID-22", "kind": "compatibility", "injection": "old and new identity revisions coexist through rollback and replay", "oracle": "wire revision keeps identities distinguishable and consumers reconcile without in-place event ID rewriting", "execution_status": "NOT_RUN"}
+  ],
+  "rollback": {
+    "entrypoint": "disable capture_flow_identity_v2 before admitting new frames",
+    "steps": [
+      "stop capture intake and wait for processor ownership to quiesce",
+      "flush or quarantine all aggregates tagged with the new identity revision",
+      "retain every emitted FlowEvent event ID source revision and replay report",
+      "disable fast route and manifest route before restoring compatible readers",
+      "restore prior processor only with an empty or explicitly migrated flow table",
+      "reconcile mixed old and new identity events without in-place ID rewriting"
+    ],
+    "durable_data_policy": "captured fixtures emitted events quarantine records and identity revision evidence are retained and never deleted to make rollback appear clean",
+    "irreversible_boundary": "once an event under the new identity revision is broker acknowledged it is reconciled additively rather than rewritten"
+  },
+  "claims": {
+    "allowed": "candidate-bound static capture timestamp canonical flow identity dual-path parity and replay identity design exists for the M02 FlowEvent producer slice",
+    "forbidden": [
+      "CAPTURE_TIMESTAMP_IMPLEMENTED",
+      "FULL_FAST_PARITY_PROVEN",
+      "COMMUNITY_ID_CROSS_LANGUAGE_PROVEN",
+      "REPLAY_IDENTITY_PROVEN",
+      "FUNCTION_DESIGN_REVIEWED",
+      "IMPLEMENTED",
+      "TESTED",
+      "EXECUTION_AUTHORIZED",
+      "N004_ACCEPTED",
+      "N005_ACCEPTED",
+      "M02_ACCEPTED"
+    ],
+    "proof_ceiling": "STATIC_DESIGN_ONLY_MISSING_IDENTITY_LEAVES_NOT_IMPLEMENTED_FUNCTION_REVIEWED_VECTOR_TESTED_REPLAY_PROVEN_OR_AUTHORIZED"
+  },
+  "blockers": [
+    "thirteen append-only atomic identity seams are absent from P101-P307",
+    "typed CaptureTimestamp plus AF_PACKET and XDP producer companion leaves are absent",
+    "canonical observation decoder FlowSample event-time and observation-scope leaves are absent",
+    "offline EvictionClock FlowSnapshot and deterministic identity leaves are absent",
+    "process_batch Full Fast Shadow single-commit route leaf is absent",
+    "FlowEvent additive identity revision contract and consumer support train are absent",
+    "FlowEvent direction compatibility with existing c2s consumers is unsigned",
+    "function design review receipt is absent",
+    "official and local cross-language Community ID vectors are not executed",
+    "full-fast parser parity matrix is not executed",
+    "capture-mode event-time parity and replay matrix is not executed",
+    "signed execution overlay is absent",
+    "in-app Browser standards research remains unavailable"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/design-candidate-manifest.schema.json",
+  "title": "Candidate-bound development-readiness design manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_kind", "schema_version", "candidate_id", "implementation_candidate_commit",
+    "scope", "source_blob_sha256", "formal_execution_status", "proof_ceiling"
+  ],
+  "properties": {
+    "artifact_kind": {"const": "DESIGN_CANDIDATE_MANIFEST"},
+    "schema_version": {"const": "1.0.0"},
+    "candidate_id": {"type": "string", "pattern": "^DESIGN-T1-M[0-9]{2}(?:-(?:N[0-9]{3}|R[0-9]{2}))?-R[0-9]+$"},
+    "implementation_candidate_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "scope": {"type": "string", "minLength": 8},
+    "source_blob_sha256": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "formal_execution_status": {"const": "BLOCKED_UNTIL_SIGNED_OVERLAY"},
+    "proof_ceiling": {"const": "DEVELOPMENT_READINESS_DESIGN_ONLY_NOT_EXECUTION_AUTHORIZATION"}
+  }
+}

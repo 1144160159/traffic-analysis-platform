@@ -1,0 +1,69 @@
+{
+  "contract_id": "model-feedback-authority-v1",
+  "task_id": "T1-M09-N017",
+  "feature_ids": ["F-ALERT-001", "F-MODEL-001", "F-MLOPS-001"],
+  "event_contract": {
+    "topic": "model.feedback.v1",
+    "schema": "contracts/events/model-feedback-event.v1.schema.json",
+    "schema_sha256": "c60bdb3ed674853da641d2c613530195a1ed9db62ce48606c402870ab283c7d9",
+    "partition_key": "tenant_id+feedback_id",
+    "new_event_or_api_versions": 0
+  },
+  "authority": {
+    "store": "postgresql",
+    "migration": "none_reuses_alert_feedback_and_alert_feedback_outbox",
+    "prediction_id_source": "server_alert_event_id",
+    "immutable_fields": ["tenant_id", "prediction_id", "alert_id", "model_version", "rule_version"],
+    "transaction_members": ["alert_feedback", "audit_logs", "alert_feedback_outbox"],
+    "aggregate": {
+      "feedback_id": "uuid_v5(model.feedback.v1,tenant_id,prediction_id)",
+      "event_id": "uuid_v5_for_idempotency_key_or_uuid_v4",
+      "compare_and_set": "expected_label_revision_equals_current_head",
+      "first_revision": 1,
+      "previous_event_required_after_revision": 1,
+      "terminal_state": "RETRACTED"
+    }
+  },
+  "conflicts": [
+    "idempotency_key_reused_for_different_command",
+    "stale_expected_label_revision",
+    "prediction_model_or_rule_identity_changed",
+    "retraction_label_differs_from_head",
+    "command_after_retracted_terminal_head"
+  ],
+  "runtime": {
+    "authority_flag": "MODEL_FEEDBACK_REVISION_AUTHORITY_V1_ENABLED",
+    "authority_default_enabled": false,
+    "producer_flag": "MODEL_FEEDBACK_REVISION_PRODUCER_V1_ENABLED",
+    "producer_default_enabled": false,
+    "consumer_group": "rule-manager-model-feedback-revision-v1",
+    "consumer_candidate_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "producer_startup_gate": [
+      "non_zero_exact_candidate_sha256",
+      "exact_contract_sha256",
+      "READY_consumer_receipt",
+      "matching_ACCEPTED_broker_projection_receipt"
+    ]
+  },
+  "kubernetes_validation": {
+    "run_id": "4c0a77ed-d4c6-49a1-9b28-8e6a93150446",
+    "status": "PASS",
+    "profile": "M09-N017-K8S-POSTGRES-UI-V1",
+    "shared_postgres": true,
+    "consumer_schema_present": false,
+    "producer_fail_closed": true,
+    "production_applied": false
+  },
+  "closure": {
+    "status": "PARTIAL",
+    "production_applied": false,
+    "open_items": [
+      "apply_and verify the M08-N014 consumer inbox and readiness migration in the target Kubernetes PostgreSQL",
+      "obtain a real Kafka accepted consumer receipt for a non-zero candidate",
+      "prove producer broker ACK and live rule/MLOps review projection",
+      "run feedback queue performance and recovery tests",
+      "complete Windows Chrome adjudication and conflict acceptance",
+      "obtain authorization before enabling either revision runtime flag"
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "profile_id": "M03-COVERED-TEN-GIGABIT-V1",
+  "profile_status": "PENDING_SIGNATURE",
+  "candidate_sha256": null,
+  "base_m02_profile": {
+    "path": "contracts/quality/m02-approved-ten-gigabit-or-higher-profile.v1.json",
+    "sha256": "c1c92d61ba708beb710d5a30c51ffcb94d1b1fc79d7646b0a838a4892867b4d1"
+  },
+  "golden_corpus": {
+    "path": "tests/fixtures/pcap/m03/manifest.v1.json",
+    "sha256": "9eac28a2658c365fd6d211237aef1da5dc10c0164d9619eac2dff85e0706360b"
+  },
+  "scope": {
+    "environment_id": "PENDING_PROFILE_APPROVAL",
+    "tenant_id": "PENDING_PROFILE_APPROVAL",
+    "run_id": "PENDING_PROFILE_APPROVAL",
+    "duration_seconds": 300
+  },
+  "expected_unique_events": {
+    "flows_raw": null,
+    "sessions": null,
+    "feature_stat": null,
+    "feature_seq": null,
+    "feature_fp": null
+  },
+  "required_protocol_categories": [
+    "normal",
+    "attack_structure",
+    "ipv6",
+    "tls",
+    "quic",
+    "truncated",
+    "large_flow",
+    "empty"
+  ],
+  "thresholds": {
+    "system_attributable_drop_packets": 0,
+    "unexplained_difference_packets": 0,
+    "capture_error_count": 0,
+    "failed_checkpoints": 0,
+    "max_final_consumer_lag": 0,
+    "max_consumer_lag_growth": 0,
+    "max_checkpoint_duration_ms": 30000,
+    "max_sink_latency_p95_ms": 1000,
+    "conflicting_event_ids": 0,
+    "unexplained_field_differences": 0
+  },
+  "approval": {
+    "required_authorities": [
+      "PROJECT_OWNER",
+      "TEST_OWNER",
+      "ACCEPTANCE_AUTHORITY"
+    ],
+    "receipts": {
+      "PROJECT_OWNER": "",
+      "TEST_OWNER": "",
+      "ACCEPTANCE_AUTHORITY": ""
+    }
+  }
+}

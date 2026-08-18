@@ -1,0 +1,74 @@
+{
+  "contract_id": "traffic.campaign.rail-correlation.v1",
+  "schema_version": 1,
+  "accountable_task": "T1-M07-N018",
+  "state": "implementation_candidate_default_off",
+  "production_applied": false,
+  "authorities": {
+    "derived_rail": "campaign_proto_projection_current_v1 joined to its immutable campaigns.v1 inbox bytes",
+    "authority_rail": "latest campaign.events.v2 aggregate and campaign.membership.events.v2 relation projections at or before as_of",
+    "correlation_ledger": "PostgreSQL campaign_rail_correlation_v1",
+    "graph_write_back_forbidden": true
+  },
+  "scope": {
+    "tenant_required": true,
+    "closed_window_required": true,
+    "as_of": "an explicit coordinated projection snapshot at or after window_through; direct legacy callers default it to window_through, while workers bind it to the execution snapshot time",
+    "maximum_campaigns": 10000,
+    "unknown_tenant_forbidden": true
+  },
+  "candidate_policy": {
+    "identity_shortcut_forbidden": true,
+    "same_tenant_required": true,
+    "source_event_received_by_as_of_required": true,
+    "late_authority_projection_replay": "re-run the same immutable CEP event-time window with a later as_of; never move the CEP event into a different window",
+    "authority_aggregate_event_required": true,
+    "membership_state": "latest relation revision at as_of must be AlertLinked",
+    "candidate_condition": "derived alert ID set intersects authority linked alert ID set",
+    "score": "jaccard(derived_alert_ids,authority_linked_alert_ids)",
+    "minimum_score": 0.5,
+    "winner": "single highest score",
+    "no_intersection": "cep_only",
+    "below_threshold_or_tied_highest": "conflict",
+    "direct_campaign_id_overwrite_forbidden": true
+  },
+  "receipt": {
+    "required": [
+      "tenant_id",
+      "correlation_id",
+      "cep_campaign_id",
+      "cep_event_id",
+      "state",
+      "correlation_version",
+      "correlation_sha256",
+      "correlation_key_sha256",
+      "as_of",
+      "confidence",
+      "source_watermarks"
+    ],
+    "correlated_additional_required": [
+      "aggregate_campaign_id",
+      "aggregate_event_id",
+      "relation_ids",
+      "membership_event_ids",
+      "relation_revision"
+    ],
+    "arrays_canonicalized_as_sorted_unique_sets": true,
+    "correlation_key": "sha256 length-delimited tenant_id, cep_campaign_id and cep_event_id; excludes processing time",
+    "correlation_sha256": "canonical correlation meaning and source watermarks; excludes as_of, correlation_id and correlation_version so a processing-time-only replay returns the existing row",
+    "same_sha_replay": "return_existing",
+    "different_meaning": "append_next_version_under_tenant_campaign_advisory_lock"
+  },
+  "reconcile": {
+    "oracle": "exact set of the latest non-revoked (tenant_id,cep_event_id,correlation_sha256) at or before as_of for the closed window",
+    "classes": ["exact", "missing", "conflict", "budget_exceeded"],
+    "extra_rows_are_evidence_not_delete_authority": true,
+    "manifest_sha256_required": true
+  },
+  "rollout": {
+    "flag": "CAMPAIGN_RAIL_CORRELATION_V1_ENABLED",
+    "default": false,
+    "requires_ready_receipts": ["cep_protobuf", "aggregate_json_v2", "membership_json_v2"],
+    "order": ["contract", "expand", "three consumer receipts", "correlation canary", "reconcile"]
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/pattern-debate-receipt.schema.json",
+  "title": "Candidate-bound pattern proposal debate receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "receipt_id", "proposal_ref", "decision_id",
+    "atomic_pr_id", "candidate", "rounds", "final_round", "final_submissions",
+    "adjudication", "canonical_review_payload", "canonical_review_payload_sha256",
+    "negative_test_results", "unresolved_p0", "unresolved_p1", "vetoes",
+    "selected_option_id", "review_disposition", "signed_at", "attestations", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0.0"},
+    "artifact_kind": {"const": "PATTERN_DEBATE_RECEIPT"},
+    "receipt_id": {"type": "string", "pattern": "^PDR-[A-Za-z0-9._-]+$"},
+    "proposal_ref": {"$ref": "#/$defs/proposal_ref"},
+    "decision_id": {"type": "string", "pattern": "^PAT-T1-M[0-9]{2}(?:-R[0-9]{2})?-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+    "atomic_pr_id": {"type": "string", "pattern": "^T1-M[0-9]{2}(?:-R[0-9]{2})?-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+    "candidate": {"$ref": "#/$defs/candidate"},
+    "rounds": {"type": "integer", "minimum": 1},
+    "final_round": {"type": "integer", "minimum": 1},
+    "final_submissions": {"$ref": "#/$defs/final_submissions"},
+    "adjudication": {"$ref": "#/$defs/adjudication"},
+    "canonical_review_payload": {"$ref": "#/$defs/canonical_review_payload"},
+    "canonical_review_payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "negative_test_results": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/test_result"}, "uniqueItems": true},
+    "unresolved_p0": {"type": "array", "items": {"type": "string", "minLength": 3}, "uniqueItems": true},
+    "unresolved_p1": {"type": "array", "items": {"$ref": "#/$defs/p1"}, "uniqueItems": true},
+    "vetoes": {"type": "array", "items": {"$ref": "#/$defs/veto"}, "uniqueItems": true},
+    "selected_option_id": {"type": ["string", "null"], "pattern": "^OPT-[A-Za-z0-9._-]+$"},
+    "review_disposition": {"enum": ["UNIFIED", "SPLIT_PR", "REVISE", "BLOCKED"]},
+    "signed_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"},
+    "attestations": {"$ref": "#/$defs/attestations"},
+    "proof_ceiling": {"const": "PATTERN_PROPOSAL_UNIFICATION_ONLY_NOT_FUNCTION_OR_EXECUTION_ACCEPTANCE"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"review_disposition": {"const": "UNIFIED"}}},
+      "then": {
+        "properties": {
+          "selected_option_id": {"type": "string", "pattern": "^OPT-[A-Za-z0-9._-]+$"},
+          "unresolved_p0": {"maxItems": 0},
+          "negative_test_results": {"items": {"allOf": [{"$ref": "#/$defs/test_result"}, {"properties": {"result": {"const": "PASS"}}}]}},
+          "vetoes": {"items": {"allOf": [{"$ref": "#/$defs/veto"}, {"properties": {"status": {"const": "RESOLVED"}, "resolution_ref": {"$ref": "#/$defs/hash_ref"}}}]}},
+          "final_submissions": {"$ref": "#/$defs/unified_submissions"},
+          "adjudication": {"allOf": [{"$ref": "#/$defs/adjudication"}, {"properties": {"review_disposition": {"const": "UNIFIED"}}}]}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "roles": {"enum": ["DOMAIN_OWNER", "LANGUAGE_OWNER", "RELIABILITY_DATA_EXPERT", "SECURITY_TENANT_EXPERT", "QA_SRE_PERFORMANCE_EXPERT", "MAINTAINABILITY_RED_TEAM", "ADJUDICATOR"]},
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commit", "manifest_path", "manifest_sha256"],
+      "properties": {"commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "manifest_path": {"type": "string", "minLength": 1}, "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+    },
+    "proposal_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_kind", "proposal_id", "decision_id", "path", "sha256", "candidate_manifest_sha256"],
+      "properties": {
+        "artifact_kind": {"const": "PATTERN_DECISION_PROPOSAL"}, "proposal_id": {"type": "string", "minLength": 3},
+        "decision_id": {"type": "string", "minLength": 3}, "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "submission": {
+      "type": "object", "additionalProperties": false,
+      "required": ["round", "role", "reviewer_identity", "recommended_option_id", "review_disposition", "body_ref", "p0", "p1"],
+      "properties": {
+        "round": {"type": "integer", "minimum": 1}, "role": {"$ref": "#/$defs/roles"}, "reviewer_identity": {"type": "string", "minLength": 3},
+        "recommended_option_id": {"type": "string", "pattern": "^OPT-[A-Za-z0-9._-]+$"}, "review_disposition": {"enum": ["UNIFIED", "SPLIT_PR", "REVISE", "BLOCKED"]},
+        "body_ref": {"$ref": "#/$defs/hash_ref"}, "p0": {"type": "array", "items": {"type": "string", "minLength": 3}, "uniqueItems": true},
+        "p1": {"type": "array", "items": {"type": "string", "minLength": 3}, "uniqueItems": true}
+      }
+    },
+    "final_submissions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["DOMAIN_OWNER", "LANGUAGE_OWNER", "RELIABILITY_DATA_EXPERT", "SECURITY_TENANT_EXPERT", "QA_SRE_PERFORMANCE_EXPERT", "MAINTAINABILITY_RED_TEAM"],
+      "properties": {
+        "DOMAIN_OWNER": {"allOf": [{"$ref": "#/$defs/submission"}, {"properties": {"role": {"const": "DOMAIN_OWNER"}}}]},
+        "LANGUAGE_OWNER": {"allOf": [{"$ref": "#/$defs/submission"}, {"properties": {"role": {"const": "LANGUAGE_OWNER"}}}]},
+        "RELIABILITY_DATA_EXPERT": {"allOf": [{"$ref": "#/$defs/submission"}, {"properties": {"role": {"const": "RELIABILITY_DATA_EXPERT"}}}]},
+        "SECURITY_TENANT_EXPERT": {"allOf": [{"$ref": "#/$defs/submission"}, {"properties": {"role": {"const": "SECURITY_TENANT_EXPERT"}}}]},
+        "QA_SRE_PERFORMANCE_EXPERT": {"allOf": [{"$ref": "#/$defs/submission"}, {"properties": {"role": {"const": "QA_SRE_PERFORMANCE_EXPERT"}}}]},
+        "MAINTAINABILITY_RED_TEAM": {"allOf": [{"$ref": "#/$defs/submission"}, {"properties": {"role": {"const": "MAINTAINABILITY_RED_TEAM"}}}]}
+      }
+    },
+    "unified_submission": {"allOf": [{"$ref": "#/$defs/submission"}, {"properties": {"review_disposition": {"const": "UNIFIED"}, "p0": {"maxItems": 0}}}]},
+    "unified_submissions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["DOMAIN_OWNER", "LANGUAGE_OWNER", "RELIABILITY_DATA_EXPERT", "SECURITY_TENANT_EXPERT", "QA_SRE_PERFORMANCE_EXPERT", "MAINTAINABILITY_RED_TEAM"],
+      "properties": {
+        "DOMAIN_OWNER": {"allOf": [{"$ref": "#/$defs/unified_submission"}, {"properties": {"role": {"const": "DOMAIN_OWNER"}}}]},
+        "LANGUAGE_OWNER": {"allOf": [{"$ref": "#/$defs/unified_submission"}, {"properties": {"role": {"const": "LANGUAGE_OWNER"}}}]},
+        "RELIABILITY_DATA_EXPERT": {"allOf": [{"$ref": "#/$defs/unified_submission"}, {"properties": {"role": {"const": "RELIABILITY_DATA_EXPERT"}}}]},
+        "SECURITY_TENANT_EXPERT": {"allOf": [{"$ref": "#/$defs/unified_submission"}, {"properties": {"role": {"const": "SECURITY_TENANT_EXPERT"}}}]},
+        "QA_SRE_PERFORMANCE_EXPERT": {"allOf": [{"$ref": "#/$defs/unified_submission"}, {"properties": {"role": {"const": "QA_SRE_PERFORMANCE_EXPERT"}}}]},
+        "MAINTAINABILITY_RED_TEAM": {"allOf": [{"$ref": "#/$defs/unified_submission"}, {"properties": {"role": {"const": "MAINTAINABILITY_RED_TEAM"}}}]}
+      }
+    },
+    "adjudication": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "reviewer_identity", "review_disposition", "selected_option_id", "reason", "body_ref"],
+      "properties": {"role": {"const": "ADJUDICATOR"}, "reviewer_identity": {"type": "string", "minLength": 3}, "review_disposition": {"enum": ["UNIFIED", "SPLIT_PR", "REVISE", "BLOCKED"]}, "selected_option_id": {"type": ["string", "null"], "pattern": "^OPT-[A-Za-z0-9._-]+$"}, "reason": {"type": "string", "minLength": 8}, "body_ref": {"$ref": "#/$defs/hash_ref"}}
+    },
+    "canonical_review_payload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["candidate_manifest_sha256", "proposal_sha256", "option_set_sha256", "catalog_sha256", "selected_option_id", "selected_option_sha256", "negative_test_manifest_sha256", "decision_outcome_sha256"],
+      "properties": {
+        "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "option_set_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "catalog_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "selected_option_id": {"type": "string", "pattern": "^OPT-[A-Za-z0-9._-]+$"}, "selected_option_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "negative_test_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "decision_outcome_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "test_result": {"type": "object", "additionalProperties": false, "required": ["case_id", "run_id", "result", "artifact_ref"], "properties": {"case_id": {"type": "string", "minLength": 3}, "run_id": {"type": "string", "minLength": 3}, "result": {"enum": ["PASS", "FAIL", "BLOCKED"]}, "artifact_ref": {"$ref": "#/$defs/hash_ref"}}},
+    "p1": {"type": "object", "additionalProperties": false, "required": ["issue", "owner", "due_at", "reopen_trigger"], "properties": {"issue": {"type": "string", "minLength": 3}, "owner": {"type": "string", "minLength": 3}, "due_at": {"type": "string", "minLength": 20}, "reopen_trigger": {"type": "string", "minLength": 3}}},
+    "veto": {"type": "object", "additionalProperties": false, "required": ["veto_id", "role", "reviewer_identity", "severity", "status", "issued_round", "reason", "resolution_ref"], "properties": {"veto_id": {"type": "string", "minLength": 3}, "role": {"$ref": "#/$defs/roles"}, "reviewer_identity": {"type": "string", "minLength": 3}, "severity": {"enum": ["P0", "P1"]}, "status": {"enum": ["ACTIVE", "RESOLVED"]}, "issued_round": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 8}, "resolution_ref": {"anyOf": [{"$ref": "#/$defs/hash_ref"}, {"type": "null"}]}}},
+    "attestation": {"type": "object", "additionalProperties": false, "required": ["role", "reviewer_identity", "payload_sha256", "purpose", "policy_id", "signature_artifact_ref"], "properties": {"role": {"$ref": "#/$defs/roles"}, "reviewer_identity": {"type": "string", "minLength": 3}, "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "purpose": {"const": "PATTERN_PROPOSAL_UNIFICATION"}, "policy_id": {"type": "string", "minLength": 3}, "signature_artifact_ref": {"$ref": "#/$defs/hash_ref"}}},
+    "attestations": {"type": "object", "additionalProperties": false, "required": ["DOMAIN_OWNER", "LANGUAGE_OWNER", "RELIABILITY_DATA_EXPERT", "SECURITY_TENANT_EXPERT", "QA_SRE_PERFORMANCE_EXPERT", "MAINTAINABILITY_RED_TEAM", "ADJUDICATOR"], "properties": {"DOMAIN_OWNER": {"allOf": [{"$ref": "#/$defs/attestation"}, {"properties": {"role": {"const": "DOMAIN_OWNER"}}}]}, "LANGUAGE_OWNER": {"allOf": [{"$ref": "#/$defs/attestation"}, {"properties": {"role": {"const": "LANGUAGE_OWNER"}}}]}, "RELIABILITY_DATA_EXPERT": {"allOf": [{"$ref": "#/$defs/attestation"}, {"properties": {"role": {"const": "RELIABILITY_DATA_EXPERT"}}}]}, "SECURITY_TENANT_EXPERT": {"allOf": [{"$ref": "#/$defs/attestation"}, {"properties": {"role": {"const": "SECURITY_TENANT_EXPERT"}}}]}, "QA_SRE_PERFORMANCE_EXPERT": {"allOf": [{"$ref": "#/$defs/attestation"}, {"properties": {"role": {"const": "QA_SRE_PERFORMANCE_EXPERT"}}}]}, "MAINTAINABILITY_RED_TEAM": {"allOf": [{"$ref": "#/$defs/attestation"}, {"properties": {"role": {"const": "MAINTAINABILITY_RED_TEAM"}}}]}, "ADJUDICATOR": {"allOf": [{"$ref": "#/$defs/attestation"}, {"properties": {"role": {"const": "ADJUDICATOR"}}}]}}},
+    "hash_ref": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}
+  }
+}

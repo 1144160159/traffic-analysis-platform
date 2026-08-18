@@ -1,0 +1,245 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M01_VERIFIER_IMAGE_BUILD_SIGN_AND_PUBLISH_WORK_ORDER",
+  "artifact_status": "BLOCKED_SOURCE_AND_EXTERNAL_AUTHORITY_INPUTS",
+  "work_order_id": "M01-EI-VERIFIER-IMAGE-BUILD-SIGN-PUBLISH",
+  "activity_id": "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN",
+  "source_refs": [
+    {
+      "role": "V2_ALLOCATION",
+      "path": "contracts/alignment/m01-early-trust-train-allocation.v2.json",
+      "sha256": "8591f573784181e82e1bd2ae139cd225cf5d11b7f267b1c2d85b47efb2f47104"
+    },
+    {
+      "role": "V2_CATALOG",
+      "path": "contracts/alignment/m01-early-trust-train-catalog.v2.json",
+      "sha256": "69a408355ef346e124ffd87331a7e1c6b98379ddf0a9b134ff47495f423acfad"
+    },
+    {
+      "role": "FUNCTION_DESIGN",
+      "path": "contracts/alignment/m01-early-trust-function-design.v1.json",
+      "sha256": "42cb53c2f0319d1e2873031b74aafd6a3f59c776e3ec44971fb5ae4065ef390b"
+    },
+    {
+      "role": "RECEIPT_SCHEMA",
+      "path": "contracts/alignment/m01-verifier-image-build-sign-receipt.schema.json",
+      "sha256": "ebf31e9c9794e161e5e90f5e2bbe59403daf8b0f386ab02ac7631383eb527bcb"
+    },
+    {
+      "role": "RECEIPT_VALIDATOR",
+      "path": "scripts/alignment/validate_m01_verifier_image_build_sign_receipt.py",
+      "sha256": "db92781b90615ee20b16c46e911626ccea466378436b9da51af8c40f666d43dd"
+    },
+    {
+      "role": "CANDIDATE_FREEZE_WORK_ORDER",
+      "path": "contracts/alignment/m01-early-trust-candidate-freeze-work-order.v1.json",
+      "sha256": "64ec78dfff39d62c57948fd8fd946fbb0f49f035379101cfe9a6087313e424fe"
+    }
+  ],
+  "depends_on_atomic_pr_ids": [
+    "T1-M01-P079-OPS-n015-s22"
+  ],
+  "candidate_manifest": {
+    "path": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/design-candidate-manifest.json",
+    "exists": false,
+    "sha256": null,
+    "status": "MISSING"
+  },
+  "required_source_inputs": [
+    {
+      "artifact_id": "VERIFIER_IMAGE_BUILD_RECIPE",
+      "owner_atomic_pr_id": "T1-M01-P079-OPS-n015-s22",
+      "path": "deployments/security/topic1-trusted-signature-verifier.Dockerfile",
+      "exists": false,
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "VERIFIER_REQUIREMENTS_LOCK",
+      "owner_atomic_pr_id": "T1-M01-P079-OPS-n015-s22",
+      "path": "deployments/security/topic1-trusted-signature-verifier.requirements.lock",
+      "exists": false,
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "VERIFIER_SERVICE_SOURCE",
+      "owner_atomic_pr_id": "T1-M01-P094-REF-n015-s37",
+      "path": "scripts/alignment/trusted_signature_service.py",
+      "exists": false,
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "TRUST_POLICY_SCHEMA",
+      "owner_atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+      "path": "contracts/alignment/signature-trust-policy.schema.json",
+      "exists": false,
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "VERIFICATION_REQUEST_SCHEMA",
+      "owner_atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+      "path": "contracts/alignment/signature-verification-request.schema.json",
+      "exists": false,
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "VERIFICATION_ATTESTATION_SCHEMA",
+      "owner_atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+      "path": "contracts/alignment/signature-verification-attestation.schema.json",
+      "exists": false,
+      "status": "MISSING"
+    }
+  ],
+  "required_external_inputs": [
+    {
+      "artifact_id": "BUILD_ENVIRONMENT_MANIFEST",
+      "expected_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/build-environment-manifest.json",
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "IMAGE_MANIFEST",
+      "expected_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/image-manifest.json",
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "CYCLONEDX_SBOM",
+      "expected_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/verifier.cdx.json",
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "SLSA_PROVENANCE_BUNDLE",
+      "expected_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/slsa-provenance.bundle",
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "IMAGE_SIGNATURE_BUNDLE",
+      "expected_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/image-signature.bundle",
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "SIGNATURE_VERIFICATION_RECEIPT",
+      "expected_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/signature-verification.json",
+      "status": "MISSING"
+    },
+    {
+      "artifact_id": "SIGNED_RECEIPT_PAYLOAD",
+      "expected_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/signed-receipt-payload.json",
+      "status": "MISSING"
+    }
+  ],
+  "owner_slots": [
+    {
+      "role": "SUPPLY_CHAIN_OWNER",
+      "assignment_status": "UNASSIGNED",
+      "identity": null
+    },
+    {
+      "role": "SECURITY_OWNER",
+      "assignment_status": "UNASSIGNED",
+      "identity": null
+    }
+  ],
+  "required_outputs": [
+    "IMAGE_DIGEST",
+    "SBOM_SHA256",
+    "PROVENANCE_ATTESTATION",
+    "SIGNATURE_VERIFICATION_RECEIPT"
+  ],
+  "expected_receipt_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/receipt.json",
+  "command_plan": [
+    {
+      "step_id": "validate-design-candidate-freeze",
+      "run_when": "before handing this work order to an authorized external build system",
+      "working_directory": ".",
+      "argv": [
+        "python3",
+        "scripts/alignment/generate_m01_early_trust_candidate_freeze_work_order.py",
+        "--verify"
+      ],
+      "expected_effect": "validate the two-stage candidate boundary and require an immutable clean design candidate before external build"
+    },
+    {
+      "step_id": "validate-v2-activity-binding",
+      "run_when": "before handing this work order to an authorized external build system",
+      "working_directory": ".",
+      "argv": [
+        "python3",
+        "scripts/alignment/generate_m01_early_trust_train_v2.py",
+        "--verify"
+      ],
+      "expected_effect": "validate the exact P079 dependency output identities and pending external activity declaration"
+    },
+    {
+      "step_id": "validate-static-source-contracts",
+      "run_when": "after P057 P079 P094 source implementations and their reviews exist on one candidate",
+      "working_directory": ".",
+      "argv": [
+        "python3",
+        "scripts/alignment/validate_m01_early_trust_function_design.py",
+        "--check-generated"
+      ],
+      "expected_effect": "validate static function type deployment package and rollback contracts without claiming implementation"
+    },
+    {
+      "step_id": "validate-receipt-contract",
+      "run_when": "before external execution and after any receipt contract revision",
+      "working_directory": ".",
+      "argv": [
+        "python3",
+        "scripts/alignment/validate_m01_verifier_image_build_sign_receipt.py",
+        "--self-test"
+      ],
+      "expected_effect": "validate receipt structure hash closure bootstrap quorum and targeted rejection cases"
+    },
+    {
+      "step_id": "validate-real-receipt",
+      "run_when": "only after protected external CI builds signs publishes verifies and two real owners sign the immutable receipt",
+      "working_directory": ".",
+      "argv": [
+        "python3",
+        "scripts/alignment/validate_m01_verifier_image_build_sign_receipt.py",
+        "--check",
+        "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/receipt.json"
+      ],
+      "expected_effect": "validate the authored receipt candidate image SBOM provenance signature and 2-of-2 hash closure without asserting cryptographic trust"
+    }
+  ],
+  "status": "BLOCKED_SOURCE_AND_EXTERNAL_AUTHORITY_INPUTS",
+  "blocking_reasons": [
+    "candidate manifest is MISSING",
+    "candidate freeze work order is BLOCKED_IMPLEMENTATION_SOURCES_AND_CLEAN_WORKTREE",
+    "required candidate source inputs present 0/6",
+    "required external build outputs present 0/7",
+    "P079 package P094 service and P057 trust schemas are planned but not implemented",
+    "supply-chain owner and security owner identities are unassigned",
+    "protected external CI build publish and independent signature verification have not run",
+    "2-of-2 bootstrap signatures and immutable receipt are absent",
+    "M01 v2 remains outside the four active registries"
+  ],
+  "validation": {
+    "schema": "PASS",
+    "source_hashes_exact": "PASS",
+    "activity_binding_exact": "PASS",
+    "candidate_freeze_work_order_blocked": "PASS_NO_CANDIDATE",
+    "source_input_exact_set": "PASS_6",
+    "external_input_exact_set": "PASS_7",
+    "owner_role_exact_set": "PASS_2_OF_2",
+    "all_owner_identities_unassigned": true,
+    "receipt_absent": true,
+    "no_build_push_signature_or_receipt_created": true,
+    "mutation_guards": {
+      "source_hash_drift": "PASS",
+      "candidate_freeze_false_ready": "PASS",
+      "dependency_drift": "PASS",
+      "source_input_omission": "PASS",
+      "external_input_omission": "PASS",
+      "owner_role_drift": "PASS",
+      "owner_identity_fabrication": "PASS",
+      "receipt_false_present": "PASS",
+      "command_drift": "PASS",
+      "false_ready": "PASS"
+    }
+  },
+  "allowed_claim": "external activity inputs roles outputs receipt path and validation commands are derived",
+  "forbidden_claim": "source implementation candidate build image publish signer identity signature receipt deployment execution registry switch authorization or acceptance exists",
+  "proof_ceiling": "BLOCKED_EXTERNAL_IMAGE_ACTIVITY_WORK_ORDER_ONLY"
+}

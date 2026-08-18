@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/data-quality/source-quality-receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "contract_id", "status", "accountable_tasks", "rails",
+    "categories", "identity", "receipt", "offset_barrier", "persistence",
+    "reconciliation", "governance_boundary", "implementations", "rollout"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract_id": {"const": "source-quality-receipt-v1"},
+    "status": {"const": "implemented_candidate_ready_not_production_applied"},
+    "accountable_tasks": {
+      "type": "array",
+      "prefixItems": [{"const": "T1-M06-N010"}, {"const": "T1-M06-N011"}],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "rails": {"type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true},
+    "categories": {"type": "array", "minItems": 7, "maxItems": 7, "uniqueItems": true},
+    "identity": {"type": "object"},
+    "receipt": {"type": "object"},
+    "offset_barrier": {"type": "object"},
+    "persistence": {"type": "object"},
+    "reconciliation": {"type": "object"},
+    "governance_boundary": {"type": "object"},
+    "implementations": {"type": "object"},
+    "rollout": {"type": "object"}
+  }
+}

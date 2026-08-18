@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "contract_id": "source-quality-receipt-v1",
+  "status": "implemented_candidate_ready_not_production_applied",
+  "accountable_tasks": ["T1-M06-N010", "T1-M06-N011"],
+  "rails": ["flow", "asset", "device_log", "user_behavior"],
+  "categories": ["accepted", "rejected", "invalid", "late", "duplicate", "conflict", "missing"],
+  "identity": {
+    "receipt_id": "source-quality- + sha256('source-quality/v1\\0' + tenant_id + '\\0' + rail + '\\0' + consumer_group + '\\0' + topic + '\\0' + partition + '\\0' + offset)",
+    "source_tuple": ["topic", "partition", "offset"],
+    "tenant_policy": "tenant_id is mandatory and part of receipt identity",
+    "collision_policy": "same receipt_id with any different field fails closed"
+  },
+  "receipt": {
+    "contract_version": "source-quality-receipt/v1",
+    "required_fields": [
+      "receipt_id", "tenant_id", "rail", "consumer_group", "source", "category",
+      "event_id", "source_sha256", "watermark_ms", "observed_at_ms", "reason_code"
+    ],
+    "source_hash": "lowercase SHA-256 of the admitted source payload bytes",
+    "watermark_unit": "unix epoch milliseconds or Long.MIN_VALUE when uninitialized",
+    "accepted_reason": "empty",
+    "non_accepted_reason": "required stable reason code"
+  },
+  "offset_barrier": {
+    "order": ["validate", "persist durable receipt", "commit source offset"],
+    "receipt_failure": "return error and do not invoke source offset commit",
+    "offset_failure": "retain immutable receipt and retry the same tuple idempotently",
+    "kafka_checkpoint": "Flink writers must publish the receipt in the checkpoint transaction that advances source offsets"
+  },
+  "persistence": {
+    "transport": "existing audit.logs AuditEventV1Json envelope",
+    "authority": "existing PostgreSQL audit_logs append-only materialization",
+    "object_type": "source_quality_receipt",
+    "action_prefix": "SOURCE_QUALITY_",
+    "new_table": false,
+    "new_topic": false
+  },
+  "reconciliation": {
+    "committed_range": "every offset in [first_offset, committed_next_offset) has exactly one receipt",
+    "extra_policy": "receipt offset outside the committed range is visible failure",
+    "lag": "log_end_offset - committed_next_offset",
+    "missing_signal": "BuildMissingReceipts emits category=missing with MISSING_SOURCE_RECEIPT for committed offsets without a receipt",
+    "pass": "ReconcileAllRails requires all four rail expectations, no missing offsets, no extra offsets and zero lag"
+  },
+  "governance_boundary": {
+    "included": ["ingress classification", "source tuple", "source hash", "watermark", "receipt", "offset reconciliation"],
+    "excluded": ["repair", "replay", "approval", "baseline", "quality rule authority", "fusion"]
+  },
+  "implementations": {
+    "go_receipt": "go/control-plane/internal/common/sourcequality/receipt.go",
+    "go_repository": "go/control-plane/internal/common/sourcequality/repository.go",
+    "go_reconcile": "go/control-plane/internal/common/sourcequality/reconcile.go",
+    "java_receipt": "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/sourcequality/SourceQualityReceipt.java",
+    "flow_writer": "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/SessionJob.java",
+    "asset_writer": "go/control-plane/internal/asset/consumer/asset_projection_event.go",
+    "device_log_writer": "java/flink-jobs/flink-log-job/src/main/java/com/traffic/flink/log/LogJob.java",
+    "user_behavior_writer": "java/flink-jobs/flink-user-behavior-job/src/main/java/com/traffic/flink/behavior/user/UserBehaviorJob.java"
+  },
+  "rollout": {
+    "enabled": false,
+    "kubernetes": "no production resource is changed until all four writers and audit materializer are candidate-bound",
+    "rollback": "disable receipt writers and redeploy the prior immutable images; preserve audit receipts and Kafka offsets"
+  }
+}

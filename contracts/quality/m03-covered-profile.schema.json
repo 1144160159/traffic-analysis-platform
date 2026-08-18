@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.openai.com/contracts/quality/m03-covered-profile.schema.json",
+  "title": "M03 covered protocol and pipeline throughput profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "profile_id", "profile_status", "candidate_sha256",
+    "base_m02_profile", "golden_corpus", "scope", "expected_unique_events",
+    "required_protocol_categories", "thresholds", "approval"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "profile_id": {"type": "string", "pattern": "^M03-COVERED-[A-Z0-9-]+-V[0-9]+$"},
+    "profile_status": {"enum": ["PENDING_SIGNATURE", "APPROVED", "SUPERSEDED"]},
+    "candidate_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "base_m02_profile": {"$ref": "#/$defs/artifact_ref"},
+    "golden_corpus": {"$ref": "#/$defs/artifact_ref"},
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["environment_id", "tenant_id", "run_id", "duration_seconds"],
+      "properties": {
+        "environment_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "run_id": {"type": "string", "minLength": 1},
+        "duration_seconds": {"type": "integer", "minimum": 60}
+      }
+    },
+    "expected_unique_events": {
+      "type": "object", "additionalProperties": false,
+      "required": ["flows_raw", "sessions", "feature_stat", "feature_seq", "feature_fp"],
+      "properties": {
+        "flows_raw": {"type": ["integer", "null"], "minimum": 1},
+        "sessions": {"type": ["integer", "null"], "minimum": 1},
+        "feature_stat": {"type": ["integer", "null"], "minimum": 1},
+        "feature_seq": {"type": ["integer", "null"], "minimum": 0},
+        "feature_fp": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "required_protocol_categories": {
+      "type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true,
+      "items": {"enum": ["normal", "attack_structure", "ipv6", "tls", "quic", "truncated", "large_flow", "empty"]}
+    },
+    "thresholds": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "system_attributable_drop_packets", "unexplained_difference_packets",
+        "capture_error_count", "failed_checkpoints", "max_final_consumer_lag",
+        "max_consumer_lag_growth", "max_checkpoint_duration_ms",
+        "max_sink_latency_p95_ms", "conflicting_event_ids",
+        "unexplained_field_differences"
+      ],
+      "properties": {
+        "system_attributable_drop_packets": {"const": 0},
+        "unexplained_difference_packets": {"const": 0},
+        "capture_error_count": {"const": 0},
+        "failed_checkpoints": {"const": 0},
+        "max_final_consumer_lag": {"type": "integer", "minimum": 0},
+        "max_consumer_lag_growth": {"type": "integer", "minimum": 0},
+        "max_checkpoint_duration_ms": {"type": "integer", "minimum": 1},
+        "max_sink_latency_p95_ms": {"type": "number", "minimum": 1},
+        "conflicting_event_ids": {"const": 0},
+        "unexplained_field_differences": {"const": 0}
+      }
+    },
+    "approval": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required_authorities", "receipts"],
+      "properties": {
+        "required_authorities": {
+          "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+          "items": {"enum": ["PROJECT_OWNER", "TEST_OWNER", "ACCEPTANCE_AUTHORITY"]}
+        },
+        "receipts": {
+          "type": "object", "additionalProperties": false,
+          "required": ["PROJECT_OWNER", "TEST_OWNER", "ACCEPTANCE_AUTHORITY"],
+          "properties": {
+            "PROJECT_OWNER": {"type": "string"},
+            "TEST_OWNER": {"type": "string"},
+            "ACCEPTANCE_AUTHORITY": {"type": "string"}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

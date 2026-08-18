@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/pattern-decision.schema.json",
+  "title": "Final PR-level pattern ADR with upstream-only references",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "decision_id", "atomic_pr_id",
+    "candidate", "proposal_ref", "debate_receipt_ref", "selected_option_id",
+    "selected_option_sha256", "option_dispositions", "decision_outcome_sha256",
+    "readiness"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0.0"},
+    "artifact_kind": {"const": "FINAL_PATTERN_DECISION"},
+    "artifact_status": {"enum": ["REVIEWED", "READY"]},
+    "decision_id": {"type": "string", "pattern": "^PAT-T1-M[0-9]{2}(?:-R[0-9]{2})?-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+    "atomic_pr_id": {"type": "string", "pattern": "^T1-M[0-9]{2}(?:-R[0-9]{2})?-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+    "candidate": {"$ref": "#/$defs/candidate"},
+    "proposal_ref": {"$ref": "#/$defs/proposal_ref"},
+    "debate_receipt_ref": {"$ref": "#/$defs/debate_ref"},
+    "selected_option_id": {"type": "string", "pattern": "^OPT-[A-Za-z0-9._-]+$"},
+    "selected_option_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "option_dispositions": {"type": "array", "minItems": 1, "maxItems": 4, "items": {"$ref": "#/$defs/option_disposition"}, "uniqueItems": true},
+    "decision_outcome_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "readiness": {"$ref": "#/$defs/readiness"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"artifact_status": {"const": "READY"}}},
+      "then": {"properties": {"readiness": {"type": "object", "properties": {"status": {"const": "READY"}, "blockers": {"maxItems": 0}}}}}
+    }
+  ],
+  "$defs": {
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commit", "manifest_path", "manifest_sha256"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "manifest_path": {"type": "string", "minLength": 1},
+        "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "proposal_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_kind", "proposal_id", "decision_id", "path", "sha256", "candidate_manifest_sha256"],
+      "properties": {
+        "artifact_kind": {"const": "PATTERN_DECISION_PROPOSAL"},
+        "proposal_id": {"type": "string", "minLength": 3},
+        "decision_id": {"type": "string", "minLength": 3},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "debate_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_kind", "receipt_id", "path", "sha256", "candidate_manifest_sha256"],
+      "properties": {
+        "artifact_kind": {"const": "PATTERN_DEBATE_RECEIPT"},
+        "receipt_id": {"type": "string", "minLength": 3},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "option_disposition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["option_id", "status", "reason", "reopen_condition"],
+      "properties": {
+        "option_id": {"type": "string", "pattern": "^OPT-[A-Za-z0-9._-]+$"},
+        "status": {"enum": ["SELECTED", "REJECTED", "DEFERRED"]},
+        "reason": {"type": "string", "minLength": 8},
+        "reopen_condition": {"type": "string", "minLength": 8}
+      }
+    },
+    "readiness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "blockers", "proof_ceiling"],
+      "properties": {
+        "status": {"enum": ["REVIEWED", "READY"]},
+        "blockers": {"type": "array", "items": {"type": "string", "minLength": 3}, "uniqueItems": true},
+        "proof_ceiling": {"const": "FINAL_PATTERN_DECISION_ONLY_NOT_FUNCTION_OR_EXECUTION_ACCEPTANCE"}
+      }
+    }
+  }
+}

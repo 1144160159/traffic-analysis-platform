@@ -51,6 +51,12 @@
     "read_models": ["postgresql", "clickhouse", "minio"],
     "dataset_signal_contract": "contracts/data-quality/dataset-signals.v1.json",
     "measurement_states": ["measured", "unknown", "not_applicable", "error"],
+    "semantic_axes": {
+      "availability_status": ["arrived", "not_arrived", "unavailable", "not_applicable"],
+      "freshness_status": ["fresh", "stale", "unknown", "not_applicable"],
+      "completeness_status": ["complete", "partial", "unknown", "not_applicable"],
+      "value_status": ["zero", "nonzero", "none"]
+    },
     "migration": "expand with 202608041400 data-quality control plane, 202608041500 governance, 202608041600 rule evaluation and 202608041700 repair lifecycle migrations; shadow rules and real watermarks before any approved activation",
     "event_types": ["data_quality.baseline.activated.v1", "data_quality.rule.changed.v1", "data_quality.repair.changed.v1"],
     "source_watermarks": ["kafka.end_offset_minus_committed_offset", "flink.event_time_watermark", "sink.commit", "business.aggregate_version", "minio.object_manifest_sha256"]

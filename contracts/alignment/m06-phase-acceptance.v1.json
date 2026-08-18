@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "contract_id": "m06-phase-acceptance-v1",
+  "phases": {
+    "asset-events": {
+      "canary_phases": ["asset-events"],
+      "oracles": [
+        "ACK_BEFORE_PUBLISHED",
+        "HEADERS_PAYLOAD",
+        "DURABLE_INBOX_OFFSET",
+        "EXACT_REPLAY_IDEMPOTENT",
+        "PUBLISH_FAILURE_PENDING",
+        "STOP_THRESHOLDS"
+      ]
+    },
+    "asset-bindings": {
+      "canary_phases": ["asset-binding-ingest", "asset-binding-probe"],
+      "oracles": [
+        "KAFKA_REQUIRED_ACKS_ALL",
+        "DURABLE_AUTHORITY_COMMIT_BEFORE_OFFSET",
+        "EXACT_REPLAY_IDEMPOTENT",
+        "DLQ_ACK_BEFORE_SOURCE_COMMIT",
+        "TENANT_FORGERY_QUARANTINED",
+        "STOP_THRESHOLDS"
+      ]
+    },
+    "device-logs": {
+      "canary_phases": ["device-logs"],
+      "oracles": [
+        "REAL_DEVICE_SOURCE_IDENTITY",
+        "KAFKA_REQUIRED_ACKS_ALL",
+        "STRICT_PROTOBUF_ENVELOPE",
+        "CHECKPOINT_OFFSET_BARRIER",
+        "DLQ_CHECKPOINT_BARRIER",
+        "SOURCE_QUALITY_RECEIPT",
+        "CLICKHOUSE_SOURCE_FACT",
+        "OPENSEARCH_EXTERNAL_GTE",
+        "STOP_THRESHOLDS"
+      ]
+    }
+  },
+  "invariants": [
+    "consumer readiness is candidate-bound and observed before producer activation",
+    "all canary phase results are PASS in exact dependency order",
+    "candidate profile and environment bindings are identical across readiness canary source and oracle receipts",
+    "every oracle is independently receipt-bound to one source tuple",
+    "device logs require a real network device connector and reject fixture or PostgreSQL seed identity",
+    "PASS requires a retained K8s canary activation but never broadens to fusion attack-chain or production-wide claims"
+  ],
+  "implementation": "scripts/alignment/evaluate_m06_phase_acceptance.py",
+  "production_applied": false
+}

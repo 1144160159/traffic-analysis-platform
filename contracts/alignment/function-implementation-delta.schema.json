@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/function-implementation-delta.schema.json",
+  "title": "Candidate-bound before-to-after function implementation delta",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_kind", "artifact_status", "atomic_pr_id", "candidate_manifest_sha256", "primary_locator_id", "deltas", "non_goals", "blockers", "proof_ceiling"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "FUNCTION_IMPLEMENTATION_DELTA"},
+    "artifact_status": {"enum": ["DRAFT", "REVIEWED"]},
+    "atomic_pr_id": {"type": "string", "minLength": 3},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "primary_locator_id": {"type": "string", "pattern": "^LOC-[A-Za-z0-9._-]+$"},
+    "deltas": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/delta"}, "uniqueItems": true},
+    "non_goals": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 8}, "uniqueItems": true},
+    "blockers": {"type": "array", "items": {"type": "string", "minLength": 8}, "uniqueItems": true},
+    "proof_ceiling": {"const": "IMPLEMENTATION_DELTA_DESIGN_ONLY_NOT_CODE_CHANGE_OR_EXECUTION_AUTHORIZATION"}
+  },
+  "$defs": {
+    "delta": {
+      "type": "object", "additionalProperties": false,
+      "required": ["delta_id", "body_step_ids", "before", "after", "exact_code_actions", "error_ids", "test_case_ids", "compatibility", "rollback"],
+      "properties": {
+        "delta_id": {"type": "string", "pattern": "^DELTA-[A-Za-z0-9._-]+$"},
+        "body_step_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^B[0-9]{2}$"}, "uniqueItems": true},
+        "before": {"type": "string", "minLength": 8},
+        "after": {"type": "string", "minLength": 8},
+        "exact_code_actions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 8}, "uniqueItems": true},
+        "error_ids": {"type": "array", "items": {"type": "string", "pattern": "^ERR-[A-Za-z0-9._-]+$"}, "uniqueItems": true},
+        "test_case_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^TC-[A-Za-z0-9._-]+$"}, "uniqueItems": true},
+        "compatibility": {"type": "string", "minLength": 8},
+        "rollback": {"type": "string", "minLength": 8}
+      }
+    }
+  }
+}

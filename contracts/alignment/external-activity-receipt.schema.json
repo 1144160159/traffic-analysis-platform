@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/external-activity-receipt.schema.json",
+  "title": "External activity immutable signed receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "activity_id", "activity_type", "run_id", "instance_id",
+    "authority", "authority_scope", "candidate_manifest_sha256", "profile_id", "input_hashes",
+    "output_hashes", "activity_payload", "started_at", "finished_at", "result",
+    "signed_payload_artifact", "signed_payload_sha256", "signature_artifact",
+    "signature_sha256", "signature_verification"
+  ],
+  "properties": {
+    "schema_version": {"enum": ["1.0.0", "1.1.0"]},
+    "activity_id": {"type": "string", "minLength": 1},
+    "activity_type": {"enum": ["CUSTODY", "EXECUTE", "ATTEST", "APPROVAL", "SCOPED_CANARY", "PROFILE_APPROVAL", "PROTECTED_MERGE"]},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{7,127}$"},
+    "instance_id": {"type": "string", "minLength": 1},
+    "authority": {"type": "string", "minLength": 1},
+    "authority_scope": {"type": "string", "minLength": 1},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {
+      "type": "string", "minLength": 1,
+      "description": "Actual profile under which this exact candidate external activity was executed or attested."
+    },
+    "input_hashes": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["artifact_id", "sha256"],
+        "properties": {
+          "artifact_id": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "output_hashes": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["artifact_id", "sha256"],
+        "properties": {
+          "artifact_id": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "activity_payload": {
+      "oneOf": [
+        {"$ref": "#/$defs/custody_payload"},
+        {"$ref": "#/$defs/execute_payload"},
+        {"$ref": "#/$defs/attest_payload"},
+        {"$ref": "#/$defs/approval_payload"},
+        {"$ref": "#/$defs/scoped_canary_payload"},
+        {"$ref": "#/$defs/profile_approval_payload"},
+        {"$ref": "#/$defs/protected_merge_payload"}
+      ]
+    },
+    "started_at": {"type": "string", "minLength": 1},
+    "finished_at": {"type": "string", "minLength": 1},
+    "result": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+    "signed_payload_artifact": {"type": "string", "minLength": 1},
+    "signed_payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signature_artifact": {"type": "string", "minLength": 1},
+    "signature_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signature_verification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "signature_algorithm", "signer_identity", "certificate_or_key_id", "verifier", "verifier_version", "verified_at", "revocation_checked"],
+      "properties": {
+        "status": {"enum": ["PASS", "FAIL"]},
+        "signature_algorithm": {"type": "string", "minLength": 1},
+        "signer_identity": {"type": "string", "minLength": 1},
+        "certificate_or_key_id": {"type": "string", "minLength": 1},
+        "verifier": {"type": "string", "minLength": 1},
+        "verifier_version": {"type": "string", "minLength": 1},
+        "verified_at": {"type": "string", "minLength": 1},
+        "revocation_checked": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "custody_payload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["payload_type", "sealed_dataset_sha256", "access_log_sha256", "handoff_manifest_sha256", "handoff_started_at", "handoff_finished_at", "handed_to", "label_separation_verified"],
+      "properties": {
+        "payload_type": {"const": "CUSTODY"},
+        "sealed_dataset_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "access_log_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "handoff_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "handoff_started_at": {"type": "string", "minLength": 1},
+        "handoff_finished_at": {"type": "string", "minLength": 1},
+        "handed_to": {"type": "string", "minLength": 1},
+        "label_separation_verified": {"const": true}
+      }
+    },
+    "execute_payload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["payload_type", "raw_predictions_sha256", "runtime_logs_sha256", "environment_manifest_sha256", "threshold_lock_sha256", "labels_absent_verified"],
+      "properties": {
+        "payload_type": {"const": "EXECUTE"},
+        "raw_predictions_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "runtime_logs_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "environment_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "threshold_lock_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "labels_absent_verified": {"const": true}
+      }
+    },
+    "attest_payload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["payload_type", "accreditation_scope", "method_sha256", "result_sha256", "report_sha256", "signed_at"],
+      "properties": {
+        "payload_type": {"const": "ATTEST"},
+        "accreditation_scope": {"type": "string", "minLength": 1},
+        "method_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "result_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "signed_at": {"type": "string", "minLength": 1}
+      }
+    },
+    "approval_payload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["payload_type", "approver_roles", "promotion_profile", "decision", "manifest_sha256", "claims_sha256", "decision_receipt_sha256"],
+      "properties": {
+        "payload_type": {"const": "APPROVAL"},
+        "approver_roles": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "promotion_profile": {"type": "string", "minLength": 1},
+        "decision": {"enum": ["GO", "NO_GO"]},
+        "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "claims_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "decision_receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "authority_signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "signer_identity", "signature_artifact", "signature_sha256", "trust_policy_role"],
+      "properties": {
+        "role": {"enum": ["PROJECT_OWNER", "TEST_OWNER", "ACCEPTANCE_AUTHORITY"]},
+        "signer_identity": {"type": "string", "minLength": 1},
+        "signature_artifact": {"type": "string", "minLength": 1},
+        "signature_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "trust_policy_role": {"enum": ["PROJECT_OWNER", "TEST_OWNER", "ACCEPTANCE_AUTHORITY"]}
+      }
+    },
+    "scoped_canary_payload": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "payload_type", "rollout_body_sha256", "scope_sha256", "deployed_digests_sha256",
+        "canary_started_at", "canary_finished_at", "stop_reason",
+        "canary_result_sha256", "rollback_result_sha256", "observation_result_sha256"
+      ],
+      "properties": {
+        "payload_type": {"const": "SCOPED_CANARY"},
+        "rollout_body_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "scope_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "deployed_digests_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "canary_started_at": {"type": "string", "minLength": 1},
+        "canary_finished_at": {"type": "string", "minLength": 1},
+        "stop_reason": {"type": "string", "minLength": 1},
+        "canary_result_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "rollback_result_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "observation_result_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "profile_approval_payload": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "payload_type", "profile_contract_sha256", "counter_contract_sha256",
+        "offline_source_manifest_sha256", "environment_manifest_sha256", "profile_id",
+        "required_authority_roles", "quorum", "distinct_signer_count",
+        "authority_signatures", "decision", "valid_from", "valid_until",
+        "signed_profile_approval_sha256"
+      ],
+      "properties": {
+        "payload_type": {"const": "PROFILE_APPROVAL"},
+        "profile_contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "counter_contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "offline_source_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "environment_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {"type": "string", "minLength": 1},
+        "required_authority_roles": {
+          "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+          "items": {"enum": ["PROJECT_OWNER", "TEST_OWNER", "ACCEPTANCE_AUTHORITY"]}
+        },
+        "quorum": {"const": 3},
+        "distinct_signer_count": {"const": 3},
+        "authority_signatures": {
+          "type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/authority_signature"}
+        },
+        "decision": {"enum": ["APPROVE", "REJECT"]},
+        "valid_from": {"type": "string", "minLength": 1},
+        "valid_until": {"type": "string", "minLength": 1},
+        "signed_profile_approval_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "protected_merge_payload": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "payload_type", "implementation_commit", "implementation_tree_sha256",
+        "merge_commit", "merge_tree_sha256", "allowed_path_diff_sha256",
+        "target_branch", "target_branch_policy_sha256", "premerge_run_sha256",
+        "promotion_intent_sha256", "protected_merge_receipt_sha256"
+      ],
+      "properties": {
+        "payload_type": {"const": "PROTECTED_MERGE"},
+        "implementation_commit": {"type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"},
+        "implementation_tree_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "merge_commit": {"type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"},
+        "merge_tree_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "allowed_path_diff_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "target_branch": {"type": "string", "minLength": 1},
+        "target_branch_policy_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "premerge_run_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "promotion_intent_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "protected_merge_receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  },
+  "allOf": [
+    {"if": {"properties": {"activity_type": {"const": "CUSTODY"}}}, "then": {"properties": {"activity_payload": {"$ref": "#/$defs/custody_payload"}}}},
+    {"if": {"properties": {"activity_type": {"const": "EXECUTE"}}}, "then": {"properties": {"activity_payload": {"$ref": "#/$defs/execute_payload"}}}},
+    {"if": {"properties": {"activity_type": {"const": "ATTEST"}}}, "then": {"properties": {"activity_payload": {"$ref": "#/$defs/attest_payload"}}}},
+    {"if": {"properties": {"activity_type": {"const": "APPROVAL"}}}, "then": {"properties": {"activity_payload": {"$ref": "#/$defs/approval_payload"}}}},
+    {"if": {"properties": {"activity_type": {"enum": ["CUSTODY", "EXECUTE", "ATTEST", "APPROVAL"]}}}, "then": {"properties": {"schema_version": {"const": "1.0.0"}}}},
+    {"if": {"properties": {"activity_type": {"const": "SCOPED_CANARY"}}}, "then": {"properties": {"schema_version": {"const": "1.1.0"}, "activity_payload": {"$ref": "#/$defs/scoped_canary_payload"}}}},
+    {"if": {"properties": {"activity_type": {"const": "PROFILE_APPROVAL"}}}, "then": {"properties": {"schema_version": {"const": "1.1.0"}, "activity_payload": {"$ref": "#/$defs/profile_approval_payload"}}}},
+    {"if": {"properties": {"activity_type": {"const": "PROTECTED_MERGE"}}}, "then": {"properties": {"schema_version": {"const": "1.1.0"}, "activity_payload": {"$ref": "#/$defs/protected_merge_payload"}}}}
+  ]
+}

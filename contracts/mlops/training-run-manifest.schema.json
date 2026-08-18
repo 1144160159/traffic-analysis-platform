@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/mlops/training-run-manifest.schema.json",
+  "title": "Traffic MLOps training run manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "state",
+    "dataset_id",
+    "dataset_sha256",
+    "graph_snapshot",
+    "algorithm",
+    "seed",
+    "parameters",
+    "code_sha256",
+    "trainer_image_digest",
+    "dependencies",
+    "resources",
+    "artifacts",
+    "run_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run_id": {"type": "string", "format": "uuid"},
+    "state": {"enum": ["trained", "failed"]},
+    "dataset_id": {"type": "string", "format": "uuid"},
+    "dataset_sha256": {"$ref": "#/$defs/sha256"},
+    "graph_snapshot": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["snapshot_id", "manifest_sha256"],
+      "properties": {
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "algorithm": {"enum": ["xgboost", "lightgbm", "gnn"]},
+    "seed": {"type": "integer", "minimum": 0},
+    "parameters": {"type": "object", "minProperties": 1},
+    "code_sha256": {"$ref": "#/$defs/sha256"},
+    "trainer_image_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "dependencies": {
+      "type": "object",
+      "required": ["python", "numpy", "pandas", "scikit_learn", "xgboost"],
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cpu_limit", "memory_limit", "gpu_limit"],
+      "properties": {
+        "cpu_limit": {"type": "string", "minLength": 1},
+        "memory_limit": {"type": "string", "minLength": 1},
+        "gpu_limit": {"type": "integer", "minimum": 0}
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "minProperties": 4,
+      "additionalProperties": {"$ref": "#/$defs/sha256"}
+    },
+    "run_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"algorithm": {"const": "gnn"}}},
+      "then": {"properties": {"graph_snapshot": {"type": "object"}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

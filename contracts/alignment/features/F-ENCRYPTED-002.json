@@ -1,0 +1,197 @@
+{
+  "feature_id": "F-ENCRYPTED-002",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": [
+      "/encrypted-traffic"
+    ],
+    "preserved_actions": [
+      "egress-create-alert",
+      "egress-audit-write",
+      "egress-response-request",
+      "evidence-create-task",
+      "evidence-download-pcap",
+      "evidence-verify-hash",
+      "evidence-export-package",
+      "evidence-associate-analysis",
+      "evidence-preserve",
+      "evidence-link-alert",
+      "evidence-expert-review",
+      "evidence-gap-mark",
+      "evidence-submit-recommendation",
+      "evidence-export-report",
+      "evidence-write-audit"
+    ],
+    "preserved_api_operations": [
+      "POST /v1/encrypted-traffic/egress-actions",
+      "POST /v1/encrypted-traffic/evidence-actions"
+    ],
+    "preserved_query_states": [
+      "accepted",
+      "running",
+      "success",
+      "failed",
+      "cancelled",
+      "compensating"
+    ],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "encrypted-traffic.action-jobs.v1",
+    "controls": [
+      {"control_id": "egress-create-alert", "action_id": "egress-create-alert"},
+      {"control_id": "egress-audit-write", "action_id": "egress-audit-write"},
+      {"control_id": "egress-response-request", "action_id": "egress-response-request"},
+      {"control_id": "evidence-create-task", "action_id": "evidence-create-task"},
+      {"control_id": "evidence-download-pcap", "action_id": "evidence-download-pcap"},
+      {"control_id": "evidence-verify-hash", "action_id": "evidence-verify-hash"},
+      {"control_id": "evidence-export-package", "action_id": "evidence-export-package"},
+      {"control_id": "evidence-associate-analysis", "action_id": "evidence-associate-analysis"},
+      {"control_id": "evidence-preserve", "action_id": "evidence-preserve"},
+      {"control_id": "evidence-link-alert", "action_id": "evidence-link-alert"},
+      {"control_id": "evidence-expert-review", "action_id": "evidence-expert-review"},
+      {"control_id": "evidence-gap-mark", "action_id": "evidence-gap-mark"},
+      {"control_id": "evidence-submit-recommendation", "action_id": "evidence-submit-recommendation"},
+      {"control_id": "evidence-export-report", "action_id": "evidence-export-report"},
+      {"control_id": "evidence-write-audit", "action_id": "evidence-write-audit"}
+    ],
+    "states": [
+      "loading",
+      "accepted",
+      "running",
+      "success",
+      "partial",
+      "failed",
+      "cancelled",
+      "compensating",
+      "forbidden"
+    ],
+    "completion_rule": "accepted is durable command intake only; the UI displays completed only after the typed final entity and receipt are queryable"
+  },
+  "api": {
+    "operation_id": "createEncryptedTrafficActionJob",
+    "method": "POST",
+    "path": "/v1/encrypted-traffic/action-jobs",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision",
+    "companion_operations": [
+      "GET /v1/encrypted-traffic/action-jobs/{job_id}",
+      "POST /v1/encrypted-traffic/action-jobs/{job_id}/cancel",
+      "POST /v1/encrypted-traffic/action-jobs/{job_id}/retry"
+    ]
+  },
+  "domain": {
+    "kind": "command",
+    "states": [
+      "accepted",
+      "ready",
+      "running",
+      "partial",
+      "completed",
+      "failed",
+      "cancel_requested",
+      "cancelled",
+      "compensating",
+      "compensated",
+      "expired"
+    ],
+    "action_authority": {
+      "create_alert": {"scope": "alert:write", "final_entity": "alert_id", "executor": "rule-manager", "compensation": "disable or withdraw only the created draft alert fact"},
+      "collect_pcap": {"scope": "pcap:write", "final_entity": "forensics_job_id", "executor": "forensics-worker", "compensation": "cancel unsealed work and retain sealed evidence"},
+      "verify_hash": {"scope": "pcap:read", "final_entity": "integrity_receipt_id", "executor": "forensics-worker", "compensation": "none; append a superseding verification receipt"},
+      "export_evidence": {"scope": "alert:export", "final_entity": "export_manifest_id", "executor": "export-worker", "compensation": "expire unpublished download grants and retain immutable audit"},
+      "preserve_evidence": {"scope": "pcap:write", "final_entity": "retention_hold_id", "executor": "evidence-governance-worker", "compensation": "release only by a new authorized revision"},
+      "associate_analysis": {"scope": "alert:write", "final_entity": "analysis_link_revision", "executor": "alert-service", "compensation": "append unlink revision without deleting history"},
+      "response_request": {"scope": "alert:write", "final_entity": "response_handoff_id", "executor": "response-handoff-worker", "compensation": "cancel undispatched handoff; external effects need provider compensation"}
+    },
+    "invariants": [
+      "tenant, actor, action, target, purpose, request hash and expected revision are frozen at acceptance",
+      "job, audit, history and outbox acceptance facts commit in one PostgreSQL transaction",
+      "same idempotency key and request returns the same job while a different request conflicts",
+      "accepted, recorded or HTTP 2xx never implies a completed alert, object, preservation hold, analysis link or external response",
+      "each action reaches a typed final entity or an explicit partial, failed, cancelled, compensated or expired state",
+      "consumer readiness and an immutable candidate digest are required before each dispatcher can be enabled",
+      "external response stays default-off and cannot perform traffic cleaning, blocking or blackhole routing in Topic 1",
+      "retry cannot duplicate the final entity or object and cannot erase an earlier provider receipt"
+    ],
+    "compensation": "disable the affected dispatcher, stop new intake, finish or fail already accepted jobs under their frozen policy, preserve all authoritative facts and restore the legacy recorded-request adapter"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": [
+      "postgresql",
+      "clickhouse",
+      "minio"
+    ],
+    "migration": "planned additive action_job, history, audit and outbox schema under T1-M09-N009/N016/N020; legacy audit-only endpoints remain until observed migration",
+    "event_types": [
+      "encrypted.action.accepted.v1",
+      "encrypted.action.completed.v1",
+      "encrypted.action.failed.v1",
+      "encrypted.action.compensated.v1"
+    ],
+    "source_watermarks": [
+      "postgresql.action_job_revision",
+      "postgresql.outbox_event_id+published_at",
+      "kafka.topic+partition+offset",
+      "executor.receipt_id+revision",
+      "minio.object_version+manifest_sha256"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": [
+      "alert:write"
+    ],
+    "action_scopes_are_authoritative": true,
+    "negative_tests": [
+      "the authenticated tenant cannot be replaced by a body, query or target tenant",
+      "an action is rejected when its exact action_authority scope is absent",
+      "requester and approver separation is enforced for preservation and external handoff when approval is required",
+      "a stale expected revision or conflicting idempotency payload creates no job, outbox or audit success",
+      "a disabled or unready executor fails closed without claiming a final entity"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": [
+      "idempotent command acceptance",
+      "status polling through a final receipt",
+      "cancel before dispatch",
+      "retry after recoverable executor failure",
+      "partial and compensation recovery"
+    ],
+    "budgets": {
+      "acceptance_server_p99_ms": 1000,
+      "status_server_p99_ms": 500,
+      "maximum_poll_seconds": 5,
+      "maximum_retry_attempts": 10
+    },
+    "stop_conditions": [
+      "duplicate final entities, outbox lag, unresolved partial jobs, stale status or acceptance P99 exceeds the approved candidate budget"
+    ]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 action, final-entity, state, permission, migration and rollback contract",
+      "G1 PostgreSQL job, history, audit and outbox atomicity with idempotency and revision conflicts",
+      "G2 consumer-first readiness, broker ACK, offset and typed final receipt",
+      "G3 duplicate, cancel, retry, partial, compensation, expiry and cross-tenant negatives",
+      "G4 same-candidate K8s action-to-final-entity reconciliation",
+      "G5 rollback and observation with legacy adapter compatibility",
+      "G6 Windows Chrome accepted-versus-final state recovery journey"
+    ],
+    "evidence": [
+      "candidate-bound request, job, audit, outbox, Kafka offset, executor receipt, final entity, compensation, rollback and browser state hashes"
+    ]
+  },
+  "rollout": {
+    "feature_flag": "ENCRYPTED_ACTION_JOBS_V1_ENABLED",
+    "default": false,
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ENCRYPTED-002-rollback.md"
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-platform.local/contracts/entity/entity-resolution.schema.json",
+  "title": "Entity resolution technical contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "status",
+    "accountable_task",
+    "rule_version",
+    "identity_roles",
+    "tenant_boundary",
+    "source_rails",
+    "identifier_rules",
+    "decision_states",
+    "determinism",
+    "rollout",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract_id": {"const": "entity-resolution-v1"},
+    "status": {"enum": ["frozen_default_off", "active"]},
+    "accountable_task": {"const": "T1-M06-N008"},
+    "rule_version": {"const": "entity-resolution/v1"},
+    "identity_roles": {"const": ["subject", "source", "destination", "device", "sensor", "account", "correlation"]},
+    "tenant_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["partition_key", "cross_tenant_action"],
+      "properties": {
+        "partition_key": {"const": "tenant_id"},
+        "cross_tenant_action": {"const": "reject"}
+      }
+    },
+    "source_rails": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rail", "allowed_identifiers", "anchor_authority"],
+        "properties": {
+          "rail": {"enum": ["flow", "asset_authority", "asset_binding", "device_log", "user_behavior", "probe_ingest"]},
+          "allowed_identifiers": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"enum": ["asset_id", "user_id", "ip", "mac", "probe_id", "community_id"]}
+          },
+          "anchor_authority": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"enum": ["asset", "user", "probe"]}
+          }
+        }
+      }
+    },
+    "identifier_rules": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule_id", "identifier", "scope", "normalization", "confidence_ppm", "may_create_entity", "ambiguity_action"],
+        "properties": {
+          "rule_id": {"type": "string", "pattern": "^ER-[A-Z0-9-]+$"},
+          "identifier": {"enum": ["asset_id", "user_id", "ip", "mac", "probe_id", "community_id"]},
+          "scope": {"enum": ["asset", "user", "probe", "correlation"]},
+          "normalization": {"type": "string", "minLength": 1},
+          "confidence_ppm": {"type": "integer", "minimum": 0, "maximum": 1000000},
+          "may_create_entity": {"type": "boolean"},
+          "ambiguity_action": {"const": "preserve_candidates_without_merge"},
+          "max_link_age_ms": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "decision_states": {
+      "const": ["accepted", "partial", "ambiguous", "conflict", "insufficient"]
+    },
+    "determinism": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resolution_id", "decision_digest", "ordering", "duplicate_source_tuple"],
+      "properties": {
+        "resolution_id": {"type": "string", "minLength": 1},
+        "decision_digest": {"type": "string", "minLength": 1},
+        "ordering": {"const": "UTF-8 lexical order after identifier normalization"},
+        "duplicate_source_tuple": {"const": "same normalized observation is idempotent; different observation is conflict"}
+      }
+    },
+    "rollout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default_enabled", "writes_external_store", "rollback"],
+      "properties": {
+        "default_enabled": {"const": false},
+        "writes_external_store": {"const": false},
+        "rollback": {"const": "disable projector; preserve input facts and resolution results"}
+      }
+    },
+    "claim_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proves", "does_not_prove"],
+      "properties": {
+        "proves": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "does_not_prove": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    }
+  }
+}

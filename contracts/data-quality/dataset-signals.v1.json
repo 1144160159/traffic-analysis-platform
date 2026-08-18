@@ -5,10 +5,20 @@
   "status": "candidate",
   "production_applied": false,
   "measurement_states": ["measured", "unknown", "not_applicable", "error"],
+  "semantic_axes": {
+    "availability_status": ["arrived", "not_arrived", "unavailable", "not_applicable"],
+    "freshness_status": ["fresh", "stale", "unknown", "not_applicable"],
+    "completeness_status": ["complete", "partial", "unknown", "not_applicable"],
+    "value_status": ["zero", "nonzero", "none"]
+  },
   "invariants": [
     "measured requires a non-empty watermark_value and observed_at",
     "unknown and not_applicable never carry a watermark_value",
     "error requires measurement_error and never carries a watermark_value",
+    "a measured numeric zero is arrived and remains distinct from not_arrived or unavailable",
+    "a partial measurement is measured but can never pass a quality gate",
+    "a stale measurement can never pass and can never downgrade an existing failure to warning",
+    "collector failure is unavailable while a missing persisted measurement is not_arrived",
     "collection failures are persisted independently per source and never converted to pass",
     "GET /v1/data-quality reads the last persisted collection and has no write side effect"
   ],

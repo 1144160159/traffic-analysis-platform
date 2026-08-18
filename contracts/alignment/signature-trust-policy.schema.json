@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/signature-trust-policy.schema.json",
+  "title": "Topic One protected signature trust policy",
+  "description": "Versioned public trust material and opaque secret references used by the protected verifier. Raw private keys, tokens, passwords and resolved secret values are not representable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "policy_version",
+    "policy_status",
+    "canonicalization_version",
+    "verifier_identity",
+    "trust_anchors",
+    "allowed_algorithms",
+    "role_rules",
+    "time_policy",
+    "revocation_policy",
+    "replay_policy",
+    "resource_limits",
+    "attestation_signing_key_ref"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "policy_id": {"type": "string", "pattern": "^T1-SIGNATURE-POLICY-[A-Za-z0-9._-]+$", "maxLength": 128},
+    "policy_version": {"type": "string", "pattern": "^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$", "maxLength": 32},
+    "policy_status": {"enum": ["DRAFT_DISABLED", "ACTIVE"]},
+    "canonicalization_version": {"const": "M01-SIGNATURE-REQUEST-C14N-V1"},
+    "verifier_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["service_id", "deployment_environment", "attestation_algorithm", "attestation_certificate_sha256", "attestation_certificate_der_base64"],
+      "properties": {
+        "service_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+        "deployment_environment": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+        "attestation_algorithm": {"$ref": "#/$defs/signature_algorithm"},
+        "attestation_certificate_sha256": {"$ref": "#/$defs/sha256"},
+        "attestation_certificate_der_base64": {"$ref": "#/$defs/base64"}
+      }
+    },
+    "trust_anchors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/trust_anchor"}
+    },
+    "allowed_algorithms": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/signature_algorithm"}
+    },
+    "role_rules": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/role_rule"}
+    },
+    "time_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_clock_skew_seconds", "max_request_validity_seconds", "max_attestation_age_seconds"],
+      "properties": {
+        "max_clock_skew_seconds": {"type": "integer", "minimum": 0, "maximum": 300},
+        "max_request_validity_seconds": {"type": "integer", "minimum": 1, "maximum": 3600},
+        "max_attestation_age_seconds": {"type": "integer", "minimum": 1, "maximum": 86400}
+      }
+    },
+    "revocation_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "methods", "max_evidence_age_seconds", "require_next_update", "client_auth_ref"],
+      "properties": {
+        "mode": {"const": "HARD_FAIL"},
+        "methods": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"enum": ["OCSP", "CRL"]}
+        },
+        "max_evidence_age_seconds": {"type": "integer", "minimum": 1, "maximum": 86400},
+        "require_next_update": {"const": true},
+        "client_auth_ref": {
+          "oneOf": [
+            {"$ref": "#/$defs/secret_reference"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "replay_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace", "claim_ttl_seconds", "store_failure_mode"],
+      "properties": {
+        "namespace": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+        "claim_ttl_seconds": {"type": "integer", "minimum": 1, "maximum": 86400},
+        "store_failure_mode": {"const": "FAIL_CLOSED"}
+      }
+    },
+    "resource_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_request_bytes", "max_payload_bytes", "max_signature_bytes", "max_certificate_bytes", "max_chain_length"],
+      "properties": {
+        "max_request_bytes": {"type": "integer", "minimum": 1024, "maximum": 4194304},
+        "max_payload_bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "max_signature_bytes": {"type": "integer", "minimum": 32, "maximum": 16384},
+        "max_certificate_bytes": {"type": "integer", "minimum": 256, "maximum": 65536},
+        "max_chain_length": {"type": "integer", "minimum": 1, "maximum": 8}
+      }
+    },
+    "attestation_signing_key_ref": {"$ref": "#/$defs/secret_reference"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "base64": {"type": "string", "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$", "minLength": 4},
+    "signature_algorithm": {
+      "enum": ["ECDSA_P256_SHA256", "ECDSA_P384_SHA384", "RSA_PSS_SHA256", "RSA_PSS_SHA384", "ED25519"]
+    },
+    "authority_role": {
+      "enum": [
+        "PROJECT_OWNER",
+        "TEST_OWNER",
+        "ACCEPTANCE_AUTHORITY",
+        "SUPPLY_CHAIN_OWNER",
+        "SECURITY_OWNER",
+        "DOMAIN_OWNER",
+        "LANGUAGE_OWNER",
+        "RELIABILITY_DATA_EXPERT",
+        "SECURITY_TENANT_EXPERT",
+        "QA_SRE_PERFORMANCE_EXPERT",
+        "MAINTAINABILITY_RED_TEAM",
+        "ADJUDICATOR",
+        "CONTRACT_OWNER",
+        "EXECUTION_OWNER",
+        "WORK_ORDER_OWNER",
+        "CNAS_SCOPE_AUTHORITY"
+      ]
+    },
+    "verification_purpose": {
+      "enum": [
+        "CANDIDATE_ARTIFACT_PROVENANCE",
+        "IMPLEMENTATION_CANDIDATE_SUPPLY_CHAIN",
+        "REQUIREMENT_SATISFACTION_AUTHORITY",
+        "BOM_TRANSITION_AUTHORITY",
+        "EXTERNAL_ACTIVITY_RECEIPT",
+        "SIGNED_CONTRACT_INTAKE",
+        "EXECUTION_OVERLAY_ACCEPTANCE",
+        "FAIL_CLOSED_SELF_TEST",
+        "WORK_ORDER_EVIDENCE_RUN"
+      ]
+    },
+    "subject_type": {
+      "enum": [
+        "CANDIDATE_ARTIFACT",
+        "IMPLEMENTATION_CANDIDATE",
+        "REQUIREMENT_SATISFACTION",
+        "BOM_TRANSITION",
+        "EXTERNAL_ACTIVITY",
+        "SIGNED_CONTRACT",
+        "EXECUTION_OVERLAY",
+        "SELF_TEST",
+        "WORK_ORDER_EVIDENCE"
+      ]
+    },
+    "authority_scope": {
+      "enum": [
+        "CANDIDATE",
+        "PROFILE",
+        "ENVIRONMENT",
+        "PURPOSE",
+        "PROJECT",
+        "TEST",
+        "ACCEPTANCE",
+        "SUPPLY_CHAIN",
+        "CONTRACT",
+        "EXECUTION",
+        "WORK_ORDER",
+        "CNAS_ACCREDITATION"
+      ]
+    },
+    "trust_anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["anchor_id", "certificate_sha256", "certificate_der_base64", "allowed_algorithms"],
+      "properties": {
+        "anchor_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+        "certificate_sha256": {"$ref": "#/$defs/sha256"},
+        "certificate_der_base64": {"$ref": "#/$defs/base64"},
+        "allowed_algorithms": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/signature_algorithm"}
+        }
+      }
+    },
+    "role_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "allowed_authority_ids",
+        "allowed_purposes",
+        "allowed_subject_types",
+        "allowed_scopes",
+        "allowed_profile_ids",
+        "allowed_environment_ids",
+        "required_eku_oids",
+        "require_cnas_scope",
+        "allowed_cnas_scope_sha256"
+      ],
+      "properties": {
+        "role": {"$ref": "#/$defs/authority_role"},
+        "allowed_authority_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{2,255}$"}
+        },
+        "allowed_purposes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/verification_purpose"}
+        },
+        "allowed_subject_types": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/subject_type"}
+        },
+        "allowed_scopes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/authority_scope"}
+        },
+        "allowed_profile_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+        },
+        "allowed_environment_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+        },
+        "required_eku_oids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[0-9]+(?:\\.[0-9]+)+$"}
+        },
+        "require_cnas_scope": {"type": "boolean"},
+        "allowed_cnas_scope_sha256": {
+          "oneOf": [
+            {"$ref": "#/$defs/sha256"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "secret_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "reference", "version", "purpose"],
+      "properties": {
+        "provider": {"enum": ["KUBERNETES_SECRET", "PKCS11", "CLOUD_KMS", "PROTECTED_FILE_DESCRIPTOR"]},
+        "reference": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,255}$"},
+        "version": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+        "purpose": {"enum": ["ATTESTATION_SIGNING", "REVOCATION_CLIENT_AUTH"]}
+      }
+    }
+  }
+}

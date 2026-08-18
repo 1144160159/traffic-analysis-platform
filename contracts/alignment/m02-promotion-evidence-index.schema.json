@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m02-promotion-evidence-index.schema.json",
+  "title": "M02 exact current task evidence closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "index_id", "candidate_manifest_sha256",
+    "profile_id", "environment_id", "task_indexes", "stale_index_sha256s",
+    "superseded_index_sha256s", "exclusions", "created_at"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_kind": {"const": "M02_PROMOTION_EVIDENCE_INDEX"},
+    "index_id": {"type": "string", "pattern": "^m02-promotion-evidence-[a-z0-9][a-z0-9-]{2,63}$"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {"type": "string", "minLength": 3, "maxLength": 128},
+    "environment_id": {"type": "string", "minLength": 3, "maxLength": 128},
+    "task_indexes": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "path", "sha256"],
+        "properties": {
+          "task_id": {"type": "string", "pattern": "^T1-M02-N(?:00[1-9]|01[0-5])$"},
+          "path": {"type": "string", "pattern": "^doc/02_acceptance/topic1/tasks/t1-m02-n(?:00[1-9]|01[0-5])/current-evidence-index\\.json$"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "stale_index_sha256s": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "superseded_index_sha256s": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "exclusions": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "sha256", "reason"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "reason": {"enum": ["STALE", "SUPERSEDED", "DIFFERENT_CANDIDATE", "DIFFERENT_PROFILE", "FAILED", "BLOCKED"]}
+        }
+      }
+    },
+    "created_at": {"type": "string", "minLength": 1}
+  }
+}

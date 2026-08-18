@@ -22,7 +22,7 @@
     {
       "domain": "frontend_operation_plan",
       "path": "web/ui/src/services/pageApiPlans.ts",
-      "sha256": "1e5808de81289b8d1bac2a76232a9eca53a7d94b0b80ff4fdc3c786e6953b83b"
+      "sha256": "3005bba87c8a76953b8068b1c793c4b0906a9139fe764cd1522720c265de7c3f"
     },
     {
       "domain": "frontend_route_authority",
@@ -32,12 +32,12 @@
     {
       "domain": "rest_contract_authority",
       "path": "contracts/openapi/alignment-v1.openapi.json",
-      "sha256": "972c2638c864f5a5a7c1973c13abc6c225f0ec7844b6b86ca1fc417b659fe763"
+      "sha256": "73ae37fa0b5a7fef55fda4c824d36619a8123eaf4066918a3de6189f4258358b"
     },
     {
       "domain": "route_action_api_scope_inventory",
       "path": "scripts/alignment/inventory.py",
-      "sha256": "15c0a212d9960e782a2b041dbc62fa4f048b197feb3992117eb6a34128376e64"
+      "sha256": "0ef63c8a829beed7d348508b754c8b5e9d661178f2f43326e972c5b8084e18bd"
     },
     {
       "domain": "work_package_ownership",
@@ -58,22 +58,16 @@
   },
   "coverage": {
     "canonical_feature_ids": 54,
-    "formal_contracts": 38,
-    "formal_contracts_valid": 38,
-    "formal_contracts_openapi_bound": 26,
+    "formal_contracts": 44,
+    "formal_contracts_valid": 44,
+    "formal_contracts_openapi_bound": 31,
     "non_draft_openapi_binding_gaps": [],
     "standard_scope_features": 38,
     "standard_scope_formal_contracts": 38,
     "missing_standard_scope_contracts": [],
     "missing_backlog_contracts": [
-      "F-ATTACKCHAIN-001",
-      "F-BASELINE-001",
       "F-COMPLIANCE-001",
       "F-DEPLOY-001",
-      "F-ENCRYPTED-001",
-      "F-ENCRYPTED-002",
-      "F-FORENSICS-001",
-      "F-FUSION-001",
       "F-MLOPS-001",
       "F-NOTIFICATION-001",
       "F-NOTIFY-001",
@@ -493,7 +487,7 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-ALERT-001.json",
-        "sha256": "2b00648986d881cf342a3d74fb91fdc32425b67b0f7484ba766b84feb134de33",
+        "sha256": "9a8fa83101a995400212cf32fbf1916b9870f22a58582065769c3198a38eca0f",
         "contract_version": 1,
         "status": "verifying",
         "operation_id": "createAlertReport",
@@ -515,6 +509,8 @@
           "alert-report-compensate"
         ],
         "preserved_api_operations": [
+          "GET /v1/alerts/{id}/feedback",
+          "POST /v1/alerts/{id}/feedback",
           "GET /v1/alerts/{id}/reports/{job_id}",
           "GET /v1/alerts/{id}/reports/{job_id}/download",
           "POST /v1/alerts/{id}/reports/export",
@@ -1056,15 +1052,15 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-GRAPH-004.json",
-        "sha256": "049b6ef1b20b1e3bdcc9cc44526eadee81861ee4ba77b6ed952e72c27aa3b859",
+        "sha256": "d78aa57e9cca44825554ab0b2aa56ce06d6cf6cca791a02d0b57fcf44c0baf01",
         "contract_version": 1,
         "status": "draft",
         "operation_id": "getGraphProjectionStatus",
         "api_method": "GET",
         "api_path": "/v1/graph/projections/status",
-        "openapi_binding_status": "MISSING",
-        "openapi_bound_operation_id": null,
-        "openapi_bound_feature_id": null,
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "getGraphProjectionStatus",
+        "openapi_bound_feature_id": "F-GRAPH-004",
         "required_scopes": [
           "graph:read"
         ],
@@ -1090,7 +1086,7 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-SEARCH-001.json",
-        "sha256": "0cb033abd6b5aa618e96ad3c9c8cd4bb4d296816269c7cf3ef76b6871e448f85",
+        "sha256": "5c5d28800afc2bb0aef60002c2fdfe04ab5970de5e7a3b2af19fc8f2a9eb44c6",
         "contract_version": 1,
         "status": "verifying",
         "operation_id": "searchAlertsCursorV1",
@@ -1490,7 +1486,7 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-DATAQUALITY-001.json",
-        "sha256": "a9a2b05f219f07b45f8c945f3c9d74d067394e035a86ee4043be42895029adc6",
+        "sha256": "18cbcce2c97bf663ac0e956cd5a1cebfd32da314806e15947a602e81c35e6d00",
         "contract_version": 1,
         "status": "verifying",
         "operation_id": "getDataQualityControlPlaneSnapshot",
@@ -1576,12 +1572,34 @@
       "acceptance_case": "AC-WP-08-CAMPAIGN-CHAIN",
       "rollback_runbook_id": "RB-WP-08-CAMPAIGN-CHAIN",
       "standard_24w_scope": false,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ATTACKCHAIN-001.json",
+        "sha256": "4d7e1d0aafc6a0479a1d30ed830c925c14f84be2d1fd016052fde9d58522a753",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "listAttackChains",
+        "api_method": "GET",
+        "api_path": "/v1/attack-chains",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "listAttackChains",
+        "openapi_bound_feature_id": "F-ATTACKCHAIN-001",
+        "required_scopes": [
+          "alert:read",
+          "graph:read"
+        ],
+        "preserved_routes": [
+          "/attack-chains"
+        ],
+        "preserved_actions": [
+          "campaign-attack-chain-view"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/attack-chains"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ENCRYPTED-001",
@@ -1591,12 +1609,39 @@
       "acceptance_case": "AC-WP-10-ENCRYPTED",
       "rollback_runbook_id": "RB-WP-10-ENCRYPTED",
       "standard_24w_scope": false,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ENCRYPTED-001.json",
+        "sha256": "16d832b1539d8e7f9979feab9908f68963e8471e7a04f43d99e858d7714fc448",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "getEncryptedTrafficSnapshot",
+        "api_method": "GET",
+        "api_path": "/v1/encrypted-traffic/snapshot",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "getEncryptedTrafficSnapshot",
+        "openapi_bound_feature_id": "F-ENCRYPTED-001",
+        "required_scopes": [
+          "alert:read"
+        ],
+        "preserved_routes": [
+          "/encrypted-traffic"
+        ],
+        "preserved_actions": [
+          "egress-evidence-lookup",
+          "egress-entity-graph"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/encrypted-traffic/stats",
+          "GET /v1/encrypted-traffic/sessions",
+          "GET /v1/encrypted-traffic/ja3",
+          "GET /v1/encrypted-traffic/tunnels",
+          "GET /v1/encrypted-traffic/exfiltration",
+          "GET /v1/encrypted-traffic/evidence"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ENCRYPTED-002",
@@ -1606,12 +1651,48 @@
       "acceptance_case": "AC-WP-10-ENCRYPTED",
       "rollback_runbook_id": "RB-WP-10-ENCRYPTED",
       "standard_24w_scope": false,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ENCRYPTED-002.json",
+        "sha256": "1aa011754c7d6765705c8d95301fcab79bf5cac29eafb11ddfe71e9e37613abc",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "createEncryptedTrafficActionJob",
+        "api_method": "POST",
+        "api_path": "/v1/encrypted-traffic/action-jobs",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
+        "required_scopes": [
+          "alert:write"
+        ],
+        "preserved_routes": [
+          "/encrypted-traffic"
+        ],
+        "preserved_actions": [
+          "egress-create-alert",
+          "egress-audit-write",
+          "egress-response-request",
+          "evidence-create-task",
+          "evidence-download-pcap",
+          "evidence-verify-hash",
+          "evidence-export-package",
+          "evidence-associate-analysis",
+          "evidence-preserve",
+          "evidence-link-alert",
+          "evidence-expert-review",
+          "evidence-gap-mark",
+          "evidence-submit-recommendation",
+          "evidence-export-report",
+          "evidence-write-audit"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/encrypted-traffic/egress-actions",
+          "POST /v1/encrypted-traffic/evidence-actions"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-FORENSICS-001",
@@ -1621,12 +1702,43 @@
       "acceptance_case": "AC-WP-11-FORENSICS",
       "rollback_runbook_id": "RB-WP-11-FORENSICS",
       "standard_24w_scope": false,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-FORENSICS-001.json",
+        "sha256": "882ee401feb57f3217e5e73a676cb238b72647e4d37f13a87a23bc3a9275253a",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "createPcapForensicsJob",
+        "api_method": "POST",
+        "api_path": "/v1/pcap/jobs",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "createPcapForensicsJob",
+        "openapi_bound_feature_id": "F-FORENSICS-001",
+        "required_scopes": [
+          "pcap:read",
+          "pcap:write",
+          "pcap:download"
+        ],
+        "preserved_routes": [
+          "/forensics"
+        ],
+        "preserved_actions": [
+          "forensics-create-job",
+          "forensics-verify-pcap",
+          "forensics-presign-pcap",
+          "forensics-cancel-job"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/pcap/jobs",
+          "GET /v1/pcap/stats",
+          "POST /v1/pcap/jobs",
+          "POST /v1/pcap/jobs/{id}/cancel",
+          "POST /v1/pcap/presign",
+          "POST /v1/pcap/verify"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-FUSION-001",
@@ -1636,12 +1748,41 @@
       "acceptance_case": "AC-WP-13-FUSION-BASELINE",
       "rollback_runbook_id": "RB-WP-13-FUSION-BASELINE",
       "standard_24w_scope": false,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-FUSION-001.json",
+        "sha256": "ff5dc832715fa6c6e7b641fa3154a457e90378e8dfd66494013c2e3f47bc6af9",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "getFusionWorkbench",
+        "api_method": "GET",
+        "api_path": "/v1/fusion/workbench",
+        "openapi_binding_status": "MISSING",
+        "openapi_bound_operation_id": null,
+        "openapi_bound_feature_id": null,
+        "required_scopes": [
+          "rule:write"
+        ],
+        "preserved_routes": [
+          "/fusion"
+        ],
+        "preserved_actions": [
+          "fusion-conflict-resolve",
+          "fusion-rule-update",
+          "fusion-evidence-export"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/fusion/workbench",
+          "GET /v1/fusion/stats",
+          "GET /v1/fusion/entities",
+          "GET /v1/fusion/value-report",
+          "POST /v1/fusion/conflicts/{id}/resolve",
+          "PATCH /v1/fusion/rules/{id}",
+          "POST /v1/fusion/evidence-packages"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-BASELINE-001",
@@ -1651,12 +1792,45 @@
       "acceptance_case": "AC-WP-13-FUSION-BASELINE",
       "rollback_runbook_id": "RB-WP-13-FUSION-BASELINE",
       "standard_24w_scope": false,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-BASELINE-001.json",
+        "sha256": "3172cbefca2154b85a97476b5daa81e8a83805abe7fd470321c44af774a311c6",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "requestBehaviorBaselineBuildV1",
+        "api_method": "POST",
+        "api_path": "/v1/baselines/{id}/builds",
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "requestBehaviorBaselineBuildV1",
+        "openapi_bound_feature_id": "F-BASELINE-001",
+        "required_scopes": [
+          "alert:write"
+        ],
+        "preserved_routes": [
+          "/baselines"
+        ],
+        "preserved_actions": [
+          "baseline-governance-action",
+          "baseline-reset"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/baselines",
+          "GET /v1/baselines/{id}",
+          "GET /v1/baselines/{id}/analytics",
+          "GET /v1/baselines/{id}/versions",
+          "GET /v1/baselines/{id}/actions",
+          "POST /v1/baselines/{id}/actions",
+          "POST /v1/baselines/{id}/reset",
+          "POST /v1/baselines/{id}/builds",
+          "POST /v1/baselines/{id}/versions/{version}/approvals",
+          "POST /v1/baselines/{id}/approvals/{approval_id}/decision",
+          "POST /v1/baselines/{id}/rollbacks",
+          "POST /v1/baselines/{id}/evaluations"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-RULE-001",
@@ -1799,8 +1973,8 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-WHITELIST-001.json",
-        "sha256": "6dab610b515b3b2c1dd00f3dbe034df4fe1b18bcf7cda12808f7dd846ac3613d",
-        "contract_version": 2,
+        "sha256": "caace32fab497b25a3c3855229f760266f6ca7147e79433278371487582b83bc",
+        "contract_version": 3,
         "status": "implementing",
         "operation_id": "createWhitelistEntry",
         "api_method": "POST",
@@ -1898,5 +2072,5 @@
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "c8e8065087b498c4c7937cf14c9d2f7a3ac832bab9d64ff322350dade8d9d0ad"
+  "catalog_sha256": "34f3c8a49a8a25d406b0fedeb6cb5a17ca4c7837740bd21d04258d3cab5ba322"
 }

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/milestone-promotion-closure.schema.json",
+  "title": "Topic One post-IDX pre-PROM milestone closure",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "milestone_id", "promotion_profile", "candidate_manifest_sha256", "environment_id", "completion_candidate_manifest_sha256", "current_idx_manifest_sha256", "current_evidence_set_sha256", "evidence_set_matches_candidate", "prom_has_no_production_change", "bom_transition_sha256", "blockers", "result", "created_at"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "milestone_id": {"type": "string", "pattern": "^T1-M(?:0[0-9]|1[0-3])$"},
+    "promotion_profile": {"type": "string", "minLength": 1},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "environment_id": {"type": "string", "minLength": 1},
+    "completion_candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "current_idx_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "current_evidence_set_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidence_set_matches_candidate": {"type": "boolean"},
+    "prom_has_no_production_change": {"type": "boolean"},
+    "bom_transition_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "blockers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "result": {"enum": ["PASS", "BLOCKED"]},
+    "created_at": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"result": {"const": "PASS"}}},
+      "then": {"properties": {"evidence_set_matches_candidate": {"const": true}, "prom_has_no_production_change": {"const": true}, "blockers": {"type": "array", "maxItems": 0}}}
+    },
+    {
+      "if": {"properties": {"result": {"const": "BLOCKED"}}},
+      "then": {"properties": {"blockers": {"type": "array", "minItems": 1}}}
+    }
+  ]
+}

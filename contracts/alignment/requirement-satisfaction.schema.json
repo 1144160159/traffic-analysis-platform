@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/requirement-satisfaction.schema.json",
+  "title": "Topic One requirement satisfaction closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "requirement_id", "requirement_class", "authority_source", "accountable_milestone",
+    "satisfaction_state", "evidence_contract_ref", "inputs", "outputs", "method_ref", "failure_conditions",
+    "evidence_contract", "closure", "allowed_claim", "forbidden_claims", "updated_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "requirement_id": {"type": "string", "pattern": "^REQ-T1-[A-Z0-9-]+$"},
+    "requirement_class": {"enum": ["contract_scope", "formal_kpi", "enabling_engineering", "release_evidence", "internal_strengthening"]},
+    "authority_source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["document_path", "document_sha256", "locator", "clause_sha256"],
+      "properties": {
+        "document_path": {"type": "string", "minLength": 1},
+        "document_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "locator": {"type": "string", "minLength": 1},
+        "clause_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "accountable_milestone": {"type": "string", "pattern": "^T1-M(?:0[0-9]|1[0-3])$"},
+    "satisfaction_state": {"enum": ["NOT_STARTED", "IMPLEMENTING", "VERIFYING", "SATISFIED", "FAILED", "BLOCKED", "STALE", "SUPERSEDED"]},
+    "evidence_contract_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requirement_id", "registry_path", "registry_sha256", "registry_status"],
+      "properties": {
+        "requirement_id": {"type": "string", "pattern": "^REQ-T1-[A-Z0-9-]+$"},
+        "registry_path": {"const": "contracts/requirements/topic1-evidence-contracts.v1.json"},
+        "registry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "registry_status": {"enum": ["DRAFT_PENDING_SIGNATURE", "SIGNED"]}
+      }
+    },
+    "inputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact"}, "uniqueItems": true},
+    "outputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact"}, "uniqueItems": true},
+    "method_ref": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/method_ref"}]},
+    "failure_conditions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "evidence_contract": {"$ref": "#/$defs/evidence_contract"},
+    "closure": {"$ref": "#/$defs/closure"},
+    "allowed_claim": {"type": ["string", "null"]},
+    "forbidden_claims": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "updated_at": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "path", "sha256", "schema_ref"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "schema_ref": {"type": ["string", "null"]}
+      }
+    },
+    "method_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method_id", "path", "sha256", "status"],
+      "properties": {
+        "method_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "status": {"enum": ["PENDING_SIGNATURE", "SIGNED", "SUPERSEDED"]}
+      }
+    },
+    "evidence_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required_gates", "required_artifact_ids", "candidate_bound", "profile_bound", "environment_bound", "time_window_bound"],
+      "properties": {
+        "required_gates": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^G[0-8]$"}, "uniqueItems": true},
+        "required_artifact_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "candidate_bound": {"const": true},
+        "profile_bound": {"const": true},
+        "environment_bound": {"const": true},
+        "time_window_bound": {"const": true}
+      }
+    },
+    "closure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["candidate_manifest_sha256", "profile_id", "environment_id", "time_window", "method_manifest_sha256", "input_set_sha256", "output_set_sha256", "evidence_set_manifest_sha256", "authority_receipts", "evidence_run_ids", "result"],
+      "properties": {
+        "candidate_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {"type": ["string", "null"]},
+        "environment_id": {"type": ["string", "null"]},
+        "time_window": {"type": ["string", "null"]},
+        "method_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "input_set_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "output_set_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "evidence_set_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "authority_receipts": {
+          "type": "array", "uniqueItems": true,
+          "items": {"$ref": "#/$defs/authority_receipt_ref"}
+        },
+        "evidence_run_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "result": {"enum": ["BLOCKED", "SATISFIED", "FAILED", "STALE", "SUPERSEDED"]}
+      }
+    },
+    "authority_receipt_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["receipt_id", "path", "sha256", "schema_version"],
+      "properties": {
+        "receipt_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "schema_version": {"const": "1.0.0"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"satisfaction_state": {"const": "SATISFIED"}}},
+      "then": {
+        "properties": {
+          "allowed_claim": {"type": "string", "minLength": 1},
+          "closure": {
+            "properties": {
+              "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "profile_id": {"type": "string", "minLength": 1},
+              "environment_id": {"type": "string", "minLength": 1},
+              "time_window": {"type": "string", "minLength": 1},
+              "input_set_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "output_set_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "evidence_set_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "authority_receipts": {"type": "array", "minItems": 1},
+              "evidence_run_ids": {"type": "array", "minItems": 1},
+              "result": {"const": "SATISFIED"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"closure": {"properties": {"result": {"const": "SATISFIED"}}}}},
+      "then": {"properties": {"satisfaction_state": {"const": "SATISFIED"}}}
+    },
+    {
+      "if": {"properties": {"requirement_class": {"const": "formal_kpi"}}},
+      "then": {
+        "properties": {
+          "method_ref": {"$ref": "#/$defs/method_ref"},
+          "closure": {
+            "properties": {
+              "method_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "authority_receipts": {"type": "array", "minItems": 1}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

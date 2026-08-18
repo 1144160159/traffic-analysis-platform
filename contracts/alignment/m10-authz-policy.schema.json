@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m10-authz-policy.schema.json",
+  "title": "T1-M10-N007 least-privilege role and operation policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "task_id", "atomic_pr_ids",
+    "default_runtime_state", "source_sha256", "dependency",
+    "runtime_enforcement", "roles", "operations", "counts", "invariants",
+    "policy_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_kind": {"const": "M10_MINIMAL_ROLE_OPERATION_POLICY"},
+    "task_id": {"const": "T1-M10-N007"},
+    "atomic_pr_ids": {
+      "const": ["T1-M10-P015-OPS-n007-s1", "T1-M10-P016-TST-POST-n007-s2"]
+    },
+    "default_runtime_state": {"const": "off"},
+    "source_sha256": {
+      "type": "object", "minProperties": 10,
+      "additionalProperties": {"$ref": "#/$defs/sha256"}
+    },
+    "dependency": {"type": "object"},
+    "runtime_enforcement": {"type": "object"},
+    "roles": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": {"$ref": "#/$defs/role"}
+    },
+    "operations": {
+      "type": "array", "minItems": 1,
+      "items": {"$ref": "#/$defs/operation"}
+    },
+    "counts": {"type": "object"},
+    "invariants": {"type": "array", "minItems": 5, "items": {"type": "string", "minLength": 1}},
+    "policy_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "role": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role_id", "scopes", "field_classes", "cross_tenant"],
+      "properties": {
+        "role_id": {"enum": ["admin", "analyst", "operator", "viewer"]},
+        "scopes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"}},
+        "field_classes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "cross_tenant": {"const": false}
+      }
+    },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["operation_id", "method", "path", "action", "required_scope", "authorized_roles", "tenant_policy", "object_policy", "field_policy"],
+      "properties": {
+        "operation_id": {"type": "string", "minLength": 1},
+        "method": {"enum": ["DELETE", "GET", "PATCH", "POST", "PUT"]},
+        "path": {"type": "string", "pattern": "^/"},
+        "action": {"type": "string", "minLength": 1},
+        "required_scope": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
+        "authorized_roles": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["admin", "analyst", "operator", "viewer"]}},
+        "tenant_policy": {"type": "object"},
+        "object_policy": {"type": "object"},
+        "field_policy": {"type": "object"}
+      }
+    }
+  }
+}

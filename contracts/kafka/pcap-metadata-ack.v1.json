@@ -36,29 +36,30 @@
         "logger.Info(\"PCAP index uploaded\""
       ],
       "ordered_tokens": [
-        ["err := h.producer.WritePcapIndex(ctx, meta)", "Success: true"],
-        ["err := h.producer.WritePcapIndex(ctx, meta)", "Message: msgPcapKafkaAccepted"]
+        ["err := h.writePcapIndex(ctx, meta)", "Success: true"],
+        ["err := h.writePcapIndex(ctx, meta)", "Message: msgPcapKafkaAccepted"]
       ]
     },
     {
       "source": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
       "required_tokens": [
-        "if resp.success",
-        "self.journal.mark_metadata_synced(&task_id)?",
-        "PCAP object uploaded but metadata was not durably acknowledged",
-        "journal and local evidence retained"
+        "if let Err(error) = self.upload_metadata(&receipt.key, &task, &result).await",
+        "self.journal.mark_metadata_accepted(&upload.task_id)?",
+        "Recovery reuses it and never calls an object PUT again",
+        "self.journal.mark_retry_wait"
       ],
       "forbidden_tokens": [],
       "ordered_tokens": [
-        ["self.upload_metadata(&key, &task, &upload_result).await", "self.journal.mark_metadata_synced(&task_id)?"],
-        ["if !metadata_synced", "journal and local evidence retained"]
+        ["self.upload_metadata(&receipt.key, &task, &result).await", "self.journal.mark_metadata_accepted(&upload.task_id)?"],
+        ["Recovery reuses it and never calls an object PUT again", "self.journal.mark_metadata_accepted(&task_id)?"]
       ]
     },
     {
       "source": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs",
       "required_tokens": [
-        "A durable metadata ACK completes the protocol but does not",
-        "entry.is_complete() && age_ms > max_age_ms",
+        "Durably marked METADATA_ACCEPTED; evidence retained",
+        "age-based journal cleanup is disabled; use exact cleanup claims and preserve DELETED tombstones",
+        "pub fn claim_cleanup_authority",
         "ACK must not delete the local evidence"
       ],
       "forbidden_tokens": [],

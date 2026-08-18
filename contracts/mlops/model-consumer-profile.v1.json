@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic.mlops.model-shadow-consumer-profile.v1",
+  "entry_class": "com.traffic.flink.behavior.ModelUpdateConsumerJob",
+  "runtime_contract": "traffic.behavior.inference.v1",
+  "runtime_version": "1.0.0",
+  "feature_schema_version": 1,
+  "graph_schema_version": 1,
+  "supported_model_formats": [
+    "onnx",
+    "numpy_npz_v1"
+  ],
+  "signing_key_binding": {
+    "algorithm": "ed25519",
+    "fingerprint_algorithm": "sha256-x509-der",
+    "runtime_secret_name": "model-shadow-consumer-profile-v1",
+    "public_key_key": "public-key-pem-base64",
+    "profile_sha256_key": "profile-sha256"
+  },
+  "activation_enabled": false,
+  "serving_outputs_enabled": false,
+  "profile_sha256_derivation": {
+    "algorithm": "sha256",
+    "encoding": "utf-8",
+    "field_order": [
+      "schema_version",
+      "entry_class",
+      "runtime_contract",
+      "runtime_version",
+      "feature_schema_version",
+      "graph_schema_version",
+      "supported_model_formats",
+      "signing_public_key_sha256",
+      "activation_enabled",
+      "serving_outputs_enabled"
+    ],
+    "line_format": "key=value",
+    "terminal_newline": true
+  }
+}

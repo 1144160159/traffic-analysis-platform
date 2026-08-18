@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/alignment/atomic-pr-implementation-result.schema.json",
+  "title": "Candidate-bound after-state implementation result for WRT or REF",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_kind", "schema_version", "atomic_pr_id", "pr_type",
+    "candidate_manifest_sha256", "profile_id", "environment_id",
+    "execution_package_sha256", "after_units", "after_artifacts", "verification_checks",
+    "implementation_delta_ref", "result", "blockers", "proof_ceiling"
+  ],
+  "properties": {
+    "artifact_kind": {"const": "ATOMIC_PR_IMPLEMENTATION_RESULT"},
+    "schema_version": {"const": "1.0.0"},
+    "atomic_pr_id": {"type": "string", "pattern": "^T1-M[0-9]{2}(?:-R[0-9]{2})?-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+    "pr_type": {"enum": ["WRT", "REF"]},
+    "candidate_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "profile_id": {"type": "string", "minLength": 3},
+    "environment_id": {"type": "string", "minLength": 3},
+    "execution_package_sha256": {"$ref": "#/$defs/sha256"},
+    "implementation_delta_ref": {
+      "type": ["object", "null"],
+      "oneOf": [{"$ref": "#/$defs/hash_ref"}, {"type": "null"}]
+    },
+    "after_units": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["target_id", "path", "locator_kind", "qualified_symbol", "signature_after", "candidate_blob_sha256", "ast_node_sha256", "resolver_receipt"],
+        "properties": {
+          "target_id": {"type": "string", "minLength": 3},
+          "path": {"type": "string", "minLength": 3},
+          "locator_kind": {"enum": ["go_symbol", "rust_symbol", "java_symbol", "ts_symbol", "python_symbol"]},
+          "qualified_symbol": {"type": "string", "minLength": 1},
+          "signature_after": {"type": "string", "minLength": 3},
+          "candidate_blob_sha256": {"$ref": "#/$defs/sha256"},
+          "ast_node_sha256": {"$ref": "#/$defs/sha256"},
+          "resolver_receipt": {"$ref": "#/$defs/hash_ref"}
+        }
+      }
+    },
+    "after_artifacts": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["target_id", "path", "locator_kind", "symbol_or_pointer", "content_sha256"],
+        "properties": {
+          "target_id": {"type": "string", "minLength": 3},
+          "path": {"type": "string", "minLength": 3},
+          "locator_kind": {"enum": ["json_pointer", "yaml_path", "proto_fqn", "sql_object", "file"]},
+          "symbol_or_pointer": {"type": ["string", "null"]},
+          "content_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "verification_checks": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["command_id", "command", "command_sha256", "exit_code", "matched_target_ids", "status"],
+        "properties": {
+          "command_id": {"type": "string", "minLength": 3},
+          "command": {"type": "string", "minLength": 3},
+          "command_sha256": {"$ref": "#/$defs/sha256"},
+          "exit_code": {"const": 0},
+          "matched_target_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "status": {"const": "PASS"}
+        }
+      }
+    },
+    "result": {"enum": ["PASS", "BLOCKED"]},
+    "blockers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "proof_ceiling": {"const": "EXACT_AFTER_IMPLEMENTATION_ONLY_NOT_TEST_RUNTIME_PARENT_OR_PRODUCTION_ACCEPTANCE"}
+  },
+  "allOf": [
+    {"if": {"properties": {"result": {"const": "PASS"}}}, "then": {"properties": {"blockers": {"maxItems": 0}}}}
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

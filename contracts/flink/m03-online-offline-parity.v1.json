@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "contract_id": "t1-m03-n012-online-offline-parity-v1",
+  "identity": {
+    "route_specific_fields": ["event_id", "run_id", "session_id", "object_id", "window_id"],
+    "processing_telemetry_fields": ["ingest_ts", "kafka_ts", "flink_out_ts"],
+    "rule": "online and offline use different run_id values; route-specific identities and processing clocks are excluded while stable business keys and lineage cardinality remain compared",
+    "timestamp_normalization": "subtract each route receipt event_time_offset_ms; this permits only a whole-capture time shift and does not hide duration or inter-arrival differences"
+  },
+  "tables": {
+    "flows_raw": {
+      "required_nonempty": true,
+      "key_fields": ["community_id", "src_ip", "dst_ip", "src_port", "dst_port", "protocol", "direction", "ts_start", "ts_end"],
+      "timestamp_fields": ["ts_start", "ts_end", "event_ts"],
+      "exact_fields": ["probe_id", "duration_ms", "packets_fwd", "packets_bwd", "bytes_fwd", "bytes_bwd", "tcp_flags_fwd", "tcp_flags_bwd", "tos", "feature_set_id", "event_ts", "pktlen_min", "pktlen_max", "subflow_count"],
+      "cardinality_fields": [],
+      "tolerances": {
+        "pps": {"absolute": 0.00001, "relative": 0.000001},
+        "bps": {"absolute": 0.00001, "relative": 0.000001},
+        "pktlen_mean": {"absolute": 0.00001, "relative": 0.000001},
+        "pktlen_std": {"absolute": 0.00001, "relative": 0.000001},
+        "iat_min_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "iat_max_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "iat_mean_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "iat_std_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "active_min_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "active_max_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "active_mean_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "active_std_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "idle_min_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "idle_max_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "idle_mean_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "idle_std_ms": {"absolute": 0.00001, "relative": 0.000001}
+      }
+    },
+    "sessions": {
+      "required_nonempty": true,
+      "key_fields": ["community_id", "src_ip", "dst_ip", "src_port", "dst_port", "protocol", "ts_start", "ts_end"],
+      "timestamp_fields": ["ts_start", "ts_end", "event_ts", "event_time_start_ms", "event_time_end_ms", "source_watermark_ms"],
+      "exact_fields": ["duration_ms", "packets_fwd", "packets_bwd", "bytes_fwd", "bytes_bwd", "feature_set_id", "event_ts", "probe_id", "bytes_total", "num_pkts", "min_payload", "max_payload", "flags_syn", "flags_ack", "flags_fin", "flags_psh", "flags_rst", "dns_pkt_cnt", "tcp_pkt_cnt", "udp_pkt_cnt", "icmp_pkt_cnt", "has_syn", "has_fin", "has_rst", "is_established", "evidence_count", "end_reason", "event_schema_version", "aggregate_version", "identity_version", "session_version", "event_time_start_ms", "event_time_end_ms", "source_watermark_ms", "completeness", "is_partial", "missing_fields"],
+      "cardinality_fields": ["flow_ids", "source_event_ids", "evidence_ids"],
+      "tolerances": {
+        "up_down_ratio": {"absolute": 0.00001, "relative": 0.000001},
+        "avg_payload": {"absolute": 0.00001, "relative": 0.000001},
+        "std_payload": {"absolute": 0.00001, "relative": 0.000001},
+        "mean_iat_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "min_iat_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "max_iat_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "std_iat_ms": {"absolute": 0.00001, "relative": 0.000001}
+      }
+    },
+    "feature_stat": {
+      "required_nonempty": true,
+      "key_fields": ["object_type", "community_id", "ts", "feature_category", "algorithm_version"],
+      "timestamp_fields": ["ts", "event_time_start_ms", "event_time_end_ms", "source_watermark_ms"],
+      "exact_fields": ["feature_set_id", "schema_version", "protocol", "duration_ms", "tcp_flag_syn_cnt", "tcp_flag_ack_cnt", "tcp_init_win_bytes_fwd", "tcp_init_win_bytes_bwd", "extra", "event_schema_version", "aggregate_version", "event_time_start_ms", "event_time_end_ms", "source_watermark_ms", "availability", "value_unit", "is_partial", "missing_fields", "missing_reason"],
+      "cardinality_fields": ["source_event_ids", "evidence_ids"],
+      "tolerances": {
+        "pps": {"absolute": 0.00001, "relative": 0.000001},
+        "bps": {"absolute": 0.00001, "relative": 0.000001},
+        "up_down_ratio": {"absolute": 0.00001, "relative": 0.000001},
+        "pktlen_mean": {"absolute": 0.00001, "relative": 0.000001},
+        "pktlen_std": {"absolute": 0.00001, "relative": 0.000001},
+        "iat_mean_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "iat_std_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "active_mean_ms": {"absolute": 0.00001, "relative": 0.000001},
+        "idle_mean_ms": {"absolute": 0.00001, "relative": 0.000001}
+      }
+    },
+    "feature_seq": {
+      "required_nonempty": true,
+      "key_fields": ["object_type", "community_id", "ts_start", "ts_end", "algorithm_version"],
+      "timestamp_fields": ["ts_start", "ts_end"],
+      "exact_fields": ["feature_set_id", "pktlen_seq_hash", "iat_seq_hash", "feature_category", "availability", "schema_version", "value_unit", "missing_fields", "missing_reason"],
+      "presence_fields": ["seq_blob_ref"],
+      "cardinality_fields": ["source_event_ids", "evidence_ids"],
+      "tolerances": {
+        "wavelet_releng_fwd": {"absolute": 0.00001, "relative": 0.000001},
+        "wavelet_releng_bwd": {"absolute": 0.00001, "relative": 0.000001},
+        "wavelet_entropy_fwd": {"absolute": 0.00001, "relative": 0.000001},
+        "wavelet_entropy_bwd": {"absolute": 0.00001, "relative": 0.000001},
+        "wavelet_detail_mean_fwd": {"absolute": 0.00001, "relative": 0.000001},
+        "wavelet_detail_mean_bwd": {"absolute": 0.00001, "relative": 0.000001},
+        "wavelet_detail_std_fwd": {"absolute": 0.00001, "relative": 0.000001},
+        "wavelet_detail_std_bwd": {"absolute": 0.00001, "relative": 0.000001}
+      }
+    },
+    "feature_fp": {
+      "required_nonempty": true,
+      "key_fields": ["community_id", "ts", "algorithm_version"],
+      "timestamp_fields": ["ts", "event_time_start_ms", "event_time_end_ms"],
+      "exact_fields": ["feature_set_id", "is_encrypted", "tls_version", "ja3", "ja4", "sni", "sni_hash", "cert_sha256", "cert_is_self_signed", "pubkey_len", "quic_version", "transport_security", "feature_category", "availability", "schema_version", "event_time_start_ms", "event_time_end_ms", "missing_fields", "missing_reason"],
+      "presence_fields": ["raw_traffic_ref"],
+      "cardinality_fields": ["source_event_ids", "evidence_ids"],
+      "tolerances": {
+        "hex_freq": {"absolute": 0.00001, "relative": 0.000001},
+        "hex_ratio": {"absolute": 0.00001, "relative": 0.000001},
+        "entropy_payload": {"absolute": 0.00001, "relative": 0.000001},
+        "chi_square_bfd": {"absolute": 0.00001, "relative": 0.000001}
+      }
+    }
+  },
+  "acceptance": {
+    "max_reported_differences": 200,
+    "forbidden_shortcuts": ["same run_id self-comparison", "count-only comparison", "unbound corpus", "missing route completion receipt", "implicit tolerance"]
+  }
+}

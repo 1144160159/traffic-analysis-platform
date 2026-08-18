@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m01-early-trust-registry-switch-preflight.schema.json",
+  "title": "M01 early-trust four-registry atomic switch blocked preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "revision_id", "source_refs",
+    "current_global_catalogs", "active_baseline", "candidate_projection", "task_transitions",
+    "future_catalogs", "preconditions", "switch_protocol", "validation", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M01_EARLY_TRUST_FOUR_REGISTRY_ATOMIC_SWITCH_PREFLIGHT"},
+    "artifact_status": {"const": "BLOCKED_PRE_SWITCH_PRECONDITIONS"},
+    "revision_id": {"const": "M01-EARLY-TRUST-REGISTRY-SWITCH-PREFLIGHT-V1"},
+    "source_refs": {
+      "type": "array", "minItems": 10, "maxItems": 10, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_ref"}
+    },
+    "current_global_catalogs": {
+      "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/current_catalog"}
+    },
+    "active_baseline": {
+      "type": "object", "additionalProperties": false,
+      "required": ["global_atomic_pr_count", "m01_atomic_pr_count", "global_atomic_id_exact_set_sha256", "m01_atomic_id_exact_set_sha256"],
+      "properties": {
+        "global_atomic_pr_count": {"const": 1289},
+        "m01_atomic_pr_count": {"const": 56},
+        "global_atomic_id_exact_set_sha256": {"$ref": "#/$defs/sha256"},
+        "m01_atomic_id_exact_set_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "candidate_projection": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "removed_active_m01_atomic_pr_ids", "retained_active_m01_atomic_pr_ids",
+        "added_candidate_m01_atomic_pr_ids", "candidate_m01_atomic_pr_ids",
+        "removed_count", "retained_count", "added_count", "candidate_m01_atomic_pr_count",
+        "candidate_global_atomic_pr_count", "candidate_global_atomic_id_exact_set_sha256",
+        "derivation"
+      ],
+      "properties": {
+        "removed_active_m01_atomic_pr_ids": {"type": "array", "minItems": 1, "maxItems": 9, "uniqueItems": true, "items": {"type": "string"}},
+        "retained_active_m01_atomic_pr_ids": {"type": "array", "minItems": 1, "maxItems": 47, "uniqueItems": true, "items": {"type": "string"}},
+        "added_candidate_m01_atomic_pr_ids": {"type": "array", "minItems": 1, "maxItems": 37, "uniqueItems": true, "items": {"type": "string"}},
+        "candidate_m01_atomic_pr_ids": {"type": "array", "minItems": 1, "maxItems": 84, "uniqueItems": true, "items": {"type": "string"}},
+        "removed_count": {"const": 9},
+        "retained_count": {"const": 47},
+        "added_count": {"const": 37},
+        "candidate_m01_atomic_pr_count": {"const": 84},
+        "candidate_global_atomic_pr_count": {"const": 1317},
+        "candidate_global_atomic_id_exact_set_sha256": {"$ref": "#/$defs/sha256"},
+        "derivation": {"const": "1289_ACTIVE_MINUS_9_SUPERSEDED_PLUS_37_NEW_EQUALS_1317_CANDIDATE"}
+      }
+    },
+    "task_transitions": {
+      "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/task_transition"}
+    },
+    "future_catalogs": {
+      "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/future_catalog"}
+    },
+    "preconditions": {
+      "type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/precondition"}
+    },
+    "switch_protocol": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decision", "atomic_steps", "failure_rule", "rollback_rule", "post_switch_execution_state"],
+      "properties": {
+        "decision": {"enum": ["BLOCKED_PRECONDITIONS", "READY_FOR_ATOMIC_SWITCH"]},
+        "atomic_steps": {"type": "array", "minItems": 7, "maxItems": 7, "uniqueItems": true, "items": {"type": "string", "minLength": 12}},
+        "failure_rule": {"const": "ANY_FAILED_PRECONDITION_OR_FOUR_CATALOG_DIVERGENCE_ABORTS_BEFORE_REPLACING_ANY_ACTIVE_FILE"},
+        "rollback_rule": {"const": "RETAIN_ALL_FOUR_ACTIVE_FILES_AND_HASHES_UNCHANGED_UNTIL_ONE_AUTHORIZED_ATOMIC_COMMIT_CAN_REPLACE_THE_EXACT_SET"},
+        "post_switch_execution_state": {"const": "DRAFT_DESIGN_AND_FORMAL_EXECUTION_STILL_BLOCKED_UNTIL_SIGNED_OVERLAY_AND_GATE_EVIDENCE"}
+      }
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "source_hashes_exact", "four_active_catalog_hashes_exact",
+        "four_active_catalog_exact_set_equal", "active_m01_exact_set",
+        "removed_retained_added_partition_exact", "candidate_count_derivation",
+        "candidate_global_exact_set", "task_transition_exact_set", "n010_n015_boundary_exact",
+        "future_catalogs_absent", "candidate_freeze_work_order_blocked", "review_work_orders_blocked", "external_image_work_order_blocked", "premature_switch_rejected",
+        "active_catalogs_unchanged", "mutation_guards"
+      ],
+      "properties": {
+        "schema": {"const": "PASS"},
+        "source_hashes_exact": {"const": "PASS"},
+        "four_active_catalog_hashes_exact": {"const": "PASS"},
+        "four_active_catalog_exact_set_equal": {"const": "PASS_1289"},
+        "active_m01_exact_set": {"const": "PASS_56"},
+        "removed_retained_added_partition_exact": {"const": "PASS_9_47_37"},
+        "candidate_count_derivation": {"const": "PASS_1317"},
+        "candidate_global_exact_set": {"const": "PASS"},
+        "task_transition_exact_set": {"const": "PASS_N003_N010_N015"},
+        "n010_n015_boundary_exact": {"const": "PASS_FOUNDATION_VS_CALLER_MIGRATION"},
+        "future_catalogs_absent": {"const": true},
+        "candidate_freeze_work_order_blocked": {"const": "PASS_NO_CANDIDATE_PAIR"},
+        "review_work_orders_blocked": {"const": "PASS_36_BLOCKED"},
+        "external_image_work_order_blocked": {"const": "PASS_NO_RECEIPT"},
+        "premature_switch_rejected": {"const": true},
+        "active_catalogs_unchanged": {"const": true},
+        "mutation_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "source_hash_drift", "active_catalog_hash_drift", "active_exact_set_drift",
+            "removed_omission", "retained_drift", "added_omission", "candidate_hash_drift",
+            "task_transition_omission", "n010_boundary_drift", "future_catalog_false_created", "candidate_freeze_false_ready",
+            "review_work_order_hash_drift", "precondition_false_pass", "switch_false_ready"
+          ],
+          "properties": {
+            "source_hash_drift": {"const": "PASS"},
+            "active_catalog_hash_drift": {"const": "PASS"},
+            "active_exact_set_drift": {"const": "PASS"},
+            "removed_omission": {"const": "PASS"},
+            "retained_drift": {"const": "PASS"},
+            "added_omission": {"const": "PASS"},
+            "candidate_hash_drift": {"const": "PASS"},
+            "task_transition_omission": {"const": "PASS"},
+            "n010_boundary_drift": {"const": "PASS"},
+            "future_catalog_false_created": {"const": "PASS"},
+            "candidate_freeze_false_ready": {"const": "PASS"},
+            "review_work_order_hash_drift": {"const": "PASS"},
+            "precondition_false_pass": {"const": "PASS"},
+            "switch_false_ready": {"const": "PASS"}
+          }
+        }
+      }
+    },
+    "proof_ceiling": {
+      "const": "READ_ONLY_SWITCH_SET_MATH_AND_BLOCKER_PREFLIGHT_ONLY_NOT_FUTURE_REGISTRY_MATERIALIZATION_ATOMIC_SWITCH_CANDIDATE_IDENTITY_REVIEW_SIGNATURE_IMPLEMENTATION_TEST_EXECUTION_AUTHORIZATION_OR_ACCEPTANCE"
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "path", "sha256"],
+      "properties": {
+        "role": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "current_catalog": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "path", "sha256", "atomic_pr_count", "m01_atomic_pr_count", "atomic_id_exact_set_sha256", "status"],
+      "properties": {
+        "role": {"enum": ["TASK_REGISTRY", "CLAIM_CATALOG", "PR_DESIGN_CATALOG", "EXECUTION_OVERLAY"]},
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "atomic_pr_count": {"const": 1289},
+        "m01_atomic_pr_count": {"const": 56},
+        "atomic_id_exact_set_sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"const": "ACTIVE_UNCHANGED"}
+      }
+    },
+    "task_transition": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "task_id", "transition_kind", "responsibility_boundary", "dependency_task_ids",
+        "member_atomic_pr_ids", "terminal_atomic_pr_id", "terminal_direct_dependency_ids", "status"
+      ],
+      "properties": {
+        "task_id": {"enum": ["T1-M01-N003", "T1-M01-N010", "T1-M01-N015"]},
+        "transition_kind": {"enum": ["REVISE_EXISTING", "ADD_NEW"]},
+        "responsibility_boundary": {"type": "string", "minLength": 12},
+        "dependency_task_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "member_atomic_pr_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string"}},
+        "terminal_atomic_pr_id": {"type": "string"},
+        "terminal_direct_dependency_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "status": {"const": "PLANNED_BLOCKED_NOT_ACTIVE"}
+      }
+    },
+    "future_catalog": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "expected_path", "status", "expected_atomic_pr_count", "expected_atomic_id_exact_set_sha256"],
+      "properties": {
+        "role": {"enum": ["TASK_REGISTRY", "CLAIM_CATALOG", "PR_DESIGN_CATALOG", "EXECUTION_OVERLAY"]},
+        "expected_path": {"type": "string", "minLength": 3},
+        "status": {"enum": ["NOT_CREATED", "CREATED"]},
+        "expected_atomic_pr_count": {"const": 1317},
+        "expected_atomic_id_exact_set_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "precondition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["check_id", "description", "status", "evidence", "blocking_reason"],
+      "properties": {
+        "check_id": {"type": "string", "pattern": "^M01-SW-C0[1-8]$"},
+        "description": {"type": "string", "minLength": 8},
+        "status": {"enum": ["PASS_STATIC", "BLOCKED"]},
+        "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+        "blocking_reason": {"type": ["string", "null"], "minLength": 8}
+      }
+    }
+  }
+}

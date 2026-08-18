@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/atomic-pr-plan-manifest.schema.json",
+  "title": "Atomic PR immutable plan manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "plan_id", "plan_kind", "status", "atomic_pr_id",
+    "candidate_manifest_sha256", "profile_id", "owner", "reviewers", "approvers", "content"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "plan_id": {"type": "string", "minLength": 1},
+    "plan_kind": {"enum": ["TEST", "EVIDENCE", "ROLLBACK", "OBSERVATION"]},
+    "status": {"enum": ["DRAFT", "APPROVED"]},
+    "atomic_pr_id": {"type": "string", "pattern": "^T1-M[0-9]{2}(?:-R[0-9]{2})?-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "owner": {"type": "string", "minLength": 1},
+    "reviewers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "approvers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commands", "fixtures", "oracles", "negative_cases", "required_gates",
+        "environment_constraints", "output_artifacts", "triggers", "steps",
+        "authority_data_handling", "derived_data_handling", "inflight_handling",
+        "offset_savepoint_object_handling", "recovery_oracles", "forward_fix_only",
+        "signals", "queries", "window", "thresholds", "stop_action",
+        "rollback_plan_id", "oncall_owner", "proof_ceiling"
+      ],
+      "properties": {
+        "commands": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "fixtures": {"type": "array", "items": {"$ref": "#/$defs/fixture"}, "uniqueItems": true},
+        "oracles": {"type": "array", "items": {"$ref": "#/$defs/oracle"}, "uniqueItems": true},
+        "negative_cases": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "required_gates": {"type": "array", "items": {"type": "string", "pattern": "^G[0-8]$"}, "uniqueItems": true},
+        "environment_constraints": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "output_artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "triggers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "steps": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "authority_data_handling": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "derived_data_handling": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "inflight_handling": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "offset_savepoint_object_handling": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "recovery_oracles": {"type": "array", "items": {"$ref": "#/$defs/oracle"}, "uniqueItems": true},
+        "forward_fix_only": {"type": "boolean"},
+        "signals": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "queries": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "window": {"type": ["string", "null"]},
+        "thresholds": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "stop_action": {"type": ["string", "null"]},
+        "rollback_plan_id": {"type": ["string", "null"]},
+        "oncall_owner": {"type": ["string", "null"]},
+        "proof_ceiling": {"enum": ["DESIGN_ONLY", "G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8"]}
+      }
+    }
+  },
+  "$defs": {
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_id", "path", "generator", "content_sha256", "schema_ref", "tenant",
+        "time_properties", "fault_properties", "oracle_ids", "proof_ceiling"
+      ],
+      "properties": {
+        "fixture_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "generator": {"type": ["string", "null"]},
+        "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "schema_ref": {"type": ["string", "null"]},
+        "tenant": {"type": "string", "minLength": 1},
+        "time_properties": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "fault_properties": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "oracle_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "proof_ceiling": {"enum": ["G0", "G1"]}
+      }
+    },
+    "oracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["oracle_id", "kind", "query_or_assertion", "expected_result"],
+      "properties": {
+        "oracle_id": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["CODE", "EVENT", "PG", "KAFKA", "CLICKHOUSE", "OPENSEARCH", "NEBULA", "MINIO", "REDIS", "API", "UI", "AUDIT", "RECOVERY"]},
+        "query_or_assertion": {"type": "string", "minLength": 1},
+        "expected_result": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

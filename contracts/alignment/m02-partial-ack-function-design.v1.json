@@ -1,0 +1,425 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M02_PARTIAL_ACK_FUNCTION_DESIGN",
+  "artifact_status": "CANDIDATE_BOUND_STATIC_DESIGN_NOT_FUNCTION_REVIEWED",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "source_blob_sha256": {
+      "proto/traffic/v1/ingest.proto": "c22c0b3cca0d254abeae81018c66817d9edd8dbfd6534a0f0a2e6802efbecd17",
+      "rust/probe-agent/probe-agent/src/sender/retry.rs": "59766aaab3d1d91a7b2719c8a8a3c1ee46aa8788ba5c84177ca200abb3900e13",
+      "rust/probe-agent/probe-agent/src/sender/grpc.rs": "45168c0b1f8bd96dac2c2b77a8b64fb586f4eb47f1e956d7b09a7fa786f658b3",
+      "go/control-plane/internal/ingest/queue/producer.go": "b7ad3551586c3e9bd62a5548463b68b14aafafbd3e9ca5049921b9afd068ad72",
+      "go/control-plane/internal/ingest/server/handler.go": "4f7d6edb8d25598e10419fc180d92d5a7abb5a9fad3a5f2fdf890dcc16baebdc",
+      "go/control-plane/internal/ingest/dedup/lru_dedup.go": "62eda679a853f012bb89d69e8b331954e8a820c892c7d2a75394c6fd10b5b032"
+    }
+  },
+  "preview_catalog_ref": {
+    "path": "contracts/alignment/m02-code-direct-leaf-catalog.v1.json",
+    "sha256": "29b7584696440bb70a8203f4ecbe4ae6574f1a785743562b94e87efbde73a703"
+  },
+  "leaf_bindings": [
+    {
+      "leaf_id": "M02-N001-L05",
+      "atomic_pr_id": "T1-M02-P105-CTR-n001-l05",
+      "role": "PROTO_DISPOSITION_CONTRACT",
+      "locator": "proto/traffic/v1/ingest.proto#traffic.v1.UploadFlowsResponse"
+    },
+    {
+      "leaf_id": "M02-N007-L03",
+      "atomic_pr_id": "T1-M02-P202-WRT-n007-l03",
+      "role": "RUST_WAL",
+      "locator": "rust/probe-agent/probe-agent/src/sender/retry.rs#LocalCache::save"
+    },
+    {
+      "leaf_id": "M02-N007-L04",
+      "atomic_pr_id": "T1-M02-P203-WRT-n007-l04",
+      "role": "RUST_BATCH_SEND",
+      "locator": "rust/probe-agent/probe-agent/src/sender/grpc.rs#GrpcSender::send_batch_with_window"
+    },
+    {
+      "leaf_id": "M02-N007-L05",
+      "atomic_pr_id": "T1-M02-P204-WRT-n007-l05",
+      "role": "RUST_STREAM_SEND",
+      "locator": "rust/probe-agent/probe-agent/src/sender/grpc.rs#GrpcSender::send_stream"
+    },
+    {
+      "leaf_id": "M02-N007-L06",
+      "atomic_pr_id": "T1-M02-P205-WRT-n007-l06",
+      "role": "RUST_RETRY",
+      "locator": "rust/probe-agent/probe-agent/src/sender/grpc.rs#GrpcSender::retry_cached"
+    },
+    {
+      "leaf_id": "M02-N008-L03",
+      "atomic_pr_id": "T1-M02-P212-WRT-n008-l03",
+      "role": "GO_KAFKA_WRITER",
+      "locator": "go/control-plane/internal/ingest/queue/producer.go#Producer.WriteFlowEvents"
+    },
+    {
+      "leaf_id": "M02-N008-L04",
+      "atomic_pr_id": "T1-M02-P213-WRT-n008-l04",
+      "role": "GO_INGEST_HANDLER",
+      "locator": "go/control-plane/internal/ingest/server/handler.go#IngestHandler.UploadFlows"
+    }
+  ],
+  "current_static_findings": [
+    {
+      "finding_id": "M02-ACK-P0-01",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/sender/grpc.rs",
+      "symbol": "GrpcSender::retry_cached",
+      "evidence": "RPC返回Ok后先删除整个LocalCache条目，未检查response.rejected或rejected_ids",
+      "consequence": "缓存重放中的部分拒绝事件被永久删除，无法按原event_id恢复",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-ACK-P0-02",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/sender/grpc.rs",
+      "symbol": "GrpcSender::send_batch_with_window",
+      "evidence": "RPC返回Ok时events_sent增加整个batch_size，rejected只计指标且不回写WAL",
+      "consequence": "首次发送的partial ACK被当作整批成功，拒绝项不会进入重试或隔离",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-ACK-P0-03",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/sender/grpc.rs",
+      "symbol": "GrpcSender::send_batch_with_window",
+      "evidence": "LocalCache仅在连接或RPC失败后写入，网络发送前没有durable write-ahead barrier",
+      "consequence": "取出batch到失败缓存之间的进程崩溃窗口可丢整批Flow事件",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-ACK-P0-04",
+      "severity": "P0",
+      "path": "go/control-plane/internal/ingest/queue/producer.go",
+      "symbol": "Producer.WriteFlowEvents",
+      "evidence": "proto.Marshal失败只continue；只要函数最终返回nil，上层无法得知被跳过的输入位置",
+      "consequence": "未进入Kafka的事件仍可能被Handler计为accepted并提交dedup标记",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-ACK-P0-05",
+      "severity": "P0",
+      "path": "go/control-plane/internal/ingest/server/handler.go",
+      "symbol": "IngestHandler.UploadFlows",
+      "evidence": "Kafka失败被编码为UploadFlowsResponse且RPC返回nil error；非空header tenant/probe未与认证上下文比较",
+      "consequence": "旧Agent可能删除整批，且认证为A的探针可提交带B身份的Flow header",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-ACK-P0-06",
+      "severity": "P0",
+      "path": "go/control-plane/internal/ingest/dedup/lru_dedup.go",
+      "symbol": "Deduplicator.IsDuplicate",
+      "evidence": "dedup key仅使用event_id，IsDuplicate与MarkSeenBatch分离且Redis Exists/Set不是原子claim",
+      "consequence": "跨租户同event_id可误去重，同批或并发请求可同时miss并重复写Kafka",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    }
+  ],
+  "dispositions": [
+    {"name": "KAFKA_ACKED", "terminal": true, "client_action": "delete the exact WAL item", "counts_as_accepted": true, "dedup_commit_allowed": true},
+    {"name": "DUPLICATE_COMMITTED", "terminal": true, "client_action": "delete the exact WAL item without republishing", "counts_as_accepted": true, "dedup_commit_allowed": true},
+    {"name": "REJECTED_INVALID", "terminal": true, "client_action": "move the exact item to typed quarantine with reason code", "counts_as_accepted": false, "dedup_commit_allowed": false},
+    {"name": "RETRYABLE", "terminal": false, "client_action": "retain event identity and schedule bounded retry", "counts_as_accepted": false, "dedup_commit_allowed": false},
+    {"name": "OUTCOME_UNKNOWN", "terminal": false, "client_action": "release lease and retry the same logical event identity", "counts_as_accepted": false, "dedup_commit_allowed": false}
+  ],
+  "wal_state_machine": {
+    "states": ["ABSENT", "DURABLE_READY", "CLAIMED", "PARTIALLY_ACKED", "TERMINAL", "QUARANTINED", "RETRY_WAIT"],
+    "transitions": [
+      {"from": "ABSENT", "event": "append_batch_flush_success", "to": "DURABLE_READY", "durability_barrier": "sled transaction and flush complete before scheduling"},
+      {"from": "DURABLE_READY", "event": "claim_with_lease", "to": "CLAIMED", "durability_barrier": "claim revision and lease stored atomically"},
+      {"from": "CLAIMED", "event": "mixed_item_dispositions", "to": "PARTIALLY_ACKED", "durability_barrier": "one transaction removes terminal items and retains nonterminal items"},
+      {"from": "CLAIMED", "event": "all_items_acked_or_duplicate", "to": "TERMINAL", "durability_barrier": "batch index removed only after item exact-set is empty"},
+      {"from": "CLAIMED", "event": "permanent_invalid_items", "to": "QUARANTINED", "durability_barrier": "reason-coded quarantine record flushed before WAL deletion"},
+      {"from": "CLAIMED", "event": "retryable_or_transport_unknown", "to": "RETRY_WAIT", "durability_barrier": "original event bytes and identity remain durable"},
+      {"from": "RETRY_WAIT", "event": "backoff_elapsed", "to": "DURABLE_READY", "durability_barrier": "attempt budget and next-attempt time persist"},
+      {"from": "PARTIALLY_ACKED", "event": "remaining_items_released", "to": "RETRY_WAIT", "durability_barrier": "accepted items cannot reappear after crash"}
+    ],
+    "invariants": [
+      "no network send occurs before every item has a durable WAL identity",
+      "only KAFKA_ACKED and DUPLICATE_COMMITTED count as accepted terminal success",
+      "an ACK response must exactly partition the submitted event identity set with no missing duplicate or foreign IDs",
+      "WAL item deletion and retained-item rewrite are one atomic transaction followed by flush",
+      "transport timeout or cancellation is OUTCOME_UNKNOWN rather than deterministic rejection",
+      "dedup identity is tenant_id plus probe_id plus event_id and is committed only after Kafka ACK"
+    ]
+  },
+  "function_contracts": [
+    {
+      "contract_id": "FC-M02-ACK-LocalCacheSave",
+      "leaf_id": "M02-N007-L03",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/sender/retry.rs",
+      "qualified_symbol": "LocalCache::save",
+      "change_kind": "modify",
+      "signature_before": "pub fn save(&self, batch: &[FlowEvent]) -> Result<()>",
+      "signature_after": "pub fn save(&self, batch: &[FlowEvent]) -> Result<CachedBatchRef>",
+      "responsibility": "在任何网络发送前原子持久化batch及逐event identity并返回稳定WAL引用",
+      "inputs": ["batch: &[FlowEvent]"],
+      "outputs": ["Result<CachedBatchRef>"],
+      "body_steps": [
+        "B01 validate non-empty batch and unique non-empty event IDs",
+        "B02 compute canonical batch UUID and per-item payload hashes without wall-clock key identity",
+        "B03 start sled transaction and enforce atomic byte and item capacity limits",
+        "B04 insert batch metadata item bytes retry revision and state DURABLE_READY",
+        "B05 flush durability and return CachedBatchRef only after success"
+      ],
+      "error_branches": ["empty or duplicate event identity returns deterministic invalid input", "capacity or disk failure returns backpressure and schedules nothing", "transaction or flush failure leaves no visible sendable ref"],
+      "atomicity": "batch metadata and all item records become visible together; no partial batch is claimable",
+      "idempotency": "the same explicit batch ID and same item hashes returns the existing ref; same ID with different bytes conflicts",
+      "callers": ["GrpcSender::send_batch_with_window", "GrpcSender::send_stream"],
+      "callees": ["encode_batch", "sled::Tree::transaction", "sled::Db::flush"],
+      "tests": ["TC-M02-ACK-01", "TC-M02-ACK-02", "TC-M02-ACK-03", "TC-M02-ACK-10"],
+      "rollback": "disable WAL producer scheduling, retain every durable entry, and restore the old reader only after a compatibility scanner proves no new-format pending entries"
+    },
+    {
+      "contract_id": "FC-M02-ACK-LocalCacheApplyAck",
+      "leaf_id": "M02-N007-L03",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/sender/retry.rs",
+      "qualified_symbol": "LocalCache::apply_ack",
+      "change_kind": "new_companion",
+      "signature_before": null,
+      "signature_after": "pub fn apply_ack(&self, batch_ref: &CachedBatchRef, ack: &AckPartition) -> Result<AckApplication>",
+      "responsibility": "验证ACK exact-set并原子删除终态item、保留retryable或unknown item、持久化quarantine",
+      "inputs": ["batch_ref: &CachedBatchRef", "ack: &AckPartition"],
+      "outputs": ["Result<AckApplication>"],
+      "body_steps": [
+        "B01 load claimed batch revision and item identity exact-set",
+        "B02 reject missing duplicate foreign or revision-mismatched ACK identities",
+        "B03 partition terminal accepted terminal invalid retryable and unknown items",
+        "B04 transactionally write quarantine remove terminal items and rewrite remaining batch",
+        "B05 flush and return counts plus next state"
+      ],
+      "error_branches": ["ACK exact-set mismatch retains the full claimed batch and emits protocol violation", "flush failure leaves prior durable state replayable", "invalid reason without stable code rejects the ACK application"],
+      "atomicity": "accepted deletion quarantine creation and rejected-item rewrite commit in one sled transaction",
+      "idempotency": "reapplying the same response revision yields the stored AckApplication without deleting additional items",
+      "callers": ["GrpcSender::send_batch_with_window", "GrpcSender::retry_cached", "GrpcSender::send_stream"],
+      "callees": ["LocalCache::load_claimed", "sled::Tree::transaction", "sled::Db::flush"],
+      "tests": ["TC-M02-ACK-04", "TC-M02-ACK-05", "TC-M02-ACK-06", "TC-M02-ACK-07"],
+      "rollback": "stop applying new ACKs and preserve the WAL; never restore whole-batch remove while any mixed-disposition entry exists"
+    },
+    {
+      "contract_id": "FC-M02-ACK-SendBatch",
+      "leaf_id": "M02-N007-L04",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/sender/grpc.rs",
+      "qualified_symbol": "GrpcSender::send_batch_with_window",
+      "change_kind": "modify",
+      "signature_before": "async fn send_batch_with_window(&self, batch: Vec<FlowEvent>)",
+      "signature_after": "async fn send_batch_with_window(&self, batch: Vec<FlowEvent>)",
+      "responsibility": "先持久化再有界claim发送，并仅按逐item disposition推进WAL与指标",
+      "inputs": ["batch: Vec<FlowEvent>"],
+      "outputs": ["() with every item terminal or durable pending"],
+      "body_steps": [
+        "B01 persist batch through LocalCache::save before acquiring a network permit",
+        "B02 claim the durable ref with lease and acquire bounded in-flight permit",
+        "B03 connect and send only the claimed immutable bytes",
+        "B04 classify response exact-set and call LocalCache::apply_ack",
+        "B05 count only terminal dispositions and release retryable or unknown claims"
+      ],
+      "error_branches": ["WAL failure applies upstream backpressure and performs no send", "connect or RPC failure releases the claim without duplicating the entry", "protocol-invalid ACK retains the whole claim and disconnects"],
+      "atomicity": "network I/O is outside sled transaction; WAL claim and ACK application are separate durable state transitions",
+      "idempotency": "retries reuse the same event IDs and payload hashes; Gateway duplicate committed is terminal success",
+      "callers": ["GrpcSender::run"],
+      "callees": ["LocalCache::save", "LocalCache::claim", "GrpcSender::do_send", "LocalCache::apply_ack"],
+      "tests": ["TC-M02-ACK-01", "TC-M02-ACK-04", "TC-M02-ACK-08", "TC-M02-ACK-09"],
+      "rollback": "stop intake, keep all durable refs, drain old-compatible claimed entries, then restore the previous sender without deleting new-format WAL data"
+    },
+    {
+      "contract_id": "FC-M02-ACK-SendStream",
+      "leaf_id": "M02-N007-L05",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/sender/grpc.rs",
+      "qualified_symbol": "GrpcSender::send_stream",
+      "change_kind": "modify",
+      "signature_before": "async fn send_stream(&self, events: Vec<FlowEvent>) -> Result<(u32, u32)>",
+      "signature_after": "async fn send_stream(&self, claimed: ClaimedBatch) -> Result<AckApplication>",
+      "responsibility": "对已持久化item建立stream并按每个响应identity精确应用ACK，不以流结束代替终态",
+      "inputs": ["claimed: ClaimedBatch"],
+      "outputs": ["Result<AckApplication>"],
+      "body_steps": [
+        "B01 verify claim lease revision and bounded item count",
+        "B02 build stream from immutable claimed event bytes",
+        "B03 collect one typed disposition per submitted event identity",
+        "B04 treat stream interruption and missing responses as OUTCOME_UNKNOWN",
+        "B05 apply exact-set ACK transaction and return terminal pending counts"
+      ],
+      "error_branches": ["foreign or duplicate response identity is protocol violation", "stream interruption retains every nonterminal item", "deadline expiration releases claim as outcome unknown"],
+      "atomicity": "each remote response is buffered until the full submitted identity set can be validated and applied atomically",
+      "idempotency": "accepted and duplicate committed items cannot reappear after ACK transaction flush",
+      "callers": ["GrpcSender::send_batch_with_window", "GrpcSender::retry_cached"],
+      "callees": ["IngestServiceClient::stream_flows", "LocalCache::apply_ack"],
+      "tests": ["TC-M02-ACK-04", "TC-M02-ACK-05", "TC-M02-ACK-08"],
+      "rollback": "disable streaming and route durable refs through the compatible unary detailed-ACK path; preserve all nonterminal WAL entries"
+    },
+    {
+      "contract_id": "FC-M02-ACK-RetryCached",
+      "leaf_id": "M02-N007-L06",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/sender/grpc.rs",
+      "qualified_symbol": "GrpcSender::retry_cached",
+      "change_kind": "modify",
+      "signature_before": "async fn retry_cached(&self)",
+      "signature_after": "async fn retry_cached(&self)",
+      "responsibility": "按稳定顺序和attempt预算claim durable refs，应用逐item ACK，绝不因RPC Ok删除整批",
+      "inputs": ["self.state.local_cache pending inventory", "retry budget", "shutdown deadline"],
+      "outputs": ["durable WAL state transitions and bounded metrics"],
+      "body_steps": [
+        "B01 enumerate eligible durable refs in stable order with bounded limit",
+        "B02 claim one ref with lease revision and check cancellation",
+        "B03 send claimed bytes through the selected unary or stream path",
+        "B04 apply typed ACK or release retryable and unknown items",
+        "B05 move exhausted permanent failures to durable quarantine and continue healthy refs"
+      ],
+      "error_branches": ["corrupt entry is quarantined without blocking later healthy entries", "transport error releases the current claim and disconnects", "shutdown keeps every unfinished item durable"],
+      "atomicity": "each claim and ACK application is independently durable; retry loop owns no cross-entry transaction",
+      "idempotency": "attempts never manufacture a new event ID or batch identity and never resend terminal items",
+      "callers": ["GrpcSender::run", "GrpcSender::drain"],
+      "callees": ["LocalCache::claim_pending", "GrpcSender::do_send", "LocalCache::apply_ack", "LocalCache::release_claim"],
+      "tests": ["TC-M02-ACK-04", "TC-M02-ACK-06", "TC-M02-ACK-09", "TC-M02-ACK-10"],
+      "rollback": "stop retry worker, leave claims to expire into durable ready state, and do not run the old whole-batch remove path"
+    },
+    {
+      "contract_id": "FC-M02-ACK-WriteFlowEvents",
+      "leaf_id": "M02-N008-L03",
+      "language": "go",
+      "path": "go/control-plane/internal/ingest/queue/producer.go",
+      "qualified_symbol": "queue.(*Producer).WriteFlowEvents",
+      "change_kind": "modify",
+      "signature_before": "func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) error",
+      "signature_after": "func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) (BatchWriteResult, error)",
+      "responsibility": "逐输入位置编码并保留Kafka per-message结果，只将明确broker ACK项标为KAFKA_ACKED",
+      "inputs": ["ctx context.Context", "events []*pb.FlowEvent"],
+      "outputs": ["BatchWriteResult", "error"],
+      "body_steps": [
+        "B01 allocate one pending result slot per input position",
+        "B02 validate header identity and encode each event without silent continue",
+        "B03 build stable tenant community key and versioned headers for encodable items",
+        "B04 synchronously WriteMessages with RequireAll and preserve kafka.WriteErrors by input position",
+        "B05 classify nil per-item result as KAFKA_ACKED deterministic failure as retryable and cancel ambiguity as OUTCOME_UNKNOWN"
+      ],
+      "error_branches": ["marshal failure becomes REJECTED_INVALID for the exact input position", "kafka.WriteErrors preserves individual ACK and failure outcomes", "deadline or cancellation without broker certainty becomes OUTCOME_UNKNOWN"],
+      "atomicity": "Kafka partitions cannot be one application transaction; the result exact-set records each independently acknowledged item",
+      "idempotency": "message identity and key are stable across retry; no claim of producer idempotence is made without configured producer sequence support",
+      "callers": ["IngestHandler.UploadFlows", "IngestHandler.StreamFlows"],
+      "callees": ["proto.Marshal", "common.MultiTopicProducer.SendBatch", "kafka.Writer.WriteMessages"],
+      "tests": ["TC-M02-ACK-06", "TC-M02-ACK-07", "TC-M02-ACK-11", "TC-M02-ACK-12"],
+      "rollback": "keep the detailed writer default-off until Handler and Agent understand dispositions; restore legacy wrapper only for traffic that remains behind the old producer flag"
+    },
+    {
+      "contract_id": "FC-M02-ACK-UploadFlows",
+      "leaf_id": "M02-N008-L04",
+      "language": "go",
+      "path": "go/control-plane/internal/ingest/server/handler.go",
+      "qualified_symbol": "server.(*IngestHandler).UploadFlows",
+      "change_kind": "modify",
+      "signature_before": "func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequest) (*pb.UploadFlowsResponse, error)",
+      "signature_after": "func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequest) (*pb.UploadFlowsResponse, error)",
+      "responsibility": "认证绑定identity、生成逐item守恒响应，并只对Kafka ACK或已提交重复项返回accepted",
+      "inputs": ["ctx authenticated tenant and probe", "req *pb.UploadFlowsRequest"],
+      "outputs": ["*pb.UploadFlowsResponse", "error"],
+      "body_steps": [
+        "B01 require authenticated tenant and probe and reject oversized or empty input",
+        "B02 bind every nonempty header tenant probe to authenticated identity and reject any mismatch before Kafka",
+        "B03 validate item fields and atomically claim tenant probe event dedup identities",
+        "B04 call Producer.WriteFlowEvents and merge validation duplicate ACK retryable and unknown results by input index",
+        "B05 commit dedup only for KAFKA_ACKED release retryable claims and emit conservation counters",
+        "B06 return non-OK RPC during compatibility if legacy Agent cannot safely process any RETRYABLE or OUTCOME_UNKNOWN item"
+      ],
+      "error_branches": ["identity mismatch returns PermissionDenied with zero producer calls", "Kafka transient or unknown returns a retry-preserving status to legacy clients", "dedup projection failure after Kafka ACK records repair debt but cannot relabel ACK as failure"],
+      "atomicity": "Kafka ACK is the authority barrier; dedup is a post-ACK projection with repair debt, not a fake distributed transaction",
+      "idempotency": "dedup key is tenant plus probe plus event and duplicate committed is a terminal accepted disposition",
+      "callers": ["traffic.v1.IngestService.UploadFlows"],
+      "callees": ["bindFlowEventIdentity", "DedupStore.ClaimBatch", "Producer.WriteFlowEvents", "DedupStore.CommitBatch", "DedupStore.ReleaseBatch"],
+      "tests": ["TC-M02-ACK-05", "TC-M02-ACK-07", "TC-M02-ACK-11", "TC-M02-ACK-13", "TC-M02-ACK-14"],
+      "rollback": "disable detailed disposition response before rolling back Handler; drain or preserve pending claims and never clear dedup or Kafka facts"
+    },
+    {
+      "contract_id": "FC-M02-ACK-BindFlowIdentity",
+      "leaf_id": "M02-N008-L04",
+      "language": "go",
+      "path": "go/control-plane/internal/ingest/server/handler.go",
+      "qualified_symbol": "server.bindFlowEventIdentity",
+      "change_kind": "new_companion",
+      "signature_before": null,
+      "signature_after": "func bindFlowEventIdentity(event *pb.FlowEvent, tenantID string, probeID string) error",
+      "responsibility": "把Flow header identity与认证tenant/probe精确绑定并在冲突时fail closed",
+      "inputs": ["event *pb.FlowEvent", "tenantID string", "probeID string"],
+      "outputs": ["error"],
+      "body_steps": [
+        "B01 reject nil event and create an empty header only for nonnil input",
+        "B02 bind empty tenant and probe fields from authenticated context",
+        "B03 reject any nonempty tenant or probe mismatch without mutating to a third value",
+        "B04 return nil with exact authenticated identity"
+      ],
+      "error_branches": ["nil event returns invalid request", "tenant mismatch returns permission denied", "probe mismatch returns permission denied"],
+      "atomicity": "pure in-memory validation and binding occurs before any producer or dedup side effect",
+      "idempotency": "repeated binding with the same authenticated identity is deterministic",
+      "callers": ["IngestHandler.UploadFlows", "IngestHandler.StreamFlows"],
+      "callees": ["no external calls"],
+      "tests": ["TC-M02-ACK-13", "TC-M02-ACK-14"],
+      "rollback": "do not remove the identity check while detailed ingestion is active; rollback only with an equivalent interceptor-enforced binding"
+    }
+  ],
+  "sequencing": [
+    {"order": 1, "leaf_id": "M02-N001-L05", "precondition": "M01 Proto compatibility baseline", "result": "additive per-item disposition and reason contract", "activation": "wire-compatible and not yet used for producer enablement"},
+    {"order": 2, "leaf_id": "M02-N007-L03", "precondition": "disposition vocabulary frozen", "result": "durable Flow WAL and atomic ACK application", "activation": "writer present but network producer remains off"},
+    {"order": 3, "leaf_id": "M02-N008-L03", "precondition": "N009 flow consumer readiness and Proto contract", "result": "per-item Kafka ACK result without silent encode drop", "activation": "Gateway detailed writer default off"},
+    {"order": 4, "leaf_id": "M02-N008-L04", "precondition": "detailed writer and authenticated identity contract", "result": "conservative UploadFlows response with legacy-client non-OK fallback", "activation": "Gateway route canary after consumer receipt"},
+    {"order": 5, "leaf_id": "M02-N007-L04", "precondition": "Gateway unary detailed response ready", "result": "persist-before-send batch path", "activation": "scoped Agent producer canary only"},
+    {"order": 6, "leaf_id": "M02-N007-L05", "precondition": "Gateway stream detailed response ready", "result": "per-event durable streaming ACK path", "activation": "streaming remains default off until exact matrix passes"},
+    {"order": 7, "leaf_id": "M02-N007-L06", "precondition": "unary stream and WAL ACK application compiled", "result": "bounded restart recovery without whole-batch removal", "activation": "startup recovery before accepting new Flow batches"}
+  ],
+  "negative_tests": [
+    {"case_id": "TC-M02-ACK-01", "kind": "fault", "injection": "crash after batch receive before WAL flush", "oracle": "no sendable ref exists and upstream backpressure prevents accepted accounting", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-02", "kind": "fault", "injection": "crash after WAL flush before RPC", "oracle": "restart claims the same durable event identities exactly once", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-03", "kind": "concurrency", "injection": "32 concurrent saves under identical simulated time", "oracle": "no key overwrite and byte plus item capacity remains atomic", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-04", "kind": "replay", "injection": "mixed ACK accepted duplicate invalid retryable", "oracle": "accepted and duplicate disappear invalid is quarantined and only retryable remains", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-05", "kind": "negative", "injection": "ACK contains missing duplicate or foreign event ID", "oracle": "entire ACK application is rejected and all claimed items remain durable", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-06", "kind": "fault", "injection": "Kafka per-message results are nil error and retryable error", "oracle": "only nil item is KAFKA_ACKED and only its dedup identity may commit", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-07", "kind": "fault", "injection": "context deadline after broker outcome becomes uncertain", "oracle": "item is OUTCOME_UNKNOWN and is neither dedup committed nor deterministically rejected", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-08", "kind": "fault", "injection": "stream terminates after a strict subset of responses", "oracle": "responded terminal items persist and every missing identity remains outcome unknown", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-09", "kind": "fault", "injection": "shutdown with collector channel in-flight send and WAL pending", "oracle": "every event is terminal or durable pending and no orphan task remains", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-10", "kind": "fault", "injection": "first WAL entry is corrupt and later entry is healthy", "oracle": "corrupt entry is quarantined and healthy entry still retries", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-11", "kind": "negative", "injection": "proto encode failure for one input item", "oracle": "that input is REJECTED_INVALID and conservation still covers every request position", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-12", "kind": "property", "injection": "arbitrary valid invalid duplicate retryable result vectors", "oracle": "accepted plus rejected plus retryable equals request event count with no duplicate index", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-13", "kind": "negative", "injection": "authenticated tenant A with header tenant B", "oracle": "PermissionDenied and producer plus dedup call counts remain zero", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-14", "kind": "compatibility", "injection": "legacy Agent receives transient or outcome unknown result", "oracle": "Gateway returns non-OK RPC so the legacy Agent preserves the entire durable batch", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-ACK-15", "kind": "concurrency", "injection": "two tenants reuse one event ID and two goroutines claim the same composite key", "oracle": "tenants do not collide and at most one same-tenant claim reaches Kafka", "execution_status": "NOT_RUN"}
+  ],
+  "rollback": {
+    "entrypoint": "stop Agent producer intake before disabling detailed Gateway responses",
+    "steps": [
+      "stop new Flow intake and wait until every in-flight item is terminal or represented by a durable WAL ref",
+      "disable stream producer then batch producer while retaining the detailed Gateway consumer and response compatibility path",
+      "reconcile WAL item identities against Kafka and dedup receipts without deleting unknown or retryable data",
+      "restore the prior Agent and Gateway versions only for old-format entries and keep new-format WAL behind a read-compatible recovery tool",
+      "record rollback and post-rollback conservation results without overwriting failed evidence"
+    ],
+    "durable_data_policy": "never clear WAL dedup Kafka offsets DLQ or immutable evidence during rollback; use replay quarantine or forward reconciliation",
+    "irreversible_boundary": "a broker-acknowledged event cannot be deleted or relabelled failed; it can only be deduplicated or projected forward"
+  },
+  "claims": {
+    "allowed": "candidate-bound static P0 analysis and function-level target design exist for the M02 Flow WAL and partial ACK slice",
+    "forbidden": [
+      "FUNCTION_DESIGN_REVIEWED",
+      "IMPLEMENTED",
+      "TESTED",
+      "EXECUTION_AUTHORIZED",
+      "M02_ACCEPTED",
+      "ZERO_DATA_LOSS_PROVEN"
+    ],
+    "proof_ceiling": "STATIC_DESIGN_ONLY_NOT_IMPLEMENTED_TESTED_EXECUTION_AUTHORIZED_OR_ACCEPTED"
+  },
+  "blockers": [
+    "preview leaf IDs are not yet active in the global task registry",
+    "Rust and Java language AST locator receipt schemas and resolvers are not available",
+    "Proto per-item disposition contract is not implemented or generated across Go Rust and Java",
+    "function design review receipt and final pattern decision are missing",
+    "owner reviewer approver and signed execution overlay are missing",
+    "negative tests are designed but NOT_RUN",
+    "real Kafka min ISR durability and end-to-end reconciliation evidence are missing"
+  ]
+}

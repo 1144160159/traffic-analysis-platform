@@ -1,0 +1,397 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/signature-verification-attestation.schema.json",
+  "title": "Topic One protected signature verification attestation",
+  "description": "A signed verifier decision. PASS requires a complete request projection, all checks PASS, a verified signer and an accepted replay claim; REJECT and ERROR remain distinct non-PASS states.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "attestation_id",
+    "decision",
+    "decision_code",
+    "request_binding",
+    "verification_checks",
+    "signer",
+    "replay_claim",
+    "verifier",
+    "issued_at",
+    "attestation_signature"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "attestation_id": {"type": "string", "pattern": "^T1-SIGATT-[A-Za-z0-9._:-]+$", "maxLength": 160},
+    "decision": {"enum": ["PASS", "REJECT", "ERROR"]},
+    "decision_code": {"$ref": "#/$defs/decision_code"},
+    "request_binding": {"$ref": "#/$defs/request_binding"},
+    "verification_checks": {"$ref": "#/$defs/verification_checks"},
+    "signer": {
+      "oneOf": [
+        {"$ref": "#/$defs/verified_signer"},
+        {"type": "null"}
+      ]
+    },
+    "replay_claim": {
+      "oneOf": [
+        {"$ref": "#/$defs/replay_claim"},
+        {"type": "null"}
+      ]
+    },
+    "verifier": {"$ref": "#/$defs/verifier"},
+    "issued_at": {"$ref": "#/$defs/rfc3339_utc"},
+    "attestation_signature": {"$ref": "#/$defs/attestation_signature"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"decision": {"const": "PASS"}}},
+      "then": {
+        "properties": {
+          "decision_code": {"const": "VERIFIED"},
+          "verification_checks": {"$ref": "#/$defs/pass_verification_checks"},
+          "signer": {"$ref": "#/$defs/verified_signer"},
+          "replay_claim": {"$ref": "#/$defs/accepted_replay_claim"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"const": "REJECT"}}},
+      "then": {
+        "properties": {
+          "decision_code": {
+            "enum": [
+              "REQUEST_SCHEMA_INVALID",
+              "CANONICALIZATION_REJECTED",
+              "POLICY_REJECTED",
+              "POLICY_FINGERPRINT_MISMATCH",
+              "CERTIFICATE_CHAIN_REJECTED",
+              "CERTIFICATE_REVOKED",
+              "SIGNATURE_REJECTED",
+              "AUTHORITY_SCOPE_REJECTED",
+              "TIME_WINDOW_REJECTED",
+              "CNAS_SCOPE_REJECTED",
+              "REPLAY_CONFLICT"
+            ]
+          },
+          "signer": {"type": "null"},
+          "replay_claim": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"const": "ERROR"}}},
+      "then": {
+        "properties": {
+          "decision_code": {
+            "enum": [
+              "DEPENDENCY_UNAVAILABLE",
+              "REVOCATION_STATUS_UNAVAILABLE",
+              "REPLAY_STORE_UNAVAILABLE",
+              "ATTESTATION_SIGNING_FAILED",
+              "INTERNAL_ERROR"
+            ]
+          },
+          "signer": {"type": "null"},
+          "replay_claim": {"type": "null"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "git_object_id": {"type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"},
+    "rfc3339_utc": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?Z$"},
+    "base64": {"type": "string", "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$", "minLength": 4},
+    "signature_algorithm": {
+      "enum": ["ECDSA_P256_SHA256", "ECDSA_P384_SHA384", "RSA_PSS_SHA256", "RSA_PSS_SHA384", "ED25519"]
+    },
+    "authority_role": {
+      "enum": [
+        "PROJECT_OWNER",
+        "TEST_OWNER",
+        "ACCEPTANCE_AUTHORITY",
+        "SUPPLY_CHAIN_OWNER",
+        "SECURITY_OWNER",
+        "DOMAIN_OWNER",
+        "LANGUAGE_OWNER",
+        "RELIABILITY_DATA_EXPERT",
+        "SECURITY_TENANT_EXPERT",
+        "QA_SRE_PERFORMANCE_EXPERT",
+        "MAINTAINABILITY_RED_TEAM",
+        "ADJUDICATOR",
+        "CONTRACT_OWNER",
+        "EXECUTION_OWNER",
+        "WORK_ORDER_OWNER",
+        "CNAS_SCOPE_AUTHORITY"
+      ]
+    },
+    "verification_purpose": {
+      "enum": [
+        "CANDIDATE_ARTIFACT_PROVENANCE",
+        "IMPLEMENTATION_CANDIDATE_SUPPLY_CHAIN",
+        "REQUIREMENT_SATISFACTION_AUTHORITY",
+        "BOM_TRANSITION_AUTHORITY",
+        "EXTERNAL_ACTIVITY_RECEIPT",
+        "SIGNED_CONTRACT_INTAKE",
+        "EXECUTION_OVERLAY_ACCEPTANCE",
+        "FAIL_CLOSED_SELF_TEST",
+        "WORK_ORDER_EVIDENCE_RUN"
+      ]
+    },
+    "subject_type": {
+      "enum": [
+        "CANDIDATE_ARTIFACT",
+        "IMPLEMENTATION_CANDIDATE",
+        "REQUIREMENT_SATISFACTION",
+        "BOM_TRANSITION",
+        "EXTERNAL_ACTIVITY",
+        "SIGNED_CONTRACT",
+        "EXECUTION_OVERLAY",
+        "SELF_TEST",
+        "WORK_ORDER_EVIDENCE"
+      ]
+    },
+    "authority_scope": {
+      "enum": [
+        "CANDIDATE",
+        "PROFILE",
+        "ENVIRONMENT",
+        "PURPOSE",
+        "PROJECT",
+        "TEST",
+        "ACCEPTANCE",
+        "SUPPLY_CHAIN",
+        "CONTRACT",
+        "EXECUTION",
+        "WORK_ORDER",
+        "CNAS_ACCREDITATION"
+      ]
+    },
+    "decision_code": {
+      "enum": [
+        "VERIFIED",
+        "REQUEST_SCHEMA_INVALID",
+        "CANONICALIZATION_REJECTED",
+        "POLICY_REJECTED",
+        "POLICY_FINGERPRINT_MISMATCH",
+        "CERTIFICATE_CHAIN_REJECTED",
+        "CERTIFICATE_REVOKED",
+        "SIGNATURE_REJECTED",
+        "AUTHORITY_SCOPE_REJECTED",
+        "TIME_WINDOW_REJECTED",
+        "CNAS_SCOPE_REJECTED",
+        "REPLAY_CONFLICT",
+        "DEPENDENCY_UNAVAILABLE",
+        "REVOCATION_STATUS_UNAVAILABLE",
+        "REPLAY_STORE_UNAVAILABLE",
+        "ATTESTATION_SIGNING_FAILED",
+        "INTERNAL_ERROR"
+      ]
+    },
+    "cnas_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accreditation_id", "scope_item_id", "method_id", "scope_sha256"],
+      "properties": {
+        "accreditation_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"},
+        "scope_item_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"},
+        "method_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"},
+        "scope_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "request_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "canonical_request_sha256",
+        "subject_type",
+        "subject_id",
+        "subject_payload_sha256",
+        "candidate_commit",
+        "profile_id",
+        "environment_id",
+        "purpose",
+        "signature_algorithm",
+        "signer_certificate_sha256",
+        "claimed_authority_ids",
+        "required_authority_roles",
+        "required_scopes",
+        "request_issued_at",
+        "request_expires_at",
+        "evaluation_time",
+        "policy_id",
+        "policy_version",
+        "policy_fingerprint_sha256",
+        "nonce",
+        "cnas_context",
+        "signature_sha256",
+        "certificate_chain_sha256"
+      ],
+      "properties": {
+        "request_id": {"type": "string", "pattern": "^T1-SIGREQ-[A-Za-z0-9._:-]+$", "maxLength": 160},
+        "canonical_request_sha256": {"$ref": "#/$defs/sha256"},
+        "subject_type": {"$ref": "#/$defs/subject_type"},
+        "subject_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,255}$"},
+        "subject_payload_sha256": {"$ref": "#/$defs/sha256"},
+        "candidate_commit": {"$ref": "#/$defs/git_object_id"},
+        "profile_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+        "environment_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+        "purpose": {"$ref": "#/$defs/verification_purpose"},
+        "signature_algorithm": {"$ref": "#/$defs/signature_algorithm"},
+        "signer_certificate_sha256": {"$ref": "#/$defs/sha256"},
+        "claimed_authority_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{2,255}$"}
+        },
+        "required_authority_roles": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/authority_role"}
+        },
+        "required_scopes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/authority_scope"}
+        },
+        "request_issued_at": {"$ref": "#/$defs/rfc3339_utc"},
+        "request_expires_at": {"$ref": "#/$defs/rfc3339_utc"},
+        "evaluation_time": {"$ref": "#/$defs/rfc3339_utc"},
+        "policy_id": {"type": "string", "pattern": "^T1-SIGNATURE-POLICY-[A-Za-z0-9._-]+$", "maxLength": 128},
+        "policy_version": {"type": "string", "pattern": "^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$", "maxLength": 32},
+        "policy_fingerprint_sha256": {"$ref": "#/$defs/sha256"},
+        "nonce": {"type": "string", "pattern": "^[A-Za-z0-9_-]{22,128}$"},
+        "cnas_context": {
+          "oneOf": [
+            {"$ref": "#/$defs/cnas_binding"},
+            {"type": "null"}
+          ]
+        },
+        "signature_sha256": {"$ref": "#/$defs/sha256"},
+        "certificate_chain_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "check_status": {"enum": ["PASS", "REJECT", "ERROR", "NOT_RUN"]},
+    "verification_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "policy", "certificate_chain", "signature", "authority_scope", "time_window", "revocation", "replay", "request_binding", "cnas_scope"],
+      "properties": {
+        "schema": {"$ref": "#/$defs/check_status"},
+        "policy": {"$ref": "#/$defs/check_status"},
+        "certificate_chain": {"$ref": "#/$defs/check_status"},
+        "signature": {"$ref": "#/$defs/check_status"},
+        "authority_scope": {"$ref": "#/$defs/check_status"},
+        "time_window": {"$ref": "#/$defs/check_status"},
+        "revocation": {"$ref": "#/$defs/check_status"},
+        "replay": {"$ref": "#/$defs/check_status"},
+        "request_binding": {"$ref": "#/$defs/check_status"},
+        "cnas_scope": {"$ref": "#/$defs/check_status"}
+      }
+    },
+    "pass_verification_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "policy", "certificate_chain", "signature", "authority_scope", "time_window", "revocation", "replay", "request_binding", "cnas_scope"],
+      "properties": {
+        "schema": {"const": "PASS"},
+        "policy": {"const": "PASS"},
+        "certificate_chain": {"const": "PASS"},
+        "signature": {"const": "PASS"},
+        "authority_scope": {"const": "PASS"},
+        "time_window": {"const": "PASS"},
+        "revocation": {"const": "PASS"},
+        "replay": {"const": "PASS"},
+        "request_binding": {"const": "PASS"},
+        "cnas_scope": {"const": "PASS"}
+      }
+    },
+    "verified_signer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signer_id", "signer_certificate_sha256", "chain_fingerprints", "verified_roles", "verified_scopes", "valid_until", "revocation_evidence_sha256"],
+      "properties": {
+        "signer_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{2,255}$"},
+        "signer_certificate_sha256": {"$ref": "#/$defs/sha256"},
+        "chain_fingerprints": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/sha256"}
+        },
+        "verified_roles": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/authority_role"}
+        },
+        "verified_scopes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/authority_scope"}
+        },
+        "valid_until": {"$ref": "#/$defs/rfc3339_utc"},
+        "revocation_evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "replay_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "claim_key_sha256", "canonical_request_sha256", "disposition", "expires_at"],
+      "properties": {
+        "claim_id": {"type": "string", "pattern": "^T1-REPLAY-[A-Za-z0-9._:-]+$", "maxLength": 160},
+        "claim_key_sha256": {"$ref": "#/$defs/sha256"},
+        "canonical_request_sha256": {"$ref": "#/$defs/sha256"},
+        "disposition": {"enum": ["CREATED", "IDEMPOTENT", "CONFLICT"]},
+        "expires_at": {"$ref": "#/$defs/rfc3339_utc"}
+      }
+    },
+    "accepted_replay_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "claim_key_sha256", "canonical_request_sha256", "disposition", "expires_at"],
+      "properties": {
+        "claim_id": {"type": "string", "pattern": "^T1-REPLAY-[A-Za-z0-9._:-]+$", "maxLength": 160},
+        "claim_key_sha256": {"$ref": "#/$defs/sha256"},
+        "canonical_request_sha256": {"$ref": "#/$defs/sha256"},
+        "disposition": {"enum": ["CREATED", "IDEMPOTENT"]},
+        "expires_at": {"$ref": "#/$defs/rfc3339_utc"}
+      }
+    },
+    "verifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["service_id", "runtime_id", "software_version", "policy_bytes_sha256"],
+      "properties": {
+        "service_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+        "runtime_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+        "software_version": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"},
+        "policy_bytes_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "attestation_signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key_id", "algorithm", "certificate_sha256", "certificate_der_base64", "attestation_body_sha256", "signature_base64", "signature_sha256"],
+      "properties": {
+        "key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,255}$"},
+        "algorithm": {"$ref": "#/$defs/signature_algorithm"},
+        "certificate_sha256": {"$ref": "#/$defs/sha256"},
+        "certificate_der_base64": {"$ref": "#/$defs/base64"},
+        "attestation_body_sha256": {"$ref": "#/$defs/sha256"},
+        "signature_base64": {"$ref": "#/$defs/base64"},
+        "signature_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m08-promotion-manifest.schema.json",
+  "title": "M08 exact evidence promotion input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_kind",
+    "candidate_id",
+    "profile_id",
+    "environment_id",
+    "candidate_manifest",
+    "evidence",
+    "allowed_claims",
+    "forbidden_claims",
+    "production_applied"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_kind": {"const": "M08_PROMOTION_MANIFEST"},
+    "candidate_id": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "profile_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "candidate_manifest": {
+      "anyOf": [
+        {"$ref": "#/$defs/hashed_ref"},
+        {"type": "null"}
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "governed_dataset",
+        "gnn_ablation",
+        "threshold_evaluation",
+        "explanation",
+        "signed_model_package",
+        "metadata_registration",
+        "activation_outbox",
+        "online_consumer_ack",
+        "shadow_observation",
+        "tenant_canary",
+        "feedback_consumer",
+        "drift_candidate",
+        "rollback",
+        "inference_parity"
+      ],
+      "properties": {
+        "governed_dataset": {"$ref": "#/$defs/hashed_ref"},
+        "gnn_ablation": {"$ref": "#/$defs/hashed_ref"},
+        "threshold_evaluation": {"$ref": "#/$defs/hashed_ref"},
+        "explanation": {"$ref": "#/$defs/hashed_ref"},
+        "signed_model_package": {"$ref": "#/$defs/hashed_ref"},
+        "metadata_registration": {"$ref": "#/$defs/hashed_ref"},
+        "activation_outbox": {"$ref": "#/$defs/hashed_ref"},
+        "online_consumer_ack": {"$ref": "#/$defs/hashed_ref"},
+        "shadow_observation": {"$ref": "#/$defs/hashed_ref"},
+        "tenant_canary": {"$ref": "#/$defs/hashed_ref"},
+        "feedback_consumer": {"$ref": "#/$defs/hashed_ref"},
+        "drift_candidate": {"$ref": "#/$defs/hashed_ref"},
+        "rollback": {"$ref": "#/$defs/hashed_ref"},
+        "inference_parity": {"$ref": "#/$defs/hashed_ref"}
+      }
+    },
+    "allowed_claims": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "forbidden_claims": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "production_applied": {"type": "boolean"}
+  },
+  "$defs": {
+    "hashed_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

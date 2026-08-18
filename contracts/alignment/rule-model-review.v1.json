@@ -1,0 +1,65 @@
+{
+  "contract_id": "T1-M09-N019-RULE-MODEL-REVIEW-V1",
+  "task_id": "T1-M09-N019",
+  "status": "PARTIAL",
+  "scope": "deployment validation, independent approval, gray expansion, exact rule/model ACK gate, rollback-target preservation and evidence export",
+  "runtime_rail": {
+    "flag": "DEPLOYMENT_RUNTIME_ACK_GATE_V1_ENABLED",
+    "default_enabled": false,
+    "rule_expected_parallelism": "RULE_APPLIED_ACK_EXPECTED_PARALLELISM",
+    "model_expected_parallelism": "MODEL_APPLIED_ACK_EXPECTED_PARALLELISM",
+    "enablement_order": [
+      "rule and model consumers",
+      "exact applied ACK reconciliation",
+      "deployment gray event projection",
+      "deployment runtime ACK gate for an authorized canary"
+    ]
+  },
+  "authorities": {
+    "workflow": "go/control-plane/internal/rules/service/deployment_service.go#DeploymentService.UpdateDeploymentWorkflow",
+    "gate": "go/control-plane/internal/rules/service/deployment_runtime_gate.go#DeploymentService.discoverDeploymentRuntimeGate",
+    "gray_execution": "go/control-plane/internal/rules/service/deployment_service.go#DeploymentService.StartGrayDeployment",
+    "activation": "go/control-plane/internal/rules/service/deployment_service.go#DeploymentService.ActivateDeployment",
+    "workbench": "go/control-plane/internal/rules/service/deployment_service.go#DeploymentService.GetDeploymentWorkbench",
+    "evidence_export": "go/control-plane/internal/rules/service/deployment_service.go#DeploymentService.ExportDeploymentEvidence",
+    "ui": "web/ui/src/pages/DeploymentManagementWorkspace.tsx#DeploymentManagementPage"
+  },
+  "receipt_sources": {
+    "rule": ["rule_versions", "rule_outbox", "rule_update_applied_acks"],
+    "model": ["model_versions", "model_update_outbox", "model_update_applied_acks"],
+    "gray_projection": ["deployment_outbox", "deployment_event_projection"]
+  },
+  "invariants": [
+    "precheck discovers receipt event IDs from immutable deployment rule/model versions instead of trusting a browser payload",
+    "approval freezes exact rule and model receipt event IDs and expected parallelism",
+    "partial, failed, pending or missing rule/model ACK sets stop gray start",
+    "a newer event after approval requires a new precheck and independent approval",
+    "full activation requires the approved rule/model receipts plus the gray_started broker projection receipt",
+    "an enabled runtime gate forbids planned-to-active bypass of gray observation",
+    "workbench and exported evidence expose the same live runtime gate",
+    "recoverable deployment rows and their immutable rule/model version references are not deleted"
+  ],
+  "ui_contract": {
+    "typed_fields": ["runtime_gate", "rule", "model", "deployment_projection", "event_id", "successful_acks", "expected_acks", "kafka_partition", "kafka_offset", "blocking_reasons"],
+    "expansion_control": "continue gray is disabled only for gray deployments whose enabled gate has expansion_allowed=false",
+    "default_off_message": "does not claim runtime completion while the gate is disabled"
+  },
+  "latest_evidence": {
+    "path": "doc/02_acceptance/topic1/tasks/t1-m09-n019/k8s-rule-model-review-latest.json",
+    "run_id": "384d9a95-68dd-4eee-a9f5-81fc3a9c2d32",
+    "status": "PASS",
+    "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_EXACT_ACK_EXPANSION_GATE",
+    "production_applied": false
+  },
+  "closure": {
+    "status": "PARTIAL",
+    "production_applied": false,
+    "open_items": [
+      "authorize and observe a non-zero production candidate before enabling the runtime gate",
+      "prove broker-generated rule and model ACK delivery for the exact deployment candidate",
+      "orchestrate dedicated rule/model rollback commands and collect fresh rollback ACKs before changing the deployment active pointer",
+      "run performance, failure-injection and formal rollback drills",
+      "complete Windows Chrome review and the production observation window"
+    ]
+  }
+}

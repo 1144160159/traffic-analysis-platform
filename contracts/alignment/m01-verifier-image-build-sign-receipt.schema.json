@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m01-verifier-image-build-sign-receipt.schema.json",
+  "title": "M01 trusted verifier image external build sign and publish receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "receipt_id", "activity_id", "activity_kind",
+    "run_id", "candidate", "profile_id", "environment_id", "source_inputs",
+    "build", "image", "sbom", "provenance", "image_signature",
+    "signature_verification_receipt", "output_hashes", "result", "published_image_ref",
+    "signed_payload_artifact", "signed_payload_sha256", "attestations", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M01_VERIFIER_IMAGE_BUILD_SIGN_AND_PUBLISH_RECEIPT"},
+    "receipt_id": {"type": "string", "pattern": "^M01-VIBSP-[A-Za-z0-9._-]{8,128}$"},
+    "activity_id": {"const": "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN"},
+    "activity_kind": {"const": "EXTERNAL_BUILD_SIGN_AND_PUBLISH"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{7,127}$"},
+    "candidate": {"$ref": "#/$defs/candidate"},
+    "profile_id": {"type": "string", "minLength": 3},
+    "environment_id": {"type": "string", "minLength": 3},
+    "source_inputs": {
+      "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_input"}
+    },
+    "build": {"$ref": "#/$defs/build"},
+    "image": {"$ref": "#/$defs/image"},
+    "sbom": {"$ref": "#/$defs/sbom"},
+    "provenance": {"$ref": "#/$defs/provenance"},
+    "image_signature": {"$ref": "#/$defs/image_signature"},
+    "signature_verification_receipt": {"$ref": "#/$defs/signature_verification_receipt"},
+    "output_hashes": {
+      "type": "array", "minItems": 1, "maxItems": 4, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/output_hash"}
+    },
+    "result": {"const": "PASS"},
+    "published_image_ref": {"type": "string", "pattern": "^[^@\\s]+@sha256:[0-9a-f]{64}$"},
+    "signed_payload_artifact": {"type": "string", "minLength": 3},
+    "signed_payload_sha256": {"$ref": "#/$defs/sha256"},
+    "attestations": {
+      "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/attestation"}
+    },
+    "proof_ceiling": {
+      "const": "EXTERNAL_VERIFIER_IMAGE_BUILD_SIGN_PUBLISH_RECEIPT_ONLY_NOT_GLOBAL_REGISTRY_SWITCH_RUNTIME_DEPLOYMENT_GATE_PASS_EXECUTION_AUTHORIZATION_OR_ACCEPTANCE"
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["implementation_commit", "manifest_path", "manifest_sha256"],
+      "properties": {
+        "implementation_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "manifest_path": {"type": "string", "minLength": 3},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "source_input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "source_kind", "path", "sha256", "candidate_manifest_sha256"],
+      "properties": {
+        "artifact_id": {"enum": ["VERIFIER_IMAGE_BUILD_RECIPE", "VERIFIER_REQUIREMENTS_LOCK", "VERIFIER_SERVICE_SOURCE", "TRUST_POLICY_SCHEMA", "VERIFICATION_REQUEST_SCHEMA", "VERIFICATION_ATTESTATION_SCHEMA"]},
+        "source_kind": {"const": "CANDIDATE_GIT_BLOB"},
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "candidate_manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "build": {
+      "type": "object", "additionalProperties": false,
+      "required": ["builder_identity", "builder_version", "environment_manifest", "invocation_sha256", "network_mode", "reproducible", "started_at", "finished_at"],
+      "properties": {
+        "builder_identity": {"type": "string", "minLength": 3},
+        "builder_version": {"type": "string", "minLength": 1},
+        "environment_manifest": {"$ref": "#/$defs/hash_ref"},
+        "invocation_sha256": {"$ref": "#/$defs/sha256"},
+        "network_mode": {"enum": ["NONE", "ALLOWLISTED_LOCKED_INPUTS_ONLY"]},
+        "reproducible": {"const": true},
+        "started_at": {"type": "string", "minLength": 20},
+        "finished_at": {"type": "string", "minLength": 20}
+      }
+    },
+    "platform": {
+      "type": "object", "additionalProperties": false,
+      "required": ["os", "architecture"],
+      "properties": {
+        "os": {"const": "linux"},
+        "architecture": {"enum": ["amd64", "arm64"]}
+      }
+    },
+    "image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "digest", "manifest", "config_digest", "runtime_binary_sha256", "platforms"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 3},
+        "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "manifest": {"$ref": "#/$defs/hash_ref"},
+        "config_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "runtime_binary_sha256": {"$ref": "#/$defs/sha256"},
+        "platforms": {"type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/platform"}}
+      }
+    },
+    "sbom": {
+      "type": "object", "additionalProperties": false,
+      "required": ["format", "spec_version", "artifact", "subject_digest"],
+      "properties": {
+        "format": {"const": "CycloneDX"},
+        "spec_version": {"enum": ["1.5", "1.6"]},
+        "artifact": {"$ref": "#/$defs/hash_ref"},
+        "subject_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["predicate_type", "artifact", "subject_digest", "builder_identity", "build_recipe_sha256"],
+      "properties": {
+        "predicate_type": {"const": "https://slsa.dev/provenance/v1"},
+        "artifact": {"$ref": "#/$defs/hash_ref"},
+        "subject_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "builder_identity": {"type": "string", "minLength": 3},
+        "build_recipe_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "image_signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bundle", "subject_digest", "signature_algorithm", "certificate_identity", "certificate_issuer", "transparency_log_verified"],
+      "properties": {
+        "bundle": {"$ref": "#/$defs/hash_ref"},
+        "subject_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "signature_algorithm": {"type": "string", "minLength": 3},
+        "certificate_identity": {"type": "string", "minLength": 3},
+        "certificate_issuer": {"type": "string", "minLength": 3},
+        "transparency_log_verified": {"const": true}
+      }
+    },
+    "signature_verification_receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact", "status", "subject_digest", "verifier_identity", "verifier_version", "verified_at", "revocation_checked"],
+      "properties": {
+        "artifact": {"$ref": "#/$defs/hash_ref"},
+        "status": {"const": "PASS"},
+        "subject_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "verifier_identity": {"type": "string", "minLength": 3},
+        "verifier_version": {"type": "string", "minLength": 1},
+        "verified_at": {"type": "string", "minLength": 20},
+        "revocation_checked": {"const": true}
+      }
+    },
+    "output_hash": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "sha256"],
+      "properties": {
+        "artifact_id": {"enum": ["IMAGE_DIGEST", "SBOM_SHA256", "PROVENANCE_ATTESTATION", "SIGNATURE_VERIFICATION_RECEIPT"]},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "attestation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "signer_identity", "signed_payload_sha256", "signature_artifact", "bootstrap_policy_id", "protected_verification_ref"],
+      "properties": {
+        "role": {"enum": ["SUPPLY_CHAIN_OWNER", "SECURITY_OWNER"]},
+        "signer_identity": {"type": "string", "minLength": 3},
+        "signed_payload_sha256": {"$ref": "#/$defs/sha256"},
+        "signature_artifact": {"$ref": "#/$defs/hash_ref"},
+        "bootstrap_policy_id": {"const": "M01-VERIFIER-BOOTSTRAP-PROTECTED-CI-2-OF-2-V1"},
+        "protected_verification_ref": {"$ref": "#/$defs/hash_ref"}
+      }
+    }
+  }
+}

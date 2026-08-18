@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "contract_id": "event-time-policy-v1",
+  "status": "implemented_shared_library",
+  "accountable_task": "T1-M06-N009",
+  "unit": "unix_epoch_milliseconds",
+  "time_roles": {
+    "event_time": "immutable source observation time used for windows and replay",
+    "ingest_time": "Kafka record timestamp assigned by the admitted producer or broker",
+    "processing_time": "explicit runtime clock used only for diagnostics and as_of capping",
+    "watermark": "lower bound of event-time progress emitted by the source strategy",
+    "as_of": "min(initialized watermark, processing_time), otherwise processing_time"
+  },
+  "boundaries": {
+    "late": "event_time < watermark - allowed_lateness_ms",
+    "future": "event_time > ingest_time + max_future_skew_ms",
+    "clock_rollback": "event_time < identity_max_event_time - max_clock_rollback_ms",
+    "watermark_uninitialized": -9223372036854775808,
+    "arithmetic": "signed_int64_saturating"
+  },
+  "classification_order": [
+    "INVALID_EVENT_TIME",
+    "INVALID_INGEST_TIME",
+    "INVALID_PROCESSING_TIME",
+    "FUTURE_EVENT",
+    "CLOCK_ROLLBACK",
+    "LATE_EVENT",
+    "ACCEPT"
+  ],
+  "wire_requirements": {
+    "positive_times": ["event_time", "ingest_time", "processing_time"],
+    "timezone": "wire values are UTC instants; local timestamps without an explicit offset must be rejected before conversion",
+    "replay": "classification receives every clock value as input and never reads the wall clock"
+  },
+  "implementations": {
+    "java": "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/eventtime/EventTimePolicy.java",
+    "go": "go/control-plane/internal/eventtime/policy.go",
+    "java_consumers": [
+      "flink-log-job",
+      "flink-session-job",
+      "flink-feature-job",
+      "flink-user-behavior-job"
+    ]
+  },
+  "rollout": {
+    "kubernetes_effect": "takes effect only in images built from this source and deployed by an approved rollout",
+    "state_migration": "none; keyed max-event-time state name remains unchanged",
+    "rollback": "redeploy the previous immutable image; Kafka source offsets and DLQ records remain durable"
+  },
+  "claim_boundary": {
+    "proves": [
+      "one strict boundary and overflow rule are implemented across four Flink consumers",
+      "future time, rollback, lateness and as_of are deterministic under replay"
+    ],
+    "does_not_prove": [
+      "a candidate image has been deployed to Kubernetes",
+      "all historical producers already emit valid event and ingest time",
+      "runtime watermark progress is healthy"
+    ]
+  }
+}

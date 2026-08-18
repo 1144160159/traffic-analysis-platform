@@ -1,0 +1,876 @@
+{
+  "accountable_task": "T1-M09-N024",
+  "allowed_claims": [
+    "M09 has an exact-hash ASSEMBLED index for 23 bounded Kubernetes component evidence artifacts"
+  ],
+  "artifact_kind": "M09_INTEGRATED_BOM",
+  "assembly_id": "ac11577a22b436c337bd045a22a6b5a74ee52b75a772af0244f3453c5abfea32",
+  "blocking_codes": [
+    "SAME_CANDIDATE_MANIFEST_REQUIRED",
+    "WINDOWS_CHROME_SEVEN_JOURNEYS_REQUIRED",
+    "CROSS_STORAGE_TRACE_FINAL_EFFECT_REQUIRED",
+    "PRODUCTION_APPLIED_REQUIRED"
+  ],
+  "bom_state": "ASSEMBLED",
+  "candidate_id": null,
+  "closure": {
+    "candidate_manifest_hash_count": 0,
+    "complete_cross_storage_traces": 0,
+    "component_count": 23,
+    "component_evidence_exact_hash": true,
+    "dependency_edges_closed": true,
+    "production_applied": false,
+    "same_candidate_manifest": false,
+    "verified_windows_journeys": 0
+  },
+  "components": [
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n001",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M04-N012",
+        "T1-M07-N020",
+        "T1-M08-N018"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n001/k8s-product-contract-latest.json",
+        "sha256": "8d515ad82f50356e7f72ce7ef8012a5e1e009c85122863582fdadb634b3570d1"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/mlops-trainer:m08-governed-export-w2c-20260815-r10",
+          "image_id": "sha256:0b905ee9b358b7dfd44aa846883d1ba55b9c56f7ac2a1b96c1f9c3d77a71d61a"
+        }
+      ],
+      "production_applied": false,
+      "role": "contract_authority",
+      "run_id": "6030a045-eb39-4af8-9015-80981236507b",
+      "task_id": "T1-M09-N001"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n002",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N001"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n002/k8s-encrypted-stats-seam-latest.json",
+        "sha256": "f7dfa062351dd776bcd47f89af2aec8b84d5ca5d4c83113d7040d3fa9741d8c3"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/alert-service:m09-n002-encrypted-stats-20260815-r1",
+          "image_id": "sha256:7aa6d74bd8ace111d0d109383e3d9f8d042264b551fc0fd32ecfad5694490cfa"
+        }
+      ],
+      "production_applied": false,
+      "role": "backend_characterization",
+      "run_id": "c511100e-159e-427c-8c58-8ff3e2546470",
+      "task_id": "T1-M09-N002"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n003",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N002"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n003/k8s-system-handler-composition-latest.json",
+        "sha256": "897523be8d1f4a3dec206645f803f1e64df01341158c92257fb9a34adf08476c"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/alert-service:m09-n003-system-handler-composition-20260815-r1",
+          "image_id": "sha256:ddae5481a32953b0439997b1e4b81aefc8aef9e63182a528804f1fb851aa12e6"
+        }
+      ],
+      "production_applied": false,
+      "role": "backend_composition",
+      "run_id": "ec8f284b-7f71-4579-95f9-4ef3a1d0b6a1",
+      "task_id": "T1-M09-N003"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n004",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N003"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n004/k8s-encrypted-typed-client-latest.json",
+        "sha256": "80a1dcbf36389b4f499d600d7c35f65d309246e0cd214ad8652c7cbc0fb96d14"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/web-ui:m09-n004-encrypted-typed-client-20260815-r1",
+          "image_id": "sha256:e80b90c9180e45671bfa6a0b525d197bc356f89432ebdc67533ee2e849a18bab"
+        }
+      ],
+      "production_applied": false,
+      "role": "typed_client",
+      "run_id": "a0bbff2e-8aae-434f-9613-f26f9c01d20c",
+      "task_id": "T1-M09-N004"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n005",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N004"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n005/k8s-encrypted-adapter-plan-latest.json",
+        "sha256": "1088ddd2b7b9baebbbe0e4cd4a0905496598a8af0f3deb10f52ca0de392708f8"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/web-ui:m09-n005-encrypted-adapter-plan-20260815-r1",
+          "image_id": "sha256:a8c992ac72ebc122b78309bcb4d849d7cf4af4694ec97a29b1bfd28399a67740"
+        }
+      ],
+      "production_applied": false,
+      "role": "compatibility_adapter",
+      "run_id": "f715ad58-f2a1-41f0-bd00-acf28d9b1309",
+      "task_id": "T1-M09-N005"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n006",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N005"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n006/k8s-alert-snapshot-repository-latest.json",
+        "sha256": "edc5e1e4b57ba13cc6763607d523540e424840752925e94dc1dfc16a2e01c008"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/alert-service:m09-n006-alert-snapshot-20260815-r2",
+          "image_id": "sha256:08778367b574ac81e84b8db07b99fa7aba0f46ad098fb7d600e2b9ae2620ab60"
+        }
+      ],
+      "production_applied": false,
+      "role": "alert_snapshot_repository",
+      "run_id": "e2515d00-454f-426f-b572-a4a951b84c69",
+      "task_id": "T1-M09-N006"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n007",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N006"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n007/k8s-encrypted-snapshot-latest.json",
+        "sha256": "e40ef5cfdfbfab2b758c9a4ee124f9f08641c2376d2b0190203d9401c31697a5"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/alert-service:m09-n007-encrypted-snapshot-20260815-r3",
+          "image_id": "sha256:e4ea67944a8e20653c822385c5cf76bc28346430351fd14e9c0c047f1b0c3a61"
+        }
+      ],
+      "production_applied": false,
+      "role": "encrypted_snapshot_api",
+      "run_id": "cca65729-d055-4884-bfc0-c3a56065286c",
+      "task_id": "T1-M09-N007"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n008",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N007"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n008/k8s-encrypted-snapshot-ui-latest.json",
+        "sha256": "efc5e0cb93a0db92fc50d699e7cd7848845397072eef4340f0d49f2242a72b00"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/web-ui:m09-n008-encrypted-snapshot-ui-20260815-r2",
+          "image_id": "sha256:dd6d2c927cba91b610e2136d1ed12252ee1521a31531bcdf5836f5dd0133d0cb"
+        }
+      ],
+      "production_applied": false,
+      "role": "encrypted_snapshot_ui",
+      "run_id": "ed7238cc-70a0-4139-b957-80a0b7206fc5",
+      "task_id": "T1-M09-N008"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n009",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N008"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n009/k8s-forensics-task-command-latest.json",
+        "sha256": "36f23bdcc7825f145d61980b7c42613ed390c68b5cca42823865bb26d48ae557"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/forensics-task-test:m09-n009-20260815-r3",
+          "image_id": "sha256:aad739620d817f5ec03d64aac81f031e2e055745eaa32f046be9eeb163996f03"
+        }
+      ],
+      "production_applied": false,
+      "role": "forensics_command",
+      "run_id": "2725ca0d-5d76-4209-b6f8-97d4e0cb68d6",
+      "task_id": "T1-M09-N009"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n010",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N008"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n010/k8s-forensics-worker-latest.json",
+        "sha256": "1a775b2e3f839a3084754f299c0ec94ef407e88df4131d997d4324c6517586a9"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/clickhouse/clickhouse-server:24.3-alpine",
+          "image_id": "docker.io/clickhouse/clickhouse-server@sha256:c3f166f4a80098480463d897a63f6867d24e3a7661fc1fe72e889788115a25f1"
+        },
+        {
+          "image": "docker.io/library/postgres:16-alpine",
+          "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7"
+        },
+        {
+          "image": "docker.io/minio/mc:latest",
+          "image_id": "docker.io/minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727"
+        },
+        {
+          "image": "docker.io/minio/minio:latest",
+          "image_id": "docker.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e"
+        },
+        {
+          "image": "docker.io/traffic/forensics-worker-index-test:m09-n010-20260815-r1",
+          "image_id": "docker.io/traffic/m09-n010-import@sha256:bdfa9d933fd62e99e73fecab7fe642f35011279c38e20c8183b70cc634f134af"
+        },
+        {
+          "image": "docker.io/traffic/forensics-worker-repository-test:m09-n010-20260815-r4",
+          "image_id": "docker.io/library/import-2026-08-15@sha256:b4f3d954fb22294125871fd080c2543a7c978b13f6db4415c8abaf59bb460cc4"
+        },
+        {
+          "image": "docker.io/traffic/forensics-worker-s3-test:m09-n010-20260816-r3",
+          "image_id": "docker.io/library/import-2026-08-16@sha256:e1908ea9293c6878bfee53da2e8358fa1d8c2ab561f10c7f9e4e77ec13042246"
+        }
+      ],
+      "production_applied": false,
+      "role": "forensics_worker",
+      "run_id": "424e519c-bd60-45c8-aef2-4a7503368155",
+      "task_id": "T1-M09-N010"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n011",
+      "coverage_status": "BOUNDED_PASS",
+      "depends_on_tasks": [
+        "T1-M09-N009",
+        "T1-M09-N010"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n011/k8s-forensics-workbench-latest.json",
+        "sha256": "c5e6df81e688ee6eeeb8e05f0ebbbbebf358b5b4a50757c6dcbadfa637c33b81"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/forensics-api-test:m09-n011-20260816-r1",
+          "image_id": "docker.io/library/import-2026-08-16@sha256:42ba42a5218d3996859e0b96c6b5d6a1c0a0ece1ce6e07ceeef6480c74c6ffea"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n011-forensics-workbench-20260815-r1",
+          "image_id": "docker.io/library/import-2026-08-15@sha256:4ec961189377cd4fd6fa3b58ffc9586e0e2a30ddf8c930ec9fd7d7aa5ccd89f4"
+        }
+      ],
+      "production_applied": false,
+      "role": "forensics_workbench",
+      "run_id": "2dd93949-230e-4094-8d50-a66b9cf76fa9",
+      "task_id": "T1-M09-N011"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n012",
+      "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_COMMAND_OUTBOX_KAFKA_CONSUMER_PROJECTION",
+      "depends_on_tasks": [
+        "T1-M09-N011"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n012/k8s-alert-evidence-link-pipeline-latest.json",
+        "sha256": "4b723b9b9a9485b76eb482b1c9f5fe0c15bab3afe36c386e43cef8dbde6defdc"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/clickhouse/clickhouse-server:24.3-alpine",
+          "image_id": "docker.io/clickhouse/clickhouse-server@sha256:c3f166f4a80098480463d897a63f6867d24e3a7661fc1fe72e889788115a25f1"
+        },
+        {
+          "image": "docker.io/library/postgres:16-alpine",
+          "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7"
+        },
+        {
+          "image": "docker.io/redpandadata/redpanda:v24.1.12",
+          "image_id": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d"
+        },
+        {
+          "image": "docker.io/traffic/alert-evidence-link-api-test:m09-n012-20260816-r1",
+          "image_id": "sha256:c43b35938ee055366a5faea8c4386372852bffac7e2bff4b9e39c1bf392dae73"
+        },
+        {
+          "image": "docker.io/traffic/alert-evidence-link-consumer-test:m09-n012-20260816-r2",
+          "image_id": "sha256:43f6e4b77fadc02ec83a0348e600b181e5e97d8436d28a031722945f8f0d500d"
+        }
+      ],
+      "production_applied": false,
+      "role": "alert_evidence_pipeline",
+      "run_id": "c935dadf-2752-4c4e-9627-fff7aa72ec74",
+      "task_id": "T1-M09-N012"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n013",
+      "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_SNAPSHOT_REPOSITORY_API_AND_UI_BUNDLE",
+      "depends_on_tasks": [
+        "T1-M09-N012"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n013/k8s-attack-chain-snapshot-ui-latest.json",
+        "sha256": "ad268b6933f278550ebb02f79c546437ee3b2ee299c975c7bd765ad40852a1b0"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/library/postgres:16-alpine",
+          "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7"
+        },
+        {
+          "image": "docker.io/traffic/attack-chain-api-test:m09-n013-20260816-r1",
+          "image_id": "sha256:b9a198efda8cb248e5d555fd72b734793cbe209abb4633a3b79d74e9587dad05"
+        },
+        {
+          "image": "docker.io/traffic/attack-chain-repository-test:m09-n013-20260816-r1",
+          "image_id": "sha256:8a7b18c0342f82ec61c77036d3aa025f0b412c0dcd5070bc5f9714552d1ff213"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n013-attack-chain-snapshot-20260816-r1",
+          "image_id": "sha256:1f1026949556f7a24431740d29a6b97b50cf8956570de525b3c0ae2cd5ddc478"
+        }
+      ],
+      "production_applied": false,
+      "role": "attack_chain_snapshot",
+      "run_id": "a8283363-a134-492d-983d-88e52835222f",
+      "task_id": "T1-M09-N013"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n014",
+      "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_NEBULAGRAPH_AND_IMMUTABLE_UI_BUNDLE",
+      "depends_on_tasks": [
+        "T1-M09-N013"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n014/k8s-graph-workbench-governance-latest.json",
+        "sha256": "53828f3d785b7dd947b9889c2742d6ab940340bda8e964a9a7922d75c1868f26"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/graph-workbench-api-test:m09-n014-20260816-r1",
+          "image_id": "sha256:a62ba8a3c7804caab560b4a955b5259dfda6773b0d6b36193c8d83fe152bf00c"
+        },
+        {
+          "image": "docker.io/traffic/graph-workbench-test:m09-n014-20260816-r1",
+          "image_id": "sha256:07354cf3f31f2616ac004fcf6c0cd7eb2b9153aecae0721fe82617fd5270901d"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n014-graph-governance-20260816-r1",
+          "image_id": "sha256:6a69179e96b8d69e1f48d5154558094dccefd0ed6cac8df0c6d1fc94e1f1d1c2"
+        }
+      ],
+      "production_applied": false,
+      "role": "graph_workbench",
+      "run_id": "3e8a6116-faf2-4aca-97a5-12590dc05bfd",
+      "task_id": "T1-M09-N014"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n015",
+      "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_OPENSEARCH_AND_IMMUTABLE_UI_BUNDLE",
+      "depends_on_tasks": [
+        "T1-M09-N014"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n015/k8s-opensearch-cursor-latest.json",
+        "sha256": "4d6968b15d582e762502663e0e0a1992cf4bcb0281df2d01a01eca60694f5b9d"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/alert-search-cursor-test:m09-n015-20260816-r1",
+          "image_id": "sha256:47f68a1224825bfc9a265cbee25b5b6fee8beac5a9e71153e0dd8d61f6559d0b"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n015-opensearch-cursor-20260816-r1",
+          "image_id": "sha256:9d08c606541c2c013ec010d25e38311a4cb33d5f0ee87d888284a1f4f7eb260e"
+        }
+      ],
+      "production_applied": false,
+      "role": "search_cursor",
+      "run_id": "4d99d81c-619f-4885-97c5-ece81f61da94",
+      "task_id": "T1-M09-N015"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n016",
+      "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_POSTGRES_MINIO_AND_IMMUTABLE_UI_BUNDLE",
+      "depends_on_tasks": [
+        "T1-M09-N015"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n016/k8s-alert-report-latest.json",
+        "sha256": "5a162fa21c8b25f79ad139a1ef1e0c7529cf50bd36d328fe82caa60ca01b2c53"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/model-feedback-test:m09-n017-20260816-r5",
+          "image_id": "sha256:5a2108d0ba4fd425b2c2186604ec04bda9969b13366fb1d7024cea010bed4f6b"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+          "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13"
+        }
+      ],
+      "production_applied": false,
+      "role": "alert_report",
+      "run_id": "346f8306-abef-46cd-9de2-84bd49c5ff37",
+      "task_id": "T1-M09-N016"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n017",
+      "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_POSTGRES_AND_IMMUTABLE_UI_BUNDLE",
+      "depends_on_tasks": [
+        "T1-M09-N016"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n017/k8s-model-feedback-latest.json",
+        "sha256": "7548ac8c848f193db66e91ae21fc698a8503f692ea83a00a0deaa5aea14869e8"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/model-feedback-test:m09-n017-20260816-r5",
+          "image_id": "sha256:5a2108d0ba4fd425b2c2186604ec04bda9969b13366fb1d7024cea010bed4f6b"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+          "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13"
+        }
+      ],
+      "production_applied": false,
+      "role": "feedback_authority",
+      "run_id": "4c0a77ed-d4c6-49a1-9b28-8e6a93150446",
+      "task_id": "T1-M09-N017"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n018",
+      "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_DRAFT_APPROVAL_EXPIRY_PROJECTION_ACK",
+      "depends_on_tasks": [
+        "T1-M09-N017"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n018/k8s-whitelist-governance-latest.json",
+        "sha256": "5308a8a778b984fa178534bb2ebe1476052c58c8fa99a535498b6c3b6dcfb2a6"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/library/postgres:16-alpine",
+          "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7"
+        },
+        {
+          "image": "docker.io/redpandadata/redpanda:v24.1.12",
+          "image_id": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+          "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13"
+        },
+        {
+          "image": "docker.io/traffic/whitelist-authority-test:m09-n018-20260816-r1",
+          "image_id": "sha256:1af2ba1d75d63024f42da75f4a8cda8619a042ff61b7dafef4d6948f36c3a91e"
+        },
+        {
+          "image": "docker.io/traffic/whitelist-consumer-test:m09-n018-20260816-r1",
+          "image_id": "sha256:e2579b68fe4e5e41551ed35ba12b6fa54ad5f3d9b886875da7f9b14bcc8f3e0c"
+        }
+      ],
+      "production_applied": false,
+      "role": "whitelist_governance",
+      "run_id": "a52db73e-0a2a-4207-9745-33346c9a1755",
+      "task_id": "T1-M09-N018"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n019",
+      "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_EXACT_ACK_EXPANSION_GATE",
+      "depends_on_tasks": [
+        "T1-M09-N018"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n019/k8s-rule-model-review-latest.json",
+        "sha256": "2ca52813384832bf48c549b482cb9efae832922e66c9f6eff8b52ac5111f23e0"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/library/postgres:16-alpine",
+          "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7"
+        },
+        {
+          "image": "docker.io/traffic/rule-model-review-test:m09-n019-20260816-r2",
+          "image_id": "sha256:c936fa4b95adc8749d24de503e5ea53f0684e5b1e17fe3adacd7aebc6fe216a0"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+          "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13"
+        }
+      ],
+      "production_applied": false,
+      "role": "rule_model_review",
+      "run_id": "384d9a95-68dd-4eee-a9f5-81fc3a9c2d32",
+      "task_id": "T1-M09-N019"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n020",
+      "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_RESPONSE_HANDOFF",
+      "depends_on_tasks": [
+        "T1-M09-N019"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n020/k8s-response-handoff-latest.json",
+        "sha256": "eec3349bb284650d91f2a0fc6526a2f67b8362b4bfd070f347c1efa02b2cf22f"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/library/postgres:16-alpine",
+          "image_id": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7"
+        },
+        {
+          "image": "docker.io/traffic/alert-response-handoff-test:m09-n020-20260816-r1",
+          "image_id": "sha256:cc290816679d418db1dff78d5601d99cf3d0a4541405e2cf0db7271d59bdacc9"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+          "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13"
+        }
+      ],
+      "production_applied": false,
+      "role": "response_handoff",
+      "run_id": "54207a03-d01d-4a26-8391-e3235d2dad7f",
+      "task_id": "T1-M09-N020"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n021",
+      "coverage_status": "PASS_FOR_K8S_IMMUTABLE_BUNDLE_STATE_AND_RESPONSIVE_CONTRACT",
+      "depends_on_tasks": [
+        "T1-M09-N020"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n021/k8s-page-state-accessibility-latest.json",
+        "sha256": "0c63756635826e704da3a7fdbfc5e09dbc190dc9c0a77d3394fe8095a7538676"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+          "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13"
+        }
+      ],
+      "production_applied": false,
+      "role": "page_state_accessibility",
+      "run_id": "c2c6fa96-b4dc-4b9e-9b0c-9cf3da7ed37d",
+      "task_id": "T1-M09-N021"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n022",
+      "coverage_status": "PASS_FOR_ALERT_DETAIL_ROUTE_SCOPED_CSS_EXTRACTION",
+      "depends_on_tasks": [
+        "T1-M09-N021"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n022/k8s-css-refactor-latest.json",
+        "sha256": "d37243a0f2b45f91fdbe269d84d0db3f4df324183b22101967ddb8c35e582d01"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/css-visual-diff:m09-n022-20260816-r3",
+          "image_id": "sha256:7e2dbdbf8893d63bc054051a4bd7396089b1651d79b6cc7f365b41b738921a83"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+          "image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13"
+        },
+        {
+          "image": "docker.io/traffic/web-ui:m09-n022-baseline-pre-refactor-20260816-r1",
+          "image_id": "sha256:a9e0e774080625d5a6ca3a4f4fab84f8ce0e6585f1b9ae9bed5f7cb2e1e224a7"
+        }
+      ],
+      "production_applied": false,
+      "role": "route_css_refactor",
+      "run_id": "a1daf6e7-88e2-4f1f-826b-7e954fee2a66",
+      "task_id": "T1-M09-N022"
+    },
+    {
+      "candidate_manifest_sha256": null,
+      "component_id": "t1-m09-n023",
+      "coverage_status": "PARTIAL",
+      "depends_on_tasks": [
+        "T1-M09-N022"
+      ],
+      "evidence": {
+        "path": "doc/02_acceptance/topic1/tasks/t1-m09-n023/k8s-journey-evidence-latest.json",
+        "sha256": "fb9758c9f83efc67e80567a4b19208d914473ed301477626d7539ce2b3b62f25"
+      },
+      "evidence_status": "PASS",
+      "image_refs": [
+        {
+          "image": "docker.io/traffic/m09-journey-evidence-test:m09-n023-20260816-r1",
+          "image_id": "sha256:472cc54139e0046eead8e9d3d62876291a89a0fa376a1ac993f41ab5765e693e"
+        }
+      ],
+      "production_applied": false,
+      "role": "windows_journey_evidence",
+      "run_id": "7062f88b-a1a2-471d-ad0d-6f586da7a21f",
+      "task_id": "T1-M09-N023"
+    }
+  ],
+  "dependency_edges": [
+    {
+      "from": "T1-M04-N012",
+      "to": "T1-M09-N001"
+    },
+    {
+      "from": "T1-M07-N020",
+      "to": "T1-M09-N001"
+    },
+    {
+      "from": "T1-M08-N018",
+      "to": "T1-M09-N001"
+    },
+    {
+      "from": "T1-M09-N001",
+      "to": "T1-M09-N002"
+    },
+    {
+      "from": "T1-M09-N002",
+      "to": "T1-M09-N003"
+    },
+    {
+      "from": "T1-M09-N003",
+      "to": "T1-M09-N004"
+    },
+    {
+      "from": "T1-M09-N004",
+      "to": "T1-M09-N005"
+    },
+    {
+      "from": "T1-M09-N005",
+      "to": "T1-M09-N006"
+    },
+    {
+      "from": "T1-M09-N006",
+      "to": "T1-M09-N007"
+    },
+    {
+      "from": "T1-M09-N007",
+      "to": "T1-M09-N008"
+    },
+    {
+      "from": "T1-M09-N008",
+      "to": "T1-M09-N009"
+    },
+    {
+      "from": "T1-M09-N008",
+      "to": "T1-M09-N010"
+    },
+    {
+      "from": "T1-M09-N009",
+      "to": "T1-M09-N011"
+    },
+    {
+      "from": "T1-M09-N010",
+      "to": "T1-M09-N011"
+    },
+    {
+      "from": "T1-M09-N011",
+      "to": "T1-M09-N012"
+    },
+    {
+      "from": "T1-M09-N012",
+      "to": "T1-M09-N013"
+    },
+    {
+      "from": "T1-M09-N013",
+      "to": "T1-M09-N014"
+    },
+    {
+      "from": "T1-M09-N014",
+      "to": "T1-M09-N015"
+    },
+    {
+      "from": "T1-M09-N015",
+      "to": "T1-M09-N016"
+    },
+    {
+      "from": "T1-M09-N016",
+      "to": "T1-M09-N017"
+    },
+    {
+      "from": "T1-M09-N017",
+      "to": "T1-M09-N018"
+    },
+    {
+      "from": "T1-M09-N018",
+      "to": "T1-M09-N019"
+    },
+    {
+      "from": "T1-M09-N019",
+      "to": "T1-M09-N020"
+    },
+    {
+      "from": "T1-M09-N020",
+      "to": "T1-M09-N021"
+    },
+    {
+      "from": "T1-M09-N021",
+      "to": "T1-M09-N022"
+    },
+    {
+      "from": "T1-M09-N022",
+      "to": "T1-M09-N023"
+    }
+  ],
+  "engineering_status": "PASS",
+  "environment_id": "existing-k8s-run-scoped-mixed-candidates",
+  "forbidden_claims": [
+    "one same-candidate M09 end-to-end journey passed",
+    "designated Windows Chrome acceptance passed",
+    "M09 production activation or promotion is authorized",
+    "M09 or the whole project is complete"
+  ],
+  "journey_input": {
+    "path": "doc/02_acceptance/topic1/tasks/t1-m09-n023/journey-evidence-input.json",
+    "sha256": "a58326b85845dedf919f1b10595085c12c0bf73d5076ff34a730cb1921fa09cc"
+  },
+  "journey_trace_index": [
+    {
+      "atomic_pr_id": "T1-M09-P056-TST-POST-n023-s1",
+      "final_effect_recorded": false,
+      "journey_id": "alert-query-journey",
+      "network_recorded": false,
+      "receipt_count": 0,
+      "status": "BLOCKED_MISSING_WINDOWS_CHROME",
+      "storage_objects_recorded": false,
+      "trace_id": null
+    },
+    {
+      "atomic_pr_id": "T1-M09-P057-TST-POST-n023-s2",
+      "final_effect_recorded": false,
+      "journey_id": "alert-mutation-journey",
+      "network_recorded": false,
+      "receipt_count": 0,
+      "status": "BLOCKED_MISSING_WINDOWS_CHROME",
+      "storage_objects_recorded": false,
+      "trace_id": null
+    },
+    {
+      "atomic_pr_id": "T1-M09-P058-TST-POST-n023-s3",
+      "final_effect_recorded": false,
+      "journey_id": "permission-negative-journey",
+      "network_recorded": false,
+      "receipt_count": 0,
+      "status": "BLOCKED_MISSING_WINDOWS_CHROME",
+      "storage_objects_recorded": false,
+      "trace_id": null
+    },
+    {
+      "atomic_pr_id": "T1-M09-P059-TST-POST-n023-s4",
+      "final_effect_recorded": false,
+      "journey_id": "failure-recovery-journey",
+      "network_recorded": false,
+      "receipt_count": 0,
+      "status": "BLOCKED_MISSING_WINDOWS_CHROME",
+      "storage_objects_recorded": false,
+      "trace_id": null
+    },
+    {
+      "atomic_pr_id": "T1-M09-P060-TST-POST-n023-s5",
+      "final_effect_recorded": false,
+      "journey_id": "forensics-download-journey",
+      "network_recorded": false,
+      "receipt_count": 0,
+      "status": "BLOCKED_MISSING_WINDOWS_CHROME",
+      "storage_objects_recorded": false,
+      "trace_id": null
+    },
+    {
+      "atomic_pr_id": "T1-M09-P061-TST-POST-n023-s6",
+      "final_effect_recorded": false,
+      "journey_id": "attack-chain-campaign-journey",
+      "network_recorded": false,
+      "receipt_count": 0,
+      "status": "BLOCKED_MISSING_WINDOWS_CHROME",
+      "storage_objects_recorded": false,
+      "trace_id": null
+    },
+    {
+      "atomic_pr_id": "T1-M09-P062-TST-POST-n023-s7",
+      "final_effect_recorded": false,
+      "journey_id": "search-export-final-fact-journey",
+      "network_recorded": false,
+      "receipt_count": 0,
+      "status": "BLOCKED_MISSING_WINDOWS_CHROME",
+      "storage_objects_recorded": false,
+      "trace_id": null
+    }
+  ],
+  "milestone_id": "T1-M09",
+  "production_applied": false,
+  "profile_id": "M09_K8S_COMPONENT_EVIDENCE_INDEX_V1",
+  "promotion_allowed": false,
+  "promotion_status": "BLOCKED",
+  "schema_version": 1,
+  "source_task_registry": {
+    "path": "contracts/alignment/task-registry.v1.json",
+    "sha256": "b7b33958fe995820a4a91f07b79d714d20a1085d090c2fcde1109c4d2a6b0c78"
+  }
+}

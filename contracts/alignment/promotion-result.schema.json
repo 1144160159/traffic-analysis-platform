@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/promotion-result.schema.json",
+  "title": "Post-merge promotion equivalence result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "promotion_id", "promotion_intent_manifest_sha256",
+    "promotion_commit", "candidate_manifest_sha256", "postmerge_production_content_sha256",
+    "equivalence_result", "promotion_profile_g0_result", "bom_transition_manifest_sha256",
+    "milestone_promotion_closure_sha256", "tag_or_pointer", "created_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "promotion_id": {"type": "string", "minLength": 1},
+    "promotion_intent_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "promotion_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "postmerge_production_content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "equivalence_result": {"const": "PASS"},
+    "promotion_profile_g0_result": {"const": "PASS"},
+    "bom_transition_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "milestone_promotion_closure_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "tag_or_pointer": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "minLength": 1}
+  }
+}

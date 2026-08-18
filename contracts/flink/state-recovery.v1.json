@@ -7,14 +7,17 @@
     "algorithm": "SHA-256 with length-prefixed UTF-8 components and UUIDv8/RFC4122 variant",
     "utility": "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/DeterministicId.java",
     "forbidden_production_tokens": ["UUID.randomUUID", "Math.random()", "UUID.nameUUIDFromBytes"],
+    "excluded_non_production_sources": [
+      "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/ChampionChallengerShadowCanaryMain.java"
+    ],
     "required_sources": [
       "java/flink-jobs/flink-session-job/src/main/java/com/traffic/flink/session/aggregator/SessionAggregator.java",
       "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/calculator/FeatureCalculator.java",
       "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/processor/FeatureProcessFunction.java",
       "java/flink-jobs/flink-feature-job/src/main/java/com/traffic/flink/feature/processor/FeatureProcessFunctionV3.java",
       "java/flink-jobs/flink-rule-job/src/main/java/com/traffic/flink/rule/broadcast/RuleBroadcastProcessFunction.java",
-      "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/BehaviorDetectorFunction.java",
-      "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/SyncBehaviorDetector.java",
+      "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/detector/BehaviorDetectionEventFactory.java",
+      "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/model/ModelUpdateAppliedAck.java",
       "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/generator/AlertGenerator.java",
       "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/generator/BusinessAlertGenerator.java",
       "java/flink-jobs/flink-alert-generator-job/src/main/java/com/traffic/flink/alert/evidence/EvidenceBuilder.java",
@@ -54,6 +57,7 @@
   "business_time": {
     "job_id": "flink-user-behavior-job",
     "watermark_config": "watermark.max.out.of.orderness.seconds",
+    "watermark_factory_token": "eventTimePolicy.watermarkStrategy(",
     "allowed_lateness_config": "watermark.allowed.lateness.seconds",
     "late_output_tag": "late-user-events-v1",
     "durable_topic": "dlq.v1",
@@ -67,14 +71,20 @@
   },
   "required_uids": {
     "flink-pcap-index-job": ["pcap-index-source", "filter-invalid-basic", "pcap-index-processor", "clickhouse-sink", "dlq-sink", "print-sink", "print-dlq"],
-    "flink-user-behavior-job": ["kafka-source", "null-filter", "late-user-event-router", "late-user-event-dlq-sink", "travel-detector", "brute-detector", "priv-detector", "merge-anomalies", "mark-replay-context", "anomaly-to-alert", "alert-kafka-sink", "ch-sink"],
-    "flink-session-job": ["kafka-raw-source", "flow-event-parse", "flow-parse-dlq-sink", "flow-event-watermark", "flow-raw-clickhouse-sink", "late-data-sink", "ch-dlq-sink", "kafka-sink", "opensearch-sink", "session-process-function", "session-window-aggregator"],
-    "flink-feature-job": ["session-source", "feature-set-config-source", "tenant-config-source", "filter-invalid", "feature-calculator-v3", "clickhouse-sink", "kafka-sink", "dlq-sink", "l2-trigger-sink", "print-feature", "print-dlq", "print-l2"],
-    "flink-rule-job": ["feature-source", "filter-invalid-features", "rule-source", "parse-rules", "rule-matcher", "clickhouse-sink", "kafka-sink", "dlq-sink", "print-sink"],
+    "flink-user-behavior-job": ["user-event-raw-kafka-source-v2", "user-event-strict-parser-v1", "user-event-watermark-v1", "user-event-quality-barrier-v1", "user-event-canonical-dlq-sink-v1", "user-event-source-quality-sink-v1", "user-event-source-fact-mapper-v1", "user-event-source-fact-clickhouse-v1", "behavior-baseline-lifecycle-source-v1", "behavior-baseline-lifecycle-parser-v1", "behavior-baseline-stage-activate-v1", "behavior-baseline-activation-ack-sink-v1", "behavior-baseline-compatibility-wrapper-v1", "travel-detector", "brute-detector", "priv-detector", "merge-anomalies", "mark-replay-context", "anomaly-to-alert", "alert-kafka-sink", "ch-sink"],
+    "flink-session-job": ["kafka-raw-source", "flow-event-parse", "flow-event-watermark", "flow-lateness-classifier-v1", "flow-parse-dlq-sink", "flow-source-quality-sink-v1", "flow-source-fact-mapper-v1", "flow-source-fact-clickhouse-v1", "flow-raw-external-write-gate-v1", "flow-raw-clickhouse-sink", "session-external-write-gate-v1", "clickhouse-async-sink", "kafka-sink", "opensearch-sink", "session-process-function", "session-window-aggregator"],
+    "flink-feature-job": ["session-source", "filter-invalid", "feature-session-watermark", "feature-set-config-source", "tenant-config-source", "feature-calculator-v3", "feature-external-write-gate-v1", "feature-sequence-external-write-gate-v1", "feature-fingerprint-external-write-gate-v1", "feature-dlq-external-write-gate-v1", "feature-l2-external-write-gate-v1", "clickhouse-sink", "clickhouse-feature-sequence-sink", "clickhouse-feature-fingerprint-sink", "kafka-sink", "dlq-sink", "l2-trigger-sink", "print-feature", "print-dlq", "print-l2"],
+    "flink-rule-job": ["feature-source", "filter-invalid-features", "feature-stat-watermarks", "rule-source", "parse-rules", "rule-update-watermarks", "rule-matcher", "clickhouse-sink", "kafka-sink", "dlq-sink", "rule-update-applied-ack-sink", "print-sink"],
     "flink-cep-job": ["alert-source", "validate-alerts", "dlq-sink", "kafka-sink", "clickhouse-sink", "print-sink", "scan-exploit-pattern", "brute-force-pattern", "lateral-movement-pattern", "data-exfil-pattern", "c2-beacon-pattern"],
-    "flink-behavior-job": ["kafka-source", "filter-invalid", "kafka-model-update-source", "model-update-broadcast", "model-update-applied-ack-sink", "async-behavior-detector", "sync-behavior-detector", "filter-low-confidence", "clickhouse-sink", "kafka-sink", "print-sink"],
-    "flink-alert-generator-job": ["behavior-detection-source", "filter-invalid-behavior-detections", "behavior-alert-generator", "business-detection-source", "filter-invalid-business-detections", "business-alert-generator", "extract-alert", "extract-evidence", "clickhouse-alert-sink", "opensearch-alert-sink", "kafka-alert-sink", "clickhouse-evidence-sink", "print-alert-sink", "print-evidence-sink"],
-    "flink-log-job": ["kafka-source", "syslog-parser", "asset-enricher", "loki-sink", "opensearch-sink"]
+    "flink-behavior-job": ["kafka-source", "filter-invalid", "behavior-feature-watermarks", "behavior-feature-lateness", "kafka-model-update-source", "model-update-broadcast", "model-update-consumer-readiness-source", "model-update-applied-ack-sink", "champion-challenger-shadow-observer", "champion-challenger-shadow-observation-sink", "async-behavior-detector", "sync-behavior-detector", "filter-low-confidence", "clickhouse-sink", "kafka-sink", "behavior-dlq-sink", "print-sink"],
+    "flink-alert-generator-job": ["behavior-detection-source", "filter-invalid-behavior-detections", "behavior-detection-watermarks", "legacy-behavior-detection-source", "validate-legacy-behavior-detections", "legacy-behavior-detection-watermarks", "behavior-alert-generator", "business-detection-source", "filter-invalid-business-detections", "business-detection-watermarks", "business-alert-generator", "extract-alert", "extract-evidence", "clickhouse-alert-sink", "opensearch-alert-sink", "kafka-alert-sink", "clickhouse-evidence-sink", "alert-generator-dlq-sink", "print-alert-sink", "print-evidence-sink"],
+    "flink-log-job": ["device-log-kafka-source-v2", "device-log-strict-deserializer-v1", "device-log-watermark-v1", "device-log-event-time-barrier-v1", "device-log-canonical-dlq-sink-v1", "device-log-source-quality-sink-v1", "device-log-source-fact-mapper-v1", "device-log-source-fact-clickhouse-v1", "device-log-syslog-parser-v2", "device-log-asset-enricher-v2", "device-log-loki-sink-v2", "device-log-opensearch-sink-v2"]
+  },
+  "auxiliary_required_uids": {
+    "flink-behavior-model-shadow-consumer": {
+      "source": "java/flink-jobs/flink-behavior-job/src/main/java/com/traffic/flink/behavior/ModelUpdateConsumerJob.java",
+      "uids": ["model-shadow-kafka-source", "model-shadow-idle-carrier", "model-shadow-broadcast", "model-shadow-consumer-readiness", "model-shadow-ack-sink"]
+    }
   },
   "gate": {
     "source_and_component_status": "eligible_for_VERIFYING_after_G0_PASS",

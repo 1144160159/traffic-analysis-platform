@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.openai.com/contracts/quality/m03-covered-profile-observation.schema.json",
+  "title": "M03 covered profile live observation",
+  "type": "object", "additionalProperties": false,
+  "required": [
+    "schema_version", "profile_sha256", "candidate_sha256", "environment_id",
+    "tenant_id", "run_id", "started_at", "ended_at", "duration_seconds",
+    "capture", "protocol_category_counts", "projections", "flink_jobs",
+    "consumer_lag", "sink_latency_p95_ms", "parity"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "profile_sha256": {"$ref": "#/$defs/sha256"},
+    "candidate_sha256": {"$ref": "#/$defs/sha256"},
+    "environment_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "started_at": {"type": "string", "minLength": 20},
+    "ended_at": {"type": "string", "minLength": 20},
+    "duration_seconds": {"type": "integer", "minimum": 1},
+    "capture": {
+      "type": "object", "additionalProperties": false,
+      "required": ["system_attributable_drop_packets", "unexplained_difference_packets", "capture_error_count"],
+      "properties": {
+        "system_attributable_drop_packets": {"type": "integer", "minimum": 0},
+        "unexplained_difference_packets": {"type": "integer", "minimum": 0},
+        "capture_error_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "protocol_category_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["normal", "attack_structure", "ipv6", "tls", "quic", "truncated", "large_flow", "empty"],
+      "properties": {
+        "normal": {"type": "integer", "minimum": 0},
+        "attack_structure": {"type": "integer", "minimum": 0},
+        "ipv6": {"type": "integer", "minimum": 0},
+        "tls": {"type": "integer", "minimum": 0},
+        "quic": {"type": "integer", "minimum": 0},
+        "truncated": {"type": "integer", "minimum": 0},
+        "large_flow": {"type": "integer", "minimum": 0},
+        "empty": {"type": "integer", "minimum": 0}
+      }
+    },
+    "projections": {
+      "type": "object", "additionalProperties": false,
+      "required": ["flows_raw", "sessions", "feature_stat", "feature_seq", "feature_fp"],
+      "properties": {
+        "flows_raw": {"$ref": "#/$defs/projection"},
+        "sessions": {"$ref": "#/$defs/projection"},
+        "feature_stat": {"$ref": "#/$defs/projection"},
+        "feature_seq": {"$ref": "#/$defs/projection"},
+        "feature_fp": {"$ref": "#/$defs/projection"}
+      }
+    },
+    "flink_jobs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["flink-session-job", "flink-feature-job"],
+      "properties": {
+        "flink-session-job": {"$ref": "#/$defs/flink_job"},
+        "flink-feature-job": {"$ref": "#/$defs/flink_job"}
+      }
+    },
+    "consumer_lag": {
+      "type": "object", "additionalProperties": false,
+      "required": ["flink-session-job", "flink-feature-job"],
+      "properties": {
+        "flink-session-job": {"$ref": "#/$defs/lag"},
+        "flink-feature-job": {"$ref": "#/$defs/lag"}
+      }
+    },
+    "sink_latency_p95_ms": {
+      "type": "object", "additionalProperties": false,
+      "required": ["session-clickhouse", "feature-clickhouse"],
+      "properties": {
+        "session-clickhouse": {"type": "number", "minimum": 0},
+        "feature-clickhouse": {"type": "number", "minimum": 0}
+      }
+    },
+    "parity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "unexplained_field_differences"],
+      "properties": {
+        "status": {"enum": ["PASS", "FAIL"]},
+        "unexplained_field_differences": {"type": "integer", "minimum": 0}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "projection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["unique_events", "duplicate_rows", "conflicting_events", "blank_event_id_rows"],
+      "properties": {
+        "unique_events": {"type": "integer", "minimum": 0},
+        "duplicate_rows": {"type": "integer", "minimum": 0},
+        "conflicting_events": {"type": "integer", "minimum": 0},
+        "blank_event_id_rows": {"type": "integer", "minimum": 0}
+      }
+    },
+    "flink_job": {
+      "type": "object", "additionalProperties": false,
+      "required": ["running_tasks", "expected_tasks", "completed_checkpoints", "failed_checkpoints", "max_checkpoint_duration_ms"],
+      "properties": {
+        "running_tasks": {"type": "integer", "minimum": 0},
+        "expected_tasks": {"type": "integer", "minimum": 1},
+        "completed_checkpoints": {"type": "integer", "minimum": 0},
+        "failed_checkpoints": {"type": "integer", "minimum": 0},
+        "max_checkpoint_duration_ms": {"type": "integer", "minimum": 0}
+      }
+    },
+    "lag": {
+      "type": "object", "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": {"type": "integer", "minimum": 0},
+        "end": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

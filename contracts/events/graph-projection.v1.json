@@ -1,0 +1,77 @@
+{
+  "contract_id": "traffic.graph.projection.v1",
+  "schema_version": 1,
+  "topic": "graph.projections.v1",
+  "encoding": {
+    "kind": "protobuf",
+    "path": "proto/traffic/v1/graph.proto",
+    "message": "traffic.v1.GraphProjectionEvent",
+    "content_type": "application/x-protobuf",
+    "deterministic_serialization_required": true
+  },
+  "partition_key": {
+    "entity": "tenant_id + ':' + vertex_id",
+    "relation": "tenant_id + ':' + edge_id",
+    "must_equal_kafka_key": true
+  },
+  "identity": {
+    "tuple_encoding": "each UTF-8 component is prefixed by an unsigned 64-bit big-endian byte length",
+    "vertex_domain": "graph-vertex/v1",
+    "vertex_components": ["tenant_id", "entity_type", "canonical_id"],
+    "vertex_id": "lowercase hex of the first 16 bytes of SHA-256(tuple)",
+    "edge_domain": "graph-edge/v1",
+    "edge_components": ["tenant_id", "relation_type", "source_vertex_id", "target_vertex_id"],
+    "edge_id": "lowercase hex of all 32 bytes of SHA-256(tuple)",
+    "nebula_rank": "positive signed 63-bit value from the first 8 big-endian bytes of edge_id; zero maps to one"
+  },
+  "event_types": [
+    "graph.entity.upserted.v1",
+    "graph.relation.upserted.v1",
+    "graph.relation.revoked.v1"
+  ],
+  "required_headers": [
+    "content_type",
+    "proto_message_type",
+    "event_id",
+    "event_type",
+    "schema_version",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "tenant_id",
+    "projection_kind",
+    "projection_id",
+    "projection_sha256",
+    "source_event_id",
+    "trace_id"
+  ],
+  "projection_hash": {
+    "algorithm": "sha256",
+    "serialization": "UTF-8 JSON of the exact ordered structures implemented by EntityProjectionSHA256 and RelationProjectionSHA256; attribute keys and evidence identities are sorted",
+    "excludes": ["projection_sha256", "Kafka source coordinates", "produced_at"],
+    "implementation": "go/control-plane/internal/graph/projection/contract.go"
+  },
+  "provenance": {
+    "observed": {"allowed_evidence_kinds": ["event"], "uncertainty_required": false},
+    "derived": {"required_any_evidence_kinds": ["rule", "model"], "uncertainty_required": true},
+    "analyst": {"required_any_evidence_kinds": ["analyst_conclusion"], "uncertainty_required": true},
+    "rule": "derived and analyst relations can never be serialized as observed facts"
+  },
+  "ordering": {
+    "admission": "same projection identity and aggregate version with another hash is permanent conflict; lower versions are permanent late events",
+    "application": "only the lowest non-applied offset in each Kafka partition can be claimed",
+    "commit": "Nebula acknowledgement precedes PostgreSQL current-state and watermark commit",
+    "ambiguity": "a crash after Nebula acknowledgement replays the same deterministic mutation"
+  },
+  "failure_policy": {
+    "invalid_or_conflicting_source": "canonical DLQ broker acknowledgement is required before source offset commit",
+    "target_failure": "bounded retry then PostgreSQL DEAD record; later events in the partition remain blocked",
+    "repair": "no automatic deletion; replay requires explicit authorization"
+  },
+  "rollout": {
+    "consumer_flag": "GRAPH_PROJECTION_CONSUMER_ENABLED",
+    "worker_flag": "GRAPH_PROJECTION_WORKER_ENABLED",
+    "defaults": {"consumer": false, "worker": false},
+    "order": ["schema", "consumer", "consumer readiness", "worker", "producer canary", "reconcile"]
+  }
+}

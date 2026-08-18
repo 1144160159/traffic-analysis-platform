@@ -122,7 +122,7 @@
     },
     {
       "path": "web/ui/src/pages/RuleManagementPage.tsx",
-      "sha256": "722163c5ae8350b3a2b8440ea911902ffc6726e7836273cfbe9581277201641f"
+      "sha256": "97a1191eb1f5795f3becae3735aa382ea39361246688272cbf2ce338d8cd0f8d"
     },
     {
       "path": "web/ui/src/pages/SettingsGovernancePage.tsx",
@@ -194,7 +194,7 @@
     },
     {
       "path": "web/ui/src/services/api.ts",
-      "sha256": "0f3317d1ab2548716850e3b2cb350ce3b7a03b0f1fd1dd2d5360827897ad19ad"
+      "sha256": "1459053fab02af0e95e2e4833964ece066931a6a2ae15b8d60275e20af3e42ad"
     },
     {
       "path": "web/ui/src/services/assetExportApi.ts",
@@ -274,7 +274,7 @@
     },
     {
       "path": "web/ui/src/services/pageApiPlans.ts",
-      "sha256": "1e5808de81289b8d1bac2a76232a9eca53a7d94b0b80ff4fdc3c786e6953b83b"
+      "sha256": "58456500655feac12a2f6a1638a12218d99366942d6ced6e4960734ea6c6aaa5"
     },
     {
       "path": "web/ui/src/services/pageSnapshotAdapters.ts",
@@ -446,5 +446,5 @@
     ]
   },
   "findings": [],
-  "catalog_sha256": "c243354050b2a7edf19be5a7fc3e3c72b7a17ca2200b7b112c1cd29e2bf064df"
+  "catalog_sha256": "26db99683dd68bf40fea3b666b5e611a080cbd20c2d0678ad7aa94a53ef62a05"
 }

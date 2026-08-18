@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/requirement-satisfaction-authority-receipt.schema.json",
+  "title": "Trusted authority decision for one Topic One requirement satisfaction closure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_id", "requirement_id", "candidate_manifest_sha256",
+    "profile_id", "environment_id", "evidence_set_manifest_sha256", "decision_body_sha256",
+    "decision", "authorities", "signed_payload_artifact", "signed_payload_sha256",
+    "signature_artifacts", "signed_at", "verification"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "receipt_id": {"type": "string", "minLength": 1},
+    "requirement_id": {"type": "string", "pattern": "^REQ-T1-[A-Z0-9-]+$"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "evidence_set_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decision_body_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decision": {"const": "SATISFIED"},
+    "authorities": {
+      "type": "array", "minItems": 2, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "identity"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1},
+          "identity": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "signed_payload_artifact": {"type": "string", "minLength": 1},
+    "signed_payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signature_artifacts": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "sha256", "algorithm", "key_or_certificate_id"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "algorithm": {"type": "string", "minLength": 1},
+          "key_or_certificate_id": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "signed_at": {"type": "string", "minLength": 1},
+    "verification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "verifier", "verifier_version", "verified_at", "revocation_checked"],
+      "properties": {
+        "status": {"const": "PASS"},
+        "verifier": {"type": "string", "minLength": 1},
+        "verifier_version": {"type": "string", "minLength": 1},
+        "verified_at": {"type": "string", "minLength": 1},
+        "revocation_checked": {"const": true}
+      }
+    }
+  }
+}

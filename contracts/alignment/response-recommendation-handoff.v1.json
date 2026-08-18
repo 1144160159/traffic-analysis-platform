@@ -1,0 +1,88 @@
+{
+  "contract_id": "T1-M09-N020-RESPONSE-RECOMMENDATION-HANDOFF-V1",
+  "task_id": "T1-M09-N020",
+  "status": "PARTIAL",
+  "scope": "response recommendation creation, dry-run validation, independently approved external-provider handoff and authoritative provider-receipt visibility",
+  "runtime_rail": {
+    "producer_flag": "ALERT_RESPONSE_EXECUTION_V1_ENABLED",
+    "external_executor_flag": "ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED",
+    "unknown_effect_reconciliation_flag": "ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED",
+    "compensation_flag": "ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED",
+    "default_enabled": false,
+    "enablement_order": [
+      "deploy the additive PostgreSQL receipt schema",
+      "configure and verify an external provider plus exact authority lookup",
+      "enable the consumer rail for an authorized canary",
+      "enable the external executor only after independent approval and rollback readiness"
+    ]
+  },
+  "authorities": {
+    "create": "go/control-plane/internal/alert/api/handler_alert_actions.go#Handler.CreateAlertResponseAction",
+    "read": "go/control-plane/internal/alert/api/handler_alert_actions.go#Handler.GetAlertResponseAction",
+    "receipt_read": "go/control-plane/internal/alert/api/handler_alert_actions.go#Handler.getAlertResponseExecutionReceipt",
+    "approval": "go/control-plane/internal/alert/api/handler_alert_response_workflow.go#Handler.DecideAlertResponseAction",
+    "projection": "go/control-plane/internal/alert/consumer/alert_response_event_consumer.go#PostgresAlertResponseProjection.ApplyAlertResponseProjection",
+    "handoff": "go/control-plane/internal/alert/consumer/alert_response_http_executor.go#HTTPAlertResponseExecutor.ExecuteAlertResponse",
+    "ui": "web/ui/src/pages/AlertDetailPage.tsx#AlertDetailPage"
+  },
+  "invariants": [
+    "dry-run writes an internal-simulation receipt with external_effect=false and effect_state=none",
+    "a real action remains pending until an independent actor approves the exact aggregate revision",
+    "an absent external executor produces blocked_external_executor and never a success state",
+    "provider HTTP success is insufficient unless provider_receipt_id, effect state and stable effect IDs validate",
+    "provider receipt, response action state and audit commit in one PostgreSQL transaction",
+    "GET binds receipt lookup to tenant_id, alert_id and job_id and returns receipt_available=false while no receipt exists",
+    "the browser polls the authoritative GET and never turns accepted or an absent receipt into completed",
+    "transport ambiguity remains partial with effect_state=unknown and is not blindly retried"
+  ],
+  "provider_receipt_fields": [
+    "event_id",
+    "state",
+    "simulated",
+    "external_effect",
+    "aggregate_version",
+    "result",
+    "error",
+    "kafka_partition",
+    "kafka_offset",
+    "provider",
+    "provider_receipt_id",
+    "effect_state",
+    "effect_ids",
+    "trace_id",
+    "receipt_sha256",
+    "authority_lookup",
+    "executed_at"
+  ],
+  "topic_boundary": {
+    "owned": [
+      "detection-derived response recommendation",
+      "dry-run validation",
+      "audited external-provider handoff task",
+      "provider receipt projection and visibility"
+    ],
+    "not_owned": [
+      "direct production traffic cleaning",
+      "direct production blackhole routing",
+      "direct production attack-source blocking",
+      "provider-side network policy implementation"
+    ]
+  },
+  "latest_evidence": {
+    "path": "doc/02_acceptance/topic1/tasks/t1-m09-n020/k8s-response-handoff-latest.json",
+    "run_id": "54207a03-d01d-4a26-8391-e3235d2dad7f",
+    "status": "PASS",
+    "coverage_status": "PASS_FOR_RUN_SCOPED_K8S_RESPONSE_HANDOFF",
+    "production_applied": false
+  },
+  "closure": {
+    "status": "PARTIAL",
+    "production_applied": false,
+    "open_items": [
+      "authorize a production provider and candidate-specific executor configuration",
+      "run provider failure injection, authority lookup and compensation drills against the release candidate",
+      "prove scale, retry and recovery behavior under the production observation profile",
+      "complete Windows Chrome review and the production observation window"
+    ]
+  }
+}

@@ -6,52 +6,217 @@
   "$defs": {
     "WhitelistLifecycleV2Json": {
       "type": "object",
-      "required": ["event_id", "event_type", "schema_version", "tenant_id", "entry_id", "aggregate_version", "action_id", "reason", "trace_id", "desired_rule_state", "occurred_at", "entry"],
+      "required": [
+        "event_id",
+        "event_type",
+        "schema_version",
+        "tenant_id",
+        "entry_id",
+        "aggregate_version",
+        "action_id",
+        "reason",
+        "trace_id",
+        "desired_rule_state",
+        "occurred_at",
+        "entry"
+      ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"enum": ["traffic.whitelist.v2.EntryDrafted", "traffic.whitelist.v2.ApprovalSubmitted", "traffic.whitelist.v2.EntryApproved", "traffic.whitelist.v2.EntryRejected", "traffic.whitelist.v2.EntryRevoked", "traffic.whitelist.v2.EntryArchived", "traffic.whitelist.v2.EntryExpired", "traffic.whitelist.v2.EntryExtended", "traffic.whitelist.v2.EntryAssigned", "traffic.whitelist.v2.EntryUpdated"]},
-        "schema_version": {"const": 2},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "entry_id": {"type": "string", "format": "uuid"},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "action_id": {"type": "string", "minLength": 1},
-        "reason": {"type": "string", "minLength": 1},
-        "trace_id": {"type": "string", "minLength": 1},
-        "desired_rule_state": {"enum": ["", "effective", "revoked"]},
-        "occurred_at": {"type": "string", "format": "date-time"},
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "enum": [
+            "traffic.whitelist.v2.EntryDrafted",
+            "traffic.whitelist.v2.ApprovalSubmitted",
+            "traffic.whitelist.v2.EntryApproved",
+            "traffic.whitelist.v2.EntryRejected",
+            "traffic.whitelist.v2.EntryRevoked",
+            "traffic.whitelist.v2.EntryArchived",
+            "traffic.whitelist.v2.EntryExpired",
+            "traffic.whitelist.v2.EntryExtended",
+            "traffic.whitelist.v2.EntryAssigned",
+            "traffic.whitelist.v2.EntryUpdated"
+          ]
+        },
+        "schema_version": {
+          "const": 2
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entry_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "desired_rule_state": {
+          "enum": [
+            "",
+            "effective",
+            "revoked"
+          ]
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
         "entry": {
           "type": "object",
-          "required": ["id", "tenant_id", "type", "value", "reason", "description", "status", "approval_status", "version", "created_by", "created_at", "updated_at"],
+          "required": [
+            "id",
+            "tenant_id",
+            "type",
+            "value",
+            "reason",
+            "description",
+            "status",
+            "approval_status",
+            "version",
+            "created_by",
+            "created_at",
+            "updated_at"
+          ],
           "properties": {
-            "id": {"type": "string", "format": "uuid"},
-            "tenant_id": {"type": "string", "minLength": 1},
-            "type": {"enum": ["ip", "domain", "fingerprint", "subnet", "asset", "account", "rule", "model"]},
-            "value": {"type": "string", "minLength": 1},
-            "reason": {"type": "string"},
-            "description": {"type": "string"},
-            "status": {"enum": ["draft", "pending", "active", "disabled"]},
-            "approval_status": {"enum": ["draft", "pending", "approved", "rejected"]},
-            "source_alert_id": {"type": "string"},
-            "feedback_id": {"type": "string"},
-            "owner_role": {"type": "string"},
-            "scope": {"type": "string"},
-            "risk_level": {"enum": ["low", "medium", "high", "critical"]},
-            "covered_alerts": {"type": "integer", "minimum": 0},
-            "covered_assets": {"type": "integer", "minimum": 0},
-            "version": {"type": "integer", "minimum": 1},
-            "created_by": {"type": "string"},
-            "approved_by": {"type": "string"},
-            "approved_at": {"type": "string", "format": "date-time"},
-            "disabled_at": {"type": "string", "format": "date-time"},
-            "expires_at": {"type": "string", "format": "date-time"},
-            "created_at": {"type": "string", "format": "date-time"},
-            "updated_at": {"type": "string", "format": "date-time"},
-            "archived_at": {"type": "string", "format": "date-time"},
-            "last_action_id": {"type": "string"},
-            "last_trace_id": {"type": "string"},
-            "rule_effect_status": {"type": "string"},
-            "rule_desired_state": {"type": "string"},
-            "rule_revision": {"type": "string"}
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "tenant_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "type": {
+              "enum": [
+                "ip",
+                "domain",
+                "fingerprint",
+                "subnet",
+                "asset",
+                "account",
+                "rule",
+                "model"
+              ]
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reason": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "draft",
+                "pending",
+                "active",
+                "disabled"
+              ]
+            },
+            "approval_status": {
+              "enum": [
+                "draft",
+                "pending",
+                "approved",
+                "rejected"
+              ]
+            },
+            "source_alert_id": {
+              "type": "string"
+            },
+            "feedback_id": {
+              "type": "string"
+            },
+            "owner_role": {
+              "type": "string"
+            },
+            "scope": {
+              "type": "string"
+            },
+            "risk_level": {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ]
+            },
+            "covered_alerts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "covered_assets": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "created_by": {
+              "type": "string"
+            },
+            "approved_by": {
+              "type": "string"
+            },
+            "approved_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "disabled_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "archived_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "last_action_id": {
+              "type": "string"
+            },
+            "last_trace_id": {
+              "type": "string"
+            },
+            "rule_effect_status": {
+              "type": "string"
+            },
+            "rule_desired_state": {
+              "type": "string"
+            },
+            "rule_revision": {
+              "type": "string"
+            }
           },
           "additionalProperties": false
         }
@@ -61,94 +226,302 @@
     "AlertFeedbackExtendedV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_version",
-        "alert_id", "tenant_id", "label", "user_id", "timestamp",
-        "add_to_whitelist", "feedback_id"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_version",
+        "alert_id",
+        "tenant_id",
+        "label",
+        "user_id",
+        "timestamp",
+        "add_to_whitelist",
+        "feedback_id"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"const": "alert.feedback.v1"},
-        "schema_version": {"const": 1},
-        "aggregate_version": {"const": 1},
-        "alert_id": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "label": {"enum": ["TP", "FP"]},
-        "reason_code": {"type": "string"},
-        "comment": {"type": "string"},
-        "user_id": {"type": "string"},
-        "timestamp": {"type": "integer"},
-        "add_to_whitelist": {"type": "boolean"},
-        "feedback_id": {"type": "string", "format": "uuid"},
-        "alert_type": {"type": "string"},
-        "severity": {"type": "string"},
-        "labels": {"type": "array", "items": {"type": "string"}},
-        "model_version": {"type": "string"},
-        "rule_version": {"type": "string"}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "const": "alert.feedback.v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_version": {
+          "const": 1
+        },
+        "alert_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "enum": [
+            "TP",
+            "FP"
+          ]
+        },
+        "reason_code": {
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "integer"
+        },
+        "add_to_whitelist": {
+          "type": "boolean"
+        },
+        "feedback_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "alert_type": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "model_version": {
+          "type": "string"
+        },
+        "rule_version": {
+          "type": "string"
+        }
       },
       "additionalProperties": false
     },
     "AlertResponseRequestedV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_version",
-        "job_id", "tenant_id", "alert_id", "action_id", "action", "target",
-        "reason", "requested_by", "trace_id", "dry_run"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_version",
+        "job_id",
+        "tenant_id",
+        "alert_id",
+        "action_id",
+        "action",
+        "target",
+        "reason",
+        "requested_by",
+        "trace_id",
+        "dry_run"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"const": "alert.response.requested.v1"},
-        "schema_version": {"const": 1},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "job_id": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "alert_id": {"type": "string", "minLength": 1},
-        "action_id": {"type": "string", "minLength": 1},
-        "action": {"type": "string", "minLength": 1},
-        "target": {"type": "string", "minLength": 1},
-        "reason": {"type": "string", "minLength": 1},
-		"requested_by": {"type": "string", "minLength": 1},
-		"approved_by": {"type": "string", "minLength": 1},
-		"approval_reason": {"type": "string", "minLength": 1},
-		"trace_id": {"type": "string", "minLength": 1},
-        "dry_run": {"type": "boolean"}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "const": "alert.response.requested.v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "job_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alert_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requested_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approval_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dry_run": {
+          "type": "boolean"
+        }
       },
-	  "allOf": [
-		{
-		  "if": {"properties": {"dry_run": {"const": false}}, "required": ["dry_run"]},
-		  "then": {"required": ["approved_by", "approval_reason"]}
-		}
-	  ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "dry_run": {
+                "const": false
+              }
+            },
+            "required": [
+              "dry_run"
+            ]
+          },
+          "then": {
+            "required": [
+              "approved_by",
+              "approval_reason"
+            ]
+          }
+        }
+      ],
       "additionalProperties": false
     },
     "AlertBatchAssignmentLifecycleV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_type",
-        "aggregate_id", "aggregate_version", "partition_key", "tenant_id",
-        "batch_id", "assignee", "requested_by", "reason", "status",
-        "total_count", "trace_id", "occurred_at"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "partition_key",
+        "tenant_id",
+        "batch_id",
+        "assignee",
+        "requested_by",
+        "reason",
+        "status",
+        "total_count",
+        "trace_id",
+        "occurred_at"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"enum": ["alert.batch-assignment.requested.v1", "alert.assignment.changed.v1", "alert.batch-assignment.compensation-requested.v1", "alert.assignment.compensated.v1"]},
-        "schema_version": {"const": 1},
-        "aggregate_type": {"enum": ["alert_assignment_batch", "alert_assignment_compensation"]},
-        "aggregate_id": {"type": "string", "format": "uuid"},
-        "aggregate_version": {"enum": [1, 2]},
-        "partition_key": {"type": "string", "minLength": 3},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "batch_id": {"type": "string", "format": "uuid"},
-        "request_id": {"type": "string", "format": "uuid"},
-        "action_id": {"const": "alert-batch-assignment-compensate"},
-        "expected_batch_revision": {"type": "integer", "minimum": 1},
-        "selection_id": {"type": "string", "format": "uuid"},
-        "selection_snapshot_id": {"type": "string", "minLength": 8, "maxLength": 256},
-        "selection_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "assignee": {"type": "string", "minLength": 1, "maxLength": 128},
-        "requested_by": {"type": "string", "minLength": 1},
-        "reason": {"type": "string", "minLength": 4, "maxLength": 1000},
-        "status": {"enum": ["accepted", "running"]},
-        "total_count": {"type": "integer", "minimum": 1, "maximum": 100},
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "enum": [
+            "alert.batch-assignment.requested.v1",
+            "alert.assignment.changed.v1",
+            "alert.batch-assignment.compensation-requested.v1",
+            "alert.assignment.compensated.v1"
+          ]
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_type": {
+          "enum": [
+            "alert_assignment_batch",
+            "alert_assignment_compensation"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 3
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "batch_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "request_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "action_id": {
+          "const": "alert-batch-assignment-compensate"
+        },
+        "expected_batch_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "selection_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "selection_snapshot_id": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 256
+        },
+        "selection_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "assignee": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "requested_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 1000
+        },
+        "status": {
+          "enum": [
+            "accepted",
+            "running"
+          ]
+        },
+        "total_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
         "items": {
           "type": "array",
           "minItems": 1,
@@ -157,52 +530,257 @@
           "items": {
             "type": "object",
             "required": [
-              "alert_id", "position", "expected_state_version", "resulting_state_version",
-              "previous_assignee", "resulting_assignee", "previous_status", "resulting_status"
+              "alert_id",
+              "position",
+              "expected_state_version",
+              "resulting_state_version",
+              "previous_assignee",
+              "resulting_assignee",
+              "previous_status",
+              "resulting_status"
             ],
             "properties": {
-              "alert_id": {"type": "string", "minLength": 1},
-              "position": {"type": "integer", "minimum": 0, "maximum": 99},
-              "expected_state_version": {"type": "integer", "minimum": 1},
-              "resulting_state_version": {"type": "integer", "minimum": 2},
-              "previous_assignee": {"type": "string"},
-              "resulting_assignee": {"type": "string"},
-              "previous_status": {"enum": ["new", "triage", "assigned", "closed"]},
-              "resulting_status": {"enum": ["new", "triage", "assigned", "closed"]}
+              "alert_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "position": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "expected_state_version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "resulting_state_version": {
+                "type": "integer",
+                "minimum": 2
+              },
+              "previous_assignee": {
+                "type": "string"
+              },
+              "resulting_assignee": {
+                "type": "string"
+              },
+              "previous_status": {
+                "enum": [
+                  "new",
+                  "triage",
+                  "assigned",
+                  "closed"
+                ]
+              },
+              "resulting_status": {
+                "enum": [
+                  "new",
+                  "triage",
+                  "assigned",
+                  "closed"
+                ]
+              }
             },
             "additionalProperties": false
           }
         },
-        "trace_id": {"type": "string", "minLength": 1},
-        "occurred_at": {"type": "string", "format": "date-time"}
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
       "allOf": [
         {
-          "if": {"properties": {"event_type": {"const": "alert.batch-assignment.requested.v1"}}, "required": ["event_type"]},
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "baseline.build.requested.v1"
+              }
+            }
+          },
           "then": {
-            "properties": {"aggregate_type": {"const": "alert_assignment_batch"}, "aggregate_version": {"const": 1}, "status": {"const": "accepted"}},
-            "required": ["selection_id", "selection_snapshot_id", "selection_sha256"]
+            "required": [
+              "baseline_kind",
+              "job_id",
+              "definition_revision",
+              "target_version"
+            ]
           }
         },
         {
-          "if": {"properties": {"event_type": {"const": "alert.assignment.changed.v1"}}, "required": ["event_type"]},
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "baseline.version.frozen.v1"
+              }
+            }
+          },
           "then": {
-            "properties": {"aggregate_type": {"const": "alert_assignment_batch"}, "aggregate_version": {"const": 2}, "status": {"const": "running"}},
-            "required": ["items"]
+            "required": [
+              "baseline_kind",
+              "baseline_version",
+              "version_id",
+              "snapshot_sha256",
+              "quality_status"
+            ]
           }
         },
         {
-          "if": {"properties": {"event_type": {"const": "alert.batch-assignment.compensation-requested.v1"}}, "required": ["event_type"]},
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "baseline.version.failed.v1"
+              }
+            }
+          },
           "then": {
-            "properties": {"aggregate_type": {"const": "alert_assignment_compensation"}, "aggregate_version": {"const": 1}, "status": {"const": "accepted"}, "expected_batch_revision": {"const": 3}},
-            "required": ["request_id", "action_id", "expected_batch_revision"]
+            "required": [
+              "error_code"
+            ],
+            "oneOf": [
+              {
+                "required": [
+                  "job_id",
+                  "target_version"
+                ]
+              },
+              {
+                "required": [
+                  "baseline_version",
+                  "version_id",
+                  "snapshot_sha256",
+                  "quality_status"
+                ]
+              }
+            ]
           }
         },
         {
-          "if": {"properties": {"event_type": {"const": "alert.assignment.compensated.v1"}}, "required": ["event_type"]},
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "alert.batch-assignment.requested.v1"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
           "then": {
-            "properties": {"aggregate_type": {"const": "alert_assignment_compensation"}, "aggregate_version": {"const": 2}, "status": {"const": "running"}, "expected_batch_revision": {"const": 3}},
-            "required": ["request_id", "action_id", "expected_batch_revision", "items"]
+            "properties": {
+              "aggregate_type": {
+                "const": "alert_assignment_batch"
+              },
+              "aggregate_version": {
+                "const": 1
+              },
+              "status": {
+                "const": "accepted"
+              }
+            },
+            "required": [
+              "selection_id",
+              "selection_snapshot_id",
+              "selection_sha256"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "alert.assignment.changed.v1"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "aggregate_type": {
+                "const": "alert_assignment_batch"
+              },
+              "aggregate_version": {
+                "const": 2
+              },
+              "status": {
+                "const": "running"
+              }
+            },
+            "required": [
+              "items"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "alert.batch-assignment.compensation-requested.v1"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "aggregate_type": {
+                "const": "alert_assignment_compensation"
+              },
+              "aggregate_version": {
+                "const": 1
+              },
+              "status": {
+                "const": "accepted"
+              },
+              "expected_batch_revision": {
+                "const": 3
+              }
+            },
+            "required": [
+              "request_id",
+              "action_id",
+              "expected_batch_revision"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "alert.assignment.compensated.v1"
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "aggregate_type": {
+                "const": "alert_assignment_compensation"
+              },
+              "aggregate_version": {
+                "const": 2
+              },
+              "status": {
+                "const": "running"
+              },
+              "expected_batch_revision": {
+                "const": 3
+              }
+            },
+            "required": [
+              "request_id",
+              "action_id",
+              "expected_batch_revision",
+              "items"
+            ]
           }
         }
       ],
@@ -211,144 +789,431 @@
     "AlertSavedViewSavedV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_type",
-        "aggregate_id", "aggregate_version", "tenant_id", "view_id",
-        "name", "filters", "changed_by", "trace_id"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "tenant_id",
+        "view_id",
+        "name",
+        "filters",
+        "changed_by",
+        "trace_id"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"const": "alert.saved-view.saved.v1"},
-        "schema_version": {"const": 1},
-        "aggregate_type": {"const": "alert_saved_view"},
-        "aggregate_id": {"type": "string", "format": "uuid"},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "view_id": {"type": "string", "format": "uuid"},
-        "name": {"type": "string", "minLength": 1},
-        "filters": {"type": "object"},
-        "changed_by": {"type": "string"},
-        "trace_id": {"type": "string", "minLength": 1}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "const": "alert.saved-view.saved.v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_type": {
+          "const": "alert_saved_view"
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "view_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "filters": {
+          "type": "object"
+        },
+        "changed_by": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
     "NotificationRuleLifecycleV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_type",
-        "aggregate_id", "aggregate_version", "tenant_id",
-        "action_id", "reason", "changed_by", "trace_id"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "tenant_id",
+        "action_id",
+        "reason",
+        "changed_by",
+        "trace_id"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"enum": [
-          "traffic.notification.rule.v1.RuleCreated",
-          "traffic.notification.rule.v1.RuleUpdated",
-          "traffic.notification.template.v1.TemplateCreated",
-          "traffic.notification.template.v1.TemplateUpdated",
-          "traffic.notification.escalation.v1.PolicyCreated",
-          "traffic.notification.escalation.v1.PolicyUpdated",
-          "traffic.notification.silence.v1.SilenceCreated",
-          "traffic.notification.silence.v1.SilenceUpdated",
-          "traffic.notification.settings.v1.SettingsUpdated"
-        ]},
-        "schema_version": {"const": 1},
-        "aggregate_type": {"enum": ["notification_rule", "notification_template", "notification_escalation_policy", "notification_silence_rule", "notification_settings"]},
-        "aggregate_id": {"type": "string", "format": "uuid"},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "rule": {"type": "object"},
-        "template": {"type": "object"},
-        "escalation_policy": {"type": "object"},
-        "silence_rule": {"type": "object"},
-        "settings": {"type": "object"},
-        "action_id": {"type": "string", "minLength": 1},
-        "reason": {"type": "string", "minLength": 1},
-        "changed_by": {"type": "string"},
-        "trace_id": {"type": "string", "minLength": 1}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "enum": [
+            "traffic.notification.rule.v1.RuleCreated",
+            "traffic.notification.rule.v1.RuleUpdated",
+            "traffic.notification.template.v1.TemplateCreated",
+            "traffic.notification.template.v1.TemplateUpdated",
+            "traffic.notification.escalation.v1.PolicyCreated",
+            "traffic.notification.escalation.v1.PolicyUpdated",
+            "traffic.notification.silence.v1.SilenceCreated",
+            "traffic.notification.silence.v1.SilenceUpdated",
+            "traffic.notification.settings.v1.SettingsUpdated"
+          ]
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_type": {
+          "enum": [
+            "notification_rule",
+            "notification_template",
+            "notification_escalation_policy",
+            "notification_silence_rule",
+            "notification_settings"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rule": {
+          "type": "object"
+        },
+        "template": {
+          "type": "object"
+        },
+        "escalation_policy": {
+          "type": "object"
+        },
+        "silence_rule": {
+          "type": "object"
+        },
+        "settings": {
+          "type": "object"
+        },
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "changed_by": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "oneOf": [
-        {"required": ["rule"]},
-        {"required": ["template"]},
-        {"required": ["escalation_policy"]},
-        {"required": ["silence_rule"]},
-        {"required": ["settings"]}
+        {
+          "required": [
+            "rule"
+          ]
+        },
+        {
+          "required": [
+            "template"
+          ]
+        },
+        {
+          "required": [
+            "escalation_policy"
+          ]
+        },
+        {
+          "required": [
+            "silence_rule"
+          ]
+        },
+        {
+          "required": [
+            "settings"
+          ]
+        }
       ],
       "additionalProperties": false
     },
     "TopicActionLifecycleV2Json": {
       "type": "object",
-      "required": ["event_id", "event_type", "tenant_id", "topic", "job_id", "revision", "trace_id"],
+      "required": [
+        "event_id",
+        "event_type",
+        "tenant_id",
+        "topic",
+        "job_id",
+        "revision",
+        "trace_id"
+      ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {
-          "enum": ["traffic.topic.v2.ActionRequested", "traffic.topic.v2.ActionResult"]
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
         },
-        "tenant_id": {"type": "string", "minLength": 1},
-        "topic": {"type": "string", "minLength": 1},
-        "job_id": {"type": "string", "format": "uuid"},
-        "action_id": {"type": "string"},
-        "snapshot_id": {"type": ["string", "null"]},
-        "revision": {"type": "integer", "minimum": 1},
-        "trace_id": {"type": "string"},
-        "status": {"type": "string"},
-        "receipt": {"type": "object"},
-        "error": {"type": "object"}
+        "event_type": {
+          "enum": [
+            "traffic.topic.v2.ActionRequested",
+            "traffic.topic.v2.ActionResult"
+          ]
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 1
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "action_id": {
+          "type": "string"
+        },
+        "snapshot_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "trace_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "receipt": {
+          "type": "object"
+        },
+        "error": {
+          "type": "object"
+        }
       },
       "additionalProperties": true
     },
     "DashboardTaskLifecycleV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_type",
-        "aggregate_id", "aggregate_version", "partition_key", "tenant_id",
-        "task_id", "action_id", "status", "snapshot_id", "trace_id", "occurred_at"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "partition_key",
+        "tenant_id",
+        "task_id",
+        "action_id",
+        "status",
+        "snapshot_id",
+        "trace_id",
+        "occurred_at"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"enum": [
-          "traffic.dashboard.v1.TaskRequested",
-          "traffic.dashboard.v1.TaskResult",
-          "traffic.dashboard.v1.TaskCompensationRequested",
-          "traffic.dashboard.v1.TaskCompensationResult"
-        ]},
-        "schema_version": {"const": 1},
-        "aggregate_type": {"const": "dashboard_task"},
-        "aggregate_id": {"type": "string", "format": "uuid"},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "partition_key": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "task_id": {"type": "string", "format": "uuid"},
-        "action_id": {"type": "string", "minLength": 1},
-        "status": {"enum": ["accepted", "running", "completed", "partial", "failed", "compensating", "compensated", "compensation_partial", "compensation_failed"]},
-        "snapshot_id": {"type": "string", "minLength": 1},
-        "provider": {"type": "string", "minLength": 1},
-        "provider_receipt_id": {"type": "string", "minLength": 1},
-        "effect_state": {"enum": ["confirmed", "none", "unknown"]},
-        "effect_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "result": {"type": "object"},
-        "error_code": {"type": "string"},
-        "error_message": {"type": "string"},
-        "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "trace_id": {"type": "string", "minLength": 1},
-        "occurred_at": {"type": "string", "format": "date-time"}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "enum": [
+            "traffic.dashboard.v1.TaskRequested",
+            "traffic.dashboard.v1.TaskResult",
+            "traffic.dashboard.v1.TaskCompensationRequested",
+            "traffic.dashboard.v1.TaskCompensationResult"
+          ]
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_type": {
+          "const": "dashboard_task"
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "accepted",
+            "running",
+            "completed",
+            "partial",
+            "failed",
+            "compensating",
+            "compensated",
+            "compensation_partial",
+            "compensation_failed"
+          ]
+        },
+        "snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider_receipt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effect_state": {
+          "enum": [
+            "confirmed",
+            "none",
+            "unknown"
+          ]
+        },
+        "effect_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "result": {
+          "type": "object"
+        },
+        "error_code": {
+          "type": "string"
+        },
+        "error_message": {
+          "type": "string"
+        },
+        "receipt_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
       "allOf": [
         {
-          "if": {"properties": {"event_type": {"const": "traffic.dashboard.v1.TaskResult"}}},
-          "then": {"required": ["provider", "provider_receipt_id", "effect_state", "effect_ids", "result", "receipt_sha256"]}
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "traffic.dashboard.v1.TaskResult"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "provider",
+              "provider_receipt_id",
+              "effect_state",
+              "effect_ids",
+              "result",
+              "receipt_sha256"
+            ]
+          }
         },
         {
-          "if": {"properties": {"event_type": {"const": "traffic.dashboard.v1.TaskCompensationResult"}}},
-          "then": {"required": ["provider", "provider_receipt_id", "effect_state", "effect_ids", "result", "receipt_sha256"]}
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "traffic.dashboard.v1.TaskCompensationResult"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "provider",
+              "provider_receipt_id",
+              "effect_state",
+              "effect_ids",
+              "result",
+              "receipt_sha256"
+            ]
+          }
         },
         {
-          "if": {"properties": {"status": {"enum": ["completed", "compensated"]}}},
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "completed",
+                  "compensated"
+                ]
+              }
+            }
+          },
           "then": {
             "properties": {
-              "effect_state": {"const": "confirmed"},
-              "effect_ids": {"minItems": 1}
+              "effect_state": {
+                "const": "confirmed"
+              },
+              "effect_ids": {
+                "minItems": 1
+              }
             },
-            "required": ["effect_state", "effect_ids"]
+            "required": [
+              "effect_state",
+              "effect_ids"
+            ]
           }
         }
       ],
@@ -357,12 +1222,21 @@
     "CampaignAggregateLifecycleV2Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_type",
-        "aggregate_id", "aggregate_version", "partition_key", "tenant_id",
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "partition_key",
+        "tenant_id",
         "trace_id"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
         "event_type": {
           "enum": [
             "traffic.campaign.v2.OwnerAssigned",
@@ -383,106 +1257,335 @@
             "traffic.campaign.v2.MembershipBackfilled"
           ]
         },
-        "schema_version": {"const": 2},
-        "aggregate_type": {"const": "campaign"},
-        "aggregate_id": {"type": "string", "minLength": 1},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "partition_key": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "campaign_id": {"type": "string"},
-        "alert_id": {"type": "string"},
-        "relation_id": {"type": "string", "format": "uuid"},
-        "relation_revision": {"type": "integer", "minimum": 1},
-        "campaign_revision": {"type": "integer", "minimum": 1},
-        "status": {"type": "string"},
-        "assignee": {"type": "string"},
-        "member_count": {"type": "integer", "minimum": 0},
-        "job_id": {"type": "string"},
-        "report_id": {"type": "string"},
-        "report_campaign_revision": {"type": "integer", "minimum": 1},
-        "snapshot_id": {"type": "string", "format": "uuid"},
-        "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "artifact_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-        "size_bytes": {"type": "integer", "minimum": 0},
-        "object_bucket": {"type": "string"},
-        "object_key": {"type": "string"},
-        "error": {"type": "string"},
-        "action_id": {"type": "string"},
-        "reason": {"type": "string"},
-        "trace_id": {"type": "string", "minLength": 1},
-        "report_snapshot": {"type": "object"},
-        "merge_id": {"type": "string", "format": "uuid"},
-        "source_campaign_id": {"type": "string"},
-        "target_campaign_id": {"type": "string"},
-        "source_campaign_revision": {"type": "integer", "minimum": 1},
-        "target_campaign_revision": {"type": "integer", "minimum": 1},
-        "source_member_count": {"type": "integer", "minimum": 0},
-        "target_member_count_before": {"type": "integer", "minimum": 0},
-        "target_member_count_after": {"type": "integer", "minimum": 0},
-        "moved_count": {"type": "integer", "minimum": 0},
-        "relinked_count": {"type": "integer", "minimum": 0},
-        "deduplicated_count": {"type": "integer", "minimum": 0},
-        "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "run_id": {"type": "string", "format": "uuid"},
-        "backfill_run_id": {"type": "string", "format": "uuid"},
-        "source_snapshot_id": {"type": "string", "minLength": 1},
-        "playbook_id": {"type": "string", "minLength": 1},
-        "approval_status": {"enum": ["pending", "approved", "rejected", "cancelled"]},
-        "executor_status": {"type": "string", "minLength": 1},
-        "workflow_revision": {"type": "integer", "minimum": 1},
-        "provider": {"type": "string", "minLength": 1},
-        "provider_receipt_id": {"type": "string", "minLength": 1},
-        "receipt_status": {"enum": ["succeeded", "partial", "failed"]},
-        "receipt_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-        "external_effect": {"type": "boolean"},
-        "inserted_count": {"type": "integer", "minimum": 0},
-        "bound_count": {"type": "integer", "minimum": 0},
-        "unchanged_count": {"type": "integer", "minimum": 0},
-        "skipped_unlinked_count": {"type": "integer", "minimum": 0}
+        "schema_version": {
+          "const": 2
+        },
+        "aggregate_type": {
+          "const": "campaign"
+        },
+        "aggregate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "campaign_id": {
+          "type": "string"
+        },
+        "alert_id": {
+          "type": "string"
+        },
+        "relation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "relation_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "campaign_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "member_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "job_id": {
+          "type": "string"
+        },
+        "report_id": {
+          "type": "string"
+        },
+        "report_campaign_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "snapshot_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "snapshot_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "artifact_sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "object_bucket": {
+          "type": "string"
+        },
+        "object_key": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "action_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "report_snapshot": {
+          "type": "object"
+        },
+        "merge_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "source_campaign_id": {
+          "type": "string"
+        },
+        "target_campaign_id": {
+          "type": "string"
+        },
+        "source_campaign_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_campaign_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_member_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "target_member_count_before": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "target_member_count_after": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "moved_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "relinked_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "deduplicated_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "run_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "backfill_run_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "source_snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "playbook_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approval_status": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected",
+            "cancelled"
+          ]
+        },
+        "executor_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workflow_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider_receipt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_status": {
+          "enum": [
+            "succeeded",
+            "partial",
+            "failed"
+          ]
+        },
+        "receipt_sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "external_effect": {
+          "type": "boolean"
+        },
+        "inserted_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bound_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unchanged_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipped_unlinked_count": {
+          "type": "integer",
+          "minimum": 0
+        }
       },
       "additionalProperties": false
     },
     "CampaignMembershipLifecycleV2Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_type",
-        "aggregate_id", "aggregate_version", "partition_key", "tenant_id",
-        "campaign_id", "alert_id", "relation_id", "relation_revision",
-        "campaign_revision", "trace_id"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "partition_key",
+        "tenant_id",
+        "campaign_id",
+        "alert_id",
+        "relation_id",
+        "relation_revision",
+        "campaign_revision",
+        "trace_id"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {
-          "enum": ["traffic.campaign.v2.AlertLinked", "traffic.campaign.v2.AlertUnlinked"]
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
         },
-        "schema_version": {"const": 2},
-        "aggregate_type": {"const": "campaign"},
-        "aggregate_id": {"type": "string", "minLength": 1},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "partition_key": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "campaign_id": {"type": "string", "minLength": 1},
-        "alert_id": {"type": "string", "minLength": 1},
-        "relation_id": {"type": "string", "format": "uuid"},
-        "relation_revision": {"type": "integer", "minimum": 1},
-        "campaign_revision": {"type": "integer", "minimum": 1},
-        "status": {"type": "string"},
-        "assignee": {"type": "string"},
-        "member_count": {"type": "integer", "minimum": 0},
-        "reason": {"type": "string"},
-        "trace_id": {"type": "string", "minLength": 1}
+        "event_type": {
+          "enum": [
+            "traffic.campaign.v2.AlertLinked",
+            "traffic.campaign.v2.AlertUnlinked"
+          ]
+        },
+        "schema_version": {
+          "const": 2
+        },
+        "aggregate_type": {
+          "const": "campaign"
+        },
+        "aggregate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "campaign_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alert_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "relation_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "campaign_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "member_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reason": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
     "PlaybookExecutionLifecycleV2Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_type",
-        "aggregate_id", "aggregate_version", "partition_key", "tenant_id",
-        "execution_id", "playbook_name", "trace_id", "status"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "partition_key",
+        "tenant_id",
+        "execution_id",
+        "playbook_name",
+        "trace_id",
+        "status"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
         "event_type": {
           "enum": [
             "traffic.playbook.v2.ExecutionRequested",
@@ -497,271 +1600,1091 @@
             "traffic.playbook.v2.CompensationFailed"
           ]
         },
-        "schema_version": {"const": 2},
-        "aggregate_type": {"const": "playbook_execution"},
-        "aggregate_id": {"type": "string", "minLength": 1},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "partition_key": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "execution_id": {"type": "string", "minLength": 1},
-        "playbook_name": {"type": "string", "minLength": 1},
-        "playbook_version": {"type": "integer", "minimum": 0},
-        "alert_id": {"type": "string"},
-        "status": {"type": "string", "minLength": 1},
-        "approval_status": {"type": "string"},
-        "executor_status": {"type": "string"},
-        "decision": {"enum": ["approve", "reject"]},
-        "operation": {"enum": ["cancel", "compensate"]},
-        "phase": {"enum": ["execute", "compensate"]},
-        "requested_by": {"type": "string"},
-        "approved_by": {"type": "string"},
-        "receipt": {"type": "object"},
-        "error": {"type": "string"},
-        "trace_id": {"type": "string", "minLength": 1}
+        "schema_version": {
+          "const": 2
+        },
+        "aggregate_type": {
+          "const": "playbook_execution"
+        },
+        "aggregate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "playbook_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "playbook_version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "alert_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "executor_status": {
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "approve",
+            "reject"
+          ]
+        },
+        "operation": {
+          "enum": [
+            "cancel",
+            "compensate"
+          ]
+        },
+        "phase": {
+          "enum": [
+            "execute",
+            "compensate"
+          ]
+        },
+        "requested_by": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "receipt": {
+          "type": "object"
+        },
+        "error": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
     "ProbeOperationRequestedV2Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "tenant_id", "probe_id",
-        "operation_id", "operation_type", "command_revision", "command_hash",
-        "expires_at", "trace_id", "command"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "tenant_id",
+        "probe_id",
+        "operation_id",
+        "operation_type",
+        "command_revision",
+        "command_hash",
+        "expires_at",
+        "trace_id",
+        "command"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"const": "traffic.probe.v2.OperationRequested"},
-        "schema_version": {"const": 2},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "probe_id": {"type": "string", "minLength": 1},
-        "operation_id": {"type": "string", "format": "uuid"},
-        "operation_type": {"type": "string", "minLength": 1},
-        "command_revision": {"type": "integer", "minimum": 1},
-        "desired_version": {"type": "string"},
-        "command_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "expires_at": {"type": "string"},
-        "trace_id": {"type": "string"},
-        "command": {"type": "object"}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "const": "traffic.probe.v2.OperationRequested"
+        },
+        "schema_version": {
+          "const": 2
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "probe_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "operation_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "desired_version": {
+          "type": "string"
+        },
+        "command_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "expires_at": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string"
+        },
+        "command": {
+          "type": "object"
+        }
       },
       "additionalProperties": false
     },
     "ProbeOperationAgentAckV2Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "tenant_id", "probe_id",
-        "operation_id", "command_revision", "reported_hash", "agent_version",
-        "applied", "acknowledged_at_ms", "detail"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "tenant_id",
+        "probe_id",
+        "operation_id",
+        "command_revision",
+        "reported_hash",
+        "agent_version",
+        "applied",
+        "acknowledged_at_ms",
+        "detail"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"const": "traffic.probe.v2.OperationAgentAcknowledged"},
-        "schema_version": {"const": 2},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "probe_id": {"type": "string", "minLength": 1},
-        "operation_id": {"type": "string", "format": "uuid"},
-        "command_revision": {"type": "integer", "minimum": 1},
-        "reported_version": {"type": "string"},
-        "reported_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "agent_version": {"type": "string", "minLength": 1},
-        "applied": {"type": "boolean"},
-        "error": {"type": "string"},
-        "acknowledged_at_ms": {"type": "integer", "minimum": 1},
-        "detail": {"type": "object"}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "const": "traffic.probe.v2.OperationAgentAcknowledged"
+        },
+        "schema_version": {
+          "const": 2
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "probe_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "command_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reported_version": {
+          "type": "string"
+        },
+        "reported_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "agent_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "applied": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        },
+        "acknowledged_at_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "detail": {
+          "type": "object"
+        }
       },
       "additionalProperties": false
     },
     "ProbeOperationLifecycleV2Json": {
       "type": "object",
-      "required": ["event_id", "event_type", "tenant_id", "operation_id"],
+      "required": [
+        "event_id",
+        "event_type",
+        "tenant_id",
+        "operation_id"
+      ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"type": "string", "pattern": "^traffic\\.probe\\.v2\\."},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "probe_id": {"type": "string"},
-        "operation_id": {"type": "string", "format": "uuid"},
-        "revision": {"type": "integer", "minimum": 1},
-        "status": {"type": "string"},
-        "detail": {"type": "object"}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "type": "string",
+          "pattern": "^traffic\\.probe\\.v2\\."
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "probe_id": {
+          "type": "string"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "object"
+        }
       },
       "additionalProperties": true
     },
     "RuleCommandV1Json": {
       "type": "object",
-      "required": ["event_id", "action", "rule", "timestamp", "operator_id", "version"],
+      "required": [
+        "event_id",
+        "schema_version",
+        "action",
+        "rule",
+        "timestamp",
+        "operator_id",
+        "version",
+        "rule_version",
+        "checksum"
+      ],
       "properties": {
-        "event_id": {"type": "string", "minLength": 1},
-        "action": {"enum": ["create", "update", "delete", "enable", "disable", "sync"]},
-        "rule": {"type": "object"},
-        "timestamp": {},
-        "operator_id": {"type": "string"},
-        "trace_id": {"type": "string"},
-        "request_id": {"type": "string"},
-        "version": {"type": ["integer", "string"]}
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "enum": [
+            "1.0",
+            "1.1"
+          ]
+        },
+        "action": {
+          "enum": [
+            "create",
+            "update",
+            "delete",
+            "enable",
+            "disable",
+            "sync"
+          ]
+        },
+        "rule": {
+          "type": "object",
+          "required": [
+            "rule_id",
+            "tenant_id",
+            "version",
+            "enabled"
+          ],
+          "properties": {
+            "rule_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tenant_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "type": {
+              "enum": [
+                "threshold",
+                "blacklist",
+                "port_scan",
+                "brute_force",
+                "data_exfil",
+                "dga",
+                "tunnel",
+                "c2",
+                "anomaly",
+                "protocol_anomaly",
+                "tls_fingerprint",
+                "custom",
+                "signature",
+                "correlation",
+                "ml"
+              ]
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": true
+        },
+        "timestamp": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "operator_id": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rule_version": {
+          "type": "string",
+          "pattern": "^v[1-9][0-9]*$"
+        },
+        "checksum_algorithm": {
+          "const": "md5-typed-canonical-json-v1"
+        },
+        "checksum": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "schema_version": {
+                "const": "1.1"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "checksum_algorithm"
+            ]
+          }
+        }
+      ],
       "additionalProperties": true
+    },
+    "RuleUpdateAppliedAckV1Json": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "event_id",
+        "tenant_id",
+        "rule_id",
+        "version",
+        "current_version",
+        "action",
+        "checksum",
+        "subtask_index",
+        "parallelism",
+        "status",
+        "error",
+        "timestamp"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "current_version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "action": {
+          "enum": [
+            "create",
+            "update",
+            "delete",
+            "enable",
+            "disable",
+            "sync"
+          ]
+        },
+        "checksum": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "subtask_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "parallelism": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "enum": [
+            "applied",
+            "duplicate",
+            "stale",
+            "conflict"
+          ]
+        },
+        "error": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
     },
     "ModelUpdateEventV1Json": {
       "type": "object",
       "required": [
-        "event_id", "schema_version", "tenant_id", "model_id", "model_name",
-        "model_type", "version", "artifact_uri", "action",
-        "expected_applied_parallelism", "timestamp"
+        "event_id",
+        "schema_version",
+        "tenant_id",
+        "model_id",
+        "model_name",
+        "model_type",
+        "version",
+        "artifact_uri",
+        "action",
+        "expected_applied_parallelism",
+        "timestamp"
       ],
       "properties": {
-        "event_id": {"type": "string", "minLength": 1},
-        "schema_version": {"type": "integer", "minimum": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "model_id": {"type": "string", "minLength": 1},
-        "model_name": {"type": "string"},
-        "model_type": {"type": "string"},
-        "version": {"type": "string", "minLength": 1},
-        "artifact_uri": {"type": "string", "minLength": 1},
-        "action": {"type": "string", "minLength": 1},
-        "metrics": {"type": "object"},
-        "expected_applied_parallelism": {"type": "integer", "minimum": 1},
-        "timestamp": {"type": "string"}
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_name": {
+          "type": "string"
+        },
+        "model_type": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_manifest_uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "package_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "package_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evaluation_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "explanation_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "graph_snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "graph_snapshot_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "aggregate_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "compatibility": {
+          "type": "object"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metrics": {
+          "type": "object"
+        },
+        "expected_applied_parallelism": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timestamp": {
+          "type": "string"
+        }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "shadow-load"
+              }
+            },
+            "required": [
+              "action"
+            ]
+          },
+          "then": {
+            "properties": {
+              "schema_version": {
+                "const": 2
+              }
+            },
+            "required": [
+              "artifact_manifest_uri",
+              "artifact_manifest_sha256",
+              "package_id",
+              "package_sha256",
+              "evaluation_sha256",
+              "explanation_sha256",
+              "graph_snapshot_id",
+              "graph_snapshot_sha256",
+              "aggregate_revision",
+              "compatibility"
+            ]
+          }
+        }
+      ],
       "additionalProperties": false
     },
     "ModelUpdateAppliedAckV1Json": {
       "type": "object",
       "required": [
-        "schema_version", "event_id", "tenant_id", "model_id", "version",
-        "artifact_uri", "artifact_sha256", "subtask_index", "parallelism",
-        "status", "timestamp"
+        "schema_version",
+        "event_id",
+        "tenant_id",
+        "model_id",
+        "version",
+        "artifact_uri",
+        "artifact_sha256",
+        "subtask_index",
+        "parallelism",
+        "status",
+        "timestamp"
       ],
       "properties": {
-        "schema_version": {"type": "integer", "minimum": 1},
-        "event_id": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "model_id": {"type": "string", "minLength": 1},
-        "version": {"type": "string", "minLength": 1},
-        "artifact_uri": {"type": "string", "minLength": 1},
-        "artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "warmup_score": {"type": "number"},
-        "subtask_index": {"type": "integer", "minimum": 0},
-        "parallelism": {"type": "integer", "minimum": 1},
-        "status": {"type": "string", "minLength": 1},
-        "error": {"type": "string"},
-        "timestamp": {"type": "string"}
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "warmup_score": {
+          "type": "number"
+        },
+        "subtask_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "parallelism": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "enum": [
+            "applied",
+            "failed",
+            "consumer_ready",
+            "shadow_ready",
+            "stale",
+            "duplicate"
+          ]
+        },
+        "error": {
+          "type": "string"
+        },
+        "ack_type": {
+          "enum": [
+            "model_update",
+            "consumer_ready",
+            "shadow_load"
+          ]
+        },
+        "consumer_deployment_id": {
+          "type": "string"
+        },
+        "consumer_profile_sha256": {
+          "type": "string",
+          "pattern": "^$|^[0-9a-f]{64}$"
+        },
+        "runtime_contract": {
+          "type": "string"
+        },
+        "runtime_version": {
+          "type": "string"
+        },
+        "feature_schema_version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "graph_schema_version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "supported_model_formats": {
+          "type": "string"
+        },
+        "package_id": {
+          "type": "string"
+        },
+        "package_sha256": {
+          "type": "string",
+          "pattern": "^$|^[0-9a-f]{64}$"
+        },
+        "aggregate_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timestamp": {
+          "type": "string"
+        }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "ack_type": {
+                "const": "shadow_load"
+              }
+            },
+            "required": [
+              "ack_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "package_id",
+              "package_sha256",
+              "aggregate_revision"
+            ],
+            "properties": {
+              "package_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "package_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "aggregate_revision": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": false
+    },
+    "ChampionChallengerObservationV1Json": {
+      "$ref": "../mlops/champion-challenger-observation.schema.json"
     },
     "ModelActionRequestedV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_version",
-        "job_id", "action_id", "tenant_id", "model_id", "version",
-        "action", "target", "payload", "status", "requested_by", "trace_id",
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_version",
+        "job_id",
+        "action_id",
+        "tenant_id",
+        "model_id",
+        "version",
+        "action",
+        "target",
+        "payload",
+        "status",
+        "requested_by",
+        "trace_id",
         "created_at"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"const": "model.action.requested.v1"},
-        "schema_version": {"const": 1},
-        "aggregate_version": {"const": 1},
-        "job_id": {"type": "string", "format": "uuid"},
-        "action_id": {"type": "string", "format": "uuid"},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "model_id": {"type": "string", "format": "uuid"},
-        "version": {"type": "string"},
-        "action": {"type": "string", "minLength": 1},
-        "target": {"type": "string", "minLength": 1},
-        "payload": {"type": "object"},
-        "status": {"const": "queued"},
-        "requested_by": {"type": "string"},
-        "trace_id": {"type": "string"},
-        "created_at": {"type": "string", "format": "date-time"}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "const": "model.action.requested.v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_version": {
+          "const": 1
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "action_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payload": {
+          "type": "object"
+        },
+        "status": {
+          "const": "queued"
+        },
+        "requested_by": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
       "additionalProperties": false
     },
     "DeploymentEventV1Json": {
       "type": "object",
       "required": [
-        "event_id", "schema_version", "event_type", "action", "deployment_id",
-        "tenant_id", "status", "operator_id", "timestamp"
+        "event_id",
+        "schema_version",
+        "event_type",
+        "action",
+        "deployment_id",
+        "tenant_id",
+        "status",
+        "operator_id",
+        "timestamp"
       ],
       "properties": {
-        "event_id": {"type": "string", "minLength": 1},
-        "schema_version": {"const": 1},
-        "event_type": {"const": "deployment_event"},
-        "action": {"type": "string", "minLength": 1},
-        "deployment_id": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "rule_version": {"type": "string"},
-        "model_version": {"type": "string"},
-        "feature_set_id": {"type": "string"},
-        "scope": {"type": "object"},
-        "status": {"type": "string", "minLength": 1},
-        "operator_id": {"type": "string"},
-        "timestamp": {"type": "integer"}
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "event_type": {
+          "const": "deployment_event"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deployment_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rule_version": {
+          "type": "string"
+        },
+        "model_version": {
+          "type": "string"
+        },
+        "feature_set_id": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "object"
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operator_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "integer"
+        }
       },
       "additionalProperties": false
     },
     "AuditEventV1Json": {
       "type": "object",
-      "required": ["event_id", "tenant_id", "action", "resource_type", "timestamp"],
+      "required": [
+        "event_id",
+        "tenant_id",
+        "action",
+        "resource_type",
+        "timestamp"
+      ],
       "properties": {
-        "event_id": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "user_id": {"type": "string"},
-        "action": {"type": "string", "minLength": 1},
-        "resource_type": {"type": "string", "minLength": 1},
-        "resource_id": {"type": "string"},
-        "detail": {"type": "object"},
-        "ip_addr": {"type": "string"},
-        "user_agent": {"type": "string"},
-        "timestamp": {"type": "string"}
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "user_id": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resource_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resource_id": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "object"
+        },
+        "ip_addr": {
+          "type": "string"
+        },
+        "user_agent": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        }
       },
       "additionalProperties": true
     },
     "AssetUpsertedV2Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_version",
-        "partition_key", "tenant_id", "asset_id", "revision", "trace_id",
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_version",
+        "partition_key",
+        "tenant_id",
+        "asset_id",
+        "revision",
+        "trace_id",
         "asset"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"const": "traffic.asset.v2.AssetUpserted"},
-        "schema_version": {"const": 2},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "partition_key": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "asset_id": {"type": "string", "format": "uuid"},
-        "revision": {"type": "integer", "minimum": 1},
-        "trace_id": {"type": "string"},
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "const": "traffic.asset.v2.AssetUpserted"
+        },
+        "schema_version": {
+          "const": 2
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asset_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "trace_id": {
+          "type": "string"
+        },
         "asset": {
           "type": "object",
           "required": [
-            "asset_id", "revision", "display_code", "tenant_id", "asset_type",
-            "status", "ip_address", "mac_address", "source", "criticality",
-            "first_seen", "last_seen"
+            "asset_id",
+            "revision",
+            "display_code",
+            "tenant_id",
+            "asset_type",
+            "status",
+            "ip_address",
+            "mac_address",
+            "source",
+            "criticality",
+            "first_seen",
+            "last_seen"
           ],
           "properties": {
-            "asset_id": {"type": "string", "format": "uuid"},
-            "revision": {"type": "integer", "minimum": 1},
-            "display_code": {"type": "string"},
-            "tenant_id": {"type": "string", "minLength": 1},
-            "asset_type": {"type": "string", "minLength": 1},
-            "status": {"type": "string", "minLength": 1},
-            "ip_address": {"type": "string"},
-            "mac_address": {"type": "string"},
-            "hostname": {"type": "string"},
-            "vendor": {"type": "string"},
-            "os_type": {"type": "string"},
-            "source": {"type": "string", "minLength": 1},
-            "vlan_id": {"type": "string"},
-            "switch_port": {"type": "string"},
-            "department": {"type": "string"},
-            "campus": {"type": "string"},
-            "owner": {"type": "string"},
-            "criticality": {"type": "integer"},
-            "tags": {"type": "object"},
-            "metadata": {"type": "object"},
-            "first_seen": {"type": "string", "format": "date-time"},
-            "last_seen": {"type": "string", "format": "date-time"}
+            "asset_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "display_code": {
+              "type": "string"
+            },
+            "tenant_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "asset_type": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ip_address": {
+              "type": "string"
+            },
+            "mac_address": {
+              "type": "string"
+            },
+            "hostname": {
+              "type": "string"
+            },
+            "vendor": {
+              "type": "string"
+            },
+            "os_type": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "vlan_id": {
+              "type": "string"
+            },
+            "switch_port": {
+              "type": "string"
+            },
+            "department": {
+              "type": "string"
+            },
+            "campus": {
+              "type": "string"
+            },
+            "owner": {
+              "type": "string"
+            },
+            "criticality": {
+              "type": "integer"
+            },
+            "tags": {
+              "type": "object"
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "first_seen": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "last_seen": {
+              "type": "string",
+              "format": "date-time"
+            }
           },
           "additionalProperties": false
         }
@@ -771,59 +2694,186 @@
     "AssetExportLifecycleV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_version",
-        "tenant_id", "job_id", "partition_key", "trace_id"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_version",
+        "tenant_id",
+        "job_id",
+        "partition_key",
+        "trace_id"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"enum": ["traffic.asset.export.v1.Requested", "traffic.asset.export.v1.Completed"]},
-        "schema_version": {"const": 1},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "job_id": {"type": "string", "format": "uuid"},
-        "partition_key": {"type": "string", "minLength": 1},
-        "query_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "format": {"enum": ["csv", "jsonl"]},
-        "snapshot_id": {"type": "string"},
-        "artifact_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-        "size_bytes": {"type": "integer", "minimum": 0},
-        "row_count": {"type": "integer", "minimum": 0},
-        "object_bucket": {"type": "string"},
-        "object_key": {"type": "string"},
-        "trace_id": {"type": "string", "minLength": 1}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "enum": [
+            "traffic.asset.export.v1.Requested",
+            "traffic.asset.export.v1.Completed"
+          ]
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "query_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "format": {
+          "enum": [
+            "csv",
+            "jsonl"
+          ]
+        },
+        "snapshot_id": {
+          "type": "string"
+        },
+        "artifact_sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "object_bucket": {
+          "type": "string"
+        },
+        "object_key": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
     "AssetDiscoveryLifecycleV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "schema_version", "aggregate_version",
-        "tenant_id", "resource_type", "resource_id", "action_id", "revision",
-        "partition_key", "trace_id"
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_version",
+        "tenant_id",
+        "resource_type",
+        "resource_id",
+        "action_id",
+        "revision",
+        "partition_key",
+        "trace_id"
       ],
       "properties": {
-        "event_id": {"type": "string", "format": "uuid"},
-        "event_type": {"enum": ["traffic.asset.discovery.v1.JobAccepted", "traffic.asset.discovery.v1.JobStateChanged", "traffic.asset.discovery.v1.CredentialUpserted", "traffic.asset.discovery.v1.TopologyLinkUpserted"]},
-        "schema_version": {"const": 1},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "resource_type": {"enum": ["run", "credential", "topology_link"]},
-        "resource_id": {"type": "string", "minLength": 1},
-        "action_id": {"enum": ["asset-active-discovery-run", "asset-discovery-credential-upsert", "asset-discovery-topology-link-upsert"]},
-        "revision": {"type": "integer", "minimum": 1},
-        "run_id": {"type": "string", "minLength": 1},
-        "partition_key": {"type": "string", "minLength": 1},
-        "trace_id": {"type": "string", "minLength": 1},
-        "status": {"enum": ["queued", "running", "cancel_requested", "cancelled", "succeeded", "partial", "failed", "blocked"]},
-        "resource": {"type": "object"}
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "enum": [
+            "traffic.asset.discovery.v1.JobAccepted",
+            "traffic.asset.discovery.v1.JobStateChanged",
+            "traffic.asset.discovery.v1.CredentialUpserted",
+            "traffic.asset.discovery.v1.TopologyLinkUpserted"
+          ]
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resource_type": {
+          "enum": [
+            "run",
+            "credential",
+            "topology_link"
+          ]
+        },
+        "resource_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_id": {
+          "enum": [
+            "asset-active-discovery-run",
+            "asset-discovery-credential-upsert",
+            "asset-discovery-topology-link-upsert"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "cancel_requested",
+            "cancelled",
+            "succeeded",
+            "partial",
+            "failed",
+            "blocked"
+          ]
+        },
+        "resource": {
+          "type": "object"
+        }
       },
       "additionalProperties": false
     },
     "ThreatIntelV1Json": {
       "type": "object",
       "required": [
-        "event_id", "event_type", "version", "schema_version",
-        "aggregate_version", "tenant_id", "source", "count", "trace_id",
+        "event_id",
+        "event_type",
+        "version",
+        "schema_version",
+        "aggregate_version",
+        "tenant_id",
+        "source",
+        "count",
+        "trace_id",
         "occurred_at"
       ],
       "properties": {
@@ -842,59 +2892,994 @@
             "threat_intel.feed_run_failed"
           ]
         },
-        "version": {"const": 1},
-        "schema_version": {"const": 1},
-        "aggregate_version": {"type": "integer", "minimum": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "user_id": {"type": "string"},
-        "username": {"type": "string"},
-        "action_id": {"type": "string", "minLength": 1},
-        "reason": {"type": "string", "minLength": 1},
-        "compatibility_mode": {"type": "boolean"},
-        "source": {"type": "string", "minLength": 1},
-        "entry": {"type": "object"},
-        "entries": {"type": "array", "items": {"type": "object"}},
-        "feed": {"type": "object"},
-        "count": {"type": "integer", "minimum": 0},
-        "request_id": {"type": "string"},
-        "trace_id": {"type": "string", "minLength": 1},
-        "occurred_at": {"type": "string", "format": "date-time"}
+        "version": {
+          "const": 1
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "user_id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compatibility_mode": {
+          "type": "boolean"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entry": {
+          "type": "object"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "feed": {
+          "type": "object"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
+      "additionalProperties": false
+    },
+    "FusionSourceSyncRequestedV1Json": {
+      "type": "object",
+      "required": [
+        "event_id",
+        "event_type",
+        "schema_version",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "partition_key",
+        "tenant_id",
+        "job_id",
+        "source_id",
+        "source_kind",
+        "window_start",
+        "window_end",
+        "requested_by",
+        "reason",
+        "trace_id",
+        "occurred_at"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "const": "fusion.source-sync.requested.v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "aggregate_type": {
+          "const": "source_sync_job"
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "source_id": {
+          "enum": [
+            "traffic",
+            "asset",
+            "log",
+            "behavior"
+          ]
+        },
+        "source_kind": {
+          "enum": [
+            "flow",
+            "asset",
+            "device_log",
+            "user_event"
+          ]
+        },
+        "window_start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "window_end": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expected_source_version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requested_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "BehaviorBaselineLifecycleV1Json": {
+      "type": "object",
+      "required": [
+        "event_id",
+        "event_type",
+        "schema_version",
+        "partition_key",
+        "tenant_id",
+        "baseline_id",
+        "candidate_sha256",
+        "trace_id"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "enum": [
+            "baseline.build.requested.v1",
+            "baseline.version.frozen.v1",
+            "baseline.version.failed.v1",
+            "baseline.activation.requested.v1",
+            "baseline.version.activated.v1",
+            "baseline.version.retired.v1"
+          ]
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseline_id": {
+          "type": "string",
+          "minLength": 3
+        },
+        "baseline_kind": {
+          "enum": [
+            "static",
+            "dynamic"
+          ]
+        },
+        "algorithm_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "definition_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "baseline_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "version_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sample_snapshot_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "candidate_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "snapshot_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "threshold_spec": {
+          "type": "object"
+        },
+        "statistics": {
+          "type": "object"
+        },
+        "window_start": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "window_end": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "quality_status": {
+          "enum": [
+            "complete",
+            "partial",
+            "failed"
+          ]
+        },
+        "error_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approval_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "expected_consumers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "acked_consumers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rollback_of_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retired_by_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "baseline.activation.requested.v1"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "baseline_version",
+              "definition_revision",
+              "baseline_kind",
+              "algorithm_version",
+              "snapshot_sha256",
+              "threshold_spec",
+              "statistics",
+              "approval_id",
+              "expected_consumers"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "baseline.version.activated.v1"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "baseline_version",
+              "snapshot_sha256",
+              "acked_consumers"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "baseline.version.retired.v1"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "baseline_version",
+              "retired_by_version",
+              "snapshot_sha256"
+            ]
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorBaselineActivationAckV1Json": {
+      "type": "object",
+      "required": [
+        "event_id",
+        "event_type",
+        "schema_version",
+        "partition_key",
+        "tenant_id",
+        "baseline_id",
+        "baseline_version",
+        "consumer_id",
+        "candidate_sha256",
+        "snapshot_sha256",
+        "ack_sha256",
+        "applied_at",
+        "trace_id"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "const": "baseline.activation.acknowledged.v1"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseline_id": {
+          "type": "string",
+          "minLength": 3
+        },
+        "baseline_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "consumer_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidate_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "snapshot_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "ack_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "applied_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "AlertEvidenceLinkLifecycleV1Json": {
+      "type": "object",
+      "required": [
+        "event_id",
+        "event_type",
+        "schema_version",
+        "tenant_id",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "partition_key",
+        "alert_id",
+        "evidence_id",
+        "evidence_type",
+        "status",
+        "source_store",
+        "object_bucket",
+        "object_key",
+        "object_version",
+        "object_sha256",
+        "size_bytes",
+        "content_type",
+        "manifest_revision",
+        "reason",
+        "trace_id",
+        "occurred_at"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "event_type": {
+          "enum": [
+            "traffic.alert-evidence.v1.Linked",
+            "traffic.alert-evidence.v1.Unlinked"
+          ]
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aggregate_type": {
+          "const": "alert_evidence_link"
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "partition_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alert_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "linked",
+            "unlinked"
+          ]
+        },
+        "source_store": {
+          "enum": [
+            "postgresql",
+            "clickhouse",
+            "opensearch",
+            "minio",
+            "arkime"
+          ]
+        },
+        "object_bucket": {
+          "type": "string"
+        },
+        "object_key": {
+          "type": "string"
+        },
+        "object_version": {
+          "type": "string"
+        },
+        "object_sha256": {
+          "type": "string",
+          "pattern": "^$|^[0-9a-f]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "content_type": {
+          "type": "string"
+        },
+        "manifest_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 1000
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "traffic.alert-evidence.v1.Linked"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "linked"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event_type": {
+                "const": "traffic.alert-evidence.v1.Unlinked"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "unlinked"
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": false
     },
     "DLQMessageV1Json": {
       "type": "object",
       "required": [
-        "original_topic", "original_partition", "original_offset",
-        "original_value_b64", "content_type", "error_code", "error_message",
-        "failed_at", "service_name", "processed_at"
+        "original_topic",
+        "original_partition",
+        "original_offset",
+        "original_value_b64",
+        "content_type",
+        "error_code",
+        "error_message",
+        "failed_at",
+        "service_name",
+        "processed_at"
       ],
       "properties": {
-        "original_topic": {"type": "string", "minLength": 1},
-        "original_partition": {"type": "integer", "minimum": 0},
-        "original_offset": {"type": "integer", "minimum": 0},
-        "original_key": {"type": "string"},
-        "original_value_b64": {"type": "string"},
-        "original_headers": {"type": "object"},
-        "original_timestamp": {"type": "string"},
-        "content_type": {"type": "string"},
-        "proto_message_type": {"type": "string"},
-        "proto_schema_version": {"type": "string"},
-        "error_code": {"type": "string", "minLength": 1},
-        "error_message": {"type": "string"},
-        "error_type": {"type": "string"},
-        "failed_at": {"type": "string"},
-        "retry_count": {"type": "integer", "minimum": 0},
-        "service_name": {"type": "string", "minLength": 1},
-        "processing_host": {"type": "string"},
-        "processed_at": {"type": "string"},
-        "tenant_id": {"type": "string"},
-        "event_id": {"type": "string"},
-        "trace_id": {"type": "string"},
-        "run_id": {"type": "string"},
-        "probe_id": {"type": "string"},
-        "metadata": {"type": "object"},
-        "replay_policy": {"type": "object"}
+        "original_topic": {
+          "type": "string",
+          "minLength": 1
+        },
+        "original_partition": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "original_offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "original_key": {
+          "type": "string"
+        },
+        "original_value_b64": {
+          "type": "string"
+        },
+        "original_headers": {
+          "type": "object"
+        },
+        "original_timestamp": {
+          "type": "string"
+        },
+        "content_type": {
+          "type": "string"
+        },
+        "proto_message_type": {
+          "type": "string"
+        },
+        "proto_schema_version": {
+          "type": "string"
+        },
+        "error_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "error_message": {
+          "type": "string"
+        },
+        "error_type": {
+          "type": "string"
+        },
+        "failed_at": {
+          "type": "string"
+        },
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "service_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processing_host": {
+          "type": "string"
+        },
+        "processed_at": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "event_id": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "probe_id": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "replay_policy": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnalysisRunSubscriptionV1Json": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "run_id",
+        "revision",
+        "state",
+        "execution_spec_sha256",
+        "window_start_ms",
+        "window_end_ms"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PREPARE",
+            "ACTIVE",
+            "CANCELLED"
+          ]
+        },
+        "execution_spec_sha256": {
+          "type": "string"
+        },
+        "window_start_ms": {
+          "type": "integer"
+        },
+        "window_end_ms": {
+          "type": "integer"
+        },
+        "fence": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnalysisFlowEnvelopeV1Json": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "task_id",
+        "run_id",
+        "execution_spec_sha256",
+        "stage_id",
+        "attempt"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "execution_spec_sha256": {
+          "type": "string"
+        },
+        "window_id": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "attempt": {
+          "type": "integer"
+        },
+        "fencing_token": {
+          "type": "string"
+        },
+        "event": {}
+      },
+      "additionalProperties": false
+    },
+    "AnalysisReceiptV1Json": {
+      "type": "object",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/AnalysisStageReceiptV1Json"
+        },
+        {
+          "$ref": "#/$defs/AnalysisPlanReadyReceiptV1Json"
+        }
+      ]
+    },
+    "AnalysisStageReceiptV1Json": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "run_id",
+        "execution_node_id",
+        "attempt",
+        "fencing_token",
+        "provider",
+        "input_count",
+        "output_count",
+        "error_count",
+        "reject_count",
+        "watermark_ms"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "execution_node_id": {
+          "type": "string"
+        },
+        "attempt": {
+          "type": "integer"
+        },
+        "fencing_token": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "input_count": {
+          "type": "integer"
+        },
+        "output_count": {
+          "type": "integer"
+        },
+        "error_count": {
+          "type": "integer"
+        },
+        "reject_count": {
+          "type": "integer"
+        },
+        "watermark_ms": {
+          "type": "integer"
+        },
+        "fence": {
+          "type": "object"
+        },
+        "payload_hash": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnalysisPlanReadyReceiptV1Json": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "run_id",
+        "consumer_id",
+        "execution_spec_sha256",
+        "subscription_revision",
+        "ready_at_ms"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "consumer_id": {
+          "type": "string"
+        },
+        "execution_spec_sha256": {
+          "type": "string"
+        },
+        "subscription_revision": {
+          "type": "integer"
+        },
+        "ready_at_ms": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnalysisExecutionSpecV1Json": {
+      "type": "object",
+      "required": [
+        "canonicalization_version",
+        "tenant_id",
+        "task_definition_id",
+        "source_kind",
+        "source_spec",
+        "selected_feature_ids",
+        "feature_set_id",
+        "encrypted_recognition_model_ref",
+        "threat_detector_refs",
+        "rule_refs",
+        "machine_summary_schema_ref",
+        "stage_dag",
+        "completion_policy",
+        "resource_budget",
+        "catalog_revision"
+      ],
+      "properties": {
+        "canonicalization_version": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "task_definition_id": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string"
+        },
+        "source_spec": {},
+        "selected_feature_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "feature_set_id": {
+          "type": "string"
+        },
+        "encrypted_recognition_model_ref": {
+          "type": "string"
+        },
+        "threat_detector_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rule_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "machine_summary_schema_ref": {
+          "type": "string"
+        },
+        "stage_dag": {},
+        "completion_policy": {},
+        "resource_budget": {},
+        "catalog_revision": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnalysisReportRequestV1Json": {
+      "type": "object",
+      "required": [
+        "report_id",
+        "run_id"
+      ],
+      "properties": {
+        "report_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        }
       },
       "additionalProperties": false
     }

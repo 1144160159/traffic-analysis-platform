@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M02_OFFLINE_PCAP_INPUT_MANIFEST",
+  "dataset_id": "M02-EDGEIIOT-CAPTURE-CONTRACT-V1",
+  "run_id": "M02-N004-L08-FROZEN-SOURCE-V1",
+  "base_dir": "cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic",
+  "approval_status": "ENGINEERING_REGRESSION_ONLY_PENDING_N015_PROFILE_SIGNATURE",
+  "entries": [
+    {
+      "entry_id": "edgeiiot-os-fingerprinting",
+      "relative_path": "OS Fingerprinting attack.pcap",
+      "sha256": "68c0464ac92f1d08a050f4e013dd5e0d0e870f39b8f70f26acde133b6d7e00c4",
+      "size_bytes": 114041,
+      "byte_order": "little_endian",
+      "timestamp_precision": "microsecond",
+      "link_type": 1,
+      "packet_count": 1176
+    },
+    {
+      "entry_id": "edgeiiot-arp-dns-mitm",
+      "relative_path": "MITM (ARP spoofing + DNS) Attack.pcap",
+      "sha256": "ef952aff57dd30f04a98511cae2f34f642a64720fcde31df8b2f6dcf0351d536",
+      "size_bytes": 127852,
+      "byte_order": "little_endian",
+      "timestamp_precision": "microsecond",
+      "link_type": 1,
+      "packet_count": 1229
+    }
+  ]
+}

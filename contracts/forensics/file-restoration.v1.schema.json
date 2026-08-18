@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/schemas/file-restoration.v1.schema.json",
+  "title": "File restoration contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "contract_id", "requirement_id", "status", "runtime_default", "authority", "approved_protocol_profiles", "unapproved_protocol_policy", "tcp_reassembly", "terminal_statuses", "terminal_status_decision", "manifest", "object_commit_protocol", "safety_limits", "compatibility_and_rollout", "claims"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "contract_id": {"const": "traffic.file-restoration.v1"},
+    "requirement_id": {"const": "REQ-T1-FILE-RESTORE-001"},
+    "status": {"const": "candidate_pending_forensics_security_acceptance_signature"},
+    "runtime_default": {"const": "off"},
+    "authority": {"type": "object"},
+    "approved_protocol_profiles": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "object"}},
+    "unapproved_protocol_policy": {"type": "object"},
+    "tcp_reassembly": {"type": "object"},
+    "terminal_statuses": {"type": "array", "uniqueItems": true, "minItems": 6, "maxItems": 6},
+    "terminal_status_decision": {"type": "object"},
+    "manifest": {"type": "object"},
+    "object_commit_protocol": {"type": "object"},
+    "safety_limits": {"type": "object"},
+    "compatibility_and_rollout": {"type": "object"},
+    "claims": {"type": "object"}
+  }
+}

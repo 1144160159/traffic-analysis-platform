@@ -1,0 +1,235 @@
+{
+  "feature_id": "F-FORENSICS-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": [
+      "/forensics"
+    ],
+    "preserved_actions": [
+      "forensics-create-job",
+      "forensics-verify-pcap",
+      "forensics-presign-pcap",
+      "forensics-cancel-job"
+    ],
+    "preserved_api_operations": [
+      "GET /v1/pcap/jobs",
+      "GET /v1/pcap/stats",
+      "POST /v1/pcap/jobs",
+      "POST /v1/pcap/jobs/{id}/cancel",
+      "POST /v1/pcap/presign",
+      "POST /v1/pcap/verify"
+    ],
+    "preserved_query_states": [
+      "loading",
+      "empty",
+      "accepted",
+      "running",
+      "success",
+      "partial",
+      "failed",
+      "cancelled",
+      "forbidden"
+    ],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "forensics.pcap-job-and-evidence.v1",
+    "controls": [
+      {"control_id": "forensics-create-job", "action_id": "forensics-create-job"},
+      {"control_id": "forensics-verify-pcap", "action_id": "forensics-verify-pcap"},
+      {"control_id": "forensics-presign-pcap", "action_id": "forensics-presign-pcap"},
+      {"control_id": "forensics-cancel-job", "action_id": "forensics-cancel-job"}
+    ],
+    "states": [
+      "loading",
+      "empty",
+      "accepted",
+      "running",
+      "success",
+      "partial",
+      "failed",
+      "cancelled",
+      "forbidden"
+    ],
+    "required_panels": [
+      "task_queue",
+      "session_replay",
+      "source_pcap_indexes",
+      "restored_files",
+      "object_manifest",
+      "chain_of_custody",
+      "download_audit"
+    ]
+  },
+  "api": {
+    "operation_id": "createPcapForensicsJob",
+    "method": "POST",
+    "path": "/v1/pcap/jobs",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision",
+    "companion_operations": [
+      "GET /v1/pcap/jobs",
+      "GET /v1/pcap/jobs/{id}",
+      "POST /v1/pcap/jobs/{id}/cancel",
+      "POST /v1/pcap/jobs/{id}/retry",
+      "POST /v1/pcap/cut",
+      "GET /v1/pcap/download/{key}",
+      "POST /v1/pcap/presign",
+      "POST /v1/pcap/verify",
+      "GET /v1/pcap/stats"
+    ]
+  },
+  "domain": {
+    "kind": "command",
+    "states": [
+      "accepted",
+      "indexed",
+      "leased",
+      "reading_source",
+      "cutting",
+      "restoring_sessions",
+      "restoring_files",
+      "verifying",
+      "publishing",
+      "partial",
+      "completed",
+      "failed",
+      "cancel_requested",
+      "cancelled",
+      "expired"
+    ],
+    "frozen_request": [
+      "tenant_id_from_identity",
+      "five_tuple",
+      "window_start",
+      "window_end",
+      "probe_ids",
+      "alert_ids",
+      "case_ids",
+      "purpose",
+      "permission_snapshot",
+      "retention_policy",
+      "restoration_contract_version"
+    ],
+    "manifest_fields": [
+      "manifest_id",
+      "manifest_version",
+      "raw_source_refs",
+      "derived_object_refs",
+      "tool_id",
+      "tool_version",
+      "sha256",
+      "size_bytes",
+      "mime_type",
+      "object_version",
+      "retention_policy",
+      "legal_hold",
+      "chain_of_custody",
+      "source_watermarks"
+    ],
+    "invariants": [
+      "the request tenant comes only from the authenticated identity and is repeated in every index, object and manifest lookup",
+      "job, frozen request, history, audit and outbox acceptance facts commit atomically",
+      "the worker is deployed compatible and idle before the writer or dispatcher can be enabled",
+      "PCAP source selection uses the M02 versioned pcap index and immutable object receipt",
+      "session and file restoration calls the M03 versioned restoration interface and never creates a second reassembly algorithm",
+      "restored content is treated as inert bytes and is never executed, imported or rendered as active content on the server",
+      "temporary objects become published only after size, hash, manifest and object-version verification",
+      "accepted is not completed; partial, corrupt, oversize, missing object, bad hash, expired source and cross-tenant states are explicit",
+      "retry resumes from an immutable checkpoint and cannot publish a duplicate object or manifest",
+      "download requires a short-lived purpose-bound authorization and a durable audit before bytes are returned",
+      "retention cleanup refuses a referenced object, legal hold, active lease, unmatched manifest or unexpired download grant"
+    ],
+    "compensation": "stop new intake, disable writer and worker flags, let each accepted job complete, fail or cancel under its frozen policy, restore the legacy API/UI route, retain objects and manifests, and reconcile orphan objects, leases, outbox, inbox and final states"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": [
+      "postgresql",
+      "clickhouse",
+      "minio"
+    ],
+    "migration": "additive forensics job/history/outbox/checkpoint/manifest/download-audit schema under T1-M09-N009/N010; no destructive cleanup",
+    "event_types": [
+      "forensics.job.accepted.v1",
+      "forensics.job.progress.v1",
+      "forensics.job.completed.v1",
+      "forensics.job.failed.v1",
+      "forensics.job.cancelled.v1"
+    ],
+    "source_watermarks": [
+      "clickhouse.pcap_index.closed_window+row_count+sha256",
+      "minio.source_object.version_id+sha256",
+      "postgresql.job_revision+checkpoint_revision",
+      "postgresql.outbox_event_id+published_at",
+      "kafka.topic+partition+offset",
+      "restoration_manifest.version+sha256",
+      "derived_object.version_id+sha256"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": [
+      "pcap:read",
+      "pcap:write",
+      "pcap:download"
+    ],
+    "operation_scopes": {
+      "list_status_verify": "pcap:read",
+      "create_cancel_retry_cut": "pcap:write",
+      "download_presign": "pcap:download"
+    },
+    "negative_tests": [
+      "cross-tenant job, source index, object key, manifest, checkpoint and audit access is rejected",
+      "a caller with pcap:read cannot create, cancel, retry, cut, presign or download",
+      "a caller with pcap:write but without pcap:download cannot receive bytes or a signed URL",
+      "expired or wrong-purpose signed authorization is rejected and audited",
+      "an alert or case reference from another tenant creates no accepted job"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": [
+      "small synchronous cut below the approved time and size threshold",
+      "asynchronous multi-object cut and session restoration",
+      "file restoration with partial and corrupt streams",
+      "interrupted worker resume from checkpoint",
+      "Range download after manifest verification"
+    ],
+    "budgets": {
+      "synchronous_window_seconds": 300,
+      "synchronous_output_bytes": 104857600,
+      "maximum_window_seconds": 86400,
+      "maximum_output_bytes": 10737418240,
+      "maximum_source_objects": 10000,
+      "status_server_p99_ms": 500
+    },
+    "stop_conditions": [
+      "a bounded limit is exceeded without async fallback, memory or disk budget is exceeded, duplicate objects appear, checkpoint recovery diverges, or status P99 exceeds the approved candidate"
+    ]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 canonical owner, state, permission, manifest, compatibility and rollback contract",
+      "G1 PostgreSQL acceptance atomicity, idempotency, revision, cancel and retry races",
+      "G2 compatible-idle worker readiness followed by default-off writer and dispatcher enablement",
+      "G3 M02 pcap index to MinIO source receipt to M03 session and file restoration to derived manifest",
+      "G4 interruption, partial, corrupt, oversize, object missing, wrong hash, expiry and cross-tenant negatives",
+      "G5 PG, Kafka, ClickHouse and MinIO final-state count, hash and watermark reconciliation",
+      "G6 K8s rollback, observation, orphan and retention reconciliation",
+      "G7 Windows Chrome refresh recovery, controlled download, verification and evidence export"
+    ],
+    "evidence": [
+      "same-candidate request, job, history, audit, outbox, Kafka offset, source index, source object receipt, restoration manifest, derived object hash, chain-of-custody, final state, download audit, rollback and browser journey"
+    ]
+  },
+  "rollout": {
+    "feature_flag": "FORENSICS_PIPELINE_V1_ENABLED",
+    "default": false,
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-FORENSICS-001-rollback.md"
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "contract_id": "m08-promotion-gate-v1",
+  "accountable_task": "T1-M08-N018",
+  "manifest_fields": [
+    "schema_version",
+    "artifact_kind",
+    "candidate_id",
+    "profile_id",
+    "environment_id",
+    "candidate_manifest",
+    "evidence",
+    "allowed_claims",
+    "forbidden_claims",
+    "production_applied"
+  ],
+  "required_evidence": {
+    "governed_dataset": {
+      "artifact_kind": "M08_GOVERNED_DATASET_BASELINE_K8S_CANARY_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/status", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/synthetic_fixture", "operator": "equals", "expected": false},
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true}
+      ]
+    },
+    "gnn_ablation": {
+      "artifact_kind": "M08_GNN_BASELINE_ABLATION_K8S_CANARY_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/status", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/synthetic_fixture", "operator": "equals", "expected": false},
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true}
+      ]
+    },
+    "threshold_evaluation": {
+      "artifact_kind": "M08_GOVERNED_KNOWN_OPEN_SET_EVALUATION_K8S_CANARY_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/status", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/oracles/threshold_selected_from", "operator": "equals", "expected": "validation"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/synthetic_fixture", "operator": "equals", "expected": false},
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true},
+        {"pointer": "/oracles/unknown_recall", "operator": "greater_than", "expected": 0},
+        {"pointer": "/oracles/activation_authorized", "operator": "equals", "expected": true}
+      ]
+    },
+    "explanation": {
+      "artifact_kind": "M08_GOVERNED_EXPLANATION_K8S_CANARY_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/status", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/synthetic_fixture", "operator": "equals", "expected": false},
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true}
+      ]
+    },
+    "signed_model_package": {
+      "artifact_kind": "M08_SIGNED_MODEL_EXPORT_K8S_CANARY_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/status", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/oracles/signature_verification", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/oracles/onnx_probability_parity", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/synthetic_fixture", "operator": "equals", "expected": false},
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true},
+        {"pointer": "/oracles/activation_authorized", "operator": "equals", "expected": true},
+        {"pointer": "/oracles/model_export_activation_authorized", "operator": "equals", "expected": true}
+      ]
+    },
+    "metadata_registration": {
+      "artifact_kind": "M08_MODEL_METADATA_REGISTRATION_K8S_CANARY_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/status", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true}
+      ]
+    },
+    "activation_outbox": {
+      "artifact_kind": "M08_MODEL_SHADOW_ACTIVATION_K8S_POSTGRES_KAFKA_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/status", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/kafka_publication_matrix/result", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true},
+        {"pointer": "/dependency_evidence/same_run_n010_event_to_n011_shadow_ack", "operator": "equals", "expected": true}
+      ]
+    },
+    "online_consumer_ack": {
+      "artifact_kind": "M08_MODEL_CONSUMER_SHADOW_K8S_CANARY_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/status", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/kubernetes_consumer_canary/consumer_ready_subtasks", "operator": "equals", "expected": 4},
+        {"pointer": "/kubernetes_consumer_canary/shadow_ready_subtasks", "operator": "equals", "expected": 4}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true},
+        {"pointer": "/kubernetes_consumer_canary/activation_applied", "operator": "equals", "expected": true}
+      ]
+    },
+    "shadow_observation": {
+      "artifact_kind": "M08_CHAMPION_CHALLENGER_SHADOW_K8S_CANARY_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/scoped_evidence_status", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/kubernetes_canary/status", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true},
+        {"pointer": "/gates/n013_tenant_canary_observation_window", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/production_activation_status", "operator": "equals", "expected": "PASS"}
+      ]
+    },
+    "tenant_canary": {
+      "artifact_kind": "M08_TENANT_MODEL_CANARY_DEFAULT_OFF_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/scoped_evidence_status", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/gates/rollback_without_automatic_activation", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true},
+        {"pointer": "/gates/n012_full_shadow_observation_window", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/production_activation_status", "operator": "equals", "expected": "PASS"}
+      ]
+    },
+    "feedback_consumer": {
+      "artifact_kind": "M08_MODEL_FEEDBACK_CONSUMER_READY_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/scoped_evidence_status", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/gates/runtime_default_off", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/environment/production_applied", "operator": "equals", "expected": true},
+        {"pointer": "/gates/real_kafka_consumer_receipt", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/gates/real_clickhouse_prediction_lookup", "operator": "equals", "expected": "PASS"}
+      ]
+    },
+    "drift_candidate": {
+      "artifact_kind": "M08_MODEL_DRIFT_CANDIDATE_DEFAULT_OFF_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/scoped_result", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/automatic_candidate_enabled", "operator": "equals", "expected": false}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/production_applied", "operator": "equals", "expected": true}
+      ]
+    },
+    "rollback": {
+      "artifact_kind": "M08_MODEL_ROLLBACK_V2_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/scoped_result", "operator": "equals", "expected": "PASS"}
+      ],
+      "promotion_assertions": [
+        {"pointer": "/production_applied", "operator": "equals", "expected": true},
+        {"pointer": "/rollback_runtime_enabled", "operator": "equals", "expected": true},
+        {"pointer": "/activation_authorized", "operator": "equals", "expected": true}
+      ]
+    },
+    "inference_parity": {
+      "artifact_kind": "M08_MODEL_INFERENCE_PARITY_INTERNAL_TEST_RESULT",
+      "engineering_assertions": [
+        {"pointer": "/scoped_result", "operator": "equals", "expected": "PASS"},
+        {"pointer": "/parity/decision_mismatches", "operator": "equals", "expected": 0},
+        {"pointer": "/cnas_claim_authorized", "operator": "equals", "expected": false}
+      ],
+      "promotion_assertions": []
+    }
+  },
+  "allowed_claims": [
+    "exact-SHA evidence indexes the isolated Kubernetes engineering path from governed synthetic data through signed model package and internal Python/ONNX/Flink parity",
+    "default-off online ACK, canary, feedback, drift and rollback components have bounded engineering evidence"
+  ],
+  "forbidden_claims": [
+    "CNAS evaluation passed",
+    "known-attack accuracy is at least 95 percent or false-positive rate is below 5 percent for production",
+    "unknown-attack detection quality is production-ready",
+    "one same-candidate production end-to-end run passed",
+    "M08 production activation or promotion is authorized",
+    "M08 or the whole project is complete"
+  ],
+  "invariants": [
+    "the evidence key set is exact and every repository-local receipt is bound by SHA-256",
+    "engineering status and production promotion status are calculated independently",
+    "promotion requires a frozen candidate manifest plus the same candidate profile and environment on every receipt",
+    "PROM never creates missing evidence, repairs a receipt, changes a release pointer on failure, or writes a CNAS claim"
+  ],
+  "implementation": "scripts/alignment/evaluate_m08_promotion.py",
+  "production_applied": false
+}

@@ -6,12 +6,12 @@
     "preserved_routes": ["/alerts"],
     "preserved_actions": [],
     "preserved_api_operations": ["POST /v1/alerts/search"],
-    "preserved_query_states": ["query", "severity", "status", "alert_types", "labels", "src_ip", "dst_ip", "start_time", "end_time", "from", "size", "sort_field", "sort_order"],
+    "preserved_query_states": ["query", "severity", "status", "alert_types", "labels", "src_ip", "dst_ip", "asset_ip", "rule_version", "model_version", "attack_phase", "min_score", "start_time", "end_time", "from", "size", "sort_field", "sort_order"],
     "strategy": "expand-migrate-contract"
   },
   "ui": {
     "query_id": "alert.search.cursor.v1",
-    "controls": [],
+    "controls": ["PIT sequential pagination", "explicit refresh/restart", "page-size restart", "filter restart"],
     "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
   },
   "api": {
@@ -28,6 +28,7 @@
       "live traversal uses search_after with alert_id as a stable deterministic tie-breaker",
       "consistent traversal uses a bounded PIT and never reports timed-out or failed shards as a complete result",
       "signed cursors bind tenant, normalized filters, sort, page size, traversal mode and expiry",
+      "signed cursors bind the resolved physical index-set digest; live traversal rejects alias drift while PIT retains frozen shards",
       "legacy from and size fields remain available only for the controlled shallow result window after cutover"
     ]
   },
@@ -35,7 +36,7 @@
     "authoritative_store": "clickhouse",
     "read_models": ["opensearch"],
     "migration": "publish the default-off cursor contract, validate alerts-v2 aliases, shadow query identities and latency, then canary the runtime flag while retaining legacy shallow requests",
-    "source_watermarks": ["opensearch.alerts.index_version", "opensearch.alerts.pit_id"]
+    "source_watermarks": ["opensearch.alerts.search", "opensearch.alerts.target_sha256"]
   },
   "permissions": {
     "tenant_source": "authenticated_identity",
@@ -57,6 +58,7 @@
   },
   "rollout": {
     "feature_flag": "OPENSEARCH_SEARCH_CURSOR_V1_ENABLED",
+    "frontend_feature_flag": "ALERT_SEARCH_CURSOR_V1_ENABLED",
     "strategy": "canary",
     "rollback_runbook": "doc/07_alignment/runbooks/T-OS-003-search-pagination-pit.md"
   }

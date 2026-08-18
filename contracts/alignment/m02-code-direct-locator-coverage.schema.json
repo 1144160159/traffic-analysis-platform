@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m02-code-direct-locator-coverage.schema.json",
+  "title": "M02 planned locator trusted-resolver coverage ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "source_catalog",
+    "planned_leaf_count", "locator_occurrence_count", "unique_locator_count",
+    "ownership_conflict_count", "status_counts", "resolver_profile_counts",
+    "trusted_resolver_checks", "locator_occurrences", "ownership_conflicts",
+    "validation", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M02_PLANNED_LOCATOR_TRUSTED_RESOLVER_COVERAGE"},
+    "artifact_status": {"const": "BLOCKED_COVERAGE_INCOMPLETE"},
+    "source_catalog": {"$ref": "#/$defs/hash_ref"},
+    "planned_leaf_count": {"const": 213},
+    "locator_occurrence_count": {"const": 270},
+    "unique_locator_count": {"const": 269},
+    "ownership_conflict_count": {"const": 1},
+    "status_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["RESOLVER_IMPLEMENTED_CANDIDATE_NOT_FROZEN", "TRUSTED_RESOLVER_NOT_IMPLEMENTED", "PLANNED_FILE_ABSENT"],
+      "properties": {
+        "RESOLVER_IMPLEMENTED_CANDIDATE_NOT_FROZEN": {"const": 125},
+        "TRUSTED_RESOLVER_NOT_IMPLEMENTED": {"const": 0},
+        "PLANNED_FILE_ABSENT": {"const": 145}
+      }
+    },
+    "resolver_profile_counts": {
+      "type": "object", "additionalProperties": {"type": "integer", "minimum": 1}
+    },
+    "trusted_resolver_checks": {
+      "type": "array", "minItems": 8, "maxItems": 8,
+      "items": {"$ref": "#/$defs/trusted_resolver_check"}
+    },
+    "locator_occurrences": {
+      "type": "array", "minItems": 270, "maxItems": 270,
+      "items": {"$ref": "#/$defs/locator_occurrence"}
+    },
+    "ownership_conflicts": {
+      "type": "array", "minItems": 1, "maxItems": 1,
+      "items": {"$ref": "#/$defs/ownership_conflict"}
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "source_exact", "planned_leaf_exact_set", "occurrence_exact_set",
+        "classification_total", "status_counts_exact", "conflict_exact_set",
+        "no_locator_claimed_resolved", "mutation_guards"
+      ],
+      "properties": {
+        "source_exact": {"const": "PASS"},
+        "planned_leaf_exact_set": {"const": "PASS"},
+        "occurrence_exact_set": {"const": "PASS"},
+        "classification_total": {"const": "PASS"},
+        "status_counts_exact": {"const": "PASS"},
+        "conflict_exact_set": {"const": "PASS"},
+        "no_locator_claimed_resolved": {"const": true},
+        "mutation_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "occurrence_omission", "false_resolved", "status_drift",
+            "conflict_omission", "path_escape", "resolver_check_drift"
+          ],
+          "properties": {
+            "occurrence_omission": {"const": "PASS"},
+            "false_resolved": {"const": "PASS"},
+            "status_drift": {"const": "PASS"},
+            "conflict_omission": {"const": "PASS"},
+            "path_escape": {"const": "PASS"},
+            "resolver_check_drift": {"const": "PASS"}
+          }
+        }
+      }
+    },
+    "proof_ceiling": {
+      "const": "LOCATOR_COVERAGE_CLASSIFICATION_ONLY_NOT_LOCATOR_RESOLVED_TARGET_BINDING_FUNCTION_REVIEW_IMPLEMENTATION_OR_EXECUTION_AUTHORIZATION"
+    }
+  },
+  "$defs": {
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "locator_occurrence": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "leaf_id", "atomic_pr_id", "locator", "path", "symbol_or_pointer",
+        "surface_suffix", "file_exists", "resolver_profile", "coverage_status",
+        "blocker", "next_action"
+      ],
+      "properties": {
+        "leaf_id": {"type": "string", "pattern": "^M02-N[0-9]{3}-L[0-9]{2,3}$"},
+        "atomic_pr_id": {"type": "string", "pattern": "^T1-M02-P[0-9]{3}-[A-Z-]+-n[0-9]{3}-l[0-9]{2,3}$"},
+        "locator": {"type": "string", "minLength": 3},
+        "path": {"type": "string", "minLength": 1},
+        "symbol_or_pointer": {"type": ["string", "null"]},
+        "surface_suffix": {"type": "string", "minLength": 1},
+        "file_exists": {"type": "boolean"},
+        "resolver_profile": {
+          "enum": [
+            "GO_AST_V1", "PYTHON_AST_V1", "RUST_SYN_V1", "JAVA_JAVAC_AST_V1", "JAVA_AST_REQUIRED",
+            "PROTO_DESCRIPTOR_V1", "SQL_DDL_PARSE_V1", "SQL_AST_REQUIRED", "STRUCTURED_CONFIG_V1",
+            "STRUCTURED_CONFIG_REQUIRED", "SHELL_AST_V1", "PLANNED_ARTIFACT_REQUIRED"
+          ]
+        },
+        "coverage_status": {
+          "enum": [
+            "RESOLVER_IMPLEMENTED_CANDIDATE_NOT_FROZEN",
+            "TRUSTED_RESOLVER_NOT_IMPLEMENTED",
+            "PLANNED_FILE_ABSENT"
+          ]
+        },
+        "blocker": {"type": "string", "minLength": 1},
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "ownership_conflict": {
+      "type": "object", "additionalProperties": false,
+      "required": ["locator", "owner_leaf_ids", "owner_atomic_pr_ids", "decision", "required_resolution", "ownership_boundary_ref", "write_scope_supersession_ref"],
+      "properties": {
+        "locator": {"type": "string", "minLength": 3},
+        "owner_leaf_ids": {"type": "array", "minItems": 2, "items": {"type": "string"}, "uniqueItems": true},
+        "owner_atomic_pr_ids": {"type": "array", "minItems": 2, "items": {"type": "string"}, "uniqueItems": true},
+        "decision": {"const": "ORDERED_SHARED_LOCATOR_SUPERSESSION_DESIGNED_NOT_REGISTERED"},
+        "required_resolution": {"const": "REGISTER_THE_SAME_SUPERSESSION_HASH_IN_FOUR_CANDIDATE_CATALOGS_THEN_SIGN_BOTH_FUNCTION_REVIEWS"},
+        "ownership_boundary_ref": {"$ref": "#/$defs/hash_ref"},
+        "write_scope_supersession_ref": {"$ref": "#/$defs/hash_ref"}
+      }
+    },
+    "trusted_resolver_check": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "resolver_profile", "resolver_source", "receipt_schema", "dependency_locks", "test_runner",
+        "test_command", "status", "positive_case_count", "negative_case_count",
+        "stdout_summary", "proof_ceiling"
+      ],
+      "properties": {
+        "resolver_profile": {"enum": ["GO_AST_V1", "PYTHON_AST_V1", "RUST_SYN_V1", "PROTO_DESCRIPTOR_V1", "STRUCTURED_CONFIG_V1", "SHELL_AST_V1", "JAVA_JAVAC_AST_V1", "SQL_DDL_PARSE_V1"]},
+        "resolver_source": {"$ref": "#/$defs/hash_ref"},
+        "receipt_schema": {"$ref": "#/$defs/hash_ref"},
+        "dependency_locks": {
+          "type": "array", "minItems": 0, "maxItems": 2,
+          "items": {"$ref": "#/$defs/hash_ref"}, "uniqueItems": true
+        },
+        "test_runner": {"$ref": "#/$defs/hash_ref"},
+        "test_command": {
+          "enum": [
+            "python3 scripts/alignment/test_go_ast_locator.py",
+            "python3 scripts/alignment/test_python_ast_locator.py",
+            "python3 scripts/alignment/test_rust_ast_locator.py",
+            "python3 scripts/alignment/test_proto_descriptor_locator.py",
+            "python3 scripts/alignment/test_structured_config_locator.py",
+            "python3 scripts/alignment/test_shell_ast_locator.py",
+            "python3 scripts/alignment/test_java_ast_locator.py",
+            "python3 scripts/alignment/test_sql_ddl_locator.py"
+          ]
+        },
+        "status": {"const": "PASS"},
+        "positive_case_count": {"type": "integer", "minimum": 1, "maximum": 6},
+        "negative_case_count": {"type": "integer", "minimum": 7, "maximum": 10},
+        "stdout_summary": {"type": "string", "pattern": "^PASS (Go AST|Python AST|Rust AST|Protobuf descriptor|structured config|shell AST|Java AST|SQL DDL) locator:"},
+        "proof_ceiling": {
+          "const": "EXACT_LOCATOR_RESOLVER_IMPLEMENTED_NOT_M02_CANDIDATE_FROZEN_OR_LOCATORS_RESOLVED"
+        }
+      }
+    }
+  }
+}

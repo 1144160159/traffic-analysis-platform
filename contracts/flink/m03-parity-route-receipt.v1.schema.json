@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "traffic-platform/m03-parity-route-receipt.v1.schema.json",
+  "title": "M03 online/offline route completion receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "route", "tenant_id", "probe_id", "run_id", "candidate_sha256",
+    "corpus_id", "corpus_manifest_sha256", "capture_mode",
+    "packet_count_received", "packet_count_dropped", "event_time_offset_ms",
+    "source_completed", "pipeline_drained", "final_checkpoint_id"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "route": {"enum": ["online", "offline"]},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "probe_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "corpus_id": {"type": "string", "minLength": 1},
+    "corpus_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "capture_mode": {"enum": ["af_packet", "xdp", "xdp_skb", "xdp_offload", "pcap_offline"]},
+    "packet_count_received": {"type": "integer", "minimum": 0},
+    "packet_count_dropped": {"type": "integer", "minimum": 0},
+    "event_time_offset_ms": {"type": "integer"},
+    "source_completed": {"const": true},
+    "pipeline_drained": {"const": true},
+    "final_checkpoint_id": {"type": "integer", "minimum": 0}
+  }
+}

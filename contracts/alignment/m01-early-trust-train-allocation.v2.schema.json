@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m01-early-trust-train-allocation.v2.schema.json",
+  "title": "M01 early trust function-complete append allocation v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "revision_id",
+    "base_preview_refs", "prior_candidate_freeze", "semantic_projection_sha256",
+    "allocation_epoch", "append_leaf_count", "function_gap_findings", "steps",
+    "external_activities", "supersessions", "dependency_revisions",
+    "completion_revision", "claims"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0.0"},
+    "artifact_kind": {"const": "M01_EARLY_TRUST_FUNCTION_COMPLETE_ALLOCATION"},
+    "artifact_status": {"const": "VERSIONED_PREVIEW_NOT_GLOBAL_REGISTRY"},
+    "revision_id": {"const": "M01-EARLY-TRUST-V2"},
+    "base_preview_refs": {
+      "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash_ref"}
+    },
+    "prior_candidate_freeze": {
+      "type": "object", "additionalProperties": false,
+      "required": ["revision_id", "candidate_leaf_count", "candidate_leaf_projection_sha256", "status"],
+      "properties": {
+        "revision_id": {"const": "M01-EARLY-TRUST-V1"},
+        "candidate_leaf_count": {"const": 57},
+        "candidate_leaf_projection_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "status": {"const": "PASS_EXACT_V1_CANDIDATE_PRESERVATION"}
+      }
+    },
+    "semantic_projection_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "allocation_epoch": {"const": "T1-M01-P067-P096"},
+    "append_leaf_count": {"const": 30},
+    "function_gap_findings": {
+      "type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "steps": {
+      "type": "array", "minItems": 30, "maxItems": 30,
+      "items": {"$ref": "#/$defs/step"}
+    },
+    "external_activities": {
+      "type": "array", "minItems": 1, "maxItems": 1,
+      "items": {"$ref": "#/$defs/external_activity"}
+    },
+    "supersessions": {
+      "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/supersession"}
+    },
+    "dependency_revisions": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/dependency_revision"}
+    },
+    "completion_revision": {"$ref": "#/$defs/completion_revision"},
+    "claims": {"$ref": "#/$defs/claims"}
+  },
+  "$defs": {
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["finding_id", "severity", "evidence", "required_resolution"],
+      "properties": {
+        "finding_id": {"type": "string", "pattern": "^M01-TRUST-V2-GAP-0[1-6]$"},
+        "severity": {"enum": ["P0", "P1"]},
+        "evidence": {"type": "string", "minLength": 25},
+        "required_resolution": {"type": "string", "minLength": 25}
+      }
+    },
+    "step": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "atomic_pr_id", "pr_type", "phase", "primary_locator", "companion_locators",
+        "target_state", "prerequisite_ids", "required_gates", "design_kind",
+        "single_outcome", "oracle_and_rollback"
+      ],
+      "properties": {
+        "atomic_pr_id": {
+          "type": "string",
+          "pattern": "^T1-M01-P(?:06[7-9]|07[0-9]|08[0-9]|09[0-6])-(?:REF|WRT|OPS|TST-PRE|TST-POST)-n015-s(?:1[0-9]|2[0-9]|3[0-9])$"
+        },
+        "pr_type": {"enum": ["REF", "WRT", "OPS", "TST-PRE", "TST-POST"]},
+        "phase": {"type": "string", "minLength": 3},
+        "primary_locator": {"type": "string", "minLength": 3},
+        "companion_locators": {
+          "type": "array", "maxItems": 16, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "target_state": {"enum": ["PLANNED", "PLANNED_OUTPUT"]},
+        "prerequisite_ids": {
+          "type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^(?:T1-M01-P[0-9]{3}-[A-Z-]+-.+|EXT-T1-M01-N015-[A-Z-]+)$"}
+        },
+        "required_gates": {
+          "type": "array", "minItems": 1, "maxItems": 1,
+          "items": {"enum": ["G0", "G1", "G2", "G3", "G6"]}
+        },
+        "design_kind": {"enum": ["FUNCTION", "TYPE_CONTRACT", "DEPLOYMENT_PACKAGE", "DEPLOYMENT_MANIFEST", "EVIDENCE_OUTPUT"]},
+        "single_outcome": {"type": "string", "minLength": 15},
+        "oracle_and_rollback": {"type": "string", "minLength": 25}
+      }
+    },
+    "external_activity": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "activity_id", "activity_kind", "depends_on_atomic_pr_ids", "required_outputs",
+        "receipt_schema_path", "receipt_validator_path", "work_order_path",
+        "candidate_freeze_work_order_path", "design_candidate_manifest_path",
+        "implementation_candidate_manifest_path", "expected_receipt_path",
+        "bootstrap_policy_id", "status", "owner_roles", "proof_ceiling"
+      ],
+      "properties": {
+        "activity_id": {"const": "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN"},
+        "activity_kind": {"const": "EXTERNAL_BUILD_SIGN_AND_PUBLISH"},
+        "depends_on_atomic_pr_ids": {
+          "type": "array", "minItems": 1, "maxItems": 1,
+          "items": {"const": "T1-M01-P079-OPS-n015-s22"}
+        },
+        "required_outputs": {
+          "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
+          "items": {"enum": ["IMAGE_DIGEST", "SBOM_SHA256", "PROVENANCE_ATTESTATION", "SIGNATURE_VERIFICATION_RECEIPT"]}
+        },
+        "receipt_schema_path": {"const": "contracts/alignment/m01-verifier-image-build-sign-receipt.schema.json"},
+        "receipt_validator_path": {"const": "scripts/alignment/validate_m01_verifier_image_build_sign_receipt.py"},
+        "work_order_path": {"const": "contracts/alignment/m01-verifier-image-build-sign-work-order.v1.json"},
+        "candidate_freeze_work_order_path": {"const": "contracts/alignment/m01-early-trust-candidate-freeze-work-order.v1.json"},
+        "design_candidate_manifest_path": {"const": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/design-candidate-manifest.json"},
+        "implementation_candidate_manifest_path": {"const": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/implementation-candidate.json"},
+        "expected_receipt_path": {"const": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/receipt.json"},
+        "bootstrap_policy_id": {"const": "M01-VERIFIER-BOOTSTRAP-PROTECTED-CI-2-OF-2-V1"},
+        "status": {"const": "PENDING_NO_RECEIPT"},
+        "owner_roles": {
+          "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+          "items": {"enum": ["supply-chain-owner", "security-owner"]}
+        },
+        "proof_ceiling": {"const": "EXTERNAL_ACTIVITY_DECLARATION_ONLY_NOT_EXECUTED_SIGNED_OR_VERIFIED"}
+      }
+    },
+    "supersession": {
+      "type": "object", "additionalProperties": false,
+      "required": ["legacy_atomic_pr_id", "replacement_atomic_pr_ids", "disposition", "reason", "historical_id_policy"],
+      "properties": {
+        "legacy_atomic_pr_id": {"enum": [
+          "T1-M01-P063-OPS-n015-s7", "T1-M01-P064-TST-PRE-n015-s8", "T1-M01-P065-TST-POST-n015-s9"
+        ]},
+        "replacement_atomic_pr_ids": {
+          "type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^T1-M01-P08[0-5]-(?:OPS|TST-PRE|TST-POST)-n015-s2[3-8]$"}
+        },
+        "disposition": {"const": "SUPERSEDED_IN_V2_PREVIEW_V1_AND_ACTIVE_REGISTRIES_UNCHANGED"},
+        "reason": {"type": "string", "minLength": 25},
+        "historical_id_policy": {"const": "PRESERVED_NOT_REUSED"}
+      }
+    },
+    "dependency_revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["atomic_pr_id", "prior_dependency_ids", "revised_dependency_ids", "reason"],
+      "properties": {
+        "atomic_pr_id": {"enum": ["T1-M01-P058-REF-n015-s2", "T1-M01-P060-REF-n015-s4", "T1-M01-P061-REF-n015-s5", "T1-M01-P079-OPS-n015-s22", "T1-M01-P066-IDX-n015-task-completion"]},
+        "prior_dependency_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "revised_dependency_ids": {"type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": {"type": "string"}},
+        "reason": {"type": "string", "minLength": 25}
+      }
+    },
+    "completion_revision": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "parent_task_id", "terminal_atomic_pr_id", "prior_member_atomic_pr_ids",
+        "revised_member_atomic_pr_ids", "superseded_member_atomic_pr_ids",
+        "revised_terminal_direct_dependency_ids", "revision_semantics"
+      ],
+      "properties": {
+        "parent_task_id": {"const": "T1-M01-N015"},
+        "terminal_atomic_pr_id": {"const": "T1-M01-P066-IDX-n015-task-completion"},
+        "prior_member_atomic_pr_ids": {"type": "array", "minItems": 9, "maxItems": 9, "uniqueItems": true},
+        "revised_member_atomic_pr_ids": {"type": "array", "minItems": 36, "maxItems": 36, "uniqueItems": true},
+        "superseded_member_atomic_pr_ids": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true},
+        "revised_terminal_direct_dependency_ids": {
+          "type": "array", "minItems": 1, "maxItems": 1,
+          "items": {"const": "T1-M01-P085-TST-POST-n015-s28"}
+        },
+        "revision_semantics": {"const": "TERMINAL_ID_PRESERVED_FUNCTION_COMPLETE_MEMBERS_AND_SINGLE_GATE_EVIDENCE_REVISED"}
+      }
+    },
+    "claims": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed", "forbidden", "proof_ceiling"],
+      "properties": {
+        "allowed": {"const": "P067-P096 repository core runtime adapter compile-time type packaging external-build deployment and single-gate evidence ownership are allocated in v2 preview"},
+        "forbidden": {
+          "type": "array", "minItems": 12, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "proof_ceiling": {"const": "STATIC_V2_ALLOCATION_ONLY_NOT_GLOBAL_REGISTRATION_FUNCTION_REVIEW_IMPLEMENTATION_IMAGE_BUILD_SIGNATURE_DEPLOYMENT_TEST_EXECUTION_TRUST_PASS_AUTHORIZATION_OR_ACCEPTANCE"}
+      }
+    }
+  }
+}

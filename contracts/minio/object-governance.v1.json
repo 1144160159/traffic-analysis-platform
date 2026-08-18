@@ -17,7 +17,8 @@
     "model",
     "flink_checkpoint",
     "flink_savepoint",
-    "argo_artifact"
+    "argo_artifact",
+    "restoration_evidence"
   ],
   "security_policy": {
     "application_root_credentials_allowed": false,
@@ -74,6 +75,22 @@
       "quota": "approval_required",
       "policy": "domain-writer-and-authorized-download-proxy-prefix-scoped-not_applied",
       "restore_priority": 2
+    },
+    {
+      "bucket": "forensics-quarantine",
+      "object_classes": ["restoration_evidence"],
+      "owner": "forensics-domain-owner",
+      "key_rule": "tenants/{tenant_id}/restorations/{restoration_id}/{part_number}/{sanitized_name}",
+      "manifest_authority": "postgresql.file_restoration_manifests_and_file_restoration_orphans",
+      "versioning": "required_by_repository_bootstrap_not_live_proven",
+      "object_lock": "required_at_bucket_creation_by_repository_bootstrap_not_live_proven",
+      "legal_hold": "supported_by_immutable_object_receipt_not_live_proven",
+      "lifecycle": {"current_days": null, "target": "manifest_retention_and_legal_hold_aware_only"},
+      "encryption": "tls_and_server_side_encryption_required_not_applied",
+      "replication": "required_not_applied",
+      "quota": "per_tenant_restoration_admission_bound_required",
+      "policy": "forensics-service-tenant-restoration-prefix-scoped-candidate_not_applied",
+      "restore_priority": 1
     },
     {
       "bucket": "traffic-models",
@@ -142,12 +159,12 @@
     "only pcap-archive and report-artifacts have repository lifecycle rules",
     "versioning Object Lock legal hold replication quotas and server-side encryption are not applied",
     "minio-proxy has one replica and no TLS identity",
-    "the five-bucket governed bootstrap is repository-only and has not been applied or reconciled against live MinIO",
+    "the six-bucket governed bootstrap including the restoration quarantine bucket is repository-only and has not been applied or reconciled against live MinIO",
     "live service identity and bucket policy exact diff credential rotation scrub restore and cross-region recovery are absent"
   ],
   "closure_blockers": [
     "approve and apply TLS plus per-service identities and prefix policies",
-    "apply the five-bucket governed bootstrap and reconcile live bucket identities without using application credentials",
+    "apply the six-bucket governed bootstrap and reconcile live bucket identities without using application credentials",
     "apply versioning retention Object Lock legal hold replication quota and encryption by object class",
     "run bounded manifest-to-object scrub for missing extra version size hash retention and temporary-object differences",
     "prove node disk proxy credential and region failure recovery with business manifests and hashes",

@@ -1,0 +1,66 @@
+{
+  "contract_id": "traffic.campaigns.protobuf.v1",
+  "schema_version": 1,
+  "accountable_task": "T1-M07-N018",
+  "state": "contract_ready_producer_and_consumer_default_off",
+  "production_applied": false,
+  "topic": "campaigns.v1",
+  "encoding": {
+    "kind": "protobuf",
+    "path": "proto/traffic/v1/alert.proto",
+    "message": "traffic.v1.Campaign",
+    "content_type": "application/x-protobuf",
+    "json_forbidden": true
+  },
+  "partition_key": {
+    "encoding": "utf8(tenant_id + ':' + campaign_id)",
+    "must_equal_kafka_key": true,
+    "unknown_tenant_forbidden": true
+  },
+  "required_headers": [
+    "content_type",
+    "proto_message_type",
+    "schema_version",
+    "source_service",
+    "target_topic",
+    "tenant_id",
+    "campaign_id",
+    "event_id"
+  ],
+  "header_values": {
+    "proto_message_type": "traffic.v1.Campaign",
+    "schema_version": "1",
+    "source_service": "flink-cep-job",
+    "target_topic": "campaigns.v1"
+  },
+  "identity": {
+    "event_id": "deterministic UUID derived from sorted alert IDs plus tenant, campaign type and closed event-time window",
+    "campaign_id": "deterministic ID derived from tenant, campaign type, event-time start and event_id",
+    "header_body_equal": ["tenant_id", "event_id"],
+    "same_event_same_payload": "duplicate_committed",
+    "same_event_different_payload": "permanent_conflict"
+  },
+  "cep_admission": {
+    "key": "length_delimited(tenant_id,src_ip)",
+    "all_pattern_alerts_same_tenant": true,
+    "empty_or_unknown_tenant": "fail_closed_before_keyed_state",
+    "cross_tenant_same_src_ip": "must_never_match"
+  },
+  "durability": {
+    "producer_acks": "all",
+    "producer_delivery": "at_least_once",
+    "consumer_offset_barrier": "commit after PostgreSQL inbox/current projection transaction or durable canonical DLQ acknowledgement",
+    "source_coordinates": ["topic", "partition", "offset"]
+  },
+  "rollout": {
+    "consumer_flag": "CAMPAIGNS_PROTO_CONSUMER_V1_ENABLED",
+    "producer_flag": "campaign.publisher.enabled",
+    "defaults": {"consumer": false, "producer": false},
+    "order": ["schema", "consumer", "consumer canary receipt", "producer", "correlation projection"]
+  },
+  "compatibility": {
+    "json_v2_topics": ["campaign.events.v2", "campaign.membership.events.v2"],
+    "json_consumer_must_not_parse_this_topic": true,
+    "protobuf_consumer_must_not_parse_json_v2": true
+  }
+}

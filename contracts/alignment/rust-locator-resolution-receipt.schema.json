@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/rust-locator-resolution-receipt.schema.json",
+  "title": "Candidate-bound Rust syn locator resolution receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "status", "proof_level", "candidate",
+    "resolver", "locator", "ambiguity_count", "resolved_at", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "RUST_LOCATOR_RESOLUTION_RECEIPT"},
+    "status": {"const": "RESOLVED"},
+    "proof_level": {"const": "LANGUAGE_AST"},
+    "candidate": {"$ref": "#/$defs/candidate"},
+    "resolver": {"$ref": "#/$defs/resolver"},
+    "locator": {"$ref": "#/$defs/locator"},
+    "ambiguity_count": {"const": 1},
+    "resolved_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "proof_ceiling": {"const": "EXACT_LOCATOR_ONLY_NOT_FUNCTION_DESIGN_OR_EXECUTION_AUTHORIZATION"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commit", "manifest_path", "manifest_sha256"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "manifest_path": {"type": "string", "minLength": 1},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "resolver": {
+      "type": "object", "additionalProperties": false,
+      "required": ["resolver_id", "engine", "engine_version", "source_path", "source_sha256"],
+      "properties": {
+        "resolver_id": {"const": "traffic-rust-syn-locator@1"},
+        "engine": {"const": "syn"},
+        "engine_version": {"type": "string", "minLength": 8},
+        "source_path": {"const": "scripts/alignment/rust_ast_locator/src/main.rs"},
+        "source_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "position": {
+      "type": "object", "additionalProperties": false,
+      "required": ["byte_offset", "line", "column"],
+      "properties": {
+        "byte_offset": {"type": "integer", "minimum": 0},
+        "line": {"type": "integer", "minimum": 1},
+        "column": {"type": "integer", "minimum": 1}
+      }
+    },
+    "call": {
+      "type": "object", "additionalProperties": false,
+      "required": ["expression", "line"],
+      "properties": {
+        "expression": {"type": "string", "minLength": 1},
+        "line": {"type": "integer", "minimum": 1}
+      }
+    },
+    "locator": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "locator_id", "language", "path", "module_path", "qualified_symbol",
+        "declaration_kind", "query", "match_strategy", "signature",
+        "candidate_blob_sha256", "source_span_sha256", "normalized_ast_sha256",
+        "start", "end", "calls"
+      ],
+      "properties": {
+        "locator_id": {"type": "string", "pattern": "^LOC-[A-Za-z0-9._-]+$"},
+        "language": {"const": "rust"},
+        "path": {"type": "string", "pattern": "^rust/.+\\.rs$"},
+        "module_path": {"type": "string", "pattern": "^crate(?:::[A-Za-z_][A-Za-z0-9_]*)*$"},
+        "qualified_symbol": {"type": "string", "minLength": 3},
+        "declaration_kind": {
+          "enum": [
+            "FUNCTION", "ASYNC_FUNCTION", "STRUCT", "ENUM", "TYPE_ALIAS", "TRAIT",
+            "INHERENT_METHOD", "ASYNC_INHERENT_METHOD", "TRAIT_METHOD",
+            "INHERENT_IMPL", "TRAIT_IMPL"
+          ]
+        },
+        "query": {"type": "string", "minLength": 1},
+        "match_strategy": {"const": "EXACT_SYN_ITEM_IMPL_OR_SIGNATURE"},
+        "signature": {"type": "string", "minLength": 3},
+        "candidate_blob_sha256": {"$ref": "#/$defs/sha256"},
+        "source_span_sha256": {"$ref": "#/$defs/sha256"},
+        "normalized_ast_sha256": {"$ref": "#/$defs/sha256"},
+        "start": {"$ref": "#/$defs/position"},
+        "end": {"$ref": "#/$defs/position"},
+        "calls": {"type": "array", "items": {"$ref": "#/$defs/call"}}
+      }
+    }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:traffic-analysis:attack-chain:snapshot:v1",
+  "title": "Versioned attack-chain snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id", "tenant_id", "chain_id", "version", "as_of", "source", "target",
+    "stages", "candidate_path", "alternative_paths", "graph_snapshot", "partial",
+    "partial_reasons", "truncated", "snapshot_sha256"
+  ],
+  "properties": {
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "chain_id": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "as_of": {"type": "string", "format": "date-time"},
+    "source": {"$ref": "#/$defs/identity"},
+    "target": {"$ref": "#/$defs/identity"},
+    "stages": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "candidate_path": {"$ref": "#/$defs/path"},
+    "alternative_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}},
+    "graph_snapshot": {"$ref": "#/$defs/graphSnapshot"},
+    "partial": {"type": "boolean"},
+    "partial_reasons": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "truncated": {"type": "boolean"},
+    "truncation_reason": {"type": "string"},
+    "continuation_boundary": {"type": "string"},
+    "snapshot_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "entity_type", "canonical_id", "vertex_id"],
+      "properties": {
+        "tenant_id": {"type": "string", "minLength": 1},
+        "entity_type": {"type": "string", "minLength": 1},
+        "canonical_id": {"type": "string", "minLength": 1},
+        "vertex_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "evidence_id", "kind", "immutable_uri", "sha256", "source_event_id", "occurred_at", "available"],
+      "properties": {
+        "tenant_id": {"type": "string", "minLength": 1},
+        "evidence_id": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["event", "rule", "model", "analyst_conclusion"]},
+        "immutable_uri": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "source_event_id": {"type": "string", "minLength": 1},
+        "occurred_at": {"type": "integer", "minimum": 1},
+        "available": {"type": "boolean"}
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edge_id", "relation_type", "stage", "source", "target", "event_time", "provenance", "confidence", "uncertainty", "evidence"],
+      "properties": {
+        "edge_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "relation_type": {"type": "string", "minLength": 1},
+        "stage": {"type": "string", "minLength": 1},
+        "source": {"$ref": "#/$defs/identity"},
+        "target": {"$ref": "#/$defs/identity"},
+        "event_time": {"type": "integer", "minimum": 1},
+        "provenance": {"enum": ["observed", "derived", "analyst"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "uncertainty": {"type": "string"},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}}
+      }
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_id", "kind", "edges", "confidence", "uncertainty", "contradicts_path_ids", "partial", "partial_reasons", "path_sha256"],
+      "properties": {
+        "path_id": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["candidate", "alternative"]},
+        "edges": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/edge"}},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "uncertainty": {"type": "string"},
+        "contradicts_path_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "partial": {"type": "boolean"},
+        "partial_reasons": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "path_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "graphSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_id", "schema_version", "nodes", "edge_ids", "label_refs", "evidence_refs", "source_watermarks", "node_count", "edge_count", "node_sha256", "edge_sha256", "snapshot_sha256"],
+      "properties": {
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "schema_version": {"const": "gnn-graph/v1"},
+        "nodes": {"type": "array", "items": {"$ref": "#/$defs/identity"}},
+        "edge_ids": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+        "label_refs": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}},
+        "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "source_watermarks": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}},
+        "node_count": {"type": "integer", "minimum": 0},
+        "edge_count": {"type": "integer", "minimum": 0},
+        "node_sha256": {"$ref": "#/$defs/sha256"},
+        "edge_sha256": {"$ref": "#/$defs/sha256"},
+        "snapshot_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

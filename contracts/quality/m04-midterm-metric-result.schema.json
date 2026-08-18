@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/quality/m04-midterm-metric-result.schema.json",
+  "title": "M04 signed midterm metric result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_kind", "result_body_sha256", "body", "signature"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M04_SIGNED_MIDTERM_METRIC_RESULT"},
+    "result_body_sha256": {"$ref": "#/$defs/sha256"},
+    "body": {"$ref": "#/$defs/body"},
+    "signature": {"$ref": "#/$defs/signature_set"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hashes": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "method_registry_sha256", "method_body_sha256", "dataset_manifest_sha256",
+        "predictions_sha256", "candidate_hash", "model_hash", "feature_hash",
+        "threshold_hash", "taxonomy_sha256", "labels_sha256"
+      ],
+      "properties": {
+        "method_registry_sha256": {"$ref": "#/$defs/sha256"},
+        "method_body_sha256": {"$ref": "#/$defs/sha256"},
+        "dataset_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "predictions_sha256": {"$ref": "#/$defs/sha256"},
+        "candidate_hash": {"$ref": "#/$defs/sha256"},
+        "model_hash": {"$ref": "#/$defs/sha256"},
+        "feature_hash": {"$ref": "#/$defs/sha256"},
+        "threshold_hash": {"$ref": "#/$defs/sha256"},
+        "taxonomy_sha256": {"$ref": "#/$defs/sha256"},
+        "labels_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["total", "evaluated", "excluded", "tp", "fp", "tn", "fn", "abstain_known_attack", "abstain_normal"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "evaluated": {"type": "integer", "minimum": 0},
+        "excluded": {"type": "integer", "minimum": 0},
+        "tp": {"type": "integer", "minimum": 0},
+        "fp": {"type": "integer", "minimum": 0},
+        "tn": {"type": "integer", "minimum": 0},
+        "fn": {"type": "integer", "minimum": 0},
+        "abstain_known_attack": {"type": "integer", "minimum": 0},
+        "abstain_normal": {"type": "integer", "minimum": 0}
+      }
+    },
+    "stratum": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stratum", "counts"],
+      "properties": {
+        "stratum": {"type": "string", "minLength": 1},
+        "counts": {"$ref": "#/$defs/counts"}
+      }
+    },
+    "failure_sample": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sample_id", "stratum", "truth", "prediction", "reason"],
+      "properties": {
+        "sample_id": {"type": "string", "minLength": 1},
+        "stratum": {"type": "string", "minLength": 1},
+        "truth": {"enum": ["known_attack", "normal"]},
+        "prediction": {"enum": ["known_attack", "normal", "abstain"]},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "metric": {
+      "type": "object", "additionalProperties": false,
+      "required": ["metric_id", "signed_formula", "numerator", "denominator", "percent", "operator", "target_percent", "threshold_pass"],
+      "properties": {
+        "metric_id": {"const": "T1-MIDTERM-ALERT-ACCURACY"},
+        "signed_formula": {"enum": ["precision=TP/(TP+FP)", "generic_accuracy=(TP+TN)/N"]},
+        "numerator": {"type": "integer", "minimum": 0},
+        "denominator": {"type": "integer", "minimum": 0},
+        "percent": {"type": "string", "pattern": "^(?:0|[1-9][0-9]?|100)\\.[0-9]{6}$"},
+        "operator": {"const": ">="},
+        "target_percent": {"const": 50},
+        "threshold_pass": {"type": "boolean"}
+      }
+    },
+    "body": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "result_id", "run_id", "method_id", "dataset_id", "profile_id",
+        "environment_id", "evaluated_at", "status", "input_hashes", "method_signature", "counts",
+        "strata", "minimum_sample_rules", "metric", "failure_samples",
+        "allowed_claim", "forbidden_claims"
+      ],
+      "properties": {
+        "result_id": {"type": "string", "minLength": 1},
+        "run_id": {"type": "string", "minLength": 1},
+        "method_id": {"const": "T1-MIDTERM-KNOWN-ALERT-METHOD"},
+        "dataset_id": {"type": "string", "minLength": 1},
+        "profile_id": {"type": "string", "minLength": 1},
+        "environment_id": {"type": "string", "minLength": 1},
+        "evaluated_at": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS_KNOWN_ATTACK_MIDTERM", "FAIL_THRESHOLD"]},
+        "input_hashes": {"$ref": "#/$defs/hashes"},
+        "method_signature": {"$ref": "#/$defs/signature_set"},
+        "counts": {"$ref": "#/$defs/counts"},
+        "strata": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/stratum"}},
+        "minimum_sample_rules": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "metric": {"$ref": "#/$defs/metric"},
+        "failure_samples": {"type": "array", "items": {"$ref": "#/$defs/failure_sample"}},
+        "allowed_claim": {"const": "only the signed-method M04 midterm metric for the frozen known-attack and normal evaluation set"},
+        "forbidden_claims": {
+          "type": "array", "minItems": 3, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "request_id", "request_sha256", "attestation_id", "attestation_issued_at", "verifier_id"],
+      "properties": {
+        "role": {
+          "enum": ["PROJECT_OWNER", "DOMAIN_OWNER", "TEST_OWNER", "ACCEPTANCE_AUTHORITY"]
+        },
+        "request_id": {"type": "string", "minLength": 1},
+        "request_sha256": {"$ref": "#/$defs/sha256"},
+        "attestation_id": {"type": "string", "minLength": 1},
+        "attestation_issued_at": {"type": "string", "minLength": 1},
+        "verifier_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "signature_set": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "signatures"],
+      "properties": {
+        "status": {"const": "VERIFIED"},
+        "signatures": {
+          "type": "array", "minItems": 1, "maxItems": 4,
+          "items": {"$ref": "#/$defs/signature"}
+        }
+      }
+    }
+  }
+}

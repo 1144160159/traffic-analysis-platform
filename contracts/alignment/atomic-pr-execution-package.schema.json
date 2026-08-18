@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/atomic-pr-execution-package.schema.json",
+  "title": "Atomic PR scoped execution authorization package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_status", "atomic_pr_id", "parent_work_id", "pr_type",
+    "candidate_manifest_path", "candidate_manifest_sha256", "profile_id", "bom_transition_ref", "responsibility",
+    "outcome", "selected_targets", "context_locators", "allowed_paths", "contract_impacts", "transaction",
+    "migration", "security", "error_mappings", "design_refs", "plan_refs", "claims", "proof_ceiling",
+    "does_not_prove", "readiness"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_status": {"enum": ["DESIGN_TEMPLATE", "DRAFT_BINDING", "READY_BINDING"]},
+    "atomic_pr_id": {"type": "string", "pattern": "^T1-M[0-9]{2}(?:-R[0-9]{2})?-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+    "parent_work_id": {"type": "string", "pattern": "^T1-M[0-9]{2}-(?:N[0-9]{3}|R[0-9]{2})$"},
+    "pr_type": {"enum": ["CTR", "EXP", "PRJ", "WRT", "UI", "OPS", "REF", "TST-PRE", "TST-POST", "IDX", "PROM"]},
+    "candidate_manifest_path": {"type": "string", "minLength": 1},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "bom_transition_ref": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["path", "sha256", "schema_version"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "schema_version": {"const": "1.0.0"}
+      }
+    },
+    "responsibility": {"$ref": "#/$defs/responsibility"},
+    "outcome": {"$ref": "#/$defs/outcome"},
+    "selected_targets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/locator"}, "uniqueItems": true},
+    "context_locators": {"type": "array", "items": {"$ref": "#/$defs/locator"}, "uniqueItems": true},
+    "allowed_paths": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "contract_impacts": {"type": "array", "items": {"$ref": "#/$defs/contract_impact"}, "uniqueItems": true},
+    "transaction": {"type": ["object", "null"], "additionalProperties": false, "required": ["authority_write_point", "isolation", "locks", "idempotency_key", "revision_rule", "commit_order", "crash_points"], "properties": {
+      "authority_write_point": {"type": "string", "minLength": 1},
+      "isolation": {"type": "string", "minLength": 1},
+      "locks": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+      "idempotency_key": {"type": "string", "minLength": 1},
+      "revision_rule": {"type": "string", "minLength": 1},
+      "commit_order": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+      "crash_points": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/crash_point"}, "uniqueItems": true}
+    }},
+    "migration": {"type": ["object", "null"], "additionalProperties": false, "required": ["migration_id", "path", "content_sha256", "additive", "objects", "lock_budget", "duration_budget", "reentrant", "validation", "rollback_or_forward_fix"], "properties": {
+      "migration_id": {"type": "string", "minLength": 1},
+      "path": {"type": "string", "minLength": 1},
+      "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+      "additive": {"type": "boolean"},
+      "objects": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+      "lock_budget": {"type": "string", "minLength": 1},
+      "duration_budget": {"type": "string", "minLength": 1},
+      "reentrant": {"type": "boolean"},
+      "validation": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+      "rollback_or_forward_fix": {"type": "string", "minLength": 1}
+    }},
+    "security": {"$ref": "#/$defs/security"},
+    "error_mappings": {"type": "array", "items": {"$ref": "#/$defs/error_mapping"}, "uniqueItems": true},
+    "design_refs": {"$ref": "#/$defs/design_refs"},
+    "plan_refs": {"$ref": "#/$defs/plan_refs"},
+    "claims": {"type": "object", "additionalProperties": false, "required": ["allowed", "forbidden"], "properties": {
+      "allowed": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+      "forbidden": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+    }},
+    "proof_ceiling": {"enum": ["DESIGN_STRUCTURE_ONLY", "SCOPED_EXECUTION_AUTHORIZATION_ONLY"]},
+    "does_not_prove": {"type": "array", "minItems": 5, "items": {"enum": ["implemented", "merged", "tested", "deployed", "accepted"]}, "uniqueItems": true},
+    "readiness": {"type": "object", "additionalProperties": false, "required": ["status", "blockers"], "properties": {
+      "status": {"enum": ["DRAFT", "READY"]},
+      "blockers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+    }}
+  },
+  "$defs": {
+    "responsibility": {"type": "object", "additionalProperties": false, "required": ["owner", "reviewers", "approvers"], "properties": {
+      "owner": {"type": "string", "minLength": 1},
+      "reviewers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+      "approvers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+    }},
+    "outcome": {"type": "object", "additionalProperties": false, "required": ["single_result", "non_goals"], "properties": {
+      "single_result": {"type": "string", "minLength": 1},
+      "non_goals": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+    }},
+    "locator": {"type": "object", "additionalProperties": false, "required": ["locator_id", "locator_kind", "path", "target_state", "symbol_or_pointer", "signature", "role", "production_surface", "candidate_blob_sha256", "created_by_atomic_pr_id", "creation_reason", "compatibility_entrypoint_locator_id", "activation_guard_locator_id"], "properties": {
+      "locator_id": {"type": "string", "minLength": 1},
+      "locator_kind": {"enum": ["go_symbol", "rust_symbol", "java_symbol", "ts_symbol", "python_symbol", "proto_fqn", "sql_object", "json_pointer", "yaml_path", "file"]},
+      "path": {"type": "string", "minLength": 1},
+      "target_state": {"enum": ["EXISTING", "PLANNED"]},
+      "symbol_or_pointer": {"type": ["string", "null"]},
+      "signature": {"type": ["string", "null"]},
+      "role": {"type": "string", "minLength": 1},
+      "production_surface": {"type": "boolean"},
+      "candidate_blob_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+      "created_by_atomic_pr_id": {"type": ["string", "null"]},
+      "creation_reason": {"type": ["string", "null"]},
+      "compatibility_entrypoint_locator_id": {"type": ["string", "null"]},
+      "activation_guard_locator_id": {"type": ["string", "null"]}
+    }},
+    "contract_impact": {"type": "object", "additionalProperties": false, "required": ["contract_id", "contract_kind", "version", "change", "runtime_enablement", "locator_id", "operation_id", "proto_fqn", "field_numbers", "topic", "key_contract", "schema_ref", "route_id"], "properties": {
+      "contract_id": {"type": "string", "minLength": 1},
+      "contract_kind": {"enum": ["OPENAPI", "PROTO", "KAFKA", "DDL", "UI", "NONE"]},
+      "version": {"type": ["string", "null"]},
+      "change": {"type": "string", "minLength": 1},
+      "runtime_enablement": {"type": "boolean"},
+      "locator_id": {"type": ["string", "null"]},
+      "operation_id": {"type": ["string", "null"]},
+      "proto_fqn": {"type": ["string", "null"]},
+      "field_numbers": {"type": "array", "items": {"type": "integer", "minimum": 1, "maximum": 536870911}, "uniqueItems": true},
+      "topic": {"type": ["string", "null"]},
+      "key_contract": {"type": ["string", "null"]},
+      "schema_ref": {"type": ["string", "null"]},
+      "route_id": {"type": ["string", "null"]}
+    }},
+    "crash_point": {"type": "object", "additionalProperties": false, "required": ["crash_point_id", "before_or_after", "authority_state", "side_effect_state", "recovery_action", "allowed_response"], "properties": {
+      "crash_point_id": {"type": "string", "minLength": 1},
+      "before_or_after": {"type": "string", "minLength": 1},
+      "authority_state": {"type": "string", "minLength": 1},
+      "side_effect_state": {"type": "string", "minLength": 1},
+      "recovery_action": {"type": "string", "minLength": 1},
+      "allowed_response": {"type": "string", "minLength": 1}
+    }},
+    "security": {"type": "object", "additionalProperties": false, "required": ["tenant_source", "actions", "scopes", "object_tenant_predicates", "redactions"], "properties": {
+      "tenant_source": {"type": "string", "minLength": 1},
+      "actions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+      "scopes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+      "object_tenant_predicates": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+      "redactions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+    }},
+    "error_mapping": {"type": "object", "additionalProperties": false, "required": ["source_error", "transport_status", "error_code", "retry_policy", "ui_state"], "properties": {
+      "source_error": {"type": "string", "minLength": 1},
+      "transport_status": {"type": "string", "minLength": 1},
+      "error_code": {"type": "string", "minLength": 1},
+      "retry_policy": {"type": "string", "minLength": 1},
+      "ui_state": {"type": "string", "minLength": 1}
+    }},
+    "plan_ref": {"type": "object", "additionalProperties": false, "required": ["plan_id", "path", "sha256"], "properties": {
+      "plan_id": {"type": "string", "minLength": 1},
+      "path": {"type": "string", "minLength": 1},
+      "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    }},
+    "design_ref": {"type": "object", "additionalProperties": false, "required": ["artifact_kind", "path", "sha256"], "properties": {
+      "artifact_kind": {"enum": ["CODE_UNIT_CONTRACT", "FUNCTION_IMPLEMENTATION_DELTA", "ASSET_UPSERT_SOURCE_PRECEDENCE"]},
+      "path": {"type": "string", "minLength": 1},
+      "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    }},
+    "design_refs": {"type": "object", "additionalProperties": false, "required": ["code_unit_contract", "implementation_delta", "source_precedence_contract"], "properties": {
+      "code_unit_contract": {"$ref": "#/$defs/design_ref"},
+      "implementation_delta": {"$ref": "#/$defs/design_ref"},
+      "source_precedence_contract": {"$ref": "#/$defs/design_ref"}
+    }},
+    "plan_refs": {"type": "object", "additionalProperties": false, "required": ["test", "evidence", "rollback", "observation"], "properties": {
+      "test": {"$ref": "#/$defs/plan_ref"},
+      "evidence": {"$ref": "#/$defs/plan_ref"},
+      "rollback": {"$ref": "#/$defs/plan_ref"},
+      "observation": {"type": ["object", "null"], "additionalProperties": false, "required": ["plan_id", "path", "sha256"], "properties": {
+        "plan_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }}
+    }}
+  }
+}

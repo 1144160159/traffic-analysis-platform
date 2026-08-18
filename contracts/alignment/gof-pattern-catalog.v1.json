@@ -1,0 +1,1320 @@
+{
+  "$schema": "./gof-pattern-catalog.schema.json",
+  "artifact_kind": "GOF_PATTERN_CATALOG",
+  "schema_version": "1.0.0",
+  "catalog_id": "gof23-project-catalog.v1",
+  "source_refs": [
+    {
+      "path": "doc/00_sources/external-engineering-standards/02_Software_Architecture_and_Patterns/设计模式_可复用面向对象软件的基础.pdf",
+      "sha256": "7e351d263f811c54272908d9cc3dce7bdd14754c5d1ea6b55edd85a52db86fd5"
+    },
+    {
+      "path": "doc/00_sources/external-engineering-standards/02_Software_Architecture_and_Patterns/大话设计模式.pdf",
+      "sha256": "ef8d8055efb685298d99fc18acdb280671623b220ebdf8d613be9180ac1a64b0"
+    },
+    {
+      "path": "doc/00_sources/external-engineering-standards/02_Software_Architecture_and_Patterns/00_Project_Software_Index/software_pattern_ocr_receipts.json",
+      "sha256": "3c2ef6b6903619a868c6416ddb87e1cdbe62f6190c14193e11889d54d1c79cf6"
+    }
+  ],
+  "pattern_count": 23,
+  "patterns": {
+    "GOF-CRE-01": {
+      "pattern_id": "GOF-CRE-01",
+      "name_en": "Abstract Factory",
+      "name_zh": "抽象工厂",
+      "category": "CREATIONAL",
+      "default_policy": "RESTRICTED",
+      "rule_ref": "GOF-CRE-01",
+      "source_summary": {
+        "intent": "提供创建相关对象族的统一接口，使客户端不依赖具体类且同族对象保持一致。",
+        "applicability": [
+          "系统应独立于产品的创建、组合和表示方式",
+          "需要配置多组产品族且确保同族对象一起使用"
+        ],
+        "participants": [
+          "AbstractFactory",
+          "ConcreteFactory",
+          "AbstractProduct",
+          "ConcreteProduct",
+          "Client"
+        ],
+        "collaboration": [
+          "客户端只经抽象工厂取得同族产品；具体工厂保证产品族匹配。"
+        ],
+        "consequences": {
+          "benefits": [
+            "隔离具体类并便于整族替换",
+            "强制同族产品一致"
+          ],
+          "liabilities": [
+            "新增产品种类会修改抽象工厂及全部具体工厂"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "composition root返回一致依赖族",
+          "rust": "validated dependency family struct",
+          "java_flink": "同profile的source/sink/client family",
+          "typescript_react": "测试fixture或provider族，业务页面不用"
+        },
+        "adoption_predicate": "相关产品族存在且同族不变量必须由一次构造保证",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：相关产品族存在且同族不变量必须由一次构造保证"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "Service Locator、隐藏全局依赖或混用不同profile产品"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 68-70",
+        "大话 PDF 167,169"
+      ]
+    },
+    "GOF-CRE-02": {
+      "pattern_id": "GOF-CRE-02",
+      "name_en": "Builder",
+      "name_zh": "生成器/建造者",
+      "category": "CREATIONAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-CRE-02",
+      "source_summary": {
+        "intent": "分离复杂对象的构造过程与表示，使同一构造过程能够产生不同表示。",
+        "applicability": [
+          "复杂对象的构造算法应独立于部件及其装配方式",
+          "同一构造过程需要产生不同表示"
+        ],
+        "participants": [
+          "Builder",
+          "ConcreteBuilder",
+          "Director",
+          "Product"
+        ],
+        "collaboration": [
+          "Director按稳定步骤驱动Builder；Builder累积部件并返回完整Product。"
+        ],
+        "consequences": {
+          "benefits": [
+            "细化构造步骤并隔离表示",
+            "允许分步校验复杂对象"
+          ],
+          "liabilities": [
+            "增加参与对象且简单构造会显得繁重"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "validated options后一次构造",
+          "rust": "typestate或validated constructor",
+          "java_flink": "不可变配置Builder并在build校验",
+          "typescript_react": "schema校验后的不可变request/fixture"
+        },
+        "adoption_predicate": "字段多且存在跨字段不变量，最终对象应不可变",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：字段多且存在跨字段不变量，最终对象应不可变"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "链式setter允许无效状态或build产生I/O"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 74-77",
+        "大话 PDF 133,135"
+      ]
+    },
+    "GOF-CRE-03": {
+      "pattern_id": "GOF-CRE-03",
+      "name_en": "Factory Method",
+      "name_zh": "工厂方法",
+      "category": "CREATIONAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-CRE-03",
+      "source_summary": {
+        "intent": "定义创建对象的接口，把具体产品实例化决定延迟给可替换实现边界。",
+        "applicability": [
+          "创建者无法预知必须创建的具体产品类",
+          "创建者希望由可替换实现指定所创建对象"
+        ],
+        "participants": [
+          "Creator",
+          "ConcreteCreator",
+          "Product",
+          "ConcreteProduct"
+        ],
+        "collaboration": [
+          "Creator通过工厂方法取得Product并只依赖其稳定接口。"
+        ],
+        "consequences": {
+          "benefits": [
+            "解除客户端与具体产品耦合",
+            "允许子类或实现边界选择产品"
+          ],
+          "liabilities": [
+            "通常需要额外创建者结构并增加类型数量"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "NewX或小工厂函数返回消费方接口",
+          "rust": "enum穷尽match后返回trait能力",
+          "java_flink": "sink/source create方法",
+          "typescript_react": "局部构造函数，不建立页面Factory类"
+        },
+        "adoption_predicate": "具体实现由配置选择且调用方只依赖稳定能力",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：具体实现由配置选择且调用方只依赖稳定能力"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "单实现三层Factory、半初始化对象或暗启worker"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 81-83",
+        "大话 PDF 89-91"
+      ]
+    },
+    "GOF-CRE-04": {
+      "pattern_id": "GOF-CRE-04",
+      "name_en": "Prototype",
+      "name_zh": "原型",
+      "category": "CREATIONAL",
+      "default_policy": "DEFAULT_REJECT",
+      "rule_ref": "GOF-CRE-04",
+      "source_summary": {
+        "intent": "通过复制已存在的原型创建对象，避免调用方依赖具体创建类。",
+        "applicability": [
+          "运行时决定实例化的具体类",
+          "避免建立与产品类平行的创建者层级",
+          "对象仅有少量状态组合且复制原型更方便"
+        ],
+        "participants": [
+          "Prototype",
+          "ConcretePrototype",
+          "Client"
+        ],
+        "collaboration": [
+          "Client请求Prototype复制自身；具体原型定义复制深度和资源语义。"
+        ],
+        "consequences": {
+          "benefits": [
+            "运行时增删产品并减少构造配置",
+            "可共享不可变状态"
+          ],
+          "liabilities": [
+            "深浅复制、循环引用和初始化语义可能复杂"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "仅无资源不可变值的显式Copy",
+          "rust": "仅证明安全的Clone/newtype",
+          "java_flink": "显式copyFor，不使用Object.clone",
+          "typescript_react": "不可变值结构复制"
+        },
+        "adoption_predicate": "构造昂贵经profile证明且clone不会复制资源、秘密或tenant状态",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：构造昂贵经profile证明且clone不会复制资源、秘密或tenant状态"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "复制socket、锁、任务、模型handle、事务或identity"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 88-90",
+        "大话 PDF 98-99"
+      ]
+    },
+    "GOF-CRE-05": {
+      "pattern_id": "GOF-CRE-05",
+      "name_en": "Singleton",
+      "name_zh": "单件/单例",
+      "category": "CREATIONAL",
+      "default_policy": "MUTABLE_STATE_REJECTED",
+      "rule_ref": "GOF-CRE-05",
+      "source_summary": {
+        "intent": "保证一个作用域内只有一个实例，并提供受控访问点。",
+        "applicability": [
+          "某一作用域必须恰有一个实例",
+          "该实例需要提供受控且可访问的入口"
+        ],
+        "participants": [
+          "Singleton",
+          "Client"
+        ],
+        "collaboration": [
+          "Singleton控制实例创建；Client仅通过受控入口访问。"
+        ],
+        "consequences": {
+          "benefits": [
+            "控制实例数量和共享资源入口"
+          ],
+          "liabilities": [
+            "可能隐藏依赖，并使继承、配置和独立测试更困难"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "不可变descriptor或composition root共享client",
+          "rust": "OnceLock仅不可变元数据",
+          "java_flink": "不可变metadata；tenant模型禁static全局",
+          "typescript_react": "模块常量；请求/租户状态不得全局"
+        },
+        "adoption_predicate": "进程级不可变对象或生命周期owner明确的共享client",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：进程级不可变对象或生命周期owner明确的共享client"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "全局mutable tenant/request/transaction或宣称集群唯一"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 95-96",
+        "大话 PDF 232-236"
+      ]
+    },
+    "GOF-STR-01": {
+      "pattern_id": "GOF-STR-01",
+      "name_en": "Adapter",
+      "name_zh": "适配器",
+      "category": "STRUCTURAL",
+      "default_policy": "CONSIDER_AT_BOUNDARY",
+      "rule_ref": "GOF-STR-01",
+      "source_summary": {
+        "intent": "把既有类或外部接口转换为客户端所需接口。",
+        "applicability": [
+          "需要使用接口不兼容的既有类",
+          "要创建可复用类与未预见接口协作"
+        ],
+        "participants": [
+          "Target",
+          "Client",
+          "Adaptee",
+          "Adapter"
+        ],
+        "collaboration": [
+          "Client调用Target；Adapter完成到Adaptee的协议和语义转换。"
+        ],
+        "consequences": {
+          "benefits": [
+            "复用既有实现并隔离供应商接口"
+          ],
+          "liabilities": [
+            "转换工作可能复杂，对象适配与类适配取舍不同"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "消费方port加SDK/DB adapter",
+          "rust": "From/TryFrom或显式trait adapter",
+          "java_flink": "serializer/deserializer与sink adapter",
+          "typescript_react": "runtime decoder加domain normalizer"
+        },
+        "adoption_predicate": "跨协议、SDK、存储或UI领域边界需要完整语义转换",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：跨协议、SDK、存储或UI领域边界需要完整语义转换"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "只改方法名并泄漏vendor DTO/error或丢revision/partial"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 103-105",
+        "大话 PDF 189-192"
+      ]
+    },
+    "GOF-STR-02": {
+      "pattern_id": "GOF-STR-02",
+      "name_en": "Bridge",
+      "name_zh": "桥接",
+      "category": "STRUCTURAL",
+      "default_policy": "DEFAULT_REJECT",
+      "rule_ref": "GOF-STR-02",
+      "source_summary": {
+        "intent": "把抽象与实现分离，使二者可以沿独立维度变化。",
+        "applicability": [
+          "希望避免抽象与具体实现永久绑定",
+          "抽象和实现均需要通过子类或实现独立扩展",
+          "多个对象应共享实现而客户端不感知"
+        ],
+        "participants": [
+          "Abstraction",
+          "RefinedAbstraction",
+          "Implementor",
+          "ConcreteImplementor"
+        ],
+        "collaboration": [
+          "Abstraction保存Implementor并把实现工作委托给它。"
+        ],
+        "consequences": {
+          "benefits": [
+            "避免永久绑定实现并允许两维独立扩展"
+          ],
+          "liabilities": [
+            "引入额外间接层，设计初期必须识别两个独立维度"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "业务intent接口与backend port组合",
+          "rust": "generic/trait两维组合",
+          "java_flink": "业务抽象与平台实现组合",
+          "typescript_react": "intent与renderer/backend函数组合"
+        },
+        "adoption_predicate": "业务抽象与实现平台两个维度均会独立扩展",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：业务抽象与实现平台两个维度均会独立扩展"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "只有一维变化却建立二维抽象矩阵"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 111-113",
+        "大话 PDF 247-249"
+      ]
+    },
+    "GOF-STR-03": {
+      "pattern_id": "GOF-STR-03",
+      "name_en": "Composite",
+      "name_zh": "组合",
+      "category": "STRUCTURAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-STR-03",
+      "source_summary": {
+        "intent": "将对象组织成部分—整体树，使客户端一致处理叶和组合。",
+        "applicability": [
+          "需要表达对象的部分—整体层次",
+          "希望客户端忽略组合对象与单个对象的差别"
+        ],
+        "participants": [
+          "Component",
+          "Leaf",
+          "Composite",
+          "Client"
+        ],
+        "collaboration": [
+          "Composite保存子Component并递归转发；Leaf执行基本行为。"
+        ],
+        "consequences": {
+          "benefits": [
+            "简化树结构客户端并便于新增节点类型"
+          ],
+          "liabilities": [
+            "使新增构件容易，但限制组合中构件类型变得更难"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "Node接口加有界遍历",
+          "rust": "递归enum加预算",
+          "java_flink": "稳定树节点接口",
+          "typescript_react": "导航/权限/证据树数据组合"
+        },
+        "adoption_predicate": "存在真实部分-整体树且叶/组合共享相同不变量",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：存在真实部分-整体树且叶/组合共享相同不变量"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "把图当树、无界递归或掩盖叶级权限/成本"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 118-120",
+        "大话 PDF 208,212"
+      ]
+    },
+    "GOF-STR-04": {
+      "pattern_id": "GOF-STR-04",
+      "name_en": "Decorator",
+      "name_zh": "装饰",
+      "category": "STRUCTURAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-STR-04",
+      "source_summary": {
+        "intent": "在保持接口不变的前提下，动态叠加独立职责。",
+        "applicability": [
+          "需要动态、透明地增加或撤销职责",
+          "子类扩展会产生大量组合或在结构上不可行"
+        ],
+        "participants": [
+          "Component",
+          "ConcreteComponent",
+          "Decorator",
+          "ConcreteDecorator"
+        ],
+        "collaboration": [
+          "Decorator持有Component，在委托前后增加单一职责。"
+        ],
+        "consequences": {
+          "benefits": [
+            "比静态继承灵活并支持职责组合"
+          ],
+          "liabilities": [
+            "产生许多外观相似的小对象且组合顺序影响行为"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "http middleware或port wrapper",
+          "rust": "layer/service wrapper",
+          "java_flink": "显式wrapper而非隐藏拓扑",
+          "typescript_react": "hook/组件组合"
+        },
+        "adoption_predicate": "横切职责可独立叠加且执行顺序能够固定和测试",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：横切职责可独立叠加且执行顺序能够固定和测试"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "重试整个非幂等mutation、吞错或动态无审计顺序"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 126-128",
+        "大话 PDF 68"
+      ]
+    },
+    "GOF-STR-05": {
+      "pattern_id": "GOF-STR-05",
+      "name_en": "Facade",
+      "name_zh": "外观",
+      "category": "STRUCTURAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-STR-05",
+      "source_summary": {
+        "intent": "为有界子系统提供更简单、稳定的统一入口。",
+        "applicability": [
+          "需要为复杂子系统提供简单入口",
+          "希望降低客户端与子系统实现的耦合",
+          "需要定义分层系统的入口"
+        ],
+        "participants": [
+          "Facade",
+          "Subsystem",
+          "Client"
+        ],
+        "collaboration": [
+          "Facade编排子系统对象；Client可选择只依赖Facade。"
+        ],
+        "consequences": {
+          "benefits": [
+            "降低客户端与子系统耦合并分层"
+          ],
+          "liabilities": [
+            "入口若承担过多职责会成为新的耦合中心"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "单用例application service",
+          "rust": "用例级service函数",
+          "java_flink": "有限job/service入口",
+          "typescript_react": "domain hook/view facade"
+        },
+        "adoption_predicate": "需要给一个有界子系统提供强类型用例入口",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：需要给一个有界子系统提供强类型用例入口"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "God Manager、跨领域switch或同步多库双写"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 132,134-135",
+        "大话 PDF 126,128"
+      ]
+    },
+    "GOF-STR-06": {
+      "pattern_id": "GOF-STR-06",
+      "name_en": "Flyweight",
+      "name_zh": "享元",
+      "category": "STRUCTURAL",
+      "default_policy": "DEFAULT_REJECT",
+      "rule_ref": "GOF-STR-06",
+      "source_summary": {
+        "intent": "共享大量细粒度对象的不可变内在状态，以降低存储和分配成本。",
+        "applicability": [
+          "应用使用大量相似对象且存储成本高",
+          "多数对象状态可转为外在状态并共享内在状态",
+          "对象身份不依赖独立实例"
+        ],
+        "participants": [
+          "Flyweight",
+          "ConcreteFlyweight",
+          "FlyweightFactory",
+          "Client"
+        ],
+        "collaboration": [
+          "Factory按规范化key复用内在状态；Client在调用时提供外在状态。"
+        ],
+        "consequences": {
+          "benefits": [
+            "大量重复对象时显著节省内存"
+          ],
+          "liabilities": [
+            "外在状态的计算、传递和共享管理会增加复杂度"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "profile后共享不可变值",
+          "rust": "Arc不可变内在状态",
+          "java_flink": "只读共享descriptor",
+          "typescript_react": "不可变token/metadata"
+        },
+        "adoption_predicate": "profile证明大量重复不可变对象造成显著内存或分配成本",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：profile证明大量重复不可变对象造成显著内存或分配成本"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "无profile的全局cache或共享tenant/secret/连接"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 139,141-143",
+        "大话 PDF 287,292,295"
+      ]
+    },
+    "GOF-STR-07": {
+      "pattern_id": "GOF-STR-07",
+      "name_en": "Proxy",
+      "name_zh": "代理",
+      "category": "STRUCTURAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-STR-07",
+      "source_summary": {
+        "intent": "为真实对象提供替代访问对象，以控制远端、权限、缓存或惰性访问。",
+        "applicability": [
+          "需要比直接引用更通用或更精细地控制对象访问",
+          "访问涉及远程位置、昂贵创建、保护或智能引用"
+        ],
+        "participants": [
+          "Subject",
+          "RealSubject",
+          "Proxy",
+          "Client"
+        ],
+        "collaboration": [
+          "Proxy保持Subject接口并在转发前后实施访问策略。"
+        ],
+        "consequences": {
+          "benefits": [
+            "在不改变客户端合同的情况下控制访问"
+          ],
+          "liabilities": [
+            "增加间接访问层，某些代理构造与请求语义更复杂"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "cache/remote/auth port wrapper",
+          "rust": "显式remote/cache trait实现",
+          "java_flink": "受控远端client wrapper",
+          "typescript_react": "API/query proxy暴露freshness和unknown"
+        },
+        "adoption_predicate": "需要远端、权限、缓存或惰性访问且能保持可观察语义",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：需要远端、权限、缓存或惰性访问且能保持可观察语义"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "cache作权威、隐藏timeout/cost或abort映射cancelled"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 148-150",
+        "大话 PDF 81"
+      ]
+    },
+    "GOF-BEH-01": {
+      "pattern_id": "GOF-BEH-01",
+      "name_en": "Chain of Responsibility",
+      "name_zh": "职责链",
+      "category": "BEHAVIORAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-BEH-01",
+      "source_summary": {
+        "intent": "让多个对象依次获得处理请求的机会，解除发送者与具体接收者耦合。",
+        "applicability": [
+          "可能有多个对象处理请求且处理者事先未知",
+          "希望动态指定并调整处理者集合"
+        ],
+        "participants": [
+          "Handler",
+          "ConcreteHandler",
+          "Client"
+        ],
+        "collaboration": [
+          "Handler处理、短路或把请求传给链中后继。"
+        ],
+        "consequences": {
+          "benefits": [
+            "降低耦合并可调整职责顺序"
+          ],
+          "liabilities": [
+            "不能保证请求一定被处理，运行时链也可能难以观察"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "middleware chain和闭合StepResult",
+          "rust": "parser/validator chain enum结果",
+          "java_flink": "显式验证链",
+          "typescript_react": "有限intent/validation pipeline"
+        },
+        "adoption_predicate": "请求需要按固定顺序由多个独立步骤处理或短路",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：请求需要按固定顺序由多个独立步骤处理或短路"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "nil同时表示跳过和成功、默认放行或链中隐式提交"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 158,160-161",
+        "大话 PDF 267"
+      ]
+    },
+    "GOF-BEH-02": {
+      "pattern_id": "GOF-BEH-02",
+      "name_en": "Command",
+      "name_zh": "命令",
+      "category": "BEHAVIORAL",
+      "default_policy": "CONSIDER_AT_BOUNDARY",
+      "rule_ref": "GOF-BEH-02",
+      "source_summary": {
+        "intent": "把请求封装为对象，使调用、排队、记录和撤销策略能够独立演进。",
+        "applicability": [
+          "需要用待执行动作参数化对象",
+          "需要在不同时间指定、排队或执行请求",
+          "需要支持记录、组合或可撤销操作"
+        ],
+        "participants": [
+          "Command",
+          "ConcreteCommand",
+          "Invoker",
+          "Receiver",
+          "Client"
+        ],
+        "collaboration": [
+          "Invoker触发Command；Command调用Receiver完成明确动作。"
+        ],
+        "consequences": {
+          "benefits": [
+            "解耦发起者和执行者并支持排队记录组合"
+          ],
+          "liabilities": [
+            "每类动作通常增加命令对象，撤销依赖充分保存状态"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "typed command加authority transaction",
+          "rust": "typed request加stage state",
+          "java_flink": "控制命令与receipt",
+          "typescript_react": "intent/submission journal/receipt view"
+        },
+        "adoption_predicate": "高风险、长时、需排队审计重放或补偿的操作",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：高风险、长时、需排队审计重放或补偿的操作"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "DTO改名Command或HTTP/Kafka ACK冒充最终成功"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 165,167-169",
+        "大话 PDF 259-260"
+      ]
+    },
+    "GOF-BEH-03": {
+      "pattern_id": "GOF-BEH-03",
+      "name_en": "Interpreter",
+      "name_zh": "解释器",
+      "category": "BEHAVIORAL",
+      "default_policy": "DEFAULT_REJECT",
+      "rule_ref": "GOF-BEH-03",
+      "source_summary": {
+        "intent": "为语言定义文法表示，并使用该表示解释语言中的句子。",
+        "applicability": [
+          "存在可表示为抽象语法树的简单语言",
+          "效率不是首要矛盾且文法变化能够由表达式结构承载"
+        ],
+        "participants": [
+          "AbstractExpression",
+          "TerminalExpression",
+          "NonterminalExpression",
+          "Context",
+          "Client"
+        ],
+        "collaboration": [
+          "Client构造语法树；表达式基于Context递归解释。"
+        ],
+        "consequences": {
+          "benefits": [
+            "简单文法易扩展和实现"
+          ],
+          "liabilities": [
+            "复杂文法会产生庞大类层级且解释效率有限"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "版本化grammar/AST/safe executor",
+          "rust": "parser enum AST加预算",
+          "java_flink": "编译后规则计划",
+          "typescript_react": "仅编辑/诊断DSL，不eval"
+        },
+        "adoption_predicate": "确有自定义DSL且grammar、AST、版本、预算和沙箱完整",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：确有自定义DSL且grammar、AST、版本、预算和沙箱完整"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "eval、字符串拼SQL/DSL或无界语法复杂度"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 173-176",
+        "大话 PDF 298,300"
+      ]
+    },
+    "GOF-BEH-04": {
+      "pattern_id": "GOF-BEH-04",
+      "name_en": "Iterator",
+      "name_zh": "迭代器",
+      "category": "BEHAVIORAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-BEH-04",
+      "source_summary": {
+        "intent": "在不暴露聚合内部表示的情况下顺序访问其元素。",
+        "applicability": [
+          "需要访问聚合内容而不暴露内部表示",
+          "需要支持多种或并行遍历",
+          "需要统一遍历不同聚合结构"
+        ],
+        "participants": [
+          "Iterator",
+          "ConcreteIterator",
+          "Aggregate",
+          "ConcreteAggregate"
+        ],
+        "collaboration": [
+          "Aggregate创建Iterator；Iterator维护遍历位置并返回Item、End或Error。"
+        ],
+        "consequences": {
+          "benefits": [
+            "支持不同遍历方式并简化聚合接口"
+          ],
+          "liabilities": [
+            "迭代器必须与聚合结构和遍历状态保持一致"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "cursor/page iterator区分Item/End/Error",
+          "rust": "Iterator/Stream加cancel owner",
+          "java_flink": "有界source/scan迭代",
+          "typescript_react": "PIT/search_after分页状态"
+        },
+        "adoption_predicate": "需要有界流式遍历并保持稳定顺序和快照身份",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：需要有界流式遍历并保持稳定顺序和快照身份"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "错误当End、OFFSET深分页、全部加载或PIT不关闭"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 182-184",
+        "大话 PDF 219-220,223"
+      ]
+    },
+    "GOF-BEH-05": {
+      "pattern_id": "GOF-BEH-05",
+      "name_en": "Mediator",
+      "name_zh": "中介者",
+      "category": "BEHAVIORAL",
+      "default_policy": "DEFAULT_REJECT",
+      "rule_ref": "GOF-BEH-05",
+      "source_summary": {
+        "intent": "用中介对象封装一组对象的交互，减少同级对象之间的直接引用。",
+        "applicability": [
+          "对象集合以复杂但定义良好的方式通信",
+          "对象因引用众多同级对象而难复用",
+          "分散在多个类中的行为需要在不大量继承的情况下定制"
+        ],
+        "participants": [
+          "Mediator",
+          "ConcreteMediator",
+          "Colleague"
+        ],
+        "collaboration": [
+          "Colleague只通知Mediator；Mediator协调其他Colleague。"
+        ],
+        "consequences": {
+          "benefits": [
+            "减少多对多耦合并集中交互协议"
+          ],
+          "liabilities": [
+            "交互复杂度可能集中到中介者并使其难以维护"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "单一有界域协调器",
+          "rust": "闭合消息enum协调task",
+          "java_flink": "有限operator协调",
+          "typescript_react": "局部controller/hook协调"
+        },
+        "adoption_predicate": "一个有界域内多个同级参与者交互关系爆炸",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：一个有界域内多个同级参与者交互关系爆炸"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "中介者成为跨领域God Manager"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 192,194-195",
+        "大话 PDF 276,283"
+      ]
+    },
+    "GOF-BEH-06": {
+      "pattern_id": "GOF-BEH-06",
+      "name_en": "Memento",
+      "name_zh": "备忘录",
+      "category": "BEHAVIORAL",
+      "default_policy": "DEFAULT_REJECT",
+      "rule_ref": "GOF-BEH-06",
+      "source_summary": {
+        "intent": "在不破坏封装的前提下捕获对象内部状态，并在以后恢复。",
+        "applicability": [
+          "必须保存对象状态以便以后恢复",
+          "直接取得状态会暴露实现细节并破坏封装"
+        ],
+        "participants": [
+          "Memento",
+          "Originator",
+          "Caretaker"
+        ],
+        "collaboration": [
+          "Originator创建和恢复Memento；Caretaker保存但不解释其内部状态。"
+        ],
+        "consequences": {
+          "benefits": [
+            "保持封装并简化恢复或撤销"
+          ],
+          "liabilities": [
+            "保存大量状态可能代价高，管理者必须维护备忘录生命周期"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "版本化无秘密snapshot",
+          "rust": "typed serializable draft snapshot",
+          "java_flink": "业务草稿；checkpoint另用原生语义",
+          "typescript_react": "tenant隔离TTL草稿"
+        },
+        "adoption_predicate": "需要恢复版本化、可序列化且无秘密的业务状态",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：需要恢复版本化、可序列化且无秘密的业务状态"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "保存secret或把backup/checkpoint/event log简化为Memento"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 199-202",
+        "大话 PDF 201,203-204"
+      ]
+    },
+    "GOF-BEH-07": {
+      "pattern_id": "GOF-BEH-07",
+      "name_en": "Observer",
+      "name_zh": "观察者",
+      "category": "BEHAVIORAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-BEH-07",
+      "source_summary": {
+        "intent": "建立一对多依赖，使主题状态变化时观察者获得通知。",
+        "applicability": [
+          "一个抽象有两个相互依赖方面且希望分别复用",
+          "一个对象变化需要其他数量不定的对象改变",
+          "一个对象应通知其他对象而不预知其具体类型"
+        ],
+        "participants": [
+          "Subject",
+          "Observer",
+          "ConcreteSubject",
+          "ConcreteObserver"
+        ],
+        "collaboration": [
+          "Subject维护订阅并通知；Observer查询或接收变化并更新。"
+        ],
+        "consequences": {
+          "benefits": [
+            "抽象耦合并支持广播通信"
+          ],
+          "liabilities": [
+            "观察者之间的更新级联和更新协议可能产生意外行为"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "进程内callback；跨进程outbox event",
+          "rust": "channel/watch加owner",
+          "java_flink": "stream event并另证checkpoint/sink",
+          "typescript_react": "subscription/query更新经revision reducer"
+        },
+        "adoption_predicate": "一个事实变化需要通知多个解耦观察者",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：一个事实变化需要通知多个解耦观察者"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "broker ACK当effect、隐藏回调顺序或无去重恢复"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 205-207",
+        "大话 PDF 149,152"
+      ]
+    },
+    "GOF-BEH-08": {
+      "pattern_id": "GOF-BEH-08",
+      "name_en": "State",
+      "name_zh": "状态",
+      "category": "BEHAVIORAL",
+      "default_policy": "CONSIDER_AT_BOUNDARY",
+      "rule_ref": "GOF-BEH-08",
+      "source_summary": {
+        "intent": "把依赖对象状态的行为局部化，使状态变化表现为明确的行为切换。",
+        "applicability": [
+          "对象行为取决于其状态且必须在运行时改变",
+          "操作包含庞大且依赖对象状态的条件分支"
+        ],
+        "participants": [
+          "Context",
+          "State",
+          "ConcreteState"
+        ],
+        "collaboration": [
+          "Context持有当前State并把状态相关请求委托给它。"
+        ],
+        "consequences": {
+          "benefits": [
+            "局部化状态行为并显式化迁移"
+          ],
+          "liabilities": [
+            "状态行为分散到多个对象并可能增加类型数量"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "enum常量加纯transition",
+          "rust": "闭合enum/typestate",
+          "java_flink": "业务状态机；keyed state不自动等同",
+          "typescript_react": "判别联合加纯reducer"
+        },
+        "adoption_predicate": "行为取决于闭合生命周期状态且合法迁移需要约束",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：行为取决于闭合生命周期状态且合法迁移需要约束"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "字符串if、终态回退、状态对象直接I/O或Strategy冒充State"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 212-214",
+        "大话 PDF 181,183"
+      ]
+    },
+    "GOF-BEH-09": {
+      "pattern_id": "GOF-BEH-09",
+      "name_en": "Strategy",
+      "name_zh": "策略",
+      "category": "BEHAVIORAL",
+      "default_policy": "CONDITIONAL",
+      "rule_ref": "GOF-BEH-09",
+      "source_summary": {
+        "intent": "定义一组可互换算法并分别封装，使算法独立于使用它的客户端变化。",
+        "applicability": [
+          "多个相关类只在行为上不同",
+          "需要同一算法的不同变体",
+          "算法使用客户端不应知晓的数据",
+          "大量条件分支代表多个可替换行为"
+        ],
+        "participants": [
+          "Strategy",
+          "ConcreteStrategy",
+          "Context"
+        ],
+        "collaboration": [
+          "Context只依赖Strategy合同并由显式选择边界注入实现。"
+        ],
+        "consequences": {
+          "benefits": [
+            "替代条件分支并允许算法独立变化"
+          ],
+          "liabilities": [
+            "客户端必须了解策略差异，且对象数量可能增加"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "函数值或消费方小接口",
+          "rust": "trait或enum dispatch",
+          "java_flink": "算法interface",
+          "typescript_react": "纯函数策略表"
+        },
+        "adoption_predicate": "至少两个算法共享相同输入输出错误副作用合同",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：至少两个算法共享相同输入输出错误副作用合同"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "单实现空壳、不同副作用硬塞接口或承担状态机/worker"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 219-221",
+        "大话 PDF 41"
+      ]
+    },
+    "GOF-BEH-10": {
+      "pattern_id": "GOF-BEH-10",
+      "name_en": "Template Method",
+      "name_zh": "模板方法",
+      "category": "BEHAVIORAL",
+      "default_policy": "RESTRICTED",
+      "rule_ref": "GOF-BEH-10",
+      "source_summary": {
+        "intent": "在稳定操作骨架中定义步骤，把部分步骤延迟给可替换实现。",
+        "applicability": [
+          "多个实现具有稳定算法骨架和可变步骤",
+          "需要提取共同行为并控制允许扩展的节点"
+        ],
+        "participants": [
+          "AbstractClass",
+          "ConcreteClass"
+        ],
+        "collaboration": [
+          "模板方法固定顺序并调用原语操作或钩子。"
+        ],
+        "consequences": {
+          "benefits": [
+            "复用稳定流程并控制扩展点"
+          ],
+          "liabilities": [
+            "实现受稳定骨架约束，扩展依赖预先定义的步骤边界"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "组合式pipeline函数",
+          "rust": "显式typed step组合",
+          "java_flink": "显式job topology而非深继承",
+          "typescript_react": "hook/函数pipeline"
+        },
+        "adoption_predicate": "流程骨架稳定且少量步骤可替换，关键语义仍显式",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：流程骨架稳定且少量步骤可替换，关键语义仍显式"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "深继承、空hook或隐藏UID/state/watermark/sink语义"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 225-227",
+        "大话 PDF 114"
+      ]
+    },
+    "GOF-BEH-11": {
+      "pattern_id": "GOF-BEH-11",
+      "name_en": "Visitor",
+      "name_zh": "访问者",
+      "category": "BEHAVIORAL",
+      "default_policy": "DEFAULT_REJECT",
+      "rule_ref": "GOF-BEH-11",
+      "source_summary": {
+        "intent": "把作用于稳定对象结构的操作封装，使新增操作无需修改元素类型。",
+        "applicability": [
+          "对象结构包含接口不同的多类对象且操作依赖具体类",
+          "需要对对象结构执行多种互不相关的操作",
+          "定义对象结构的类很少改变而操作经常增加"
+        ],
+        "participants": [
+          "Visitor",
+          "ConcreteVisitor",
+          "Element",
+          "ConcreteElement",
+          "ObjectStructure"
+        ],
+        "collaboration": [
+          "Element接受Visitor并进行双分派；Visitor实现每种元素操作。"
+        ],
+        "consequences": {
+          "benefits": [
+            "集中相关操作并便于新增操作"
+          ],
+          "liabilities": [
+            "新增元素类型代价高，访问者可能依赖元素内部细节"
+          ]
+        }
+      },
+      "project_adaptation": {
+        "native_forms": {
+          "go": "稳定AST上的显式visitor接口",
+          "rust": "稳定enum上match通常优先",
+          "java_flink": "稳定元素层级才双分派",
+          "typescript_react": "普通判别联合switch优先"
+        },
+        "adoption_predicate": "元素层级稳定而新增操作频繁且矩阵可穷尽测试",
+        "function_obligations": [
+          "按代码单元合同明确输入输出、不变量、失败和资源所有权",
+          "采用本模式时必须满足：元素层级稳定而新增操作频繁且矩阵可穷尽测试"
+        ],
+        "test_obligations": [
+          "共享合同测试覆盖所有参与实现",
+          "模式误用与失败路径必须有负例"
+        ],
+        "blocking_misuse": [
+          "快速演进Proto/domain建立全局Visitor"
+        ]
+      },
+      "evidence_refs": [
+        "GoF PDF 229-232",
+        "大话 PDF 309,318"
+      ]
+    }
+  },
+  "evidence_boundary": "Catalog decisions are design constraints only; they do not prove any code, PR, runtime, deployment, or acceptance state."
+}

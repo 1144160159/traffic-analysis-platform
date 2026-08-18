@@ -3816,5 +3816,20 @@
     "decision": "HOLD_FOR_CURRENT_IMAGES_25_PRODUCTION_MIGRATIONS_GRAY_REAL_SCAN_LIVE_RECONCILIATION_APPROVED_PERFORMANCE_WINDOWS_CHROME_G6_G7_AND_EXTERNAL_G8",
     "g7_status": "OPEN",
     "g8_status": "BLOCKED"
+  },
+  "latest_m09_integrated_bom": {
+    "milestone_id": "T1-M09",
+    "accountable_task": "T1-M09-N024",
+    "assembly_id": "ac11577a22b436c337bd045a22a6b5a74ee52b75a772af0244f3453c5abfea32",
+    "integrated_bom": "contracts/alignment/m09-integrated-bom.v1.json",
+    "integrated_bom_sha256": "91bac6e61e436276b0108764e49827670061340731b8bfa01cbd9cc57e058e2b",
+    "evidence_index": "doc/02_acceptance/topic1/t1-m09-p064-idx-n024-s1/evidence-index.json",
+    "evidence_index_sha256": "6b0d607741ec2ba8c5687059ebae6479957a3cf55a95a5cf4fc784e1c5f5467c",
+    "release_pointer": "contracts/releases/topic1/t1-m09-release-pointer.json",
+    "release_pointer_sha256": "a37507857c72687b8c97d70f4f145df4ebcceed08ab879531664519cf4ed32b9",
+    "status": "ASSEMBLED_NO_GO",
+    "promotion_allowed": false,
+    "production_applied": false,
+    "note": "The exact-hash N001-N023 Kubernetes component index is assembled, but no single candidate manifest, seven verified Windows Chrome journeys, complete cross-storage traces, or production application exists."
   }
 }

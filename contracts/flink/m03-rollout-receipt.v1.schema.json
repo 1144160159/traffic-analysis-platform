@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.openai.com/contracts/flink/m03-rollout-receipt.v1.schema.json",
+  "title": "Candidate-bound M03 rollout stage receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "rollout_id",
+    "candidate_sha256",
+    "sequence",
+    "stage",
+    "status",
+    "observed_at",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "rollout_id": {"type": "string", "pattern": "^m03-[a-z0-9][a-z0-9-]{7,63}$"},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sequence": {"type": "integer", "minimum": 1, "maximum": 9},
+    "stage": {
+      "enum": [
+        "STATIC_COMPATIBILITY_VERIFIED",
+        "SESSION_SHADOW_VERIFIED",
+        "FEATURE_SHADOW_VERIFIED",
+        "OLD_SESSION_STOPPED_WITH_SAVEPOINT",
+        "SESSION_PRODUCTION_VERIFIED",
+        "OLD_FEATURE_STOPPED_WITH_SAVEPOINT",
+        "FEATURE_PRODUCTION_VERIFIED",
+        "PRODUCER_CANARY_VERIFIED",
+        "RECONCILIATION_PASSED"
+      ]
+    },
+    "status": {"enum": ["PASS", "FAIL"]},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "failure_code": {"type": "string", "minLength": 1},
+        "failure_detail": {"type": "string", "minLength": 1},
+        "state_recovery_result": {"enum": ["PASS", "FAIL"]},
+        "state_recovery_contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "savepoint_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "job_id": {"enum": ["flink-session-job", "flink-feature-job"]},
+        "image": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/:~-]*@sha256:[0-9a-f]{64}$"},
+        "activation": {"enum": ["shadow", "production"]},
+        "consumer_group": {"type": "string", "minLength": 1},
+        "running_tasks": {"type": "integer", "minimum": 0},
+        "expected_tasks": {"type": "integer", "minimum": 1},
+        "restored_from_savepoint": {"type": "boolean"},
+        "restored_savepoint_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "completed_checkpoint_id": {"type": "integer", "minimum": 1},
+        "failed_checkpoints": {"type": "integer", "minimum": 0},
+        "external_writes": {"type": "integer", "minimum": 0},
+        "old_job_stopped": {"type": "boolean"},
+        "shadow_job_stopped": {"type": "boolean"},
+        "cutover_savepoint_uri": {"type": "string", "pattern": "^s3://flink-checkpoints/savepoints/[^.].+$"},
+        "cutover_savepoint_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "cutover_source_job_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "producer_enabled": {"type": "boolean"},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "probe_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "event_contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "session_checkpoint_id": {"type": "integer", "minimum": 1},
+        "feature_checkpoint_id": {"type": "integer", "minimum": 1},
+        "event_reconciliation_result": {"enum": ["PASS", "FAIL"]},
+        "online_offline_parity_result": {"enum": ["PASS", "FAIL"]},
+        "conflicting_event_ids": {"type": "integer", "minimum": 0},
+        "unexplained_field_differences": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

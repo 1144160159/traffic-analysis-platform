@@ -1,0 +1,2634 @@
+{
+  "schema_version": "2.0.0",
+  "artifact_kind": "M01_EARLY_TRUST_FUNCTION_COMPLETE_CANDIDATE_CATALOG",
+  "artifact_status": "VERSIONED_PREVIEW_NOT_GLOBAL_REGISTRY",
+  "revision_id": "M01-EARLY-TRUST-V2",
+  "base_catalog": {
+    "path": "contracts/alignment/m01-early-trust-train-catalog.v1.json",
+    "sha256": "051f0945243c9e842614580e8cabb34c7dd6a158d8e284dc600dd7efe8f85827"
+  },
+  "allocation_ledger": {
+    "path": "contracts/alignment/m01-early-trust-train-allocation.v2.json",
+    "sha256": "8591f573784181e82e1bd2ae139cd225cf5d11b7f267b1c2d85b47efb2f47104"
+  },
+  "source_m01_leaf_count": 57,
+  "v2_superseded_leaf_count": 3,
+  "v2_appended_leaf_count": 30,
+  "candidate_m01_leaf_count": 84,
+  "candidate_global_atomic_pr_count": 1317,
+  "retained_atomic_pr_ids": [
+    "T1-M01-P001-TST-PRE-n001-s1",
+    "T1-M01-P002-IDX-n001-task-completion",
+    "T1-M01-P003-CTR-n002-s1",
+    "T1-M01-P004-IDX-n002-task-completion",
+    "T1-M01-P005-REF-n003-s1",
+    "T1-M01-P006-TST-PRE-n003-s2",
+    "T1-M01-P007-IDX-n003-task-completion",
+    "T1-M01-P008-REF-n004-s1",
+    "T1-M01-P009-REF-n004-s2",
+    "T1-M01-P010-REF-n004-s3",
+    "T1-M01-P011-TST-PRE-n004-s4",
+    "T1-M01-P012-IDX-n004-task-completion",
+    "T1-M01-P013-CTR-n005-s1",
+    "T1-M01-P014-PRJ-n005-s2",
+    "T1-M01-P015-REF-n005-s3",
+    "T1-M01-P016-TST-PRE-n005-s4",
+    "T1-M01-P017-IDX-n005-task-completion",
+    "T1-M01-P018-CTR-n006-s1",
+    "T1-M01-P019-IDX-n006-task-completion",
+    "T1-M01-P020-CTR-n007-s1",
+    "T1-M01-P021-IDX-n007-task-completion",
+    "T1-M01-P022-CTR-n008-s1",
+    "T1-M01-P023-PRJ-n008-s2",
+    "T1-M01-P024-REF-n008-s3",
+    "T1-M01-P025-TST-PRE-n008-s4",
+    "T1-M01-P026-IDX-n008-task-completion",
+    "T1-M01-P027-CTR-n009-s1",
+    "T1-M01-P028-PRJ-n009-s2",
+    "T1-M01-P029-REF-n009-s3",
+    "T1-M01-P030-TST-PRE-n009-s4",
+    "T1-M01-P031-IDX-n009-task-completion",
+    "T1-M01-P038-REF-n010-s7",
+    "T1-M01-P039-REF-n010-s8",
+    "T1-M01-P040-REF-n010-s9",
+    "T1-M01-P041-REF-n010-s10",
+    "T1-M01-P042-REF-n010-s11",
+    "T1-M01-P043-REF-n010-s12",
+    "T1-M01-P044-REF-n010-s13",
+    "T1-M01-P048-IDX-n010-task-completion",
+    "T1-M01-P049-CTR-n011-s1",
+    "T1-M01-P050-IDX-n011-task-completion",
+    "T1-M01-P051-TST-PRE-n012-s1",
+    "T1-M01-P052-IDX-n012-task-completion",
+    "T1-M01-P053-IDX-n013-s1",
+    "T1-M01-P054-IDX-n013-task-completion",
+    "T1-M01-P055-PROM-n014-s1",
+    "T1-M01-P056-IDX-n014-task-completion",
+    "T1-M01-P057-CTR-n015-s1",
+    "T1-M01-P058-REF-n015-s2",
+    "T1-M01-P059-REF-n015-s3",
+    "T1-M01-P060-REF-n015-s4",
+    "T1-M01-P061-REF-n015-s5",
+    "T1-M01-P062-REF-n015-s6",
+    "T1-M01-P066-IDX-n015-task-completion"
+  ],
+  "supersession_tombstones": [
+    {
+      "legacy_atomic_pr_id": "T1-M01-P032-CTR-n010-s1",
+      "replacement_atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "contracts/alignment/signature-trust-policy.schema.json#/",
+        "contracts/alignment/signature-verification-request.schema.json#/",
+        "contracts/alignment/signature-verification-attestation.schema.json#/"
+      ],
+      "legacy_leaf_projection_sha256": "168abeeacc8c1ab5761031b2cef8020de32bcef9172f92feaaaf87c7d17e3477"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P033-REF-n010-s2",
+      "replacement_atomic_pr_id": "T1-M01-P058-REF-n015-s2",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "scripts/alignment/test_trusted_signature_verifier.py#main",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/payload-substitution.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/wrong-authority-role.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/certificate-time-revocation-eku.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/policy-fingerprint-drift.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/chain-root-algorithm-invalid.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-candidate-profile-environment-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/cnas-scope-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/verifier-transport-or-shape-failure.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/self-reported-pass-random-signature.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-replay.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-positive-run/tst-post/protected-positive-attestation.json#/"
+      ],
+      "legacy_leaf_projection_sha256": "c3120f94639b73981edc0e1fe881e95dec618432154f58c486b8567024d5f8e1"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P034-REF-n010-s3",
+      "replacement_atomic_pr_id": "T1-M01-P059-REF-n015-s3",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "scripts/alignment/verify_trusted_signature.py#verify_exact_payload"
+      ],
+      "legacy_leaf_projection_sha256": "7252c562283fd84dd4395c19a1b4d0be5497ae0a940da480dc930f53a1801611"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P035-REF-n010-s4",
+      "replacement_atomic_pr_id": "T1-M01-P060-REF-n015-s4",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#require_trusted_signature_verifier"
+      ],
+      "legacy_leaf_projection_sha256": "1d20f99a7a942d416db9cf7bc602301369c27edd45c638ad52dd5c11696c5824"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P036-REF-n010-s5",
+      "replacement_atomic_pr_id": "T1-M01-P061-REF-n015-s5",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_candidate_artifact_refs"
+      ],
+      "legacy_leaf_projection_sha256": "c7b0e90605df7e2c07812d0ed41db46bef276068f2c087d2befce9ba259ff4ec"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P037-REF-n010-s6",
+      "replacement_atomic_pr_id": "T1-M01-P062-REF-n015-s6",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_implementation_candidate"
+      ],
+      "legacy_leaf_projection_sha256": "f3bf237b0e1c263cf1b50fd21a89be2d46d80dcf7b609aee4cd70ecbd2706620"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P046-OPS-n010-s15",
+      "replacement_atomic_pr_id": "T1-M01-P063-OPS-n015-s7",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EXACT_LOCATOR_SET_TRANSFER",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "deployments/security/topic1-trusted-signature-verifier.yaml#/"
+      ],
+      "legacy_leaf_projection_sha256": "059d6bc21719b0b89a4e2c942401fa9a17b7bd21b68472b6f7e951fd57e082a2"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P045-TST-PRE-n010-s14",
+      "replacement_atomic_pr_id": "T1-M01-P064-TST-PRE-n015-s8",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EQUIVALENT_NEW_ID_OUTPUT_SCOPE",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p045-tst-pre-n010-s14/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p045-tst-pre-n010-s14/case-report.json"
+      ],
+      "legacy_leaf_projection_sha256": "adc64040a95e7a7577fee66b52b7a9bd8cf3e348bb6f85afdbeef7eeef3bd18e"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P047-TST-POST-n010-s16",
+      "replacement_atomic_pr_id": "T1-M01-P065-TST-POST-n015-s9",
+      "disposition": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED",
+      "write_scope_transfer": "EQUIVALENT_NEW_ID_OUTPUT_SCOPE",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p047-tst-post-n010-s16/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p047-tst-post-n010-s16/case-report.json"
+      ],
+      "legacy_leaf_projection_sha256": "d5bcd9ad6126c89166ce20e7cbc15f534f25bbaf0ebc11a0a437d6b81fe268d4"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P063-OPS-n015-s7",
+      "replacement_atomic_pr_ids": [
+        "T1-M01-P083-OPS-n015-s26"
+      ],
+      "disposition": "SUPERSEDED_IN_V2_PREVIEW_V1_AND_ACTIVE_REGISTRIES_UNCHANGED",
+      "reason": "the v1 leaf combines a runtime or evidence responsibility now split into exact v2 owners",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "deployments/security/topic1-trusted-signature-verifier.yaml#/"
+      ],
+      "legacy_leaf_projection_sha256": "28329df622b2eb0be693d07a1691b7c474ed46c52ce47b96ea1ed7b16bd6f403"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P064-TST-PRE-n015-s8",
+      "replacement_atomic_pr_ids": [
+        "T1-M01-P080-TST-PRE-n015-s23",
+        "T1-M01-P081-TST-PRE-n015-s24"
+      ],
+      "disposition": "SUPERSEDED_IN_V2_PREVIEW_V1_AND_ACTIVE_REGISTRIES_UNCHANGED",
+      "reason": "the v1 leaf combines a runtime or evidence responsibility now split into exact v2 owners",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p064-tst-pre-n015-s8/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p064-tst-pre-n015-s8/case-report.json"
+      ],
+      "legacy_leaf_projection_sha256": "55aacd12aaa331b762575579b369b9728c03bbfc839b6cd2d4203f9787926eda"
+    },
+    {
+      "legacy_atomic_pr_id": "T1-M01-P065-TST-POST-n015-s9",
+      "replacement_atomic_pr_ids": [
+        "T1-M01-P084-TST-POST-n015-s27",
+        "T1-M01-P085-TST-POST-n015-s28"
+      ],
+      "disposition": "SUPERSEDED_IN_V2_PREVIEW_V1_AND_ACTIVE_REGISTRIES_UNCHANGED",
+      "reason": "the v1 leaf combines a runtime or evidence responsibility now split into exact v2 owners",
+      "historical_id_policy": "PRESERVED_NOT_REUSED",
+      "legacy_write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p065-tst-post-n015-s9/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p065-tst-post-n015-s9/case-report.json"
+      ],
+      "legacy_leaf_projection_sha256": "1a1ad5095b0fe0b2c1df5bcea15dc8d631c6a8b92dce96aad44cc1c0295aacbb"
+    }
+  ],
+  "candidate_leaves": [
+    {
+      "atomic_pr_id": "T1-M01-P001-TST-PRE-n001-s1",
+      "parent_work_id": "T1-M01-N001",
+      "pr_type": "TST-PRE",
+      "phase": "step-1",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p001-tst-pre-n001-s1/test-result.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P004-IDX-n002-task-completion"
+      ],
+      "required_gates": [
+        "G0",
+        "G1"
+      ],
+      "single_outcome": "the exact positive and negative checks pass on the frozen candidate without runtime enablement",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P002-IDX-n001-task-completion",
+      "parent_work_id": "T1-M01-N001",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n001/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n001/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P001-TST-PRE-n001-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P003-CTR-n002-s1",
+      "parent_work_id": "T1-M01-N002",
+      "pr_type": "CTR",
+      "phase": "step-1",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "contracts/release/candidate-identity.schema.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M00-P018-IDX-n008-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "versioned contract validates and the compatibility diff contains no unapproved removal",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P004-IDX-n002-task-completion",
+      "parent_work_id": "T1-M01-N002",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n002/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n002/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P003-CTR-n002-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P005-REF-n003-s1",
+      "parent_work_id": "T1-M01-N003",
+      "pr_type": "REF",
+      "phase": "candidate-provenance-fixture",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/test_implementation_candidate.py#main",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/active-prebuilt-without-provenance.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/duplicate-prebuilt-path.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/binary-image-sha-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/builder-recipe-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/image-deployed-digest-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/supply-chain-artifact-missing.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/tracked-or-root-exclusion.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n003/candidate-provenance-run/tst-pre/self-reported-signature-pass.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P002-IDX-n001-task-completion",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the dedicated runner contains the complete prebuilt/provenance rejection matrix and compiles",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P006-TST-PRE-n003-s2",
+      "parent_work_id": "T1-M01-N003",
+      "pr_type": "TST-PRE",
+      "phase": "candidate-provenance-run",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p006-tst-pre-n003-s2/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P005-REF-n003-s1",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "required_gates": [
+        "G0",
+        "G1"
+      ],
+      "single_outcome": "every declared provenance case records the required rejection code and the same-candidate result is PASS",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P007-IDX-n003-task-completion",
+      "parent_work_id": "T1-M01-N003",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n003/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n003/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P006-TST-PRE-n003-s2"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P008-REF-n004-s1",
+      "parent_work_id": "T1-M01-N004",
+      "pr_type": "REF",
+      "phase": "candidate-freeze-fixture",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/test_candidate_freeze.py#main",
+        "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/clean-worktree.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/tracked-dirty.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/untracked-dirty.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/wrong-parent.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/moving-head.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/source-roots-drift.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/exclusion-set-drift.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n004/candidate-freeze-run/tst-pre/run-id-overwrite.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P050-IDX-n011-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the dedicated runner covers clean, tracked dirty, untracked, wrong parent, moving HEAD, source-root, exclusion and overwrite cases",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P009-REF-n004-s2",
+      "parent_work_id": "T1-M01-N004",
+      "pr_type": "REF",
+      "phase": "candidate-git-identity",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/capture_g0.py#_git_snapshot"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P008-REF-n004-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "_git_snapshot returns porcelain-v2 identity without cleaning or hiding any tracked or untracked change",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P010-REF-n004-s3",
+      "parent_work_id": "T1-M01-N004",
+      "pr_type": "REF",
+      "phase": "candidate-main-fail-closed",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/capture_g0.py#main"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P009-REF-n004-s2"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "main blocks before publishing when dirty, parent/range mismatched, HEAD moves or the run identity changes",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P011-TST-PRE-n004-s4",
+      "parent_work_id": "T1-M01-N004",
+      "pr_type": "TST-PRE",
+      "phase": "candidate-freeze-run",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p011-tst-pre-n004-s4/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p011-tst-pre-n004-s4/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P010-REF-n004-s3"
+      ],
+      "required_gates": [
+        "G0",
+        "G1"
+      ],
+      "single_outcome": "all eight freeze cases record expected/actual state and the same-candidate matrix is PASS",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P012-IDX-n004-task-completion",
+      "parent_work_id": "T1-M01-N004",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n004/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n004/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P011-TST-PRE-n004-s4"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P013-CTR-n005-s1",
+      "parent_work_id": "T1-M01-N005",
+      "pr_type": "CTR",
+      "phase": "contract-inventory-schema",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "contracts/alignment/topic1-contract-inventory.schema.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P007-IDX-n003-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the schema fixes item identity, source hash, owner, status, blocker and next-task fields without creating an inventory instance",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P014-PRJ-n005-s2",
+      "parent_work_id": "T1-M01-N005",
+      "pr_type": "PRJ",
+      "phase": "contract-inventory-builder",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_contract_inventory.py#main"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P013-CTR-n005-s1"
+      ],
+      "required_gates": [
+        "G2",
+        "G3"
+      ],
+      "single_outcome": "the builder deterministically derives 54 feature, 48 technical, 38 standard and 16 backlog records from read-only authorities",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P015-REF-n005-s3",
+      "parent_work_id": "T1-M01-N005",
+      "pr_type": "REF",
+      "phase": "contract-inventory-mutation-oracle",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/test_topic1_contract_inventory.py#main",
+        "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/exact-inventory.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/missing-canonical.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/duplicate-canonical.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/wrong-canonical-kind.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/wrong-owner.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/missing-contract-path.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/backlog-without-next-task.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n005/contract-inventory-verification/tst-pre/nondeterministic-rebuild.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P014-PRJ-n005-s2"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the independent oracle rejects missing, duplicate, relabelled and wrong-owner records without modifying the derived inventory",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P016-TST-PRE-n005-s4",
+      "parent_work_id": "T1-M01-N005",
+      "pr_type": "TST-PRE",
+      "phase": "contract-inventory-verification",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p016-tst-pre-n005-s4/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p016-tst-pre-n005-s4/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P015-REF-n005-s3"
+      ],
+      "required_gates": [
+        "G0",
+        "G1"
+      ],
+      "single_outcome": "schema validation, exact cardinalities, path resolution and deterministic rebuild diff all PASS",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P017-IDX-n005-task-completion",
+      "parent_work_id": "T1-M01-N005",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n005/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n005/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P016-TST-PRE-n005-s4"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P018-CTR-n006-s1",
+      "parent_work_id": "T1-M01-N006",
+      "pr_type": "CTR",
+      "phase": "step-1",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "contracts/alignment/feature-contract.schema.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P017-IDX-n005-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "versioned contract validates and the compatibility diff contains no unapproved removal",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P019-IDX-n006-task-completion",
+      "parent_work_id": "T1-M01-N006",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n006/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n006/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P018-CTR-n006-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P020-CTR-n007-s1",
+      "parent_work_id": "T1-M01-N007",
+      "pr_type": "CTR",
+      "phase": "step-1",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "contracts/openapi/alignment-v1.openapi.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P019-IDX-n006-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "versioned contract validates and the compatibility diff contains no unapproved removal",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P021-IDX-n007-task-completion",
+      "parent_work_id": "T1-M01-N007",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n007/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n007/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P020-CTR-n007-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P022-CTR-n008-s1",
+      "parent_work_id": "T1-M01-N008",
+      "pr_type": "CTR",
+      "phase": "proto-topic-matrix-schema",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "contracts/events/proto-topic-compatibility-matrix.schema.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P021-IDX-n007-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the schema fixes topic/version/FQN/key/producer/consumer/DLQ/ACL/readiness fields without asserting compatibility",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P023-PRJ-n008-s2",
+      "parent_work_id": "T1-M01-N008",
+      "pr_type": "PRJ",
+      "phase": "proto-topic-matrix-builder",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_proto_topic_compatibility_matrix.py#main"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P022-CTR-n008-s1"
+      ],
+      "required_gates": [
+        "G2",
+        "G3"
+      ],
+      "single_outcome": "the builder resolves every catalog-referenced descriptor and computes producer-consumer-ACL-DLQ compatibility deterministically",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P024-REF-n008-s3",
+      "parent_work_id": "T1-M01-N008",
+      "pr_type": "REF",
+      "phase": "proto-topic-matrix-mutation-oracle",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/test_proto_topic_compatibility_matrix.py#main",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/exact-compatible-matrix.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/topic-without-schema.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/schema-without-topic.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/producer-only.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/consumer-only.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/incompatible-proto-fqn.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/missing-key-contract.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/missing-dlq.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/wildcard-acl.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/producer-before-consumer.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n008/proto-topic-matrix-verification/tst-pre/duplicate-event-version.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P023-PRJ-n008-s2"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the independent oracle rejects descriptor, key, ACL, DLQ and consumer-first mutations without modifying the matrix",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P025-TST-PRE-n008-s4",
+      "parent_work_id": "T1-M01-N008",
+      "pr_type": "TST-PRE",
+      "phase": "proto-topic-matrix-verification",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p025-tst-pre-n008-s4/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p025-tst-pre-n008-s4/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P024-REF-n008-s3"
+      ],
+      "required_gates": [
+        "G0",
+        "G1"
+      ],
+      "single_outcome": "descriptor exact set, buf lint, catalog/ACL diff and consumer-first negative matrix all PASS",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P026-IDX-n008-task-completion",
+      "parent_work_id": "T1-M01-N008",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n008/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n008/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P025-TST-PRE-n008-s4"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P027-CTR-n009-s1",
+      "parent_work_id": "T1-M01-N009",
+      "pr_type": "CTR",
+      "phase": "schema-authority-contract",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "contracts/alignment/schema-authority-registry.schema.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P026-IDX-n008-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the schema fixes storage/object/authority/init/migration/checksum/predecessor/runtime-callsite fields without applying DDL",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P028-PRJ-n009-s2",
+      "parent_work_id": "T1-M01-N009",
+      "pr_type": "PRJ",
+      "phase": "schema-authority-builder",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_schema_authority_registry.py#main"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P027-CTR-n009-s1"
+      ],
+      "required_gates": [
+        "G2",
+        "G3"
+      ],
+      "single_outcome": "the builder scans every approved init/migration file and runtime DDL callsite and emits a deterministic authority registry",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P029-REF-n009-s3",
+      "parent_work_id": "T1-M01-N009",
+      "pr_type": "REF",
+      "phase": "schema-authority-mutation-oracle",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/test_schema_authority_registry.py#main",
+        "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/exact-authority-registry.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/file-without-registry.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/registry-without-blob.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/duplicate-authority.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/broken-predecessor.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/checksum-drift.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/runtime-ddl-callsite.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/init-migration-drift.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n009/schema-authority-verification/tst-pre/non-reentrant-replay.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P028-PRJ-n009-s2"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the independent oracle rejects duplicate authority, predecessor, checksum, init drift and runtime-DDL mutations without applying DDL",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P030-TST-PRE-n009-s4",
+      "parent_work_id": "T1-M01-N009",
+      "pr_type": "TST-PRE",
+      "phase": "schema-authority-verification",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p030-tst-pre-n009-s4/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p030-tst-pre-n009-s4/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P029-REF-n009-s3"
+      ],
+      "required_gates": [
+        "G0",
+        "G1"
+      ],
+      "single_outcome": "file-to-registry and registry-to-blob diffs, ordering, checksum, replay and duplicate-authority cases all PASS",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P031-IDX-n009-task-completion",
+      "parent_work_id": "T1-M01-N009",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n009/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n009/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P030-TST-PRE-n009-s4"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P038-REF-n010-s7",
+      "parent_work_id": "T1-M01-N010",
+      "pr_type": "REF",
+      "phase": "caller-requirement-satisfaction",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_requirement_satisfaction_refs"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P031-IDX-n009-task-completion",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "requirement-satisfaction passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P039-REF-n010-s8",
+      "parent_work_id": "T1-M01-N010",
+      "pr_type": "REF",
+      "phase": "caller-bom-transition",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_bom_transition"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P038-REF-n010-s7"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "bom-transition passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P040-REF-n010-s9",
+      "parent_work_id": "T1-M01-N010",
+      "pr_type": "REF",
+      "phase": "caller-external-signature",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_external_signature_artifacts"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P039-REF-n010-s8"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "external-signature passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P041-REF-n010-s10",
+      "parent_work_id": "T1-M01-N010",
+      "pr_type": "REF",
+      "phase": "caller-signed-contract-intake",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_signed_contract_intake"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P040-REF-n010-s9"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "signed-contract-intake passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P042-REF-n010-s11",
+      "parent_work_id": "T1-M01-N010",
+      "pr_type": "REF",
+      "phase": "caller-execution-overlay",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_execution_overlay"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P041-REF-n010-s10"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "execution-overlay passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P043-REF-n010-s12",
+      "parent_work_id": "T1-M01-N010",
+      "pr_type": "REF",
+      "phase": "caller-fail-closed-selftest",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#run_fail_closed_validator_self_tests"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P042-REF-n010-s11"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "fail-closed-selftest passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P044-REF-n010-s13",
+      "parent_work_id": "T1-M01-N010",
+      "pr_type": "REF",
+      "phase": "caller-work-order-evidence-run",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_work_order_evidence_run"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P043-REF-n010-s12"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "characterization tests remain unchanged while the named seam moves without contract drift",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P048-IDX-n010-task-completion",
+      "parent_work_id": "T1-M01-N010",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n010/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n010/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P044-REF-n010-s13",
+        "T1-M01-P066-IDX-n015-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P049-CTR-n011-s1",
+      "parent_work_id": "T1-M01-N011",
+      "pr_type": "CTR",
+      "phase": "step-1",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "contracts/alignment/common-response-protocol.v1.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P048-IDX-n010-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "versioned contract validates and the compatibility diff contains no unapproved removal",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P050-IDX-n011-task-completion",
+      "parent_work_id": "T1-M01-N011",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n011/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n011/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P049-CTR-n011-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P051-TST-PRE-n012-s1",
+      "parent_work_id": "T1-M01-N012",
+      "pr_type": "TST-PRE",
+      "phase": "step-1",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p051-tst-pre-n012-s1/test-result.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P012-IDX-n004-task-completion"
+      ],
+      "required_gates": [
+        "G0",
+        "G1"
+      ],
+      "single_outcome": "the exact positive and negative checks pass on the frozen candidate without runtime enablement",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P052-IDX-n012-task-completion",
+      "parent_work_id": "T1-M01-N012",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n012/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n012/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P051-TST-PRE-n012-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P053-IDX-n013-s1",
+      "parent_work_id": "T1-M01-N013",
+      "pr_type": "IDX",
+      "phase": "step-1",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p053-idx-n013-s1/current-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P052-IDX-n012-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the current index contains the exact non-superseded artifact/run set and every hash resolves",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P054-IDX-n013-task-completion",
+      "parent_work_id": "T1-M01-N013",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n013/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n013/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P053-IDX-n013-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P055-PROM-n014-s1",
+      "parent_work_id": "T1-M01-N014",
+      "pr_type": "PROM",
+      "phase": "step-1",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "contracts/releases/topic1/t1-m01-release-pointer.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P054-IDX-n013-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "pre/post-merge production content is equivalent and the release pointer references the signed current IDX",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P056-IDX-n014-task-completion",
+      "parent_work_id": "T1-M01-N014",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n014/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n014/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P055-PROM-n014-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "every declared leaf/dependency/external/evidence/rollback/output artifact resolves and one same-identity PASS current task index is published",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P057-CTR-n015-s1",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "CTR",
+      "phase": "trusted-signature-contracts",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "contracts/alignment/signature-trust-policy.schema.json#/",
+        "contracts/alignment/signature-verification-request.schema.json#/",
+        "contracts/alignment/signature-verification-attestation.schema.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P002-IDX-n001-task-completion"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "policy, exact request and attestation schemas are versioned and forbid secret values and self-reported trust",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P058-REF-n015-s2",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-signature-fixture",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/test_trusted_signature_verifier.py#main",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/payload-substitution.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/wrong-authority-role.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/certificate-time-revocation-eku.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/policy-fingerprint-drift.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/chain-root-algorithm-invalid.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-candidate-profile-environment-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/cnas-scope-mismatch.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/verifier-transport-or-shape-failure.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/self-reported-pass-random-signature.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-negative-run/tst-pre/attestation-replay.json#/",
+        "scripts/alignment/fixtures/topic1/t1-m01-n010/trusted-signature-positive-run/tst-post/protected-positive-attestation.json#/"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P096-WRT-n015-s39"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the dedicated runner implements all ten negative cases plus the protected positive case without embedding trust anchors",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P059-REF-n015-s3",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-verifier-adapter",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/verify_trusted_signature.py#verify_exact_payload"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P058-REF-n015-s2"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the adapter sends a bounded structured request, pins policy identity, enforces timeout/output limits and fails closed",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P060-REF-n015-s4",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-verifier-wrapper",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#require_trusted_signature_verifier"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P095-WRT-n015-s38"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "the wrapper accepts the typed request instead of a context string and retains unconditional blocking when the protected verifier is unavailable",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P061-REF-n015-s5",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "caller-candidate-artifact-refs",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_candidate_artifact_refs"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P060-REF-n015-s4",
+        "T1-M01-P071-REF-n015-s14"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "candidate-artifact-refs passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P062-REF-n015-s6",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "caller-implementation-candidate",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_implementation_candidate"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P061-REF-n015-s5"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "implementation-candidate passes exact payload/hash, role, purpose, time, policy, candidate/profile/environment and applicable scope to the typed verifier request; unavailable trust remains BLOCKED",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "IDX",
+      "phase": "task-completion",
+      "source_kind": "RETAINED_V1_ID_AND_WRITE_SCOPE",
+      "write_locators": [
+        "doc/02_acceptance/topic1/tasks/t1-m01-n015/completion-candidate.json",
+        "doc/02_acceptance/topic1/tasks/t1-m01-n015/current-evidence-index.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P085-TST-POST-n015-s28"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "materialize the exact N015 PASS completion candidate only after all nine early-trust leaves and dependency evidence resolve",
+      "terminal_task_idx": true,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P067-REF-n015-s10",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "candidate-repository-context",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#resolve_candidate_repository"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P060-REF-n015-s4"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "resolve one immutable canonical repository root without ambient global fallback",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P068-REF-n015-s11",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "candidate-blob-reader",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#read_candidate_blob"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P067-REF-n015-s10"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "read one candidate Git blob from the explicit repository root with typed absent versus command failure",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P069-REF-n015-s12",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "hashed-artifact-loader",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#load_hashed_json_artifact"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P068-REF-n015-s11"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "load one safe repository-scoped JSON artifact using explicit root exact hash and optional schema",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P070-REF-n015-s13",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "hashed-artifact-validator",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#validate_hashed_artifact"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P069-REF-n015-s12"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "validate one safe explicit-root artifact path and exact digest without following repository escapes",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P071-REF-n015-s14",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "candidate-tree-fingerprint",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#candidate_tree_fingerprint"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P070-REF-n015-s13"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "derive the production tree fingerprint only from the explicit repository and exact candidate commit",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P072-REF-n015-s15",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-request-canonicalization",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#canonicalize_verification_request"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P062-REF-n015-s6",
+        "T1-M01-P096-WRT-n015-s39"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "canonicalize one typed request while excluding no signed identity field",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P073-REF-n015-s16",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trust-policy-loader",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#load_trust_policy"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P072-REF-n015-s15"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "load the pinned policy and trust-anchor references without loading secret values into output",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P074-REF-n015-s17",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "certificate-chain-verifier",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#verify_certificate_chain"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P073-REF-n015-s16"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "verify chain algorithm EKU validity and revocation state against the pinned policy",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P075-REF-n015-s18",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "signature-verifier",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#verify_detached_signature"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P074-REF-n015-s17"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "verify the detached signature over the exact canonical payload and reject algorithm downgrade",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P076-REF-n015-s19",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "authority-scope-verifier",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#verify_authority_scope"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P075-REF-n015-s18"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "verify required role purpose candidate profile environment time window and optional CNAS scope",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P077-REF-n015-s20",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "attestation-replay-guard",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#claim_attestation_nonce"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P076-REF-n015-s19"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "atomically claim one policy-scoped attestation nonce or return its exact replay receipt",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P078-REF-n015-s21",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "verification-endpoint",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#verify_request"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P077-REF-n015-s20"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "orchestrate exact payload chain signature role scope and replay checks into one typed attestation",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P079-OPS-n015-s22",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "OPS",
+      "phase": "verifier-image-package",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "deployments/security/topic1-trusted-signature-verifier.Dockerfile#$DOCUMENT",
+        "deployments/security/topic1-trusted-signature-verifier.requirements.lock#$DOCUMENT"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P094-REF-n015-s37"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "define a non-root digest-pinnable verifier image package with no embedded trust anchors or secrets",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P080-TST-PRE-n015-s23",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "TST-PRE",
+      "phase": "trusted-signature-g0",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p080-tst-pre-n015-s23/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p080-tst-pre-n015-s23/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P079-OPS-n015-s22"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "record the exact static unit schema and ten-case fail-closed matrix for one candidate",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P081-TST-PRE-n015-s24",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "TST-PRE",
+      "phase": "trusted-signature-g1",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p081-tst-pre-n015-s24/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p081-tst-pre-n015-s24/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P080-TST-PRE-n015-s23"
+      ],
+      "required_gates": [
+        "G1"
+      ],
+      "single_outcome": "record isolated restart policy rotation expiry revocation and rollback compatibility evidence",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P082-OPS-n015-s25",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "OPS",
+      "phase": "verifier-deployment-manifest",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "deployments/security/topic1-trusted-signature-verifier.yaml#/$DOCUMENT"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P081-TST-PRE-n015-s24",
+        "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "materialize a default-off digest-pinned deployment with secret references NetworkPolicy and rollback controls",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P083-OPS-n015-s26",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "OPS",
+      "phase": "verifier-deployment-g6",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p083-ops-n015-s26/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p083-ops-n015-s26/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P082-OPS-n015-s25"
+      ],
+      "required_gates": [
+        "G6"
+      ],
+      "single_outcome": "record canary deployment health stop thresholds hard-block rollback and observation evidence",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P084-TST-POST-n015-s27",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "TST-POST",
+      "phase": "trusted-signature-g2",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p084-tst-post-n015-s27/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p084-tst-post-n015-s27/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P083-OPS-n015-s26"
+      ],
+      "required_gates": [
+        "G2"
+      ],
+      "single_outcome": "record protected endpoint functional and fault-path verification for one candidate and environment",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P085-TST-POST-n015-s28",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "TST-POST",
+      "phase": "trusted-signature-g3",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p085-tst-post-n015-s28/test-result.json",
+        "doc/02_acceptance/topic1/work-orders/t1-m01-p085-tst-post-n015-s28/case-report.json"
+      ],
+      "target_state": "PLANNED_OUTPUT",
+      "dependency_ids": [
+        "T1-M01-P084-TST-POST-n015-s27"
+      ],
+      "required_gates": [
+        "G3"
+      ],
+      "single_outcome": "record request attestation replay-ledger and caller-result reconciliation with unexplained diff zero",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P086-WRT-n015-s29",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "WRT",
+      "phase": "trusted-runtime-types",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#SignatureVerificationRuntime"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P078-REF-n015-s21"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "define one immutable runtime aggregate for policy secret replay ledger audit and server dependencies",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P087-REF-n015-s30",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-secret-resolver",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#resolve_secret_handle"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P086-WRT-n015-s29"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "resolve one allowlisted secret reference into an opaque handle without serializing its value",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P088-REF-n015-s31",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-replay-store",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#open_replay_store"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P087-REF-n015-s30"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "open one persistent exclusive atomic replay store and reject unsafe or incompatible state",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P089-REF-n015-s32",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-attestation-writer",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#append_attestation_record"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P088-REF-n015-s31"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "append and fsync one canonical request decision and replay binding before exposing PASS",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P090-REF-n015-s33",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-http-handler",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#handle_verify_request"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P089-REF-n015-s32"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "parse one bounded HTTP request invoke the domain verifier persist the decision and return a typed response",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P091-REF-n015-s34",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-health-handler",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#handle_health_request"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P090-REF-n015-s33"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "report readiness only after policy secret replay ledger and audit dependencies are usable",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P092-REF-n015-s35",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-server-builder",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#build_server"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P091-REF-n015-s34"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "build a bounded TLS verifier server with only verify and health routes and explicit dependencies",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P093-REF-n015-s36",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-runtime-bootstrap",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#serve"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P092-REF-n015-s35"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "bootstrap validate and serve the verifier with staged shutdown and durable replay audit flush",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P094-REF-n015-s37",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "REF",
+      "phase": "trusted-service-cli",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#main"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P093-REF-n015-s36"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "parse explicit runtime paths and start the protected verifier without ambient trust configuration",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P095-WRT-n015-s38",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "WRT",
+      "phase": "trusted-candidate-types",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/build_topic1_task_registry.py#CandidateRepository",
+        "scripts/alignment/build_topic1_task_registry.py#CandidateTrustContext",
+        "scripts/alignment/build_topic1_task_registry.py#TrustedSignatureVerifier"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P059-REF-n015-s3"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "define immutable candidate repository trust context and verifier client protocols used by every migrated caller",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    },
+    {
+      "atomic_pr_id": "T1-M01-P096-WRT-n015-s39",
+      "parent_work_id": "T1-M01-N015",
+      "pr_type": "WRT",
+      "phase": "trusted-service-types",
+      "source_kind": "APPENDED_PREVIEW_V2",
+      "write_locators": [
+        "scripts/alignment/trusted_signature_service.py#SignatureVerificationRequest",
+        "scripts/alignment/trusted_signature_service.py#SignatureVerificationAttestation",
+        "scripts/alignment/trusted_signature_service.py#LoadedTrustPolicy",
+        "scripts/alignment/trusted_signature_service.py#VerifiedSigner",
+        "scripts/alignment/trusted_signature_service.py#VerifiedAuthority",
+        "scripts/alignment/trusted_signature_service.py#ReplayClaim",
+        "scripts/alignment/trusted_signature_service.py#SecretHandle",
+        "scripts/alignment/trusted_signature_service.py#SecretResolver",
+        "scripts/alignment/trusted_signature_service.py#ReplayStore",
+        "scripts/alignment/trusted_signature_service.py#AttestationLedger",
+        "scripts/alignment/trusted_signature_service.py#HttpResponse",
+        "scripts/alignment/trusted_signature_service.py#SSLContext",
+        "scripts/alignment/trusted_signature_service.py#ServerLimits",
+        "scripts/alignment/trusted_signature_service.py#VerifierServer",
+        "scripts/alignment/trusted_signature_service.py#SignatureServiceConfig",
+        "scripts/alignment/trusted_signature_service.py#Clock",
+        "scripts/alignment/trusted_signature_service.py#ShutdownSignal"
+      ],
+      "target_state": "PLANNED",
+      "dependency_ids": [
+        "T1-M01-P057-CTR-n015-s1"
+      ],
+      "required_gates": [
+        "G0"
+      ],
+      "single_outcome": "define the complete typed service boundary for requests attestations policy authority replay secrets audit HTTP TLS config clock and shutdown",
+      "terminal_task_idx": false,
+      "formal_execution_status": "BLOCKED_UNTIL_GLOBAL_REGISTRY_TARGET_BINDING_FUNCTION_REVIEW_EXTERNAL_IMAGE_RECEIPT_AND_SIGNED_OVERLAY"
+    }
+  ],
+  "candidate_edges": [
+    {
+      "from": "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN",
+      "to": "T1-M01-P082-OPS-n015-s25",
+      "edge_kind": "EXTERNAL_ACTIVITY"
+    },
+    {
+      "from": "T1-M00-P018-IDX-n008-task-completion",
+      "to": "T1-M01-P003-CTR-n002-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P001-TST-PRE-n001-s1",
+      "to": "T1-M01-P002-IDX-n001-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P002-IDX-n001-task-completion",
+      "to": "T1-M01-P005-REF-n003-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P002-IDX-n001-task-completion",
+      "to": "T1-M01-P057-CTR-n015-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P003-CTR-n002-s1",
+      "to": "T1-M01-P004-IDX-n002-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P004-IDX-n002-task-completion",
+      "to": "T1-M01-P001-TST-PRE-n001-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P005-REF-n003-s1",
+      "to": "T1-M01-P006-TST-PRE-n003-s2",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P006-TST-PRE-n003-s2",
+      "to": "T1-M01-P007-IDX-n003-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P007-IDX-n003-task-completion",
+      "to": "T1-M01-P013-CTR-n005-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P008-REF-n004-s1",
+      "to": "T1-M01-P009-REF-n004-s2",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P009-REF-n004-s2",
+      "to": "T1-M01-P010-REF-n004-s3",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P010-REF-n004-s3",
+      "to": "T1-M01-P011-TST-PRE-n004-s4",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P011-TST-PRE-n004-s4",
+      "to": "T1-M01-P012-IDX-n004-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P012-IDX-n004-task-completion",
+      "to": "T1-M01-P051-TST-PRE-n012-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P013-CTR-n005-s1",
+      "to": "T1-M01-P014-PRJ-n005-s2",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P014-PRJ-n005-s2",
+      "to": "T1-M01-P015-REF-n005-s3",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P015-REF-n005-s3",
+      "to": "T1-M01-P016-TST-PRE-n005-s4",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P016-TST-PRE-n005-s4",
+      "to": "T1-M01-P017-IDX-n005-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P017-IDX-n005-task-completion",
+      "to": "T1-M01-P018-CTR-n006-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P018-CTR-n006-s1",
+      "to": "T1-M01-P019-IDX-n006-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P019-IDX-n006-task-completion",
+      "to": "T1-M01-P020-CTR-n007-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P020-CTR-n007-s1",
+      "to": "T1-M01-P021-IDX-n007-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P021-IDX-n007-task-completion",
+      "to": "T1-M01-P022-CTR-n008-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P022-CTR-n008-s1",
+      "to": "T1-M01-P023-PRJ-n008-s2",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P023-PRJ-n008-s2",
+      "to": "T1-M01-P024-REF-n008-s3",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P024-REF-n008-s3",
+      "to": "T1-M01-P025-TST-PRE-n008-s4",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P025-TST-PRE-n008-s4",
+      "to": "T1-M01-P026-IDX-n008-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P026-IDX-n008-task-completion",
+      "to": "T1-M01-P027-CTR-n009-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P027-CTR-n009-s1",
+      "to": "T1-M01-P028-PRJ-n009-s2",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P028-PRJ-n009-s2",
+      "to": "T1-M01-P029-REF-n009-s3",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P029-REF-n009-s3",
+      "to": "T1-M01-P030-TST-PRE-n009-s4",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P030-TST-PRE-n009-s4",
+      "to": "T1-M01-P031-IDX-n009-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P031-IDX-n009-task-completion",
+      "to": "T1-M01-P038-REF-n010-s7",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P038-REF-n010-s7",
+      "to": "T1-M01-P039-REF-n010-s8",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P039-REF-n010-s8",
+      "to": "T1-M01-P040-REF-n010-s9",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P040-REF-n010-s9",
+      "to": "T1-M01-P041-REF-n010-s10",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P041-REF-n010-s10",
+      "to": "T1-M01-P042-REF-n010-s11",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P042-REF-n010-s11",
+      "to": "T1-M01-P043-REF-n010-s12",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P043-REF-n010-s12",
+      "to": "T1-M01-P044-REF-n010-s13",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P044-REF-n010-s13",
+      "to": "T1-M01-P048-IDX-n010-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P048-IDX-n010-task-completion",
+      "to": "T1-M01-P049-CTR-n011-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P049-CTR-n011-s1",
+      "to": "T1-M01-P050-IDX-n011-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P050-IDX-n011-task-completion",
+      "to": "T1-M01-P008-REF-n004-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P051-TST-PRE-n012-s1",
+      "to": "T1-M01-P052-IDX-n012-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P052-IDX-n012-task-completion",
+      "to": "T1-M01-P053-IDX-n013-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P053-IDX-n013-s1",
+      "to": "T1-M01-P054-IDX-n013-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P054-IDX-n013-task-completion",
+      "to": "T1-M01-P055-PROM-n014-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P055-PROM-n014-s1",
+      "to": "T1-M01-P056-IDX-n014-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P057-CTR-n015-s1",
+      "to": "T1-M01-P096-WRT-n015-s39",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P058-REF-n015-s2",
+      "to": "T1-M01-P059-REF-n015-s3",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P059-REF-n015-s3",
+      "to": "T1-M01-P095-WRT-n015-s38",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P060-REF-n015-s4",
+      "to": "T1-M01-P061-REF-n015-s5",
+      "edge_kind": "REVISED_DEPENDENCY"
+    },
+    {
+      "from": "T1-M01-P060-REF-n015-s4",
+      "to": "T1-M01-P067-REF-n015-s10",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P061-REF-n015-s5",
+      "to": "T1-M01-P062-REF-n015-s6",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P062-REF-n015-s6",
+      "to": "T1-M01-P072-REF-n015-s15",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P066-IDX-n015-task-completion",
+      "to": "T1-M01-P005-REF-n003-s1",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P066-IDX-n015-task-completion",
+      "to": "T1-M01-P006-TST-PRE-n003-s2",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P066-IDX-n015-task-completion",
+      "to": "T1-M01-P038-REF-n010-s7",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P066-IDX-n015-task-completion",
+      "to": "T1-M01-P048-IDX-n010-task-completion",
+      "edge_kind": "RETAINED_V1"
+    },
+    {
+      "from": "T1-M01-P067-REF-n015-s10",
+      "to": "T1-M01-P068-REF-n015-s11",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P068-REF-n015-s11",
+      "to": "T1-M01-P069-REF-n015-s12",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P069-REF-n015-s12",
+      "to": "T1-M01-P070-REF-n015-s13",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P070-REF-n015-s13",
+      "to": "T1-M01-P071-REF-n015-s14",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P071-REF-n015-s14",
+      "to": "T1-M01-P061-REF-n015-s5",
+      "edge_kind": "REVISED_DEPENDENCY"
+    },
+    {
+      "from": "T1-M01-P072-REF-n015-s15",
+      "to": "T1-M01-P073-REF-n015-s16",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P073-REF-n015-s16",
+      "to": "T1-M01-P074-REF-n015-s17",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P074-REF-n015-s17",
+      "to": "T1-M01-P075-REF-n015-s18",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P075-REF-n015-s18",
+      "to": "T1-M01-P076-REF-n015-s19",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P076-REF-n015-s19",
+      "to": "T1-M01-P077-REF-n015-s20",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P077-REF-n015-s20",
+      "to": "T1-M01-P078-REF-n015-s21",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P078-REF-n015-s21",
+      "to": "T1-M01-P086-WRT-n015-s29",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P079-OPS-n015-s22",
+      "to": "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN",
+      "edge_kind": "EXTERNAL_ACTIVITY"
+    },
+    {
+      "from": "T1-M01-P079-OPS-n015-s22",
+      "to": "T1-M01-P080-TST-PRE-n015-s23",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P080-TST-PRE-n015-s23",
+      "to": "T1-M01-P081-TST-PRE-n015-s24",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P081-TST-PRE-n015-s24",
+      "to": "T1-M01-P082-OPS-n015-s25",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P082-OPS-n015-s25",
+      "to": "T1-M01-P083-OPS-n015-s26",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P083-OPS-n015-s26",
+      "to": "T1-M01-P084-TST-POST-n015-s27",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P084-TST-POST-n015-s27",
+      "to": "T1-M01-P085-TST-POST-n015-s28",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P085-TST-POST-n015-s28",
+      "to": "T1-M01-P066-IDX-n015-task-completion",
+      "edge_kind": "REVISED_DEPENDENCY"
+    },
+    {
+      "from": "T1-M01-P086-WRT-n015-s29",
+      "to": "T1-M01-P087-REF-n015-s30",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P087-REF-n015-s30",
+      "to": "T1-M01-P088-REF-n015-s31",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P088-REF-n015-s31",
+      "to": "T1-M01-P089-REF-n015-s32",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P089-REF-n015-s32",
+      "to": "T1-M01-P090-REF-n015-s33",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P090-REF-n015-s33",
+      "to": "T1-M01-P091-REF-n015-s34",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P091-REF-n015-s34",
+      "to": "T1-M01-P092-REF-n015-s35",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P092-REF-n015-s35",
+      "to": "T1-M01-P093-REF-n015-s36",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P093-REF-n015-s36",
+      "to": "T1-M01-P094-REF-n015-s37",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P094-REF-n015-s37",
+      "to": "T1-M01-P079-OPS-n015-s22",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    },
+    {
+      "from": "T1-M01-P095-WRT-n015-s38",
+      "to": "T1-M01-P060-REF-n015-s4",
+      "edge_kind": "REVISED_DEPENDENCY"
+    },
+    {
+      "from": "T1-M01-P096-WRT-n015-s39",
+      "to": "T1-M01-P058-REF-n015-s2",
+      "edge_kind": "REVISED_DEPENDENCY"
+    },
+    {
+      "from": "T1-M01-P096-WRT-n015-s39",
+      "to": "T1-M01-P072-REF-n015-s15",
+      "edge_kind": "APPENDED_PREREQUISITE"
+    }
+  ],
+  "external_activities": [
+    {
+      "activity_id": "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN",
+      "activity_kind": "EXTERNAL_BUILD_SIGN_AND_PUBLISH",
+      "depends_on_atomic_pr_ids": [
+        "T1-M01-P079-OPS-n015-s22"
+      ],
+      "required_outputs": [
+        "IMAGE_DIGEST",
+        "SBOM_SHA256",
+        "PROVENANCE_ATTESTATION",
+        "SIGNATURE_VERIFICATION_RECEIPT"
+      ],
+      "receipt_schema_path": "contracts/alignment/m01-verifier-image-build-sign-receipt.schema.json",
+      "receipt_validator_path": "scripts/alignment/validate_m01_verifier_image_build_sign_receipt.py",
+      "work_order_path": "contracts/alignment/m01-verifier-image-build-sign-work-order.v1.json",
+      "candidate_freeze_work_order_path": "contracts/alignment/m01-early-trust-candidate-freeze-work-order.v1.json",
+      "design_candidate_manifest_path": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/design-candidate-manifest.json",
+      "implementation_candidate_manifest_path": "doc/02_acceptance/topic1/m01/candidates/m01-early-trust-v2/implementation-candidate.json",
+      "expected_receipt_path": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/receipt.json",
+      "bootstrap_policy_id": "M01-VERIFIER-BOOTSTRAP-PROTECTED-CI-2-OF-2-V1",
+      "status": "PENDING_NO_RECEIPT",
+      "owner_roles": [
+        "supply-chain-owner",
+        "security-owner"
+      ],
+      "proof_ceiling": "EXTERNAL_ACTIVITY_DECLARATION_ONLY_NOT_EXECUTED_SIGNED_OR_VERIFIED"
+    }
+  ],
+  "completion_revision": {
+    "parent_task_id": "T1-M01-N015",
+    "terminal_atomic_pr_id": "T1-M01-P066-IDX-n015-task-completion",
+    "prior_member_atomic_pr_ids": [
+      "T1-M01-P057-CTR-n015-s1",
+      "T1-M01-P058-REF-n015-s2",
+      "T1-M01-P059-REF-n015-s3",
+      "T1-M01-P060-REF-n015-s4",
+      "T1-M01-P061-REF-n015-s5",
+      "T1-M01-P062-REF-n015-s6",
+      "T1-M01-P063-OPS-n015-s7",
+      "T1-M01-P064-TST-PRE-n015-s8",
+      "T1-M01-P065-TST-POST-n015-s9"
+    ],
+    "revised_member_atomic_pr_ids": [
+      "T1-M01-P057-CTR-n015-s1",
+      "T1-M01-P058-REF-n015-s2",
+      "T1-M01-P059-REF-n015-s3",
+      "T1-M01-P060-REF-n015-s4",
+      "T1-M01-P061-REF-n015-s5",
+      "T1-M01-P062-REF-n015-s6",
+      "T1-M01-P067-REF-n015-s10",
+      "T1-M01-P068-REF-n015-s11",
+      "T1-M01-P069-REF-n015-s12",
+      "T1-M01-P070-REF-n015-s13",
+      "T1-M01-P071-REF-n015-s14",
+      "T1-M01-P072-REF-n015-s15",
+      "T1-M01-P073-REF-n015-s16",
+      "T1-M01-P074-REF-n015-s17",
+      "T1-M01-P075-REF-n015-s18",
+      "T1-M01-P076-REF-n015-s19",
+      "T1-M01-P077-REF-n015-s20",
+      "T1-M01-P078-REF-n015-s21",
+      "T1-M01-P079-OPS-n015-s22",
+      "T1-M01-P080-TST-PRE-n015-s23",
+      "T1-M01-P081-TST-PRE-n015-s24",
+      "T1-M01-P082-OPS-n015-s25",
+      "T1-M01-P083-OPS-n015-s26",
+      "T1-M01-P084-TST-POST-n015-s27",
+      "T1-M01-P085-TST-POST-n015-s28",
+      "T1-M01-P086-WRT-n015-s29",
+      "T1-M01-P087-REF-n015-s30",
+      "T1-M01-P088-REF-n015-s31",
+      "T1-M01-P089-REF-n015-s32",
+      "T1-M01-P090-REF-n015-s33",
+      "T1-M01-P091-REF-n015-s34",
+      "T1-M01-P092-REF-n015-s35",
+      "T1-M01-P093-REF-n015-s36",
+      "T1-M01-P094-REF-n015-s37",
+      "T1-M01-P095-WRT-n015-s38",
+      "T1-M01-P096-WRT-n015-s39"
+    ],
+    "superseded_member_atomic_pr_ids": [
+      "T1-M01-P063-OPS-n015-s7",
+      "T1-M01-P064-TST-PRE-n015-s8",
+      "T1-M01-P065-TST-POST-n015-s9"
+    ],
+    "revised_terminal_direct_dependency_ids": [
+      "T1-M01-P085-TST-POST-n015-s28"
+    ],
+    "revision_semantics": "TERMINAL_ID_PRESERVED_FUNCTION_COMPLETE_MEMBERS_AND_SINGLE_GATE_EVIDENCE_REVISED"
+  },
+  "global_switch_gate": {
+    "decision": "BLOCKED_PREVIEW_ONLY",
+    "active_global_atomic_pr_count": 1289,
+    "active_m01_atomic_pr_count": 56,
+    "candidate_m01_atomic_pr_count": 84,
+    "candidate_global_atomic_pr_count": 1317,
+    "required_catalogs": [
+      "contracts/alignment/task-registry.v1.json",
+      "contracts/alignment/developer-claim-package-catalog.v1.json",
+      "contracts/alignment/pr-design-application-catalog.v1.json",
+      "contracts/alignment/task-execution-overlay.template.v1.json"
+    ],
+    "switch_rule": "TASK_CLAIM_PR_DESIGN_AND_OVERLAY_MUST_SWITCH_ATOMICALLY_TO_ONE_REVIEWED_V2_CANDIDATE_AFTER_EXTERNAL_IMAGE_RECEIPT_BINDING"
+  },
+  "validation": {
+    "schema": "PASS",
+    "v1_catalog_hash": "PASS",
+    "v1_candidate_exact": "PASS",
+    "append_id_exact": "PASS_P067_P096",
+    "supersession_exact": "PASS",
+    "write_locator_unique": true,
+    "function_owner_exact": "PASS_25_FUNCTION_OWNERS",
+    "type_owner_exact": "PASS_3_TYPE_OWNERS",
+    "single_gate_evidence_exact": "PASS_G0_G1_G2_G3_G6",
+    "external_image_activity_explicit": true,
+    "completion_member_exact": "PASS",
+    "candidate_dag": "PASS",
+    "global_switch_blocked": true,
+    "mutation_guards": {
+      "v1_drift": "PASS",
+      "append_id_reuse": "PASS",
+      "missing_server_owner": "PASS",
+      "missing_runtime_owner": "PASS",
+      "missing_type_contract": "PASS",
+      "repo_root_helper_omission": "PASS",
+      "multi_gate_evidence": "PASS",
+      "external_activity_omission": "PASS",
+      "locator_reuse": "PASS",
+      "supersession_omission": "PASS",
+      "terminal_dependency_drift": "PASS",
+      "completion_omission": "PASS",
+      "dag_cycle": "PASS",
+      "semantic_pin_drift": "PASS",
+      "global_catalog_exact_set": "PASS"
+    }
+  },
+  "proof_ceiling": "VERSIONED_STATIC_V2_PREVIEW_ONLY_NOT_GLOBAL_REGISTRATION_FUNCTION_REVIEW_IMPLEMENTATION_IMAGE_BUILD_SIGNATURE_DEPLOYMENT_TEST_EXECUTION_TRUST_PASS_AUTHORIZATION_OR_ACCEPTANCE"
+}

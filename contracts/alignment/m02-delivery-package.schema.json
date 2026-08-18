@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m02-delivery-package.schema.json",
+  "title": "M02 exact-five candidate delivery package",
+  "$ref": "#/$defs/delivery_package",
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "git_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "artifact_role": {
+      "enum": ["install-manifest", "preflight-plan", "upgrade-plan", "rollback-plan", "restore-plan"]
+    },
+    "artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "path", "git_blob_sha1", "content_sha256"],
+      "properties": {
+        "role": {"$ref": "#/$defs/artifact_role"},
+        "path": {"type": "string", "pattern": "^deployments/releases/topic1/m02-(?:install-manifest|preflight-plan|upgrade-plan|rollback-plan|restore-plan)\\.v1\\.json$"},
+        "git_blob_sha1": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "content_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "delivery_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "action", "failure_action"],
+      "properties": {
+        "order": {"type": "integer", "minimum": 1, "maximum": 32},
+        "action": {"type": "string", "minLength": 3, "maxLength": 256},
+        "failure_action": {"enum": ["BLOCK", "ROLLBACK"]}
+      }
+    },
+    "delivery_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "artifact_kind", "package_id", "status", "candidate_commit",
+        "candidate_tree_sha256", "candidate_manifest_sha256", "profile_id", "environment_id", "artifacts",
+        "install_order", "preflight_checks", "upgrade_steps", "rollback_steps", "restore_steps"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "artifact_kind": {"const": "M02_EXACT_FIVE_DELIVERY_PACKAGE"},
+        "package_id": {"type": "string", "pattern": "^m02-delivery-[a-z0-9][a-z0-9-]{2,63}$"},
+        "status": {"enum": ["PENDING_CANDIDATE_BINDING", "CANDIDATE_BOUND"]},
+        "candidate_commit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+        "candidate_tree_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "candidate_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {"type": "string", "minLength": 3, "maxLength": 128},
+        "environment_id": {"type": "string", "minLength": 3, "maxLength": 128},
+        "artifacts": {"type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true, "items": {"$ref": "#/$defs/artifact_ref"}},
+        "install_order": {"type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true, "items": {"$ref": "#/$defs/artifact_role"}},
+        "preflight_checks": {"type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+        "upgrade_steps": {"type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/delivery_step"}},
+        "rollback_steps": {"type": "array", "minItems": 4, "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/delivery_step"}},
+        "restore_steps": {"type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/delivery_step"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "CANDIDATE_BOUND"}}},
+          "then": {"properties": {
+            "candidate_commit": {"type": "string"},
+            "candidate_tree_sha256": {"type": "string"},
+            "candidate_manifest_sha256": {"type": "string"},
+            "environment_id": {"not": {"const": "PENDING_ENVIRONMENT_BINDING"}}
+          }}
+        },
+        {
+          "if": {"properties": {"status": {"const": "PENDING_CANDIDATE_BINDING"}}},
+          "then": {"properties": {
+            "candidate_commit": {"type": "null"},
+            "candidate_tree_sha256": {"type": "null"},
+            "candidate_manifest_sha256": {"type": "null"},
+            "environment_id": {"const": "PENDING_ENVIRONMENT_BINDING"}
+          }}
+        }
+      ]
+    },
+    "delivery_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "artifact_kind", "artifact_role", "package_id", "body"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "artifact_kind": {"const": "M02_DELIVERY_ARTIFACT"},
+        "artifact_role": {"$ref": "#/$defs/artifact_role"},
+        "package_id": {"type": "string", "pattern": "^m02-delivery-[a-z0-9][a-z0-9-]{2,63}$"},
+        "body": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["steps", "rollback_plan_path", "preserve_durable_data"],
+          "properties": {
+            "steps": {"type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/delivery_step"}},
+            "rollback_plan_path": {"const": "deployments/releases/topic1/m02-rollback-plan.v1.json"},
+            "preserve_durable_data": {"const": true}
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m10-apisix-route-diff.schema.json",
+  "title": "T1-M10-N006 APISIX candidate/live route diff evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "task_id", "atomic_pr_id", "status",
+    "engineering_status", "acceptance_status", "environment_kind", "candidate_id",
+    "source_sha256", "candidate", "live", "route_diff", "workload_diff",
+    "secret_key_observation", "rollback_baseline", "blocking_codes",
+    "required_gates", "shared_infrastructure_touched", "production_applied",
+    "allowed_claims", "does_not_prove"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_kind": {"const": "M10_APISIX_ROUTE_DIFF_RESULT"},
+    "task_id": {"const": "T1-M10-N006"},
+    "atomic_pr_id": {"const": "T1-M10-P013-OPS-n006-s1"},
+    "status": {"const": "PASS"},
+    "engineering_status": {"const": "PASS"},
+    "acceptance_status": {"enum": ["PASS", "BLOCKED_ROUTE_DIFF"]},
+    "environment_kind": {"const": "KUBERNETES"},
+    "candidate_id": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "source_sha256": {"type": "object", "additionalProperties": {"$ref": "#/$defs/sha256"}},
+    "candidate": {"type": "object"},
+    "live": {"type": "object"},
+    "route_diff": {"$ref": "#/$defs/routeDiff"},
+    "workload_diff": {"type": "object"},
+    "secret_key_observation": {"type": "object"},
+    "rollback_baseline": {"type": "object"},
+    "blocking_codes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "required_gates": {"type": "object"},
+    "shared_infrastructure_touched": {"const": false},
+    "production_applied": {"const": false},
+    "allowed_claims": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "does_not_prove": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "routeDiff": {
+      "type": "object", "additionalProperties": false,
+      "required": ["candidate_count", "live_count", "missing_live_ids", "extra_live_ids", "changed_ids", "unchanged_ids", "zero_diff"],
+      "properties": {
+        "candidate_count": {"type": "integer", "minimum": 0},
+        "live_count": {"type": "integer", "minimum": 0},
+        "missing_live_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "extra_live_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "changed_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "unchanged_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "zero_diff": {"type": "boolean"}
+      }
+    }
+  }
+}

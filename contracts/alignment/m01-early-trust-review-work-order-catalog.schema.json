@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m01-early-trust-review-work-order-catalog.schema.json",
+  "title": "M01 early-trust design review work-order catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "source_refs",
+    "work_order_count", "review_surface_counts", "work_order_status_counts",
+    "covered_atomic_pr_exact_set_sha256", "work_orders", "validation", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M01_EARLY_TRUST_DESIGN_REVIEW_WORK_ORDER_CATALOG"},
+    "artifact_status": {"const": "BLOCKED_EXTERNAL_CANDIDATE_IDENTITY_AND_ATTESTATION_INPUTS"},
+    "source_refs": {
+      "type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_ref"}
+    },
+    "work_order_count": {"const": 36},
+    "review_surface_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["FUNCTION", "TYPE", "NON_FUNCTION"],
+      "properties": {
+        "FUNCTION": {"const": 25},
+        "TYPE": {"const": 3},
+        "NON_FUNCTION": {"const": 8}
+      }
+    },
+    "work_order_status_counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["BLOCKED_EXTERNAL_INPUTS"],
+      "properties": {"BLOCKED_EXTERNAL_INPUTS": {"const": 36}}
+    },
+    "covered_atomic_pr_exact_set_sha256": {"$ref": "#/$defs/sha256"},
+    "work_orders": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/work_order"}
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "source_hashes_exact", "member_exact_set", "classification_exact",
+        "design_pointer_exact", "locator_dependency_and_gate_binding_exact",
+        "review_contract_and_command_exact", "all_external_inputs_missing",
+        "all_reviewer_identities_unassigned", "no_candidate_identity_signature_receipt_or_decision_created",
+        "mutation_guards"
+      ],
+      "properties": {
+        "schema": {"const": "PASS"},
+        "source_hashes_exact": {"const": "PASS"},
+        "member_exact_set": {"const": "PASS_36"},
+        "classification_exact": {"const": "PASS_25_FUNCTION_3_TYPE_8_NON_FUNCTION"},
+        "design_pointer_exact": {"const": "PASS"},
+        "locator_dependency_and_gate_binding_exact": {"const": "PASS"},
+        "review_contract_and_command_exact": {"const": "PASS"},
+        "all_external_inputs_missing": {"const": true},
+        "all_reviewer_identities_unassigned": {"const": true},
+        "no_candidate_identity_signature_receipt_or_decision_created": {"const": true},
+        "mutation_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "source_hash_drift", "work_order_omission", "classification_drift",
+            "design_pointer_drift", "locator_drift", "dependency_drift", "gate_drift",
+            "review_path_drift", "reviewer_role_drift", "reviewer_identity_fabrication",
+            "external_input_false_ready", "work_order_false_ready", "validator_command_drift"
+          ],
+          "properties": {
+            "source_hash_drift": {"const": "PASS"},
+            "work_order_omission": {"const": "PASS"},
+            "classification_drift": {"const": "PASS"},
+            "design_pointer_drift": {"const": "PASS"},
+            "locator_drift": {"const": "PASS"},
+            "dependency_drift": {"const": "PASS"},
+            "gate_drift": {"const": "PASS"},
+            "review_path_drift": {"const": "PASS"},
+            "reviewer_role_drift": {"const": "PASS"},
+            "reviewer_identity_fabrication": {"const": "PASS"},
+            "external_input_false_ready": {"const": "PASS"},
+            "work_order_false_ready": {"const": "PASS"},
+            "validator_command_drift": {"const": "PASS"}
+          }
+        }
+      }
+    },
+    "proof_ceiling": {
+      "const": "DEVELOPER_REVIEW_WORK_ORDER_ORCHESTRATION_ONLY_NOT_CANDIDATE_CREATION_IDENTITY_ASSIGNMENT_REVIEW_DEBATE_DECISION_SIGNATURE_RECEIPT_IMPLEMENTATION_TEST_EXECUTION_REGISTRY_SWITCH_AUTHORIZATION_OR_ACCEPTANCE"
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "path", "sha256"],
+      "properties": {
+        "role": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "input_requirement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "expected_path", "status"],
+      "properties": {
+        "role": {"enum": ["CLEAN_CANDIDATE_MANIFEST", "FINAL_PATTERN_DECISION", "CODE_UNIT_CONTRACT", "NEGATIVE_TEST_MANIFEST", "SPECIALIZED_CONTRACT", "VERIFICATION_PLAN", "ROLLBACK_PLAN"]},
+        "expected_path": {"type": "string", "minLength": 3},
+        "status": {"enum": ["MISSING", "READY"]}
+      }
+    },
+    "reviewer_slot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "assignment_status", "reviewer_identity"],
+      "properties": {
+        "role": {"enum": ["LANGUAGE_OWNER", "DOMAIN_OWNER", "QA_SRE_PERFORMANCE_EXPERT", "MAINTAINABILITY_RED_TEAM", "ADJUDICATOR"]},
+        "assignment_status": {"enum": ["UNASSIGNED", "ASSIGNED"]},
+        "reviewer_identity": {"type": ["string", "null"], "minLength": 3}
+      }
+    },
+    "command_step": {
+      "type": "object", "additionalProperties": false,
+      "required": ["step_id", "run_when", "working_directory", "argv", "expected_effect"],
+      "properties": {
+        "step_id": {"type": "string", "minLength": 3},
+        "run_when": {"type": "string", "minLength": 8},
+        "working_directory": {"const": "."},
+        "argv": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}},
+        "expected_effect": {"type": "string", "minLength": 8}
+      }
+    },
+    "work_order": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "work_order_id", "atomic_pr_id", "parent_task_id", "sequence_order", "pr_type",
+        "review_surface", "design_contract_id", "design_json_pointer", "target_locators",
+        "dependency_ids", "required_gates", "review_checklist", "required_review_artifact_kind",
+        "expected_review_path", "required_inputs", "reviewer_slots", "command_plan",
+        "status", "blocking_reasons", "allowed_claim", "forbidden_claim", "proof_ceiling"
+      ],
+      "properties": {
+        "work_order_id": {"type": "string", "pattern": "^M01-RWO-P[0-9]{3}$"},
+        "atomic_pr_id": {"type": "string", "pattern": "^T1-M01-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+        "parent_task_id": {"const": "T1-M01-N015"},
+        "sequence_order": {"type": "integer", "minimum": 1, "maximum": 36},
+        "pr_type": {"type": "string", "minLength": 3},
+        "review_surface": {"enum": ["FUNCTION", "TYPE", "NON_FUNCTION"]},
+        "design_contract_id": {"type": "string", "minLength": 3},
+        "design_json_pointer": {"type": "string", "pattern": "^/(?:function_contracts|type_contracts|non_function_contracts)/[0-9]+$"},
+        "target_locators": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+        "dependency_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 3}},
+        "required_gates": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^G[0-9]+$"}},
+        "review_checklist": {"type": "array", "minItems": 6, "uniqueItems": true, "items": {"type": "string", "minLength": 8}},
+        "required_review_artifact_kind": {"enum": ["FUNCTION_DESIGN_REVIEW_RECEIPT", "NON_FUNCTION_DESIGN_EXEMPTION_RECEIPT"]},
+        "expected_review_path": {"type": "string", "minLength": 3},
+        "required_inputs": {"type": "array", "minItems": 4, "uniqueItems": true, "items": {"$ref": "#/$defs/input_requirement"}},
+        "reviewer_slots": {"type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true, "items": {"$ref": "#/$defs/reviewer_slot"}},
+        "command_plan": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/command_step"}},
+        "status": {"enum": ["BLOCKED_EXTERNAL_INPUTS", "READY_FOR_EXTERNAL_REVIEW"]},
+        "blocking_reasons": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"type": "string", "minLength": 8}},
+        "allowed_claim": {"const": "exact review scope inputs roles output path and validation commands are derived"},
+        "forbidden_claim": {"const": "candidate reviewer identity debate decision signature receipt implementation test execution registry switch authorization or acceptance exists"},
+        "proof_ceiling": {"const": "BLOCKED_DEVELOPER_REVIEW_WORK_ORDER_ONLY"}
+      }
+    }
+  }
+}

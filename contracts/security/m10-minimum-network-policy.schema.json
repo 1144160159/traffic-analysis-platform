@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis.local/contracts/security/m10-minimum-network-policy.schema.json",
+  "title": "T1-M10-N009 minimum network policy contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "task_id",
+    "status",
+    "production_applied",
+    "target_namespace",
+    "cni_requirement",
+    "dns_egress",
+    "forbidden",
+    "workloads",
+    "exceptions"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "policy_id": {"const": "M10-N009-MINIMUM-NETWORK-POLICY-V1"},
+    "task_id": {"const": "T1-M10-N009"},
+    "status": {"const": "CANDIDATE_DEFAULT_OFF"},
+    "production_applied": {"const": false},
+    "target_namespace": {"const": "traffic-analysis"},
+    "cni_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["api", "enforcement_required", "yaml_objects_without_enforcement_do_not_pass", "approved_equivalent_control"],
+      "properties": {
+        "api": {"const": "networking.k8s.io/v1"},
+        "enforcement_required": {"const": true},
+        "yaml_objects_without_enforcement_do_not_pass": {"const": true},
+        "approved_equivalent_control": {"type": ["object", "null"]}
+      }
+    },
+    "dns_egress": {"$ref": "#/$defs/namespaced_rule_target"},
+    "forbidden": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["destination_namespaces", "destination_ports", "cidrs", "empty_allow_selectors", "same_namespace_blanket_allow"],
+      "properties": {
+        "destination_namespaces": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "destination_ports": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1, "maximum": 65535}},
+        "cidrs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "empty_allow_selectors": {"const": true},
+        "same_namespace_blanket_allow": {"const": true}
+      }
+    },
+    "workloads": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["workload_id", "pod_selector", "ingress", "egress"],
+        "properties": {
+          "workload_id": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+          "pod_selector": {"$ref": "#/$defs/selector"},
+          "ingress": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ingress_rule"}},
+          "egress": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/egress_rule"}}
+        }
+      }
+    },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["exception_id", "workload_id", "reason", "scope", "risk_owner_role", "approval_status", "replacement"],
+        "properties": {
+          "exception_id": {"type": "string", "minLength": 1},
+          "workload_id": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "scope": {"type": "string", "minLength": 1},
+          "risk_owner_role": {"type": "string", "minLength": 1},
+          "approval_status": {"enum": ["REQUIRED_NOT_APPROVED", "APPROVED"]},
+          "replacement": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "selector": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
+    "port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol", "port"],
+      "properties": {
+        "protocol": {"enum": ["TCP", "UDP"]},
+        "port": {"type": "integer", "minimum": 1, "maximum": 65535}
+      }
+    },
+    "namespaced_rule_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace", "pod_selector", "ports"],
+      "properties": {
+        "namespace": {"type": "string", "minLength": 1},
+        "pod_selector": {"$ref": "#/$defs/selector"},
+        "ports": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/port"}}
+      }
+    },
+    "ingress_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "ports"],
+      "properties": {
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["namespace", "pod_selector"],
+          "properties": {
+            "namespace": {"type": "string", "minLength": 1},
+            "pod_selector": {"$ref": "#/$defs/selector"}
+          }
+        },
+        "ports": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/port"}}
+      }
+    },
+    "egress_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["to", "ports"],
+      "properties": {
+        "to": {
+          "type": "object",
+          "additionalProperties": false,
+          "oneOf": [
+            {
+              "required": ["namespace", "pod_selector"],
+              "properties": {
+                "namespace": {"type": "string", "minLength": 1},
+                "pod_selector": {"$ref": "#/$defs/selector"}
+              }
+            },
+            {
+              "required": ["ip_block"],
+              "properties": {"ip_block": {"type": "string", "minLength": 1}}
+            }
+          ]
+        },
+        "ports": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/port"}},
+        "exception_id": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

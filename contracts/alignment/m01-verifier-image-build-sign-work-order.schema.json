@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m01-verifier-image-build-sign-work-order.schema.json",
+  "title": "M01 trusted verifier external image build sign and publish work order",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "work_order_id", "activity_id",
+    "source_refs", "depends_on_atomic_pr_ids", "candidate_manifest", "required_source_inputs",
+    "required_external_inputs", "owner_slots", "required_outputs", "expected_receipt_path",
+    "command_plan", "status", "blocking_reasons", "validation", "allowed_claim",
+    "forbidden_claim", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M01_VERIFIER_IMAGE_BUILD_SIGN_AND_PUBLISH_WORK_ORDER"},
+    "artifact_status": {"const": "BLOCKED_SOURCE_AND_EXTERNAL_AUTHORITY_INPUTS"},
+    "work_order_id": {"const": "M01-EI-VERIFIER-IMAGE-BUILD-SIGN-PUBLISH"},
+    "activity_id": {"const": "EXT-T1-M01-N015-VERIFIER-IMAGE-BUILD-AND-SIGN"},
+    "source_refs": {
+      "type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_ref"}
+    },
+    "depends_on_atomic_pr_ids": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"const": "T1-M01-P079-OPS-n015-s22"}},
+    "candidate_manifest": {"$ref": "#/$defs/path_probe"},
+    "required_source_inputs": {
+      "type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_input"}
+    },
+    "required_external_inputs": {
+      "type": "array", "minItems": 7, "maxItems": 7, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/external_input"}
+    },
+    "owner_slots": {
+      "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/owner_slot"}
+    },
+    "required_outputs": {
+      "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
+      "items": {"enum": ["IMAGE_DIGEST", "SBOM_SHA256", "PROVENANCE_ATTESTATION", "SIGNATURE_VERIFICATION_RECEIPT"]}
+    },
+    "expected_receipt_path": {"const": "doc/02_acceptance/topic1/m01/external-activities/verifier-image-build-sign-publish/receipt.json"},
+    "command_plan": {
+      "type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/command_step"}
+    },
+    "status": {"enum": ["BLOCKED_SOURCE_AND_EXTERNAL_AUTHORITY_INPUTS", "READY_FOR_AUTHORIZED_EXTERNAL_EXECUTION"]},
+    "blocking_reasons": {"type": "array", "minItems": 6, "uniqueItems": true, "items": {"type": "string", "minLength": 8}},
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema", "source_hashes_exact", "activity_binding_exact", "candidate_freeze_work_order_blocked", "source_input_exact_set",
+        "external_input_exact_set", "owner_role_exact_set", "all_owner_identities_unassigned",
+        "receipt_absent", "no_build_push_signature_or_receipt_created", "mutation_guards"
+      ],
+      "properties": {
+        "schema": {"const": "PASS"},
+        "source_hashes_exact": {"const": "PASS"},
+        "activity_binding_exact": {"const": "PASS"},
+        "candidate_freeze_work_order_blocked": {"const": "PASS_NO_CANDIDATE"},
+        "source_input_exact_set": {"const": "PASS_6"},
+        "external_input_exact_set": {"const": "PASS_7"},
+        "owner_role_exact_set": {"const": "PASS_2_OF_2"},
+        "all_owner_identities_unassigned": {"const": true},
+        "receipt_absent": {"const": true},
+        "no_build_push_signature_or_receipt_created": {"const": true},
+        "mutation_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source_hash_drift", "candidate_freeze_false_ready", "dependency_drift", "source_input_omission", "external_input_omission", "owner_role_drift", "owner_identity_fabrication", "receipt_false_present", "command_drift", "false_ready"],
+          "properties": {
+            "source_hash_drift": {"const": "PASS"},
+            "candidate_freeze_false_ready": {"const": "PASS"},
+            "dependency_drift": {"const": "PASS"},
+            "source_input_omission": {"const": "PASS"},
+            "external_input_omission": {"const": "PASS"},
+            "owner_role_drift": {"const": "PASS"},
+            "owner_identity_fabrication": {"const": "PASS"},
+            "receipt_false_present": {"const": "PASS"},
+            "command_drift": {"const": "PASS"},
+            "false_ready": {"const": "PASS"}
+          }
+        }
+      }
+    },
+    "allowed_claim": {"const": "external activity inputs roles outputs receipt path and validation commands are derived"},
+    "forbidden_claim": {"const": "source implementation candidate build image publish signer identity signature receipt deployment execution registry switch authorization or acceptance exists"},
+    "proof_ceiling": {"const": "BLOCKED_EXTERNAL_IMAGE_ACTIVITY_WORK_ORDER_ONLY"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "path", "sha256"],
+      "properties": {
+        "role": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "path_probe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "exists", "sha256", "status"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "exists": {"type": "boolean"},
+        "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "status": {"enum": ["MISSING", "PRESENT_UNVALIDATED"]}
+      }
+    },
+    "source_input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "owner_atomic_pr_id", "path", "exists", "status"],
+      "properties": {
+        "artifact_id": {"enum": ["VERIFIER_IMAGE_BUILD_RECIPE", "VERIFIER_REQUIREMENTS_LOCK", "VERIFIER_SERVICE_SOURCE", "TRUST_POLICY_SCHEMA", "VERIFICATION_REQUEST_SCHEMA", "VERIFICATION_ATTESTATION_SCHEMA"]},
+        "owner_atomic_pr_id": {"type": "string", "pattern": "^T1-M01-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+        "path": {"type": "string", "minLength": 3},
+        "exists": {"type": "boolean"},
+        "status": {"enum": ["MISSING", "PRESENT_UNVALIDATED"]}
+      }
+    },
+    "external_input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "expected_path", "status"],
+      "properties": {
+        "artifact_id": {"enum": ["BUILD_ENVIRONMENT_MANIFEST", "IMAGE_MANIFEST", "CYCLONEDX_SBOM", "SLSA_PROVENANCE_BUNDLE", "IMAGE_SIGNATURE_BUNDLE", "SIGNATURE_VERIFICATION_RECEIPT", "SIGNED_RECEIPT_PAYLOAD"]},
+        "expected_path": {"type": "string", "minLength": 3},
+        "status": {"enum": ["MISSING", "PRESENT_UNVALIDATED"]}
+      }
+    },
+    "owner_slot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "assignment_status", "identity"],
+      "properties": {
+        "role": {"enum": ["SUPPLY_CHAIN_OWNER", "SECURITY_OWNER"]},
+        "assignment_status": {"enum": ["UNASSIGNED", "ASSIGNED"]},
+        "identity": {"type": ["string", "null"], "minLength": 3}
+      }
+    },
+    "command_step": {
+      "type": "object", "additionalProperties": false,
+      "required": ["step_id", "run_when", "working_directory", "argv", "expected_effect"],
+      "properties": {
+        "step_id": {"type": "string", "minLength": 3},
+        "run_when": {"type": "string", "minLength": 8},
+        "working_directory": {"const": "."},
+        "argv": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}},
+        "expected_effect": {"type": "string", "minLength": 8}
+      }
+    }
+  }
+}

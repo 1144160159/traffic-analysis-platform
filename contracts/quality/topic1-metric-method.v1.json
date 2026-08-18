@@ -1,0 +1,109 @@
+{
+  "schema_version": "2.0.0",
+  "registry_status": "DRAFT",
+  "methods": [
+    {
+      "method_id": "T1-MIDTERM-KNOWN-ALERT-METHOD",
+      "stage": "MIDTERM",
+      "method_status": "PENDING_SIGNATURE",
+      "authority": {
+        "project_owner": null,
+        "algorithm_owner": null,
+        "qa_owner": null,
+        "acceptance_owner": null,
+        "external_lab": null,
+        "signature_set": []
+      },
+      "population": {
+        "analysis_unit": null,
+        "dedup_window": null,
+        "classes": ["known_attack", "normal", "abstain"],
+        "abstain_policy": null,
+        "invalid_sample_policy": null,
+        "label_arbitration": null,
+        "strata": ["known_attack", "normal"],
+        "minimum_sample_rules": []
+      },
+      "metrics": [
+        {
+          "metric_id": "T1-MIDTERM-ALERT-ACCURACY",
+          "display_name": "中期预警准确率",
+          "stage": "MIDTERM",
+          "operator": ">=",
+          "target_percent": 50,
+          "formula_status": "UNRESOLVED",
+          "signed_formula": null,
+          "proposal_formulas": ["precision=TP/(TP+FP)", "generic_accuracy=(TP+TN)/N", "other method signed before evaluation"],
+          "does_not_equal": ["recall", "F1", "unknown_recall"]
+        }
+      ],
+      "threshold_lock": {
+        "status": "PENDING",
+        "candidate_hash": null,
+        "model_hash": null,
+        "feature_hash": null,
+        "threshold_hash": null,
+        "dataset_manifest_hash": null
+      },
+      "signed_intake": null,
+      "retest_policy": "The signed midterm method is independent of the final CNAS method. Formula, known-set, threshold, candidate, label, preprocessing or exclusion changes create a new midterm method run; failed runs remain immutable."
+    },
+    {
+      "method_id": "T1-FINAL-CNAS-QUALITY-METHOD",
+      "stage": "FINAL",
+      "method_status": "PENDING_SIGNATURE",
+      "authority": {
+        "project_owner": null,
+        "algorithm_owner": null,
+        "qa_owner": null,
+        "acceptance_owner": null,
+        "external_lab": null,
+        "signature_set": []
+      },
+      "population": {
+        "analysis_unit": null,
+        "dedup_window": null,
+        "classes": ["known_attack", "unknown_attack", "normal", "abstain"],
+        "abstain_policy": null,
+        "invalid_sample_policy": null,
+        "label_arbitration": null,
+        "strata": ["known_attack", "unknown_attack", "normal"],
+        "minimum_sample_rules": []
+      },
+      "metrics": [
+        {
+          "metric_id": "T1-FINAL-ALERT-ACCURACY",
+          "display_name": "完成态预警准确率",
+          "stage": "FINAL",
+          "operator": ">=",
+          "target_percent": 95,
+          "formula_status": "UNRESOLVED",
+          "signed_formula": null,
+          "proposal_formulas": ["precision=TP/(TP+FP)", "generic_accuracy=(TP+TN)/N", "other method signed before blind execution"],
+          "does_not_equal": ["recall", "F1", "unknown_recall"]
+        },
+        {
+          "metric_id": "T1-FINAL-FALSE-ALARM-RATE",
+          "display_name": "完成态误报率",
+          "stage": "FINAL",
+          "operator": "<",
+          "target_percent": 5,
+          "formula_status": "UNRESOLVED",
+          "signed_formula": null,
+          "proposal_formulas": ["FP/(FP+TN)", "other method signed before blind execution"],
+          "does_not_equal": ["1-precision", "false-discovery-rate unless explicitly signed"]
+        }
+      ],
+      "threshold_lock": {
+        "status": "PENDING",
+        "candidate_hash": null,
+        "model_hash": null,
+        "feature_hash": null,
+        "threshold_hash": null,
+        "dataset_manifest_hash": null
+      },
+      "signed_intake": null,
+      "retest_policy": "After first blind execution, any model, feature, threshold, preprocessing, candidate runtime, label rule, formula or exclusion change creates a new candidate and requires a new blind set or a separately pre-approved independent retest set; failed runs remain immutable."
+    }
+  ]
+}

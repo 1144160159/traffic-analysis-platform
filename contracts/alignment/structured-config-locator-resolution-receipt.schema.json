@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/structured-config-locator-resolution-receipt.schema.json",
+  "title": "Candidate-bound structured config locator resolution receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "status", "proof_level", "candidate",
+    "resolver", "locator", "ambiguity_count", "resolved_at", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "STRUCTURED_CONFIG_LOCATOR_RESOLUTION_RECEIPT"},
+    "status": {"const": "RESOLVED"},
+    "proof_level": {"const": "STRUCTURED_PARSE_TREE"},
+    "candidate": {"$ref": "#/$defs/candidate"},
+    "resolver": {"$ref": "#/$defs/resolver"},
+    "locator": {"$ref": "#/$defs/locator"},
+    "ambiguity_count": {"const": 1},
+    "resolved_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"},
+    "proof_ceiling": {"const": "EXACT_LOCATOR_ONLY_NOT_CONFIG_DESIGN_DEPLOYMENT_OR_EXECUTION_AUTHORIZATION"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commit", "manifest_path", "manifest_sha256"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "manifest_path": {"type": "string", "minLength": 1},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "resolver": {
+      "type": "object", "additionalProperties": false,
+      "required": ["resolver_id", "engine", "engine_version", "source_path", "source_sha256"],
+      "properties": {
+        "resolver_id": {"const": "traffic-structured-config-locator@1"},
+        "engine": {"const": "tomllib/json/PyYAML"},
+        "engine_version": {"type": "string", "minLength": 16},
+        "source_path": {"const": "scripts/alignment/structured_config_locator.py"},
+        "source_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "position": {
+      "type": "object", "additionalProperties": false,
+      "required": ["byte_offset"],
+      "properties": {"byte_offset": {"type": "integer", "minimum": 0}}
+    },
+    "locator": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "locator_id", "format", "path", "query", "match_strategy", "node_kind",
+        "candidate_blob_sha256", "semantic_value_sha256", "semantic_value",
+        "start", "end", "source_span_sha256"
+      ],
+      "properties": {
+        "locator_id": {"type": "string", "pattern": "^LOC-[A-Za-z0-9._-]+$"},
+        "format": {"enum": ["json", "yaml", "toml"]},
+        "path": {"type": "string", "pattern": "^.+\\.(?:json|ya?ml|toml)$"},
+        "query": {"type": "string", "minLength": 1},
+        "match_strategy": {"enum": ["JSON_WHOLE_DOCUMENT", "JSON_EXACT_RFC6901_POINTER", "TOML_EXACT_DOTTED_PATH", "YAML_EXACT_SCALAR_VALUE", "K8S_EXACT_METADATA_NAME_AND_ENV_NAME"]},
+        "node_kind": {"type": "string", "minLength": 1},
+        "candidate_blob_sha256": {"$ref": "#/$defs/sha256"},
+        "semantic_value_sha256": {"$ref": "#/$defs/sha256"},
+        "semantic_value": {},
+        "start": {"anyOf": [{"$ref": "#/$defs/position"}, {"type": "null"}]},
+        "end": {"anyOf": [{"$ref": "#/$defs/position"}, {"type": "null"}]},
+        "source_span_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"format": {"const": "yaml"}}},
+          "then": {"properties": {"start": {"$ref": "#/$defs/position"}, "end": {"$ref": "#/$defs/position"}, "source_span_sha256": {"$ref": "#/$defs/sha256"}}},
+          "else": {"properties": {"start": {"type": "null"}, "end": {"type": "null"}, "source_span_sha256": {"type": "null"}}}
+        }
+      ]
+    }
+  }
+}

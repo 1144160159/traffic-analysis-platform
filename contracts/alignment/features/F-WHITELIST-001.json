@@ -1,14 +1,85 @@
 {
   "feature_id": "F-WHITELIST-001",
-  "contract_version": 2,
+  "contract_version": 3,
   "status": "implementing",
-  "compatibility": {"preserved_routes": ["/whitelist"], "preserved_actions": ["whitelist-create", "whitelist-submit-approval", "whitelist-disable", "whitelist-extend"], "preserved_api_operations": ["GET /v1/whitelist", "POST /v1/whitelist", "PATCH /v1/whitelist/{id}", "DELETE /v1/whitelist/{id}", "POST /v1/whitelist/check"], "strategy": "expand-migrate-contract", "delete_semantics": "route preserved; implementation is now immutable soft archive"},
-  "ui": {"query_id": "whitelist.governance.snapshot", "controls": [{"control_id": "whitelist-create", "action_id": "whitelist-create"}, {"control_id": "whitelist-submit", "action_id": "whitelist-submit-approval"}, {"control_id": "whitelist-approve", "action_id": "whitelist-approve"}, {"control_id": "whitelist-reject", "action_id": "whitelist-reject"}, {"control_id": "whitelist-extend", "action_id": "whitelist-extend"}, {"control_id": "whitelist-disable", "action_id": "whitelist-disable"}], "states": ["loading", "empty", "draft", "pending_approval", "approved_pending_rule_ack", "effective", "rule_effect_failed", "disabled_pending_rule_ack", "disabled", "stale", "failed"]},
-  "api": {"operation_id": "createWhitelistEntry", "additional_operation_ids": ["listWhitelistEntries", "transitionWhitelistEntry", "archiveWhitelistEntry"], "method": "POST", "path": "/v1/whitelist", "response_envelope": "data-meta-error", "async": false, "idempotency_key": "Idempotency-Key", "action_header": "X-Action-ID", "revision_field": "expected_revision", "compatibility_revision_field": "expected_version"},
-  "domain": {"kind": "command", "invariants": ["entry version, approval, expiry and rule effect are distinct states", "approval never implies effective until the current version has an applied rule ACK", "high-risk approval requires a different actor", "expired entries cannot match", "archive never physically deletes the authoritative row"], "states": ["draft", "pending_approval", "approved_pending_rule_ack", "effective", "rule_effect_failed", "expired_pending_revocation", "disabled_pending_revocation", "disabled", "rejected", "archived"], "compensation": "disable the effective rule version and publish a reconciled revocation"},
-  "data": {"authoritative_store": "postgresql", "read_models": ["postgresql"], "planned_read_models": ["redis"], "migration": "202608071930_whitelist_rule_projection_v1.sql", "migration_chain": ["202608031610_whitelist_governance_v2.sql", "202608071930_whitelist_rule_projection_v1.sql"], "transaction_facts": ["whitelist", "whitelist_entry_versions", "audit_logs", "whitelist_event_outbox", "whitelist_command_requests", "whitelist_rule_effects", "whitelist_rule_projection"], "event_types": ["traffic.whitelist.v2.EntryDrafted", "traffic.whitelist.v2.ApprovalSubmitted", "traffic.whitelist.v2.EntryApproved", "traffic.whitelist.v2.EntryRejected", "traffic.whitelist.v2.EntryExtended", "traffic.whitelist.v2.EntryRevoked", "traffic.whitelist.v2.EntryExpired", "traffic.whitelist.v2.EntryArchived", "traffic.whitelist.v2.EntryAssigned", "traffic.whitelist.v2.EntryUpdated"], "publisher_status": "implemented_default_off_pending_real_kafka_rollout", "source_watermarks": ["postgresql.whitelist.version", "postgresql.whitelist_rule_effects.acknowledged_at", "postgresql.whitelist_rule_projection.aggregate_version", "kafka.whitelist.events.v2.offset"]},
-  "permissions": {"tenant_source": "authenticated_identity", "required_scopes": ["alert:write"], "negative_tests": ["requester cannot approve own high-risk entry", "cross-tenant value cannot be modified"]},
-  "performance": {"baseline_required": true, "journeys": ["create and approve", "expiry", "rule ACK failure"], "stop_conditions": ["database/effective-rule divergence or expired rule remains active"]},
-  "acceptance": {"tests": ["G0 lifecycle contract", "G1 dual approval idempotency expiry soft archive and ACK gating", "G2 real PostgreSQL and rule channel", "G3 effective-rule reconcile", "G4 expiry sweep profile", "G5 Windows Chrome lifecycle"], "evidence": ["entry version, approvals, outbox dispatch ACK, deterministic rule projection ACK, expiry, suppression and audit reconcile"], "current_proof": ["isolated PostgreSQL 16 create approve dispatch project ACK match disable revoke replay integration", "common Docker Kubernetes schema replay with identical structure hash", "outbox broker failure and ACK-before-published component tests", "rule projection transaction rollback duplicate and older replay component tests", "alert ingestion suppression-before-storage component test", "Go TypeScript event catalog Schema and ACL tests"], "remaining": ["release-candidate real Kafka publish consume offset and PG reconciliation", "performance and fault injection", "candidate deployment and rollback rehearsal", "Windows Chrome lifecycle", "T+0 T+1 T+3 T+7 observation"]},
-  "rollout": {"feature_flag": "WHITELIST_EVENT_PIPELINE_V2_ENABLED", "strategy": "canary", "rollback_runbook": "doc/07_alignment/runbooks/F-WHITELIST-001-rollback.md"}
+  "compatibility": {
+    "preserved_routes": ["/whitelist"],
+    "preserved_actions": ["whitelist-create", "whitelist-submit-approval", "whitelist-disable", "whitelist-extend"],
+    "preserved_api_operations": ["GET /v1/whitelist", "POST /v1/whitelist", "PATCH /v1/whitelist/{id}", "DELETE /v1/whitelist/{id}", "POST /v1/whitelist/check"],
+    "strategy": "expand-migrate-contract",
+    "delete_semantics": "route preserved; implementation is an immutable soft archive",
+    "legacy_transition_reason": "reason remains accepted; command_reason prevents approval comments from overwriting the FP rationale"
+  },
+  "ui": {
+    "query_id": "whitelist.governance.snapshot",
+    "controls": [
+      {"control_id": "whitelist-create", "action_id": "whitelist-create"},
+      {"control_id": "whitelist-submit", "action_id": "whitelist-submit-approval"},
+      {"control_id": "whitelist-approve", "action_id": "whitelist-approve"},
+      {"control_id": "whitelist-reject", "action_id": "whitelist-reject"},
+      {"control_id": "whitelist-extend", "action_id": "whitelist-extend"},
+      {"control_id": "whitelist-disable", "action_id": "whitelist-disable"}
+    ],
+    "states": ["loading", "empty", "draft", "pending_approval", "approved_pending_rule_ack", "effective", "rule_effect_failed", "expired_pending_revocation", "disabled_pending_rule_ack", "disabled", "stale", "failed"],
+    "ack_fields": ["rule_effect_status", "rule_desired_state", "rule_revision", "rule_ack_event_id", "rule_acknowledged_at", "rule_kafka_partition", "rule_kafka_offset", "rule_last_error"]
+  },
+  "api": {
+    "operation_id": "createWhitelistEntry",
+    "additional_operation_ids": ["listWhitelistEntries", "transitionWhitelistEntry", "archiveWhitelistEntry"],
+    "method": "POST",
+    "path": "/v1/whitelist",
+    "response_envelope": "data-meta-error",
+    "async": false,
+    "idempotency_key": "Idempotency-Key",
+    "action_header": "X-Action-ID",
+    "revision_field": "expected_revision",
+    "compatibility_revision_field": "expected_version"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "entry version, approval, expiry and rule effect are distinct states",
+      "approval never implies effective until the current version has an applied rule ACK",
+      "creator cannot approve or reject their own entry",
+      "expired entries cannot be approved or matched",
+      "one command cannot combine lifecycle, expiry and owner mutations",
+      "archive never physically deletes the authoritative row"
+    ],
+    "states": ["draft", "pending_approval", "approved_pending_rule_ack", "effective", "rule_effect_failed", "expired_pending_revocation", "disabled_pending_revocation", "disabled", "rejected", "archived"],
+    "compensation": "disable the effective rule version and publish a reconciled revocation",
+    "network_effect": "none; this feature changes detection suppression only"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql"],
+    "planned_read_models": ["redis"],
+    "migration": "202608161100_m09_whitelist_consumer_readiness_v2.sql",
+    "migration_chain": ["202608031610_whitelist_governance_v2.sql", "202608071930_whitelist_rule_projection_v1.sql", "202608161100_m09_whitelist_consumer_readiness_v2.sql"],
+    "transaction_facts": ["whitelist", "whitelist_entry_versions", "audit_logs", "whitelist_event_outbox", "whitelist_command_requests", "whitelist_rule_effects", "whitelist_rule_projection", "whitelist_consumer_readiness_receipt"],
+    "event_types": ["traffic.whitelist.v2.EntryDrafted", "traffic.whitelist.v2.ApprovalSubmitted", "traffic.whitelist.v2.EntryApproved", "traffic.whitelist.v2.EntryRejected", "traffic.whitelist.v2.EntryExtended", "traffic.whitelist.v2.EntryRevoked", "traffic.whitelist.v2.EntryExpired", "traffic.whitelist.v2.EntryArchived", "traffic.whitelist.v2.EntryAssigned", "traffic.whitelist.v2.EntryUpdated"],
+    "publisher_status": "implemented_default_off_consumer_receipt_required",
+    "source_watermarks": ["postgresql.whitelist.version", "postgresql.whitelist_rule_effects.acknowledged_at", "postgresql.whitelist_rule_projection.entry_version", "kafka.whitelist.events.v2.offset"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:write"],
+    "negative_tests": ["requester cannot approve own entry", "cross-tenant value cannot be modified", "past expiry cannot be approved", "mixed governance command is rejected"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["create and approve", "expiry", "rule ACK failure"],
+    "stop_conditions": ["database/effective-rule divergence or expired rule remains active"]
+  },
+  "acceptance": {
+    "tests": ["G0 lifecycle contract", "G1 dual approval idempotency expiry soft archive and ACK gating", "G2 real PostgreSQL and Kafka rule channel", "G3 effective-rule reconcile", "G4 expiry sweep profile", "G5 Windows Chrome lifecycle"],
+    "evidence": ["entry version", "approvals", "outbox broker ACK", "consumer readiness receipt", "deterministic rule projection ACK", "expiry", "suppression", "audit reconcile"],
+    "current_proof": ["Kubernetes run-scoped PostgreSQL 16 and Kafka create submit approve project ACK expire revoke integration", "consumer broker projection readiness joined to applied rule effect", "immutable Web bundle exposes ACK event rule revision and Kafka coordinates", "Go TypeScript OpenAPI event catalog schema and ACL tests"],
+    "remaining": ["production candidate deployment", "performance and fault injection", "rollback rehearsal", "Windows Chrome lifecycle", "T+0 T+1 T+3 T+7 observation"]
+  },
+  "rollout": {
+    "feature_flags": ["WHITELIST_EVENT_CONSUMER_V2_ENABLED", "WHITELIST_EVENT_PRODUCER_V2_ENABLED", "WHITELIST_DETECTION_MATCHER_V2_ENABLED"],
+    "deprecated_flag": "WHITELIST_EVENT_PIPELINE_V2_ENABLED",
+    "strategy": "consumer receipt then producer then reconciled matcher",
+    "rollback_runbook": "doc/07_alignment/runbooks/T1-M09-N018-whitelist-governance.md"
+  }
 }

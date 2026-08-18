@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis.local/contracts/alignment/m10-network-policy-k8s-result.schema.json",
+  "title": "T1-M10-N009 Kubernetes network policy evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "task_id", "atomic_pr_ids", "run_id",
+    "captured_at", "status", "engineering_status", "acceptance_status", "profile_id",
+    "environment_kind", "candidate_id", "contract_sha256", "generated_manifest_sha256",
+    "source_sha256", "cluster", "candidate", "negative_probes", "blocking_codes",
+    "required_gates", "shared_infrastructure_touched", "production_applied",
+    "run_scoped_resources_created", "allowed_claims", "does_not_prove"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_kind": {"const": "M10_NETWORK_POLICY_K8S_ENFORCEMENT_RESULT"},
+    "task_id": {"const": "T1-M10-N009"},
+    "atomic_pr_ids": {
+      "const": ["T1-M10-P021-OPS-n009-s1", "T1-M10-P022-TST-POST-n009-s2"]
+    },
+    "run_id": {"type": "string", "format": "uuid"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "status": {"const": "BLOCKED"},
+    "engineering_status": {"const": "PASS"},
+    "acceptance_status": {"const": "BLOCKED_CNI_ENFORCEMENT_MISSING"},
+    "profile_id": {"const": "M10-N009-K8S-MINIMUM-NETWORK-POLICY-V1"},
+    "environment_kind": {"const": "KUBERNETES"},
+    "candidate_id": {"type": ["string", "null"]},
+    "contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "generated_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_sha256": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "cluster": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["context", "server_version", "network_policy_api_available", "target_namespace", "nodes", "cni_daemonsets", "policy_enforcement_cnis", "live_network_policy_count", "live_network_policies"],
+      "properties": {
+        "context": {"type": "string", "minLength": 1},
+        "server_version": {"type": "string", "minLength": 1},
+        "network_policy_api_available": {"type": "boolean"},
+        "target_namespace": {"type": "object"},
+        "nodes": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+        "cni_daemonsets": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+        "policy_enforcement_cnis": {"type": "array", "maxItems": 0},
+        "live_network_policy_count": {"type": "integer", "minimum": 0},
+        "live_network_policies": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["object_count", "policy_names", "client_dry_run", "present_in_target_namespace", "applied_by_run", "exception_approvals"],
+      "properties": {
+        "object_count": {"const": 10},
+        "policy_names": {"type": "array", "minItems": 10, "maxItems": 10, "uniqueItems": true, "items": {"type": "string"}},
+        "client_dry_run": {"const": "PASS"},
+        "present_in_target_namespace": {"type": "array", "maxItems": 0},
+        "applied_by_run": {"const": false},
+        "exception_approvals": {"type": "array", "minItems": 1, "items": {"type": "object"}}
+      }
+    },
+    "negative_probes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unauthorized_pod", "unauthorized_port", "external_egress"],
+      "properties": {
+        "unauthorized_pod": {"const": "NOT_EXECUTED_CNI_ENFORCEMENT_MISSING"},
+        "unauthorized_port": {"const": "NOT_EXECUTED_CNI_ENFORCEMENT_MISSING"},
+        "external_egress": {"const": "NOT_EXECUTED_CNI_ENFORCEMENT_MISSING"}
+      }
+    },
+    "blocking_codes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "required_gates": {"type": "object"},
+    "shared_infrastructure_touched": {"const": false},
+    "production_applied": {"const": false},
+    "run_scoped_resources_created": {"const": false},
+    "allowed_claims": {"type": "array", "items": {"type": "string"}},
+    "does_not_prove": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+  }
+}

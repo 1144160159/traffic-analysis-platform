@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/alignment/asset-atomic-ephemeral-test-result.schema.json",
+  "title": "Candidate-bound asset authority transaction G1 result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version", "artifact_kind", "subject_pr_id", "run_id", "status", "candidate_manifest",
+    "profile_id", "environment_id", "source_blob_sha256", "oracle_results",
+    "errors", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_kind": {"const": "ASSET_ATOMIC_EPHEMERAL_TEST_RESULT"},
+    "subject_pr_id": {"const": "T1-M06-P906-TST-PRE-n004-authority-transaction-fault-matrix"},
+    "run_id": {"type": "string", "minLength": 3},
+    "status": {"const": "PASS"},
+    "candidate_manifest": {"$ref": "#/$defs/hash_ref"},
+    "profile_id": {"type": "string", "minLength": 3},
+    "environment_id": {"type": "string", "minLength": 3},
+    "source_blob_sha256": {"type": "object"},
+    "oracle_results": {"type": "object"},
+    "errors": {"type": "array", "maxItems": 0},
+    "proof_ceiling": {"const": "OWNED_EPHEMERAL_POSTGRES_G1_ONLY_NOT_PRODUCTION_ACCEPTANCE"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

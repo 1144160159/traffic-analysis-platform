@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/evidence-case-fixture.schema.json",
+  "title": "Registered immutable fixture recipe for one atomic verification case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "suite_id", "case_id", "recipe_id", "recipe_version",
+    "mutation_operator", "expected_outcome", "expected_rejection_code",
+    "authority_input_paths", "parameters"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "suite_id": {"type": "string", "pattern": "^T1-M[0-9]{2}-N[0-9]{3}::[a-z0-9-]+::TST-(?:PRE|POST)$"},
+    "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "recipe_id": {"type": "string", "pattern": "^T1-FIXTURE-[A-Z0-9_-]+-V[0-9]+$"},
+    "recipe_version": {"const": 1},
+    "mutation_operator": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+    "expected_outcome": {"enum": ["PASS", "BLOCKED"]},
+    "expected_rejection_code": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^REJECT_[A-Z0-9_]+$"}
+      ]
+    },
+    "authority_input_paths": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "parameters": {"type": "object"}
+  }
+}

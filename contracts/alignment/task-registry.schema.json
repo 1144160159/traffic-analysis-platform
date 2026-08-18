@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/task-registry.schema.json",
+  "title": "Topic One executable PR design registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "source_document", "source_document_sha256", "status",
+    "milestone_count", "task_count", "closure_slice_count", "atomic_pr_count",
+    "tasks", "closure_slices", "validation"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.1.0"},
+    "source_document": {"type": "string", "minLength": 1},
+    "source_document_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {"enum": ["DRAFT_DESIGN", "ACCEPTED_DESIGN_BASELINE"]},
+    "milestone_count": {"const": 14},
+    "task_count": {"const": 212},
+    "closure_slice_count": {"const": 30},
+    "atomic_pr_count": {"type": "integer", "minimum": 212},
+    "tasks": {
+      "type": "array", "minItems": 212, "maxItems": 212,
+      "items": {"$ref": "#/$defs/task"}
+    },
+    "closure_slices": {
+      "type": "array", "minItems": 30, "maxItems": 30,
+      "items": {"$ref": "#/$defs/closure_slice"}
+    },
+    "validation": {"$ref": "#/$defs/validation"}
+  },
+  "$defs": {
+    "symbol": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "symbol", "line"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "symbol": {"type": "string", "minLength": 1},
+        "line": {"type": "integer", "minimum": 1}
+      }
+    },
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "kind", "value", "exists_in_snapshot", "resolution_status",
+        "candidate_paths", "symbol_candidates", "resolution_note"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "EXISTING_FILE", "EXISTING_DIRECTORY", "EXISTING_GLOB", "EXISTING_CANDIDATES",
+            "PROPOSED_FILE", "LOGICAL_ARTIFACT", "CONTRACT_ID", "EXTERNAL_ARTIFACT"
+          ]
+        },
+        "value": {"type": "string", "minLength": 1},
+        "exists_in_snapshot": {"type": "boolean"},
+        "resolution_status": {
+          "enum": [
+            "EXACT_FILE", "EXACT_DIRECTORY", "GLOB_MATCH", "UNIQUE_CANDIDATE",
+            "AMBIGUOUS_CANDIDATES", "REGISTRY_MATCH", "PLANNED", "LOGICAL_ONLY", "UNRESOLVED"
+          ]
+        },
+        "candidate_paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "symbol_candidates": {"type": "array", "items": {"$ref": "#/$defs/symbol"}},
+        "resolution_note": {"type": "string", "minLength": 1}
+      }
+    },
+    "selected_target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "symbol", "target_state", "approved_by"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "symbol": {"type": "string", "minLength": 1},
+        "target_state": {"enum": ["EXISTING", "PLANNED"]},
+        "approved_by": {"type": "string", "minLength": 1}
+      }
+    },
+    "evidence_run_binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "run_id", "candidate_manifest_sha256", "profile_id", "environment_id", "time_window", "gate_id", "result", "manifest_path", "manifest_sha256", "production_applied", "exclusions"],
+      "properties": {
+        "schema_version": {"const": "1.0.0"},
+        "run_id": {"type": "string", "minLength": 1},
+        "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {
+          "type": "string", "minLength": 1,
+          "description": "Native/default profile at design time; accepted execution may promote the full ancestry to the scoped milestone profile and must revalidate every edge."
+        },
+        "environment_id": {"type": "string", "minLength": 1},
+        "time_window": {"type": "string", "minLength": 1},
+        "gate_id": {"type": "string", "pattern": "^G[0-8]$"},
+        "result": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+        "manifest_path": {"type": "string", "minLength": 1},
+        "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "production_applied": {"type": "boolean"},
+        "exclusions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "atomic_pr": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "pr_id", "pr_type", "status", "primary_id", "depends_on_prs", "depends_on_external_activities",
+        "required_gates", "required_profiles", "rollback_runbook_id", "default_runtime_state",
+        "phase", "candidate_paths", "selected_targets", "allowed_paths",
+        "candidate_manifest_path", "candidate_manifest_sha256", "profile_id",
+        "current_idx_manifest_path", "current_idx_manifest_sha256",
+        "promotion_intent_manifest_path", "promotion_intent_manifest_sha256",
+        "postmerge_result_manifest_path", "postmerge_result_manifest_sha256", "evidence_run_bindings",
+        "max_handwritten_loc", "max_production_files",
+        "max_expand_migrations", "max_event_or_api_versions", "produces_new_evidence",
+        "proves", "does_not_prove"
+      ],
+      "properties": {
+        "pr_id": {"type": "string", "pattern": "^T1-M[0-9]{2}(?:-R[0-9]{2})?-P[0-9]{3}-[A-Z-]+-[a-z0-9-]+$"},
+        "pr_type": {"enum": ["CTR", "EXP", "PRJ", "WRT", "UI", "OPS", "REF", "TST-PRE", "TST-POST", "IDX", "PROM"]},
+        "status": {"enum": ["DRAFT", "READY", "IMPLEMENTING", "VERIFYING", "OBSERVING", "BLOCKED", "PASS", "FAIL"]},
+        "primary_id": {"type": "string", "minLength": 1},
+        "canonical_ids": {"type": "array", "items": {"type": "string", "pattern": "^(F|T)-[A-Z]+-[0-9]{3}$"}, "uniqueItems": true},
+        "depends_on_prs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "depends_on_external_activities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "required_gates": {"type": "array", "items": {"type": "string", "pattern": "^G[0-8]$"}, "uniqueItems": true},
+        "required_profiles": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "rollback_runbook_id": {"type": "string", "minLength": 1},
+        "default_runtime_state": {"enum": ["not_applicable", "off", "idle", "no_runtime_change"]},
+        "phase": {"type": "string", "minLength": 1},
+        "candidate_paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "selected_targets": {"type": "array", "items": {"$ref": "#/$defs/selected_target"}, "uniqueItems": true},
+        "allowed_paths": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "candidate_manifest_path": {"type": ["string", "null"]},
+        "candidate_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {"type": ["string", "null"]},
+        "current_idx_manifest_path": {"type": ["string", "null"]},
+        "current_idx_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "promotion_intent_manifest_path": {"type": ["string", "null"]},
+        "promotion_intent_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "postmerge_result_manifest_path": {"type": ["string", "null"]},
+        "postmerge_result_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "evidence_run_bindings": {"type": "array", "items": {"$ref": "#/$defs/evidence_run_binding"}, "uniqueItems": true},
+        "max_handwritten_loc": {"type": "integer", "minimum": 1, "maximum": 800},
+        "max_production_files": {"type": "integer", "minimum": 1, "maximum": 25},
+        "max_expand_migrations": {"type": "integer", "minimum": 0},
+        "max_event_or_api_versions": {"type": "integer", "minimum": 0},
+        "produces_new_evidence": {"type": "boolean"},
+        "proves": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "does_not_prove": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    },
+    "external_activity": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "activity_id", "activity_type", "status", "authority", "mutable_by_repository_authors",
+        "depends_on_prs", "depends_on_external_activities", "run_id", "instance_id",
+        "candidate_manifest_sha256", "profile_id", "required_inputs", "receipt_artifact", "receipt_sha256",
+        "receipt_schema", "receipt_required_fields", "signature_required", "failure_route"
+      ],
+      "properties": {
+        "activity_id": {"type": "string", "minLength": 1},
+        "activity_type": {"enum": ["CUSTODY", "EXECUTE", "ATTEST", "APPROVAL"]},
+        "status": {"enum": ["PENDING", "READY", "RUNNING", "PASS", "FAIL", "BLOCKED"]},
+        "authority": {"type": "string", "minLength": 1},
+        "mutable_by_repository_authors": {"const": false},
+        "depends_on_prs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "depends_on_external_activities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "run_id": {"type": ["string", "null"]},
+        "instance_id": {"type": ["string", "null"]},
+        "candidate_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "profile_id": {"type": "string", "minLength": 1},
+        "required_inputs": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["artifact_id", "sha256"],
+            "properties": {
+              "artifact_id": {"type": "string", "minLength": 1},
+              "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+            }
+          }
+        },
+        "receipt_artifact": {"type": "string", "minLength": 1},
+        "receipt_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "receipt_schema": {"const": "contracts/alignment/external-activity-receipt.schema.json"},
+        "receipt_required_fields": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+        "signature_required": {"const": true},
+        "failure_route": {"type": "string", "minLength": 1}
+      }
+    },
+    "responsibility": {
+      "type": "object", "additionalProperties": false,
+      "required": ["owner_role", "owner", "reviewers", "approvers"],
+      "properties": {
+        "owner_role": {"type": "string", "minLength": 1},
+        "owner": {"type": ["string", "null"]},
+        "reviewers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "approvers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "task": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "task_id", "milestone_id", "status", "track", "primary_kind", "primary_id",
+        "accountable_milestone", "accountable_ids", "requirement_ids", "requirement_links", "secondary_ids", "affected_ids",
+        "depends_on_tasks", "target_hints", "resolved_targets", "pr_sequence", "external_activities",
+        "action", "verification_and_rollback", "allowed_claim_template", "forbidden_claim_template", "completion_contract",
+        "responsibility", "readiness_blockers"
+      ],
+      "properties": {
+        "task_id": {"type": "string", "pattern": "^T1-M[0-9]{2}-N[0-9]{3}$"},
+        "milestone_id": {"type": "string", "pattern": "^T1-M[0-9]{2}$"},
+        "status": {"enum": ["DRAFT", "READY", "IMPLEMENTING", "VERIFYING", "OBSERVING", "BLOCKED", "CLOSED"]},
+        "track": {"enum": ["contract_delivery", "remediation", "engineering_strict"]},
+        "primary_kind": {"enum": ["requirement", "canonical", "technical", "release", "external_gate"]},
+        "primary_id": {"type": "string", "minLength": 1},
+        "accountable_milestone": {"type": "string", "pattern": "^T1-M[0-9]{2}$"},
+        "accountable_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "requirement_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "requirement_links": {
+          "type": "array", "uniqueItems": true,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["requirement_id", "relation"],
+            "properties": {
+              "requirement_id": {"type": "string", "pattern": "^REQ-T1-[A-Z0-9-]+$"},
+              "relation": {"enum": ["DIRECT_DELIVERY", "VERIFICATION", "AGGREGATE", "DEPENDENCY", "AFFECTED", "SUPPORT"]}
+            }
+          }
+        },
+        "secondary_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "affected_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "depends_on_tasks": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "target_hints": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "resolved_targets": {"type": "array", "items": {"$ref": "#/$defs/target"}, "minItems": 1},
+        "pr_sequence": {"type": "array", "items": {"$ref": "#/$defs/atomic_pr"}},
+        "external_activities": {"type": "array", "items": {"$ref": "#/$defs/external_activity"}},
+        "action": {"type": "string", "minLength": 1},
+        "verification_and_rollback": {"type": "string", "minLength": 1},
+        "allowed_claim_template": {"type": "string", "minLength": 1},
+        "forbidden_claim_template": {"type": "string", "minLength": 1},
+        "completion_contract": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "schema_path", "current_index_schema_path", "expected_atomic_pr_ids",
+            "terminal_task_idx_pr_id", "dependency_task_idx_pr_ids",
+            "interleaved_leaf_dependency_pr_ids", "external_activity_ids",
+            "required_rollback_runbook_ids", "status"
+          ],
+          "properties": {
+            "schema_path": {"const": "contracts/alignment/task-completion-candidate.schema.json"},
+            "current_index_schema_path": {"const": "contracts/alignment/task-current-evidence-index.schema.json"},
+            "expected_atomic_pr_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "terminal_task_idx_pr_id": {"type": "string", "minLength": 1},
+            "dependency_task_idx_pr_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "interleaved_leaf_dependency_pr_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "external_activity_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "required_rollback_runbook_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "status": {"enum": ["PENDING", "PASS", "BLOCKED"]}
+          }
+        },
+        "responsibility": {"$ref": "#/$defs/responsibility"},
+        "readiness_blockers": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "closure_decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["canonical_id", "status", "evidence_manifest_sha256", "decision_authority"],
+      "properties": {
+        "canonical_id": {"type": "string", "pattern": "^(F|T)-[A-Z]+-[0-9]{3}$"},
+        "status": {"enum": ["PENDING", "PASS", "BLOCKED"]},
+        "evidence_manifest_sha256": {"type": ["string", "null"]},
+        "decision_authority": {"type": ["string", "null"]}
+      }
+    },
+    "closure_slice": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "slice_id", "short_id", "canonical_ids", "surface", "minimum_closure_rule", "status",
+        "track", "accountable_parent_task_id", "depends_on_slices", "contract_impact", "eligibility",
+        "owner_roles", "target_hints", "closure_decisions", "pr_sequence", "readiness_blockers"
+      ],
+      "properties": {
+        "slice_id": {"type": "string", "pattern": "^T1-M13-R[0-9]{2}$"},
+        "short_id": {"type": "string", "pattern": "^R[0-9]{2}$"},
+        "canonical_ids": {"type": "array", "items": {"type": "string", "pattern": "^(F|T)-[A-Z]+-[0-9]{3}$"}, "minItems": 1, "uniqueItems": true},
+        "surface": {"type": "string", "minLength": 1},
+        "minimum_closure_rule": {"type": "string", "minLength": 1},
+        "status": {"enum": ["DRAFT", "READY", "IMPLEMENTING", "VERIFYING", "OBSERVING", "BLOCKED", "CLOSED"]},
+        "track": {"const": "remediation"},
+        "accountable_parent_task_id": {"type": "string", "pattern": "^T1-M13-N00[6-8]$"},
+        "depends_on_slices": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "contract_impact": {"enum": ["UNCLASSIFIED", "REQUIRED", "NOT_APPLICABLE", "RESIDUAL"]},
+        "eligibility": {"type": "string", "minLength": 1},
+        "owner_roles": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+        "target_hints": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+        "closure_decisions": {"type": "array", "items": {"$ref": "#/$defs/closure_decision"}, "minItems": 1},
+        "pr_sequence": {"type": "array", "items": {"$ref": "#/$defs/atomic_pr"}, "minItems": 1},
+        "readiness_blockers": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "structure_status", "dor_status", "candidate_status", "promotion_status",
+        "task_ids_unique", "task_ids_contiguous", "pr_ids_unique", "dependencies_exist",
+        "dependency_graph_acyclic", "single_pr_type", "compound_parent_tasks_expanded",
+        "external_activity_dependencies_complete", "closure_slices_expanded", "idx_before_prom",
+        "canonical_slice_count", "canonical_slice_unique", "canonical_slice_matches_registry",
+        "canonical_slice_sha256", "target_resolution_counts", "fully_unresolved_task_count"
+      ],
+      "properties": {
+        "structure_status": {"const": "PASS"},
+        "dor_status": {"enum": ["PASS", "BLOCKED"]},
+        "candidate_status": {"enum": ["PASS", "BLOCKED"]},
+        "promotion_status": {"enum": ["PASS", "BLOCKED"]},
+        "task_ids_unique": {"const": true},
+        "task_ids_contiguous": {"const": true},
+        "pr_ids_unique": {"const": true},
+        "dependencies_exist": {"const": true},
+        "dependency_graph_acyclic": {"const": true},
+        "single_pr_type": {"const": true},
+        "compound_parent_tasks_expanded": {"const": true},
+        "external_activity_dependencies_complete": {"const": true},
+        "closure_slices_expanded": {"const": true},
+        "idx_before_prom": {"const": true},
+        "canonical_slice_count": {"const": 102},
+        "canonical_slice_unique": {"const": 102},
+        "canonical_slice_matches_registry": {"const": true},
+        "canonical_slice_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "target_resolution_counts": {"type": "object"},
+        "fully_unresolved_task_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

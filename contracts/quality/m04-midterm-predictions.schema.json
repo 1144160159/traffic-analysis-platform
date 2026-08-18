@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/quality/m04-midterm-predictions.schema.json",
+  "title": "M04 immutable raw prediction artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "run_id", "profile_id", "environment_id",
+    "candidate_hash", "model_hash", "feature_hash", "threshold_hash",
+    "dataset_manifest_hash", "method_body_hash", "generated_at",
+    "labels_visible_to_predictor", "rows"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M04_MIDTERM_RAW_PREDICTIONS"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,159}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "candidate_hash": {"$ref": "#/$defs/sha256"},
+    "model_hash": {"$ref": "#/$defs/sha256"},
+    "feature_hash": {"$ref": "#/$defs/sha256"},
+    "threshold_hash": {"$ref": "#/$defs/sha256"},
+    "dataset_manifest_hash": {"$ref": "#/$defs/sha256"},
+    "method_body_hash": {"$ref": "#/$defs/sha256"},
+    "generated_at": {"$ref": "#/$defs/rfc3339_utc"},
+    "labels_visible_to_predictor": {"const": false},
+    "rows": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/row"}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "rfc3339_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?Z$"
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sample_id", "predicted_class", "score", "detector_version", "evidence_ids"],
+      "properties": {
+        "sample_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,191}$"},
+        "predicted_class": {"enum": ["known_attack", "normal", "abstain"]},
+        "score": {"type": "number", "minimum": 0, "maximum": 1},
+        "detector_version": {"type": "string", "minLength": 1},
+        "evidence_ids": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

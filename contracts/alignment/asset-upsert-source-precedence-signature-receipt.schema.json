@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.local/contracts/alignment/asset-upsert-source-precedence-signature-receipt.schema.json",
+  "title": "Trusted signature receipt for one P917 domain approver",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "receipt_id", "candidate_manifest_sha256",
+    "profile_id", "environment_id", "approval_id", "role", "signer_identity",
+    "payload_sha256", "purpose", "policy_id", "verifier", "verification_status",
+    "verified_at", "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "TRUSTED_DOMAIN_APPROVAL_SIGNATURE_RECEIPT"},
+    "receipt_id": {"type": "string", "pattern": "^SIG-P917-[A-Z0-9-]+$"},
+    "candidate_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "profile_id": {"const": "T1-ASSET-SOURCE-PRECEDENCE-V1"},
+    "environment_id": {"type": "string", "minLength": 3},
+    "approval_id": {"pattern": "^APPROVAL-T1-M06-P917-[A-Z0-9-]+$"},
+    "role": {"enum": ["multi-source-data-owner", "asset-service-owner"]},
+    "signer_identity": {"type": "string", "minLength": 3},
+    "payload_sha256": {"$ref": "#/$defs/sha256"},
+    "purpose": {"const": "ASSET_SOURCE_PRECEDENCE_DOMAIN_APPROVAL"},
+    "policy_id": {"const": "TOPIC1-DOMAIN-APPROVAL-V1"},
+    "verifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["service_identity", "deployment_manifest_sha256", "trust_policy_sha256", "request_sha256", "attestation_sha256"],
+      "properties": {
+        "service_identity": {"type": "string", "minLength": 3},
+        "deployment_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "trust_policy_sha256": {"$ref": "#/$defs/sha256"},
+        "request_sha256": {"$ref": "#/$defs/sha256"},
+        "attestation_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "verification_status": {"const": "PASS"},
+    "verified_at": {"type": "string", "minLength": 20},
+    "proof_ceiling": {"const": "ONE_TRUSTED_DOMAIN_SIGNATURE_ONLY_NOT_QUORUM_OR_EXECUTION_AUTHORIZATION"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m01-early-trust-train-allocation.schema.json",
+  "title": "M01 append-only early trusted-verifier train allocation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_kind", "artifact_status", "revision_id",
+    "base_active_catalog_refs", "active_m01_projection_freeze",
+    "semantic_projection_sha256", "allocation_epoch", "append_leaf_count",
+    "new_task", "train", "supersessions", "dependency_revisions",
+    "task_dependency_revisions", "completion_revisions", "claims"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_kind": {"const": "M01_EARLY_TRUST_TRAIN_ALLOCATION"},
+    "artifact_status": {"const": "VERSIONED_PREVIEW_NOT_GLOBAL_REGISTRY"},
+    "revision_id": {"const": "M01-EARLY-TRUST-V1"},
+    "base_active_catalog_refs": {
+      "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash_ref"}
+    },
+    "active_m01_projection_freeze": {"$ref": "#/$defs/freeze"},
+    "semantic_projection_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "allocation_epoch": {"const": "T1-M01-P057-P066"},
+    "append_leaf_count": {"const": 10},
+    "new_task": {"$ref": "#/$defs/new_task"},
+    "train": {"$ref": "#/$defs/train"},
+    "supersessions": {
+      "type": "array", "minItems": 9, "maxItems": 9, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/supersession"}
+    },
+    "dependency_revisions": {
+      "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/dependency_revision"}
+    },
+    "task_dependency_revisions": {
+      "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/task_dependency_revision"}
+    },
+    "completion_revisions": {
+      "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/completion_revision"}
+    },
+    "claims": {"$ref": "#/$defs/claims"}
+  },
+  "$defs": {
+    "hash_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 3},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "freeze": {
+      "type": "object", "additionalProperties": false,
+      "required": ["atomic_id_epoch", "field_names", "ordered_projection_sha256", "status"],
+      "properties": {
+        "atomic_id_epoch": {"const": "T1-M01-P001-P056"},
+        "field_names": {
+          "type": "array", "minItems": 11, "maxItems": 11, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 2}
+        },
+        "ordered_projection_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "status": {"const": "PASS_EXACT_ACTIVE_SOURCE_PRESERVATION"}
+      }
+    },
+    "new_task": {
+      "type": "object", "additionalProperties": false,
+      "required": ["task_id", "milestone_id", "depends_on_task_ids", "single_result", "status"],
+      "properties": {
+        "task_id": {"const": "T1-M01-N015"},
+        "milestone_id": {"const": "T1-M01"},
+        "depends_on_task_ids": {
+          "type": "array", "minItems": 1, "maxItems": 1,
+          "items": {"const": "T1-M01-N001"}
+        },
+        "single_result": {"type": "string", "minLength": 20},
+        "status": {"const": "DRAFT_PREVIEW_NOT_REGISTERED"}
+      }
+    },
+    "step": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "atomic_pr_id", "pr_type", "phase", "primary_locator", "companion_locators",
+        "target_state", "prerequisite_atomic_pr_ids", "required_gates",
+        "single_outcome", "oracle_and_rollback", "terminal_task_idx",
+        "replaces_atomic_pr_id"
+      ],
+      "properties": {
+        "atomic_pr_id": {
+          "type": "string",
+          "pattern": "^T1-M01-P(?:05[7-9]|06[0-6])-(?:CTR|REF|OPS|TST-PRE|TST-POST|IDX)-n015-(?:s[1-9]|task-completion)$"
+        },
+        "pr_type": {"enum": ["CTR", "REF", "OPS", "TST-PRE", "TST-POST", "IDX"]},
+        "phase": {"type": "string", "minLength": 3},
+        "primary_locator": {"type": "string", "minLength": 3},
+        "companion_locators": {
+          "type": "array", "maxItems": 16, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "target_state": {"enum": ["PLANNED", "PLANNED_OUTPUT"]},
+        "prerequisite_atomic_pr_ids": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^T1-M[0-9]{2}-P[0-9]{3}-[A-Z-]+-.+$"}
+        },
+        "required_gates": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^G[0-9]+$"}
+        },
+        "single_outcome": {"type": "string", "minLength": 12},
+        "oracle_and_rollback": {"type": "string", "minLength": 20},
+        "terminal_task_idx": {"type": "boolean"},
+        "replaces_atomic_pr_id": {
+          "type": ["string", "null"],
+          "pattern": "^T1-M01-P(?:03[2-7]|04[5-7])-[A-Z-]+-n010-s[0-9]+$"
+        }
+      }
+    },
+    "train": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "train_id", "parent_task_id", "gap_id", "single_result", "steps",
+        "entry_dependency_atomic_pr_id", "terminal_atomic_pr_id"
+      ],
+      "properties": {
+        "train_id": {"const": "M01-EARLY-TRUST-TRAIN-01"},
+        "parent_task_id": {"const": "T1-M01-N015"},
+        "gap_id": {"const": "GAP-M01-P006-TRUST-DEPENDENCY-CYCLE"},
+        "single_result": {"type": "string", "minLength": 20},
+        "steps": {
+          "type": "array", "minItems": 10, "maxItems": 10,
+          "items": {"$ref": "#/$defs/step"}
+        },
+        "entry_dependency_atomic_pr_id": {"const": "T1-M01-P002-IDX-n001-task-completion"},
+        "terminal_atomic_pr_id": {"const": "T1-M01-P066-IDX-n015-task-completion"}
+      }
+    },
+    "supersession": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "legacy_atomic_pr_id", "replacement_atomic_pr_id", "disposition",
+        "write_scope_transfer", "historical_id_policy"
+      ],
+      "properties": {
+        "legacy_atomic_pr_id": {"type": "string", "pattern": "^T1-M01-P(?:03[2-7]|04[5-7])-[A-Z-]+-n010-s[0-9]+$"},
+        "replacement_atomic_pr_id": {"type": "string", "pattern": "^T1-M01-P(?:05[7-9]|06[0-5])-[A-Z-]+-n015-s[1-9]$"},
+        "disposition": {"const": "SUPERSEDED_IN_PREVIEW_ACTIVE_REGISTRY_UNCHANGED"},
+        "write_scope_transfer": {"enum": ["EXACT_LOCATOR_SET_TRANSFER", "EQUIVALENT_NEW_ID_OUTPUT_SCOPE"]},
+        "historical_id_policy": {"const": "PRESERVED_NOT_REUSED"}
+      }
+    },
+    "dependency_revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["atomic_pr_id", "prior_dependency_ids", "revised_dependency_ids", "reason"],
+      "properties": {
+        "atomic_pr_id": {"enum": [
+          "T1-M01-P005-REF-n003-s1", "T1-M01-P006-TST-PRE-n003-s2",
+          "T1-M01-P038-REF-n010-s7", "T1-M01-P048-IDX-n010-task-completion"
+        ]},
+        "prior_dependency_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "revised_dependency_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string"}},
+        "reason": {"type": "string", "minLength": 20}
+      }
+    },
+    "task_dependency_revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["task_id", "prior_dependency_task_ids", "revised_dependency_task_ids"],
+      "properties": {
+        "task_id": {"enum": ["T1-M01-N003", "T1-M01-N010"]},
+        "prior_dependency_task_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "revised_dependency_task_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "completion_revision": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "parent_task_id", "terminal_atomic_pr_id", "prior_member_atomic_pr_ids",
+        "revised_member_atomic_pr_ids", "superseded_member_atomic_pr_ids",
+        "revised_dependency_task_idx_pr_ids", "revised_terminal_direct_dependency_ids",
+        "revision_semantics"
+      ],
+      "properties": {
+        "parent_task_id": {"enum": ["T1-M01-N003", "T1-M01-N010", "T1-M01-N015"]},
+        "terminal_atomic_pr_id": {"type": "string"},
+        "prior_member_atomic_pr_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "revised_member_atomic_pr_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string"}},
+        "superseded_member_atomic_pr_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "revised_dependency_task_idx_pr_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "revised_terminal_direct_dependency_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "revision_semantics": {"enum": [
+          "EXISTING_TERMINAL_ID_PRESERVED_MEMBER_AND_DEPENDENCY_EXACT_SET_REVISED",
+          "NEW_TASK_TERMINAL_AND_MEMBER_EXACT_SET"
+        ]}
+      }
+    },
+    "claims": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed", "forbidden", "proof_ceiling"],
+      "properties": {
+        "allowed": {"const": "P057-P066 early-trust ownership supersession and dependency intent are statically allocated in preview"},
+        "forbidden": {
+          "type": "array", "minItems": 10, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 3}
+        },
+        "proof_ceiling": {"const": "STATIC_PREVIEW_ALLOCATION_ONLY_NOT_GLOBAL_REGISTRATION_FUNCTION_REVIEW_IMPLEMENTATION_FIXTURE_CREATION_DEPLOYMENT_TEST_EXECUTION_TRUST_PASS_AUTHORIZATION_OR_ACCEPTANCE"}
+      }
+    }
+  }
+}

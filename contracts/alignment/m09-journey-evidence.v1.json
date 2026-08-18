@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "task_id": "T1-M09-N023",
+  "status": "PARTIAL",
+  "aggregation_mode": "READ_ONLY",
+  "production_applied": false,
+  "required_browser": {
+    "name": "Chrome",
+    "os": "Windows",
+    "backend": "chrome_extension",
+    "allowed_viewports": [
+      "1366x900",
+      "1600x900"
+    ],
+    "url_prefix": "http://127.0.0.1:25173/"
+  },
+  "candidate_binding": {
+    "app_image": "traffic/web-ui:m09-n022-alert-detail-css-20260816-r2",
+    "app_image_id": "sha256:6ec59641d1b271198c4a842218c79ff4c575d7c3f191375a4278d58dd0496b13",
+    "config_path": "deployments/kubernetes/applications/web-ui.yaml",
+    "config_sha256": "ab956d2286aab8c5dc14d385e5d0989e74e973cd6e2f592e0a02d20dc37bf6e1",
+    "route_config_path": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+    "route_config_sha256": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79"
+  },
+  "required_check_kinds": [
+    "query",
+    "mutation",
+    "permission",
+    "failure_recovery",
+    "download",
+    "final_fact"
+  ],
+  "required_journeys": [
+    {
+      "atomic_pr_id": "T1-M09-P056-TST-POST-n023-s1",
+      "journey_id": "alert-query-journey",
+      "route": "/alerts",
+      "required_stores": ["opensearch", "postgres"]
+    },
+    {
+      "atomic_pr_id": "T1-M09-P057-TST-POST-n023-s2",
+      "journey_id": "alert-mutation-journey",
+      "route": "/alerts/:alertId",
+      "required_stores": ["postgres", "kafka"]
+    },
+    {
+      "atomic_pr_id": "T1-M09-P058-TST-POST-n023-s3",
+      "journey_id": "permission-negative-journey",
+      "route": "/whitelist",
+      "required_stores": ["postgres", "kafka"]
+    },
+    {
+      "atomic_pr_id": "T1-M09-P059-TST-POST-n023-s4",
+      "journey_id": "failure-recovery-journey",
+      "route": "/deployments",
+      "required_stores": ["postgres", "kafka"]
+    },
+    {
+      "atomic_pr_id": "T1-M09-P060-TST-POST-n023-s5",
+      "journey_id": "forensics-download-journey",
+      "route": "/forensics",
+      "required_stores": ["postgres", "clickhouse", "minio"]
+    },
+    {
+      "atomic_pr_id": "T1-M09-P061-TST-POST-n023-s6",
+      "journey_id": "attack-chain-campaign-journey",
+      "route": "/campaigns",
+      "required_stores": ["postgres", "clickhouse", "nebulagraph"]
+    },
+    {
+      "atomic_pr_id": "T1-M09-P062-TST-POST-n023-s7",
+      "journey_id": "search-export-final-fact-journey",
+      "route": "/alerts",
+      "required_stores": ["opensearch", "postgres", "minio"]
+    }
+  ],
+  "source_evidence": {
+    "n012_alert_evidence": {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n012/k8s-alert-evidence-link-pipeline-latest.json",
+      "sha256": "4b723b9b9a9485b76eb482b1c9f5fe0c15bab3afe36c386e43cef8dbde6defdc",
+      "task_id": "T1-M09-N012",
+      "run_id": "c935dadf-2752-4c4e-9627-fff7aa72ec74"
+    },
+    "n013_attack_chain": {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n013/k8s-attack-chain-snapshot-ui-latest.json",
+      "sha256": "ad268b6933f278550ebb02f79c546437ee3b2ee299c975c7bd765ad40852a1b0",
+      "task_id": "T1-M09-N013",
+      "run_id": "a8283363-a134-492d-983d-88e52835222f"
+    },
+    "n014_graph": {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n014/k8s-graph-workbench-governance-latest.json",
+      "sha256": "53828f3d785b7dd947b9889c2742d6ab940340bda8e964a9a7922d75c1868f26",
+      "task_id": "T1-M09-N014",
+      "run_id": "3e8a6116-faf2-4aca-97a5-12590dc05bfd"
+    },
+    "n015_search": {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n015/k8s-opensearch-cursor-latest.json",
+      "sha256": "4d6968b15d582e762502663e0e0a1992cf4bcb0281df2d01a01eca60694f5b9d",
+      "task_id": "T1-M09-N015",
+      "run_id": "4d99d81c-619f-4885-97c5-ece81f61da94"
+    },
+    "n016_report": {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n016/k8s-alert-report-latest.json",
+      "sha256": "5a162fa21c8b25f79ad139a1ef1e0c7529cf50bd36d328fe82caa60ca01b2c53",
+      "task_id": "T1-M09-N016",
+      "run_id": "346f8306-abef-46cd-9de2-84bd49c5ff37"
+    },
+    "n017_feedback": {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n017/k8s-model-feedback-latest.json",
+      "sha256": "7548ac8c848f193db66e91ae21fc698a8503f692ea83a00a0deaa5aea14869e8",
+      "task_id": "T1-M09-N017",
+      "run_id": "4c0a77ed-d4c6-49a1-9b28-8e6a93150446"
+    },
+    "n018_whitelist": {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n018/k8s-whitelist-governance-latest.json",
+      "sha256": "5308a8a778b984fa178534bb2ebe1476052c58c8fa99a535498b6c3b6dcfb2a6",
+      "task_id": "T1-M09-N018",
+      "run_id": "a52db73e-0a2a-4207-9745-33346c9a1755"
+    },
+    "n019_review": {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n019/k8s-rule-model-review-latest.json",
+      "sha256": "2ca52813384832bf48c549b482cb9efae832922e66c9f6eff8b52ac5111f23e0",
+      "task_id": "T1-M09-N019",
+      "run_id": "384d9a95-68dd-4eee-a9f5-81fc3a9c2d32"
+    },
+    "n020_handoff": {
+      "path": "doc/02_acceptance/topic1/tasks/t1-m09-n020/k8s-response-handoff-latest.json",
+      "sha256": "eec3349bb284650d91f2a0fc6526a2f67b8362b4bfd070f347c1efa02b2cf22f",
+      "task_id": "T1-M09-N020",
+      "run_id": "54207a03-d01d-4a26-8391-e3235d2dad7f"
+    }
+  },
+  "latest_kubernetes_evidence": {
+    "path": "doc/02_acceptance/topic1/tasks/t1-m09-n023/k8s-journey-evidence-latest.json",
+    "run_id": "7062f88b-a1a2-471d-ad0d-6f586da7a21f"
+  },
+  "closure_blockers": [
+    "capture all seven journeys in the designated Windows Chrome extension backend",
+    "bind every journey to one immutable app image and exact Kubernetes configuration hashes",
+    "record clean network and console artifacts plus cross-storage trace receipts and final facts",
+    "run the candidate in an authorized observation window before promotion"
+  ]
+}

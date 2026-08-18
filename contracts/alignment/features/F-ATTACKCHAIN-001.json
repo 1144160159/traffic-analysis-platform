@@ -1,0 +1,81 @@
+{
+  "feature_id": "F-ATTACKCHAIN-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/attack-chains"],
+    "preserved_actions": ["campaign-attack-chain-view"],
+    "preserved_api_operations": ["GET /v1/attack-chains"],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "attack-chain.versioned-snapshot.v1",
+    "controls": [{"control_id": "campaign-attack-chain-view", "action_id": "campaign-attack-chain-view"}],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "listAttackChains",
+    "method": "GET",
+    "path": "/v1/attack-chains",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "edge_kinds": ["observed", "derived", "analyst"],
+    "path_kinds": ["candidate", "alternative"],
+    "invariants": [
+      "every chain binds source, target, ordered stages, candidate path, alternative paths, graph snapshot version and as_of",
+      "every edge binds source and target identity, event time, provenance kind, confidence, uncertainty and at least one evidence anchor",
+      "observed, derived and analyst edges remain distinguishable in storage, API and UI",
+      "derived or analyst edges can never be rendered or serialized as observed facts",
+      "path event time is nondecreasing; a time reversal fails closed rather than being reordered silently",
+      "a path cannot repeat a node or edge identity and cannot exceed the approved depth or result budget",
+      "contradictory paths are retained as alternatives with explicit uncertainty and never collapsed into one certain path",
+      "missing evidence makes the path partial; truncation exposes truncated=true, reason and continuation boundary",
+      "each edge can be traced to an event, rule, model or analyst conclusion and its immutable evidence reference"
+    ],
+    "compensation": "withdraw the affected derived snapshot, retain observed facts and analyst history, restore the prior graph snapshot, and rebuild bounded paths from the retained source watermarks"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "nebulagraph", "minio"],
+    "migration": "deployments/postgres/migrations/202608142100_m07_attack_chain_snapshot_v1.sql; current compatibility recommendations remain in common/sql/ch/03-attack-chain-recommendations.sql",
+    "schema": "contracts/attack-chain/attack-chain-snapshot.v1.schema.json",
+    "assembler": "go/control-plane/internal/alert/attackchain/assembler.go",
+    "event_types": ["attack-chain.snapshot.assembled.v1", "attack-chain.snapshot.withdrawn.v1"],
+    "source_watermarks": ["clickhouse_event_window+max_event_ts+row_count+sha256", "nebulagraph_space+schema_version+projection_watermark", "postgresql_analyst_revision", "evidence_manifest_version+sha256"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:read", "graph:read"],
+    "negative_tests": [
+      "cross-tenant source, target, path, edge or evidence reference is rejected",
+      "over-depth, cyclic, time-reversed and evidence-free paths are rejected",
+      "a derived edge labelled observed is rejected",
+      "contradictory alternatives cannot be discarded without an analyst revision and audit"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["bounded primary path", "alternative path enumeration", "evidence traversal", "versioned graph snapshot assembly"],
+    "stop_conditions": ["path budget truncation is hidden, query P99 or Nebula PROFILE budget exceeds the approved candidate, source watermarks or evidence hashes diverge"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 contract and compatibility inventory",
+      "G1 path shape, provenance, time ordering and tenant isolation",
+      "G2 over-depth, cycle, reverse-time, missing-evidence and contradiction negatives",
+      "G3 same-snapshot ClickHouse, NebulaGraph, PostgreSQL and MinIO assembly",
+      "G4 count, hash, watermark and per-edge evidence reconciliation",
+      "G5 K8s canary, rollback and observation"
+    ],
+    "evidence": ["candidate-bound graph snapshot, exact node and edge sets, primary and alternative path hashes, per-edge evidence manifest, truncation report, rollback receipt and observation window"]
+  },
+  "rollout": {
+    "feature_flag": "ATTACK_CHAIN_V1_ENABLED",
+    "default": false,
+    "strategy": "shadow-read",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ATTACKCHAIN-001-rollback.md"
+  }
+}

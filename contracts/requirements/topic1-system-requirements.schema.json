@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/requirements/topic1-system-requirements.schema.json",
+  "title": "Topic One system-engineering requirements",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "source_documents", "soft_outputs_excluded", "approval_intake", "requirements"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "status": {"enum": ["DRAFT_PENDING_SIGNATURE", "APPROVED"]},
+    "source_documents": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "sha256", "authority"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "authority": {"type": "string"}
+        }
+      }
+    },
+    "soft_outputs_excluded": {"const": true},
+    "approval_intake": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["receipt_path", "receipt_sha256", "approved_at", "authorities", "signature_verification"],
+      "properties": {
+        "receipt_path": {"type": "string", "minLength": 1},
+        "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "approved_at": {"type": "string", "minLength": 1},
+        "authorities": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "signature_verification": {"const": "PASS"}
+      }
+    },
+    "requirements": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": [
+          "requirement_id", "claim_class", "source_document", "source_anchor", "statement",
+          "verification_authority", "method_status", "status", "satisfaction_state",
+          "accountable_milestone", "satisfaction_manifest_schema", "related_milestones",
+          "forbidden_interpretations"
+        ],
+        "properties": {
+          "requirement_id": {"type": "string", "pattern": "^REQ-T1-[A-Z0-9-]+-001$"},
+          "claim_class": {"enum": ["contract_scope", "formal_kpi", "enabling_engineering", "release_evidence", "internal_strengthening"]},
+          "source_document": {"type": "string"},
+          "source_anchor": {"type": "string"},
+          "statement": {"type": "string", "minLength": 1},
+          "verification_authority": {"type": "string", "minLength": 1},
+          "method_status": {"enum": ["NOT_APPLICABLE", "PENDING_SIGNATURE", "SIGNED"]},
+          "status": {"enum": ["DRAFT", "APPROVED", "SUPERSEDED"]},
+          "satisfaction_state": {"enum": ["NOT_STARTED", "IMPLEMENTING", "VERIFYING", "SATISFIED", "FAILED", "BLOCKED", "STALE", "SUPERSEDED"]},
+          "accountable_milestone": {"type": "string", "pattern": "^T1-M(?:0[0-9]|1[0-3])$"},
+          "satisfaction_manifest_schema": {"const": "contracts/alignment/requirement-satisfaction.schema.json"},
+          "related_milestones": {"type": "array", "items": {"type": "string", "pattern": "^T1-M[0-9]{2}$"}, "uniqueItems": true},
+          "forbidden_interpretations": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "metric_method_ids": {"type": "array", "items": {"type": "string", "pattern": "^T1-[A-Z0-9-]+$"}, "minItems": 1, "uniqueItems": true},
+          "metric": {
+            "type": "object", "additionalProperties": false,
+            "required": ["name", "operator", "value", "unit", "formula_authority"],
+            "properties": {
+              "name": {"type": "string"},
+              "operator": {"enum": [">=", "<"]},
+              "value": {"type": "number"},
+              "unit": {"const": "percent"},
+              "formula_authority": {"enum": ["PENDING_SIGNATURE", "SIGNED_METHOD_REFERENCE"]}
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "approval_intake": {"type": "object"},
+          "requirements": {
+            "type": "array",
+            "items": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]}
+          }
+        }
+      },
+      "else": {"properties": {"approval_intake": {"type": "null"}}}
+    }
+  ]
+}

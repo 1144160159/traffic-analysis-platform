@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/contracts/alignment/m08-release-pointer.schema.json",
+  "title": "M08 fail-closed release pointer decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_kind",
+    "milestone_id",
+    "accountable_task",
+    "status",
+    "milestone_state",
+    "candidate_id",
+    "profile_id",
+    "environment_id",
+    "promotion_input",
+    "current_index",
+    "engineering_status",
+    "promotion_status",
+    "promotion_allowed",
+    "blocking_codes",
+    "allowed_claims",
+    "forbidden_claims",
+    "production_applied",
+    "created_at",
+    "supersedes_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_kind": {"const": "M08_RELEASE_POINTER_DECISION"},
+    "milestone_id": {"const": "T1-M08"},
+    "accountable_task": {"const": "T1-M08-N018"},
+    "status": {"enum": ["NO_GO", "PROMOTED"]},
+    "milestone_state": {"enum": ["IMPLEMENTING", "OBSERVING", "COMPLETE"]},
+    "candidate_id": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "promotion_input": {"$ref": "#/$defs/hashed_ref"},
+    "current_index": {"$ref": "#/$defs/hashed_ref"},
+    "engineering_status": {"enum": ["PASS", "BLOCKED"]},
+    "promotion_status": {"enum": ["PASS", "BLOCKED"]},
+    "promotion_allowed": {"type": "boolean"},
+    "blocking_codes": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "allowed_claims": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "forbidden_claims": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "production_applied": {"const": false},
+    "created_at": {"type": "string", "format": "date-time"},
+    "supersedes_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "NO_GO"}}},
+      "then": {
+        "properties": {
+          "candidate_id": {"const": null},
+          "promotion_status": {"const": "BLOCKED"},
+          "promotion_allowed": {"const": false},
+          "blocking_codes": {"minItems": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "PROMOTED"}}},
+      "then": {
+        "properties": {
+          "candidate_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "promotion_status": {"const": "PASS"},
+          "promotion_allowed": {"const": true},
+          "blocking_codes": {"maxItems": 0}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "hashed_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.example/contracts/mlops/champion-challenger-observation.schema.json",
+  "title": "ChampionChallengerObservationV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "observation_id", "tenant_id", "source_event_id",
+    "object_id", "community_id", "event_time_ms", "observed_at_ms",
+    "sample_bucket", "serving_result_source", "champion_model_id",
+    "champion_version", "champion_label", "champion_score",
+    "champion_detected", "champion_latency_nanos", "challenger_model_id",
+    "challenger_version", "challenger_package_id", "challenger_package_sha256",
+    "challenger_aggregate_revision", "challenger_label", "challenger_score",
+    "challenger_detected", "challenger_latency_nanos", "challenger_cpu_nanos",
+    "challenger_heap_delta_bytes", "absolute_score_delta", "decision_changed",
+    "label_changed", "status", "error_code", "error_message"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "observation_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "source_event_id": {"type": "string", "minLength": 1},
+    "object_id": {"type": "string"},
+    "community_id": {"type": "string"},
+    "event_time_ms": {"type": "integer", "minimum": 0},
+    "observed_at_ms": {"type": "integer", "minimum": 1},
+    "sample_bucket": {"type": "integer", "minimum": 0, "maximum": 9999},
+    "serving_result_source": {"const": "champion"},
+    "champion_model_id": {"type": "string"},
+    "champion_version": {"type": "string"},
+    "champion_label": {"type": "string"},
+    "champion_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "champion_detected": {"type": ["boolean", "null"]},
+    "champion_latency_nanos": {"type": "integer", "minimum": 0},
+    "challenger_model_id": {"type": "string", "minLength": 1},
+    "challenger_version": {"type": "string", "minLength": 1},
+    "challenger_package_id": {"type": "string", "minLength": 1},
+    "challenger_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "challenger_aggregate_revision": {"type": "integer", "minimum": 1},
+    "challenger_label": {"type": "string"},
+    "challenger_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "challenger_detected": {"type": ["boolean", "null"]},
+    "challenger_latency_nanos": {"type": "integer", "minimum": 0},
+    "challenger_cpu_nanos": {"type": "integer", "minimum": -1},
+    "challenger_heap_delta_bytes": {"type": "integer"},
+    "absolute_score_delta": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "decision_changed": {"type": ["boolean", "null"]},
+    "label_changed": {"type": ["boolean", "null"]},
+    "status": {"enum": ["compared", "champion_unavailable", "timeout", "error", "overloaded"]},
+    "error_code": {"type": "string", "maxLength": 128},
+    "error_message": {"type": "string", "maxLength": 512}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "compared"}}},
+      "then": {
+        "properties": {
+          "champion_score": {"type": "number"},
+          "champion_detected": {"type": "boolean"},
+          "challenger_score": {"type": "number"},
+          "challenger_detected": {"type": "boolean"},
+          "absolute_score_delta": {"type": "number"},
+          "decision_changed": {"type": "boolean"},
+          "label_changed": {"type": "boolean"},
+          "error_code": {"const": ""},
+          "error_message": {"const": ""}
+        }
+      }
+    }
+  ]
+}

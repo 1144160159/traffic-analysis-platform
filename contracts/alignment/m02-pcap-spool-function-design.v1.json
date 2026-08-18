@@ -1,0 +1,492 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "M02_PCAP_SPOOL_FUNCTION_DESIGN",
+  "artifact_status": "CANDIDATE_BOUND_STATIC_DESIGN_BLOCKED_BY_MISSING_ATOMIC_LEAVES",
+  "candidate": {
+    "commit": "f6072c4540b6198677b345e3df4bf876df5c7410",
+    "source_blob_sha256": {
+      "rust/probe-agent/probe-agent/src/main.rs": "89cc7144e605e97d49681b94b1f5fa35df1f864778c863a6b9feabc285a29236",
+      "rust/probe-agent/probe-agent/src/archiver/buffer.rs": "b3cf3501d4a772bbaa8cbcd6f3cf60f84026296f0f71a0eb15ab51a6ac4bcd85",
+      "rust/probe-agent/probe-agent/src/archiver/uploader.rs": "d49e771e2bab1f62f24c8adaa85f85245236283046f2f8971833a15332991542",
+      "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs": "ded6e5445b52dea57fa3517c2dfa6b086703997614d5588f009a1b6da9e16d6e",
+      "rust/probe-agent/probe-agent/src/archiver/disk_monitor.rs": "2feff2f6079b2d5860c35a1c8d7570f9ce52c23983dcd5567985c67fa5d409ac",
+      "rust/probe-agent/probe-agent/src/archiver/pcap.rs": "cf1f5ccf3a45012130fe53051b92731cab6b69f9213027abf832c05d8f842b2d"
+    }
+  },
+  "preview_catalog_ref": {
+    "path": "contracts/alignment/m02-code-direct-leaf-catalog.v1.json",
+    "sha256": "29b7584696440bb70a8203f4ecbe4ae6574f1a785743562b94e87efbde73a703"
+  },
+  "leaf_bindings": [
+    {
+      "leaf_id": "M02-N006-L04",
+      "atomic_pr_id": "T1-M02-P183-WRT-n006-l04",
+      "role": "UPLOAD_CONSUMER",
+      "locator": "rust/probe-agent/probe-agent/src/archiver/uploader.rs#Uploader::upload_journaled(&self, upload: JournaledUploadRef) -> Result<UploadResult>"
+    },
+    {
+      "leaf_id": "M02-N006-L05",
+      "atomic_pr_id": "T1-M02-P184-WRT-n006-l05",
+      "role": "DURABLE_SPOOL",
+      "locator": "rust/probe-agent/probe-agent/src/archiver/spool.rs#DurablePcapSpool::persist_rotated(&self, upload: UploadData, tenant_id: &str, probe_id: &str) -> Result<JournaledUploadRef>"
+    },
+    {
+      "leaf_id": "M02-N006-L06",
+      "atomic_pr_id": "T1-M02-P185-WRT-n006-l06",
+      "role": "BUFFER_LEASE",
+      "locator": "rust/probe-agent/probe-agent/src/archiver/buffer.rs#TripleBuffer::try_rotate"
+    },
+    {
+      "leaf_id": "M02-N006-L07",
+      "atomic_pr_id": "T1-M02-P186-WRT-n006-l07",
+      "role": "JOURNAL_PENDING",
+      "locator": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs#UploadJournal::record_spooled_pending(&self, upload: &JournaledUploadRef) -> Result<String>"
+    },
+    {
+      "leaf_id": "M02-N006-L08",
+      "atomic_pr_id": "T1-M02-P187-WRT-n006-l08",
+      "role": "ROTATOR_PRODUCER",
+      "locator": "rust/probe-agent/probe-agent/src/main.rs#run_pcap_rotator"
+    },
+    {
+      "leaf_id": "M02-N006-L12",
+      "atomic_pr_id": "T1-M02-P191-WRT-n006-l12",
+      "role": "OBJECT_RECEIPT",
+      "locator": "rust/probe-agent/probe-agent/src/archiver/uploader.rs#Uploader::do_upload_to_s3_with_receipt(&self, key: &str, data: &[u8]) -> Result<ObjectWriteReceipt>"
+    },
+    {
+      "leaf_id": "M02-N006-L15",
+      "atomic_pr_id": "T1-M02-P194-WRT-n006-l15",
+      "role": "JOURNAL_RECEIPT",
+      "locator": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs#UploadJournal::mark_object_written"
+    },
+    {
+      "leaf_id": "M02-N006-L16",
+      "atomic_pr_id": "T1-M02-P195-WRT-n006-l16",
+      "role": "MAIN_UPLOAD",
+      "locator": "rust/probe-agent/probe-agent/src/archiver/uploader.rs#Uploader::upload_with_journal"
+    },
+    {
+      "leaf_id": "M02-N006-L17",
+      "atomic_pr_id": "T1-M02-P196-WRT-n006-l17",
+      "role": "RECOVERY",
+      "locator": "rust/probe-agent/probe-agent/src/archiver/uploader.rs#Uploader::recover_pending_uploads"
+    }
+  ],
+  "current_static_findings": [
+    {
+      "finding_id": "M02-PCAP-P0-01",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/main.rs",
+      "symbol": "run_pcap_rotator",
+      "evidence": "正常路径只要UploadTask进入内存mpsc就调用complete_upload复用TripleBuffer，尚无本地耐久屏障",
+      "consequence": "队列发送后到本地持久化前的进程或节点崩溃会永久丢失已轮转PCAP",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-PCAP-P0-02",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/main.rs",
+      "symbol": "run_pcap_rotator shutdown branch",
+      "evidence": "停机分支对upload_tx.send(task)调用ok丢弃错误，随后无条件complete_upload",
+      "consequence": "uploader已退出或channel关闭时，最后一批PCAP会被静默释放且不可恢复",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-PCAP-P0-03",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "symbol": "Uploader::upload_with_journal",
+      "evidence": "本地缓存直接tokio::fs::write最终路径，未执行临时文件sync_data、原子rename和父目录fsync",
+      "consequence": "断电或文件系统故障可留下截断文件、空目录项或journal与文件不一致",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-PCAP-P0-04",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "symbol": "Uploader::recover_pending_uploads",
+      "evidence": "函数及spawn_recovery_task存在，但当前工作树没有任何运行时caller",
+      "consequence": "重启后journal中的PENDING或对象已写入但metadata未确认记录不会自动恢复",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-PCAP-P0-05",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "symbol": "Uploader::recover_pending_uploads needs_s3 loop",
+      "evidence": "恢复路径读取local_path后直接上传，未对compressed_size和sha256重新校验",
+      "consequence": "截断、篡改或路径碰撞的缓存字节可被写入权威对象存储并继续推进状态",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-PCAP-P0-06",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/archiver/disk_monitor.rs",
+      "symbol": "DiskMonitor::cleanup_old_files",
+      "evidence": "清理按目录mtime排序删除最老30%普通文件，不读取UploadJournal状态，也不区分pending和cleanup-authorized",
+      "consequence": "磁盘压力可删除尚未上传或metadata未确认的唯一耐久副本",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-PCAP-P0-07",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "symbol": "Uploader::upload_with_journal key and local_path generation",
+      "evidence": "local_path和对象key主要由ts_start与ts_end构造，缺少稳定capture或spool UUID",
+      "consequence": "同时间窗重试、并发轮转或时钟碰撞可覆盖本地证据并混淆对象identity",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-PCAP-P0-08",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/archiver/buffer.rs",
+      "symbol": "TripleBuffer::wait_for_upload",
+      "evidence": "UploadData只复制buffer中packet records，未在移交数据前合成PCAP global header",
+      "consequence": "上传对象可能不是可独立解析的标准PCAP文件，恢复验证也缺少格式权威",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-PCAP-P0-09",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs",
+      "symbol": "UploadJournal::mark_s3_uploaded and mark_metadata_synced",
+      "evidence": "task_id不存在时仅warn并仍返回Ok，调用方无法区分状态已耐久与记录缺失",
+      "consequence": "对象或metadata成功后可能被误认为journal同步成功，形成不可恢复的事实分叉",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    },
+    {
+      "finding_id": "M02-PCAP-P0-10",
+      "severity": "P0",
+      "path": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "symbol": "Uploader::upload_with_journal object and metadata transitions",
+      "evidence": "对象写入、journal mark和metadata RPC分属独立副作用，当前receipt不足以证明远端对象版本和同一manifest",
+      "consequence": "任一崩溃窗口可重复上传对象或用错误对象事实重试metadata，无法证明端到端幂等",
+      "evidence_kind": "CURRENT_WORKTREE_STATIC_EVIDENCE_NOT_RUNTIME_REPRODUCTION"
+    }
+  ],
+  "spool_state_machine": {
+    "states": ["IN_MEMORY", "SEALED", "SPOOL_TEMP_WRITTEN", "SPOOL_DURABLE", "JOURNALED_PENDING", "CLAIMED", "OBJECT_WRITTEN", "METADATA_ACCEPTED", "CLEANUP_AUTHORIZED", "DELETED", "RETRY_WAIT", "QUARANTINED"],
+    "transitions": [
+      {"from": "IN_MEMORY", "event": "rotate_and_lease", "to": "SEALED", "durability_barrier": "buffer remains non-reusable"},
+      {"from": "SEALED", "event": "write_unique_temp", "to": "SPOOL_TEMP_WRITTEN", "durability_barrier": "complete bytes and canonical manifest computed"},
+      {"from": "SPOOL_TEMP_WRITTEN", "event": "sync_rename_parent_sync", "to": "SPOOL_DURABLE", "durability_barrier": "file sync_data plus atomic rename plus parent directory fsync"},
+      {"from": "SPOOL_DURABLE", "event": "journal_pending_flush", "to": "JOURNALED_PENDING", "durability_barrier": "sled record and flush contains immutable path size hash and identity"},
+      {"from": "JOURNALED_PENDING", "event": "claim_revision", "to": "CLAIMED", "durability_barrier": "bounded lease revision is durable"},
+      {"from": "CLAIMED", "event": "verified_object_receipt", "to": "OBJECT_WRITTEN", "durability_barrier": "receipt and state stored in one sled batch and flush"},
+      {"from": "OBJECT_WRITTEN", "event": "metadata_ack_same_manifest", "to": "METADATA_ACCEPTED", "durability_barrier": "gateway ACK identity and receipt hash match journal"},
+      {"from": "METADATA_ACCEPTED", "event": "authorize_cleanup", "to": "CLEANUP_AUTHORIZED", "durability_barrier": "cleanup authorization is durable and audit-visible"},
+      {"from": "CLEANUP_AUTHORIZED", "event": "unlink_and_parent_sync", "to": "DELETED", "durability_barrier": "file removal and parent directory fsync complete"},
+      {"from": "CLAIMED", "event": "retryable_or_unknown", "to": "RETRY_WAIT", "durability_barrier": "spool bytes and manifest remain unchanged"},
+      {"from": "RETRY_WAIT", "event": "backoff_elapsed", "to": "JOURNALED_PENDING", "durability_barrier": "attempt and next-attempt time persisted"},
+      {"from": "SPOOL_DURABLE", "event": "manifest_mismatch", "to": "QUARANTINED", "durability_barrier": "corrupt evidence retained with typed reason"}
+    ],
+    "invariants": [
+      "TripleBuffer cannot be reused before SPOOL_DURABLE and JOURNALED_PENDING are both proven",
+      "every durable spool identity includes tenant probe capture UUID manifest size and sha256",
+      "a recoverable local file is verified against journal size and hash before any object write",
+      "OBJECT_WRITTEN requires a real SDK or trusted HEAD receipt bound to the same key and manifest",
+      "metadata retries after OBJECT_WRITTEN never upload the object again",
+      "DiskMonitor may delete only CLEANUP_AUTHORIZED files and never infer authorization from age",
+      "shutdown stops capture then seals and spools then drains upload claims before closing dependencies",
+      "a PCAP spool contains one valid global header followed only by complete packet records"
+    ]
+  },
+  "function_contracts": [
+    {
+      "contract_id": "FC-M02-PCAP-UploadJournaled",
+      "leaf_id": "M02-N006-L04",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "qualified_symbol": "Uploader::upload_journaled",
+      "change_kind": "new_companion",
+      "signature_before": null,
+      "signature_after": "pub async fn upload_journaled(&self, upload: JournaledUploadRef) -> Result<UploadResult>",
+      "responsibility": "只消费已经SPOOL_DURABLE且JOURNALED_PENDING的不可变引用，并按receipt推进对象与metadata状态",
+      "inputs": ["upload: JournaledUploadRef"],
+      "outputs": ["Result<UploadResult>"],
+      "body_steps": ["B01 reload journal entry by immutable task ID and compare the full manifest", "B02 claim the pending revision without reading mutable UploadTask bytes", "B03 verify local size and sha256 before object upload", "B04 obtain and durably store ObjectWriteReceipt before metadata RPC", "B05 reuse stored receipt for metadata-only retry and authorize cleanup only after ACK"],
+      "error_branches": ["missing or conflicting journal identity returns typed corruption and keeps evidence", "local hash mismatch quarantines without object write", "metadata failure retains OBJECT_WRITTEN and the local spool"],
+      "atomicity": "remote effects are separated by journal flush barriers; no remote call is labeled durable before its receipt transition commits",
+      "idempotency": "the same JournaledUploadRef always addresses the same spool hash object key and journal task ID",
+      "callers": ["run_pcap_uploader", "Uploader::recover_pending_uploads"],
+      "callees": ["UploadJournal::claim", "Uploader::do_upload_to_s3_with_receipt", "UploadJournal::mark_object_written", "Uploader::upload_metadata"],
+      "tests": ["TC-M02-PCAP-05", "TC-M02-PCAP-08", "TC-M02-PCAP-09", "TC-M02-PCAP-12"],
+      "rollback": "disable new producer first, retain every new-format journal and spool, then let the compatible consumer drain or export them"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-PersistRotated",
+      "leaf_id": "M02-N006-L05",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/archiver/spool.rs",
+      "qualified_symbol": "DurablePcapSpool::persist_rotated",
+      "change_kind": "new_companion",
+      "signature_before": null,
+      "signature_after": "pub async fn persist_rotated(&self, upload: UploadData, tenant_id: &str, probe_id: &str) -> Result<JournaledUploadRef>",
+      "responsibility": "将完整有效PCAP写入唯一临时路径，经文件与目录耐久屏障后记录PENDING并返回稳定引用",
+      "inputs": ["upload: UploadData", "tenant_id: &str", "probe_id: &str"],
+      "outputs": ["Result<JournaledUploadRef>"],
+      "body_steps": ["B01 validate identity timestamps packet count and bounded byte length", "B02 prepend exactly one canonical PCAP global header and compute capture UUID plus manifest", "B03 create_new a same-directory temporary file and write all bytes", "B04 sync_data rename to content-bound final path and fsync the parent directory", "B05 call record_spooled_pending and return only after sled flush"],
+      "error_branches": ["invalid record layout rejects before file creation", "temp write or sync failure removes only the owned temp file and retains the buffer lease", "journal failure retains the durable orphan for deterministic startup reconciliation"],
+      "atomicity": "filesystem publication and journal publication are ordered durability barriers with an explicit recoverable orphan state between them",
+      "idempotency": "capture UUID plus manifest hash makes same bytes idempotent and same UUID with different bytes a conflict",
+      "callers": ["run_pcap_rotator"],
+      "callees": ["PcapManifest::from_upload", "tokio::fs::OpenOptions::create_new", "File::sync_data", "UploadJournal::record_spooled_pending"],
+      "tests": ["TC-M02-PCAP-01", "TC-M02-PCAP-02", "TC-M02-PCAP-03", "TC-M02-PCAP-04", "TC-M02-PCAP-16"],
+      "rollback": "stop rotator production and preserve all final spool files and journal records; cleanup only owned temporary files proven unpublished"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-TryRotate",
+      "leaf_id": "M02-N006-L06",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/archiver/buffer.rs",
+      "qualified_symbol": "TripleBuffer::try_rotate",
+      "change_kind": "modify",
+      "signature_before": "pub fn try_rotate(&self) -> bool",
+      "signature_after": "pub fn try_rotate(&self) -> bool",
+      "responsibility": "只封存可移交buffer并保持upload lease，直到rotator确认引用已耐久而不以队列接收替代完成",
+      "inputs": ["current write and upload indices"],
+      "outputs": ["bool rotation result"],
+      "body_steps": ["B01 take the rotation lock and inspect write upload and next indices", "B02 refuse rotation if any sealed upload lease remains outstanding", "B03 move write index and seal the previous buffer without reset", "B04 expose one immutable UploadData snapshot through the existing lease", "B05 reset only through an explicit durable-spool completion callback"],
+      "error_branches": ["lock contention returns false without state mutation", "outstanding lease returns false without overwriting data", "completion index mismatch keeps the buffer sealed"],
+      "atomicity": "index publication uses acquire-release ordering and buffer reset happens only after the durability callback",
+      "idempotency": "repeated rotate attempts while a lease is active cannot create another identity or reset the sealed bytes",
+      "callers": ["run_pcap_rotator", "TripleBuffer::force_rotate"],
+      "callees": ["TripleBuffer::try_rotate_inner", "TripleBuffer::wait_for_upload", "TripleBuffer::complete_upload"],
+      "tests": ["TC-M02-PCAP-01", "TC-M02-PCAP-06", "TC-M02-PCAP-13"],
+      "rollback": "stop capture and rotator, drain or persist the sealed lease, then restore old index behavior only with no outstanding new-format ref"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-RecordSpooledPending",
+      "leaf_id": "M02-N006-L07",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs",
+      "qualified_symbol": "UploadJournal::record_spooled_pending",
+      "change_kind": "new_companion",
+      "signature_before": null,
+      "signature_after": "pub fn record_spooled_pending(&self, upload: &JournaledUploadRef) -> Result<String>",
+      "responsibility": "以稳定task ID写入完整spool manifest和PENDING状态并flush，拒绝identity冲突",
+      "inputs": ["upload: &JournaledUploadRef"],
+      "outputs": ["Result<String> task_id"],
+      "body_steps": ["B01 validate final path is confined beneath configured spool root", "B02 derive stable task ID from tenant probe capture UUID and manifest hash", "B03 compare any existing entry for exact manifest equality", "B04 insert new versioned PENDING entry or return the identical existing entry", "B05 flush sled before reporting success"],
+      "error_branches": ["same task ID with different manifest is a typed conflict", "path traversal or symlink escape is rejected", "insert or flush failure returns error and never reports JOURNALED_PENDING"],
+      "atomicity": "the full entry is one sled value and success requires a completed flush",
+      "idempotency": "an exact ref replays to the same task ID while any changed identity field is rejected",
+      "callers": ["DurablePcapSpool::persist_rotated"],
+      "callees": ["sled::Tree::compare_and_swap", "sled::Db::flush"],
+      "tests": ["TC-M02-PCAP-03", "TC-M02-PCAP-04", "TC-M02-PCAP-14"],
+      "rollback": "preserve versioned entries and keep the legacy record_pending reader compatible; do not downgrade or delete manifests"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-RunRotator",
+      "leaf_id": "M02-N006-L08",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/main.rs",
+      "qualified_symbol": "run_pcap_rotator",
+      "change_kind": "modify",
+      "signature_before": "async fn run_pcap_rotator( mut handle: ShutdownHandle, buffer: Arc<TripleBuffer>, upload_tx: mpsc::Sender<UploadTask>, tenant_id: String, probe_id: String, )",
+      "signature_after": "async fn run_pcap_rotator(mut handle: ShutdownHandle, buffer: Arc<TripleBuffer>, spool: Arc<DurablePcapSpool>, upload_tx: mpsc::Sender<JournaledUploadRef>, tenant_id: String, probe_id: String)",
+      "responsibility": "执行rotate、耐久spool、journal flush、enqueue ref，再释放buffer；停机发送失败绝不静默",
+      "inputs": ["ShutdownHandle", "Arc<TripleBuffer>", "Arc<DurablePcapSpool>", "mpsc::Sender<JournaledUploadRef>", "tenant_id", "probe_id"],
+      "outputs": ["task completion with no unpersisted sealed buffer"],
+      "body_steps": ["B01 rotate and acquire the exact sealed buffer lease", "B02 call persist_rotated before any buffer completion", "B03 enqueue only the returned JournaledUploadRef", "B04 release the buffer after JOURNALED_PENDING even when the consumer channel is unavailable", "B05 on shutdown force rotate and repeat the same durability sequence before completing the handle"],
+      "error_branches": ["spool failure retains the lease and applies capture backpressure", "journal failure preserves the durable orphan and does not release until reconciled", "closed consumer channel leaves the journaled ref recoverable and emits a fatal health signal"],
+      "atomicity": "buffer lease release is ordered after filesystem and journal durability, never after a merely in-memory send",
+      "idempotency": "retries of the same sealed upload reuse the content-bound spool and journal identity",
+      "callers": ["probe_agent_main task spawn"],
+      "callees": ["TripleBuffer::try_rotate", "TripleBuffer::wait_for_upload", "DurablePcapSpool::persist_rotated", "TripleBuffer::complete_upload"],
+      "tests": ["TC-M02-PCAP-01", "TC-M02-PCAP-04", "TC-M02-PCAP-06", "TC-M02-PCAP-15"],
+      "rollback": "stop capture before disabling the new rotator; persist or export the current sealed lease and leave every journaled ref recoverable"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-ObjectReceipt",
+      "leaf_id": "M02-N006-L12",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "qualified_symbol": "Uploader::do_upload_to_s3_with_receipt",
+      "change_kind": "new_companion",
+      "signature_before": null,
+      "signature_after": "async fn do_upload_to_s3_with_receipt(&self, key: &str, data: &[u8]) -> Result<ObjectWriteReceipt>",
+      "responsibility": "从真实对象存储响应或受信HEAD构造与manifest一致的ObjectWriteReceipt，不以配置或请求值冒充事实",
+      "inputs": ["key: &str", "data: &[u8]"],
+      "outputs": ["Result<ObjectWriteReceipt>"],
+      "body_steps": ["B01 compute the expected stored size and sha256 from immutable bytes", "B02 issue conditional put for the stable key or verify an existing same-hash object", "B03 retain SDK etag version and response metadata", "B04 trusted-HEAD verify stored size and checksum when the put response lacks proof", "B05 return a receipt only when bucket key and manifest are mutually consistent"],
+      "error_branches": ["existing same key with conflicting hash returns identity conflict", "ambiguous timeout returns outcome unknown and no fabricated receipt", "HEAD without trusted checksum proof remains retryable"],
+      "atomicity": "object storage is an external authority; only a verified receipt crosses the local OBJECT_WRITTEN barrier",
+      "idempotency": "conditional stable-key writes accept the same manifest and reject any different manifest",
+      "callers": ["Uploader::upload_journaled", "Uploader::recover_pending_uploads"],
+      "callees": ["Bucket::put_object", "Bucket::head_object"],
+      "tests": ["TC-M02-PCAP-07", "TC-M02-PCAP-08", "TC-M02-PCAP-11", "TC-M02-PCAP-12"],
+      "rollback": "retain receipt-aware records and route old Result unit wrappers through this API; never discard a verified version or etag"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-MarkObjectWritten",
+      "leaf_id": "M02-N006-L15",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs",
+      "qualified_symbol": "UploadJournal::mark_object_written",
+      "change_kind": "new_companion",
+      "signature_before": null,
+      "signature_after": "pub fn mark_object_written(&self, task_id: &str, receipt: &ObjectWriteReceipt) -> Result<()> ",
+      "responsibility": "校验receipt与journal manifest后，在一次sled写入与flush中保存完整receipt并推进OBJECT_WRITTEN",
+      "inputs": ["task_id: &str", "receipt: &ObjectWriteReceipt"],
+      "outputs": ["Result<()>"],
+      "body_steps": ["B01 load the exact task and fail if absent", "B02 verify state permits transition from PENDING or idempotent OBJECT_WRITTEN", "B03 compare key stored size sha256 tenant probe and capture identity", "B04 write receipt and OBJECT_WRITTEN in one versioned entry", "B05 flush before returning success"],
+      "error_branches": ["missing task is an error rather than warn plus Ok", "conflicting repeated receipt is quarantined", "flush failure cannot report OBJECT_WRITTEN"],
+      "atomicity": "receipt and state share one serialized journal value and one required flush barrier",
+      "idempotency": "the exact same receipt is a no-op success and any differing receipt is a conflict",
+      "callers": ["Uploader::upload_journaled", "Uploader::recover_pending_uploads"],
+      "callees": ["sled::Tree::get", "sled::Tree::compare_and_swap", "sled::Db::flush"],
+      "tests": ["TC-M02-PCAP-08", "TC-M02-PCAP-09", "TC-M02-PCAP-14"],
+      "rollback": "keep the new receipt fields readable and never translate OBJECT_WRITTEN back to an unproven legacy s3_key-only state"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-UploadWithJournal",
+      "leaf_id": "M02-N006-L16",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "qualified_symbol": "Uploader::upload_with_journal",
+      "change_kind": "modify",
+      "signature_before": "pub async fn upload_with_journal(&self, task: UploadTask) -> Result<UploadResult>",
+      "signature_after": "pub async fn upload_with_journal(&self, task: UploadTask) -> Result<UploadResult>",
+      "responsibility": "保留旧入口但适配到durable spool与typed receipt，不再以直接write最终路径作为主链耐久保证",
+      "inputs": ["task: UploadTask"],
+      "outputs": ["Result<UploadResult>"],
+      "body_steps": ["B01 reject production use when durable-spool producer flag is active", "B02 compatibility-spool the legacy task through the same atomic file path", "B03 record a versioned pending manifest and call upload_journaled", "B04 return only after metadata ACK while preserving all nonterminal evidence", "B05 emit a metric for every legacy entrypoint use until removal is authorized"],
+      "error_branches": ["legacy spool failure returns error before object I/O", "object success plus metadata failure returns error with OBJECT_WRITTEN retained", "missing journal transition never returns success"],
+      "atomicity": "legacy compatibility obtains the same filesystem journal receipt and metadata barriers as the new ref path",
+      "idempotency": "a deterministic legacy capture UUID prevents retries from generating a second logical object",
+      "callers": ["run_pcap_uploader legacy compatibility"],
+      "callees": ["DurablePcapSpool::persist_rotated", "Uploader::upload_journaled"],
+      "tests": ["TC-M02-PCAP-05", "TC-M02-PCAP-10", "TC-M02-PCAP-16"],
+      "rollback": "disable new production first and keep this compatibility adapter available until every journaled ref is drained"
+    },
+    {
+      "contract_id": "FC-M02-PCAP-RecoverPending",
+      "leaf_id": "M02-N006-L17",
+      "language": "rust",
+      "path": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "qualified_symbol": "Uploader::recover_pending_uploads",
+      "change_kind": "modify",
+      "signature_before": "pub async fn recover_pending_uploads(&self) -> Result<usize>",
+      "signature_after": "pub async fn recover_pending_uploads(&self) -> Result<RecoverySummary>",
+      "responsibility": "按状态与稳定顺序恢复：PENDING先校验再写对象，OBJECT_WRITTEN只重试metadata，坏记录隔离且不阻塞健康记录",
+      "inputs": ["journal inventory", "configured spool root", "bounded recovery budget"],
+      "outputs": ["Result<RecoverySummary>"],
+      "body_steps": ["B01 enumerate versioned entries in stable task order with a bounded page", "B02 canonicalize every local path beneath the spool root and reject symlink escape", "B03 verify size and sha256 before PENDING object work", "B04 call receipt upload only for PENDING and reuse stored receipt for OBJECT_WRITTEN", "B05 quarantine corrupt entries continue healthy records and return per-state counts"],
+      "error_branches": ["manifest mismatch quarantines and never uploads", "OBJECT_WRITTEN without a valid receipt is blocked for repair", "transport failure retains the same state and bounded retry metadata"],
+      "atomicity": "each entry independently crosses a flushed journal barrier; one corrupt entry cannot roll back or block other completed entries",
+      "idempotency": "recovery never changes capture UUID key or manifest and never reuploads an OBJECT_WRITTEN record",
+      "callers": ["missing startup recovery caller", "missing background recovery supervisor"],
+      "callees": ["UploadJournal::recover_by_state", "Uploader::do_upload_to_s3_with_receipt", "UploadJournal::mark_object_written", "Uploader::upload_metadata"],
+      "tests": ["TC-M02-PCAP-08", "TC-M02-PCAP-09", "TC-M02-PCAP-10", "TC-M02-PCAP-12", "TC-M02-PCAP-14"],
+      "rollback": "stop the recovery worker and leave all records in their last flushed states; never delete or downgrade new-format evidence"
+    }
+  ],
+  "missing_atomic_leaves": [
+    {
+      "gap_id": "M02-PCAP-GAP-01",
+      "required_locator": "rust/probe-agent/probe-agent/src/main.rs#run_pcap_startup_recovery_before_capture",
+      "proposed_signature": "async fn run_pcap_startup_recovery_before_capture(uploader: Arc<Uploader>, handle: ShutdownHandle, policy: PcapRecoveryPolicy) -> Result<PcapRecoveryRuntime>",
+      "single_result": "capture admission opens only after one bounded startup reconcile and one recovery supervisor owner are established",
+      "reason": "L17 owns recovery behavior but no leaf owns the runtime caller, startup ordering, health policy, or retry supervisor",
+      "blocked_by": ["stable P101-P307 IDs cannot be shifted", "current N006 leaf list has no startup recovery production locator"],
+      "resolution": "a formal registry revision must add one append-only WRT plus distinct REF and TST closure and prove recovery completes or explicitly degrades before capture intake starts",
+      "status": "BLOCKED_MISSING_ATOMIC_LEAF_AND_STABLE_ID"
+    },
+    {
+      "gap_id": "M02-PCAP-GAP-02",
+      "required_locator": "rust/probe-agent/probe-agent/src/archiver/disk_monitor.rs#DiskMonitor::cleanup_old_files",
+      "proposed_signature": "async fn cleanup_old_files(&self) -> Result<PcapCleanupReport>",
+      "single_result": "only revision-claimed CLEANUP_AUTHORIZED entries beneath the canonical spool root can become DELETED",
+      "reason": "disk cleanup is a production writer that can delete pending evidence but N006 has no journal-aware cleanup leaf",
+      "blocked_by": ["destructive cleanup needs its own rollback and fault matrix", "current N006 leaves do not bind DiskMonitor", "L10 freezes only PENDING OBJECT_WRITTEN and METADATA_ACCEPTED so cleanup authority states need an explicit contract decision"],
+      "resolution": "a formal registry revision must add one append-only WRT plus distinct REF and TST closure, freeze cleanup authority states, and permit deletion only from durable CLEANUP_AUTHORIZED inventory with symlink protection",
+      "status": "BLOCKED_MISSING_ATOMIC_LEAF_AND_STABLE_ID"
+    },
+    {
+      "gap_id": "M02-PCAP-GAP-03",
+      "required_locator": "rust/probe-agent/probe-agent/src/main.rs#stage_capture_spool_upload_shutdown",
+      "proposed_signature": "async fn stage_capture_spool_upload_shutdown(runtime: &mut PcapPipelineRuntime, deadline: tokio::time::Instant) -> Result<PcapShutdownReport>",
+      "single_result": "capture stop precedes final durable spool which precedes producer close uploader drain recovery stop and dependency close",
+      "reason": "ShutdownHandle priority metadata does not prove capture stop, spool seal, uploader drain, then dependency close ordering",
+      "blocked_by": ["run_pcap_rotator alone cannot sequence sibling task termination", "current N006 leaves contain no lifecycle coordinator locator"],
+      "resolution": "a formal registry revision must add one append-only WRT plus distinct REF and TST closure for staged shutdown with deadlines durable handoff or explicit refusal and kill-at-step tests",
+      "status": "BLOCKED_MISSING_ATOMIC_LEAF_AND_STABLE_ID"
+    }
+  ],
+  "registry_revision_gate": {
+    "decision": "KEEP_GAPS_BLOCKED_UNTIL_FORMAL_REGISTRY_REVISION",
+    "frozen_epoch": "T1-M02-P101-P307",
+    "active_global_m02_pr_count": 34,
+    "preview_leaf_count": 207,
+    "revision_requirements": [
+      "compare immutable semantic hashes for every P101-P307 ID parent type locator outcome dependency and terminal flag",
+      "assign every post-P307 ID explicitly rather than deriving IDs from document row order",
+      "add complete WRT REF TST and terminal IDX closure or publish an explicit tombstone and replacement mapping",
+      "prove one N006 terminal identity preserve N016 aggregation semantics and validate an acyclic mixed DAG",
+      "atomically switch task claim PR-design and overlay catalogs to the same candidate hash or keep the old active registry",
+      "freeze cleanup authority states in the journal contract before any destructive DiskMonitor writer can be claimable"
+    ],
+    "support_train": "EACH_NEW_PRODUCTION_WRT_REQUIRES_DISTINCT_REF_AND_TST_CLOSURE_PLUS_ONE_UNIQUE_TERMINAL_IDX_OR_EXPLICIT_TOMBSTONE_REPLACEMENT",
+    "atomic_switch": "TASK_CLAIM_PR_DESIGN_AND_OVERLAY_CATALOGS_MUST_SWITCH_TO_ONE_CANDIDATE_HASH_OR_OLD_34_M02_CARDS_REMAIN_ACTIVE"
+  },
+  "sequencing": [
+    {"order": 1, "leaf_id": "M02-N006-L04", "precondition": "old UploadTask path remains active", "result": "idle-deployable JournaledUploadRef consumer", "activation": "compile and unit tests only; producer flag off"},
+    {"order": 2, "leaf_id": "M02-N006-L12", "precondition": "consumer accepts a ref", "result": "verified direct object receipt API", "activation": "old Result unit wrappers remain compatible"},
+    {"order": 3, "leaf_id": "M02-N006-L15", "precondition": "receipt type is frozen", "result": "durable OBJECT_WRITTEN transition", "activation": "no producer traffic"},
+    {"order": 4, "leaf_id": "M02-N006-L17", "precondition": "receipt transition is readable", "result": "state-aware recovery function", "activation": "manual fixture only because runtime caller leaf is missing"},
+    {"order": 5, "leaf_id": "M02-N006-L07", "precondition": "journal version remains backward-readable", "result": "stable PENDING entry from a spool ref", "activation": "no rotator traffic"},
+    {"order": 6, "leaf_id": "M02-N006-L05", "precondition": "journal companion consumes durable refs", "result": "atomic durable spool producer API", "activation": "fixture-only production"},
+    {"order": 7, "leaf_id": "M02-N006-L06", "precondition": "spool API proves durability callback", "result": "buffer lease survives until durability", "activation": "capture integration remains off"},
+    {"order": 8, "leaf_id": "M02-N006-L16", "precondition": "new consumer and spool APIs compile together", "result": "legacy main upload adapter uses the same barriers", "activation": "legacy compatibility route only"},
+    {"order": 9, "leaf_id": "M02-N006-L08", "precondition": "all prior leaves plus the three missing append-only leaves are reviewed", "result": "rotator switches to durable ref production", "activation": "blocked until startup recovery cleanup and shutdown leaves exist and pass"}
+  ],
+  "negative_tests": [
+    {"case_id": "TC-M02-PCAP-01", "kind": "fault", "injection": "kill after buffer seal before temp create", "oracle": "sealed bytes remain leased or capture is explicitly backpressured; no false spool record", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-02", "kind": "fault", "injection": "disk full during temp write", "oracle": "no final file or journal PENDING is published and buffer is not silently reused", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-03", "kind": "fault", "injection": "kill after file sync before rename and after rename before parent fsync", "oracle": "startup reconciliation deterministically removes temp or recovers one complete final spool", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-04", "kind": "fault", "injection": "kill after durable rename before journal flush", "oracle": "orphan scan reconstructs the exact manifest without duplicating identity", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-05", "kind": "negative", "injection": "local spool size or sha256 differs from journal", "oracle": "record is quarantined and no object or metadata call occurs", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-06", "kind": "concurrency", "injection": "channel full and repeated rotation attempts with one outstanding lease", "oracle": "one stable upload identity exists and no leased buffer resets", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-07", "kind": "fault", "injection": "object put timeout with unknown remote outcome", "oracle": "no receipt is fabricated; trusted HEAD resolves same hash or state remains retryable", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-08", "kind": "fault", "injection": "kill after object success before journal receipt flush", "oracle": "recovery verifies the stable key and same manifest before accepting one receipt", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-09", "kind": "fault", "injection": "kill after OBJECT_WRITTEN flush before metadata ACK", "oracle": "restart retries metadata only and never uploads the object again", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-10", "kind": "recovery", "injection": "mixed PENDING OBJECT_WRITTEN METADATA_ACCEPTED and corrupt journal entries", "oracle": "healthy entries progress independently and corrupt entries retain typed quarantine evidence", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-11", "kind": "negative", "injection": "same object key already contains a different hash", "oracle": "identity conflict is returned and metadata is not emitted", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-12", "kind": "property", "injection": "repeat every recovery operation one to one hundred times", "oracle": "one capture identity maps to one manifest and terminal states never regress", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-13", "kind": "shutdown", "injection": "shutdown while capture writes while rotator spools and while uploader sends", "oracle": "capture stops first and every sealed record becomes journaled or shutdown fails explicitly", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-14", "kind": "compatibility", "injection": "load legacy journal entries with missing version receipt or manifest fields", "oracle": "deterministic compatibility state is chosen and incomplete evidence cannot acknowledge metadata", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-15", "kind": "fault", "injection": "uploader receiver closes before shutdown rotator sends final ref", "oracle": "final ref is already durable and a fatal health event replaces silent loss", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-16", "kind": "property", "injection": "parse every produced spool as PCAP and count complete packet records", "oracle": "exactly one global header exists and parsed packet count and time range equal the manifest", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-17", "kind": "negative", "injection": "DiskMonitor sees old PENDING and newer CLEANUP_AUTHORIZED files", "oracle": "only cleanup-authorized files can be removed regardless of age or pressure", "execution_status": "NOT_RUN"},
+    {"case_id": "TC-M02-PCAP-18", "kind": "negative", "injection": "spool path or cleanup directory contains traversal or symlink escape", "oracle": "operation is rejected before reading uploading or deleting outside the configured root", "execution_status": "NOT_RUN"}
+  ],
+  "rollback": {
+    "entrypoint": "disable the durable-spool producer flag before changing any consumer or journal reader",
+    "steps": [
+      "stop capture intake and wait for the current write buffer to seal",
+      "persist or export every sealed upload before stopping the rotator",
+      "leave JournaledUploadRef consumer and all new journal readers deployed while producers are disabled",
+      "drain PENDING and OBJECT_WRITTEN records without deleting local spool evidence",
+      "verify no new-format nonterminal entry remains before restoring legacy production",
+      "retain quarantined and receipt-bearing records for repair and audit rather than downgrading them"
+    ],
+    "durable_data_policy": "new spool files manifests receipts and journal states are never deleted or rewritten to weaker legacy evidence during rollback",
+    "irreversible_boundary": "there is no authorized irreversible boundary in this design; cleanup remains blocked until metadata ACK and a dedicated cleanup leaf pass"
+  },
+  "claims": {
+    "allowed": "candidate-bound static P0 analysis and function-level target design exist for the M02 PCAP durable spool slice, with uncovered atomic work explicitly blocked",
+    "forbidden": ["FUNCTION_DESIGN_REVIEWED", "REGISTRY_INTEGRATED", "IMPLEMENTED", "TESTED", "EXECUTION_AUTHORIZED", "PCAP_DURABILITY_PROVEN", "M02_ACCEPTED"],
+    "proof_ceiling": "STATIC_DESIGN_ONLY_MISSING_ATOMIC_LEAVES_NOT_IMPLEMENTED_TESTED_EXECUTION_AUTHORIZED_OR_ACCEPTED"
+  },
+  "blockers": [
+    "M02 PCAP startup recovery caller has no append-only atomic leaf or stable ID",
+    "journal-aware DiskMonitor cleanup has no append-only atomic leaf or stable ID",
+    "staged capture-spool-uploader shutdown has no append-only atomic leaf or stable ID",
+    "function design review and signed execution overlay are absent",
+    "all eighteen negative and fault tests remain NOT_RUN",
+    "real filesystem crash MinIO gateway and restart evidence is absent",
+    "the preview leaf catalog is not the active global registry and active M02 count remains unchanged"
+  ]
+}

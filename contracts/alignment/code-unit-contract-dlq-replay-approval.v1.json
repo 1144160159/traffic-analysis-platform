@@ -1,0 +1,768 @@
+{
+  "schema_version": "2.0.0",
+  "artifact_kind": "CODE_UNIT_CONTRACT",
+  "artifact_status": "DRAFT",
+  "atomic_pr_id": "T1-M10-P001-ATC-DLQ-APPROVAL",
+  "parent_work_id": "T1-M10-N001",
+  "candidate": {
+    "commit": "f6072c454",
+    "manifest_path": "contracts/alignment/draft-candidate-manifest.json",
+    "manifest_sha256": "pending-worktree-snapshot"
+  },
+  "design_scope": "FUNCTION_SET",
+  "outcome": {
+    "single_result": "DLQ 回放审批权威迁移 PG + ICMP 跨语言对齐的函数级合同(草稿)",
+    "non_goals": [
+      "回放执行语义",
+      "其他域函数"
+    ]
+  },
+  "pattern_decision_ref": {
+    "artifact_kind": "PATTERN_PROPOSAL",
+    "decision_id": "PAT-STRATEGY-REPLAY-APPROVAL",
+    "path": "contracts/alignment/pattern-proposal-dlq-replay-approval.v1.json",
+    "sha256": "pending",
+    "candidate_manifest_sha256": "pending"
+  },
+  "context_locators": [
+    {
+      "locator_id": "ctx-1",
+      "locator_kind": "FUNCTION",
+      "target_state": "MODIFIED_OR_NEW",
+      "language": "GO",
+      "path": "go/control-plane/internal/ingest/dlq/replay_approval_pg.go",
+      "qualified_symbol": "PostgresReplayApprovalStore",
+      "signature_before": "(未存在)",
+      "signature_after": "type PostgresReplayApprovalStore struct",
+      "candidate_blob_sha256": "004f345dd957c79afc86e6ff38d7a3c671619782478b6ebf15ab53e247e9ad98",
+      "ast_node_sha256": "",
+      "resolver_receipt_ref": "",
+      "created_by_atomic_pr_id": "T1-M10-P001-ATC-DLQ-APPROVAL",
+      "creation_reason": "外部工程标准纠偏:DLQ 回放审批权威迁移 PostgreSQL",
+      "compatibility_entrypoint": "additive",
+      "activation_guard": "pgDB != nil else fail-closed"
+    }
+  ],
+  "code_units": [
+    {
+      "unit_id": "DLQ-APPR-001",
+      "profile_ref": "contracts/alignment/code-unit-contract.schema.json",
+      "kind": "FUNCTION",
+      "change_kind": "NEW_OR_MODIFIED",
+      "primary": true,
+      "locator": {
+        "locator_id": "DLQ-APPR-001-loc",
+        "locator_kind": "FUNCTION",
+        "target_state": "MODIFIED_OR_NEW",
+        "language": "GO",
+        "path": "go/control-plane/internal/ingest/dlq/replay_approval_pg.go",
+        "qualified_symbol": "(*PostgresReplayApprovalStore).CreateApproval",
+        "signature_before": "(未存在)",
+        "signature_after": "func (s *PostgresReplayApprovalStore) CreateApproval(ctx context.Context, approval ReplayApproval) error",
+        "candidate_blob_sha256": "004f345dd957c79afc86e6ff38d7a3c671619782478b6ebf15ab53e247e9ad98",
+        "ast_node_sha256": "",
+        "resolver_receipt_ref": "",
+        "created_by_atomic_pr_id": "T1-M10-P001-ATC-DLQ-APPROVAL",
+        "creation_reason": "外部工程标准纠偏:DLQ 回放审批权威迁移 PostgreSQL",
+        "compatibility_entrypoint": "additive",
+        "activation_guard": "pgDB != nil else fail-closed"
+      },
+      "purpose": "审批命令唯一受理边界:PG 同事务提交 state+history+receipt",
+      "non_goals": "不负责回放执行与跨服务通知",
+      "callers": [
+        "dlq.ReplayHTTPHandler.HandleCreateApproval"
+      ],
+      "callees": [
+        "sql.DB.BeginTx/ExecContext/Commit"
+      ],
+      "inputs": "见签名;tenant/identity/secret 分类按上下文",
+      "outputs": "typed result/error;不以非空 ID 推断成功",
+      "preconditions": [
+        "pgDB 非 nil",
+        "admin scope",
+        "tenant 与 principal 一致"
+      ],
+      "postconditions": [
+        "COMMIT 后 accepted 成立;唯一约束防旧 ID 复用"
+      ],
+      "pattern_roles": [],
+      "body_steps": [
+        {
+          "step_id": "1",
+          "op": "BeginTx",
+          "guard": "s.db != nil",
+          "reads": "none",
+          "writes": "tx handle",
+          "invokes": "BeginTx",
+          "invariant_before": "无事务",
+          "invariant_after": "事务打开",
+          "error_ids": [
+            "DLQ-APPR-ERR-001"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-001"
+          ]
+        },
+        {
+          "step_id": "2",
+          "op": "INSERT state",
+          "guard": "affected==1",
+          "reads": "none",
+          "writes": "dlq_replay_approvals",
+          "invokes": "ExecContext",
+          "invariant_before": "无同 key 记录",
+          "invariant_after": "唯一 (tenant,approval) 存在",
+          "error_ids": [
+            "DLQ-APPR-ERR-002"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-001"
+          ]
+        },
+        {
+          "step_id": "3",
+          "op": "INSERT history",
+          "guard": "state 已插入",
+          "reads": "none",
+          "writes": "dlq_replay_approval_history",
+          "invokes": "ExecContext",
+          "invariant_before": "无 history 行",
+          "invariant_after": "created 行存在",
+          "error_ids": [
+            "DLQ-APPR-ERR-003"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-001"
+          ]
+        },
+        {
+          "step_id": "4",
+          "op": "INSERT receipt",
+          "guard": "history 已插入",
+          "reads": "none",
+          "writes": "dlq_replay_approval_receipts",
+          "invokes": "ExecContext",
+          "invariant_before": "无 receipt 行",
+          "invariant_after": "accepted 行存在",
+          "error_ids": [
+            "DLQ-APPR-ERR-003"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-001"
+          ]
+        },
+        {
+          "step_id": "5",
+          "op": "COMMIT",
+          "guard": "全部写入成功",
+          "reads": "none",
+          "writes": "commit",
+          "invokes": "Commit",
+          "invariant_before": "未提交",
+          "invariant_after": "accepted 持久化",
+          "error_ids": [
+            "DLQ-APPR-ERR-004"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-001"
+          ]
+        }
+      ],
+      "side_effects": [
+        "dlq_replay_approvals",
+        "dlq_replay_approval_history",
+        "dlq_replay_approval_receipts"
+      ],
+      "profile_contract": "ENG-FUNC-002/ENG-CMD-001",
+      "atomicity": "同事务 state+history+receipt(CreateApproval);读路径无副作用",
+      "idempotency": "唯一约束 (tenant_id, approval_id),冲突稳定 409",
+      "concurrency": "依赖 PG 唯一约束;无进程内共享可变状态",
+      "timeout_cancel": "ctx 全链传递,事务随 ctx 取消",
+      "errors": [
+        "DLQ-APPR-ERR-001 pg unavailable",
+        "DLQ-APPR-ERR-002 duplicate approval_id (稳定 conflict)",
+        "DLQ-APPR-ERR-003 insert failure",
+        "DLQ-APPR-ERR-004 commit failure"
+      ],
+      "observability": "zap 结构化日志;trace/tenant/approval_id",
+      "security": "tenant 校验、admin scope、无明文 secret",
+      "performance": "单行/单事务,无 N+1",
+      "compatibility": "新增表/接口;旧调用方不受影响",
+      "rollback": "DDL additive;代码回滚不影响既有表",
+      "tests": [
+        "replay_approval_pg_test.go::TestPostgresReplayApprovalStoreCreateCommitsStateHistoryReceipt",
+        "::TestPostgresReplayApprovalStoreCreateConflictRejectsDuplicate"
+      ]
+    },
+    {
+      "unit_id": "DLQ-APPR-002",
+      "profile_ref": "contracts/alignment/code-unit-contract.schema.json",
+      "kind": "FUNCTION",
+      "change_kind": "NEW_OR_MODIFIED",
+      "primary": true,
+      "locator": {
+        "locator_id": "DLQ-APPR-002-loc",
+        "locator_kind": "FUNCTION",
+        "target_state": "MODIFIED_OR_NEW",
+        "language": "GO",
+        "path": "go/control-plane/internal/ingest/dlq/replay_approval_pg.go",
+        "qualified_symbol": "(*PostgresReplayApprovalStore).GetApproval",
+        "signature_before": "(未存在)",
+        "signature_after": "func (s *PostgresReplayApprovalStore) GetApproval(ctx context.Context, tenantID, approvalID string) (*ReplayApproval, error)",
+        "candidate_blob_sha256": "004f345dd957c79afc86e6ff38d7a3c671619782478b6ebf15ab53e247e9ad98",
+        "ast_node_sha256": "",
+        "resolver_receipt_ref": "",
+        "created_by_atomic_pr_id": "T1-M10-P001-ATC-DLQ-APPROVAL",
+        "creation_reason": "外部工程标准纠偏:DLQ 回放审批权威迁移 PostgreSQL",
+        "compatibility_entrypoint": "additive",
+        "activation_guard": "pgDB != nil else fail-closed"
+      },
+      "purpose": "按 tenant+approval+status=approved 读审批记录,fail-closed",
+      "non_goals": "不负责状态变更",
+      "callers": [
+        "dlq.ReplayManager.verifyApproval"
+      ],
+      "callees": [
+        "sql.DB.QueryRowContext"
+      ],
+      "inputs": "见签名;tenant/identity/secret 分类按上下文",
+      "outputs": "typed result/error;不以非空 ID 推断成功",
+      "preconditions": [
+        "pgDB 非 nil"
+      ],
+      "postconditions": [
+        "返回 approved 记录或 ErrApprovalNotFound"
+      ],
+      "pattern_roles": [],
+      "body_steps": [
+        {
+          "step_id": "1",
+          "op": "SELECT",
+          "guard": "s.db != nil",
+          "reads": "dlq_replay_approvals",
+          "writes": "none",
+          "invokes": "QueryRowContext",
+          "invariant_before": "—",
+          "invariant_after": "行集<=1",
+          "error_ids": [
+            "DLQ-APPR-ERR-005"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-003"
+          ]
+        }
+      ],
+      "side_effects": [
+        "无"
+      ],
+      "profile_contract": "ENG-FUNC-002/ENG-CMD-001",
+      "atomicity": "同事务 state+history+receipt(CreateApproval);读路径无副作用",
+      "idempotency": "唯一约束 (tenant_id, approval_id),冲突稳定 409",
+      "concurrency": "依赖 PG 唯一约束;无进程内共享可变状态",
+      "timeout_cancel": "ctx 全链传递,事务随 ctx 取消",
+      "errors": [
+        "DLQ-APPR-ERR-005 query failure / not found"
+      ],
+      "observability": "zap 结构化日志;trace/tenant/approval_id",
+      "security": "tenant 校验、admin scope、无明文 secret",
+      "performance": "单行/单事务,无 N+1",
+      "compatibility": "新增表/接口;旧调用方不受影响",
+      "rollback": "DDL additive;代码回滚不影响既有表",
+      "tests": [
+        "replay_approval_pg_test.go::TestPostgresReplayApprovalStoreGetOnlyApproved",
+        "::TestPostgresReplayApprovalStoreGetNotFound"
+      ]
+    },
+    {
+      "unit_id": "DLQ-APPR-003",
+      "profile_ref": "contracts/alignment/code-unit-contract.schema.json",
+      "kind": "FUNCTION",
+      "change_kind": "NEW_OR_MODIFIED",
+      "primary": true,
+      "locator": {
+        "locator_id": "DLQ-APPR-003-loc",
+        "locator_kind": "FUNCTION",
+        "target_state": "MODIFIED_OR_NEW",
+        "language": "GO",
+        "path": "go/control-plane/internal/ingest/dlq/replay_manager.go",
+        "qualified_symbol": "(*ReplayManager).verifyApproval",
+        "signature_before": "(未存在)",
+        "signature_after": "func (m *ReplayManager) verifyApproval(ctx context.Context, req ReplayRequest) error",
+        "candidate_blob_sha256": "0b6209942bef27416e9b8c7e87e91ab692e7d4904c3c0b56b472e8fb41ad9ec8",
+        "ast_node_sha256": "",
+        "resolver_receipt_ref": "",
+        "created_by_atomic_pr_id": "T1-M10-P001-ATC-DLQ-APPROVAL",
+        "creation_reason": "外部工程标准纠偏:DLQ 回放审批权威迁移 PostgreSQL",
+        "compatibility_entrypoint": "additive",
+        "activation_guard": "pgDB != nil else fail-closed"
+      },
+      "purpose": "回放前逐字段校验审批记录;台账缺失/不匹配即拒绝",
+      "non_goals": "不负责审批创建与回放执行",
+      "callers": [
+        "ReplayManager.ReplayFallback"
+      ],
+      "callees": [
+        "ReplayApprovalStore.GetApproval"
+      ],
+      "inputs": "见签名;tenant/identity/secret 分类按上下文",
+      "outputs": "typed result/error;不以非空 ID 推断成功",
+      "preconditions": [
+        "validateReplayRequest 已通过"
+      ],
+      "postconditions": [
+        "匹配 tenant/approved_by/requested_by/status"
+      ],
+      "pattern_roles": [],
+      "body_steps": [
+        {
+          "step_id": "1",
+          "op": "store nil check",
+          "guard": "m.approvals != nil",
+          "reads": "none",
+          "writes": "none",
+          "invokes": "—",
+          "invariant_before": "—",
+          "invariant_after": "—",
+          "error_ids": [
+            "DLQ-APPR-ERR-006"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-004"
+          ]
+        },
+        {
+          "step_id": "2",
+          "op": "GetApproval",
+          "guard": "—",
+          "reads": "approval store",
+          "writes": "none",
+          "invokes": "GetApproval",
+          "invariant_before": "—",
+          "invariant_after": "approval != nil",
+          "error_ids": [
+            "DLQ-APPR-ERR-007"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-004"
+          ]
+        },
+        {
+          "step_id": "3",
+          "op": "field compare",
+          "guard": "status==approved",
+          "reads": "none",
+          "writes": "none",
+          "invokes": "strings compare",
+          "invariant_before": "—",
+          "invariant_after": "全部字段匹配",
+          "error_ids": [
+            "DLQ-APPR-ERR-008"
+          ],
+          "cancel_point": "—",
+          "oracle_ids": [
+            "DLQ-APPR-T-004"
+          ]
+        }
+      ],
+      "side_effects": [
+        "无"
+      ],
+      "profile_contract": "ENG-FUNC-002/ENG-CMD-001",
+      "atomicity": "同事务 state+history+receipt(CreateApproval);读路径无副作用",
+      "idempotency": "唯一约束 (tenant_id, approval_id),冲突稳定 409",
+      "concurrency": "依赖 PG 唯一约束;无进程内共享可变状态",
+      "timeout_cancel": "ctx 全链传递,事务随 ctx 取消",
+      "errors": [
+        "DLQ-APPR-ERR-006 store 未配置",
+        "DLQ-APPR-ERR-007 记录缺失",
+        "DLQ-APPR-ERR-008 字段不匹配"
+      ],
+      "observability": "zap 结构化日志;trace/tenant/approval_id",
+      "security": "tenant 校验、admin scope、无明文 secret",
+      "performance": "单行/单事务,无 N+1",
+      "compatibility": "新增表/接口;旧调用方不受影响",
+      "rollback": "DDL additive;代码回滚不影响既有表",
+      "tests": [
+        "replay_manager_test.go::TestReplayManagerRejectsWithoutApprovalStore",
+        "::TestReplayManagerRejectsUnknownApproval",
+        "::TestReplayManagerRejectsApproverMismatch"
+      ]
+    },
+    {
+      "unit_id": "DLQ-APPR-004",
+      "profile_ref": "contracts/alignment/code-unit-contract.schema.json",
+      "kind": "FUNCTION",
+      "change_kind": "NEW_OR_MODIFIED",
+      "primary": true,
+      "locator": {
+        "locator_id": "DLQ-APPR-004-loc",
+        "locator_kind": "FUNCTION",
+        "target_state": "MODIFIED_OR_NEW",
+        "language": "GO",
+        "path": "go/control-plane/internal/ingest/dlq/replay_http.go",
+        "qualified_symbol": "(*ReplayHTTPHandler).HandleCreateApproval",
+        "signature_before": "(未存在)",
+        "signature_after": "func (h *ReplayHTTPHandler) HandleCreateApproval(w http.ResponseWriter, r *http.Request)",
+        "candidate_blob_sha256": "74a016b6c99f14443375199353b0c36b28ba174e6d2483d0a273506a2f23c906",
+        "ast_node_sha256": "",
+        "resolver_receipt_ref": "",
+        "created_by_atomic_pr_id": "T1-M10-P001-ATC-DLQ-APPROVAL",
+        "creation_reason": "外部工程标准纠偏:DLQ 回放审批权威迁移 PostgreSQL",
+        "compatibility_entrypoint": "additive",
+        "activation_guard": "pgDB != nil else fail-closed"
+      },
+      "purpose": "审批创建 HTTP 入口:鉴权/admin scope/tenant 校验后委托权威存储",
+      "non_goals": "不绕过 PG 受理边界",
+      "callers": [
+        "http.ServeMux"
+      ],
+      "callees": [
+        "authenticate",
+        "CreateApproval",
+        "approvalRequestHash"
+      ],
+      "inputs": "见签名;tenant/identity/secret 分类按上下文",
+      "outputs": "typed result/error;不以非空 ID 推断成功",
+      "preconditions": [
+        "admin scope",
+        "body 大小上限 64KB"
+      ],
+      "postconditions": [
+        "201 且 PG 已提交;否则 403/409"
+      ],
+      "pattern_roles": [],
+      "body_steps": [
+        {
+          "step_id": "1",
+          "op": "auth",
+          "guard": "bearer+scope",
+          "reads": "header",
+          "writes": "none",
+          "invokes": "authenticate",
+          "invariant_before": "—",
+          "invariant_after": "principal 确定",
+          "error_ids": [
+            "DLQ-APPR-ERR-009"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-005"
+          ]
+        },
+        {
+          "step_id": "2",
+          "op": "decode",
+          "guard": "MaxBytesReader",
+          "reads": "body",
+          "writes": "none",
+          "invokes": "json.Decoder",
+          "invariant_before": "—",
+          "invariant_after": "req 解析",
+          "error_ids": [
+            "DLQ-APPR-ERR-010"
+          ],
+          "cancel_point": "—",
+          "oracle_ids": [
+            "DLQ-APPR-T-005"
+          ]
+        },
+        {
+          "step_id": "3",
+          "op": "tenant bind",
+          "guard": "tenant==token tenant",
+          "reads": "none",
+          "writes": "none",
+          "invokes": "—",
+          "invariant_before": "—",
+          "invariant_after": "tenant 以 principal 为准",
+          "error_ids": [
+            "DLQ-APPR-ERR-011"
+          ],
+          "cancel_point": "—",
+          "oracle_ids": [
+            "DLQ-APPR-T-005"
+          ]
+        },
+        {
+          "step_id": "4",
+          "op": "CreateApproval",
+          "guard": "字段齐全且 approver!=requester",
+          "reads": "none",
+          "writes": "PG",
+          "invokes": "CreateApproval",
+          "invariant_before": "无同 key 记录",
+          "invariant_after": "accepted 持久化",
+          "error_ids": [
+            "DLQ-APPR-ERR-002"
+          ],
+          "cancel_point": "ctx",
+          "oracle_ids": [
+            "DLQ-APPR-T-005"
+          ]
+        }
+      ],
+      "side_effects": [
+        "PG approval tables"
+      ],
+      "profile_contract": "ENG-FUNC-002/ENG-CMD-001",
+      "atomicity": "同事务 state+history+receipt(CreateApproval);读路径无副作用",
+      "idempotency": "唯一约束 (tenant_id, approval_id),冲突稳定 409",
+      "concurrency": "依赖 PG 唯一约束;无进程内共享可变状态",
+      "timeout_cancel": "ctx 全链传递,事务随 ctx 取消",
+      "errors": [
+        "DLQ-APPR-ERR-009 未授权",
+        "DLQ-APPR-ERR-010 请求体非法",
+        "DLQ-APPR-ERR-011 租户不一致",
+        "DLQ-APPR-ERR-002 冲突"
+      ],
+      "observability": "zap 结构化日志;trace/tenant/approval_id",
+      "security": "tenant 校验、admin scope、无明文 secret",
+      "performance": "单行/单事务,无 N+1",
+      "compatibility": "新增表/接口;旧调用方不受影响",
+      "rollback": "DDL additive;代码回滚不影响既有表",
+      "tests": [
+        "replay_http_test.go::TestReplayHTTPHandlerCreateApprovalRequiresAdminScope",
+        "::TestReplayHTTPHandlerCreateApprovalAndReplayRoundTrip"
+      ]
+    },
+    {
+      "unit_id": "DLQ-APPR-005",
+      "profile_ref": "contracts/alignment/code-unit-contract.schema.json",
+      "kind": "FUNCTION",
+      "change_kind": "NEW_OR_MODIFIED",
+      "primary": true,
+      "locator": {
+        "locator_id": "DLQ-APPR-005-loc",
+        "locator_kind": "FUNCTION",
+        "target_state": "MODIFIED_OR_NEW",
+        "language": "GO",
+        "path": "go/control-plane/internal/ingest/dlq/replay_http.go",
+        "qualified_symbol": "approvalRequestHash",
+        "signature_before": "(未存在)",
+        "signature_after": "func approvalRequestHash(tenantID, approvalID, requestedBy, approvedBy, reason string) string",
+        "candidate_blob_sha256": "74a016b6c99f14443375199353b0c36b28ba174e6d2483d0a273506a2f23c906",
+        "ast_node_sha256": "",
+        "resolver_receipt_ref": "",
+        "created_by_atomic_pr_id": "T1-M10-P001-ATC-DLQ-APPROVAL",
+        "creation_reason": "外部工程标准纠偏:DLQ 回放审批权威迁移 PostgreSQL",
+        "compatibility_entrypoint": "additive",
+        "activation_guard": "pgDB != nil else fail-closed"
+      },
+      "purpose": "审批请求 canonical 字段哈希(ENG-CMD-002 request hash)",
+      "non_goals": "不参与受理判定",
+      "callers": [
+        "HandleCreateApproval"
+      ],
+      "callees": [
+        "sha256"
+      ],
+      "inputs": "见签名;tenant/identity/secret 分类按上下文",
+      "outputs": "typed result/error;不以非空 ID 推断成功",
+      "preconditions": [
+        "—"
+      ],
+      "postconditions": [
+        "确定性 hex sha256"
+      ],
+      "pattern_roles": [],
+      "body_steps": [
+        {
+          "step_id": "1",
+          "op": "join+hash",
+          "guard": "—",
+          "reads": "—",
+          "writes": "—",
+          "invokes": "sha256",
+          "invariant_before": "—",
+          "invariant_after": "同输入同哈希",
+          "error_ids": [],
+          "cancel_point": "—",
+          "oracle_ids": [
+            "DLQ-APPR-T-005"
+          ]
+        }
+      ],
+      "side_effects": [
+        "无"
+      ],
+      "profile_contract": "ENG-FUNC-002/ENG-CMD-001",
+      "atomicity": "同事务 state+history+receipt(CreateApproval);读路径无副作用",
+      "idempotency": "唯一约束 (tenant_id, approval_id),冲突稳定 409",
+      "concurrency": "依赖 PG 唯一约束;无进程内共享可变状态",
+      "timeout_cancel": "ctx 全链传递,事务随 ctx 取消",
+      "errors": [
+        "无"
+      ],
+      "observability": "zap 结构化日志;trace/tenant/approval_id",
+      "security": "tenant 校验、admin scope、无明文 secret",
+      "performance": "单行/单事务,无 N+1",
+      "compatibility": "新增表/接口;旧调用方不受影响",
+      "rollback": "DDL additive;代码回滚不影响既有表",
+      "tests": [
+        "replay_http_test.go 间接覆盖"
+      ]
+    },
+    {
+      "unit_id": "CML-ICMP-001",
+      "profile_ref": "contracts/alignment/code-unit-contract.schema.json",
+      "kind": "FUNCTION",
+      "change_kind": "NEW_OR_MODIFIED",
+      "primary": true,
+      "locator": {
+        "locator_id": "CML-ICMP-001-loc",
+        "locator_kind": "FUNCTION",
+        "target_state": "MODIFIED_OR_NEW",
+        "language": "JAVA",
+        "path": "java/flink-jobs/flink-common/src/main/java/com/traffic/flink/common/CommunityIdUtil.java",
+        "qualified_symbol": "CommunityIdUtil.computeIcmp",
+        "signature_before": "(未存在)",
+        "signature_after": "public static String computeIcmp(String srcIp, String dstIp, int icmpType, int icmpCode, int protocol)",
+        "candidate_blob_sha256": "59b71228bdca9b10d512d574ad3170b0a0256ccd0007cfc06dc795924ac9e72c",
+        "ast_node_sha256": "",
+        "resolver_receipt_ref": "",
+        "created_by_atomic_pr_id": "T1-M10-P001-ATC-DLQ-APPROVAL",
+        "creation_reason": "外部工程标准纠偏:DLQ 回放审批权威迁移 PostgreSQL",
+        "compatibility_entrypoint": "additive",
+        "activation_guard": "pgDB != nil else fail-closed"
+      },
+      "purpose": "ICMP/ICMPv6 community-id-spec 编码:(type<<8)|code,应答归一化",
+      "non_goals": "不改 TCP/UDP/IPv6 既有编码",
+      "callers": [
+        "SessionizeProcessFunction.calculateCommunityId",
+        "SessionAggregator.calculateCommunityId"
+      ],
+      "callees": [
+        "compute"
+      ],
+      "inputs": "见签名;tenant/identity/secret 分类按上下文",
+      "outputs": "typed result/error;不以非空 ID 推断成功",
+      "preconditions": [
+        "合法 IP"
+      ],
+      "postconditions": [
+        "request/reply 同 ID;与 Rust pin 向量一致"
+      ],
+      "pattern_roles": [],
+      "body_steps": [
+        {
+          "step_id": "1",
+          "op": "normalize reply type",
+          "guard": "protocol==1&&type==0 或 protocol==58&&type==129",
+          "reads": "—",
+          "writes": "—",
+          "invokes": "—",
+          "invariant_before": "—",
+          "invariant_after": "type 归一为请求类型",
+          "error_ids": [],
+          "cancel_point": "—",
+          "oracle_ids": [
+            "CML-ICMP-T-001"
+          ]
+        },
+        {
+          "step_id": "2",
+          "op": "pack",
+          "guard": "—",
+          "reads": "—",
+          "writes": "—",
+          "invokes": "compute",
+          "invariant_before": "—",
+          "invariant_after": "双端口= (type<<8)|code",
+          "error_ids": [],
+          "cancel_point": "—",
+          "oracle_ids": [
+            "CML-ICMP-T-001"
+          ]
+        }
+      ],
+      "side_effects": [
+        "无"
+      ],
+      "profile_contract": "ENG-FUNC-002/ENG-CMD-001",
+      "atomicity": "同事务 state+history+receipt(CreateApproval);读路径无副作用",
+      "idempotency": "唯一约束 (tenant_id, approval_id),冲突稳定 409",
+      "concurrency": "依赖 PG 唯一约束;无进程内共享可变状态",
+      "timeout_cancel": "ctx 全链传递,事务随 ctx 取消",
+      "errors": [
+        "无"
+      ],
+      "observability": "zap 结构化日志;trace/tenant/approval_id",
+      "security": "tenant 校验、admin scope、无明文 secret",
+      "performance": "单行/单事务,无 N+1",
+      "compatibility": "新增表/接口;旧调用方不受影响",
+      "rollback": "DDL additive;代码回滚不影响既有表",
+      "tests": [
+        "CommunityIdUtilTest::testIcmpSpecEncodingPinnedVector",
+        "::testIcmpv6SpecEncodingPinnedVector"
+      ]
+    }
+  ],
+  "sql_migration_design": {
+    "migration_refs": [
+      "common/sql/pg/24-dlq-replay-approval-v1.sql",
+      "deployments/kubernetes/init-jobs/02-postgres-schema.yaml"
+    ],
+    "expand_order": "additive tables first; no contract phase"
+  },
+  "call_flow": {
+    "nodes": [
+      {
+        "path": "go/control-plane/internal/ingest/dlq/replay_http.go",
+        "symbol": "HandleCreateApproval"
+      },
+      {
+        "path": "go/control-plane/internal/ingest/dlq/replay_approval_pg.go",
+        "symbol": "CreateApproval"
+      },
+      {
+        "path": "go/control-plane/internal/ingest/dlq/replay_manager.go",
+        "symbol": "verifyApproval"
+      },
+      {
+        "path": "go/control-plane/internal/ingest/dlq/replay_approval_pg.go",
+        "symbol": "GetApproval"
+      }
+    ],
+    "edges": [
+      {
+        "from": "go/control-plane/internal/ingest/dlq/replay_http.go#HandleCreateApproval",
+        "to": "go/control-plane/internal/ingest/dlq/replay_approval_pg.go#CreateApproval",
+        "data": "ReplayApproval"
+      },
+      {
+        "from": "go/control-plane/internal/ingest/dlq/replay_manager.go#ReplayFallback",
+        "to": "go/control-plane/internal/ingest/dlq/replay_manager.go#verifyApproval",
+        "data": "ReplayRequest"
+      },
+      {
+        "from": "go/control-plane/internal/ingest/dlq/replay_manager.go#verifyApproval",
+        "to": "go/control-plane/internal/ingest/dlq/replay_approval_pg.go#GetApproval",
+        "data": "tenant+approval_id"
+      }
+    ]
+  },
+  "companions": [],
+  "contract_impact_refs": [],
+  "plan_refs": [],
+  "claims": [
+    {
+      "claim": "G01/G02 通过;G03-G09 BLOCKED",
+      "evidence": "doc/05_status/外部工程标准纠偏验证状态-2026-08-17.md"
+    }
+  ],
+  "review_status": {
+    "status": "DRAFT",
+    "blockers": [
+      "ast_node_sha256/resolver_receipt_ref 待 resolver 生成"
+    ]
+  },
+  "readiness": "NOT_READY"
+}
