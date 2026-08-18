@@ -164,6 +164,116 @@ CREATE INDEX IF NOT EXISTS idx_model_update_applied_acks_status
 CREATE INDEX IF NOT EXISTS idx_model_update_applied_acks_model
     ON model_update_applied_acks (tenant_id, model_id, applied_at DESC);
 
+CREATE TABLE IF NOT EXISTS model_update_consumer_readiness (
+  consumer_deployment_id TEXT NOT NULL,
+  subtask_index INT NOT NULL CHECK (subtask_index >= 0),
+  event_id TEXT NOT NULL UNIQUE,
+  consumer_profile_sha256 TEXT NOT NULL CHECK (consumer_profile_sha256 ~ '^[0-9a-f]{64}$'),
+  runtime_contract TEXT NOT NULL,
+  runtime_version TEXT NOT NULL,
+  feature_schema_version INT NOT NULL CHECK (feature_schema_version > 0),
+  graph_schema_version INT NOT NULL CHECK (graph_schema_version > 0),
+  supported_model_formats TEXT NOT NULL,
+  parallelism INT NOT NULL CHECK (parallelism > 0 AND subtask_index < parallelism),
+  status TEXT NOT NULL DEFAULT 'ready' CHECK (status='ready'),
+  payload JSONB NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (consumer_deployment_id,subtask_index)
+);
+CREATE INDEX IF NOT EXISTS idx_model_update_consumer_readiness_profile
+  ON model_update_consumer_readiness (consumer_profile_sha256,last_seen_at DESC);
+
+CREATE TABLE IF NOT EXISTS model_update_consumer_ready_receipts (
+  consumer_deployment_id TEXT PRIMARY KEY,
+  consumer_profile_sha256 TEXT NOT NULL CHECK (consumer_profile_sha256 ~ '^[0-9a-f]{64}$'),
+  runtime_contract TEXT NOT NULL,
+  runtime_version TEXT NOT NULL,
+  feature_schema_version INT NOT NULL CHECK (feature_schema_version > 0),
+  graph_schema_version INT NOT NULL CHECK (graph_schema_version > 0),
+  supported_model_formats TEXT NOT NULL,
+  expected_parallelism INT NOT NULL CHECK (expected_parallelism > 0),
+  ready_subtasks INT NOT NULL CHECK (ready_subtasks = expected_parallelism),
+  status TEXT NOT NULL DEFAULT 'ready' CHECK (status='ready'),
+  ready_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_model_update_consumer_ready_active
+  ON model_update_consumer_ready_receipts (expires_at,consumer_profile_sha256) WHERE status='ready';
+
+CREATE TABLE IF NOT EXISTS model_shadow_activation_aggregates (
+  tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  model_id UUID NOT NULL REFERENCES models(model_id) ON DELETE CASCADE,
+  aggregate_revision BIGINT NOT NULL DEFAULT 0 CHECK (aggregate_revision >= 0),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id,model_id)
+);
+
+CREATE TABLE IF NOT EXISTS model_shadow_activation_requests (
+  request_id TEXT PRIMARY KEY,
+  event_id TEXT NOT NULL UNIQUE REFERENCES model_update_outbox(event_id) ON DELETE RESTRICT,
+  tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  model_id UUID NOT NULL REFERENCES models(model_id) ON DELETE RESTRICT,
+  model_version TEXT NOT NULL REFERENCES model_versions(model_version) ON DELETE RESTRICT,
+  package_id TEXT NOT NULL,
+  package_sha256 TEXT NOT NULL CHECK (package_sha256 ~ '^[0-9a-f]{64}$'),
+  idempotency_key TEXT NOT NULL,
+  request_sha256 TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+  expected_revision BIGINT NOT NULL CHECK (expected_revision >= 0),
+  aggregate_revision BIGINT NOT NULL CHECK (aggregate_revision = expected_revision + 1),
+  requested_by TEXT NOT NULL,
+  approved_by TEXT NOT NULL,
+  approval_reason TEXT NOT NULL CHECK (length(approval_reason) BETWEEN 8 AND 1000),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id,idempotency_key),
+  UNIQUE (tenant_id,model_id,aggregate_revision),
+  CHECK (requested_by <> approved_by)
+);
+CREATE INDEX IF NOT EXISTS idx_model_shadow_activation_model
+  ON model_shadow_activation_requests (tenant_id,model_id,aggregate_revision DESC);
+
+CREATE TABLE IF NOT EXISTS model_update_shadow_acks (
+  event_id TEXT NOT NULL,
+  tenant_id TEXT NOT NULL,
+  model_id TEXT NOT NULL,
+  model_version TEXT NOT NULL,
+  package_id TEXT NOT NULL,
+  package_sha256 TEXT NOT NULL CHECK (package_sha256 ~ '^[0-9a-f]{64}$'),
+  aggregate_revision BIGINT NOT NULL CHECK (aggregate_revision > 0),
+  subtask_index INT NOT NULL CHECK (subtask_index >= 0),
+  parallelism INT NOT NULL CHECK (parallelism > 0 AND subtask_index < parallelism),
+  status TEXT NOT NULL CHECK (status IN ('shadow_ready','stale','duplicate','failed')),
+  error TEXT NOT NULL DEFAULT '',
+  payload JSONB NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (event_id,subtask_index)
+);
+CREATE INDEX IF NOT EXISTS idx_model_update_shadow_acks_quorum
+  ON model_update_shadow_acks (event_id,status,subtask_index);
+CREATE INDEX IF NOT EXISTS idx_model_update_shadow_acks_model
+  ON model_update_shadow_acks (tenant_id,model_id,aggregate_revision DESC);
+
+CREATE TABLE IF NOT EXISTS model_update_shadow_ready_receipts (
+  event_id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  model_id TEXT NOT NULL,
+  model_version TEXT NOT NULL,
+  package_id TEXT NOT NULL,
+  package_sha256 TEXT NOT NULL CHECK (package_sha256 ~ '^[0-9a-f]{64}$'),
+  aggregate_revision BIGINT NOT NULL CHECK (aggregate_revision > 0),
+  expected_parallelism INT NOT NULL CHECK (expected_parallelism > 0),
+  ready_subtasks INT NOT NULL CHECK (ready_subtasks = expected_parallelism),
+  status TEXT NOT NULL DEFAULT 'shadow_ready' CHECK (status='shadow_ready'),
+  ready_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  UNIQUE (tenant_id,model_id,aggregate_revision)
+);
+CREATE INDEX IF NOT EXISTS idx_model_update_shadow_ready_active
+  ON model_update_shadow_ready_receipts (expires_at,tenant_id,model_id) WHERE status='shadow_ready';
+
 CREATE TABLE IF NOT EXISTS model_workbench_items (
   item_id      TEXT PRIMARY KEY,
   tenant_id    TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,

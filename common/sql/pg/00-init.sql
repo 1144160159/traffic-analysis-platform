@@ -393,9 +393,54 @@ CREATE TABLE IF NOT EXISTS probe_operation_outbox (
   payload JSONB NOT NULL, published BOOLEAN NOT NULL DEFAULT false, attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
   last_error TEXT NOT NULL DEFAULT '', next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ,
   locked_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ,
+	publish_state TEXT NOT NULL DEFAULT 'PENDING',
+	broker_topic TEXT NOT NULL DEFAULT '', broker_partition INTEGER, broker_offset BIGINT,
+	publish_attempt UUID, acked_at TIMESTAMPTZ,
   UNIQUE (operation_id,event_type)
 );
-CREATE INDEX IF NOT EXISTS idx_probe_operation_outbox_pending ON probe_operation_outbox (next_attempt_at,created_at) WHERE published=false;
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS publish_state TEXT NOT NULL DEFAULT 'PENDING';
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS broker_topic TEXT NOT NULL DEFAULT '';
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS broker_partition INTEGER;
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS broker_offset BIGINT;
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS publish_attempt UUID;
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS acked_at TIMESTAMPTZ;
+UPDATE probe_operation_outbox SET publish_state=CASE WHEN published THEN 'KAFKA_ACKED' ELSE 'PENDING' END
+WHERE publish_state NOT IN ('OUTCOME_UNKNOWN','KAFKA_ACKED') OR published;
+ALTER TABLE probe_operation_outbox DROP CONSTRAINT IF EXISTS probe_operation_outbox_publish_state_check;
+ALTER TABLE probe_operation_outbox ADD CONSTRAINT probe_operation_outbox_publish_state_check
+CHECK (publish_state IN ('PENDING','OUTCOME_UNKNOWN','KAFKA_ACKED')) NOT VALID;
+ALTER TABLE probe_operation_outbox VALIDATE CONSTRAINT probe_operation_outbox_publish_state_check;
+ALTER TABLE probe_operation_outbox DROP CONSTRAINT IF EXISTS probe_operation_outbox_publish_compatibility_check;
+ALTER TABLE probe_operation_outbox ADD CONSTRAINT probe_operation_outbox_publish_compatibility_check
+CHECK ((published AND publish_state='KAFKA_ACKED') OR
+       (NOT published AND publish_state IN ('PENDING','OUTCOME_UNKNOWN'))) NOT VALID;
+ALTER TABLE probe_operation_outbox VALIDATE CONSTRAINT probe_operation_outbox_publish_compatibility_check;
+DROP INDEX IF EXISTS idx_probe_operation_outbox_pending;
+CREATE INDEX idx_probe_operation_outbox_pending ON probe_operation_outbox (next_attempt_at,created_at)
+WHERE publish_state IN ('PENDING','OUTCOME_UNKNOWN');
+CREATE TABLE IF NOT EXISTS probe_pipeline_readiness_epochs (
+  pipeline_id TEXT NOT NULL,
+  consumer_role TEXT NOT NULL CHECK (consumer_role IN ('COMMAND_DELIVERY','ACK_AUTHORITY','LIFECYCLE_PROJECTION')),
+  consumer_group TEXT NOT NULL, owner_id TEXT NOT NULL, owner_epoch BIGINT NOT NULL CHECK (owner_epoch > 0),
+  ready BOOLEAN NOT NULL, observed_at TIMESTAMPTZ NOT NULL, lease_expires_at TIMESTAMPTZ,
+  revoked_at TIMESTAMPTZ, updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (pipeline_id,consumer_role),
+  CHECK ((ready AND lease_expires_at IS NOT NULL AND revoked_at IS NULL) OR
+         (NOT ready AND revoked_at IS NOT NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_probe_pipeline_readiness_live
+ON probe_pipeline_readiness_epochs (pipeline_id,lease_expires_at) WHERE ready;
+CREATE TABLE IF NOT EXISTS kafka_dlq_acknowledgement_receipts (
+  consumer_group TEXT NOT NULL, source_topic TEXT NOT NULL,
+  source_partition INTEGER NOT NULL CHECK (source_partition >= 0),
+  source_offset BIGINT NOT NULL CHECK (source_offset >= 0),
+  source_key_sha256 TEXT NOT NULL CHECK (source_key_sha256 ~ '^[0-9a-f]{64}$'),
+  payload_sha256 TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+  headers_sha256 TEXT NOT NULL CHECK (headers_sha256 ~ '^[0-9a-f]{64}$'),
+  error_sha256 TEXT NOT NULL CHECK (error_sha256 ~ '^[0-9a-f]{64}$'),
+  acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (consumer_group,source_topic,source_partition,source_offset)
+);
 
 -- 页面业务状态: 行为基线重置点
 CREATE TABLE IF NOT EXISTS behavior_baseline_resets (

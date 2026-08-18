@@ -1519,7 +1519,10 @@ CREATE TABLE IF NOT EXISTS probe_operation_event_projection (
     operation_id UUID NOT NULL,
     tenant_id TEXT NOT NULL,
     probe_id TEXT NOT NULL,
-    event_type TEXT NOT NULL CHECK (event_type = 'traffic.probe.v2.OperationAcknowledged'),
+    event_type TEXT NOT NULL CHECK (event_type IN (
+        'traffic.probe.v2.OperationAcknowledged',
+        'traffic.probe.v2.OperationExpired'
+    )),
     revision BIGINT NOT NULL CHECK (revision > 0),
     status TEXT NOT NULL,
     trace_id TEXT NOT NULL,

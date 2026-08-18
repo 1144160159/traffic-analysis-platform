@@ -167,6 +167,13 @@ CREATE TABLE IF NOT EXISTS asset_projection_inbox (
 CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_ready ON asset_projection_inbox(available_at,created_at) WHERE status='pending';
 CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_reclaim ON asset_projection_inbox(locked_until,created_at) WHERE status='processing';
 CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_dead ON asset_projection_inbox(updated_at) WHERE status='dead';
+ALTER TABLE asset_projection_inbox
+  ADD COLUMN IF NOT EXISTS kafka_topic TEXT NOT NULL DEFAULT 'asset.events.v2',
+  ADD COLUMN IF NOT EXISTS kafka_timestamp_ms BIGINT NOT NULL DEFAULT 1 CHECK (kafka_timestamp_ms>0),
+  ADD COLUMN IF NOT EXISTS raw_payload BYTEA,
+  ADD COLUMN IF NOT EXISTS source_sha256 TEXT NOT NULL DEFAULT repeat('0',64) CHECK (length(source_sha256)=64),
+  ADD COLUMN IF NOT EXISTS ch_status TEXT NOT NULL DEFAULT 'disabled' CHECK (ch_status IN ('disabled','pending','applied','dead'));
+CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_ch_ready ON asset_projection_inbox(available_at,created_at) WHERE ch_status='pending';
 CREATE TABLE IF NOT EXISTS asset_projection_watermarks (
   tenant_id TEXT NOT NULL,
   asset_id UUID NOT NULL REFERENCES assets(asset_id) ON DELETE RESTRICT,
@@ -178,6 +185,11 @@ CREATE TABLE IF NOT EXISTS asset_projection_watermarks (
   PRIMARY KEY (tenant_id,asset_id,target)
 );
 CREATE INDEX IF NOT EXISTS idx_asset_projection_watermarks_target_version ON asset_projection_watermarks(target,aggregate_version);
+ALTER TABLE asset_projection_watermarks
+  DROP CONSTRAINT IF EXISTS asset_projection_watermarks_target_check;
+ALTER TABLE asset_projection_watermarks
+  ADD CONSTRAINT asset_projection_watermarks_target_check
+  CHECK (target IN ('opensearch','nebulagraph','clickhouse'));
 CREATE TABLE IF NOT EXISTS asset_discovery_credentials (
   credential_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, name TEXT NOT NULL,
   protocol TEXT NOT NULL, endpoint TEXT, secret_ref TEXT NOT NULL, created_by TEXT,

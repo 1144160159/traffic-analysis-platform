@@ -125,7 +125,19 @@ CREATE TABLE IF NOT EXISTS traffic.sessions_local ON CLUSTER traffic_cluster (
   is_established UInt8,
   evidence_count UInt32,
   flow_ids       Array(String),
-  end_reason     String
+  end_reason     String,
+  event_schema_version String DEFAULT '',
+  aggregate_version UInt64 DEFAULT 0,
+  identity_version String DEFAULT '',
+  session_version UInt64 DEFAULT 0,
+  event_time_start_ms Int64 DEFAULT 0,
+  event_time_end_ms Int64 DEFAULT 0,
+  source_watermark_ms Nullable(Int64) DEFAULT NULL,
+  source_event_ids Array(String) DEFAULT [],
+  evidence_ids Array(String) DEFAULT [],
+  completeness LowCardinality(String) DEFAULT 'SESSION_COMPLETENESS_UNSPECIFIED',
+  is_partial UInt8 DEFAULT 1,
+  missing_fields Array(String) DEFAULT []
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/sessions', '{replica}')
 PARTITION BY toYYYYMMDD(toDateTime(ts_start / 1000))
@@ -166,6 +178,21 @@ CREATE TABLE IF NOT EXISTS traffic.feature_stat_local ON CLUSTER traffic_cluster
   tcp_init_win_bytes_fwd       UInt32,
   tcp_init_win_bytes_bwd       UInt32,
   extra                        Array(Float32),
+  event_schema_version         String DEFAULT '',
+  aggregate_version            UInt64 DEFAULT 0,
+  event_time_start_ms          Int64 DEFAULT 0,
+  event_time_end_ms            Int64 DEFAULT 0,
+  source_watermark_ms          Nullable(Int64) DEFAULT NULL,
+  source_event_ids             Array(String) DEFAULT [],
+  evidence_ids                 Array(String) DEFAULT [],
+  feature_category             LowCardinality(String) DEFAULT 'FEATURE_CATEGORY_UNSPECIFIED',
+  availability                 LowCardinality(String) DEFAULT 'FEATURE_AVAILABILITY_UNSPECIFIED',
+  algorithm_version            String DEFAULT '',
+  window_id                    String DEFAULT '',
+  value_unit                   String DEFAULT '',
+  is_partial                   UInt8 DEFAULT 1,
+  missing_fields               Array(String) DEFAULT [],
+  missing_reason               String DEFAULT '',
   ingest_ts                    DateTime64(3) DEFAULT now64(3)
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/feature_stat', '{replica}')
@@ -179,7 +206,53 @@ AS traffic.feature_stat_local
 ENGINE = Distributed(traffic_cluster, traffic, feature_stat_local, rand());
 
 -- =============================================================================
--- 4. feature_fp — FeatureFingerprint
+-- 4. feature_seq — FeatureSeq
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS traffic.feature_seq_local ON CLUSTER traffic_cluster (
+  tenant_id String,
+  run_id String,
+  feature_set_id String,
+  event_id String,
+  object_type LowCardinality(String),
+  object_id String,
+  community_id String,
+  window_id String,
+  ts_start DateTime64(3),
+  ts_end DateTime64(3),
+  pktlen_seq_hash String,
+  iat_seq_hash String,
+  wavelet_releng_fwd Float32,
+  wavelet_releng_bwd Float32,
+  wavelet_entropy_fwd Float32,
+  wavelet_entropy_bwd Float32,
+  wavelet_detail_mean_fwd Float32,
+  wavelet_detail_mean_bwd Float32,
+  wavelet_detail_std_fwd Float32,
+  wavelet_detail_std_bwd Float32,
+  seq_blob_ref String,
+  feature_category LowCardinality(String) DEFAULT 'FEATURE_CATEGORY_UNSPECIFIED',
+  availability LowCardinality(String) DEFAULT 'FEATURE_AVAILABILITY_UNSPECIFIED',
+  schema_version String DEFAULT '',
+  algorithm_version String DEFAULT '',
+  value_unit String DEFAULT '',
+  source_event_ids Array(String) DEFAULT [],
+  evidence_ids Array(String) DEFAULT [],
+  missing_fields Array(String) DEFAULT [],
+  missing_reason String DEFAULT '',
+  ingest_ts DateTime64(3) DEFAULT now64(3)
+)
+ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/feature_seq', '{replica}')
+PARTITION BY toDate(ts_end)
+ORDER BY (tenant_id, ts_end, community_id, object_type, object_id, window_id)
+TTL toDateTime(ts_end) + INTERVAL 30 DAY
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS traffic.feature_seq ON CLUSTER traffic_cluster
+AS traffic.feature_seq_local
+ENGINE = Distributed(traffic_cluster, traffic, feature_seq_local, cityHash64(tenant_id, community_id));
+
+-- =============================================================================
+-- 5. feature_fp — FeatureFingerprint
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS traffic.feature_fp_local ON CLUSTER traffic_cluster (
   tenant_id          String,
@@ -192,14 +265,30 @@ CREATE TABLE IF NOT EXISTS traffic.feature_fp_local ON CLUSTER traffic_cluster (
   is_encrypted       UInt8,
   tls_version        LowCardinality(String),
   ja3                LowCardinality(String),
+  ja4                String DEFAULT '',
+  sni                String DEFAULT '',
   sni_hash           String,
   cert_sha256        String,
   cert_is_self_signed UInt8,
   pubkey_len         UInt16,
+  quic_version       String DEFAULT '',
+  transport_security LowCardinality(String) DEFAULT 'TRANSPORT_SECURITY_PROTOCOL_UNSPECIFIED',
+  raw_traffic_ref    String DEFAULT '',
   hex_freq           Array(Float32),
   hex_ratio          Array(Float32),
   entropy_payload    Float32,
   chi_square_bfd     Float32,
+  feature_category   LowCardinality(String) DEFAULT 'FEATURE_CATEGORY_UNSPECIFIED',
+  availability       LowCardinality(String) DEFAULT 'FEATURE_AVAILABILITY_UNSPECIFIED',
+  schema_version     String DEFAULT '',
+  algorithm_version  String DEFAULT '',
+  window_id          String DEFAULT '',
+  event_time_start_ms Int64 DEFAULT 0,
+  event_time_end_ms   Int64 DEFAULT 0,
+  source_event_ids   Array(String) DEFAULT [],
+  evidence_ids       Array(String) DEFAULT [],
+  missing_fields     Array(String) DEFAULT [],
+  missing_reason     String DEFAULT '',
   ingest_ts          DateTime64(3) DEFAULT now64(3)
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/feature_fp', '{replica}')
@@ -446,6 +535,91 @@ CREATE TABLE IF NOT EXISTS traffic.pcap_index ON CLUSTER traffic_cluster
 AS traffic.pcap_index_local
 ENGINE = Distributed(traffic_cluster, traffic, pcap_index_local, rand());
 
+-- Manifest-v2 carrier/restoration projection. This table is intentionally
+-- isolated from the legacy PCAP cutter table above so rollback remains
+-- additive and neither reader can silently accept the other's schema.
+CREATE TABLE IF NOT EXISTS traffic.pcap_index_v2_local ON CLUSTER traffic_cluster (
+  tenant_id String,
+  probe_id String,
+  file_key String,
+  bucket String,
+  object_version String,
+  etag String,
+  original_size UInt64,
+  stored_size UInt64,
+  compression LowCardinality(String),
+  manifest_version UInt16,
+  kafka_topic String,
+  kafka_partition Int32,
+  kafka_offset Int64,
+  kafka_key_sha256 FixedString(64),
+  kafka_headers_sha256 FixedString(64),
+  raw_sha256 FixedString(64),
+  projection_identity FixedString(64),
+  ts_start DateTime64(3, 'UTC'),
+  ts_end DateTime64(3, 'UTC'),
+  byte_size UInt64,
+  zstd_level UInt8,
+  sha256 String,
+  community_id String,
+  flow_id String,
+  offset_start Nullable(UInt64),
+  offset_end Nullable(UInt64),
+  bloom_filter_b64 String,
+  community_ids Array(String),
+  created_ts DateTime64(3, 'UTC')
+)
+ENGINE = ReplicatedReplacingMergeTree('/clickhouse/tables/{shard}/pcap_index_v2_local', '{replica}', created_ts)
+PARTITION BY toYYYYMMDD(ts_start)
+ORDER BY (tenant_id, probe_id, file_key, projection_identity)
+TTL toDateTime(ts_start) + INTERVAL 90 DAY
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS traffic.pcap_index_v2 ON CLUSTER traffic_cluster
+AS traffic.pcap_index_v2_local
+ENGINE = Distributed(traffic_cluster, traffic, pcap_index_v2_local, cityHash64(tenant_id, file_key));
+
 -- =============================================================================
 -- 扩展表 (device_logs, user_events, dlq_events) 见 01-extended.sql
 -- =============================================================================
+
+-- =============================================================================
+-- 10. analysis_detections / analysis_run_results — 统一分析调度中心结果表(加法式)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS traffic.analysis_detections_local ON CLUSTER traffic_cluster (
+  tenant_id             String,
+  run_id                String,
+  execution_spec_sha256 String,
+  input_identity        String,
+  detector_id           String,
+  disposition           LowCardinality(String),
+  score                 Float64,
+  labels                String,
+  evidence_refs         String,
+  ts                    DateTime64(3) DEFAULT now64(3)
+) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/traffic_analysis_detections_local', '{replica}')
+PARTITION BY toYYYYMM(ts)
+ORDER BY (tenant_id, run_id, input_identity, detector_id);
+
+CREATE TABLE IF NOT EXISTS traffic.analysis_detections ON CLUSTER traffic_cluster AS traffic.analysis_detections_local
+ENGINE = Distributed('traffic_cluster', 'traffic', 'analysis_detections_local', rand());
+
+CREATE TABLE IF NOT EXISTS traffic.analysis_run_results_local ON CLUSTER traffic_cluster (
+  tenant_id             String,
+  run_id                String,
+  execution_node_id     String,
+  attempt               UInt32,
+  input_count           UInt64,
+  output_count          UInt64,
+  error_count           UInt64,
+  reject_count          UInt64,
+  watermark_ms          Int64,
+  fence_json            String,
+  payload_hash          String,
+  ts                    DateTime64(3) DEFAULT now64(3)
+) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/traffic_analysis_run_results_local', '{replica}')
+PARTITION BY toYYYYMM(ts)
+ORDER BY (tenant_id, run_id, execution_node_id, attempt);
+
+CREATE TABLE IF NOT EXISTS traffic.analysis_run_results ON CLUSTER traffic_cluster AS traffic.analysis_run_results_local
+ENGINE = Distributed('traffic_cluster', 'traffic', 'analysis_run_results_local', rand());
