@@ -211,8 +211,10 @@ fn optimize_for_numa(cpu_set: libc::cpu_set_t, cpu_cores: &[u32]) -> Result<libc
             numa_nodes.keys().collect::<Vec<_>>()
         );
     } else if numa_nodes.len() == 1 {
-        let node_id = numa_nodes.keys().next().unwrap();
-        info!("✓ All CPU cores are on NUMA node {}", node_id);
+        // len==1 已保证至少一个键;防御性取首项,避免非测试 unwrap。
+        if let Some(node_id) = numa_nodes.keys().next() {
+            info!("✓ All CPU cores are on NUMA node {}", node_id);
+        }
     }
 
     Ok(cpu_set)

@@ -10,6 +10,8 @@
 use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
+use super::ApplicationDecodeError;
+
 /// ARP 操作码
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArpOperation {
@@ -205,6 +207,45 @@ impl ArpParser {
         self.update_state(&binding);
 
         Some(binding)
+    }
+
+    pub fn parse_arp_packet_checked(
+        &mut self,
+        data: &[u8],
+        capture_mac: Option<MacAddr>,
+        vlan_id: Option<u16>,
+        timestamp_ms: u64,
+    ) -> Result<ArpBinding, ApplicationDecodeError> {
+        if data.len() < 28 {
+            return Err(ApplicationDecodeError::Truncated {
+                protocol: "ARP",
+                stage: "fixed_header",
+                required: 28,
+                actual: data.len(),
+            });
+        }
+        let htype = u16::from_be_bytes([data[0], data[1]]);
+        let ptype = u16::from_be_bytes([data[2], data[3]]);
+        if htype != 1 || ptype != 0x0800 || data[4] != 6 || data[5] != 4 {
+            return Err(ApplicationDecodeError::Unsupported {
+                protocol: "ARP",
+                stage: "address_format",
+                value: ((htype as u32) << 16) | ptype as u32,
+            });
+        }
+        let operation = u16::from_be_bytes([data[6], data[7]]);
+        if !matches!(operation, 1..=4) {
+            return Err(ApplicationDecodeError::Unsupported {
+                protocol: "ARP",
+                stage: "operation",
+                value: operation as u32,
+            });
+        }
+        self.parse_arp_packet(data, capture_mac, vlan_id, timestamp_ms)
+            .ok_or(ApplicationDecodeError::Malformed {
+                protocol: "ARP",
+                reason: "validated ARP payload was not decoded",
+            })
     }
 
     /// 更新内部状态

@@ -42,34 +42,6 @@ pub enum ShutdownPhase {
     Complete,
 }
 
-static GLOBAL_COMPLETION_SENDER: once_cell::sync::OnceCell<
-    mpsc::UnboundedSender<(&'static str, Result<(), String>)>,
-> = once_cell::sync::OnceCell::new();
-
-fn init_global_completion_queue() -> mpsc::UnboundedSender<(&'static str, Result<(), String>)> {
-    let (tx, mut rx) = mpsc::unbounded_channel();
-
-    std::thread::spawn(move || {
-        let rt = tokio::runtime::Runtime::new().expect("Failed to create completion runtime");
-
-        rt.block_on(async move {
-            while let Some((name, result)) = rx.recv().await {
-                debug!(
-                    "Global completion queue: component '{}' completed with {:?}",
-                    name, result
-                );
-            }
-        });
-    });
-
-    tx
-}
-
-fn get_global_completion_sender(
-) -> &'static mpsc::UnboundedSender<(&'static str, Result<(), String>)> {
-    GLOBAL_COMPLETION_SENDER.get_or_init(init_global_completion_queue)
-}
-
 pub struct ShutdownManager {
     shutdown_tx: broadcast::Sender<ShutdownPhase>,
     completion_tx: mpsc::Sender<(&'static str, Result<(), String>)>,
@@ -83,7 +55,9 @@ pub struct ShutdownManager {
 impl ShutdownManager {
     pub fn new() -> Arc<Self> {
         let (shutdown_tx, _) = broadcast::channel(16);
-        let (completion_tx, completion_rx) = mpsc::channel(64);
+        // A generous capacity: `ShutdownHandle::drop` cannot await, so a
+        // full channel would drop completion notifications.
+        let (completion_tx, completion_rx) = mpsc::channel(256);
 
         Arc::new(Self {
             shutdown_tx,
@@ -339,12 +313,9 @@ impl ShutdownManager {
     }
 }
 
-impl Default for ShutdownManager {
-    fn default() -> Self {
-        Arc::try_unwrap(Self::new())
-            .unwrap_or_else(|_| panic!("Cannot unwrap default ShutdownManager"))
-    }
-}
+// NOTE: the former `Default` impl for `ShutdownManager` panicked on a
+// multi-reference Arc. It was unused and has been removed; use
+// `ShutdownManager::new()` (returns `Arc<Self>`) instead.
 
 #[derive(Debug)]
 enum ShutdownResult {
@@ -429,12 +400,14 @@ impl ShutdownHandle {
         self.name
     }
 
-    pub async fn complete(self) {
+    pub async fn complete(mut self) {
+        self.notified = true;
         let _ = self.manager.completion_tx.send((self.name, Ok(()))).await;
         debug!("Component '{}' signaled completion", self.name);
     }
 
-    pub async fn complete_with_error(self, error: String) {
+    pub async fn complete_with_error(mut self, error: String) {
+        self.notified = true;
         let _ = self
             .manager
             .completion_tx
@@ -448,22 +421,38 @@ impl Drop for ShutdownHandle {
         if !self.notified {
             let name = self.name;
 
-            match self.manager.completion_tx.try_send((name, Ok(()))) {
-                Ok(_) => {
-                    debug!("Component '{}' auto-completed (try_send)", name);
-                }
-                Err(mpsc::error::TrySendError::Full((name, result))) => {
-                    if let Err(e) = get_global_completion_sender().send((name, result)) {
-                        warn!("Component '{}' completion notification lost: {}", name, e);
-                    } else {
-                        debug!("Component '{}' auto-completed (global queue)", name);
+            // `Drop` cannot await, so retry `try_send` with a bounded spin.
+            // The wait loop drains the completion channel continuously, so a
+            // full channel is only transient; a completion notification must
+            // never be diverted to a side queue that the wait loop does not
+            // consume (that used to cause false shutdown timeouts).
+            let mut attempts = 0usize;
+            loop {
+                match self.manager.completion_tx.try_send((name, Ok(()))) {
+                    Ok(_) => {
+                        debug!("Component '{}' auto-completed (try_send)", name);
+                        break;
                     }
-                }
-                Err(mpsc::error::TrySendError::Closed(_)) => {
-                    debug!(
-                        "Completion channel closed, ignoring notification for '{}'",
-                        name
-                    );
+                    Err(mpsc::error::TrySendError::Full((name, result))) => {
+                        attempts += 1;
+                        if attempts >= 10_000 {
+                            warn!(
+                                "Component '{}' completion notification could not be delivered (channel full)",
+                                name
+                            );
+                            // Keep the value so the receiver may still see it.
+                            let _ = result;
+                            break;
+                        }
+                        std::hint::spin_loop();
+                    }
+                    Err(mpsc::error::TrySendError::Closed(_)) => {
+                        debug!(
+                            "Completion channel closed, ignoring notification for '{}'",
+                            name
+                        );
+                        break;
+                    }
                 }
             }
         }

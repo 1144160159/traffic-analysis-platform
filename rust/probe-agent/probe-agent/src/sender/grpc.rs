@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
@@ -15,12 +16,13 @@ use proto_gen::{
 };
 
 use proto_gen::{
-    ingest_service_client::IngestServiceClient, FlowEvent, StreamFlowsRequest, UploadFlowsRequest,
-    UploadFlowsResponse,
+    ingest_service_client::IngestServiceClient, FlowEvent, FlowItemDisposition, FlowItemResult,
+    MacIpBinding, StreamFlowsRequest, UploadAssetBindingsRequest, UploadAssetBindingsResponse,
+    UploadFlowsRequest, UploadFlowsResponse,
 };
 
 use super::auth::AuthProvider;
-use super::retry::LocalCache;
+use super::retry::{AckApplication, AckPartition, CachedBatchRef, ClaimedBatch, LocalCache};
 use crate::config::SenderConfig;
 use crate::metrics;
 
@@ -80,11 +82,23 @@ impl SlidingWindow {
     }
 
     async fn acquire(&self) -> tokio::sync::OwnedSemaphorePermit {
-        self.semaphore
-            .clone()
-            .acquire_owned()
-            .await
-            .expect("Semaphore closed unexpectedly")
+        match self.semaphore.clone().acquire_owned().await {
+            Ok(permit) => permit,
+            Err(_) => {
+                // The window semaphore is held for the sender's lifetime and
+                // cannot normally close; degrade with an independent
+                // single-permit semaphore instead of panicking.
+                error!("Sender window semaphore closed; acquiring a fallback permit");
+                loop {
+                    match Arc::new(Semaphore::new(1)).acquire_owned().await {
+                        Ok(permit) => return permit,
+                        // A freshly created semaphore with no clones cannot be
+                        // closed; retry instead of panicking.
+                        Err(_) => continue,
+                    }
+                }
+            }
+        }
     }
 
     fn available(&self) -> usize {
@@ -178,6 +192,8 @@ struct SharedState {
     client: RwLock<Option<IngestServiceClient<Channel>>>,
     local_cache: LocalCache,
     stats: SenderStats,
+    last_heartbeat_capture_packets: AtomicU64,
+    last_heartbeat_at_ms: AtomicU64,
 }
 
 impl SharedState {
@@ -187,6 +203,8 @@ impl SharedState {
             client: RwLock::new(None),
             local_cache,
             stats: SenderStats::default(),
+            last_heartbeat_capture_packets: AtomicU64::new(0),
+            last_heartbeat_at_ms: AtomicU64::new(0),
         }
     }
 
@@ -208,15 +226,15 @@ impl SharedState {
         *self.client.write().await = client;
     }
 
-    fn cache_batch(&self, batch: &[FlowEvent]) -> bool {
-        match self.local_cache.save(batch) {
-            Ok(()) => {
+    async fn cache_batch(&self, batch: &[FlowEvent]) -> Result<CachedBatchRef> {
+        match self.local_cache.save_async(batch).await {
+            Ok(batch_ref) => {
                 self.stats.batches_cached.fetch_add(1, Ordering::Relaxed);
-                true
+                Ok(batch_ref)
             }
             Err(e) => {
                 error!("Failed to cache batch: {}", e);
-                false
+                Err(e)
             }
         }
     }
@@ -228,6 +246,10 @@ pub struct GrpcSender {
     window: Arc<SlidingWindow>,
     shutdown: Arc<Notify>,
     auth: Option<Arc<AuthProvider>>,
+    /// (path, mtime_secs) fingerprint of the configured mTLS files, used to
+    /// detect certificate rotation and force a reconnect so the new
+    /// credentials are loaded.
+    cert_fingerprint: Arc<parking_lot::Mutex<Option<Vec<(String, u64)>>>>,
 }
 
 impl GrpcSender {
@@ -238,6 +260,15 @@ impl GrpcSender {
         if config.probe_id.is_none() {
             anyhow::bail!("probe_id is required");
         }
+
+        let tenant_id = config
+            .tenant_id
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("tenant_id is required"))?;
+        let probe_id = config
+            .probe_id
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("probe_id is required"))?;
 
         let cache_path = std::path::Path::new(&config.cache_path);
         if let Some(parent) = cache_path.parent() {
@@ -263,8 +294,8 @@ impl GrpcSender {
         info!(
             "GrpcSender created: gateway={}, tenant_id={}, probe_id={}, max_in_flight={}, cache={}",
             config.gateway_addr,
-            config.tenant_id.as_ref().unwrap(),
-            config.probe_id.as_ref().unwrap(),
+            tenant_id,
+            probe_id,
             config.max_in_flight,
             config.cache_path
         );
@@ -275,6 +306,7 @@ impl GrpcSender {
             window,
             shutdown: Arc::new(Notify::new()),
             auth,
+            cert_fingerprint: Arc::new(parking_lot::Mutex::new(None)),
         })
     }
 
@@ -292,6 +324,23 @@ impl GrpcSender {
             .http2_keep_alive_interval(Duration::from_secs(30))
             .keep_alive_timeout(Duration::from_secs(20))
             .keep_alive_while_idle(true);
+
+        // mTLS must be all-or-nothing: a partially configured certificate set
+        // silently downgrades to plaintext, leaking the tenant token. Refuse
+        // to connect in that case instead.
+        let tls_file_count = [
+            &self.config.tls_ca_cert,
+            &self.config.tls_client_cert,
+            &self.config.tls_client_key,
+        ]
+        .iter()
+        .filter(|value| value.is_some())
+        .count();
+        if tls_file_count > 0 && tls_file_count < 3 {
+            anyhow::bail!(
+                "mTLS requires all of tls_ca_cert, tls_client_cert and tls_client_key (got {tls_file_count}/3); refusing silent plaintext downgrade"
+            );
+        }
 
         if let (Some(ca_cert), Some(client_cert), Some(client_key)) = (
             &self.config.tls_ca_cert,
@@ -324,10 +373,11 @@ impl GrpcSender {
             debug!("Client key size: {} bytes", client_key_pem.len());
 
             debug!("Creating TLS config...");
+            let sni = crate::config::gateway_sni(&self.config.gateway_addr);
             let tls_config = ClientTlsConfig::new()
                 .ca_certificate(Certificate::from_pem(ca_pem))
                 .identity(Identity::from_pem(client_cert_pem, client_key_pem))
-                .domain_name("ingest-gateway");
+                .domain_name(&sni);
 
             debug!("Applying TLS config to endpoint...");
             match endpoint.tls_config(tls_config) {
@@ -341,7 +391,7 @@ impl GrpcSender {
                     return Err(e.into());
                 }
             }
-            info!("✓ mTLS configured successfully (domain: ingest-gateway)");
+            info!("✓ mTLS configured successfully (domain: {})", sni);
         } else {
             info!("⚠ mTLS disabled (using plain HTTP)");
         }
@@ -406,18 +456,38 @@ impl GrpcSender {
             vec![]
         };
 
+        let capture = metrics::capture_snapshot();
+        let now_ms = u64::try_from(
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)?
+                .as_millis(),
+        )?;
+        let prior_packets = self
+            .state
+            .last_heartbeat_capture_packets
+            .load(Ordering::Acquire);
+        let prior_at_ms = self.state.last_heartbeat_at_ms.load(Ordering::Acquire);
+        let capture_pps =
+            capture_rate_per_second(prior_packets, capture.capture_packets, prior_at_ms, now_ms);
         let mut request = Request::new(HeartbeatRequest {
             tenant_id: self.config.tenant_id.clone().unwrap_or_default(),
             probe_id: self.config.probe_id.clone().unwrap_or_default(),
             status: Some(ProbeStatus {
                 cpu_usage: get_cpu_usage(),
                 memory_usage: get_memory_usage(),
-                capture_pps: self.state.stats.events_sent.load(Ordering::Relaxed) / 60,
+                capture_pps,
                 upload_bps: 0,
-                packets_captured: self.state.stats.events_sent.load(Ordering::Relaxed),
-                packets_dropped: 0,
+                packets_captured: capture.capture_packets,
+                packets_dropped: capture
+                    .capture_allocation_drops
+                    .saturating_add(capture.capture_kernel_drops),
                 uptime_seconds: get_uptime_seconds(),
                 interfaces,
+                capture_allocation_drops: capture.capture_allocation_drops,
+                capture_kernel_drops: capture.capture_kernel_drops,
+                capture_errors: capture.capture_errors,
+                capture_bytes: capture.capture_bytes,
+                capture_counter_revision: 1,
             }),
             operation_acks,
         });
@@ -425,6 +495,13 @@ impl GrpcSender {
         self.add_metadata(&mut request).await?;
 
         let response = client.heartbeat(request).await?.into_inner();
+
+        self.state
+            .last_heartbeat_capture_packets
+            .store(capture.capture_packets, Ordering::Release);
+        self.state
+            .last_heartbeat_at_ms
+            .store(now_ms, Ordering::Release);
 
         if let Some(config) = response.config.as_ref() {
             debug!("Received config update: version={}", config.config_version);
@@ -508,6 +585,7 @@ impl GrpcSender {
 
                 _ = retry_ticker.tick() => {
                     self.retry_cached().await;
+                    self.check_cert_rotation().await;
                 }
 
                 _ = &mut next_reconnect => {
@@ -554,6 +632,20 @@ impl GrpcSender {
         let batch_size = batch.len();
         let start = Instant::now();
 
+        // Durability is the admission barrier: a batch that cannot enter the
+        // WAL is never sent and therefore cannot be counted as accepted.
+        let batch_ref = match self.state.cache_batch(&batch).await {
+            Ok(batch_ref) => batch_ref,
+            Err(error) => {
+                self.state
+                    .stats
+                    .batches_failed
+                    .fetch_add(1, Ordering::Relaxed);
+                warn!("Flow batch WAL admission failed: {}", error);
+                return;
+            }
+        };
+
         let permit = self.window.acquire().await;
         self.state.stats.in_flight.fetch_add(1, Ordering::Relaxed);
         metrics::IN_FLIGHT_REQUESTS.set(self.state.stats.in_flight.load(Ordering::Relaxed) as f64);
@@ -561,15 +653,24 @@ impl GrpcSender {
         if !self.state.is_connected() {
             if let Err(e) = self.connect().await {
                 warn!(
-                    "Connection failed, caching batch of {} events: {}",
-                    batch_size, e
+                    "Connection failed; durable batch {} remains pending ({} events): {}",
+                    batch_ref.batch_id, batch_size, e
                 );
-                self.state.cache_batch(&batch);
                 self.state.stats.in_flight.fetch_sub(1, Ordering::Relaxed);
                 drop(permit);
                 return;
             }
         }
+
+        let claimed = match self.state.local_cache.claim(&batch_ref) {
+            Ok(claimed) => claimed,
+            Err(error) => {
+                warn!("Durable Flow batch claim failed: {}", error);
+                self.state.stats.in_flight.fetch_sub(1, Ordering::Relaxed);
+                drop(permit);
+                return;
+            }
+        };
 
         let client = self.state.get_client().await;
         let state = Arc::clone(&self.state);
@@ -580,54 +681,65 @@ impl GrpcSender {
             window: Arc::clone(&self.window),
             shutdown: Arc::clone(&self.shutdown),
             auth: self.auth.clone(),
+            cert_fingerprint: self.cert_fingerprint.clone(),
         };
 
         tokio::spawn(async move {
-            let result = sender.do_send(client, batch.clone()).await;
+            let result = if sender.config.enable_streaming {
+                sender.send_stream(claimed.clone()).await
+            } else {
+                match sender.do_send(client, claimed.events.clone()).await {
+                    Ok(response) => {
+                        let ack = AckPartition {
+                            response_revision: response.response_revision,
+                            item_results: response.item_results,
+                        };
+                        state.local_cache.apply_ack(&claimed.batch_ref, &ack)
+                    }
+                    Err(error) => Err(error),
+                }
+            };
 
             let latency_ms = start.elapsed().as_millis() as u64;
             state.stats.record_latency(latency_ms);
             metrics::SENDER_LATENCY.observe(latency_ms as f64 / 1000.0);
 
             match result {
-                Ok(response) => {
+                Ok(application) => {
                     state.stats.batches_sent.fetch_add(1, Ordering::Relaxed);
                     state
                         .stats
                         .events_sent
-                        .fetch_add(batch_size as u64, Ordering::Relaxed);
-
+                        .fetch_add(application.terminal as u64, Ordering::Relaxed);
+                    state
+                        .stats
+                        .events_rejected
+                        .fetch_add(application.quarantined as u64, Ordering::Relaxed);
                     metrics::BATCHES_SENT.inc();
-                    metrics::EVENTS_SENT.inc_by(batch_size as f64);
-
-                    if response.rejected > 0 {
-                        state
-                            .stats
-                            .events_rejected
-                            .fetch_add(response.rejected as u64, Ordering::Relaxed);
-                        metrics::EVENTS_FAILED.inc_by(response.rejected as f64);
-                        warn!(
-                            "Batch partially rejected: accepted={}, rejected={}",
-                            response.accepted, response.rejected
-                        );
-                    }
-
+                    metrics::EVENTS_SENT.inc_by(application.terminal as f64);
+                    metrics::EVENTS_FAILED.inc_by(application.quarantined as f64);
                     trace!(
-                        "Batch sent successfully: {} events in {}ms",
-                        batch_size,
+                        "Durable Flow ACK applied: terminal={}, quarantined={}, pending={}, latency={}ms",
+                        application.terminal,
+                        application.quarantined,
+                        application.pending,
                         latency_ms
                     );
                 }
                 Err(e) => {
                     state.stats.batches_failed.fetch_add(1, Ordering::Relaxed);
                     metrics::EVENTS_FAILED.inc_by(batch_size as f64);
-                    metrics::HEARTBEAT_FAILURES.inc();
+                    // NOTE: this is a *batch send* failure, not a heartbeat
+                    // failure; increment the correct metric so heartbeat
+                    // monitoring is not polluted by upload outages.
+                    metrics::BATCHES_FAILED.inc();
                     error!("Send failed: {}", e);
 
-                    if state.cache_batch(&batch) {
-                        metrics::EVENTS_CACHED.set(state.local_cache.size().unwrap_or(0) as f64);
-                        debug!("Batch cached for retry: {} events", batch_size);
+                    if let Err(release_error) = state.local_cache.release_claim(&claimed.batch_ref)
+                    {
+                        error!("Failed to release durable Flow claim: {}", release_error);
                     }
+                    metrics::EVENTS_CACHED.set(state.local_cache.size().unwrap_or(0) as f64);
 
                     state.set_connected(false);
                 }
@@ -651,6 +763,7 @@ impl GrpcSender {
         let mut request = Request::new(UploadFlowsRequest {
             events: batch,
             compression: "gzip".to_string(),
+            accepted_response_revision: 1,
         });
 
         self.add_metadata(&mut request).await?;
@@ -664,10 +777,48 @@ impl GrpcSender {
         Ok(response)
     }
 
+    pub async fn send_asset_bindings(
+        &self,
+        bindings: Vec<MacIpBinding>,
+    ) -> Result<UploadAssetBindingsResponse> {
+        if bindings.is_empty() {
+            anyhow::bail!("cannot upload an empty asset binding batch")
+        }
+        self.connect().await?;
+        let mut client = self
+            .state
+            .get_client()
+            .await
+            .ok_or_else(|| anyhow::anyhow!("No connection available"))?;
+        let tenant_id = self
+            .config
+            .tenant_id
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("tenant_id is not configured"))?;
+        let probe_id = self
+            .config
+            .probe_id
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("probe_id is not configured"))?;
+        let mut request = Request::new(UploadAssetBindingsRequest {
+            tenant_id,
+            probe_id,
+            bindings,
+            accepted_response_revision: 1,
+        });
+        self.add_metadata(&mut request).await?;
+        match client.upload_asset_bindings(request).await {
+            Ok(response) => Ok(response.into_inner()),
+            Err(error) => {
+                self.state.set_connected(false);
+                Err(error).context("UploadAssetBindings RPC failed")
+            }
+        }
+    }
+
     /// Streaming send: 使用双向流通道逐个发送 FlowEvent。
     /// 适用于低延迟场景，每个事件即时送达，无需等待批量攒满。
-    #[allow(dead_code)]
-    async fn send_stream(&self, events: Vec<FlowEvent>) -> Result<(u32, u32)> {
+    async fn send_stream(&self, claimed: ClaimedBatch) -> Result<AckApplication> {
         use tokio_stream::StreamExt;
 
         let client = self
@@ -677,11 +828,28 @@ impl GrpcSender {
             .ok_or_else(|| anyhow::anyhow!("No connection available for streaming"))?;
         let mut client = client.clone();
 
-        let stream = tokio_stream::iter(
-            events
-                .into_iter()
-                .map(|e| StreamFlowsRequest { event: Some(e) }),
-        );
+        let mut input_indexes = HashMap::with_capacity(claimed.events.len());
+        for (input_index, event) in claimed.events.iter().enumerate() {
+            let event_id = event
+                .header
+                .as_ref()
+                .map(|header| header.event_id.as_str())
+                .unwrap_or_default();
+            if event_id.is_empty()
+                || input_indexes
+                    .insert(event_id.to_owned(), input_index)
+                    .is_some()
+            {
+                anyhow::bail!("claimed Flow stream contains an invalid or duplicate event identity")
+            }
+        }
+
+        let stream = tokio_stream::iter(claimed.events.clone().into_iter().map(|event| {
+            StreamFlowsRequest {
+                event: Some(event),
+                accepted_response_revision: 1,
+            }
+        }));
 
         let mut request = Request::new(stream);
         self.add_metadata(&mut request).await?;
@@ -692,50 +860,118 @@ impl GrpcSender {
             .context("StreamFlows RPC failed")?;
         let mut resp_stream = response.into_inner();
 
-        let mut accepted: u32 = 0;
-        let mut rejected: u32 = 0;
+        let mut item_results: Vec<Option<FlowItemResult>> = vec![None; claimed.events.len()];
+        let mut interrupted = false;
         while let Some(result) = resp_stream.next().await {
             match result {
                 Ok(resp) => {
-                    if resp.accepted {
-                        accepted += 1;
-                    } else {
-                        rejected += 1;
-                        if !resp.error.is_empty() {
-                            trace!(
-                                "StreamFlows rejected: id={}, err={}",
-                                resp.event_id,
-                                resp.error
-                            );
-                        }
+                    if resp.response_revision != 1 {
+                        anyhow::bail!("unsupported StreamFlows response revision")
                     }
+                    // Foreign or duplicate response identities are protocol
+                    // anomalies; skip them instead of bailing out the whole
+                    // batch, which would leave every item hanging as
+                    // OUTCOME_UNKNOWN and retry the batch forever. The
+                    // affected item simply stays OUTCOME_UNKNOWN and is
+                    // retried by the durable cache.
+                    let input_index = match input_indexes.get(&resp.event_id).copied() {
+                        Some(index) => index,
+                        None => {
+                            warn!(
+                                "Foreign StreamFlows response identity; skipping: {}",
+                                resp.event_id
+                            );
+                            continue;
+                        }
+                    };
+                    if item_results[input_index].is_some() {
+                        warn!(
+                            "Duplicate StreamFlows response identity; skipping: {}",
+                            resp.event_id
+                        );
+                        continue;
+                    }
+                    item_results[input_index] = Some(FlowItemResult {
+                        input_index: input_index as u32,
+                        event_id: resp.event_id,
+                        disposition: resp.disposition,
+                        reason_code: resp.reason_code,
+                        ack_scope: resp.ack_scope,
+                    });
                 }
                 Err(e) => {
                     warn!("StreamFlows error: {}", e);
-                    rejected += 1;
+                    interrupted = true;
+                    break;
                 }
             }
         }
 
-        if accepted > 0 {
-            self.state
-                .stats
-                .events_sent
-                .fetch_add(accepted as u64, Ordering::Relaxed);
-            metrics::EVENTS_SENT.inc_by(accepted as f64);
+        let mut exact_results = Vec::with_capacity(item_results.len());
+        for (input_index, result) in item_results.into_iter().enumerate() {
+            exact_results.push(result.unwrap_or_else(|| {
+                FlowItemResult {
+                    input_index: input_index as u32,
+                    event_id: claimed.events[input_index]
+                        .header
+                        .as_ref()
+                        .map(|header| header.event_id.clone())
+                        .unwrap_or_else(|| format!("missing-header-{input_index}")),
+                    disposition: FlowItemDisposition::OutcomeUnknown as i32,
+                    reason_code: if interrupted {
+                        "STREAM_INTERRUPTED_OUTCOME_UNKNOWN".to_owned()
+                    } else {
+                        "STREAM_RESPONSE_MISSING_OUTCOME_UNKNOWN".to_owned()
+                    },
+                    ack_scope: "KAFKA_RECORD".to_owned(),
+                }
+            }));
         }
-        if rejected > 0 {
-            self.state
-                .stats
-                .events_rejected
-                .fetch_add(rejected as u64, Ordering::Relaxed);
-        }
+        self.state.local_cache.apply_ack(
+            &claimed.batch_ref,
+            &AckPartition {
+                response_revision: 1,
+                item_results: exact_results,
+            },
+        )
+    }
 
-        debug!(
-            "StreamFlows done: accepted={}, rejected={}",
-            accepted, rejected
-        );
-        Ok((accepted, rejected))
+    /// Detect mTLS certificate file rotation and force a reconnect so the
+    /// next `connect()` re-reads the rotated credentials. `connect()` already
+    /// reloads the files on every call, so a forced disconnect is sufficient.
+    async fn check_cert_rotation(&self) {
+        let files = [
+            self.config.tls_ca_cert.as_deref(),
+            self.config.tls_client_cert.as_deref(),
+            self.config.tls_client_key.as_deref(),
+        ];
+        // Only track when mTLS is fully configured.
+        if files.iter().any(Option::is_none) {
+            return;
+        }
+        let mut current = Vec::with_capacity(files.len());
+        for file in files.into_iter().flatten() {
+            let mtime_secs = std::fs::metadata(file)
+                .ok()
+                .and_then(|md| md.modified().ok())
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            current.push((file.to_string(), mtime_secs));
+        }
+        let changed = {
+            let mut guard = self.cert_fingerprint.lock();
+            let changed = match guard.as_ref() {
+                Some(previous) => previous != &current,
+                None => false,
+            };
+            *guard = Some(current);
+            changed
+        };
+        if changed {
+            info!("mTLS certificate files changed; forcing reconnect to load rotated credentials");
+            self.disconnect().await;
+        }
     }
 
     async fn retry_cached(&self) {
@@ -757,14 +993,38 @@ impl GrpcSender {
 
         debug!("Retrying {} cached batches", pending.len());
 
-        for (key, batch) in pending {
-            let client = self.state.get_client().await;
-
-            match self.do_send(client, batch).await {
-                Ok(response) => {
-                    if let Err(e) = self.state.local_cache.remove(key) {
-                        warn!("Failed to remove cached batch: {}", e);
-                    }
+        // Bound the work per cycle by `max_retries` and honor the sliding
+        // window: a retry must acquire an in-flight permit just like a fresh
+        // send, and a bounded backoff prevents the retry loop from busy
+        // spinning against an unreachable gateway.
+        let max_batches_per_cycle = self.config.max_retries.max(1);
+        for (batch_ref, _) in pending.into_iter().take(max_batches_per_cycle) {
+            let permit = self.window.acquire().await;
+            let claimed = match self.state.local_cache.claim(&batch_ref) {
+                Ok(claimed) => claimed,
+                Err(error) => {
+                    debug!("Skipping non-claimable cached batch: {}", error);
+                    drop(permit);
+                    continue;
+                }
+            };
+            let result = if self.config.enable_streaming {
+                self.send_stream(claimed.clone()).await
+            } else {
+                let client = self.state.get_client().await;
+                match self.do_send(client, claimed.events.clone()).await {
+                    Ok(response) => self.state.local_cache.apply_ack(
+                        &claimed.batch_ref,
+                        &AckPartition {
+                            response_revision: response.response_revision,
+                            item_results: response.item_results,
+                        },
+                    ),
+                    Err(error) => Err(error),
+                }
+            };
+            match result {
+                Ok(application) => {
                     self.state
                         .stats
                         .batches_retried
@@ -772,18 +1032,24 @@ impl GrpcSender {
                     self.state
                         .stats
                         .events_sent
-                        .fetch_add(response.accepted as u64, Ordering::Relaxed);
+                        .fetch_add(application.terminal as u64, Ordering::Relaxed);
                     debug!(
-                        "Cached batch retried successfully: {} events accepted",
-                        response.accepted
+                        "Cached ACK applied: terminal={}, pending={}",
+                        application.terminal, application.pending
                     );
                 }
                 Err(e) => {
                     debug!("Retry failed, will try again later: {}", e);
+                    if let Err(error) = self.state.local_cache.release_claim(&claimed.batch_ref) {
+                        error!("Failed to release cached Flow claim: {}", error);
+                    }
                     self.disconnect().await;
+                    drop(permit);
                     break;
                 }
             }
+            drop(permit);
+            tokio::time::sleep(Duration::from_millis(100)).await;
         }
 
         metrics::EVENTS_CACHED.set(self.state.local_cache.size().unwrap_or(0) as f64);
@@ -893,4 +1159,33 @@ fn get_uptime_seconds() -> i64 {
     static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
     let start = START_TIME.get_or_init(|| Instant::now());
     start.elapsed().as_secs() as i64
+}
+
+fn capture_rate_per_second(
+    prior_packets: u64,
+    current_packets: u64,
+    prior_at_ms: u64,
+    current_at_ms: u64,
+) -> u64 {
+    let elapsed_ms = current_at_ms.saturating_sub(prior_at_ms);
+    if prior_at_ms == 0 || elapsed_ms == 0 {
+        return 0;
+    }
+    current_packets
+        .saturating_sub(prior_packets)
+        .saturating_mul(1000)
+        / elapsed_ms
+}
+
+#[cfg(test)]
+mod capture_heartbeat_tests {
+    use super::capture_rate_per_second;
+
+    #[test]
+    fn pps_uses_monotonic_packet_delta_and_actual_elapsed_time() {
+        assert_eq!(capture_rate_per_second(1_000, 1_600, 10_000, 12_000), 300);
+        assert_eq!(capture_rate_per_second(0, 600, 0, 2_000), 0);
+        assert_eq!(capture_rate_per_second(1_600, 1_000, 10_000, 12_000), 0);
+        assert_eq!(capture_rate_per_second(1_000, 1_600, 12_000, 12_000), 0);
+    }
 }

@@ -136,16 +136,10 @@ pub struct InterfaceStatusDelta {
 }
 
 impl InterfaceStatusDelta {
-    pub fn has_critical_issues(&self) -> bool {
-        const ERROR_THRESHOLD: u64 = 100;
-        const DROP_THRESHOLD: u64 = 1000;
-
-        self.rx_errors_delta > ERROR_THRESHOLD
-            || self.tx_errors_delta > ERROR_THRESHOLD
-            || self.rx_dropped_delta > DROP_THRESHOLD
-            || self.tx_dropped_delta > DROP_THRESHOLD
-            || !self.link_status_changed
-    }
+    // NOTE: the former `has_critical_issues` method was removed: it had no
+    // callers and its final term (`!self.link_status_changed`) inverted the
+    // link-change semantics, flagging a *stable* link as critical. Any future
+    // caller should compute the threshold checks explicitly.
 }
 
 #[derive(Debug, Clone)]

@@ -13,6 +13,15 @@ pub enum CaptureMode {
     PcapOffline,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ParserRoute {
+    #[default]
+    Full,
+    Fast,
+    Shadow,
+}
+
 impl Default for CaptureMode {
     fn default() -> Self {
         Self::Xdp
@@ -65,7 +74,7 @@ impl ProbeConfig {
         let mut config: Self =
             serde_yaml::from_str(&content).context("Failed to parse YAML config")?;
 
-        config.from_env();
+        config.from_env()?;
         config.validate()?;
 
         Ok(config)
@@ -102,7 +111,7 @@ impl ProbeConfig {
         Ok(result)
     }
 
-    pub fn from_env(&mut self) {
+    pub fn from_env(&mut self) -> Result<()> {
         if let Ok(tenant_id) = std::env::var("TENANT_ID") {
             self.tenant_id = tenant_id;
         }
@@ -115,12 +124,40 @@ impl ProbeConfig {
         if let Ok(interface) = std::env::var("CAPTURE_INTERFACE") {
             self.capture.interface = interface;
         }
+        if let Ok(enabled) = std::env::var("M02_CAPTURE_PRODUCER_V1_ENABLED") {
+            self.capture.producer_enabled =
+                parse_strict_bool("M02_CAPTURE_PRODUCER_V1_ENABLED", &enabled)?;
+        }
+        if let Ok(probe_ids) = std::env::var("M02_CAPTURE_CANARY_PROBE_IDS") {
+            self.capture.producer_scope_probe_ids = probe_ids
+                .split(',')
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(ToOwned::to_owned)
+                .collect();
+        }
         if let Ok(gateway) = std::env::var("GATEWAY_ADDR") {
             self.sender.gateway_addr = gateway;
         }
         if let Ok(token) = std::env::var("AUTH_TOKEN") {
             self.sender.auth_token = Some(token);
         }
+        if let Ok(enabled) = std::env::var("M06_ASSET_BINDING_UPLOAD_V1_ENABLED") {
+            self.sender.asset_binding_upload_enabled =
+                parse_strict_bool("M06_ASSET_BINDING_UPLOAD_V1_ENABLED", &enabled)?;
+        }
+        if let Ok(tenant_id) = std::env::var("M06_ASSET_BINDING_CANARY_TENANT_ID") {
+            self.sender.asset_binding_canary_tenant_id = tenant_id.trim().to_owned();
+        }
+        if let Ok(probe_ids) = std::env::var("M06_ASSET_BINDING_CANARY_PROBE_IDS") {
+            self.sender.asset_binding_canary_probe_ids = probe_ids
+                .split(',')
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(ToOwned::to_owned)
+                .collect();
+        }
+        Ok(())
     }
 
     fn validate(&self) -> Result<()> {
@@ -130,13 +167,22 @@ impl ProbeConfig {
         if self.probe_id.is_empty() {
             anyhow::bail!("probe_id cannot be empty");
         }
-        if self.capture.interface.is_empty() {
+        if !self.capture.mode.is_pcap_offline() && self.capture.interface.trim().is_empty() {
             anyhow::bail!("capture.interface cannot be empty");
         }
         if self.sender.gateway_addr.is_empty() {
             anyhow::bail!("sender.gateway_addr cannot be empty");
         }
         validate_gateway_transport(&self.sender)?;
+        let mut producer_scope = std::collections::BTreeSet::new();
+        for probe_id in &self.capture.producer_scope_probe_ids {
+            if probe_id.trim().is_empty() || probe_id == "*" {
+                anyhow::bail!("M02_CAPTURE_CANARY_PROBE_IDS_REQUIRES_EXACT_PROBE_IDS");
+            }
+            if !producer_scope.insert(probe_id) {
+                anyhow::bail!("M02_CAPTURE_CANARY_PROBE_IDS_DUPLICATE");
+            }
+        }
 
         if !self
             .tenant_id
@@ -173,12 +219,57 @@ impl ProbeConfig {
         if self.sender.batch_size > 10_000 {
             anyhow::bail!("sender.batch_size exceeds maximum (10k)");
         }
+        let mut binding_scope = std::collections::BTreeSet::new();
+        for probe_id in &self.sender.asset_binding_canary_probe_ids {
+            if probe_id.trim().is_empty() || probe_id == "*" {
+                anyhow::bail!("M06_ASSET_BINDING_CANARY_PROBE_IDS_REQUIRES_EXACT_PROBE_IDS");
+            }
+            if !binding_scope.insert(probe_id) {
+                anyhow::bail!("M06_ASSET_BINDING_CANARY_PROBE_IDS_DUPLICATE");
+            }
+        }
+        if self.sender.asset_binding_upload_enabled
+            && (self.sender.asset_binding_canary_tenant_id != self.tenant_id
+                || binding_scope.is_empty()
+                || !binding_scope.contains(&self.probe_id))
+        {
+            anyhow::bail!("M06_ASSET_BINDING_UPLOAD_REQUIRES_EXACT_TENANT_PROBE_SCOPE");
+        }
 
-        if self.capture.frame_size % 4096 != 0 {
+        if !self.capture.mode.is_pcap_offline() && self.capture.frame_size % 4096 != 0 {
             anyhow::bail!(
                 "capture.frame_size ({}) must be multiple of 4096 (Kunpeng requirement)",
                 self.capture.frame_size
             );
+        }
+
+        if self.capture.pcap_manifest_route_enabled {
+            if !self.capture.mode.is_pcap_offline() {
+                anyhow::bail!("PCAP_MANIFEST_ROUTE_REQUIRES_OFFLINE_MODE");
+            }
+            if self.capture.pcap_dir.is_some() {
+                anyhow::bail!("PCAP_MANIFEST_ROUTE_CONFLICTS_WITH_LEGACY_DIRECTORY");
+            }
+            let manifest_path = self
+                .capture
+                .pcap_manifest_path
+                .as_deref()
+                .filter(|value| !value.trim().is_empty())
+                .ok_or_else(|| anyhow::anyhow!("PCAP_MANIFEST_PATH_REQUIRED"))?;
+            if manifest_path.contains('\0') {
+                anyhow::bail!("PCAP_MANIFEST_PATH_INVALID");
+            }
+            let manifest_hash = self
+                .capture
+                .pcap_manifest_sha256
+                .as_deref()
+                .filter(|value| is_lower_hex_sha256(value))
+                .ok_or_else(|| anyhow::anyhow!("PCAP_MANIFEST_SHA256_REQUIRED"))?;
+            debug_assert_eq!(manifest_hash.len(), 64);
+        } else if self.capture.pcap_manifest_path.is_some()
+            || self.capture.pcap_manifest_sha256.is_some()
+        {
+            anyhow::bail!("PCAP_MANIFEST_FIELDS_REQUIRE_ROUTE_ENABLED");
         }
 
         if self.archiver.enabled && self.archiver.buffer_size_mb < 64 {
@@ -198,6 +289,34 @@ impl ProbeConfig {
 
     pub fn active_timeout(&self) -> Duration {
         self.aggregator.active_timeout()
+    }
+
+    pub fn capture_producer_admitted(&self) -> bool {
+        self.capture.producer_enabled
+            && (self.capture.producer_scope_probe_ids.is_empty()
+                || self
+                    .capture
+                    .producer_scope_probe_ids
+                    .iter()
+                    .any(|probe_id| probe_id == &self.probe_id))
+    }
+
+    pub fn asset_binding_upload_admitted(&self) -> bool {
+        self.sender.asset_binding_upload_enabled
+            && self.sender.asset_binding_canary_tenant_id == self.tenant_id
+            && self
+                .sender
+                .asset_binding_canary_probe_ids
+                .iter()
+                .any(|probe_id| probe_id == &self.probe_id)
+    }
+}
+
+fn parse_strict_bool(name: &str, value: &str) -> Result<bool> {
+    match value {
+        "true" => Ok(true),
+        "false" => Ok(false),
+        _ => anyhow::bail!("{name} must be exactly true or false"),
     }
 }
 
@@ -258,9 +377,26 @@ fn is_loopback_http_endpoint(endpoint: &str) -> bool {
     host == "localhost" || host == "127.0.0.1"
 }
 
+fn is_lower_hex_sha256(value: &str) -> bool {
+    value.len() == 64
+        && value
+            .as_bytes()
+            .iter()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(byte))
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaptureConfig {
     pub interface: String,
+    /// Runtime admission gate for packet production. Existing standalone
+    /// configurations remain enabled; deployment manifests set this false and
+    /// turn it on only after consumer readiness has been proven.
+    #[serde(default = "default_capture_producer_enabled")]
+    pub producer_enabled: bool,
+    /// Exact probe allow-list for managed canary activation. Empty preserves the
+    /// legacy standalone configuration behavior.
+    #[serde(default)]
+    pub producer_scope_probe_ids: Vec<String>,
     #[serde(default)]
     pub mode: CaptureMode,
     #[serde(default)]
@@ -287,10 +423,27 @@ pub struct CaptureConfig {
     /// Loop replay when all files are consumed
     #[serde(default)]
     pub loop_replay: Option<bool>,
+    /// Candidate-bound offline manifest path. Disabled unless the explicit route is enabled.
+    #[serde(default)]
+    pub pcap_manifest_path: Option<String>,
+    /// SHA-256 of the exact manifest body loaded at startup.
+    #[serde(default)]
+    pub pcap_manifest_sha256: Option<String>,
+    /// Opt-in switch for the manifest-only route. Defaults false for compatibility.
+    #[serde(default)]
+    pub pcap_manifest_route_enabled: bool,
+    /// 测试阶段 wire 回放接口 allowlist:pcap_replay 命令携带 interface 时的
+    /// AF_PACKET 注入目标(veth 对输入端)。空 = 全部拒绝;生产探针默认关闭。
+    #[serde(default)]
+    pub wire_replay_interfaces: Vec<String>,
 }
 
 fn default_buffer_size() -> usize {
     64 * 1024 * 1024
+}
+
+fn default_capture_producer_enabled() -> bool {
+    true
 }
 
 fn default_frame_size() -> usize {
@@ -309,6 +462,8 @@ impl Default for CaptureConfig {
     fn default() -> Self {
         Self {
             interface: "eth0".to_string(),
+            producer_enabled: default_capture_producer_enabled(),
+            producer_scope_probe_ids: Vec::new(),
             mode: CaptureMode::default(),
             queue_id: 0,
             buffer_size: default_buffer_size(),
@@ -321,6 +476,10 @@ impl Default for CaptureConfig {
             pcap_dir: None,
             replay_speed: None,
             loop_replay: None,
+            pcap_manifest_path: None,
+            pcap_manifest_sha256: None,
+            pcap_manifest_route_enabled: false,
+            wire_replay_interfaces: Vec::new(),
         }
     }
 }
@@ -338,6 +497,11 @@ pub struct AggregatorConfig {
     /// 使用分代流表 (young/old/tenured 三层)，默认使用分区流表
     #[serde(default)]
     pub use_generational: bool,
+    /// Explicit parser route. `full` is the compatibility-safe default;
+    /// `fast` falls back to the full decoder outside its proven subset and
+    /// `shadow` compares both decoders before one table commit.
+    #[serde(default)]
+    pub parser_route: ParserRoute,
 }
 
 fn default_flow_capacity() -> usize {
@@ -364,6 +528,7 @@ impl Default for AggregatorConfig {
             active_timeout_sec: default_active_timeout(),
             scan_interval_sec: default_scan_interval(),
             use_generational: false,
+            parser_route: ParserRoute::Full,
         }
     }
 }
@@ -386,6 +551,8 @@ impl AggregatorConfig {
 pub struct ArchiverConfig {
     #[serde(default = "default_true")]
     pub enabled: bool,
+    #[serde(default)]
+    pub durable_spool_enabled: bool,
     #[serde(default = "default_archiver_buffer_size")]
     pub buffer_size_mb: usize,
     #[serde(default = "default_rotation_interval")]
@@ -450,6 +617,7 @@ impl Default for ArchiverConfig {
     fn default() -> Self {
         Self {
             enabled: true,
+            durable_spool_enabled: false,
             buffer_size_mb: default_archiver_buffer_size(),
             rotation_interval_sec: default_rotation_interval(),
             zstd_level: default_zstd_level(),
@@ -484,6 +652,29 @@ pub struct SenderConfig {
     pub cache_path: String,
     #[serde(default = "default_cache_max_size")]
     pub cache_max_size: usize,
+    #[serde(default)]
+    pub asset_binding_upload_enabled: bool,
+    #[serde(default)]
+    pub asset_binding_canary_tenant_id: String,
+    #[serde(default)]
+    pub asset_binding_canary_probe_ids: Vec<String>,
+}
+
+/// Derive the TLS SNI name from a gateway address. Uses the host portion when
+/// it is a DNS name; falls back to the well-known service name for IP
+/// addresses or malformed URLs (the mTLS certificates are issued for the
+/// service DNS name).
+pub fn gateway_sni(gateway_addr: &str) -> String {
+    let host = gateway_addr
+        .split("://")
+        .nth(1)
+        .and_then(|rest| rest.split([':', '/']).next())
+        .unwrap_or("ingest-gateway");
+    if host.is_empty() || host.parse::<std::net::IpAddr>().is_ok() {
+        "ingest-gateway".to_string()
+    } else {
+        host.to_string()
+    }
 }
 
 fn default_batch_size() -> usize {
@@ -517,6 +708,9 @@ impl Default for SenderConfig {
             probe_id: None,
             cache_path: "/var/lib/probe-agent/cache".to_string(),
             cache_max_size: 1_000_000,
+            asset_binding_upload_enabled: false,
+            asset_binding_canary_tenant_id: String::new(),
+            asset_binding_canary_probe_ids: Vec::new(),
         }
     }
 }
@@ -544,7 +738,10 @@ impl Default for MetricsConfig {
 
 #[cfg(test)]
 mod transport_tests {
-    use super::{validate_gateway_transport, SenderConfig};
+    use super::{
+        validate_gateway_transport, AggregatorConfig, ArchiverConfig, CaptureConfig, CaptureMode,
+        MetricsConfig, ProbeConfig, SenderConfig,
+    };
 
     fn sender(endpoint: &str) -> SenderConfig {
         SenderConfig {
@@ -558,6 +755,19 @@ mod transport_tests {
         config.tls_client_cert = Some("/run/pki/tls.crt".to_string());
         config.tls_client_key = Some("/run/pki/tls.key".to_string());
         config
+    }
+
+    fn probe(capture: CaptureConfig) -> ProbeConfig {
+        ProbeConfig {
+            tenant_id: "tenant-a".to_string(),
+            probe_id: "probe-a".to_string(),
+            run_id: Some("run-a".to_string()),
+            capture,
+            aggregator: AggregatorConfig::default(),
+            archiver: ArchiverConfig::default(),
+            sender: sender("http://127.0.0.1:50051"),
+            metrics: MetricsConfig::default(),
+        }
     }
 
     #[test]
@@ -605,6 +815,102 @@ mod transport_tests {
             "https://ingest-gateway.traffic-analysis.svc:50051"
         )))
         .is_ok());
+    }
+
+    #[test]
+    fn manifest_route_is_default_off_and_requires_exact_offline_identity() {
+        let default = CaptureConfig::default();
+        assert!(!default.pcap_manifest_route_enabled);
+        assert!(default.pcap_manifest_path.is_none());
+        assert!(default.pcap_manifest_sha256.is_none());
+
+        let capture = CaptureConfig {
+            mode: CaptureMode::PcapOffline,
+            interface: String::new(),
+            pcap_manifest_route_enabled: true,
+            pcap_manifest_path: Some("/fixtures/manifest.json".to_string()),
+            pcap_manifest_sha256: Some("a".repeat(64)),
+            ..CaptureConfig::default()
+        };
+        assert!(probe(capture).validate().is_ok());
+    }
+
+    #[test]
+    fn manifest_route_rejects_wrong_mode_legacy_mix_and_partial_fields() {
+        let base = CaptureConfig {
+            mode: CaptureMode::PcapOffline,
+            pcap_manifest_route_enabled: true,
+            pcap_manifest_path: Some("/fixtures/manifest.json".to_string()),
+            pcap_manifest_sha256: Some("a".repeat(64)),
+            ..CaptureConfig::default()
+        };
+        let mut wrong_mode = base.clone();
+        wrong_mode.mode = CaptureMode::AfPacket;
+        assert!(probe(wrong_mode)
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("REQUIRES_OFFLINE_MODE"));
+
+        let mut mixed = base.clone();
+        mixed.pcap_dir = Some("/legacy".to_string());
+        assert!(probe(mixed)
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("CONFLICTS_WITH_LEGACY_DIRECTORY"));
+
+        let mut invalid_hash = base;
+        invalid_hash.pcap_manifest_sha256 = Some("A".repeat(64));
+        assert!(probe(invalid_hash)
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("SHA256_REQUIRED"));
+
+        let partial = CaptureConfig {
+            mode: CaptureMode::PcapOffline,
+            pcap_manifest_path: Some("/fixtures/manifest.json".to_string()),
+            ..CaptureConfig::default()
+        };
+        assert!(probe(partial)
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("FIELDS_REQUIRE_ROUTE_ENABLED"));
+    }
+
+    #[test]
+    fn capture_producer_admission_is_default_on_but_exact_scope_fail_closed() {
+        let default = probe(CaptureConfig::default());
+        assert!(default.capture_producer_admitted());
+
+        let mut disabled = default.clone();
+        disabled.capture.producer_enabled = false;
+        assert!(!disabled.capture_producer_admitted());
+
+        let mut scoped = default;
+        scoped.capture.producer_scope_probe_ids = vec!["probe-canary".to_string()];
+        assert!(!scoped.capture_producer_admitted());
+        scoped.probe_id = "probe-canary".to_string();
+        assert!(scoped.capture_producer_admitted());
+    }
+
+    #[test]
+    fn asset_binding_upload_is_default_off_and_requires_exact_scope() {
+        let default = probe(CaptureConfig::default());
+        assert!(!default.asset_binding_upload_admitted());
+
+        let mut missing_scope = default.clone();
+        missing_scope.sender.asset_binding_upload_enabled = true;
+        assert!(missing_scope.validate().is_err());
+
+        let mut admitted = default;
+        admitted.sender.asset_binding_upload_enabled = true;
+        admitted.sender.asset_binding_canary_tenant_id = "tenant-a".to_owned();
+        admitted.sender.asset_binding_canary_probe_ids = vec!["probe-a".to_owned()];
+        assert!(admitted.validate().is_ok());
+        assert!(admitted.asset_binding_upload_admitted());
     }
 }
 

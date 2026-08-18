@@ -1,18 +1,19 @@
 pub mod buffer;
 pub mod disk_monitor;
-pub mod index;
 pub mod pcap;
+pub mod spool;
 pub mod upload_journal;
 pub mod uploader;
 
 pub use pcap::{PcapGlobalHeader, PcapPacketHeader, PcapWriter, PCAP_MAGIC};
+pub use spool::{DurablePcapSpool, JournaledUploadRef};
+pub use spool::inspect_packet_records;
 
 pub use buffer::{TripleBuffer, TripleBufferConfig, UploadData, WriteResult};
 
 pub use disk_monitor::{DiskMonitor, DiskMonitorConfig};
-pub use index::PcapIndexMeta;
-pub use upload_journal::{JournalEntry, UploadJournal};
-pub use uploader::{UploadTask, Uploader, UploaderConfig};
+pub use upload_journal::{JournalEntry, JournalObjectState, UploadJournal};
+pub use uploader::{ObjectWriteReceipt, RecoverySummary, UploadTask, Uploader, UploaderConfig};
 
 use std::sync::Arc;
 
@@ -207,7 +208,7 @@ pub fn batch_to_pcap_batch(batch: &crate::capture::PacketBatch) -> PcapWriteBatc
 
     for i in 0..batch.len() {
         if let Some(data) = batch.get_packet(i) {
-            let timestamp = batch.frames[i].timestamp;
+            let timestamp = batch.frames[i].captured_at.epoch_micros();
             pcap_batch.push(data.to_vec(), timestamp);
         }
     }

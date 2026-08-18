@@ -1,7 +1,7 @@
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, AtomicU8, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use parking_lot::Mutex;
@@ -14,6 +14,7 @@ struct Buffer {
     ts_start: AtomicU64,
     ts_end: AtomicU64,
     created_at: Mutex<Instant>,
+    in_flight_writes: AtomicUsize,
 }
 
 impl Buffer {
@@ -25,6 +26,7 @@ impl Buffer {
             ts_start: AtomicU64::new(u64::MAX),
             ts_end: AtomicU64::new(0),
             created_at: Mutex::new(Instant::now()),
+            in_flight_writes: AtomicUsize::new(0),
         }
     }
 
@@ -33,6 +35,7 @@ impl Buffer {
         self.packet_count.store(0, Ordering::Release);
         self.ts_start.store(u64::MAX, Ordering::Release);
         self.ts_end.store(0, Ordering::Release);
+        self.in_flight_writes.store(0, Ordering::Release);
         *self.created_at.lock() = Instant::now();
     }
 
@@ -121,7 +124,7 @@ pub enum WriteResult {
     Error,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UploadData {
     pub data: Vec<u8>,
     pub ts_start: u64,
@@ -161,6 +164,10 @@ pub struct TripleBuffer {
     config: TripleBufferConfig,
     stats: BufferStats,
     rotate_lock: tokio::sync::Mutex<()>,
+    /// Set while a rotation is sealing a buffer; writers use it together with
+    /// the per-buffer `in_flight_writes` counter to hand off the buffer to the
+    /// uploader without racing on the underlying memory.
+    sealing: AtomicBool,
 }
 
 #[derive(Debug, Default)]
@@ -219,6 +226,7 @@ impl TripleBuffer {
             config,
             stats: BufferStats::default(),
             rotate_lock: tokio::sync::Mutex::new(()),
+            sealing: AtomicBool::new(false),
         }
     }
 
@@ -226,14 +234,35 @@ impl TripleBuffer {
         for retry in 0..self.config.max_retries {
             if retry > 0 {
                 self.stats.retries.fetch_add(1, Ordering::Relaxed);
-                std::thread::sleep(self.config.retry_delay);
+                // Yield instead of sleeping: this write path is invoked
+                // synchronously from the async capture task, so a
+                // `thread::sleep` would block a tokio worker.
+                std::thread::yield_now();
                 trace!("Retry {} for PCAP write", retry);
             }
 
+            // Writer/rotator handshake: take an in-flight slot on the current
+            // write buffer, then verify the buffer is still the active write
+            // buffer and no rotation is in progress. If a rotation swapped
+            // `write_idx` or set `sealing` while we were taking the slot,
+            // release the slot and retry on the (new) current buffer. The
+            // rotator waits for the in-flight count to drain to zero before
+            // sealing, so a writer that holds a slot is guaranteed to finish
+            // its memcpy before the buffer is handed to the uploader.
             let write_idx = self.write_idx.load(Ordering::Acquire) as usize;
             let buffer = &self.buffers[write_idx];
+            buffer.in_flight_writes.fetch_add(1, Ordering::AcqRel);
+            if self.sealing.load(Ordering::Acquire)
+                || self.write_idx.load(Ordering::Acquire) as usize != write_idx
+            {
+                buffer.in_flight_writes.fetch_sub(1, Ordering::AcqRel);
+                continue;
+            }
 
-            if buffer.write_packet(timestamp, data) {
+            let wrote = buffer.write_packet(timestamp, data);
+            buffer.in_flight_writes.fetch_sub(1, Ordering::AcqRel);
+
+            if wrote {
                 self.stats.packets_written.fetch_add(1, Ordering::Relaxed);
                 self.stats
                     .bytes_written
@@ -250,12 +279,21 @@ impl TripleBuffer {
                 return WriteResult::Ok;
             }
 
+            // The active buffer is full: try to rotate into a fresh buffer.
             if let Ok(_guard) = self.rotate_lock.try_lock() {
                 if self.try_rotate_inner() {
                     let new_write_idx = self.write_idx.load(Ordering::Acquire) as usize;
                     let new_buffer = &self.buffers[new_write_idx];
-
-                    if new_buffer.write_packet(timestamp, data) {
+                    new_buffer.in_flight_writes.fetch_add(1, Ordering::AcqRel);
+                    let still_current = !self.sealing.load(Ordering::Acquire)
+                        && self.write_idx.load(Ordering::Acquire) as usize == new_write_idx;
+                    let wrote_new = if still_current {
+                        new_buffer.write_packet(timestamp, data)
+                    } else {
+                        false
+                    };
+                    new_buffer.in_flight_writes.fetch_sub(1, Ordering::AcqRel);
+                    if wrote_new {
                         self.stats.packets_written.fetch_add(1, Ordering::Relaxed);
                         self.stats
                             .bytes_written
@@ -304,7 +342,11 @@ impl TripleBuffer {
         let packet_header = self.make_pcap_packet_header(timestamp, data.len());
         file.write_all(&packet_header)?;
         file.write_all(data)?;
-        file.sync_all()?;
+        // NOTE: no per-packet fsync here. The fallback file is best-effort
+        // and consumed asynchronously by the fallback consumer (which routes
+        // it through the durable spool pipeline); a synchronous `sync_all`
+        // per packet stalls the capture hot path.
+        file.flush()?;
 
         Ok(())
     }
@@ -347,13 +389,37 @@ impl TripleBuffer {
         let upload_idx = self.upload_idx.load(Ordering::Acquire);
         let ready_idx = (write_idx + 1) % 3;
 
-        if ready_idx == upload_idx {
-            trace!("Rotate blocked: ready_idx={} is uploading", ready_idx);
+        if upload_idx != 255 {
+            trace!(
+                "Rotate blocked: sealed/upload buffer {} has not crossed the durable spool barrier",
+                upload_idx
+            );
+            return false;
+        }
+
+        // Seal handshake: block new writer reservations, then wait for any
+        // in-flight writer on the buffer being sealed to finish its memcpy
+        // before taking it over for upload. The wait is bounded so a stuck
+        // writer cannot wedge rotation forever.
+        self.sealing.store(true, Ordering::Release);
+        if !self.wait_in_flight_drained(write_idx as usize) {
+            warn!("Rotate aborted: write buffer did not drain before deadline");
+            self.sealing.store(false, Ordering::Release);
+            return false;
+        }
+
+        if self
+            .upload_idx
+            .compare_exchange(255, write_idx, Ordering::AcqRel, Ordering::Acquire)
+            .is_err()
+        {
+            self.sealing.store(false, Ordering::Release);
             return false;
         }
 
         self.write_idx.store(ready_idx, Ordering::Release);
         self.buffers[ready_idx as usize].reset();
+        self.sealing.store(false, Ordering::Release);
         self.stats.rotations.fetch_add(1, Ordering::Relaxed);
 
         debug!(
@@ -365,6 +431,22 @@ impl TripleBuffer {
         );
 
         true
+    }
+
+    /// Bounded spin until the writer in-flight counter for `buffer_idx`
+    /// drains to zero. Writers hold a slot only for the duration of a single
+    /// packet memcpy, so this is expected to return almost immediately.
+    fn wait_in_flight_drained(&self, buffer_idx: usize) -> bool {
+        let deadline = Instant::now() + Duration::from_millis(100);
+        loop {
+            if self.buffers[buffer_idx].in_flight_writes.load(Ordering::Acquire) == 0 {
+                return true;
+            }
+            if Instant::now() >= deadline {
+                return false;
+            }
+            std::hint::spin_loop();
+        }
     }
 
     pub fn force_rotate(&self) -> bool {
@@ -379,47 +461,34 @@ impl TripleBuffer {
     }
 
     pub async fn wait_for_upload(&self) -> Option<UploadData> {
-        let write_idx = self.write_idx.load(Ordering::Acquire);
         let upload_idx = self.upload_idx.load(Ordering::Acquire);
-        let ready_idx = if write_idx == 0 { 2 } else { write_idx - 1 };
-
-        if upload_idx != 255 {
+        if upload_idx == 255 {
             return None;
         }
-
-        let buffer = &self.buffers[ready_idx as usize];
+        let buffer = &self.buffers[upload_idx as usize];
         if buffer.packet_count() == 0 {
             return None;
         }
-
-        match self
-            .upload_idx
-            .compare_exchange(255, ready_idx, Ordering::AcqRel, Ordering::Acquire)
-        {
-            Ok(_) => {
-                let pos = buffer.pos();
-                let (mut ts_start, ts_end) = buffer.ts_range();
-                if ts_start == u64::MAX {
-                    ts_start = ts_end;
-                }
-                let packet_count = buffer.packet_count();
-                let mut data = vec![0u8; pos];
-                data.copy_from_slice(&buffer.data[..pos]);
-
-                debug!(
-                    "Upload task ready: buffer={}, packets={}, bytes={}",
-                    ready_idx, packet_count, pos
-                );
-
-                Some(UploadData {
-                    data,
-                    ts_start,
-                    ts_end,
-                    packet_count,
-                })
-            }
-            Err(_) => None,
+        let pos = buffer.pos();
+        let (mut ts_start, ts_end) = buffer.ts_range();
+        if ts_start == u64::MAX {
+            ts_start = ts_end;
         }
+        let packet_count = buffer.packet_count();
+        let mut data = vec![0u8; pos];
+        data.copy_from_slice(&buffer.data[..pos]);
+
+        debug!(
+            "Sealed upload lease ready: buffer={}, packets={}, bytes={}",
+            upload_idx, packet_count, pos
+        );
+
+        Some(UploadData {
+            data,
+            ts_start,
+            ts_end,
+            packet_count,
+        })
     }
 
     pub fn complete_upload(&self, buffer_idx: u8) {
@@ -517,5 +586,45 @@ impl AtomicMinMax for AtomicU64 {
                 Err(c) => current = c,
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{TripleBuffer, TripleBufferConfig, WriteResult};
+
+    #[tokio::test]
+    async fn sealed_buffer_blocks_another_rotation_until_durable_completion() {
+        let buffer = TripleBuffer::new(TripleBufferConfig {
+            buffer_size: 4096,
+            max_packets: 1,
+            ..TripleBufferConfig::default()
+        });
+        assert_eq!(
+            buffer.write_packet(1_000_001, b"first"),
+            WriteResult::Rotated
+        );
+        let leased = buffer.wait_for_upload().await.expect("sealed lease");
+        assert_eq!(leased.packet_count, 1);
+
+        // Writes may continue in the next active buffer, but a second rotate
+        // must fail until the exact sealed lease is durably spooled.
+        assert_eq!(buffer.write_packet(2_000_002, b"second"), WriteResult::Ok);
+        assert!(!buffer.try_rotate());
+        assert_eq!(
+            buffer
+                .wait_for_upload()
+                .await
+                .expect("same sealed lease")
+                .data,
+            leased.data
+        );
+
+        let sealed_idx = buffer.find_uploading_buffer().expect("sealed index");
+        buffer.complete_upload(sealed_idx);
+        assert!(buffer.try_rotate());
+        let next = buffer.wait_for_upload().await.expect("next lease");
+        assert_eq!(next.packet_count, 1);
+        assert_ne!(next.data, leased.data);
     }
 }

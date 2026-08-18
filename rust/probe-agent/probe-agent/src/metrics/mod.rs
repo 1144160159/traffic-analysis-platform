@@ -22,6 +22,38 @@ pub static PCAP_FALLBACK: Lazy<Counter> = Lazy::new(|| {
     .unwrap()
 });
 
+pub static ASSET_BINDING_WAL_PENDING: Lazy<IntGauge> = Lazy::new(|| {
+    IntGauge::new(
+        "probe_asset_binding_wal_pending",
+        "Durable asset binding observations waiting for an ingest receipt",
+    )
+    .unwrap()
+});
+
+pub static ASSET_BINDING_WAL_REJECTED: Lazy<IntGauge> = Lazy::new(|| {
+    IntGauge::new(
+        "probe_asset_binding_wal_rejected",
+        "Durable asset binding observations quarantined after a terminal rejection",
+    )
+    .unwrap()
+});
+
+pub static ASSET_BINDING_UPLOAD_FAILURES: Lazy<Counter> = Lazy::new(|| {
+    Counter::new(
+        "probe_asset_binding_upload_failures_total",
+        "Asset binding upload attempts that did not return a usable response",
+    )
+    .unwrap()
+});
+
+pub static ASSET_BINDING_RESPONSE_CONTRACT_FAILURES: Lazy<Counter> = Lazy::new(|| {
+    Counter::new(
+        "probe_asset_binding_response_contract_failures_total",
+        "Asset binding responses rejected by the exact-set receipt contract",
+    )
+    .unwrap()
+});
+
 pub static PACKETS_CAPTURED: Lazy<Counter> =
     Lazy::new(|| Counter::new("probe_packets_captured_total", "Total packets captured").unwrap());
 
@@ -190,6 +222,22 @@ pub static PCAP_FILES_UPLOADED: Lazy<Counter> =
 pub static PCAP_UPLOAD_ERRORS: Lazy<Counter> =
     Lazy::new(|| Counter::new("probe_pcap_upload_errors_total", "Upload errors").unwrap());
 
+pub static PCAP_OBJECT_HASH_MISMATCHES: Lazy<Counter> = Lazy::new(|| {
+    Counter::new(
+        "probe_pcap_object_hash_mismatch_total",
+        "Object receipts whose trusted SHA-256 conflicts with the immutable spool manifest",
+    )
+    .unwrap()
+});
+
+pub static PCAP_METADATA_WITHOUT_OBJECT: Lazy<Counter> = Lazy::new(|| {
+    Counter::new(
+        "probe_pcap_metadata_without_object_total",
+        "OBJECT_WRITTEN journal entries for which no durable object can be proven",
+    )
+    .unwrap()
+});
+
 pub static PCAP_UPLOAD_QUEUE_DEPTH: Lazy<IntGauge> = Lazy::new(|| {
     IntGauge::new(
         "probe_pcap_upload_queue_depth",
@@ -209,6 +257,9 @@ pub static EVENTS_CACHED: Lazy<Gauge> =
 
 pub static BATCHES_SENT: Lazy<Counter> =
     Lazy::new(|| Counter::new("probe_batches_sent_total", "Batches sent").unwrap());
+
+pub static BATCHES_FAILED: Lazy<Counter> =
+    Lazy::new(|| Counter::new("probe_batches_failed_total", "Batches failed").unwrap());
 
 pub static BATCH_LATENCY: Lazy<Histogram> = Lazy::new(|| {
     Histogram::with_opts(
@@ -303,6 +354,9 @@ struct CachePadded<T>(T);
 struct BatchedMetrics {
     bytes: CachePadded<AtomicU64>,
     packets: CachePadded<AtomicU64>,
+    allocation_drops: CachePadded<AtomicU64>,
+    kernel_drops: CachePadded<AtomicU64>,
+    capture_errors: CachePadded<AtomicU64>,
 }
 
 impl BatchedMetrics {
@@ -310,25 +364,23 @@ impl BatchedMetrics {
         Self {
             bytes: CachePadded(AtomicU64::new(0)),
             packets: CachePadded(AtomicU64::new(0)),
+            allocation_drops: CachePadded(AtomicU64::new(0)),
+            kernel_drops: CachePadded(AtomicU64::new(0)),
+            capture_errors: CachePadded(AtomicU64::new(0)),
         }
     }
 
     #[inline(always)]
-    fn add(&self, bytes: u64) {
+    fn add(&self, packets: u64, bytes: u64) {
         self.bytes.0.fetch_add(bytes, Ordering::Relaxed);
-        self.packets.0.fetch_add(1, Ordering::Relaxed);
+        self.packets.0.fetch_add(packets, Ordering::Relaxed);
+        BYTES_CAPTURED.inc_by(bytes as f64);
+        PACKETS_CAPTURED.inc_by(packets as f64);
     }
 
     fn flush_to_prometheus(&self) {
-        let bytes = self.bytes.0.swap(0, Ordering::Relaxed);
-        let packets = self.packets.0.swap(0, Ordering::Relaxed);
-
-        if bytes > 0 {
-            BYTES_CAPTURED.inc_by(bytes as f64);
-        }
-        if packets > 0 {
-            PACKETS_CAPTURED.inc_by(packets as f64);
-        }
+        // Capture totals are committed synchronously by run_capture so a
+        // heartbeat cannot race a destructive local flush.
     }
 }
 
@@ -345,8 +397,35 @@ thread_local! {
 const LOCAL_FLUSH_THRESHOLD_FLOWS: u64 = 1_000;
 
 #[inline(always)]
-pub fn inc_capture_local(bytes: u64) {
-    CAPTURE_METRICS.add(bytes);
+pub fn inc_capture_local(packets: u64, bytes: u64) {
+    CAPTURE_METRICS.add(packets, bytes);
+}
+
+#[inline(always)]
+pub fn inc_capture_allocation_drop_local(count: u64) {
+    CAPTURE_METRICS
+        .allocation_drops
+        .0
+        .fetch_add(count, Ordering::Relaxed);
+    PACKETS_DROPPED.inc_by(count as f64);
+}
+
+#[inline(always)]
+pub fn inc_capture_kernel_drop_local(count: u64) {
+    CAPTURE_METRICS
+        .kernel_drops
+        .0
+        .fetch_add(count, Ordering::Relaxed);
+    PACKETS_DROPPED.inc_by(count as f64);
+}
+
+#[inline(always)]
+pub fn inc_capture_error_local() {
+    CAPTURE_METRICS
+        .capture_errors
+        .0
+        .fetch_add(1, Ordering::Relaxed);
+    CAPTURE_ERRORS.inc();
 }
 
 #[inline]
@@ -455,6 +534,9 @@ pub struct LocalMetricsSnapshot {
     pub failed_packets: u64,
     pub new_flows: u64,
     pub updated_flows: u64,
+    pub capture_allocation_drops: u64,
+    pub capture_kernel_drops: u64,
+    pub capture_errors: u64,
 }
 
 pub fn get_local_stats() -> LocalMetricsSnapshot {
@@ -474,7 +556,14 @@ pub fn get_local_stats() -> LocalMetricsSnapshot {
         failed_packets: failed,
         new_flows,
         updated_flows,
+        capture_allocation_drops: CAPTURE_METRICS.allocation_drops.0.load(Ordering::Relaxed),
+        capture_kernel_drops: CAPTURE_METRICS.kernel_drops.0.load(Ordering::Relaxed),
+        capture_errors: CAPTURE_METRICS.capture_errors.0.load(Ordering::Relaxed),
     }
+}
+
+pub fn capture_snapshot() -> LocalMetricsSnapshot {
+    get_local_stats()
 }
 
 pub fn update_flow_table_fragmentation(fragmentation: f64) {
@@ -564,13 +653,20 @@ pub fn register_metrics() -> Result<()> {
     register!(*PCAP_BYTES_WRITTEN);
     register!(*PCAP_FILES_UPLOADED);
     register!(*PCAP_UPLOAD_ERRORS);
+    register!(*PCAP_OBJECT_HASH_MISMATCHES);
+    register!(*PCAP_METADATA_WITHOUT_OBJECT);
     register!(*PCAP_UPLOAD_QUEUE_DEPTH);
     register!(*PCAP_FALLBACK);
+    register!(*ASSET_BINDING_WAL_PENDING);
+    register!(*ASSET_BINDING_WAL_REJECTED);
+    register!(*ASSET_BINDING_UPLOAD_FAILURES);
+    register!(*ASSET_BINDING_RESPONSE_CONTRACT_FAILURES);
 
     register!(*EVENTS_SENT);
     register!(*EVENTS_FAILED);
     register!(*EVENTS_CACHED);
     register!(*BATCHES_SENT);
+    register!(*BATCHES_FAILED);
     register!(*BATCH_LATENCY);
     register!(*IN_FLIGHT_REQUESTS);
     register!(*SENDER_LATENCY);
@@ -731,6 +827,34 @@ fn get_thread_count() -> Result<usize> {
 
     #[cfg(not(target_os = "linux"))]
     Ok(1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn asset_binding_canary_metrics_are_registered_without_high_cardinality_labels() {
+        register_metrics().unwrap();
+        ASSET_BINDING_WAL_PENDING.set(2);
+        ASSET_BINDING_WAL_REJECTED.set(1);
+        ASSET_BINDING_UPLOAD_FAILURES.inc();
+        ASSET_BINDING_RESPONSE_CONTRACT_FAILURES.inc();
+
+        let names: std::collections::HashSet<_> = REGISTRY
+            .gather()
+            .into_iter()
+            .map(|family| family.get_name().to_owned())
+            .collect();
+        for expected in [
+            "probe_asset_binding_wal_pending",
+            "probe_asset_binding_wal_rejected",
+            "probe_asset_binding_upload_failures_total",
+            "probe_asset_binding_response_contract_failures_total",
+        ] {
+            assert!(names.contains(expected), "missing metric {expected}");
+        }
+    }
 }
 
 fn get_cpu_usage_percent() -> Result<f64> {

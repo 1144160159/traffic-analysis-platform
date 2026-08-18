@@ -10,6 +10,8 @@
 use std::collections::HashMap;
 use std::net::IpAddr;
 
+use super::ApplicationDecodeError;
+
 /// DNS 操作码
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DnsOpcode {
@@ -273,9 +275,13 @@ impl DnsParser {
 
         // 解析应答记录
         if is_response && answers > 0 {
-            for _ in 0..questions {
+            // The first question was already consumed above to construct the
+            // record. Skip only any remaining questions.
+            for _ in 1..questions {
                 if let Some((_, _, _)) = self.parse_dns_question(data, &mut offset) {
                     // skip question section
+                } else {
+                    return None;
                 }
             }
 
@@ -351,6 +357,62 @@ impl DnsParser {
         Some(record)
     }
 
+    pub fn process_dns_packet_checked(
+        &mut self,
+        data: &[u8],
+        dns_server_ip: IpAddr,
+        client_ip: IpAddr,
+        timestamp_ms: u64,
+    ) -> Result<DnsRecord, ApplicationDecodeError> {
+        if data.len() < 12 {
+            return Err(ApplicationDecodeError::Truncated {
+                protocol: "DNS",
+                stage: "header",
+                required: 12,
+                actual: data.len(),
+            });
+        }
+        let opcode = (u16::from_be_bytes([data[2], data[3]]) >> 11) & 0x0f;
+        if !matches!(opcode, 0 | 1 | 2 | 4 | 5) {
+            return Err(ApplicationDecodeError::Unsupported {
+                protocol: "DNS",
+                stage: "opcode",
+                value: opcode as u32,
+            });
+        }
+        let questions = u16::from_be_bytes([data[4], data[5]]);
+        if questions == 0 {
+            return Err(ApplicationDecodeError::Malformed {
+                protocol: "DNS",
+                reason: "question count is zero",
+            });
+        }
+        let answers = u16::from_be_bytes([data[6], data[7]]);
+        let authorities = u16::from_be_bytes([data[8], data[9]]);
+        let additionals = u16::from_be_bytes([data[10], data[11]]);
+        let mut offset = 12usize;
+        for _ in 0..questions {
+            self.parse_dns_question(data, &mut offset).ok_or(
+                ApplicationDecodeError::Malformed {
+                    protocol: "DNS",
+                    reason: "question section is malformed",
+                },
+            )?;
+        }
+        for _ in 0..u32::from(answers) + u32::from(authorities) + u32::from(additionals) {
+            self.parse_dns_rr(data, &mut offset)
+                .ok_or(ApplicationDecodeError::Malformed {
+                    protocol: "DNS",
+                    reason: "resource record section is malformed",
+                })?;
+        }
+        self.process_dns_packet(data, dns_server_ip, client_ip, timestamp_ms)
+            .ok_or(ApplicationDecodeError::Malformed {
+                protocol: "DNS",
+                reason: "name, question or resource record is malformed",
+            })
+    }
+
     /// 解析DNS问题部分
     fn parse_dns_question(&self, data: &[u8], offset: &mut usize) -> Option<(String, u16, u16)> {
         let name = Self::parse_name(data, *offset)?;
@@ -390,7 +452,10 @@ impl DnsParser {
         *offset += 10;
 
         let rdata_offset = *offset;
-        *offset += rdlength as usize;
+        *offset = (*offset).checked_add(rdlength as usize)?;
+        if *offset > data.len() {
+            return None;
+        }
 
         Some((name, rr_type, rr_class, ttl, rdlength, rdata_offset))
     }
@@ -402,25 +467,16 @@ impl DnsParser {
         }
 
         let mut parts: Vec<String> = Vec::new();
-        let mut jumped = false;
-        let mut jump_offset = 0;
-        let _original_offset = offset;
+        let mut pointer_hops = 0usize;
+        let mut expanded_length = 0usize;
 
         loop {
             if offset >= data.len() {
-                if jumped {
-                    offset = jump_offset;
-                    continue;
-                }
                 return None;
             }
 
             let len = data[offset];
             if len == 0 {
-                offset += 1;
-                if !jumped {
-                    // break out
-                }
                 break;
             }
 
@@ -430,9 +486,9 @@ impl DnsParser {
                     return None;
                 }
                 let pointer = ((len as usize & 0x3F) << 8) | data[offset + 1] as usize;
-                if !jumped {
-                    jump_offset = offset + 2;
-                    jumped = true;
+                pointer_hops += 1;
+                if pointer >= data.len() || pointer_hops > 32 {
+                    return None;
                 }
                 offset = pointer;
                 continue;
@@ -445,6 +501,10 @@ impl DnsParser {
             offset += 1;
             let end = offset + len as usize;
             if end > data.len() {
+                return None;
+            }
+            expanded_length = expanded_length.checked_add(len as usize + 1)?;
+            if expanded_length > 254 {
                 return None;
             }
 
@@ -474,9 +534,15 @@ impl DnsParser {
                 return Some(offset - start + 1);
             }
             if len & 0xC0 == 0xC0 {
+                if offset + 1 >= data.len() {
+                    return None;
+                }
                 return Some(offset - start + 2);
             }
-            offset += 1 + len as usize;
+            if len > 63 {
+                return None;
+            }
+            offset = offset.checked_add(1 + len as usize)?;
         }
     }
 
@@ -698,6 +764,18 @@ impl DnsParser {
 mod tests {
     use super::*;
 
+    fn build_a_response() -> Vec<u8> {
+        let mut packet = vec![
+            0x12, 0x34, 0x81, 0x80, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+        ];
+        packet.extend_from_slice(&[
+            3, b'w', b'w', b'w', 7, b'e', b'x', b'a', b'm', b'p', b'l', b'e', 3, b'c', b'o', b'm',
+            0, 0, 1, 0, 1,
+        ]);
+        packet.extend_from_slice(&[0xc0, 0x0c, 0, 1, 0, 1, 0, 0, 0, 60, 0, 4, 192, 0, 2, 10]);
+        packet
+    }
+
     #[test]
     fn test_parse_dns_name_simple() {
         // www.example.com — 编码: 3 'w' 'w' 'w' 7 'e' 'x' 'a' 'm' 'p' 'l' 'e' 3 'c' 'o' 'm' 0
@@ -720,6 +798,53 @@ mod tests {
         ];
         let name = DnsParser::parse_name(data, 25); // start at "www"
         assert_eq!(name, Some("www.example.com".to_string()));
+    }
+
+    #[test]
+    fn test_response_parses_first_answer_after_consumed_question() {
+        let mut parser = DnsParser::new();
+        let server = "8.8.8.8".parse().unwrap();
+        let client = "192.0.2.20".parse().unwrap();
+        let record = parser
+            .process_dns_packet(&build_a_response(), server, client, 1000)
+            .unwrap();
+        assert_eq!(record.query_name, "www.example.com");
+        assert_eq!(
+            record.resolved_ips,
+            vec!["192.0.2.10".parse::<IpAddr>().unwrap()]
+        );
+        assert_eq!(record.ttl, 60);
+        assert_eq!(record.dns_server, server);
+        assert_eq!(record.client_ip, client);
+    }
+
+    #[test]
+    fn test_compression_cycle_and_truncated_rdata_are_rejected() {
+        assert_eq!(DnsParser::parse_name(&[0xc0, 0x00], 0), None);
+        let mut packet = build_a_response();
+        packet.truncate(packet.len() - 2);
+        let mut parser = DnsParser::new();
+        let record = parser.process_dns_packet(
+            &packet,
+            "8.8.8.8".parse().unwrap(),
+            "192.0.2.20".parse().unwrap(),
+            1000,
+        );
+        assert!(record.is_some());
+        assert!(record.unwrap().resolved_ips.is_empty());
+        let checked = parser.process_dns_packet_checked(
+            &packet,
+            "8.8.8.8".parse().unwrap(),
+            "192.0.2.20".parse().unwrap(),
+            1000,
+        );
+        assert!(matches!(
+            checked,
+            Err(ApplicationDecodeError::Malformed {
+                protocol: "DNS",
+                reason: "resource record section is malformed"
+            })
+        ));
     }
 
     #[test]

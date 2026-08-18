@@ -1,12 +1,44 @@
-use super::community_id;
-use super::flow_table::{FlowKey, PacketInfo, UpdateResult};
+use super::flow_table::{FlowUpdateError, ObservationScope, UpdateResult};
 use super::partitioned_flow_table::PartitionedFlowTable;
 use crate::archiver::{TripleBuffer, WriteResult};
-use crate::capture::PacketBatch;
+use crate::capture::{CaptureFrame, CaptureTimestamp, PacketBatch};
+use crate::config::ParserRoute;
 use crate::metrics;
-use crate::parser::{PacketParser, PassiveAssetDiscovery};
+use crate::parser::security::PacketFeatureObservation;
+use crate::parser::{
+    FastDecodeError, FlowDecodeError, FlowFields, FlowSampleBuilder, FlowSampleError, PacketParser,
+    PassiveAssetDiscovery,
+};
 use std::sync::Arc;
-use tracing::{debug, trace, warn};
+use tracing::{trace, warn};
+
+fn decode_full(data: &[u8]) -> Result<Option<FlowFields>, FlowDecodeError> {
+    match PacketParser::decode_flow_fields(data) {
+        Ok(fields) => Ok(Some(fields)),
+        Err(crate::parser::FlowDecodeError::UnsupportedEtherType(_)) => Ok(None),
+        Err(error) => Err(error),
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FlowUpdateOutcome {
+    NewFlow,
+    Updated,
+    Skipped,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PacketProcessError {
+    #[error(transparent)]
+    Decode(#[from] FlowDecodeError),
+    #[error(transparent)]
+    Sample(#[from] FlowSampleError),
+    #[error(transparent)]
+    Update(#[from] FlowUpdateError),
+    #[error("SHADOW_FLOW_SAMPLE_MISMATCH")]
+    ShadowMismatch,
+}
+
 #[derive(Default, Debug, Clone)]
 pub struct ProcessorStats {
     pub packets_processed: u64,
@@ -52,6 +84,8 @@ pub struct PacketProcessor {
     discovery: Option<Arc<PassiveAssetDiscovery>>,
     stats: ProcessorStats,
     pcap_full_capture: bool,
+    observation_scope: ObservationScope,
+    parser_route: ParserRoute,
 }
 impl PacketProcessor {
     pub fn new(flow_table: Arc<PartitionedFlowTable>) -> Self {
@@ -61,6 +95,8 @@ impl PacketProcessor {
             discovery: None,
             stats: ProcessorStats::default(),
             pcap_full_capture: false,
+            observation_scope: ObservationScope::global_l3(),
+            parser_route: ParserRoute::Full,
         }
     }
 
@@ -79,7 +115,18 @@ impl PacketProcessor {
             discovery: None,
             stats: ProcessorStats::default(),
             pcap_full_capture: true,
+            observation_scope: ObservationScope::global_l3(),
+            parser_route: ParserRoute::Full,
         }
+    }
+
+    pub fn with_observation_scope(mut self, scope: ObservationScope) -> Self {
+        self.observation_scope = scope;
+        self
+    }
+    pub fn with_parser_route(mut self, route: ParserRoute) -> Self {
+        self.parser_route = route;
+        self
     }
     pub fn set_pcap_mode(&mut self, full_capture: bool) {
         self.pcap_full_capture = full_capture;
@@ -92,10 +139,19 @@ impl PacketProcessor {
         for i in 0..batch.len() {
             if let Some(data) = batch.get_packet(i) {
                 let info = batch.frames[i];
+                let timestamp = info.captured_at.epoch_micros();
                 if self.pcap_full_capture {
-                    self.write_to_pcap(data, info.timestamp);
+                    self.write_to_pcap(data, timestamp);
                 }
-                self.process_packet(data, info.timestamp);
+                let frame = CaptureFrame::new(data, info.captured_at);
+                let result = match self.parser_route {
+                    ParserRoute::Full => self.process_packet(&frame),
+                    ParserRoute::Fast => self.process_packet_fast(&frame),
+                    ParserRoute::Shadow => self.process_packet_shadow(&frame),
+                };
+                if let Err(error) = result {
+                    trace!(route = ?self.parser_route, "Packet route rejected frame: {}", error);
+                }
             }
         }
         let elapsed = batch_start.elapsed();
@@ -103,6 +159,132 @@ impl PacketProcessor {
         if batch_size > 0 {
             trace!("Processed batch: {} packets in {:?}", batch_size, elapsed);
         }
+    }
+    fn process_decoded_frame(
+        &mut self,
+        frame: &CaptureFrame<'_>,
+        decoded: Result<Option<FlowFields>, PacketProcessError>,
+    ) -> Result<FlowUpdateOutcome, PacketProcessError> {
+        self.stats.packets_processed += 1;
+        metrics::PARSE_TOTAL.inc();
+        metrics::inc_processed_local();
+        let parse_start = std::time::Instant::now();
+        let fields = match decoded {
+            Ok(Some(fields)) => fields,
+            Ok(None) => {
+                self.stats.packets_failed += 1;
+                metrics::PARSE_SKIPPED.inc();
+                metrics::inc_parse_result_local(false);
+                if let Some(ref discovery) = self.discovery {
+                    discovery.process_arp_packet(frame.bytes, frame.captured_at.epoch_micros());
+                }
+                return Ok(FlowUpdateOutcome::Skipped);
+            }
+            Err(error) => {
+                self.stats.packets_failed += 1;
+                metrics::PARSE_FAILED.inc();
+                metrics::inc_parse_result_local(false);
+                return Err(error);
+            }
+        };
+
+        let sample =
+            match FlowSampleBuilder::build(fields, frame.captured_at, &self.observation_scope) {
+                Ok(sample) => sample,
+                Err(error) => {
+                    self.stats.packets_failed += 1;
+                    metrics::PARSE_FAILED.inc();
+                    metrics::inc_parse_result_local(false);
+                    return Err(error.into());
+                }
+            };
+
+        let feature_observation = PacketFeatureObservation::from_decoded_frame(
+            &sample.fields,
+            sample.packet.direction,
+            sample.packet.timestamp,
+            frame.bytes,
+        );
+        let outcome = match self
+            .flow_table
+            .update_sample_with_feature(&sample, &feature_observation)
+        {
+            Ok(UpdateResult::NewFlow) => {
+                self.stats.new_flows += 1;
+                metrics::FLOWS_CREATED.inc();
+                metrics::PROCESSOR_NEW_FLOWS.inc();
+                metrics::inc_flow_update_local(true);
+                FlowUpdateOutcome::NewFlow
+            }
+            Ok(UpdateResult::Updated) => {
+                self.stats.updated_flows += 1;
+                metrics::FLOW_TABLE_UPDATES.inc();
+                metrics::PROCESSOR_UPDATED_FLOWS.inc();
+                metrics::inc_flow_update_local(false);
+                FlowUpdateOutcome::Updated
+            }
+            Err(error) => {
+                self.stats.packets_failed += 1;
+                metrics::inc_parse_result_local(false);
+                return Err(error.into());
+            }
+        };
+        self.stats.packets_parsed += 1;
+        metrics::PARSE_SUCCESS.inc();
+        metrics::inc_parse_result_local(true);
+        metrics::PARSE_LATENCY.observe(parse_start.elapsed().as_secs_f64());
+
+        if let Some(ref discovery) = self.discovery {
+            discovery.process_flow_sample(
+                frame.bytes,
+                &sample.fields,
+                frame.captured_at.epoch_micros(),
+            );
+        }
+        Ok(outcome)
+    }
+
+    fn process_packet(
+        &mut self,
+        frame: &CaptureFrame<'_>,
+    ) -> Result<FlowUpdateOutcome, PacketProcessError> {
+        let decoded = decode_full(frame.bytes).map_err(PacketProcessError::from);
+        self.process_decoded_frame(frame, decoded)
+    }
+
+    pub fn process_packet_fast(
+        &mut self,
+        frame: &CaptureFrame<'_>,
+    ) -> Result<FlowUpdateOutcome, PacketProcessError> {
+        let decoded = match PacketParser::decode_flow_fields_fast(frame.bytes) {
+            Ok(fields) => Ok(Some(fields)),
+            Err(FastDecodeError::Fallback(_)) => {
+                decode_full(frame.bytes).map_err(PacketProcessError::from)
+            }
+            Err(FastDecodeError::Invalid(FlowDecodeError::UnsupportedEtherType(_))) => Ok(None),
+            Err(FastDecodeError::Invalid(error)) => Err(error.into()),
+        };
+        self.process_decoded_frame(frame, decoded)
+    }
+
+    fn process_packet_shadow(
+        &mut self,
+        frame: &CaptureFrame<'_>,
+    ) -> Result<FlowUpdateOutcome, PacketProcessError> {
+        let full = decode_full(frame.bytes)?;
+        let decoded = match (full, PacketParser::decode_flow_fields_fast(frame.bytes)) {
+            (None, Err(FastDecodeError::Invalid(FlowDecodeError::UnsupportedEtherType(_)))) => {
+                Ok(None)
+            }
+            (Some(full), Ok(fast)) if full == fast => Ok(Some(full)),
+            (Some(full), Err(FastDecodeError::Fallback(_))) => Ok(Some(full)),
+            (Some(_), Err(FastDecodeError::Invalid(error))) => Err(error.into()),
+            (Some(_), Ok(_))
+            | (None, Ok(_))
+            | (None, Err(FastDecodeError::Fallback(_)))
+            | (None, Err(FastDecodeError::Invalid(_))) => Err(PacketProcessError::ShadowMismatch),
+        };
+        self.process_decoded_frame(frame, decoded)
     }
     #[inline]
     fn write_to_pcap(&mut self, data: &[u8], timestamp: u64) {
@@ -137,188 +319,6 @@ impl PacketProcessor {
             }
         }
     }
-    fn process_packet(&mut self, data: &[u8], timestamp: u64) {
-        self.stats.packets_processed += 1;
-        metrics::PARSE_TOTAL.inc();
-
-        // 被动资产发现: ARP (ethertype 0x0806 → 不需要 IP 层解析)
-        if let Some(ref discovery) = self.discovery {
-            discovery.process_arp_packet(data, timestamp);
-        }
-
-        let parse_start = std::time::Instant::now();
-        let parsed = match PacketParser::parse(data, timestamp) {
-            Ok(Some(p)) => {
-                self.stats.packets_parsed += 1;
-                metrics::PARSE_SUCCESS.inc();
-                metrics::PARSE_LATENCY.observe(parse_start.elapsed().as_secs_f64());
-                p
-            }
-            Ok(None) => {
-                self.stats.packets_failed += 1;
-                metrics::PARSE_SKIPPED.inc();
-                return;
-            }
-            Err(e) => {
-                self.stats.packets_failed += 1;
-                metrics::PARSE_FAILED.inc();
-                trace!("Parse error: {}", e);
-                return;
-            }
-        };
-        let protocol_name = match parsed.protocol {
-            1 => "ICMP",
-            6 => "TCP",
-            17 => "UDP",
-            58 => "ICMPv6",
-            _ => "Other",
-        };
-        if parsed.protocol == 17 {
-            trace!(
-                "Parsed UDP: {}:{} -> {}:{}, len={}, tos={}",
-                parsed.src_ip,
-                parsed.src_port,
-                parsed.dst_ip,
-                parsed.dst_port,
-                parsed.total_len,
-                parsed.tos
-            );
-        }
-        let flow_key = FlowKey::new(
-            parsed.src_ip,
-            parsed.dst_ip,
-            parsed.src_port,
-            parsed.dst_port,
-            parsed.protocol,
-        );
-        let normalized_key = flow_key.normalize();
-        let is_forward = community_id::is_forward(
-            parsed.src_ip,
-            parsed.src_port,
-            parsed.dst_ip,
-            parsed.dst_port,
-        );
-        let packet_info = PacketInfo {
-            len: parsed.total_len,
-            tcp_flags: parsed.tcp_flags,
-            is_forward,
-            timestamp,
-            tos: parsed.tos,
-        };
-        match self.flow_table.update(&normalized_key, &packet_info) {
-            UpdateResult::NewFlow => {
-                self.stats.new_flows += 1;
-                metrics::FLOWS_CREATED.inc();
-                metrics::PROCESSOR_NEW_FLOWS.inc();
-                if parsed.protocol == 17 {
-                    debug!(
-                        "New UDP flow: {}:{} <-> {}:{}, cid={}",
-                        normalized_key.src_ip,
-                        normalized_key.src_port,
-                        normalized_key.dst_ip,
-                        normalized_key.dst_port,
-                        normalized_key.community_id()
-                    );
-                } else {
-                    debug!(
-                        "New {} flow: {}:{} <-> {}:{}, cid={}",
-                        protocol_name,
-                        normalized_key.src_ip,
-                        normalized_key.src_port,
-                        normalized_key.dst_ip,
-                        normalized_key.dst_port,
-                        normalized_key.community_id()
-                    );
-                }
-            }
-            UpdateResult::Updated => {
-                self.stats.updated_flows += 1;
-                metrics::FLOW_TABLE_UPDATES.inc();
-                metrics::PROCESSOR_UPDATED_FLOWS.inc();
-                trace!(
-                    "{} flow updated: {}:{} <-> {}:{}",
-                    protocol_name,
-                    normalized_key.src_ip,
-                    normalized_key.src_port,
-                    normalized_key.dst_ip,
-                    normalized_key.dst_port
-                );
-            }
-        }
-
-        // 被动资产发现: DNS (UDP 53) / DHCP (UDP 67/68)
-        if let Some(ref discovery) = self.discovery {
-            discovery.process_packet(
-                data,
-                parsed.src_port,
-                parsed.dst_port,
-                parsed.protocol,
-                timestamp,
-            );
-        }
-    }
-    #[inline]
-    pub fn process_packet_fast(&mut self, data: &[u8], timestamp: u64) {
-        self.stats.packets_processed += 1;
-        let tuple = match PacketParser::quick_five_tuple(data) {
-            Some(t) => t,
-            None => {
-                self.stats.packets_failed += 1;
-                return;
-            }
-        };
-        let tos = PacketParser::quick_tos(data).unwrap_or(0);
-        let (src_ip, dst_ip, src_port, dst_port, protocol) = tuple;
-        let flow_key = FlowKey::new(src_ip, dst_ip, src_port, dst_port, protocol);
-        let normalized_key = flow_key.normalize();
-        let is_forward = community_id::is_forward(src_ip, src_port, dst_ip, dst_port);
-        let tcp_flags = if protocol == 6 {
-            Self::quick_tcp_flags(data)
-        } else {
-            0
-        };
-        let packet_info = PacketInfo {
-            len: data.len() as u16,
-            tcp_flags,
-            is_forward,
-            timestamp,
-            tos,
-        };
-        match self.flow_table.update(&normalized_key, &packet_info) {
-            UpdateResult::NewFlow => {
-                self.stats.new_flows += 1;
-            }
-            UpdateResult::Updated => {
-                self.stats.updated_flows += 1;
-            }
-        }
-        self.stats.packets_parsed += 1;
-    }
-    #[inline]
-    fn quick_tcp_flags(data: &[u8]) -> u8 {
-        if data.len() < 14 {
-            return 0;
-        }
-        let ethertype = u16::from_be_bytes([data[12], data[13]]);
-        let ip_offset = if ethertype == 0x8100 { 18 } else { 14 };
-        if data.len() < ip_offset + 20 {
-            return 0;
-        }
-        let ip_version = (data[ip_offset] >> 4) & 0x0F;
-        if ip_version != 4 && ip_version != 6 {
-            return 0;
-        }
-        let ihl = if ip_version == 4 {
-            (data[ip_offset] & 0x0F) as usize * 4
-        } else {
-            40
-        };
-        let tcp_offset = ip_offset + ihl;
-        if data.len() < tcp_offset + 14 {
-            return 0;
-        }
-        data[tcp_offset + 13]
-    }
     pub fn stats(&self) -> &ProcessorStats {
         &self.stats
     }
@@ -333,6 +333,18 @@ impl PacketProcessor {
     }
     pub fn flow_table(&self) -> &Arc<PartitionedFlowTable> {
         &self.flow_table
+    }
+    pub fn process_frame_for_test(
+        &mut self,
+        data: &[u8],
+        captured_at: CaptureTimestamp,
+    ) -> Result<FlowUpdateOutcome, PacketProcessError> {
+        let frame = CaptureFrame::new(data, captured_at);
+        match self.parser_route {
+            ParserRoute::Full => self.process_packet(&frame),
+            ParserRoute::Fast => self.process_packet_fast(&frame),
+            ParserRoute::Shadow => self.process_packet_shadow(&frame),
+        }
     }
     pub fn triple_buffer(&self) -> Option<&Arc<TripleBuffer>> {
         self.triple_buffer.as_ref()

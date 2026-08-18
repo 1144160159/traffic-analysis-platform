@@ -104,6 +104,86 @@ pub struct ActiveIdleStats {
     #[prost(float, tag="4")]
     pub std_ms: f32,
 }
+/// TrafficFeatureObservation is a bounded, additive carrier from packet capture
+/// through sessionization to feature projection. It contains no raw payload:
+/// byte histograms and hashes are sufficient for deterministic statistics while
+/// raw_traffic_ref, when present, points to separately governed PCAP evidence.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TrafficFeatureObservation {
+    #[prost(string, tag="1")]
+    pub schema_version: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub algorithm_version: ::prost::alloc::string::String,
+    #[prost(sint32, repeated, tag="3")]
+    pub signed_packet_lengths: ::prost::alloc::vec::Vec<i32>,
+    #[prost(int64, repeated, tag="4")]
+    pub packet_event_time_us: ::prost::alloc::vec::Vec<i64>,
+    /// Sixteen nibble buckets (0x0..0xf), bounded independently of flow size.
+    #[prost(uint64, repeated, tag="5")]
+    pub payload_nibble_counts: ::prost::alloc::vec::Vec<u64>,
+    #[prost(uint64, tag="6")]
+    pub payload_observed_bytes: u64,
+    #[prost(bool, tag="7")]
+    pub sequence_truncated: bool,
+    #[prost(enumeration="TransportSecurityProtocol", tag="8")]
+    pub transport_security: i32,
+    #[prost(string, tag="9")]
+    pub tls_version: ::prost::alloc::string::String,
+    #[prost(string, tag="10")]
+    pub ja3: ::prost::alloc::string::String,
+    #[prost(string, tag="11")]
+    pub ja4: ::prost::alloc::string::String,
+    #[prost(string, tag="12")]
+    pub sni: ::prost::alloc::string::String,
+    #[prost(string, tag="13")]
+    pub cert_sha256: ::prost::alloc::string::String,
+    #[prost(bool, tag="14")]
+    pub cert_is_self_signed: bool,
+    #[prost(bool, tag="15")]
+    pub cert_is_self_signed_known: bool,
+    #[prost(uint32, tag="16")]
+    pub pubkey_len: u32,
+    #[prost(bool, tag="17")]
+    pub pubkey_len_known: bool,
+    #[prost(string, tag="18")]
+    pub quic_version: ::prost::alloc::string::String,
+    #[prost(string, tag="19")]
+    pub raw_traffic_ref: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="20")]
+    pub missing_fields: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// TransportSecurityProtocol names only a positively observed wire protocol.
+/// Port numbers alone MUST NOT set this value or imply malicious traffic.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum TransportSecurityProtocol {
+    Unspecified = 0,
+    Tls = 1,
+    Quic = 2,
+}
+impl TransportSecurityProtocol {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            TransportSecurityProtocol::Unspecified => "TRANSPORT_SECURITY_PROTOCOL_UNSPECIFIED",
+            TransportSecurityProtocol::Tls => "TRANSPORT_SECURITY_PROTOCOL_TLS",
+            TransportSecurityProtocol::Quic => "TRANSPORT_SECURITY_PROTOCOL_QUIC",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "TRANSPORT_SECURITY_PROTOCOL_UNSPECIFIED" => Some(Self::Unspecified),
+            "TRANSPORT_SECURITY_PROTOCOL_TLS" => Some(Self::Tls),
+            "TRANSPORT_SECURITY_PROTOCOL_QUIC" => Some(Self::Quic),
+            _ => None,
+        }
+    }
+}
 /// FlowDirection 流方向
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -526,6 +606,8 @@ pub struct AlertFeedback {
     pub reason_code: ::prost::alloc::string::String,
     #[prost(string, tag="7")]
     pub comment: ::prost::alloc::string::String,
+    /// Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+    /// a future breaking-change migration should use `bool`.
     #[prost(uint32, tag="8")]
     pub add_to_whitelist: u32,
     #[prost(string, tag="9")]
@@ -769,6 +851,1253 @@ pub struct AlertExtendedBatch {
     #[prost(message, repeated, tag="20")]
     pub notification_events: ::prost::alloc::vec::Vec<NotificationEvent>,
 }
+// ---------------------------------------------------------------------------
+// 业务对象
+// ---------------------------------------------------------------------------
+
+/// 不可变计划修订。execution_spec_sha256 只覆盖规范化后的运行字段,
+/// 不含 plan_source/selection_origins/created_by/created_at。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnalysisPlanRevision {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub task_definition_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="3")]
+    pub plan_revision: i64,
+    #[prost(enumeration="PlanSource", tag="4")]
+    pub plan_source: i32,
+    #[prost(enumeration="SourceKind", tag="5")]
+    pub source_kind: i32,
+    /// 采集源/窗口/限额(site 相关字段)
+    #[prost(string, tag="6")]
+    pub source_spec_json: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="7")]
+    pub selected_feature_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag="8")]
+    pub feature_set_id: ::prost::alloc::string::String,
+    #[prost(string, tag="9")]
+    pub encrypted_recognition_model_ref: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="10")]
+    pub threat_detector_refs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag="11")]
+    pub rule_refs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag="12")]
+    pub machine_summary_schema_ref: ::prost::alloc::string::String,
+    /// 五阶段 DAG(ExecutionNode exact-set)
+    #[prost(string, tag="13")]
+    pub stage_dag_json: ::prost::alloc::string::String,
+    #[prost(string, tag="14")]
+    pub completion_policy_json: ::prost::alloc::string::String,
+    #[prost(string, tag="15")]
+    pub resource_budget_json: ::prost::alloc::string::String,
+    #[prost(int64, tag="16")]
+    pub catalog_revision: i64,
+    #[prost(string, repeated, tag="17")]
+    pub selection_origins: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag="18")]
+    pub canonicalization_version: ::prost::alloc::string::String,
+    #[prost(string, tag="19")]
+    pub execution_spec_sha256: ::prost::alloc::string::String,
+    #[prost(string, tag="20")]
+    pub plan_revision_sha256: ::prost::alloc::string::String,
+    #[prost(string, tag="21")]
+    pub created_by: ::prost::alloc::string::String,
+    #[prost(int64, tag="22")]
+    pub created_at_ms: i64,
+}
+/// 不可变调度修订:精确绑定一个已批准 plan revision,不解析"当前 active plan"。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnalysisScheduleRevision {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub task_definition_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="3")]
+    pub revision: i64,
+    #[prost(int64, tag="4")]
+    pub approved_plan_revision: i64,
+    #[prost(string, tag="5")]
+    pub execution_spec_sha256: ::prost::alloc::string::String,
+    #[prost(enumeration="TriggerKind", tag="6")]
+    pub trigger_kind: i32,
+    #[prost(string, tag="7")]
+    pub timezone: ::prost::alloc::string::String,
+    #[prost(string, tag="8")]
+    pub window_or_cron_json: ::prost::alloc::string::String,
+    #[prost(int64, tag="9")]
+    pub prepare_lead_time_ms: i64,
+    /// MISFIRE_FAIL|MISFIRE_DELAY|MISFIRE_BOUNDED_REPLAY
+    #[prost(string, tag="10")]
+    pub misfire_policy: ::prost::alloc::string::String,
+    /// FORBID_OVERLAP|ALLOW_OVERLAP
+    #[prost(string, tag="11")]
+    pub concurrency_policy: ::prost::alloc::string::String,
+    #[prost(enumeration="SchedulingClass", tag="12")]
+    pub scheduling_class: i32,
+    #[prost(string, tag="13")]
+    pub resource_restrictions_json: ::prost::alloc::string::String,
+    #[prost(string, tag="14")]
+    pub schedule_sha256: ::prost::alloc::string::String,
+    #[prost(enumeration="ScheduleActivationState", tag="15")]
+    pub activation_state: i32,
+}
+/// 一次确定性触发事实(物化后与 Task 一一对应)。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TriggerInstance {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub trigger_instance_id: ::prost::alloc::string::String,
+    /// actor|schedule|event
+    #[prost(string, tag="3")]
+    pub identity_kind: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub canonical_identity_hash: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub request_sha256: ::prost::alloc::string::String,
+    #[prost(enumeration="TriggerInstanceState", tag="6")]
+    pub state: i32,
+    #[prost(string, tag="7")]
+    pub materialized_task_id: ::prost::alloc::string::String,
+    #[prost(enumeration="TriggerKind", tag="8")]
+    pub trigger_kind: i32,
+    #[prost(string, tag="9")]
+    pub window_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="10")]
+    pub created_at_ms: i64,
+}
+/// 业务请求:绑定 definition/plan/trigger 与当前 Run。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnalysisTask {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub task_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub task_definition_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="4")]
+    pub plan_revision: i64,
+    #[prost(string, tag="5")]
+    pub execution_spec_sha256: ::prost::alloc::string::String,
+    /// on-demand 时为 0
+    #[prost(int64, tag="6")]
+    pub schedule_revision: i64,
+    #[prost(string, tag="7")]
+    pub trigger_instance_id: ::prost::alloc::string::String,
+    #[prost(enumeration="SchedulingClass", tag="8")]
+    pub effective_class: i32,
+    #[prost(string, tag="9")]
+    pub effective_policy_sha256: ::prost::alloc::string::String,
+    #[prost(string, tag="10")]
+    pub current_run_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="11")]
+    pub created_at_ms: i64,
+}
+/// 一次有界执行尝试;整任务重试创建新 run,不覆写旧终态。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnalysisRun {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub task_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub execution_spec_sha256: ::prost::alloc::string::String,
+    #[prost(enumeration="RunState", tag="5")]
+    pub state: i32,
+    #[prost(enumeration="Completeness", tag="6")]
+    pub completeness: i32,
+    #[prost(enumeration="IntegrityState", tag="7")]
+    pub integrity_state: i32,
+    #[prost(enumeration="FindingConclusion", tag="8")]
+    pub finding_conclusion: i32,
+    #[prost(enumeration="RiskSeverity", tag="9")]
+    pub risk_severity: i32,
+    #[prost(int64, tag="10")]
+    pub window_start_ms: i64,
+    #[prost(int64, tag="11")]
+    pub window_end_ms: i64,
+    #[prost(int64, tag="12")]
+    pub revision: i64,
+    #[prost(int64, tag="13")]
+    pub started_at_ms: i64,
+    #[prost(int64, tag="14")]
+    pub finalized_at_ms: i64,
+    #[prost(int64, tag="15")]
+    pub created_at_ms: i64,
+    #[prost(string, tag="16")]
+    pub cancel_manifest_sha256: ::prost::alloc::string::String,
+}
+/// 执行节点 attempt(以 business_phase_id + execution_node_id 标识真实节点)。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnalysisStageAttempt {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub stage_attempt_id: ::prost::alloc::string::String,
+    /// S1..S5
+    #[prost(string, tag="4")]
+    pub business_phase_id: ::prost::alloc::string::String,
+    /// SESSIONIZATION|FEATURE_EXTRACTION|ENCRYPTED_RECOGNIZER|RULE_DETECTION|BEHAVIOR_DETECTION|DETECTION_AGGREGATE|RECONCILE|MACHINE_FINALIZATION
+    #[prost(string, tag="5")]
+    pub execution_node_id: ::prost::alloc::string::String,
+    #[prost(int32, tag="6")]
+    pub attempt: i32,
+    #[prost(enumeration="StageAttemptState", tag="7")]
+    pub state: i32,
+    #[prost(enumeration="ProviderMode", tag="8")]
+    pub provider_mode: i32,
+    #[prost(enumeration="ActivationMode", tag="9")]
+    pub activation_mode: i32,
+    #[prost(string, tag="10")]
+    pub fencing_token: ::prost::alloc::string::String,
+    #[prost(int64, tag="11")]
+    pub lease_expires_at_ms: i64,
+    #[prost(int64, tag="12")]
+    pub started_at_ms: i64,
+    #[prost(int64, tag="13")]
+    pub finished_at_ms: i64,
+    /// OPTIONAL_PREDICATE_FALSE|BLOCKED_BY_UPSTREAM_FAILURE|CANCELLED_BEFORE_DISPATCH|NOT_APPLICABLE_BY_PLAN
+    #[prost(string, tag="14")]
+    pub skip_reason: ::prost::alloc::string::String,
+}
+/// 执行器提交的不可变事实。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnalysisStageReceipt {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub execution_node_id: ::prost::alloc::string::String,
+    #[prost(int32, tag="4")]
+    pub attempt: i32,
+    #[prost(string, tag="5")]
+    pub fencing_token: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub provider: ::prost::alloc::string::String,
+    #[prost(int64, tag="7")]
+    pub input_count: i64,
+    #[prost(int64, tag="8")]
+    pub output_count: i64,
+    #[prost(int64, tag="9")]
+    pub error_count: i64,
+    #[prost(int64, tag="10")]
+    pub reject_count: i64,
+    #[prost(int64, tag="11")]
+    pub watermark_ms: i64,
+    #[prost(string, tag="12")]
+    pub fence_json: ::prost::alloc::string::String,
+    #[prost(string, tag="13")]
+    pub payload_hash: ::prost::alloc::string::String,
+    #[prost(int64, tag="14")]
+    pub received_at_ms: i64,
+}
+/// 每个输入×detector 的 typed outcome。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnalysisResult {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub input_identity: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub detector_id: ::prost::alloc::string::String,
+    #[prost(enumeration="DetectorDisposition", tag="5")]
+    pub disposition: i32,
+    #[prost(double, tag="6")]
+    pub score: f64,
+    #[prost(string, repeated, tag="7")]
+    pub labels: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag="8")]
+    pub evidence_refs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(int64, tag="9")]
+    pub created_at_ms: i64,
+}
+/// 机器总体摘要(与终态同事务冻结)。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MachineAnalysisSummary {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(enumeration="FindingConclusion", tag="3")]
+    pub finding_conclusion: i32,
+    #[prost(enumeration="RiskSeverity", tag="4")]
+    pub risk_severity: i32,
+    #[prost(enumeration="Completeness", tag="5")]
+    pub completeness: i32,
+    #[prost(enumeration="IntegrityState", tag="6")]
+    pub integrity_state: i32,
+    #[prost(string, tag="7")]
+    pub scope_json: ::prost::alloc::string::String,
+    #[prost(string, tag="8")]
+    pub key_findings_json: ::prost::alloc::string::String,
+    #[prost(string, tag="9")]
+    pub limitations_json: ::prost::alloc::string::String,
+    #[prost(string, tag="10")]
+    pub evidence_manifest_hash: ::prost::alloc::string::String,
+    #[prost(string, tag="11")]
+    pub closure_manifest_hash: ::prost::alloc::string::String,
+    #[prost(string, tag="12")]
+    pub canonical_sha256: ::prost::alloc::string::String,
+    #[prost(int64, tag="13")]
+    pub created_at_ms: i64,
+}
+/// 人读报告(独立 ReportState,失败不回退 Run)。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct HumanReadableReport {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub report_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub summary_sha256: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub template_revision: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub locale: ::prost::alloc::string::String,
+    #[prost(enumeration="ReportState", tag="7")]
+    pub state: i32,
+    #[prost(string, tag="8")]
+    pub object_key: ::prost::alloc::string::String,
+    #[prost(string, tag="9")]
+    pub object_sha256: ::prost::alloc::string::String,
+    #[prost(int64, tag="10")]
+    pub object_size: i64,
+    #[prost(int64, tag="11")]
+    pub created_at_ms: i64,
+    #[prost(int64, tag="12")]
+    pub updated_at_ms: i64,
+}
+// ---------------------------------------------------------------------------
+// API 请求/响应(核心端点,卷B §1.2)
+// ---------------------------------------------------------------------------
+
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateTaskDefinitionRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(enumeration="SchedulingClass", tag="3")]
+    pub default_scheduling_class: i32,
+    #[prost(string, tag="4")]
+    pub owner: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreatePlanRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub task_definition_id: ::prost::alloc::string::String,
+    #[prost(enumeration="PlanSource", tag="3")]
+    pub plan_source: i32,
+    #[prost(enumeration="SourceKind", tag="4")]
+    pub source_kind: i32,
+    #[prost(string, tag="5")]
+    pub source_spec_json: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="6")]
+    pub selected_feature_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag="7")]
+    pub encrypted_recognition_model_ref: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="8")]
+    pub threat_detector_refs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag="9")]
+    pub rule_refs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag="10")]
+    pub completion_policy_json: ::prost::alloc::string::String,
+    #[prost(string, tag="11")]
+    pub resource_budget_json: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateScheduleRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub task_definition_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="3")]
+    pub approved_plan_revision: i64,
+    #[prost(enumeration="TriggerKind", tag="4")]
+    pub trigger_kind: i32,
+    #[prost(string, tag="5")]
+    pub timezone: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub window_or_cron_json: ::prost::alloc::string::String,
+    #[prost(int64, tag="7")]
+    pub prepare_lead_time_ms: i64,
+    #[prost(string, tag="8")]
+    pub misfire_policy: ::prost::alloc::string::String,
+    #[prost(string, tag="9")]
+    pub concurrency_policy: ::prost::alloc::string::String,
+    #[prost(enumeration="SchedulingClass", tag="10")]
+    pub scheduling_class: i32,
+    #[prost(string, tag="11")]
+    pub resource_restrictions_json: ::prost::alloc::string::String,
+}
+/// 即时分析触发(三步向导最终提交;default/custom 均为主业务链执行环节)。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubmitTriggerRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub task_definition_id: ::prost::alloc::string::String,
+    #[prost(enumeration="PlanSource", tag="3")]
+    pub plan_source: i32,
+    /// custom 时才携带;覆盖项=探针/采集源/特征/识别模型/检测模型/规则/阈值
+    #[prost(string, tag="4")]
+    pub custom_overrides_json: ::prost::alloc::string::String,
+    #[prost(enumeration="SourceKind", tag="5")]
+    pub source_kind: i32,
+    /// PCAP_REPLAY 必填 object_ref+window
+    #[prost(string, tag="6")]
+    pub source_spec_json: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
+    pub client_idempotency_key: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubmitTriggerResponse {
+    #[prost(string, tag="1")]
+    pub task_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub status_url: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub execution_spec_sha256: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListRunsRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub task_definition_id: ::prost::alloc::string::String,
+    #[prost(enumeration="RunState", tag="3")]
+    pub state: i32,
+    #[prost(enumeration="SchedulingClass", tag="4")]
+    pub scheduling_class: i32,
+    #[prost(int64, tag="5")]
+    pub window_start_ms: i64,
+    #[prost(int64, tag="6")]
+    pub window_end_ms: i64,
+    #[prost(int32, tag="7")]
+    pub limit: i32,
+    #[prost(string, tag="8")]
+    pub cursor: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListRunsResponse {
+    #[prost(message, repeated, tag="1")]
+    pub runs: ::prost::alloc::vec::Vec<AnalysisRun>,
+    #[prost(string, tag="2")]
+    pub next_cursor: ::prost::alloc::string::String,
+    #[prost(int64, tag="3")]
+    pub total: i64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetRunResponse {
+    #[prost(message, optional, tag="1")]
+    pub run: ::core::option::Option<AnalysisRun>,
+    #[prost(message, repeated, tag="2")]
+    pub stages: ::prost::alloc::vec::Vec<AnalysisStageAttempt>,
+    #[prost(message, optional, tag="3")]
+    pub summary: ::core::option::Option<MachineAnalysisSummary>,
+    #[prost(message, optional, tag="4")]
+    pub report: ::core::option::Option<HumanReadableReport>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListRunResultsRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(enumeration="DetectorDisposition", tag="3")]
+    pub disposition: i32,
+    #[prost(int32, tag="4")]
+    pub limit: i32,
+    #[prost(string, tag="5")]
+    pub cursor: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListRunResultsResponse {
+    #[prost(message, repeated, tag="1")]
+    pub results: ::prost::alloc::vec::Vec<AnalysisResult>,
+    #[prost(string, tag="2")]
+    pub next_cursor: ::prost::alloc::string::String,
+    #[prost(int64, tag="3")]
+    pub total: i64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CancelRunRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub client_idempotency_key: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RetryRunRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub client_idempotency_key: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RequestReportRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub template_revision: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub locale: ::prost::alloc::string::String,
+}
+/// 通用回执。
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnalysisOperationReceipt {
+    #[prost(string, tag="1")]
+    pub operation_id: ::prost::alloc::string::String,
+    /// accepted|running|succeeded|failed|cancelled
+    #[prost(string, tag="2")]
+    pub state: ::prost::alloc::string::String,
+    #[prost(int64, tag="3")]
+    pub revision: i64,
+    #[prost(string, tag="4")]
+    pub status_url: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub error_code: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub error_message: ::prost::alloc::string::String,
+}
+// ---------------------------------------------------------------------------
+// 枚举(0=UNSPECIFIED,unknown fail closed)
+// ---------------------------------------------------------------------------
+
+/// 计划参数来源:只回答"计划参数由批准默认值还是授权人工覆盖准备",
+/// 不决定触发方式、容量、拓扑(与 TriggerKind 正交)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum PlanSource {
+    Unspecified = 0,
+    AutoDefault = 1,
+    ManualCustom = 2,
+}
+impl PlanSource {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            PlanSource::Unspecified => "PLAN_SOURCE_UNSPECIFIED",
+            PlanSource::AutoDefault => "PLAN_SOURCE_AUTO_DEFAULT",
+            PlanSource::ManualCustom => "PLAN_SOURCE_MANUAL_CUSTOM",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "PLAN_SOURCE_UNSPECIFIED" => Some(Self::Unspecified),
+            "PLAN_SOURCE_AUTO_DEFAULT" => Some(Self::AutoDefault),
+            "PLAN_SOURCE_MANUAL_CUSTOM" => Some(Self::ManualCustom),
+            _ => None,
+        }
+    }
+}
+/// 触发方式(与 PlanSource 正交,任一来源可绑定任一触发)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum TriggerKind {
+    Unspecified = 0,
+    ContinuousWindow = 1,
+    CronWindow = 2,
+    EventDriven = 3,
+    OnDemand = 4,
+}
+impl TriggerKind {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            TriggerKind::Unspecified => "TRIGGER_KIND_UNSPECIFIED",
+            TriggerKind::ContinuousWindow => "TRIGGER_KIND_CONTINUOUS_WINDOW",
+            TriggerKind::CronWindow => "TRIGGER_KIND_CRON_WINDOW",
+            TriggerKind::EventDriven => "TRIGGER_KIND_EVENT_DRIVEN",
+            TriggerKind::OnDemand => "TRIGGER_KIND_ON_DEMAND",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "TRIGGER_KIND_UNSPECIFIED" => Some(Self::Unspecified),
+            "TRIGGER_KIND_CONTINUOUS_WINDOW" => Some(Self::ContinuousWindow),
+            "TRIGGER_KIND_CRON_WINDOW" => Some(Self::CronWindow),
+            "TRIGGER_KIND_EVENT_DRIVEN" => Some(Self::EventDriven),
+            "TRIGGER_KIND_ON_DEMAND" => Some(Self::OnDemand),
+            _ => None,
+        }
+    }
+}
+/// 数据源类型。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SourceKind {
+    Unspecified = 0,
+    LiveStreamWindow = 1,
+    ProbeCaptureWindow = 2,
+    PcapReplay = 3,
+}
+impl SourceKind {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            SourceKind::Unspecified => "SOURCE_KIND_UNSPECIFIED",
+            SourceKind::LiveStreamWindow => "SOURCE_KIND_LIVE_STREAM_WINDOW",
+            SourceKind::ProbeCaptureWindow => "SOURCE_KIND_PROBE_CAPTURE_WINDOW",
+            SourceKind::PcapReplay => "SOURCE_KIND_PCAP_REPLAY",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "SOURCE_KIND_UNSPECIFIED" => Some(Self::Unspecified),
+            "SOURCE_KIND_LIVE_STREAM_WINDOW" => Some(Self::LiveStreamWindow),
+            "SOURCE_KIND_PROBE_CAPTURE_WINDOW" => Some(Self::ProbeCaptureWindow),
+            "SOURCE_KIND_PCAP_REPLAY" => Some(Self::PcapReplay),
+            _ => None,
+        }
+    }
+}
+/// 调度类别。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SchedulingClass {
+    Unspecified = 0,
+    Baseline = 1,
+    Interactive = 2,
+    Acceptance = 3,
+}
+impl SchedulingClass {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            SchedulingClass::Unspecified => "SCHEDULING_CLASS_UNSPECIFIED",
+            SchedulingClass::Baseline => "SCHEDULING_CLASS_BASELINE",
+            SchedulingClass::Interactive => "SCHEDULING_CLASS_INTERACTIVE",
+            SchedulingClass::Acceptance => "SCHEDULING_CLASS_ACCEPTANCE",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "SCHEDULING_CLASS_UNSPECIFIED" => Some(Self::Unspecified),
+            "SCHEDULING_CLASS_BASELINE" => Some(Self::Baseline),
+            "SCHEDULING_CLASS_INTERACTIVE" => Some(Self::Interactive),
+            "SCHEDULING_CLASS_ACCEPTANCE" => Some(Self::Acceptance),
+            _ => None,
+        }
+    }
+}
+/// 任务定义状态。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum TaskDefinitionState {
+    Unspecified = 0,
+    Draft = 1,
+    Validated = 2,
+    Active = 3,
+    Suspended = 4,
+    Retired = 5,
+}
+impl TaskDefinitionState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            TaskDefinitionState::Unspecified => "TASK_DEFINITION_STATE_UNSPECIFIED",
+            TaskDefinitionState::Draft => "TASK_DEFINITION_STATE_DRAFT",
+            TaskDefinitionState::Validated => "TASK_DEFINITION_STATE_VALIDATED",
+            TaskDefinitionState::Active => "TASK_DEFINITION_STATE_ACTIVE",
+            TaskDefinitionState::Suspended => "TASK_DEFINITION_STATE_SUSPENDED",
+            TaskDefinitionState::Retired => "TASK_DEFINITION_STATE_RETIRED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "TASK_DEFINITION_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "TASK_DEFINITION_STATE_DRAFT" => Some(Self::Draft),
+            "TASK_DEFINITION_STATE_VALIDATED" => Some(Self::Validated),
+            "TASK_DEFINITION_STATE_ACTIVE" => Some(Self::Active),
+            "TASK_DEFINITION_STATE_SUSPENDED" => Some(Self::Suspended),
+            "TASK_DEFINITION_STATE_RETIRED" => Some(Self::Retired),
+            _ => None,
+        }
+    }
+}
+/// 计划治理头状态(CAS 推进)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum PlanGovernanceState {
+    Unspecified = 0,
+    Draft = 1,
+    Validated = 2,
+    Approved = 3,
+    Active = 4,
+    Retired = 5,
+}
+impl PlanGovernanceState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            PlanGovernanceState::Unspecified => "PLAN_GOVERNANCE_STATE_UNSPECIFIED",
+            PlanGovernanceState::Draft => "PLAN_GOVERNANCE_STATE_DRAFT",
+            PlanGovernanceState::Validated => "PLAN_GOVERNANCE_STATE_VALIDATED",
+            PlanGovernanceState::Approved => "PLAN_GOVERNANCE_STATE_APPROVED",
+            PlanGovernanceState::Active => "PLAN_GOVERNANCE_STATE_ACTIVE",
+            PlanGovernanceState::Retired => "PLAN_GOVERNANCE_STATE_RETIRED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "PLAN_GOVERNANCE_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "PLAN_GOVERNANCE_STATE_DRAFT" => Some(Self::Draft),
+            "PLAN_GOVERNANCE_STATE_VALIDATED" => Some(Self::Validated),
+            "PLAN_GOVERNANCE_STATE_APPROVED" => Some(Self::Approved),
+            "PLAN_GOVERNANCE_STATE_ACTIVE" => Some(Self::Active),
+            "PLAN_GOVERNANCE_STATE_RETIRED" => Some(Self::Retired),
+            _ => None,
+        }
+    }
+}
+/// 调度激活头状态。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ScheduleActivationState {
+    Unspecified = 0,
+    Draft = 1,
+    Active = 2,
+    Paused = 3,
+    Retired = 4,
+}
+impl ScheduleActivationState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            ScheduleActivationState::Unspecified => "SCHEDULE_ACTIVATION_STATE_UNSPECIFIED",
+            ScheduleActivationState::Draft => "SCHEDULE_ACTIVATION_STATE_DRAFT",
+            ScheduleActivationState::Active => "SCHEDULE_ACTIVATION_STATE_ACTIVE",
+            ScheduleActivationState::Paused => "SCHEDULE_ACTIVATION_STATE_PAUSED",
+            ScheduleActivationState::Retired => "SCHEDULE_ACTIVATION_STATE_RETIRED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "SCHEDULE_ACTIVATION_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "SCHEDULE_ACTIVATION_STATE_DRAFT" => Some(Self::Draft),
+            "SCHEDULE_ACTIVATION_STATE_ACTIVE" => Some(Self::Active),
+            "SCHEDULE_ACTIVATION_STATE_PAUSED" => Some(Self::Paused),
+            "SCHEDULE_ACTIVATION_STATE_RETIRED" => Some(Self::Retired),
+            _ => None,
+        }
+    }
+}
+/// 触发实例状态。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum TriggerInstanceState {
+    Unspecified = 0,
+    PendingMaterialization = 1,
+    Materialized = 2,
+    Suppressed = 3,
+    Quarantined = 4,
+}
+impl TriggerInstanceState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            TriggerInstanceState::Unspecified => "TRIGGER_INSTANCE_STATE_UNSPECIFIED",
+            TriggerInstanceState::PendingMaterialization => "TRIGGER_INSTANCE_STATE_PENDING_MATERIALIZATION",
+            TriggerInstanceState::Materialized => "TRIGGER_INSTANCE_STATE_MATERIALIZED",
+            TriggerInstanceState::Suppressed => "TRIGGER_INSTANCE_STATE_SUPPRESSED",
+            TriggerInstanceState::Quarantined => "TRIGGER_INSTANCE_STATE_QUARANTINED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "TRIGGER_INSTANCE_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "TRIGGER_INSTANCE_STATE_PENDING_MATERIALIZATION" => Some(Self::PendingMaterialization),
+            "TRIGGER_INSTANCE_STATE_MATERIALIZED" => Some(Self::Materialized),
+            "TRIGGER_INSTANCE_STATE_SUPPRESSED" => Some(Self::Suppressed),
+            "TRIGGER_INSTANCE_STATE_QUARANTINED" => Some(Self::Quarantined),
+            _ => None,
+        }
+    }
+}
+/// Run 状态。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum RunState {
+    Unspecified = 0,
+    Accepted = 1,
+    Preparing = 2,
+    Queued = 3,
+    Running = 4,
+    Finalizing = 5,
+    Succeeded = 6,
+    PartiallySucceeded = 7,
+    Failed = 8,
+    CancelRequested = 9,
+    Cancelled = 10,
+}
+impl RunState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            RunState::Unspecified => "RUN_STATE_UNSPECIFIED",
+            RunState::Accepted => "RUN_STATE_ACCEPTED",
+            RunState::Preparing => "RUN_STATE_PREPARING",
+            RunState::Queued => "RUN_STATE_QUEUED",
+            RunState::Running => "RUN_STATE_RUNNING",
+            RunState::Finalizing => "RUN_STATE_FINALIZING",
+            RunState::Succeeded => "RUN_STATE_SUCCEEDED",
+            RunState::PartiallySucceeded => "RUN_STATE_PARTIALLY_SUCCEEDED",
+            RunState::Failed => "RUN_STATE_FAILED",
+            RunState::CancelRequested => "RUN_STATE_CANCEL_REQUESTED",
+            RunState::Cancelled => "RUN_STATE_CANCELLED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "RUN_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "RUN_STATE_ACCEPTED" => Some(Self::Accepted),
+            "RUN_STATE_PREPARING" => Some(Self::Preparing),
+            "RUN_STATE_QUEUED" => Some(Self::Queued),
+            "RUN_STATE_RUNNING" => Some(Self::Running),
+            "RUN_STATE_FINALIZING" => Some(Self::Finalizing),
+            "RUN_STATE_SUCCEEDED" => Some(Self::Succeeded),
+            "RUN_STATE_PARTIALLY_SUCCEEDED" => Some(Self::PartiallySucceeded),
+            "RUN_STATE_FAILED" => Some(Self::Failed),
+            "RUN_STATE_CANCEL_REQUESTED" => Some(Self::CancelRequested),
+            "RUN_STATE_CANCELLED" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+}
+/// 执行节点 attempt 状态。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum StageAttemptState {
+    Unspecified = 0,
+    Pending = 1,
+    Dispatched = 2,
+    Running = 3,
+    Succeeded = 4,
+    Partial = 5,
+    Failed = 6,
+    CancelRequested = 7,
+    Cancelled = 8,
+    Skipped = 9,
+}
+impl StageAttemptState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            StageAttemptState::Unspecified => "STAGE_ATTEMPT_STATE_UNSPECIFIED",
+            StageAttemptState::Pending => "STAGE_ATTEMPT_STATE_PENDING",
+            StageAttemptState::Dispatched => "STAGE_ATTEMPT_STATE_DISPATCHED",
+            StageAttemptState::Running => "STAGE_ATTEMPT_STATE_RUNNING",
+            StageAttemptState::Succeeded => "STAGE_ATTEMPT_STATE_SUCCEEDED",
+            StageAttemptState::Partial => "STAGE_ATTEMPT_STATE_PARTIAL",
+            StageAttemptState::Failed => "STAGE_ATTEMPT_STATE_FAILED",
+            StageAttemptState::CancelRequested => "STAGE_ATTEMPT_STATE_CANCEL_REQUESTED",
+            StageAttemptState::Cancelled => "STAGE_ATTEMPT_STATE_CANCELLED",
+            StageAttemptState::Skipped => "STAGE_ATTEMPT_STATE_SKIPPED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "STAGE_ATTEMPT_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "STAGE_ATTEMPT_STATE_PENDING" => Some(Self::Pending),
+            "STAGE_ATTEMPT_STATE_DISPATCHED" => Some(Self::Dispatched),
+            "STAGE_ATTEMPT_STATE_RUNNING" => Some(Self::Running),
+            "STAGE_ATTEMPT_STATE_SUCCEEDED" => Some(Self::Succeeded),
+            "STAGE_ATTEMPT_STATE_PARTIAL" => Some(Self::Partial),
+            "STAGE_ATTEMPT_STATE_FAILED" => Some(Self::Failed),
+            "STAGE_ATTEMPT_STATE_CANCEL_REQUESTED" => Some(Self::CancelRequested),
+            "STAGE_ATTEMPT_STATE_CANCELLED" => Some(Self::Cancelled),
+            "STAGE_ATTEMPT_STATE_SKIPPED" => Some(Self::Skipped),
+            _ => None,
+        }
+    }
+}
+/// 检测器对单个输入×required detector 的 typed outcome(无消息≠阴性)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum DetectorDisposition {
+    Unspecified = 0,
+    Positive = 1,
+    Negative = 2,
+    Inconclusive = 3,
+    Incompatible = 4,
+    Error = 5,
+    NotRun = 6,
+}
+impl DetectorDisposition {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            DetectorDisposition::Unspecified => "DETECTOR_DISPOSITION_UNSPECIFIED",
+            DetectorDisposition::Positive => "DETECTOR_DISPOSITION_POSITIVE",
+            DetectorDisposition::Negative => "DETECTOR_DISPOSITION_NEGATIVE",
+            DetectorDisposition::Inconclusive => "DETECTOR_DISPOSITION_INCONCLUSIVE",
+            DetectorDisposition::Incompatible => "DETECTOR_DISPOSITION_INCOMPATIBLE",
+            DetectorDisposition::Error => "DETECTOR_DISPOSITION_ERROR",
+            DetectorDisposition::NotRun => "DETECTOR_DISPOSITION_NOT_RUN",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "DETECTOR_DISPOSITION_UNSPECIFIED" => Some(Self::Unspecified),
+            "DETECTOR_DISPOSITION_POSITIVE" => Some(Self::Positive),
+            "DETECTOR_DISPOSITION_NEGATIVE" => Some(Self::Negative),
+            "DETECTOR_DISPOSITION_INCONCLUSIVE" => Some(Self::Inconclusive),
+            "DETECTOR_DISPOSITION_INCOMPATIBLE" => Some(Self::Incompatible),
+            "DETECTOR_DISPOSITION_ERROR" => Some(Self::Error),
+            "DETECTOR_DISPOSITION_NOT_RUN" => Some(Self::NotRun),
+            _ => None,
+        }
+    }
+}
+/// Run 总体机器结论(与 DetectorDisposition 分层)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum FindingConclusion {
+    Unspecified = 0,
+    ThreatFound = 1,
+    NoThreatObserved = 2,
+    Inconclusive = 3,
+    NoData = 4,
+    NotEvaluated = 5,
+}
+impl FindingConclusion {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            FindingConclusion::Unspecified => "FINDING_CONCLUSION_UNSPECIFIED",
+            FindingConclusion::ThreatFound => "FINDING_CONCLUSION_THREAT_FOUND",
+            FindingConclusion::NoThreatObserved => "FINDING_CONCLUSION_NO_THREAT_OBSERVED",
+            FindingConclusion::Inconclusive => "FINDING_CONCLUSION_INCONCLUSIVE",
+            FindingConclusion::NoData => "FINDING_CONCLUSION_NO_DATA",
+            FindingConclusion::NotEvaluated => "FINDING_CONCLUSION_NOT_EVALUATED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "FINDING_CONCLUSION_UNSPECIFIED" => Some(Self::Unspecified),
+            "FINDING_CONCLUSION_THREAT_FOUND" => Some(Self::ThreatFound),
+            "FINDING_CONCLUSION_NO_THREAT_OBSERVED" => Some(Self::NoThreatObserved),
+            "FINDING_CONCLUSION_INCONCLUSIVE" => Some(Self::Inconclusive),
+            "FINDING_CONCLUSION_NO_DATA" => Some(Self::NoData),
+            "FINDING_CONCLUSION_NOT_EVALUATED" => Some(Self::NotEvaluated),
+            _ => None,
+        }
+    }
+}
+/// 风险严重度(只描述已观察发现,不参与 RunState/FindingConclusion 判定)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum RiskSeverity {
+    Unspecified = 0,
+    Critical = 1,
+    High = 2,
+    Medium = 3,
+    Low = 4,
+    None = 5,
+    Unknown = 6,
+}
+impl RiskSeverity {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            RiskSeverity::Unspecified => "RISK_SEVERITY_UNSPECIFIED",
+            RiskSeverity::Critical => "RISK_SEVERITY_CRITICAL",
+            RiskSeverity::High => "RISK_SEVERITY_HIGH",
+            RiskSeverity::Medium => "RISK_SEVERITY_MEDIUM",
+            RiskSeverity::Low => "RISK_SEVERITY_LOW",
+            RiskSeverity::None => "RISK_SEVERITY_NONE",
+            RiskSeverity::Unknown => "RISK_SEVERITY_UNKNOWN",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "RISK_SEVERITY_UNSPECIFIED" => Some(Self::Unspecified),
+            "RISK_SEVERITY_CRITICAL" => Some(Self::Critical),
+            "RISK_SEVERITY_HIGH" => Some(Self::High),
+            "RISK_SEVERITY_MEDIUM" => Some(Self::Medium),
+            "RISK_SEVERITY_LOW" => Some(Self::Low),
+            "RISK_SEVERITY_NONE" => Some(Self::None),
+            "RISK_SEVERITY_UNKNOWN" => Some(Self::Unknown),
+            _ => None,
+        }
+    }
+}
+/// 完整性(与结论确定性正交)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Completeness {
+    Unspecified = 0,
+    Complete = 1,
+    Partial = 2,
+    Incomplete = 3,
+    Unknown = 4,
+}
+impl Completeness {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Completeness::Unspecified => "COMPLETENESS_UNSPECIFIED",
+            Completeness::Complete => "COMPLETENESS_COMPLETE",
+            Completeness::Partial => "COMPLETENESS_PARTIAL",
+            Completeness::Incomplete => "COMPLETENESS_INCOMPLETE",
+            Completeness::Unknown => "COMPLETENESS_UNKNOWN",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "COMPLETENESS_UNSPECIFIED" => Some(Self::Unspecified),
+            "COMPLETENESS_COMPLETE" => Some(Self::Complete),
+            "COMPLETENESS_PARTIAL" => Some(Self::Partial),
+            "COMPLETENESS_INCOMPLETE" => Some(Self::Incomplete),
+            "COMPLETENESS_UNKNOWN" => Some(Self::Unknown),
+            _ => None,
+        }
+    }
+}
+/// 证据完整性状态。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum IntegrityState {
+    Unspecified = 0,
+    Verified = 1,
+    Unverified = 2,
+    Failed = 3,
+}
+impl IntegrityState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            IntegrityState::Unspecified => "INTEGRITY_STATE_UNSPECIFIED",
+            IntegrityState::Verified => "INTEGRITY_STATE_VERIFIED",
+            IntegrityState::Unverified => "INTEGRITY_STATE_UNVERIFIED",
+            IntegrityState::Failed => "INTEGRITY_STATE_FAILED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "INTEGRITY_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "INTEGRITY_STATE_VERIFIED" => Some(Self::Verified),
+            "INTEGRITY_STATE_UNVERIFIED" => Some(Self::Unverified),
+            "INTEGRITY_STATE_FAILED" => Some(Self::Failed),
+            _ => None,
+        }
+    }
+}
+/// 人读报告状态(独立于 RunState)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ReportState {
+    Unspecified = 0,
+    NotRequested = 1,
+    Queued = 2,
+    Generating = 3,
+    Verifying = 4,
+    Available = 5,
+    Failed = 6,
+    Cancelled = 7,
+}
+impl ReportState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            ReportState::Unspecified => "REPORT_STATE_UNSPECIFIED",
+            ReportState::NotRequested => "REPORT_STATE_NOT_REQUESTED",
+            ReportState::Queued => "REPORT_STATE_QUEUED",
+            ReportState::Generating => "REPORT_STATE_GENERATING",
+            ReportState::Verifying => "REPORT_STATE_VERIFYING",
+            ReportState::Available => "REPORT_STATE_AVAILABLE",
+            ReportState::Failed => "REPORT_STATE_FAILED",
+            ReportState::Cancelled => "REPORT_STATE_CANCELLED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "REPORT_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "REPORT_STATE_NOT_REQUESTED" => Some(Self::NotRequested),
+            "REPORT_STATE_QUEUED" => Some(Self::Queued),
+            "REPORT_STATE_GENERATING" => Some(Self::Generating),
+            "REPORT_STATE_VERIFYING" => Some(Self::Verifying),
+            "REPORT_STATE_AVAILABLE" => Some(Self::Available),
+            "REPORT_STATE_FAILED" => Some(Self::Failed),
+            "REPORT_STATE_CANCELLED" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+}
+/// provider/activation 模式(执行节点契约)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ProviderMode {
+    Unspecified = 0,
+    SharedStream = 1,
+    DedicatedOperation = 2,
+    AuthorityLocal = 3,
+}
+impl ProviderMode {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            ProviderMode::Unspecified => "PROVIDER_MODE_UNSPECIFIED",
+            ProviderMode::SharedStream => "PROVIDER_MODE_SHARED_STREAM",
+            ProviderMode::DedicatedOperation => "PROVIDER_MODE_DEDICATED_OPERATION",
+            ProviderMode::AuthorityLocal => "PROVIDER_MODE_AUTHORITY_LOCAL",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "PROVIDER_MODE_UNSPECIFIED" => Some(Self::Unspecified),
+            "PROVIDER_MODE_SHARED_STREAM" => Some(Self::SharedStream),
+            "PROVIDER_MODE_DEDICATED_OPERATION" => Some(Self::DedicatedOperation),
+            "PROVIDER_MODE_AUTHORITY_LOCAL" => Some(Self::AuthorityLocal),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ActivationMode {
+    Unspecified = 0,
+    PipelinedStream = 1,
+    AfterUpstreamClose = 2,
+    AuthorityLocal = 3,
+}
+impl ActivationMode {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            ActivationMode::Unspecified => "ACTIVATION_MODE_UNSPECIFIED",
+            ActivationMode::PipelinedStream => "ACTIVATION_MODE_PIPELINED_STREAM",
+            ActivationMode::AfterUpstreamClose => "ACTIVATION_MODE_AFTER_UPSTREAM_CLOSE",
+            ActivationMode::AuthorityLocal => "ACTIVATION_MODE_AUTHORITY_LOCAL",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "ACTIVATION_MODE_UNSPECIFIED" => Some(Self::Unspecified),
+            "ACTIVATION_MODE_PIPELINED_STREAM" => Some(Self::PipelinedStream),
+            "ACTIVATION_MODE_AFTER_UPSTREAM_CLOSE" => Some(Self::AfterUpstreamClose),
+            "ACTIVATION_MODE_AUTHORITY_LOCAL" => Some(Self::AuthorityLocal),
+            _ => None,
+        }
+    }
+}
 /// Asset represents a network device discovered through passive or active means.
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -849,6 +2178,21 @@ pub struct MacIpBinding {
     /// arp or dhcp
     #[prost(string, tag="5")]
     pub source: ::prost::alloc::string::String,
+    /// Stable probe-local identity. Retries must retain this value and payload.
+    #[prost(string, tag="6")]
+    pub observation_id: ::prost::alloc::string::String,
+    /// Authenticated gateway identity; a non-empty mismatching value is rejected.
+    #[prost(string, tag="7")]
+    pub probe_id: ::prost::alloc::string::String,
+    /// Observation scope. Empty remains compatible with untagged legacy traffic.
+    #[prost(string, tag="8")]
+    pub vlan_id: ::prost::alloc::string::String,
+    /// Packet/parser identity used for audit correlation, not as Kafka authority.
+    #[prost(string, tag="9")]
+    pub source_event_id: ::prost::alloc::string::String,
+    /// Additive payload contract revision. New probe uploads use value 1.
+    #[prost(uint32, tag="10")]
+    pub schema_version: u32,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1236,6 +2580,26 @@ pub struct FeatureStat {
     pub tuple: ::core::option::Option<FiveTuple>,
     #[prost(string, repeated, tag="24")]
     pub evidence_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(enumeration="FeatureCategory", tag="25")]
+    pub feature_category: i32,
+    #[prost(enumeration="FeatureAvailability", tag="26")]
+    pub availability: i32,
+    #[prost(string, tag="27")]
+    pub algorithm_version: ::prost::alloc::string::String,
+    #[prost(string, tag="28")]
+    pub window_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="29")]
+    pub event_time_start_ms: i64,
+    #[prost(int64, tag="30")]
+    pub event_time_end_ms: i64,
+    #[prost(string, tag="31")]
+    pub value_unit: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="32")]
+    pub source_event_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag="33")]
+    pub missing_fields: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag="34")]
+    pub missing_reason: ::prost::alloc::string::String,
 }
 /// FeatureSeq L2 序列特征
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1277,6 +2641,24 @@ pub struct FeatureSeq {
     pub wavelet_detail_std_bwd: f32,
     #[prost(string, tag="18")]
     pub seq_blob_ref: ::prost::alloc::string::String,
+    #[prost(enumeration="FeatureCategory", tag="19")]
+    pub feature_category: i32,
+    #[prost(enumeration="FeatureAvailability", tag="20")]
+    pub availability: i32,
+    #[prost(string, tag="21")]
+    pub schema_version: ::prost::alloc::string::String,
+    #[prost(string, tag="22")]
+    pub algorithm_version: ::prost::alloc::string::String,
+    #[prost(string, tag="23")]
+    pub value_unit: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="24")]
+    pub source_event_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag="25")]
+    pub evidence_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag="26")]
+    pub missing_fields: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag="27")]
+    pub missing_reason: ::prost::alloc::string::String,
 }
 /// FeatureFingerprint L3 指纹特征
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1290,6 +2672,8 @@ pub struct FeatureFingerprint {
     pub session_id: ::prost::alloc::string::String,
     #[prost(int64, tag="4")]
     pub ts: i64,
+    /// Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+    /// a future breaking-change migration should use `bool`.
     #[prost(uint32, tag="5")]
     pub is_encrypted: u32,
     #[prost(string, tag="6")]
@@ -1312,6 +2696,40 @@ pub struct FeatureFingerprint {
     pub entropy_payload: f32,
     #[prost(float, tag="15")]
     pub chi_square_bfd: f32,
+    #[prost(enumeration="FeatureCategory", tag="16")]
+    pub feature_category: i32,
+    #[prost(enumeration="FeatureAvailability", tag="17")]
+    pub availability: i32,
+    #[prost(string, tag="18")]
+    pub schema_version: ::prost::alloc::string::String,
+    #[prost(string, tag="19")]
+    pub algorithm_version: ::prost::alloc::string::String,
+    #[prost(string, tag="20")]
+    pub window_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="21")]
+    pub event_time_start_ms: i64,
+    #[prost(int64, tag="22")]
+    pub event_time_end_ms: i64,
+    #[prost(string, tag="23")]
+    pub value_unit: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="24")]
+    pub source_event_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag="25")]
+    pub evidence_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag="26")]
+    pub missing_fields: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag="27")]
+    pub missing_reason: ::prost::alloc::string::String,
+    #[prost(string, tag="28")]
+    pub ja4: ::prost::alloc::string::String,
+    #[prost(string, tag="29")]
+    pub sni: ::prost::alloc::string::String,
+    #[prost(string, tag="30")]
+    pub quic_version: ::prost::alloc::string::String,
+    #[prost(enumeration="TransportSecurityProtocol", tag="31")]
+    pub transport_security: i32,
+    #[prost(string, tag="32")]
+    pub raw_traffic_ref: ::prost::alloc::string::String,
 }
 /// FeatureBatch 特征批次
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1331,6 +2749,89 @@ pub struct FeatureBatch {
     pub run_id: ::prost::alloc::string::String,
     #[prost(int64, tag="7")]
     pub created_at: i64,
+}
+/// FeatureCategory is an explicit semantic category, not a detection label.
+/// Encrypted traffic and high entropy are never interpreted as malicious here.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum FeatureCategory {
+    Unspecified = 0,
+    FlowMetadata = 1,
+    PlaintextVisible = 2,
+    SideChannel = 3,
+    RawReference = 4,
+    RandomnessStatistics = 5,
+}
+impl FeatureCategory {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            FeatureCategory::Unspecified => "FEATURE_CATEGORY_UNSPECIFIED",
+            FeatureCategory::FlowMetadata => "FEATURE_CATEGORY_FLOW_METADATA",
+            FeatureCategory::PlaintextVisible => "FEATURE_CATEGORY_PLAINTEXT_VISIBLE",
+            FeatureCategory::SideChannel => "FEATURE_CATEGORY_SIDE_CHANNEL",
+            FeatureCategory::RawReference => "FEATURE_CATEGORY_RAW_REFERENCE",
+            FeatureCategory::RandomnessStatistics => "FEATURE_CATEGORY_RANDOMNESS_STATISTICS",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "FEATURE_CATEGORY_UNSPECIFIED" => Some(Self::Unspecified),
+            "FEATURE_CATEGORY_FLOW_METADATA" => Some(Self::FlowMetadata),
+            "FEATURE_CATEGORY_PLAINTEXT_VISIBLE" => Some(Self::PlaintextVisible),
+            "FEATURE_CATEGORY_SIDE_CHANNEL" => Some(Self::SideChannel),
+            "FEATURE_CATEGORY_RAW_REFERENCE" => Some(Self::RawReference),
+            "FEATURE_CATEGORY_RANDOMNESS_STATISTICS" => Some(Self::RandomnessStatistics),
+            _ => None,
+        }
+    }
+}
+/// FeatureAvailability separates absent, unsupported and invalid calculations;
+/// numeric proto defaults must not be interpreted as successfully measured.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum FeatureAvailability {
+    Unspecified = 0,
+    Available = 1,
+    MissingInput = 2,
+    NotApplicable = 3,
+    Unsupported = 4,
+    Invalid = 5,
+    PartiallyAvailable = 6,
+}
+impl FeatureAvailability {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            FeatureAvailability::Unspecified => "FEATURE_AVAILABILITY_UNSPECIFIED",
+            FeatureAvailability::Available => "FEATURE_AVAILABILITY_AVAILABLE",
+            FeatureAvailability::MissingInput => "FEATURE_AVAILABILITY_MISSING_INPUT",
+            FeatureAvailability::NotApplicable => "FEATURE_AVAILABILITY_NOT_APPLICABLE",
+            FeatureAvailability::Unsupported => "FEATURE_AVAILABILITY_UNSUPPORTED",
+            FeatureAvailability::Invalid => "FEATURE_AVAILABILITY_INVALID",
+            FeatureAvailability::PartiallyAvailable => "FEATURE_AVAILABILITY_PARTIALLY_AVAILABLE",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "FEATURE_AVAILABILITY_UNSPECIFIED" => Some(Self::Unspecified),
+            "FEATURE_AVAILABILITY_AVAILABLE" => Some(Self::Available),
+            "FEATURE_AVAILABILITY_MISSING_INPUT" => Some(Self::MissingInput),
+            "FEATURE_AVAILABILITY_NOT_APPLICABLE" => Some(Self::NotApplicable),
+            "FEATURE_AVAILABILITY_UNSUPPORTED" => Some(Self::Unsupported),
+            "FEATURE_AVAILABILITY_INVALID" => Some(Self::Invalid),
+            "FEATURE_AVAILABILITY_PARTIALLY_AVAILABLE" => Some(Self::PartiallyAvailable),
+            _ => None,
+        }
+    }
 }
 /// FlowEvent 流事件（对应 ClickHouse flows_raw 表）
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1380,6 +2881,12 @@ pub struct FlowEvent {
     pub idle_stats: ::core::option::Option<ActiveIdleStats>,
     #[prost(uint32, tag="22")]
     pub subflow_count: u32,
+    /// Additive identity algorithm revision. Zero means the legacy algorithm;
+    /// revision 2 is the canonical capture-event-time identity contract.
+    #[prost(uint32, tag="23")]
+    pub identity_revision: u32,
+    #[prost(message, optional, tag="24")]
+    pub feature_observation: ::core::option::Option<TrafficFeatureObservation>,
 }
 /// FlowBatch 流事件批次
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1443,6 +2950,8 @@ pub struct GraphQueryLog {
     pub result_size_bytes: u64,
     #[prost(uint32, tag="15")]
     pub duration_ms: u32,
+    /// Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+    /// a future breaking-change migration should use `bool`.
     #[prost(uint32, tag="16")]
     pub cache_hit: u32,
     #[prost(uint32, tag="17")]
@@ -1608,6 +3117,182 @@ pub struct GraphStatsBatch {
     #[prost(int64, tag="7")]
     pub created_at: i64,
 }
+/// GraphEntityIdentity is the tenant-scoped canonical identity used to derive a
+/// stable NebulaGraph VID. vertex_id is the lowercase SHA-256 prefix defined by
+/// the M07 graph projection contract; producers may not choose an arbitrary VID.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GraphEntityIdentity {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub entity_type: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub canonical_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub vertex_id: ::prost::alloc::string::String,
+}
+/// GraphEvidenceAnchor binds a relation to immutable evidence. At least one
+/// anchor is required for every projected relation and attack-chain edge.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GraphEvidenceAnchor {
+    #[prost(string, tag="1")]
+    pub evidence_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub evidence_kind: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub immutable_uri: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub sha256: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub source_event_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="6")]
+    pub occurred_at: i64,
+}
+/// GraphProjectionSource carries the source ordering and integrity identity.
+/// aggregate_version is compared before a NebulaGraph mutation is accepted.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GraphProjectionSource {
+    #[prost(string, tag="1")]
+    pub source_system: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub source_event_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub aggregate_type: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub aggregate_id: ::prost::alloc::string::String,
+    #[prost(uint64, tag="5")]
+    pub aggregate_version: u64,
+    #[prost(string, tag="6")]
+    pub source_sha256: ::prost::alloc::string::String,
+    #[prost(int64, tag="7")]
+    pub occurred_at: i64,
+}
+/// GraphProjectedEntity is an idempotent entity upsert/revocation payload.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GraphProjectedEntity {
+    #[prost(message, optional, tag="1")]
+    pub identity: ::core::option::Option<GraphEntityIdentity>,
+    #[prost(map="string, string", tag="2")]
+    pub attributes: ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    #[prost(int64, tag="3")]
+    pub valid_from: i64,
+    #[prost(int64, tag="4")]
+    pub valid_to: i64,
+    #[prost(message, optional, tag="5")]
+    pub source: ::core::option::Option<GraphProjectionSource>,
+    #[prost(string, tag="6")]
+    pub projection_sha256: ::prost::alloc::string::String,
+    #[prost(bool, tag="7")]
+    pub revoked: bool,
+}
+/// GraphProjectedRelation is an idempotent relationship upsert/revocation
+/// payload. edge_id is derived from tenant, relation type and endpoint VIDs.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GraphProjectedRelation {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub edge_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub relation_type: ::prost::alloc::string::String,
+    #[prost(message, optional, tag="4")]
+    pub source_identity: ::core::option::Option<GraphEntityIdentity>,
+    #[prost(message, optional, tag="5")]
+    pub target_identity: ::core::option::Option<GraphEntityIdentity>,
+    #[prost(enumeration="GraphProvenanceKind", tag="6")]
+    pub provenance_kind: i32,
+    #[prost(double, tag="7")]
+    pub confidence: f64,
+    #[prost(string, tag="8")]
+    pub uncertainty: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag="9")]
+    pub evidence: ::prost::alloc::vec::Vec<GraphEvidenceAnchor>,
+    #[prost(int64, tag="10")]
+    pub valid_from: i64,
+    #[prost(int64, tag="11")]
+    pub valid_to: i64,
+    #[prost(message, optional, tag="12")]
+    pub source: ::core::option::Option<GraphProjectionSource>,
+    #[prost(string, tag="13")]
+    pub projection_sha256: ::prost::alloc::string::String,
+    #[prost(bool, tag="14")]
+    pub revoked: bool,
+}
+/// GraphProjectionEvent is the graph projector's canonical Kafka payload.
+/// partition_key must equal tenant_id plus the projected entity or relation
+/// identity, so all versions for one aggregate are observed in order.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GraphProjectionEvent {
+    #[prost(message, optional, tag="1")]
+    pub header: ::core::option::Option<EventHeader>,
+    #[prost(string, tag="2")]
+    pub partition_key: ::prost::alloc::string::String,
+    #[prost(oneof="graph_projection_event::Projection", tags="3, 4")]
+    pub projection: ::core::option::Option<graph_projection_event::Projection>,
+}
+/// Nested message and enum types in `GraphProjectionEvent`.
+pub mod graph_projection_event {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Projection {
+        #[prost(message, tag="3")]
+        Entity(super::GraphProjectedEntity),
+        #[prost(message, tag="4")]
+        Relation(super::GraphProjectedRelation),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GraphProjectionEventBatch {
+    #[prost(message, repeated, tag="1")]
+    pub events: ::prost::alloc::vec::Vec<GraphProjectionEvent>,
+    #[prost(string, tag="2")]
+    pub batch_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="4")]
+    pub created_at: i64,
+}
+/// GraphProvenanceKind prevents an inferred or analyst-authored relationship
+/// from being serialized as a directly observed fact.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum GraphProvenanceKind {
+    Unspecified = 0,
+    Observed = 1,
+    Derived = 2,
+    Analyst = 3,
+}
+impl GraphProvenanceKind {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            GraphProvenanceKind::Unspecified => "GRAPH_PROVENANCE_KIND_UNSPECIFIED",
+            GraphProvenanceKind::Observed => "GRAPH_PROVENANCE_KIND_OBSERVED",
+            GraphProvenanceKind::Derived => "GRAPH_PROVENANCE_KIND_DERIVED",
+            GraphProvenanceKind::Analyst => "GRAPH_PROVENANCE_KIND_ANALYST",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "GRAPH_PROVENANCE_KIND_UNSPECIFIED" => Some(Self::Unspecified),
+            "GRAPH_PROVENANCE_KIND_OBSERVED" => Some(Self::Observed),
+            "GRAPH_PROVENANCE_KIND_DERIVED" => Some(Self::Derived),
+            "GRAPH_PROVENANCE_KIND_ANALYST" => Some(Self::Analyst),
+            _ => None,
+        }
+    }
+}
 /// SessionEvent 双向会话事件
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1696,6 +3381,34 @@ pub struct SessionEvent {
     pub flow_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     #[prost(string, tag="42")]
     pub end_reason: ::prost::alloc::string::String,
+    /// Additive M03 identity and event-time contract. All timestamps are Unix
+    /// epoch milliseconds; identity_version names the deterministic ID recipe.
+    #[prost(string, tag="43")]
+    pub identity_version: ::prost::alloc::string::String,
+    #[prost(uint64, tag="44")]
+    pub session_version: u64,
+    #[prost(int64, tag="45")]
+    pub event_time_start_ms: i64,
+    #[prost(int64, tag="46")]
+    pub event_time_end_ms: i64,
+    #[prost(string, repeated, tag="47")]
+    pub source_event_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag="48")]
+    pub evidence_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(enumeration="SessionCompleteness", tag="49")]
+    pub completeness: i32,
+    #[prost(string, repeated, tag="50")]
+    pub missing_fields: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, optional, tag="51")]
+    pub feature_observation: ::core::option::Option<TrafficFeatureObservation>,
+    /// Directional packet counts: forward = packets emitted in the initiator
+    /// (client) direction, backward = responder (server) direction. Zero when the
+    /// producer cannot attribute direction; both fields are additive (legacy
+    /// producers stay wire-compatible with proto3 zero defaults).
+    #[prost(uint64, tag="52")]
+    pub packets_fwd: u64,
+    #[prost(uint64, tag="53")]
+    pub packets_bwd: u64,
 }
 /// SessionBatch 会话事件批次
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1717,6 +3430,44 @@ pub struct SessionBatch {
     pub compression: ::prost::alloc::string::String,
     #[prost(int64, tag="8")]
     pub created_at: i64,
+}
+/// SessionCompleteness distinguishes a usable complete session from an
+/// explicitly partial or invalid observation. Zero remains the legacy/unknown
+/// value so existing producers stay wire-compatible without claiming success.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SessionCompleteness {
+    Unspecified = 0,
+    Complete = 1,
+    Partial = 2,
+    Truncated = 3,
+    Invalid = 4,
+}
+impl SessionCompleteness {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            SessionCompleteness::Unspecified => "SESSION_COMPLETENESS_UNSPECIFIED",
+            SessionCompleteness::Complete => "SESSION_COMPLETENESS_COMPLETE",
+            SessionCompleteness::Partial => "SESSION_COMPLETENESS_PARTIAL",
+            SessionCompleteness::Truncated => "SESSION_COMPLETENESS_TRUNCATED",
+            SessionCompleteness::Invalid => "SESSION_COMPLETENESS_INVALID",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "SESSION_COMPLETENESS_UNSPECIFIED" => Some(Self::Unspecified),
+            "SESSION_COMPLETENESS_COMPLETE" => Some(Self::Complete),
+            "SESSION_COMPLETENESS_PARTIAL" => Some(Self::Partial),
+            "SESSION_COMPLETENESS_TRUNCATED" => Some(Self::Truncated),
+            "SESSION_COMPLETENESS_INVALID" => Some(Self::Invalid),
+            _ => None,
+        }
+    }
 }
 /// PcapIndexMeta PCAP 索引元数据
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1752,6 +3503,26 @@ pub struct PcapIndexMeta {
     pub community_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     #[prost(int64, tag="15")]
     pub created_ts: i64,
+    /// Object-store manifest fields are additive. Kafka source coordinates remain
+    /// transport authority and MUST NOT be copied into this wire message.
+    #[prost(string, tag="16")]
+    pub bucket: ::prost::alloc::string::String,
+    #[prost(string, tag="17")]
+    pub object_version: ::prost::alloc::string::String,
+    #[prost(string, tag="18")]
+    pub etag: ::prost::alloc::string::String,
+    #[prost(uint64, tag="19")]
+    pub original_size: u64,
+    #[prost(uint64, tag="20")]
+    pub stored_size: u64,
+    #[prost(string, tag="21")]
+    pub compression: ::prost::alloc::string::String,
+    #[prost(uint32, tag="22")]
+    pub manifest_version: u32,
+    /// Additive: total packet count observed in the archived capture window.
+    /// Zero means the producer did not record a count (legacy wire-compatible).
+    #[prost(uint64, tag="23")]
+    pub packet_count: u64,
 }
 /// PcapIndexBatch PCAP 索引批次
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1850,6 +3621,9 @@ pub struct UploadFlowsRequest {
     pub events: ::prost::alloc::vec::Vec<FlowEvent>,
     #[prost(string, tag="2")]
     pub compression: ::prost::alloc::string::String,
+    /// Highest exact-set response revision the client can durably apply.
+    #[prost(uint32, tag="3")]
+    pub accepted_response_revision: u32,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1862,6 +3636,28 @@ pub struct UploadFlowsResponse {
     pub rejected_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     #[prost(string, tag="4")]
     pub message: ::prost::alloc::string::String,
+    /// Additive exact-set acknowledgement. When present, there is exactly one
+    /// result for every request input_index; old aggregate fields remain for
+    /// wire compatibility but cannot override these dispositions.
+    #[prost(message, repeated, tag="5")]
+    pub item_results: ::prost::alloc::vec::Vec<FlowItemResult>,
+    #[prost(uint32, tag="6")]
+    pub response_revision: u32,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FlowItemResult {
+    #[prost(uint32, tag="1")]
+    pub input_index: u32,
+    #[prost(string, tag="2")]
+    pub event_id: ::prost::alloc::string::String,
+    #[prost(enumeration="FlowItemDisposition", tag="3")]
+    pub disposition: i32,
+    #[prost(string, tag="4")]
+    pub reason_code: ::prost::alloc::string::String,
+    /// The only currently approved durable acceptance barrier for FlowEvent.
+    #[prost(string, tag="5")]
+    pub ack_scope: ::prost::alloc::string::String,
 }
 // ==================== Flow 流式上报 ====================
 
@@ -1870,6 +3666,8 @@ pub struct UploadFlowsResponse {
 pub struct StreamFlowsRequest {
     #[prost(message, optional, tag="1")]
     pub event: ::core::option::Option<FlowEvent>,
+    #[prost(uint32, tag="2")]
+    pub accepted_response_revision: u32,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1880,6 +3678,14 @@ pub struct StreamFlowsResponse {
     pub accepted: bool,
     #[prost(string, tag="3")]
     pub error: ::prost::alloc::string::String,
+    #[prost(enumeration="FlowItemDisposition", tag="4")]
+    pub disposition: i32,
+    #[prost(string, tag="5")]
+    pub reason_code: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub ack_scope: ::prost::alloc::string::String,
+    #[prost(uint32, tag="7")]
+    pub response_revision: u32,
 }
 // ==================== Session 上报 ====================
 
@@ -1917,6 +3723,50 @@ pub struct UploadPcapIndexResponse {
     #[prost(bool, tag="1")]
     pub success: bool,
     #[prost(string, tag="2")]
+    pub message: ::prost::alloc::string::String,
+}
+// ==================== Passive asset binding upload ====================
+
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UploadAssetBindingsRequest {
+    #[prost(string, tag="1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub probe_id: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag="3")]
+    pub bindings: ::prost::alloc::vec::Vec<MacIpBinding>,
+    /// Highest exact-set response revision the probe can durably apply.
+    #[prost(uint32, tag="4")]
+    pub accepted_response_revision: u32,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AssetBindingItemResult {
+    #[prost(uint32, tag="1")]
+    pub input_index: u32,
+    #[prost(string, tag="2")]
+    pub observation_id: ::prost::alloc::string::String,
+    #[prost(enumeration="AssetBindingItemDisposition", tag="3")]
+    pub disposition: i32,
+    #[prost(string, tag="4")]
+    pub reason_code: ::prost::alloc::string::String,
+    /// KAFKA_RECORD only after required-acks=all succeeds.
+    #[prost(string, tag="5")]
+    pub ack_scope: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UploadAssetBindingsResponse {
+    #[prost(int32, tag="1")]
+    pub accepted: i32,
+    #[prost(int32, tag="2")]
+    pub rejected: i32,
+    #[prost(message, repeated, tag="3")]
+    pub item_results: ::prost::alloc::vec::Vec<AssetBindingItemResult>,
+    #[prost(uint32, tag="4")]
+    pub response_revision: u32,
+    #[prost(string, tag="5")]
     pub message: ::prost::alloc::string::String,
 }
 // ==================== 心跳 ====================
@@ -2007,6 +3857,34 @@ pub struct ProbeOperationAck {
     #[prost(bytes="vec", tag="9")]
     pub detail_json: ::prost::alloc::vec::Vec<u8>,
 }
+/// ProbeGroupReadinessReceiptV1 is a durable, cross-process statement about
+/// one broker-owned consumer-group generation. It is not a process health
+/// signal: receivers must validate the Kafka key and headers, the bounded
+/// lease, and the monotonic owner epoch before it can authorize work.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProbeGroupReadinessReceiptV1 {
+    #[prost(string, tag="1")]
+    pub receipt_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub consumer_group: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub observed_topic: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub member_id: ::prost::alloc::string::String,
+    #[prost(int32, tag="5")]
+    pub generation_id: i32,
+    #[prost(int64, tag="6")]
+    pub owner_epoch: i64,
+    #[prost(enumeration="ProbeGroupReadinessStateV1", tag="7")]
+    pub state: i32,
+    #[prost(int64, tag="8")]
+    pub observed_at_ms: i64,
+    #[prost(int64, tag="9")]
+    pub expires_at_ms: i64,
+    #[prost(string, tag="10")]
+    pub publisher_instance_id: ::prost::alloc::string::String,
+}
 // ==================== 探针注册 ====================
 
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -2056,6 +3934,19 @@ pub struct ProbeStatus {
     pub uptime_seconds: i64,
     #[prost(message, repeated, tag="10")]
     pub interfaces: ::prost::alloc::vec::Vec<InterfaceStatus>,
+    /// Additive authority breakdown. The legacy packets_dropped field equals
+    /// capture_allocation_drops + capture_kernel_drops and excludes parser,
+    /// downstream queue, and sender failures.
+    #[prost(uint64, tag="11")]
+    pub capture_allocation_drops: u64,
+    #[prost(uint64, tag="12")]
+    pub capture_kernel_drops: u64,
+    #[prost(uint64, tag="13")]
+    pub capture_errors: u64,
+    #[prost(uint64, tag="14")]
+    pub capture_bytes: u64,
+    #[prost(uint64, tag="15")]
+    pub capture_counter_revision: u64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2082,7 +3973,6 @@ pub struct InterfaceStatus {
     pub rx_crc_errors: u64,
     #[prost(uint64, tag="11")]
     pub rx_dropped: u64,
-    /// uint64 tx_dropped = 13;
     #[prost(uint64, tag="12")]
     pub collisions: u64,
 }
@@ -2163,6 +4053,122 @@ pub struct Nic {
     pub speed_mbps: u64,
     #[prost(string, tag="6")]
     pub driver_version: ::prost::alloc::string::String,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum FlowItemDisposition {
+    Unspecified = 0,
+    /// The exact message received the configured Kafka broker acknowledgement.
+    KafkaAcked = 1,
+    /// The same tenant/probe/event identity was already broker committed.
+    DuplicateCommitted = 2,
+    /// Deterministic validation failure; retrying identical bytes cannot help.
+    RejectedInvalid = 3,
+    /// Broker or dependency reported a retryable failure before a durable ACK.
+    Retryable = 4,
+    /// The remote outcome is ambiguous; retry must preserve the same event ID.
+    OutcomeUnknown = 5,
+}
+impl FlowItemDisposition {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            FlowItemDisposition::Unspecified => "FLOW_ITEM_DISPOSITION_UNSPECIFIED",
+            FlowItemDisposition::KafkaAcked => "FLOW_ITEM_DISPOSITION_KAFKA_ACKED",
+            FlowItemDisposition::DuplicateCommitted => "FLOW_ITEM_DISPOSITION_DUPLICATE_COMMITTED",
+            FlowItemDisposition::RejectedInvalid => "FLOW_ITEM_DISPOSITION_REJECTED_INVALID",
+            FlowItemDisposition::Retryable => "FLOW_ITEM_DISPOSITION_RETRYABLE",
+            FlowItemDisposition::OutcomeUnknown => "FLOW_ITEM_DISPOSITION_OUTCOME_UNKNOWN",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "FLOW_ITEM_DISPOSITION_UNSPECIFIED" => Some(Self::Unspecified),
+            "FLOW_ITEM_DISPOSITION_KAFKA_ACKED" => Some(Self::KafkaAcked),
+            "FLOW_ITEM_DISPOSITION_DUPLICATE_COMMITTED" => Some(Self::DuplicateCommitted),
+            "FLOW_ITEM_DISPOSITION_REJECTED_INVALID" => Some(Self::RejectedInvalid),
+            "FLOW_ITEM_DISPOSITION_RETRYABLE" => Some(Self::Retryable),
+            "FLOW_ITEM_DISPOSITION_OUTCOME_UNKNOWN" => Some(Self::OutcomeUnknown),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum AssetBindingItemDisposition {
+    Unspecified = 0,
+    KafkaAcked = 1,
+    DuplicateCommitted = 2,
+    RejectedInvalid = 3,
+    Retryable = 4,
+    OutcomeUnknown = 5,
+}
+impl AssetBindingItemDisposition {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            AssetBindingItemDisposition::Unspecified => "ASSET_BINDING_ITEM_DISPOSITION_UNSPECIFIED",
+            AssetBindingItemDisposition::KafkaAcked => "ASSET_BINDING_ITEM_DISPOSITION_KAFKA_ACKED",
+            AssetBindingItemDisposition::DuplicateCommitted => "ASSET_BINDING_ITEM_DISPOSITION_DUPLICATE_COMMITTED",
+            AssetBindingItemDisposition::RejectedInvalid => "ASSET_BINDING_ITEM_DISPOSITION_REJECTED_INVALID",
+            AssetBindingItemDisposition::Retryable => "ASSET_BINDING_ITEM_DISPOSITION_RETRYABLE",
+            AssetBindingItemDisposition::OutcomeUnknown => "ASSET_BINDING_ITEM_DISPOSITION_OUTCOME_UNKNOWN",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "ASSET_BINDING_ITEM_DISPOSITION_UNSPECIFIED" => Some(Self::Unspecified),
+            "ASSET_BINDING_ITEM_DISPOSITION_KAFKA_ACKED" => Some(Self::KafkaAcked),
+            "ASSET_BINDING_ITEM_DISPOSITION_DUPLICATE_COMMITTED" => Some(Self::DuplicateCommitted),
+            "ASSET_BINDING_ITEM_DISPOSITION_REJECTED_INVALID" => Some(Self::RejectedInvalid),
+            "ASSET_BINDING_ITEM_DISPOSITION_RETRYABLE" => Some(Self::Retryable),
+            "ASSET_BINDING_ITEM_DISPOSITION_OUTCOME_UNKNOWN" => Some(Self::OutcomeUnknown),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ProbeGroupReadinessStateV1 {
+    Unspecified = 0,
+    Assigned = 1,
+    Ready = 2,
+    Revoked = 3,
+    Stopped = 4,
+}
+impl ProbeGroupReadinessStateV1 {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            ProbeGroupReadinessStateV1::Unspecified => "PROBE_GROUP_READINESS_STATE_V1_UNSPECIFIED",
+            ProbeGroupReadinessStateV1::Assigned => "PROBE_GROUP_READINESS_STATE_V1_ASSIGNED",
+            ProbeGroupReadinessStateV1::Ready => "PROBE_GROUP_READINESS_STATE_V1_READY",
+            ProbeGroupReadinessStateV1::Revoked => "PROBE_GROUP_READINESS_STATE_V1_REVOKED",
+            ProbeGroupReadinessStateV1::Stopped => "PROBE_GROUP_READINESS_STATE_V1_STOPPED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "PROBE_GROUP_READINESS_STATE_V1_UNSPECIFIED" => Some(Self::Unspecified),
+            "PROBE_GROUP_READINESS_STATE_V1_ASSIGNED" => Some(Self::Assigned),
+            "PROBE_GROUP_READINESS_STATE_V1_READY" => Some(Self::Ready),
+            "PROBE_GROUP_READINESS_STATE_V1_REVOKED" => Some(Self::Revoked),
+            "PROBE_GROUP_READINESS_STATE_V1_STOPPED" => Some(Self::Stopped),
+            _ => None,
+        }
+    }
 }
 include!("traffic.v1.serde.rs");
 include!("traffic.v1.tonic.rs");

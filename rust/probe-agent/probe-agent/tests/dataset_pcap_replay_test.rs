@@ -33,10 +33,10 @@ fn replays_external_dataset_pcap() {
         while captured < MAX_PACKETS {
             match replayer.poll() {
                 Ok(Some(batch)) => {
-                    for (packet, timestamp) in batch.iter() {
+                    for (packet, captured_at) in batch.iter() {
                         captured += 1;
                         total_bytes += packet.len();
-                        if PacketParser::parse(packet, timestamp)
+                        if PacketParser::parse(packet, captured_at.epoch_micros())
                             .expect("packet parser must not fail")
                             .is_some()
                         {

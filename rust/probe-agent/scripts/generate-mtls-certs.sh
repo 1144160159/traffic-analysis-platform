@@ -21,13 +21,27 @@ set -euo pipefail
 OUT_DIR="${1:-./certs}"
 CA_VALIDITY_DAYS="${CA_VALIDITY_DAYS:-3650}"
 LEAF_VALIDITY_DAYS="${LEAF_VALIDITY_DAYS:-90}"
+CRL_VALIDITY_DAYS="${CRL_VALIDITY_DAYS:-7}"
+PKI_GENERATION_ID="${PKI_GENERATION_ID:-probe-ingest-$(date -u +%Y%m%dT%H%M%SZ)}"
 case "$CA_VALIDITY_DAYS:$LEAF_VALIDITY_DAYS" in
   *[!0-9:]*|:*|*:)
     echo "CA_VALIDITY_DAYS and LEAF_VALIDITY_DAYS must be positive integers" >&2
     exit 1
     ;;
 esac
-if [ "$CA_VALIDITY_DAYS" -lt 365 ] || [ "$LEAF_VALIDITY_DAYS" -lt 1 ] || [ "$LEAF_VALIDITY_DAYS" -gt 90 ]; then
+case "$CRL_VALIDITY_DAYS" in
+  *[!0-9]*|'')
+    echo "CRL_VALIDITY_DAYS must be a positive integer" >&2
+    exit 1
+    ;;
+esac
+case "$PKI_GENERATION_ID" in
+  *[!A-Za-z0-9._-]*|'')
+    echo "PKI_GENERATION_ID must use only letters, digits, dot, underscore, and hyphen" >&2
+    exit 1
+    ;;
+esac
+if [ "$CA_VALIDITY_DAYS" -lt 365 ] || [ "$LEAF_VALIDITY_DAYS" -lt 1 ] || [ "$LEAF_VALIDITY_DAYS" -gt 90 ] || [ "$CRL_VALIDITY_DAYS" -lt 1 ]; then
   echo "CA validity must be >=365 days and leaf validity must be between 1 and 90 days" >&2
   exit 1
 fi
@@ -89,11 +103,50 @@ openssl x509 -req -days "$LEAF_VALIDITY_DAYS" -in client.csr -CA ca-cert.pem -CA
 rm -f client.csr client-ext.cnf
 echo "  ✅ Client certificate (probe-agent)"
 
+# 4. 当前 CA 的空 CRL。吊销时由批准的 issuer 使用同一格式发布新 CRL；
+# ingest-gateway 会拒绝无 CRL、过期 CRL 或非受信 CA 签名的 CRL。
+mkdir -p ca-newcerts
+: > ca-index.txt
+echo 1000 > ca-serial
+echo 1000 > ca-crlnumber
+cat > ca-crl.cnf << EOF
+[ca]
+default_ca = CA_default
+[CA_default]
+dir = .
+database = \$dir/ca-index.txt
+new_certs_dir = \$dir/ca-newcerts
+certificate = \$dir/ca-cert.pem
+private_key = \$dir/ca-key.pem
+serial = \$dir/ca-serial
+crlnumber = \$dir/ca-crlnumber
+default_md = sha256
+default_days = $LEAF_VALIDITY_DAYS
+default_crl_days = $CRL_VALIDITY_DAYS
+policy = policy_any
+[policy_any]
+commonName = supplied
+EOF
+openssl ca -gencrl -batch -config ca-crl.cnf -out client-crl.pem 2>/dev/null
+echo "  ✅ Client certificate revocation list"
+
+# 5. 原子投影 manifest。Kubernetes Secret 更新期间只要任一文件来自另一代，
+# 摘要即不匹配，服务会继续使用上一套已验证材料。
+cert_sha="$(sha256sum server-cert.pem | awk '{print $1}')"
+key_sha="$(sha256sum server-key.pem | awk '{print $1}')"
+trust_sha="$(sha256sum ca-cert.pem | awk '{print $1}')"
+crl_sha="$(sha256sum client-crl.pem | awk '{print $1}')"
+cat > generation.json << EOF
+{"schema_version":1,"generation":"$PKI_GENERATION_ID","certificate_sha256":"$cert_sha","private_key_sha256":"$key_sha","trust_bundle_sha256":"$trust_sha","revocation_sha256":"$crl_sha"}
+EOF
+echo "  ✅ Atomic generation manifest ($PKI_GENERATION_ID)"
+
 openssl verify -CAfile ca-cert.pem server-cert.pem client-cert.pem >/dev/null
 openssl x509 -checkend 86400 -noout -in server-cert.pem >/dev/null
 openssl x509 -checkend 86400 -noout -in client-cert.pem >/dev/null
+openssl crl -noout -in client-crl.pem >/dev/null
 chmod 600 ca-key.pem server-key.pem client-key.pem
-chmod 644 ca-cert.pem server-cert.pem client-cert.pem
+chmod 644 ca-cert.pem server-cert.pem client-cert.pem client-crl.pem generation.json
 
 # Summary
 echo ""
@@ -111,4 +164,5 @@ echo "    --from-file=ca-cert.pem --from-file=client-cert.pem --from-file=client
 echo "    -n traffic-analysis"
 echo "  kubectl create secret generic ingest-gateway-certs \\"
 echo "    --from-file=ca-cert.pem --from-file=server-cert.pem --from-file=server-key.pem \\"
+echo "    --from-file=client-crl.pem --from-file=generation.json \\"
 echo "    -n traffic-analysis"

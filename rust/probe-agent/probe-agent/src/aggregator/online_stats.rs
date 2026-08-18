@@ -3,8 +3,12 @@ use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 #[derive(Debug)]
 pub struct OnlineStats {
     count: AtomicU64,
-    mean: AtomicU64,
-    m2: AtomicU64,
+    /// (mean * 1e6, m2 * 1e6) protected together so concurrent writers cannot
+    /// lose updates between the two moments (mean/m2 used to be two separate
+    /// non-atomic load-compute-store RMWs). Uncontended in the current
+    /// single-writer design; the lock guarantees coherence if the table is
+    /// ever updated from multiple threads.
+    mean_m2: parking_lot::Mutex<(u64, u64)>,
     min: AtomicU32,
     max: AtomicU32,
 }
@@ -19,8 +23,7 @@ impl OnlineStats {
     pub const fn new() -> Self {
         Self {
             count: AtomicU64::new(0),
-            mean: AtomicU64::new(0),
-            m2: AtomicU64::new(0),
+            mean_m2: parking_lot::Mutex::new((0, 0)),
             min: AtomicU32::new(u32::MAX),
             max: AtomicU32::new(0),
         }
@@ -30,15 +33,16 @@ impl OnlineStats {
     pub fn update(&self, value: u32) {
         let n = self.count.fetch_add(1, Ordering::Relaxed) + 1;
 
-        let old_mean = self.mean.load(Ordering::Relaxed) as f64 / 1e6;
+        let mut guard = self.mean_m2.lock();
+        let (mean_scaled, m2_scaled) = *guard;
+        let old_mean = mean_scaled as f64 / 1e6;
+        let old_m2 = m2_scaled as f64 / 1e6;
         let delta = value as f64 - old_mean;
         let new_mean = old_mean + delta / n as f64;
         let delta2 = value as f64 - new_mean;
-        let old_m2 = self.m2.load(Ordering::Relaxed) as f64 / 1e6;
         let new_m2 = old_m2 + delta * delta2;
-
-        self.mean.store((new_mean * 1e6) as u64, Ordering::Relaxed);
-        self.m2.store((new_m2 * 1e6) as u64, Ordering::Relaxed);
+        *guard = ((new_mean * 1e6) as u64, (new_m2 * 1e6) as u64);
+        drop(guard);
 
         let mut current_min = self.min.load(Ordering::Acquire);
         while value < current_min {
@@ -78,17 +82,22 @@ impl OnlineStats {
     }
 
     #[inline]
+    fn mean_m2_f64(&self) -> (f64, f64) {
+        let (mean_scaled, m2_scaled) = *self.mean_m2.lock();
+        (mean_scaled as f64 / 1e6, m2_scaled as f64 / 1e6)
+    }
+
+    #[inline]
     pub fn sum(&self) -> u64 {
         let count = self.count.load(Ordering::Relaxed);
-        let mean = self.mean.load(Ordering::Relaxed) as f64 / 1e6;
+        let (mean, _) = self.mean_m2_f64();
         (mean * count as f64) as u64
     }
 
     #[inline]
     pub fn sum_sq(&self) -> u64 {
         let count = self.count.load(Ordering::Relaxed);
-        let mean = self.mean.load(Ordering::Relaxed) as f64 / 1e6;
-        let m2 = self.m2.load(Ordering::Relaxed) as f64 / 1e6;
+        let (mean, m2) = self.mean_m2_f64();
         let variance = if count > 1 {
             m2 / (count - 1) as f64
         } else {
@@ -103,7 +112,8 @@ impl OnlineStats {
         if count == 0 {
             return 0.0;
         }
-        (self.mean.load(Ordering::Relaxed) as f64 / 1e6) as f32
+        let (mean, _) = self.mean_m2_f64();
+        mean as f32
     }
 
     #[inline]
@@ -118,7 +128,7 @@ impl OnlineStats {
             return 0.0;
         }
 
-        let m2 = self.m2.load(Ordering::Relaxed) as f64 / 1e6;
+        let (_, m2) = self.mean_m2_f64();
         let variance = m2 / (count - 1) as f64;
 
         if variance > 0.0 {
@@ -160,8 +170,7 @@ impl OnlineStats {
 
     pub fn reset(&self) {
         self.count.store(0, Ordering::Release);
-        self.mean.store(0, Ordering::Release);
-        self.m2.store(0, Ordering::Release);
+        *self.mean_m2.lock() = (0, 0);
         self.min.store(u32::MAX, Ordering::Release);
         self.max.store(0, Ordering::Release);
     }
@@ -193,10 +202,8 @@ impl OnlineStats {
             return OnlineStatsSnapshot::empty();
         }
 
-        let mean1 = self.mean.load(Ordering::Relaxed) as f64 / 1e6;
-        let mean2 = other.mean.load(Ordering::Relaxed) as f64 / 1e6;
-        let m2_1 = self.m2.load(Ordering::Relaxed) as f64 / 1e6;
-        let m2_2 = other.m2.load(Ordering::Relaxed) as f64 / 1e6;
+        let (mean1, m2_1) = self.mean_m2_f64();
+        let (mean2, m2_2) = other.mean_m2_f64();
 
         let delta = mean2 - mean1;
         let mean = (count1 as f64 * mean1 + count2 as f64 * mean2) / total_count as f64;

@@ -1,4 +1,4 @@
-use super::flow_table::{FlowKey, FlowValue, PacketInfo, UpdateResult};
+use super::flow_table::{FlowKey, FlowUpdateError, FlowValue, PacketInfo, UpdateResult};
 use super::partitioned_flow_table::PartitionedFlowTable;
 use parking_lot::Mutex;
 use std::sync::Arc;
@@ -162,7 +162,7 @@ impl GenerationalFlowTable {
         let now = Instant::now();
         let now_ms = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_default()
             .as_millis() as u64;
 
         let mut evicted = Vec::new();
@@ -287,7 +287,11 @@ impl GenerationalFlowTable {
         evicted
     }
 
-    pub fn update(&self, key: &FlowKey, packet: &PacketInfo) -> UpdateResult {
+    pub fn update(
+        &self,
+        key: &FlowKey,
+        packet: &PacketInfo,
+    ) -> Result<UpdateResult, FlowUpdateError> {
         if self.young.contains_key(key) {
             return self.young.update(key, packet);
         }
@@ -296,8 +300,7 @@ impl GenerationalFlowTable {
             if let Some((k, v)) = self.old.remove(key) {
                 *self.demotions_to_young.lock() += 1;
                 debug!("Demoting hot flow from Old to Young: {:?}", k);
-                let dummy_packet = PacketInfo::default();
-                self.young.update_with_value(&k, v, &dummy_packet);
+                let _ = self.young.insert_with_value(&k, v);
                 return self.young.update(&k, packet);
             }
         }
@@ -306,8 +309,7 @@ impl GenerationalFlowTable {
             if let Some((k, v)) = self.tenured.remove(key) {
                 *self.demotions_to_young.lock() += 1;
                 debug!("Demoting hot flow from Tenured to Young: {:?}", k);
-                let dummy_packet = PacketInfo::default();
-                self.young.update_with_value(&k, v, &dummy_packet);
+                let _ = self.young.insert_with_value(&k, v);
                 return self.young.update(&k, packet);
             }
         }
@@ -319,7 +321,7 @@ impl GenerationalFlowTable {
         let _now = Instant::now();
         let now_ms = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_default()
             .as_millis() as u64;
 
         let promotion_threshold_ms = self.config.promotion_threshold.as_millis() as u64;
@@ -346,8 +348,7 @@ impl GenerationalFlowTable {
         if count > 0 {
             for key in to_promote {
                 if let Some((k, v)) = self.young.remove(&key) {
-                    let dummy_packet = PacketInfo::default();
-                    self.old.update_with_value(&k, v, &dummy_packet);
+                    self.old.insert_with_value(&k, v);
                 }
             }
             *self.promotions_to_old.lock() += count as u64;
@@ -359,7 +360,7 @@ impl GenerationalFlowTable {
         let _now = Instant::now();
         let now_ms = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_default()
             .as_millis() as u64;
 
         let tenuring_threshold_ms = self.config.tenuring_threshold.as_millis() as u64;
@@ -386,8 +387,7 @@ impl GenerationalFlowTable {
         if count > 0 {
             for key in to_promote {
                 if let Some((k, v)) = self.old.remove(&key) {
-                    let dummy_packet = PacketInfo::default();
-                    self.tenured.update_with_value(&k, v, &dummy_packet);
+                    self.tenured.insert_with_value(&k, v);
                 }
             }
             *self.promotions_to_tenured.lock() += count as u64;
@@ -397,15 +397,13 @@ impl GenerationalFlowTable {
 
     pub fn demote_to_young(&self, key: &FlowKey) {
         if let Some((k, v)) = self.old.remove(key) {
-            let dummy_packet = PacketInfo::default();
-            self.young.update_with_value(&k, v, &dummy_packet);
+            self.young.insert_with_value(&k, v);
             *self.demotions_to_young.lock() += 1;
             return;
         }
 
         if let Some((k, v)) = self.tenured.remove(key) {
-            let dummy_packet = PacketInfo::default();
-            self.young.update_with_value(&k, v, &dummy_packet);
+            self.young.insert_with_value(&k, v);
             *self.demotions_to_young.lock() += 1;
         }
     }

@@ -2,20 +2,24 @@ pub mod af_packet;
 pub mod frame_allocator;
 pub mod packet_batch;
 pub mod pcap_offline;
+pub mod pcap_replay_op;
 pub mod promisc;
 pub mod ring;
 pub mod umem;
+pub mod wire_inject;
 pub mod xdp;
 pub mod xdp_socket;
 pub mod xdp_sys;
 
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use thiserror::Error;
 
 pub use af_packet::AfPacketCapture;
 pub use frame_allocator::{FrameAllocator, FrameAllocatorStats};
 pub use packet_batch::{IndexedPacket, PacketBatchBuilder, PacketBatchExt, PacketBatchStats};
-pub use pcap_offline::{PcapReplayer, ReplaySpeed};
+pub use pcap_offline::{ManifestPcapReplayer, OfflinePcapManifest, PcapReplayer, ReplaySpeed};
 pub use promisc::PromiscuousMode;
 pub use ring::{CompQueue, FillQueue, RxQueue, TxQueue, XdpDesc};
 pub use umem::{Umem, UmemConfig};
@@ -25,12 +29,105 @@ pub use xdp_sys::{XdpMmapOffsets, XdpStatistics, XdpUmemReg};
 
 pub use crate::config::{CaptureConfig, CaptureMode};
 
+/// Precision carried by the capture source before normalization.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TimestampPrecision {
+    Microsecond,
+    Nanosecond,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CaptureTimestampProvenance {
+    SourceRecord,
+    KernelPerFrame,
+    CorrelatedMonotonic,
+    BatchWallClockDegraded,
+    DescriptorWallClockDegraded,
+}
+
+/// Immutable view passed from a capture batch into either parser route.
+/// Keeping the bytes and their checked timestamp together prevents adapters
+/// from silently changing time units or frame length between routes.
+#[derive(Debug, Clone, Copy)]
+pub struct CaptureFrame<'a> {
+    pub bytes: &'a [u8],
+    pub captured_at: CaptureTimestamp,
+}
+
+impl<'a> CaptureFrame<'a> {
+    pub fn new(bytes: &'a [u8], captured_at: CaptureTimestamp) -> Self {
+        Self { bytes, captured_at }
+    }
+}
+
+/// Checked capture time used by all deterministic offline readers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CaptureTimestamp {
+    epoch_micros: u64,
+    pub source_precision: TimestampPrecision,
+    pub precision_loss_nanos: u16,
+    pub provenance: CaptureTimestampProvenance,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
+pub enum CaptureTimestampError {
+    #[error("CAPTURE_TIMESTAMP_SUBSECOND_OUT_OF_RANGE")]
+    SubsecondOutOfRange,
+    #[error("CAPTURE_TIMESTAMP_OVERFLOW")]
+    Overflow,
+}
+
+impl CaptureTimestamp {
+    pub fn from_unix_parts(
+        seconds: u64,
+        subsecond: u32,
+        precision: TimestampPrecision,
+    ) -> std::result::Result<Self, CaptureTimestampError> {
+        let (subsecond_micros, precision_loss_nanos) = match precision {
+            TimestampPrecision::Microsecond if subsecond < 1_000_000 => (subsecond as u64, 0),
+            TimestampPrecision::Nanosecond if subsecond < 1_000_000_000 => {
+                ((subsecond / 1_000) as u64, (subsecond % 1_000) as u16)
+            }
+            _ => return Err(CaptureTimestampError::SubsecondOutOfRange),
+        };
+        let epoch_micros = seconds
+            .checked_mul(1_000_000)
+            .and_then(|value| value.checked_add(subsecond_micros))
+            .ok_or(CaptureTimestampError::Overflow)?;
+        Ok(Self {
+            epoch_micros,
+            source_precision: precision,
+            precision_loss_nanos,
+            provenance: CaptureTimestampProvenance::SourceRecord,
+        })
+    }
+
+    pub fn from_epoch_micros(epoch_micros: u64, provenance: CaptureTimestampProvenance) -> Self {
+        Self {
+            epoch_micros,
+            source_precision: TimestampPrecision::Microsecond,
+            precision_loss_nanos: 0,
+            provenance,
+        }
+    }
+
+    pub fn epoch_micros(self) -> u64 {
+        self.epoch_micros
+    }
+
+    pub fn with_provenance(mut self, provenance: CaptureTimestampProvenance) -> Self {
+        self.provenance = provenance;
+        self
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct FrameInfo {
     pub idx: usize,
     pub offset: u32,
     pub len: u32,
-    pub timestamp: u64,
+    pub captured_at: CaptureTimestamp,
 }
 
 impl Default for FrameInfo {
@@ -39,7 +136,10 @@ impl Default for FrameInfo {
             idx: 0,
             offset: 0,
             len: 0,
-            timestamp: 0,
+            captured_at: CaptureTimestamp::from_epoch_micros(
+                0,
+                CaptureTimestampProvenance::BatchWallClockDegraded,
+            ),
         }
     }
 }
@@ -97,20 +197,20 @@ impl PacketBatch {
         }
     }
 
-    pub fn copy_packets(&self) -> Vec<(Vec<u8>, u64)> {
+    pub fn copy_packets(&self) -> Vec<(Vec<u8>, CaptureTimestamp)> {
         let mut result = Vec::with_capacity(self.frames.len());
         for (i, info) in self.frames.iter().enumerate() {
             if let Some(data) = self.get_packet(i) {
-                result.push((data.to_vec(), info.timestamp));
+                result.push((data.to_vec(), info.captured_at));
             }
         }
         result
     }
 
-    pub fn copy_packet(&self, i: usize) -> Option<(Vec<u8>, u64)> {
+    pub fn copy_packet(&self, i: usize) -> Option<(Vec<u8>, CaptureTimestamp)> {
         let info = self.frames.get(i)?;
         let data = self.get_packet(i)?;
-        Some((data.to_vec(), info.timestamp))
+        Some((data.to_vec(), info.captured_at))
     }
 
     pub fn transfer_ownership(&mut self) {
@@ -134,15 +234,23 @@ impl PacketBatch {
             return None;
         }
 
-        let min_ts = self.frames.iter().map(|f| f.timestamp).min().unwrap();
-        let max_ts = self.frames.iter().map(|f| f.timestamp).max().unwrap();
+        let mut timestamps = self.frames.iter().map(|f| f.captured_at.epoch_micros());
+        let mut min_ts = match timestamps.next() {
+            Some(first) => first,
+            None => return None,
+        };
+        let mut max_ts = min_ts;
+        for ts in timestamps {
+            min_ts = min_ts.min(ts);
+            max_ts = max_ts.max(ts);
+        }
 
         Some((min_ts, max_ts))
     }
 
     /// Create a PacketBatch from owned packet data (for PCAP offline mode).
     /// All packets are stored in a single buffer that backs the UMEM.
-    pub fn from_owned_packets(packets: Vec<(Vec<u8>, u64)>) -> Self {
+    pub fn from_owned_packets(packets: Vec<(Vec<u8>, CaptureTimestamp)>) -> Self {
         let total_len: usize = packets.iter().map(|(d, _)| d.len()).sum();
         let size = total_len.max(1);
         let mut buffer: Vec<u8> = vec![0u8; size];
@@ -158,7 +266,7 @@ impl PacketBatch {
                 idx: 0, // All packets in same buffer, identified by offset
                 offset: offset as u32,
                 len: len as u32,
-                timestamp: *ts,
+                captured_at: *ts,
             });
             offset += len;
         }
@@ -188,7 +296,7 @@ pub struct PacketBatchIter<'a> {
 }
 
 impl<'a> Iterator for PacketBatchIter<'a> {
-    type Item = (&'a [u8], u64);
+    type Item = (&'a [u8], CaptureTimestamp);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index >= self.batch.len() {
@@ -197,7 +305,7 @@ impl<'a> Iterator for PacketBatchIter<'a> {
         let info = &self.batch.frames[self.index];
         let data = self.batch.get_packet(self.index)?;
         self.index += 1;
-        Some((data, info.timestamp))
+        Some((data, info.captured_at))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -213,6 +321,8 @@ pub struct CaptureStats {
     pub packets_received: u64,
     pub packets_dropped: u64,
     pub bytes_received: u64,
+    pub allocation_drops: u64,
+    pub kernel_drops: u64,
 }
 
 impl CaptureStats {
@@ -228,12 +338,16 @@ impl CaptureStats {
         self.packets_received = 0;
         self.packets_dropped = 0;
         self.bytes_received = 0;
+        self.allocation_drops = 0;
+        self.kernel_drops = 0;
     }
 
     pub fn merge(&mut self, other: &CaptureStats) {
         self.packets_received += other.packets_received;
         self.packets_dropped += other.packets_dropped;
         self.bytes_received += other.bytes_received;
+        self.allocation_drops += other.allocation_drops;
+        self.kernel_drops += other.kernel_drops;
     }
 }
 
@@ -243,6 +357,11 @@ pub trait Capturer: Send + Sync {
     async fn stop(&mut self) -> Result<()>;
     fn poll(&mut self) -> Result<Option<PacketBatch>>;
     fn stats(&self) -> CaptureStats;
+    /// True only when a finite offline source has consumed its final record.
+    /// A transient empty live poll is never end-of-input.
+    fn end_of_input(&self) -> bool {
+        false
+    }
 }
 
 pub async fn create_capturer(config: &CaptureConfig) -> Result<Box<dyn Capturer>> {
@@ -255,7 +374,34 @@ pub async fn create_capturer(config: &CaptureConfig) -> Result<Box<dyn Capturer>
     let capturer: Box<dyn Capturer> = match config.mode {
         CaptureMode::PcapOffline => {
             tracing::info!("Initializing PCAP offline replayer");
-            Box::new(PcapReplayer::from_config(config)?)
+            if config.pcap_manifest_route_enabled {
+                let manifest_path = config
+                    .pcap_manifest_path
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("PCAP_MANIFEST_PATH_REQUIRED"))?;
+                let expected_hash = config
+                    .pcap_manifest_sha256
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("PCAP_MANIFEST_SHA256_REQUIRED"))?;
+                let manifest =
+                    OfflinePcapManifest::load_and_validate(std::path::Path::new(manifest_path))?;
+                if manifest.body_sha256 != expected_hash {
+                    anyhow::bail!(
+                        "PCAP_MANIFEST_BODY_HASH_MISMATCH expected={} actual={}",
+                        expected_hash,
+                        manifest.body_sha256
+                    );
+                }
+                let speed =
+                    ReplaySpeed::from_str(config.replay_speed.as_deref().unwrap_or("original"))?;
+                Box::new(ManifestPcapReplayer::from_manifest(
+                    manifest,
+                    speed,
+                    config.loop_replay.unwrap_or(false),
+                )?)
+            } else {
+                Box::new(PcapReplayer::from_config(config)?)
+            }
         }
         CaptureMode::Xdp | CaptureMode::XdpSkb | CaptureMode::XdpOffload => {
             tracing::info!("Initializing AF_XDP capturer (mode: {:?})", config.mode);

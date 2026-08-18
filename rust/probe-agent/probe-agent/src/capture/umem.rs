@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 use crossbeam_queue::ArrayQueue;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
-use tracing::{debug, warn};
+use tracing::{debug, error, warn};
 
 #[derive(Clone, Debug)]
 pub struct UmemConfig {
@@ -83,6 +83,9 @@ struct UmemInner {
     allocated_frames: AtomicUsize,
     batch_refcount: AtomicUsize,
     mmap_valid: bool,
+    /// Owns the backing allocation for non-mmap UMEMs (dummy / from_buffer);
+    /// `None` for mmap-based UMEMs where `munmap` releases the memory.
+    owned_buffer: Option<Box<[u8]>>,
 }
 
 impl UmemInner {
@@ -142,16 +145,24 @@ impl UmemInner {
 
     fn dummy(size: usize) -> Self {
         let frame_size = size.max(4096);
-        let buffer = vec![0u8; frame_size];
-        Self::from_buffer(buffer)
+        Self::from_buffer(vec![0u8; frame_size])
     }
 
     fn from_buffer(mut buffer: Vec<u8>) -> Self {
         let size = buffer.len();
         let frame_size = size.max(4096);
+        // Keep the allocation alive in `owned_buffer` so frame addressing stays
+        // valid for the whole lifetime; never `mem::forget` the Vec (that used
+        // to leak the entire buffer because the non-mmap Drop path returned
+        // without reclaiming it).
+        if size < frame_size {
+            let mut padded = vec![0u8; frame_size].into_boxed_slice();
+            padded[..size].copy_from_slice(&buffer);
+            buffer = padded.to_vec();
+        }
+        let owned_buffer = buffer.into_boxed_slice();
+        let addr = owned_buffer.as_ptr() as *mut u8;
         let frame_count = 1usize;
-        let addr = buffer.as_mut_ptr();
-        std::mem::forget(buffer); // Transfer ownership to raw pointer
 
         let free_frames = Arc::new(ArrayQueue::new(frame_count));
         free_frames.push(0).ok();
@@ -168,6 +179,7 @@ impl UmemInner {
             allocated_frames: AtomicUsize::new(0),
             batch_refcount: AtomicUsize::new(0),
             mmap_valid: false,
+            owned_buffer: Some(owned_buffer),
         }
     }
 
@@ -197,6 +209,7 @@ impl UmemInner {
             allocated_frames: AtomicUsize::new(0),
             batch_refcount: AtomicUsize::new(0),
             mmap_valid: true,
+            owned_buffer: None,
         })
     }
 }
@@ -204,7 +217,9 @@ impl UmemInner {
 impl Drop for UmemInner {
     fn drop(&mut self) {
         if !self.mmap_valid {
-            debug!("UMEM not mapped, skipping munmap");
+            // The backing allocation is reclaimed by `owned_buffer` when this
+            // struct drops; there is no mmap to unmap.
+            debug!("UMEM not mapped, owned buffer reclaimed by field drop");
             return;
         }
 
@@ -219,7 +234,7 @@ impl Drop for UmemInner {
 
         while self.batch_refcount.load(Ordering::Acquire) > 0 {
             if start.elapsed() > timeout {
-                panic!(
+                error!(
                     "CRITICAL: Timeout waiting for {} PacketBatch references to be released. \
                      This indicates a logic bug where PacketBatch is held too long. \
                      Allocated frames: {}, Free frames: {}",
@@ -227,6 +242,7 @@ impl Drop for UmemInner {
                     self.allocated_frames.load(Ordering::Acquire),
                     self.free_frames.len()
                 );
+                break;
             }
             std::thread::sleep(std::time::Duration::from_millis(10));
         }
@@ -239,8 +255,8 @@ impl Drop for UmemInner {
 
         let allocated = self.allocated_frames.load(Ordering::Acquire);
         if allocated > 0 {
-            panic!(
-                "CRITICAL: UMEM dropped with {} frames still allocated! \
+            warn!(
+                "UMEM dropped with {} frames still allocated! \
                  This indicates a logic bug (frames not properly freed). \
                  Total frames: {}, Free frames: {}, Batch refs: {}",
                 allocated,
@@ -255,12 +271,13 @@ impl Drop for UmemInner {
 
         while self.allocated_frames.load(Ordering::Acquire) > 0 {
             if additional_start.elapsed() > additional_timeout {
-                panic!(
+                error!(
                     "CRITICAL: Timeout waiting for frames to be released. \
                      {} frames still allocated after {} seconds.",
                     self.allocated_frames.load(Ordering::Acquire),
                     timeout.as_secs() + additional_timeout.as_secs()
                 );
+                break;
             }
             std::thread::sleep(std::time::Duration::from_millis(10));
         }
@@ -270,8 +287,8 @@ impl Drop for UmemInner {
         let ret = unsafe { libc::munmap(self.addr as *mut libc::c_void, self.size) };
 
         if ret != 0 {
-            panic!(
-                "CRITICAL: munmap failed for UMEM (addr={:p}, size={}): {}. \
+            error!(
+                "munmap failed for UMEM (addr={:p}, size={}): {}. \
                  This will cause memory leak of {} MB!",
                 self.addr,
                 self.size,
@@ -433,32 +450,36 @@ impl Umem {
         } else if addr >= base_addr && addr - base_addr < self.inner.size {
             addr - base_addr
         } else {
-            warn!(
-                "Address 0x{:x} is outside UMEM [0x{:x}, 0x{:x}) and offset range [0, {}), clamping to last frame",
+            // Out-of-range addresses must NOT be clamped to the last frame:
+            // clamping would alias a legitimate frame and create two `&mut`
+            // references to the same memory. Return an invalid index so the
+            // descriptor is dropped by the caller's bookkeeping instead.
+            error!(
+                "Address 0x{:x} is outside UMEM [0x{:x}, 0x{:x}) and offset range [0, {}), dropping descriptor",
                 addr,
                 base_addr,
                 base_addr.saturating_add(self.inner.size),
                 self.inner.size
             );
-            return self.inner.frame_count - 1;
+            return self.inner.frame_count;
         };
 
         if offset >= self.inner.size {
-            warn!(
-                "Address offset {} exceeds UMEM size {}, clamping to last frame",
+            error!(
+                "Address offset {} exceeds UMEM size {}, dropping descriptor",
                 offset, self.inner.size
             );
-            return self.inner.frame_count - 1;
+            return self.inner.frame_count;
         }
 
         let frame_idx = offset / self.inner.frame_size;
 
         if frame_idx >= self.inner.frame_count {
-            warn!(
-                "Calculated frame index {} exceeds count {}, clamping",
+            error!(
+                "Calculated frame index {} exceeds count {}, dropping descriptor",
                 frame_idx, self.inner.frame_count
             );
-            return self.inner.frame_count - 1;
+            return self.inner.frame_count;
         }
 
         frame_idx
@@ -506,11 +527,16 @@ impl Umem {
     }
 
     pub fn free_frame(&self, idx: usize) {
-        debug_assert!(
-            idx < self.inner.frame_count,
-            "Frame index {} out of range",
-            idx
-        );
+        if idx >= self.inner.frame_count {
+            // An invalid (dropped) descriptor index must never be pushed back
+            // into the free queue: that would alias the frame it previously
+            // pointed at.
+            warn!(
+                "free_frame: frame index {} out of range (count={}), ignoring",
+                idx, self.inner.frame_count
+            );
+            return;
+        }
 
         if self.inner.free_frames.push(idx).is_err() {
             warn!("Free frames queue is full, frame {} lost", idx);
@@ -531,15 +557,26 @@ impl Umem {
     }
 
     pub fn dec_batch_refcount(&self) {
-        let old_count = self.inner.batch_refcount.fetch_sub(1, Ordering::AcqRel);
-        tracing::trace!(
-            "dec_batch_refcount: {} -> {}",
-            old_count,
-            old_count.saturating_sub(1)
-        );
-
-        if old_count == 0 {
-            warn!("dec_batch_refcount called when refcount is already 0");
+        // Guard against underflow: decrementing from zero would wrap the
+        // counter around to usize::MAX and hang the Drop wait loop.
+        loop {
+            let current = self.inner.batch_refcount.load(Ordering::Acquire);
+            if current == 0 {
+                warn!("dec_batch_refcount called when refcount is already 0");
+                return;
+            }
+            match self.inner.batch_refcount.compare_exchange_weak(
+                current,
+                current - 1,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            ) {
+                Ok(_) => {
+                    tracing::trace!("dec_batch_refcount: {} -> {}", current, current - 1);
+                    return;
+                }
+                Err(_) => continue,
+            }
         }
     }
 

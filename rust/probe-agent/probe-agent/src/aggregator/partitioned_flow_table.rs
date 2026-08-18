@@ -1,4 +1,9 @@
-use super::flow_table::{FlowKey, FlowTable, FlowValue, PacketInfo, UpdateResult};
+use super::flow_table::{
+    FlowKey, FlowTable, FlowUpdateError, FlowValue, PacketInfo, UpdateResult,
+    FLOW_IDENTITY_REVISION, OBSERVATION_SCOPE_REVISION,
+};
+use crate::parser::security::PacketFeatureObservation;
+use crate::parser::FlowSample;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 pub struct PartitionedFlowTable {
@@ -55,16 +60,58 @@ impl PartitionedFlowTable {
     }
 
     #[inline]
-    pub fn update(&self, key: &FlowKey, packet: &PacketInfo) -> UpdateResult {
+    pub fn update(
+        &self,
+        key: &FlowKey,
+        packet: &PacketInfo,
+    ) -> Result<UpdateResult, FlowUpdateError> {
         let partition_idx = self.partition_for(key);
-        let result = self.partitions[partition_idx].update(key, packet);
+        let result = self.partitions[partition_idx].update(key, packet)?;
 
         self.stats.updates.fetch_add(1, Ordering::Relaxed);
         if matches!(result, UpdateResult::NewFlow) {
             self.stats.new_flows.fetch_add(1, Ordering::Relaxed);
         }
 
-        result
+        Ok(result)
+    }
+
+    pub fn update_sample(&self, sample: &FlowSample) -> Result<UpdateResult, FlowUpdateError> {
+        self.update_sample_inner(sample, None)
+    }
+
+    pub fn update_sample_with_feature(
+        &self,
+        sample: &FlowSample,
+        feature: &PacketFeatureObservation,
+    ) -> Result<UpdateResult, FlowUpdateError> {
+        self.update_sample_inner(sample, Some(feature))
+    }
+
+    fn update_sample_inner(
+        &self,
+        sample: &FlowSample,
+        feature: Option<&PacketFeatureObservation>,
+    ) -> Result<UpdateResult, FlowUpdateError> {
+        if sample.identity_revision != FLOW_IDENTITY_REVISION
+            || sample.observation_scope_revision != OBSERVATION_SCOPE_REVISION
+        {
+            return Err(FlowUpdateError::RevisionMismatch {
+                identity_revision: sample.identity_revision,
+                observation_scope_revision: sample.observation_scope_revision,
+            });
+        }
+        let partition_idx = self.partition_for(&sample.key);
+        let result = self.partitions[partition_idx].update_with_feature(
+            &sample.key,
+            &sample.packet,
+            feature,
+        )?;
+        self.stats.updates.fetch_add(1, Ordering::Relaxed);
+        if matches!(result, UpdateResult::NewFlow) {
+            self.stats.new_flows.fetch_add(1, Ordering::Relaxed);
+        }
+        Ok(result)
     }
 
     #[inline]
@@ -73,16 +120,16 @@ impl PartitionedFlowTable {
         key: &FlowKey,
         packet: &PacketInfo,
         now_ms: u64,
-    ) -> UpdateResult {
+    ) -> Result<UpdateResult, FlowUpdateError> {
         let partition_idx = self.partition_for(key);
-        let result = self.partitions[partition_idx].update_with_time(key, packet, now_ms);
+        let result = self.partitions[partition_idx].update_with_time(key, packet, now_ms)?;
 
         self.stats.updates.fetch_add(1, Ordering::Relaxed);
         if matches!(result, UpdateResult::NewFlow) {
             self.stats.new_flows.fetch_add(1, Ordering::Relaxed);
         }
 
-        result
+        Ok(result)
     }
 
     pub fn update_with_value(
@@ -90,28 +137,33 @@ impl PartitionedFlowTable {
         key: &FlowKey,
         value: FlowValue,
         packet: &PacketInfo,
-    ) -> UpdateResult {
+    ) -> Result<UpdateResult, FlowUpdateError> {
         let partition_idx = self.partition_for(key);
         let partition = &self.partitions[partition_idx];
 
         value.dscp_bitmap.store(0, Ordering::Relaxed);
 
         if let Some(_old_value) = partition.insert_with_value(key.clone(), value) {
-            partition.update(key, packet);
+            partition.update(key, packet)?;
             self.stats.updates.fetch_add(1, Ordering::Relaxed);
-            UpdateResult::Updated
+            Ok(UpdateResult::Updated)
         } else {
-            partition.update(key, packet);
+            partition.update(key, packet)?;
             self.stats.updates.fetch_add(1, Ordering::Relaxed);
             self.stats.new_flows.fetch_add(1, Ordering::Relaxed);
-            UpdateResult::NewFlow
+            Ok(UpdateResult::NewFlow)
         }
+    }
+
+    pub fn insert_with_value(&self, key: &FlowKey, value: FlowValue) -> Option<FlowValue> {
+        let partition_idx = self.partition_for(key);
+        self.partitions[partition_idx].insert_with_value(key.clone(), value)
     }
 
     #[inline]
     pub fn update_batch(&self, updates: &[(FlowKey, PacketInfo)]) {
         for (key, packet) in updates {
-            self.update(key, packet);
+            let _ = self.update(key, packet);
         }
     }
 
@@ -152,7 +204,7 @@ impl PartitionedFlowTable {
 
         let now_ms = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_default()
             .as_millis() as u64;
 
         self.partitions
@@ -189,7 +241,7 @@ impl PartitionedFlowTable {
 
         let now_ms = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_default()
             .as_millis() as u64;
 
         self.partitions

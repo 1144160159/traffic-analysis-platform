@@ -28,6 +28,7 @@ aggregator:
 
 archiver:
   enabled: false
+  durable_spool_enabled: false
 
 sender:
   gateway_addr: "${GATEWAY_ADDR:-http://127.0.0.1:50051}"

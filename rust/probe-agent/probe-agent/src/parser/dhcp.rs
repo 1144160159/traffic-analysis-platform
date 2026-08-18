@@ -10,6 +10,8 @@
 use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
+use super::ApplicationDecodeError;
+
 /// MAC 地址类型 (6 字节)
 pub type MacAddr = [u8; 6];
 
@@ -274,8 +276,9 @@ impl DhcpParser {
         // DHCP服务器 IP (siaddr)
         let server_ip = Ipv4Addr::new(data[20], data[21], data[22], data[23]);
 
-        // 解析DHCP选项 (从偏移量240开始，跳过4字节 magic cookie)
-        let options_offset = 240;
+        // BOOTP fixed header is 236 bytes. RFC 2131 places the four-byte
+        // DHCP magic cookie at 236 and options at 240.
+        let options_offset = 236;
         if options_offset + 4 > data.len() {
             return None;
         }
@@ -373,6 +376,125 @@ impl DhcpParser {
         Some(lease)
     }
 
+    pub fn parse_dhcp_packet_checked(
+        &mut self,
+        data: &[u8],
+        source_mac: MacAddr,
+        timestamp_ms: u64,
+    ) -> Result<DhcpLease, ApplicationDecodeError> {
+        if data.len() < 240 {
+            return Err(ApplicationDecodeError::Truncated {
+                protocol: "DHCP",
+                stage: "bootp_cookie",
+                required: 240,
+                actual: data.len(),
+            });
+        }
+        if data[236..240] != [99, 130, 83, 99] {
+            return Err(ApplicationDecodeError::Malformed {
+                protocol: "DHCP",
+                reason: "invalid magic cookie",
+            });
+        }
+        if !matches!(data[0], 1 | 2) {
+            return Err(ApplicationDecodeError::Unsupported {
+                protocol: "DHCP",
+                stage: "bootp_operation",
+                value: data[0] as u32,
+            });
+        }
+        if data[1] != 1 || data[2] != 6 {
+            return Err(ApplicationDecodeError::Unsupported {
+                protocol: "DHCP",
+                stage: "hardware_address_format",
+                value: ((data[1] as u32) << 8) | data[2] as u32,
+            });
+        }
+        let options = Self::validate_options(&data[240..], true)?;
+        if let Some(relay) = options.get(&82) {
+            Self::validate_options(relay, false).map_err(|_| {
+                ApplicationDecodeError::Malformed {
+                    protocol: "DHCP",
+                    reason: "relay-agent sub-options are malformed",
+                }
+            })?;
+        }
+        let message_type = options
+            .get(&53)
+            .and_then(|value| value.first())
+            .copied()
+            .ok_or(ApplicationDecodeError::Malformed {
+                protocol: "DHCP",
+                reason: "message type option is missing or truncated",
+            })?;
+        if !(1..=8).contains(&message_type) {
+            return Err(ApplicationDecodeError::Unsupported {
+                protocol: "DHCP",
+                stage: "message_type",
+                value: message_type as u32,
+            });
+        }
+        self.parse_dhcp_packet(data, source_mac, timestamp_ms)
+            .ok_or(ApplicationDecodeError::Malformed {
+                protocol: "DHCP",
+                reason: "validated DHCP payload was not decoded",
+            })
+    }
+
+    fn validate_options(
+        data: &[u8],
+        require_end: bool,
+    ) -> Result<HashMap<u8, Vec<u8>>, ApplicationDecodeError> {
+        let mut options = HashMap::new();
+        let mut offset = 0usize;
+        let mut ended = false;
+        while offset < data.len() {
+            let code = data[offset];
+            offset += 1;
+            match code {
+                0 => continue,
+                255 => {
+                    ended = true;
+                    break;
+                }
+                _ => {}
+            }
+            if offset >= data.len() {
+                return Err(ApplicationDecodeError::Truncated {
+                    protocol: "DHCP",
+                    stage: "option_length",
+                    required: offset + 1,
+                    actual: data.len(),
+                });
+            }
+            let len = usize::from(data[offset]);
+            offset += 1;
+            let end = offset
+                .checked_add(len)
+                .ok_or(ApplicationDecodeError::Malformed {
+                    protocol: "DHCP",
+                    reason: "option length overflow",
+                })?;
+            if end > data.len() {
+                return Err(ApplicationDecodeError::Truncated {
+                    protocol: "DHCP",
+                    stage: "option_value",
+                    required: end,
+                    actual: data.len(),
+                });
+            }
+            options.insert(code, data[offset..end].to_vec());
+            offset = end;
+        }
+        if require_end && !ended {
+            return Err(ApplicationDecodeError::Malformed {
+                protocol: "DHCP",
+                reason: "end option is missing",
+            });
+        }
+        Ok(options)
+    }
+
     /// 解析DHCP选项
     fn parse_dhcp_options(&self, data: &[u8]) -> Option<HashMap<u8, Vec<u8>>> {
         let mut options = HashMap::new();
@@ -465,10 +587,14 @@ impl DhcpParser {
     /// 更新内部状态
     fn update_state(&mut self, lease: &DhcpLease) {
         // 更新租约记录
-        self.leases.insert(lease.mac_address, lease.clone());
-
-        // 更新 IP→MAC 映射
-        self.ip_to_mac.insert(lease.assigned_ip, lease.mac_address);
+        let is_bound_lease = matches!(
+            lease.message_type,
+            DhcpMessageType::Offer | DhcpMessageType::Ack
+        ) && lease.assigned_ip != Ipv4Addr::UNSPECIFIED;
+        if is_bound_lease {
+            self.leases.insert(lease.mac_address, lease.clone());
+            self.ip_to_mac.insert(lease.assigned_ip, lease.mac_address);
+        }
 
         // 更新 MAC→hostname
         if let Some(ref hostname) = lease.hostname {
@@ -557,22 +683,22 @@ mod tests {
         pkt[33] = client_mac[5];
 
         // Magic Cookie
-        pkt[240] = 99;
-        pkt[241] = 130;
-        pkt[242] = 83;
-        pkt[243] = 99;
+        pkt[236] = 99;
+        pkt[237] = 130;
+        pkt[238] = 83;
+        pkt[239] = 99;
 
         // Option 53: DHCP Message Type = Discover
-        pkt[244] = 53;
-        pkt[245] = 1;
-        pkt[246] = 1; // DHCPDISCOVER
+        pkt[240] = 53;
+        pkt[241] = 1;
+        pkt[242] = 1; // DHCPDISCOVER
 
         // Option 12: Hostname
         let hn = hostname.as_bytes();
-        pkt[247] = 12;
-        pkt[248] = hn.len() as u8;
-        pkt[249..249 + hn.len()].copy_from_slice(hn);
-        let next = 249 + hn.len();
+        pkt[243] = 12;
+        pkt[244] = hn.len() as u8;
+        pkt[245..245 + hn.len()].copy_from_slice(hn);
+        let next = 245 + hn.len();
 
         // Option 60: Vendor Class Identifier
         let vc = b"MSFT 5.0";
@@ -599,6 +725,29 @@ mod tests {
         assert_eq!(lease.vendor_class, Some("MSFT 5.0".to_string()));
         assert!(lease.is_new_device);
         assert_eq!(parser.lease_stats.total_discoveries, 1);
+        assert!(parser.leases.is_empty());
+        assert!(!parser.ip_to_mac.contains_key(&Ipv4Addr::UNSPECIFIED));
+    }
+
+    #[test]
+    fn test_checked_parser_rejects_truncated_option_without_state_write() {
+        let mut parser = DhcpParser::new();
+        let mac = mac_new(0x00, 0x1A, 0xC5, 0x01, 0x02, 0x03);
+        let mut packet = build_discover_packet(mac, "DEVICE");
+        packet.truncate(242);
+        packet[240] = 12;
+        packet[241] = 20;
+        let result = parser.parse_dhcp_packet_checked(&packet, mac, 1000);
+        assert!(matches!(
+            result,
+            Err(ApplicationDecodeError::Truncated {
+                protocol: "DHCP",
+                stage: "option_value",
+                ..
+            })
+        ));
+        assert!(parser.leases.is_empty());
+        assert!(parser.ip_to_mac.is_empty());
     }
 
     #[test]

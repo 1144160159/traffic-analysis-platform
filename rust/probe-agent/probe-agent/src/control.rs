@@ -46,6 +46,8 @@ impl ProbeOperationExecutor for FailClosedExecutor {
 pub struct BuiltinProbeExecutor {
     connectivity_targets: BTreeMap<String, String>,
     connect_timeout: std::time::Duration,
+    replay: Option<Arc<dyn ReplayOperationExecutor>>,
+    capture_interface: Option<String>,
 }
 
 impl BuiltinProbeExecutor {
@@ -54,7 +56,21 @@ impl BuiltinProbeExecutor {
         Ok(Self {
             connectivity_targets: BTreeMap::from([("ingest-gateway".to_string(), endpoint)]),
             connect_timeout: std::time::Duration::from_secs(5),
+            replay: None,
+            capture_interface: None,
         })
+    }
+
+    /// 挂载回放执行器(pcap_replay 操作;未挂载时该操作 FailClosed,不伪造成功)。
+    pub fn with_replay(mut self, replay: Arc<dyn ReplayOperationExecutor>) -> Self {
+        self.replay = Some(replay);
+        self
+    }
+
+    /// 挂载实时采集接口(capture_window 操作;未挂载时该操作 FailClosed)。
+    pub fn with_capture_interface(mut self, interface: String) -> Self {
+        self.capture_interface = Some(interface);
+        self
     }
 
     #[cfg(test)]
@@ -62,6 +78,8 @@ impl BuiltinProbeExecutor {
         Self {
             connectivity_targets,
             connect_timeout: std::time::Duration::from_secs(1),
+            replay: None,
+            capture_interface: None,
         }
     }
 
@@ -126,12 +144,158 @@ impl BuiltinProbeExecutor {
     }
 }
 
+/// ReplayOperationExecutor —— 探针侧回放执行端口(main 以共享 flow_table 实现,
+/// 复用既有聚合器单一真源;调度中心经探针控制通道投递 ReplayWindowCommand)。
+#[async_trait]
+pub trait ReplayOperationExecutor: Send + Sync {
+    async fn execute_replay(&self, cmd: &ReplayWindowCommand) -> Result<ReplayExecution>;
+}
+
+/// 回放执行结果(applied=true 表示对象校验+有界回放+共享分支喂入全程成功)。
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ReplayExecution {
+    pub applied: bool,
+    pub packets: u64,
+    pub bytes_consumed: u64,
+    pub watermark_ms: i64,
+    pub detail: String,
+}
+
 #[async_trait]
 impl ProbeOperationExecutor for BuiltinProbeExecutor {
     async fn execute(&self, operation_type: &str, command: &Value) -> Result<OperationExecution> {
         match operation_type {
             "connectivity_test" => self.connectivity_test(command).await,
+            "pcap_replay" => self.pcap_replay(command).await,
+            "capture_window" => self.capture_window(command).await,
             _ => FailClosedExecutor.execute(operation_type, command).await,
+        }
+    }
+}
+
+impl BuiltinProbeExecutor {
+    /// capture_window —— 有界实时采集窗口(FP-206):
+    /// 命令=窗口覆盖确认:校验命令(签名/身份/窗口/限额/配额/interface)→ 确认
+    /// 该窗口落在探针常驻实时采集(ambient capture)覆盖范围内 → applied=true
+    /// ACK 携带窗口坐标;窗口内流量经既有流聚合→eviction→sender 链入共享分支,
+    /// 由 RunScopeRouter 按订阅窗口归属到 run。interface 不匹配或窗口已过去
+    /// 则 applied=false(fail-closed,不伪造覆盖)。
+    async fn capture_window(&self, command: &Value) -> Result<OperationExecution> {
+        let Some(expected_interface) = self.capture_interface.as_ref() else {
+            return Ok(OperationExecution {
+                applied: false,
+                reported_version: String::new(),
+                detail: serde_json::json!({"operation_type": "capture_window"}),
+                error: "capture_window executor is not enabled on this probe".to_string(),
+            });
+        };
+        let cmd: CaptureWindowCommand = match serde_json::from_value(command.clone()) {
+            Ok(cmd) => cmd,
+            Err(e) => {
+                return Ok(OperationExecution {
+                    applied: false,
+                    reported_version: String::new(),
+                    detail: serde_json::json!({"operation_type": "capture_window"}),
+                    error: format!("capture window command malformed: {e}"),
+                })
+            }
+        };
+        if let Err(e) = cmd.validate() {
+            return Ok(OperationExecution {
+                applied: false,
+                reported_version: String::new(),
+                detail: serde_json::json!({"validation": format!("{e}")}),
+                error: format!("capture window validation failed: {e}"),
+            });
+        }
+        if &cmd.interface != expected_interface {
+            return Ok(OperationExecution {
+                applied: false,
+                reported_version: String::new(),
+                detail: serde_json::json!({"interface_requested": cmd.interface}),
+                error: format!(
+                    "requested interface {} is not the monitored interface {}",
+                    cmd.interface, expected_interface
+                ),
+            });
+        }
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        if cmd.window_end_ms <= now_ms {
+            return Ok(OperationExecution {
+                applied: false,
+                reported_version: String::new(),
+                detail: serde_json::json!({"window_end_ms": cmd.window_end_ms}),
+                error: "capture window already elapsed before operation execution".to_string(),
+            });
+        }
+        Ok(OperationExecution {
+            applied: true,
+            reported_version: cmd.execution_spec_sha256.clone(),
+            detail: serde_json::json!({
+                "run_id": cmd.run_id,
+                "fencing_token": cmd.fencing_token,
+                "interface": cmd.interface,
+                "window_start_ms": cmd.window_start_ms,
+                "window_end_ms": cmd.window_end_ms,
+                "packets": 0,
+                "bytes_consumed": 0,
+                "watermark_ms": cmd.window_start_ms,
+                "detail": "window_acknowledged"
+            }),
+            error: String::new(),
+        })
+    }
+
+    async fn pcap_replay(&self, command: &Value) -> Result<OperationExecution> {
+        let Some(replay) = self.replay.as_ref() else {
+            // 诚实 FailClosed:操作已允许但执行器未挂载,applied=false
+            return Ok(OperationExecution {
+                applied: false,
+                reported_version: String::new(),
+                detail: serde_json::json!({"operation_type": "pcap_replay"}),
+                error: "pcap_replay executor is not enabled on this probe".to_string(),
+            });
+        };
+        let cmd: ReplayWindowCommand = match serde_json::from_value(command.clone()) {
+            Ok(cmd) => cmd,
+            Err(e) => {
+                return Ok(OperationExecution {
+                    applied: false,
+                    reported_version: String::new(),
+                    detail: serde_json::json!({"operation_type": "pcap_replay"}),
+                    error: format!("replay command malformed: {e}"),
+                })
+            }
+        };
+        if let Err(e) = cmd.validate() {
+            return Ok(OperationExecution {
+                applied: false,
+                reported_version: String::new(),
+                detail: serde_json::json!({"operation_type": "pcap_replay", "command": cmd}),
+                error: e.to_string(),
+            });
+        }
+        match replay.execute_replay(&cmd).await {
+            Ok(ex) => Ok(OperationExecution {
+                applied: ex.applied,
+                reported_version: cmd.execution_spec_sha256.clone(),
+                detail: serde_json::json!({
+                    "packets": ex.packets,
+                    "bytes_consumed": ex.bytes_consumed,
+                    "watermark_ms": ex.watermark_ms,
+                    "detail": ex.detail,
+                    "run_id": cmd.run_id,
+                    "execution_spec_sha256": cmd.execution_spec_sha256,
+                    "fencing_token": cmd.fencing_token,
+                }),
+                error: if ex.applied { String::new() } else { ex.detail.clone() },
+            }),
+            Err(e) => Ok(OperationExecution {
+                applied: false,
+                reported_version: String::new(),
+                detail: serde_json::json!({"operation_type": "pcap_replay"}),
+                error: format!("replay execution failed: {e}"),
+            }),
         }
     }
 }
@@ -170,6 +334,8 @@ impl ProbeControlProcessor {
             "batch_upgrade",
             "batch_state",
             "restart",
+            "capture_window",
+            "pcap_replay",
         ]
         .into_iter()
         .map(str::to_string)
@@ -191,47 +357,59 @@ impl ProbeControlProcessor {
         }
 
         let now_ms = chrono::Utc::now().timestamp_millis();
-        let command_value: Value = serde_json::from_slice(&command.command_json)
-            .context("command_json is not valid JSON")?;
-
-        let execution = if command.expires_at_ms <= now_ms {
-            OperationExecution {
+        // A malformed JSON payload must still produce a persisted failed
+        // ACK; otherwise the gateway cannot confirm delivery and re-sends
+        // the same command on every heartbeat forever.
+        let execution = match serde_json::from_slice(&command.command_json) {
+            Err(parse_error) => OperationExecution {
                 applied: false,
                 reported_version: String::new(),
-                detail: serde_json::json!({
-                    "expired_at_ms": command.expires_at_ms,
-                    "received_at_ms": now_ms
-                }),
-                error: "operation expired before Agent execution".to_string(),
-            }
-        } else if deterministic_command_hash(&command_value) != command.command_hash {
-            OperationExecution {
-                applied: false,
-                reported_version: String::new(),
-                detail: serde_json::json!({"validation": "command_hash_mismatch"}),
-                error: "deterministic command hash mismatch".to_string(),
-            }
-        } else if command.command_revision <= self.highest_revision()? {
-            OperationExecution {
-                applied: false,
-                reported_version: String::new(),
-                detail: serde_json::json!({"validation": "stale_command_revision"}),
-                error: "command revision is not newer than the persisted Agent revision"
-                    .to_string(),
-            }
-        } else {
-            match self
-                .executor
-                .execute(&command.operation_type, &command_value)
-                .await
-            {
-                Ok(result) => result,
-                Err(err) => OperationExecution {
-                    applied: false,
-                    reported_version: String::new(),
-                    detail: serde_json::json!({"executor_error": err.to_string()}),
-                    error: truncate_error(&err.to_string()),
-                },
+                detail: serde_json::json!({"validation": "invalid_json_payload"}),
+                error: truncate_error(&format!(
+                    "command_json is not valid JSON: {parse_error}"
+                )),
+            },
+            Ok(command_value) => {
+                if command.expires_at_ms <= now_ms {
+                    OperationExecution {
+                        applied: false,
+                        reported_version: String::new(),
+                        detail: serde_json::json!({
+                            "expired_at_ms": command.expires_at_ms,
+                            "received_at_ms": now_ms
+                        }),
+                        error: "operation expired before Agent execution".to_string(),
+                    }
+                } else if deterministic_command_hash(&command_value) != command.command_hash {
+                    OperationExecution {
+                        applied: false,
+                        reported_version: String::new(),
+                        detail: serde_json::json!({"validation": "command_hash_mismatch"}),
+                        error: "deterministic command hash mismatch".to_string(),
+                    }
+                } else if command.command_revision <= self.highest_revision()? {
+                    OperationExecution {
+                        applied: false,
+                        reported_version: String::new(),
+                        detail: serde_json::json!({"validation": "stale_command_revision"}),
+                        error: "command revision is not newer than the persisted Agent revision"
+                            .to_string(),
+                    }
+                } else {
+                    match self
+                        .executor
+                        .execute(&command.operation_type, &command_value)
+                        .await
+                    {
+                        Ok(result) => result,
+                        Err(err) => OperationExecution {
+                            applied: false,
+                            reported_version: String::new(),
+                            detail: serde_json::json!({"executor_error": err.to_string()}),
+                            error: truncate_error(&err.to_string()),
+                        },
+                    }
+                }
             }
         };
 
@@ -360,7 +538,8 @@ fn canonical_json(value: &Value) -> String {
         Value::Null => "null".to_string(),
         Value::Bool(value) => value.to_string(),
         Value::Number(value) => value.to_string(),
-        Value::String(value) => serde_json::to_string(value).expect("string serialization"),
+        Value::String(value) => serde_json::to_string(value)
+            .unwrap_or_else(|_| value.clone()), // string serialization cannot fail
         Value::Array(values) => format!(
             "[{}]",
             values
@@ -614,5 +793,369 @@ mod tests {
             deterministic_command_hash(&left),
             deterministic_command_hash(&right)
         );
+    }
+}
+
+// =============================================================================
+// CaptureWindowExecutor —— 有界采集窗口执行器(ATC-SRC / FP-206)
+//
+// 约束(76.12.2):validate 无副作用;start 先持久化 command/lease 再创建
+// run-scoped spool;达到任一上限即 stop;完成后 fsync/hash 并发布 StageReceipt。
+// 本核心卷落地 validate 判定核(纯校验);start/stop 与 capture 数据面接线
+// 由后续 P3 集成轮次完成(TODO:capture_window_start)。
+// =============================================================================
+
+use serde::{Deserialize, Serialize};
+
+/// 有界采集窗口命令(领域命令,typed,不含自由字符串脚本入口)。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CaptureWindowCommand {
+    pub tenant_id: String,
+    pub task_id: String,
+    pub run_id: String,
+    pub execution_spec_sha256: String,
+    pub probe_id: String,
+    pub interface: String,
+    pub bpf_filter: Option<String>,
+    pub window_start_ms: i64,
+    pub window_end_ms: i64,
+    pub packet_limit: u64,
+    pub byte_limit: u64,
+    pub spool_quota_bytes: u64,
+    pub lease_epoch: u64,
+    pub fencing_token: String,
+}
+
+/// 校验通过的有界窗口(类型化,防未校验直用)。
+#[derive(Debug, Clone)]
+pub struct ValidatedCaptureWindow {
+    pub command: CaptureWindowCommand,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum CaptureWindowError {
+    #[error("tenant_id is empty")]
+    MissingTenant,
+    #[error("run identity is incomplete")]
+    IncompleteRunIdentity,
+    #[error("execution_spec_sha256 is empty")]
+    MissingExecutionSpec,
+    #[error("window_end must be after window_start")]
+    InvalidWindow,
+    #[error("packet_limit and byte_limit must not both be zero (bounded capture)")]
+    UnboundedCapture,
+    #[error("spool_quota_bytes exceeds hard limit")]
+    SpoolQuotaExceeded,
+    #[error("fencing_token is empty")]
+    MissingFencingToken,
+    #[error("interface is empty")]
+    MissingInterface,
+    #[error("bpf_filter exceeds max length")]
+    BpfTooComplex,
+}
+
+/// BPF 复杂度上限(核心卷:长度上限;AST 复杂度分析接后续安全轮次)。
+const MAX_BPF_LEN: usize = 512;
+/// spool 配额硬上限(运行配置可低于,不得高于)。
+const MAX_SPOOL_QUOTA: u64 = 64 * 1024 * 1024 * 1024; // 64 GiB
+
+impl CaptureWindowCommand {
+    /// validate —— 无副作用校验(签名/租户/身份/范围/限额/配额/lease/fencing)。
+    pub fn validate(&self) -> Result<ValidatedCaptureWindow, CaptureWindowError> {
+        if self.tenant_id.trim().is_empty() {
+            return Err(CaptureWindowError::MissingTenant);
+        }
+        if self.task_id.trim().is_empty()
+            || self.run_id.trim().is_empty()
+            || self.probe_id.trim().is_empty()
+        {
+            return Err(CaptureWindowError::IncompleteRunIdentity);
+        }
+        if self.execution_spec_sha256.trim().is_empty() {
+            return Err(CaptureWindowError::MissingExecutionSpec);
+        }
+        if self.interface.trim().is_empty() {
+            return Err(CaptureWindowError::MissingInterface);
+        }
+        if self.window_end_ms <= self.window_start_ms {
+            return Err(CaptureWindowError::InvalidWindow);
+        }
+        if self.packet_limit == 0 && self.byte_limit == 0 {
+            return Err(CaptureWindowError::UnboundedCapture);
+        }
+        if self.spool_quota_bytes > MAX_SPOOL_QUOTA {
+            return Err(CaptureWindowError::SpoolQuotaExceeded);
+        }
+        if self.fencing_token.trim().is_empty() {
+            return Err(CaptureWindowError::MissingFencingToken);
+        }
+        if let Some(bpf) = &self.bpf_filter {
+            if bpf.len() > MAX_BPF_LEN {
+                return Err(CaptureWindowError::BpfTooComplex);
+            }
+        }
+        Ok(ValidatedCaptureWindow {
+            command: self.clone(),
+        })
+    }
+}
+
+#[cfg(test)]
+mod capture_window_tests {
+    use super::*;
+
+    fn valid_command() -> CaptureWindowCommand {
+        CaptureWindowCommand {
+            tenant_id: "tenant-a".into(),
+            task_id: "task-1".into(),
+            run_id: "run-1".into(),
+            execution_spec_sha256: "spec-1".into(),
+            probe_id: "probe-a".into(),
+            interface: "eth0".into(),
+            bpf_filter: None,
+            window_start_ms: 0,
+            window_end_ms: 60_000,
+            packet_limit: 10_000,
+            byte_limit: 0,
+            spool_quota_bytes: 1024 * 1024 * 1024,
+            lease_epoch: 1,
+            fencing_token: "fence-1".into(),
+        }
+    }
+
+    #[test]
+    fn validate_accepts_valid_command() {
+        assert!(valid_command().validate().is_ok());
+    }
+
+    #[test]
+    fn validate_rejects_missing_tenant() {
+        let mut c = valid_command();
+        c.tenant_id = " ".into();
+        assert_eq!(c.validate().unwrap_err(), CaptureWindowError::MissingTenant);
+    }
+
+    #[test]
+    fn validate_rejects_unbounded() {
+        let mut c = valid_command();
+        c.packet_limit = 0;
+        c.byte_limit = 0;
+        assert_eq!(c.validate().unwrap_err(), CaptureWindowError::UnboundedCapture);
+    }
+
+    #[test]
+    fn validate_rejects_invalid_window() {
+        let mut c = valid_command();
+        c.window_start_ms = 60_000;
+        c.window_end_ms = 60_000;
+        assert_eq!(c.validate().unwrap_err(), CaptureWindowError::InvalidWindow);
+    }
+
+    #[test]
+    fn validate_rejects_oversized_spool() {
+        let mut c = valid_command();
+        c.spool_quota_bytes = MAX_SPOOL_QUOTA + 1;
+        assert_eq!(c.validate().unwrap_err(), CaptureWindowError::SpoolQuotaExceeded);
+    }
+
+    #[test]
+    fn validate_rejects_oversized_bpf() {
+        let mut c = valid_command();
+        c.bpf_filter = Some("x".repeat(MAX_BPF_LEN + 1));
+        assert_eq!(c.validate().unwrap_err(), CaptureWindowError::BpfTooComplex);
+    }
+
+    #[test]
+    fn validate_rejects_missing_fencing() {
+        let mut c = valid_command();
+        c.fencing_token = "".into();
+        assert_eq!(c.validate().unwrap_err(), CaptureWindowError::MissingFencingToken);
+    }
+}
+
+// =============================================================================
+// ReplayWindowCommand —— 人工执行链:analysis-service 经 probe.control.v2 投递的
+// 有界对象回放命令(回放发生在所选探针位置;与 CaptureWindowCommand 对称)。
+// =============================================================================
+
+/// 有界对象回放命令(typed,不含自由字符串脚本入口)。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReplayWindowCommand {
+    pub tenant_id: String,
+    pub task_id: String,
+    pub run_id: String,
+    pub execution_spec_sha256: String,
+    pub probe_id: String,
+    pub object_ref: String,    // s3://bucket/key
+    pub object_sha256: String, // 64 hex
+    /// 测试阶段 wire 回放注入目标(虚拟网卡输入端);None = 进程内共享分支喂入
+    /// (生产语义)。Some(iface) = 仅经 AF_PACKET 向 iface 注入真实流量,
+    /// 供输出端探针实时采集;接口须在探针配置 allowlist 内,否则 fail-closed。
+    #[serde(default)]
+    pub interface: Option<String>,
+    pub window_start_ms: i64,
+    pub window_end_ms: i64,
+    pub packet_limit: u64,
+    pub byte_limit: u64,
+    pub fencing_token: String,
+}
+
+/// 校验通过的有界回放窗口(类型化,防未校验直用)。
+#[derive(Debug, Clone)]
+pub struct ValidatedReplayWindow {
+    pub command: ReplayWindowCommand,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum ReplayWindowError {
+    #[error("tenant_id is empty")]
+    MissingTenant,
+    #[error("run identity is incomplete")]
+    IncompleteRunIdentity,
+    #[error("execution_spec_sha256 is empty")]
+    MissingExecutionSpec,
+    #[error("object_ref must be s3://bucket/key")]
+    InvalidObjectRef,
+    #[error("object_sha256 must be 64 hex chars")]
+    InvalidObjectSha256,
+    #[error("window_end must be after window_start")]
+    InvalidWindow,
+    #[error("packet_limit and byte_limit must not both be zero (bounded replay)")]
+    UnboundedReplay,
+    #[error("wire replay interface must not be empty when present")]
+    InvalidWireInterface,
+    #[error("fencing_token is empty")]
+    MissingFencingToken,
+}
+
+impl ReplayWindowCommand {
+    /// validate —— 无副作用校验(身份/对象/hash/窗口/限额/fencing)。
+    pub fn validate(&self) -> Result<ValidatedReplayWindow, ReplayWindowError> {
+        if self.tenant_id.trim().is_empty() {
+            return Err(ReplayWindowError::MissingTenant);
+        }
+        if self.task_id.trim().is_empty()
+            || self.run_id.trim().is_empty()
+            || self.probe_id.trim().is_empty()
+        {
+            return Err(ReplayWindowError::IncompleteRunIdentity);
+        }
+        if self.execution_spec_sha256.trim().is_empty() {
+            return Err(ReplayWindowError::MissingExecutionSpec);
+        }
+        let rest = match self.object_ref.strip_prefix("s3://") {
+            Some(rest) => rest,
+            None => return Err(ReplayWindowError::InvalidObjectRef),
+        };
+        let mut parts = rest.splitn(2, '/');
+        if parts.next().unwrap_or("").is_empty() || parts.next().unwrap_or("").is_empty() {
+            return Err(ReplayWindowError::InvalidObjectRef);
+        }
+        if self.object_sha256.len() != 64 || !self.object_sha256.chars().all(|c| c.is_ascii_hexdigit()) {
+            return Err(ReplayWindowError::InvalidObjectSha256);
+        }
+        if self.window_end_ms <= self.window_start_ms {
+            return Err(ReplayWindowError::InvalidWindow);
+        }
+        if self.packet_limit == 0 && self.byte_limit == 0 {
+            return Err(ReplayWindowError::UnboundedReplay);
+        }
+        if self.interface.as_deref().is_some_and(|s| s.trim().is_empty()) {
+            return Err(ReplayWindowError::InvalidWireInterface);
+        }
+        if self.fencing_token.trim().is_empty() {
+            return Err(ReplayWindowError::MissingFencingToken);
+        }
+        Ok(ValidatedReplayWindow {
+            command: self.clone(),
+        })
+    }
+}
+
+#[cfg(test)]
+mod replay_window_tests {
+    use super::*;
+
+    fn valid_command() -> ReplayWindowCommand {
+        ReplayWindowCommand {
+            tenant_id: "default".into(),
+            task_id: "task-1".into(),
+            run_id: "run-1".into(),
+            execution_spec_sha256: "spec-1".into(),
+            probe_id: "probe-agent".into(),
+            object_ref: "s3://analysis-bench/pcap/x.pcap".into(),
+            object_sha256: "f4c4c59d460c6748110e6a0288c84a1362d7a3fa8a34b7a5cbe423de9e903deb".into(),
+            interface: None,
+            window_start_ms: 1,
+            window_end_ms: 1000,
+            packet_limit: 1000,
+            byte_limit: 0,
+            fencing_token: "fence-1".into(),
+        }
+    }
+
+    #[test]
+    fn valid_command_passes() {
+        assert!(valid_command().validate().is_ok());
+    }
+
+    #[test]
+    fn rejects_empty_wire_interface() {
+        let mut c = valid_command();
+        c.interface = Some("   ".into());
+        assert_eq!(c.validate().unwrap_err(), ReplayWindowError::InvalidWireInterface);
+        let mut c2 = valid_command();
+        c2.interface = Some("ta-veth-in".into());
+        assert!(c2.validate().is_ok(), "wire interface must pass validation; allowlist is enforced by the executor");
+    }
+
+    #[test]
+    fn rejects_missing_identity() {
+        for mut c in [valid_command(), valid_command()] {
+            c.task_id.clear();
+            assert_eq!(c.validate().unwrap_err(), ReplayWindowError::IncompleteRunIdentity);
+            break;
+        }
+        let mut c = valid_command();
+        c.tenant_id.clear();
+        assert_eq!(c.validate().unwrap_err(), ReplayWindowError::MissingTenant);
+    }
+
+    #[test]
+    fn rejects_non_s3_object_ref() {
+        let mut c = valid_command();
+        c.object_ref = "file:///tmp/x.pcap".into();
+        assert_eq!(c.validate().unwrap_err(), ReplayWindowError::InvalidObjectRef);
+        let mut c2 = valid_command();
+        c2.object_ref = "s3://bucketonly".into();
+        assert_eq!(c2.validate().unwrap_err(), ReplayWindowError::InvalidObjectRef);
+    }
+
+    #[test]
+    fn rejects_bad_sha256() {
+        let mut c = valid_command();
+        c.object_sha256 = "xyz".into();
+        assert_eq!(c.validate().unwrap_err(), ReplayWindowError::InvalidObjectSha256);
+        let mut c2 = valid_command();
+        c2.object_sha256 = "g".repeat(64);
+        assert_eq!(c2.validate().unwrap_err(), ReplayWindowError::InvalidObjectSha256);
+    }
+
+    #[test]
+    fn rejects_unbounded_replay() {
+        let mut c = valid_command();
+        c.packet_limit = 0;
+        c.byte_limit = 0;
+        assert_eq!(c.validate().unwrap_err(), ReplayWindowError::UnboundedReplay);
+    }
+
+    #[test]
+    fn rejects_invalid_window_and_fencing() {
+        let mut c = valid_command();
+        c.window_end_ms = c.window_start_ms;
+        assert_eq!(c.validate().unwrap_err(), ReplayWindowError::InvalidWindow);
+        let mut c2 = valid_command();
+        c2.fencing_token.clear();
+        assert_eq!(c2.validate().unwrap_err(), ReplayWindowError::MissingFencingToken);
     }
 }

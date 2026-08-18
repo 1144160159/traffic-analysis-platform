@@ -1,10 +1,13 @@
-use super::{CaptureStats, Capturer, FrameInfo, PacketBatch, Umem, UmemConfig};
+use super::{
+    CaptureStats, CaptureTimestamp, CaptureTimestampProvenance, Capturer, FrameInfo, PacketBatch,
+    Umem, UmemConfig,
+};
 use crate::config::CaptureConfig;
-use crate::metrics;
 use anyhow::{bail, Result};
 use libc::{
-    bind, c_int, c_void, close, iovec, mmsghdr, msghdr, recvmmsg, setsockopt, sockaddr_ll, socket,
-    AF_PACKET, ETH_P_ALL, SOCK_RAW, SOL_SOCKET, SO_RCVBUF,
+    bind, c_int, c_void, close, cmsghdr, iovec, mmsghdr, msghdr, recvmmsg, setsockopt, sockaddr_ll,
+    socket, timespec, AF_PACKET, ETH_P_ALL, SCM_TIMESTAMPNS, SOCK_RAW, SOL_SOCKET, SO_RCVBUF,
+    SO_TIMESTAMPNS,
 };
 use std::os::fd::RawFd;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -27,6 +30,7 @@ pub struct AfPacketCapture {
     config: CaptureConfig,
     socket_fd: Option<RawFd>,
     recv_buffers: Vec<Vec<u8>>,
+    recv_control: Vec<Vec<usize>>,
     umem: Arc<Umem>,
     stats: CaptureStats,
     internal_stats: AfPacketStats,
@@ -51,10 +55,19 @@ impl AfPacketCapture {
             config.interface, ifindex, config.frame_size, config.frame_count
         );
         let recv_buffers = (0..RECV_BATCH_SIZE).map(|_| vec![0u8; 65536]).collect();
+        // SAFETY: CMSG_SPACE only performs the platform alignment calculation
+        // for the fixed `timespec` payload size supplied here.
+        let control_len =
+            unsafe { libc::CMSG_SPACE(std::mem::size_of::<timespec>() as u32) as usize };
+        let control_words = control_len.div_ceil(std::mem::size_of::<usize>());
+        let recv_control = (0..RECV_BATCH_SIZE)
+            .map(|_| vec![0usize; control_words])
+            .collect();
         Ok(Self {
             config: config.clone(),
             socket_fd: None,
             recv_buffers,
+            recv_control,
             umem,
             stats: CaptureStats::default(),
             internal_stats: AfPacketStats::default(),
@@ -147,6 +160,53 @@ impl AfPacketCapture {
             self.internal_stats.recv_would_block.load(Ordering::Relaxed),
             self.internal_stats.recv_success.load(Ordering::Relaxed),
         )
+    }
+
+    fn timestamp_from_control(header: &msghdr) -> Option<CaptureTimestamp> {
+        // SAFETY: the header and ancillary buffer are owned by this receiver
+        // until `recvmmsg` returns. Length and level/type are checked before
+        // reading one `timespec` from CMSG_DATA.
+        unsafe {
+            let control: *mut cmsghdr = libc::CMSG_FIRSTHDR(header);
+            if control.is_null()
+                || (*control).cmsg_level != SOL_SOCKET
+                || (*control).cmsg_type != SCM_TIMESTAMPNS
+                || (*control).cmsg_len
+                    < libc::CMSG_LEN(std::mem::size_of::<timespec>() as u32) as usize
+            {
+                return None;
+            }
+            let stamp = std::ptr::read_unaligned(libc::CMSG_DATA(control).cast::<timespec>());
+            let seconds = u64::try_from(stamp.tv_sec).ok()?;
+            let nanos = u32::try_from(stamp.tv_nsec).ok()?;
+            let normalized = CaptureTimestamp::from_unix_parts(
+                seconds,
+                nanos,
+                super::TimestampPrecision::Nanosecond,
+            )
+            .ok()?;
+            Some(normalized.with_provenance(CaptureTimestampProvenance::KernelPerFrame))
+        }
+    }
+
+    /// Binds one receive timestamp to every descriptor. Kernel ancillary
+    /// metadata is preferred; missing metadata is explicit per descriptor and
+    /// never presented as a kernel timestamp.
+    pub fn recv_frames_with_timestamps(
+        headers: &[mmsghdr],
+        degraded_at: CaptureTimestamp,
+    ) -> Vec<CaptureTimestamp> {
+        headers
+            .iter()
+            .map(|message| {
+                Self::timestamp_from_control(&message.msg_hdr).unwrap_or_else(|| {
+                    CaptureTimestamp::from_epoch_micros(
+                        degraded_at.epoch_micros(),
+                        CaptureTimestampProvenance::DescriptorWallClockDegraded,
+                    )
+                })
+            })
+            .collect()
     }
 }
 
@@ -275,6 +335,20 @@ impl Capturer for AfPacketCapture {
             } else {
                 debug!("Socket buffer size set successfully");
             }
+            let timestamping: c_int = 1;
+            if setsockopt(
+                fd,
+                SOL_SOCKET,
+                SO_TIMESTAMPNS,
+                &timestamping as *const _ as *const c_void,
+                std::mem::size_of::<c_int>() as u32,
+            ) < 0
+            {
+                warn!(
+                    "AF_PACKET kernel per-frame timestamps unavailable; using explicit descriptor receipt time: {}",
+                    std::io::Error::last_os_error()
+                );
+            }
             // Apply BPF filter if configured
             if let Some(ref bpf_expr) = self.config.bpf_filter {
                 match apply_bpf_filter(fd, bpf_expr) {
@@ -351,8 +425,12 @@ impl Capturer for AfPacketCapture {
         };
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_micros() as u64;
+            .map_err(|_| anyhow::anyhow!("AF_PACKET_BATCH_CLOCK_BEFORE_UNIX_EPOCH"))?;
+        let degraded_at = CaptureTimestamp::from_epoch_micros(
+            u64::try_from(timestamp.as_micros())
+                .map_err(|_| anyhow::anyhow!("AF_PACKET_BATCH_CLOCK_OVERFLOW"))?,
+            CaptureTimestampProvenance::DescriptorWallClockDegraded,
+        );
         let mut frames = Vec::with_capacity(RECV_BATCH_SIZE);
 
         let mut iovecs: Vec<iovec> = self
@@ -365,14 +443,15 @@ impl Capturer for AfPacketCapture {
             .collect();
         let mut msgs: Vec<mmsghdr> = iovecs
             .iter_mut()
-            .map(|iov| mmsghdr {
+            .zip(self.recv_control.iter_mut())
+            .map(|(iov, control)| mmsghdr {
                 msg_hdr: msghdr {
                     msg_name: std::ptr::null_mut(),
                     msg_namelen: 0,
                     msg_iov: iov,
                     msg_iovlen: 1,
-                    msg_control: std::ptr::null_mut(),
-                    msg_controllen: 0,
+                    msg_control: control.as_mut_ptr().cast::<c_void>(),
+                    msg_controllen: control.len() * std::mem::size_of::<usize>(),
                     msg_flags: 0,
                 },
                 msg_len: 0,
@@ -413,6 +492,7 @@ impl Capturer for AfPacketCapture {
         if received == 0 {
             return Ok(None);
         }
+        let timestamps = Self::recv_frames_with_timestamps(&msgs[..received], degraded_at);
 
         for i in 0..received {
             let len = msgs[i].msg_len as usize;
@@ -430,21 +510,19 @@ impl Capturer for AfPacketCapture {
                             idx: frame_idx,
                             offset: 0,
                             len: len as u32,
-                            timestamp,
+                            captured_at: timestamps[i],
                         });
                         self.stats.packets_received += 1;
                         self.stats.bytes_received += len as u64;
-                        metrics::PACKETS_CAPTURED.inc();
-                        metrics::BYTES_CAPTURED.inc_by(len as f64);
                     } else {
                         self.umem.free_frame(frame_idx);
                         self.stats.packets_dropped += 1;
-                        metrics::PACKETS_DROPPED.inc();
+                        self.stats.allocation_drops += 1;
                     }
                 }
                 None => {
                     self.stats.packets_dropped += 1;
-                    metrics::PACKETS_DROPPED.inc();
+                    self.stats.allocation_drops += 1;
                     if self.stats.packets_dropped % 1000 == 0 {
                         warn!(
                             "High frame allocation failure rate: {} dropped, {} available",

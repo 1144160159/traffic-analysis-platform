@@ -115,8 +115,6 @@ pub mod asset_service_client {
                 .insert(GrpcMethod::new("traffic.v1.AssetService", "UpsertAsset"));
             self.inner.unary(req, path, codec).await
         }
-        /** GetAsset retrieves an asset by ID or MAC.
-*/
         pub async fn get_asset(
             &mut self,
             request: impl tonic::IntoRequest<super::GetAssetRequest>,
@@ -142,8 +140,6 @@ pub mod asset_service_client {
                 .insert(GrpcMethod::new("traffic.v1.AssetService", "GetAsset"));
             self.inner.unary(req, path, codec).await
         }
-        /** ListAssets returns assets for a tenant, with optional filters.
-*/
         pub async fn list_assets(
             &mut self,
             request: impl tonic::IntoRequest<super::ListAssetsRequest>,
@@ -242,8 +238,6 @@ pub mod asset_service_server {
             tonic::Response<super::UpsertAssetResponse>,
             tonic::Status,
         >;
-        /** GetAsset retrieves an asset by ID or MAC.
-*/
         async fn get_asset(
             &self,
             request: tonic::Request<super::GetAssetRequest>,
@@ -251,8 +245,6 @@ pub mod asset_service_server {
             tonic::Response<super::GetAssetResponse>,
             tonic::Status,
         >;
-        /** ListAssets returns assets for a tenant, with optional filters.
-*/
         async fn list_assets(
             &self,
             request: tonic::Request<super::ListAssetsRequest>,
@@ -800,6 +792,33 @@ pub mod ingest_service_client {
                 .insert(GrpcMethod::new("traffic.v1.IngestService", "UploadPcapIndex"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn upload_asset_bindings(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UploadAssetBindingsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::UploadAssetBindingsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/traffic.v1.IngestService/UploadAssetBindings",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("traffic.v1.IngestService", "UploadAssetBindings"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn heartbeat(
             &mut self,
             request: impl tonic::IntoRequest<super::HeartbeatRequest>,
@@ -891,6 +910,13 @@ pub mod ingest_service_server {
             request: tonic::Request<super::UploadPcapIndexRequest>,
         ) -> std::result::Result<
             tonic::Response<super::UploadPcapIndexResponse>,
+            tonic::Status,
+        >;
+        async fn upload_asset_bindings(
+            &self,
+            request: tonic::Request<super::UploadAssetBindingsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::UploadAssetBindingsResponse>,
             tonic::Status,
         >;
         async fn heartbeat(
@@ -1153,6 +1179,52 @@ pub mod ingest_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = UploadPcapIndexSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/traffic.v1.IngestService/UploadAssetBindings" => {
+                    #[allow(non_camel_case_types)]
+                    struct UploadAssetBindingsSvc<T: IngestService>(pub Arc<T>);
+                    impl<
+                        T: IngestService,
+                    > tonic::server::UnaryService<super::UploadAssetBindingsRequest>
+                    for UploadAssetBindingsSvc<T> {
+                        type Response = super::UploadAssetBindingsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::UploadAssetBindingsRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as IngestService>::upload_asset_bindings(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = UploadAssetBindingsSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

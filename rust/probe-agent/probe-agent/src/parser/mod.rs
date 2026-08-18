@@ -1,11 +1,49 @@
+use crate::aggregator::{
+    canonicalize_observation, FlowIdentityError, FlowKey, ObservationScope, ObservedEndpoints,
+    PacketInfo, ScopePolicy, FLOW_IDENTITY_REVISION, OBSERVATION_SCOPE_REVISION,
+};
+use crate::capture::CaptureTimestamp;
 use anyhow::Result;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-use tracing::{debug, trace};
+use tracing::{debug, trace, warn};
 
 pub mod arp;
 pub mod dhcp;
 pub mod dns;
+pub mod security;
+
+#[derive(Debug, thiserror::Error, Clone, PartialEq, Eq)]
+pub enum ApplicationDecodeError {
+    #[error("{protocol} payload is truncated at {stage}: required={required} actual={actual}")]
+    Truncated {
+        protocol: &'static str,
+        stage: &'static str,
+        required: usize,
+        actual: usize,
+    },
+    #[error("malformed {protocol} payload: {reason}")]
+    Malformed {
+        protocol: &'static str,
+        reason: &'static str,
+    },
+    #[error("unsupported {protocol} value {value} at {stage}")]
+    Unsupported {
+        protocol: &'static str,
+        stage: &'static str,
+        value: u32,
+    },
+}
+
+impl ApplicationDecodeError {
+    pub fn is_truncated(&self) -> bool {
+        matches!(self, Self::Truncated { .. })
+    }
+
+    pub fn is_unsupported(&self) -> bool {
+        matches!(self, Self::Unsupported { .. })
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct ParsedPacket {
@@ -319,10 +357,578 @@ impl std::fmt::Display for ParseError {
 
 impl std::error::Error for ParseError {}
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FlowFields {
+    pub src_ip: IpAddr,
+    pub dst_ip: IpAddr,
+    pub src_port: u16,
+    pub dst_port: u16,
+    pub protocol: u8,
+    pub tcp_flags: u8,
+    pub total_len: u16,
+    pub vlan_stack: Vec<u16>,
+    pub ttl: u8,
+    pub tos: u8,
+    pub is_fragment: bool,
+    pub fragment_id: Option<u32>,
+    pub transport_status: TransportDecodeStatus,
+    pub application_payload_offset: usize,
+    pub application_payload_end: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TransportDecodeStatus {
+    Decoded,
+    FirstFragment,
+    Unsupported,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum FlowDecodeError {
+    #[error("ethernet frame is shorter than 14 bytes")]
+    TruncatedEthernet,
+    #[error("truncated VLAN header at depth {depth}")]
+    TruncatedVlan { depth: usize },
+    #[error("more than two VLAN tags are not supported")]
+    TooManyVlanTags,
+    #[error("unsupported EtherType 0x{0:04x}")]
+    UnsupportedEtherType(u16),
+    #[error("malformed IPv4 header: {0}")]
+    MalformedIpv4(&'static str),
+    #[error("malformed IPv6 header or extension chain: {0}")]
+    MalformedIpv6(&'static str),
+    #[error("non-first IP fragment requires reassembly (protocol={protocol}, id={fragment_id})")]
+    NonFirstFragment { protocol: u8, fragment_id: u32 },
+    #[error("transport header is truncated for protocol {protocol}")]
+    TruncatedTransport { protocol: u8 },
+    #[error("malformed transport header for protocol {protocol}: {reason}")]
+    MalformedTransport { protocol: u8, reason: &'static str },
+    #[error("frame length exceeds the FlowEvent uint16 carrier")]
+    FrameTooLarge,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FastFallback {
+    QinQ,
+    Ipv4Options,
+    Ipv6Extension,
+    Fragment,
+    Protocol,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum FastDecodeError {
+    #[error("fast parser fallback required: {0:?}")]
+    Fallback(FastFallback),
+    #[error(transparent)]
+    Invalid(#[from] FlowDecodeError),
+}
+
+#[derive(Debug)]
+pub struct FlowSample {
+    pub key: FlowKey,
+    pub packet: PacketInfo,
+    pub fields: FlowFields,
+    pub identity_revision: u8,
+    pub observation_scope_revision: u8,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum FlowSampleError {
+    #[error(transparent)]
+    Identity(#[from] FlowIdentityError),
+    #[error("capture timestamp is outside the event-time carrier")]
+    InvalidTimestamp,
+    #[error("observation scope revision {actual} does not match {expected}")]
+    ScopeRevision { actual: u8, expected: u8 },
+}
+
+pub struct FlowSampleBuilder;
+
+impl FlowSampleBuilder {
+    pub fn build(
+        fields: FlowFields,
+        captured_at: CaptureTimestamp,
+        scope: &ObservationScope,
+    ) -> Result<FlowSample, FlowSampleError> {
+        let timestamp = captured_at.epoch_micros();
+        if timestamp < 1_000 {
+            return Err(FlowSampleError::InvalidTimestamp);
+        }
+        if scope.revision != OBSERVATION_SCOPE_REVISION {
+            return Err(FlowSampleError::ScopeRevision {
+                actual: scope.revision,
+                expected: OBSERVATION_SCOPE_REVISION,
+            });
+        }
+        let identity = canonicalize_observation(ObservedEndpoints {
+            src_ip: fields.src_ip,
+            dst_ip: fields.dst_ip,
+            src_port: fields.src_port,
+            dst_port: fields.dst_port,
+            protocol: fields.protocol,
+        })?;
+        // Interface is capture configuration, while VLAN/QinQ is observed on
+        // each frame. Only policies that explicitly include VLAN may let the
+        // parsed tag stack affect aggregation; Community ID remains based on
+        // the canonical L3/L4 tuple.
+        let mut effective_scope = scope.clone();
+        effective_scope.vlan_stack = match scope.policy {
+            ScopePolicy::InterfaceAndVlan | ScopePolicy::FullObservation => {
+                fields.vlan_stack.clone()
+            }
+            ScopePolicy::GlobalL3 | ScopePolicy::Interface => Vec::new(),
+        };
+        let key = FlowKey::new(&identity, &effective_scope);
+        let packet = PacketInfo {
+            len: fields.total_len,
+            tcp_flags: fields.tcp_flags,
+            direction: identity.packet_direction,
+            timestamp,
+            tos: fields.tos,
+        };
+        Ok(FlowSample {
+            key,
+            packet,
+            fields,
+            identity_revision: FLOW_IDENTITY_REVISION,
+            observation_scope_revision: OBSERVATION_SCOPE_REVISION,
+        })
+    }
+}
+
+struct DecodedNetwork {
+    src_ip: IpAddr,
+    dst_ip: IpAddr,
+    protocol: u8,
+    ttl: u8,
+    tos: u8,
+    transport_offset: usize,
+    network_end: usize,
+    is_fragment: bool,
+    fragment_id: Option<u32>,
+}
+
+struct DecodedTransport {
+    src_port: u16,
+    dst_port: u16,
+    tcp_flags: u8,
+    application_payload_offset: usize,
+    application_payload_end: usize,
+    status: TransportDecodeStatus,
+}
+
+fn decode_ethernet(data: &[u8]) -> Result<(usize, u16, Vec<u16>), FlowDecodeError> {
+    if data.len() < 14 {
+        return Err(FlowDecodeError::TruncatedEthernet);
+    }
+    let mut cursor = 14;
+    let mut ether_type = u16::from_be_bytes([data[12], data[13]]);
+    let mut vlan_stack = Vec::new();
+    while matches!(ether_type, 0x8100 | 0x88a8) {
+        if vlan_stack.len() == 2 {
+            return Err(FlowDecodeError::TooManyVlanTags);
+        }
+        if data.len() < cursor + 4 {
+            return Err(FlowDecodeError::TruncatedVlan {
+                depth: vlan_stack.len() + 1,
+            });
+        }
+        let tag = u16::from_be_bytes([data[cursor], data[cursor + 1]]);
+        vlan_stack.push(tag & 0x0fff);
+        ether_type = u16::from_be_bytes([data[cursor + 2], data[cursor + 3]]);
+        cursor += 4;
+    }
+    Ok((cursor, ether_type, vlan_stack))
+}
+
+fn decode_ipv4(data: &[u8], offset: usize) -> Result<DecodedNetwork, FlowDecodeError> {
+    if data.len() < offset + 20 {
+        return Err(FlowDecodeError::MalformedIpv4("truncated base header"));
+    }
+    if data[offset] >> 4 != 4 {
+        return Err(FlowDecodeError::MalformedIpv4("invalid version"));
+    }
+    let header_len = usize::from(data[offset] & 0x0f) * 4;
+    if header_len < 20 || data.len() < offset + header_len {
+        return Err(FlowDecodeError::MalformedIpv4("invalid IHL"));
+    }
+    let declared_len = usize::from(u16::from_be_bytes([data[offset + 2], data[offset + 3]]));
+    if declared_len < header_len || data.len() < offset + declared_len {
+        return Err(FlowDecodeError::MalformedIpv4("invalid total length"));
+    }
+    let protocol = data[offset + 9];
+    let fragment_bits = u16::from_be_bytes([data[offset + 6], data[offset + 7]]);
+    let fragment_offset = fragment_bits & 0x1fff;
+    let more_fragments = fragment_bits & 0x2000 != 0;
+    let fragment_id = u16::from_be_bytes([data[offset + 4], data[offset + 5]]) as u32;
+    if fragment_offset != 0 {
+        return Err(FlowDecodeError::NonFirstFragment {
+            protocol,
+            fragment_id,
+        });
+    }
+    Ok(DecodedNetwork {
+        src_ip: IpAddr::V4(Ipv4Addr::new(
+            data[offset + 12],
+            data[offset + 13],
+            data[offset + 14],
+            data[offset + 15],
+        )),
+        dst_ip: IpAddr::V4(Ipv4Addr::new(
+            data[offset + 16],
+            data[offset + 17],
+            data[offset + 18],
+            data[offset + 19],
+        )),
+        protocol,
+        ttl: data[offset + 8],
+        tos: data[offset + 1],
+        transport_offset: offset + header_len,
+        network_end: offset + declared_len,
+        is_fragment: more_fragments,
+        fragment_id: more_fragments.then_some(fragment_id),
+    })
+}
+
+fn decode_ipv6(data: &[u8], offset: usize) -> Result<DecodedNetwork, FlowDecodeError> {
+    if data.len() < offset + 40 {
+        return Err(FlowDecodeError::MalformedIpv6("truncated base header"));
+    }
+    if data[offset] >> 4 != 6 {
+        return Err(FlowDecodeError::MalformedIpv6("invalid version"));
+    }
+    let payload_len = usize::from(u16::from_be_bytes([data[offset + 4], data[offset + 5]]));
+    if data.len() < offset + 40 + payload_len {
+        return Err(FlowDecodeError::MalformedIpv6("invalid payload length"));
+    }
+    let src_ip = {
+        let mut octets = [0; 16];
+        octets.copy_from_slice(&data[offset + 8..offset + 24]);
+        IpAddr::V6(Ipv6Addr::from(octets))
+    };
+    let dst_ip = {
+        let mut octets = [0; 16];
+        octets.copy_from_slice(&data[offset + 24..offset + 40]);
+        IpAddr::V6(Ipv6Addr::from(octets))
+    };
+    let traffic_class = ((data[offset] & 0x0f) << 4) | (data[offset + 1] >> 4);
+    let mut next_header = data[offset + 6];
+    let mut cursor = offset + 40;
+    let payload_end = offset + 40 + payload_len;
+    let mut is_fragment = false;
+    let mut fragment_id = None;
+    let mut extension_count = 0usize;
+
+    loop {
+        if extension_count >= 8 {
+            return Err(FlowDecodeError::MalformedIpv6(
+                "extension chain exceeds 8 headers",
+            ));
+        }
+        match next_header {
+            0 | 43 | 60 => {
+                extension_count += 1;
+                if cursor + 2 > payload_end {
+                    return Err(FlowDecodeError::MalformedIpv6("truncated extension header"));
+                }
+                let length = (usize::from(data[cursor + 1]) + 1) * 8;
+                if length < 8 || cursor + length > payload_end {
+                    return Err(FlowDecodeError::MalformedIpv6("invalid extension length"));
+                }
+                next_header = data[cursor];
+                cursor += length;
+            }
+            51 => {
+                extension_count += 1;
+                if cursor + 2 > payload_end {
+                    return Err(FlowDecodeError::MalformedIpv6(
+                        "truncated authentication header",
+                    ));
+                }
+                let length = (usize::from(data[cursor + 1]) + 2) * 4;
+                if length < 8 || cursor + length > payload_end {
+                    return Err(FlowDecodeError::MalformedIpv6(
+                        "invalid authentication length",
+                    ));
+                }
+                next_header = data[cursor];
+                cursor += length;
+            }
+            44 => {
+                extension_count += 1;
+                if cursor + 8 > payload_end {
+                    return Err(FlowDecodeError::MalformedIpv6("truncated fragment header"));
+                }
+                let fragment_bits = u16::from_be_bytes([data[cursor + 2], data[cursor + 3]]);
+                let fragment_offset = (fragment_bits & 0xfff8) >> 3;
+                let more_fragments = fragment_bits & 1 != 0;
+                let id = u32::from_be_bytes([
+                    data[cursor + 4],
+                    data[cursor + 5],
+                    data[cursor + 6],
+                    data[cursor + 7],
+                ]);
+                if fragment_offset != 0 {
+                    return Err(FlowDecodeError::NonFirstFragment {
+                        protocol: data[cursor],
+                        fragment_id: id,
+                    });
+                }
+                is_fragment = more_fragments;
+                fragment_id = more_fragments.then_some(id);
+                next_header = data[cursor];
+                cursor += 8;
+            }
+            // IPv6 No Next Header is a valid terminal value. Preserve it as
+            // an unsupported L4 protocol instead of reporting truncation.
+            59 => break,
+            _ => break,
+        }
+    }
+
+    Ok(DecodedNetwork {
+        src_ip,
+        dst_ip,
+        protocol: next_header,
+        ttl: data[offset + 7],
+        tos: traffic_class,
+        transport_offset: cursor,
+        network_end: payload_end,
+        is_fragment,
+        fragment_id,
+    })
+}
+
+fn decode_transport(
+    data: &[u8],
+    offset: usize,
+    network_end: usize,
+    protocol: u8,
+    is_fragment: bool,
+) -> Result<DecodedTransport, FlowDecodeError> {
+    let needed = match protocol {
+        6 => 20,
+        17 => 8,
+        1 | 58 => 4,
+        _ => 0,
+    };
+    if needed == 0 {
+        return Ok(DecodedTransport {
+            src_port: 0,
+            dst_port: 0,
+            tcp_flags: 0,
+            application_payload_offset: offset,
+            application_payload_end: network_end,
+            status: TransportDecodeStatus::Unsupported,
+        });
+    }
+    if network_end > data.len() || offset > network_end || network_end - offset < needed {
+        return Err(FlowDecodeError::TruncatedTransport { protocol });
+    }
+    match protocol {
+        6 => {
+            let header_len = usize::from(data[offset + 12] >> 4) * 4;
+            if header_len < 20 || offset + header_len > network_end {
+                return Err(FlowDecodeError::MalformedTransport {
+                    protocol,
+                    reason: "invalid TCP data offset",
+                });
+            }
+            Ok(DecodedTransport {
+                src_port: u16::from_be_bytes([data[offset], data[offset + 1]]),
+                dst_port: u16::from_be_bytes([data[offset + 2], data[offset + 3]]),
+                tcp_flags: data[offset + 13],
+                application_payload_offset: offset + header_len,
+                application_payload_end: network_end,
+                status: if is_fragment {
+                    TransportDecodeStatus::FirstFragment
+                } else {
+                    TransportDecodeStatus::Decoded
+                },
+            })
+        }
+        17 => {
+            let udp_len = usize::from(u16::from_be_bytes([data[offset + 4], data[offset + 5]]));
+            if udp_len < 8 {
+                return Err(FlowDecodeError::MalformedTransport {
+                    protocol,
+                    reason: "UDP length is shorter than the header",
+                });
+            }
+            if !is_fragment && offset + udp_len > network_end {
+                return Err(FlowDecodeError::MalformedTransport {
+                    protocol,
+                    reason: "UDP length exceeds the IP payload",
+                });
+            }
+            Ok(DecodedTransport {
+                src_port: u16::from_be_bytes([data[offset], data[offset + 1]]),
+                dst_port: u16::from_be_bytes([data[offset + 2], data[offset + 3]]),
+                tcp_flags: 0,
+                application_payload_offset: offset + 8,
+                application_payload_end: if is_fragment {
+                    network_end
+                } else {
+                    offset + udp_len
+                },
+                status: if is_fragment {
+                    TransportDecodeStatus::FirstFragment
+                } else {
+                    TransportDecodeStatus::Decoded
+                },
+            })
+        }
+        1 | 58 => Ok(DecodedTransport {
+            src_port: data[offset] as u16,
+            dst_port: data[offset + 1] as u16,
+            tcp_flags: 0,
+            application_payload_offset: offset + 4,
+            application_payload_end: network_end,
+            status: if is_fragment {
+                TransportDecodeStatus::FirstFragment
+            } else {
+                TransportDecodeStatus::Decoded
+            },
+        }),
+        _ => Err(FlowDecodeError::MalformedTransport {
+            protocol,
+            reason: "unsupported transport protocol",
+        }),
+    }
+}
+
 pub struct PacketParser;
 
 impl PacketParser {
     pub fn parse(data: &[u8], timestamp: u64) -> Result<Option<ParsedPacket>> {
+        match Self::decode_flow_fields(data) {
+            Ok(fields) => Ok(Some(ParsedPacket {
+                src_ip: fields.src_ip,
+                dst_ip: fields.dst_ip,
+                src_port: fields.src_port,
+                dst_port: fields.dst_port,
+                protocol: fields.protocol,
+                tcp_flags: fields.tcp_flags,
+                payload_len: 0,
+                total_len: fields.total_len,
+                timestamp,
+                is_fragment: fields.is_fragment,
+                fragment_offset: 0,
+                more_fragments: fields.is_fragment,
+                vlan_id: fields.vlan_stack.first().copied(),
+                ttl: fields.ttl,
+                tos: fields.tos,
+                fragment_id: fields.fragment_id,
+            })),
+            // `parse` is the legacy compatibility adapter. Historically a
+            // frame that could not produce an IP flow was a skip, not a hard
+            // error. The production flow route calls `decode_flow_fields`
+            // directly and therefore retains its typed fail-closed errors.
+            Err(
+                FlowDecodeError::TruncatedEthernet
+                | FlowDecodeError::TruncatedVlan { .. }
+                | FlowDecodeError::TooManyVlanTags
+                | FlowDecodeError::UnsupportedEtherType(_)
+                | FlowDecodeError::MalformedIpv4(_)
+                | FlowDecodeError::MalformedIpv6(_)
+                | FlowDecodeError::NonFirstFragment { .. }
+                | FlowDecodeError::TruncatedTransport { .. }
+                | FlowDecodeError::MalformedTransport { .. },
+            ) => Ok(None),
+            Err(error) => Err(anyhow::anyhow!(error)),
+        }
+    }
+
+    /// Checked L2-L4 decoder shared by the full path and fast-path eligibility
+    /// adapter. It accepts single VLAN and QinQ, follows the supported IPv6
+    /// extension chain, and rejects non-first fragments before any zero-port
+    /// flow can be fabricated.
+    pub fn decode_flow_fields(data: &[u8]) -> Result<FlowFields, FlowDecodeError> {
+        let total_len = u16::try_from(data.len()).map_err(|_| FlowDecodeError::FrameTooLarge)?;
+        let (mut cursor, ether_type, vlan_stack) = decode_ethernet(data)?;
+
+        let network = match ether_type {
+            0x0800 => decode_ipv4(data, cursor)?,
+            0x86dd => decode_ipv6(data, cursor)?,
+            other => return Err(FlowDecodeError::UnsupportedEtherType(other)),
+        };
+        cursor = network.transport_offset;
+
+        let transport = decode_transport(
+            data,
+            cursor,
+            network.network_end,
+            network.protocol,
+            network.is_fragment,
+        )?;
+        Ok(FlowFields {
+            src_ip: network.src_ip,
+            dst_ip: network.dst_ip,
+            src_port: transport.src_port,
+            dst_port: transport.dst_port,
+            protocol: network.protocol,
+            tcp_flags: transport.tcp_flags,
+            total_len,
+            vlan_stack,
+            ttl: network.ttl,
+            tos: network.tos,
+            is_fragment: network.is_fragment,
+            fragment_id: network.fragment_id,
+            transport_status: transport.status,
+            application_payload_offset: transport.application_payload_offset,
+            application_payload_end: transport.application_payload_end,
+        })
+    }
+
+    /// Fast parser is deliberately a proven subset. Every other frame must be
+    /// handed to `decode_flow_fields`; it never guesses around extensions or
+    /// fragments.
+    pub fn decode_flow_fields_fast(data: &[u8]) -> Result<FlowFields, FastDecodeError> {
+        let (ip_offset, ether_type, vlan_stack) =
+            decode_ethernet(data).map_err(FastDecodeError::Invalid)?;
+        if vlan_stack.len() > 1 {
+            return Err(FastDecodeError::Fallback(FastFallback::QinQ));
+        }
+        match ether_type {
+            0x0800 => {
+                if data.len() < ip_offset + 20 {
+                    return Err(FastDecodeError::Invalid(FlowDecodeError::MalformedIpv4(
+                        "truncated base header",
+                    )));
+                }
+                if data[ip_offset] & 0x0f != 5 {
+                    return Err(FastDecodeError::Fallback(FastFallback::Ipv4Options));
+                }
+                let fragment_bits = u16::from_be_bytes([data[ip_offset + 6], data[ip_offset + 7]]);
+                if fragment_bits & 0x3fff != 0 {
+                    return Err(FastDecodeError::Fallback(FastFallback::Fragment));
+                }
+                if !matches!(data[ip_offset + 9], 6 | 17) {
+                    return Err(FastDecodeError::Fallback(FastFallback::Protocol));
+                }
+            }
+            0x86dd => {
+                if data.len() < ip_offset + 40 {
+                    return Err(FastDecodeError::Invalid(FlowDecodeError::MalformedIpv6(
+                        "truncated base header",
+                    )));
+                }
+                if !matches!(data[ip_offset + 6], 6 | 17) {
+                    return Err(FastDecodeError::Fallback(FastFallback::Ipv6Extension));
+                }
+            }
+            other => {
+                return Err(FastDecodeError::Invalid(
+                    FlowDecodeError::UnsupportedEtherType(other),
+                ));
+            }
+        }
+        Self::decode_flow_fields(data).map_err(FastDecodeError::Invalid)
+    }
+
+    #[allow(dead_code)]
+    fn parse_legacy(data: &[u8], timestamp: u64) -> Result<Option<ParsedPacket>> {
         if data.len() < 14 {
             trace!("Packet too short: {} bytes", data.len());
             return Ok(None);
@@ -655,80 +1261,14 @@ impl PacketParser {
     }
 
     pub fn quick_five_tuple(data: &[u8]) -> Option<(IpAddr, IpAddr, u16, u16, u8)> {
-        if data.len() < 34 {
-            return None;
-        }
-
-        let ethertype = u16::from_be_bytes([data[12], data[13]]);
-
-        let ip_offset = if ethertype == 0x8100 { 18 } else { 14 };
-
-        if data.len() < ip_offset + 20 {
-            return None;
-        }
-
-        let ip_version = (data[ip_offset] >> 4) & 0x0F;
-
-        match ip_version {
-            4 => {
-                let protocol = data[ip_offset + 9];
-                let src_ip = IpAddr::V4(Ipv4Addr::new(
-                    data[ip_offset + 12],
-                    data[ip_offset + 13],
-                    data[ip_offset + 14],
-                    data[ip_offset + 15],
-                ));
-                let dst_ip = IpAddr::V4(Ipv4Addr::new(
-                    data[ip_offset + 16],
-                    data[ip_offset + 17],
-                    data[ip_offset + 18],
-                    data[ip_offset + 19],
-                ));
-
-                let ihl = (data[ip_offset] & 0x0F) as usize * 4;
-                let transport_offset = ip_offset + ihl;
-
-                if data.len() < transport_offset + 4 {
-                    return Some((src_ip, dst_ip, 0, 0, protocol));
-                }
-
-                let src_port =
-                    u16::from_be_bytes([data[transport_offset], data[transport_offset + 1]]);
-                let dst_port =
-                    u16::from_be_bytes([data[transport_offset + 2], data[transport_offset + 3]]);
-
-                Some((src_ip, dst_ip, src_port, dst_port, protocol))
-            }
-            6 => {
-                if data.len() < ip_offset + 40 {
-                    return None;
-                }
-
-                let protocol = data[ip_offset + 6];
-
-                let mut src_bytes = [0u8; 16];
-                let mut dst_bytes = [0u8; 16];
-                src_bytes.copy_from_slice(&data[ip_offset + 8..ip_offset + 24]);
-                dst_bytes.copy_from_slice(&data[ip_offset + 24..ip_offset + 40]);
-
-                let src_ip = IpAddr::V6(Ipv6Addr::from(src_bytes));
-                let dst_ip = IpAddr::V6(Ipv6Addr::from(dst_bytes));
-
-                let transport_offset = ip_offset + 40;
-
-                if data.len() < transport_offset + 4 {
-                    return Some((src_ip, dst_ip, 0, 0, protocol));
-                }
-
-                let src_port =
-                    u16::from_be_bytes([data[transport_offset], data[transport_offset + 1]]);
-                let dst_port =
-                    u16::from_be_bytes([data[transport_offset + 2], data[transport_offset + 3]]);
-
-                Some((src_ip, dst_ip, src_port, dst_port, protocol))
-            }
-            _ => None,
-        }
+        let fields = Self::decode_flow_fields_fast(data).ok()?;
+        Some((
+            fields.src_ip,
+            fields.dst_ip,
+            fields.src_port,
+            fields.dst_port,
+            fields.protocol,
+        ))
     }
 
     pub fn quick_tos(data: &[u8]) -> Option<u8> {
@@ -763,10 +1303,24 @@ use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 // PassiveAssetDiscovery: 被动资产发现协调器
 // 集成 DNS/DHCP/ARP 解析器，从流量中被动发现 MAC↔IP↔Hostname 绑定
 // ============================================================================
-use crate::parser::arp::{ArpParser, MacAddr};
-use crate::parser::dhcp::DhcpParser;
+use crate::parser::arp::ArpParser;
+use crate::parser::dhcp::{DhcpMessageType, DhcpParser};
 use crate::parser::dns::DnsParser;
 use std::sync::Mutex;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AssetBindingObservation {
+    pub mac: String,
+    pub ip: String,
+    pub observed_at_ms: i64,
+    pub source: &'static str,
+    pub vlan_id: Option<u16>,
+    pub source_event_id: String,
+}
+
+pub trait AssetBindingSink: Send + Sync {
+    fn persist(&self, observation: AssetBindingObservation) -> Result<()>;
+}
 
 /// 被动资产发现事件
 #[derive(Debug, Clone)]
@@ -823,6 +1377,9 @@ pub struct DiscoveryStats {
     pub dhcp_leases: AtomicU64,
     pub dns_mappings: AtomicU64,
     pub alerts_generated: AtomicU64,
+    pub truncated_payloads: AtomicU64,
+    pub malformed_payloads: AtomicU64,
+    pub unsupported_payloads: AtomicU64,
 }
 
 /// 被动资产发现协调器
@@ -834,6 +1391,7 @@ pub struct PassiveAssetDiscovery {
     /// 最近发现的资产绑定事件 (环形缓冲区)
     pub events: Mutex<Vec<AssetDiscoveryEvent>>,
     max_events: usize,
+    binding_sink: Option<std::sync::Arc<dyn AssetBindingSink>>,
 }
 
 impl PassiveAssetDiscovery {
@@ -845,107 +1403,173 @@ impl PassiveAssetDiscovery {
             stats: DiscoveryStats::default(),
             events: Mutex::new(Vec::with_capacity(256)),
             max_events: 256,
+            binding_sink: None,
         }
     }
 
-    /// 处理数据包，根据协议判断是否触发被动发现
-    pub fn process_packet(
-        &self,
-        data: &[u8],
-        src_port: u16,
-        dst_port: u16,
-        protocol: u8,
-        timestamp: u64,
-    ) {
-        if data.len() < 20 {
+    pub fn with_binding_sink(mut self, sink: std::sync::Arc<dyn AssetBindingSink>) -> Self {
+        self.binding_sink = Some(sink);
+        self
+    }
+
+    fn persist_binding(&self, observation: AssetBindingObservation) {
+        if let Some(sink) = &self.binding_sink {
+            if let Err(error) = sink.persist(observation) {
+                warn!(error = %error, "durable asset binding spool rejected observation");
+            }
+        }
+    }
+
+    fn record_application_error(&self, error: &ApplicationDecodeError) {
+        if error.is_truncated() {
+            self.stats
+                .truncated_payloads
+                .fetch_add(1, AtomicOrdering::Relaxed);
+        } else if error.is_unsupported() {
+            self.stats
+                .unsupported_payloads
+                .fetch_add(1, AtomicOrdering::Relaxed);
+        } else {
+            self.stats
+                .malformed_payloads
+                .fetch_add(1, AtomicOrdering::Relaxed);
+        }
+        trace!(error = %error, "Application discovery parser rejected payload");
+    }
+
+    /// Process an already validated flow frame. Application parsers receive
+    /// only their L4 payload, never Ethernet or IP header bytes.
+    pub fn process_flow_sample(&self, frame: &[u8], fields: &FlowFields, timestamp: u64) {
+        if fields.application_payload_offset > fields.application_payload_end
+            || fields.application_payload_end > frame.len()
+            || fields.transport_status != TransportDecodeStatus::Decoded
+        {
             return;
         }
+        let data = &frame[fields.application_payload_offset..fields.application_payload_end];
 
-        // DNS: UDP port 53 (需要完整 4 参数调用)
-        if protocol == protocols::UDP && (src_port == 53 || dst_port == 53) {
+        // DNS over TCP needs stream reassembly and is intentionally not
+        // interpreted as a single packet here.
+        if fields.protocol == protocols::UDP && (fields.src_port == 53 || fields.dst_port == 53) {
             self.stats.dns_packets.fetch_add(1, AtomicOrdering::Relaxed);
             if let Ok(mut parser) = self.dns.lock() {
-                let fake_ip = IpAddr::V4(Ipv4Addr::UNSPECIFIED);
-                if let Some(record) = parser.process_dns_packet(data, fake_ip, fake_ip, timestamp) {
-                    self.stats
-                        .dns_mappings
-                        .fetch_add(1, AtomicOrdering::Relaxed);
-                    // 检测 DNS 隧道
-                    if parser.detect_dns_tunnel(&record) {
+                let (dns_server_ip, client_ip) = if fields.src_port == 53 {
+                    (fields.src_ip, fields.dst_ip)
+                } else {
+                    (fields.dst_ip, fields.src_ip)
+                };
+                match parser.process_dns_packet_checked(data, dns_server_ip, client_ip, timestamp) {
+                    Ok(record) => {
                         self.stats
-                            .alerts_generated
-                            .fetch_add(1, AtomicOrdering::Relaxed);
-                        if let Ok(mut events) = self.events.lock() {
-                            if events.len() >= self.max_events {
-                                events.remove(0);
+                            .dns_mappings
+                            .fetch_add(record.resolved_ips.len() as u64, AtomicOrdering::Relaxed);
+                        // 检测 DNS 隧道
+                        if parser.detect_dns_tunnel(&record) {
+                            self.stats
+                                .alerts_generated
+                                .fetch_add(1, AtomicOrdering::Relaxed);
+                            if let Ok(mut events) = self.events.lock() {
+                                if events.len() >= self.max_events {
+                                    events.remove(0);
+                                }
+                                events.push(AssetDiscoveryEvent::DnsTunnelAlert {
+                                    domain: record.query_name.clone(),
+                                    entropy: 0.0, // computed internally in detect_dns_tunnel
+                                    length: record.query_name.len(),
+                                });
                             }
-                            events.push(AssetDiscoveryEvent::DnsTunnelAlert {
-                                domain: record.query_name.clone(),
-                                entropy: 0.0, // computed internally in detect_dns_tunnel
-                                length: record.query_name.len(),
-                            });
+                        }
+                        // 记录 IP↔域名映射
+                        for ip in &record.resolved_ips {
+                            if let Ok(mut events) = self.events.lock() {
+                                if events.len() >= self.max_events {
+                                    events.remove(0);
+                                }
+                                events.push(AssetDiscoveryEvent::DnsMapping {
+                                    ip: ip.to_string(),
+                                    domain: record.query_name.clone(),
+                                    is_internal: record.is_internal,
+                                    rr_type: format!("{:?}", record.query_type),
+                                });
+                            }
                         }
                     }
-                    // 记录 IP↔域名映射
-                    for ip in &record.resolved_ips {
-                        if let Ok(mut events) = self.events.lock() {
-                            if events.len() >= self.max_events {
-                                events.remove(0);
-                            }
-                            events.push(AssetDiscoveryEvent::DnsMapping {
-                                ip: ip.to_string(),
-                                domain: record.query_name.clone(),
-                                is_internal: record.is_internal,
-                                rr_type: format!("{:?}", record.query_type),
-                            });
-                        }
-                    }
+                    Err(error) => self.record_application_error(&error),
                 }
             }
             return;
         }
 
         // DHCP: UDP port 67 (server) or 68 (client)
-        if protocol == protocols::UDP
-            && (src_port == 67 || dst_port == 67 || src_port == 68 || dst_port == 68)
+        if fields.protocol == protocols::UDP
+            && (fields.src_port == 67
+                || fields.dst_port == 67
+                || fields.src_port == 68
+                || fields.dst_port == 68)
         {
             self.stats
                 .dhcp_packets
                 .fetch_add(1, AtomicOrdering::Relaxed);
             if let Ok(mut parser) = self.dhcp.lock() {
-                if let Some(lease) = parser.parse_dhcp_packet(data, MacAddr::default(), timestamp) {
-                    self.stats.dhcp_leases.fetch_add(1, AtomicOrdering::Relaxed);
-                    let os_type = parser
-                        .identify_os(lease.vendor_class.as_deref().unwrap_or(""))
-                        .map(|f| f.os_name.clone());
-                    if let Ok(mut events) = self.events.lock() {
-                        if events.len() >= self.max_events {
-                            events.remove(0);
+                let source_mac = frame
+                    .get(6..12)
+                    .and_then(|bytes| <[u8; 6]>::try_from(bytes).ok())
+                    .unwrap_or_default();
+                match parser.parse_dhcp_packet_checked(data, source_mac, timestamp) {
+                    Ok(lease) => {
+                        let has_bound_lease = matches!(
+                            lease.message_type,
+                            DhcpMessageType::Offer | DhcpMessageType::Ack
+                        ) && lease.assigned_ip != Ipv4Addr::UNSPECIFIED;
+                        if has_bound_lease {
+                            self.stats.dhcp_leases.fetch_add(1, AtomicOrdering::Relaxed);
                         }
-                        events.push(AssetDiscoveryEvent::DhcpLease {
-                            mac: crate::parser::arp::mac_to_string(&lease.mac_address),
-                            ip: lease.assigned_ip.to_string(),
-                            hostname: lease.hostname.clone(),
-                            os_type,
-                            vlan_id: None, // DHCP relay info not available in current parser
-                        });
-                    }
-                    // 检测 DHCP 耗尽攻击
-                    if parser.detect_dhcp_exhaustion() {
-                        self.stats
-                            .alerts_generated
-                            .fetch_add(1, AtomicOrdering::Relaxed);
-                        let active = parser.active_leases().len();
-                        if let Ok(mut events) = self.events.lock() {
-                            if events.len() >= self.max_events {
-                                events.remove(0);
-                            }
-                            events.push(AssetDiscoveryEvent::DhcpExhaustionAlert {
-                                subnet: "unknown".to_string(),
-                                active_leases: active,
+                        let os_type = parser
+                            .identify_os(lease.vendor_class.as_deref().unwrap_or(""))
+                            .map(|f| f.os_name.clone());
+                        if has_bound_lease {
+                            let mac = crate::parser::arp::mac_to_string(&lease.mac_address);
+                            let vlan_id =
+                                lease.relay_agent.as_ref().and_then(|relay| relay.vlan_id);
+                            self.persist_binding(AssetBindingObservation {
+                                mac: mac.clone(),
+                                ip: lease.assigned_ip.to_string(),
+                                observed_at_ms: (lease.timestamp_ms / 1_000) as i64,
+                                source: "dhcp",
+                                vlan_id,
+                                source_event_id: format!("dhcp-xid:{:08x}", lease.transaction_id),
                             });
+                            if let Ok(mut events) = self.events.lock() {
+                                if events.len() >= self.max_events {
+                                    events.remove(0);
+                                }
+                                events.push(AssetDiscoveryEvent::DhcpLease {
+                                    mac,
+                                    ip: lease.assigned_ip.to_string(),
+                                    hostname: lease.hostname.clone(),
+                                    os_type,
+                                    vlan_id,
+                                });
+                            }
+                        }
+                        // 检测 DHCP 耗尽攻击
+                        if parser.detect_dhcp_exhaustion() {
+                            self.stats
+                                .alerts_generated
+                                .fetch_add(1, AtomicOrdering::Relaxed);
+                            let active = parser.active_leases().len();
+                            if let Ok(mut events) = self.events.lock() {
+                                if events.len() >= self.max_events {
+                                    events.remove(0);
+                                }
+                                events.push(AssetDiscoveryEvent::DhcpExhaustionAlert {
+                                    subnet: "unknown".to_string(),
+                                    active_leases: active,
+                                });
+                            }
                         }
                     }
+                    Err(error) => self.record_application_error(&error),
                 }
             }
             return;
@@ -954,23 +1578,46 @@ impl PassiveAssetDiscovery {
 
     /// 处理 ARP 数据包 (需要从以太网层判断 ethertype=0x0806)
     pub fn process_arp_packet(&self, data: &[u8], timestamp: u64) {
-        if data.len() < 28 {
+        if data.len() < 14 {
             return;
         }
-        // 检查以太网帧类型是否为 ARP (0x0806)
-        let ethertype = u16::from_be_bytes([data[12], data[13]]);
+        let (payload_offset, ethertype, vlan_stack) = match decode_ethernet(data) {
+            Ok(decoded) => decoded,
+            Err(_) => return,
+        };
         if ethertype != 0x0806 {
             return;
         }
+        let payload = match data.get(payload_offset..payload_offset + 28) {
+            Some(payload) => payload,
+            None => {
+                self.record_application_error(&ApplicationDecodeError::Truncated {
+                    protocol: "ARP",
+                    stage: "payload",
+                    required: payload_offset + 28,
+                    actual: data.len(),
+                });
+                return;
+            }
+        };
+        let capture_mac = data
+            .get(6..12)
+            .and_then(|bytes| <[u8; 6]>::try_from(bytes).ok());
         self.stats.arp_packets.fetch_add(1, AtomicOrdering::Relaxed);
         if let Ok(mut parser) = self.arp.lock() {
-            let binding = parser.parse_arp_packet(data, None, None, timestamp);
-            if let Some(b) = binding {
+            let alert_count_before = parser.spoof_alerts.len();
+            let binding = parser.parse_arp_packet_checked(
+                payload,
+                capture_mac,
+                vlan_stack.first().copied(),
+                timestamp,
+            );
+            if let Ok(b) = binding {
                 self.stats
                     .arp_bindings
                     .fetch_add(1, AtomicOrdering::Relaxed);
                 // 检测 ARP 欺骗
-                let spoof_alerts = parser.recent_spoof_alerts(5).to_vec();
+                let spoof_alerts = parser.spoof_alerts[alert_count_before..].to_vec();
                 for alert in &spoof_alerts {
                     self.stats
                         .alerts_generated
@@ -991,18 +1638,29 @@ impl PassiveAssetDiscovery {
                     }
                 }
                 if spoof_alerts.is_empty() {
+                    let mac = crate::parser::arp::mac_to_string(&b.mac);
+                    self.persist_binding(AssetBindingObservation {
+                        mac: mac.clone(),
+                        ip: b.ip.to_string(),
+                        observed_at_ms: (b.timestamp_ms / 1_000) as i64,
+                        source: "arp",
+                        vlan_id: b.vlan_id,
+                        source_event_id: format!("arp:{:?}", b.operation),
+                    });
                     if let Ok(mut events) = self.events.lock() {
                         if events.len() >= self.max_events {
                             events.remove(0);
                         }
                         events.push(AssetDiscoveryEvent::ArpBinding {
-                            mac: crate::parser::arp::mac_to_string(&b.mac),
+                            mac,
                             ip: b.ip.to_string(),
                             is_gateway: b.is_gratuitous,
                             timestamp: b.timestamp_ms,
                         });
                     }
                 }
+            } else if let Err(error) = binding {
+                self.record_application_error(&error);
             }
         }
     }
@@ -1033,11 +1691,223 @@ impl PassiveAssetDiscovery {
             self.stats.alerts_generated.load(AtomicOrdering::Relaxed),
         )
     }
+
+    /// Keep parser rejection counters separate from valid protocol traffic.
+    pub fn get_decode_error_stats(&self) -> (u64, u64, u64) {
+        (
+            self.stats.truncated_payloads.load(AtomicOrdering::Relaxed),
+            self.stats.malformed_payloads.load(AtomicOrdering::Relaxed),
+            self.stats
+                .unsupported_payloads
+                .load(AtomicOrdering::Relaxed),
+        )
+    }
 }
 
 impl Default for PassiveAssetDiscovery {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod discovery_tests {
+    use super::*;
+
+    #[derive(Default)]
+    struct RecordingBindingSink {
+        observations: Mutex<Vec<AssetBindingObservation>>,
+    }
+
+    impl AssetBindingSink for RecordingBindingSink {
+        fn persist(&self, observation: AssetBindingObservation) -> Result<()> {
+            self.observations.lock().unwrap().push(observation);
+            Ok(())
+        }
+    }
+
+    fn ethernet(ether_type: u16, payload: &[u8]) -> Vec<u8> {
+        let mut frame = vec![0; 12];
+        frame[6..12].copy_from_slice(&[0x00, 0x1a, 0xc5, 1, 2, 3]);
+        frame.extend_from_slice(&ether_type.to_be_bytes());
+        frame.extend_from_slice(payload);
+        frame
+    }
+
+    fn ipv4_udp(src_port: u16, dst_port: u16, payload: &[u8]) -> Vec<u8> {
+        let total_len = 20 + 8 + payload.len();
+        let mut packet = vec![0; total_len];
+        packet[0] = 0x45;
+        packet[2..4].copy_from_slice(&(total_len as u16).to_be_bytes());
+        packet[8] = 64;
+        packet[9] = 17;
+        packet[12..16].copy_from_slice(&[192, 0, 2, 20]);
+        packet[16..20].copy_from_slice(&[8, 8, 8, 8]);
+        packet[20..22].copy_from_slice(&src_port.to_be_bytes());
+        packet[22..24].copy_from_slice(&dst_port.to_be_bytes());
+        packet[24..26].copy_from_slice(&((8 + payload.len()) as u16).to_be_bytes());
+        packet[28..].copy_from_slice(payload);
+        ethernet(0x0800, &packet)
+    }
+
+    fn dns_a_response() -> Vec<u8> {
+        let mut packet = vec![
+            0x12, 0x34, 0x81, 0x80, 0, 1, 0, 1, 0, 0, 0, 0, 3, b'w', b'w', b'w', 7, b'e', b'x',
+            b'a', b'm', b'p', b'l', b'e', 3, b'c', b'o', b'm', 0, 0, 1, 0, 1,
+        ];
+        packet.extend_from_slice(&[0xc0, 0x0c, 0, 1, 0, 1, 0, 0, 0, 60, 0, 4, 192, 0, 2, 10]);
+        packet
+    }
+
+    fn dhcp_discover() -> Vec<u8> {
+        let mut packet = vec![0; 244];
+        packet[0] = 1;
+        packet[1] = 1;
+        packet[2] = 6;
+        packet[4..8].copy_from_slice(&0x1020_3040u32.to_be_bytes());
+        packet[28..34].copy_from_slice(&[0x00, 0x1a, 0xc5, 1, 2, 3]);
+        packet[236..240].copy_from_slice(&[99, 130, 83, 99]);
+        packet[240..244].copy_from_slice(&[53, 1, 1, 255]);
+        packet
+    }
+
+    fn dhcp_ack() -> Vec<u8> {
+        let mut packet = dhcp_discover();
+        packet[16..20].copy_from_slice(&[192, 168, 1, 20]);
+        packet[242] = 5;
+        packet
+    }
+
+    #[test]
+    fn raw_dns_frame_uses_udp_payload_and_real_endpoints() {
+        let discovery = PassiveAssetDiscovery::new();
+        let frame = ipv4_udp(53000, 53, &dns_a_response());
+        let fields = PacketParser::decode_flow_fields(&frame).unwrap();
+        discovery.process_flow_sample(&frame, &fields, 1_000);
+
+        assert_eq!(discovery.stats.dns_packets.load(AtomicOrdering::Relaxed), 1);
+        assert_eq!(
+            discovery.stats.dns_mappings.load(AtomicOrdering::Relaxed),
+            1
+        );
+        let parser = discovery.dns.lock().unwrap();
+        assert_eq!(
+            parser.assets.hostname_to_ip.get("www.example.com"),
+            Some(&vec!["192.0.2.10".parse::<IpAddr>().unwrap()])
+        );
+    }
+
+    #[test]
+    fn raw_dhcp_discover_does_not_fabricate_a_bound_lease() {
+        let discovery = PassiveAssetDiscovery::new();
+        let frame = ipv4_udp(68, 67, &dhcp_discover());
+        let fields = PacketParser::decode_flow_fields(&frame).unwrap();
+        discovery.process_flow_sample(&frame, &fields, 1_000);
+
+        assert_eq!(
+            discovery.stats.dhcp_packets.load(AtomicOrdering::Relaxed),
+            1
+        );
+        assert_eq!(discovery.stats.dhcp_leases.load(AtomicOrdering::Relaxed), 0);
+        let parser = discovery.dhcp.lock().unwrap();
+        assert!(parser.leases.is_empty());
+        assert!(parser.ip_to_mac.is_empty());
+        assert_eq!(parser.lease_stats.total_discoveries, 1);
+        drop(parser);
+        assert!(discovery.recent_events(10).is_empty());
+    }
+
+    #[test]
+    fn raw_dhcp_ack_persists_a_durable_binding_observation() {
+        let sink = std::sync::Arc::new(RecordingBindingSink::default());
+        let discovery = PassiveAssetDiscovery::new().with_binding_sink(sink.clone());
+        let frame = ipv4_udp(67, 68, &dhcp_ack());
+        let fields = PacketParser::decode_flow_fields(&frame).unwrap();
+        discovery.process_flow_sample(&frame, &fields, 2_000_000);
+
+        let observations = sink.observations.lock().unwrap();
+        assert_eq!(observations.len(), 1);
+        assert_eq!(observations[0].source, "dhcp");
+        assert_eq!(observations[0].ip, "192.168.1.20");
+        assert_eq!(observations[0].observed_at_ms, 2_000);
+    }
+
+    #[test]
+    fn raw_vlan_arp_frame_is_decoded_and_truncation_is_counted() {
+        let sink = std::sync::Arc::new(RecordingBindingSink::default());
+        let discovery = PassiveAssetDiscovery::new().with_binding_sink(sink.clone());
+        let mut arp = vec![0; 28];
+        arp[0..2].copy_from_slice(&1u16.to_be_bytes());
+        arp[2..4].copy_from_slice(&0x0800u16.to_be_bytes());
+        arp[4] = 6;
+        arp[5] = 4;
+        arp[6..8].copy_from_slice(&1u16.to_be_bytes());
+        arp[8..14].copy_from_slice(&[0, 0x1a, 0xc5, 1, 2, 3]);
+        arp[14..18].copy_from_slice(&[192, 168, 1, 10]);
+        arp[24..28].copy_from_slice(&[192, 168, 1, 1]);
+        let mut vlan_payload = Vec::new();
+        vlan_payload.extend_from_slice(&100u16.to_be_bytes());
+        vlan_payload.extend_from_slice(&0x0806u16.to_be_bytes());
+        vlan_payload.extend_from_slice(&arp);
+        discovery.process_arp_packet(&ethernet(0x8100, &vlan_payload), 1_000);
+        assert_eq!(
+            discovery.stats.arp_bindings.load(AtomicOrdering::Relaxed),
+            1
+        );
+        assert_eq!(discovery.arp.lock().unwrap().ip_to_mac.len(), 1);
+        let observations = sink.observations.lock().unwrap();
+        assert_eq!(observations.len(), 1);
+        assert_eq!(observations[0].source, "arp");
+        assert_eq!(observations[0].vlan_id, Some(100));
+        assert_eq!(observations[0].observed_at_ms, 1);
+        drop(observations);
+
+        discovery.process_arp_packet(&ethernet(0x0806, &[0; 10]), 2_000);
+        assert_eq!(
+            discovery
+                .stats
+                .truncated_payloads
+                .load(AtomicOrdering::Relaxed),
+            1
+        );
+    }
+
+    #[test]
+    fn truncated_application_corpus_rejects_without_state_mutation() {
+        let dns_packet = dns_a_response();
+        for end in 0..dns_packet.len() {
+            let mut parser = DnsParser::new();
+            assert!(parser
+                .process_dns_packet_checked(
+                    &dns_packet[..end],
+                    "8.8.8.8".parse().unwrap(),
+                    "192.0.2.20".parse().unwrap(),
+                    1_000,
+                )
+                .is_err());
+            assert!(parser.assets.hostname_to_ip.is_empty());
+        }
+
+        let dhcp_packet = dhcp_discover();
+        for end in 0..dhcp_packet.len() {
+            let mut parser = DhcpParser::new();
+            assert!(parser
+                .parse_dhcp_packet_checked(&dhcp_packet[..end], [0x00, 0x1a, 0xc5, 1, 2, 3], 1_000,)
+                .is_err());
+            assert!(parser.leases.is_empty());
+            assert!(parser.ip_to_mac.is_empty());
+            assert!(parser.mac_to_hostname.is_empty());
+        }
+
+        let arp_packet = vec![0; 28];
+        for end in 0..arp_packet.len() {
+            let mut parser = ArpParser::new();
+            assert!(parser
+                .parse_arp_packet_checked(&arp_packet[..end], None, None, 1_000)
+                .is_err());
+            assert!(parser.ip_to_mac.is_empty());
+            assert!(parser.mac_to_ip.is_empty());
+        }
     }
 }
 

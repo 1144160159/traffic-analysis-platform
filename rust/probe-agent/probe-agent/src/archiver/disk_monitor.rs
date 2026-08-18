@@ -1,9 +1,27 @@
-use anyhow::{Context, Result};
-use std::path::Path;
+use anyhow::{bail, Context, Result};
+use std::os::unix::fs::MetadataExt;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::time::{interval, Duration};
 use tracing::{debug, error, info, warn};
+
+use super::upload_journal::{CleanupClaim, UploadJournal};
+
+pub trait PcapCleanupAuthority: Send + Sync {
+    fn cleanup_claims(&self) -> Result<Vec<CleanupClaim>>;
+    fn record_deleted(&self, claim: &CleanupClaim) -> Result<()>;
+}
+
+impl PcapCleanupAuthority for UploadJournal {
+    fn cleanup_claims(&self) -> Result<Vec<CleanupClaim>> {
+        UploadJournal::cleanup_claims(self)
+    }
+
+    fn record_deleted(&self, claim: &CleanupClaim) -> Result<()> {
+        UploadJournal::record_deleted(self, claim)
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct DiskMonitorConfig {
@@ -127,12 +145,77 @@ pub struct DiskMonitor {
     running: Arc<AtomicBool>,
 
     latest_stats: Arc<tokio::sync::RwLock<DiskStats>>,
+    /// Set once the monitor has performed at least one real disk measurement;
+    /// the target-watermark stop in cleanup only applies after a measurement.
+    measured: AtomicBool,
 
     warning_count: AtomicU64,
 
     critical_count: AtomicU64,
 
     last_cleanup: Arc<tokio::sync::Mutex<Option<std::time::Instant>>>,
+    cleanup_authority: Option<Arc<dyn PcapCleanupAuthority>>,
+    canonical_spool_root: Option<CanonicalSpoolRoot>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PcapCleanupReport {
+    pub claims_inspected: usize,
+    pub files_deleted: usize,
+    pub tombstones_written: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct CanonicalSpoolRoot {
+    path: PathBuf,
+}
+
+impl CanonicalSpoolRoot {
+    pub fn new(path: impl AsRef<Path>) -> Result<Self> {
+        let path = std::fs::canonicalize(path.as_ref()).with_context(|| {
+            format!(
+                "failed to canonicalize cleanup spool root {}",
+                path.as_ref().display()
+            )
+        })?;
+        Ok(Self { path })
+    }
+
+    pub async fn unlink_claimed(&self, claim: &CleanupClaim) -> Result<()> {
+        let original = PathBuf::from(&claim.canonical_path);
+        let deletion = PathBuf::from(&claim.deletion_path);
+        if !original.starts_with(&self.path)
+            || !deletion.starts_with(&self.path)
+            || original.parent() != deletion.parent()
+        {
+            bail!("cleanup claim path is outside the canonical spool root");
+        }
+        let parent = original
+            .parent()
+            .context("cleanup claim path has no parent directory")?;
+        let canonical_parent = std::fs::canonicalize(parent)?;
+        if !canonical_parent.starts_with(&self.path) || canonical_parent != parent {
+            bail!("cleanup claim parent is not canonical beneath the spool root");
+        }
+        if original.exists() && deletion.exists() {
+            bail!("cleanup claim has both source and deletion paths");
+        }
+        if original.exists() {
+            verify_claimed_inode(&original, claim)?;
+            tokio::fs::rename(&original, &deletion)
+                .await
+                .context("failed to atomically claim cleanup path")?;
+            sync_directory(parent).await?;
+        }
+        if deletion.exists() {
+            verify_claimed_inode(&deletion, claim)?;
+            tokio::fs::remove_file(&deletion)
+                .await
+                .context("failed to unlink claimed PCAP evidence")?;
+            sync_directory(parent).await?;
+        }
+        Ok(())
+    }
 }
 
 impl DiskMonitor {
@@ -146,10 +229,24 @@ impl DiskMonitor {
             config,
             running: Arc::new(AtomicBool::new(false)),
             latest_stats: Arc::new(tokio::sync::RwLock::new(DiskStats::empty())),
+            measured: AtomicBool::new(false),
             warning_count: AtomicU64::new(0),
             critical_count: AtomicU64::new(0),
             last_cleanup: Arc::new(tokio::sync::Mutex::new(None)),
+            cleanup_authority: None,
+            canonical_spool_root: None,
         }
+    }
+
+    pub fn with_pcap_cleanup_authority(
+        config: DiskMonitorConfig,
+        cleanup_authority: Arc<dyn PcapCleanupAuthority>,
+        spool_root: impl AsRef<Path>,
+    ) -> Result<Self> {
+        let mut monitor = Self::new(config);
+        monitor.cleanup_authority = Some(cleanup_authority);
+        monitor.canonical_spool_root = Some(CanonicalSpoolRoot::new(spool_root)?);
+        Ok(monitor)
     }
 
     pub async fn start(self: Arc<Self>) -> tokio::task::JoinHandle<()> {
@@ -183,6 +280,7 @@ impl DiskMonitor {
 
             match self.check_disk_space().await {
                 Ok(stats) => {
+                    self.measured.store(true, Ordering::Release);
                     *self.latest_stats.write().await = stats.clone();
 
                     if iteration % 10 == 0 {
@@ -271,7 +369,9 @@ impl DiskMonitor {
         let mut last_cleanup = self.last_cleanup.lock().await;
 
         if let Some(last) = *last_cleanup {
-            if last.elapsed() < Duration::from_secs(300) {
+            // Honor the configured minimum interval instead of a hardcoded
+            // 300s throttle.
+            if last.elapsed() < self.config.min_cleanup_interval {
                 debug!("Cleanup triggered too frequently, skipping");
                 return;
             }
@@ -280,8 +380,8 @@ impl DiskMonitor {
         info!("Triggering disk cleanup...");
 
         match self.cleanup_old_files().await {
-            Ok(cleaned) => {
-                info!("✓ Cleanup completed: {} files removed", cleaned);
+            Ok(report) => {
+                info!("✓ Cleanup completed: {:?}", report);
                 *last_cleanup = Some(std::time::Instant::now());
             }
             Err(e) => {
@@ -290,47 +390,42 @@ impl DiskMonitor {
         }
     }
 
-    async fn cleanup_old_files(&self) -> Result<usize> {
-        let path = Path::new(&self.config.path);
-        let mut cleaned = 0;
-
-        let mut entries = tokio::fs::read_dir(path)
-            .await
-            .context("Failed to read directory")?;
-
-        let mut files = Vec::new();
-
-        while let Some(entry) = entries
-            .next_entry()
-            .await
-            .context("Failed to read directory entry")?
-        {
-            if let Ok(metadata) = entry.metadata().await {
-                if metadata.is_file() {
-                    if let Ok(modified) = metadata.modified() {
-                        files.push((entry.path(), modified));
-                    }
-                }
+    pub async fn cleanup_old_files(&self) -> Result<PcapCleanupReport> {
+        let authority = self
+            .cleanup_authority
+            .as_ref()
+            .context("disk cleanup has no PCAP cleanup authority")?;
+        let spool_root = self
+            .canonical_spool_root
+            .as_ref()
+            .context("disk cleanup has no canonical spool root")?;
+        let claims = authority.cleanup_claims()?;
+        let mut report = PcapCleanupReport {
+            claims_inspected: claims.len(),
+            ..PcapCleanupReport::default()
+        };
+        let target_usage = self.config.cleanup_target_percent;
+        for claim in claims {
+            // Honor the configured target water mark: stop deleting once the
+            // *measured* usage is at or below the target, instead of deleting
+            // every authorized claim unconditionally. Before any real
+            // measurement exists (e.g. tests or a monitor that has not ticked
+            // yet), proceed with the authorized claims.
+            let measured = self.measured.load(Ordering::Acquire);
+            let usage = self.latest_stats.read().await.usage_percent;
+            if measured && usage <= target_usage {
+                debug!(
+                    "Cleanup reached target usage {:.1}% (target {:.1}%); stopping",
+                    usage, target_usage
+                );
+                break;
             }
+            spool_root.unlink_claimed(&claim).await?;
+            report.files_deleted += 1;
+            authority.record_deleted(&claim)?;
+            report.tombstones_written += 1;
         }
-
-        files.sort_by(|a, b| a.1.cmp(&b.1));
-
-        let to_remove = (files.len() as f64 * 0.3) as usize;
-
-        for (file_path, _) in files.iter().take(to_remove) {
-            match tokio::fs::remove_file(file_path).await {
-                Ok(()) => {
-                    cleaned += 1;
-                    debug!("Removed old file: {:?}", file_path);
-                }
-                Err(e) => {
-                    warn!("Failed to remove file {:?}: {}", file_path, e);
-                }
-            }
-        }
-
-        Ok(cleaned)
+        Ok(report)
     }
 
     pub async fn get_stats(&self) -> DiskStats {
@@ -343,6 +438,27 @@ impl DiskMonitor {
             self.critical_count.load(Ordering::Relaxed),
         )
     }
+}
+
+fn verify_claimed_inode(path: &Path, claim: &CleanupClaim) -> Result<()> {
+    let metadata = std::fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink()
+        || !metadata.is_file()
+        || metadata.dev() != claim.device
+        || metadata.ino() != claim.inode
+    {
+        bail!("cleanup claim path identity changed before unlink");
+    }
+    Ok(())
+}
+
+async fn sync_directory(path: &Path) -> Result<()> {
+    let path = path.to_path_buf();
+    let sync_path = path.clone();
+    tokio::task::spawn_blocking(move || std::fs::File::open(&sync_path)?.sync_all())
+        .await
+        .context("cleanup directory sync task failed")?
+        .with_context(|| format!("failed to fsync cleanup directory {}", path.display()))
 }
 
 fn get_disk_stats(path: &str) -> Result<DiskStats> {
@@ -388,5 +504,108 @@ fn get_disk_stats(path: &str) -> Result<DiskStats> {
     #[cfg(not(target_os = "linux"))]
     {
         anyhow::bail!("DiskMonitor only supported on Linux");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{DiskMonitor, DiskMonitorConfig};
+    use crate::archiver::{ObjectWriteReceipt, UploadJournal, UploadTask};
+    use std::sync::Arc;
+
+    fn receipt(stored_size: u64, sha256: &str) -> ObjectWriteReceipt {
+        ObjectWriteReceipt {
+            bucket: "pcap-archive".to_string(),
+            key: "tenant-a/probe-a/capture.pcap.zst".to_string(),
+            version_id: "v1".to_string(),
+            etag: "etag".to_string(),
+            stored_size,
+            sha256: sha256.to_string(),
+        }
+    }
+
+    #[tokio::test]
+    async fn cleanup_deletes_only_exact_authorized_claim() {
+        let directory = tempfile::tempdir().expect("directory");
+        let spool_root = directory.path().join("spool");
+        let identity_root = spool_root.join("tenant-a").join("probe-a");
+        std::fs::create_dir_all(&identity_root).expect("spool identity root");
+        let journal = Arc::new(UploadJournal::new(directory.path()).expect("journal"));
+        let task = UploadTask {
+            data: vec![1],
+            ts_start: 1,
+            ts_end: 1,
+            packet_count: 1,
+            tenant_id: "tenant-a".to_string(),
+            probe_id: "probe-a".to_string(),
+        };
+        let pending_path = identity_root.join("old-pending.pcap.zst");
+        let authorized_path = identity_root.join("new-authorized.pcap.zst");
+        std::fs::write(&pending_path, b"pending").expect("pending file");
+        std::fs::write(&authorized_path, b"authorized").expect("authorized file");
+        let pending_sha = "a".repeat(64);
+        let authorized_sha = "b".repeat(64);
+        let pending_id = journal
+            .record_pending(
+                &task,
+                pending_path.to_str().expect("pending path"),
+                1,
+                7,
+                &pending_sha,
+            )
+            .expect("pending entry");
+        let authorized_id = journal
+            .record_pending(
+                &task,
+                authorized_path.to_str().expect("authorized path"),
+                1,
+                10,
+                &authorized_sha,
+            )
+            .expect("authorized entry");
+        journal
+            .mark_object_written(&authorized_id, &receipt(10, &authorized_sha))
+            .expect("object");
+        journal
+            .mark_metadata_accepted(&authorized_id)
+            .expect("metadata");
+        let revision = journal
+            .get_entry(&authorized_id)
+            .expect("lookup")
+            .expect("accepted")
+            .revision;
+        journal
+            .claim_cleanup_authority(&authorized_id, revision, &spool_root)
+            .expect("cleanup claim");
+
+        let monitor = DiskMonitor::with_pcap_cleanup_authority(
+            DiskMonitorConfig {
+                path: spool_root.to_string_lossy().into_owned(),
+                ..DiskMonitorConfig::default()
+            },
+            journal.clone(),
+            &spool_root,
+        )
+        .expect("monitor");
+        let report = monitor.cleanup_old_files().await.expect("cleanup");
+        assert_eq!(report.files_deleted, 1);
+        assert!(pending_path.exists(), "PENDING evidence must survive");
+        assert!(!authorized_path.exists());
+        assert_eq!(
+            journal
+                .get_entry(&pending_id)
+                .expect("lookup")
+                .expect("pending")
+                .effective_object_state(),
+            crate::archiver::JournalObjectState::Pending
+        );
+        assert_eq!(
+            journal
+                .get_entry(&authorized_id)
+                .expect("lookup")
+                .expect("deleted")
+                .effective_object_state(),
+            crate::archiver::JournalObjectState::Deleted
+        );
     }
 }

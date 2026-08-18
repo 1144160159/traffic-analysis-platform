@@ -10,9 +10,11 @@ use super::ring::XdpDesc;
 use super::umem::{Umem, UmemConfig};
 use super::xdp_socket::{XskSocket, XskSocketConfig};
 use super::xdp_sys::XDP_COPY;
-use super::{CaptureConfig, CaptureMode, CaptureStats, Capturer};
+use super::{
+    CaptureConfig, CaptureMode, CaptureStats, CaptureTimestamp, CaptureTimestampProvenance,
+    Capturer,
+};
 use super::{FrameInfo, PacketBatch};
-use crate::metrics;
 use aya::maps::XskMap;
 use aya::programs::{Xdp, XdpFlags};
 use aya::Bpf;
@@ -307,6 +309,37 @@ impl XdpCapture {
             false
         }
     }
+
+    /// Converts already-decoded RX descriptors into frame metadata. This XSK
+    /// ABI currently carries no timestamp metadata, so every descriptor gets
+    /// an explicit degraded receipt timestamp instead of a false kernel-time
+    /// claim. A future ABI decoder can pass `Some(KernelPerFrame)` here without
+    /// changing batch ownership or aggregation code.
+    pub fn consume_rx_with_timestamps(
+        umem: &Umem,
+        descriptors: &[XdpDesc],
+        decoded_timestamps: &[Option<CaptureTimestamp>],
+        degraded_at: CaptureTimestamp,
+    ) -> Result<Vec<FrameInfo>> {
+        if descriptors.len() != decoded_timestamps.len() {
+            anyhow::bail!("XDP_TIMESTAMP_DESCRIPTOR_COUNT_MISMATCH");
+        }
+        Ok(descriptors
+            .iter()
+            .zip(decoded_timestamps)
+            .map(|(descriptor, decoded)| FrameInfo {
+                idx: umem.addr_to_frame(descriptor.addr as usize),
+                offset: ((descriptor.addr as usize) % umem.frame_size()) as u32,
+                len: descriptor.len,
+                captured_at: decoded.unwrap_or_else(|| {
+                    CaptureTimestamp::from_epoch_micros(
+                        degraded_at.epoch_micros(),
+                        CaptureTimestampProvenance::DescriptorWallClockDegraded,
+                    )
+                }),
+            })
+            .collect())
+    }
 }
 
 // SAFETY: XdpCapture wraps XskSocket which internally manages AF_XDP rings and UMEM.
@@ -485,28 +518,29 @@ impl Capturer for XdpCapture {
         }
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_micros() as u64;
-        let mut frames = Vec::with_capacity(received);
-        for desc in &descs[..received] {
-            let frame_idx = self.umem.addr_to_frame(desc.addr as usize);
+            .map_err(|_| anyhow::anyhow!("XDP_BATCH_CLOCK_BEFORE_UNIX_EPOCH"))?;
+        let degraded_at = CaptureTimestamp::from_epoch_micros(
+            u64::try_from(timestamp.as_micros())
+                .map_err(|_| anyhow::anyhow!("XDP_BATCH_CLOCK_OVERFLOW"))?,
+            CaptureTimestampProvenance::DescriptorWallClockDegraded,
+        );
+        let decoded_timestamps = vec![None; received];
+        let frames = Self::consume_rx_with_timestamps(
+            &self.umem,
+            &descs[..received],
+            &decoded_timestamps,
+            degraded_at,
+        )?;
+        for (desc, frame) in descs[..received].iter().zip(&frames) {
+            let frame_idx = frame.idx;
             if !self.kernel_owned_frames.remove(&frame_idx) {
                 warn!(
                     "RX descriptor returned untracked UMEM frame {}; preserving batch ownership",
                     frame_idx
                 );
             }
-            let offset = (desc.addr as usize) % self.umem.frame_size();
-            frames.push(FrameInfo {
-                idx: frame_idx,
-                offset: offset as u32,
-                len: desc.len,
-                timestamp,
-            });
             self.stats.packets_received += 1;
             self.stats.bytes_received += desc.len as u64;
-            metrics::PACKETS_CAPTURED.inc();
-            metrics::BYTES_CAPTURED.inc_by(desc.len as f64);
         }
         // ⑤ Refill — no outstanding borrow
         self.refill_fill_queue();
@@ -514,7 +548,14 @@ impl Capturer for XdpCapture {
     }
 
     fn stats(&self) -> CaptureStats {
-        self.stats.clone()
+        let mut stats = self.stats.clone();
+        if let Some(socket) = self.xsk_socket.as_ref() {
+            if let Ok(kernel) = socket.statistics() {
+                stats.kernel_drops = kernel.rx_dropped.saturating_add(kernel.rx_ring_full);
+                stats.packets_dropped = stats.allocation_drops.saturating_add(stats.kernel_drops);
+            }
+        }
+        stats
     }
 }
 

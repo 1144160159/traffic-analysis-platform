@@ -181,5 +181,8 @@ fn workspace_root() -> Result<PathBuf> {
     let path = PathBuf::from(path.trim());
 
     // 返回 Cargo.toml 的父目录
-    Ok(path.parent().unwrap().to_path_buf())
+    Ok(path
+        .parent()
+        .context("workspace Cargo.toml path has no parent")?
+        .to_path_buf())
 }

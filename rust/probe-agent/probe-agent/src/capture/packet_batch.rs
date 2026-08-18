@@ -101,8 +101,8 @@ impl PacketBatchStats {
             stats.total_bytes += frame.len as u64;
             stats.min_len = stats.min_len.min(frame.len);
             stats.max_len = stats.max_len.max(frame.len);
-            stats.first_timestamp = stats.first_timestamp.min(frame.timestamp);
-            stats.last_timestamp = stats.last_timestamp.max(frame.timestamp);
+            stats.first_timestamp = stats.first_timestamp.min(frame.captured_at.epoch_micros());
+            stats.last_timestamp = stats.last_timestamp.max(frame.captured_at.epoch_micros());
         }
 
         if stats.min_len == u32::MAX {
@@ -211,7 +211,10 @@ impl PacketBatchExt for super::PacketBatch {
         self.frames
             .iter()
             .enumerate()
-            .filter(|(_, f)| f.timestamp >= start && f.timestamp <= end)
+            .filter(|(_, f)| {
+                let captured_at = f.captured_at.epoch_micros();
+                captured_at >= start && captured_at <= end
+            })
             .map(|(i, _)| i)
             .collect()
     }
@@ -225,8 +228,8 @@ impl PacketBatchExt for super::PacketBatch {
         let mut max_ts = 0u64;
 
         for frame in &self.frames {
-            min_ts = min_ts.min(frame.timestamp);
-            max_ts = max_ts.max(frame.timestamp);
+            min_ts = min_ts.min(frame.captured_at.epoch_micros());
+            max_ts = max_ts.max(frame.captured_at.epoch_micros());
         }
 
         Some((min_ts, max_ts))

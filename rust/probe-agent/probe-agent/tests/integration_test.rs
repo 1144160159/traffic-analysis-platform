@@ -156,7 +156,7 @@ fn test_same_flow_aggregates() {
     let p1 = tcp_pkt("192.168.1.1", "10.0.0.1", 8080, 80, 100);
     let p2 = tcp_pkt("192.168.1.1", "10.0.0.1", 8080, 80, 200);
     let p3 = tcp_pkt("192.168.1.1", "10.0.0.1", 8080, 80, 150);
-    gen_pcap(&path, &[(0, 0, &p1), (0, 100_000, &p2), (0, 200_000, &p3)]);
+    gen_pcap(&path, &[(1, 0, &p1), (1, 100_000, &p2), (1, 200_000, &p3)]);
 
     let ft = Arc::new(PartitionedFlowTable::new(4, 10000));
     let mut proc = PacketProcessor::new(ft.clone());
@@ -192,7 +192,7 @@ fn test_multiple_flows() {
 
     let mut entries = vec![];
     for (idx, pkt) in pkts.iter().enumerate() {
-        entries.push((0u32, idx as u32, pkt.as_slice()));
+        entries.push((1u32, idx as u32, pkt.as_slice()));
     }
     gen_pcap(&path, &entries);
 
@@ -224,7 +224,7 @@ fn test_eviction_produces_flow_events() {
     // Packets with timestamps spread over 5 seconds
     let p1 = tcp_pkt("10.0.0.1", "10.0.0.2", 80, 12345, 100);
     let p2 = tcp_pkt("10.0.0.3", "10.0.0.4", 443, 54321, 200);
-    gen_pcap(&path, &[(0, 0, &p1), (5, 0, &p2)]);
+    gen_pcap(&path, &[(1, 0, &p1), (6, 0, &p2)]);
 
     let ft = Arc::new(PartitionedFlowTable::new(4, 10000));
     let mut proc = PacketProcessor::new(ft.clone());
@@ -286,7 +286,7 @@ fn bench_small_packets() {
 
     let pkt = tcp_pkt("192.168.1.1", "10.0.0.1", 80, 8080, 0); // min size
     let entries: Vec<_> = (0..100_000)
-        .map(|i| (0u32, i as u32, pkt.as_slice()))
+        .map(|i| (1u32, i as u32, pkt.as_slice()))
         .collect();
     gen_pcap(&path, &entries);
 
@@ -313,7 +313,7 @@ fn bench_large_packets() {
 
     let pkt = tcp_pkt("192.168.1.1", "10.0.0.1", 80, 8080, 1400); // near MTU
     let entries: Vec<_> = (0..50_000)
-        .map(|i| (0u32, i as u32, pkt.as_slice()))
+        .map(|i| (1u32, i as u32, pkt.as_slice()))
         .collect();
     gen_pcap(&path, &entries);
 
@@ -348,7 +348,7 @@ fn bench_flow_aggregation() {
     for (flow_id, pkt) in pkts.iter().enumerate() {
         for seq in 0..1000 {
             entries.push((
-                0u32,
+                1u32,
                 (flow_id as u32 * 1000 + seq as u32) as u32,
                 pkt.as_slice(),
             ));
@@ -392,7 +392,7 @@ fn test_mixed_tcp_udp() {
 
     let tcp = tcp_pkt("192.168.1.1", "10.0.0.1", 80, 8080, 100);
     let udp = udp_pkt("192.168.1.2", "10.0.0.2", 53, 12345, 50);
-    gen_pcap(&path, &[(0, 0, &tcp), (0, 1000, &udp)]);
+    gen_pcap(&path, &[(1, 0, &tcp), (1, 1000, &udp)]);
 
     let ft = Arc::new(PartitionedFlowTable::new(4, 100));
     let mut proc = PacketProcessor::new(ft.clone());
