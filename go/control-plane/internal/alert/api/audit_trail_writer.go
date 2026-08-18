@@ -6,10 +6,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 )
 
@@ -18,6 +22,112 @@ import (
 type AlertActionAuditWriter struct {
 	db     *sql.DB
 	logger *zap.Logger
+
+	// 审计失败补偿：进程内重试队列，后台 worker 周期重放，避免审计永久缺失。
+	mu      sync.Mutex
+	pending []pendingAuditRecord
+	stop    chan struct{}
+	once    sync.Once
+}
+
+// pendingAuditRecord 排队中的审计记录（提取后的传输信息，避免持有 *http.Request）。
+type pendingAuditRecord struct {
+	record    AlertActionAuditRecord
+	ipAddress string
+	userAgent string
+}
+
+// maxPendingAuditRecords 审计补偿队列上限。
+const maxPendingAuditRecords = 10000
+
+var (
+	auditRetryQueuedTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "alert_action_audit_retry_queued_total",
+		Help: "Total number of alert action audit records queued for retry",
+	})
+	auditRetryDroppedTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "alert_action_audit_retry_dropped_total",
+		Help: "Total number of alert action audit records dropped due to queue overflow",
+	})
+	auditRetrySucceededTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "alert_action_audit_retry_succeeded_total",
+		Help: "Total number of alert action audit records recovered by the retry worker",
+	})
+)
+
+// StartRetryWorker 启动审计补偿重试 worker（进程内队列）。
+func (w *AlertActionAuditWriter) StartRetryWorker(ctx context.Context) {
+	if w == nil || w.db == nil {
+		return
+	}
+	w.once.Do(func() {
+		w.stop = make(chan struct{})
+		go func() {
+			ticker := time.NewTicker(10 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-w.stop:
+					return
+				case <-ticker.C:
+					w.drainPending(ctx)
+				}
+			}
+		}()
+	})
+}
+
+// Stop 停止重试 worker。
+func (w *AlertActionAuditWriter) Stop() {
+	if w == nil || w.stop == nil {
+		return
+	}
+	close(w.stop)
+}
+
+// drainPending 重放排队中的审计记录；失败则放回队列（有界）。
+func (w *AlertActionAuditWriter) drainPending(ctx context.Context) {
+	w.mu.Lock()
+	queue := w.pending
+	w.pending = nil
+	w.mu.Unlock()
+	if len(queue) == 0 {
+		return
+	}
+	var retry []pendingAuditRecord
+	for _, item := range queue {
+		if err := w.recordWithTransport(ctx, w.db, item.record, item.ipAddress, item.userAgent); err != nil {
+			if w.logger != nil {
+				w.logger.Warn("Audit retry failed; re-queued",
+					zap.String("action", item.record.Action), zap.Error(err))
+			}
+			retry = append(retry, item)
+		} else {
+			auditRetrySucceededTotal.Inc()
+		}
+	}
+	if len(retry) > 0 {
+		w.mu.Lock()
+		w.pending = append(retry, w.pending...)
+		if len(w.pending) > maxPendingAuditRecords {
+			w.pending = w.pending[len(w.pending)-maxPendingAuditRecords:]
+		}
+		w.mu.Unlock()
+	}
+}
+
+func (h *Handler) recordAlertActionAudit(ctx context.Context, r *http.Request, record AlertActionAuditRecord) {
+	if h == nil || h.actionAudit == nil {
+		return
+	}
+	if err := h.actionAudit.Record(ctx, r, record); err != nil && h.logger != nil {
+		h.logger.Error("Failed to write alert action audit log, queued for compensation retry",
+			zap.String("action", record.Action),
+			zap.String("alert_id", record.AlertID),
+			zap.Error(err))
+	}
 }
 
 type auditSQLExecutor interface {
@@ -54,23 +164,45 @@ func NewAlertActionAuditWriter(db *sql.DB, logger *zap.Logger) *AlertActionAudit
 	return &AlertActionAuditWriter{db: db, logger: logger}
 }
 
-func (h *Handler) recordAlertActionAudit(ctx context.Context, r *http.Request, record AlertActionAuditRecord) {
-	if h == nil || h.actionAudit == nil {
-		return
-	}
-	if err := h.actionAudit.Record(ctx, r, record); err != nil && h.logger != nil {
-		h.logger.Warn("Failed to write alert action audit log",
-			zap.String("action", record.Action),
-			zap.String("alert_id", record.AlertID),
-			zap.Error(err))
-	}
-}
-
 func (w *AlertActionAuditWriter) Record(ctx context.Context, r *http.Request, record AlertActionAuditRecord) error {
-	return w.recordWithExecutor(ctx, w.db, r, record)
+	ipAddress, userAgent := "", ""
+	if r != nil {
+		ipAddress = clientIP(r)
+		userAgent = r.UserAgent()
+	}
+	err := w.recordWithTransport(ctx, w.db, record, ipAddress, userAgent)
+	if err != nil {
+		// 失败进进程内补偿队列，由 StartRetryWorker 周期重放，避免审计永久缺失
+		w.enqueuePending(record, ipAddress, userAgent)
+	}
+	return err
 }
 
+// recordWithExecutor 兼容既有调用方：从请求提取传输信息后委托 recordWithTransport。
 func (w *AlertActionAuditWriter) recordWithExecutor(ctx context.Context, executor auditSQLExecutor, r *http.Request, record AlertActionAuditRecord) error {
+	ipAddress, userAgent := "", ""
+	if r != nil {
+		ipAddress = clientIP(r)
+		userAgent = r.UserAgent()
+	}
+	return w.recordWithTransport(ctx, executor, record, ipAddress, userAgent)
+}
+
+// enqueuePending 将失败的审计记录放入有界补偿队列。
+func (w *AlertActionAuditWriter) enqueuePending(record AlertActionAuditRecord, ipAddress, userAgent string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.pending = append(w.pending, pendingAuditRecord{record: record, ipAddress: ipAddress, userAgent: userAgent})
+	if len(w.pending) > maxPendingAuditRecords {
+		w.pending = w.pending[len(w.pending)-maxPendingAuditRecords:]
+		auditRetryDroppedTotal.Inc()
+	}
+	auditRetryQueuedTotal.Inc()
+}
+
+// recordWithTransport 与 recordWithExecutor 等价，但传输信息由调用方提供
+// （供补偿重试使用，不持有 *http.Request）。
+func (w *AlertActionAuditWriter) recordWithTransport(ctx context.Context, executor auditSQLExecutor, record AlertActionAuditRecord, ipAddress, userAgent string) error {
 	if w == nil || w.db == nil {
 		return nil
 	}
@@ -82,16 +214,13 @@ func (w *AlertActionAuditWriter) recordWithExecutor(ctx context.Context, executo
 	}
 	objectType := nonEmpty(record.ObjectType, "alert")
 	objectID := nonEmpty(record.ObjectID, record.AlertID)
-	detail := record.alertActionDetail(ctx, r)
+	detail := record.alertActionDetail(ctx, nil)
+	if ipAddress != "" {
+		detail["ip_addr"] = ipAddress
+	}
 	detailJSON, err := json.Marshal(detail)
 	if err != nil {
 		return err
-	}
-	ipAddress := ""
-	userAgent := ""
-	if r != nil {
-		ipAddress = clientIP(r)
-		userAgent = r.UserAgent()
 	}
 
 	userIDExpr := "NULLIF($3, '')"

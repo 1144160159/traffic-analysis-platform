@@ -13,6 +13,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,13 +25,18 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	segmentkafka "github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 
+	authConfig "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/config"
 	authjwt "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/jwt"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/oidc"
 	authrepository "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
 	authservice "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/authz"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
@@ -42,6 +48,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/metrics"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/monitoring"
 	graphnebula "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/nebula"
+	graphprojection "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/projection"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/query"
 )
 
@@ -284,8 +291,10 @@ func main() {
 		chCircuitBreaker,
 		logger,
 	)
+	var workbenchStore *graphnebula.WorkbenchStore
 	if cfg.Nebula.Enabled {
-		workbenchStore, nebulaErr := graphnebula.NewWorkbenchStore(cfg.Nebula, logger)
+		var nebulaErr error
+		workbenchStore, nebulaErr = graphnebula.NewWorkbenchStore(cfg.Nebula, logger)
 		if nebulaErr != nil {
 			logger.Fatal("Failed to initialize NebulaGraph workbench store", zap.Error(nebulaErr))
 		}
@@ -298,6 +307,74 @@ func main() {
 		logger.Warn("NebulaGraph workbench store disabled; using ClickHouse compatibility path")
 	}
 	logger.Info("Graph query engine initialized")
+
+	// ==================== M07 durable graph projection ====================
+
+	var graphProjectionConsumer *commonkafka.Consumer
+	if cfg.Projection.ConsumerEnabled || cfg.Projection.WorkerEnabled {
+		projectionInbox, projectionErr := graphprojection.NewInbox(pgDB)
+		if projectionErr != nil {
+			logger.Fatal("Failed to initialize graph projection inbox", zap.Error(projectionErr))
+		}
+		readinessCtx, readinessCancel := context.WithTimeout(ctx, 10*time.Second)
+		projectionErr = projectionInbox.VerifySchema(readinessCtx)
+		readinessCancel()
+		if projectionErr != nil {
+			logger.Fatal("Graph projection inbox schema is not ready", zap.Error(projectionErr))
+		}
+
+		if cfg.Projection.ConsumerEnabled {
+			graphProjectionConsumer, projectionErr = commonkafka.NewConsumer(commonkafka.ConsumerConfig{
+				Brokers: cfg.Kafka.Brokers, Topic: cfg.Projection.Topic, GroupID: cfg.Projection.GroupID,
+				StartOffset: segmentkafka.FirstOffset, MaxRetries: 3, RetryBackoff: time.Second,
+				EnableDLQ: true, DLQTopic: cfg.Projection.DLQTopic,
+				CommitOnDLQSuccess: true, DLQPermanentOnly: true,
+				Security: cfg.KafkaSecurity,
+			}, logger)
+			if projectionErr != nil {
+				logger.Fatal("Failed to initialize graph projection Kafka consumer", zap.Error(projectionErr))
+			}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if consumeErr := graphProjectionConsumer.Consume(ctx, projectionInbox.Handle); consumeErr != nil && !errors.Is(consumeErr, context.Canceled) {
+					logger.Error("Graph projection Kafka consumer stopped", zap.Error(consumeErr))
+				}
+			}()
+			logger.Info("Graph projection consumer enabled",
+				zap.String("topic", cfg.Projection.Topic), zap.String("group_id", cfg.Projection.GroupID))
+		}
+
+		if cfg.Projection.WorkerEnabled {
+			projectionTarget, targetErr := graphnebula.NewProjectionTarget(workbenchStore)
+			if targetErr != nil {
+				logger.Fatal("Failed to initialize NebulaGraph projection target", zap.Error(targetErr))
+			}
+			hostname, _ := os.Hostname()
+			projectionWorker, workerErr := graphprojection.NewWorker(pgDB, projectionTarget, graphprojection.WorkerConfig{
+				WorkerID: "graph-projection/" + hostname, Lease: cfg.Projection.Lease,
+				Interval: cfg.Projection.Interval, MaxAttempts: cfg.Projection.MaxAttempts, Logger: logger,
+			})
+			if workerErr != nil {
+				logger.Fatal("Failed to initialize graph projection worker", zap.Error(workerErr))
+			}
+			readinessCtx, readinessCancel = context.WithTimeout(ctx, 10*time.Second)
+			workerErr = projectionWorker.VerifySchema(readinessCtx)
+			readinessCancel()
+			if workerErr != nil {
+				logger.Fatal("Graph projection target is not ready", zap.Error(workerErr))
+			}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				projectionWorker.Run(ctx)
+			}()
+			logger.Info("NebulaGraph projection worker enabled",
+				zap.Duration("lease", cfg.Projection.Lease), zap.Int("max_attempts", cfg.Projection.MaxAttempts))
+		}
+	} else {
+		logger.Info("M07 graph projection remains default-off")
+	}
 
 	// ==================== 修复 W1：初始化缓存预热服务 ====================
 
@@ -324,11 +401,22 @@ func main() {
 		rateLimiter,
 		cfg.Security,
 		cfg.Query,
+		cfg.Workbench,
 		logger,
 		queryLogger,        // 修复 G1
 		slowQueryDetector,  // 修复 G1
 		tenantConfigLoader, // 修复 G2
 	)
+	projectionStatusRepository, err := graphprojection.NewStatusRepository(
+		pgDB,
+		cfg.Projection.ConsumerEnabled,
+		cfg.Projection.WorkerEnabled && cfg.ContinuousProjectionEnabled,
+		5*time.Minute,
+	)
+	if err != nil {
+		logger.Fatal("Failed to initialize graph projection status repository", zap.Error(err))
+	}
+	handler.SetProjectionStatusRepository(projectionStatusRepository)
 	logger.Info("API handler initialized with monitoring")
 
 	// ==================== 创建 Router ====================
@@ -338,7 +426,6 @@ func main() {
 	// 注册健康检查和指标端点
 	r.HandleFunc("/health", handler.HealthCheck).Methods("GET")
 	r.HandleFunc("/ready", handler.ReadinessCheck).Methods("GET")
-	r.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
 	// 注册业务路由。Handler 内部已经声明 /api/v1 前缀，入口层只传根路由。
 	handler.RegisterRoutes(r)
@@ -361,15 +448,37 @@ func main() {
 		if jwtErr != nil {
 			logger.Fatal("Failed to initialize graph JWT service", zap.Error(jwtErr))
 		}
-		authService := authservice.NewAuthService(userRepo, jwtService, nil, nil, logger, nil)
+		// 统一令牌模型 P1:附带 OIDC Provider,使 ValidateToken 具备
+		// Keycloak 访问令牌 JWKS 回退(修复 nil provider 缺陷)。
+		authCfg, authCfgErr := authConfig.Load()
+		if authCfgErr != nil {
+			authCfg = &authConfig.Config{}
+		}
+		var oidcProvider *oidc.Provider
+		if authCfg.OIDC.Enabled {
+			if p, err := oidc.NewProvider(authCfg.OIDC, logger); err != nil {
+				logger.Warn("OIDC provider init failed; Keycloak token fallback disabled", zap.Error(err))
+			} else {
+				oidcProvider = p
+			}
+		}
+		authService := authservice.NewAuthService(userRepo, jwtService, oidcProvider, authCfg, logger, nil)
 		graphAuthMiddleware = httpx.Auth(tokenValidatorAdapter{authService: authService}, logger)
 		logger.Info("Graph API auth middleware initialized")
 	}
 
+	// /metrics 仅在启用认证时要求 admin:* 权限,防止指标端点被匿名访问
+	// (Prometheus 抓取需配置对应凭据或由 NetworkPolicy 收敛访问面)。
+	metricsHandler := promhttp.Handler()
+	if graphAuthMiddleware != nil {
+		metricsHandler = httpx.RequireAnyPermission("admin:*", "*")(graphAuthMiddleware(metricsHandler))
+	}
+	r.Handle("/metrics", metricsHandler).Methods("GET")
+
 	// ==================== 构建中间件链 ====================
 
 	middlewareChain := buildMiddlewareChain(cfg, logger)
-	finalHandler := middlewareChain.Then(protectGraphBusinessAPI(r, graphAuthMiddleware))
+	finalHandler := middlewareChain.Then(protectGraphBusinessAPI(r, graphAuthMiddleware, logger, auditLogger))
 
 	// ==================== HTTP Server ====================
 
@@ -433,6 +542,11 @@ func main() {
 
 	// 取消 context，通知所有 goroutine 退出
 	cancel()
+	if graphProjectionConsumer != nil {
+		if err := graphProjectionConsumer.Close(); err != nil {
+			logger.Error("Failed to close graph projection Kafka consumer", zap.Error(err))
+		}
+	}
 
 	// 停止缓存预热服务
 	if warmupService != nil {
@@ -492,14 +606,27 @@ func main() {
 	logger.Info("Shutdown complete")
 }
 
-func protectGraphBusinessAPI(next http.Handler, authMiddleware httpx.Middleware) http.Handler {
+func protectGraphBusinessAPI(next http.Handler, authMiddleware httpx.Middleware, logger *zap.Logger, auditLogger *audit.Logger) http.Handler {
 	if authMiddleware == nil {
 		return next
 	}
-	protected := authMiddleware(httpx.RequireAnyPermission("graph:read", "admin:*", "*")(next))
+	// P2 契约解释器:认证之后、业务路由之前逐操作判定(认证层先产出主体,
+	// 契约层按 required_scope 判定;/api/v1/graph/* 4 操作均要求 graph:read)。
+	contractNext := next
+	if mode := strings.TrimSpace(getEnv("AUTHZ_CONTRACT_MODE", "")); mode == "enforce" || mode == "shadow" {
+		contractNext = authz.EnforceContract(graphContractPrincipal, mode, nil, logger, graphContractDenyAudit(auditLogger))(next)
+		logger.Info("Contract interpreter enabled (graph business API)", zap.String("mode", mode))
+	}
+	protected := authMiddleware(httpx.RequireAnyPermission("graph:read", "admin:*", "*")(contractNext))
+	// 缓存管理端点为管理员操作:除处理器内部角色校验外,路由层也收紧为 admin 权限。
+	adminProtected := authMiddleware(httpx.RequireAnyPermission("admin:*", "*")(contractNext))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions || !strings.HasPrefix(r.URL.Path, "/api/v1/graph") {
 			next.ServeHTTP(w, r)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/api/v1/graph/cache/") {
+			adminProtected.ServeHTTP(w, r)
 			return
 		}
 		protected.ServeHTTP(w, r)
@@ -664,4 +791,46 @@ type graphQueryExploreAdapter struct {
 
 func (a *graphQueryExploreAdapter) Explore(ctx context.Context, tenantID, centerIP string, depth int, startTime, endTime int64, runID string) (interface{}, error) {
 	return a.gq.Explore(ctx, tenantID, centerIP, depth, startTime, endTime, runID)
+}
+
+// graphContractPrincipal 将 graph-service 认证层(httpx.Auth 统一入口)产出的
+// httpx 上下文键适配为契约解释器判定主体。
+func graphContractPrincipal(r *http.Request) *authz.Principal {
+	userID := strings.TrimSpace(httpx.GetUserID(r.Context()))
+	if userID == "" {
+		return nil
+	}
+	return &authz.Principal{
+		Kind:        authz.PrincipalKindHuman,
+		Subject:     userID,
+		Username:    httpx.GetUsername(r.Context()),
+		TenantID:    httpx.GetTenantID(r.Context()),
+		Roles:       httpx.GetRoles(r.Context()),
+		Permissions: httpx.GetPermissions(r.Context()),
+	}
+}
+
+// graphContractDenyAudit 契约拒绝留痕(Kafka 审计事件)。
+func graphContractDenyAudit(auditLogger *audit.Logger) authz.ContractDenyAuditor {
+	return func(r *http.Request, op *authz.Operation, principal *authz.Principal, status int) {
+		if auditLogger == nil {
+			return
+		}
+		userID := ""
+		if principal != nil {
+			userID = principal.Subject
+		}
+		auditLogger.Log(r.Context(), &audit.AuditEvent{
+			EventType:    audit.EventTypePermissionDenied,
+			TenantID:     httpx.GetTenantID(r.Context()),
+			UserID:       userID,
+			ServiceName:  "graph-service",
+			SourceIP:     httpx.GetClientIP(r),
+			Action:       "CONTRACT_ACCESS_DENIED",
+			ResourceType: "contract_operation",
+			ResourceID:   op.OperationID,
+			Detail:       map[string]interface{}{"operation_id": op.OperationID, "required_scope": op.RequiredScope, "path": r.URL.Path, "result": "denied", "status": status},
+			Result:       audit.ResultFailure,
+		})
+	}
 }

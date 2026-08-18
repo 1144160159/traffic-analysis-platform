@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/query"
 )
 
 func TestAssetProjectionQueriesAreTenantAssetAndRelationBounded(t *testing.T) {
@@ -13,6 +15,28 @@ func TestAssetProjectionQueriesAreTenantAssetAndRelationBounded(t *testing.T) {
 	}
 	if !strings.Contains(assetProjectionEdgeQuery, "GO FROM %s OVER relation BIDIRECT") || !strings.Contains(assetProjectionEdgeQuery, "relation.tenant_id == $tenant_id") {
 		t.Fatalf("edge query is not a tenant-filtered adjacency traversal: %s", assetProjectionEdgeQuery)
+	}
+}
+
+func TestGovernedWorkbenchQueriesCarryDatabaseBoundsAndTenantPredicates(t *testing.T) {
+	if !strings.Contains(boundedWorkbenchLandingQuery, "entity.tenant_id == $tenant_id") ||
+		!strings.Contains(boundedWorkbenchLandingQuery, "LIMIT 1") {
+		t.Fatalf("landing query is not tenant and result bounded: %s", boundedWorkbenchLandingQuery)
+	}
+	for _, fragment := range []string{"GO FROM %s", "relation.tenant_id == $tenant_id", "ORDER BY $-.relation_id", "LIMIT %d"} {
+		if !strings.Contains(boundedWorkbenchEdgeQuery, fragment) {
+			t.Fatalf("bounded edge query missing %q: %s", fragment, boundedWorkbenchEdgeQuery)
+		}
+	}
+}
+
+func TestGovernedWorkbenchRejectsInvalidBudgetsBeforeStoreAccess(t *testing.T) {
+	var store *WorkbenchStore
+	_, _, _, _, err := store.LoadWorkbenchGraphBounded(context.Background(), "tenant-a", query.WorkbenchFilter{
+		Depth: 3, Limit: 0, EdgeLimit: 100, NeighborLimit: 10,
+	})
+	if err == nil {
+		t.Fatal("invalid node budget reached the store")
 	}
 }
 

@@ -16,6 +16,9 @@
 package main
 
 import (
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/authz"
+	"go.uber.org/zap"
+
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,6 +27,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -59,11 +63,11 @@ type NgqlRequest struct {
 }
 
 type NgqlResponse struct {
-	Success bool              `json:"success"`
-	Columns []string          `json:"columns,omitempty"`
-	Rows    [][]interface{}   `json:"rows,omitempty"`
-	Error   string            `json:"error,omitempty"`
-	Latency string            `json:"latency"`
+	Success bool            `json:"success"`
+	Columns []string        `json:"columns,omitempty"`
+	Rows    [][]interface{} `json:"rows,omitempty"`
+	Error   string          `json:"error,omitempty"`
+	Latency string          `json:"latency"`
 }
 
 var config Config
@@ -75,12 +79,29 @@ func main() {
 	http.HandleFunc("/api/v1/ngql", handleNgql)
 	http.HandleFunc("/api/v1/spaces", handleSpaces)
 
+	// 权限体系三层防御:任意 nGQL 执行面必须经共享鉴权中间件
+	// (JWKS 验签 + 租户绑定 + 契约;上线前强制 AUTHZ_MODE=enforce)。
+	logger, _ := zap.NewProduction()
+	authzMW := authz.New(authz.Config{
+		JWKSURL:            getEnv("AUTHZ_JWKS_URL", "http://10.0.5.8:30180/auth/realms/master/protocol/openid-connect/certs"),
+		Issuer:             getEnv("AUTHZ_ISSUER", "http://10.0.5.8:30180/realms/master"),
+		Mode:               getEnv("AUTHZ_MODE", "shadow"),
+		RequireTenantClaim: getBoolEnv("AUTHZ_REQUIRE_TENANT_CLAIM", true),
+		AllowedAZP:         splitCSV(getEnv("AUTHZ_ALLOWED_AZP", "traffic-ui")),
+		ExemptPaths:        []string{"/status"},
+	}, logger)
+	var root http.Handler = http.DefaultServeMux
+	root = authzMW.Handler(root)
+	if mode := getEnv("AUTHZ_CONTRACT_MODE", ""); mode == "enforce" || mode == "shadow" {
+		root = authz.EnforceContract(authz.PrincipalFromRequest, mode, nil, logger)(root)
+	}
+
 	log.Printf("NebulaGraph HTTP Gateway starting on %s", config.ListenAddr)
 	log.Printf("  Graph: %s, User: %s, Space: %s", config.GraphAddr, config.User, config.Space)
 
 	server := &http.Server{
 		Addr:         config.ListenAddr,
-		Handler:      http.DefaultServeMux,
+		Handler:      root,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  120 * time.Second,
@@ -331,4 +352,27 @@ func writeError(w http.ResponseWriter, msg string) {
 		Error:   msg,
 		Latency: "0s",
 	})
+}
+
+func getBoolEnv(key string, def bool) bool {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		return def
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return def
+	}
+	return b
+}
+
+func splitCSV(v string) []string {
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if t := strings.TrimSpace(p); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
 }

@@ -28,7 +28,7 @@ func (s stubAlertCampaignLookup) Exists(context.Context, string, string) (bool, 
 func campaignLinkRequest(body string, permissions ...string) *http.Request {
 	request := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/AL-1/campaign-links", bytes.NewBufferString(body))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Tenant-ID", "tenant-a")
+	request = withTenant(request, "tenant-a")
 	request.Header.Set("Idempotency-Key", "campaign-link-key-000001")
 	request = request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, permissions))
 	return mux.SetURLVars(request, map[string]string{"id": "AL-1"})

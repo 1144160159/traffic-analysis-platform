@@ -25,6 +25,7 @@ const (
 	TaskStatusQueued     = "queued"
 	TaskStatusProcessing = "processing"
 	TaskStatusCompleted  = "completed"
+	TaskStatusPartial    = "partial"
 	TaskStatusFailed     = "failed"
 	TaskStatusCancelled  = "cancelled"
 )

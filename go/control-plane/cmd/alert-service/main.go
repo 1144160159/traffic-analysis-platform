@@ -28,7 +28,10 @@ import (
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/arkime"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/attackchain"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/audit"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/baseline"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/campaignrail"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/config"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/consumer"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/dedup"
@@ -42,11 +45,14 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/risk"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/whitelist"
+	authConfig "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/config"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/jwt"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/middleware"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/oidc"
 	authRepo "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
 	authService "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	commonAudit "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/authz"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/dataquality"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
@@ -87,6 +93,12 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	if stage := strings.TrimSpace(os.Getenv("CAMPAIGN_RAIL_CANARY_STAGE")); stage != "" {
+		if err := runCampaignRailCanary(ctx, stage, cfg, logger); err != nil {
+			logger.Fatal("Campaign rail K8s canary stopped", zap.String("stage", stage), zap.Error(err))
+		}
+		return
+	}
 
 	// ==================== 初始化 Redis ====================
 	var rdb *redis.Client
@@ -185,9 +197,9 @@ func main() {
 	if db != nil {
 		whitelistRepo = whitelist.NewRepository(db, logger)
 	}
-	if cfg.Kafka.WhitelistEventPipelineEnabled {
+	if cfg.Kafka.WhitelistEventProducerEnabled || cfg.Kafka.WhitelistDetectionMatcherEnabled {
 		if whitelistRepo == nil || readOnlyVerificationMode {
-			logger.Fatal("Whitelist event pipeline requires writable PostgreSQL mode")
+			logger.Fatal("Whitelist producer or detection matcher requires writable PostgreSQL mode")
 		}
 		verifyCtx, verifyCancel := context.WithTimeout(ctx, 10*time.Second)
 		verifyErr := whitelistRepo.VerifyRuleProjectionSchema(verifyCtx)
@@ -338,9 +350,17 @@ func main() {
 		alertAuditLogger,
 		logger,
 	)
+	alertService.SetAlertSnapshotRepository(repository.NewAlertSnapshotRepository(
+		alertRepo,
+		osRepo,
+		db,
+		cfg.OpenSearch.WriteTarget(),
+		logger,
+	))
 
 	// ==================== 初始化 Kafka Producer (for Feedback) ====================
 	var feedbackProducer *kafka.Producer
+	var modelFeedbackRevisionProducer *kafka.Producer
 	var responseActionProducer *kafka.Producer
 	var savedViewEventProducer *kafka.Producer
 	savedViewTransactionEnabled := cfg.Kafka.SavedViewTransactionEnabled && !readOnlyVerificationMode
@@ -388,7 +408,12 @@ func main() {
 	// Feedback HTTP always uses the PostgreSQL transaction/outbox path. A
 	// temporarily unavailable producer leaves committed outbox rows pending.
 	apiHandler := api.NewHandlerWithFeedback(alertService, feedbackProducer, alertAuditLogger, logger)
-	apiHandler.SetActionAuditWriter(api.NewAlertActionAuditWriter(db, logger))
+	alertActionAuditWriter := api.NewAlertActionAuditWriter(db, logger)
+	apiHandler.SetActionAuditWriter(alertActionAuditWriter)
+	if alertActionAuditWriter != nil {
+		alertActionAuditWriter.StartRetryWorker(ctx)
+		logger.Info("Alert action audit compensation retry worker started")
+	}
 	alertEvidenceChainEnabled := getBoolEnv("ALERT_EVIDENCE_CHAIN_V1_ENABLED", false)
 	if alertEvidenceChainEnabled && strings.TrimSpace(os.Getenv("ALERT_EVIDENCE_DOWNLOAD_SECRET")) == "" {
 		logger.Fatal("ALERT_EVIDENCE_DOWNLOAD_SECRET is required when strict evidence access is enabled")
@@ -404,8 +429,110 @@ func main() {
 	}
 	apiHandler.SetAlertEvidenceManifestStore(alertEvidenceManifests)
 	apiHandler.SetAlertEvidenceChainEnabled(alertEvidenceChainEnabled)
+	alertEvidenceLinkConsumerEnabled := cfg.Kafka.AlertEvidenceLinkConsumerEnabled && !readOnlyVerificationMode
+	alertEvidenceLinkDispatcherEnabled := cfg.Kafka.AlertEvidenceLinkDispatcherEnabled && !readOnlyVerificationMode
+	alertEvidenceLinkWriterEnabled := getBoolEnv("ALERT_EVIDENCE_LINK_WRITER_V1_ENABLED", false) && !readOnlyVerificationMode
+	var alertEvidenceLinkConsumer *consumer.AlertEvidenceLinkConsumer
+	if alertEvidenceLinkConsumerEnabled {
+		if cfg.Kafka.AlertEvidenceLinkTopic != api.AlertEvidenceLinkEventTopic {
+			logger.Fatal("Alert evidence link topic must match the versioned contract",
+				zap.String("expected", api.AlertEvidenceLinkEventTopic), zap.String("actual", cfg.Kafka.AlertEvidenceLinkTopic))
+		}
+		candidateSHA256 := strings.ToLower(strings.TrimSpace(getEnv("ALERT_EVIDENCE_LINK_CANDIDATE_SHA256", "")))
+		projection := api.NewAlertEvidenceLinkProjectionApplier(db, chClient)
+		kafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.AlertEvidenceLinkTopic,
+			GroupID: cfg.Kafka.AlertEvidenceLinkGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
+			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create alert evidence link projection consumer", zap.Error(consumerErr))
+		}
+		alertEvidenceLinkConsumer, consumerErr = consumer.NewAlertEvidenceLinkConsumer(
+			kafkaConsumer, projection, cfg.Kafka.AlertEvidenceLinkTopic,
+			cfg.Kafka.AlertEvidenceLinkGroup, candidateSHA256, logger)
+		if consumerErr != nil {
+			_ = kafkaConsumer.Close()
+			logger.Fatal("Failed to initialize alert evidence link projection consumer", zap.Error(consumerErr))
+		}
+		defer alertEvidenceLinkConsumer.Close()
+		apiHandler.AddReadinessCheck("alert_evidence_link_projection_v1", alertEvidenceLinkConsumer.Ready)
+		go func() {
+			logger.Info("Starting alert evidence link projection consumer",
+				zap.String("topic", cfg.Kafka.AlertEvidenceLinkTopic),
+				zap.String("group_id", cfg.Kafka.AlertEvidenceLinkGroup),
+				zap.String("candidate_sha256", candidateSHA256))
+			if startErr := alertEvidenceLinkConsumer.Start(ctx); startErr != nil && startErr != context.Canceled {
+				logger.Error("Alert evidence link projection consumer stopped", zap.Error(startErr))
+				cancel()
+			}
+		}()
+	} else {
+		logger.Info("Alert evidence link projection consumer is disabled")
+	}
+	if alertEvidenceLinkWriterEnabled {
+		if !alertEvidenceLinkConsumerEnabled || !alertEvidenceLinkDispatcherEnabled || alertEvidenceLinkConsumer == nil {
+			logger.Fatal("Alert evidence link writer requires the consumer-first dispatcher stage")
+		}
+		readinessDeadline := time.Now().Add(10 * time.Second)
+		for alertEvidenceLinkConsumer.Ready(ctx) != nil && time.Now().Before(readinessDeadline) && ctx.Err() == nil {
+			time.Sleep(50 * time.Millisecond)
+		}
+		if readyErr := alertEvidenceLinkConsumer.Ready(ctx); readyErr != nil {
+			logger.Fatal("Alert evidence link writer cannot start before the projection consumer is ready", zap.Error(readyErr))
+		}
+		producer, producerErr := kafka.NewKeyedProducer(kafka.ProducerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.AlertEvidenceLinkTopic, BatchSize: 100,
+			RequiredAcks: "all", Compression: "lz4", Async: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if producerErr != nil {
+			logger.Fatal("Failed to initialize alert evidence link event producer", zap.Error(producerErr))
+		}
+		defer producer.Close()
+		apiHandler.SetAlertEvidenceLinkRuntime(true, alertEvidenceLinkConsumer.Ready, producer)
+		if workerErr := apiHandler.StartAlertEvidenceLinkOutboxWorker(ctx, 2*time.Second); workerErr != nil {
+			logger.Fatal("Failed to start alert evidence link outbox worker", zap.Error(workerErr))
+		}
+		logger.Info("Alert evidence link writer enabled after consumer readiness")
+	} else {
+		apiHandler.SetAlertEvidenceLinkRuntime(false, nil, nil)
+		if alertEvidenceLinkDispatcherEnabled {
+			logger.Warn("Alert evidence link dispatcher requested without the writer; it remains stopped")
+		}
+		logger.Info("Alert evidence link writer is disabled")
+	}
 	feedbackTransactionalOutboxEnabled := getBoolEnv("ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED", true) && !readOnlyVerificationMode
 	apiHandler.SetFeedbackTransactionalOutboxEnabled(feedbackTransactionalOutboxEnabled)
+	modelFeedbackRevisionAuthorityEnabled := getBoolEnv("MODEL_FEEDBACK_REVISION_AUTHORITY_V1_ENABLED", false) && !readOnlyVerificationMode
+	modelFeedbackRevisionProducerEnabled := getBoolEnv("MODEL_FEEDBACK_REVISION_PRODUCER_V1_ENABLED", false) && !readOnlyVerificationMode
+	if modelFeedbackRevisionProducerEnabled {
+		if !modelFeedbackRevisionAuthorityEnabled || !feedbackTransactionalOutboxEnabled {
+			logger.Fatal("Model feedback revision producer requires the transactional revision authority")
+		}
+		readiness := api.ModelFeedbackProducerReadiness{
+			Topic:           getEnv("KAFKA_MODEL_FEEDBACK_TOPIC", "model.feedback.v1"),
+			ConsumerGroup:   getEnv("KAFKA_MODEL_FEEDBACK_CONSUMER_GROUP", "rule-manager-model-feedback-revision-v1"),
+			CandidateSHA256: getEnv("MODEL_FEEDBACK_CONSUMER_CANDIDATE_SHA256", ""),
+			ContractSHA256:  getEnv("MODEL_FEEDBACK_CONTRACT_SHA256", ""),
+		}
+		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		readinessErr := api.VerifyModelFeedbackProducerReadiness(verifyCtx, db, readiness)
+		cancelVerify()
+		if readinessErr != nil {
+			logger.Fatal("Model feedback revision producer is not authorized by a consumer broker receipt", zap.Error(readinessErr))
+		}
+		modelFeedbackRevisionProducer, err = kafka.NewProducer(kafka.ProducerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: readiness.Topic, BatchSize: 100,
+			RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
+		}, logger)
+		if err != nil {
+			logger.Fatal("Failed to create model feedback revision producer", zap.Error(err))
+		}
+		defer modelFeedbackRevisionProducer.Close()
+	}
+	apiHandler.SetModelFeedbackRevisionRuntime(modelFeedbackRevisionAuthorityEnabled, modelFeedbackRevisionProducer)
 	apiHandler.SetResponseActionProducer(responseActionProducer)
 	responseUnknownReconciliationEnabled := getBoolEnv("ALERT_RESPONSE_UNKNOWN_EFFECT_RECONCILIATION_V1_ENABLED", false) && !readOnlyVerificationMode
 	responseCompensationEnabled := getBoolEnv("ALERT_RESPONSE_COMPENSATION_EXECUTOR_V1_ENABLED", false) && !readOnlyVerificationMode
@@ -419,7 +546,15 @@ func main() {
 	apiHandler.SetResponseCompensationEnabled(responseCompensationEnabled)
 	apiHandler.SetResponseCompensationMaxAttempts(responseCompensationMaxAttempts)
 	apiHandler.SetSavedViewEventProducer(savedViewEventProducer)
-	alertReportFeatureEnabled := getBoolEnv("ALERT_REPORT_JOBS_V1_ENABLED", true) && !readOnlyVerificationMode
+	alertReportFeatureEnabled := getBoolEnv("ALERT_REPORT_JOBS_V1_ENABLED", false) && !readOnlyVerificationMode
+	alertReportArtifactTTL, alertReportTTLParseErr := time.ParseDuration(getEnv("ALERT_REPORT_ARTIFACT_TTL", "24h"))
+	if alertReportTTLParseErr != nil {
+		logger.Fatal("ALERT_REPORT_ARTIFACT_TTL must be a duration between 5m and 720h", zap.Error(alertReportTTLParseErr))
+	}
+	if alertReportArtifactTTL < 5*time.Minute || alertReportArtifactTTL > 30*24*time.Hour {
+		logger.Fatal("ALERT_REPORT_ARTIFACT_TTL must be a duration between 5m and 720h", zap.Duration("configured_ttl", alertReportArtifactTTL))
+	}
+	apiHandler.SetAlertReportArtifactTTL(alertReportArtifactTTL)
 	campaignLinkFeatureEnabled := getBoolEnv("CAMPAIGN_ALERT_LINKS_V1_ENABLED", true)
 	campaignAggregateV2Enabled := getBoolEnv("CAMPAIGN_AGGREGATE_V2_ENABLED", false)
 	apiHandler.SetAlignmentFeatureFlags(alertReportFeatureEnabled, campaignLinkFeatureEnabled)
@@ -587,7 +722,8 @@ func main() {
 			Brokers: cfg.Kafka.Brokers, Topic: threatIntelTopic, GroupID: threatIntelGroup,
 			MinBytes: 1, MaxWait: 500 * time.Millisecond, MaxRetries: 3,
 			RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
-			CommitOnDLQSuccess: true, CommitOnHandlerError: false, Security: cfg.Kafka.Security,
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
 		}, logger)
 		if consumerErr != nil {
 			logger.Fatal("Failed to create threat intel event projection consumer", zap.Error(consumerErr))
@@ -623,6 +759,14 @@ func main() {
 			logger.Info("Feedback transactional outbox worker started")
 		}
 	}
+	if modelFeedbackRevisionProducer != nil && modelFeedbackRevisionAuthorityEnabled {
+		if err := apiHandler.StartModelFeedbackRevisionOutboxWorker(ctx, 2*time.Second); err != nil {
+			logger.Fatal("Failed to start model feedback revision outbox worker", zap.Error(err))
+		}
+		logger.Info("Model feedback revision outbox worker started after consumer receipt verification")
+	} else {
+		logger.Info("Model feedback revision producer is disabled; revision outbox rows remain pending")
+	}
 	if db != nil && alertReportFeatureEnabled {
 		if err := apiHandler.StartAlertReportWorker(ctx, 2*time.Second); err != nil {
 			logger.Warn("Failed to start alert-report worker", zap.Error(err))
@@ -651,7 +795,7 @@ func main() {
 			arkimeLinkGen,
 			logger,
 		)
-		if cfg.Kafka.WhitelistEventPipelineEnabled {
+		if cfg.Kafka.WhitelistDetectionMatcherEnabled {
 			kafkaConsumer.SetWhitelistMatcher(whitelistRepo)
 		}
 	}
@@ -703,8 +847,21 @@ func main() {
 			logger.Fatal("Failed to init JWT service", zap.Error(jwtErr))
 		}
 
-		// 初始化 Auth Service
-		authSvc := authService.NewAuthService(userRepo, jwtService, nil, nil, logger, nil)
+		// 初始化 Auth Service(统一令牌模型 P1:附带 OIDC Provider,使 ValidateToken
+		// 具备 Keycloak 访问令牌 JWKS 回退)
+		authCfg, authCfgErr := authConfig.Load()
+		if authCfgErr != nil {
+			authCfg = &authConfig.Config{}
+		}
+		var oidcProvider *oidc.Provider
+		if authCfg.OIDC.Enabled {
+			if p, err := oidc.NewProvider(authCfg.OIDC, logger); err != nil {
+				logger.Warn("OIDC provider init failed; Keycloak token fallback disabled", zap.Error(err))
+			} else {
+				oidcProvider = p
+			}
+		}
+		authSvc := authService.NewAuthService(userRepo, jwtService, oidcProvider, authCfg, logger, nil)
 		realtimeAuthService = authSvc
 
 		// 初始化 Auth Middleware
@@ -727,14 +884,253 @@ func main() {
 			router.Use(authMiddleware.Authenticate)
 		}
 	}
-	systemHandler := api.NewSystemHandler(chClient, db, logger)
+	systemHandler := newAlertSystemHandler(
+		chClient,
+		db,
+		logger,
+		api.NewClickHouseEncryptedTrafficStatsService(chClient),
+	)
+	var campaignProtoReadiness *campaignrail.ProtoProjectionStore
+	if cfg.Kafka.CampaignEventEnabled {
+		logger.Warn("CAMPAIGN_EVENT_PIPELINE_V2_ENABLED is deprecated and does not enable either campaign JSON rail; set the consumer and dispatcher switches explicitly")
+	}
+	if cfg.Kafka.CampaignProtoEnabled && !readOnlyVerificationMode {
+		candidateSHA256 := strings.TrimSpace(getEnv("CAMPAIGNS_PROTO_CANDIDATE_SHA256", ""))
+		protoStore, protoErr := campaignrail.NewProtoProjectionStore(db)
+		if protoErr != nil {
+			logger.Fatal("Failed to initialize campaigns.v1 projection store", zap.Error(protoErr))
+		}
+		readinessCtx, readinessCancel := context.WithTimeout(ctx, 10*time.Second)
+		protoErr = protoStore.VerifySchema(readinessCtx)
+		readinessCancel()
+		if protoErr != nil {
+			logger.Fatal("campaigns.v1 projection schema is not ready", zap.Error(protoErr))
+		}
+		campaignProtoReadiness = protoStore
+		protoKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.CampaignProtoTopic,
+			GroupID: cfg.Kafka.CampaignProtoGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
+			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create campaigns.v1 Protobuf consumer", zap.Error(consumerErr))
+		}
+		protoConsumer, consumerErr := consumer.NewCampaignDetectionConsumer(
+			protoKafkaConsumer, protoStore, candidateSHA256,
+			cfg.Kafka.CampaignProtoTopic, cfg.Kafka.CampaignProtoGroup, logger)
+		if consumerErr != nil {
+			_ = protoKafkaConsumer.Close()
+			logger.Fatal("Failed to initialize campaigns.v1 Protobuf consumer", zap.Error(consumerErr))
+		}
+		defer protoConsumer.Close()
+		apiHandler.AddReadinessCheck("campaigns_proto_consumer_v1", protoConsumer.Ready)
+		go func() {
+			logger.Info("Starting campaigns.v1 Protobuf consumer; readiness waits for a durable canary receipt",
+				zap.String("topic", cfg.Kafka.CampaignProtoTopic), zap.String("group_id", cfg.Kafka.CampaignProtoGroup),
+				zap.String("candidate_sha256", candidateSHA256))
+			if startErr := protoConsumer.Start(ctx); startErr != nil && startErr != context.Canceled {
+				logger.Error("campaigns.v1 Protobuf consumer stopped", zap.Error(startErr))
+				cancel()
+			}
+		}()
+	} else {
+		logger.Info("campaigns.v1 Protobuf consumer is disabled")
+	}
+	attackChainV1Enabled := getBoolEnv("ATTACK_CHAIN_V1_ENABLED", false)
+	if attackChainV1Enabled {
+		attackChainRepository, attackChainErr := attackchain.NewRepository(db)
+		if attackChainErr != nil {
+			logger.Fatal("Failed to initialize attack-chain snapshot repository", zap.Error(attackChainErr))
+		}
+		readinessCtx, readinessCancel := context.WithTimeout(ctx, 10*time.Second)
+		attackChainErr = attackChainRepository.VerifySchema(readinessCtx)
+		readinessCancel()
+		if attackChainErr != nil {
+			logger.Fatal("Attack-chain snapshot schema is not ready", zap.Error(attackChainErr))
+		}
+		systemHandler.SetAttackChainV1Runtime(true, attackChainRepository)
+		logger.Info("Versioned attack-chain snapshot API enabled")
+	} else {
+		systemHandler.SetAttackChainV1Runtime(false, nil)
+		logger.Info("Versioned attack-chain snapshot API disabled; compatibility reads remain active")
+	}
 	topicSnapshotFeatureEnabled := getBoolEnv("TOPIC_SNAPSHOT_V1_ENABLED", true)
 	topicExecutorFeatureEnabled := getBoolEnv("TOPIC_EXECUTOR_V2_ENABLED", true) && !readOnlyVerificationMode
-	probeOperationFeatureEnabled := getBoolEnv("PROBE_OPERATION_ACK_V2_ENABLED", true) && !readOnlyVerificationMode
+	probeOperationPipelineConfig := cfg.ProbeOperation
+	if readOnlyVerificationMode {
+		probeOperationPipelineConfig = config.ProbeOperationPipelineConfig{}
+	}
 	auditBatchFeatureEnabled := getBoolEnv("AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED", false) && !readOnlyVerificationMode
 	systemHandler.SetCampaignAggregateV2FeatureFlag(campaignAggregateV2Enabled)
+	fusionWriterEnabled := getBoolEnv("FUSION_V1_ENABLED", false) && !readOnlyVerificationMode
+	systemHandler.SetFusionV1FeatureFlag(false)
+	baselineWriterEnabled := getBoolEnv("BEHAVIOR_BASELINE_V1_ENABLED", false) && !readOnlyVerificationMode
+	baselineCandidateSHA256 := strings.TrimSpace(getEnv("BEHAVIOR_BASELINE_CANDIDATE_SHA256", ""))
+	if baselineWriterEnabled && len(baselineCandidateSHA256) != 64 {
+		logger.Fatal("Behavior baseline V1 writer requires a 64-character candidate SHA")
+	}
+	systemHandler.SetBehaviorBaselineV1Runtime(false, baselineCandidateSHA256)
 	systemHandler.SetTopicAlignmentFeatureFlags(topicSnapshotFeatureEnabled, topicExecutorFeatureEnabled)
-	systemHandler.SetProbeOperationAckFeatureFlag(probeOperationFeatureEnabled)
+	systemHandler.SetProbeOperationAckFeatureFlag(probeOperationPipelineConfig.DesiredWriterEnabled)
+	fusionKafkaConfig := cfg.Kafka
+	if readOnlyVerificationMode {
+		fusionKafkaConfig.FusionProjectionEnabled = false
+	}
+	fusionRuntime, fusionPipelineErr := initFusionProjectionPipeline(ctx, FusionProjectionPipelineDeps{
+		Kafka: fusionKafkaConfig, Postgres: db, ClickHouse: chSQLDB,
+		CandidateSHA256: strings.TrimSpace(getEnv("FUSION_CANDIDATE_SHA256", "")), Logger: logger,
+	})
+	if fusionPipelineErr != nil {
+		logger.Fatal("Failed to initialize fusion projection pipeline", zap.Error(fusionPipelineErr))
+	}
+	if fusionRuntime != nil {
+		defer func() {
+			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer shutdownCancel()
+			if err := fusionRuntime.Close(shutdownCtx); err != nil {
+				logger.Error("Failed to stop fusion projection pipeline", zap.Error(err))
+			}
+		}()
+	}
+	if fusionKafkaConfig.FusionProjectionEnabled {
+		logger.Info("Fusion projection consumer is assigned and ready",
+			zap.String("topic", fusionKafkaConfig.FusionCommandTopic),
+			zap.String("group_id", fusionKafkaConfig.FusionProjectionGroup))
+	} else {
+		logger.Info("Fusion projection consumer is disabled")
+	}
+	var fusionCommandProducer *kafka.KeyedProducer
+	if fusionWriterEnabled {
+		if !fusionKafkaConfig.FusionProjectionEnabled || fusionRuntime == nil || fusionRuntime.readiness == nil {
+			logger.Fatal("Fusion V1 writer cannot start before its candidate-bound projection consumer is ready")
+		}
+		fusionCommandProducer, err = kafka.NewKeyedProducer(kafka.ProducerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.FusionCommandTopic, BatchSize: 100,
+			RequiredAcks: "all", Compression: "lz4", Async: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if err != nil {
+			logger.Fatal("Failed to initialize fusion command producer", zap.Error(err))
+		}
+		defer fusionCommandProducer.Close()
+		systemHandler.SetFusionV1Runtime(strings.TrimSpace(getEnv("FUSION_CANDIDATE_SHA256", "")), fusionRuntime.readiness, fusionCommandProducer)
+		if err := systemHandler.StartFusionCommandOutboxWorker(ctx, 2*time.Second); err != nil {
+			logger.Fatal("Failed to start fusion command outbox worker", zap.Error(err))
+		}
+		systemHandler.SetFusionV1FeatureFlag(true)
+		logger.Info("Fusion V1 authority writer enabled behind current consumer readiness fence")
+	} else {
+		logger.Info("Fusion V1 authority writer is disabled")
+	}
+	baselineAckKafkaConfig := cfg.Kafka
+	if readOnlyVerificationMode {
+		baselineAckKafkaConfig.BaselineActivationAckEnabled = false
+	}
+	baselineAckRuntime, baselineAckPipelineErr := initBaselineActivationAckPipeline(ctx, BaselineAckPipelineDeps{
+		Kafka:           baselineAckKafkaConfig,
+		Postgres:        db,
+		CandidateSHA256: baselineCandidateSHA256,
+		Logger:          logger,
+	})
+	if baselineAckPipelineErr != nil {
+		logger.Fatal("Failed to initialize behavior baseline activation ACK pipeline", zap.Error(baselineAckPipelineErr))
+	}
+	if baselineAckRuntime != nil {
+		defer func() {
+			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer shutdownCancel()
+			if err := baselineAckRuntime.Close(shutdownCtx); err != nil {
+				logger.Error("Failed to stop behavior baseline activation ACK pipeline", zap.Error(err))
+			}
+		}()
+	}
+	if baselineAckKafkaConfig.BaselineActivationAckEnabled {
+		logger.Info("Behavior baseline activation ACK consumer is assigned and ready",
+			zap.String("topic", baselineAckKafkaConfig.BaselineActivationAckTopic),
+			zap.String("group_id", baselineAckKafkaConfig.BaselineActivationAckGroup),
+			zap.String("candidate_sha256", baselineCandidateSHA256))
+	} else {
+		logger.Info("Behavior baseline activation ACK consumer is disabled")
+	}
+	baselineLifecycleDispatcherEnabled := getBoolEnv("BEHAVIOR_BASELINE_LIFECYCLE_DISPATCHER_V1_ENABLED", false) && !readOnlyVerificationMode
+	var baselineLifecycleDispatcher *baseline.LifecycleOutboxDispatcher
+	var baselineLifecycleProducer *kafka.KeyedProducer
+	if baselineLifecycleDispatcherEnabled {
+		if baselineAckRuntime == nil || baselineAckRuntime.readiness == nil ||
+			!baselineAckKafkaConfig.BaselineActivationAckEnabled || cfg.Kafka.BaselineLifecycleTopic != baseline.LifecycleTopic {
+			logger.Fatal("Behavior baseline lifecycle dispatcher requires the ready ACK consumer and exact lifecycle topic")
+		}
+		baselineLifecycleProducer, err = kafka.NewKeyedProducer(kafka.ProducerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.BaselineLifecycleTopic, BatchSize: 100,
+			RequiredAcks: "all", Compression: "lz4", Async: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if err != nil {
+			logger.Fatal("Failed to initialize behavior baseline lifecycle producer", zap.Error(err))
+		}
+		defer baselineLifecycleProducer.Close()
+		baselineLifecycleDispatcher, err = baseline.NewLifecycleOutboxDispatcher(db, baselineLifecycleProducer,
+			baselineAckRuntime.readiness, baselineCandidateSHA256)
+		if err != nil {
+			logger.Fatal("Failed to initialize behavior baseline lifecycle dispatcher", zap.Error(err))
+		}
+		go func() {
+			ticker := time.NewTicker(2 * time.Second)
+			defer ticker.Stop()
+			for {
+				if _, drainErr := baselineLifecycleDispatcher.Drain(ctx, 50); drainErr != nil && ctx.Err() == nil {
+					logger.Warn("Failed to drain behavior baseline lifecycle outbox", zap.Error(drainErr))
+				}
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+				}
+			}
+		}()
+		logger.Info("Behavior baseline lifecycle dispatcher enabled",
+			zap.String("topic", cfg.Kafka.BaselineLifecycleTopic), zap.String("candidate_sha256", baselineCandidateSHA256))
+	} else {
+		logger.Info("Behavior baseline lifecycle dispatcher is disabled")
+	}
+	baselineWorkerEnabled := getBoolEnv("BEHAVIOR_BASELINE_BUILD_WORKER_V1_ENABLED", false) && !readOnlyVerificationMode
+	if baselineWorkerEnabled {
+		if len(baselineCandidateSHA256) != 64 || chSQLDB == nil || db == nil {
+			logger.Fatal("Behavior baseline build worker requires PostgreSQL, ClickHouse and the exact candidate SHA")
+		}
+		sampleReader, sampleReaderErr := baseline.NewClickHouseSampleReader(chSQLDB)
+		if sampleReaderErr != nil {
+			logger.Fatal("Failed to initialize behavior baseline ClickHouse reader", zap.Error(sampleReaderErr))
+		}
+		baselineWorker, baselineWorkerErr := baseline.NewWorker(db, sampleReader, baselineCandidateSHA256,
+			"alert-service:"+getEnv("POD_NAME", "local"))
+		if baselineWorkerErr != nil {
+			logger.Fatal("Failed to initialize behavior baseline worker", zap.Error(baselineWorkerErr))
+		}
+		go func() {
+			if err := baseline.RunWorkerLoop(ctx, baselineWorker, 2*time.Second); err != nil && err != context.Canceled {
+				logger.Error("Behavior baseline build worker stopped", zap.Error(err))
+				cancel()
+			}
+		}()
+		logger.Info("Behavior baseline build worker enabled", zap.String("candidate_sha256", baselineCandidateSHA256))
+	} else {
+		logger.Info("Behavior baseline build worker is disabled")
+	}
+	if baselineWriterEnabled {
+		if db == nil || !baselineAckKafkaConfig.BaselineActivationAckEnabled || baselineAckRuntime == nil || baselineAckRuntime.readiness == nil {
+			logger.Fatal("Behavior baseline V1 writer cannot start before its candidate-bound ACK consumer is ready")
+		}
+		if !baselineLifecycleDispatcherEnabled || baselineLifecycleDispatcher == nil || baselineLifecycleProducer == nil {
+			logger.Fatal("Behavior baseline V1 writer cannot start before its lifecycle dispatcher is ready")
+		}
+		systemHandler.SetBehaviorBaselineV1Runtime(true, baselineCandidateSHA256)
+		logger.Info("Behavior baseline V1 authority writer enabled; projection dispatch remains separately gated",
+			zap.String("candidate_sha256", baselineCandidateSHA256))
+	} else {
+		systemHandler.SetBehaviorBaselineV1Runtime(false, baselineCandidateSHA256)
+		logger.Info("Behavior baseline V1 authority writer is disabled")
+	}
 	var auditBatchProducer *kafka.Producer
 	if auditBatchFeatureEnabled {
 		auditBatchProducer, err = kafka.NewProducer(kafka.ProducerConfig{
@@ -766,9 +1162,111 @@ func main() {
 	}
 	var campaignAggregateEventProducer *kafka.Producer
 	var campaignMembershipEventProducer *kafka.Producer
-	if cfg.Kafka.CampaignEventEnabled && !readOnlyVerificationMode {
+	var campaignJSONReadiness *campaignrail.ProtoProjectionStore
+	if (cfg.Kafka.CampaignEventConsumerEnabled || cfg.Kafka.CampaignEventDispatcherEnabled) && !readOnlyVerificationMode {
 		if db == nil {
-			logger.Fatal("Campaign event pipeline requires PostgreSQL")
+			logger.Fatal("Campaign JSON event rails require PostgreSQL")
+		}
+		campaignJSONReadiness, err = campaignrail.NewProtoProjectionStore(db)
+		if err != nil {
+			logger.Fatal("Failed to initialize campaign JSON readiness authority", zap.Error(err))
+		}
+		readinessCtx, readinessCancel := context.WithTimeout(ctx, 10*time.Second)
+		err = campaignJSONReadiness.VerifySchema(readinessCtx)
+		readinessCancel()
+		if err != nil {
+			logger.Fatal("Campaign JSON readiness schema is unavailable", zap.Error(err))
+		}
+	}
+	if cfg.Kafka.CampaignEventConsumerEnabled && !readOnlyVerificationMode {
+		candidateSHA256 := strings.TrimSpace(getEnv("CAMPAIGN_JSON_V2_CANDIDATE_SHA256", ""))
+		campaignAggregateKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.CampaignEventTopic,
+			GroupID: cfg.Kafka.CampaignEventGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
+			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create campaign aggregate projection consumer", zap.Error(consumerErr))
+		}
+		campaignAggregateConsumer, consumerErr := consumer.NewCampaignEventConsumer(
+			campaignAggregateKafkaConsumer, systemHandler, "aggregate", cfg.Kafka.CampaignEventTopic, logger)
+		if consumerErr == nil {
+			consumerErr = campaignAggregateConsumer.SetReadinessAuthority(
+				campaignJSONReadiness, candidateSHA256, cfg.Kafka.CampaignEventGroup)
+		}
+		if consumerErr != nil {
+			_ = campaignAggregateKafkaConsumer.Close()
+			logger.Fatal("Failed to initialize campaign aggregate projection consumer", zap.Error(consumerErr))
+		}
+		defer campaignAggregateConsumer.Close()
+		apiHandler.AddReadinessCheck("campaign_aggregate_json_v2", campaignAggregateConsumer.Ready)
+		go func() {
+			logger.Info("Starting campaign aggregate projection consumer", zap.String("topic", cfg.Kafka.CampaignEventTopic), zap.String("group_id", cfg.Kafka.CampaignEventGroup))
+			if startErr := campaignAggregateConsumer.Start(ctx); startErr != nil && startErr != context.Canceled {
+				logger.Error("Campaign aggregate projection consumer stopped", zap.Error(startErr))
+				cancel()
+			}
+		}()
+
+		campaignMembershipKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.CampaignMemberTopic,
+			GroupID: cfg.Kafka.CampaignMemberGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
+			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create campaign membership projection consumer", zap.Error(consumerErr))
+		}
+		campaignMembershipConsumer, consumerErr := consumer.NewCampaignEventConsumer(
+			campaignMembershipKafkaConsumer, systemHandler, "membership", cfg.Kafka.CampaignMemberTopic, logger)
+		if consumerErr == nil {
+			consumerErr = campaignMembershipConsumer.SetReadinessAuthority(
+				campaignJSONReadiness, candidateSHA256, cfg.Kafka.CampaignMemberGroup)
+		}
+		if consumerErr != nil {
+			_ = campaignMembershipKafkaConsumer.Close()
+			logger.Fatal("Failed to initialize campaign membership projection consumer", zap.Error(consumerErr))
+		}
+		defer campaignMembershipConsumer.Close()
+		apiHandler.AddReadinessCheck("campaign_membership_json_v2", campaignMembershipConsumer.Ready)
+		go func() {
+			logger.Info("Starting campaign membership projection consumer", zap.String("topic", cfg.Kafka.CampaignMemberTopic), zap.String("group_id", cfg.Kafka.CampaignMemberGroup))
+			if startErr := campaignMembershipConsumer.Start(ctx); startErr != nil && startErr != context.Canceled {
+				logger.Error("Campaign membership projection consumer stopped", zap.Error(startErr))
+				cancel()
+			}
+		}()
+		logger.Info("Campaign JSON V2 consumers started; dispatcher remains independently gated",
+			zap.String("candidate_sha256", candidateSHA256))
+	} else {
+		logger.Info("Campaign JSON V2 consumers are disabled")
+	}
+	if cfg.Kafka.CampaignEventDispatcherEnabled && !readOnlyVerificationMode {
+		if !cfg.Kafka.CampaignEventConsumerEnabled || campaignJSONReadiness == nil {
+			logger.Fatal("Campaign JSON V2 dispatcher cannot start before both consumers are enabled")
+		}
+		candidateSHA256 := strings.TrimSpace(getEnv("CAMPAIGN_JSON_V2_CANDIDATE_SHA256", ""))
+		dispatchAdmission := func(admissionCtx context.Context) error {
+			if err := campaignJSONReadiness.AssertConsumerReady(admissionCtx,
+				campaignrail.AggregateJSONRailID, candidateSHA256,
+				cfg.Kafka.CampaignEventTopic, cfg.Kafka.CampaignEventGroup); err != nil {
+				return fmt.Errorf("aggregate JSON consumer: %w", err)
+			}
+			if err := campaignJSONReadiness.AssertConsumerReady(admissionCtx,
+				campaignrail.MembershipJSONRailID, candidateSHA256,
+				cfg.Kafka.CampaignMemberTopic, cfg.Kafka.CampaignMemberGroup); err != nil {
+				return fmt.Errorf("membership JSON consumer: %w", err)
+			}
+			return nil
+		}
+		readinessCtx, readinessCancel := context.WithTimeout(ctx, 10*time.Second)
+		err = dispatchAdmission(readinessCtx)
+		readinessCancel()
+		if err != nil {
+			logger.Fatal("Campaign JSON V2 dispatcher lacks both durable consumer canary receipts", zap.Error(err))
 		}
 		campaignAggregateEventProducer, err = kafka.NewProducer(kafka.ProducerConfig{
 			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.CampaignEventTopic, BatchSize: 100,
@@ -787,56 +1285,62 @@ func main() {
 		}
 		defer campaignMembershipEventProducer.Close()
 		systemHandler.SetCampaignEventProducers(campaignAggregateEventProducer, campaignMembershipEventProducer)
+		systemHandler.SetCampaignDispatcherAdmission(dispatchAdmission)
 		if err := systemHandler.StartCampaignEventOutboxWorker(ctx, 2*time.Second); err != nil {
 			logger.Fatal("Failed to start campaign event outbox worker", zap.Error(err))
 		}
-		campaignAggregateKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
-			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.CampaignEventTopic,
-			GroupID: cfg.Kafka.CampaignEventGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
-			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
-			CommitOnDLQSuccess: true, CommitOnHandlerError: false, Security: cfg.Kafka.Security,
-		}, logger)
-		if consumerErr != nil {
-			logger.Fatal("Failed to create campaign aggregate projection consumer", zap.Error(consumerErr))
-		}
-		campaignAggregateConsumer, consumerErr := consumer.NewCampaignEventConsumer(
-			campaignAggregateKafkaConsumer, systemHandler, "aggregate", cfg.Kafka.CampaignEventTopic, logger)
-		if consumerErr != nil {
-			_ = campaignAggregateKafkaConsumer.Close()
-			logger.Fatal("Failed to initialize campaign aggregate projection consumer", zap.Error(consumerErr))
-		}
-		defer campaignAggregateConsumer.Close()
-		go func() {
-			logger.Info("Starting campaign aggregate projection consumer", zap.String("topic", cfg.Kafka.CampaignEventTopic), zap.String("group_id", cfg.Kafka.CampaignEventGroup))
-			if startErr := campaignAggregateConsumer.Start(ctx); startErr != nil && startErr != context.Canceled {
-				logger.Error("Campaign aggregate projection consumer stopped", zap.Error(startErr))
-			}
-		}()
-		campaignMembershipKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
-			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.CampaignMemberTopic,
-			GroupID: cfg.Kafka.CampaignMemberGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
-			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
-			CommitOnDLQSuccess: true, CommitOnHandlerError: false, Security: cfg.Kafka.Security,
-		}, logger)
-		if consumerErr != nil {
-			logger.Fatal("Failed to create campaign membership projection consumer", zap.Error(consumerErr))
-		}
-		campaignMembershipConsumer, consumerErr := consumer.NewCampaignEventConsumer(
-			campaignMembershipKafkaConsumer, systemHandler, "membership", cfg.Kafka.CampaignMemberTopic, logger)
-		if consumerErr != nil {
-			_ = campaignMembershipKafkaConsumer.Close()
-			logger.Fatal("Failed to initialize campaign membership projection consumer", zap.Error(consumerErr))
-		}
-		defer campaignMembershipConsumer.Close()
-		go func() {
-			logger.Info("Starting campaign membership projection consumer", zap.String("topic", cfg.Kafka.CampaignMemberTopic), zap.String("group_id", cfg.Kafka.CampaignMemberGroup))
-			if startErr := campaignMembershipConsumer.Start(ctx); startErr != nil && startErr != context.Canceled {
-				logger.Error("Campaign membership projection consumer stopped", zap.Error(startErr))
-			}
-		}()
-		logger.Info("Campaign event V2 pipeline started", zap.String("aggregate_topic", cfg.Kafka.CampaignEventTopic), zap.String("membership_topic", cfg.Kafka.CampaignMemberTopic))
+		logger.Info("Campaign JSON V2 dispatcher started after both consumer receipts",
+			zap.String("aggregate_topic", cfg.Kafka.CampaignEventTopic), zap.String("membership_topic", cfg.Kafka.CampaignMemberTopic))
 	} else {
-		logger.Warn("Campaign event V2 pipeline is disabled")
+		logger.Info("Campaign JSON V2 dispatcher is disabled")
+	}
+	if cfg.Kafka.CampaignRailCorrelationEnabled && !readOnlyVerificationMode {
+		if !cfg.Kafka.CampaignProtoEnabled || !cfg.Kafka.CampaignEventConsumerEnabled ||
+			!cfg.Kafka.CampaignEventDispatcherEnabled || campaignProtoReadiness == nil {
+			logger.Fatal("Campaign rail correlation requires the Protobuf consumer and both JSON consumer/dispatcher stages")
+		}
+		protoCandidateSHA := strings.TrimSpace(getEnv("CAMPAIGNS_PROTO_CANDIDATE_SHA256", ""))
+		jsonCandidateSHA := strings.TrimSpace(getEnv("CAMPAIGN_JSON_V2_CANDIDATE_SHA256", ""))
+		correlationContractSHA := strings.TrimSpace(getEnv("CAMPAIGN_RAIL_CORRELATION_CONTRACT_SHA256", ""))
+		if correlationContractSHA != "f4f564d6d22084c1202634af99fabe29067bd51f5748dfd30b9fd48f0541980b" {
+			logger.Fatal("Campaign rail correlation contract candidate SHA is missing or stale")
+		}
+		correlationAdmission := func(admissionCtx context.Context) error {
+			checks := []struct {
+				rail, candidate, topic, group string
+			}{
+				{campaignrail.ProtoRailID, protoCandidateSHA, cfg.Kafka.CampaignProtoTopic, cfg.Kafka.CampaignProtoGroup},
+				{campaignrail.AggregateJSONRailID, jsonCandidateSHA, cfg.Kafka.CampaignEventTopic, cfg.Kafka.CampaignEventGroup},
+				{campaignrail.MembershipJSONRailID, jsonCandidateSHA, cfg.Kafka.CampaignMemberTopic, cfg.Kafka.CampaignMemberGroup},
+			}
+			for _, check := range checks {
+				if err := campaignProtoReadiness.AssertConsumerReady(admissionCtx,
+					check.rail, check.candidate, check.topic, check.group); err != nil {
+					return fmt.Errorf("%s readiness: %w", check.rail, err)
+				}
+			}
+			return nil
+		}
+		admissionCtx, admissionCancel := context.WithTimeout(ctx, 10*time.Second)
+		err = correlationAdmission(admissionCtx)
+		admissionCancel()
+		if err != nil {
+			logger.Fatal("Campaign rail correlation lacks three durable candidate-bound consumer receipts", zap.Error(err))
+		}
+		systemHandler.SetCampaignRailCorrelationAdmission(correlationAdmission)
+		if err := systemHandler.StartCampaignRailCorrelationWorker(
+			ctx,
+			time.Duration(getIntEnv("CAMPAIGN_RAIL_CORRELATION_INTERVAL_SECONDS", 60))*time.Second,
+			time.Duration(getIntEnv("CAMPAIGN_RAIL_CORRELATION_WINDOW_SECONDS", 300))*time.Second,
+			time.Duration(getIntEnv("CAMPAIGN_RAIL_CORRELATION_CLOSE_LAG_SECONDS", 60))*time.Second,
+			getIntEnv("CAMPAIGN_RAIL_CORRELATION_MAX_CAMPAIGNS", 1000),
+		); err != nil {
+			logger.Fatal("Failed to start campaign rail correlation worker", zap.Error(err))
+		}
+		logger.Info("Campaign rail correlation worker started after three durable receipts",
+			zap.String("contract_sha256", correlationContractSHA))
+	} else {
+		logger.Info("Campaign rail correlation worker is disabled")
 	}
 	if db != nil && campaignAggregateV2Enabled && !readOnlyVerificationMode {
 		if err := systemHandler.StartCampaignReportWorker(ctx, 2*time.Second); err != nil {
@@ -848,8 +1352,8 @@ func main() {
 		}
 	}
 	if cfg.CampaignProjection.Enabled && !readOnlyVerificationMode {
-		if !cfg.Kafka.CampaignEventEnabled {
-			logger.Fatal("Campaign target projection requires the campaign event V2 pipeline")
+		if !cfg.Kafka.CampaignEventConsumerEnabled || !cfg.Kafka.CampaignEventDispatcherEnabled {
+			logger.Fatal("Campaign target projection requires both JSON consumers and the independently gated dispatcher")
 		}
 		if db == nil {
 			logger.Fatal("Campaign target projection requires PostgreSQL")
@@ -969,7 +1473,7 @@ func main() {
 			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.TopicActionEventTopic,
 			GroupID: cfg.Kafka.TopicActionEventGroup, MaxRetries: 3, RetryBackoff: time.Second,
 			EnableDLQ: true, DLQTopic: "dlq.v1",
-			CommitOnDLQSuccess: true, CommitOnHandlerError: false,
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
 			Security: cfg.Kafka.Security,
 		}, logger)
 		if consumerErr != nil {
@@ -998,105 +1502,21 @@ func main() {
 			}
 		}
 	}
-	var probeOperationProducer *kafka.Producer
-	var probeOperationEventProducer *kafka.Producer
-	if probeOperationFeatureEnabled {
-		probeOperationProducer, err = kafka.NewProducer(kafka.ProducerConfig{
-			Brokers: cfg.Kafka.Brokers, Topic: "probe.control.v2", BatchSize: 100,
-			RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
-		}, logger)
-		if err != nil {
-			logger.Warn("Failed to create probe-operation Kafka producer; durable outbox will remain pending", zap.Error(err))
-			probeOperationProducer = nil
-		} else {
-			defer probeOperationProducer.Close()
-			systemHandler.SetProbeOperationProducer(probeOperationProducer)
-		}
-		probeOperationEventProducer, err = kafka.NewProducer(kafka.ProducerConfig{
-			Brokers: cfg.Kafka.Brokers, Topic: "probe.events.v2", BatchSize: 100,
-			RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
-		}, logger)
-		if err != nil {
-			logger.Warn("Failed to create probe-operation event producer; durable ACK outbox will remain pending", zap.Error(err))
-			probeOperationEventProducer = nil
-		} else {
-			defer probeOperationEventProducer.Close()
-			systemHandler.SetProbeOperationEventProducer(probeOperationEventProducer)
-		}
+	probeOperationRuntime, probeOperationErr := initProbeOperationPipelines(
+		ctx,
+		ProbeOperationPipelineDeps{Kafka: cfg.Kafka, DB: db, Handler: systemHandler, Logger: logger},
+		probeOperationPipelineConfig,
+	)
+	if probeOperationErr != nil {
+		logger.Fatal("Failed to initialize probe operation generation pipeline", zap.Error(probeOperationErr))
 	}
-	if db != nil && probeOperationFeatureEnabled && probeOperationProducer != nil && probeOperationEventProducer != nil {
-		if err := systemHandler.StartProbeOperationOutboxWorker(ctx, 2*time.Second); err != nil {
-			logger.Warn("Failed to start probe-operation outbox worker", zap.Error(err))
-		} else {
-			logger.Info("Probe-operation outbox worker started", zap.String("topic", probeOperationProducer.Topic()))
+	defer func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer shutdownCancel()
+		if closeErr := probeOperationRuntime.Close(shutdownCtx); closeErr != nil {
+			logger.Error("Probe operation generation pipeline did not close cleanly", zap.Error(closeErr))
 		}
-	}
-	if db != nil && probeOperationFeatureEnabled {
-		probeEventKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
-			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.ProbeEventTopic,
-			GroupID: cfg.Kafka.ProbeEventGroup, MaxRetries: 3, RetryBackoff: time.Second,
-			EnableDLQ: true, DLQTopic: "dlq.v1",
-			CommitOnDLQSuccess: true, CommitOnHandlerError: false,
-			Security: cfg.Kafka.Security,
-		}, logger)
-		if consumerErr != nil {
-			logger.Warn("Failed to create probe event projection consumer", zap.Error(consumerErr))
-		} else {
-			probeEventConsumer, initErr := consumer.NewProbeOperationEventConsumer(
-				probeEventKafkaConsumer, systemHandler, logger,
-			)
-			if initErr != nil {
-				_ = probeEventKafkaConsumer.Close()
-				logger.Warn("Failed to initialize probe event projection consumer", zap.Error(initErr))
-			} else {
-				defer probeEventConsumer.Close()
-				go func() {
-					logger.Info(
-						"Starting probe event projection consumer",
-						zap.String("topic", cfg.Kafka.ProbeEventTopic),
-						zap.String("group_id", cfg.Kafka.ProbeEventGroup),
-						zap.String("dlq_topic", "dlq.v1"),
-					)
-					if startErr := probeEventConsumer.Start(ctx); startErr != nil &&
-						startErr != context.Canceled {
-						logger.Error("Probe event projection consumer stopped", zap.Error(startErr))
-					}
-				}()
-			}
-		}
-	}
-	if db != nil && probeOperationFeatureEnabled {
-		probeAckKafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
-			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.ProbeAckTopic,
-			GroupID: cfg.Kafka.ProbeAckGroup, MaxRetries: 3, RetryBackoff: time.Second,
-			EnableDLQ: true, DLQTopicPrefix: "dlq.", CommitOnDLQSuccess: true,
-			CommitOnHandlerError: false, Security: cfg.Kafka.Security,
-		}, logger)
-		if consumerErr != nil {
-			logger.Warn("Failed to create probe ACK Kafka consumer", zap.Error(consumerErr))
-		} else {
-			probeAckConsumer, consumerErr := consumer.NewProbeAckConsumer(
-				probeAckKafkaConsumer, systemHandler, logger,
-			)
-			if consumerErr != nil {
-				_ = probeAckKafkaConsumer.Close()
-				logger.Warn("Failed to initialize probe ACK consumer", zap.Error(consumerErr))
-			} else {
-				defer probeAckConsumer.Close()
-				go func() {
-					logger.Info(
-						"Starting probe ACK consumer",
-						zap.String("topic", cfg.Kafka.ProbeAckTopic),
-						zap.String("group_id", cfg.Kafka.ProbeAckGroup),
-					)
-					if startErr := probeAckConsumer.Start(ctx); startErr != nil &&
-						startErr != context.Canceled {
-						logger.Error("Probe ACK consumer stopped", zap.Error(startErr))
-					}
-				}()
-			}
-		}
-	}
+	}()
 
 	realtimeHandler := realtime.NewHandler(realtimeAuthService, logger)
 	r.HandleFunc("/ws", realtimeHandler.HandleEvents).Methods("GET")
@@ -1123,6 +1543,13 @@ func main() {
 
 	// 应用中间件链
 	applyAPIMiddlewares(apiRouter)
+	// P2 契约解释器:对命中 m10 契约的 /v1/* 操作逐操作判定 required_scope
+	// (alert 29 操作/whitelist 5 操作/dashboard 等),未命中契约路径原样放行;
+	// /internal/v1 内部路由不受影响。
+	if mode := strings.TrimSpace(getEnv("AUTHZ_CONTRACT_MODE", "")); mode == "enforce" || mode == "shadow" {
+		apiRouter.Use(authz.EnforceContract(alertContractPrincipal, mode, nil, logger, alertContractDenyAudit(auditLogger)))
+		logger.Info("Contract interpreter enabled on API router", zap.String("mode", mode))
+	}
 	internalRouter := r.PathPrefix("/internal/v1").Subrouter()
 	applyAPIMiddlewares(internalRouter)
 	systemHandler.RegisterInternalRoutes(internalRouter)
@@ -1214,6 +1641,17 @@ func main() {
 	dashboardHandler := api.NewDashboardHandler(chClient, logger)
 	dashboardSnapshotHandler := api.NewDashboardSnapshotHandler(chClient, db, osRepo, rdb, logger, getBoolEnv("DASHBOARD_SNAPSHOT_V1_ENABLED", false))
 	dashboardSnapshotHandler.RegisterRoutes(apiRouter)
+	encryptedTrafficSnapshotEnabled := getBoolEnv("ENCRYPTED_TRAFFIC_SNAPSHOT_V1_ENABLED", false)
+	if encryptedTrafficSnapshotEnabled && len(strings.TrimSpace(cfg.Auth.JWTSecretKey)) < 32 {
+		logger.Fatal("Encrypted traffic snapshot V1 requires a continuation signing key of at least 32 characters")
+	}
+	encryptedTrafficSnapshotHandler := api.NewEncryptedTrafficSnapshotHandler(
+		chClient,
+		logger,
+		encryptedTrafficSnapshotEnabled,
+		cfg.Auth.JWTSecretKey,
+	)
+	encryptedTrafficSnapshotHandler.RegisterRoutes(apiRouter)
 	apiRouter.HandleFunc("/dashboard/stats", dashboardHandler.GetStats).Methods("GET")
 	apiRouter.HandleFunc("/dashboard/alerts/trend", dashboardHandler.GetAlertTrend).Methods("GET")
 	apiRouter.HandleFunc("/dashboard/attack-phases", dashboardHandler.GetAttackPhases).Methods("GET")
@@ -1339,7 +1777,19 @@ func main() {
 		if !readOnlyVerificationMode {
 			go whitelistRepo.RunExpirySweeper(ctx, time.Duration(getIntEnv("WHITELIST_EXPIRY_SWEEP_SECONDS", 60))*time.Second, getIntEnv("WHITELIST_EXPIRY_SWEEP_BATCH", 100))
 		}
-		if cfg.Kafka.WhitelistEventPipelineEnabled {
+		if cfg.Kafka.WhitelistEventProducerEnabled {
+			readiness := whitelist.ProducerReadiness{
+				Topic:           cfg.Kafka.WhitelistEventTopic,
+				ConsumerGroup:   cfg.Kafka.WhitelistEventConsumerGroup,
+				CandidateSHA256: cfg.Kafka.WhitelistConsumerCandidateSHA256,
+				ContractSHA256:  cfg.Kafka.WhitelistEventContractSHA256,
+			}
+			verifyCtx, verifyCancel := context.WithTimeout(ctx, 10*time.Second)
+			readinessErr := whitelist.VerifyProducerReadiness(verifyCtx, db, readiness)
+			verifyCancel()
+			if readinessErr != nil {
+				logger.Fatal("Whitelist producer is not authorized by a consumer broker projection receipt", zap.Error(readinessErr))
+			}
 			whitelistProducer, producerErr := kafka.NewProducer(kafka.ProducerConfig{
 				Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.WhitelistEventTopic,
 				BatchSize: 100, RequiredAcks: "all", Compression: "lz4", Async: false,
@@ -1355,16 +1805,19 @@ func main() {
 			if dispatcherErr != nil {
 				logger.Fatal("Failed to initialize whitelist outbox dispatcher", zap.Error(dispatcherErr))
 			}
-			verifyCtx, verifyCancel := context.WithTimeout(ctx, 10*time.Second)
+			verifyCtx, verifyCancel = context.WithTimeout(ctx, 10*time.Second)
 			dispatcherErr = dispatcher.VerifySchema(verifyCtx)
 			verifyCancel()
 			if dispatcherErr != nil {
 				logger.Fatal("Whitelist outbox schema is unavailable", zap.Error(dispatcherErr))
 			}
 			go dispatcher.Run(ctx)
-			logger.Info("Whitelist event pipeline started", zap.String("topic", cfg.Kafka.WhitelistEventTopic))
+			logger.Info("Whitelist event producer started after consumer readiness",
+				zap.String("topic", cfg.Kafka.WhitelistEventTopic),
+				zap.String("consumer_group", cfg.Kafka.WhitelistEventConsumerGroup),
+				zap.String("consumer_candidate_sha256", cfg.Kafka.WhitelistConsumerCandidateSHA256))
 		} else {
-			logger.Warn("Whitelist event pipeline is disabled")
+			logger.Warn("Whitelist event producer is disabled")
 		}
 		logger.Info("Whitelist governance initialized (IP/domain/asset/account/rule/model, approval and expiry lifecycle)")
 	}
@@ -1664,7 +2117,8 @@ func main() {
 			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.PlaybookEventTopic,
 			GroupID: cfg.Kafka.PlaybookEventGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
 			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
-			CommitOnDLQSuccess: true, CommitOnHandlerError: false, Security: cfg.Kafka.Security,
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
 		}, logger)
 		if consumerErr != nil {
 			logger.Fatal("Failed to create playbook execution projection consumer", zap.Error(consumerErr))
@@ -1727,6 +2181,17 @@ func main() {
 	}
 
 	logger.Info("Alert Service stopped")
+}
+
+func newAlertSystemHandler(
+	chClient *storage.ClickHouseClient,
+	pgDB *sql.DB,
+	logger *zap.Logger,
+	encryptedTrafficStats api.EncryptedTrafficStatsService,
+) *api.SystemHandler {
+	handler := api.NewSystemHandler(chClient, pgDB, logger)
+	handler.SetEncryptedTrafficStatsService(encryptedTrafficStats)
+	return handler
 }
 
 // getEnv 获取环境变量，带默认值
@@ -1821,4 +2286,53 @@ func initClickHouseSQLDB(cfg config.ClickHouseConfig, logger *zap.Logger) (*sql.
 		zap.String("host", host),
 		zap.String("database", database))
 	return db, nil
+}
+
+// alertContractPrincipal 将 alert-service 自有认证层(判定合一 P1:HMAC→OIDC
+// 统一 ValidateToken 入口,httpx 上下文键)适配为契约解释器的判定主体。
+func alertContractPrincipal(r *http.Request) *authz.Principal {
+	userID := strings.TrimSpace(httpx.GetUserID(r.Context()))
+	if userID == "" {
+		return nil
+	}
+	return &authz.Principal{
+		Kind:        authz.PrincipalKindHuman,
+		Subject:     userID,
+		Username:    httpx.GetUsername(r.Context()),
+		TenantID:    httpx.GetTenantID(r.Context()),
+		Roles:       httpx.GetRoles(r.Context()),
+		Permissions: httpx.GetPermissions(r.Context()),
+	}
+}
+
+// alertContractDenyAudit 契约拒绝留痕(审计三联:拒绝→审计行,Kafka 审计事件)。
+func alertContractDenyAudit(auditLogger *commonAudit.Logger) authz.ContractDenyAuditor {
+	return func(r *http.Request, op *authz.Operation, principal *authz.Principal, status int) {
+		if auditLogger == nil {
+			return
+		}
+		detail := map[string]interface{}{
+			"operation_id":   op.OperationID,
+			"required_scope": op.RequiredScope,
+			"path":           r.URL.Path,
+			"result":         "denied",
+			"status":         status,
+		}
+		userID := ""
+		if principal != nil {
+			userID = principal.Subject
+		}
+		auditLogger.Log(r.Context(), &commonAudit.AuditEvent{
+			EventType:    commonAudit.EventTypePermissionDenied,
+			TenantID:     httpx.GetTenantID(r.Context()),
+			UserID:       userID,
+			ServiceName:  "alert-service",
+			SourceIP:     httpx.GetClientIP(r),
+			Action:       "CONTRACT_ACCESS_DENIED",
+			ResourceType: "contract_operation",
+			ResourceID:   op.OperationID,
+			Detail:       detail,
+			Result:       commonAudit.ResultFailure,
+		})
+	}
 }

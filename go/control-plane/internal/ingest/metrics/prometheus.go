@@ -258,6 +258,9 @@ func (m *Metrics) RecordProbeStatus(probeID string, status *pb.ProbeStatus) {
 	m.probeStatusGauge.WithLabelValues(probeID, "upload_bps").Set(float64(status.UploadBps))
 	m.probeStatusGauge.WithLabelValues(probeID, "packets_captured").Set(float64(status.PacketsCaptured))
 	m.probeStatusGauge.WithLabelValues(probeID, "packets_dropped").Set(float64(status.PacketsDropped))
+	m.probeStatusGauge.WithLabelValues(probeID, "capture_allocation_drops").Set(float64(status.CaptureAllocationDrops))
+	m.probeStatusGauge.WithLabelValues(probeID, "capture_kernel_drops").Set(float64(status.CaptureKernelDrops))
+	m.probeStatusGauge.WithLabelValues(probeID, "capture_errors").Set(float64(status.CaptureErrors))
 }
 
 func (m *Metrics) RecordReject429() {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -65,6 +66,34 @@ YIELD relation.relation_id AS relation_id,
       relation.attributes_json AS attributes_json,
       relation.weight AS weight,
       relation.observed_at AS observed_at`
+
+const boundedWorkbenchLandingQuery = `LOOKUP ON entity
+WHERE entity.tenant_id == $tenant_id
+YIELD entity.entity_id AS entity_id,
+      entity.entity_type AS entity_type,
+      entity.label AS label,
+      entity.detail AS detail,
+      entity.risk_score AS risk_score,
+      entity.risk_level AS risk_level,
+      entity.x AS x,
+      entity.y AS y,
+      entity.icon AS icon,
+      entity.metadata_json AS metadata_json,
+      entity.updated_at AS updated_at
+| ORDER BY $-.entity_id | LIMIT 1;`
+
+const boundedWorkbenchEdgeQuery = `GO FROM %s OVER relation BIDIRECT
+WHERE relation.tenant_id == $tenant_id%s
+YIELD relation.relation_id AS relation_id,
+      relation.source_id AS source_id,
+      relation.target_id AS target_id,
+      relation.relation_type AS relation_type,
+      relation.risk_level AS risk_level,
+      relation.evidence_id AS evidence_id,
+      relation.attributes_json AS attributes_json,
+      relation.weight AS weight,
+      relation.observed_at AS observed_at
+| ORDER BY $-.relation_id | LIMIT %d;`
 
 // WorkbenchStore serves the entity workbench directly from NebulaGraph using
 // the official Go SDK. The session pool is bound to one graph space and user,
@@ -217,6 +246,196 @@ func (s *WorkbenchStore) LoadWorkbenchGraph(ctx context.Context, tenantID string
 		zap.Int("nodes", len(nodes)),
 		zap.Int("edges", len(edges)))
 	return nodes, edges, nil
+}
+
+// LoadWorkbenchGraphBounded performs a breadth-first traversal whose result
+// caps are present in every NebulaGraph statement. It never executes the
+// tenant-wide LOOKUP queries used by the compatibility path. Frontier and
+// visited sets make cycles finite; tenant-namespaced VIDs plus the relation
+// predicate prevent a malformed cross-tenant edge from escaping its tenant.
+func (s *WorkbenchStore) LoadWorkbenchGraphBounded(
+	ctx context.Context,
+	tenantID string,
+	filter query.WorkbenchFilter,
+) ([]*query.WorkbenchNode, []*query.WorkbenchEdge, bool, string, error) {
+	if s == nil || s.pool == nil {
+		return nil, nil, false, "", fmt.Errorf("NebulaGraph workbench store is unavailable")
+	}
+	if strings.TrimSpace(tenantID) == "" {
+		return nil, nil, false, "", fmt.Errorf("tenant ID is required")
+	}
+	if filter.Depth < 1 || filter.Depth > 6 || filter.Limit < 1 || filter.Limit > 500 ||
+		filter.EdgeLimit < 1 || filter.EdgeLimit > 5000 || filter.NeighborLimit < 1 || filter.NeighborLimit > 500 {
+		return nil, nil, false, "", fmt.Errorf("invalid governed workbench budget")
+	}
+
+	parameters := map[string]interface{}{"tenant_id": tenantID}
+	centerID := strings.TrimSpace(filter.CenterID)
+	var centerNodes []*query.WorkbenchNode
+	var err error
+	if centerID == "" {
+		result, queryErr := s.execute(ctx, boundedWorkbenchLandingQuery, parameters)
+		if queryErr != nil {
+			return nil, nil, false, "", fmt.Errorf("query bounded landing entity: %w", queryErr)
+		}
+		centerNodes, err = decodeWorkbenchNodes(result)
+	} else {
+		centerNodes, err = s.fetchBoundedWorkbenchNodes(ctx, tenantID, []string{centerID})
+	}
+	if err != nil {
+		return nil, nil, false, "", err
+	}
+	if len(centerNodes) == 0 {
+		return []*query.WorkbenchNode{}, []*query.WorkbenchEdge{}, false, "", nil
+	}
+	centerID = centerNodes[0].EntityID
+	nodes := []*query.WorkbenchNode{centerNodes[0]}
+	nodeByID := map[string]*query.WorkbenchNode{centerID: centerNodes[0]}
+	visited := map[string]bool{centerID: true}
+	edgeByID := make(map[string]*query.WorkbenchEdge)
+	frontier := []string{centerID}
+	truncated := false
+	reason := ""
+
+	for hop := 0; hop < filter.Depth && len(frontier) > 0; hop++ {
+		remainingEdges := filter.EdgeLimit - len(edgeByID)
+		if remainingEdges <= 0 {
+			truncated, reason = true, "edge_budget"
+			break
+		}
+		hopBudget := filter.NeighborLimit * len(frontier)
+		if hopBudget > remainingEdges {
+			hopBudget = remainingEdges
+		}
+		if hopBudget < 1 {
+			truncated, reason = true, "hop_neighbor_budget"
+			break
+		}
+		hopEdges, hasMore, queryErr := s.fetchBoundedWorkbenchEdges(ctx, tenantID, frontier, filter.SinceMS, filter.UntilMS, hopBudget)
+		if queryErr != nil {
+			return nil, nil, false, "", queryErr
+		}
+		if hasMore {
+			truncated = true
+			if hopBudget < remainingEdges {
+				reason = "hop_neighbor_budget"
+			} else {
+				reason = "edge_budget"
+			}
+		}
+
+		candidateIDs := make([]string, 0, len(hopEdges))
+		candidateSet := make(map[string]bool)
+		for _, edge := range hopEdges {
+			for _, nodeID := range []string{edge.SourceID, edge.TargetID} {
+				if nodeID != "" && !visited[nodeID] && !candidateSet[nodeID] {
+					candidateSet[nodeID] = true
+					candidateIDs = append(candidateIDs, nodeID)
+				}
+			}
+		}
+		sort.Strings(candidateIDs)
+		remainingNodes := filter.Limit + 1 - len(nodes)
+		if remainingNodes <= 0 {
+			truncated, reason = true, "node_budget"
+			break
+		}
+		if len(candidateIDs) > remainingNodes {
+			candidateIDs = candidateIDs[:remainingNodes]
+			truncated, reason = true, "node_budget"
+		}
+		newNodes, queryErr := s.fetchBoundedWorkbenchNodes(ctx, tenantID, candidateIDs)
+		if queryErr != nil {
+			return nil, nil, false, "", queryErr
+		}
+		frontier = frontier[:0]
+		for _, node := range newNodes {
+			if visited[node.EntityID] {
+				continue
+			}
+			visited[node.EntityID] = true
+			nodeByID[node.EntityID] = node
+			nodes = append(nodes, node)
+			frontier = append(frontier, node.EntityID)
+		}
+		sort.Strings(frontier)
+		for _, edge := range hopEdges {
+			if nodeByID[edge.SourceID] == nil || nodeByID[edge.TargetID] == nil {
+				continue
+			}
+			if _, exists := edgeByID[edge.RelationID]; !exists {
+				edgeByID[edge.RelationID] = edge
+			}
+		}
+	}
+
+	edges := make([]*query.WorkbenchEdge, 0, len(edgeByID))
+	for _, edge := range edgeByID {
+		edges = append(edges, edge)
+	}
+	sort.Slice(nodes, func(i, j int) bool { return nodes[i].EntityID < nodes[j].EntityID })
+	sort.Slice(edges, func(i, j int) bool { return edges[i].RelationID < edges[j].RelationID })
+	return nodes, edges, truncated, reason, nil
+}
+
+func (s *WorkbenchStore) fetchBoundedWorkbenchNodes(ctx context.Context, tenantID string, entityIDs []string) ([]*query.WorkbenchNode, error) {
+	if len(entityIDs) == 0 {
+		return []*query.WorkbenchNode{}, nil
+	}
+	literals := make([]string, 0, len(entityIDs))
+	for _, entityID := range entityIDs {
+		literals = append(literals, tenantVIDLiteral(tenantID, entityID))
+	}
+	statement := fmt.Sprintf(assetProjectionNodeQuery, strings.Join(literals, ",")) + ";"
+	result, err := s.execute(ctx, statement, map[string]interface{}{"tenant_id": tenantID})
+	if err != nil {
+		return nil, fmt.Errorf("query bounded workbench entities: %w", err)
+	}
+	nodes, err := decodeWorkbenchNodes(result)
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(nodes, func(i, j int) bool { return nodes[i].EntityID < nodes[j].EntityID })
+	return nodes, nil
+}
+
+func (s *WorkbenchStore) fetchBoundedWorkbenchEdges(ctx context.Context, tenantID string, frontier []string, sinceMS, untilMS int64, limit int) ([]*query.WorkbenchEdge, bool, error) {
+	literals := make([]string, 0, len(frontier))
+	for _, entityID := range frontier {
+		literals = append(literals, tenantVIDLiteral(tenantID, entityID))
+	}
+	predicate := ""
+	parameters := map[string]interface{}{"tenant_id": tenantID}
+	if sinceMS > 0 {
+		converted, err := nebulaParameterInt(sinceMS, "workbench since_ms")
+		if err != nil {
+			return nil, false, err
+		}
+		parameters["since_ms"] = converted
+		predicate = " AND relation.observed_at >= $since_ms"
+	}
+	if untilMS > 0 {
+		converted, err := nebulaParameterInt(untilMS, "workbench until_ms")
+		if err != nil {
+			return nil, false, err
+		}
+		parameters["until_ms"] = converted
+		predicate += " AND relation.observed_at <= $until_ms"
+	}
+	statement := fmt.Sprintf(boundedWorkbenchEdgeQuery, strings.Join(literals, ","), predicate, limit+1)
+	result, err := s.execute(ctx, statement, parameters)
+	if err != nil {
+		return nil, false, fmt.Errorf("query bounded workbench relations: %w", err)
+	}
+	edges, err := decodeWorkbenchEdges(result)
+	if err != nil {
+		return nil, false, err
+	}
+	hasMore := len(edges) > limit
+	if hasMore {
+		edges = edges[:limit]
+	}
+	return edges, hasMore, nil
 }
 
 // LoadAssetProjection is intentionally separate from LoadWorkbenchGraph: the

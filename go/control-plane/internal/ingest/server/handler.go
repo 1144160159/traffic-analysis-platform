@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -30,6 +32,7 @@ const (
 	errMsgEmptyRequest        = "empty request"
 	errMsgBatchTooLarge       = "batch size exceeds maximum"
 	errMsgTenantIDRequired    = "tenant_id not found in context"
+	errMsgProbeIDRequired     = "probe_id not found in context"
 	errMsgFileKeyRequired     = "file_key is required"
 	errMsgEventNil            = "event is nil"
 	errMsgHeaderNil           = "event header is nil"
@@ -53,15 +56,19 @@ type probeStatusEntry struct {
 type IngestHandler struct {
 	pb.UnimplementedIngestServiceServer
 
-	producer      *queue.Producer
-	dlqProducer   *dlq.Producer
-	deduper       *dedup.Deduplicator
-	metrics       *metrics.Metrics
-	configManager *config.ProbeConfigManager
-	controlBridge ProbeControlBridge
-	probeRegistry ProbeRegistry
-	auditLogger   *audit.Logger
-	logger        *zap.Logger
+	producer           *queue.Producer
+	writeFlowEvents    func(context.Context, []*pb.FlowEvent) (queue.BatchWriteResult, error)
+	writePcapIndex     func(context.Context, *pb.PcapIndexMeta) error
+	writeAssetBindings func(context.Context, []*pb.MacIpBinding) (queue.AssetBindingWriteResult, error)
+	dlqProducer        *dlq.Producer
+	deduper            *dedup.Deduplicator
+	metrics            *metrics.Metrics
+	configManager      *config.ProbeConfigManager
+	controlBridge      ProbeControlBridge
+	controlBridgeMu    sync.RWMutex
+	probeRegistry      ProbeRegistry
+	auditLogger        *audit.Logger
+	logger             *zap.Logger
 
 	probeStatus sync.Map
 
@@ -88,14 +95,19 @@ type ProbeControlBridge interface {
 }
 
 type HandlerConfig struct {
-	MaxBatchSize       int           `env:"MAX_BATCH_SIZE" envDefault:"10000"`
-	MaxEventSize       int           `env:"MAX_EVENT_SIZE" envDefault:"65536"`
-	StreamBufferSize   int           `env:"STREAM_BUFFER_SIZE" envDefault:"1000"`
-	HeartbeatInterval  time.Duration `env:"HEARTBEAT_INTERVAL" envDefault:"30s"`
-	EnableDLQ          bool          `env:"ENABLE_DLQ" envDefault:"true"`
-	EnableDedup        bool          `env:"ENABLE_DEDUP" envDefault:"true"`
-	ProbeStatusTimeout time.Duration `env:"PROBE_STATUS_TIMEOUT" envDefault:"5m"`
-	EnableAudit        bool          `env:"ENABLE_AUDIT" envDefault:"true"`
+	MaxBatchSize         int           `env:"MAX_BATCH_SIZE" envDefault:"10000"`
+	MaxEventSize         int           `env:"MAX_EVENT_SIZE" envDefault:"65536"`
+	StreamBufferSize     int           `env:"STREAM_BUFFER_SIZE" envDefault:"1000"`
+	HeartbeatInterval    time.Duration `env:"HEARTBEAT_INTERVAL" envDefault:"30s"`
+	EnableDLQ            bool          `env:"ENABLE_DLQ" envDefault:"true"`
+	EnableDedup          bool          `env:"ENABLE_DEDUP" envDefault:"true"`
+	ProbeStatusTimeout   time.Duration `env:"PROBE_STATUS_TIMEOUT" envDefault:"5m"`
+	EnableAudit          bool          `env:"ENABLE_AUDIT" envDefault:"true"`
+	FlowWriterEnabled    bool
+	PcapWriterEnabled    bool
+	BindingWriterEnabled bool
+	CanaryTenantID       string
+	CanaryProbeIDs       []string
 }
 
 func NewIngestHandlerWithConfig(
@@ -130,6 +142,15 @@ func NewIngestHandlerWithConfig(
 		handlerConfig:       cfg,
 		defaultFeatureSetID: config.DefaultFeatureSetID,
 	}
+	if producer != nil && cfg.FlowWriterEnabled {
+		h.writeFlowEvents = producer.WriteFlowEvents
+	}
+	if producer != nil && cfg.PcapWriterEnabled {
+		h.writePcapIndex = producer.WritePcapIndex
+	}
+	if producer != nil && cfg.BindingWriterEnabled {
+		h.writeAssetBindings = producer.WriteAssetBindings
+	}
 
 	logger.Info("Handler initialized",
 		zap.Bool("enable_dedup", cfg.EnableDedup),
@@ -141,13 +162,34 @@ func NewIngestHandlerWithConfig(
 	return h
 }
 
+// writerScopeAllows is the final identity barrier before an M02 canary writer.
+// An empty scope is accepted only for package-local tests that inject a writer
+// directly; production configuration rejects enabled writers without an exact
+// tenant and explicit probe set.
+func (h *IngestHandler) writerScopeAllows(tenantID, probeID string) bool {
+	if h.handlerConfig.CanaryTenantID == "" && len(h.handlerConfig.CanaryProbeIDs) == 0 {
+		return true
+	}
+	if tenantID != h.handlerConfig.CanaryTenantID {
+		return false
+	}
+	for _, allowedProbeID := range h.handlerConfig.CanaryProbeIDs {
+		if probeID == allowedProbeID {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *IngestHandler) SetConfigManager(cm *config.ProbeConfigManager) {
 	h.configManager = cm
 	h.logger.Info("Config manager set")
 }
 
 func (h *IngestHandler) SetProbeControlBridge(bridge ProbeControlBridge) {
+	h.controlBridgeMu.Lock()
 	h.controlBridge = bridge
+	h.controlBridgeMu.Unlock()
 	h.logger.Info("Probe control bridge set", zap.Bool("enabled", bridge != nil))
 }
 
@@ -272,6 +314,10 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 		})
 		return nil, status.Error(codes.Unauthenticated, errMsgTenantIDRequired)
 	}
+	if probeID == "" {
+		h.metrics.RecordReject401()
+		return nil, status.Error(codes.Unauthenticated, errMsgProbeIDRequired)
+	}
 
 	if req == nil || len(req.Events) == 0 {
 		return &pb.UploadFlowsResponse{
@@ -301,107 +347,166 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 		zap.Int("count", len(req.Events)),
 		zap.String("compression", req.Compression))
 
-	validEvents := make([]*pb.FlowEvent, 0, len(req.Events))
-	rejectedIDs := make([]string, 0)
-	dedupedIDs := make([]string, 0)
-
-	now := time.Now()
-	nowMs := now.UnixMilli()
-
-	for _, event := range req.Events {
+	itemResults := make([]*pb.FlowItemResult, len(req.Events))
+	for inputIndex, event := range req.Events {
 		if event == nil {
+			itemResults[inputIndex] = rejectedFlowItem(inputIndex, "", "EVENT_NIL")
 			continue
 		}
+		if err := bindFlowEventIdentity(event, tenantID, probeID); err != nil {
+			h.metrics.RecordReject403()
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+	}
 
-		if event.Header == nil {
-			event.Header = &pb.EventHeader{}
-		}
-
-		if event.Header.EventId == "" {
-			event.Header.EventId = uuid.New().String()
-		}
-		if event.Header.TenantId == "" {
-			event.Header.TenantId = tenantID
-		}
-		if event.Header.ProbeId == "" {
-			event.Header.ProbeId = probeID
-		}
-		if event.Header.EventTs == 0 {
-			event.Header.EventTs = nowMs
+	validEvents := make([]*pb.FlowEvent, 0, len(req.Events))
+	validInputIndexes := make([]int, 0, len(req.Events))
+	validEventIDs := make([]string, 0, len(req.Events))
+	nowMs := time.Now().UnixMilli()
+	for inputIndex, event := range req.Events {
+		if event == nil {
+			continue
 		}
 		if event.Header.IngestTs == 0 {
 			event.Header.IngestTs = nowMs
 		}
-
 		if event.Header.FeatureSetId == "" {
 			event.Header.FeatureSetId = h.getFeatureSetID(ctx, tenantID, probeID)
 		}
-
-		if h.isDedupEnabled() {
-			if h.deduper.IsDuplicate(ctx, event.Header.EventId) {
-				dedupedIDs = append(dedupedIDs, event.Header.EventId)
-				h.metrics.RecordDedupHit()
-				atomic.AddInt64(&h.totalEventsDedupe, 1)
-				continue
-			}
-			h.metrics.RecordDedupMiss()
-		}
-
 		if err := h.validateFlowEvent(event); err != nil {
 			logger.Debug("Event validation failed",
 				zap.String("event_id", event.Header.EventId),
 				zap.Error(err))
-			rejectedIDs = append(rejectedIDs, event.Header.EventId)
+			itemResults[inputIndex] = rejectedFlowItem(inputIndex, event.Header.EventId, "FLOW_VALIDATION_FAILED")
 			continue
 		}
-
 		validEvents = append(validEvents, event)
+		validInputIndexes = append(validInputIndexes, inputIndex)
+		validEventIDs = append(validEventIDs, event.Header.EventId)
+	}
+
+	claims := make([]dedup.Claim, len(validEvents))
+	if h.isDedupEnabled() && len(validEvents) > 0 {
+		var claimErr error
+		claims, claimErr = h.deduper.ClaimBatch(ctx, tenantID, probeID, validEventIDs)
+		if claimErr != nil {
+			h.metrics.RecordReject503()
+			return nil, status.Errorf(codes.Unavailable, "dedup claim failed: %v", claimErr)
+		}
+	}
+
+	sendEvents := make([]*pb.FlowEvent, 0, len(validEvents))
+	sendInputIndexes := make([]int, 0, len(validEvents))
+	sendClaims := make([]dedup.Claim, 0, len(validEvents))
+	for validIndex, event := range validEvents {
+		claim := claims[validIndex]
+		if h.isDedupEnabled() {
+			switch claim.Status {
+			case dedup.ClaimDuplicateCommitted:
+				itemResults[validInputIndexes[validIndex]] = &pb.FlowItemResult{
+					InputIndex:  uint32(validInputIndexes[validIndex]),
+					EventId:     event.Header.EventId,
+					Disposition: pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_DUPLICATE_COMMITTED,
+					ReasonCode:  "DEDUP_COMMITTED",
+					AckScope:    "TENANT_PROBE_EVENT",
+				}
+				h.metrics.RecordDedupHit()
+				atomic.AddInt64(&h.totalEventsDedupe, 1)
+				continue
+			case dedup.ClaimInFlight:
+				itemResults[validInputIndexes[validIndex]] = &pb.FlowItemResult{
+					InputIndex:  uint32(validInputIndexes[validIndex]),
+					EventId:     event.Header.EventId,
+					Disposition: pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_RETRYABLE,
+					ReasonCode:  "DEDUP_CLAIM_IN_FLIGHT",
+					AckScope:    "TENANT_PROBE_EVENT",
+				}
+				continue
+			default:
+				h.metrics.RecordDedupMiss()
+			}
+		}
+		sendEvents = append(sendEvents, event)
+		sendInputIndexes = append(sendInputIndexes, validInputIndexes[validIndex])
+		sendClaims = append(sendClaims, claim)
 	}
 
 	var writeErr error
-	if len(validEvents) > 0 {
+	if len(sendEvents) > 0 {
+		var writeResult queue.BatchWriteResult
 		kafkaStart := time.Now()
-		writeErr = h.producer.WriteFlowEvents(ctx, validEvents)
-		h.metrics.RecordKafkaLatency(config.TopicFlowEvents, time.Since(kafkaStart))
-
-		if writeErr != nil {
-			logger.Error("Failed to write events to Kafka",
-				zap.Int("count", len(validEvents)),
-				zap.Error(writeErr))
-
-			if h.handlerConfig.EnableDLQ && h.dlqProducer != nil {
-				h.dlqProducer.SendFlowEvents(ctx, validEvents, writeErr)
+		if !h.writerScopeAllows(tenantID, probeID) {
+			writeErr = fmt.Errorf("flow writer is not enabled for authenticated canary scope")
+			writeResult.Items = make([]queue.FlowWriteItemResult, len(sendEvents))
+			for i, event := range sendEvents {
+				writeResult.Items[i] = queue.FlowWriteItemResult{InputIndex: i, EventID: event.Header.EventId, Disposition: pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_RETRYABLE, ReasonCode: "CANARY_SCOPE_NOT_ACTIVE", AckScope: "TENANT_PROBE_EVENT"}
 			}
-
-			h.metrics.RecordKafkaError()
-			h.metrics.RecordReject503()
-			atomic.AddInt64(&h.totalEventsRejected, int64(len(validEvents)))
-
-			h.recordAudit(ctx, audit.EventTypeSystemError, tenantID, probeID, "upload_flows", map[string]interface{}{
-				"error": writeErr.Error(),
-				"count": len(validEvents),
-			})
+		} else if h.writeFlowEvents == nil {
+			writeErr = fmt.Errorf("flow producer is not configured")
+			writeResult.Items = make([]queue.FlowWriteItemResult, len(sendEvents))
+			for i, event := range sendEvents {
+				writeResult.Items[i] = queue.FlowWriteItemResult{InputIndex: i, EventID: event.Header.EventId, Disposition: pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_RETRYABLE, ReasonCode: "KAFKA_NOT_CONFIGURED", AckScope: "KAFKA_RECORD"}
+			}
 		} else {
-
+			writeResult, writeErr = h.writeFlowEvents(ctx, sendEvents)
+		}
+		h.metrics.RecordKafkaLatency(config.TopicFlowEvents, time.Since(kafkaStart))
+		if exactErr := writeResult.ValidateExactSet(len(sendEvents)); exactErr != nil {
 			if h.isDedupEnabled() {
-				eventIDs := make([]string, len(validEvents))
-				for i, e := range validEvents {
-					eventIDs[i] = e.Header.EventId
-				}
-				h.deduper.MarkSeenBatch(ctx, eventIDs)
+				h.deduper.ReleaseBatch(ctx, sendClaims)
 			}
-			atomic.AddInt64(&h.totalEventsAccepted, int64(len(validEvents)))
+			return nil, status.Errorf(codes.Internal, "producer result contract violated: %v", exactErr)
+		}
+
+		committedClaims := make([]dedup.Claim, 0, len(sendClaims))
+		releasedClaims := make([]dedup.Claim, 0, len(sendClaims))
+		for _, writeItem := range writeResult.Items {
+			requestIndex := sendInputIndexes[writeItem.InputIndex]
+			itemResults[requestIndex] = &pb.FlowItemResult{
+				InputIndex:  uint32(requestIndex),
+				EventId:     writeItem.EventID,
+				Disposition: writeItem.Disposition,
+				ReasonCode:  writeItem.ReasonCode,
+				AckScope:    writeItem.AckScope,
+			}
+			if h.isDedupEnabled() {
+				if writeItem.Disposition == pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_KAFKA_ACKED {
+					committedClaims = append(committedClaims, sendClaims[writeItem.InputIndex])
+				} else {
+					releasedClaims = append(releasedClaims, sendClaims[writeItem.InputIndex])
+				}
+			}
+		}
+		if h.isDedupEnabled() {
+			if commitErr := h.deduper.CommitBatch(ctx, committedClaims); commitErr != nil {
+				logger.Error("Kafka ACK committed but dedup projection failed", zap.Error(commitErr))
+			}
+			h.deduper.ReleaseBatch(ctx, releasedClaims)
 		}
 	}
 
-	accepted := int32(len(validEvents))
-	rejected := int32(len(rejectedIDs))
-	deduped := int32(len(dedupedIDs))
-
-	if writeErr != nil {
-		rejected += accepted
-		accepted = 0
+	var accepted, rejected, deduped, retryable int32
+	rejectedIDs := make([]string, 0)
+	for inputIndex, item := range itemResults {
+		if item == nil {
+			item = &pb.FlowItemResult{InputIndex: uint32(inputIndex), Disposition: pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_OUTCOME_UNKNOWN, ReasonCode: "INTERNAL_RESULT_MISSING", AckScope: "INPUT_ITEM"}
+			itemResults[inputIndex] = item
+		}
+		switch item.Disposition {
+		case pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_KAFKA_ACKED:
+			accepted++
+		case pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_DUPLICATE_COMMITTED:
+			accepted++
+			deduped++
+		case pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_REJECTED_INVALID:
+			rejected++
+			rejectedIDs = append(rejectedIDs, item.EventId)
+		default:
+			retryable++
+		}
 	}
+	atomic.AddInt64(&h.totalEventsAccepted, int64(accepted))
+	atomic.AddInt64(&h.totalEventsRejected, int64(rejected))
 
 	h.metrics.RecordFlowEvents(tenantID, int64(accepted))
 	if rejected > 0 {
@@ -411,13 +516,17 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 	h.metrics.RecordLatency("upload_flows", time.Since(start))
 
 	response := &pb.UploadFlowsResponse{
-		Accepted:    accepted,
-		Rejected:    rejected + deduped,
-		RejectedIds: append(rejectedIDs, dedupedIDs...),
+		Accepted:         accepted,
+		Rejected:         rejected,
+		RejectedIds:      rejectedIDs,
+		ItemResults:      itemResults,
+		ResponseRevision: 1,
 	}
 
 	if writeErr != nil {
 		response.Message = fmt.Sprintf(msgPartialFailure, writeErr.Error())
+	} else if retryable > 0 {
+		response.Message = fmt.Sprintf(msgPartialFailure, "one or more events are not terminal")
 	} else if rejected > 0 || deduped > 0 {
 		response.Message = fmt.Sprintf(msgRejectedDeduplicated, rejected, deduped)
 	} else {
@@ -430,15 +539,53 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 		zap.Int32("accepted", accepted),
 		zap.Int32("rejected", rejected),
 		zap.Int32("deduped", deduped),
+		zap.Int32("retryable", retryable),
 		zap.Duration("duration", time.Since(start)))
 
 	h.recordAudit(ctx, audit.EventTypeDataIngested, tenantID, probeID, "upload_flows", map[string]interface{}{
-		"accepted": accepted,
-		"rejected": rejected,
-		"deduped":  deduped,
+		"accepted":  accepted,
+		"rejected":  rejected,
+		"deduped":   deduped,
+		"retryable": retryable,
 	})
 
+	// gRPC cannot deliver a response body together with a non-OK status. Until
+	// every deployed Agent advertises exact-set ACK support, any nonterminal
+	// outcome must fail the RPC so a legacy client cannot delete a whole batch.
+	if retryable > 0 && req.AcceptedResponseRevision < 1 {
+		h.metrics.RecordKafkaError()
+		h.metrics.RecordReject503()
+		return nil, status.Error(codes.Unavailable, response.Message)
+	}
 	return response, nil
+}
+
+func rejectedFlowItem(inputIndex int, eventID, reasonCode string) *pb.FlowItemResult {
+	return &pb.FlowItemResult{
+		InputIndex:  uint32(inputIndex),
+		EventId:     eventID,
+		Disposition: pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_REJECTED_INVALID,
+		ReasonCode:  reasonCode,
+		AckScope:    "INPUT_ITEM",
+	}
+}
+
+func bindFlowEventIdentity(event *pb.FlowEvent, tenantID, probeID string) error {
+	if event == nil {
+		return fmt.Errorf("%s", errMsgEventNil)
+	}
+	if event.Header == nil {
+		event.Header = &pb.EventHeader{}
+	}
+	if event.Header.TenantId != "" && event.Header.TenantId != tenantID {
+		return fmt.Errorf("flow event tenant_id does not match authenticated tenant")
+	}
+	if event.Header.ProbeId != "" && event.Header.ProbeId != probeID {
+		return fmt.Errorf("flow event probe_id does not match authenticated probe")
+	}
+	event.Header.TenantId = tenantID
+	event.Header.ProbeId = probeID
+	return nil
 }
 
 func (h *IngestHandler) validateFlowEvent(event *pb.FlowEvent) *errors.AppError {
@@ -450,6 +597,15 @@ func (h *IngestHandler) validateFlowEvent(event *pb.FlowEvent) *errors.AppError 
 	}
 	if event.Header.TenantId == "" {
 		return errors.New(errors.ErrCodeMissingParameter, "tenant_id is required")
+	}
+	if event.Header.ProbeId == "" {
+		return errors.New(errors.ErrCodeMissingParameter, "probe_id is required")
+	}
+	if event.Header.EventId == "" {
+		return errors.New(errors.ErrCodeMissingParameter, "event_id is required")
+	}
+	if event.Header.EventTs <= 0 {
+		return errors.New(errors.ErrCodeMissingParameter, "event_ts is required")
 	}
 	if event.Tuple == nil {
 		return errors.New(errors.ErrCodeInvalidRequest, errMsgTupleNil)
@@ -585,6 +741,7 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 	validSessions := make([]*pb.SessionEvent, 0, len(req.Sessions))
 	rejectedIDs := make([]string, 0)
 	dedupedIDs := make([]string, 0)
+	retryableIDs := make([]string, 0)
 
 	now := time.Now()
 	nowMs := now.UnixMilli()
@@ -618,16 +775,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 			session.Header.FeatureSetId = h.getFeatureSetID(ctx, tenantID, probeID)
 		}
 
-		if h.isDedupEnabled() {
-			if h.deduper.IsDuplicate(ctx, session.Header.EventId) {
-				dedupedIDs = append(dedupedIDs, session.Header.EventId)
-				h.metrics.RecordDedupHit()
-				atomic.AddInt64(&h.totalEventsDedupe, 1)
-				continue
-			}
-			h.metrics.RecordDedupMiss()
-		}
-
 		if err := h.validateSessionEvent(session); err != nil {
 			logger.Debug("Session validation failed",
 				zap.String("session_id", session.SessionId),
@@ -639,45 +786,88 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 		validSessions = append(validSessions, session)
 	}
 
+	// 原子去重:与 flows 路径一致,使用 ClaimBatch 以 tenant:probe:event 复合键
+	// 在 Redis SetNX 上原子领取,消除 check-then-set 竞态导致的并发重复入 Kafka,
+	// 并在 Kafka acks=all 屏障后 CommitBatch / ReleaseBatch。
+	claims := make([]dedup.Claim, len(validSessions))
+	if h.isDedupEnabled() && len(validSessions) > 0 {
+		eventIDs := make([]string, len(validSessions))
+		for i, s := range validSessions {
+			eventIDs[i] = s.Header.EventId
+		}
+		var claimErr error
+		claims, claimErr = h.deduper.ClaimBatch(ctx, tenantID, probeID, eventIDs)
+		if claimErr != nil {
+			h.metrics.RecordReject503()
+			return nil, status.Errorf(codes.Unavailable, "session dedup claim failed: %v", claimErr)
+		}
+	}
+
+	sendSessions := make([]*pb.SessionEvent, 0, len(validSessions))
+	sendClaims := make([]dedup.Claim, 0, len(validSessions))
+	for validIndex, session := range validSessions {
+		claim := claims[validIndex]
+		if h.isDedupEnabled() {
+			switch claim.Status {
+			case dedup.ClaimDuplicateCommitted:
+				dedupedIDs = append(dedupedIDs, session.Header.EventId)
+				h.metrics.RecordDedupHit()
+				atomic.AddInt64(&h.totalEventsDedupe, 1)
+				continue
+			case dedup.ClaimInFlight:
+				retryableIDs = append(retryableIDs, session.Header.EventId)
+				continue
+			default:
+				h.metrics.RecordDedupMiss()
+			}
+		}
+		sendSessions = append(sendSessions, session)
+		sendClaims = append(sendClaims, claim)
+	}
+
 	var writeErr error
-	if len(validSessions) > 0 {
+	if len(sendSessions) > 0 {
 		kafkaStart := time.Now()
-		writeErr = h.producer.WriteSessionEvents(ctx, validSessions)
+		writeErr = h.producer.WriteSessionEvents(ctx, sendSessions)
 		h.metrics.RecordKafkaLatency(config.TopicSessionEvents, time.Since(kafkaStart))
 
 		if writeErr != nil {
 			logger.Error("Failed to write session events to Kafka",
-				zap.Int("count", len(validSessions)),
+				zap.Int("count", len(sendSessions)),
 				zap.Error(writeErr))
 
 			if h.handlerConfig.EnableDLQ && h.dlqProducer != nil {
-				h.dlqProducer.SendSessionEvents(ctx, validSessions, writeErr)
+				if dlqErr := h.dlqProducer.SendSessionEvents(ctx, sendSessions, writeErr); dlqErr != nil {
+					logger.Error("Failed to persist rejected session events to DLQ",
+						zap.Int("count", len(sendSessions)),
+						zap.Error(dlqErr))
+					h.metrics.RecordError("session_dlq_write_failed")
+				}
+			}
+
+			if h.isDedupEnabled() {
+				h.deduper.ReleaseBatch(ctx, sendClaims)
 			}
 
 			h.metrics.RecordKafkaError()
 			h.metrics.RecordReject503()
-			atomic.AddInt64(&h.totalEventsRejected, int64(len(validSessions)))
+			atomic.AddInt64(&h.totalEventsRejected, int64(len(sendSessions)))
 		} else {
-
 			if h.isDedupEnabled() {
-				eventIDs := make([]string, len(validSessions))
-				for i, s := range validSessions {
-					eventIDs[i] = s.Header.EventId
+				if commitErr := h.deduper.CommitBatch(ctx, sendClaims); commitErr != nil {
+					logger.Error("Kafka ACK committed but session dedup projection failed", zap.Error(commitErr))
 				}
-				h.deduper.MarkSeenBatch(ctx, eventIDs)
 			}
-			atomic.AddInt64(&h.totalEventsAccepted, int64(len(validSessions)))
+			atomic.AddInt64(&h.totalEventsAccepted, int64(len(sendSessions)))
 		}
 	}
 
-	accepted := int32(len(validSessions))
-	rejected := int32(len(rejectedIDs))
-	deduped := int32(len(dedupedIDs))
-
-	if writeErr != nil {
-		rejected += accepted
-		accepted = 0
+	accepted := int32(0)
+	if writeErr == nil {
+		accepted = int32(len(sendSessions))
 	}
+	rejected := int32(len(rejectedIDs) + len(retryableIDs))
+	deduped := int32(len(dedupedIDs))
 
 	if accepted > 0 {
 		h.metrics.RecordSessionEvents(tenantID, int64(accepted))
@@ -724,6 +914,181 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 	})
 
 	return response, nil
+}
+
+func (h *IngestHandler) UploadAssetBindings(
+	ctx context.Context,
+	req *pb.UploadAssetBindingsRequest,
+) (*pb.UploadAssetBindingsResponse, error) {
+	ctx, span := otel.StartSpan(ctx, "ingest.upload_asset_bindings")
+	defer span.End()
+	start := time.Now()
+
+	tenantID := auth.GetTenantID(ctx)
+	probeID := auth.GetProbeID(ctx)
+	ctx = logging.WithTenantID(ctx, tenantID)
+	ctx = logging.WithProbeID(ctx, probeID)
+	if tenantID == "" {
+		h.metrics.RecordReject401()
+		return nil, status.Error(codes.Unauthenticated, errMsgTenantIDRequired)
+	}
+	if probeID == "" {
+		h.metrics.RecordReject401()
+		return nil, status.Error(codes.Unauthenticated, errMsgProbeIDRequired)
+	}
+	if req == nil || len(req.Bindings) == 0 {
+		h.metrics.RecordReject400()
+		return nil, status.Error(codes.InvalidArgument, "at least one asset binding is required")
+	}
+	if len(req.Bindings) > h.handlerConfig.MaxBatchSize {
+		h.metrics.RecordReject400()
+		return nil, status.Error(codes.InvalidArgument, errMsgBatchTooLarge)
+	}
+	if (req.TenantId != "" && req.TenantId != tenantID) || (req.ProbeId != "" && req.ProbeId != probeID) {
+		h.metrics.RecordReject403()
+		return nil, status.Error(codes.PermissionDenied, "asset binding request identity does not match authenticated probe")
+	}
+
+	itemResults := make([]*pb.AssetBindingItemResult, len(req.Bindings))
+	validBindings := make([]*pb.MacIpBinding, 0, len(req.Bindings))
+	validInputIndexes := make([]int, 0, len(req.Bindings))
+	for inputIndex, binding := range req.Bindings {
+		if binding != nil && ((binding.TenantId != "" && binding.TenantId != tenantID) ||
+			(binding.ProbeId != "" && binding.ProbeId != probeID)) {
+			h.metrics.RecordReject403()
+			return nil, status.Error(codes.PermissionDenied, "asset binding item identity does not match authenticated probe")
+		}
+		if binding != nil {
+			binding.TenantId = tenantID
+			binding.ProbeId = probeID
+		}
+		if reasonCode := validateAssetBinding(binding, h.handlerConfig.MaxEventSize, time.Now().UTC()); reasonCode != "" {
+			observationID := ""
+			if binding != nil {
+				observationID = binding.ObservationId
+			}
+			itemResults[inputIndex] = &pb.AssetBindingItemResult{
+				InputIndex: uint32(inputIndex), ObservationId: observationID,
+				Disposition: pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_REJECTED_INVALID,
+				ReasonCode:  reasonCode, AckScope: "INPUT_ITEM",
+			}
+			continue
+		}
+		validBindings = append(validBindings, binding)
+		validInputIndexes = append(validInputIndexes, inputIndex)
+	}
+
+	var writeErr error
+	if len(validBindings) > 0 {
+		var writeResult queue.AssetBindingWriteResult
+		kafkaStart := time.Now()
+		switch {
+		case !h.writerScopeAllows(tenantID, probeID):
+			writeErr = fmt.Errorf("asset binding writer is not enabled for authenticated canary scope")
+			writeResult.Items = retryableAssetBindingWriteItems(validBindings, "CANARY_SCOPE_NOT_ACTIVE")
+		case h.writeAssetBindings == nil:
+			writeErr = fmt.Errorf("asset binding Kafka producer is not configured")
+			writeResult.Items = retryableAssetBindingWriteItems(validBindings, "KAFKA_NOT_CONFIGURED")
+		default:
+			writeResult, writeErr = h.writeAssetBindings(ctx, validBindings)
+		}
+		h.metrics.RecordKafkaLatency(config.TopicAssetBindings, time.Since(kafkaStart))
+		if err := writeResult.ValidateExactSet(len(validBindings)); err != nil {
+			return nil, status.Errorf(codes.Internal, "asset binding producer result contract violated: %v", err)
+		}
+		for _, writeItem := range writeResult.Items {
+			requestIndex := validInputIndexes[writeItem.InputIndex]
+			itemResults[requestIndex] = &pb.AssetBindingItemResult{
+				InputIndex: uint32(requestIndex), ObservationId: writeItem.ObservationID,
+				Disposition: writeItem.Disposition, ReasonCode: writeItem.ReasonCode, AckScope: writeItem.AckScope,
+			}
+		}
+	}
+
+	var accepted, rejected, retryable int32
+	for inputIndex, item := range itemResults {
+		if item == nil {
+			item = &pb.AssetBindingItemResult{
+				InputIndex:  uint32(inputIndex),
+				Disposition: pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_OUTCOME_UNKNOWN,
+				ReasonCode:  "INTERNAL_RESULT_MISSING", AckScope: "INPUT_ITEM",
+			}
+			itemResults[inputIndex] = item
+		}
+		switch item.Disposition {
+		case pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_KAFKA_ACKED,
+			pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_DUPLICATE_COMMITTED:
+			accepted++
+		case pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_REJECTED_INVALID:
+			rejected++
+		default:
+			retryable++
+		}
+	}
+	response := &pb.UploadAssetBindingsResponse{
+		Accepted: accepted, Rejected: rejected, ItemResults: itemResults, ResponseRevision: 1,
+	}
+	if writeErr != nil {
+		response.Message = fmt.Sprintf(msgPartialFailure, writeErr.Error())
+	} else if retryable > 0 {
+		response.Message = fmt.Sprintf(msgPartialFailure, "one or more asset bindings are not terminal")
+	} else if rejected > 0 {
+		response.Message = fmt.Sprintf("%d asset bindings rejected", rejected)
+	} else {
+		response.Message = msgSuccess
+	}
+	h.metrics.RecordLatency("upload_asset_bindings", time.Since(start))
+	h.recordAudit(ctx, audit.EventTypeDataIngested, tenantID, probeID, "upload_asset_bindings", map[string]interface{}{
+		"accepted": accepted, "rejected": rejected, "retryable": retryable,
+	})
+	if retryable > 0 && req.AcceptedResponseRevision < 1 {
+		h.metrics.RecordKafkaError()
+		h.metrics.RecordReject503()
+		return nil, status.Error(codes.Unavailable, response.Message)
+	}
+	return response, nil
+}
+
+func retryableAssetBindingWriteItems(bindings []*pb.MacIpBinding, reasonCode string) []queue.AssetBindingWriteItemResult {
+	items := make([]queue.AssetBindingWriteItemResult, len(bindings))
+	for inputIndex, binding := range bindings {
+		items[inputIndex] = queue.AssetBindingWriteItemResult{
+			InputIndex: inputIndex, ObservationID: binding.ObservationId,
+			Disposition: pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_RETRYABLE,
+			ReasonCode:  reasonCode, AckScope: "KAFKA_RECORD",
+		}
+	}
+	return items
+}
+
+func validateAssetBinding(binding *pb.MacIpBinding, maxEventSize int, now time.Time) string {
+	if binding == nil {
+		return "BINDING_REQUIRED"
+	}
+	if proto.Size(binding) > maxEventSize {
+		return "BINDING_TOO_LARGE"
+	}
+	if strings.TrimSpace(binding.ObservationId) == "" || binding.ObservationId != strings.TrimSpace(binding.ObservationId) {
+		return "OBSERVATION_ID_REQUIRED"
+	}
+	parsedMAC, err := net.ParseMAC(binding.MacAddress)
+	if err != nil || len(parsedMAC) != 6 || strings.ToLower(parsedMAC.String()) != binding.MacAddress {
+		return "MAC_NOT_CANONICAL"
+	}
+	parsedIP := net.ParseIP(binding.IpAddress)
+	if parsedIP == nil || parsedIP.String() != binding.IpAddress {
+		return "IP_NOT_CANONICAL"
+	}
+	if binding.Source != "arp" && binding.Source != "dhcp" {
+		return "SOURCE_INVALID"
+	}
+	if binding.ObservedAt <= 0 || binding.ObservedAt > now.Add(5*time.Minute).UnixMilli() {
+		return "OBSERVED_AT_INVALID"
+	}
+	if binding.SchemaVersion != 1 {
+		return "SCHEMA_VERSION_UNSUPPORTED"
+	}
+	return ""
 }
 
 func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapIndexRequest) (*pb.UploadPcapIndexResponse, error) {
@@ -788,7 +1153,16 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 		zap.Uint64("byte_size", meta.ByteSize))
 
 	kafkaStart := time.Now()
-	err := h.producer.WritePcapIndex(ctx, meta)
+	if !h.writerScopeAllows(tenantID, probeID) {
+		h.metrics.RecordReject503()
+		return nil, status.Error(codes.Unavailable, "pcap metadata writer is not enabled for authenticated canary scope")
+	}
+	if h.writePcapIndex == nil {
+		h.metrics.RecordKafkaError()
+		h.metrics.RecordReject503()
+		return nil, status.Error(codes.Unavailable, "pcap metadata Kafka producer is not configured")
+	}
+	err := h.writePcapIndex(ctx, meta)
 	h.metrics.RecordKafkaLatency(config.TopicPcapIndex, time.Since(kafkaStart))
 
 	if err != nil {
@@ -872,6 +1246,10 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 		h.metrics.RecordReject401()
 		return status.Error(codes.Unauthenticated, errMsgTenantIDRequired)
 	}
+	if probeID == "" {
+		h.metrics.RecordReject401()
+		return status.Error(codes.Unauthenticated, errMsgProbeIDRequired)
+	}
 
 	h.metrics.IncrActiveConnections()
 	defer h.metrics.DecrActiveConnections()
@@ -913,54 +1291,111 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 			return nil
 		}
 
-		kafkaStart := time.Now()
-		err := h.producer.WriteFlowEvents(ctx, buffer)
-		h.metrics.RecordKafkaLatency(config.TopicFlowEvents, time.Since(kafkaStart))
+		claims := make([]dedup.Claim, len(buffer))
+		if h.isDedupEnabled() {
+			eventIDs := make([]string, len(buffer))
+			for i, event := range buffer {
+				eventIDs[i] = event.Header.EventId
+			}
+			var claimErr error
+			claims, claimErr = h.deduper.ClaimBatch(ctx, tenantID, probeID, eventIDs)
+			if claimErr != nil {
+				return status.Errorf(codes.Unavailable, "dedup claim failed: %v", claimErr)
+			}
+		}
 
-		if err != nil {
-			logger.Error("Failed to flush stream buffer",
-				zap.Int("count", len(buffer)),
-				zap.Error(err))
-			h.metrics.RecordKafkaError()
-
-			for _, event := range buffer {
-				if sendErr := stream.Send(&pb.StreamFlowsResponse{
-					EventId:  event.Header.EventId,
-					Accepted: false,
-					Error:    err.Error(),
-				}); sendErr != nil {
-					logger.Error("Failed to send NACK", zap.Error(sendErr))
-					return sendErr
+		sendEvents := make([]*pb.FlowEvent, 0, len(buffer))
+		sendBufferIndexes := make([]int, 0, len(buffer))
+		sendClaims := make([]dedup.Claim, 0, len(buffer))
+		for bufferIndex, event := range buffer {
+			if h.isDedupEnabled() {
+				switch claims[bufferIndex].Status {
+				case dedup.ClaimDuplicateCommitted:
+					if err := stream.Send(streamFlowResponse(event.Header.EventId, pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_DUPLICATE_COMMITTED, "DEDUP_COMMITTED", "TENANT_PROBE_EVENT")); err != nil {
+						return err
+					}
+					totalAccepted++
+					totalDeduped++
+					continue
+				case dedup.ClaimInFlight:
+					if err := stream.Send(streamFlowResponse(event.Header.EventId, pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_RETRYABLE, "DEDUP_CLAIM_IN_FLIGHT", "TENANT_PROBE_EVENT")); err != nil {
+						return err
+					}
+					continue
 				}
 			}
+			sendEvents = append(sendEvents, event)
+			sendBufferIndexes = append(sendBufferIndexes, bufferIndex)
+			sendClaims = append(sendClaims, claims[bufferIndex])
+		}
 
-			if h.handlerConfig.EnableDLQ && h.dlqProducer != nil {
-				h.dlqProducer.SendFlowEvents(ctx, buffer, err)
-			}
-
+		if len(sendEvents) == 0 {
 			buffer = buffer[:0]
 			return nil
 		}
 
-		if h.isDedupEnabled() {
-			eventIDs := make([]string, len(buffer))
-			for i, e := range buffer {
-				eventIDs[i] = e.Header.EventId
+		kafkaStart := time.Now()
+		var writeResult queue.BatchWriteResult
+		var err error
+		if !h.writerScopeAllows(tenantID, probeID) {
+			err = fmt.Errorf("flow writer is not enabled for authenticated canary scope")
+			writeResult.Items = make([]queue.FlowWriteItemResult, len(sendEvents))
+			for i, event := range sendEvents {
+				writeResult.Items[i] = queue.FlowWriteItemResult{InputIndex: i, EventID: event.Header.EventId, Disposition: pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_RETRYABLE, ReasonCode: "CANARY_SCOPE_NOT_ACTIVE", AckScope: "TENANT_PROBE_EVENT"}
 			}
-			h.deduper.MarkSeenBatch(ctx, eventIDs)
+		} else if h.writeFlowEvents == nil {
+			err = fmt.Errorf("flow producer is not configured")
+			writeResult.Items = make([]queue.FlowWriteItemResult, len(sendEvents))
+			for i, event := range sendEvents {
+				writeResult.Items[i] = queue.FlowWriteItemResult{InputIndex: i, EventID: event.Header.EventId, Disposition: pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_RETRYABLE, ReasonCode: "KAFKA_NOT_CONFIGURED", AckScope: "KAFKA_RECORD"}
+			}
+		} else {
+			writeResult, err = h.writeFlowEvents(ctx, sendEvents)
+		}
+		h.metrics.RecordKafkaLatency(config.TopicFlowEvents, time.Since(kafkaStart))
+		if exactErr := writeResult.ValidateExactSet(len(sendEvents)); exactErr != nil {
+			if h.isDedupEnabled() {
+				h.deduper.ReleaseBatch(ctx, sendClaims)
+			}
+			return status.Errorf(codes.Internal, "producer result contract violated: %v", exactErr)
 		}
 
-		for _, event := range buffer {
-			if sendErr := stream.Send(&pb.StreamFlowsResponse{
-				EventId:  event.Header.EventId,
-				Accepted: true,
-			}); sendErr != nil {
+		if err != nil {
+			logger.Error("Failed to flush stream buffer",
+				zap.Int("count", len(sendEvents)),
+				zap.Error(err))
+			h.metrics.RecordKafkaError()
+
+			if h.handlerConfig.EnableDLQ && h.dlqProducer != nil {
+				h.dlqProducer.SendFlowEvents(ctx, sendEvents, err)
+			}
+		}
+
+		committedClaims := make([]dedup.Claim, 0, len(sendClaims))
+		releasedClaims := make([]dedup.Claim, 0, len(sendClaims))
+		for _, item := range writeResult.Items {
+			event := buffer[sendBufferIndexes[item.InputIndex]]
+			if sendErr := stream.Send(streamFlowResponse(event.Header.EventId, item.Disposition, item.ReasonCode, item.AckScope)); sendErr != nil {
+				if h.isDedupEnabled() {
+					h.deduper.ReleaseBatch(ctx, sendClaims)
+				}
 				return sendErr
 			}
-			totalAccepted++
+			if item.Disposition == pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_KAFKA_ACKED {
+				totalAccepted++
+				committedClaims = append(committedClaims, sendClaims[item.InputIndex])
+			} else {
+				releasedClaims = append(releasedClaims, sendClaims[item.InputIndex])
+			}
+		}
+		if h.isDedupEnabled() {
+			if commitErr := h.deduper.CommitBatch(ctx, committedClaims); commitErr != nil {
+				logger.Error("Kafka ACK committed but stream dedup projection failed", zap.Error(commitErr))
+			}
+			h.deduper.ReleaseBatch(ctx, releasedClaims)
 		}
 
-		h.metrics.RecordFlowEvents(tenantID, int64(len(buffer)))
+		h.metrics.RecordFlowEvents(tenantID, int64(len(committedClaims)))
 		buffer = buffer[:0]
 		return nil
 	}
@@ -1007,53 +1442,18 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 			totalReceived++
 			atomic.AddInt64(&h.totalEventsReceived, 1)
 
-			now := time.Now()
-			nowMs := now.UnixMilli()
-
-			if event.Header == nil {
-				event.Header = &pb.EventHeader{}
-			}
-			if event.Header.EventId == "" {
-				event.Header.EventId = uuid.New().String()
-			}
-			if event.Header.TenantId == "" {
-				event.Header.TenantId = tenantID
-			}
-			if event.Header.ProbeId == "" {
-				event.Header.ProbeId = probeID
-			}
-			if event.Header.EventTs == 0 {
-				event.Header.EventTs = nowMs
+			if err := bindFlowEventIdentity(event, tenantID, probeID); err != nil {
+				return status.Error(codes.PermissionDenied, err.Error())
 			}
 			if event.Header.IngestTs == 0 {
-				event.Header.IngestTs = nowMs
+				event.Header.IngestTs = time.Now().UnixMilli()
 			}
 			if event.Header.FeatureSetId == "" {
 				event.Header.FeatureSetId = h.getFeatureSetID(ctx, tenantID, probeID)
 			}
 
-			if h.isDedupEnabled() {
-				if h.deduper.IsDuplicate(ctx, event.Header.EventId) {
-					totalDeduped++
-					h.metrics.RecordDedupHit()
-
-					if sendErr := stream.Send(&pb.StreamFlowsResponse{
-						EventId:  event.Header.EventId,
-						Accepted: true,
-					}); sendErr != nil {
-						return sendErr
-					}
-					continue
-				}
-				h.metrics.RecordDedupMiss()
-			}
-
 			if err := h.validateFlowEvent(event); err != nil {
-				if sendErr := stream.Send(&pb.StreamFlowsResponse{
-					EventId:  event.Header.EventId,
-					Accepted: false,
-					Error:    err.Error(),
-				}); sendErr != nil {
+				if sendErr := stream.Send(streamFlowResponse(event.Header.EventId, pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_REJECTED_INVALID, "FLOW_VALIDATION_FAILED", "INPUT_ITEM")); sendErr != nil {
 					return sendErr
 				}
 				continue
@@ -1068,6 +1468,23 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 			}
 		}
 	}
+}
+
+func streamFlowResponse(eventID string, disposition pb.FlowItemDisposition, reasonCode, ackScope string) *pb.StreamFlowsResponse {
+	accepted := disposition == pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_KAFKA_ACKED ||
+		disposition == pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_DUPLICATE_COMMITTED
+	response := &pb.StreamFlowsResponse{
+		EventId:          eventID,
+		Accepted:         accepted,
+		Disposition:      disposition,
+		ReasonCode:       reasonCode,
+		AckScope:         ackScope,
+		ResponseRevision: 1,
+	}
+	if !accepted {
+		response.Error = reasonCode
+	}
+	return response
 }
 
 func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest) (*pb.HeartbeatResponse, error) {
@@ -1120,12 +1537,15 @@ func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest)
 		Ok: true,
 	}
 
-	if h.controlBridge != nil && tenantID != "" && probeID != "" {
+	h.controlBridgeMu.RLock()
+	controlBridge := h.controlBridge
+	h.controlBridgeMu.RUnlock()
+	if controlBridge != nil && tenantID != "" && probeID != "" {
 		var acks []*pb.ProbeOperationAck
 		if req != nil {
 			acks = req.OperationAcks
 		}
-		commands, acceptedAckIDs, err := h.controlBridge.Exchange(
+		commands, acceptedAckIDs, err := controlBridge.Exchange(
 			ctx, tenantID, probeID, acks,
 		)
 		if err != nil {
@@ -1198,11 +1618,12 @@ func (h *IngestHandler) RegisterProbe(ctx context.Context, req *pb.RegisterProbe
 	tenantID := auth.GetTenantID(ctx)
 	probeID := auth.GetProbeID(ctx)
 
-	if tenantID == "" && req != nil {
-		tenantID = req.TenantId
-	}
-	if probeID == "" && req != nil {
-		probeID = req.ProbeId
+	// 身份只来自认证上下文(interceptor 从 mTLS 证书 CN / token claims 注入)。
+	// 禁止回退到请求体中的 tenant/probe:无认证上下文时直接拒绝注册,
+	// 防止 ALLOW_NO_TOKEN 等部署下任意客户端注册任意租户探针。
+	if tenantID == "" || probeID == "" {
+		h.metrics.RecordReject401()
+		return nil, status.Error(codes.Unauthenticated, "registration requires an authenticated probe identity")
 	}
 
 	ctx = logging.WithTenantID(ctx, tenantID)

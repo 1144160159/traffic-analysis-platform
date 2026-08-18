@@ -27,7 +27,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type encryptedTrafficStatsDTO struct {
+type EncryptedTrafficStats struct {
 	TotalSessions       int64   `json:"total_sessions"`
 	ObservedSessions    int64   `json:"observed_sessions"`
 	EncryptedRatio      float64 `json:"encrypted_ratio"`
@@ -36,6 +36,8 @@ type encryptedTrafficStatsDTO struct {
 	JA3Fingerprints     int64   `json:"ja3_fingerprints"`
 	MaliciousJA3Matches int64   `json:"malicious_ja3_matches"`
 }
+
+type encryptedTrafficStatsDTO = EncryptedTrafficStats
 
 type encryptedTrafficSessionDTO struct {
 	SessionID             string  `json:"session_id"`
@@ -290,20 +292,23 @@ type fusionConflictResolveRequest struct {
 }
 
 type fusionConflictResolutionDTO struct {
-	TenantID       string                 `json:"tenant_id"`
-	ConflictID     string                 `json:"conflict_id"`
-	ObjectID       string                 `json:"object_id"`
-	ObjectType     string                 `json:"object_type"`
-	FieldName      string                 `json:"field_name"`
-	SelectedSource string                 `json:"selected_source"`
-	SelectedValue  string                 `json:"selected_value"`
-	Strategy       string                 `json:"strategy"`
-	Note           string                 `json:"note"`
-	RuleID         string                 `json:"rule_id"`
-	StateVersion   int64                  `json:"state_version"`
-	ResolvedBy     string                 `json:"resolved_by"`
-	ResolvedAt     int64                  `json:"resolved_at"`
-	Detail         map[string]interface{} `json:"detail"`
+	ResolutionID      string                 `json:"resolution_id,omitempty"`
+	ResolutionVersion int64                  `json:"resolution_version,omitempty"`
+	OutboxEventID     string                 `json:"outbox_event_id,omitempty"`
+	TenantID          string                 `json:"tenant_id"`
+	ConflictID        string                 `json:"conflict_id"`
+	ObjectID          string                 `json:"object_id"`
+	ObjectType        string                 `json:"object_type"`
+	FieldName         string                 `json:"field_name"`
+	SelectedSource    string                 `json:"selected_source"`
+	SelectedValue     string                 `json:"selected_value"`
+	Strategy          string                 `json:"strategy"`
+	Note              string                 `json:"note"`
+	RuleID            string                 `json:"rule_id"`
+	StateVersion      int64                  `json:"state_version"`
+	ResolvedBy        string                 `json:"resolved_by"`
+	ResolvedAt        int64                  `json:"resolved_at"`
+	Detail            map[string]interface{} `json:"detail"`
 }
 
 type fusionRepairTaskDTO struct {
@@ -770,49 +775,18 @@ func (h *SystemHandler) GetEncryptedTrafficStats(w http.ResponseWriter, r *http.
 		return
 	}
 	start, end := queryTimeRange(r, 24*time.Hour)
-
-	var total, tls, quic, ssh uint64
-	row, err := h.chClient.QueryRow(ctx, `
-		SELECT count(),
-		       countIf(protocol != 17 AND dst_port IN (443, 8443, 853, 993, 995, 465)),
-		       countIf(protocol = 17 AND dst_port IN (443, 8443)),
-		       countIf(dst_port = 22)
-		FROM traffic.sessions
-		WHERE tenant_id=? AND ts_start>=? AND ts_start<=?`, tenantID, start, end)
+	service := h.encryptedTrafficStats
+	if service == nil {
+		service = newClickHouseEncryptedTrafficStatsService(h.chClient)
+	}
+	stats, err := service.Load(ctx, encryptedTrafficStatsQuery{
+		TenantID:   tenantID,
+		StartMilli: start,
+		EndMilli:   end,
+	})
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
-	}
-	if err := row.Scan(&total, &tls, &quic, &ssh); err != nil {
-		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
-		return
-	}
-
-	encrypted := tls + quic + ssh
-	stats := encryptedTrafficStatsDTO{
-		TotalSessions:    int64(encrypted),
-		ObservedSessions: int64(total),
-		TLSSessions:      int64(tls),
-		QUICSessions:     int64(quic),
-		JA3Fingerprints:  0,
-	}
-	if total > 0 {
-		stats.EncryptedRatio = float64(encrypted) / float64(total)
-	}
-	if h.encryptedEvidenceFingerprintTableAvailable(ctx) {
-		row, queryErr := h.chClient.QueryRow(ctx, `
-			SELECT uniqExact(ja3),
-			       uniqExactIf(ja3, entropy_payload >= 7.5 OR cert_is_self_signed = 1)
-			FROM traffic.feature_fp
-			WHERE tenant_id=? AND is_encrypted=1 AND ja3!=''
-			  AND toUnixTimestamp64Milli(ts)>=? AND toUnixTimestamp64Milli(ts)<=?`, tenantID, start, end)
-		if queryErr == nil {
-			var fingerprints, malicious uint64
-			if scanErr := row.Scan(&fingerprints, &malicious); scanErr == nil {
-				stats.JA3Fingerprints = int64(fingerprints)
-				stats.MaliciousJA3Matches = int64(malicious)
-			}
-		}
 	}
 	httpx.JSONSuccess(w, ctx, stats)
 }
@@ -3522,6 +3496,10 @@ func (h *SystemHandler) SyncFusionSource(w http.ResponseWriter, r *http.Request)
 		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_PARAMETER", "source id is required")
 		return
 	}
+	if h.fusionV1 {
+		h.syncFusionSourceV1(w, r, tenantID, sourceID)
+		return
+	}
 	if err := h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), "FUSION_SOURCE_SYNC_REQUESTED", "fusion_source", sourceID, map[string]interface{}{"status": "accepted"}, r); err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
@@ -3554,6 +3532,9 @@ func (h *SystemHandler) ResolveFusionConflict(w http.ResponseWriter, r *http.Req
 		return
 	}
 	validStrategies := map[string]bool{"authoritative-source": true, "manual-repair-task": true, "accept-primary": true}
+	if h.fusionV1 {
+		validStrategies["revoke"] = true
+	}
 	if !validStrategies[req.Strategy] {
 		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "unsupported fusion conflict strategy")
 		return
@@ -3562,12 +3543,26 @@ func (h *SystemHandler) ResolveFusionConflict(w http.ResponseWriter, r *http.Req
 		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "expected_state_version is required")
 		return
 	}
+	if h.fusionV1 && req.Note == "" {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "note is required for a versioned fusion resolution")
+		return
+	}
 	tx, err := h.pgDB.BeginTx(ctx, nil)
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
 	defer tx.Rollback()
+	if h.fusionV1 {
+		if h.fusionReadinessGate == nil || len(h.fusionCandidateSHA256) != 64 {
+			httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "FUSION_PIPELINE_NOT_READY", "fusion authority is not bound to a projection candidate")
+			return
+		}
+		if err := h.fusionReadinessGate.AssertReadyTx(ctx, tx, h.fusionCandidateSHA256); err != nil {
+			httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "FUSION_CONSUMER_NOT_READY", err.Error())
+			return
+		}
+	}
 	var canonicalObjectID, canonicalObjectType, canonicalFieldName, sourceValuesJSON, currentStatus, canonicalRuleID, canonicalDetailJSON string
 	var currentStateVersion int64
 	err = tx.QueryRowContext(ctx, `SELECT object_id, object_type, field_name, source_values::text, status, rule_id, state_version, detail::text
@@ -3672,6 +3667,18 @@ func (h *SystemHandler) ResolveFusionConflict(w http.ResponseWriter, r *http.Req
 		Strategy: req.Strategy, Note: req.Note, RuleID: req.RuleID, StateVersion: stateVersion,
 		ResolvedBy: resolvedBy, ResolvedAt: resolvedAt.UnixMilli(), Detail: req.Detail,
 	}
+	if h.fusionV1 {
+		resolutionID, resolutionVersion, eventID, appendErr := appendFusionResolutionV1(
+			ctx, tx, dto, canonicalSourceValues, httpx.GetTraceID(ctx),
+		)
+		if appendErr != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", appendErr.Error())
+			return
+		}
+		dto.ResolutionID = resolutionID
+		dto.ResolutionVersion = resolutionVersion
+		dto.OutboxEventID = eventID
+	}
 	var repairTask *fusionRepairTaskDTO
 	if req.Strategy == "manual-repair-task" {
 		taskDetailJSON, marshalErr := json.Marshal(req.Detail)
@@ -3712,7 +3719,16 @@ func (h *SystemHandler) ResolveFusionConflict(w http.ResponseWriter, r *http.Req
 		auditDetail["repair_task_id"] = repairTask.TaskID
 		auditDetail["repair_task_type"] = repairTask.TaskType
 	}
-	if err := insertFusionAuditTx(ctx, tx, tenantID, resolvedBy, "FUSION_CONFLICT_RESOLVED", "fusion_conflict", conflictID, auditDetail, r); err != nil {
+	if dto.ResolutionID != "" {
+		auditDetail["resolution_id"] = dto.ResolutionID
+		auditDetail["resolution_version"] = dto.ResolutionVersion
+		auditDetail["outbox_event_id"] = dto.OutboxEventID
+	}
+	auditAction := "FUSION_CONFLICT_RESOLVED"
+	if req.Strategy == "revoke" {
+		auditAction = "FUSION_CONFLICT_RESOLUTION_REVOKED"
+	}
+	if err := insertFusionAuditTx(ctx, tx, tenantID, resolvedBy, auditAction, "fusion_conflict", conflictID, auditDetail, r); err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
@@ -3725,6 +3741,82 @@ func (h *SystemHandler) ResolveFusionConflict(w http.ResponseWriter, r *http.Req
 		"repair_task":   repairTask,
 		"audit_written": true,
 	})
+}
+
+func appendFusionResolutionV1(
+	ctx context.Context,
+	tx *sql.Tx,
+	resolution fusionConflictResolutionDTO,
+	sourceValues []map[string]interface{},
+	traceID string,
+) (string, int64, string, error) {
+	if tx == nil || resolution.TenantID == "" || resolution.ConflictID == "" || resolution.StateVersion < 1 ||
+		resolution.SelectedSource == "" || resolution.SelectedValue == "" || resolution.Note == "" || resolution.ResolvedBy == "" {
+		return "", 0, "", fmt.Errorf("versioned fusion resolution identity, reason and authority are required")
+	}
+	var previousResolutionID string
+	var previousVersion int64
+	err := tx.QueryRowContext(ctx, `SELECT resolution_id::text,resolution_version
+		FROM fusion_resolution_history
+		WHERE tenant_id=$1 AND conflict_id=$2
+		ORDER BY resolution_version DESC LIMIT 1 FOR UPDATE`, resolution.TenantID, resolution.ConflictID).Scan(&previousResolutionID, &previousVersion)
+	if err != nil && err != sql.ErrNoRows {
+		return "", 0, "", fmt.Errorf("lock fusion resolution history: %w", err)
+	}
+	resolutionVersion := previousVersion + 1
+	provenance := map[string]interface{}{
+		"object_id": resolution.ObjectID, "object_type": resolution.ObjectType,
+		"field_name": resolution.FieldName, "rule_id": resolution.RuleID,
+		"conflict_state_version": resolution.StateVersion, "source_values": sourceValues,
+		"detail": resolution.Detail,
+	}
+	provenanceJSON, err := json.Marshal(provenance)
+	if err != nil {
+		return "", 0, "", fmt.Errorf("marshal fusion resolution provenance: %w", err)
+	}
+	var resolutionID string
+	lifecycleState := "applied"
+	if resolution.Strategy == "revoke" {
+		lifecycleState = "revoked"
+	}
+	err = tx.QueryRowContext(ctx, `INSERT INTO fusion_resolution_history (
+			resolution_id,tenant_id,conflict_id,resolution_version,conflict_state_version,lifecycle_state,
+			selected_source,selected_value,strategy,reason,source_snapshot_id,supersedes_id,provenance,resolved_by,trace_id
+		) VALUES (uuid_generate_v4(),$1,$2,$3,$4,$5,$6,$7,$8,$9,NULL,NULLIF($10,'')::uuid,$11::jsonb,$12,$13)
+		RETURNING resolution_id::text`,
+		resolution.TenantID, resolution.ConflictID, resolutionVersion, resolution.StateVersion, lifecycleState,
+		resolution.SelectedSource, resolution.SelectedValue, resolution.Strategy, resolution.Note,
+		previousResolutionID, string(provenanceJSON), resolution.ResolvedBy, traceID,
+	).Scan(&resolutionID)
+	if err != nil {
+		return "", 0, "", fmt.Errorf("append fusion resolution history: %w", err)
+	}
+	payload := map[string]interface{}{
+		"contract_version": "fusion-resolution-v1", "tenant_id": resolution.TenantID,
+		"conflict_id": resolution.ConflictID, "resolution_id": resolutionID,
+		"resolution_version": resolutionVersion, "conflict_state_version": resolution.StateVersion,
+		"selected_source": resolution.SelectedSource, "selected_value": resolution.SelectedValue,
+		"strategy": resolution.Strategy, "lifecycle_state": lifecycleState,
+		"reason": resolution.Note, "resolved_by": resolution.ResolvedBy,
+		"trace_id": traceID,
+	}
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return "", 0, "", fmt.Errorf("marshal fusion resolution event: %w", err)
+	}
+	payloadSHA256 := fmt.Sprintf("%x", sha256.Sum256(payloadJSON))
+	var eventID string
+	err = tx.QueryRowContext(ctx, `INSERT INTO fusion_projection_outbox (
+			event_id,tenant_id,aggregate_type,aggregate_id,aggregate_version,event_type,
+			partition_key,payload,payload_sha256,publish_state,trace_id
+		) VALUES (uuid_generate_v4(),$1,'resolution',$2::uuid,$3,'fusion.resolution.changed.v1',$4,$5::jsonb,$6,'PENDING',$7)
+		RETURNING event_id::text`, resolution.TenantID, resolutionID, resolutionVersion,
+		resolution.TenantID+":"+resolution.ConflictID, string(payloadJSON), payloadSHA256, traceID,
+	).Scan(&eventID)
+	if err != nil {
+		return "", 0, "", fmt.Errorf("append fusion resolution outbox: %w", err)
+	}
+	return resolutionID, resolutionVersion, eventID, nil
 }
 
 func (h *SystemHandler) UpdateFusionRule(w http.ResponseWriter, r *http.Request) {
@@ -5085,11 +5177,10 @@ func (h *SystemHandler) requirePostgres(w http.ResponseWriter, ctx context.Conte
 	return false
 }
 
+// writeTenantID 只从已验证的请求上下文读取租户身份，客户端可控的
+// query tenant_id 不作为身份来源。
 func writeTenantID(r *http.Request) string {
-	if tenantID := httpx.GetTenantID(r.Context()); tenantID != "" {
-		return tenantID
-	}
-	return queryTenantID(r)
+	return httpx.GetTenantID(r.Context())
 }
 
 func (h *SystemHandler) requireFusionWritePermission(w http.ResponseWriter, r *http.Request) bool {
@@ -5715,6 +5806,13 @@ func (h *SystemHandler) clickHouseSource(ctx context.Context, tenantID, sourceID
 	if h.chClient == nil {
 		return unavailableFusionSource(tenantID, sourceID, sourceType, name, "clickhouse."+table, "SOURCE_NOT_CONFIGURED", createdAt)
 	}
+	// 标识符白名单：表名/时间列必须为合法 SQL 标识符，防止拼接注入
+	if _, err := sqlIdent(table); err != nil {
+		return unavailableFusionSource(tenantID, sourceID, sourceType, name, "clickhouse."+table, "SOURCE_QUERY_FAILED", createdAt)
+	}
+	if _, err := sqlIdent(timeColumn); err != nil {
+		return unavailableFusionSource(tenantID, sourceID, sourceType, name, "clickhouse."+table, "SOURCE_QUERY_FAILED", createdAt)
+	}
 	var total, recent uint64
 	var latest int64
 	query := fmt.Sprintf("SELECT count(), countIf(%s >= ?), max(%s) FROM %s WHERE tenant_id=?", timeColumn, timeColumn, table)
@@ -5734,6 +5832,12 @@ func (h *SystemHandler) clickHouseSource(ctx context.Context, tenantID, sourceID
 func (h *SystemHandler) clickHouseDateTimeSource(ctx context.Context, tenantID, sourceID, sourceType, name, table, timeColumn string, createdAt int64) dataSourceDTO {
 	if h.chClient == nil {
 		return unavailableFusionSource(tenantID, sourceID, sourceType, name, "clickhouse."+table, "SOURCE_NOT_CONFIGURED", createdAt)
+	}
+	if _, err := sqlIdent(table); err != nil {
+		return unavailableFusionSource(tenantID, sourceID, sourceType, name, "clickhouse."+table, "SOURCE_QUERY_FAILED", createdAt)
+	}
+	if _, err := sqlIdent(timeColumn); err != nil {
+		return unavailableFusionSource(tenantID, sourceID, sourceType, name, "clickhouse."+table, "SOURCE_QUERY_FAILED", createdAt)
 	}
 	var total, recent uint64
 	var latest time.Time
@@ -5760,6 +5864,12 @@ func (h *SystemHandler) postgresSource(ctx context.Context, tenantID, sourceID, 
 	var latest sql.NullTime
 	if h.pgDB == nil {
 		return unavailableFusionSource(tenantID, sourceID, sourceType, name, "postgres."+table, "SOURCE_NOT_CONFIGURED", createdAt)
+	}
+	if _, err := sqlIdent(table); err != nil {
+		return unavailableFusionSource(tenantID, sourceID, sourceType, name, "postgres."+table, "SOURCE_QUERY_FAILED", createdAt)
+	}
+	if _, err := sqlIdent(timeColumn); err != nil {
+		return unavailableFusionSource(tenantID, sourceID, sourceType, name, "postgres."+table, "SOURCE_QUERY_FAILED", createdAt)
 	}
 	query := fmt.Sprintf("SELECT count(*), count(*) FILTER (WHERE %s >= now() - interval '1 hour'), max(%s) FROM %s WHERE tenant_id=$1", timeColumn, timeColumn, table)
 	if err := h.pgDB.QueryRowContext(ctx, query, tenantID).Scan(&total, &recent, &latest); err != nil {
@@ -7044,6 +7154,10 @@ func (h *SystemHandler) queryBaselineMetrics(ctx context.Context, tenantID, ip s
 }
 
 func (h *SystemHandler) currentBaselineValue(ctx context.Context, tenantID, ip, column string) float64 {
+	// 列名白名单校验，防止拼接注入
+	if _, err := sqlIdent(column); err != nil {
+		return 0
+	}
 	var value float64
 	query := fmt.Sprintf("SELECT avg(toFloat64(%s)) FROM traffic.sessions WHERE tenant_id=? AND src_ip=? AND ts_start>=?", column)
 	row, err := h.chClient.QueryRow(ctx, query, tenantID, ip, time.Now().Add(-15*time.Minute).UnixMilli())
@@ -7053,8 +7167,23 @@ func (h *SystemHandler) currentBaselineValue(ctx context.Context, tenantID, ip, 
 	return dashboardFinite(value)
 }
 
-func metricDTO(name, unit string, mean, std, current float64) behaviorMetricDTO {
-	mean = dashboardFinite(mean)
+// sqlIdent 校验 SQL 标识符白名单：仅允许 [A-Za-z_][A-Za-z0-9_]*。
+// 用于校验拼接进查询的表名/列名，防止把来源数据变成注入面。
+func sqlIdent(ident string) (string, error) {
+	if ident == "" {
+		return "", fmt.Errorf("empty SQL identifier")
+	}
+	for i, r := range ident {
+		isLetterOrUnderscore := (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || r == '_'
+		isDigit := r >= '0' && r <= '9'
+		if !(isLetterOrUnderscore || (i > 0 && isDigit)) {
+			return "", fmt.Errorf("invalid SQL identifier %q", ident)
+		}
+	}
+	return ident, nil
+}
+
+func metricDTO(name, unit string, mean, std, current float64) behaviorMetricDTO {	mean = dashboardFinite(mean)
 	std = dashboardFinite(std)
 	current = dashboardFinite(current)
 	low := mean - 2*std

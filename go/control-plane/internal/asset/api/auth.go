@@ -10,6 +10,9 @@ import (
 	"github.com/google/uuid"
 
 	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/authz"
+	commonerrors "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 )
 
 const (
@@ -112,8 +115,32 @@ func (h *HTTPHandler) requireAssetPreferenceRead(w http.ResponseWriter, r *http.
 }
 
 func (h *HTTPHandler) requestIdentity(r *http.Request) (requestIdentity, int, string) {
+	// 统一令牌模型 P1:共享鉴权中间件(asset-service main.go 外层)已用
+	// JWKS/API token 校验并注入 Principal——优先信任该判定主体;
+	// 未走中间件(如旧部署/内部直连)时回退到自有 HMAC 应用 token 校验。
+	if p := authz.PrincipalFromContext(r.Context()); p != nil {
+		if p.TenantID == "" {
+			return requestIdentity{}, http.StatusForbidden, "verified tenant identity required"
+		}
+		if err := httpx.ValidateRequestTenant(r, p.TenantID); err != nil {
+			return requestIdentity{}, commonerrors.GetHTTPStatus(err), "cross-tenant access denied"
+		}
+		return requestIdentity{
+			TenantID: p.TenantID,
+			UserID:   p.Subject,
+			Username: p.Username,
+			Scopes:   p.Permissions,
+		}, 0, ""
+	}
 	if tokenString := bearerToken(r); tokenString != "" {
-		return accessTokenIdentity(tokenString, h.jwtSigningKey)
+		identity, status, message := accessTokenIdentity(tokenString, h.jwtSigningKey)
+		if status != 0 {
+			return requestIdentity{}, status, message
+		}
+		if err := httpx.ValidateRequestTenant(r, identity.TenantID); err != nil {
+			return requestIdentity{}, commonerrors.GetHTTPStatus(err), "cross-tenant access denied"
+		}
+		return identity, 0, ""
 	}
 
 	return requestIdentity{}, http.StatusUnauthorized, "authorization required"

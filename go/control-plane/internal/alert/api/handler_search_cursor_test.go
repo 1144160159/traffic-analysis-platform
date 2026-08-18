@@ -1,9 +1,35 @@
 package api
 
 import (
+	"context"
 	"strings"
 	"testing"
+
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
 )
+
+func TestAlertSearchContractMetaPreservesSnapshotDegradationEvidence(t *testing.T) {
+	result := &service.SearchResult{
+		SnapshotID:      "alert-snapshot-1",
+		AsOf:            "2026-08-15T09:00:00Z",
+		Partial:         true,
+		MissingSections: []string{"postgresql.alerts.projection_receipts"},
+		SourceWatermarks: map[string]string{
+			"clickhouse.alerts.source_version": "1786784400000",
+			"opensearch.alerts.search":         "2026-08-15T09:00:00Z",
+		},
+	}
+	meta := alertSearchContractMeta(context.Background(), result)
+	if !meta.Partial || meta.SnapshotID != result.SnapshotID || meta.AsOf != result.AsOf {
+		t.Fatalf("meta = %#v", meta)
+	}
+	if len(meta.MissingSections) != 1 || meta.MissingSections[0] != result.MissingSections[0] {
+		t.Fatalf("missing sections = %#v", meta.MissingSections)
+	}
+	if meta.SourceWatermarks["clickhouse.alerts.source_version"] != "1786784400000" {
+		t.Fatalf("source watermarks = %#v", meta.SourceWatermarks)
+	}
+}
 
 func TestValidateSearchAlertsRequestAcceptsLegacyAndCursorContracts(t *testing.T) {
 	for _, request := range []*SearchAlertsRequest{

@@ -116,3 +116,24 @@ func TestValidateCampaignMembershipRejectsRelationCollision(t *testing.T) {
 		t.Fatal("relation collision must fail closed")
 	}
 }
+
+func TestDrainCampaignOutboxChecksConsumerAdmissionBeforeClaim(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	handler := NewSystemHandler(nil, db, zap.NewNop())
+	handler.campaignEventPublish = func(context.Context, string, []byte, ...commonkafka.MessageHeader) error { return nil }
+	handler.campaignMemberPublish = func(context.Context, string, []byte, ...commonkafka.MessageHeader) error { return nil }
+	readinessErr := errors.New("membership consumer receipt missing")
+	handler.SetCampaignDispatcherAdmission(func(context.Context) error { return readinessErr })
+
+	processed, err := handler.drainCampaignEventOutboxes(context.Background(), "worker-gated", 10)
+	if processed != 0 || !errors.Is(err, readinessErr) {
+		t.Fatalf("processed=%d err=%v", processed, err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal("dispatcher must not claim SQL rows before admission: ", err)
+	}
+}

@@ -25,6 +25,22 @@ const (
 	SignalStatusNotApplicable = "not_applicable"
 	SignalStatusError         = "error"
 
+	SignalAvailabilityArrived       = "arrived"
+	SignalAvailabilityNotArrived    = "not_arrived"
+	SignalAvailabilityUnavailable   = "unavailable"
+	SignalAvailabilityNotApplicable = "not_applicable"
+	SignalFreshnessFresh            = "fresh"
+	SignalFreshnessStale            = "stale"
+	SignalFreshnessUnknown          = "unknown"
+	SignalFreshnessNotApplicable    = "not_applicable"
+	SignalCompletenessComplete      = "complete"
+	SignalCompletenessPartial       = "partial"
+	SignalCompletenessUnknown       = "unknown"
+	SignalCompletenessNotApplicable = "not_applicable"
+	SignalValueZero                 = "zero"
+	SignalValueNonzero              = "nonzero"
+	SignalValueNone                 = "none"
+
 	SignalKindKafkaOffset     = "kafka_offset"
 	SignalKindFlinkWatermark  = "flink_watermark"
 	SignalKindSinkCommit      = "sink_commit"
@@ -61,18 +77,22 @@ type SignalDefinition struct {
 }
 
 type HandoffSignal struct {
-	TenantID         string                 `json:"tenant_id"`
-	DatasetID        string                 `json:"dataset_id"`
-	SourceKind       string                 `json:"source_kind"`
-	SourceID         string                 `json:"source_id"`
-	PartitionID      string                 `json:"partition_id"`
-	MeasurementState string                 `json:"measurement_status"`
-	WatermarkValue   *string                `json:"watermark_value,omitempty"`
-	ObservedAt       *time.Time             `json:"observed_at,omitempty"`
-	CollectedAt      time.Time              `json:"collected_at"`
-	TraceID          string                 `json:"trace_id"`
-	MeasurementError string                 `json:"measurement_error,omitempty"`
-	Metadata         map[string]interface{} `json:"metadata"`
+	TenantID          string                 `json:"tenant_id"`
+	DatasetID         string                 `json:"dataset_id"`
+	SourceKind        string                 `json:"source_kind"`
+	SourceID          string                 `json:"source_id"`
+	PartitionID       string                 `json:"partition_id"`
+	MeasurementState  string                 `json:"measurement_status"`
+	WatermarkValue    *string                `json:"watermark_value,omitempty"`
+	ObservedAt        *time.Time             `json:"observed_at,omitempty"`
+	CollectedAt       time.Time              `json:"collected_at"`
+	TraceID           string                 `json:"trace_id"`
+	MeasurementError  string                 `json:"measurement_error,omitempty"`
+	AvailabilityState string                 `json:"availability_status"`
+	FreshnessState    string                 `json:"freshness_status"`
+	CompletenessState string                 `json:"completeness_status"`
+	ValueState        string                 `json:"value_status"`
+	Metadata          map[string]interface{} `json:"metadata"`
 }
 
 type SignalCollectionRequest struct {
@@ -133,7 +153,7 @@ func (c *CompositeSignalCollector) Collect(ctx context.Context, request SignalCo
 		definition := collector.Definition()
 		signal, err := collector.Collect(ctx, request)
 		if err != nil {
-			result = append(result, HandoffSignal{
+			signal := HandoffSignal{
 				TenantID: request.TenantID, DatasetID: request.DatasetID,
 				SourceKind: definition.Kind, SourceID: definition.SourceID,
 				MeasurementState: SignalStatusError, CollectedAt: request.CollectedAt,
@@ -141,18 +161,22 @@ func (c *CompositeSignalCollector) Collect(ctx context.Context, request SignalCo
 				Metadata: mergeSignalMetadata(definition.Metadata, map[string]interface{}{
 					"required": definition.Required, "unit": definition.Unit,
 				}),
-			})
+			}
+			deriveSignalSemantics(&signal)
+			result = append(result, signal)
 			continue
 		}
 		if signal == nil {
-			result = append(result, HandoffSignal{
+			missing := HandoffSignal{
 				TenantID: request.TenantID, DatasetID: request.DatasetID,
 				SourceKind: definition.Kind, SourceID: definition.SourceID,
 				MeasurementState: SignalStatusUnknown, CollectedAt: request.CollectedAt,
 				TraceID: request.TraceID, Metadata: mergeSignalMetadata(definition.Metadata, map[string]interface{}{
 					"required": definition.Required, "unit": definition.Unit, "reason": "collector returned no measurement",
 				}),
-			})
+			}
+			deriveSignalSemantics(&missing)
+			result = append(result, missing)
 			continue
 		}
 		signal.TenantID = request.TenantID
@@ -164,6 +188,7 @@ func (c *CompositeSignalCollector) Collect(ctx context.Context, request SignalCo
 		signal.Metadata = mergeSignalMetadata(definition.Metadata, signal.Metadata)
 		signal.Metadata["required"] = definition.Required
 		signal.Metadata["unit"] = definition.Unit
+		deriveSignalSemantics(signal)
 		result = append(result, *signal)
 	}
 	return result
@@ -359,12 +384,37 @@ func (c *KafkaOffsetCollector) Collect(ctx context.Context, request SignalCollec
 	if err != nil {
 		return nil, err
 	}
+	uncommitted := 0
+	for _, partition := range snapshot.Partitions {
+		if partition.CommittedOffset < 0 {
+			uncommitted++
+		}
+	}
+	metadata := map[string]interface{}{
+		"end_offset_total": snapshot.TotalEndOffset, "committed_offset_total": snapshot.TotalCommittedOffset,
+		"partition_count": len(snapshot.Partitions), "uncommitted_partition_count": uncommitted,
+		"partitions": snapshot.Partitions,
+	}
+	if len(snapshot.Partitions) == 0 || uncommitted == len(snapshot.Partitions) {
+		return &HandoffSignal{
+			MeasurementState:  SignalStatusUnknown,
+			AvailabilityState: SignalAvailabilityNotArrived,
+			FreshnessState:    SignalFreshnessUnknown,
+			CompletenessState: SignalCompletenessUnknown,
+			ValueState:        SignalValueNone,
+			Metadata:          metadata,
+		}, nil
+	}
 	value := strconv.FormatInt(snapshot.TotalLag, 10)
 	observed := request.CollectedAt
-	return &HandoffSignal{MeasurementState: SignalStatusMeasured, WatermarkValue: &value, ObservedAt: &observed, Metadata: map[string]interface{}{
-		"end_offset_total": snapshot.TotalEndOffset, "committed_offset_total": snapshot.TotalCommittedOffset,
-		"partition_count": len(snapshot.Partitions), "partitions": snapshot.Partitions,
-	}}, nil
+	completeness := SignalCompletenessComplete
+	if uncommitted > 0 {
+		completeness = SignalCompletenessPartial
+	}
+	return &HandoffSignal{
+		MeasurementState: SignalStatusMeasured, WatermarkValue: &value, ObservedAt: &observed,
+		CompletenessState: completeness, Metadata: metadata,
+	}, nil
 }
 
 type FlinkSubtaskWatermark struct {
@@ -620,6 +670,98 @@ func SignalDefinitionFor(contract DatasetSignalContract, kind string) (SignalDef
 		}
 	}
 	return SignalDefinition{}, fmt.Errorf("signal definition %s not found", kind)
+}
+
+// deriveSignalSemantics keeps zero, not-arrived, unavailable, stale-capable,
+// and partial states machine-readable. These axes are intentionally separate
+// from MeasurementState: a numeric zero is a real measurement, while a
+// partially assigned Kafka group is measured but cannot pass a quality gate.
+func deriveSignalSemantics(signal *HandoffSignal) {
+	if signal == nil {
+		return
+	}
+	if signal.Metadata == nil {
+		signal.Metadata = map[string]interface{}{}
+	}
+	metadataString := func(key string) string {
+		value, _ := signal.Metadata[key].(string)
+		return value
+	}
+	if signal.AvailabilityState == "" {
+		signal.AvailabilityState = metadataString("availability_status")
+	}
+	if signal.FreshnessState == "" {
+		signal.FreshnessState = metadataString("freshness_status")
+	}
+	if signal.CompletenessState == "" {
+		signal.CompletenessState = metadataString("completeness_status")
+	}
+	if signal.ValueState == "" {
+		signal.ValueState = metadataString("value_status")
+	}
+	switch signal.MeasurementState {
+	case SignalStatusMeasured:
+		if signal.AvailabilityState == "" {
+			signal.AvailabilityState = SignalAvailabilityArrived
+		}
+		if signal.FreshnessState == "" {
+			signal.FreshnessState = SignalFreshnessFresh
+		}
+		if signal.CompletenessState == "" {
+			signal.CompletenessState = SignalCompletenessComplete
+		}
+		if signal.ValueState == "" {
+			signal.ValueState = SignalValueNonzero
+			if signal.WatermarkValue != nil {
+				if numeric, err := strconv.ParseFloat(*signal.WatermarkValue, 64); err == nil && numeric == 0 {
+					signal.ValueState = SignalValueZero
+				}
+			}
+		}
+	case SignalStatusUnknown:
+		if signal.AvailabilityState == "" {
+			signal.AvailabilityState = SignalAvailabilityNotArrived
+		}
+		if signal.FreshnessState == "" {
+			signal.FreshnessState = SignalFreshnessUnknown
+		}
+		if signal.CompletenessState == "" {
+			signal.CompletenessState = SignalCompletenessUnknown
+		}
+		if signal.ValueState == "" {
+			signal.ValueState = SignalValueNone
+		}
+	case SignalStatusError:
+		if signal.AvailabilityState == "" {
+			signal.AvailabilityState = SignalAvailabilityUnavailable
+		}
+		if signal.FreshnessState == "" {
+			signal.FreshnessState = SignalFreshnessUnknown
+		}
+		if signal.CompletenessState == "" {
+			signal.CompletenessState = SignalCompletenessUnknown
+		}
+		if signal.ValueState == "" {
+			signal.ValueState = SignalValueNone
+		}
+	case SignalStatusNotApplicable:
+		if signal.AvailabilityState == "" {
+			signal.AvailabilityState = SignalAvailabilityNotApplicable
+		}
+		if signal.FreshnessState == "" {
+			signal.FreshnessState = SignalFreshnessNotApplicable
+		}
+		if signal.CompletenessState == "" {
+			signal.CompletenessState = SignalCompletenessNotApplicable
+		}
+		if signal.ValueState == "" {
+			signal.ValueState = SignalValueNone
+		}
+	}
+	signal.Metadata["availability_status"] = signal.AvailabilityState
+	signal.Metadata["freshness_status"] = signal.FreshnessState
+	signal.Metadata["completeness_status"] = signal.CompletenessState
+	signal.Metadata["value_status"] = signal.ValueState
 }
 
 func mergeSignalMetadata(base, extra map[string]interface{}) map[string]interface{} {

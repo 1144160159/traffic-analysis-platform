@@ -21,19 +21,22 @@ import (
 
 // Config 总配置
 type Config struct {
-	Server        ServerConfig `envPrefix:"SERVER_"`
-	ClickHouse    storage.ClickHouseConfig
-	Nebula        NebulaConfig `envPrefix:"NEBULA_"`
-	Redis         RedisConfig  `envPrefix:"REDIS_"`
-	API           APIConfig    `envPrefix:"API_"`
-	Cache         CacheConfig  `envPrefix:"CACHE_"`
-	Query         QueryConfig  `envPrefix:"QUERY_"`
-	OTEL          OTELConfig   `envPrefix:"OTEL_"`
-	Audit         AuditConfig  `envPrefix:"AUDIT_"`
-	Kafka         KafkaConfig  `envPrefix:"KAFKA_"`
-	KafkaSecurity commonkafka.SecurityConfig
-	Security      SecurityConfig `envPrefix:"SECURITY_"`
-	Auth          AuthConfig     `envPrefix:"AUTH_"`
+	Server                      ServerConfig `envPrefix:"SERVER_"`
+	ClickHouse                  storage.ClickHouseConfig
+	Nebula                      NebulaConfig `envPrefix:"NEBULA_"`
+	Redis                       RedisConfig  `envPrefix:"REDIS_"`
+	API                         APIConfig    `envPrefix:"API_"`
+	Cache                       CacheConfig  `envPrefix:"CACHE_"`
+	Query                       QueryConfig  `envPrefix:"QUERY_"`
+	OTEL                        OTELConfig   `envPrefix:"OTEL_"`
+	Audit                       AuditConfig  `envPrefix:"AUDIT_"`
+	Kafka                       KafkaConfig  `envPrefix:"KAFKA_"`
+	KafkaSecurity               commonkafka.SecurityConfig
+	Projection                  ProjectionConfig `envPrefix:"GRAPH_PROJECTION_"`
+	ContinuousProjectionEnabled bool             `env:"GRAPH_CONTINUOUS_PROJECTION_V1_ENABLED" envDefault:"false"`
+	Workbench                   WorkbenchConfig  `envPrefix:"GRAPH_WORKBENCH_"`
+	Security                    SecurityConfig   `envPrefix:"SECURITY_"`
+	Auth                        AuthConfig       `envPrefix:"AUTH_"`
 }
 
 // NebulaConfig configures the native NebulaGraph session pool used by the
@@ -137,7 +140,7 @@ func (c RedisConfig) ToStorageConfig() storage.RedisConfig {
 // APIConfig API 配置
 type APIConfig struct {
 	ListenAddr         string   `env:"LISTEN_ADDR" envDefault:":8084"`
-	AllowedOrigins     []string `env:"ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
+	AllowedOrigins     []string `env:"ALLOWED_ORIGINS" envSeparator:"," envDefault:"http://localhost:5173,http://127.0.0.1:5173,http://localhost:25173,http://127.0.0.1:25173"`
 	RequestTimeout     int      `env:"REQUEST_TIMEOUT" envDefault:"30"`            // 秒
 	MaxRequestBodySize int64    `env:"MAX_REQUEST_BODY_SIZE" envDefault:"1048576"` // 1MB
 }
@@ -196,6 +199,30 @@ type AuditConfig struct {
 // KafkaConfig Kafka 配置
 type KafkaConfig struct {
 	Brokers []string `env:"BROKERS" envSeparator:"," envDefault:"kafka-bootstrap.middleware.svc:9092"`
+}
+
+// ProjectionConfig separates consumer readiness from Nebula mutation so the
+// M07 stream can be deployed consumer-first and remains default-off.
+type ProjectionConfig struct {
+	ConsumerEnabled bool          `env:"CONSUMER_ENABLED" envDefault:"false"`
+	WorkerEnabled   bool          `env:"WORKER_ENABLED" envDefault:"false"`
+	Topic           string        `env:"TOPIC" envDefault:"graph.projections.v1"`
+	GroupID         string        `env:"GROUP_ID" envDefault:"graph-service-projection-v1"`
+	DLQTopic        string        `env:"DLQ_TOPIC" envDefault:"dlq.v1"`
+	Lease           time.Duration `env:"LEASE" envDefault:"30s"`
+	Interval        time.Duration `env:"INTERVAL" envDefault:"500ms"`
+	MaxAttempts     int           `env:"MAX_ATTEMPTS" envDefault:"8"`
+}
+
+// WorkbenchConfig gates the M09 governed graph query contract. The signing
+// secret is deliberately absent from configuration summaries and must be
+// injected from a Kubernetes Secret before the feature can be enabled.
+type WorkbenchConfig struct {
+	Enabled            bool          `env:"V2_ENABLED" envDefault:"false"`
+	PageNodes          int           `env:"PAGE_NODES" envDefault:"100"`
+	MaxEdges           int           `env:"MAX_EDGES" envDefault:"1000"`
+	ContinuationTTL    time.Duration `env:"CONTINUATION_TTL" envDefault:"15m"`
+	ContinuationSecret string        `env:"CONTINUATION_SECRET"`
 }
 
 // SecurityConfig 安全配置
@@ -277,10 +304,8 @@ func (c *Config) setDefaults() error {
 		c.ClickHouse.WriteTimeout = 30 * time.Second
 	}
 
-	// API 默认值
-	if len(c.API.AllowedOrigins) == 0 {
-		c.API.AllowedOrigins = []string{"*"}
-	}
+	// API 默认值:CORS 默认禁止通配来源(禁止 * + AllowCredentials),
+	// 生产跨域来源必须显式配置;同源访问不受影响。
 	if c.API.RequestTimeout <= 0 {
 		c.API.RequestTimeout = 30
 	}
@@ -353,6 +378,12 @@ func (c *Config) Validate() error {
 	if err := c.validateNebula(); err != nil {
 		return err
 	}
+	if err := c.validateProjection(); err != nil {
+		return err
+	}
+	if err := c.validateWorkbench(); err != nil {
+		return err
+	}
 
 	// 验证 Query 配置
 	if err := c.validateQuery(); err != nil {
@@ -386,6 +417,46 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	return nil
+}
+
+func (c *Config) validateWorkbench() error {
+	if !c.Workbench.Enabled {
+		return nil
+	}
+	if !c.Nebula.Enabled {
+		return errors.New(errors.ErrCodeConfigError, "governed graph workbench requires NebulaGraph")
+	}
+	if c.Workbench.PageNodes < 10 || c.Workbench.PageNodes > 500 ||
+		c.Workbench.MaxEdges < 10 || c.Workbench.MaxEdges > 5000 ||
+		c.Workbench.ContinuationTTL < time.Minute || c.Workbench.ContinuationTTL > 24*time.Hour {
+		return errors.New(errors.ErrCodeConfigError, "governed graph workbench budgets are outside bounds")
+	}
+	if len(c.Workbench.ContinuationSecret) < 32 {
+		return errors.New(errors.ErrCodeConfigError, "governed graph workbench continuation secret must contain at least 32 bytes")
+	}
+	return nil
+}
+
+func (c *Config) validateProjection() error {
+	if !c.Projection.ConsumerEnabled && !c.Projection.WorkerEnabled && !c.ContinuousProjectionEnabled {
+		return nil
+	}
+	if c.Projection.WorkerEnabled != c.ContinuousProjectionEnabled {
+		return errors.New(errors.ErrCodeConfigError, "graph projection worker and feature flag must change together")
+	}
+	if !c.Nebula.Enabled && c.Projection.WorkerEnabled {
+		return errors.New(errors.ErrCodeConfigError, "graph projection worker requires NebulaGraph")
+	}
+	if len(c.Kafka.Brokers) == 0 || c.Projection.Topic != "graph.projections.v1" ||
+		c.Projection.GroupID != "graph-service-projection-v1" || c.Projection.DLQTopic != "dlq.v1" {
+		return errors.New(errors.ErrCodeConfigError, "graph projection Kafka identities are pinned to the v1 contract")
+	}
+	if c.Projection.Lease < time.Second || c.Projection.Lease > 5*time.Minute ||
+		c.Projection.Interval < 10*time.Millisecond || c.Projection.Interval > time.Minute ||
+		c.Projection.MaxAttempts < 1 || c.Projection.MaxAttempts > 100 {
+		return errors.New(errors.ErrCodeConfigError, "graph projection lease interval or attempts are outside bounds")
+	}
 	return nil
 }
 
@@ -649,6 +720,9 @@ func (c *Config) GetConfigSummary() map[string]interface{} {
 		"query": map[string]interface{}{
 			"max_depth":                c.Query.MaxDepth,
 			"default_time_range_hours": c.Query.DefaultTimeRangeHours,
+			"workbench_v2_enabled":     c.Workbench.Enabled,
+			"workbench_page_nodes":     c.Workbench.PageNodes,
+			"workbench_max_edges":      c.Workbench.MaxEdges,
 		},
 	}
 }

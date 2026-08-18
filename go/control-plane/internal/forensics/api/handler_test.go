@@ -3,13 +3,58 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/repository"
 	"github.com/DATA-DOG/go-sqlmock"
+	"go.uber.org/zap"
 )
+
+func TestTaskCommandAdmissionRequiresFlagAndCompatibleWorker(t *testing.T) {
+	for _, test := range []struct {
+		name, wantCode   string
+		pipeline, worker bool
+		wantStatus       int
+	}{
+		{name: "both disabled", wantCode: "FORENSICS_PIPELINE_NOT_READY", wantStatus: http.StatusServiceUnavailable},
+		{name: "writer flag only", pipeline: true, wantCode: "FORENSICS_PIPELINE_NOT_READY", wantStatus: http.StatusServiceUnavailable},
+		{name: "worker receipt only", worker: true, wantCode: "FORENSICS_PIPELINE_NOT_READY", wantStatus: http.StatusServiceUnavailable},
+		{name: "both ready reaches request validation", pipeline: true, worker: true, wantCode: "start_time and end_time are required", wantStatus: http.StatusBadRequest},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			handler := NewHandler(nil, nil, nil, nil, nil, nil)
+			handler.SetTaskCommandAdmission(test.pipeline, test.worker)
+			recorder := httptest.NewRecorder()
+			request := httptest.NewRequest(http.MethodPost, "/api/v1/pcap/jobs", strings.NewReader(`{}`))
+			handler.CreateJob(recorder, request)
+			if recorder.Code != test.wantStatus || !strings.Contains(recorder.Body.String(), test.wantCode) {
+				t.Fatalf("status=%d body=%s, want status=%d code=%s", recorder.Code, recorder.Body.String(), test.wantStatus, test.wantCode)
+			}
+		})
+	}
+}
+
+func TestVersionedForensicsTaskCommandMetaRejectsCompatibilityFallback(t *testing.T) {
+	baseContext := context.WithValue(context.Background(), httpx.ContextKeyTraceID, "trace-forensics-1")
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/pcap/jobs", nil).WithContext(baseContext)
+	if _, err := versionedForensicsTaskCommandMeta(request, "tenant-a", "actor-a", repository.ForensicsTaskCreateAction, 0, false); err == nil {
+		t.Fatal("expected missing idempotency key and reason to fail closed")
+	}
+	request.Header.Set("Idempotency-Key", "forensics-create-000001")
+	request.Header.Set("X-Action-Reason", "investigate encrypted exfiltration")
+	meta, err := versionedForensicsTaskCommandMeta(request, "tenant-a", "actor-a", repository.ForensicsTaskCreateAction, 0, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if meta.CompatibilityMode || meta.TenantID != "tenant-a" || meta.ActorID != "actor-a" || meta.TraceID != "trace-forensics-1" {
+		t.Fatalf("unexpected versioned command meta: %+v", meta)
+	}
+}
 
 func TestHasForensicsPermission(t *testing.T) {
 	tests := []struct {
@@ -20,6 +65,8 @@ func TestHasForensicsPermission(t *testing.T) {
 	}{
 		{name: "exact", permissions: []string{"pcap:read"}, required: "pcap:read", want: true},
 		{name: "pcap wildcard", permissions: []string{"pcap:*"}, required: "pcap:download", want: true},
+		{name: "pcap wildcard cannot admit restoration", permissions: []string{"pcap:*"}, required: "forensics:write", want: false},
+		{name: "forensics write admits restoration", permissions: []string{"forensics:write"}, required: "forensics:write", want: true},
 		{name: "admin wildcard", permissions: []string{"admin:*"}, required: "pcap:write", want: true},
 		{name: "global wildcard", permissions: []string{"*"}, required: "pcap:write", want: true},
 		{name: "read does not grant write", permissions: []string{"pcap:read"}, required: "pcap:write", want: false},
@@ -32,6 +79,53 @@ func TestHasForensicsPermission(t *testing.T) {
 				t.Fatalf("hasForensicsPermission() = %v, want %v", got, test.want)
 			}
 		})
+	}
+}
+
+func TestNormalizeResultKeyAcceptsLegacyAndVersionedTenantCoordinates(t *testing.T) {
+	handler := &Handler{}
+	for _, test := range []struct {
+		key, tenant string
+		valid       bool
+	}{
+		{key: "results/tenant-a/jobs/result.pcap", tenant: "tenant-a", valid: true},
+		{key: "tenants/tenant-a/forensics/jobs/task-a/pcap/result.pcap", tenant: "tenant-a", valid: true},
+		{key: "tenants/tenant-a/forensics/jobs/task-a/result.pcap", valid: false},
+		{key: "tenants/tenant-a/forensics/jobs/../task-b/pcap/result.pcap", valid: false},
+		{key: "/tenants/tenant-a/forensics/jobs/task-a/pcap/result.pcap", valid: false},
+	} {
+		key, tenant, err := handler.normalizeResultKey(test.key)
+		if (err == nil) != test.valid {
+			t.Fatalf("normalizeResultKey(%q) key=%q tenant=%q err=%v", test.key, key, tenant, err)
+		}
+		if test.valid && (key != test.key || tenant != test.tenant) {
+			t.Fatalf("normalizeResultKey(%q) = %q,%q", test.key, key, tenant)
+		}
+	}
+}
+
+func TestNormalizeForensicsPurposeRejectsMissingOrUnsafeValues(t *testing.T) {
+	if _, err := normalizeForensicsPurpose("", true); err == nil {
+		t.Fatal("missing versioned download purpose was accepted")
+	}
+	if _, err := normalizeForensicsPurpose(strings.Repeat("x", 257), true); err == nil {
+		t.Fatal("oversized versioned download purpose was accepted")
+	}
+	if _, err := normalizeForensicsPurpose("case\nheader", true); err == nil {
+		t.Fatal("unsafe versioned download purpose was accepted")
+	}
+	if purpose, err := normalizeForensicsPurpose("  case CASE-1 review  ", true); err != nil || purpose != "case CASE-1 review" {
+		t.Fatalf("safe purpose = %q, %v", purpose, err)
+	}
+}
+
+func TestVerifyPCAPRejectsMalformedExpectedDigestBeforeObjectAccess(t *testing.T) {
+	handler := &Handler{logger: zap.NewNop()}
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/pcap/verify", strings.NewReader(`{"key":"results/default/job/result.pcap","expected_sha256":"bad"}`))
+	recorder := httptest.NewRecorder()
+	handler.VerifyPCAP(recorder, request)
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d body=%s", recorder.Code, recorder.Body.String())
 	}
 }
 

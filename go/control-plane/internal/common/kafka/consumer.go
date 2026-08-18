@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -79,6 +80,12 @@ type ConsumerMetrics struct {
 type commitRequest struct {
 	messages []kafka.Message
 }
+
+// maxProcessingBackoff 连续处理失败退避上限。
+const maxProcessingBackoff = 30 * time.Second
+
+// processingCircuitBreakThreshold 连续失败熔断告警阈值。
+const processingCircuitBreakThreshold = 30
 
 func NewConsumer(config ConsumerConfig, logger *zap.Logger) (*Consumer, error) {
 	if len(config.Brokers) == 0 {
@@ -351,6 +358,25 @@ func (m *ReceivedMessage) GetAllHeaders() map[string]string {
 	return copied
 }
 
+// DuplicateHeaderNames exposes ambiguous Kafka envelopes before the first
+// value wins in the convenience header map.
+func (m *ReceivedMessage) DuplicateHeaderNames() []string {
+	seen := make(map[string]struct{}, len(m.Headers))
+	duplicates := make(map[string]struct{})
+	for _, header := range m.Headers {
+		if _, exists := seen[header.Key]; exists {
+			duplicates[header.Key] = struct{}{}
+		}
+		seen[header.Key] = struct{}{}
+	}
+	result := make([]string, 0, len(duplicates))
+	for name := range duplicates {
+		result = append(result, name)
+	}
+	sort.Strings(result)
+	return result
+}
+
 func (m *ReceivedMessage) TenantID() string {
 	return m.GetHeader("tenant_id")
 }
@@ -471,7 +497,9 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 			}
 			c.recordFetchFailure(err)
 			c.logger.Error("Failed to fetch message", zap.Error(err))
-			time.Sleep(c.config.RetryBackoff)
+			if !sleepWithContext(ctx, c.config.RetryBackoff) {
+				return ctx.Err()
+			}
 			continue
 		}
 		c.recordFetchSuccess()
@@ -531,8 +559,20 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 			}
 
 			if !shouldCommit {
+				failures := atomic.LoadInt64(&c.processingFailures)
+				backoff := c.processingBackoff()
 				c.logger.Warn("Message not committed, will be redelivered",
-					zap.Int64("offset", msg.Offset))
+					zap.Int64("offset", msg.Offset),
+					zap.Int64("consecutive_failures", failures),
+					zap.Duration("backoff", backoff))
+				// 连续失败指数退避 + 熔断告警:避免无 DLQ 时对同一条消息忙循环。
+				if failures >= processingCircuitBreakThreshold && failures%10 == 0 {
+					c.logger.Error("Processing circuit breaker: repeated failures, consumer is stuck",
+						zap.Int64("consecutive_failures", failures))
+				}
+				if !sleepWithContext(ctx, backoff) {
+					return ctx.Err()
+				}
 				continue
 			}
 		} else {
@@ -784,6 +824,35 @@ func (c *Consumer) recordProcessingFailure(err error) {
 	c.lastProcessingErr = err.Error()
 	c.lastProcessingAt = time.Now()
 	c.mu.Unlock()
+}
+
+// processingBackoff 连续处理失败后的指数退避时长(以 2 为底递增,封顶 30s)。
+func (c *Consumer) processingBackoff() time.Duration {
+	failures := atomic.LoadInt64(&c.processingFailures)
+	if failures <= 1 {
+		return c.config.RetryBackoff
+	}
+	shift := failures - 1
+	if shift > 6 {
+		shift = 6
+	}
+	backoff := c.config.RetryBackoff * time.Duration(1<<uint(shift))
+	if backoff > maxProcessingBackoff {
+		return maxProcessingBackoff
+	}
+	return backoff
+}
+
+// sleepWithContext 等待 d 时长,期间 ctx 取消立即返回 false。
+func sleepWithContext(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
+	}
 }
 
 func (c *Consumer) recordProcessingSuccess() {

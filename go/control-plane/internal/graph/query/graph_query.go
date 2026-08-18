@@ -89,33 +89,41 @@ type WorkbenchEdge struct {
 
 // WorkbenchGraph is the database-backed graph contract consumed by the UI.
 type WorkbenchGraph struct {
-	CenterID string           `json:"center_id"`
-	Nodes    []*WorkbenchNode `json:"nodes"`
-	Edges    []*WorkbenchEdge `json:"edges"`
+	CenterID         string           `json:"center_id"`
+	Nodes            []*WorkbenchNode `json:"nodes"`
+	Edges            []*WorkbenchEdge `json:"edges"`
+	Truncated        bool             `json:"truncated"`
+	TruncationReason string           `json:"truncation_reason,omitempty"`
 }
 
 // WorkbenchFilter captures the analyst-controlled neighborhood filters.
 type WorkbenchFilter struct {
-	CenterID    string
-	RequiredIDs []string
-	Depth       int
-	EntityType  string
-	Site        string
-	SinceMS     int64
-	TimeRange   string
-	Limit       int
+	CenterID      string
+	RequiredIDs   []string
+	Depth         int
+	EntityType    string
+	Site          string
+	SinceMS       int64
+	UntilMS       int64
+	TimeRange     string
+	Limit         int
+	EdgeLimit     int
+	NeighborLimit int
+	Bounded       bool
 }
 
 // WorkbenchPath is a persisted relationship path returned for one analysis tab.
 type WorkbenchPath struct {
-	Mode        string           `json:"mode"`
-	SourceID    string           `json:"source_id"`
-	TargetID    string           `json:"target_id"`
-	NodeIDs     []string         `json:"node_ids"`
-	Edges       []*WorkbenchEdge `json:"edges"`
-	Length      int              `json:"length"`
-	RiskLevel   string           `json:"risk_level"`
-	EvidenceIDs []string         `json:"evidence_ids"`
+	Mode             string           `json:"mode"`
+	SourceID         string           `json:"source_id"`
+	TargetID         string           `json:"target_id"`
+	NodeIDs          []string         `json:"node_ids"`
+	Edges            []*WorkbenchEdge `json:"edges"`
+	Length           int              `json:"length"`
+	RiskLevel        string           `json:"risk_level"`
+	EvidenceIDs      []string         `json:"evidence_ids"`
+	Truncated        bool             `json:"truncated"`
+	TruncationReason string           `json:"truncation_reason,omitempty"`
 }
 
 // Path 路径
@@ -164,6 +172,14 @@ type WorkbenchStore interface {
 	LoadWorkbenchGraph(ctx context.Context, tenantID string) ([]*WorkbenchNode, []*WorkbenchEdge, error)
 }
 
+// BoundedWorkbenchStore is the mandatory persistence seam for the governed
+// workbench. Implementations must apply the node, edge and per-hop limits at
+// the database boundary; an in-memory slice after an unbounded tenant scan is
+// not a compliant implementation.
+type BoundedWorkbenchStore interface {
+	LoadWorkbenchGraphBounded(ctx context.Context, tenantID string, filter WorkbenchFilter) ([]*WorkbenchNode, []*WorkbenchEdge, bool, string, error)
+}
+
 // QueryMetrics 查询指标
 type QueryMetrics struct {
 	TotalQueries   int64
@@ -178,11 +194,29 @@ type QueryMetrics struct {
 // query deliberately keeps tenant isolation in both node and edge reads.
 func (g *GraphQuery) GetWorkbenchGraph(ctx context.Context, tenantID string, filter WorkbenchFilter) (*WorkbenchGraph, error) {
 	if g.workbenchStore != nil {
-		nodes, edges, err := g.workbenchStore.LoadWorkbenchGraph(ctx, tenantID)
+		var nodes []*WorkbenchNode
+		var edges []*WorkbenchEdge
+		var sourceTruncated bool
+		var truncationReason string
+		var err error
+		if filter.Bounded {
+			bounded, ok := g.workbenchStore.(BoundedWorkbenchStore)
+			if !ok {
+				return nil, fmt.Errorf("workbench store does not implement bounded traversal")
+			}
+			nodes, edges, sourceTruncated, truncationReason, err = bounded.LoadWorkbenchGraphBounded(ctx, tenantID, filter)
+		} else {
+			nodes, edges, err = g.workbenchStore.LoadWorkbenchGraph(ctx, tenantID)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to load NebulaGraph workbench graph: %w", err)
 		}
-		return filterWorkbenchGraph(nodes, edges, filter), nil
+		graph := filterWorkbenchGraph(nodes, edges, filter)
+		if sourceTruncated {
+			graph.Truncated = true
+			graph.TruncationReason = truncationReason
+		}
+		return graph, nil
 	}
 
 	return g.getClickHouseWorkbenchGraph(ctx, tenantID, filter)
@@ -295,16 +329,18 @@ func filterWorkbenchGraph(nodes []*WorkbenchNode, edges []*WorkbenchEdge, filter
 	if filter.Depth < 1 {
 		filter.Depth = 2
 	}
+	orderedNodes := nodes
+	orderedEdges := edges
 	byID := make(map[string]*WorkbenchNode, len(nodes))
-	for _, node := range nodes {
+	for _, node := range orderedNodes {
 		byID[node.EntityID] = node
 	}
 	centerID := filter.CenterID
 	if _, ok := byID[centerID]; !ok {
 		if _, preferred := byID["host:10.20.4.18"]; preferred {
 			centerID = "host:10.20.4.18"
-		} else if len(nodes) > 0 {
-			centerID = nodes[0].EntityID
+		} else if len(orderedNodes) > 0 {
+			centerID = orderedNodes[0].EntityID
 		}
 	}
 	required := make(map[string]bool, len(filter.RequiredIDs)+1)
@@ -317,8 +353,11 @@ func filterWorkbenchGraph(nodes []*WorkbenchNode, edges []*WorkbenchEdge, filter
 
 	eligibleEdges := make([]*WorkbenchEdge, 0, len(edges))
 	adjacency := make(map[string][]*WorkbenchEdge)
-	for _, edge := range edges {
+	for _, edge := range orderedEdges {
 		if filter.SinceMS > 0 && edge.ObservedAt < filter.SinceMS {
+			continue
+		}
+		if filter.UntilMS > 0 && edge.ObservedAt > filter.UntilMS {
 			continue
 		}
 		eligibleEdges = append(eligibleEdges, edge)
@@ -365,11 +404,13 @@ func filterWorkbenchGraph(nodes []*WorkbenchNode, edges []*WorkbenchEdge, filter
 
 	filteredNodes := make([]*WorkbenchNode, 0, len(visible))
 	retained := make(map[string]bool, len(visible))
+	nodeTruncated := false
 	appendNode := func(node *WorkbenchNode) {
 		if node == nil || !visible[node.EntityID] || retained[node.EntityID] {
 			return
 		}
 		if filter.Limit > 0 && len(filteredNodes) >= filter.Limit {
+			nodeTruncated = true
 			return
 		}
 		filteredNodes = append(filteredNodes, node)
@@ -379,10 +420,11 @@ func filterWorkbenchGraph(nodes []*WorkbenchNode, edges []*WorkbenchEdge, filter
 	for _, nodeID := range filter.RequiredIDs {
 		appendNode(byID[nodeID])
 	}
-	for _, node := range nodes {
+	for _, node := range orderedNodes {
 		appendNode(node)
 	}
 	filteredEdges := make([]*WorkbenchEdge, 0, len(eligibleEdges))
+	edgeTruncated := false
 	for _, edge := range eligibleEdges {
 		if !retained[edge.SourceID] || !retained[edge.TargetID] {
 			continue
@@ -390,9 +432,21 @@ func filterWorkbenchGraph(nodes []*WorkbenchNode, edges []*WorkbenchEdge, filter
 		if minInt(distance[edge.SourceID], distance[edge.TargetID]) >= filter.Depth {
 			continue
 		}
+		if filter.EdgeLimit > 0 && len(filteredEdges) >= filter.EdgeLimit {
+			edgeTruncated = true
+			continue
+		}
 		filteredEdges = append(filteredEdges, edge)
 	}
-	return &WorkbenchGraph{CenterID: centerID, Nodes: filteredNodes, Edges: filteredEdges}
+	graph := &WorkbenchGraph{CenterID: centerID, Nodes: filteredNodes, Edges: filteredEdges}
+	if nodeTruncated {
+		graph.Truncated = true
+		graph.TruncationReason = "node_budget"
+	} else if edgeTruncated {
+		graph.Truncated = true
+		graph.TruncationReason = "edge_budget"
+	}
+	return graph
 }
 
 type workbenchPathStep struct {
@@ -480,7 +534,7 @@ func (g *GraphQuery) FindWorkbenchPath(ctx context.Context, tenantID, sourceID, 
 		nodeIDs, pathEdges, found = findDirectedWorkbenchSegment(adjacency, sourceID, targetID, maxDepth)
 	}
 	if !found {
-		return &WorkbenchPath{Mode: mode, SourceID: sourceID, TargetID: targetID, NodeIDs: []string{}, Edges: []*WorkbenchEdge{}, EvidenceIDs: []string{}}, nil
+		return &WorkbenchPath{Mode: mode, SourceID: sourceID, TargetID: targetID, NodeIDs: []string{}, Edges: []*WorkbenchEdge{}, EvidenceIDs: []string{}, Truncated: graph.Truncated, TruncationReason: graph.TruncationReason}, nil
 	}
 	risk := "low"
 	evidenceSet := make(map[string]bool)
@@ -494,7 +548,7 @@ func (g *GraphQuery) FindWorkbenchPath(ctx context.Context, tenantID, sourceID, 
 			evidenceIDs = append(evidenceIDs, edge.EvidenceID)
 		}
 	}
-	return &WorkbenchPath{Mode: mode, SourceID: sourceID, TargetID: targetID, NodeIDs: nodeIDs, Edges: pathEdges, Length: len(pathEdges), RiskLevel: risk, EvidenceIDs: evidenceIDs}, nil
+	return &WorkbenchPath{Mode: mode, SourceID: sourceID, TargetID: targetID, NodeIDs: nodeIDs, Edges: pathEdges, Length: len(pathEdges), RiskLevel: risk, EvidenceIDs: evidenceIDs, Truncated: graph.Truncated, TruncationReason: graph.TruncationReason}, nil
 }
 
 func workbenchEdgeMatchesMode(edge *WorkbenchEdge, mode string) bool {

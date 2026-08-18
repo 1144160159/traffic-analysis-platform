@@ -59,6 +59,7 @@ const (
 	ProtoMessageFlowEvent    = "traffic.v1.FlowEvent"
 	ProtoMessageSessionEvent = "traffic.v1.SessionEvent"
 	ProtoMessagePcapIndex    = "traffic.v1.PcapIndexMeta"
+	ProtoMessageAssetBinding = "traffic.v1.MacIpBinding"
 )
 
 var PublicMethodPrefixes = []string{
@@ -114,6 +115,7 @@ const (
 	HealthCheckTimeout      = 2 * time.Second
 	GracefulShutdownTimeout = 25 * time.Second
 	KafkaFlushTimeout       = 5 * time.Second
+	ShutdownDrainDelay      = 1 * time.Second
 	HTTPRequestTimeout      = 30 * time.Second
 	GRPCRequestTimeout      = 30 * time.Second
 )
@@ -154,15 +156,17 @@ const (
 )
 
 const (
-	DefaultDLQFallbackDir = "/var/log/ingest-gateway/dlq-fallback"
-	DefaultHealthAddr     = ":8081"
-	DefaultMetricsAddr    = ":9090"
-	DefaultGRPCAddr       = ":50051"
-	DefaultHTTPAddr       = ":8080"
-	DefaultConfigPath     = "./config.env"
-	DefaultTLSCertPath    = "./certs/server/server-cert.pem"
-	DefaultTLSKeyPath     = "./certs/server/server-key.pem"
-	DefaultTLSCAPath      = "./certs/ca/ca-cert.pem"
+	DefaultDLQFallbackDir      = "/var/log/ingest-gateway/dlq-fallback"
+	DefaultHealthAddr          = ":8081"
+	DefaultMetricsAddr         = ":9090"
+	DefaultGRPCAddr            = ":50051"
+	DefaultHTTPAddr            = ":8080"
+	DefaultConfigPath          = "./config.env"
+	DefaultTLSCertPath         = "./certs/server/server-cert.pem"
+	DefaultTLSKeyPath          = "./certs/server/server-key.pem"
+	DefaultTLSCAPath           = "./certs/ca/ca-cert.pem"
+	DefaultTLSReloadInterval   = 30 * time.Second
+	DefaultTLSMinimumRemaining = 30 * 24 * time.Hour
 )
 
 const (

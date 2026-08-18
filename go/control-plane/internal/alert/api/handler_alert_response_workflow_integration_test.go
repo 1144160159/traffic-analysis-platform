@@ -68,6 +68,12 @@ func TestAlertResponseWorkflowPostgresIntegration(t *testing.T) {
 	if status != "pending_approval" || approvalStatus != "pending" || revision != 1 {
 		t.Fatalf("unexpected initial state: status=%s approval=%s revision=%d", status, approvalStatus, revision)
 	}
+	pendingRead := runAlertResponseIntegrationRequest(t, handler.GetAlertResponseAction,
+		http.MethodGet, "/api/v1/alerts/"+alertID+"/response-actions/"+jobID, "",
+		tenantID, alertID, jobID, "operator-a", "", []string{authmodel.ScopeAlertRead})
+	if pendingRead.Code != http.StatusOK || responseBooleanFromEnvelope(t, pendingRead, "receipt_available") {
+		t.Fatalf("pending action inferred an execution receipt: status=%d body=%s", pendingRead.Code, pendingRead.Body.String())
+	}
 	var outboxCount int
 	if err := db.QueryRow(`SELECT count(*) FROM alert_response_outbox WHERE tenant_id=$1 AND job_id=$2`, tenantID, jobID).Scan(&outboxCount); err != nil {
 		t.Fatal(err)
@@ -216,6 +222,33 @@ func TestAlertResponseCompensationQueuePostgresIntegration(t *testing.T) {
 	handler.SetActionAuditWriter(NewAlertActionAuditWriter(db, zap.NewNop()))
 	handler.SetResponseCompensationEnabled(true)
 	handler.SetResponseCompensationMaxAttempts(5)
+	receiptRead := runAlertResponseIntegrationRequest(t, handler.GetAlertResponseAction,
+		http.MethodGet, "/api/v1/alerts/"+alertID+"/response-actions/"+jobID, "",
+		tenantID, alertID, jobID, "security-operator", "", []string{authmodel.ScopeAlertRead})
+	if receiptRead.Code != http.StatusOK {
+		t.Fatalf("provider receipt read status=%d body=%s", receiptRead.Code, receiptRead.Body.String())
+	}
+	var receiptEnvelope struct {
+		Data struct {
+			ReceiptAvailable bool `json:"receipt_available"`
+			Receipt          struct {
+				Provider          string   `json:"provider"`
+				ProviderReceiptID string   `json:"provider_receipt_id"`
+				EffectState       string   `json:"effect_state"`
+				EffectIDs         []string `json:"effect_ids"`
+				ExternalEffect    bool     `json:"external_effect"`
+			} `json:"execution_receipt"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(receiptRead.Body.Bytes(), &receiptEnvelope); err != nil {
+		t.Fatal(err)
+	}
+	if !receiptEnvelope.Data.ReceiptAvailable || receiptEnvelope.Data.Receipt.Provider != "ephemeral-firewall" ||
+		receiptEnvelope.Data.Receipt.ProviderReceiptID != "execution-receipt-"+suffix ||
+		receiptEnvelope.Data.Receipt.EffectState != "confirmed" || !receiptEnvelope.Data.Receipt.ExternalEffect ||
+		len(receiptEnvelope.Data.Receipt.EffectIDs) != 1 {
+		t.Fatalf("provider receipt read diverged: %#v", receiptEnvelope.Data)
+	}
 	body := `{"expected_revision":3,"reason":"restore approved network access"}`
 	request := runAlertResponseIntegrationRequest(t, handler.RequestAlertResponseCompensation,
 		http.MethodPost, "/api/v1/alerts/"+alertID+"/response-actions/"+jobID+"/compensations",
@@ -262,7 +295,7 @@ func runAlertResponseIntegrationRequest(
 ) *httptest.ResponseRecorder {
 	t.Helper()
 	request := responseWorkflowRequest(method, path, body, permissions, actor, idempotencyKey)
-	request.Header.Set("X-Tenant-ID", tenantID)
+	request = withTenant(request, tenantID)
 	request = muxWithAlertResponseVars(request, alertID, jobID)
 	recorder := httptest.NewRecorder()
 	handler(recorder, request)

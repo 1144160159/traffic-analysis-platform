@@ -13,7 +13,6 @@ package repository
 
 import (
 	"context"
-	"crypto/md5"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -479,13 +478,16 @@ func (r *RuleRepository) CreateVersion(ctx context.Context, rule *model.Rule) er
 	ctx, span := otel.StartSpan(ctx, "RuleRepository.CreateVersion")
 	defer span.End()
 
-	contentJSON, err := json.Marshal(rule)
+	contentURI, checksum, err := model.EncodeRuleVersionSnapshot(rule)
 	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to marshal rule content")
+		return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to encode rule version snapshot")
 	}
 
 	versionID := fmt.Sprintf("%s-v%d", rule.RuleID, rule.Version)
-	checksum := fmt.Sprintf("%x", md5Sum(contentJSON))
+	createdBy := rule.UpdatedBy
+	if createdBy == "" {
+		createdBy = rule.CreatedBy
+	}
 
 	query := `
 		INSERT INTO rule_versions (rule_version, rule_id, tenant_id, version, content_uri, checksum, status, created_by, created_at)
@@ -493,10 +495,10 @@ func (r *RuleRepository) CreateVersion(ctx context.Context, rule *model.Rule) er
 		ON CONFLICT (rule_version) DO NOTHING
 	`
 
-	_, err = r.db.ExecContext(ctx, query,
+	result, err := r.db.ExecContext(ctx, query,
 		versionID, rule.RuleID, rule.TenantID, rule.Version,
-		fmt.Sprintf("inline:%s", string(contentJSON)),
-		checksum, "active", rule.CreatedBy, time.Now(),
+		contentURI,
+		checksum, "active", createdBy, time.Now(),
 	)
 
 	if err != nil {
@@ -504,6 +506,13 @@ func (r *RuleRepository) CreateVersion(ctx context.Context, rule *model.Rule) er
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to insert rule version")
 	}
 
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to inspect rule version insert")
+	}
+	if rowsAffected != 1 {
+		return errors.Newf(errors.ErrCodeVersionConflict, "rule version already exists: %s", versionID)
+	}
 	return nil
 }
 
@@ -513,7 +522,8 @@ func (r *RuleRepository) GetVersions(ctx context.Context, ruleID string) ([]*mod
 	defer span.End()
 
 	query := `
-		SELECT rule_version, rule_id, tenant_id, version, content_uri, checksum, status, created_by, created_at
+		SELECT rule_version, rule_id, tenant_id, version, content_uri, checksum, status,
+		       COALESCE(change_log, ''), COALESCE(created_by, ''), created_at
 		FROM rule_versions
 		WHERE rule_id = $1
 		ORDER BY version DESC
@@ -531,7 +541,10 @@ func (r *RuleRepository) GetVersions(ctx context.Context, ruleID string) ([]*mod
 		var checksum sql.NullString
 		var version sql.NullInt64
 
-		err := rows.Scan(&v.RuleVersionID, &v.RuleID, &v.TenantID, &version, &v.ContentURI, &checksum, &v.Status, &v.CreatedBy, &v.CreatedAt)
+		err := rows.Scan(
+			&v.RuleVersionID, &v.RuleID, &v.TenantID, &version, &v.ContentURI,
+			&checksum, &v.Status, &v.ChangeLog, &v.CreatedBy, &v.CreatedAt,
+		)
 		if err != nil {
 			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan version")
 		}
@@ -561,7 +574,8 @@ func (r *RuleRepository) GetVersion(ctx context.Context, ruleID string, version 
 	versionID := fmt.Sprintf("%s-v%d", ruleID, version)
 
 	query := `
-		SELECT rule_version, rule_id, tenant_id, version, content_uri, checksum, status, created_by, created_at
+		SELECT rule_version, rule_id, tenant_id, version, content_uri, checksum, status,
+		       COALESCE(change_log, ''), COALESCE(created_by, ''), created_at
 		FROM rule_versions
 		WHERE rule_version = $1
 	`
@@ -571,7 +585,8 @@ func (r *RuleRepository) GetVersion(ctx context.Context, ruleID string, version 
 	var versionNum sql.NullInt64
 
 	err := r.db.QueryRowContext(ctx, query, versionID).Scan(
-		&v.RuleVersionID, &v.RuleID, &v.TenantID, &versionNum, &v.ContentURI, &checksum, &v.Status, &v.CreatedBy, &v.CreatedAt,
+		&v.RuleVersionID, &v.RuleID, &v.TenantID, &versionNum, &v.ContentURI,
+		&checksum, &v.Status, &v.ChangeLog, &v.CreatedBy, &v.CreatedAt,
 	)
 
 	if err != nil {
@@ -996,16 +1011,20 @@ func (r *RuleRepository) scanRules(rows *sql.Rows, total int) ([]*model.Rule, in
 }
 
 // Transaction 执行事务
-func (r *RuleRepository) Transaction(ctx context.Context, fn func(ctx context.Context, tx *sql.Tx) error) error {
+func (r *RuleRepository) Transaction(ctx context.Context, fn func(ctx context.Context, tx *sql.Tx) error) (err error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to begin transaction")
 	}
 
+	// panic 收敛为 error:事务内 panic 先回滚再转为返回错误,避免 panic 击穿进程。
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p)
+			if rbErr := tx.Rollback(); rbErr != nil {
+				r.logger.Error("Failed to rollback transaction after panic", zap.Error(rbErr))
+			}
+			r.logger.Error("Panic recovered in transaction", zap.Any("panic", p))
+			err = fmt.Errorf("panic recovered in transaction: %v", p)
 		}
 	}()
 
@@ -1058,11 +1077,4 @@ func (r *RuleRepository) Search(ctx context.Context, tenantID, keyword string, l
 
 	rules, _, err := r.queryRulesWithArgs(ctx, query, total, tenantID, searchPattern, limit, offset)
 	return rules, total, err
-}
-
-// md5Sum 计算 MD5
-func md5Sum(data []byte) []byte {
-	h := md5.New()
-	h.Write(data)
-	return h.Sum(nil)
 }

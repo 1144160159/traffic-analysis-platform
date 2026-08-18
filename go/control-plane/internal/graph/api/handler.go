@@ -34,6 +34,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/config"
 	graphlogging "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/logging"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/monitoring"
+	graphprojection "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/projection"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/query"
 )
 
@@ -53,11 +54,13 @@ type Handler struct {
 	rateLimiter        *storage.SlidingWindowRateLimiter
 	security           config.SecurityConfig
 	queryConfig        config.QueryConfig
+	workbenchConfig    config.WorkbenchConfig
 	logger             *zap.Logger
 	ipValidator        *validation.IPValidator
 	queryLogger        *graphlogging.QueryLogger     // 新增
 	slowQueryDetector  *monitoring.SlowQueryDetector // 新增
 	tenantConfigLoader *config.TenantConfigLoader    // 新增
+	projectionStatus   *graphprojection.StatusRepository
 }
 
 // NewHandler 创建处理器（保留向后兼容）
@@ -68,17 +71,19 @@ func NewHandler(
 	rateLimiter *storage.SlidingWindowRateLimiter,
 	security config.SecurityConfig,
 	queryConfig config.QueryConfig,
+	workbenchConfig config.WorkbenchConfig,
 	logger *zap.Logger,
 ) *Handler {
 	return &Handler{
-		graphQuery:  &query.GraphQueryWithCircuitBreaker{GraphQuery: graphQuery},
-		cache:       cache,
-		auditLogger: auditLogger,
-		rateLimiter: rateLimiter,
-		security:    security,
-		queryConfig: queryConfig,
-		logger:      logger,
-		ipValidator: validation.NewIPValidator(),
+		graphQuery:      &query.GraphQueryWithCircuitBreaker{GraphQuery: graphQuery},
+		cache:           cache,
+		auditLogger:     auditLogger,
+		rateLimiter:     rateLimiter,
+		security:        security,
+		queryConfig:     queryConfig,
+		workbenchConfig: workbenchConfig,
+		logger:          logger,
+		ipValidator:     validation.NewIPValidator(),
 	}
 }
 
@@ -90,6 +95,7 @@ func NewHandlerWithMonitoring(
 	rateLimiter *storage.SlidingWindowRateLimiter,
 	security config.SecurityConfig,
 	queryConfig config.QueryConfig,
+	workbenchConfig config.WorkbenchConfig,
 	logger *zap.Logger,
 	queryLogger *graphlogging.QueryLogger,
 	slowQueryDetector *monitoring.SlowQueryDetector,
@@ -102,6 +108,7 @@ func NewHandlerWithMonitoring(
 		rateLimiter:        rateLimiter,
 		security:           security,
 		queryConfig:        queryConfig,
+		workbenchConfig:    workbenchConfig,
 		logger:             logger,
 		ipValidator:        validation.NewIPValidator(),
 		queryLogger:        queryLogger,
@@ -134,6 +141,7 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/api/v1/graph/explore/batch", h.BatchExplore).Methods("POST", "OPTIONS")
 	r.HandleFunc("/api/v1/graph/workbench", h.GetWorkbenchGraph).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/v1/graph/workbench/path", h.GetWorkbenchPath).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/v1/graph/projections/status", h.GetProjectionStatus).Methods("GET", "OPTIONS")
 
 	// 实体详情
 	r.HandleFunc("/api/v1/graph/entity/{id}", h.GetEntityDetails).Methods("GET", "OPTIONS")
@@ -150,6 +158,38 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/api/v1/graph/cache/stats", h.GetCacheStats).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/v1/graph/cache/invalidate", h.InvalidateCache).Methods("POST", "OPTIONS")
 	r.HandleFunc("/api/v1/graph/cache/warmup", h.WarmupCache).Methods("POST", "OPTIONS") // 新增
+}
+
+func (h *Handler) SetProjectionStatusRepository(repository *graphprojection.StatusRepository) {
+	h.projectionStatus = repository
+}
+
+func (h *Handler) GetProjectionStatus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tenantID := httpx.GetTenantID(ctx)
+	if tenantID == "" {
+		errors.WriteError(w, errors.New(errors.ErrCodeTenantNotFound, "Tenant ID is required"), httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	if h.projectionStatus == nil {
+		errors.WriteError(w, errors.New(errors.ErrCodeServiceUnavailable, "Graph projection status is unavailable"), httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	status, err := h.projectionStatus.Load(ctx, tenantID)
+	if err != nil {
+		h.logger.Error("Failed to load graph projection status", zap.String("tenant_id", tenantID), zap.Error(err))
+		errors.WriteError(w, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to load graph projection status"), httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	errors.WriteSuccess(w, map[string]interface{}{
+		"projection": status,
+		"meta": map[string]interface{}{
+			"source":   "postgresql_graph_projection_authority",
+			"complete": status.Complete,
+			"stale":    status.State == "stale",
+			"partial":  status.State == "partial" || status.State == "failed",
+		},
+	}, httpx.GetTraceID(ctx))
 }
 
 // GetWorkbenchGraph returns the persisted multi-entity graph used by the
@@ -172,7 +212,51 @@ func (h *Handler) GetWorkbenchGraph(w http.ResponseWriter, r *http.Request) {
 	}
 	tenantQueryConfig := h.getTenantQueryConfig(ctx, tenantID)
 	filter.Limit = tenantQueryConfig.MaxNodes
-	graph, err := h.graphQuery.GetWorkbenchGraph(ctx, tenantID, filter)
+	nextContinuation := ""
+	continuationMode := "none"
+	redactedFields := []string{}
+	queryFingerprint := ""
+	pageSize := 0
+	if h.workbenchConfig.Enabled {
+		hardNodeLimit := tenantQueryConfig.MaxNodes
+		pageSize = minWorkbenchInt(h.workbenchConfig.PageNodes, hardNodeLimit)
+		rawNodeLimit := strings.TrimSpace(r.URL.Query().Get("max_nodes"))
+		if rawNodeLimit != "" {
+			requested, parseErr := strconv.Atoi(rawNodeLimit)
+			if parseErr != nil || requested < 10 || requested > pageSize {
+				errors.WriteError(w, errors.New(errors.ErrCodeInvalidParameter, "max_nodes must be within 10 and the configured page size"), httpx.GetTraceID(ctx), r.URL.Path)
+				return
+			}
+			pageSize = requested
+		}
+		filter.Bounded = true
+		filter.Limit = pageSize
+		filter.EdgeLimit = h.workbenchConfig.MaxEdges
+		filter.NeighborLimit = tenantQueryConfig.MaxNeighborsPerHop
+		if rawContinuation := strings.TrimSpace(r.URL.Query().Get("continuation")); rawContinuation != "" {
+			payload, decodeErr := decodeWorkbenchContinuation(rawContinuation, tenantID, "", h.workbenchConfig.ContinuationSecret, time.Now())
+			queryFingerprint = workbenchFilterFingerprint(filter, payload.PageSize, filter.EdgeLimit)
+			if decodeErr != nil || payload.Fingerprint != queryFingerprint || payload.NodeLimit > hardNodeLimit ||
+				rawNodeLimit != "" && pageSize != payload.PageSize {
+				errors.WriteError(w, errors.New(errors.ErrCodeInvalidParameter, "continuation is invalid, expired or belongs to another query"), httpx.GetTraceID(ctx), r.URL.Path)
+				return
+			}
+			filter.Limit = payload.NodeLimit
+			filter.SinceMS = payload.SinceMS
+			filter.UntilMS = payload.UntilMS
+			pageSize = payload.PageSize
+		} else {
+			queryFingerprint = workbenchFilterFingerprint(filter, pageSize, filter.EdgeLimit)
+		}
+		continuationMode = "replace_accumulated"
+	}
+	queryCtx := ctx
+	queryCancel := func() {}
+	if h.workbenchConfig.Enabled && tenantQueryConfig.QueryTimeoutSec > 0 {
+		queryCtx, queryCancel = context.WithTimeout(ctx, time.Duration(tenantQueryConfig.QueryTimeoutSec)*time.Second)
+	}
+	defer queryCancel()
+	graph, err := h.graphQuery.GetWorkbenchGraph(queryCtx, tenantID, filter)
 	if err != nil {
 		h.logger.Error("Failed to load entity graph workbench",
 			zap.String("tenant_id", tenantID),
@@ -183,6 +267,22 @@ func (h *Handler) GetWorkbenchGraph(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	queryDurationMS := time.Since(queryStartedAt).Milliseconds()
+	if h.workbenchConfig.Enabled {
+		graph, redactedFields = governWorkbenchGraph(graph, httpx.GetPermissions(ctx))
+		if graph.Truncated && graph.TruncationReason == "node_budget" && filter.Limit < tenantQueryConfig.MaxNodes {
+			nextLimit := minWorkbenchInt(filter.Limit+pageSize, tenantQueryConfig.MaxNodes)
+			nextContinuation, err = encodeWorkbenchContinuation(workbenchContinuation{
+				Version: workbenchContinuationVersion, TenantID: tenantID, Fingerprint: queryFingerprint,
+				NodeLimit: nextLimit, PageSize: pageSize,
+				SinceMS: filter.SinceMS, UntilMS: filter.UntilMS,
+				ExpiresAt: time.Now().Add(h.workbenchConfig.ContinuationTTL).Unix(),
+			}, h.workbenchConfig.ContinuationSecret)
+			if err != nil {
+				errors.WriteError(w, errors.Wrap(err, errors.ErrCodeInternal, "Failed to create graph continuation"), httpx.GetTraceID(ctx), r.URL.Path)
+				return
+			}
+		}
+	}
 
 	if h.auditLogger != nil {
 		h.auditLogger.Log(ctx, &audit.AuditEvent{
@@ -206,21 +306,38 @@ func (h *Handler) GetWorkbenchGraph(w http.ResponseWriter, r *http.Request) {
 	errors.WriteSuccess(w, map[string]interface{}{
 		"graph": graph,
 		"meta": map[string]interface{}{
-			"source":            h.graphQuery.WorkbenchSource(),
-			"node_count":        len(graph.Nodes),
-			"edge_count":        len(graph.Edges),
-			"depth":             filter.Depth,
-			"entity_type":       filter.EntityType,
-			"site":              filter.Site,
-			"time_range":        filter.TimeRange,
-			"query_duration_ms": queryDurationMS,
-			"node_limit":        tenantQueryConfig.MaxNodes,
-			"cache_hit_rate":    "N/A",
-			"cache_applicable":  false,
-			"data_origin":       "nebula_graph_persisted_projection",
-			"slow_query":        queryDurationMS >= 500,
+			"source":                  h.graphQuery.WorkbenchSource(),
+			"node_count":              len(graph.Nodes),
+			"edge_count":              len(graph.Edges),
+			"depth":                   filter.Depth,
+			"entity_type":             filter.EntityType,
+			"site":                    filter.Site,
+			"time_range":              filter.TimeRange,
+			"query_duration_ms":       queryDurationMS,
+			"node_limit":              tenantQueryConfig.MaxNodes,
+			"response_node_limit":     filter.Limit,
+			"edge_limit":              filter.EdgeLimit,
+			"neighbors_per_hop_limit": filter.NeighborLimit,
+			"truncated":               graph.Truncated,
+			"truncation_reason":       graph.TruncationReason,
+			"next_continuation":       nextContinuation,
+			"continuation_mode":       continuationMode,
+			"redacted_fields":         redactedFields,
+			"query_fingerprint":       queryFingerprint,
+			"as_of_ms":                filter.UntilMS,
+			"cache_hit_rate":          "N/A",
+			"cache_applicable":        false,
+			"data_origin":             "nebula_graph_persisted_projection",
+			"slow_query":              queryDurationMS >= 500,
 		},
 	}, httpx.GetTraceID(ctx))
+}
+
+func minWorkbenchInt(left, right int) int {
+	if left < right {
+		return left
+	}
+	return right
 }
 
 func parseWorkbenchFilter(r *http.Request) (query.WorkbenchFilter, *errors.AppError) {
@@ -248,13 +365,15 @@ func parseWorkbenchFilter(r *http.Request) (query.WorkbenchFilter, *errors.AppEr
 		return filter, errors.New(errors.ErrCodeInvalidParameter, "unsupported entity_type")
 	}
 	timeRange := strings.TrimSpace(r.URL.Query().Get("time_range"))
+	now := time.Now()
+	filter.UntilMS = now.UnixMilli()
 	switch timeRange {
 	case "", "24h":
 		filter.TimeRange = "24h"
-		filter.SinceMS = time.Now().Add(-24 * time.Hour).UnixMilli()
+		filter.SinceMS = now.Add(-24 * time.Hour).UnixMilli()
 	case "7d":
 		filter.TimeRange = "7d"
-		filter.SinceMS = time.Now().Add(-7 * 24 * time.Hour).UnixMilli()
+		filter.SinceMS = now.Add(-7 * 24 * time.Hour).UnixMilli()
 	case "all":
 		filter.TimeRange = "all"
 		filter.SinceMS = 0
@@ -301,17 +420,38 @@ func (h *Handler) GetWorkbenchPath(w http.ResponseWriter, r *http.Request) {
 		errors.WriteError(w, filterErr, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	tenantQueryConfig := h.getTenantQueryConfig(ctx, tenantID)
+	if h.workbenchConfig.Enabled && maxDepth > minWorkbenchInt(6, tenantQueryConfig.MaxPathSearchHops) {
+		errors.WriteError(w, errors.New(errors.ErrCodeInvalidParameter, "max_depth exceeds the tenant path budget"), httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
 	filter.CenterID = sourceID
 	filter.Depth = maxDepth
-	filter.Limit = h.getTenantQueryConfig(ctx, tenantID).MaxNodes
+	filter.Limit = tenantQueryConfig.MaxNodes
+	if h.workbenchConfig.Enabled {
+		filter.Bounded = true
+		filter.EdgeLimit = h.workbenchConfig.MaxEdges
+		filter.NeighborLimit = tenantQueryConfig.MaxNeighborsPerHop
+	}
 	path, err := h.graphQuery.FindWorkbenchPath(ctx, tenantID, sourceID, targetID, anchorID, mode, filter)
 	if err != nil {
 		errors.WriteError(w, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to analyze entity graph path"), httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	redactedFields := []string{}
+	if h.workbenchConfig.Enabled {
+		path, redactedFields = governWorkbenchPath(path, httpx.GetPermissions(ctx))
+	}
 	errors.WriteSuccess(w, map[string]interface{}{
 		"path": path,
-		"meta": map[string]interface{}{"source": h.graphQuery.WorkbenchSource(), "mode": mode, "anchor_id": anchorID, "site": filter.Site, "entity_type": filter.EntityType, "time_range": filter.TimeRange, "max_depth": filter.Depth},
+		"meta": map[string]interface{}{
+			"source": h.graphQuery.WorkbenchSource(), "mode": mode, "anchor_id": anchorID,
+			"site": filter.Site, "entity_type": filter.EntityType, "time_range": filter.TimeRange,
+			"max_depth": filter.Depth, "node_limit": filter.Limit, "edge_limit": filter.EdgeLimit,
+			"neighbors_per_hop_limit": filter.NeighborLimit, "truncated": path.Truncated,
+			"truncation_reason": path.TruncationReason, "redacted_fields": redactedFields,
+			"as_of_ms": filter.UntilMS,
+		},
 	}, httpx.GetTraceID(ctx))
 }
 

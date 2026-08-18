@@ -3,6 +3,10 @@ package consumer
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,12 +17,182 @@ import (
 	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/config"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/sourcequality"
 	graphNebula "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/nebula"
 )
 
 type OpenSearchAssetProjection struct {
 	client *opensearch.Client
 	index  string
+}
+
+type ClickHouseAssetProjection struct {
+	db            *sql.DB
+	table         string
+	consumerGroup string
+}
+
+type assetSourceFact struct {
+	Rail                   string `json:"rail"`
+	TenantID               string `json:"tenant_id"`
+	AggregateID            string `json:"aggregate_id"`
+	EventID                string `json:"event_id"`
+	EventTimeMS            int64  `json:"event_time_ms"`
+	IngestTimeMS           int64  `json:"ingest_time_ms"`
+	SchemaVersion          string `json:"schema_version"`
+	SourceTopic            string `json:"source_topic"`
+	SourcePartition        int    `json:"source_partition"`
+	SourceOffset           int64  `json:"source_offset"`
+	SourceTimestampMS      int64  `json:"source_timestamp_ms"`
+	SourcePayloadSHA256    string `json:"source_payload_sha256"`
+	SourceVersion          int64  `json:"source_version"`
+	ProjectionIdentity     string `json:"projection_identity"`
+	SourceQualityReceiptID string `json:"source_quality_receipt_id"`
+	PayloadBase64          string `json:"payload_base64"`
+	ProjectionHash         string `json:"projection_hash"`
+}
+
+func NewClickHouseAssetProjection(
+	db *sql.DB,
+	table string,
+	consumerGroup string,
+) (*ClickHouseAssetProjection, error) {
+	if db == nil {
+		return nil, fmt.Errorf("asset projection ClickHouse database is required")
+	}
+	if strings.TrimSpace(table) != "traffic.source_asset_facts_v1" {
+		return nil, fmt.Errorf("asset source facts are pinned to traffic.source_asset_facts_v1")
+	}
+	if strings.TrimSpace(consumerGroup) == "" {
+		return nil, fmt.Errorf("asset projection consumer group is required")
+	}
+	return &ClickHouseAssetProjection{
+		db: db, table: strings.TrimSpace(table), consumerGroup: strings.TrimSpace(consumerGroup),
+	}, nil
+}
+
+func (p *ClickHouseAssetProjection) Name() string { return assetProjectionClickHouse }
+
+func (p *ClickHouseAssetProjection) Projection(event AssetUpsertedV2) ([]byte, error) {
+	if event.SourceTopic != "asset.events.v2" || event.SourcePartition < 0 ||
+		event.SourceOffset < 0 || event.SourceTimestamp <= 0 || len(event.RawPayload) == 0 {
+		return nil, fmt.Errorf("asset ClickHouse projection requires durable source coordinates")
+	}
+	if sourcequality.HashSource(event.RawPayload) != event.SourceSHA256 {
+		return nil, fmt.Errorf("asset ClickHouse source payload checksum mismatch")
+	}
+	eventTimeMS := event.Asset.LastSeen.UnixMilli()
+	if eventTimeMS <= 0 || event.AggregateVersion <= 0 {
+		return nil, fmt.Errorf("asset ClickHouse event time and version must be positive")
+	}
+	receipt, err := sourcequality.Build(sourcequality.Input{
+		TenantID: event.TenantID, Rail: sourcequality.RailAsset,
+		ConsumerGroup: p.consumerGroup,
+		Source: sourcequality.SourceTuple{
+			Topic: event.SourceTopic, Partition: event.SourcePartition, Offset: event.SourceOffset,
+		},
+		Category: sourcequality.Accepted, EventID: event.EventID,
+		SourceSHA256: event.SourceSHA256, WatermarkMS: -1,
+		ObservedAtMS: event.SourceTimestamp,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("build asset source-quality receipt identity: %w", err)
+	}
+	projectionIdentity := sha256HexString(
+		"source-fact/v1\x00asset\x00" + event.TenantID + "\x00" + event.EventID)
+	fact := assetSourceFact{
+		Rail: "asset", TenantID: event.TenantID, AggregateID: event.AssetID,
+		EventID: event.EventID, EventTimeMS: eventTimeMS,
+		IngestTimeMS: event.SourceTimestamp, SchemaVersion: "v2",
+		SourceTopic: event.SourceTopic, SourcePartition: event.SourcePartition,
+		SourceOffset: event.SourceOffset, SourceTimestampMS: event.SourceTimestamp,
+		SourcePayloadSHA256: event.SourceSHA256, SourceVersion: event.AggregateVersion,
+		ProjectionIdentity: projectionIdentity, SourceQualityReceiptID: receipt.ReceiptID,
+		PayloadBase64: base64.StdEncoding.EncodeToString(event.RawPayload),
+	}
+	unsigned, err := json.Marshal(fact)
+	if err != nil {
+		return nil, fmt.Errorf("marshal unsigned asset source fact: %w", err)
+	}
+	fact.ProjectionHash = sha256HexBytes(unsigned)
+	projection, err := json.Marshal(fact)
+	if err != nil {
+		return nil, fmt.Errorf("marshal asset source fact: %w", err)
+	}
+	return projection, nil
+}
+
+func (p *ClickHouseAssetProjection) Apply(
+	ctx context.Context,
+	_ AssetUpsertedV2,
+	projection []byte,
+) error {
+	var fact assetSourceFact
+	if err := json.Unmarshal(projection, &fact); err != nil {
+		return fmt.Errorf("decode asset source fact: %w", err)
+	}
+	if fact.Rail != "asset" || fact.TenantID == "" || fact.ProjectionIdentity == "" ||
+		fact.SourceVersion <= 0 || fact.ProjectionHash == "" {
+		return fmt.Errorf("invalid asset source fact projection")
+	}
+	var count, currentVersion int64
+	var currentHash string
+	if err := p.db.QueryRowContext(ctx,
+		`SELECT count(),if(count()>0,max(source_version),0),`+
+			`if(count()>0,argMax(projection_hash,source_version),'') `+
+			`FROM traffic.source_asset_facts_v1 WHERE projection_identity=?`,
+		fact.ProjectionIdentity,
+	).Scan(&count, &currentVersion, &currentHash); err != nil {
+		return fmt.Errorf("read asset ClickHouse source-fact version: %w", err)
+	}
+	if count > 0 {
+		switch {
+		case currentVersion > fact.SourceVersion:
+			return fmt.Errorf("stale asset source-fact version")
+		case currentVersion == fact.SourceVersion && currentHash == fact.ProjectionHash:
+			return nil
+		case currentVersion == fact.SourceVersion:
+			return fmt.Errorf("asset source-fact version hash conflict")
+		}
+	}
+	_, err := p.db.ExecContext(ctx, `
+		INSERT INTO traffic.source_asset_facts_v1 (
+		  rail,tenant_id,aggregate_id,event_id,event_time_ms,ingest_time_ms,
+		  schema_version,source_topic,source_partition,source_offset,
+		  source_timestamp_ms,source_payload_sha256,source_version,
+		  projection_identity,source_quality_receipt_id,payload_base64,projection_hash
+		) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		fact.Rail, fact.TenantID, fact.AggregateID, fact.EventID,
+		fact.EventTimeMS, fact.IngestTimeMS, fact.SchemaVersion,
+		fact.SourceTopic, fact.SourcePartition, fact.SourceOffset,
+		fact.SourceTimestampMS, fact.SourcePayloadSHA256, fact.SourceVersion,
+		fact.ProjectionIdentity, fact.SourceQualityReceiptID,
+		fact.PayloadBase64, fact.ProjectionHash,
+	)
+	if err != nil {
+		return fmt.Errorf("insert asset ClickHouse source fact: %w", err)
+	}
+	return nil
+}
+
+func (p *ClickHouseAssetProjection) Ready(ctx context.Context) error {
+	var exists uint8
+	if err := p.db.QueryRowContext(ctx,
+		`SELECT count()>0 FROM system.tables WHERE database='traffic' AND name='source_asset_facts_v1'`,
+	).Scan(&exists); err != nil {
+		return fmt.Errorf("check asset ClickHouse source-fact table: %w", err)
+	}
+	if exists != 1 {
+		return fmt.Errorf("asset ClickHouse source-fact table is absent")
+	}
+	return nil
+}
+
+func sha256HexString(value string) string { return sha256HexBytes([]byte(value)) }
+
+func sha256HexBytes(value []byte) string {
+	sum := sha256.Sum256(value)
+	return hex.EncodeToString(sum[:])
 }
 
 type assetSearchDocument struct {

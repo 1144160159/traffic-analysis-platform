@@ -328,6 +328,58 @@ func (r *AlertRepository) GetByID(ctx context.Context, tenantID, alertID string)
 	return alerts[0], nil
 }
 
+// GetByIDs loads the authoritative ClickHouse facts for a bounded set of
+// OpenSearch candidate IDs. The caller owns presentation ordering; this method
+// deliberately returns only source facts and never treats a missing row as a
+// successful OpenSearch fallback.
+func (r *AlertRepository) GetByIDs(ctx context.Context, tenantID string, alertIDs []string) ([]*persistence.Alert, error) {
+	ctx, span := otel.StartSpan(ctx, "alert_repository.get_by_ids")
+	defer span.End()
+
+	tenantID = strings.TrimSpace(tenantID)
+	if tenantID == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
+	}
+	if len(alertIDs) == 0 {
+		return []*persistence.Alert{}, nil
+	}
+	if len(alertIDs) > 1000 {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "alert snapshot lookup exceeds 1000 ids")
+	}
+
+	uniqueIDs := make([]string, 0, len(alertIDs))
+	seen := make(map[string]struct{}, len(alertIDs))
+	for _, alertID := range alertIDs {
+		alertID = strings.TrimSpace(alertID)
+		if alertID == "" {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "alert snapshot lookup contains an empty id")
+		}
+		if _, duplicate := seen[alertID]; duplicate {
+			continue
+		}
+		seen[alertID] = struct{}{}
+		uniqueIDs = append(uniqueIDs, alertID)
+	}
+
+	sql := fmt.Sprintf(`
+		SELECT %s
+		FROM %s
+		WHERE tenant_id = ? AND alert_id IN ?
+		ORDER BY alert_id ASC
+	`, alertSelectColumns, alertLatestProjection)
+	rows, err := r.client.Query(ctx, sql, tenantID, uniqueIDs)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query authoritative alert snapshot facts")
+	}
+	defer rows.Close()
+
+	alerts, err := r.scanAlerts(rows)
+	if err != nil {
+		return nil, err
+	}
+	return alerts, nil
+}
+
 // GetByIDWithVersion 根据ID查询告警（返回版本信息用于乐观锁）
 func (r *AlertRepository) GetByIDWithVersion(ctx context.Context, tenantID, alertID string) (*persistence.Alert, time.Time, error) {
 	alert, err := r.GetByID(ctx, tenantID, alertID)
@@ -395,10 +447,13 @@ func (r *AlertRepository) UpdateStatusWithVersion(ctx context.Context, tenantID,
 	}
 	// 更新字段
 	alert.Status = newStatus
-	newVersion := time.Now()
+	previousVersion := alert.UpdatedTs
+	newVersion := nextMonotonicVersion(previousVersion)
 	alert.UpdatedTs = newVersion
-	// 插入新版本（ReplacingMergeTree会自动合并）
-	return newVersion, r.upsertAlert(ctx, alert)
+	// 插入新版本（ReplacingMergeTree会自动合并）。最终写入前再核对一次
+	// 版本，把 read-check-write 的竞态窗口压到最小；并发写方任一先提交，
+	// 本写方得到 ErrCodeVersionConflict 由调用方重试。
+	return newVersion, r.upsertAlertWithVersionCheck(ctx, alert, previousVersion)
 }
 
 // UpdateAssignee 更新告警分配人（带乐观锁）
@@ -440,9 +495,10 @@ func (r *AlertRepository) UpdateAssigneeWithVersion(ctx context.Context, tenantI
 	// 更新字段
 	alert.Assignee = assignee
 	alert.Status = "assigned"
-	alert.UpdatedTs = time.Now()
-	// 插入新版本
-	return r.upsertAlert(ctx, alert)
+	previousVersion := alert.UpdatedTs
+	alert.UpdatedTs = nextMonotonicVersion(previousVersion)
+	// 条件写：写入前再次核对版本，并发修改返回版本冲突而非覆盖
+	return r.upsertAlertWithVersionCheck(ctx, alert, previousVersion)
 }
 
 // ProjectAssigneeWithVersions applies an assignment projection with a fixed
@@ -530,8 +586,8 @@ func (r *AlertRepository) updateWithOptimisticLock(ctx context.Context, tenantID
 		if err := updateFn(alert); err != nil {
 			return err
 		}
-		// 设置新的更新时间
-		newVersion := time.Now()
+		// 设置新的更新时间（严格单调递增，避免同毫秒版本冲突被绕过）
+		newVersion := nextMonotonicVersion(version)
 		alert.UpdatedTs = newVersion
 		// 尝试更新（使用版本检查）
 		err = r.upsertAlertWithVersionCheck(ctx, alert, version)
@@ -578,6 +634,17 @@ func (r *AlertRepository) upsertAlertWithVersionCheck(ctx context.Context, alert
 	}
 	// 版本匹配，执行更新
 	return r.upsertAlert(ctx, alert)
+}
+
+// nextMonotonicVersion 生成严格递增的更新时间版本。取 max(当前版本+1ms,
+// 当前墙钟),保证同一毫秒内的并发更新不会产生相同版本号,从而不能被
+// If-Match(state_version) 冲突检测绕过。
+func nextMonotonicVersion(current time.Time) time.Time {
+	now := time.Now().UTC()
+	if !current.IsZero() && current.UnixMilli() >= now.UnixMilli() {
+		return time.UnixMilli(current.UnixMilli() + 1).UTC()
+	}
+	return now
 }
 
 // BatchUpdateStatus 批量更新告警状态（优化版：并发处理）

@@ -300,8 +300,18 @@ func (s *Service) ImportFromFile(path string) error {
 	if err := json.Unmarshal(data, &entries); err != nil {
 		return fmt.Errorf("parse threat intel: %w", err)
 	}
-	for _, e := range entries {
-		s.builtinThreats[e.Type+":"+e.Value] = &e
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i := range entries {
+		e := &entries[i]
+		// 归一化并拒绝空 key，避免污染内置威胁源
+		e.Type = normalizeType(e.Type)
+		e.Value = normalizeValue(e.Type, e.Value)
+		if e.Type == "" || e.Value == "" {
+			s.logger.Warn("Skipping threat intel entry with empty type or value")
+			continue
+		}
+		s.builtinThreats[e.Type+":"+e.Value] = e
 	}
 	s.logger.Info("Imported threat intel", zap.Int("count", len(entries)), zap.String("source", path))
 	return nil

@@ -34,13 +34,17 @@ type DataQualityReport struct {
 }
 
 type QualityCheck struct {
-	Name      string  `json:"name"`
-	Status    string  `json:"status"` // pass | warn | fail | unknown
-	Message   string  `json:"message"`
-	Value     float64 `json:"value"`
-	Threshold float64 `json:"threshold"`
-	Measured  bool    `json:"measured"`
-	Source    string  `json:"source"`
+	Name         string  `json:"name"`
+	Status       string  `json:"status"` // pass | warn | fail | unknown
+	Message      string  `json:"message"`
+	Value        float64 `json:"value"`
+	Threshold    float64 `json:"threshold"`
+	Measured     bool    `json:"measured"`
+	Source       string  `json:"source"`
+	Availability string  `json:"availability_status,omitempty"`
+	Freshness    string  `json:"freshness_status,omitempty"`
+	Completeness string  `json:"completeness_status,omitempty"`
+	ValueState   string  `json:"value_status,omitempty"`
 }
 
 type LatencyChainReport struct {

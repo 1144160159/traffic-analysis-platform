@@ -46,7 +46,6 @@ type TokenValidator interface {
 func Auth(validator TokenValidator, logger *zap.Logger) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
 				err := errors.New(errors.ErrCodeUnauthorized, "Authorization header required")
@@ -75,6 +74,15 @@ func Auth(validator TokenValidator, logger *zap.Logger) Middleware {
 				errors.WriteError(w, appErr, GetTraceID(r.Context()), r.URL.Path)
 				return
 			}
+			if claims == nil || strings.TrimSpace(claims.GetUserID()) == "" || strings.TrimSpace(claims.GetTenantID()) == "" {
+				appErr := errors.New(errors.ErrCodeUnauthorized, "Verified user and tenant identity required")
+				errors.WriteError(w, appErr, GetTraceID(r.Context()), r.URL.Path)
+				return
+			}
+			if err := ValidateRequestTenant(r, claims.GetTenantID()); err != nil {
+				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
+				return
+			}
 
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, ContextKeyClaims, claims)
@@ -92,18 +100,7 @@ func Auth(validator TokenValidator, logger *zap.Logger) Middleware {
 func RequirePermission(permission string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			permissions := GetPermissions(r.Context())
-
-			hasPermission := false
-			for _, p := range permissions {
-				if p == permission {
-					hasPermission = true
-					break
-				}
-			}
-
-			if !hasPermission {
-				err := errors.Newf(errors.ErrCodePermissionDenied, "Permission denied: %s required", permission)
+			if err := AuthorizeResource(r.Context(), ResourceAuthorizationRequest{RequiredScopes: []string{permission}}); err != nil {
 				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
 				return
 			}
@@ -116,6 +113,11 @@ func RequirePermission(permission string) Middleware {
 func RequireRole(role string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if GetClaims(r.Context()) == nil {
+				err := errors.New(errors.ErrCodeUnauthorized, "Verified identity is required")
+				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
+				return
+			}
 			roles := GetRoles(r.Context())
 
 			hasRole := false
@@ -140,6 +142,11 @@ func RequireRole(role string) Middleware {
 func RequireAnyRole(requiredRoles ...string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if GetClaims(r.Context()) == nil {
+				err := errors.New(errors.ErrCodeUnauthorized, "Verified identity is required")
+				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
+				return
+			}
 			roles := GetRoles(r.Context())
 
 			for _, role := range roles {
@@ -160,19 +167,11 @@ func RequireAnyRole(requiredRoles ...string) Middleware {
 func RequireAnyPermission(requiredPermissions ...string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			permissions := GetPermissions(r.Context())
-
-			for _, perm := range permissions {
-				for _, required := range requiredPermissions {
-					if perm == required {
-						next.ServeHTTP(w, r)
-						return
-					}
-				}
+			if err := AuthorizeResource(r.Context(), ResourceAuthorizationRequest{RequiredScopes: requiredPermissions}); err != nil {
+				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
+				return
 			}
-
-			err := errors.New(errors.ErrCodePermissionDenied, "Insufficient permission")
-			errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
+			next.ServeHTTP(w, r)
 		})
 	}
 }
@@ -195,6 +194,14 @@ func OptionalAuth(validator TokenValidator) Middleware {
 			claims, err := validator.ValidateToken(parts[1])
 			if err != nil {
 				next.ServeHTTP(w, r)
+				return
+			}
+			if claims == nil || strings.TrimSpace(claims.GetUserID()) == "" || strings.TrimSpace(claims.GetTenantID()) == "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			if err := ValidateRequestTenant(r, claims.GetTenantID()); err != nil {
+				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
 				return
 			}
 
@@ -287,11 +294,5 @@ func HasRole(ctx context.Context, role string) bool {
 }
 
 func HasPermission(ctx context.Context, permission string) bool {
-	permissions := GetPermissions(ctx)
-	for _, p := range permissions {
-		if p == permission {
-			return true
-		}
-	}
-	return false
+	return GetClaims(ctx) != nil && PermissionAllows(GetPermissions(ctx), permission)
 }

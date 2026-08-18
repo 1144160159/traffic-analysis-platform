@@ -18,6 +18,7 @@ import (
 const (
 	ForensicsTaskCreateAction   = "forensics.pcap-cut.create"
 	ForensicsTaskCancelAction   = "forensics.pcap-cut.cancel"
+	ForensicsTaskRetryAction    = "forensics.pcap-cut.retry"
 	forensicsTaskLeaseAction    = "forensics.pcap-cut.worker-lease"
 	forensicsTaskProgressAction = "forensics.pcap-cut.worker-progress"
 	forensicsTaskCompleteAction = "forensics.pcap-cut.worker-complete"
@@ -96,6 +97,12 @@ func (r *TaskRepository) CreateAtomic(ctx context.Context, task *Task, meta Task
 	})
 	if err := validateTaskCommandMeta(meta); err != nil {
 		return nil, err
+	}
+	if meta.TenantID != task.TenantID {
+		return nil, commonerrors.New(commonerrors.ErrCodePermissionDenied, "task tenant must match authenticated command tenant")
+	}
+	if !meta.CompatibilityMode && (strings.TrimSpace(meta.ActorID) == "" || strings.TrimSpace(task.CreatedBy) != strings.TrimSpace(meta.ActorID)) {
+		return nil, commonerrors.New(commonerrors.ErrCodePermissionDenied, "task creator must match authenticated command actor")
 	}
 	if meta.ExpectedRevision != nil && *meta.ExpectedRevision != 0 {
 		return nil, commonerrors.New(commonerrors.ErrCodeVersionConflict, "new task expected_revision must be 0")
@@ -218,6 +225,14 @@ func (r *TaskRepository) CancelForTenant(ctx context.Context, tenantID, taskID s
 	return r.mutateTaskAtomic(ctx, taskID, meta, taskMutation{Operation: "cancel", Status: TaskStatusCancelled, Completed: true})
 }
 
+// RetryForTenant requeues the same immutable request. It never creates a
+// second task or rewrites params, so a retry cannot change the original
+// evidence selection after admission.
+func (r *TaskRepository) RetryForTenant(ctx context.Context, tenantID, taskID string, meta TaskCommandMeta) (*TaskCommandReceipt, error) {
+	meta.TenantID = tenantID
+	return r.mutateTaskAtomic(ctx, taskID, meta, taskMutation{Operation: "retry", Status: TaskStatusQueued})
+}
+
 func (r *TaskRepository) leasePendingTasksAtomic(ctx context.Context, limit int) ([]*Task, error) {
 	if limit <= 0 {
 		limit = 1
@@ -271,7 +286,7 @@ func (r *TaskRepository) leasePendingTasksAtomic(ctx context.Context, limit int)
 }
 
 func (r *TaskRepository) archiveOldTasksAtomic(ctx context.Context, cutoff time.Time) (int64, error) {
-	return r.batchTaskMutationAtomic(ctx, `status IN ('completed','failed','cancelled') AND completed_at IS NOT NULL AND completed_at < $1`,
+	return r.batchTaskMutationAtomic(ctx, `status IN ('completed','partial','failed','cancelled') AND completed_at IS NOT NULL AND completed_at < $1`,
 		cutoff, taskMutation{Operation: "archive", Archive: true}, forensicsTaskArchiveAction)
 }
 
@@ -379,7 +394,10 @@ func applyTaskMutation(task *Task, mutation taskMutation, now time.Time) error {
 		if task.Status != TaskStatusProcessing {
 			return commonerrors.Newf(commonerrors.ErrCodeInvalidStateTransition, "cannot complete task in status: %s", task.Status)
 		}
-		task.Status, task.Progress = TaskStatusCompleted, 100
+		if mutation.Status != TaskStatusCompleted && mutation.Status != TaskStatusPartial {
+			return commonerrors.New(commonerrors.ErrCodeInvalidParameter, "task completion status must be completed or partial")
+		}
+		task.Status, task.Progress = mutation.Status, 100
 		task.ResultFileKey, task.ResultSHA256 = mutation.ResultFileKey, mutation.ResultSHA256
 		if mutation.Packets != nil {
 			task.ResultPackets = *mutation.Packets
@@ -401,13 +419,20 @@ func applyTaskMutation(task *Task, mutation taskMutation, now time.Time) error {
 			return commonerrors.Newf(commonerrors.ErrCodeInvalidStateTransition, "cannot cancel task in status: %s", task.Status)
 		}
 		task.Status, task.CompletedAt = TaskStatusCancelled, &now
+	case "retry":
+		if task.Status != TaskStatusFailed && task.Status != TaskStatusCancelled {
+			return commonerrors.Newf(commonerrors.ErrCodeInvalidStateTransition, "cannot retry task in status: %s", task.Status)
+		}
+		task.Status, task.Progress, task.ErrorMessage, task.CompletedAt = TaskStatusQueued, 0, "", nil
+		task.ResultFileKey, task.ResultSHA256 = "", ""
+		task.ResultPackets, task.ResultBytes, task.FilesScanned = 0, 0, 0
 	case "recover":
 		if task.Status != TaskStatusProcessing {
 			return commonerrors.Newf(commonerrors.ErrCodeInvalidStateTransition, "cannot recover task in status: %s", task.Status)
 		}
 		task.Status, task.CompletedAt = TaskStatusQueued, nil
 	case "archive":
-		if task.Status != TaskStatusCompleted && task.Status != TaskStatusFailed && task.Status != TaskStatusCancelled {
+		if task.Status != TaskStatusCompleted && task.Status != TaskStatusPartial && task.Status != TaskStatusFailed && task.Status != TaskStatusCancelled {
 			return commonerrors.Newf(commonerrors.ErrCodeInvalidStateTransition, "cannot archive task in status: %s", task.Status)
 		}
 		task.DeletedAt = &now
@@ -637,6 +662,8 @@ func actionForTaskMutation(m taskMutation) string {
 		return forensicsTaskFailAction
 	case "cancel":
 		return ForensicsTaskCancelAction
+	case "retry":
+		return ForensicsTaskRetryAction
 	case "recover":
 		return forensicsTaskRecoverAction
 	case "archive":
@@ -656,6 +683,8 @@ func reasonForTaskMutation(m taskMutation) string {
 		return "pcap cut execution failed"
 	case "cancel":
 		return "pcap cut cancelled"
+	case "retry":
+		return "failed or cancelled PCAP cut requeued"
 	case "recover":
 		return "stuck worker lease recovered"
 	case "archive":
@@ -666,13 +695,15 @@ func reasonForTaskMutation(m taskMutation) string {
 }
 
 func taskSnapshot(task *Task) map[string]interface{} {
+	paramsDigest := sha256.Sum256(task.ParamsJSON)
 	return map[string]interface{}{
 		"task_id": task.TaskID, "tenant_id": task.TenantID, "task_type": task.TaskType,
+		"params": json.RawMessage(task.ParamsJSON), "params_sha256": hex.EncodeToString(paramsDigest[:]),
 		"status": task.Status, "progress": task.Progress, "result_file_key": task.ResultFileKey,
 		"result_sha256": task.ResultSHA256, "result_packets": task.ResultPackets,
 		"result_bytes": task.ResultBytes, "files_scanned": task.FilesScanned,
 		"error_message": task.ErrorMessage, "revision": task.Revision,
-		"created_at": task.CreatedAt, "updated_at": task.UpdatedAt,
+		"created_by": task.CreatedBy, "created_at": task.CreatedAt, "updated_at": task.UpdatedAt,
 		"completed_at": task.CompletedAt, "deleted_at": task.DeletedAt,
 	}
 }
@@ -701,6 +732,8 @@ func operationForAction(actionID string) string {
 		return "fail"
 	case ForensicsTaskCancelAction:
 		return "cancel"
+	case ForensicsTaskRetryAction:
+		return "retry"
 	case forensicsTaskRecoverAction:
 		return "recover"
 	case forensicsTaskArchiveAction:

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -62,6 +63,43 @@ func TestWhitelistTransitionRejectsLifecycleSkips(t *testing.T) {
 	draft := "draft"
 	if code, _ := validateWhitelistTransition(activeApproved, UpdateRequest{Status: &draft}, "reviewer-2", true); code != "INVALID_TRANSITION" {
 		t.Fatalf("expected active/approved to draft/approved transition to fail, got %q", code)
+	}
+}
+
+func TestWhitelistTransitionRejectsExpiredApprovalAndPastExtension(t *testing.T) {
+	past := time.Now().Add(-time.Minute)
+	active, approved := "active", "approved"
+	entry := &Entry{ID: "entry-001", Status: "pending", ApprovalStatus: "pending", CreatedBy: "author-1", Version: 2, ExpiresAt: &past}
+	if code, _ := validateWhitelistTransition(entry, UpdateRequest{Status: &active, ApprovalStatus: &approved}, "reviewer-2", true); code != "WHITELIST_EXPIRY_NOT_FUTURE" {
+		t.Fatalf("expired draft approval must fail closed, got %q", code)
+	}
+	futureEntry := &Entry{ID: "entry-002", Status: "active", ApprovalStatus: "approved", Version: 3}
+	if code, _ := validateWhitelistTransition(futureEntry, UpdateRequest{ExpiresAt: &past}, "reviewer-2", true); code != "WHITELIST_EXPIRY_NOT_FUTURE" {
+		t.Fatalf("past expiry update must fail closed, got %q", code)
+	}
+}
+
+func TestWhitelistUpdateShapeRejectsMixedCommands(t *testing.T) {
+	disabled := "disabled"
+	approved := "approved"
+	future := time.Now().Add(time.Hour)
+	owner := "security-operations"
+	for _, req := range []UpdateRequest{
+		{Status: &disabled, ExpiresAt: &future},
+		{ExpiresAt: &future, OwnerRole: &owner},
+		{Status: &disabled, ApprovalStatus: &approved},
+	} {
+		if code, _ := validateWhitelistUpdateShape(req); code != "INVALID_TRANSITION" {
+			t.Fatalf("mixed whitelist command must fail, got %q for %+v", code, req)
+		}
+	}
+}
+
+func TestWhitelistCommandReasonDoesNotOverwriteFeedbackReason(t *testing.T) {
+	domainReason := "confirmed model false positive"
+	commandReason := "independent reviewer approved"
+	if got := whitelistCommandReason(UpdateRequest{Reason: &domainReason, CommandReason: &commandReason}); got != commandReason {
+		t.Fatalf("command reason = %q want %q", got, commandReason)
 	}
 }
 

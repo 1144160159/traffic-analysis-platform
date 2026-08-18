@@ -21,6 +21,7 @@ const (
 type FallbackReplayer interface {
 	GetFallbackStats() (fileCount int, totalSize int64, err error)
 	ReplayFallbackFiles(ctx context.Context) FallbackReplayReport
+	ReplayFallbackFilesForTenant(ctx context.Context, tenantID string) FallbackReplayReport
 }
 
 type ReplayRequest struct {
@@ -96,11 +97,12 @@ func (s *MemoryReplayIdempotencyStore) Put(_ context.Context, key string, result
 }
 
 type ReplayManager struct {
-	replayer FallbackReplayer
-	store    ReplayIdempotencyStore
-	logger   *zap.Logger
-	now      func() time.Time
-	mu       sync.Mutex
+	replayer  FallbackReplayer
+	store     ReplayIdempotencyStore
+	approvals ReplayApprovalStore
+	logger    *zap.Logger
+	now       func() time.Time
+	mu        sync.Mutex
 }
 
 func NewReplayManager(replayer FallbackReplayer, store ReplayIdempotencyStore, logger *zap.Logger) *ReplayManager {
@@ -118,8 +120,21 @@ func NewReplayManager(replayer FallbackReplayer, store ReplayIdempotencyStore, l
 	}
 }
 
+// SetApprovalStore 注入审批台账。未注入时回放一律拒绝(fail-closed)。
+func (m *ReplayManager) SetApprovalStore(s ReplayApprovalStore) {
+	m.approvals = s
+}
+
+// ApprovalStore 返回当前审批台账(可能为 nil)。
+func (m *ReplayManager) ApprovalStore() ReplayApprovalStore {
+	return m.approvals
+}
+
 func (m *ReplayManager) ReplayFallback(ctx context.Context, req ReplayRequest) (*ReplayResult, error) {
 	if err := validateReplayRequest(req); err != nil {
+		return nil, err
+	}
+	if err := m.verifyApproval(ctx, req); err != nil {
 		return nil, err
 	}
 	if m.replayer == nil {
@@ -190,7 +205,8 @@ func (m *ReplayManager) ReplayFallback(ctx context.Context, req ReplayRequest) (
 	}
 
 	if !req.DryRun {
-		report := m.replayer.ReplayFallbackFiles(ctx)
+		// 租户隔离:按请求租户做过滤回放,只重放该租户的消息并保留其他租户行。
+		report := m.replayer.ReplayFallbackFilesForTenant(ctx, strings.TrimSpace(req.TenantID))
 		result.ReplayedFiles = report.ReplayedFiles
 		result.FailedFiles = report.FailedFiles
 		result.RemainingFallbackFiles = report.RemainingFallbackFiles
@@ -227,8 +243,36 @@ func (m *ReplayManager) ReplayFallback(ctx context.Context, req ReplayRequest) (
 	return &result, nil
 }
 
-func validateReplayRequest(req ReplayRequest) error {
-	required := map[string]string{
+// verifyApproval 校验回放请求的审批台账记录。
+// fail-closed:台账未配置、记录缺失、状态非 approved、或 tenant/approver/requester
+// 任一与请求不符,一律拒绝,不允许把 approval_id 仅作记录字段。
+func (m *ReplayManager) verifyApproval(ctx context.Context, req ReplayRequest) error {
+	if m.approvals == nil {
+		return fmt.Errorf("dlq replay approval store is not configured")
+	}
+	approval, err := m.approvals.GetApproval(ctx, strings.TrimSpace(req.TenantID), strings.TrimSpace(req.ApprovalID))
+	if err != nil {
+		return fmt.Errorf("get dlq replay approval: %w", err)
+	}
+	if approval == nil {
+		return fmt.Errorf("dlq replay approval not found")
+	}
+	if approval.Status != ApprovalStatusApproved {
+		return fmt.Errorf("dlq replay approval status is %q, expected %q", approval.Status, ApprovalStatusApproved)
+	}
+	if strings.TrimSpace(approval.ApprovedBy) != strings.TrimSpace(req.ApprovedBy) {
+		return fmt.Errorf("approved_by does not match approval record")
+	}
+	if strings.TrimSpace(approval.RequestedBy) != strings.TrimSpace(req.RequestedBy) {
+		return fmt.Errorf("requested_by does not match approval record")
+	}
+	if !strings.EqualFold(strings.TrimSpace(approval.TenantID), strings.TrimSpace(req.TenantID)) {
+		return fmt.Errorf("approval tenant does not match request tenant")
+	}
+	return nil
+}
+
+func validateReplayRequest(req ReplayRequest) error {	required := map[string]string{
 		"tenant_id":       req.TenantID,
 		"requested_by":    req.RequestedBy,
 		"approved_by":     req.ApprovedBy,

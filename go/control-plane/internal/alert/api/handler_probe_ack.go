@@ -442,7 +442,8 @@ func (h *SystemHandler) applyProbeOperationAck(
 	lifecycleEventID := uuid.NewString()
 	eventPayload, _ := json.Marshal(map[string]interface{}{
 		"event_id": lifecycleEventID, "event_type": probeOperationAcknowledgedEvent,
-		"tenant_id": tenantID, "probe_id": probeID, "operation_id": operationID,
+		"schema_version": 2,
+		"tenant_id":      tenantID, "probe_id": probeID, "operation_id": operationID,
 		"command_revision": input.CommandRevision, "state_revision": stateRevision,
 		"revision": stateRevision,
 		"status":   statusValue, "accepted": accepted, "reported_version": input.ReportedVersion,

@@ -40,14 +40,14 @@ func TestAssetOutboxDispatcherPublishesStableEnvelope(t *testing.T) {
 	defer db.Close()
 	publisher := &recordingAssetPublisher{}
 	dispatcher, err := NewAssetOutboxDispatcher(db, publisher, OutboxDispatcherConfig{
-		WorkerID: "worker-a", Lease: 30 * time.Second, MaxAttempts: 8,
+		WorkerID: "worker-a", Lease: 30 * time.Second, MaxAttempts: 8, TenantID: "tenant-a",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	payload := []byte(`{"event_id":"11111111-1111-4111-8111-111111111111","event_type":"traffic.asset.v2.AssetUpserted","schema_version":2,"aggregate_version":3,"partition_key":"tenant-a:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","tenant_id":"tenant-a","asset_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","revision":3,"trace_id":"trace-a","asset":{}}`)
 	mock.ExpectQuery("WITH candidate AS").
-		WithArgs("worker-a", int64(30)).
+		WithArgs("worker-a", int64(30), "tenant-a").
 		WillReturnRows(sqlmock.NewRows([]string{
 			"outbox_id", "event_id", "tenant_id", "asset_id", "aggregate_version",
 			"schema_version", "partition_key", "event_type", "payload", "attempt_count",

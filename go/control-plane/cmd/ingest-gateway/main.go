@@ -27,10 +27,10 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
+	commonpki "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/pki"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/auth"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/config"
-	ingestcontrol "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/control"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/dedup"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/dlq"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/metrics"
@@ -81,6 +81,33 @@ func main() {
 
 	dlqProducer := initDLQProducer(cfg, logger)
 
+	// 审计日志:生产环境强制 Audit.Enabled=true,必须装配到 handler 与 auth interceptor,
+	// 否则全部 ingest 审计事件(上传/鉴权失败/越权)会静默丢弃。
+	var auditLogger *audit.Logger
+	if cfg.Audit.Enabled && len(cfg.Kafka.Brokers) > 0 {
+		auditLogger, err = audit.NewLogger(audit.Config{
+			KafkaBrokers:  cfg.Kafka.Brokers,
+			Topic:         cfg.Audit.Topic,
+			ServiceName:   "ingest-gateway",
+			BufferSize:    cfg.Audit.BufferSize,
+			BatchSize:     cfg.Audit.BatchSize,
+			FlushInterval: cfg.Audit.FlushInterval,
+			Security:      cfg.Kafka.Security,
+		}, logger)
+		if err != nil {
+			logger.Warn("Failed to initialize audit logger", zap.Error(err))
+		} else {
+			logger.Info("Audit logger initialized",
+				zap.String("topic", cfg.Audit.Topic),
+				zap.Bool("enabled", auditLogger != nil))
+			defer func() {
+				if closeErr := auditLogger.Close(); closeErr != nil {
+					logger.Error("Failed to close audit logger", zap.Error(closeErr))
+				}
+			}()
+		}
+	}
+
 	mainCtx, mainCancel := context.WithCancel(context.Background())
 	defer mainCancel()
 	go dlqProducer.StartFallbackReplay(mainCtx, config.DefaultDLQReplayInterval)
@@ -93,20 +120,32 @@ func main() {
 	}
 
 	handler := initHandler(producer, dlqProducer, deduper, configManager, m, cfg.Handler, logger)
+	handler.SetAuditLogger(auditLogger)
 	if pgDB != nil {
 		handler.SetProbeRegistry(server.NewPostgresProbeRegistry(pgDB))
 	}
 	handler.StartProbeStatusCleaner(mainCtx)
-	closeProbeControl := initProbeControlBridge(mainCtx, cfg.Kafka, rdb, handler, logger)
-	defer closeProbeControl()
+	probeControlRuntime, err := initProbeControlPipeline(mainCtx, ProbeControlPipelineDeps{
+		Kafka: cfg.Kafka, Redis: rdb, Postgres: pgDB, Handler: handler, Logger: logger,
+	}, cfg.ProbeControl)
+	if err != nil {
+		logger.Fatal("Failed to initialize probe control generation pipeline", zap.Error(err))
+	}
+	defer func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer shutdownCancel()
+		if closeErr := probeControlRuntime.Close(shutdownCtx); closeErr != nil {
+			logger.Error("Probe control generation pipeline did not close cleanly", zap.Error(closeErr))
+		}
+	}()
 
-	grpcServer := createGRPCServer(cfg, tokenCache, limiter, handler, logger)
+	grpcServer := createGRPCServer(mainCtx, cfg, tokenCache, limiter, handler, auditLogger, logger)
 	healthServer := registerHealthCheck(grpcServer)
 
 	listener := startGRPCServer(grpcServer, cfg.Server.GRPCAddr, logger)
 	defer listener.Close()
 
-	replayManager := initDLQReplayManager(dlqProducer, rdb, logger)
+	replayManager := initDLQReplayManager(dlqProducer, rdb, pgDB, logger)
 	go startHealthEndpoint(producer, tokenCache, replayManager, cfg.JWT, logger)
 
 	gracefulShutdown(
@@ -156,89 +195,6 @@ func logConfigSummary(logger *zap.Logger, cfg *config.Config) {
 		zap.Bool("metrics_enabled", cfg.Metrics.Enabled),
 		zap.Bool("enable_dedup", cfg.Dedup.Enabled),
 		zap.Bool("dedup_redis_enabled", cfg.Dedup.RedisEnabled))
-}
-
-func initProbeControlBridge(
-	ctx context.Context,
-	cfg config.KafkaConfig,
-	rdb redis.UniversalClient,
-	handler *server.IngestHandler,
-	logger *zap.Logger,
-) func() {
-	if rdb == nil || len(cfg.Brokers) == 0 {
-		logger.Warn("Probe control bridge disabled: Redis and Kafka are both required")
-		return func() {}
-	}
-	store, err := ingestcontrol.NewRedisCommandStore(rdb, 24*time.Hour)
-	if err != nil {
-		logger.Warn("Probe control bridge disabled", zap.Error(err))
-		return func() {}
-	}
-	ackProducer, err := commonkafka.NewProducer(commonkafka.ProducerConfig{
-		Brokers:      cfg.Brokers,
-		Topic:        cfg.ProbeAckTopic,
-		BatchSize:    100,
-		BatchTimeout: 100 * time.Millisecond,
-		MaxAttempts:  cfg.MaxRetries,
-		RequiredAcks: "all",
-		Compression:  "lz4",
-		Async:        false,
-		Security:     cfg.Security,
-	}, logger)
-	if err != nil {
-		logger.Warn("Probe control ACK publisher unavailable", zap.Error(err))
-		return func() {}
-	}
-	bridge, err := ingestcontrol.NewBridge(
-		store,
-		&ingestcontrol.KafkaAckPublisher{Producer: ackProducer},
-	)
-	if err != nil {
-		_ = ackProducer.Close()
-		logger.Warn("Probe control bridge disabled", zap.Error(err))
-		return func() {}
-	}
-	router, err := ingestcontrol.NewRouter(store)
-	if err != nil {
-		_ = ackProducer.Close()
-		logger.Warn("Probe control router disabled", zap.Error(err))
-		return func() {}
-	}
-	commandConsumer, err := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
-		Brokers:              cfg.Brokers,
-		Topic:                cfg.ProbeControlTopic,
-		GroupID:              cfg.ProbeControlGroup,
-		MaxRetries:           cfg.MaxRetries,
-		RetryBackoff:         time.Second,
-		CommitOnHandlerError: false,
-		EnableDLQ:            false,
-		Security:             cfg.Security,
-	}, logger)
-	if err != nil {
-		_ = ackProducer.Close()
-		logger.Warn("Probe control command consumer unavailable", zap.Error(err))
-		return func() {}
-	}
-	handler.SetProbeControlBridge(bridge)
-	go func() {
-		err := commandConsumer.Consume(ctx, func(messageCtx context.Context, message *commonkafka.ReceivedMessage) error {
-			return router.Route(messageCtx, message.Value)
-		})
-		if err != nil && ctx.Err() == nil {
-			logger.Error("Probe control command consumer stopped", zap.Error(err))
-		}
-	}()
-	logger.Info(
-		"Probe control bridge started",
-		zap.String("command_topic", cfg.ProbeControlTopic),
-		zap.String("ack_topic", cfg.ProbeAckTopic),
-		zap.String("consumer_group", cfg.ProbeControlGroup),
-	)
-	return func() {
-		handler.SetProbeControlBridge(nil)
-		_ = commandConsumer.Close()
-		_ = ackProducer.Close()
-	}
 }
 
 func initRedis(cfg config.RedisConfig, logger *zap.Logger) redis.UniversalClient {
@@ -367,6 +323,7 @@ func initLimiter(rdb redis.UniversalClient, cfg config.QuotaConfig, logger *zap.
 		ProbeRPS:             cfg.ProbeRPS,
 		ProbeBurst:           cfg.ProbeBurst,
 		LocalFallbackEnabled: cfg.LocalFallbackEnabled,
+		FailClosed:           cfg.FailClosed,
 	}, logger)
 }
 
@@ -385,6 +342,7 @@ func initKafkaProducer(cfg config.KafkaConfig, logger *zap.Logger) *queue.Produc
 		FlowTopic:         cfg.FlowTopic,
 		PcapIndexTopic:    cfg.PcapTopic,
 		SessionTopic:      cfg.SessionTopic,
+		BindingTopic:      cfg.BindingTopic,
 		BatchSize:         cfg.BatchSize,
 		BatchTimeout:      cfg.BatchTimeout,
 		Compression:       cfg.Compression,
@@ -400,7 +358,7 @@ func initKafkaProducer(cfg config.KafkaConfig, logger *zap.Logger) *queue.Produc
 	}
 
 	logger.Info("Kafka producer initialized",
-		zap.Strings("topics", []string{cfg.FlowTopic, cfg.SessionTopic, cfg.PcapTopic}))
+		zap.Strings("topics", []string{cfg.FlowTopic, cfg.SessionTopic, cfg.PcapTopic, cfg.BindingTopic}))
 
 	return producer
 }
@@ -432,8 +390,9 @@ func initDLQProducer(cfg *config.Config, logger *zap.Logger) *dlq.Producer {
 	return dlqProducer
 }
 
-func initDLQReplayManager(dlqProducer *dlq.Producer, rdb redis.UniversalClient, logger *zap.Logger) *dlq.ReplayManager {
+func initDLQReplayManager(dlqProducer *dlq.Producer, rdb redis.UniversalClient, pgDB *sql.DB, logger *zap.Logger) *dlq.ReplayManager {
 	var store dlq.ReplayIdempotencyStore
+	var approvals dlq.ReplayApprovalStore
 	if rdb != nil {
 		store = dlq.NewRedisReplayIdempotencyStore(rdb, "", config.DefaultDLQReplayIdempotencyTTL, logger)
 		logger.Info("DLQ replay idempotency store initialized",
@@ -443,7 +402,19 @@ func initDLQReplayManager(dlqProducer *dlq.Producer, rdb redis.UniversalClient, 
 		store = dlq.NewMemoryReplayIdempotencyStore()
 		logger.Warn("DLQ replay idempotency store falling back to memory; duplicate suppression is process-local")
 	}
-	return dlq.NewReplayManager(dlqProducer, store, logger)
+	// 审批权威必须是 PostgreSQL(ENG-ARCH-002/ENG-CMD-001);Redis 只承担幂等辅助。
+	if pgDB != nil {
+		approvals = dlq.NewPostgresReplayApprovalStore(pgDB, logger)
+		logger.Info("DLQ replay approval store initialized",
+			zap.String("backend", "postgres"))
+	} else {
+		logger.Warn("DLQ replay approval authority (postgres) is not configured; replay requests will be rejected (fail-closed)")
+	}
+	manager := dlq.NewReplayManager(dlqProducer, store, logger)
+	if approvals != nil {
+		manager.SetApprovalStore(approvals)
+	}
+	return manager
 }
 
 func initDeduplicator(cfg config.DedupConfig, rdb redis.UniversalClient, logger *zap.Logger) *dedup.Deduplicator {
@@ -494,13 +465,18 @@ func initHandler(
 	logger *zap.Logger,
 ) *server.IngestHandler {
 	handler := server.NewIngestHandlerWithConfig(logger, producer, dlqProducer, m, server.HandlerConfig{
-		MaxBatchSize:       cfg.MaxBatchSize,
-		MaxEventSize:       cfg.MaxEventSize,
-		StreamBufferSize:   cfg.StreamBufferSize,
-		HeartbeatInterval:  cfg.HeartbeatInterval,
-		EnableDLQ:          cfg.EnableDLQ,
-		EnableDedup:        cfg.EnableDedup,
-		ProbeStatusTimeout: cfg.ProbeStatusTimeout,
+		MaxBatchSize:         cfg.MaxBatchSize,
+		MaxEventSize:         cfg.MaxEventSize,
+		StreamBufferSize:     cfg.StreamBufferSize,
+		HeartbeatInterval:    cfg.HeartbeatInterval,
+		EnableDLQ:            cfg.EnableDLQ,
+		EnableDedup:          cfg.EnableDedup,
+		ProbeStatusTimeout:   cfg.ProbeStatusTimeout,
+		FlowWriterEnabled:    cfg.FlowWriterEnabled,
+		PcapWriterEnabled:    cfg.PcapWriterEnabled,
+		BindingWriterEnabled: cfg.BindingWriterEnabled,
+		CanaryTenantID:       cfg.CanaryTenantID,
+		CanaryProbeIDs:       append([]string(nil), cfg.CanaryProbeIDs...),
 	})
 
 	if deduper != nil {
@@ -515,22 +491,29 @@ func initHandler(
 
 	logger.Info("Handler initialized",
 		zap.Int("max_batch_size", cfg.MaxBatchSize),
-		zap.Bool("enable_dedup", cfg.EnableDedup))
+		zap.Bool("enable_dedup", cfg.EnableDedup),
+		zap.Bool("m02_flow_writer_enabled", cfg.FlowWriterEnabled),
+		zap.Bool("m02_pcap_writer_enabled", cfg.PcapWriterEnabled),
+		zap.Bool("m06_asset_binding_writer_enabled", cfg.BindingWriterEnabled),
+		zap.String("m02_canary_tenant_id", cfg.CanaryTenantID),
+		zap.Strings("m02_canary_probe_ids", cfg.CanaryProbeIDs))
 
 	return handler
 }
 
 func createGRPCServer(
+	ctx context.Context,
 	cfg *config.Config,
 	tokenCache *auth.TokenCache,
 	limiter *quota.Limiter,
 	handler *server.IngestHandler,
+	auditLogger *audit.Logger,
 	logger *zap.Logger,
 ) *grpc.Server {
 	var opts []grpc.ServerOption
 
 	if cfg.Auth.RequireMTLS && cfg.Server.TLSCertFile != "" {
-		tlsConfig, err := loadTLSConfig(cfg.Server)
+		tlsConfig, err := loadTLSConfig(ctx, cfg.Server, logger)
 		if err != nil {
 			logger.Fatal("Failed to load TLS config", zap.Error(err))
 		}
@@ -547,7 +530,7 @@ func createGRPCServer(
 		}),
 	}
 
-	interceptor := createAuthInterceptor(cfg, tokenCache, limiter, logger)
+	interceptor := createAuthInterceptor(cfg, tokenCache, limiter, auditLogger, logger)
 
 	opts = append(opts,
 		grpc.ChainUnaryInterceptor(
@@ -584,6 +567,7 @@ func createAuthInterceptor(
 	cfg *config.Config,
 	tokenCache *auth.TokenCache,
 	limiter *quota.Limiter,
+	auditLogger *audit.Logger,
 	logger *zap.Logger,
 ) *auth.Interceptor {
 	interceptorConfig := auth.InterceptorConfig{
@@ -603,6 +587,7 @@ func createAuthInterceptor(
 
 	interceptor := auth.NewInterceptor(logger, tokenCache, interceptorConfig)
 	interceptor.SetLimiter(limiter)
+	interceptor.SetAuditLogger(auditLogger)
 
 	return interceptor
 }
@@ -612,7 +597,10 @@ func registerHealthCheck(grpcServer *grpc.Server) *health.Server {
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("ingest.IngestService", grpc_health_v1.HealthCheckResponse_SERVING)
 
-	reflection.Register(grpcServer)
+	// gRPC reflection 仅限非生产环境;生产环境关闭以收敛攻击面。
+	if !config.IsProduction() {
+		reflection.Register(grpcServer)
+	}
 
 	return healthServer
 }
@@ -656,8 +644,9 @@ func gracefulShutdown(
 	logger.Info("Step 1/7: Marking service as NOT_SERVING")
 	healthServer.SetServingStatus("ingest.IngestService", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
-	logger.Info("Step 2/7: Waiting for load balancer to stop routing traffic")
-	time.Sleep(1 * time.Second)
+	logger.Info("Step 2/7: Waiting for load balancer to stop routing traffic",
+		zap.Duration("drain_delay", config.ShutdownDrainDelay))
+	time.Sleep(config.ShutdownDrainDelay)
 
 	logger.Info("Step 3/7: Stopping background tasks")
 	mainCancel()
@@ -719,7 +708,31 @@ func gracefulShutdown(
 	logger.Info("Ingest Gateway stopped gracefully")
 }
 
-func loadTLSConfig(cfg config.ServerConfig) (*tls.Config, error) {
+func loadTLSConfig(ctx context.Context, cfg config.ServerConfig, logger *zap.Logger) (*tls.Config, error) {
+	if cfg.TLSRotationEnabled {
+		reloader, err := commonpki.NewReloader(commonpki.FileSet{
+			CertificateFile:  cfg.TLSCertFile,
+			PrivateKeyFile:   cfg.TLSKeyFile,
+			TrustBundleFile:  cfg.TLSCAFile,
+			RevocationFile:   cfg.TLSCRLFile,
+			ManifestFile:     cfg.TLSManifestFile,
+			ServerDNSNames:   append([]string(nil), cfg.TLSServerDNSNames...),
+			ClientDNSNames:   append([]string(nil), cfg.TLSClientDNSNames...),
+			MinimumRemaining: cfg.TLSMinimumRemaining,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("load atomic PKI generation: %w", err)
+		}
+		logger.Info("Atomic TLS rotation enabled",
+			zap.String("generation", reloader.Generation()),
+			zap.Duration("reload_interval", cfg.TLSReloadInterval),
+			zap.Duration("minimum_remaining", cfg.TLSMinimumRemaining))
+		go reloader.Run(ctx, cfg.TLSReloadInterval, func(err error) {
+			logger.Error("Rejected incomplete or invalid TLS rotation; retaining last valid generation", zap.Error(err))
+		})
+		return reloader.ServerTLSConfig(), nil
+	}
+
 	cert, err := tls.LoadX509KeyPair(cfg.TLSCertFile, cfg.TLSKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("load server cert: %w", err)
@@ -797,7 +810,11 @@ func startHealthEndpoint(producer *queue.Producer, tokenCache *auth.TokenCache, 
 		w.Write([]byte(`{"status":"alive"}`))
 	})
 
-	dlq.NewReplayHTTPHandler(replayManager, auth.NewReplayTokenValidator(tokenCache, jwtConfig, logger), logger).Register(mux)
+	replayHandler := dlq.NewReplayHTTPHandler(replayManager, auth.NewReplayTokenValidator(tokenCache, jwtConfig, logger), logger)
+	if store := replayManager.ApprovalStore(); store != nil {
+		replayHandler.SetApprovalStore(store)
+	}
+	replayHandler.Register(mux)
 
 	healthAddr := os.Getenv(config.EnvHealthAddr)
 	if healthAddr == "" {

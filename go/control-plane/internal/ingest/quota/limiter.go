@@ -27,6 +27,9 @@ type LimiterConfig struct {
 	ProbeBurst int     `env:"RATE_LIMIT_PROBE_BURST" envDefault:"10000"`
 
 	LocalFallbackEnabled bool `env:"RATE_LIMIT_LOCAL_FALLBACK" envDefault:"true"`
+	// FailClosed 控制 Redis 不可用且本地兜底关闭时的行为:
+	// true=拒绝请求(fail-closed,默认), false=放行(仅显式兼容旧行为)。
+	FailClosed bool `env:"RATE_LIMIT_FAIL_CLOSED" envDefault:"true"`
 }
 
 type Limiter struct {
@@ -155,6 +158,14 @@ func (l *Limiter) AllowN(ctx context.Context, tenantID, probeID string, n int) b
 	if l.config.LocalFallbackEnabled {
 		atomic.AddInt64(&l.fallbackUsed, int64(n))
 		return l.checkLocal(tenantID, probeID, n)
+	}
+
+	if l.config.FailClosed {
+		atomic.AddInt64(&l.deniedTotal, int64(n))
+		l.logger.Warn("Rate limiting unavailable (Redis down, local fallback disabled); denying request (fail-closed)",
+			zap.String("tenant_id", tenantID),
+			zap.String("probe_id", probeID))
+		return false
 	}
 
 	l.logger.Warn("Rate limiting disabled, allowing request",

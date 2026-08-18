@@ -1,0 +1,15 @@
+FROM docker.io/traffic/alert-service:alert-detail-r802
+
+ARG SOURCE_REVISION=unknown
+ARG IMAGE_VERSION=local
+LABEL org.opencontainers.image.revision=${SOURCE_REVISION} \
+      org.opencontainers.image.version=${IMAGE_VERSION} \
+      org.opencontainers.image.title="M09 N020 alert response handoff tests"
+
+USER 0
+COPY --chown=1000:1000 api-tests /usr/local/bin/api-tests
+COPY --chown=1000:1000 consumer-tests /usr/local/bin/consumer-tests
+RUN chmod 0755 /usr/local/bin/api-tests /usr/local/bin/consumer-tests
+USER 1000:1000
+
+ENTRYPOINT ["/usr/local/bin/api-tests"]

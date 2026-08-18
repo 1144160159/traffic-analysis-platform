@@ -20,9 +20,11 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,20 +42,27 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/task"
 )
 
+var forensicsSHA256 = regexp.MustCompile(`^[0-9a-f]{64}$`)
+
 // Handler API 处理器
 type Handler struct {
-	cutter      *cutter.Cutter
-	asyncCutter *task.AsyncCutter
-	s3Client    *s3client.S3Client
-	taskRepo    *repository.TaskRepository
-	auditLogger *audit.Logger
-	auditDB     *sql.DB
-	logger      *zap.Logger
+	cutter                *cutter.Cutter
+	asyncCutter           *task.AsyncCutter
+	s3Client              *s3client.S3Client
+	taskRepo              *repository.TaskRepository
+	auditLogger           *audit.Logger
+	auditDB               *sql.DB
+	restorationProcessor  RestorationProcessor
+	taskPipelineEnabled   bool
+	compatibleWorkerReady bool
+	logger                *zap.Logger
 
 	// ========== 修复 L2: 添加限流器 ==========
 	globalLimiter  *rate.Limiter // 全局 QPS 限制
-	tenantLimiters sync.Map      // map[tenantID]*rate.Limiter
-	ipLimiters     sync.Map      // map[clientIP]*rate.Limiter
+	tenantLimiters sync.Map      // map[tenantID]*rateLimiterEntry
+	ipLimiters     sync.Map      // map[clientIP]*rateLimiterEntry
+	// rateLimiterEvictCounter 限流器淘汰扫描节流计数器
+	rateLimiterEvictCounter atomic.Int64
 }
 
 // NewHandler 创建处理器
@@ -82,6 +91,14 @@ func (h *Handler) SetAuditDB(db *sql.DB) {
 	h.auditDB = db
 }
 
+// SetTaskCommandAdmission keeps the versioned writer fail-closed. Both the
+// product flag and a compatible worker readiness receipt must be present before
+// create/cancel/retry commands are accepted.
+func (h *Handler) SetTaskCommandAdmission(pipelineEnabled, compatibleWorkerReady bool) {
+	h.taskPipelineEnabled = pipelineEnabled
+	h.compatibleWorkerReady = compatibleWorkerReady
+}
+
 func (h *Handler) loadUIFixture(ctx context.Context, tenantID, endpoint string, target interface{}) bool {
 	if h.auditDB == nil {
 		return false
@@ -107,6 +124,7 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	r.Handle("/api/v1/pcap/jobs", h.requirePermission("pcap:write", h.CreateJob)).Methods("POST")
 	r.Handle("/api/v1/pcap/jobs/{id}", h.requirePermission("pcap:read", h.GetJob)).Methods("GET")
 	r.Handle("/api/v1/pcap/jobs/{id}/cancel", h.requirePermission("pcap:write", h.CancelJob)).Methods("POST")
+	r.Handle("/api/v1/pcap/jobs/{id}/retry", h.requirePermission("pcap:write", h.RetryJob)).Methods("POST")
 	r.Handle("/api/v1/pcap/jobs", h.requirePermission("pcap:read", h.ListJobs)).Methods("GET")
 
 	// 同步裁剪（仅用于小文件，保留兼容）
@@ -124,6 +142,11 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	// 统计信息
 	r.Handle("/api/v1/pcap/stats", h.requirePermission("pcap:read", h.GetStats)).Methods("GET")
 
+	// Additive file-restoration admission. It is registered in every version so
+	// a default-off deployment returns an explicit disabled result rather than
+	// silently falling back to PCAP cutting.
+	r.Handle("/api/v1/forensics/restorations", h.requirePermission("forensics:write", h.CreateRestoration)).Methods("POST")
+
 	// 健康检查
 	r.HandleFunc("/health", h.HealthCheck).Methods("GET")
 	r.HandleFunc("/ready", h.ReadinessCheck).Methods("GET")
@@ -132,6 +155,9 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 func (h *Handler) requirePermission(permission string, next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !hasForensicsPermission(r.Context(), permission) {
+			// ADR-5 拒绝留痕:尽力而为写拒绝审计(403 语义已成立,
+			// 审计失败不改变拒绝,仅告警)。
+			h.recordPermissionDenied(r, permission)
 			rw := httpx.NewResponseWriter(w, r.Context())
 			rw.Error(http.StatusForbidden, "FORBIDDEN", fmt.Sprintf("Permission denied: %s required", permission), nil)
 			return
@@ -140,9 +166,26 @@ func (h *Handler) requirePermission(permission string, next http.HandlerFunc) ht
 	})
 }
 
+// recordPermissionDenied 为 403 拒绝补审计行(action=AUTH_PERMISSION_DENIED)。
+func (h *Handler) recordPermissionDenied(r *http.Request, permission string) {
+	if h.auditDB == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	tenantID := httpx.GetTenantID(ctx)
+	userID := httpx.GetUserID(ctx)
+	if err := h.recordPcapAudit(ctx, r, audit.EventTypePermissionDenied, tenantID, userID, permission,
+		map[string]interface{}{"required_scope": permission, "result": "denied", "path": r.URL.Path}); err != nil {
+		h.logger.Warn("Failed to persist permission-denied audit",
+			zap.String("scope", permission), zap.String("path", r.URL.Path), zap.Error(err))
+	}
+}
+
 func hasForensicsPermission(ctx context.Context, required string) bool {
 	for _, permission := range httpx.GetPermissions(ctx) {
-		if permission == "*" || permission == "admin:*" || permission == "pcap:*" || permission == required {
+		if permission == "*" || permission == "admin:*" ||
+			(permission == "pcap:*" && strings.HasPrefix(required, "pcap:")) || permission == required {
 			return true
 		}
 	}
@@ -158,16 +201,53 @@ func (h *Handler) checkGlobalRateLimit() bool {
 
 // checkTenantRateLimit 检查租户级别限流
 func (h *Handler) checkTenantRateLimit(tenantID string) bool {
-	limiterInterface, _ := h.tenantLimiters.LoadOrStore(tenantID, rate.NewLimiter(rate.Limit(10), 20)) // 10 QPS/租户，突发 20
-	limiter := limiterInterface.(*rate.Limiter)
-	return limiter.Allow()
+	h.evictStaleLimiters()
+	entryInterface, _ := h.tenantLimiters.LoadOrStore(tenantID, &rateLimiterEntry{
+		limiter: rate.NewLimiter(rate.Limit(10), 20), // 10 QPS/租户，突发 20
+	})
+	entry := entryInterface.(*rateLimiterEntry)
+	entry.lastUsed.Store(time.Now().Unix())
+	return entry.limiter.Allow()
 }
 
 // checkIPRateLimit 检查 IP 级别限流
 func (h *Handler) checkIPRateLimit(clientIP string) bool {
-	limiterInterface, _ := h.ipLimiters.LoadOrStore(clientIP, rate.NewLimiter(rate.Limit(5), 10)) // 5 QPS/IP，突发 10
-	limiter := limiterInterface.(*rate.Limiter)
-	return limiter.Allow()
+	h.evictStaleLimiters()
+	entryInterface, _ := h.ipLimiters.LoadOrStore(clientIP, &rateLimiterEntry{
+		limiter: rate.NewLimiter(rate.Limit(5), 10), // 5 QPS/IP，突发 10
+	})
+	entry := entryInterface.(*rateLimiterEntry)
+	entry.lastUsed.Store(time.Now().Unix())
+	return entry.limiter.Allow()
+}
+
+// rateLimiterEntry 限流器条目，携带最后使用时间以便淘汰
+type rateLimiterEntry struct {
+	limiter  *rate.Limiter
+	lastUsed atomic.Int64 // unix 秒
+}
+
+// rateLimiterTTL 限流器空闲淘汰阈值
+const rateLimiterTTL = 10 * 60 // 10 分钟（秒）
+
+// evictStaleLimiters 机会式淘汰空闲限流器，防止 tenantLimiters/ipLimiters
+// 无界增长（每 64 次调用执行一次扫描，成本可控）。
+func (h *Handler) evictStaleLimiters() {
+	if h.rateLimiterEvictCounter.Add(1)%64 != 0 {
+		return
+	}
+	now := time.Now().Unix()
+	cutoff := now - rateLimiterTTL
+	evictMap := func(m *sync.Map) {
+		m.Range(func(key, value interface{}) bool {
+			if entry, ok := value.(*rateLimiterEntry); ok && entry.lastUsed.Load() < cutoff {
+				m.Delete(key)
+			}
+			return true
+		})
+	}
+	evictMap(&h.tenantLimiters)
+	evictMap(&h.ipLimiters)
 }
 
 // ========== 修复 L3: 敏感信息掩码 ==========
@@ -236,11 +316,37 @@ func (h *Handler) normalizeResultKey(rawKey string) (string, string, error) {
 	}
 
 	parts := strings.Split(key, "/")
-	if len(parts) < 4 || parts[0] != "results" || parts[1] == "" {
-		return "", "", fmt.Errorf("invalid result key format")
+	if len(parts) >= 4 && parts[0] == "results" && parts[1] != "" {
+		return key, parts[1], nil
 	}
+	if len(parts) >= 7 && parts[0] == "tenants" && parts[1] != "" &&
+		parts[2] == "forensics" && parts[3] == "jobs" && parts[4] != "" && parts[5] == "pcap" {
+		return key, parts[1], nil
+	}
+	return "", "", fmt.Errorf("invalid result key format")
+}
 
-	return key, parts[1], nil
+func normalizeForensicsPurpose(raw string, required bool) (string, error) {
+	purpose := strings.TrimSpace(raw)
+	if required && purpose == "" {
+		return "", fmt.Errorf("purpose is required for versioned result download")
+	}
+	if len(purpose) > 256 || strings.ContainsAny(purpose, "\x00\r\n") {
+		return "", fmt.Errorf("purpose must be at most 256 safe characters")
+	}
+	return purpose, nil
+}
+
+func decodeForensicsJSON(w http.ResponseWriter, r *http.Request, target interface{}) error {
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return fmt.Errorf("request body must contain exactly one JSON object")
+	}
+	return nil
 }
 
 func currentTenantID(ctx context.Context) string {
@@ -251,15 +357,35 @@ func currentTenantID(ctx context.Context) string {
 	return tenantID
 }
 
-func (h *Handler) registeredResultSHA256(ctx context.Context, key string) string {
+func (h *Handler) registeredResultSHA256(ctx context.Context, tenantID, key string) string {
 	if h.taskRepo == nil {
 		return ""
 	}
+	if manifest, err := h.taskRepo.GetVersionedManifestByResultKey(ctx, tenantID, key); err == nil && manifest != nil {
+		return strings.ToLower(strings.TrimSpace(manifest.ResultObject.SHA256))
+	}
 	task, err := h.taskRepo.GetByResultFileKey(ctx, key)
-	if err != nil || task == nil {
+	if err != nil || task == nil || task.TenantID != tenantID {
 		return ""
 	}
 	return strings.ToLower(strings.TrimSpace(task.ResultSHA256))
+}
+
+func (h *Handler) versionedResultManifest(ctx context.Context, tenantID, key string) (*repository.TaskManifestReceipt, error) {
+	if !strings.HasPrefix(key, "tenants/") {
+		return nil, nil
+	}
+	if h.taskRepo == nil {
+		return nil, errors.New(errors.ErrCodeServiceUnavailable, "versioned result manifest repository is unavailable")
+	}
+	manifest, err := h.taskRepo.GetVersionedManifestByResultKey(ctx, tenantID, key)
+	if err != nil {
+		return nil, fmt.Errorf("load versioned result manifest: %w", err)
+	}
+	if manifest == nil {
+		return nil, errors.New(errors.ErrCodeResourceNotFound, "versioned result manifest not found")
+	}
+	return manifest, nil
 }
 
 func (h *Handler) computeObjectSHA256(ctx context.Context, key string) (string, int64, error) {
@@ -326,6 +452,19 @@ func forensicsTaskCommandMeta(r *http.Request, tenantID, actorID, actionID strin
 	}
 }
 
+func versionedForensicsTaskCommandMeta(r *http.Request, tenantID, actorID, actionID string, expectedRevision int64, compatibility bool) (repository.TaskCommandMeta, error) {
+	meta := forensicsTaskCommandMeta(r, tenantID, actorID, actionID, expectedRevision, compatibility)
+	if meta.CompatibilityMode || strings.TrimSpace(meta.IdempotencyKey) == "" || strings.TrimSpace(meta.Reason) == "" {
+		return repository.TaskCommandMeta{}, errors.New(errors.ErrCodeInvalidParameter,
+			"Idempotency-Key, X-Action-Reason and the required revision precondition are mandatory")
+	}
+	if strings.TrimSpace(meta.TenantID) == "" || strings.TrimSpace(meta.ActorID) == "" || strings.TrimSpace(meta.TraceID) == "" {
+		return repository.TaskCommandMeta{}, errors.New(errors.ErrCodeUnauthorized,
+			"authenticated tenant, actor and trace identity are required")
+	}
+	return meta, nil
+}
+
 func parseForensicsTaskRevision(r *http.Request, fallback int64) (int64, bool, error) {
 	header := strings.TrimSpace(r.Header.Get("If-Match"))
 	if header == "" {
@@ -349,12 +488,24 @@ func writeForensicsCommandError(rw *httpx.ResponseWriter, err error) {
 	rw.Error(status, string(code), err.Error(), nil)
 }
 
+func (h *Handler) requireTaskCommandAdmission(rw *httpx.ResponseWriter) bool {
+	if h.taskPipelineEnabled && h.compatibleWorkerReady {
+		return true
+	}
+	rw.Error(http.StatusServiceUnavailable, "FORENSICS_PIPELINE_NOT_READY",
+		"Forensics task commands remain disabled until the compatible worker is ready", nil)
+	return false
+}
+
 // ========== API 处理方法 ==========
 
 // CreateJob 创建异步裁剪任务（修复版）
 func (h *Handler) CreateJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	rw := httpx.NewResponseWriter(w, ctx)
+	if !h.requireTaskCommandAdmission(rw) {
+		return
+	}
 
 	// ========== 修复 L2: 全局限流 ==========
 	if !h.checkGlobalRateLimit() {
@@ -372,8 +523,14 @@ func (h *Handler) CreateJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req converter.CutRequestParams
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
 		rw.Error(http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", nil)
+		return
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		rw.Error(http.StatusBadRequest, "INVALID_REQUEST", "request body must contain exactly one JSON object", nil)
 		return
 	}
 
@@ -389,24 +546,33 @@ func (h *Handler) CreateJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ========== 修复 H1: 强制使用用户租户 ID ==========
-	userTenantID := httpx.GetTenantID(ctx)
+	userTenantID := strings.TrimSpace(httpx.GetTenantID(ctx))
 	if userTenantID == "" {
-		userTenantID = "default"
+		rw.Error(http.StatusUnauthorized, "UNAUTHENTICATED", "authenticated tenant identity is required", nil)
+		return
 	}
 
-	// 如果请求中指定了 tenant_id，检查权限
+	// tenant_id is identity-derived. A body value is accepted only when it
+	// repeats that identity; even cross-tenant administrators cannot override
+	// the command tenant through payload data.
 	if req.TenantID != "" && req.TenantID != userTenantID {
-		if !h.checkCrossTenantAccess(ctx, userTenantID, req.TenantID) {
-			h.logger.Warn("Cross-tenant create job denied",
-				zap.String("user_tenant", userTenantID),
-				zap.String("requested_tenant", req.TenantID),
-				zap.String("client_ip", maskIP(clientIP)))
-			rw.Error(http.StatusForbidden, "FORBIDDEN", "Cross-tenant access denied", nil)
-			return
-		}
-	} else {
-		// ✅ 强制使用用户的租户 ID
-		req.TenantID = userTenantID
+		h.logger.Warn("Tenant override on forensics command denied",
+			zap.String("user_tenant", userTenantID),
+			zap.String("requested_tenant", req.TenantID),
+			zap.String("client_ip", maskIP(clientIP)))
+		rw.Error(http.StatusForbidden, "TENANT_OVERRIDE_FORBIDDEN", "tenant_id must come from authenticated identity", nil)
+		return
+	}
+	req.TenantID = userTenantID
+	if strings.TrimSpace(req.Purpose) == "" {
+		rw.Error(http.StatusBadRequest, "INVALID_REQUEST", "purpose is required", nil)
+		return
+	}
+	if req.RetentionPolicy == "" {
+		req.RetentionPolicy = "forensics-standard"
+	}
+	if req.RestorationContractVersion == 0 {
+		req.RestorationContractVersion = 1
 	}
 
 	// ========== 修复 L2: 租户限流 ==========
@@ -429,27 +595,51 @@ func (h *Handler) CreateJob(w http.ResponseWriter, r *http.Request) {
 		zap.Int64("start_time", req.StartTime),
 		zap.Int64("end_time", req.EndTime))
 
+	commandMeta, err := versionedForensicsTaskCommandMeta(r, req.TenantID, userID, repository.ForensicsTaskCreateAction, 0, false)
+	if err != nil {
+		writeForensicsCommandError(rw, err)
+		return
+	}
+	restorationSpecs := make([]task.RestorationTaskSpec, 0, len(req.Restorations))
+	for _, requested := range req.Restorations {
+		restorationSpecs = append(restorationSpecs, task.RestorationTaskSpec{
+			RequestID: requested.RequestID, SessionID: requested.SessionID,
+			CommunityID: requested.CommunityID, FlowIDs: requested.FlowIDs, FlowID: requested.FlowID,
+			Tuple: requested.Tuple, Direction: requested.Direction, ProfileID: requested.ProfileID,
+			FTPData: requested.FTPData, FTPTLSEnabled: requested.FTPTLSEnabled,
+		})
+	}
+
 	// 创建任务请求
 	taskReq := &task.CutTaskRequest{
-		TenantID:     req.TenantID,
-		UserID:       userID,
-		AssetID:      req.AssetID,
-		AlertID:      req.AlertID,
-		CampaignID:   req.CampaignID,
-		BaselineID:   req.BaselineID,
-		EvidenceID:   req.EvidenceID,
-		EvidenceType: req.EvidenceType,
-		ProbeID:      req.ProbeID,
-		SrcIP:        req.SrcIP,
-		DstIP:        req.DstIP,
-		SrcPort:      req.SrcPort,
-		DstPort:      req.DstPort,
-		Protocol:     req.Protocol,
-		CommunityID:  req.CommunityID,
-		StartTime:    req.StartTime,
-		EndTime:      req.EndTime,
-		MaxPackets:   req.MaxPackets,
-		CommandMeta:  forensicsTaskCommandMeta(r, req.TenantID, userID, repository.ForensicsTaskCreateAction, 0, false),
+		TenantID:                   req.TenantID,
+		UserID:                     userID,
+		AssetID:                    req.AssetID,
+		AlertID:                    req.AlertID,
+		AlertIDs:                   req.AlertIDs,
+		CaseIDs:                    req.CaseIDs,
+		CampaignID:                 req.CampaignID,
+		BaselineID:                 req.BaselineID,
+		EvidenceID:                 req.EvidenceID,
+		EvidenceType:               req.EvidenceType,
+		ProbeID:                    req.ProbeID,
+		ProbeIDs:                   req.ProbeIDs,
+		SrcIP:                      req.SrcIP,
+		DstIP:                      req.DstIP,
+		SrcPort:                    req.SrcPort,
+		DstPort:                    req.DstPort,
+		Protocol:                   req.Protocol,
+		CommunityID:                req.CommunityID,
+		StartTime:                  req.StartTime,
+		EndTime:                    req.EndTime,
+		MaxPackets:                 req.MaxPackets,
+		Purpose:                    req.Purpose,
+		PermissionSnapshot:         httpx.GetPermissions(ctx),
+		RetentionPolicy:            req.RetentionPolicy,
+		RestorationContractVersion: req.RestorationContractVersion,
+		Restorations:               restorationSpecs,
+		TraceID:                    commandMeta.TraceID,
+		CommandMeta:                commandMeta,
 	}
 
 	job, err := h.asyncCutter.SubmitTask(ctx, taskReq)
@@ -489,18 +679,13 @@ func (h *Handler) GetJob(w http.ResponseWriter, r *http.Request) {
 	jobID := vars["id"]
 
 	// 获取当前用户的 tenant_id
-	userTenantID := httpx.GetTenantID(ctx)
+	userTenantID := strings.TrimSpace(httpx.GetTenantID(ctx))
 	if userTenantID == "" {
-		userTenantID = "default"
+		rw.Error(http.StatusUnauthorized, "UNAUTHENTICATED", "authenticated tenant identity is required", nil)
+		return
 	}
 
-	var job *repository.Task
-	var err error
-	if hasForensicsCrossTenantPermission(ctx) {
-		job, err = h.taskRepo.GetByID(ctx, jobID)
-	} else {
-		job, err = h.taskRepo.GetByIDForTenant(ctx, userTenantID, jobID)
-	}
+	job, err := h.taskRepo.GetByIDForTenant(ctx, userTenantID, jobID)
 	if err != nil {
 		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
 			rw.Error(http.StatusNotFound, "JOB_NOT_FOUND", "Job not found", nil)
@@ -530,6 +715,17 @@ func (h *Handler) GetJob(w http.ResponseWriter, r *http.Request) {
 // buildJobResponse 构建任务响应
 func (h *Handler) buildJobResponse(ctx context.Context, job *repository.Task) *converter.JobResponse {
 	response := converter.NewJobResponseFromTask(job)
+	versionedManifest := false
+	if manifest, err := h.taskRepo.GetVersionedManifestForTenant(ctx, job.TenantID, job.TaskID); err != nil {
+		h.logger.Warn("Failed to load versioned task manifest", zap.String("task_id", job.TaskID), zap.Error(err))
+	} else if manifest != nil {
+		versionedManifest = true
+		response.ManifestSHA256 = manifest.ManifestSHA256
+		response.Manifest = manifest.Manifest
+		response.ResultObjectVersion = manifest.ObjectVersion
+		retentionUntil := manifest.RetentionUntil.UnixMilli()
+		response.RetentionUntil = &retentionUntil
+	}
 
 	// 解析参数
 	if len(job.ParamsJSON) > 0 {
@@ -540,7 +736,7 @@ func (h *Handler) buildJobResponse(ctx context.Context, job *repository.Task) *c
 	}
 
 	// 如果任务完成且有结果文件，生成预签名 URL
-	if job.Status == repository.TaskStatusCompleted && job.ResultFileKey != "" {
+	if job.Status == repository.TaskStatusCompleted && job.ResultFileKey != "" && !versionedManifest {
 		expiry := 1 * time.Hour
 		url, err := h.s3Client.GetPresignedURL(ctx, job.ResultFileKey, expiry)
 		if err == nil {
@@ -557,23 +753,21 @@ func (h *Handler) buildJobResponse(ctx context.Context, job *repository.Task) *c
 func (h *Handler) CancelJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	rw := httpx.NewResponseWriter(w, ctx)
+	if !h.requireTaskCommandAdmission(rw) {
+		return
+	}
 
 	vars := mux.Vars(r)
 	jobID := vars["id"]
 
 	// ========== 修复 H1: 先获取任务检查权限 ==========
-	userTenantID := httpx.GetTenantID(ctx)
+	userTenantID := strings.TrimSpace(httpx.GetTenantID(ctx))
 	if userTenantID == "" {
-		userTenantID = "default"
+		rw.Error(http.StatusUnauthorized, "UNAUTHENTICATED", "authenticated tenant identity is required", nil)
+		return
 	}
 
-	var job *repository.Task
-	var err error
-	if hasForensicsCrossTenantPermission(ctx) {
-		job, err = h.taskRepo.GetByID(ctx, jobID)
-	} else {
-		job, err = h.taskRepo.GetByIDForTenant(ctx, userTenantID, jobID)
-	}
+	job, err := h.taskRepo.GetByIDForTenant(ctx, userTenantID, jobID)
 	if err != nil {
 		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
 			rw.Error(http.StatusNotFound, "JOB_NOT_FOUND", "Job not found", nil)
@@ -584,22 +778,16 @@ func (h *Handler) CancelJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ========== 租户隔离检查 ==========
-	if !h.checkCrossTenantAccess(ctx, userTenantID, job.TenantID) {
-		h.logger.Warn("Cross-tenant cancel denied",
-			zap.String("user_tenant", userTenantID),
-			zap.String("job_tenant", job.TenantID),
-			zap.String("job_id", jobID))
-		rw.Error(http.StatusForbidden, "FORBIDDEN", "Access denied", nil)
-		return
-	}
-
 	expectedRevision, compatibility, err := parseForensicsTaskRevision(r, job.Revision)
 	if err != nil {
 		writeForensicsCommandError(rw, err)
 		return
 	}
-	meta := forensicsTaskCommandMeta(r, job.TenantID, httpx.GetUserID(ctx), repository.ForensicsTaskCancelAction, expectedRevision, compatibility)
+	meta, err := versionedForensicsTaskCommandMeta(r, job.TenantID, httpx.GetUserID(ctx), repository.ForensicsTaskCancelAction, expectedRevision, compatibility)
+	if err != nil {
+		writeForensicsCommandError(rw, err)
+		return
+	}
 	receipt, err := h.asyncCutter.CancelTask(ctx, job.TenantID, jobID, meta)
 	if err != nil {
 		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
@@ -614,6 +802,51 @@ func (h *Handler) CancelJob(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Idempotency-Key", receipt.IdempotencyKey)
 	w.Header().Set("X-Event-ID", receipt.EventID)
 	rw.Success(receipt)
+}
+
+// RetryJob requeues a failed or cancelled task without accepting a replacement
+// payload. The immutable request, permission snapshot and purpose stay bound to
+// the original task revision chain.
+func (h *Handler) RetryJob(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	rw := httpx.NewResponseWriter(w, ctx)
+	if !h.requireTaskCommandAdmission(rw) {
+		return
+	}
+	taskID := mux.Vars(r)["id"]
+	tenantID := strings.TrimSpace(httpx.GetTenantID(ctx))
+	if tenantID == "" {
+		rw.Error(http.StatusUnauthorized, "UNAUTHENTICATED", "authenticated tenant identity is required", nil)
+		return
+	}
+	job, err := h.taskRepo.GetByIDForTenant(ctx, tenantID, taskID)
+	if err != nil {
+		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
+			rw.Error(http.StatusNotFound, "JOB_NOT_FOUND", "Job not found", nil)
+			return
+		}
+		writeForensicsCommandError(rw, err)
+		return
+	}
+	expectedRevision, compatibility, err := parseForensicsTaskRevision(r, job.Revision)
+	if err != nil {
+		writeForensicsCommandError(rw, err)
+		return
+	}
+	meta, err := versionedForensicsTaskCommandMeta(r, tenantID, httpx.GetUserID(ctx), repository.ForensicsTaskRetryAction, expectedRevision, compatibility)
+	if err != nil {
+		writeForensicsCommandError(rw, err)
+		return
+	}
+	receipt, err := h.asyncCutter.RetryTask(ctx, tenantID, taskID, meta)
+	if err != nil {
+		writeForensicsCommandError(rw, err)
+		return
+	}
+	w.Header().Set("ETag", fmt.Sprintf(`W/"%d"`, receipt.Revision))
+	w.Header().Set("Idempotency-Key", receipt.IdempotencyKey)
+	w.Header().Set("X-Event-ID", receipt.EventID)
+	rw.Accepted(receipt)
 }
 
 // ListJobs 列出任务
@@ -903,30 +1136,52 @@ func (h *Handler) DownloadPCAP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Access denied", http.StatusForbidden)
 		return
 	}
-
-	h.logger.Debug("Download PCAP request", zap.String("key", key))
-
-	// 检查文件是否存在
-	exists, err := h.s3Client.ObjectExists(ctx, key)
-	if err != nil || !exists {
-		http.Error(w, "File not found", http.StatusNotFound)
+	manifest, err := h.versionedResultManifest(ctx, fileTenantID, key)
+	if err != nil {
+		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
+			http.Error(w, "File not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Failed to resolve immutable result authority", http.StatusInternalServerError)
+		}
+		return
+	}
+	purpose, err := normalizeForensicsPurpose(r.URL.Query().Get("purpose"), manifest != nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	obj, err := h.s3Client.GetObject(ctx, key)
-	if err != nil {
-		h.logger.Error("Failed to get object", zap.String("key", key), zap.Error(err))
-		http.Error(w, "Failed to download file", http.StatusInternalServerError)
+	h.logger.Debug("Download PCAP request", zap.String("key", key))
+
+	var obj io.ReadCloser
+	resultSHA256 := ""
+	detail := map[string]interface{}{"mode": "download", "purpose": purpose}
+	if manifest != nil {
+		var verified s3client.ObjectAuthority
+		obj, verified, err = h.s3Client.OpenForensicsResultObject(ctx, manifest.ResultObject, fileTenantID, manifest.TaskID)
+		if err == nil {
+			resultSHA256 = verified.SHA256
+			detail["manifest_sha256"] = manifest.ManifestSHA256
+			detail["object_version"] = verified.VersionID
+		}
+	} else {
+		var exists bool
+		exists, err = h.s3Client.ObjectExists(ctx, key)
+		if err == nil && exists {
+			obj, err = h.s3Client.GetObject(ctx, key)
+		} else if err == nil {
+			err = errors.New(errors.ErrCodeResourceNotFound, "legacy result object not found")
+		}
+		resultSHA256 = h.registeredResultSHA256(ctx, fileTenantID, key)
+	}
+	if err != nil || obj == nil {
+		h.logger.Error("Failed to open authorized PCAP object", zap.String("key", key), zap.Error(err))
+		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
 	defer obj.Close()
 
-	resultSHA256 := h.registeredResultSHA256(ctx, key)
-
 	userID := httpx.GetUserID(ctx)
-	detail := map[string]interface{}{
-		"mode": "download",
-	}
 	if resultSHA256 != "" {
 		detail["sha256"] = resultSHA256
 	}
@@ -941,6 +1196,10 @@ func (h *Handler) DownloadPCAP(w http.ResponseWriter, r *http.Request) {
 	if resultSHA256 != "" {
 		w.Header().Set("X-Content-SHA256", resultSHA256)
 	}
+	if manifest != nil {
+		w.Header().Set("X-Object-Version", manifest.ResultObject.VersionID)
+		w.Header().Set("X-Manifest-SHA256", manifest.ManifestSHA256)
+	}
 
 	if _, err := io.Copy(w, obj); err != nil {
 		h.logger.Error("Failed to stream PCAP", zap.Error(err))
@@ -949,16 +1208,20 @@ func (h *Handler) DownloadPCAP(w http.ResponseWriter, r *http.Request) {
 
 // PresignRequest 预签名请求
 type PresignRequest struct {
-	Key    string `json:"key"`
-	Expiry int    `json:"expiry_seconds"`
+	Key     string `json:"key"`
+	Expiry  int    `json:"expiry_seconds"`
+	Purpose string `json:"purpose"`
 }
 
 // PresignResponse 预签名响应
 type PresignResponse struct {
-	URL       string `json:"url"`
-	ExpiresAt int64  `json:"expires_at"`
-	Key       string `json:"key"`
-	SHA256    string `json:"sha256,omitempty"`
+	URL            string `json:"url"`
+	ExpiresAt      int64  `json:"expires_at"`
+	Key            string `json:"key"`
+	SHA256         string `json:"sha256,omitempty"`
+	ObjectVersion  string `json:"object_version,omitempty"`
+	ManifestSHA256 string `json:"manifest_sha256,omitempty"`
+	Purpose        string `json:"purpose,omitempty"`
 }
 
 // GetPresignedURL 获取预签名 URL（修复版：添加租户隔离）
@@ -967,7 +1230,7 @@ func (h *Handler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
 	rw := httpx.NewResponseWriter(w, ctx)
 
 	var req PresignRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeForensicsJSON(w, r, &req); err != nil {
 		rw.Error(http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", nil)
 		return
 	}
@@ -995,15 +1258,18 @@ func (h *Handler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
 		rw.Error(http.StatusForbidden, "FORBIDDEN", "Access denied", nil)
 		return
 	}
-
-	exists, err := h.s3Client.ObjectExists(ctx, key)
+	manifest, err := h.versionedResultManifest(ctx, fileTenantID, key)
 	if err != nil {
-		h.logger.Error("Failed to stat object before presign", zap.String("key", key), zap.Error(err))
-		rw.Error(http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to check object", nil)
+		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
+			rw.Error(http.StatusNotFound, "PCAP_NOT_FOUND", "Versioned result manifest not found", nil)
+		} else {
+			rw.Error(http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to resolve immutable result authority", nil)
+		}
 		return
 	}
-	if !exists {
-		rw.Error(http.StatusNotFound, "PCAP_NOT_FOUND", "File not found", nil)
+	purpose, err := normalizeForensicsPurpose(req.Purpose, manifest != nil)
+	if err != nil {
+		rw.Error(http.StatusBadRequest, "PURPOSE_REQUIRED", err.Error(), nil)
 		return
 	}
 
@@ -1011,26 +1277,56 @@ func (h *Handler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
 		req.Expiry = 3600 // 1 小时默认
 	}
 	if req.Expiry > 86400 {
-		req.Expiry = 86400 // 最多 24 小时
-	}
-
-	expiry := time.Duration(req.Expiry) * time.Second
-	url, err := h.s3Client.GetPresignedURL(ctx, key, expiry)
-	if err != nil {
-		h.logger.Error("Failed to generate presigned URL", zap.Error(err))
-		rw.Error(http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to generate URL", nil)
+		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", "expiry_seconds must not exceed 86400", nil)
 		return
 	}
 
-	resultSHA256 := h.registeredResultSHA256(ctx, key)
+	expiry := time.Duration(req.Expiry) * time.Second
+	resultSHA256 := ""
+	objectVersion := ""
+	manifestSHA256 := ""
+	var signedURL string
+	if manifest != nil {
+		var verified s3client.ObjectAuthority
+		signedURL, verified, err = h.s3Client.PresignForensicsResultObject(ctx, manifest.ResultObject, fileTenantID, manifest.TaskID, expiry)
+		if err == nil {
+			resultSHA256 = verified.SHA256
+			objectVersion = verified.VersionID
+			manifestSHA256 = manifest.ManifestSHA256
+		}
+	} else {
+		var exists bool
+		exists, err = h.s3Client.ObjectExists(ctx, key)
+		if err == nil && !exists {
+			err = errors.New(errors.ErrCodeResourceNotFound, "legacy result object not found")
+		}
+		if err == nil {
+			signedURL, err = h.s3Client.GetPresignedURL(ctx, key, expiry)
+		}
+		resultSHA256 = h.registeredResultSHA256(ctx, fileTenantID, key)
+	}
+	if err != nil {
+		h.logger.Error("Failed to generate authorized presigned URL", zap.String("key", key), zap.Error(err))
+		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
+			rw.Error(http.StatusNotFound, "PCAP_NOT_FOUND", "File not found", nil)
+		} else {
+			rw.Error(http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to generate URL", nil)
+		}
+		return
+	}
 	userID := httpx.GetUserID(ctx)
 	detail := map[string]interface{}{
 		"mode":           "presign",
 		"expiry_seconds": req.Expiry,
 		"expires_at":     time.Now().Add(expiry).Unix(),
+		"purpose":        purpose,
 	}
 	if resultSHA256 != "" {
 		detail["sha256"] = resultSHA256
+	}
+	if objectVersion != "" {
+		detail["object_version"] = objectVersion
+		detail["manifest_sha256"] = manifestSHA256
 	}
 	if err := h.recordPcapAudit(ctx, r, audit.EventTypePcapDownload, fileTenantID, userID, key, detail); err != nil {
 		h.logger.Error("Failed to persist PCAP presign audit", zap.String("key", key), zap.Error(err))
@@ -1039,10 +1335,13 @@ func (h *Handler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rw.Success(PresignResponse{
-		URL:       url,
-		ExpiresAt: time.Now().Add(expiry).Unix(),
-		Key:       key,
-		SHA256:    resultSHA256,
+		URL:            signedURL,
+		ExpiresAt:      time.Now().Add(expiry).Unix(),
+		Key:            key,
+		SHA256:         resultSHA256,
+		ObjectVersion:  objectVersion,
+		ManifestSHA256: manifestSHA256,
+		Purpose:        purpose,
 	})
 }
 
@@ -1069,12 +1368,17 @@ func (h *Handler) VerifyPCAP(w http.ResponseWriter, r *http.Request) {
 	rw := httpx.NewResponseWriter(w, ctx)
 
 	var req VerifyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeForensicsJSON(w, r, &req); err != nil {
 		rw.Error(http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", nil)
 		return
 	}
 	if req.Key == "" {
 		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", "key is required", nil)
+		return
+	}
+	expectedSHA256 := strings.ToLower(strings.TrimSpace(req.ExpectedSHA256))
+	if expectedSHA256 != "" && !forensicsSHA256.MatchString(expectedSHA256) {
+		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", "expected_sha256 must contain exactly 64 hexadecimal characters", nil)
 		return
 	}
 
@@ -1092,27 +1396,56 @@ func (h *Handler) VerifyPCAP(w http.ResponseWriter, r *http.Request) {
 		rw.Error(http.StatusForbidden, "FORBIDDEN", "Access denied", nil)
 		return
 	}
-
-	exists, err := h.s3Client.ObjectExists(ctx, key)
+	manifest, err := h.versionedResultManifest(ctx, fileTenantID, key)
 	if err != nil {
-		h.logger.Error("Failed to stat object before verification", zap.String("key", key), zap.Error(err))
-		rw.Error(http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to check object", nil)
-		return
-	}
-	if !exists {
-		rw.Error(http.StatusNotFound, "PCAP_NOT_FOUND", "File not found", nil)
+		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
+			rw.Error(http.StatusNotFound, "PCAP_NOT_FOUND", "Versioned result manifest not found", nil)
+		} else {
+			rw.Error(http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to resolve immutable result authority", nil)
+		}
 		return
 	}
 
-	actualSHA256, sizeBytes, err := h.computeObjectSHA256(ctx, key)
+	actualSHA256 := ""
+	var sizeBytes int64
+	registeredSHA256 := ""
+	objectVersion := ""
+	if manifest != nil {
+		object, verified, openErr := h.s3Client.OpenForensicsResultObject(ctx, manifest.ResultObject, fileTenantID, manifest.TaskID)
+		if openErr != nil {
+			err = openErr
+		} else {
+			defer object.Close()
+			hasher := sha256.New()
+			sizeBytes, err = io.Copy(hasher, io.LimitReader(object, verified.SizeBytes+1))
+			if err == nil && sizeBytes != verified.SizeBytes {
+				err = fmt.Errorf("versioned result body size differs from final manifest")
+			}
+			actualSHA256 = hex.EncodeToString(hasher.Sum(nil))
+			registeredSHA256 = verified.SHA256
+			objectVersion = verified.VersionID
+		}
+	} else {
+		var exists bool
+		exists, err = h.s3Client.ObjectExists(ctx, key)
+		if err == nil && !exists {
+			err = errors.New(errors.ErrCodeResourceNotFound, "legacy result object not found")
+		}
+		if err == nil {
+			actualSHA256, sizeBytes, err = h.computeObjectSHA256(ctx, key)
+		}
+		registeredSHA256 = h.registeredResultSHA256(ctx, fileTenantID, key)
+	}
 	if err != nil {
 		h.logger.Error("Failed to compute PCAP sha256", zap.String("key", key), zap.Error(err))
-		rw.Error(http.StatusInternalServerError, "INTEGRITY_CHECK_FAILED", "Failed to compute sha256", nil)
+		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
+			rw.Error(http.StatusNotFound, "PCAP_NOT_FOUND", "File not found", nil)
+		} else {
+			rw.Error(http.StatusInternalServerError, "INTEGRITY_CHECK_FAILED", "Failed to compute sha256", nil)
+		}
 		return
 	}
 
-	expectedSHA256 := strings.ToLower(strings.TrimSpace(req.ExpectedSHA256))
-	registeredSHA256 := h.registeredResultSHA256(ctx, key)
 	referenceSHA256 := expectedSHA256
 	if referenceSHA256 == "" {
 		referenceSHA256 = registeredSHA256
@@ -1137,6 +1470,7 @@ func (h *Handler) VerifyPCAP(w http.ResponseWriter, r *http.Request) {
 		"registered_sha256": registeredSHA256,
 		"verified":          verified,
 		"size_bytes":        sizeBytes,
+		"object_version":    objectVersion,
 	}); err != nil {
 		h.logger.Error("Failed to persist PCAP integrity audit", zap.String("key", key), zap.Error(err))
 		rw.Error(http.StatusInternalServerError, "AUDIT_PERSIST_FAILED", "Failed to persist PCAP integrity audit", nil)

@@ -16,6 +16,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -127,6 +128,8 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	rules.HandleFunc("/{id}/enable", h.EnableRule).Methods("POST")
 	rules.HandleFunc("/{id}/disable", h.DisableRule).Methods("POST")
 	rules.HandleFunc("/{id}/versions", h.GetRuleVersions).Methods("GET")
+	rules.HandleFunc("/{id}/rollback", h.RollbackRule).Methods("POST")
+	rules.HandleFunc("/{id}/operations/{event_id}", h.GetRuleApplicationStatus).Methods("GET")
 	rules.HandleFunc("/{id}/workbench", h.GetRuleWorkbench).Methods("GET")
 	rules.HandleFunc("/{id}/actions", h.SubmitRuleWorkbenchAction).Methods("POST")
 
@@ -613,6 +616,74 @@ func (h *Handler) GetRuleVersions(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"data":    versions,
 	})
+}
+
+// RollbackRule restores a historical rule snapshot as a new higher version.
+func (h *Handler) RollbackRule(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+
+	ruleID := mux.Vars(r)["id"]
+	if ruleID == "" {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "rule id is required"))
+		return
+	}
+	var req RollbackRuleRequest
+	if err := h.decodeJSON(r, &req); err != nil {
+		h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid request body"))
+		return
+	}
+	if err := req.Validate(); err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+
+	result, err := h.ruleService.RollbackRule(
+		ctx,
+		ruleID,
+		req.TargetVersion,
+		req.ExpectedVersion,
+		req.Reason,
+		opCtx,
+	)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusAccepted, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"rule":             h.ruleToDTO(result.Rule),
+			"event_id":         result.EventID,
+			"runtime_status":   result.RuntimeStatus,
+			"expected_acks":    result.ExpectedAcks,
+			"target_version":   result.TargetVersion,
+			"previous_version": result.PreviousVersion,
+			"new_version":      result.NewVersion,
+		},
+	})
+}
+
+// GetRuleApplicationStatus returns broker publication and exact Flink subtask
+// receipts for a rule outbox event.
+func (h *Handler) GetRuleApplicationStatus(w http.ResponseWriter, r *http.Request) {
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	ruleID := mux.Vars(r)["id"]
+	eventID := mux.Vars(r)["event_id"]
+	status, err := h.ruleService.GetRuleApplicationStatus(r.Context(), ruleID, eventID, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": status})
 }
 
 // GetRuleWorkbench returns database-backed data for every visible workbench
@@ -1406,6 +1477,30 @@ type BatchOperationRequest struct {
 	RuleIDs []string `json:"rule_ids"`
 }
 
+type RollbackRuleRequest struct {
+	TargetVersion   int64  `json:"target_version"`
+	ExpectedVersion int64  `json:"expected_version"`
+	Reason          string `json:"reason"`
+}
+
+func (r *RollbackRuleRequest) Validate() error {
+	if r.TargetVersion <= 0 {
+		return errors.New(errors.ErrCodeInvalidParameter, "target_version must be greater than zero")
+	}
+	if r.ExpectedVersion <= 0 {
+		return errors.New(errors.ErrCodeInvalidParameter, "expected_version must be greater than zero")
+	}
+	reason := strings.TrimSpace(r.Reason)
+	if reason == "" {
+		return errors.New(errors.ErrCodeMissingParameter, "rollback reason is required")
+	}
+	if len(reason) > 1000 {
+		return errors.New(errors.ErrCodeInvalidParameter, "rollback reason too long, max 1000 characters")
+	}
+	r.Reason = reason
+	return nil
+}
+
 // CreateDeploymentRequest 创建部署请求
 type CreateDeploymentRequest struct {
 	Name         string                 `json:"name,omitempty"`
@@ -1668,6 +1763,32 @@ func (h *Handler) decodeJSON(r *http.Request, v interface{}) error {
 	return json.Unmarshal(body, v)
 }
 
+// decodeJSONStrict is reserved for versioned governance commands whose
+// request hash must not be affected by silently ignored client fields.
+func (h *Handler) decodeJSONStrict(r *http.Request, v interface{}) error {
+	body, err := io.ReadAll(io.LimitReader(r.Body, h.config.MaxRequestSize))
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	if len(body) == 0 {
+		return errors.New(errors.ErrCodeInvalidRequest, "empty request body")
+	}
+	decoder := json.NewDecoder(bytes.NewReader(body))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(v); err != nil {
+		return err
+	}
+	var trailing interface{}
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return errors.New(errors.ErrCodeInvalidRequest, "request body must contain exactly one JSON value")
+		}
+		return err
+	}
+	return nil
+}
+
 // writeJSON 写入 JSON 响应（统一格式）
 func (h *Handler) writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -1681,6 +1802,8 @@ func (h *Handler) writeJSON(w http.ResponseWriter, statusCode int, data interfac
 func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) {
 	traceID := httpx.GetTraceID(r.Context())
 	if errors.GetCode(err) == errors.ErrCodePermissionDenied {
+		// ADR-5 拒绝留痕:规则/模型高风险操作 403 同时发拒绝审计事件(best-effort)
+		h.recordPermissionDenied(r, err)
 		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied, err.Error(), traceID, r.URL.Path)
 		return
 	}
@@ -1689,4 +1812,22 @@ func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) 
 		return
 	}
 	errors.WriteError(w, err, traceID, r.URL.Path)
+}
+
+// recordPermissionDenied 规则/模型操作权限拒绝审计事件(AUTH_PERMISSION_DENIED)。
+func (h *Handler) recordPermissionDenied(r *http.Request, err error) {
+	if h.auditLogger == nil {
+		return
+	}
+	h.auditLogger.Log(r.Context(), &audit.AuditEvent{
+		EventType:    audit.EventTypePermissionDenied,
+		TenantID:     httpx.GetTenantID(r.Context()),
+		UserID:       httpx.GetUserID(r.Context()),
+		ServiceName:  "rule-manager",
+		SourceIP:     httpx.GetClientIP(r),
+		Action:       "RULE_ACCESS_DENIED",
+		ResourceType: "rule",
+		Detail:       map[string]interface{}{"path": r.URL.Path, "reason": err.Error(), "result": "denied"},
+		Result:       audit.ResultFailure,
+	})
 }

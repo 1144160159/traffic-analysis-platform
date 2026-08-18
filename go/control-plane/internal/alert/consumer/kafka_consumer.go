@@ -180,7 +180,18 @@ type Consumer struct {
 	commitMetricMu   sync.Mutex
 	lastCommitEvent  map[string]string
 	topic            string
+
+	// pendingEvidence 证据落库失败后的进程内补偿队列：下一批次循环重试，
+	// 避免"offset 照常提交 + 证据永久丢失"。进程崩溃时该队列会丢失
+	// （降级语义，见 processBatch 注释）。
+	pendingEvidence []*evidence.Evidence
 }
+
+// maxEvidencePerAlert 单个告警可能产出的证据上限（stat/sequence/fingerprint/arkime）。
+const maxEvidencePerAlert = 16
+
+// maxPendingEvidence 进程内证据补偿队列上限。
+const maxPendingEvidence = 10000
 
 type alertDLQProducer interface {
 	Send(context.Context, *kafka.ReceivedMessage, error) error
@@ -328,7 +339,9 @@ func buildKafkaConsumerConfig(kafkaCfg config.KafkaConfig) kafka.ConsumerConfig 
 		StartOffset:    -2, // earliest
 		MaxRetries:     3,
 		RetryBackoff:   time.Second,
-		EnableDLQ:      true,
+		// DLQ 收敛为单一专用 producer（c.dlqProducer）：关闭 common consumer
+		// 内建 DLQ 写路径，避免同一批失败消息被写两份 dlq.<topic> 记录。
+		EnableDLQ:      false,
 		DLQTopicPrefix: "dlq.",
 		Security:       kafkaCfg.Security,
 	}
@@ -369,9 +382,24 @@ func (c *Consumer) Start(ctx context.Context) error {
 		defer c.wg.Done()
 		defer atomic.StoreInt32(&c.running, 0)
 
-		err := c.kafkaConsumer.BatchConsume(consumeCtx, c.batchSize, c.flushInterval, c.processBatch)
-		if err != nil && err != context.Canceled {
-			c.logger.Error("Consumer detection consume error", zap.Error(err))
+		// 批次失败（offset 未提交）时重启消费循环并退避，避免单一批次
+		// 失败永久停摆消费者；消息在 offset 提交前会被重新投递，配合
+		// 事件级去重与专用 DLQ 保证至少一次语义。
+		for {
+			err := c.kafkaConsumer.BatchConsume(consumeCtx, c.batchSize, c.flushInterval, c.processBatch)
+			if err == nil || err == context.Canceled || consumeCtx.Err() != nil {
+				if err != nil && err != context.Canceled {
+					c.logger.Info("Alert consumer stopping", zap.Error(err))
+				}
+				return
+			}
+			c.logger.Error("Alert consumer batch consume error, restarting after backoff",
+				zap.Error(err))
+			select {
+			case <-consumeCtx.Done():
+				return
+			case <-time.After(2 * time.Second):
+			}
 		}
 	}()
 
@@ -401,9 +429,36 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 
 	start := time.Now()
 
+	// 补偿：先重试上一轮未落库的证据（幂等插入，重复重试不会产生新行）
+	if c.evidenceGenerator != nil {
+		c.mu.Lock()
+		pending := c.pendingEvidence
+		c.pendingEvidence = nil
+		c.mu.Unlock()
+		if len(pending) > 0 {
+			if err := c.evidenceGenerator.SaveEvidenceBatch(ctx, pending); err != nil {
+				c.mu.Lock()
+				c.pendingEvidence = append(c.pendingEvidence, pending...)
+				if len(c.pendingEvidence) > maxPendingEvidence {
+					c.pendingEvidence = c.pendingEvidence[len(c.pendingEvidence)-maxPendingEvidence:]
+				}
+				pendingAfter := len(c.pendingEvidence)
+				c.mu.Unlock()
+				logger.Error("Compensation retry for pending evidence failed",
+					zap.Int("pending", pendingAfter),
+					zap.Error(err))
+			} else {
+				logger.Info("Compensation retry for pending evidence succeeded",
+					zap.Int("count", len(pending)))
+			}
+		}
+	}
+
 	// ✅ 使用channel收集结果（线程安全）
 	alertChan := make(chan *persistence.Alert, len(msgs))
-	evidenceChan := make(chan *evidence.Evidence, len(msgs)*4)
+	// 容量 = 消息数 × 单告警证据上限常量，避免单告警证据数超 4 时 send 阻塞
+	// 导致 wg.Wait() 永久等待（死锁）；另对 Wait 本身加超时兜底。
+	evidenceChan := make(chan *evidence.Evidence, len(msgs)*maxEvidencePerAlert)
 	errorChan := make(chan error, len(msgs))
 	unsafeFailureChan := make(chan error, len(msgs))
 
@@ -414,6 +469,15 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 		wg.Add(1)
 		go func(m *kafka.ReceivedMessage) {
 			defer wg.Done()
+			// 单条消息故障隔离：panic 不得击穿 BatchConsume 循环
+			defer func() {
+				if r := recover(); r != nil {
+					logger.Error("panic recovered while processing message",
+						zap.Any("panic", r),
+						zap.String("event_id", m.EventID()))
+					unsafeFailureChan <- fmt.Errorf("event %s panicked during processing: %v", m.EventID(), r)
+				}
+			}()
 
 			tenantID := m.TenantID()
 			if tenantID == "" {
@@ -453,8 +517,19 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 		}(msg)
 	}
 
-	// 等待所有goroutine完成
-	wg.Wait()
+	// 等待所有goroutine完成（加超时兜底，防止极端情况下通道阻塞死锁）
+	waitDone := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(waitDone)
+	}()
+	select {
+	case <-waitDone:
+	case <-time.After(60 * time.Second):
+		logger.Error("Alert consumer batch processing timed out waiting for message goroutines",
+			zap.Int("count", len(msgs)))
+		return errors.New("alert consumer batch processing timed out")
+	}
 	close(alertChan)
 	close(evidenceChan)
 	close(errorChan)
@@ -523,11 +598,20 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 		}
 	}
 
-	// 批量写入证据
+	// 批量写入证据（失败进进程内补偿队列，下一批次循环重试，不静默丢弃）
 	if len(evidences) > 0 && c.evidenceGenerator != nil {
 		if err := c.evidenceGenerator.SaveEvidenceBatch(ctx, evidences); err != nil {
-			logger.Warn("Failed to save evidence detection",
+			c.mu.Lock()
+			c.pendingEvidence = append(c.pendingEvidence, evidences...)
+			// 有界补偿：防止上游持续失败时内存无界增长
+			if len(c.pendingEvidence) > maxPendingEvidence {
+				c.pendingEvidence = c.pendingEvidence[len(c.pendingEvidence)-maxPendingEvidence:]
+			}
+			pending := len(c.pendingEvidence)
+			c.mu.Unlock()
+			logger.Error("Failed to save evidence, queued for compensation retry",
 				zap.Int("count", len(evidences)),
+				zap.Int("pending", pending),
 				zap.Error(err))
 		}
 	}

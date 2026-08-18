@@ -13,6 +13,7 @@ func TestAssetProjectionConsumerConfigReplaysRetainedLogFailClosed(t *testing.T)
 		Brokers:               "kafka-a:9092,kafka-b:9092",
 		EventTopic:            "asset.events.v2",
 		ProjectionGroupID:     "asset-projection-v2",
+		ProjectionDLQTopic:    "dlq.v1",
 		MinBytes:              1,
 		MaxBytes:              1 << 20,
 		ProjectionMaxAttempts: 8,
@@ -28,7 +29,10 @@ func TestAssetProjectionConsumerConfigReplaysRetainedLogFailClosed(t *testing.T)
 	if got.CommitOnHandlerError {
 		t.Fatal("projection consumer must not commit a failed projection event")
 	}
-	if got.EnableDLQ {
-		t.Fatal("projection consumer must not enable DLQ until commit-after-DLQ is wired and verified")
+	if !got.EnableDLQ || got.DLQTopic != "dlq.v1" {
+		t.Fatal("projection consumer must use the canonical DLQ")
+	}
+	if !got.DLQPermanentOnly || !got.CommitOnDLQSuccess {
+		t.Fatal("projection consumer must commit only after a permanent failure has a durable DLQ ACK")
 	}
 }

@@ -7,6 +7,8 @@ import (
 	stdErrors "errors"
 	"fmt"
 	"io"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/opensearch-project/opensearch-go/v2"
@@ -124,22 +126,27 @@ func (r *OpenSearchRepository) targetFor(firstSeen time.Time) string {
 
 // SearchQuery 搜索查询参数
 type SearchQuery struct {
-	TenantID   string
-	Query      string   // 全文搜索词
-	Severity   []string // 严重程度过滤
-	Status     []string // 状态过滤
-	AlertTypes []string // 告警类型过滤
-	Labels     []string // 标签过滤
-	SrcIP      string
-	DstIP      string
-	StartTime  time.Time
-	EndTime    time.Time
-	From       int
-	Size       int
-	SortField  string
-	SortOrder  string
-	Cursor     string
-	CursorMode string
+	TenantID     string
+	Query        string   // 全文搜索词
+	Severity     []string // 严重程度过滤
+	Status       []string // 状态过滤
+	AlertTypes   []string // 告警类型过滤
+	Labels       []string // 标签过滤
+	SrcIP        string
+	DstIP        string
+	AssetIP      string
+	RuleVersion  string
+	ModelVersion string
+	AttackPhase  string
+	MinScore     *float64
+	StartTime    time.Time
+	EndTime      time.Time
+	From         int
+	Size         int
+	SortField    string
+	SortOrder    string
+	Cursor       string
+	CursorMode   string
 	// OmitAggregations is intended for bounded watermark/health reads against
 	// legacy mappings whose text fields cannot be aggregated safely.
 	OmitAggregations bool
@@ -167,6 +174,7 @@ type SearchResult struct {
 	SnapshotID          string                 `json:"snapshot_id,omitempty"`
 	AsOf                string                 `json:"as_of,omitempty"`
 	Partial             bool                   `json:"partial"`
+	SourceWatermarks    map[string]string      `json:"source_watermarks,omitempty"`
 }
 
 // Search 全文搜索告警
@@ -266,6 +274,11 @@ func (r *OpenSearchRepository) searchWithCursor(ctx context.Context, query *Sear
 	if query.From != 0 {
 		return nil, errors.New(errors.ErrCodeInvalidParameter, "cursor traversal cannot be combined with from")
 	}
+	if r.queryTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, r.queryTimeout)
+		defer cancel()
+	}
 	mode := query.CursorMode
 	size := query.Size
 	if size <= 0 {
@@ -302,13 +315,30 @@ func (r *OpenSearchRepository) searchWithCursor(ctx context.Context, query *Sear
 		return nil, errors.New(errors.ErrCodeInvalidParameter, "cursor does not match the current search query")
 	}
 
+	var physicalTargets []string
+	var err error
+	targetSHA256 := ""
+	if claims != nil && claims.Mode == SearchCursorModePIT {
+		// A PIT already freezes its physical shards. Resolving the mutable alias
+		// again would incorrectly invalidate a consistent traversal after an
+		// approved alias cutover.
+		targetSHA256 = claims.TargetSHA256
+	} else {
+		physicalTargets, targetSHA256, err = r.resolveSearchTargets(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if claims != nil && !hmacEqualString(claims.TargetSHA256, targetSHA256) {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "search cursor is stale because the OpenSearch read target changed")
+		}
+	}
+
 	pitID := ""
 	createdPIT := false
 	if claims != nil {
 		pitID = claims.PITID
 	} else if mode == SearchCursorModePIT {
-		var err error
-		pitID, err = r.createPIT(ctx)
+		pitID, err = r.createPIT(ctx, physicalTargets)
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +361,7 @@ func (r *OpenSearchRepository) searchWithCursor(ctx context.Context, query *Sear
 	if claims != nil {
 		searchBody["search_after"] = claims.SortValues
 	}
-	index := r.readTarget
+	index := strings.Join(physicalTargets, ",")
 	if mode == SearchCursorModePIT {
 		index = ""
 		searchBody["pit"] = map[string]interface{}{"id": pitID, "keep_alive": formatOpenSearchDuration(r.cursorTTL)}
@@ -359,7 +389,7 @@ func (r *OpenSearchRepository) searchWithCursor(ctx context.Context, query *Sear
 	nextCursor := ""
 	if hasMore {
 		lastSort := hits[len(hits)-1].Sort
-		nextCursor, err = r.cursorCodec.encode(query.TenantID, querySHA, mode, size, lastSort, pitID, snapshotAt)
+		nextCursor, err = r.cursorCodec.encode(query.TenantID, querySHA, targetSHA256, mode, size, lastSort, pitID, snapshotAt)
 		if err != nil {
 			if mode == SearchCursorModePIT {
 				r.bestEffortClosePIT(ctx, pitID)
@@ -374,11 +404,88 @@ func (r *OpenSearchRepository) searchWithCursor(ctx context.Context, query *Sear
 		AggregationsOmitted: true, Took: response.Took, NextCursor: nextCursor, HasMore: hasMore,
 		CursorMode: mode, Partial: false,
 		AsOf: snapshotAt.Format(time.RFC3339Nano),
+		SourceWatermarks: map[string]string{
+			"opensearch.alerts.search":        snapshotAt.Format(time.RFC3339Nano),
+			"opensearch.alerts.target_sha256": targetSHA256,
+		},
 	}
 	if mode == SearchCursorModePIT {
 		result.SnapshotID = searchSnapshotID(query.TenantID, pitID)
 	}
 	return result, nil
+}
+
+type resolvedOpenSearchTargets struct {
+	Indices []struct {
+		Name string `json:"name"`
+	} `json:"indices"`
+	Aliases []struct {
+		Indices []string `json:"indices"`
+	} `json:"aliases"`
+	DataStreams []struct {
+		BackingIndices []string `json:"backing_indices"`
+	} `json:"data_streams"`
+}
+
+// resolveSearchTargets freezes a logical alias or wildcard to the exact
+// physical index set used by one cursor page. Live continuations compare this
+// set before searching; PIT continuations retain the PIT snapshot but still
+// carry the same signed target identity for evidence.
+func (r *OpenSearchRepository) resolveSearchTargets(ctx context.Context) ([]string, string, error) {
+	res, err := r.client.Indices.ResolveIndex(
+		[]string{r.readTarget},
+		r.client.Indices.ResolveIndex.WithContext(ctx),
+		r.client.Indices.ResolveIndex.WithExpandWildcards("open,hidden"),
+	)
+	if err != nil {
+		return nil, "", errors.Wrap(err, errors.ErrCodeOpenSearchError, "resolve OpenSearch read target")
+	}
+	if res == nil || res.Body == nil {
+		return nil, "", errors.New(errors.ErrCodeOpenSearchError, "OpenSearch returned no read-target resolution")
+	}
+	defer res.Body.Close()
+	if res.IsError() {
+		_, _ = io.Copy(io.Discard, io.LimitReader(res.Body, 64*1024))
+		return nil, "", errors.Newf(errors.ErrCodeOpenSearchError, "resolve OpenSearch read target: %s", res.Status())
+	}
+	var resolved resolvedOpenSearchTargets
+	if err := json.NewDecoder(io.LimitReader(res.Body, 4*1024*1024)).Decode(&resolved); err != nil {
+		return nil, "", errors.Wrap(err, errors.ErrCodeSerializationError, "decode OpenSearch read-target resolution")
+	}
+	unique := make(map[string]struct{})
+	add := func(name string) {
+		name = strings.TrimSpace(name)
+		if name != "" {
+			unique[name] = struct{}{}
+		}
+	}
+	for _, index := range resolved.Indices {
+		add(index.Name)
+	}
+	for _, alias := range resolved.Aliases {
+		for _, index := range alias.Indices {
+			add(index)
+		}
+	}
+	for _, stream := range resolved.DataStreams {
+		for _, index := range stream.BackingIndices {
+			add(index)
+		}
+	}
+	physicalTargets := make([]string, 0, len(unique))
+	combinedLength := 0
+	for name := range unique {
+		if len(name) > 255 {
+			return nil, "", errors.New(errors.ErrCodeOpenSearchError, "resolved OpenSearch index name exceeds the cursor budget")
+		}
+		combinedLength += len(name)
+		physicalTargets = append(physicalTargets, name)
+	}
+	if len(physicalTargets) == 0 || len(physicalTargets) > 256 || combinedLength > 16*1024 {
+		return nil, "", errors.New(errors.ErrCodeOpenSearchError, "resolved OpenSearch read target is empty or exceeds the cursor budget")
+	}
+	sort.Strings(physicalTargets)
+	return physicalTargets, searchTargetSHA256(r.readTarget, physicalTargets), nil
 }
 
 func buildOpenSearchBoolQuery(query *SearchQuery) map[string]interface{} {
@@ -413,6 +520,26 @@ func buildOpenSearchBoolQuery(query *SearchQuery) map[string]interface{} {
 	if query.DstIP != "" {
 		filter = append(filter, map[string]interface{}{"term": map[string]interface{}{"dst_ip": query.DstIP}})
 	}
+	if query.AssetIP != "" {
+		filter = append(filter, map[string]interface{}{"bool": map[string]interface{}{
+			"should": []map[string]interface{}{
+				{"term": map[string]interface{}{"src_ip": query.AssetIP}},
+				{"term": map[string]interface{}{"dst_ip": query.AssetIP}},
+			},
+			"minimum_should_match": 1,
+		}})
+	}
+	for _, item := range []struct {
+		field string
+		value string
+	}{{"rule_version", query.RuleVersion}, {"model_version", query.ModelVersion}, {"attack_phase", query.AttackPhase}} {
+		if item.value != "" {
+			filter = append(filter, map[string]interface{}{"term": map[string]interface{}{item.field: item.value}})
+		}
+	}
+	if query.MinScore != nil {
+		filter = append(filter, map[string]interface{}{"range": map[string]interface{}{"score": map[string]interface{}{"gte": *query.MinScore}}})
+	}
 	result := map[string]interface{}{"filter": filter}
 	if len(must) > 0 {
 		result["must"] = must
@@ -431,8 +558,9 @@ func defaultAlertSearchAggregations() map[string]interface{} {
 var alertSearchSourceFields = []string{
 	"tenant_id", "alert_id", "fingerprint", "community_id", "session_id", "campaign_id",
 	"src_ip", "dst_ip", "src_port", "dst_port", "protocol", "alert_type", "labels", "score",
-	"severity", "first_seen", "last_seen", "count", "status", "assignee", "updated_ts",
+	"severity", "first_seen", "last_seen", "count", "status", "assignee", "updated_at",
 	"model_version", "rule_version", "feature_set_id", "evidence_ids", "event_id",
+	"attack_phase", "state_version", "trace_id",
 }
 
 func (r *OpenSearchRepository) executeSearch(
@@ -453,7 +581,7 @@ func (r *OpenSearchRepository) executeSearch(
 		r.client.Search.WithTrackTotalHits(trackTotalHits),
 	}
 	if index != "" {
-		options = append(options, r.client.Search.WithIndex(index))
+		options = append(options, r.client.Search.WithIndex(strings.Split(index, ",")...))
 	}
 	if !legacy {
 		options = append(options, r.client.Search.WithAllowPartialSearchResults(false))
@@ -487,10 +615,10 @@ func (r *OpenSearchRepository) executeSearch(
 	return &response, nil
 }
 
-func (r *OpenSearchRepository) createPIT(ctx context.Context) (string, error) {
+func (r *OpenSearchRepository) createPIT(ctx context.Context, physicalTargets []string) (string, error) {
 	res, response, err := r.client.PointInTime.Create(
 		r.client.PointInTime.Create.WithContext(ctx),
-		r.client.PointInTime.Create.WithIndex(r.readTarget),
+		r.client.PointInTime.Create.WithIndex(physicalTargets...),
 		r.client.PointInTime.Create.WithKeepAlive(r.cursorTTL),
 	)
 	if res != nil && res.Body != nil {

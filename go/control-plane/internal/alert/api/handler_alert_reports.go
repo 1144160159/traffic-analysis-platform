@@ -30,8 +30,11 @@ import (
 )
 
 const (
-	alertReportContractVersion = 1
-	alertReportMaxDownloadSize = 50 << 20
+	alertReportContractVersion     = 1
+	alertReportMaxDownloadSize     = 50 << 20
+	alertReportManifestVersion     = 1
+	alertReportObjectFormatVersion = 1
+	alertReportDefaultArtifactTTL  = 24 * time.Hour
 )
 
 type alertReportRequest struct {
@@ -142,7 +145,7 @@ func (h *Handler) CreateAlertReport(w http.ResponseWriter, r *http.Request) {
 			httpx.JSONError(w, ctx, http.StatusConflict, "IDEMPOTENCY_KEY_CONFLICT", "Idempotency-Key was already used for a different report")
 			return
 		}
-		writeAlertReportJobResponse(w, ctx, http.StatusAccepted, existing)
+		h.writeAlertReportJobResponse(w, ctx, http.StatusAccepted, existing)
 		return
 	}
 
@@ -239,7 +242,7 @@ func (h *Handler) CreateAlertReport(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to commit alert report job")
 		return
 	}
-	writeAlertReportJobResponse(w, ctx, http.StatusAccepted, job)
+	h.writeAlertReportJobResponse(w, ctx, http.StatusAccepted, job)
 }
 
 func (h *Handler) GetAlertReportJob(w http.ResponseWriter, r *http.Request) {
@@ -264,7 +267,7 @@ func (h *Handler) GetAlertReportJob(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to load alert report job")
 		return
 	}
-	writeAlertReportJobResponse(w, ctx, http.StatusOK, job)
+	h.writeAlertReportJobResponse(w, ctx, http.StatusOK, job)
 }
 
 func (h *Handler) CancelAlertReport(w http.ResponseWriter, r *http.Request) {
@@ -328,7 +331,7 @@ func (h *Handler) controlAlertReport(w http.ResponseWriter, r *http.Request, ope
 			httpx.JSONError(w, ctx, http.StatusNotFound, "REPORT_NOT_FOUND", "alert report job not found")
 			return
 		}
-		writeAlertReportJobResponse(w, ctx, http.StatusAccepted, replayed)
+		h.writeAlertReportJobResponse(w, ctx, http.StatusAccepted, replayed)
 		return
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -439,7 +442,7 @@ func (h *Handler) controlAlertReport(w http.ResponseWriter, r *http.Request, ope
 	current.Status = nextStatus
 	current.Revision = nextRevision
 	current.UpdatedAt = now
-	writeAlertReportJobResponse(w, ctx, http.StatusAccepted, current)
+	h.writeAlertReportJobResponse(w, ctx, http.StatusAccepted, current)
 }
 
 func (h *Handler) DownloadAlertReport(w http.ResponseWriter, r *http.Request) {
@@ -466,6 +469,10 @@ func (h *Handler) DownloadAlertReport(w http.ResponseWriter, r *http.Request) {
 	}
 	if job.Status != "completed" || job.ObjectKey == "" {
 		httpx.JSONError(w, ctx, http.StatusConflict, "REPORT_NOT_READY", "alert report is not completed")
+		return
+	}
+	if _, expired := h.alertReportArtifactExpiry(job, time.Now().UTC()); expired {
+		httpx.JSONError(w, ctx, http.StatusGone, "REPORT_EXPIRED", "alert report artifact download authority has expired")
 		return
 	}
 	store, err := h.alertReportObjectStore()
@@ -933,6 +940,8 @@ func (b *defaultAlertReportBuilder) Build(ctx context.Context, tenantID, alertID
 		SourceWatermarks: map[string]string{
 			"clickhouse.alerts.state_version": strconv.FormatUint(alert.StateVersion, 10),
 			"clickhouse.alerts.updated_at":    alert.UpdatedAt.UTC().Format(time.RFC3339Nano),
+			"clickhouse.alerts.rule_version":  nonEmpty(alert.RuleVersion, "empty"),
+			"clickhouse.alerts.model_version": nonEmpty(alert.ModelVersion, "empty"),
 		},
 	}
 	if len(evidence) > 0 {
@@ -958,9 +967,11 @@ func (b *defaultAlertReportBuilder) loadAssets(ctx context.Context, model *Alert
 		model.TenantID, "{"+model.Alert.SrcIP+","+model.Alert.DstIP+"}")
 	if err != nil {
 		model.MissingSections = append(model.MissingSections, "asset_context")
+		model.SourceWatermarks["postgresql.assets.updated_at"] = "unavailable"
 		return
 	}
 	defer rows.Close()
+	var latest time.Time
 	for rows.Next() {
 		var assetID string
 		var displayCode, ipAddress, hostname, assetType, status sql.NullString
@@ -968,6 +979,7 @@ func (b *defaultAlertReportBuilder) loadAssets(ctx context.Context, model *Alert
 		var updatedAt time.Time
 		if err := rows.Scan(&assetID, &displayCode, &ipAddress, &hostname, &assetType, &status, &criticality, &updatedAt); err != nil {
 			model.MissingSections = appendUnique(model.MissingSections, "asset_context")
+			model.SourceWatermarks["postgresql.assets.updated_at"] = "unavailable"
 			return
 		}
 		model.Assets = append(model.Assets, map[string]interface{}{
@@ -975,9 +987,17 @@ func (b *defaultAlertReportBuilder) loadAssets(ctx context.Context, model *Alert
 			"hostname": hostname.String, "asset_type": assetType.String, "status": status.String,
 			"criticality": criticality.Int64, "updated_at": updatedAt.UTC().Format(time.RFC3339Nano),
 		})
+		if updatedAt.After(latest) {
+			latest = updatedAt
+		}
 	}
 	if rows.Err() != nil || len(model.Assets) == 0 {
 		model.MissingSections = appendUnique(model.MissingSections, "asset_context")
+	}
+	if latest.IsZero() {
+		model.SourceWatermarks["postgresql.assets.updated_at"] = "empty"
+	} else {
+		model.SourceWatermarks["postgresql.assets.updated_at"] = latest.UTC().Format(time.RFC3339Nano)
 	}
 }
 
@@ -986,24 +1006,35 @@ func (b *defaultAlertReportBuilder) loadResponseActions(ctx context.Context, mod
 		FROM alert_response_actions WHERE tenant_id=$1 AND alert_id=$2 ORDER BY created_at,job_id`, model.TenantID, model.AlertID)
 	if err != nil {
 		model.MissingSections = appendUnique(model.MissingSections, "response_actions")
+		model.SourceWatermarks["postgresql.alert_response_actions.updated_at"] = "unavailable"
 		return
 	}
 	defer rows.Close()
+	var latest time.Time
 	for rows.Next() {
 		var jobID, action, target, reason, status string
 		var dryRun bool
 		var createdAt, updatedAt time.Time
 		if err := rows.Scan(&jobID, &action, &target, &reason, &dryRun, &status, &createdAt, &updatedAt); err != nil {
 			model.MissingSections = appendUnique(model.MissingSections, "response_actions")
+			model.SourceWatermarks["postgresql.alert_response_actions.updated_at"] = "unavailable"
 			return
 		}
 		model.ResponseActions = append(model.ResponseActions, map[string]interface{}{
 			"job_id": jobID, "action": action, "target": target, "reason": reason, "dry_run": dryRun,
 			"status": status, "created_at": createdAt.UTC().Format(time.RFC3339Nano), "updated_at": updatedAt.UTC().Format(time.RFC3339Nano),
 		})
+		if updatedAt.After(latest) {
+			latest = updatedAt
+		}
 	}
 	if rows.Err() != nil {
 		model.MissingSections = appendUnique(model.MissingSections, "response_actions")
+	}
+	if latest.IsZero() {
+		model.SourceWatermarks["postgresql.alert_response_actions.updated_at"] = "empty"
+	} else {
+		model.SourceWatermarks["postgresql.alert_response_actions.updated_at"] = latest.UTC().Format(time.RFC3339Nano)
 	}
 }
 
@@ -1013,14 +1044,17 @@ func (b *defaultAlertReportBuilder) loadAudit(ctx context.Context, model *AlertR
 		ORDER BY created_at,action LIMIT 1000`, model.TenantID, model.AlertID)
 	if err != nil {
 		model.MissingSections = appendUnique(model.MissingSections, "audit_trail")
+		model.SourceWatermarks["postgresql.audit_logs.created_at"] = "unavailable"
 		return
 	}
 	defer rows.Close()
+	var latest time.Time
 	for rows.Next() {
 		var action, objectType, objectID, detailJSON string
 		var createdAt time.Time
 		if err := rows.Scan(&action, &objectType, &objectID, &detailJSON, &createdAt); err != nil {
 			model.MissingSections = appendUnique(model.MissingSections, "audit_trail")
+			model.SourceWatermarks["postgresql.audit_logs.created_at"] = "unavailable"
 			return
 		}
 		var detail map[string]interface{}
@@ -1029,9 +1063,17 @@ func (b *defaultAlertReportBuilder) loadAudit(ctx context.Context, model *AlertR
 			"action": action, "object_type": objectType, "object_id": objectID,
 			"detail": detail, "created_at": createdAt.UTC().Format(time.RFC3339Nano),
 		})
+		if createdAt.After(latest) {
+			latest = createdAt
+		}
 	}
 	if rows.Err() != nil {
 		model.MissingSections = appendUnique(model.MissingSections, "audit_trail")
+	}
+	if latest.IsZero() {
+		model.SourceWatermarks["postgresql.audit_logs.created_at"] = "empty"
+	} else {
+		model.SourceWatermarks["postgresql.audit_logs.created_at"] = latest.UTC().Format(time.RFC3339Nano)
 	}
 }
 
@@ -1116,15 +1158,38 @@ func scanAlertReportJob(row *sql.Row) (alertReportJob, error) {
 	return job, nil
 }
 
-func writeAlertReportJobResponse(w http.ResponseWriter, ctx context.Context, statusCode int, job alertReportJob) {
+func (h *Handler) writeAlertReportJobResponse(w http.ResponseWriter, ctx context.Context, statusCode int, job alertReportJob) {
+	expiresAt, artifactExpired := h.alertReportArtifactExpiry(job, time.Now().UTC())
+	manifestStatus := "pending"
+	switch {
+	case job.Status == "completed" && artifactExpired:
+		manifestStatus = "expired"
+	case job.Status == "completed" && job.ObjectKey != "":
+		manifestStatus = "available"
+	case (job.Status == "partial" || job.Status == "compensation_failed") && job.ObjectKey != "":
+		manifestStatus = "residual"
+	case job.Status == "cancelled" || job.Status == "compensated":
+		manifestStatus = "removed"
+	case job.Status == "failed":
+		manifestStatus = "failed"
+	}
 	data := map[string]interface{}{
 		"job_id": job.JobID, "alert_id": job.AlertID, "format": job.Format, "status": job.Status, "revision": job.Revision,
 		"snapshot_sha256": job.SnapshotSHA256, "artifact_sha256": job.ArtifactSHA256,
 		"size_bytes": job.SizeBytes, "mime_type": job.MIMEType, "error_message": job.ErrorMessage,
 		"created_at": job.CreatedAt, "updated_at": job.UpdatedAt, "completed_at": job.CompletedAt,
 		"cancel_requested_at": job.CancelRequestedAt, "cancelled_at": job.CancelledAt,
+		"manifest": map[string]interface{}{
+			"manifest_version": alertReportManifestVersion, "object_format_version": alertReportObjectFormatVersion,
+			"status": manifestStatus, "snapshot_sha256": job.SnapshotSHA256, "artifact_sha256": job.ArtifactSHA256,
+			"size_bytes": job.SizeBytes, "mime_type": job.MIMEType,
+		},
+		"artifact_expired": artifactExpired,
 	}
-	if job.Status == "completed" {
+	if !expiresAt.IsZero() {
+		data["artifact_expires_at"] = expiresAt
+	}
+	if job.Status == "completed" && !artifactExpired {
 		data["download_url"] = fmt.Sprintf("/v1/alerts/%s/reports/%s/download", job.AlertID, job.JobID)
 	}
 	meta := httpx.ContractMeta{
@@ -1137,6 +1202,18 @@ func writeAlertReportJobResponse(w http.ResponseWriter, ctx context.Context, sta
 		return
 	}
 	httpx.JSONContractSuccess(w, ctx, data, meta)
+}
+
+func (h *Handler) alertReportArtifactExpiry(job alertReportJob, now time.Time) (time.Time, bool) {
+	if job.Status != "completed" || job.CompletedAt == nil {
+		return time.Time{}, false
+	}
+	ttl := h.reportArtifactTTL
+	if ttl <= 0 {
+		ttl = alertReportDefaultArtifactTTL
+	}
+	expiresAt := job.CompletedAt.UTC().Add(ttl)
+	return expiresAt, !now.Before(expiresAt)
 }
 
 func buildAlertReportArtifact(format string, snapshot []byte) ([]byte, string, string, error) {

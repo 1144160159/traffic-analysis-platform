@@ -385,8 +385,8 @@ func responseWorkflowRequest(
 ) *http.Request {
 	request := httptest.NewRequest(method, path, bytes.NewBufferString(body))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Tenant-ID", "tenant-a")
-	request.Header.Set("X-User-ID", userID)
+	request = withTenant(request, "tenant-a")
+	request = withUser(request, userID)
 	request.Header.Set("Idempotency-Key", idempotencyKey)
 	request = request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, permissions))
 	request = mux.SetURLVars(request, map[string]string{

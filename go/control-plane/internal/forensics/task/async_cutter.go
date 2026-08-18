@@ -11,7 +11,10 @@ package task
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,34 +26,64 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/cutter"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/repository"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/restoration"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/s3client"
 )
 
 // CutTaskRequest 裁剪任务请求
 type CutTaskRequest struct {
-	TenantID     string                     `json:"tenant_id"`
-	UserID       string                     `json:"user_id"`
-	AssetID      string                     `json:"asset_id,omitempty"`
-	AlertID      string                     `json:"alert_id,omitempty"`
-	CampaignID   string                     `json:"campaign_id,omitempty"`
-	BaselineID   string                     `json:"baseline_id,omitempty"`
-	EvidenceID   string                     `json:"evidence_id,omitempty"`
-	EvidenceType string                     `json:"evidence_type,omitempty"`
-	ProbeID      string                     `json:"probe_id,omitempty"`
-	SrcIP        string                     `json:"src_ip,omitempty"`
-	DstIP        string                     `json:"dst_ip,omitempty"`
-	SrcPort      uint16                     `json:"src_port,omitempty"`
-	DstPort      uint16                     `json:"dst_port,omitempty"`
-	Protocol     uint8                      `json:"protocol,omitempty"`
-	CommunityID  string                     `json:"community_id,omitempty"`
-	StartTime    int64                      `json:"start_time"`
-	EndTime      int64                      `json:"end_time"`
-	MaxPackets   int64                      `json:"max_packets,omitempty"`
-	CommandMeta  repository.TaskCommandMeta `json:"-"`
+	TenantID                   string                     `json:"tenant_id"`
+	UserID                     string                     `json:"user_id"`
+	AssetID                    string                     `json:"asset_id,omitempty"`
+	AlertID                    string                     `json:"alert_id,omitempty"`
+	CampaignID                 string                     `json:"campaign_id,omitempty"`
+	BaselineID                 string                     `json:"baseline_id,omitempty"`
+	EvidenceID                 string                     `json:"evidence_id,omitempty"`
+	EvidenceType               string                     `json:"evidence_type,omitempty"`
+	ProbeID                    string                     `json:"probe_id,omitempty"`
+	ProbeIDs                   []string                   `json:"probe_ids,omitempty"`
+	AlertIDs                   []string                   `json:"alert_ids,omitempty"`
+	CaseIDs                    []string                   `json:"case_ids,omitempty"`
+	SrcIP                      string                     `json:"src_ip,omitempty"`
+	DstIP                      string                     `json:"dst_ip,omitempty"`
+	SrcPort                    uint16                     `json:"src_port,omitempty"`
+	DstPort                    uint16                     `json:"dst_port,omitempty"`
+	Protocol                   uint8                      `json:"protocol,omitempty"`
+	CommunityID                string                     `json:"community_id,omitempty"`
+	StartTime                  int64                      `json:"start_time"`
+	EndTime                    int64                      `json:"end_time"`
+	MaxPackets                 int64                      `json:"max_packets,omitempty"`
+	Purpose                    string                     `json:"purpose,omitempty"`
+	PermissionSnapshot         []string                   `json:"permission_snapshot,omitempty"`
+	RetentionPolicy            string                     `json:"retention_policy,omitempty"`
+	RestorationContractVersion int                        `json:"restoration_contract_version,omitempty"`
+	Restorations               []RestorationTaskSpec      `json:"restorations,omitempty"`
+	TraceID                    string                     `json:"trace_id,omitempty"`
+	CommandMeta                repository.TaskCommandMeta `json:"-"`
+}
+
+// RestorationTaskSpec is a frozen reference to the M03 versioned restoration
+// interface. It contains no tenant or actor override; the worker derives both
+// from the already-authorized task.
+type RestorationTaskSpec struct {
+	RequestID     string                      `json:"request_id"`
+	SessionID     string                      `json:"session_id"`
+	CommunityID   string                      `json:"community_id"`
+	FlowIDs       []string                    `json:"flow_ids"`
+	FlowID        string                      `json:"flow_id"`
+	Tuple         restoration.FiveTuple       `json:"five_tuple"`
+	Direction     string                      `json:"direction"`
+	ProfileID     string                      `json:"protocol_profile_id"`
+	FTPData       *restoration.FTPDataRequest `json:"ftp_data,omitempty"`
+	FTPTLSEnabled bool                        `json:"ftp_tls_enabled"`
 }
 
 // Validate 验证请求
 func (r *CutTaskRequest) Validate() error {
+	r.normalizeFrozenFields()
+	if r.TraceID == "" {
+		r.TraceID = strings.TrimSpace(r.CommandMeta.TraceID)
+	}
 	if r.TenantID == "" {
 		return errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
 	}
@@ -60,7 +93,110 @@ func (r *CutTaskRequest) Validate() error {
 	if r.EndTime < r.StartTime {
 		return errors.New(errors.ErrCodeInvalidParameter, "end_time must be greater than start_time")
 	}
+	if r.RestorationContractVersion != 0 {
+		if r.RestorationContractVersion != 1 {
+			return errors.New(errors.ErrCodeInvalidParameter, "restoration_contract_version must be 1")
+		}
+		if r.Purpose == "" {
+			return errors.New(errors.ErrCodeInvalidParameter, "purpose is required for versioned forensics tasks")
+		}
+		if r.TraceID == "" || r.UserID == "" {
+			return errors.New(errors.ErrCodeInvalidParameter, "versioned forensics tasks require actor and trace identity")
+		}
+		if r.RetentionPolicy == "" {
+			return errors.New(errors.ErrCodeInvalidParameter, "retention_policy is required for versioned forensics tasks")
+		}
+		if !containsString(r.PermissionSnapshot, "pcap:write") &&
+			!containsString(r.PermissionSnapshot, "pcap:*") &&
+			!containsString(r.PermissionSnapshot, "admin:*") &&
+			!containsString(r.PermissionSnapshot, "*") {
+			return errors.New(errors.ErrCodePermissionDenied, "permission snapshot does not authorize pcap:write")
+		}
+		if len(r.ProbeIDs) == 0 {
+			return errors.New(errors.ErrCodeInvalidParameter, "versioned forensics tasks require at least one probe_id")
+		}
+		if len(r.Restorations) > 100 {
+			return errors.New(errors.ErrCodeInvalidParameter, "restorations cannot contain more than 100 requests")
+		}
+		seenRestorations := make(map[string]struct{}, len(r.Restorations))
+		for index := range r.Restorations {
+			spec := &r.Restorations[index]
+			spec.RequestID = strings.TrimSpace(spec.RequestID)
+			sort.Strings(spec.FlowIDs)
+			spec.FlowIDs = canonicalStringSet(spec.FlowIDs)
+			if spec.RequestID == "" || strings.ContainsAny(spec.RequestID, "\x00\r\n") {
+				return errors.New(errors.ErrCodeInvalidParameter, "restoration request_id is required")
+			}
+			if _, exists := seenRestorations[spec.RequestID]; exists {
+				return errors.New(errors.ErrCodeInvalidParameter, "restoration request_id must be unique")
+			}
+			seenRestorations[spec.RequestID] = struct{}{}
+			candidate := restoration.ProcessRequest{
+				TenantID: r.TenantID, IdempotencyKey: "forensics-job-validation-" + spec.RequestID,
+				SessionID: spec.SessionID, CommunityID: spec.CommunityID, FlowIDs: spec.FlowIDs,
+				FlowID: spec.FlowID, Tuple: spec.Tuple, Direction: spec.Direction,
+				StartTime: time.UnixMilli(r.StartTime), EndTime: time.UnixMilli(r.EndTime),
+				ProfileID: spec.ProfileID, FTPData: spec.FTPData, FTPTLSEnabled: spec.FTPTLSEnabled,
+				ActorID: r.UserID, Reason: r.Purpose, TraceID: "forensics-job-validation",
+			}
+			if err := candidate.Validate(); err != nil {
+				return errors.Wrap(err, errors.ErrCodeInvalidParameter, "invalid restoration request")
+			}
+		}
+	}
 	return nil
+}
+
+func (r *CutTaskRequest) normalizeFrozenFields() {
+	r.TenantID = strings.TrimSpace(r.TenantID)
+	r.UserID = strings.TrimSpace(r.UserID)
+	r.ProbeID = strings.TrimSpace(r.ProbeID)
+	r.AlertID = strings.TrimSpace(r.AlertID)
+	r.Purpose = strings.TrimSpace(r.Purpose)
+	r.RetentionPolicy = strings.TrimSpace(r.RetentionPolicy)
+	if r.ProbeID != "" {
+		r.ProbeIDs = append(r.ProbeIDs, r.ProbeID)
+	}
+	if r.AlertID != "" {
+		r.AlertIDs = append(r.AlertIDs, r.AlertID)
+	}
+	r.ProbeIDs = canonicalStringSet(r.ProbeIDs)
+	r.AlertIDs = canonicalStringSet(r.AlertIDs)
+	r.CaseIDs = canonicalStringSet(r.CaseIDs)
+	r.PermissionSnapshot = canonicalStringSet(r.PermissionSnapshot)
+	if r.ProbeID == "" && len(r.ProbeIDs) > 0 {
+		r.ProbeID = r.ProbeIDs[0]
+	}
+	if r.AlertID == "" && len(r.AlertIDs) > 0 {
+		r.AlertID = r.AlertIDs[0]
+	}
+}
+
+func canonicalStringSet(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		if _, exists := seen[value]; exists {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func containsString(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
 
 // ToCutQuery 转换为裁剪查询
@@ -102,6 +238,10 @@ type AsyncCutterConfig struct {
 	PollInterval    time.Duration
 	ShutdownTimeout time.Duration
 	TaskTimeout     time.Duration // 新增：单个任务超时时间
+	ConsumerEnabled bool
+	VersionedWorker bool
+	WorkerID        string
+	ExecutionLease  time.Duration
 }
 
 // DefaultAsyncCutterConfig 默认配置
@@ -113,16 +253,21 @@ func DefaultAsyncCutterConfig() AsyncCutterConfig {
 		PollInterval:    5 * time.Second,
 		ShutdownTimeout: 30 * time.Second,
 		TaskTimeout:     30 * time.Minute, // 默认 30 分钟超时
+		ConsumerEnabled: false,
+		VersionedWorker: false,
+		WorkerID:        "forensics-worker",
+		ExecutionLease:  31 * time.Minute,
 	}
 }
 
 // AsyncCutter 异步裁剪器
 type AsyncCutter struct {
-	cutter   *cutter.Cutter
-	s3Client *s3client.S3Client
-	taskRepo *repository.TaskRepository
-	config   AsyncCutterConfig
-	logger   *zap.Logger
+	cutter            *cutter.Cutter
+	s3Client          *s3client.S3Client
+	taskRepo          *repository.TaskRepository
+	config            AsyncCutterConfig
+	logger            *zap.Logger
+	versionedPipeline *VersionedPipeline
 
 	taskQueue  chan *repository.Task
 	cancelMap  map[string]context.CancelFunc
@@ -131,6 +276,19 @@ type AsyncCutter struct {
 	ctx        context.Context
 	cancel     context.CancelFunc
 	running    int32 // 原子标志
+}
+
+func (a *AsyncCutter) SetVersionedPipeline(pipeline *VersionedPipeline) {
+	if atomic.LoadInt32(&a.running) != 0 {
+		panic("versioned pipeline must be configured before AsyncCutter.Start")
+	}
+	a.versionedPipeline = pipeline
+}
+
+// CompatibleWorkerReady reports code/config compatibility only. It does not
+// imply that task consumption is enabled.
+func (a *AsyncCutter) CompatibleWorkerReady() bool {
+	return a.versionedPipeline != nil && a.config.VersionedWorker && strings.TrimSpace(a.config.WorkerID) != "" && a.config.ExecutionLease > a.config.TaskTimeout
 }
 
 // NewAsyncCutter 创建异步裁剪器
@@ -191,18 +349,22 @@ func (a *AsyncCutter) Start(ctx context.Context) {
 		go a.worker(i)
 	}
 
-	// 启动任务轮询器
-	a.wg.Add(1)
-	go a.taskPoller()
-
-	// 启动清理器
-	a.wg.Add(1)
-	go a.cleaner()
+	if a.config.ConsumerEnabled {
+		// Consumption and retention cleanup share one explicit activation gate.
+		// An idle-compatible deployment starts workers but makes no durable reads
+		// or destructive object mutations.
+		a.wg.Add(1)
+		go a.taskPoller()
+		a.wg.Add(1)
+		go a.cleaner()
+	}
 
 	a.logger.Info("AsyncCutter started",
 		zap.Int("workers", a.config.WorkerCount),
 		zap.Int("queue_size", a.config.QueueSize),
-		zap.Duration("task_timeout", a.config.TaskTimeout))
+		zap.Duration("task_timeout", a.config.TaskTimeout),
+		zap.Bool("consumer_enabled", a.config.ConsumerEnabled),
+		zap.Bool("compatible_worker_ready", a.CompatibleWorkerReady()))
 }
 
 // Stop 停止异步处理器（优化版：带超时的优雅关闭）
@@ -280,7 +442,7 @@ func (a *AsyncCutter) SubmitTask(ctx context.Context, req *CutTaskRequest) (*Cut
 	}
 
 	// 尝试加入队列
-	if !receipt.Replayed {
+	if !receipt.Replayed && a.config.ConsumerEnabled && !a.config.VersionedWorker {
 		select {
 		case a.taskQueue <- task:
 			a.logger.Info("Task submitted",
@@ -318,6 +480,31 @@ func (a *AsyncCutter) CancelTask(ctx context.Context, tenantID, taskID string, m
 	if running {
 		cancelFn()
 		a.logger.Info("Task cancelled", zap.String("task_id", taskID))
+	}
+	return receipt, nil
+}
+
+// RetryTask durably requeues a failed or cancelled task. The original params
+// remain unchanged in PostgreSQL and the poller is the delivery fallback if the
+// in-memory queue is full or the process exits after commit.
+func (a *AsyncCutter) RetryTask(ctx context.Context, tenantID, taskID string, meta repository.TaskCommandMeta) (*repository.TaskCommandReceipt, error) {
+	ctx, span := otel.StartSpan(ctx, "AsyncCutter.RetryTask")
+	defer span.End()
+	receipt, err := a.taskRepo.RetryForTenant(ctx, tenantID, taskID, meta)
+	if err != nil {
+		return nil, err
+	}
+	if receipt.Replayed {
+		return receipt, nil
+	}
+	if a.config.ConsumerEnabled && !a.config.VersionedWorker {
+		if retried, getErr := a.taskRepo.GetByIDForTenant(ctx, tenantID, taskID); getErr == nil {
+			select {
+			case a.taskQueue <- retried:
+			default:
+				a.logger.Warn("Task retry queue full; durable poller will resume it", zap.String("task_id", taskID))
+			}
+		}
 	}
 	return receipt, nil
 }
@@ -366,6 +553,10 @@ func (a *AsyncCutter) processTask(task *repository.Task) {
 		zap.String("task_id", task.TaskID),
 		zap.String("tenant_id", task.TenantID),
 		zap.Duration("timeout", a.config.TaskTimeout))
+	if a.config.VersionedWorker {
+		a.processVersionedTask(ctx, task)
+		return
+	}
 
 	// 更新状态为处理中
 	if task.Status != repository.TaskStatusProcessing {
@@ -452,6 +643,87 @@ func (a *AsyncCutter) processTask(task *repository.Task) {
 		zap.Duration("duration", result.Duration))
 }
 
+func (a *AsyncCutter) processVersionedTask(ctx context.Context, task *repository.Task) {
+	if a.versionedPipeline == nil {
+		a.failTask(ctx, task.TaskID, "compatible versioned pipeline is unavailable")
+		return
+	}
+	if task.Status != repository.TaskStatusProcessing {
+		if err := a.taskRepo.UpdateStatus(ctx, task.TaskID, repository.TaskStatusProcessing); err != nil {
+			a.logger.Error("Failed to lease versioned task", zap.String("task_id", task.TaskID), zap.Error(err))
+			return
+		}
+		task.Status = repository.TaskStatusProcessing
+	}
+	var request CutTaskRequest
+	if err := json.Unmarshal(task.ParamsJSON, &request); err != nil {
+		a.failTask(ctx, task.TaskID, fmt.Sprintf("failed to parse immutable versioned params: %v", err))
+		return
+	}
+	claim, err := a.taskRepo.ClaimVersionedExecution(ctx, task, a.config.WorkerID, a.config.ExecutionLease)
+	if err != nil {
+		if stderrors.Is(err, repository.ErrTaskExecutionLeaseUnavailable) {
+			a.logger.Info("Versioned task is owned by another live worker", zap.String("task_id", task.TaskID))
+			return
+		}
+		a.failTask(ctx, task.TaskID, fmt.Sprintf("failed to claim versioned execution: %v", err))
+		return
+	}
+	var checkpointMu sync.Mutex
+	advance := func(phase string, checkpoint any) error {
+		checkpointMu.Lock()
+		defer checkpointMu.Unlock()
+		return a.taskRepo.AdvanceVersionedExecution(ctx, claim, phase, checkpoint, a.config.ExecutionLease)
+	}
+	progress := func(filesProcessed, totalFiles int, packetsFound int64) {
+		progressValue := 0
+		if totalFiles > 0 {
+			progressValue = filesProcessed * 80 / totalFiles
+		}
+		if progressValue > 80 {
+			progressValue = 80
+		}
+		if err := a.taskRepo.UpdateProgress(ctx, task.TaskID, progressValue, packetsFound); err != nil {
+			a.logger.Warn("Failed to persist versioned task progress", zap.String("task_id", task.TaskID), zap.Error(err))
+		}
+		if err := advance("cutting", map[string]any{
+			"files_processed": filesProcessed, "total_files": totalFiles, "packets_found": packetsFound,
+		}); err != nil {
+			a.logger.Warn("Failed to persist versioned task checkpoint", zap.String("task_id", task.TaskID), zap.Error(err))
+		}
+	}
+	result, err := a.versionedPipeline.Process(ctx, task.TaskID, request, progress, advance)
+	if err != nil {
+		failureCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if failErr := a.taskRepo.FailVersionedExecution(failureCtx, claim, err.Error()); failErr != nil {
+			a.logger.Error("Failed to persist versioned task failure", zap.String("task_id", task.TaskID), zap.Error(failErr))
+		}
+		return
+	}
+	manifestJSON, err := json.Marshal(result.Manifest)
+	if err != nil {
+		a.failTask(ctx, task.TaskID, fmt.Sprintf("failed to marshal versioned manifest: %v", err))
+		return
+	}
+	completionCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	terminalStatus := repository.TaskStatusCompleted
+	if result.Manifest.Status == "partial" {
+		terminalStatus = repository.TaskStatusPartial
+	}
+	if err := a.taskRepo.CompleteVersionedExecution(completionCtx, claim, repository.VersionedTaskManifest{
+		TenantID: task.TenantID, TaskID: task.TaskID, ManifestSHA256: result.ManifestSHA,
+		ManifestJSON: manifestJSON, Status: terminalStatus, ResultObject: result.Manifest.ResultObject,
+	}, result.Packets, result.Bytes, result.FilesScanned); err != nil {
+		a.logger.Error("Failed to commit versioned task manifest", zap.String("task_id", task.TaskID), zap.Error(err))
+		return
+	}
+	a.logger.Info("Versioned forensics task completed",
+		zap.String("task_id", task.TaskID), zap.String("manifest_sha256", result.ManifestSHA),
+		zap.String("object_version", result.Manifest.ResultObject.VersionID))
+}
+
 // failTask 标记任务失败
 func (a *AsyncCutter) failTask(ctx context.Context, taskID, errorMsg string) {
 	a.logger.Error("Task failed",
@@ -482,7 +754,9 @@ func (a *AsyncCutter) taskPoller() {
 			return
 
 		case <-ticker.C:
-			a.pollPendingTasks()
+			if a.config.ConsumerEnabled {
+				a.pollPendingTasks()
+			}
 		}
 	}
 }

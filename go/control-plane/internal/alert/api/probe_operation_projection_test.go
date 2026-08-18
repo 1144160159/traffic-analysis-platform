@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -43,7 +44,7 @@ func TestApplyProbeOperationProjectionCommitsEventAndLatestState(t *testing.T) {
 	}
 }
 
-func TestApplyProbeOperationProjectionAcceptsExactDuplicate(t *testing.T) {
+func TestApplyProbeOperationProjectionCrossOffsetReplay(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatal(err)
@@ -53,12 +54,19 @@ func TestApplyProbeOperationProjectionAcceptsExactDuplicate(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO probe_operation_event_projection").
 		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectQuery("SELECT EXISTS").
-		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+	mock.ExpectQuery("SELECT operation_id::text").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"operation_id", "tenant_id", "probe_id", "event_type", "revision", "status", "trace_id", "payload",
+		}).AddRow(
+			"22222222-2222-4222-8222-222222222222", "tenant-a", "probe-a",
+			"traffic.probe.v2.OperationAcknowledged", int64(3), "completed", "trace-a",
+			[]byte(`{"revision":3}`),
+		))
 	mock.ExpectCommit()
-	if err := handler.ApplyProbeOperationProjection(
-		context.Background(), probeOperationProjectionFixture(),
-	); err != nil {
+	replay := probeOperationProjectionFixture()
+	replay.KafkaPartition = 4
+	replay.KafkaOffset = 101
+	if err := handler.ApplyProbeOperationProjection(context.Background(), replay); err != nil {
 		t.Fatal(err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -76,13 +84,19 @@ func TestApplyProbeOperationProjectionRejectsCollision(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO probe_operation_event_projection").
 		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectQuery("SELECT EXISTS").
-		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+	mock.ExpectQuery("SELECT operation_id::text").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"operation_id", "tenant_id", "probe_id", "event_type", "revision", "status", "trace_id", "payload",
+		}).AddRow(
+			"22222222-2222-4222-8222-222222222222", "tenant-a", "probe-a",
+			"traffic.probe.v2.OperationAcknowledged", int64(3), "failed", "trace-a",
+			[]byte(`{"revision":3,"conflict":true}`),
+		))
 	mock.ExpectRollback()
 	if err := handler.ApplyProbeOperationProjection(
 		context.Background(), probeOperationProjectionFixture(),
-	); err == nil {
-		t.Fatal("expected collision")
+	); !errors.Is(err, ErrProbeOperationProjectionConflict) {
+		t.Fatalf("error = %v, want ErrProbeOperationProjectionConflict", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)

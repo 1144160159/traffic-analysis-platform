@@ -27,7 +27,7 @@ func TestRequireAssetReadEnforcesScopeAndVerifiedTenant(t *testing.T) {
 		{name: "asset read", tenant: "tenant-a", scopes: []string{authmodel.ScopeAssetRead}, withToken: true, wantOK: true},
 		{name: "asset wildcard", tenant: "tenant-a", scopes: []string{"asset:*"}, withToken: true, wantOK: true},
 		{name: "wrong scope", tenant: "tenant-a", scopes: []string{authmodel.ScopeGraphRead}, withToken: true, wantStatus: http.StatusForbidden},
-		{name: "missing tenant", scopes: []string{authmodel.ScopeAssetRead}, withToken: true, wantStatus: http.StatusForbidden},
+		{name: "missing tenant", scopes: []string{authmodel.ScopeAssetRead}, withToken: true, wantStatus: http.StatusUnauthorized},
 		{name: "missing authorization", tenant: "tenant-a", wantStatus: http.StatusUnauthorized},
 	}
 
@@ -69,11 +69,21 @@ func TestRequestIdentityRejectsSpoofedIdentityHeaders(t *testing.T) {
 	}
 }
 
-func TestTenantFromRequestIgnoresQueryOverride(t *testing.T) {
+func TestTenantFromRequestDoesNotTrustUnsignedRequestData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/assets?tenant_id=tenant-b", nil)
 	req.Header.Set("X-Tenant-ID", "tenant-a")
-	if got := tenantFromRequest(req); got != "tenant-a" {
-		t.Fatalf("tenant = %q, want trusted header tenant-a", got)
+	if got := tenantFromRequest(req); got != "" {
+		t.Fatalf("tenant = %q, want empty without authenticated context", got)
+	}
+}
+
+func TestRequestIdentityRejectsCrossTenantAssertion(t *testing.T) {
+	const signingKey = "asset-cross-tenant-test-signing-key"
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/assets?tenant_id=tenant-b", nil)
+	req.Header.Set("Authorization", "Bearer "+signAccessToken(t, signingKey, "tenant-a", []string{authmodel.ScopeAssetRead}))
+	identity, status, message := (&HTTPHandler{jwtSigningKey: signingKey}).requestIdentity(req)
+	if status != http.StatusForbidden || message != "cross-tenant access denied" || identity.TenantID != "" {
+		t.Fatalf("identity=%+v status=%d message=%q", identity, status, message)
 	}
 }
 

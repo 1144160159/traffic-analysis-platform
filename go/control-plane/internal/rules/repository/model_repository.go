@@ -423,6 +423,11 @@ func (r *ModelRepository) RecoverStaleModelActions(ctx context.Context, age time
 			WHERE action_job_id = model_action_jobs.job_id
 			  AND status IN ('pending', 'processing')
 		  )
+		  AND NOT EXISTS (
+			SELECT 1 FROM model_rollback_requests
+			WHERE action_job_id = model_action_jobs.job_id
+			  AND state IN ('PENDING_ACK','PARTIAL','COMPENSATING')
+		  )
 	`, age.Seconds())
 	if err != nil {
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to recover stale model actions")
@@ -604,7 +609,11 @@ func (r *ModelRepository) GetModelVersion(ctx context.Context, modelVersion stri
 
 	query := `
 		SELECT mv.model_version, mv.model_id, mv.tenant_id, mv.feature_set_id,
-		       mv.artifact_uri, mv.metrics, mv.status, mv.created_by,
+		       mv.artifact_uri, mv.artifact_manifest_uri, mv.package_id, mv.package_sha256,
+		       mv.artifact_manifest_sha256, mv.evaluation_sha256, mv.explanation_sha256,
+		       mv.graph_snapshot_id, mv.graph_snapshot_sha256, mv.signing_key_id,
+		       mv.compatibility, mv.revision, mv.registration_idempotency_key,
+		       mv.registration_request_sha256, mv.metrics, mv.status, mv.created_by,
 		       mv.created_at, mv.updated_at,
 		       m.name, m.model_type, m.description
 		FROM model_versions mv
@@ -617,7 +626,11 @@ func (r *ModelRepository) GetModelVersion(ctx context.Context, modelVersion stri
 
 	err := r.db.QueryRowContext(ctx, query, modelVersion).Scan(
 		&mv.ModelVersion, &mv.ModelID, &mv.TenantID, &mv.FeatureSetID,
-		&mv.ArtifactURI, &mv.MetricsJSON, &mv.Status, &createdBy,
+		&mv.ArtifactURI, &mv.ArtifactManifestURI, &mv.PackageID, &mv.PackageSHA256,
+		&mv.ArtifactManifestSHA256, &mv.EvaluationSHA256, &mv.ExplanationSHA256,
+		&mv.GraphSnapshotID, &mv.GraphSnapshotSHA256, &mv.SigningKeyID,
+		&mv.CompatibilityJSON, &mv.Revision, &mv.RegistrationIdempotencyKey,
+		&mv.RegistrationRequestSHA256, &mv.MetricsJSON, &mv.Status, &createdBy,
 		&mv.CreatedAt, &mv.UpdatedAt,
 		&modelName, &modelType, &description,
 	)
@@ -641,6 +654,7 @@ func (r *ModelRepository) GetModelVersion(ctx context.Context, modelVersion stri
 		mv.Description = description.String
 	}
 	_ = mv.UnmarshalMetrics()
+	_ = mv.UnmarshalCompatibility()
 
 	return &mv, nil
 }
@@ -678,7 +692,11 @@ func (r *ModelRepository) ListModelVersions(ctx context.Context, tenantID, model
 
 	selectQuery := `
 		SELECT mv.model_version, mv.model_id, mv.tenant_id, mv.feature_set_id,
-		       mv.artifact_uri, mv.metrics, mv.status, mv.created_by,
+		       mv.artifact_uri, mv.artifact_manifest_uri, mv.package_id, mv.package_sha256,
+		       mv.artifact_manifest_sha256, mv.evaluation_sha256, mv.explanation_sha256,
+		       mv.graph_snapshot_id, mv.graph_snapshot_sha256, mv.signing_key_id,
+		       mv.compatibility, mv.revision, mv.registration_idempotency_key,
+		       mv.registration_request_sha256, mv.metrics, mv.status, mv.created_by,
 		       mv.created_at, mv.updated_at,
 		       m.name, m.model_type, m.description
 		FROM model_versions mv
@@ -700,7 +718,11 @@ func (r *ModelRepository) ListModelVersions(ctx context.Context, tenantID, model
 		var createdBy, modelName, modelType, description sql.NullString
 		if err := rows.Scan(
 			&mv.ModelVersion, &mv.ModelID, &mv.TenantID, &mv.FeatureSetID,
-			&mv.ArtifactURI, &mv.MetricsJSON, &mv.Status, &createdBy,
+			&mv.ArtifactURI, &mv.ArtifactManifestURI, &mv.PackageID, &mv.PackageSHA256,
+			&mv.ArtifactManifestSHA256, &mv.EvaluationSHA256, &mv.ExplanationSHA256,
+			&mv.GraphSnapshotID, &mv.GraphSnapshotSHA256, &mv.SigningKeyID,
+			&mv.CompatibilityJSON, &mv.Revision, &mv.RegistrationIdempotencyKey,
+			&mv.RegistrationRequestSHA256, &mv.MetricsJSON, &mv.Status, &createdBy,
 			&mv.CreatedAt, &mv.UpdatedAt,
 			&modelName, &modelType, &description,
 		); err != nil {
@@ -719,6 +741,7 @@ func (r *ModelRepository) ListModelVersions(ctx context.Context, tenantID, model
 			mv.Description = description.String
 		}
 		_ = mv.UnmarshalMetrics()
+		_ = mv.UnmarshalCompatibility()
 		versions = append(versions, &mv)
 	}
 
@@ -732,7 +755,11 @@ func (r *ModelRepository) GetActiveModelVersion(ctx context.Context, modelID str
 
 	query := `
 		SELECT mv.model_version, mv.model_id, mv.tenant_id, mv.feature_set_id,
-		       mv.artifact_uri, mv.metrics, mv.status, mv.created_by,
+		       mv.artifact_uri, mv.artifact_manifest_uri, mv.package_id, mv.package_sha256,
+		       mv.artifact_manifest_sha256, mv.evaluation_sha256, mv.explanation_sha256,
+		       mv.graph_snapshot_id, mv.graph_snapshot_sha256, mv.signing_key_id,
+		       mv.compatibility, mv.revision, mv.registration_idempotency_key,
+		       mv.registration_request_sha256, mv.metrics, mv.status, mv.created_by,
 		       mv.created_at, mv.updated_at,
 		       m.name, m.model_type, m.description
 		FROM model_versions mv
@@ -747,7 +774,11 @@ func (r *ModelRepository) GetActiveModelVersion(ctx context.Context, modelID str
 
 	err := r.db.QueryRowContext(ctx, query, modelID).Scan(
 		&mv.ModelVersion, &mv.ModelID, &mv.TenantID, &mv.FeatureSetID,
-		&mv.ArtifactURI, &mv.MetricsJSON, &mv.Status, &createdBy,
+		&mv.ArtifactURI, &mv.ArtifactManifestURI, &mv.PackageID, &mv.PackageSHA256,
+		&mv.ArtifactManifestSHA256, &mv.EvaluationSHA256, &mv.ExplanationSHA256,
+		&mv.GraphSnapshotID, &mv.GraphSnapshotSHA256, &mv.SigningKeyID,
+		&mv.CompatibilityJSON, &mv.Revision, &mv.RegistrationIdempotencyKey,
+		&mv.RegistrationRequestSHA256, &mv.MetricsJSON, &mv.Status, &createdBy,
 		&mv.CreatedAt, &mv.UpdatedAt,
 		&modelName, &modelType, &description,
 	)
@@ -771,6 +802,7 @@ func (r *ModelRepository) GetActiveModelVersion(ctx context.Context, modelID str
 		mv.Description = description.String
 	}
 	_ = mv.UnmarshalMetrics()
+	_ = mv.UnmarshalCompatibility()
 
 	return &mv, nil
 }

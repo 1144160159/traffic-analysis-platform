@@ -48,6 +48,43 @@ func TestPostgresAlertResponseProjectionIntegration(t *testing.T) {
 	suffix := time.Now().UTC().Format("150405000000")
 	baseOffset := time.Now().UnixNano()
 	tenantID := "integration-response-projection-" + suffix
+	dryRunJobID := "alert-action-dry-run-" + suffix
+	dryRunEventID := "99999999-9999-4999-8999-" + suffix
+	if _, err := db.Exec(`INSERT INTO alert_response_actions
+		(job_id,event_id,tenant_id,alert_id,action_id,action,target,reason,dry_run,
+		 status,approval_status,revision,trace_id,idempotency_key,expected_revision,
+		 detail,requested_by,approved_by,result,error)
+		VALUES ($1,$2::uuid,$3,'AL-DRY-RUN-1','alert-response-block-ip','block_ip',
+		 '198.51.100.9','validate response recommendation',true,
+		 'accepted','not_required',1,'trace-dry-run',$4,0,
+		 '{}'::jsonb,'operator-a','', '{}'::jsonb,'')`,
+		dryRunJobID, dryRunEventID, tenantID, "projection-dry-run-"+suffix,
+	); err != nil {
+		t.Fatal(err)
+	}
+	dryRunInput := AlertResponseProjectionInput{
+		EventID: dryRunEventID, JobID: dryRunJobID, TenantID: tenantID,
+		AlertID: "AL-DRY-RUN-1", ActionID: "alert-response-block-ip",
+		Action: "block_ip", Target: "198.51.100.9", Reason: "validate response recommendation",
+		RequestedBy: "operator-a", TraceID: "trace-dry-run", DryRun: true,
+		AggregateVersion: 1, KafkaPartition: 1, KafkaOffset: baseOffset - 1,
+	}
+	if err := projection.ApplyAlertResponseProjection(context.Background(), dryRunInput); err != nil {
+		t.Fatal(err)
+	}
+	var dryRunState, dryRunProvider, dryRunEffectState string
+	var dryRunExternalEffect bool
+	if err := db.QueryRow(`SELECT state,provider,effect_state,external_effect
+		FROM alert_response_execution_receipts WHERE tenant_id=$1 AND job_id=$2`,
+		tenantID, dryRunJobID,
+	).Scan(&dryRunState, &dryRunProvider, &dryRunEffectState, &dryRunExternalEffect); err != nil {
+		t.Fatal(err)
+	}
+	if dryRunState != "simulated_completed" || dryRunProvider != "internal-simulation" ||
+		dryRunEffectState != "none" || dryRunExternalEffect {
+		t.Fatalf("dry-run receipt crossed the external-effect boundary: state=%s provider=%s effect=%s/%t",
+			dryRunState, dryRunProvider, dryRunEffectState, dryRunExternalEffect)
+	}
 	jobID := "alert-action-" + suffix
 	eventID := "11111111-1111-4111-8111-" + suffix
 	if _, err := db.Exec(`INSERT INTO alert_response_actions

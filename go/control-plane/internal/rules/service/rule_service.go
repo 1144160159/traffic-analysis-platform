@@ -55,31 +55,42 @@ const (
 	outboxProcessInterval = 5 * time.Second
 	outboxRetryDelay      = 1 * time.Minute
 	outboxMaxRetries      = 10
+
+	// 单轮 outbox 处理上限与超时
+	outboxProcessBatchLimit = 100
+	outboxProcessTimeout    = 30 * time.Second
+	outboxPublishTimeout    = 10 * time.Second
 )
 
 // RuleServiceConfig 规则服务配置
 type RuleServiceConfig struct {
-	MaxRulesPerTenant     int           `env:"MAX_RULES_PER_TENANT" envDefault:"10000"`
-	EnableCache           bool          `env:"RULE_CACHE_ENABLED" envDefault:"true"`
-	CacheTTL              time.Duration `env:"RULE_CACHE_TTL" envDefault:"5m"`
-	EnableAudit           bool          `env:"RULE_AUDIT_ENABLED" envDefault:"true"`
-	KafkaPublishRetries   int           `env:"KAFKA_PUBLISH_RETRIES" envDefault:"3"`
-	KafkaPublishTimeout   time.Duration `env:"KAFKA_PUBLISH_TIMEOUT" envDefault:"10s"`
-	EnableOutbox          bool          `env:"RULE_OUTBOX_ENABLED" envDefault:"true"`
-	OutboxProcessInterval time.Duration `env:"RULE_OUTBOX_PROCESS_INTERVAL" envDefault:"5s"`
+	MaxRulesPerTenant             int           `env:"MAX_RULES_PER_TENANT" envDefault:"10000"`
+	EnableCache                   bool          `env:"RULE_CACHE_ENABLED" envDefault:"true"`
+	CacheTTL                      time.Duration `env:"RULE_CACHE_TTL" envDefault:"5m"`
+	EnableAudit                   bool          `env:"RULE_AUDIT_ENABLED" envDefault:"true"`
+	KafkaPublishRetries           int           `env:"KAFKA_PUBLISH_RETRIES" envDefault:"3"`
+	KafkaPublishTimeout           time.Duration `env:"KAFKA_PUBLISH_TIMEOUT" envDefault:"10s"`
+	EnableOutbox                  bool          `env:"RULE_OUTBOX_ENABLED" envDefault:"true"`
+	OutboxProcessInterval         time.Duration `env:"RULE_OUTBOX_PROCESS_INTERVAL" envDefault:"5s"`
+	AppliedAckExpectedParallelism int           `env:"RULE_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
+	AppliedAckTimeout             time.Duration `env:"RULE_APPLIED_ACK_TIMEOUT" envDefault:"2m"`
+	AppliedAckSweepInterval       time.Duration `env:"RULE_APPLIED_ACK_SWEEP_INTERVAL" envDefault:"15s"`
 }
 
 // DefaultRuleServiceConfig 默认配置
 func DefaultRuleServiceConfig() RuleServiceConfig {
 	return RuleServiceConfig{
-		MaxRulesPerTenant:     10000,
-		EnableCache:           true,
-		CacheTTL:              5 * time.Minute,
-		EnableAudit:           true,
-		KafkaPublishRetries:   3,
-		KafkaPublishTimeout:   10 * time.Second,
-		EnableOutbox:          true,
-		OutboxProcessInterval: 5 * time.Second,
+		MaxRulesPerTenant:             10000,
+		EnableCache:                   true,
+		CacheTTL:                      5 * time.Minute,
+		EnableAudit:                   true,
+		KafkaPublishRetries:           3,
+		KafkaPublishTimeout:           10 * time.Second,
+		EnableOutbox:                  true,
+		OutboxProcessInterval:         5 * time.Second,
+		AppliedAckExpectedParallelism: 4,
+		AppliedAckTimeout:             2 * time.Minute,
+		AppliedAckSweepInterval:       15 * time.Second,
 	}
 }
 
@@ -139,6 +150,12 @@ func NewRuleServiceWithDeps(
 	if config.EnableOutbox && db != nil {
 		go svc.startOutboxProcessor()
 		logger.Info("Outbox processor started", zap.Duration("interval", config.OutboxProcessInterval))
+		if config.AppliedAckTimeout > 0 && config.AppliedAckSweepInterval > 0 {
+			go svc.startRuleAppliedAckTimeoutProcessor()
+			logger.Info("Rule applied ACK timeout processor started",
+				zap.Duration("timeout", config.AppliedAckTimeout),
+				zap.Duration("interval", config.AppliedAckSweepInterval))
+		}
 	}
 
 	return svc
@@ -226,8 +243,7 @@ func (s *RuleService) CreateRule(ctx context.Context, rule *model.Rule, opCtx *O
 
 		// 6.2 创建版本记录
 		if err := s.createRuleVersionInTx(ctx, tx, rule); err != nil {
-			s.logger.Warn("Failed to create rule version record", zap.Error(err))
-			// 不阻塞主流程
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to create rule version record")
 		}
 
 		// 6.3 如果规则启用，写入 Outbox
@@ -338,7 +354,7 @@ func (s *RuleService) UpdateRule(ctx context.Context, rule *model.Rule, opCtx *O
 
 		// 7.2 创建版本记录
 		if err := s.createRuleVersionInTx(ctx, tx, rule); err != nil {
-			s.logger.Warn("Failed to create rule version record", zap.Error(err))
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to create rule version record")
 		}
 
 		// 7.3 写入 Outbox
@@ -653,6 +669,142 @@ func (s *RuleService) GetRuleVersions(ctx context.Context, ruleID string, opCtx 
 	}
 
 	return s.repo.GetVersions(ctx, ruleID)
+}
+
+// RollbackRule restores a checksum-verified historical snapshot as a new,
+// monotonically increasing rule version. The target version is never made
+// current in-place: downstream consumers receive a normal higher-version
+// update and therefore retain their stale-replay guarantees.
+func (s *RuleService) RollbackRule(
+	ctx context.Context,
+	ruleID string,
+	targetVersion int64,
+	expectedVersion int64,
+	reason string,
+	opCtx *OperationContext,
+) (result *RuleRollbackResult, rollbackErr error) {
+	ctx, span := otel.StartSpan(ctx, "RuleService.RollbackRule")
+	defer span.End()
+	defer func() {
+		if rollbackErr != nil {
+			s.recordAuditFailure(ctx, opCtx, audit.EventTypeRuleRollback, "rule", ruleID, rollbackErr.Error())
+		}
+	}()
+
+	ruleID = strings.TrimSpace(ruleID)
+	reason = strings.TrimSpace(reason)
+	if ruleID == "" {
+		return nil, errors.New(errors.ErrCodeMissingParameter, "rule id is required")
+	}
+	if targetVersion <= 0 {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "target_version must be greater than zero")
+	}
+	if expectedVersion <= 0 {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "expected_version must be greater than zero")
+	}
+	if reason == "" {
+		return nil, errors.New(errors.ErrCodeMissingParameter, "rollback reason is required")
+	}
+	if len(reason) > 1000 {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "rollback reason too long, max 1000 characters")
+	}
+	if !s.config.EnableOutbox {
+		return nil, errors.New(errors.ErrCodeInvalidStateTransition, "rule rollback requires the transactional outbox")
+	}
+
+	current, err := s.repo.GetByID(ctx, ruleID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.checkPermission(ctx, opCtx, rbac.PermissionRuleWrite, current.TenantID); err != nil {
+		return nil, err
+	}
+	if current.Version != expectedVersion {
+		return nil, errors.Newf(
+			errors.ErrCodeVersionConflict,
+			"rule version changed: expected %d, current %d",
+			expectedVersion,
+			current.Version,
+		)
+	}
+	if targetVersion >= current.Version {
+		return nil, errors.Newf(
+			errors.ErrCodeInvalidStateTransition,
+			"rollback target version %d must be older than current version %d",
+			targetVersion,
+			current.Version,
+		)
+	}
+
+	target, err := s.repo.GetVersion(ctx, ruleID, targetVersion)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	restored, err := buildRuleRollbackCandidate(current, target, expectedVersion, opCtx.UserID, now)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.validateRule(restored); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeInvalidStateTransition, "rollback snapshot is not a valid rule")
+	}
+
+	rollbackCommand := &model.RuleCommand{
+		EventID:    uuid.NewString(),
+		Action:     string(model.ActionUpdate),
+		Rule:       restored,
+		Timestamp:  now,
+		OperatorID: opCtx.UserID,
+		Version:    restored.Version,
+	}
+	rollbackErr = s.repo.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		if err := s.updateRuleInTx(ctx, tx, restored, expectedVersion); err != nil {
+			if err == repository.ErrVersionConflict {
+				return errors.Wrap(err, errors.ErrCodeVersionConflict, "rule changed while rollback was being committed")
+			}
+			return err
+		}
+		if err := s.createRuleVersionWithStatusInTx(
+			ctx,
+			tx,
+			restored,
+			model.VersionStatusRollback,
+			fmt.Sprintf("restored from version %d: %s", targetVersion, reason),
+		); err != nil {
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to create rollback version record")
+		}
+		if err := s.insertOutboxInTx(ctx, tx, ruleID, string(model.ActionUpdate), rollbackCommand); err != nil {
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to insert rollback outbox event")
+		}
+		return nil
+	})
+	if rollbackErr != nil {
+		return nil, rollbackErr
+	}
+
+	s.invalidateRuleCache(ctx, ruleID, current.TenantID)
+	s.recordAuditSuccess(ctx, opCtx, audit.EventTypeRuleRollback, "rule", ruleID, map[string]interface{}{
+		"operation":        "rollback",
+		"reason":           reason,
+		"target_version":   targetVersion,
+		"previous_version": current.Version,
+		"new_version":      restored.Version,
+		"target_checksum":  target.Checksum,
+	})
+	s.logger.Info("Rule rolled back as a new version",
+		zap.String("rule_id", ruleID),
+		zap.Int64("target_version", targetVersion),
+		zap.Int64("previous_version", current.Version),
+		zap.Int64("new_version", restored.Version))
+	return &RuleRollbackResult{
+		Rule:            restored,
+		EventID:         rollbackCommand.EventID,
+		RuntimeStatus:   "pending",
+		ExpectedAcks:    s.config.AppliedAckExpectedParallelism,
+		TargetVersion:   targetVersion,
+		PreviousVersion: current.Version,
+		NewVersion:      restored.Version,
+	}, nil
 }
 
 // GetRuleWorkbench loads the selected rule and all visible workbench modules
@@ -1236,6 +1388,15 @@ func (s *RuleService) GetRuleStats(ctx context.Context, tenantID string, opCtx *
 
 // insertOutboxInTx 在事务中插入 Outbox 事件
 func (s *RuleService) insertOutboxInTx(ctx context.Context, tx *sql.Tx, ruleID, eventType string, cmd *model.RuleCommand) error {
+	if cmd == nil || cmd.Rule == nil {
+		return fmt.Errorf("rule command and rule are required")
+	}
+	if cmd.EventID == "" {
+		cmd.EventID = uuid.NewString()
+	}
+	if cmd.Version == 0 {
+		cmd.Version = cmd.Rule.Version
+	}
 	payload, err := json.Marshal(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to marshal command: %w", err)
@@ -1270,24 +1431,35 @@ func (s *RuleService) startOutboxProcessor() {
 }
 
 // processOutbox 处理 Outbox 事件
+//
+// 每条事件在独立事务内用 FOR UPDATE SKIP LOCKED 领取后处理:
+//   - 多副本部署时行锁互斥,不会重复处理同一事件;
+//   - 发布成功与 published 标记同事务提交,崩溃后按 event_id 幂等重投;
+//   - 无效 payload 直接置失败;发布失败按指数退避重试,超限置失败。
 func (s *RuleService) processOutbox() error {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), outboxProcessTimeout)
+	defer cancel()
 
-	// 1. 查询待发布的事件（限制每次处理 100 条）
-	query := `
-		SELECT id, rule_id, event_type, payload, retry_count
-		FROM rule_outbox
-		WHERE published = false
-		  AND (next_retry IS NULL OR next_retry <= $1)
-		ORDER BY created_at ASC
-		LIMIT 100
-	`
-
-	rows, err := s.db.QueryContext(ctx, query, time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to query outbox: %w", err)
+	processed := 0
+	for processed < outboxProcessBatchLimit {
+		claimed, err := s.claimAndPublishOneOutbox(ctx)
+		if err != nil {
+			return err
+		}
+		if !claimed {
+			break
+		}
+		processed++
 	}
-	defer rows.Close()
+	return nil
+}
+
+func (s *RuleService) claimAndPublishOneOutbox(ctx context.Context) (bool, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to begin outbox claim: %w", err)
+	}
+	defer tx.Rollback()
 
 	type outboxEvent struct {
 		ID         int64
@@ -1297,109 +1469,84 @@ func (s *RuleService) processOutbox() error {
 		RetryCount int
 	}
 
-	events := make([]outboxEvent, 0, 100)
-	for rows.Next() {
-		var e outboxEvent
-		if err := rows.Scan(&e.ID, &e.RuleID, &e.EventType, &e.Payload, &e.RetryCount); err != nil {
-			s.logger.Error("Failed to scan outbox event", zap.Error(err))
-			continue
-		}
-		events = append(events, e)
+	var e outboxEvent
+	claimQuery := `
+		SELECT id, rule_id, event_type, payload, retry_count
+		FROM rule_outbox
+		WHERE published = false
+		  AND (next_retry IS NULL OR next_retry <= $1)
+		ORDER BY created_at ASC
+		LIMIT 1
+		FOR UPDATE SKIP LOCKED
+	`
+	err = tx.QueryRowContext(ctx, claimQuery, time.Now()).Scan(&e.ID, &e.RuleID, &e.EventType, &e.Payload, &e.RetryCount)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to claim outbox event: %w", err)
 	}
 
-	if len(events) == 0 {
-		return nil
+	var cmd model.RuleCommand
+	if err := json.Unmarshal(e.Payload, &cmd); err != nil {
+		s.logger.Error("Failed to unmarshal outbox payload",
+			zap.Int64("id", e.ID),
+			zap.Error(err))
+		if _, err := tx.ExecContext(ctx, `
+			UPDATE rule_outbox SET published = true, published_at = $1, last_error = $2 WHERE id = $3
+		`, time.Now(), "INVALID_PAYLOAD: "+err.Error(), e.ID); err != nil {
+			return false, fmt.Errorf("failed to mark outbox failed: %w", err)
+		}
+		if err := tx.Commit(); err != nil {
+			return false, fmt.Errorf("failed to commit outbox failure: %w", err)
+		}
+		return true, nil
 	}
 
-	s.logger.Info("Processing outbox events", zap.Int("count", len(events)))
+	publishCtx, cancel := context.WithTimeout(ctx, outboxPublishTimeout)
+	publishErr := s.publisher.PublishRuleCommandWithRetry(publishCtx, &cmd, 3)
+	cancel()
 
-	// 2. 逐条发布到 Kafka
-	for _, e := range events {
-		var cmd model.RuleCommand
-		if err := json.Unmarshal(e.Payload, &cmd); err != nil {
-			s.logger.Error("Failed to unmarshal outbox payload",
-				zap.Int64("id", e.ID),
-				zap.Error(err))
-			s.markOutboxFailed(ctx, e.ID, err.Error())
-			continue
-		}
-
-		// 发布到 Kafka
-		publishCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		err := s.publisher.PublishRuleCommandWithRetry(publishCtx, &cmd, 3)
-		cancel()
-
-		if err != nil {
-			s.logger.Warn("Failed to publish outbox event to Kafka",
-				zap.Int64("id", e.ID),
-				zap.String("rule_id", e.RuleID),
-				zap.String("event_type", e.EventType),
-				zap.Int("retry_count", e.RetryCount),
-				zap.Error(err))
-
-			// 如果重试次数超过限制，标记为失败
-			if e.RetryCount >= outboxMaxRetries {
-				s.markOutboxFailed(ctx, e.ID, err.Error())
-			} else {
-				// 安排下次重试（指数退避）
-				nextRetry := time.Now().Add(outboxRetryDelay * time.Duration(1<<uint(e.RetryCount)))
-				s.scheduleOutboxRetry(ctx, e.ID, e.RetryCount+1, nextRetry, err.Error())
+	if publishErr != nil {
+		s.logger.Warn("Failed to publish outbox event to Kafka",
+			zap.Int64("id", e.ID),
+			zap.String("rule_id", e.RuleID),
+			zap.String("event_type", e.EventType),
+			zap.Int("retry_count", e.RetryCount),
+			zap.Error(publishErr))
+		if e.RetryCount >= outboxMaxRetries {
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE rule_outbox SET published = true, published_at = $1, last_error = $2 WHERE id = $3
+			`, time.Now(), "MAX_RETRIES_EXCEEDED: "+publishErr.Error(), e.ID); err != nil {
+				return false, fmt.Errorf("failed to mark outbox failed: %w", err)
 			}
-			continue
-		}
-
-		// 发布成功，标记为已发布
-		if err := s.markOutboxPublished(ctx, e.ID); err != nil {
-			s.logger.Error("Failed to mark outbox as published",
-				zap.Int64("id", e.ID),
-				zap.Error(err))
 		} else {
-			s.logger.Debug("Outbox event published successfully",
-				zap.Int64("id", e.ID),
-				zap.String("rule_id", e.RuleID),
-				zap.String("event_type", e.EventType))
+			nextRetry := time.Now().Add(outboxRetryDelay * time.Duration(1<<uint(e.RetryCount)))
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE rule_outbox SET retry_count = $1, next_retry = $2, last_error = $3 WHERE id = $4
+			`, e.RetryCount+1, nextRetry, publishErr.Error(), e.ID); err != nil {
+				return false, fmt.Errorf("failed to schedule outbox retry: %w", err)
+			}
 		}
+		if err := tx.Commit(); err != nil {
+			return false, fmt.Errorf("failed to commit outbox retry: %w", err)
+		}
+		return true, nil
 	}
 
-	return nil
-}
-
-// markOutboxPublished 标记 Outbox 事件为已发布
-func (s *RuleService) markOutboxPublished(ctx context.Context, id int64) error {
-	query := `
-		UPDATE rule_outbox
-		SET published = true, published_at = $1
-		WHERE id = $2
-	`
-	_, err := s.db.ExecContext(ctx, query, time.Now(), id)
-	return err
-}
-
-// scheduleOutboxRetry 安排 Outbox 事件重试
-func (s *RuleService) scheduleOutboxRetry(ctx context.Context, id int64, retryCount int, nextRetry time.Time, lastError string) error {
-	query := `
-		UPDATE rule_outbox
-		SET retry_count = $1, next_retry = $2, last_error = $3
-		WHERE id = $4
-	`
-	_, err := s.db.ExecContext(ctx, query, retryCount, nextRetry, lastError, id)
-	return err
-}
-
-// markOutboxFailed 标记 Outbox 事件为失败
-func (s *RuleService) markOutboxFailed(ctx context.Context, id int64, lastError string) error {
-	query := `
-		UPDATE rule_outbox
-		SET published = true, published_at = $1, last_error = $2
-		WHERE id = $3
-	`
-	_, err := s.db.ExecContext(ctx, query, time.Now(), "MAX_RETRIES_EXCEEDED: "+lastError, id)
-	if err == nil {
-		s.logger.Error("Outbox event marked as failed after max retries",
-			zap.Int64("id", id),
-			zap.String("error", lastError))
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE rule_outbox SET published = true, published_at = $1 WHERE id = $2
+	`, time.Now(), e.ID); err != nil {
+		return false, fmt.Errorf("failed to mark outbox as published: %w", err)
 	}
-	return err
+	if err := tx.Commit(); err != nil {
+		return false, fmt.Errorf("failed to commit outbox publish: %w", err)
+	}
+	s.logger.Debug("Outbox event published successfully",
+		zap.Int64("id", e.ID),
+		zap.String("rule_id", e.RuleID),
+		zap.String("event_type", e.EventType))
+	return true, nil
 }
 
 // =============================================================================
@@ -1445,9 +1592,19 @@ func (s *RuleService) createRuleInTx(ctx context.Context, tx *sql.Tx, rule *mode
 
 // createRuleVersionInTx 在事务中创建规则版本
 func (s *RuleService) createRuleVersionInTx(ctx context.Context, tx *sql.Tx, rule *model.Rule) error {
-	contentJSON, err := json.Marshal(rule)
+	return s.createRuleVersionWithStatusInTx(ctx, tx, rule, model.VersionStatusActive, "")
+}
+
+func (s *RuleService) createRuleVersionWithStatusInTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	rule *model.Rule,
+	status model.VersionStatus,
+	changeLog string,
+) error {
+	contentURI, checksum, err := model.EncodeRuleVersionSnapshot(rule)
 	if err != nil {
-		return err
+		return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to encode rule version snapshot")
 	}
 
 	versionID := fmt.Sprintf("%s-v%d", rule.RuleID, rule.Version)
@@ -1457,21 +1614,36 @@ func (s *RuleService) createRuleVersionInTx(ctx context.Context, tx *sql.Tx, rul
 	}
 
 	query := `
-		INSERT INTO rule_versions (rule_version, rule_id, tenant_id, version, content_uri, status, created_by, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO rule_versions (
+			rule_version, rule_id, tenant_id, version, content_uri,
+			checksum, status, change_log, created_by, created_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		ON CONFLICT (rule_version) DO NOTHING
 	`
-	_, err = tx.ExecContext(ctx, query,
+	result, err := tx.ExecContext(ctx, query,
 		versionID,
 		rule.RuleID,
 		rule.TenantID,
 		rule.Version,
-		fmt.Sprintf("inline:%s", string(contentJSON)),
-		"active",
+		contentURI,
+		checksum,
+		string(status),
+		changeLog,
 		createdBy,
 		time.Now(),
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return errors.Newf(errors.ErrCodeVersionConflict, "rule version already exists: %s", versionID)
+	}
+	return nil
 }
 
 // updateRuleInTx 在事务中更新规则（带 CAS）

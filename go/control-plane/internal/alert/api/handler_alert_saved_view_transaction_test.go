@@ -21,8 +21,8 @@ func savedViewRequest() *http.Request {
 		`{"action_id":"alert-view-save","action":"save_view","target":"critical-alerts","reason":"operator workspace","expected_revision":0,"detail":{"filters":{"severity":"critical"}}}`,
 	))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Tenant-ID", "tenant-a")
-	request.Header.Set("X-User-ID", "operator-a")
+	request = withTenant(request, "tenant-a")
+	request = withUser(request, "operator-a")
 	request.Header.Set("Idempotency-Key", "alert-saved-view-key-0001")
 	return request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{model.ScopeAlertWrite}))
 }
@@ -200,8 +200,8 @@ func TestSaveAlertViewRejectsStaleExpectedRevisionBeforeMutation(t *testing.T) {
 		`{"action_id":"alert-view-save","action":"save_view","target":"critical-alerts","reason":"operator workspace","expected_revision":1,"detail":{"filters":{"severity":"critical"}}}`,
 	))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Tenant-ID", "tenant-a")
-	request.Header.Set("X-User-ID", "operator-a")
+	request = withTenant(request, "tenant-a")
+	request = withUser(request, "operator-a")
 	request.Header.Set("Idempotency-Key", "alert-saved-view-key-0001")
 	request = request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{model.ScopeAlertWrite}))
 	recorder := httptest.NewRecorder()

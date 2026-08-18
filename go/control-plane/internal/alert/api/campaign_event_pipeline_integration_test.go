@@ -123,6 +123,7 @@ func runCampaignEventRealKafkaProjectionBoundary(t *testing.T) campaignEventKafk
 	defer membershipProducer.Close()
 	handler := NewSystemHandler(nil, db, zap.NewNop())
 	handler.SetCampaignEventProducers(aggregateProducer, membershipProducer)
+	handler.SetCampaignDispatcherAdmission(func(context.Context) error { return nil })
 	processed, err := handler.drainCampaignEventOutboxes(context.Background(), "campaign-real-worker", 10)
 	if err != nil || processed != 2 {
 		t.Fatalf("drain processed=%d err=%v", processed, err)

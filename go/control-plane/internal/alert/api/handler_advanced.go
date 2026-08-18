@@ -1445,17 +1445,10 @@ func writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	json.NewEncoder(w).Encode(data)
 }
 
+// tenantIDFromRequest 只从已验证的请求上下文读取租户身份。
+// 客户端可控的 X-Tenant-ID header / tenant_id query 不作为身份来源。
 func tenantIDFromRequest(r *http.Request) string {
-	if tenantID := httpx.GetTenantID(r.Context()); tenantID != "" {
-		return tenantID
-	}
-	if tenantID := r.Header.Get("X-Tenant-ID"); tenantID != "" {
-		return tenantID
-	}
-	if tenantID := r.URL.Query().Get("tenant_id"); tenantID != "" {
-		return tenantID
-	}
-	return "default"
+	return httpx.GetTenantID(r.Context())
 }
 
 func defaultPlaybookAlertContext(name, tenantID string) *playbook.AlertContext {

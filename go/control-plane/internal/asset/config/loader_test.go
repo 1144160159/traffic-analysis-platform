@@ -88,3 +88,22 @@ func TestAssetDetailEvidenceAndNebulaConfigurationFailClosed(t *testing.T) {
 		t.Fatalf("Nebula limit err=%v", err)
 	}
 }
+
+func TestAssetEventOutboxConfigurationRequiresExplicitTenantScope(t *testing.T) {
+	cfg := Config{
+		Server:    ServerConfig{GRPCPort: 50053},
+		Postgres:  PostgresConfig{Host: "ephemeral-postgres"},
+		Discovery: DiscoveryConfig{MaxHosts: 128},
+		Export: AssetExportConfig{
+			MaxRows: 100, MaxBytes: 1 << 20, Retention: time.Hour,
+		},
+		Kafka: KafkaConfig{EventOutboxEnabled: true, EventTopic: "asset.events.v2"},
+	}
+	if err := cfg.validate(); err == nil || !strings.Contains(err.Error(), "explicit tenant scope") {
+		t.Fatalf("tenant scope err=%v", err)
+	}
+	cfg.Kafka.EventOutboxTenantID = "asset-canary"
+	if err := cfg.validate(); err != nil {
+		t.Fatalf("valid tenant-scoped asset event outbox config: %v", err)
+	}
+}

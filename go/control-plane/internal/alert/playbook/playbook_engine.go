@@ -34,6 +34,9 @@ type Playbook struct {
 	Cooldown time.Duration `json:"cooldown"` // 同一告警重复触发冷却
 	MaxRuns  int           `json:"max_runs"` // 最大执行次数
 	RunCount int           `json:"run_count"`
+	// LastRunAt 最近一次执行时间（Cooldown 判定依据）。仅内存态；
+	// 多副本/重启后重置，属当前引擎内存设计的已知边界。
+	LastRunAt time.Time `json:"last_run_at,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -181,17 +184,24 @@ func (e *PlaybookEngine) Evaluate(ctx context.Context, alert *AlertContext) []*E
 			continue
 		}
 
-		// 冷却检查
-		if pb.RunCount >= pb.MaxRuns && pb.MaxRuns > 0 {
+		// 冷却与次数限制：全程持锁读取并推进，避免数据竞争；
+		// Cooldown 冷却期内不再触发同一剧本。
+		e.mu.Lock()
+		if pb.MaxRuns > 0 && pb.RunCount >= pb.MaxRuns {
+			e.mu.Unlock()
 			continue
 		}
+		if pb.Cooldown > 0 && !pb.LastRunAt.IsZero() && time.Since(pb.LastRunAt) < pb.Cooldown {
+			e.mu.Unlock()
+			continue
+		}
+		pb.RunCount++
+		pb.LastRunAt = time.Now()
+		e.mu.Unlock()
 
 		// 执行 Actions
 		result := e.executePlaybook(ctx, pb, alert, false)
 		results = append(results, result)
-		e.mu.Lock()
-		pb.RunCount++
-		e.mu.Unlock()
 	}
 
 	return results
@@ -219,7 +229,12 @@ func (e *PlaybookEngine) ExecuteByName(ctx context.Context, name string, alert *
 		e.mu.Unlock()
 		return nil, fmt.Errorf("playbook max runs reached: %s", name)
 	}
+	if pb.Cooldown > 0 && !pb.LastRunAt.IsZero() && time.Since(pb.LastRunAt) < pb.Cooldown {
+		e.mu.Unlock()
+		return nil, fmt.Errorf("playbook is in cooldown: %s", name)
+	}
 	pb.RunCount++
+	pb.LastRunAt = time.Now()
 	e.mu.Unlock()
 
 	return e.executePlaybook(ctx, pb, alert, false), nil

@@ -568,6 +568,13 @@ CREATE TABLE IF NOT EXISTS asset_projection_inbox (
 CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_ready ON asset_projection_inbox(available_at,created_at) WHERE status='pending';
 CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_reclaim ON asset_projection_inbox(locked_until,created_at) WHERE status='processing';
 CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_dead ON asset_projection_inbox(updated_at) WHERE status='dead';
+ALTER TABLE asset_projection_inbox
+  ADD COLUMN IF NOT EXISTS kafka_topic TEXT NOT NULL DEFAULT 'asset.events.v2',
+  ADD COLUMN IF NOT EXISTS kafka_timestamp_ms BIGINT NOT NULL DEFAULT 1 CHECK (kafka_timestamp_ms>0),
+  ADD COLUMN IF NOT EXISTS raw_payload BYTEA,
+  ADD COLUMN IF NOT EXISTS source_sha256 TEXT NOT NULL DEFAULT repeat('0',64) CHECK (length(source_sha256)=64),
+  ADD COLUMN IF NOT EXISTS ch_status TEXT NOT NULL DEFAULT 'disabled' CHECK (ch_status IN ('disabled','pending','applied','dead'));
+CREATE INDEX IF NOT EXISTS idx_asset_projection_inbox_ch_ready ON asset_projection_inbox(available_at,created_at) WHERE ch_status='pending';
 CREATE TABLE IF NOT EXISTS asset_projection_watermarks (
   tenant_id TEXT NOT NULL,
   asset_id UUID NOT NULL REFERENCES assets(asset_id) ON DELETE RESTRICT,
@@ -578,6 +585,8 @@ CREATE TABLE IF NOT EXISTS asset_projection_watermarks (
   applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (tenant_id,asset_id,target)
 );
+ALTER TABLE asset_projection_watermarks DROP CONSTRAINT IF EXISTS asset_projection_watermarks_target_check;
+ALTER TABLE asset_projection_watermarks ADD CONSTRAINT asset_projection_watermarks_target_check CHECK (target IN ('opensearch','nebulagraph','clickhouse'));
 CREATE INDEX IF NOT EXISTS idx_asset_projection_watermarks_target_version ON asset_projection_watermarks(target,aggregate_version);
 CREATE TABLE IF NOT EXISTS asset_discovery_credentials (credential_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, name TEXT NOT NULL, protocol TEXT NOT NULL, endpoint TEXT, secret_ref TEXT NOT NULL, created_by TEXT, revision BIGINT NOT NULL DEFAULT 1 CHECK(revision>0), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE(tenant_id,name));
 CREATE TABLE IF NOT EXISTS asset_discovery_runs (run_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, mode TEXT NOT NULL, target_cidr TEXT, target_network CIDR, credential_id TEXT, action_id TEXT NOT NULL DEFAULT 'asset-active-discovery-run', status TEXT NOT NULL DEFAULT 'queued' CHECK(status IN ('queued','running','cancel_requested','cancelled','succeeded','completed','partial','failed','blocked')), revision BIGINT NOT NULL DEFAULT 1 CHECK(revision>0), requested_by TEXT, reason TEXT NOT NULL DEFAULT 'legacy-compatible', rate_limit_per_second INT NOT NULL DEFAULT 10 CHECK(rate_limit_per_second BETWEEN 1 AND 10000), security_window_start TIMESTAMPTZ, security_window_end TIMESTAMPTZ, approved_by TEXT NOT NULL DEFAULT '', idempotency_key TEXT, request_hash TEXT, trace_id TEXT NOT NULL DEFAULT '', cancel_requested BOOLEAN NOT NULL DEFAULT false, discovered_assets INT NOT NULL DEFAULT 0, discovered_links INT NOT NULL DEFAULT 0, discovered_candidates INT NOT NULL DEFAULT 0, rejected_records INT NOT NULL DEFAULT 0, result_watermark TEXT NOT NULL DEFAULT '', error_message TEXT, queued_at TIMESTAMPTZ NOT NULL DEFAULT now(), started_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ, locked_by TEXT NOT NULL DEFAULT '', locked_until TIMESTAMPTZ);
@@ -892,6 +901,137 @@ CREATE INDEX IF NOT EXISTS idx_model_update_outbox_ready ON model_update_outbox 
 CREATE INDEX IF NOT EXISTS idx_model_update_outbox_aggregate ON model_update_outbox (model_id, id);
 CREATE INDEX IF NOT EXISTS idx_model_update_outbox_job ON model_update_outbox (action_job_id) WHERE action_job_id <> '';
 CREATE INDEX IF NOT EXISTS idx_model_update_outbox_lease ON model_update_outbox (locked_at) WHERE status = 'processing';
+
+CREATE TABLE IF NOT EXISTS model_update_applied_acks (
+  event_id TEXT NOT NULL,
+  tenant_id TEXT NOT NULL,
+  model_id TEXT NOT NULL,
+  model_version TEXT NOT NULL,
+  subtask_index INT NOT NULL CHECK (subtask_index >= 0),
+  parallelism INT NOT NULL CHECK (parallelism > 0 AND subtask_index < parallelism),
+  status TEXT NOT NULL CHECK (status IN ('applied', 'failed')),
+  artifact_uri TEXT NOT NULL,
+  artifact_sha256 TEXT NOT NULL DEFAULT '',
+  warmup_score DOUBLE PRECISION,
+  error TEXT NOT NULL DEFAULT '',
+  payload JSONB NOT NULL,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (event_id,subtask_index)
+);
+CREATE INDEX IF NOT EXISTS idx_model_update_applied_acks_status
+  ON model_update_applied_acks (event_id,status,subtask_index);
+CREATE INDEX IF NOT EXISTS idx_model_update_applied_acks_model
+  ON model_update_applied_acks (tenant_id,model_id,applied_at DESC);
+
+CREATE TABLE IF NOT EXISTS model_update_consumer_readiness (
+  consumer_deployment_id TEXT NOT NULL,
+  subtask_index INT NOT NULL CHECK (subtask_index >= 0),
+  event_id TEXT NOT NULL UNIQUE,
+  consumer_profile_sha256 TEXT NOT NULL CHECK (consumer_profile_sha256 ~ '^[0-9a-f]{64}$'),
+  runtime_contract TEXT NOT NULL,
+  runtime_version TEXT NOT NULL,
+  feature_schema_version INT NOT NULL CHECK (feature_schema_version > 0),
+  graph_schema_version INT NOT NULL CHECK (graph_schema_version > 0),
+  supported_model_formats TEXT NOT NULL,
+  parallelism INT NOT NULL CHECK (parallelism > 0 AND subtask_index < parallelism),
+  status TEXT NOT NULL DEFAULT 'ready' CHECK (status='ready'),
+  payload JSONB NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (consumer_deployment_id,subtask_index)
+);
+CREATE INDEX IF NOT EXISTS idx_model_update_consumer_readiness_profile
+  ON model_update_consumer_readiness (consumer_profile_sha256,last_seen_at DESC);
+
+CREATE TABLE IF NOT EXISTS model_update_consumer_ready_receipts (
+  consumer_deployment_id TEXT PRIMARY KEY,
+  consumer_profile_sha256 TEXT NOT NULL CHECK (consumer_profile_sha256 ~ '^[0-9a-f]{64}$'),
+  runtime_contract TEXT NOT NULL,
+  runtime_version TEXT NOT NULL,
+  feature_schema_version INT NOT NULL CHECK (feature_schema_version > 0),
+  graph_schema_version INT NOT NULL CHECK (graph_schema_version > 0),
+  supported_model_formats TEXT NOT NULL,
+  expected_parallelism INT NOT NULL CHECK (expected_parallelism > 0),
+  ready_subtasks INT NOT NULL CHECK (ready_subtasks = expected_parallelism),
+  status TEXT NOT NULL DEFAULT 'ready' CHECK (status='ready'),
+  ready_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_model_update_consumer_ready_active
+  ON model_update_consumer_ready_receipts (expires_at,consumer_profile_sha256) WHERE status='ready';
+
+CREATE TABLE IF NOT EXISTS model_shadow_activation_aggregates (
+  tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  model_id UUID NOT NULL REFERENCES models(model_id) ON DELETE CASCADE,
+  aggregate_revision BIGINT NOT NULL DEFAULT 0 CHECK (aggregate_revision >= 0),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id,model_id)
+);
+
+CREATE TABLE IF NOT EXISTS model_shadow_activation_requests (
+  request_id TEXT PRIMARY KEY,
+  event_id TEXT NOT NULL UNIQUE REFERENCES model_update_outbox(event_id) ON DELETE RESTRICT,
+  tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  model_id UUID NOT NULL REFERENCES models(model_id) ON DELETE RESTRICT,
+  model_version TEXT NOT NULL REFERENCES model_versions(model_version) ON DELETE RESTRICT,
+  package_id TEXT NOT NULL,
+  package_sha256 TEXT NOT NULL CHECK (package_sha256 ~ '^[0-9a-f]{64}$'),
+  idempotency_key TEXT NOT NULL,
+  request_sha256 TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+  expected_revision BIGINT NOT NULL CHECK (expected_revision >= 0),
+  aggregate_revision BIGINT NOT NULL CHECK (aggregate_revision = expected_revision + 1),
+  requested_by TEXT NOT NULL,
+  approved_by TEXT NOT NULL,
+  approval_reason TEXT NOT NULL CHECK (length(approval_reason) BETWEEN 8 AND 1000),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id,idempotency_key),
+  UNIQUE (tenant_id,model_id,aggregate_revision),
+  CHECK (requested_by <> approved_by)
+);
+CREATE INDEX IF NOT EXISTS idx_model_shadow_activation_model
+  ON model_shadow_activation_requests (tenant_id,model_id,aggregate_revision DESC);
+
+CREATE TABLE IF NOT EXISTS model_update_shadow_acks (
+  event_id TEXT NOT NULL,
+  tenant_id TEXT NOT NULL,
+  model_id TEXT NOT NULL,
+  model_version TEXT NOT NULL,
+  package_id TEXT NOT NULL,
+  package_sha256 TEXT NOT NULL CHECK (package_sha256 ~ '^[0-9a-f]{64}$'),
+  aggregate_revision BIGINT NOT NULL CHECK (aggregate_revision > 0),
+  subtask_index INT NOT NULL CHECK (subtask_index >= 0),
+  parallelism INT NOT NULL CHECK (parallelism > 0 AND subtask_index < parallelism),
+  status TEXT NOT NULL CHECK (status IN ('shadow_ready','stale','duplicate','failed')),
+  error TEXT NOT NULL DEFAULT '',
+  payload JSONB NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (event_id,subtask_index)
+);
+CREATE INDEX IF NOT EXISTS idx_model_update_shadow_acks_quorum
+  ON model_update_shadow_acks (event_id,status,subtask_index);
+CREATE INDEX IF NOT EXISTS idx_model_update_shadow_acks_model
+  ON model_update_shadow_acks (tenant_id,model_id,aggregate_revision DESC);
+
+CREATE TABLE IF NOT EXISTS model_update_shadow_ready_receipts (
+  event_id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  model_id TEXT NOT NULL,
+  model_version TEXT NOT NULL,
+  package_id TEXT NOT NULL,
+  package_sha256 TEXT NOT NULL CHECK (package_sha256 ~ '^[0-9a-f]{64}$'),
+  aggregate_revision BIGINT NOT NULL CHECK (aggregate_revision > 0),
+  expected_parallelism INT NOT NULL CHECK (expected_parallelism > 0),
+  ready_subtasks INT NOT NULL CHECK (ready_subtasks = expected_parallelism),
+  status TEXT NOT NULL DEFAULT 'shadow_ready' CHECK (status='shadow_ready'),
+  ready_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  UNIQUE (tenant_id,model_id,aggregate_revision)
+);
+CREATE INDEX IF NOT EXISTS idx_model_update_shadow_ready_active
+  ON model_update_shadow_ready_receipts (expires_at,tenant_id,model_id) WHERE status='shadow_ready';
 
 CREATE TABLE IF NOT EXISTS model_workbench_items (
   item_id      TEXT PRIMARY KEY,
@@ -1237,9 +1377,43 @@ CREATE TABLE IF NOT EXISTS probe_operation_outbox (
   payload JSONB NOT NULL, published BOOLEAN NOT NULL DEFAULT false, attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
   last_error TEXT NOT NULL DEFAULT '', next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ,
   locked_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ,
+  publish_state TEXT NOT NULL DEFAULT 'PENDING',
+  broker_topic TEXT NOT NULL DEFAULT '', broker_partition INTEGER, broker_offset BIGINT,
+  publish_attempt UUID, acked_at TIMESTAMPTZ,
   UNIQUE (operation_id,event_type)
 );
-CREATE INDEX IF NOT EXISTS idx_probe_operation_outbox_pending ON probe_operation_outbox (next_attempt_at,created_at) WHERE published=false;
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS publish_state TEXT NOT NULL DEFAULT 'PENDING';
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS broker_topic TEXT NOT NULL DEFAULT '';
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS broker_partition INTEGER;
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS broker_offset BIGINT;
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS publish_attempt UUID;
+ALTER TABLE probe_operation_outbox ADD COLUMN IF NOT EXISTS acked_at TIMESTAMPTZ;
+UPDATE probe_operation_outbox SET publish_state=CASE WHEN published THEN 'KAFKA_ACKED' ELSE 'PENDING' END
+WHERE publish_state NOT IN ('OUTCOME_UNKNOWN','KAFKA_ACKED') OR published;
+ALTER TABLE probe_operation_outbox DROP CONSTRAINT IF EXISTS probe_operation_outbox_publish_state_check;
+ALTER TABLE probe_operation_outbox ADD CONSTRAINT probe_operation_outbox_publish_state_check
+CHECK (publish_state IN ('PENDING','OUTCOME_UNKNOWN','KAFKA_ACKED')) NOT VALID;
+ALTER TABLE probe_operation_outbox VALIDATE CONSTRAINT probe_operation_outbox_publish_state_check;
+ALTER TABLE probe_operation_outbox DROP CONSTRAINT IF EXISTS probe_operation_outbox_publish_compatibility_check;
+ALTER TABLE probe_operation_outbox ADD CONSTRAINT probe_operation_outbox_publish_compatibility_check
+CHECK ((published AND publish_state='KAFKA_ACKED') OR
+       (NOT published AND publish_state IN ('PENDING','OUTCOME_UNKNOWN'))) NOT VALID;
+ALTER TABLE probe_operation_outbox VALIDATE CONSTRAINT probe_operation_outbox_publish_compatibility_check;
+DROP INDEX IF EXISTS idx_probe_operation_outbox_pending;
+CREATE INDEX idx_probe_operation_outbox_pending ON probe_operation_outbox (next_attempt_at,created_at)
+WHERE publish_state IN ('PENDING','OUTCOME_UNKNOWN');
+CREATE TABLE IF NOT EXISTS probe_pipeline_readiness_epochs (
+  pipeline_id TEXT NOT NULL,
+  consumer_role TEXT NOT NULL CHECK (consumer_role IN ('COMMAND_DELIVERY','ACK_AUTHORITY','LIFECYCLE_PROJECTION')),
+  consumer_group TEXT NOT NULL, owner_id TEXT NOT NULL, owner_epoch BIGINT NOT NULL CHECK (owner_epoch > 0),
+  ready BOOLEAN NOT NULL, observed_at TIMESTAMPTZ NOT NULL, lease_expires_at TIMESTAMPTZ,
+  revoked_at TIMESTAMPTZ, updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (pipeline_id,consumer_role),
+  CHECK ((ready AND lease_expires_at IS NOT NULL AND revoked_at IS NULL) OR
+         (NOT ready AND revoked_at IS NOT NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_probe_pipeline_readiness_live
+ON probe_pipeline_readiness_epochs (pipeline_id,lease_expires_at) WHERE ready;
 
 -- =========================================================================================
 -- 审计日志（合并所有字段）
@@ -2495,7 +2669,10 @@ CREATE INDEX IF NOT EXISTS idx_topic_action_job_projection_tenant_topic ON topic
 CREATE TABLE IF NOT EXISTS probe_operation_event_projection (
   event_id UUID PRIMARY KEY, operation_id UUID NOT NULL, tenant_id TEXT NOT NULL,
   probe_id TEXT NOT NULL,
-  event_type TEXT NOT NULL CHECK (event_type = 'traffic.probe.v2.OperationAcknowledged'),
+    event_type TEXT NOT NULL CHECK (event_type IN (
+        'traffic.probe.v2.OperationAcknowledged',
+        'traffic.probe.v2.OperationExpired'
+    )),
   revision BIGINT NOT NULL CHECK (revision > 0), status TEXT NOT NULL,
   trace_id TEXT NOT NULL, payload JSONB NOT NULL, kafka_partition INTEGER NOT NULL,
   kafka_offset BIGINT NOT NULL, projected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -5124,5 +5301,311 @@ INSERT INTO alignment_schema_migrations(version, description)
 VALUES ('202608092300', 'revision-safe alert batch assignment compensation v1')
 ON CONFLICT (version) DO NOTHING;
 
+-- BEGIN GENERATED T1-M04 RULE APPLICATION RECEIPTS V1
+ALTER TABLE rule_outbox
+  ADD COLUMN IF NOT EXISTS runtime_status TEXT NOT NULL DEFAULT 'pending',
+  ADD COLUMN IF NOT EXISTS runtime_applied_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS runtime_last_error TEXT NOT NULL DEFAULT '';
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname='rule_outbox_runtime_status_check'
+  ) THEN
+    ALTER TABLE rule_outbox ADD CONSTRAINT rule_outbox_runtime_status_check
+      CHECK (runtime_status IN ('pending','partial','applied','failed'));
+  END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS idx_rule_outbox_event_id
+  ON rule_outbox((payload->>'event_id')) WHERE payload ? 'event_id';
+CREATE TABLE IF NOT EXISTS rule_update_applied_acks (
+  event_id TEXT NOT NULL,
+  tenant_id TEXT NOT NULL,
+  rule_id TEXT NOT NULL,
+  rule_version BIGINT NOT NULL CHECK(rule_version>0),
+  action TEXT NOT NULL CHECK(action IN ('create','update','delete','enable','disable','sync')),
+  checksum TEXT NOT NULL CHECK(checksum ~ '^[0-9a-f]{32}$'),
+  subtask_index INT NOT NULL CHECK(subtask_index>=0),
+  parallelism INT NOT NULL CHECK(parallelism>0 AND subtask_index<parallelism),
+  status TEXT NOT NULL CHECK(status IN ('applied','duplicate','stale','conflict')),
+  current_version BIGINT NOT NULL CHECK(current_version>=0),
+  error TEXT NOT NULL DEFAULT '',
+  payload JSONB NOT NULL,
+  acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY(event_id,subtask_index)
+);
+CREATE INDEX IF NOT EXISTS idx_rule_update_applied_acks_status
+  ON rule_update_applied_acks(event_id,status,subtask_index);
+CREATE INDEX IF NOT EXISTS idx_rule_update_applied_acks_rule
+  ON rule_update_applied_acks(tenant_id,rule_id,rule_version,acknowledged_at DESC);
+INSERT INTO alignment_schema_migrations(version,description)
+VALUES ('202608141500','M04 per-subtask rule update application receipts and exact parallelism aggregation')
+ON CONFLICT(version) DO NOTHING;
+-- END GENERATED T1-M04 RULE APPLICATION RECEIPTS V1
+
+-- BEGIN GENERATED T1-M04 RULE VERSION ROLLBACK V1
+ALTER TABLE rule_versions
+  ADD COLUMN IF NOT EXISTS checksum TEXT,
+  ADD COLUMN IF NOT EXISTS change_log TEXT NOT NULL DEFAULT '';
+UPDATE rule_versions
+SET checksum=md5(substr(content_uri,length('inline:')+1))
+WHERE checksum IS NULL
+  AND content_uri LIKE 'inline:%'
+  AND length(content_uri)>length('inline:');
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rule_versions_rule_id_version
+  ON rule_versions(rule_id,version);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid='rule_versions'::regclass
+      AND conname='rule_versions_checksum_format_check'
+  ) THEN
+    ALTER TABLE rule_versions ADD CONSTRAINT rule_versions_checksum_format_check
+      CHECK (
+        checksum IS NULL OR
+        checksum ~ '^[0-9a-f]{32}$' OR
+        checksum ~ '^sha256:[0-9a-f]{64}$'
+      ) NOT VALID;
+  END IF;
+END $$;
+INSERT INTO alignment_schema_migrations(version,description)
+VALUES ('202608141530','M04 checksum-verified monotonic rule version rollback')
+ON CONFLICT(version) DO NOTHING;
+-- END GENERATED T1-M04 RULE VERSION ROLLBACK V1
+
 COMMIT;
 -- END GENERATED F-ALERT-004 ASSIGNMENT COMPENSATION V1
+
+-- BEGIN GENERATED T1-M09 ALERT EVIDENCE LINKS V1
+-- T1-M09-N012 / P026-P028
+-- Additive alert/evidence relationship authority.  Evidence object identity is
+-- copied from the immutable manifest and cannot be rewritten by a later link.
+-- Rollback is flag-only: stop intake/dispatch and retain relation, command,
+-- history, audit and outbox facts.  No evidence object is deleted here.
+
+BEGIN;
+SET LOCAL lock_timeout='5s';
+SET LOCAL statement_timeout='2min';
+
+CREATE TABLE IF NOT EXISTS alert_evidence_links (
+  relation_id       UUID PRIMARY KEY,
+  tenant_id         TEXT NOT NULL CHECK (tenant_id<>''),
+  alert_id          TEXT NOT NULL CHECK (alert_id<>''),
+  evidence_id       TEXT NOT NULL CHECK (evidence_id<>''),
+  evidence_type     TEXT NOT NULL CHECK (evidence_type<>''),
+  source_store      TEXT NOT NULL CHECK (source_store IN ('postgresql','clickhouse','opensearch','minio','arkime')),
+  object_bucket     TEXT NOT NULL DEFAULT '',
+  object_key        TEXT NOT NULL DEFAULT '',
+  object_version    TEXT NOT NULL DEFAULT '',
+  object_sha256     TEXT NOT NULL DEFAULT '',
+  size_bytes        BIGINT NOT NULL DEFAULT 0 CHECK (size_bytes>=0),
+  content_type      TEXT NOT NULL DEFAULT '',
+  status            TEXT NOT NULL CHECK (status IN ('linked','unlinked')),
+  revision          BIGINT NOT NULL CHECK (revision>0),
+  last_event_id     UUID NOT NULL,
+  reason            TEXT NOT NULL CHECK (char_length(reason) BETWEEN 4 AND 1000),
+  created_by        TEXT NOT NULL DEFAULT '',
+  updated_by        TEXT NOT NULL DEFAULT '',
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id,alert_id,evidence_id),
+  FOREIGN KEY (tenant_id,alert_id,evidence_id)
+    REFERENCES alert_evidence_manifests(tenant_id,alert_id,evidence_id) ON DELETE RESTRICT,
+  CHECK (source_store<>'minio' OR (
+    object_bucket<>'' AND object_key LIKE ('tenants/'||tenant_id||'/%') AND
+    object_key NOT LIKE '%..%' AND object_version<>'' AND object_sha256 ~ '^[0-9a-f]{64}$'
+  ))
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_evidence_links_active
+  ON alert_evidence_links(tenant_id,alert_id,updated_at DESC,evidence_id)
+  WHERE status='linked';
+
+CREATE TABLE IF NOT EXISTS alert_evidence_link_history (
+  event_id           UUID PRIMARY KEY,
+  relation_id        UUID NOT NULL REFERENCES alert_evidence_links(relation_id) ON DELETE RESTRICT,
+  tenant_id          TEXT NOT NULL,
+  alert_id           TEXT NOT NULL,
+  evidence_id        TEXT NOT NULL,
+  event_type         TEXT NOT NULL CHECK (event_type IN ('linked','unlinked')),
+  relation_revision  BIGINT NOT NULL CHECK (relation_revision>0),
+  source_store       TEXT NOT NULL,
+  object_bucket      TEXT NOT NULL DEFAULT '',
+  object_key         TEXT NOT NULL DEFAULT '',
+  object_version     TEXT NOT NULL DEFAULT '',
+  object_sha256      TEXT NOT NULL DEFAULT '',
+  request_sha256     TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+  payload            JSONB NOT NULL CHECK (jsonb_typeof(payload)='object'),
+  reason             TEXT NOT NULL,
+  created_by         TEXT NOT NULL DEFAULT '',
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (relation_id,relation_revision)
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_evidence_link_history_lookup
+  ON alert_evidence_link_history(tenant_id,alert_id,evidence_id,relation_revision DESC);
+
+CREATE TABLE IF NOT EXISTS alert_evidence_link_commands (
+  command_id          UUID PRIMARY KEY,
+  tenant_id           TEXT NOT NULL,
+  relation_id         UUID NOT NULL REFERENCES alert_evidence_links(relation_id) ON DELETE RESTRICT,
+  alert_id            TEXT NOT NULL,
+  evidence_id         TEXT NOT NULL,
+  operation           TEXT NOT NULL CHECK (operation IN ('link','unlink')),
+  idempotency_key     TEXT NOT NULL CHECK (char_length(idempotency_key) BETWEEN 16 AND 200),
+  request_sha256      TEXT NOT NULL CHECK (request_sha256 ~ '^[0-9a-f]{64}$'),
+  expected_revision   BIGINT NOT NULL CHECK (expected_revision>=0),
+  relation_revision   BIGINT NOT NULL CHECK (relation_revision>0),
+  result              JSONB NOT NULL CHECK (jsonb_typeof(result)='object'),
+  created_by          TEXT NOT NULL DEFAULT '',
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id,idempotency_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_evidence_link_commands_relation
+  ON alert_evidence_link_commands(tenant_id,relation_id,created_at DESC);
+
+CREATE TABLE IF NOT EXISTS alert_evidence_link_outbox (
+  event_id             UUID PRIMARY KEY REFERENCES alert_evidence_link_history(event_id) ON DELETE RESTRICT,
+  tenant_id            TEXT NOT NULL,
+  aggregate_id         UUID NOT NULL REFERENCES alert_evidence_links(relation_id) ON DELETE RESTRICT,
+  aggregate_version    BIGINT NOT NULL CHECK (aggregate_version>0),
+  event_type           TEXT NOT NULL CHECK (event_type IN ('traffic.alert-evidence.v1.Linked','traffic.alert-evidence.v1.Unlinked')),
+  schema_version       INTEGER NOT NULL DEFAULT 1 CHECK (schema_version=1),
+  partition_key        TEXT NOT NULL CHECK (partition_key<>''),
+  payload              JSONB NOT NULL CHECK (jsonb_typeof(payload)='object'),
+  status               TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','published','dead')),
+  attempts             INTEGER NOT NULL DEFAULT 0 CHECK (attempts>=0),
+  next_attempt_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_attempt_at      TIMESTAMPTZ,
+  locked_until         TIMESTAMPTZ,
+  locked_by            TEXT NOT NULL DEFAULT '',
+  last_error           TEXT NOT NULL DEFAULT '',
+  broker_partition     INTEGER,
+  broker_offset        BIGINT,
+  broker_acknowledged_at TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  published_at         TIMESTAMPTZ,
+  dead_at              TIMESTAMPTZ,
+  UNIQUE (aggregate_id,aggregate_version),
+  CHECK ((status='published' AND published_at IS NOT NULL AND broker_partition IS NOT NULL AND broker_offset IS NOT NULL AND broker_acknowledged_at IS NOT NULL)
+      OR status<>'published')
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_evidence_link_outbox_delivery
+  ON alert_evidence_link_outbox(next_attempt_at,created_at,event_id)
+  WHERE status IN ('pending','processing');
+
+CREATE TABLE IF NOT EXISTS alert_evidence_link_projection_inbox (
+  event_id              UUID PRIMARY KEY,
+  tenant_id             TEXT NOT NULL,
+  aggregate_id          UUID NOT NULL,
+  aggregate_version     BIGINT NOT NULL CHECK (aggregate_version>0),
+  event_type            TEXT NOT NULL,
+  partition_key         TEXT NOT NULL,
+  payload_sha256        TEXT NOT NULL CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'),
+  payload               JSONB NOT NULL CHECK (jsonb_typeof(payload)='object'),
+  first_kafka_topic     TEXT NOT NULL,
+  first_kafka_partition INTEGER NOT NULL,
+  first_kafka_offset    BIGINT NOT NULL,
+  projection_status     TEXT NOT NULL DEFAULT 'pending' CHECK (projection_status IN ('pending','projected')),
+  projection_attempts   INTEGER NOT NULL DEFAULT 0 CHECK (projection_attempts>=0),
+  last_error            TEXT NOT NULL DEFAULT '',
+  received_at           TIMESTAMPTZ NOT NULL,
+  projected_at          TIMESTAMPTZ,
+  UNIQUE (tenant_id,aggregate_id,aggregate_version)
+);
+
+CREATE TABLE IF NOT EXISTS alert_evidence_link_projection_deliveries (
+  kafka_topic      TEXT NOT NULL,
+  kafka_partition  INTEGER NOT NULL,
+  kafka_offset     BIGINT NOT NULL,
+  event_id         UUID NOT NULL REFERENCES alert_evidence_link_projection_inbox(event_id) ON DELETE RESTRICT,
+  received_at      TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (kafka_topic,kafka_partition,kafka_offset)
+);
+
+CREATE TABLE IF NOT EXISTS alert_evidence_link_projection_watermarks (
+  kafka_topic      TEXT NOT NULL,
+  kafka_partition  INTEGER NOT NULL,
+  last_offset      BIGINT NOT NULL,
+  last_event_id    UUID NOT NULL,
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (kafka_topic,kafka_partition)
+);
+
+CREATE OR REPLACE FUNCTION enforce_alert_evidence_link_identity()
+RETURNS trigger LANGUAGE plpgsql AS $body$
+BEGIN
+  IF TG_OP='UPDATE' THEN
+    IF NEW.revision<=OLD.revision THEN
+      RAISE EXCEPTION 'alert evidence link revision must increase';
+    END IF;
+    IF (NEW.relation_id,NEW.tenant_id,NEW.alert_id,NEW.evidence_id,NEW.evidence_type,
+        NEW.source_store,NEW.object_bucket,NEW.object_key,NEW.object_version,
+        NEW.object_sha256,NEW.size_bytes,NEW.content_type,NEW.created_by,NEW.created_at)
+       IS DISTINCT FROM
+       (OLD.relation_id,OLD.tenant_id,OLD.alert_id,OLD.evidence_id,OLD.evidence_type,
+        OLD.source_store,OLD.object_bucket,OLD.object_key,OLD.object_version,
+        OLD.object_sha256,OLD.size_bytes,OLD.content_type,OLD.created_by,OLD.created_at) THEN
+      RAISE EXCEPTION 'immutable alert evidence link identity or object reference changed';
+    END IF;
+    NEW.updated_at=now();
+  END IF;
+  RETURN NEW;
+END
+$body$;
+
+DROP TRIGGER IF EXISTS trg_alert_evidence_link_identity ON alert_evidence_links;
+CREATE TRIGGER trg_alert_evidence_link_identity
+BEFORE UPDATE ON alert_evidence_links
+FOR EACH ROW EXECUTE FUNCTION enforce_alert_evidence_link_identity();
+
+CREATE TABLE IF NOT EXISTS alignment_schema_migrations (
+  version TEXT PRIMARY KEY,
+  description TEXT NOT NULL,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  applied_by TEXT NOT NULL DEFAULT current_user
+);
+INSERT INTO alignment_schema_migrations(version,description)
+VALUES ('202608160030','M09 alert evidence link command history outbox v1')
+ON CONFLICT (version) DO NOTHING;
+
+COMMIT;
+-- END GENERATED T1-M09 ALERT EVIDENCE LINKS V1
+
+-- BEGIN GENERATED T1-M09 WHITELIST CONSUMER READINESS V2
+-- F-WHITELIST-001 / T1-M09-N018
+-- Consumer-first admission receipt for whitelist.events.v2. This migration is
+-- expand-only and does not enable the producer, matcher or any network action.
+
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS whitelist_consumer_readiness_receipt (
+  consumer_group    TEXT NOT NULL,
+  candidate_sha256  CHAR(64) NOT NULL CHECK (candidate_sha256 ~ '^[0-9a-f]{64}$'),
+  contract_sha256   CHAR(64) NOT NULL CHECK (contract_sha256 ~ '^[0-9a-f]{64}$'),
+  kafka_topic       TEXT NOT NULL CHECK (kafka_topic='whitelist.events.v2'),
+  state             TEXT NOT NULL CHECK (state IN ('READY','STOPPED')),
+  event_id          UUID,
+  kafka_partition   INTEGER CHECK (kafka_partition IS NULL OR kafka_partition >= 0),
+  kafka_offset      BIGINT CHECK (kafka_offset IS NULL OR kafka_offset >= 0),
+  observed_at       TIMESTAMPTZ NOT NULL,
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (consumer_group,candidate_sha256),
+  UNIQUE (kafka_topic,consumer_group,candidate_sha256),
+  CHECK ((state='READY' AND event_id IS NOT NULL AND kafka_partition IS NOT NULL AND kafka_offset IS NOT NULL)
+      OR (state='STOPPED' AND event_id IS NULL AND kafka_partition IS NULL AND kafka_offset IS NULL))
+);
+
+CREATE INDEX IF NOT EXISTS idx_whitelist_consumer_readiness_lookup
+  ON whitelist_consumer_readiness_receipt
+  (kafka_topic,consumer_group,candidate_sha256,contract_sha256,state);
+
+INSERT INTO alignment_schema_migrations(version,description)
+VALUES ('202608161100','M09 whitelist consumer broker projection readiness receipt')
+ON CONFLICT (version) DO NOTHING;
+
+COMMIT;
+-- END GENERATED T1-M09 WHITELIST CONSUMER READINESS V2
+

@@ -134,3 +134,29 @@ func TestWorkbenchPathModesUsePersistedRelationshipSemantics(t *testing.T) {
 		})
 	}
 }
+
+func TestFilterWorkbenchGraphReportsBudgetsAndCycleTraversalTerminates(t *testing.T) {
+	nodes := []*WorkbenchNode{
+		{EntityID: "a", Metadata: map[string]interface{}{"site": "main"}},
+		{EntityID: "b", Metadata: map[string]interface{}{"site": "main"}},
+		{EntityID: "c", Metadata: map[string]interface{}{"site": "main"}},
+	}
+	edges := []*WorkbenchEdge{
+		{RelationID: "ab", SourceID: "a", TargetID: "b"},
+		{RelationID: "bc", SourceID: "b", TargetID: "c"},
+		{RelationID: "ca", SourceID: "c", TargetID: "a"},
+	}
+	graph := filterWorkbenchGraph(nodes, edges, WorkbenchFilter{CenterID: "a", Depth: 3, Site: "main", Limit: 2, EdgeLimit: 10})
+	if !graph.Truncated || graph.TruncationReason != "node_budget" || len(graph.Nodes) != 2 {
+		t.Fatalf("node budget was not explicit: %+v", graph)
+	}
+	adjacency := map[string][]workbenchPathStep{
+		"a": {{nodeID: "b", edge: edges[0]}},
+		"b": {{nodeID: "c", edge: edges[1]}},
+		"c": {{nodeID: "a", edge: edges[2]}},
+	}
+	nodeIDs, pathEdges, found := findDirectedWorkbenchSegment(adjacency, "a", "c", 6)
+	if !found || len(nodeIDs) != 3 || len(pathEdges) != 2 {
+		t.Fatalf("cycle-safe path failed: nodes=%v edges=%v found=%v", nodeIDs, pathEdges, found)
+	}
+}

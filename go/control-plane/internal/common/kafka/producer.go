@@ -3,12 +3,14 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/gzip"
 	"github.com/segmentio/kafka-go/lz4"
@@ -43,6 +45,57 @@ type Producer struct {
 
 	closedFlag int32
 }
+
+// KeyedProducer is the fail-closed producer used by streams whose ordering
+// contract is scoped by the Kafka message key. It deliberately does not use
+// ProducerConfig.IdempotentKey: that value describes an application key and
+// must never be allowed to select the broker partitioning algorithm.
+type KeyedProducer struct {
+	producer *Producer
+	send     func(context.Context, string, []byte, ...MessageHeader) error
+	mu       sync.Mutex
+	pending  map[string]chan brokerCompletion
+}
+
+const PublishAttemptHeader = "publish_attempt"
+
+type BrokerReceipt struct {
+	AttemptID      string
+	Topic          string
+	Partition      int
+	Offset         int64
+	Key            string
+	AcknowledgedAt time.Time
+}
+
+type PublishOutcomeUnknownError struct {
+	Receipt BrokerReceipt
+	Cause   error
+}
+
+func (err *PublishOutcomeUnknownError) Error() string {
+	if err == nil {
+		return "Kafka publish outcome is unknown"
+	}
+	return fmt.Sprintf("Kafka publish outcome is unknown for attempt %s: %v", err.Receipt.AttemptID, err.Cause)
+}
+
+func (err *PublishOutcomeUnknownError) Unwrap() error {
+	if err == nil {
+		return nil
+	}
+	return err.Cause
+}
+
+type brokerCompletion struct {
+	receipt BrokerReceipt
+	err     error
+}
+
+var (
+	ErrEmptyKafkaMessageKey = errors.New("keyed kafka producer requires a nonempty message key")
+	ErrWeakKeyedProducer    = errors.New("keyed kafka producer requires synchronous acks=all")
+)
 
 type ProducerMetrics struct {
 	MessagesSent  int64
@@ -80,6 +133,42 @@ func (m *ProducerMetrics) GetLastError() string {
 }
 
 func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
+	// Preserve the existing generic producer policy for compatibility. Streams
+	// that require per-key ordering must use NewKeyedProducer instead.
+	var balancer kafka.Balancer = &kafka.Hash{}
+	if cfg.IdempotentKey == "" {
+		balancer = &kafka.RoundRobin{}
+	}
+	return newProducer(cfg, logger, balancer)
+}
+
+// NewKeyedProducer constructs a producer with a stable FNV-1a Hash balancer.
+// Weak durability settings fail before a writer is created, and the selected
+// balancer is independent of IdempotentKey or any other descriptive config.
+func NewKeyedProducer(cfg ProducerConfig, logger *zap.Logger) (*KeyedProducer, error) {
+	if cfg.Async || strings.ToLower(strings.TrimSpace(cfg.RequiredAcks)) != "all" {
+		return nil, fmt.Errorf(
+			"%w: required_acks=%q async=%t",
+			ErrWeakKeyedProducer,
+			cfg.RequiredAcks,
+			cfg.Async,
+		)
+	}
+
+	producer, err := newProducer(cfg, logger, &kafka.Hash{})
+	if err != nil {
+		return nil, err
+	}
+	keyed := &KeyedProducer{
+		producer: producer,
+		pending:  make(map[string]chan brokerCompletion),
+	}
+	keyed.send = producer.Send
+	producer.writer.Completion = keyed.complete
+	return keyed, nil
+}
+
+func newProducer(cfg ProducerConfig, logger *zap.Logger, balancer kafka.Balancer) (*Producer, error) {
 	if len(cfg.Brokers) == 0 {
 		return nil, fmt.Errorf("kafka brokers not configured")
 	}
@@ -99,11 +188,11 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		requiredAcks = kafka.RequireAll
 	}
 
-	// 选择平衡器: 指定 key → Hash; 否则 RoundRobin
-	var balancer kafka.Balancer = &kafka.Hash{}
-	if cfg.IdempotentKey == "" {
-		// 无幂等key时使用RoundRobin获得更好的负载均衡
-		balancer = &kafka.RoundRobin{}
+	if balancer == nil {
+		return nil, fmt.Errorf("kafka balancer not configured")
+	}
+	if logger == nil {
+		logger = zap.NewNop()
 	}
 
 	dialer, err := cfg.Security.Dialer("traffic-control-plane-producer")
@@ -122,8 +211,6 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		RequiredAcks:     int(requiredAcks),
 		CompressionCodec: compression,
 		Async:            cfg.Async,
-		// 启用幂等写: 设置 transactional ID (非事务模式下为空字符串)
-		// 当 RequiredAcks=all 且 MaxAttempts>0 时，Kafka broker 自动提供幂等保证
 		ErrorLogger: kafka.LoggerFunc(func(msg string, args ...interface{}) {
 			logger.Error(fmt.Sprintf(msg, args...))
 		}),
@@ -136,6 +223,151 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		metrics:    &ProducerMetrics{},
 		closedFlag: 0,
 	}, nil
+}
+
+func (p *KeyedProducer) Send(
+	ctx context.Context,
+	key string,
+	value []byte,
+	headers ...MessageHeader,
+) (BrokerReceipt, error) {
+	if p == nil || p.producer == nil {
+		return BrokerReceipt{}, fmt.Errorf("keyed kafka producer is unavailable")
+	}
+	if strings.TrimSpace(key) == "" {
+		return BrokerReceipt{}, ErrEmptyKafkaMessageKey
+	}
+	attemptID, err := publishAttemptID(headers)
+	if err != nil {
+		return BrokerReceipt{}, err
+	}
+	if attemptID == "" {
+		attemptID = uuid.NewString()
+		headers = append(headers, MessageHeader{Key: PublishAttemptHeader, Value: attemptID})
+	}
+	receipt := BrokerReceipt{
+		AttemptID: attemptID,
+		Topic:     p.producer.Topic(),
+		Partition: -1,
+		Offset:    -1,
+		Key:       key,
+	}
+	completionChannel := make(chan brokerCompletion, 1)
+	p.mu.Lock()
+	if p.pending == nil {
+		p.pending = make(map[string]chan brokerCompletion)
+	}
+	if _, exists := p.pending[attemptID]; exists {
+		p.mu.Unlock()
+		return receipt, fmt.Errorf("duplicate in-flight Kafka publish_attempt %s", attemptID)
+	}
+	p.pending[attemptID] = completionChannel
+	p.mu.Unlock()
+	defer func() {
+		p.mu.Lock()
+		delete(p.pending, attemptID)
+		p.mu.Unlock()
+	}()
+
+	send := p.send
+	if send == nil {
+		send = p.producer.Send
+	}
+	sendErr := send(ctx, key, value, headers...)
+	select {
+	case completion := <-completionChannel:
+		if completion.err != nil {
+			return receipt, fmt.Errorf("Kafka publish attempt %s failed: %w", attemptID, completion.err)
+		}
+		if completion.receipt.AttemptID != attemptID || completion.receipt.Key != key ||
+			completion.receipt.Topic != p.producer.Topic() || completion.receipt.Partition < 0 ||
+			completion.receipt.Offset < 0 {
+			return receipt, &PublishOutcomeUnknownError{
+				Receipt: receipt,
+				Cause:   fmt.Errorf("broker completion identity is incomplete or mismatched"),
+			}
+		}
+		return completion.receipt, nil
+	default:
+		if sendErr == nil {
+			sendErr = fmt.Errorf("synchronous writer returned without an exact broker completion")
+		}
+		return receipt, &PublishOutcomeUnknownError{Receipt: receipt, Cause: sendErr}
+	}
+}
+
+func (p *KeyedProducer) complete(messages []kafka.Message, completionErr error) {
+	for _, message := range messages {
+		attemptID := kafkaMessageHeader(message.Headers, PublishAttemptHeader)
+		if attemptID == "" {
+			continue
+		}
+		topic := message.Topic
+		if topic == "" && p != nil && p.producer != nil {
+			topic = p.producer.Topic()
+		}
+		completion := brokerCompletion{
+			receipt: BrokerReceipt{
+				AttemptID:      attemptID,
+				Topic:          topic,
+				Partition:      message.Partition,
+				Offset:         message.Offset,
+				Key:            string(message.Key),
+				AcknowledgedAt: time.Now().UTC(),
+			},
+			err: completionErr,
+		}
+		p.mu.Lock()
+		channel := p.pending[attemptID]
+		p.mu.Unlock()
+		if channel != nil {
+			select {
+			case channel <- completion:
+			default:
+			}
+		}
+	}
+}
+
+func publishAttemptID(headers []MessageHeader) (string, error) {
+	var attemptID string
+	for _, header := range headers {
+		if !strings.EqualFold(strings.TrimSpace(header.Key), PublishAttemptHeader) {
+			continue
+		}
+		value := strings.TrimSpace(header.Value)
+		if attemptID != "" {
+			return "", fmt.Errorf("duplicate %s header", PublishAttemptHeader)
+		}
+		if _, err := uuid.Parse(value); err != nil {
+			return "", fmt.Errorf("invalid %s header", PublishAttemptHeader)
+		}
+		attemptID = value
+	}
+	return attemptID, nil
+}
+
+func kafkaMessageHeader(headers []kafka.Header, key string) string {
+	for _, header := range headers {
+		if strings.EqualFold(strings.TrimSpace(header.Key), key) {
+			return string(header.Value)
+		}
+	}
+	return ""
+}
+
+func (p *KeyedProducer) Topic() string {
+	if p == nil || p.producer == nil {
+		return ""
+	}
+	return p.producer.Topic()
+}
+
+func (p *KeyedProducer) Close() error {
+	if p == nil || p.producer == nil {
+		return nil
+	}
+	return p.producer.Close()
 }
 
 func getCompression(name string) kafka.CompressionCodec {

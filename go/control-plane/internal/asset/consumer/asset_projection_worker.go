@@ -16,6 +16,7 @@ import (
 const (
 	assetProjectionOpenSearch = "opensearch"
 	assetProjectionNebula     = "nebulagraph"
+	assetProjectionClickHouse = "clickhouse"
 )
 
 // AssetProjectionTarget renders a deterministic target document and applies it
@@ -50,6 +51,13 @@ type leasedAssetProjection struct {
 	PayloadSHA256    string
 	OSStatus         string
 	NebulaStatus     string
+	CHStatus         string
+	KafkaTopic       string
+	KafkaPartition   int
+	KafkaOffset      int64
+	KafkaTimestampMS int64
+	RawPayload       []byte
+	SourceSHA256     string
 	AttemptCount     int
 }
 
@@ -82,7 +90,8 @@ func NewAssetProjectionWorker(
 			return nil, fmt.Errorf("asset projection target is nil")
 		}
 		name := target.Name()
-		if name != assetProjectionOpenSearch && name != assetProjectionNebula {
+		if name != assetProjectionOpenSearch && name != assetProjectionNebula &&
+			name != assetProjectionClickHouse {
 			return nil, fmt.Errorf("unsupported asset projection target %q", name)
 		}
 		if _, exists := targetMap[name]; exists {
@@ -90,8 +99,11 @@ func NewAssetProjectionWorker(
 		}
 		targetMap[name] = target
 	}
-	if len(targetMap) != 2 {
+	if targetMap[assetProjectionOpenSearch] == nil || targetMap[assetProjectionNebula] == nil {
 		return nil, fmt.Errorf("asset projection requires opensearch and nebulagraph targets")
+	}
+	if len(targetMap) < 2 || len(targetMap) > 3 {
+		return nil, fmt.Errorf("asset projection supports two or three durable targets")
 	}
 	return &AssetProjectionWorker{db: db, targets: targetMap, cfg: cfg}, nil
 }
@@ -110,7 +122,8 @@ func (w *AssetProjectionWorker) VerifySchema(ctx context.Context) error {
 		      'partition_key','trace_id','payload','payload_sha256','kafka_partition',
 		      'kafka_offset','os_status','nebula_status','status','attempt_count',
 		      'available_at','locked_by','locked_until','last_error','created_at',
-		      'updated_at','applied_at'
+		      'updated_at','applied_at','kafka_topic','kafka_timestamp_ms',
+		      'raw_payload','source_sha256','ch_status'
 		    ))
 		    OR
 		    (table_name='asset_projection_watermarks' AND column_name IN (
@@ -121,9 +134,9 @@ func (w *AssetProjectionWorker) VerifySchema(ctx context.Context) error {
 	).Scan(&inboxColumns, &watermarkColumns); err != nil {
 		return fmt.Errorf("verify asset projection schema: %w", err)
 	}
-	if inboxColumns != 22 || watermarkColumns != 7 {
+	if inboxColumns != 27 || watermarkColumns != 7 {
 		return fmt.Errorf(
-			"asset projection schema incomplete: inbox_columns=%d/22 watermark_columns=%d/7",
+			"asset projection schema incomplete: inbox_columns=%d/27 watermark_columns=%d/7",
 			inboxColumns,
 			watermarkColumns,
 		)
@@ -178,6 +191,21 @@ func (w *AssetProjectionWorker) ProjectNext(ctx context.Context) (bool, error) {
 			}
 		}
 	}
+	if row.CHStatus == "pending" {
+		target := w.targets[assetProjectionClickHouse]
+		if target == nil {
+			missing := fmt.Errorf("clickhouse target is required for pending inbox row")
+			attemptErrors = append(attemptErrors, missing)
+			if recordErr := w.recordTargetFailure(ctx, row, assetProjectionClickHouse, missing); recordErr != nil {
+				attemptErrors = append(attemptErrors, recordErr)
+			}
+		} else if err := w.applyTarget(ctx, row, target); err != nil {
+			attemptErrors = append(attemptErrors, fmt.Errorf("clickhouse: %w", err))
+			if recordErr := w.recordTargetFailure(ctx, row, assetProjectionClickHouse, err); recordErr != nil {
+				attemptErrors = append(attemptErrors, recordErr)
+			}
+		}
+	}
 
 	if err := w.finishAttempt(ctx, row, attemptErrors); err != nil {
 		attemptErrors = append(attemptErrors, err)
@@ -199,7 +227,8 @@ func (w *AssetProjectionWorker) leaseNext(ctx context.Context) (leasedAssetProje
 		      (current.status='pending' AND current.available_at<=now())
 		      OR (current.status='processing' AND current.locked_until<now())
 		    )
-		    AND (current.os_status='pending' OR current.nebula_status='pending')
+		    AND (current.os_status='pending' OR current.nebula_status='pending'
+		         OR current.ch_status='pending')
 		    AND NOT EXISTS (
 		      SELECT 1
 		      FROM asset_projection_inbox prior
@@ -222,11 +251,15 @@ func (w *AssetProjectionWorker) leaseNext(ctx context.Context) (leasedAssetProje
 		WHERE inbox.event_id=candidate.event_id
 		RETURNING inbox.event_id::text,inbox.tenant_id,inbox.asset_id::text,
 		          inbox.aggregate_version,inbox.payload::text,inbox.payload_sha256,inbox.os_status,
-		          inbox.nebula_status,inbox.attempt_count`,
+		          inbox.nebula_status,inbox.ch_status,inbox.kafka_topic,inbox.kafka_partition,
+		          inbox.kafka_offset,inbox.kafka_timestamp_ms,inbox.raw_payload,inbox.source_sha256,
+		          inbox.attempt_count`,
 		w.cfg.WorkerID, leaseSeconds,
 	).Scan(
 		&row.EventID, &row.TenantID, &row.AssetID, &row.AggregateVersion,
-		&row.Payload, &row.PayloadSHA256, &row.OSStatus, &row.NebulaStatus, &row.AttemptCount,
+		&row.Payload, &row.PayloadSHA256, &row.OSStatus, &row.NebulaStatus, &row.CHStatus,
+		&row.KafkaTopic, &row.KafkaPartition, &row.KafkaOffset, &row.KafkaTimestampMS,
+		&row.RawPayload, &row.SourceSHA256, &row.AttemptCount,
 	)
 	if err == sql.ErrNoRows {
 		return leasedAssetProjection{}, false, nil
@@ -263,6 +296,12 @@ func (w *AssetProjectionWorker) applyTarget(
 		event.AggregateVersion != row.AggregateVersion {
 		return fmt.Errorf("durable payload does not match inbox identity")
 	}
+	event.SourceTopic = row.KafkaTopic
+	event.SourcePartition = row.KafkaPartition
+	event.SourceOffset = row.KafkaOffset
+	event.SourceTimestamp = row.KafkaTimestampMS
+	event.SourceSHA256 = row.SourceSHA256
+	event.RawPayload = append([]byte(nil), row.RawPayload...)
 	projection, err := target.Projection(event)
 	if err != nil {
 		return fmt.Errorf("render projection: %w", err)
@@ -448,16 +487,18 @@ func (w *AssetProjectionWorker) finishAttempt(
 	result, err := w.db.ExecContext(ctx, `
 		UPDATE asset_projection_inbox
 		SET status=CASE
-		      WHEN os_status='applied' AND nebula_status='applied' THEN 'applied'
-		      WHEN os_status='dead' OR nebula_status='dead' THEN 'dead'
+		      WHEN os_status='applied' AND nebula_status='applied'
+		           AND ch_status IN ('disabled','applied') THEN 'applied'
+		      WHEN os_status='dead' OR nebula_status='dead' OR ch_status='dead' THEN 'dead'
 		      ELSE 'pending'
 		    END,
 		    applied_at=CASE
-		      WHEN os_status='applied' AND nebula_status='applied' THEN now()
+		      WHEN os_status='applied' AND nebula_status='applied'
+		           AND ch_status IN ('disabled','applied') THEN now()
 		      ELSE applied_at
 		    END,
 		    available_at=CASE
-		      WHEN os_status='pending' OR nebula_status='pending'
+		      WHEN os_status='pending' OR nebula_status='pending' OR ch_status='pending'
 		        THEN now()+($3*interval '1 second')
 		      ELSE available_at
 		    END,
@@ -484,6 +525,8 @@ func targetStatusColumn(target string) (string, error) {
 		return "os_status", nil
 	case assetProjectionNebula:
 		return "nebula_status", nil
+	case assetProjectionClickHouse:
+		return "ch_status", nil
 	default:
 		return "", fmt.Errorf("unsupported projection target %q", target)
 	}

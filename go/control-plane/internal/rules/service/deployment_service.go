@@ -38,25 +38,31 @@ import (
 
 // DeploymentServiceConfig 部署服务配置
 type DeploymentServiceConfig struct {
-	MaxActiveDeploymentsPerTenant int           `env:"MAX_ACTIVE_DEPLOYMENTS_PER_TENANT" envDefault:"10"`
-	GrayTimeout                   time.Duration `env:"GRAY_DEPLOYMENT_TIMEOUT" envDefault:"24h"`
-	RequireRollbackReason         bool          `env:"DEPLOYMENT_REQUIRE_ROLLBACK_REASON" envDefault:"true"`
-	EnableAutoRollback            bool          `env:"DEPLOYMENT_ENABLE_AUTO_ROLLBACK" envDefault:"true"`
-	AutoRollbackThreshold         float64       `env:"DEPLOYMENT_AUTO_ROLLBACK_THRESHOLD" envDefault:"0.05"`
-	EnableGrayValidation          bool          `env:"DEPLOYMENT_ENABLE_GRAY_VALIDATION" envDefault:"true"`
-	MaxGrayDuration               time.Duration `env:"DEPLOYMENT_MAX_GRAY_DURATION" envDefault:"24h"`
+	MaxActiveDeploymentsPerTenant   int           `env:"MAX_ACTIVE_DEPLOYMENTS_PER_TENANT" envDefault:"10"`
+	GrayTimeout                     time.Duration `env:"GRAY_DEPLOYMENT_TIMEOUT" envDefault:"24h"`
+	RequireRollbackReason           bool          `env:"DEPLOYMENT_REQUIRE_ROLLBACK_REASON" envDefault:"true"`
+	EnableAutoRollback              bool          `env:"DEPLOYMENT_ENABLE_AUTO_ROLLBACK" envDefault:"true"`
+	AutoRollbackThreshold           float64       `env:"DEPLOYMENT_AUTO_ROLLBACK_THRESHOLD" envDefault:"0.05"`
+	EnableGrayValidation            bool          `env:"DEPLOYMENT_ENABLE_GRAY_VALIDATION" envDefault:"true"`
+	EnableRuntimeAckGate            bool          `env:"DEPLOYMENT_RUNTIME_ACK_GATE_V1_ENABLED" envDefault:"false"`
+	RuleAppliedExpectedParallelism  int           `env:"RULE_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
+	ModelAppliedExpectedParallelism int           `env:"MODEL_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
+	MaxGrayDuration                 time.Duration `env:"DEPLOYMENT_MAX_GRAY_DURATION" envDefault:"24h"`
 }
 
 // DefaultDeploymentServiceConfig 默认配置
 func DefaultDeploymentServiceConfig() DeploymentServiceConfig {
 	return DeploymentServiceConfig{
-		MaxActiveDeploymentsPerTenant: 10,
-		GrayTimeout:                   24 * time.Hour,
-		RequireRollbackReason:         true,
-		EnableAutoRollback:            true,
-		AutoRollbackThreshold:         0.05,
-		EnableGrayValidation:          true,
-		MaxGrayDuration:               24 * time.Hour,
+		MaxActiveDeploymentsPerTenant:   10,
+		GrayTimeout:                     24 * time.Hour,
+		RequireRollbackReason:           true,
+		EnableAutoRollback:              true,
+		AutoRollbackThreshold:           0.05,
+		EnableGrayValidation:            true,
+		EnableRuntimeAckGate:            false,
+		RuleAppliedExpectedParallelism:  4,
+		ModelAppliedExpectedParallelism: 4,
+		MaxGrayDuration:                 24 * time.Hour,
 	}
 }
 
@@ -923,6 +929,13 @@ func (s *DeploymentService) StartGrayDeployment(ctx context.Context, deploymentI
 		"execution_configuration": approvedConfiguration,
 	}
 	if err := s.commitDeploymentTransition(ctx, deployment, opCtx, audit.EventTypeDeployGray, "gray_started", "deploy", detail, func(tx *sql.Tx) error {
+		runtimeGate, err := s.verifyApprovedDeploymentRuntimeGate(
+			ctx, tx, deployment, approvedConfiguration, false,
+		)
+		if err != nil {
+			return err
+		}
+		detail["runtime_gate"] = runtimeGate
 		if err := lockDeploymentCapacityTx(ctx, tx, deployment.TenantID); err != nil {
 			return err
 		}
@@ -995,6 +1008,11 @@ func (s *DeploymentService) ActivateDeployment(ctx context.Context, deploymentID
 		s.recordAuditFailure(ctx, opCtx, audit.EventTypeDeployActivate, "deployment", deploymentID, err.Error())
 		return err
 	}
+	if s.config.EnableRuntimeAckGate && model.DeploymentStatus(deployment.Status) == model.DeploymentStatusPlanned {
+		err := errors.New(errors.ErrCodeInvalidStateTransition, "runtime ACK gated deployment must pass through gray observation before full activation")
+		s.recordAuditFailure(ctx, opCtx, audit.EventTypeDeployActivate, "deployment", deploymentID, err.Error())
+		return err
+	}
 	executionConfigurationJSON, err := json.Marshal(approvedConfiguration)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to encode approved activation configuration")
@@ -1033,6 +1051,12 @@ func (s *DeploymentService) ActivateDeployment(ctx context.Context, deploymentID
 		return err
 	}
 	lockedApprovedConfiguration, err := approvedDeploymentConfiguration(lockedDeployment, "deploy")
+	if err != nil {
+		return err
+	}
+	runtimeGate, err := s.verifyApprovedDeploymentRuntimeGate(
+		ctx, tx, lockedDeployment, lockedApprovedConfiguration, true,
+	)
 	if err != nil {
 		return err
 	}
@@ -1098,6 +1122,7 @@ func (s *DeploymentService) ActivateDeployment(ctx context.Context, deploymentID
 		"new_status":              string(model.DeploymentStatusActive),
 		"release_line":            releaseLine,
 		"execution_configuration": approvedConfiguration,
+		"runtime_gate":            runtimeGate,
 	}
 	if err := insertDeploymentHistoryTx(ctx, tx, deployment.DeploymentID, deployment.Status, opCtx.UserID, "activated", detail); err != nil {
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to persist activation history")
@@ -1332,11 +1357,18 @@ func (s *DeploymentService) GetDeploymentWorkbench(ctx context.Context, deployme
 	if len(rollbackCandidates) > 0 {
 		grouped["rollback_versions"] = rollbackCandidates
 	}
+	runtimeGate, err := s.discoverDeploymentRuntimeGate(
+		ctx, s.db, deployment, model.DeploymentStatus(deployment.Status) == model.DeploymentStatusGray,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to resolve deployment runtime ACK gate")
+	}
 	return &model.DeploymentWorkbench{
-		Deployment: deployment,
-		History:    history,
-		Items:      grouped,
-		Source:     "postgresql",
+		Deployment:  deployment,
+		History:     history,
+		Items:       grouped,
+		RuntimeGate: runtimeGate,
+		Source:      "postgresql",
 	}, nil
 }
 
@@ -1594,6 +1626,14 @@ func (s *DeploymentService) UpdateDeploymentWorkflow(ctx context.Context, deploy
 	precheckResults, _ := previous["precheck_results"].([]interface{})
 	precheckSnapshotHash := workflowString(previous, "precheck_snapshot_hash")
 	precheckCompletedAt := previous["precheck_completed_at"]
+	var runtimeGate *model.DeploymentRuntimeGate
+	if stage == "precheck" && operation == "deploy" && s.config.EnableRuntimeAckGate {
+		runtimeGate, err = s.discoverDeploymentRuntimeGate(ctx, tx, &lockedDeployment, false)
+		if err != nil {
+			return nil, err
+		}
+		configuration[deploymentRuntimeGateConfigurationKey] = runtimeGate
+	}
 	currentSnapshot := buildDeploymentApprovalSnapshot(&lockedDeployment, operation, configuration)
 	currentSnapshotHash, err := canonicalValueHash(currentSnapshot)
 	if err != nil {
@@ -1603,6 +1643,12 @@ func (s *DeploymentService) UpdateDeploymentWorkflow(ctx context.Context, deploy
 		results, status, err := s.buildDeploymentPrecheckTx(ctx, tx, &lockedDeployment, operation, configuration)
 		if err != nil {
 			return nil, err
+		}
+		if operation == "deploy" && s.config.EnableRuntimeAckGate {
+			results = append(results, deploymentRuntimeGatePrecheckResult(runtimeGate))
+			if runtimeGate == nil || !runtimeGate.Ready {
+				status = "failed"
+			}
 		}
 		precheckStatus = status
 		precheckResults = results
@@ -1974,6 +2020,7 @@ func (s *DeploymentService) ExportDeploymentEvidence(ctx context.Context, deploy
 		Deployment:  workbench.Deployment,
 		History:     workbench.History,
 		Evidence:    workbench.Items["evidence"],
+		RuntimeGate: workbench.RuntimeGate,
 		Source:      workbench.Source,
 	}
 	checksumPayload, err := json.Marshal(bundle)
@@ -2309,9 +2356,11 @@ func (s *DeploymentService) runDeploymentOutboxProcessor() {
 	ticker := time.NewTicker(deploymentOutboxProcessInterval)
 	defer ticker.Stop()
 	for {
-		if err := s.processDeploymentOutbox(context.Background()); err != nil && s.logger != nil {
+		iterCtx, iterCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		if err := s.processDeploymentOutbox(iterCtx); err != nil && s.logger != nil {
 			s.logger.Error("Failed to process deployment outbox", zap.Error(err))
 		}
+		iterCancel()
 		select {
 		case <-ticker.C:
 		case <-s.outboxStopCh:

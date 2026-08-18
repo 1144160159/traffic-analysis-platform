@@ -9,6 +9,7 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -34,12 +35,25 @@ import (
 
 // ModelServiceConfig 模型服务配置
 type ModelServiceConfig struct {
-	MaxModelsPerTenant            int  `env:"MODEL_MAX_PER_TENANT" envDefault:"50"`
-	MaxVersionsPerModel           int  `env:"MODEL_MAX_VERSIONS_PER_MODEL" envDefault:"100"`
-	AppliedAckExpectedParallelism int  `env:"MODEL_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
-	EnableModelActionOutbox       bool `env:"MODEL_ACTION_OUTBOX_V1_ENABLED" envDefault:"true"`
-	EnableKafkaNotification       bool `env:"MODEL_ENABLE_KAFKA_NOTIFICATION" envDefault:"true"`
-	AutoActivateNewVersion        bool `env:"MODEL_AUTO_ACTIVATE_NEW_VERSION" envDefault:"false"`
+	MaxModelsPerTenant            int           `env:"MODEL_MAX_PER_TENANT" envDefault:"50"`
+	MaxVersionsPerModel           int           `env:"MODEL_MAX_VERSIONS_PER_MODEL" envDefault:"100"`
+	AppliedAckExpectedParallelism int           `env:"MODEL_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
+	ModelConsumerDeploymentID     string        `env:"MODEL_CONSUMER_DEPLOYMENT_ID"`
+	ModelConsumerProfileSHA256    string        `env:"MODEL_CONSUMER_PROFILE_SHA256"`
+	ModelConsumerRuntimeContract  string        `env:"MODEL_RUNTIME_CONTRACT" envDefault:"traffic.behavior.inference.v1"`
+	ModelConsumerRuntimeVersion   string        `env:"MODEL_RUNTIME_VERSION" envDefault:"1.0.0"`
+	ModelConsumerFeatureSchema    int           `env:"MODEL_FEATURE_SCHEMA_VERSION" envDefault:"1"`
+	ModelConsumerGraphSchema      int           `env:"MODEL_GRAPH_SCHEMA_VERSION" envDefault:"1"`
+	ModelConsumerFormats          string        `env:"MODEL_SUPPORTED_FORMATS" envDefault:"onnx,numpy_npz_v1"`
+	ModelConsumerReadyTTL         time.Duration `env:"MODEL_CONSUMER_READY_TTL" envDefault:"5m"`
+	ModelShadowReadyTTL           time.Duration `env:"MODEL_SHADOW_READY_TTL" envDefault:"15m"`
+	EnableModelShadowActivation   bool          `env:"MODEL_SHADOW_ACTIVATION_V1_ENABLED" envDefault:"false"`
+	EnableModelShadowPublisher    bool          `env:"MODEL_SHADOW_PUBLISHER_V1_ENABLED" envDefault:"false"`
+	EnableModelRollbackV2         bool          `env:"MODEL_ROLLBACK_V2_ENABLED" envDefault:"false"`
+	ModelRollbackAckTimeout       time.Duration `env:"MODEL_ROLLBACK_ACK_TIMEOUT" envDefault:"2m"`
+	EnableModelActionOutbox       bool          `env:"MODEL_ACTION_OUTBOX_V1_ENABLED" envDefault:"true"`
+	EnableKafkaNotification       bool          `env:"MODEL_ENABLE_KAFKA_NOTIFICATION" envDefault:"true"`
+	AutoActivateNewVersion        bool          `env:"MODEL_AUTO_ACTIVATE_NEW_VERSION" envDefault:"false"`
 }
 
 // DefaultModelServiceConfig 默认配置
@@ -48,6 +62,17 @@ func DefaultModelServiceConfig() ModelServiceConfig {
 		MaxModelsPerTenant:            50,
 		MaxVersionsPerModel:           100,
 		AppliedAckExpectedParallelism: 4,
+		ModelConsumerRuntimeContract:  "traffic.behavior.inference.v1",
+		ModelConsumerRuntimeVersion:   "1.0.0",
+		ModelConsumerFeatureSchema:    1,
+		ModelConsumerGraphSchema:      1,
+		ModelConsumerFormats:          "onnx,numpy_npz_v1",
+		ModelConsumerReadyTTL:         5 * time.Minute,
+		ModelShadowReadyTTL:           15 * time.Minute,
+		EnableModelShadowActivation:   false,
+		EnableModelShadowPublisher:    false,
+		EnableModelRollbackV2:         false,
+		ModelRollbackAckTimeout:       2 * time.Minute,
 		EnableModelActionOutbox:       true,
 		EnableKafkaNotification:       true,
 		AutoActivateNewVersion:        false,
@@ -89,6 +114,7 @@ func (s *ModelService) StartActionWorker(parent context.Context) {
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 		lastRecovery := time.Now()
+		lastRollbackSweep := time.Now()
 		for {
 			if err := s.processModelUpdateOutbox(ctx); err != nil {
 				s.logger.Error("Model update outbox dispatch failed", zap.Error(err))
@@ -100,6 +126,14 @@ func (s *ModelService) StartActionWorker(parent context.Context) {
 			}
 			if err := s.dispatchNextModelAction(ctx); err != nil {
 				s.logger.Error("Model action dispatch failed", zap.Error(err))
+			}
+			if time.Since(lastRollbackSweep) >= 10*time.Second {
+				if count, err := s.expireTimedOutModelRollbacks(ctx, time.Now()); err != nil {
+					s.logger.Warn("Failed to reconcile timed out model rollbacks", zap.Error(err))
+				} else if count > 0 {
+					s.logger.Warn("Timed out model rollbacks reconciled", zap.Int("count", count))
+				}
+				lastRollbackSweep = time.Now()
 			}
 			if time.Since(lastRecovery) >= time.Minute {
 				if err := s.repo.RecoverStaleModelActions(ctx, 5*time.Minute); err != nil {
@@ -303,104 +337,221 @@ func (s *ModelService) RegisterModelVersion(ctx context.Context, req *model.Regi
 	if err := s.checkPermission(ctx, opCtx, rbac.PermModelCreate, req.TenantID); err != nil {
 		return nil, err
 	}
+	requestSHA, err := modelRegistrationRequestSHA256(req)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeSerializationError, "failed to hash model registration request")
+	}
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to start model registration transaction")
+	}
+	defer tx.Rollback()
 
-	// 查找或创建模型。页面通常传 UUID, MLOps pipeline 通常传模型名称。
-	var modelObj *model.Model
-	var err error
-	modelIDIsUUID := false
-	if _, parseErr := uuid.Parse(req.ModelID); parseErr == nil {
-		modelIDIsUUID = true
-		modelObj, err = s.repo.GetModel(ctx, req.ModelID)
-	} else {
-		modelObj, err = s.repo.GetModelByName(ctx, req.TenantID, req.ModelID)
+	// Serialize retries of one tenant-scoped command before checking its stored
+	// request hash. A reused key may return the original row, but never mutate it.
+	var idempotencyLock interface{}
+	if err := tx.QueryRowContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2, 0))`, req.TenantID, req.IdempotencyKey).Scan(&idempotencyLock); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to lock model registration idempotency key")
 	}
-	// A UUID is an authoritative resource path, never a model name. Missing
-	// UUIDs must remain 404 and must not fall through to auto-creation under a
-	// different generated identifier.
-	if modelIDIsUUID && err != nil && errors.IsCode(err, errors.ErrCodeModelNotFound) {
-		return nil, err
-	}
-	if !modelIDIsUUID && err != nil && errors.IsCode(err, errors.ErrCodeModelNotFound) {
-		modelObj, err = s.repo.GetModelByName(ctx, req.TenantID, req.ModelID)
-	}
-	if err != nil && errors.IsCode(err, errors.ErrCodeModelNotFound) {
-		// 模型不存在时按 pipeline 提供的名称自动创建。
-		modelObj = &model.Model{
-			TenantID:    req.TenantID,
-			Name:        req.ModelID,
-			ModelType:   req.ModelType,
-			Description: req.Description,
-			Metadata: map[string]interface{}{
-				"source":       "mlops-pipeline",
-				"auto_created": true,
-			},
+	if existing, err := getModelRegistrationByIdempotencyTx(ctx, tx, req.TenantID, req.IdempotencyKey); err == nil {
+		if existing.RegistrationRequestSHA256 != requestSHA {
+			return nil, errors.New(errors.ErrCodeVersionConflict, "Idempotency-Key was already used for a different model registration")
 		}
-		if err := s.repo.CreateModel(ctx, modelObj); err != nil {
-			return nil, err
+		if err := tx.Commit(); err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to commit idempotent model registration read")
 		}
-		s.logger.Info("Auto-created model", zap.String("model_id", modelObj.ModelID), zap.String("name", req.ModelID))
-	} else if err != nil {
-		return nil, err
-	} else if modelObj.TenantID != req.TenantID {
-		return nil, errors.New(errors.ErrCodePermissionDenied, "cross-tenant model registration denied")
+		return existing, nil
+	} else if err != sql.ErrNoRows {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to read model registration idempotency record")
 	}
 
-	// 版本限额检查
-	_, versionCount, err := s.repo.ListModelVersions(ctx, req.TenantID, modelObj.ModelID, &model.ModelVersionFilter{Limit: 1})
-	if err == nil && int(versionCount) >= s.config.MaxVersionsPerModel {
+	modelObj, err := s.resolveModelForRegistrationTx(ctx, tx, req)
+	if err != nil {
+		return nil, err
+	}
+	var versionCount int
+	if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM model_versions WHERE tenant_id = $1 AND model_id = $2`, req.TenantID, modelObj.ModelID).Scan(&versionCount); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to count model versions")
+	}
+	if versionCount >= s.config.MaxVersionsPerModel {
 		return nil, errors.Newf(errors.ErrCodeQuotaExceeded, "model version limit exceeded: max %d per model", s.config.MaxVersionsPerModel)
 	}
 
-	// 生成版本号
-	version := req.Version
-	if version == "" {
-		version = time.Now().UTC().Format("v20060102_150405")
+	metricsJSON, err := json.Marshal(req.Metrics)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeSerializationError, "failed to marshal model registration metrics")
 	}
-
-	// 构建模型版本
+	compatibilityJSON, err := json.Marshal(req.Compatibility)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeSerializationError, "failed to marshal model compatibility")
+	}
 	mv := &model.ModelVersion{
-		ModelVersion: version,
-		ModelID:      modelObj.ModelID,
-		TenantID:     req.TenantID,
-		FeatureSetID: req.FeatureSetID,
-		ArtifactURI:  req.ArtifactURI,
-		Metrics:      req.Metrics,
-		Status:       string(model.ModelStatusRegistered),
-		CreatedBy:    opCtx.UserID,
+		ModelVersion: req.Version, ModelID: modelObj.ModelID, TenantID: req.TenantID,
+		FeatureSetID: req.FeatureSetID, ArtifactURI: req.ArtifactURI,
+		ArtifactManifestURI: req.ArtifactManifestURI, PackageID: req.PackageID,
+		PackageSHA256: req.PackageSHA256, ArtifactManifestSHA256: req.ArtifactManifestSHA256,
+		EvaluationSHA256: req.EvaluationSHA256, ExplanationSHA256: req.ExplanationSHA256,
+		GraphSnapshotID: req.GraphSnapshotID, GraphSnapshotSHA256: req.GraphSnapshotSHA256,
+		SigningKeyID: req.SigningKeyID, Compatibility: req.Compatibility,
+		Revision: 1, RegistrationIdempotencyKey: req.IdempotencyKey,
+		RegistrationRequestSHA256: requestSHA, Metrics: req.Metrics,
+		Status: string(model.ModelStatusRegistered), CreatedBy: opCtx.UserID,
+		ModelName: modelObj.Name, ModelType: modelObj.ModelType,
 	}
-
-	if mv.Status == "" {
-		mv.Status = string(model.ModelStatusRegistered)
+	err = tx.QueryRowContext(ctx, `
+		INSERT INTO model_versions (
+			model_version, model_id, tenant_id, feature_set_id, artifact_uri,
+			artifact_manifest_uri, package_id, package_sha256, artifact_manifest_sha256,
+			evaluation_sha256, explanation_sha256, graph_snapshot_id, graph_snapshot_sha256,
+			signing_key_id, compatibility, revision, registration_idempotency_key,
+			registration_request_sha256, metrics, status, created_by, created_at, updated_at
+		) VALUES (
+			$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,1,$16,$17,$18::jsonb,'registered',
+			(SELECT user_id FROM users WHERE user_id::text = $19 AND tenant_id = $3 LIMIT 1),now(),now()
+		) ON CONFLICT DO NOTHING
+		RETURNING created_at, updated_at
+	`, mv.ModelVersion, mv.ModelID, mv.TenantID, mv.FeatureSetID, mv.ArtifactURI,
+		mv.ArtifactManifestURI, mv.PackageID, mv.PackageSHA256, mv.ArtifactManifestSHA256,
+		mv.EvaluationSHA256, mv.ExplanationSHA256, mv.GraphSnapshotID, mv.GraphSnapshotSHA256,
+		mv.SigningKeyID, string(compatibilityJSON), mv.RegistrationIdempotencyKey,
+		mv.RegistrationRequestSHA256, string(metricsJSON), mv.CreatedBy,
+	).Scan(&mv.CreatedAt, &mv.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, errors.Newf(errors.ErrCodeVersionConflict, "model version already exists: %s", mv.ModelVersion)
 	}
-
-	// 创建版本
-	if err := s.repo.CreateModelVersion(ctx, mv); err != nil {
-		s.recordAuditFailure(ctx, opCtx, audit.EventTypeModelVersionCreate, "model_version", version, err.Error())
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to persist model version registration")
+	}
+	auditDetail := map[string]interface{}{
+		"model_id": modelObj.ModelID, "model_name": modelObj.Name,
+		"artifact_uri": mv.ArtifactURI, "artifact_manifest_uri": mv.ArtifactManifestURI,
+		"package_id": mv.PackageID, "package_sha256": mv.PackageSHA256,
+		"artifact_manifest_sha256": mv.ArtifactManifestSHA256,
+		"evaluation_sha256":        mv.EvaluationSHA256, "explanation_sha256": mv.ExplanationSHA256,
+		"graph_snapshot_id": mv.GraphSnapshotID, "graph_snapshot_sha256": mv.GraphSnapshotSHA256,
+		"signing_key_id": mv.SigningKeyID, "revision": mv.Revision,
+		"registration_request_sha256": requestSHA, "activation_event_created": false,
+		"f1_score": s.getF1FromMetrics(mv.Metrics),
+	}
+	if err := s.recordAuditLogTx(ctx, tx, opCtx, audit.EventTypeModelVersionCreate, "model_version", mv.ModelVersion, auditDetail); err != nil {
 		return nil, err
 	}
-
-	// 填充关联信息
-	mv.ModelName = modelObj.Name
-	mv.ModelType = modelObj.ModelType
-
-	// 发布 Kafka 模型更新通知
-	if s.config.EnableKafkaNotification {
-		go s.publishModelUpdateEvent(context.Background(), modelObj, mv, "registered")
+	if err := tx.Commit(); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to commit model registration")
 	}
-
-	s.recordAuditSuccess(ctx, opCtx, audit.EventTypeModelVersionCreate, "model_version", version, map[string]interface{}{
-		"model_id":     modelObj.ModelID,
-		"model_name":   modelObj.Name,
-		"artifact_uri": mv.ArtifactURI,
-		"f1_score":     s.getF1FromMetrics(mv.Metrics),
-	})
+	s.recordAuditStreamSuccess(ctx, opCtx, audit.EventTypeModelVersionCreate, "model_version", mv.ModelVersion, auditDetail)
 
 	s.logger.Info("Model version registered",
 		zap.String("model_name", modelObj.Name),
-		zap.String("version", version),
+		zap.String("version", mv.ModelVersion),
 		zap.String("status", mv.Status))
 
 	return mv, nil
+}
+
+func modelRegistrationRequestSHA256(req *model.RegisterModelRequest) (string, error) {
+	payload, err := json.Marshal(req)
+	if err != nil {
+		return "", err
+	}
+	digest := sha256.Sum256(payload)
+	return fmt.Sprintf("%x", digest[:]), nil
+}
+
+type modelRegistrationScanner interface {
+	Scan(dest ...interface{}) error
+}
+
+func scanModelRegistration(scanner modelRegistrationScanner) (*model.ModelVersion, error) {
+	var mv model.ModelVersion
+	var metricsJSON, compatibilityJSON []byte
+	err := scanner.Scan(
+		&mv.ModelVersion, &mv.ModelID, &mv.TenantID, &mv.FeatureSetID, &mv.ArtifactURI,
+		&mv.ArtifactManifestURI, &mv.PackageID, &mv.PackageSHA256, &mv.ArtifactManifestSHA256,
+		&mv.EvaluationSHA256, &mv.ExplanationSHA256, &mv.GraphSnapshotID, &mv.GraphSnapshotSHA256,
+		&mv.SigningKeyID, &compatibilityJSON, &mv.Revision, &mv.RegistrationIdempotencyKey,
+		&mv.RegistrationRequestSHA256, &metricsJSON, &mv.Status, &mv.CreatedBy,
+		&mv.CreatedAt, &mv.UpdatedAt, &mv.ModelName, &mv.ModelType,
+	)
+	if err != nil {
+		return nil, err
+	}
+	mv.MetricsJSON, mv.CompatibilityJSON = metricsJSON, compatibilityJSON
+	if err := mv.UnmarshalMetrics(); err != nil {
+		return nil, err
+	}
+	if err := mv.UnmarshalCompatibility(); err != nil {
+		return nil, err
+	}
+	return &mv, nil
+}
+
+func getModelRegistrationByIdempotencyTx(ctx context.Context, tx *sql.Tx, tenantID, idempotencyKey string) (*model.ModelVersion, error) {
+	return scanModelRegistration(tx.QueryRowContext(ctx, `
+		SELECT mv.model_version, mv.model_id, mv.tenant_id, mv.feature_set_id, mv.artifact_uri,
+		       mv.artifact_manifest_uri, mv.package_id, mv.package_sha256, mv.artifact_manifest_sha256,
+		       mv.evaluation_sha256, mv.explanation_sha256, mv.graph_snapshot_id, mv.graph_snapshot_sha256,
+		       mv.signing_key_id, mv.compatibility, mv.revision, mv.registration_idempotency_key,
+		       mv.registration_request_sha256, mv.metrics, mv.status, COALESCE(mv.created_by::text, ''),
+		       mv.created_at, mv.updated_at, m.name, m.model_type
+		FROM model_versions mv JOIN models m ON m.model_id = mv.model_id
+		WHERE mv.tenant_id = $1 AND mv.registration_idempotency_key = $2
+		FOR UPDATE
+	`, tenantID, idempotencyKey))
+}
+
+func (s *ModelService) resolveModelForRegistrationTx(ctx context.Context, tx *sql.Tx, req *model.RegisterModelRequest) (*model.Model, error) {
+	modelObj := &model.Model{}
+	var description sql.NullString
+	if _, err := uuid.Parse(req.ModelID); err == nil {
+		err = tx.QueryRowContext(ctx, `
+			SELECT model_id, tenant_id, name, model_type, description
+			FROM models WHERE model_id = $1 FOR UPDATE
+		`, req.ModelID).Scan(&modelObj.ModelID, &modelObj.TenantID, &modelObj.Name, &modelObj.ModelType, &description)
+		if err == sql.ErrNoRows {
+			return nil, errors.Newf(errors.ErrCodeModelNotFound, "model not found: %s", req.ModelID)
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to resolve model for registration")
+		}
+		if modelObj.TenantID != req.TenantID {
+			return nil, errors.New(errors.ErrCodePermissionDenied, "cross-tenant model registration denied")
+		}
+	} else {
+		err := tx.QueryRowContext(ctx, `
+			SELECT model_id, tenant_id, name, model_type, description
+			FROM models WHERE tenant_id = $1 AND name = $2 FOR UPDATE
+		`, req.TenantID, req.ModelID).Scan(&modelObj.ModelID, &modelObj.TenantID, &modelObj.Name, &modelObj.ModelType, &description)
+		if err == sql.ErrNoRows {
+			var count int
+			if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM models WHERE tenant_id = $1`, req.TenantID).Scan(&count); err != nil {
+				return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to count tenant models")
+			}
+			if count >= s.config.MaxModelsPerTenant {
+				return nil, errors.Newf(errors.ErrCodeQuotaExceeded, "model limit exceeded: max %d per tenant", s.config.MaxModelsPerTenant)
+			}
+			modelObj = &model.Model{ModelID: uuid.NewString(), TenantID: req.TenantID, Name: req.ModelID, ModelType: req.ModelType, Description: req.Description}
+			metadataJSON := `{"source":"mlops-pipeline","auto_created":true}`
+			if err := tx.QueryRowContext(ctx, `
+				INSERT INTO models (model_id, tenant_id, name, model_type, description, metadata, created_at, updated_at)
+				VALUES ($1,$2,$3,$4,$5,$6::jsonb,now(),now())
+				RETURNING model_id, tenant_id, name, model_type, description
+			`, modelObj.ModelID, modelObj.TenantID, modelObj.Name, modelObj.ModelType, modelObj.Description, metadataJSON).Scan(
+				&modelObj.ModelID, &modelObj.TenantID, &modelObj.Name, &modelObj.ModelType, &description,
+			); err != nil {
+				return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to auto-create model in registration transaction")
+			}
+		} else if err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to resolve model name for registration")
+		}
+	}
+	if description.Valid {
+		modelObj.Description = description.String
+	}
+	if modelObj.ModelType != req.ModelType {
+		return nil, errors.New(errors.ErrCodeVersionConflict, "model_type does not match the registered model")
+	}
+	return modelObj, nil
 }
 
 // ActivateModelVersion 激活模型版本（部署到生产）
@@ -409,6 +560,14 @@ func (s *ModelService) ActivateModelVersion(ctx context.Context, expectedModelID
 	defer span.End()
 	if grayPercent != 100 {
 		return errors.New(errors.ErrCodeOutOfRange, "model registry activation currently requires gray_percent=100; use the deployment workflow for staged traffic rollout")
+	}
+
+	// SUB-FS-12 修复:授权判定必须先于资源锁定,防止低权限调用者在锁路径
+	// 触发业务错误(原实现先 SELECT FOR UPDATE 后 checkPermission,viewer
+	// 对不存在版本得到 500 而非 403)。
+	if err := s.checkScopePermission(ctx, opCtx, rbac.PermModelActivate); err != nil {
+		s.recordAuditFailure(ctx, opCtx, audit.EventTypeModelVersionActivate, "model_version", modelVersion, err.Error())
+		return err
 	}
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -430,6 +589,16 @@ func (s *ModelService) ActivateModelVersion(ctx context.Context, expectedModelID
 	}
 	if expectedModelID != "" && mv.ModelID != expectedModelID {
 		err := errors.Newf(errors.ErrCodeModelVersionNotFound, "model version not found under model: %s", expectedModelID)
+		s.recordAuditFailure(ctx, opCtx, audit.EventTypeModelVersionActivate, "model_version", modelVersion, err.Error())
+		return err
+	}
+	// Signed governed packages must follow consumer-first shadow loading.  The
+	// legacy schema-v1 endpoint changes serving state immediately and therefore
+	// cannot be used as a shortcut around readiness, revision or two-person
+	// approval.
+	if strings.TrimSpace(mv.PackageID) != "" || strings.TrimSpace(mv.ArtifactManifestURI) != "" {
+		err := errors.New(errors.ErrCodeInvalidStateTransition,
+			"governed model versions cannot use legacy direct activation; prepare a schema-v2 shadow activation")
 		s.recordAuditFailure(ctx, opCtx, audit.EventTypeModelVersionActivate, "model_version", modelVersion, err.Error())
 		return err
 	}
@@ -499,83 +668,7 @@ func (s *ModelService) RollbackModelVersion(ctx context.Context, expectedModelID
 }
 
 func (s *ModelService) rollbackModelVersion(ctx context.Context, expectedModelID, modelVersion string, opCtx *OperationContext, job *model.ModelActionJob) error {
-	ctx, span := otel.StartSpan(ctx, "ModelService.RollbackModelVersion")
-	defer span.End()
-
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to start model rollback transaction")
-	}
-	defer tx.Rollback()
-
-	mv, err := s.getModelVersionForUpdate(ctx, tx, modelVersion)
-	if err != nil {
-		return err
-	}
-	if err := s.checkPermission(ctx, opCtx, rbac.PermModelActivate, mv.TenantID); err != nil {
-		return err
-	}
-	if expectedModelID != "" && mv.ModelID != expectedModelID {
-		return errors.Newf(errors.ErrCodeModelVersionNotFound, "model version not found under model: %s", expectedModelID)
-	}
-	if model.ModelStatus(mv.Status) != model.ModelStatusDeprecated {
-		return errors.Newf(errors.ErrCodeInvalidStateTransition, "rollback target must be deprecated, got: %s", mv.Status)
-	}
-	if err := s.validateModelActivationGatesTx(ctx, tx, mv.TenantID, mv.ModelID); err != nil {
-		return err
-	}
-
-	previousActive := ""
-	if err := tx.QueryRowContext(ctx, `
-		SELECT model_version
-		FROM model_versions
-		WHERE model_id = $1::uuid AND tenant_id = $2 AND status = 'active' AND model_version <> $3
-		ORDER BY updated_at DESC
-		LIMIT 1
-		FOR UPDATE
-	`, mv.ModelID, mv.TenantID, modelVersion).Scan(&previousActive); err != nil && err != sql.ErrNoRows {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to lock previous active model version")
-	}
-	if err := s.deprecateOtherVersionsTx(ctx, tx, mv.ModelID, modelVersion); err != nil {
-		return err
-	}
-	if err := s.updateModelVersionStatusTx(ctx, tx, modelVersion, model.ModelStatusActive); err != nil {
-		return err
-	}
-	detail := map[string]interface{}{
-		"model_id":                mv.ModelID,
-		"target_version":          modelVersion,
-		"previous_active_version": previousActive,
-		"previous_status":         mv.Status,
-		"new_status":              string(model.ModelStatusActive),
-	}
-	if job != nil {
-		detail["job_id"] = job.JobID
-		detail["reason"] = stringPayload(job.Payload, "reason")
-	}
-	if err := s.recordAuditLogTx(ctx, tx, opCtx, audit.EventType("MODEL_VERSION_ROLLBACK_APPLIED"), "model_version", modelVersion, detail); err != nil {
-		return err
-	}
-	if s.config.EnableKafkaNotification {
-		mv.Status = string(model.ModelStatusActive)
-		jobID := ""
-		if job != nil {
-			jobID = job.JobID
-		}
-		if _, err := s.insertModelUpdateOutboxTx(ctx, tx, mv, "rollback-activated", jobID); err != nil {
-			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to persist rollback model update outbox")
-		}
-	}
-	if err := tx.Commit(); err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to commit model rollback")
-	}
-	s.recordAuditStreamSuccess(ctx, opCtx, audit.EventType("MODEL_VERSION_ROLLBACK_APPLIED"), "model_version", modelVersion, detail)
-	// Without Kafka notification there is no outbox acknowledgement to close a
-	// linked action job, so finish it transactionally through the repository.
-	if job != nil && !s.config.EnableKafkaNotification {
-		return s.repo.FinishModelAction(ctx, job, "completed", "MODEL_VERSION_ROLLBACK_COMPLETED", "")
-	}
-	return nil
+	return s.prepareModelRollbackV2(ctx, expectedModelID, modelVersion, opCtx, job)
 }
 
 // validateModelActivationGatesTx makes persisted workbench review gates a
@@ -666,14 +759,19 @@ func (s *ModelService) DeprecateModelVersion(ctx context.Context, expectedModelI
 		s.recordAuditFailure(ctx, opCtx, audit.EventTypeModelVersionDeprecate, "model_version", modelVersion, err.Error())
 		return err
 	}
+	// 与激活路径一致:弃用状态、审计与 outbox 事件在同一事务内原子提交,
+	// 由 processModelUpdateOutbox 按稳定 event_id 幂等发布;禁止 fire-and-forget
+	// 后台发布(发布失败会静默丢失模型热更新事件)。
+	if s.config.EnableKafkaNotification {
+		mv.Status = string(model.ModelStatusDeprecated)
+		if _, err := s.insertModelUpdateOutboxTx(ctx, tx, mv, "deprecated", ""); err != nil {
+			s.recordAuditFailure(ctx, opCtx, audit.EventTypeModelVersionDeprecate, "model_version", modelVersion, err.Error())
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to persist model deprecate outbox")
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		s.recordAuditFailure(ctx, opCtx, audit.EventTypeModelVersionDeprecate, "model_version", modelVersion, err.Error())
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to commit model deprecate")
-	}
-
-	if s.config.EnableKafkaNotification {
-		mv.Status = string(model.ModelStatusDeprecated)
-		go s.publishModelUpdateEvent(context.Background(), nil, mv, "deprecated")
 	}
 
 	s.recordAuditStreamSuccess(ctx, opCtx, audit.EventTypeModelVersionDeprecate, "model_version", modelVersion, auditDetail)
@@ -795,6 +893,9 @@ func (s *ModelService) SubmitModelAction(
 	req.Action = strings.TrimSpace(req.Action)
 	req.Target = strings.TrimSpace(req.Target)
 	req.Version = strings.TrimSpace(req.Version)
+	if req.Action == "rollback-version" && !s.config.EnableModelRollbackV2 {
+		return nil, errors.New(errors.ErrCodeServiceUnavailable, "governed model rollback v2 is disabled")
+	}
 	if req.Action == "" || len(req.Action) > 64 || !isSafeModelAction(req.Action) {
 		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid model action")
 	}
@@ -902,8 +1003,23 @@ func validateModelActionRequest(req *model.ModelActionRequest) error {
 		if req.Version == "" {
 			return errors.New(errors.ErrCodeMissingParameter, "rollback target version is required")
 		}
-		if strings.TrimSpace(stringPayload(req.Payload, "reason")) == "" {
+		reason := strings.TrimSpace(stringPayload(req.Payload, "reason"))
+		if reason == "" {
 			return errors.New(errors.ErrCodeMissingParameter, "rollback reason is required")
+		}
+		if len(reason) < 8 || len(reason) > 1000 {
+			return errors.New(errors.ErrCodeInvalidParameter, "rollback reason must contain 8 to 1000 characters")
+		}
+		expectedActive := strings.TrimSpace(stringPayload(req.Payload, "expected_active_version"))
+		if expectedActive == "" {
+			return errors.New(errors.ErrCodeMissingParameter, "expected_active_version is required for rollback")
+		}
+		if expectedActive == req.Version {
+			return errors.New(errors.ErrCodeInvalidParameter, "rollback target must differ from expected_active_version")
+		}
+		expectedRevision, ok := int64Payload(req.Payload, "expected_active_revision")
+		if !ok || expectedRevision <= 0 {
+			return errors.New(errors.ErrCodeInvalidParameter, "expected_active_revision must be a positive integer")
 		}
 	}
 	return nil
@@ -924,6 +1040,25 @@ func numberPayload(payload map[string]interface{}, key string) (float64, bool) {
 		return float64(value), true
 	case int64:
 		return float64(value), true
+	default:
+		return 0, false
+	}
+}
+
+func int64Payload(payload map[string]interface{}, key string) (int64, bool) {
+	switch value := payload[key].(type) {
+	case int:
+		return int64(value), true
+	case int32:
+		return int64(value), true
+	case int64:
+		return value, true
+	case float64:
+		converted := int64(value)
+		return converted, float64(converted) == value
+	case float32:
+		converted := int64(value)
+		return converted, float32(converted) == value
 	default:
 		return 0, false
 	}
@@ -953,32 +1088,67 @@ type ModelUpdateEvent struct {
 	ModelType                  string                 `json:"model_type"`
 	Version                    string                 `json:"version"`
 	ArtifactURI                string                 `json:"artifact_uri"`
+	ArtifactManifestURI        string                 `json:"artifact_manifest_uri"`
+	ArtifactManifestSHA256     string                 `json:"artifact_manifest_sha256"`
+	PackageID                  string                 `json:"package_id"`
+	PackageSHA256              string                 `json:"package_sha256"`
+	EvaluationSHA256           string                 `json:"evaluation_sha256"`
+	ExplanationSHA256          string                 `json:"explanation_sha256"`
+	GraphSnapshotID            string                 `json:"graph_snapshot_id"`
+	GraphSnapshotSHA256        string                 `json:"graph_snapshot_sha256"`
+	AggregateRevision          int64                  `json:"aggregate_revision"`
+	Compatibility              map[string]interface{} `json:"compatibility,omitempty"`
 	Action                     string                 `json:"action"` // registered, activated, deprecated, rollback-activated
 	Metrics                    map[string]interface{} `json:"metrics,omitempty"`
 	ExpectedAppliedParallelism int                    `json:"expected_applied_parallelism"`
+	RollbackID                 string                 `json:"rollback_id,omitempty"`
+	RollbackPhase              string                 `json:"rollback_phase,omitempty"`
+	RollbackFromVersion        string                 `json:"rollback_from_version,omitempty"`
+	ExpectedActiveRevision     int64                  `json:"expected_active_revision,omitempty"`
+	ConsumerDeploymentID       string                 `json:"consumer_deployment_id,omitempty"`
+	ConsumerProfileSHA256      string                 `json:"consumer_profile_sha256,omitempty"`
 	Timestamp                  string                 `json:"timestamp"`
 }
 
 type ModelAppliedAck struct {
-	SchemaVersion  int     `json:"schema_version"`
-	EventID        string  `json:"event_id"`
-	TenantID       string  `json:"tenant_id"`
-	ModelID        string  `json:"model_id"`
-	Version        string  `json:"version"`
-	ArtifactURI    string  `json:"artifact_uri"`
-	ArtifactSHA256 string  `json:"artifact_sha256"`
-	WarmupScore    float64 `json:"warmup_score"`
-	SubtaskIndex   int     `json:"subtask_index"`
-	Parallelism    int     `json:"parallelism"`
-	Status         string  `json:"status"`
-	Error          string  `json:"error"`
-	Timestamp      string  `json:"timestamp"`
+	SchemaVersion         int     `json:"schema_version"`
+	EventID               string  `json:"event_id"`
+	TenantID              string  `json:"tenant_id"`
+	ModelID               string  `json:"model_id"`
+	Version               string  `json:"version"`
+	ArtifactURI           string  `json:"artifact_uri"`
+	ArtifactSHA256        string  `json:"artifact_sha256"`
+	WarmupScore           float64 `json:"warmup_score"`
+	SubtaskIndex          int     `json:"subtask_index"`
+	Parallelism           int     `json:"parallelism"`
+	Status                string  `json:"status"`
+	Error                 string  `json:"error"`
+	Timestamp             string  `json:"timestamp"`
+	AckType               string  `json:"ack_type"`
+	ConsumerDeploymentID  string  `json:"consumer_deployment_id"`
+	ConsumerProfileSHA256 string  `json:"consumer_profile_sha256"`
+	RuntimeContract       string  `json:"runtime_contract"`
+	RuntimeVersion        string  `json:"runtime_version"`
+	FeatureSchemaVersion  int     `json:"feature_schema_version"`
+	GraphSchemaVersion    int     `json:"graph_schema_version"`
+	SupportedModelFormats string  `json:"supported_model_formats"`
+	PackageID             string  `json:"package_id"`
+	PackageSHA256         string  `json:"package_sha256"`
+	AggregateRevision     int64   `json:"aggregate_revision"`
+	RollbackID            string  `json:"rollback_id"`
+	RollbackPhase         string  `json:"rollback_phase"`
 }
 
 type modelAppliedContract struct {
+	SchemaVersion              int
 	ArtifactURI                string
 	ArtifactSHA256             string
 	ExpectedAppliedParallelism int
+	Action                     string
+	RollbackID                 string
+	RollbackPhase              string
+	RollbackFromVersion        string
+	ExpectedActiveRevision     int64
 }
 
 func parseModelAppliedContract(payload []byte, configuredParallelism int) (modelAppliedContract, error) {
@@ -998,13 +1168,22 @@ func parseModelAppliedContract(payload []byte, configuredParallelism int) (model
 		expectedSHA = strings.ToLower(strings.TrimSpace(value))
 	}
 	return modelAppliedContract{
+		SchemaVersion:              event.SchemaVersion,
 		ArtifactURI:                strings.TrimSpace(event.ArtifactURI),
 		ArtifactSHA256:             expectedSHA,
 		ExpectedAppliedParallelism: expectedParallelism,
+		Action:                     strings.TrimSpace(event.Action),
+		RollbackID:                 strings.TrimSpace(event.RollbackID),
+		RollbackPhase:              strings.TrimSpace(event.RollbackPhase),
+		RollbackFromVersion:        strings.TrimSpace(event.RollbackFromVersion),
+		ExpectedActiveRevision:     event.ExpectedActiveRevision,
 	}, nil
 }
 
 func validateModelAppliedAckContract(ack ModelAppliedAck, contract modelAppliedContract, requireFingerprint bool) error {
+	if ack.SchemaVersion != contract.SchemaVersion || (ack.SchemaVersion != 1 && ack.SchemaVersion != 2) {
+		return fmt.Errorf("model applied acknowledgement schema_version does not match event contract")
+	}
 	if ack.Parallelism != contract.ExpectedAppliedParallelism {
 		return fmt.Errorf("model applied acknowledgement parallelism %d does not match server contract %d", ack.Parallelism, contract.ExpectedAppliedParallelism)
 	}
@@ -1020,6 +1199,17 @@ func validateModelAppliedAckContract(ack ModelAppliedAck, contract modelAppliedC
 	if contract.ArtifactSHA256 != "" && strings.ToLower(strings.TrimSpace(ack.ArtifactSHA256)) != contract.ArtifactSHA256 {
 		return fmt.Errorf("model applied acknowledgement artifact_sha256 does not match event contract")
 	}
+	if contract.RollbackID != "" {
+		if contract.SchemaVersion != 2 {
+			return fmt.Errorf("model rollback event must use schema_version 2")
+		}
+		if ack.RollbackID != contract.RollbackID || ack.RollbackPhase != contract.RollbackPhase {
+			return fmt.Errorf("model applied acknowledgement rollback identity does not match event contract")
+		}
+		if ack.ConsumerDeploymentID == "" || ack.ConsumerProfileSHA256 == "" {
+			return fmt.Errorf("model rollback acknowledgement requires consumer deployment and profile identity")
+		}
+	}
 	return nil
 }
 
@@ -1030,6 +1220,12 @@ func (s *ModelService) HandleModelAppliedAck(ctx context.Context, payload []byte
 	var ack ModelAppliedAck
 	if err := json.Unmarshal(payload, &ack); err != nil {
 		return fmt.Errorf("decode model applied acknowledgement: %w", err)
+	}
+	if ack.AckType == "consumer_ready" || ack.Status == "consumer_ready" {
+		return s.handleModelConsumerReadyAck(ctx, ack, payload)
+	}
+	if ack.AckType == "shadow_load" {
+		return s.handleModelShadowAck(ctx, ack, payload)
 	}
 	if strings.TrimSpace(ack.EventID) == "" || strings.TrimSpace(ack.TenantID) == "" ||
 		strings.TrimSpace(ack.ModelID) == "" || strings.TrimSpace(ack.Version) == "" {
@@ -1051,14 +1247,17 @@ func (s *ModelService) HandleModelAppliedAck(ctx context.Context, payload []byte
 	}
 	defer tx.Rollback()
 
-	var actionJobID, expectedTenant, expectedModel, expectedVersion string
+	var actionJobID, expectedTenant, expectedModel, expectedVersion, outboxStatus string
 	var eventPayload []byte
 	if err := tx.QueryRowContext(ctx, `
-		SELECT action_job_id, tenant_id, model_id, model_version, payload
+		SELECT action_job_id, tenant_id, model_id, model_version, payload, status
 		FROM model_update_outbox WHERE event_id = $1
 		FOR UPDATE
-	`, ack.EventID).Scan(&actionJobID, &expectedTenant, &expectedModel, &expectedVersion, &eventPayload); err != nil {
+	`, ack.EventID).Scan(&actionJobID, &expectedTenant, &expectedModel, &expectedVersion, &eventPayload, &outboxStatus); err != nil {
 		return fmt.Errorf("resolve model update outbox event %s: %w", ack.EventID, err)
+	}
+	if outboxStatus != "published" {
+		return fmt.Errorf("model update outbox event %s has no durable broker publication receipt", ack.EventID)
 	}
 	if ack.TenantID != expectedTenant || ack.ModelID != expectedModel || ack.Version != expectedVersion {
 		return fmt.Errorf("model applied acknowledgement scope mismatch for event %s", ack.EventID)
@@ -1110,6 +1309,17 @@ func (s *ModelService) HandleModelAppliedAck(ctx context.Context, payload []byte
 
 	allExpectedSubtasksApplied := appliedCount == contract.ExpectedAppliedParallelism &&
 		minAppliedSubtask == 0 && maxAppliedSubtask == contract.ExpectedAppliedParallelism-1
+	if handled, err := s.advanceModelRollbackFromAckTx(
+		ctx, tx, ack, contract, appliedCount, allExpectedSubtasksApplied,
+		hasFailure, aggregateFailureReason,
+	); err != nil {
+		return err
+	} else if handled {
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("commit governed model rollback acknowledgement: %w", err)
+		}
+		return nil
+	}
 	if actionJobID != "" && (hasFailure || allExpectedSubtasksApplied) {
 		status := "completed"
 		auditAction := "MODEL_VERSION_ROLLBACK_COMPLETED"
@@ -1160,6 +1370,7 @@ type modelUpdateOutboxRecord struct {
 	ID           int64
 	EventID      string
 	ModelID      string
+	Action       string
 	PartitionKey string
 	Payload      []byte
 	ActionJobID  string
@@ -1185,8 +1396,8 @@ func (s *ModelService) insertModelUpdateOutboxTx(ctx context.Context, tx *sql.Tx
 		INSERT INTO model_update_outbox (
 			event_id, tenant_id, model_id, model_version, action, partition_key,
 			payload, action_job_id, status, available_at, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, 'pending', $9, $9, $9)
-	`, eventID, mv.TenantID, mv.ModelID, mv.ModelVersion, action, partitionKey, string(payload), actionJobID, createdAt); err != nil {
+		) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, 'pending', now(), now(), now())
+	`, eventID, mv.TenantID, mv.ModelID, mv.ModelVersion, action, partitionKey, string(payload), actionJobID); err != nil {
 		return "", errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to insert model update outbox event")
 	}
 	return eventID, nil
@@ -1236,6 +1447,7 @@ func (s *ModelService) claimModelUpdateOutbox(ctx context.Context, limit int) ([
 			SELECT current.id
 			FROM model_update_outbox current
 			WHERE current.status = 'pending' AND current.available_at <= now()
+			  AND (current.action <> 'shadow-load' OR $3)
 			  AND NOT EXISTS (
 				SELECT 1 FROM model_update_outbox prior
 				WHERE prior.model_id = current.model_id AND prior.id < current.id
@@ -1249,9 +1461,9 @@ func (s *ModelService) claimModelUpdateOutbox(ctx context.Context, limit int) ([
 		SET status = 'processing', locked_at = now(), locked_by = $2,
 		    attempt_count = target.attempt_count + 1, updated_at = now()
 		FROM candidates WHERE target.id = candidates.id
-		RETURNING target.id, target.event_id, target.model_id, target.partition_key,
+		RETURNING target.id, target.event_id, target.model_id, target.action, target.partition_key,
 		          target.payload, target.action_job_id, target.attempt_count, target.created_at
-	`, limit, s.outboxWorkerID)
+	`, limit, s.outboxWorkerID, s.config.EnableModelShadowPublisher)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to claim model update outbox events")
 	}
@@ -1259,7 +1471,7 @@ func (s *ModelService) claimModelUpdateOutbox(ctx context.Context, limit int) ([
 	records := make([]modelUpdateOutboxRecord, 0, limit)
 	for rows.Next() {
 		var record modelUpdateOutboxRecord
-		if err := rows.Scan(&record.ID, &record.EventID, &record.ModelID, &record.PartitionKey, &record.Payload, &record.ActionJobID, &record.AttemptCount, &record.CreatedAt); err != nil {
+		if err := rows.Scan(&record.ID, &record.EventID, &record.ModelID, &record.Action, &record.PartitionKey, &record.Payload, &record.ActionJobID, &record.AttemptCount, &record.CreatedAt); err != nil {
 			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan model update outbox event")
 		}
 		records = append(records, record)
@@ -1332,8 +1544,28 @@ func (s *ModelService) failModelUpdateOutbox(ctx context.Context, record modelUp
 		s.logger.Error("Failed to record model update outbox publication failure", zap.Error(err))
 		return
 	}
+	isGovernedRollback := false
+	if status == "dead" && record.ActionJobID != "" && s.config.EnableModelRollbackV2 {
+		if err := tx.QueryRowContext(ctx, `
+			SELECT EXISTS (
+				SELECT 1 FROM model_rollback_requests
+				WHERE action_job_id=$1 AND (rollback_event_id=$2 OR compensation_event_id=$2)
+			)
+		`, record.ActionJobID, record.EventID).Scan(&isGovernedRollback); err != nil {
+			s.logger.Error("Failed to classify dead model rollback outbox", zap.Error(err))
+			return
+		}
+	}
 	if status == "dead" && record.ActionJobID != "" {
-		if _, err := tx.ExecContext(ctx, `
+		if isGovernedRollback {
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE model_action_jobs SET updated_at=now()
+				WHERE job_id=$1 AND status='running'
+			`, record.ActionJobID); err != nil {
+				s.logger.Error("Failed to retain dead model rollback action for compensation", zap.Error(err))
+				return
+			}
+		} else if _, err := tx.ExecContext(ctx, `
 			UPDATE model_action_jobs SET status = 'failed', updated_at = now()
 			WHERE job_id = $1 AND status = 'running'
 		`, record.ActionJobID); err != nil {
@@ -1343,54 +1575,13 @@ func (s *ModelService) failModelUpdateOutbox(ctx context.Context, record modelUp
 	}
 	if err := tx.Commit(); err != nil {
 		s.logger.Error("Failed to commit model update outbox publication failure", zap.Error(err))
+		return
 	}
-}
-
-// publishModelUpdateEvent 发布模型更新事件到 Kafka
-func (s *ModelService) publishModelUpdateEvent(ctx context.Context, modelObj *model.Model, mv *model.ModelVersion, action string) error {
-	if s.publisher == nil {
-		return errors.New(errors.ErrCodeServiceUnavailable, "model update publisher is not configured")
+	if status == "dead" && isGovernedRollback {
+		if err := s.reconcileDeadModelRollbackOutbox(ctx, record.EventID, publishErr.Error()); err != nil {
+			s.logger.Error("Failed to reconcile dead model rollback outbox", zap.Error(err))
+		}
 	}
-
-	publishCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	eventID := uuid.NewString()
-	occurredAt := time.Now().UTC()
-	event := &ModelUpdateEvent{
-		EventID:       eventID,
-		SchemaVersion: 1,
-		TenantID:      mv.TenantID,
-		ModelID:       mv.ModelID,
-		ModelName:     mv.ModelName,
-		ModelType:     mv.ModelType,
-		Version:       mv.ModelVersion,
-		ArtifactURI:   mv.ArtifactURI,
-		Action:        action,
-		Metrics:       mv.Metrics,
-		Timestamp:     occurredAt.Format(time.RFC3339Nano),
-	}
-
-	if modelObj != nil {
-		event.ModelName = modelObj.Name
-		event.ModelType = modelObj.ModelType
-	}
-
-	eventJSON, _ := json.Marshal(event)
-
-	if err := s.publisher.PublishModelUpdateWithID(publishCtx, mv.ModelID, eventJSON, eventID, occurredAt); err != nil {
-		s.logger.Error("Failed to publish model update event",
-			zap.String("model_id", mv.ModelID),
-			zap.String("action", action),
-			zap.Error(err))
-		return err
-	}
-
-	s.logger.Info("Published model update event to Kafka",
-		zap.String("model_id", mv.ModelID),
-		zap.String("version", mv.ModelVersion),
-		zap.String("action", action))
-	return nil
 }
 
 // =============================================================================
@@ -1418,6 +1609,14 @@ func (s *ModelService) checkPermission(ctx context.Context, opCtx *OperationCont
 	}
 	if opCtx.TenantID != resourceTenantID && !s.hasAdminPermission(opCtx) {
 		return errors.New(errors.ErrCodePermissionDenied, "cross-tenant access denied")
+	}
+	return s.checkScopePermission(ctx, opCtx, permission)
+}
+
+// checkScopePermission 仅判定 scope(不涉及资源租户,用于资源锁定前的先行判定)。
+func (s *ModelService) checkScopePermission(ctx context.Context, opCtx *OperationContext, permission rbac.Permission) error {
+	if opCtx == nil {
+		return errors.New(errors.ErrCodeUnauthorized, "operation context required")
 	}
 	if s.rbacChecker == nil {
 		return nil
@@ -1733,7 +1932,11 @@ func (s *ModelService) RecordAutomatedMLOpsAuditCompletion(ctx context.Context, 
 func (s *ModelService) getModelVersionForUpdate(ctx context.Context, tx *sql.Tx, modelVersion string) (*model.ModelVersion, error) {
 	query := `
 		SELECT mv.model_version, mv.model_id, mv.tenant_id, mv.feature_set_id,
-		       mv.artifact_uri, mv.metrics, mv.status, mv.created_by,
+		       mv.artifact_uri, mv.artifact_manifest_uri, mv.package_id, mv.package_sha256,
+		       mv.artifact_manifest_sha256, mv.evaluation_sha256, mv.explanation_sha256,
+		       mv.graph_snapshot_id, mv.graph_snapshot_sha256, mv.signing_key_id,
+		       mv.compatibility, mv.revision, mv.registration_idempotency_key,
+		       mv.registration_request_sha256, mv.metrics, mv.status, mv.created_by,
 		       mv.created_at, mv.updated_at,
 		       m.name, m.model_type, m.description
 		FROM model_versions mv
@@ -1746,7 +1949,11 @@ func (s *ModelService) getModelVersionForUpdate(ctx context.Context, tx *sql.Tx,
 	var createdBy, modelName, modelType, description sql.NullString
 	if err := tx.QueryRowContext(ctx, query, modelVersion).Scan(
 		&mv.ModelVersion, &mv.ModelID, &mv.TenantID, &mv.FeatureSetID,
-		&mv.ArtifactURI, &mv.MetricsJSON, &mv.Status, &createdBy,
+		&mv.ArtifactURI, &mv.ArtifactManifestURI, &mv.PackageID, &mv.PackageSHA256,
+		&mv.ArtifactManifestSHA256, &mv.EvaluationSHA256, &mv.ExplanationSHA256,
+		&mv.GraphSnapshotID, &mv.GraphSnapshotSHA256, &mv.SigningKeyID,
+		&mv.CompatibilityJSON, &mv.Revision, &mv.RegistrationIdempotencyKey,
+		&mv.RegistrationRequestSHA256, &mv.MetricsJSON, &mv.Status, &createdBy,
 		&mv.CreatedAt, &mv.UpdatedAt,
 		&modelName, &modelType, &description,
 	); err != nil {
@@ -1768,6 +1975,7 @@ func (s *ModelService) getModelVersionForUpdate(ctx context.Context, tx *sql.Tx,
 		mv.Description = description.String
 	}
 	_ = mv.UnmarshalMetrics()
+	_ = mv.UnmarshalCompatibility()
 	return &mv, nil
 }
 

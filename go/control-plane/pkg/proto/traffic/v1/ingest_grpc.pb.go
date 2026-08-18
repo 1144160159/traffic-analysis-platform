@@ -23,12 +23,13 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	IngestService_UploadFlows_FullMethodName     = "/traffic.v1.IngestService/UploadFlows"
-	IngestService_StreamFlows_FullMethodName     = "/traffic.v1.IngestService/StreamFlows"
-	IngestService_UploadSessions_FullMethodName  = "/traffic.v1.IngestService/UploadSessions"
-	IngestService_UploadPcapIndex_FullMethodName = "/traffic.v1.IngestService/UploadPcapIndex"
-	IngestService_Heartbeat_FullMethodName       = "/traffic.v1.IngestService/Heartbeat"
-	IngestService_RegisterProbe_FullMethodName   = "/traffic.v1.IngestService/RegisterProbe"
+	IngestService_UploadFlows_FullMethodName         = "/traffic.v1.IngestService/UploadFlows"
+	IngestService_StreamFlows_FullMethodName         = "/traffic.v1.IngestService/StreamFlows"
+	IngestService_UploadSessions_FullMethodName      = "/traffic.v1.IngestService/UploadSessions"
+	IngestService_UploadPcapIndex_FullMethodName     = "/traffic.v1.IngestService/UploadPcapIndex"
+	IngestService_UploadAssetBindings_FullMethodName = "/traffic.v1.IngestService/UploadAssetBindings"
+	IngestService_Heartbeat_FullMethodName           = "/traffic.v1.IngestService/Heartbeat"
+	IngestService_RegisterProbe_FullMethodName       = "/traffic.v1.IngestService/RegisterProbe"
 )
 
 // IngestServiceClient is the client API for IngestService service.
@@ -43,6 +44,10 @@ type IngestServiceClient interface {
 	UploadSessions(ctx context.Context, in *UploadSessionsRequest, opts ...grpc.CallOption) (*UploadSessionsResponse, error)
 	// 上报 PCAP 索引元数据
 	UploadPcapIndex(ctx context.Context, in *UploadPcapIndexRequest, opts ...grpc.CallOption) (*UploadPcapIndexResponse, error)
+	// Upload passive ARP/DHCP observations through the authenticated probe
+	// channel. The Gateway owns Kafka credentials and returns broker-scoped
+	// exact item results; probes never publish asset.bindings.v1 directly.
+	UploadAssetBindings(ctx context.Context, in *UploadAssetBindingsRequest, opts ...grpc.CallOption) (*UploadAssetBindingsResponse, error)
 	// 探针心跳与配置同步
 	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error)
 	// 探针注册
@@ -115,6 +120,15 @@ func (c *ingestServiceClient) UploadPcapIndex(ctx context.Context, in *UploadPca
 	return out, nil
 }
 
+func (c *ingestServiceClient) UploadAssetBindings(ctx context.Context, in *UploadAssetBindingsRequest, opts ...grpc.CallOption) (*UploadAssetBindingsResponse, error) {
+	out := new(UploadAssetBindingsResponse)
+	err := c.cc.Invoke(ctx, IngestService_UploadAssetBindings_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *ingestServiceClient) Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error) {
 	out := new(HeartbeatResponse)
 	err := c.cc.Invoke(ctx, IngestService_Heartbeat_FullMethodName, in, out, opts...)
@@ -145,6 +159,10 @@ type IngestServiceServer interface {
 	UploadSessions(context.Context, *UploadSessionsRequest) (*UploadSessionsResponse, error)
 	// 上报 PCAP 索引元数据
 	UploadPcapIndex(context.Context, *UploadPcapIndexRequest) (*UploadPcapIndexResponse, error)
+	// Upload passive ARP/DHCP observations through the authenticated probe
+	// channel. The Gateway owns Kafka credentials and returns broker-scoped
+	// exact item results; probes never publish asset.bindings.v1 directly.
+	UploadAssetBindings(context.Context, *UploadAssetBindingsRequest) (*UploadAssetBindingsResponse, error)
 	// 探针心跳与配置同步
 	Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error)
 	// 探针注册
@@ -166,6 +184,9 @@ func (UnimplementedIngestServiceServer) UploadSessions(context.Context, *UploadS
 }
 func (UnimplementedIngestServiceServer) UploadPcapIndex(context.Context, *UploadPcapIndexRequest) (*UploadPcapIndexResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadPcapIndex not implemented")
+}
+func (UnimplementedIngestServiceServer) UploadAssetBindings(context.Context, *UploadAssetBindingsRequest) (*UploadAssetBindingsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadAssetBindings not implemented")
 }
 func (UnimplementedIngestServiceServer) Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Heartbeat not implemented")
@@ -265,6 +286,24 @@ func _IngestService_UploadPcapIndex_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IngestService_UploadAssetBindings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadAssetBindingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IngestServiceServer).UploadAssetBindings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IngestService_UploadAssetBindings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IngestServiceServer).UploadAssetBindings(ctx, req.(*UploadAssetBindingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IngestService_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HeartbeatRequest)
 	if err := dec(in); err != nil {
@@ -319,6 +358,10 @@ var IngestService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadPcapIndex",
 			Handler:    _IngestService_UploadPcapIndex_Handler,
+		},
+		{
+			MethodName: "UploadAssetBindings",
+			Handler:    _IngestService_UploadAssetBindings_Handler,
 		},
 		{
 			MethodName: "Heartbeat",

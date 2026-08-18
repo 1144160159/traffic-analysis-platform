@@ -24,6 +24,9 @@ type Config struct {
 type ServerConfig struct {
 	GRPCPort int `env:"ASSET_GRPC_PORT" envDefault:"50053"`
 	HTTPPort int `env:"ASSET_HTTP_PORT" envDefault:"8083"`
+	// GRPCEnableReflection 是否注册 gRPC reflection 服务。
+	// 默认关闭，生产环境不得开启（reflection 会暴露全部服务与消息结构）。
+	GRPCEnableReflection bool `env:"ASSET_GRPC_ENABLE_REFLECTION" envDefault:"false"`
 }
 
 type PostgresConfig struct {
@@ -91,13 +94,16 @@ type AssetGovernanceConfig struct {
 }
 
 type KafkaConfig struct {
-	Enabled                bool          `env:"ASSET_KAFKA_ENABLED" envDefault:"true"`
+	Enabled                bool          `env:"ASSET_KAFKA_ENABLED" envDefault:"false"`
 	Brokers                string        `env:"ASSET_KAFKA_BROKERS" envDefault:"kafka-bootstrap.middleware.svc:9092"`
 	Topic                  string        `env:"ASSET_KAFKA_TOPIC" envDefault:"asset.bindings.v1"`
 	GroupID                string        `env:"ASSET_KAFKA_GROUP_ID" envDefault:"asset-service-bindings"`
 	MinBytes               int           `env:"ASSET_KAFKA_MIN_BYTES" envDefault:"1"`
 	MaxBytes               int           `env:"ASSET_KAFKA_MAX_BYTES" envDefault:"1048576"`
+	BindingDLQTopic        string        `env:"ASSET_BINDING_DLQ_TOPIC" envDefault:"dlq.v1"`
+	BindingMaxAttempts     int           `env:"ASSET_BINDING_MAX_ATTEMPTS" envDefault:"8"`
 	EventOutboxEnabled     bool          `env:"ASSET_EVENT_OUTBOX_ENABLED" envDefault:"false"`
+	EventOutboxTenantID    string        `env:"ASSET_EVENT_OUTBOX_TENANT_ID" envDefault:""`
 	EventTopic             string        `env:"ASSET_EVENT_TOPIC" envDefault:"asset.events.v2"`
 	DiscoveryOutboxEnabled bool          `env:"ASSET_DISCOVERY_OUTBOX_ENABLED" envDefault:"false"`
 	DiscoveryEventTopic    string        `env:"ASSET_DISCOVERY_EVENT_TOPIC" envDefault:"asset.discovery.events.v1"`
@@ -117,6 +123,18 @@ type ProjectionConfig struct {
 	Lease      time.Duration `env:"ASSET_PROJECTION_LEASE" envDefault:"45s"`
 	OpenSearch ProjectionOpenSearchConfig
 	Nebula     ProjectionNebulaConfig
+	ClickHouse ProjectionClickHouseConfig
+}
+
+type ProjectionClickHouseConfig struct {
+	Enabled  bool          `env:"ASSET_PROJECTION_CLICKHOUSE_ENABLED" envDefault:"false"`
+	Hosts    []string      `env:"ASSET_PROJECTION_CLICKHOUSE_HOSTS" envSeparator:"," envDefault:"clickhouse-1.middleware.svc:9000,clickhouse-2.middleware.svc:9000"`
+	Database string        `env:"ASSET_PROJECTION_CLICKHOUSE_DATABASE" envDefault:"traffic"`
+	Username string        `env:"ASSET_PROJECTION_CLICKHOUSE_USERNAME" envDefault:"default"`
+	Password string        `env:"ASSET_PROJECTION_CLICKHOUSE_PASSWORD"`
+	Table    string        `env:"ASSET_PROJECTION_CLICKHOUSE_TABLE" envDefault:"traffic.source_asset_facts_v1"`
+	Dial     time.Duration `env:"ASSET_PROJECTION_CLICKHOUSE_DIAL_TIMEOUT" envDefault:"5s"`
+	Read     time.Duration `env:"ASSET_PROJECTION_CLICKHOUSE_READ_TIMEOUT" envDefault:"8s"`
 }
 
 type ProjectionOpenSearchConfig struct {
@@ -540,9 +558,13 @@ type AssetEvidenceObjectSet struct {
 
 // MacIpBinding MAC→IP 绑定（来自 ARP/DHCP 被动发现）
 type MacIpBinding struct {
-	MACAddress string `json:"mac_address"`
-	IPAddress  string `json:"ip_address"`
-	TenantID   string `json:"tenant_id"`
-	ObservedAt int64  `json:"observed_at"`
-	Source     string `json:"source"` // arp / dhcp
+	MACAddress    string `json:"mac_address"`
+	IPAddress     string `json:"ip_address"`
+	TenantID      string `json:"tenant_id"`
+	ObservedAt    int64  `json:"observed_at"`
+	Source        string `json:"source"` // arp / dhcp
+	ObservationID string `json:"observation_id"`
+	ProbeID       string `json:"probe_id"`
+	VlanID        string `json:"vlan_id,omitempty"`
+	SourceEventID string `json:"source_event_id,omitempty"`
 }

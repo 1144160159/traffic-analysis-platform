@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -59,7 +60,21 @@ func TestReplayHTTPHandlerRejectsMissingReplayScope(t *testing.T) {
 
 func TestReplayHTTPHandlerDryRunUsesTokenTenantAndActorFallback(t *testing.T) {
 	replayer := &fakeFallbackReplayer{fileCount: 2, totalSize: 2048}
-	handler := NewReplayHTTPHandler(NewReplayManager(replayer, nil, zap.NewNop()), fakeReplayValidator{
+	manager := NewReplayManager(replayer, nil, zap.NewNop())
+	approvals := NewMemoryReplayApprovalStore()
+	if err := approvals.CreateApproval(context.Background(), ReplayApproval{
+		TenantID:    "tenant-a",
+		ApprovalID:  "APPROVAL-20260628-002",
+		RequestedBy: "operator-1",
+		ApprovedBy:  "operator-2",
+		Status:      ApprovalStatusApproved,
+		Reason:      "test approval",
+		CreatedAt:   time.Now(),
+	}); err != nil {
+		t.Fatalf("seed approval: %v", err)
+	}
+	manager.SetApprovalStore(approvals)
+	handler := NewReplayHTTPHandler(manager, fakeReplayValidator{
 		info: &auth.TokenInfo{TenantID: "tenant-a", ProbeID: "operator-1", Scopes: []string{config.ScopeDLQReplay}},
 	}, zap.NewNop())
 	body := map[string]interface{}{
@@ -104,5 +119,72 @@ func TestReplayHTTPHandlerAcceptsAdminWildcardScope(t *testing.T) {
 	}
 	if hasReplayScope([]string{"ingest:write"}) {
 		t.Fatalf("ingest write must not allow dlq replay")
+	}
+}
+
+func TestReplayHTTPHandlerCreateApprovalRequiresAdminScope(t *testing.T) {
+	manager := NewReplayManager(&fakeFallbackReplayer{}, nil, zap.NewNop())
+	approvals := NewMemoryReplayApprovalStore()
+	manager.SetApprovalStore(approvals)
+	handler := NewReplayHTTPHandler(manager, fakeReplayValidator{
+		info: &auth.TokenInfo{TenantID: "tenant-a", ProbeID: "operator-1", Scopes: []string{config.ScopeDLQReplay}},
+	}, zap.NewNop())
+	handler.SetApprovalStore(approvals)
+
+	body, _ := json.Marshal(map[string]interface{}{
+		"tenant_id":    "tenant-a",
+		"approval_id":  "APPROVAL-20260628-003",
+		"requested_by": "analyst-1",
+		"approved_by":  "operator-2",
+		"reason":       "approve replay",
+	})
+	req := httptest.NewRequest(http.MethodPost, defaultReplayApprovalPath, bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer token-1")
+	rr := httptest.NewRecorder()
+	handler.HandleCreateApproval(rr, req)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("status=%d want 403 body=%s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestReplayHTTPHandlerCreateApprovalAndReplayRoundTrip(t *testing.T) {
+	replayer := &fakeFallbackReplayer{fileCount: 1, totalSize: 512}
+	manager := NewReplayManager(replayer, nil, zap.NewNop())
+	approvals := NewMemoryReplayApprovalStore()
+	manager.SetApprovalStore(approvals)
+	handler := NewReplayHTTPHandler(manager, fakeReplayValidator{
+		info: &auth.TokenInfo{TenantID: "tenant-a", ProbeID: "operator-1", Scopes: []string{config.ScopeAdminAll}},
+	}, zap.NewNop())
+	handler.SetApprovalStore(approvals)
+
+	createBody, _ := json.Marshal(map[string]interface{}{
+		"approval_id":  "APPROVAL-20260628-004",
+		"requested_by": "analyst-1",
+		"approved_by":  "operator-1",
+		"reason":       "approve replay after repair",
+	})
+	req := httptest.NewRequest(http.MethodPost, defaultReplayApprovalPath, bytes.NewReader(createBody))
+	req.Header.Set("Authorization", "Bearer token-1")
+	rr := httptest.NewRecorder()
+	handler.HandleCreateApproval(rr, req)
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("create status=%d want 201 body=%s", rr.Code, rr.Body.String())
+	}
+
+	replayBody, _ := json.Marshal(map[string]interface{}{
+		"requested_by":    "analyst-1",
+		"approved_by":     "operator-1",
+		"approval_id":     "APPROVAL-20260628-004",
+		"reason":          "recover after schema repair",
+		"repair_summary":  "fixed malformed event payloads",
+		"idempotency_key": "tenant-a:APPROVAL-20260628-004:dry-run",
+		"dry_run":         true,
+	})
+	req2 := httptest.NewRequest(http.MethodPost, defaultReplayPath, bytes.NewReader(replayBody))
+	req2.Header.Set("Authorization", "Bearer token-1")
+	rr2 := httptest.NewRecorder()
+	handler.HandleReplayFallback(rr2, req2)
+	if rr2.Code != http.StatusOK {
+		t.Fatalf("replay status=%d want 200 body=%s", rr2.Code, rr2.Body.String())
 	}
 }

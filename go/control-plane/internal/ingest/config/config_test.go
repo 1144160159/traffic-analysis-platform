@@ -28,6 +28,25 @@ func TestValidate(t *testing.T) {
 	}
 }
 
+func TestM02WriterActivationRequiresExactCanaryScope(t *testing.T) {
+	cfg := &Config{}
+	cfg.SetDefaults()
+	cfg.Kafka.Brokers = []string{"localhost:9092"}
+	cfg.Handler.FlowWriterEnabled = true
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("enabled writer accepted an empty canary scope")
+	}
+	cfg.Handler.CanaryTenantID = "tenant-canary"
+	cfg.Handler.CanaryProbeIDs = []string{"probe-a", "probe-a"}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("enabled writer accepted duplicate probe IDs")
+	}
+	cfg.Handler.CanaryProbeIDs = []string{"probe-a"}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("exact canary scope rejected: %v", err)
+	}
+}
+
 func TestDedupConfig(t *testing.T) {
 	cfg := &Config{}
 	cfg.SetDefaults()
@@ -96,5 +115,24 @@ func TestProductionConfigRejectsAnonymousProbeTokens(t *testing.T) {
 	cfg.Auth.AllowNoToken = true
 	if err := validateProductionConfig(cfg, EnvironmentProduction); err == nil {
 		t.Fatal("production configuration accepted ALLOW_NO_TOKEN")
+	}
+}
+
+func TestTLSRotationRequiresCompleteFailClosedPolicy(t *testing.T) {
+	cfg := productionConfig()
+	cfg.Server.TLSRotationEnabled = true
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("TLS rotation accepted without manifest, CRL, and identities")
+	}
+	cfg.Server.TLSManifestFile = "/run/pki/generation.json"
+	cfg.Server.TLSCRLFile = "/run/pki/client.crl.pem"
+	cfg.Server.TLSServerDNSNames = []string{"ingest-gateway", "ingest-gateway.traffic-analysis.svc"}
+	cfg.Server.TLSClientDNSNames = []string{"probe-agent"}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("complete TLS rotation policy rejected: %v", err)
+	}
+	cfg.Server.TLSClientDNSNames = []string{"*.traffic-analysis.svc"}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("TLS rotation accepted wildcard client identity")
 	}
 }

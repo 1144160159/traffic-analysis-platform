@@ -39,14 +39,16 @@ type ConsoleClientConfig struct {
 }
 
 // DefaultConsoleConfig 默认 Console 配置
-// 支持环境变量覆盖: NEBULA_CONSOLE_BIN, NEBULA_CONSOLE_ADDR, NEBULA_CONSOLE_PORT
+// 支持环境变量覆盖: NEBULA_CONSOLE_BIN, NEBULA_CONSOLE_ADDR, NEBULA_CONSOLE_PORT,
+// NEBULA_CONSOLE_USERNAME, NEBULA_CONSOLE_PASSWORD
+// 用户名/密码禁止硬编码默认值;未配置时 NewConsoleClient 将 fail-closed 拒绝创建。
 func DefaultConsoleConfig() ConsoleClientConfig {
 	cfg := ConsoleClientConfig{
 		ConsoleBin: "/usr/local/nebula/bin/nebula-console",
 		GraphAddr:  "nebula-graph.middleware.svc",
 		GraphPort:  9669,
-		Username:   "root",
-		Password:   "root",
+		Username:   os.Getenv("NEBULA_CONSOLE_USERNAME"),
+		Password:   os.Getenv("NEBULA_CONSOLE_PASSWORD"),
 		Timeout:    30 * time.Second,
 		RetryCount: 3,
 	}
@@ -83,6 +85,9 @@ func NewConsoleClient(cfg ConsoleClientConfig, logger *zap.Logger) (*ConsoleClie
 	}
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 30 * time.Second
+	}
+	if strings.TrimSpace(cfg.Username) == "" || strings.TrimSpace(cfg.Password) == "" {
+		return nil, fmt.Errorf("nebula console credentials must be provided via NEBULA_CONSOLE_USERNAME/NEBULA_CONSOLE_PASSWORD; refusing default credentials")
 	}
 
 	client := &ConsoleClient{
@@ -156,6 +161,10 @@ func (cc *ConsoleClient) Execute(ctx context.Context, nGQL string) (*ResultSet, 
 // executeConsole 调用 nebula-console 执行查询
 func (cc *ConsoleClient) executeConsole(ctx context.Context, nGQL string) (*ResultSet, error) {
 	nGQL = normalizeNGQL(nGQL)
+	// 密码仅来自配置(环境变量注入,禁止硬编码默认口令)。nebula-console CLI
+	// 未提供 stdin/配置文件认证方式,密码经 -p 出现在子进程 argv(ps 可见),
+	// 这是上游工具的固有限制;本客户端通过显式设置 cmd.Env 控制子进程环境,
+	// 且密码绝不写入日志。
 	args := []string{
 		"-addr", cc.config.GraphAddr,
 		"-port", fmt.Sprintf("%d", cc.config.GraphPort),
@@ -165,6 +174,7 @@ func (cc *ConsoleClient) executeConsole(ctx context.Context, nGQL string) (*Resu
 	}
 
 	cmd := exec.CommandContext(ctx, cc.config.ConsoleBin, args...)
+	cmd.Env = os.Environ()
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 

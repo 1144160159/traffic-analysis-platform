@@ -177,7 +177,12 @@ func (h *FeedbackHandler) getAuthoritativeFeedback(
 		return nil, sql.ErrConnDone
 	}
 	rows, err := h.actionAudit.db.QueryContext(ctx, `
-		SELECT feedback_id::text,alert_id,tenant_id,COALESCE(user_id::text,''),
+		SELECT COALESCE(NULLIF(payload->>'feedback_id',''),feedback_id::text),
+		       event_id::text,COALESCE(payload->>'prediction_id',''),
+		       COALESCE((payload->>'label_revision')::bigint,0),
+		       COALESCE(payload->>'adjudication_state',''),
+		       COALESCE(payload->>'previous_event_id',''),
+		       alert_id,tenant_id,COALESCE(user_id::text,''),
 		       label,COALESCE(reason_code,''),COALESCE(comment,''),add_to_whitelist,
 		       alert_type,severity,model_version,rule_version,created_at
 		FROM alert_feedback
@@ -193,7 +198,9 @@ func (h *FeedbackHandler) getAuthoritativeFeedback(
 	for rows.Next() {
 		record := &FeedbackRecord{}
 		if err := rows.Scan(
-			&record.FeedbackID, &record.AlertID, &record.TenantID, &record.UserID,
+			&record.FeedbackID, &record.EventID, &record.PredictionID,
+			&record.LabelRevision, &record.AdjudicationState, &record.PreviousEventID,
+			&record.AlertID, &record.TenantID, &record.UserID,
 			&record.Label, &record.ReasonCode, &record.Comment, &record.AddToWhitelist,
 			&record.AlertType, &record.Severity, &record.ModelVersion,
 			&record.RuleVersion, &record.CreatedAt,
@@ -216,9 +223,21 @@ func (h *FeedbackHandler) getAuthoritativeFeedbackStats(
 		return nil, sql.ErrConnDone
 	}
 	rows, err := h.actionAudit.db.QueryContext(ctx, `
-		SELECT label,count(*) FROM alert_feedback
-		WHERE tenant_id=$1 AND created_at >= now()-interval '30 days'
-		GROUP BY label`,
+		WITH effective AS (
+			SELECT label FROM alert_feedback
+			WHERE tenant_id=$1 AND created_at >= now()-interval '30 days'
+			  AND payload->>'event_type' IS DISTINCT FROM 'model.feedback.v1'
+			UNION ALL
+			SELECT label FROM (
+				SELECT DISTINCT ON (payload->>'prediction_id') label,
+				       payload->>'adjudication_state' AS adjudication_state
+				FROM alert_feedback
+				WHERE tenant_id=$1 AND created_at >= now()-interval '30 days'
+				  AND payload->>'event_type'='model.feedback.v1'
+				ORDER BY payload->>'prediction_id',(payload->>'label_revision')::bigint DESC
+			) heads WHERE adjudication_state <> 'RETRACTED'
+		)
+		SELECT label,count(*) FROM effective GROUP BY label`,
 		tenantID,
 	)
 	if err != nil {
@@ -264,9 +283,21 @@ func (h *FeedbackHandler) getAuthoritativeFPRanking(
 		limit = 10
 	}
 	rows, err := h.actionAudit.db.QueryContext(ctx, `
-		SELECT COALESCE(reason_code,''),count(*) FROM alert_feedback
-		WHERE tenant_id=$1 AND label='FP'
-		  AND created_at >= now()-interval '30 days'
+		WITH effective AS (
+			SELECT label,reason_code FROM alert_feedback
+			WHERE tenant_id=$1 AND created_at >= now()-interval '30 days'
+			  AND payload->>'event_type' IS DISTINCT FROM 'model.feedback.v1'
+			UNION ALL
+			SELECT label,reason_code FROM (
+				SELECT DISTINCT ON (payload->>'prediction_id') label,reason_code,
+				       payload->>'adjudication_state' AS adjudication_state
+				FROM alert_feedback
+				WHERE tenant_id=$1 AND created_at >= now()-interval '30 days'
+				  AND payload->>'event_type'='model.feedback.v1'
+				ORDER BY payload->>'prediction_id',(payload->>'label_revision')::bigint DESC
+			) heads WHERE adjudication_state <> 'RETRACTED'
+		)
+		SELECT COALESCE(reason_code,''),count(*) FROM effective WHERE label='FP'
 		GROUP BY reason_code ORDER BY count(*) DESC,reason_code LIMIT $2`,
 		tenantID, limit,
 	)

@@ -32,6 +32,7 @@ type Config struct {
 	API           APIConfig
 	Cutter        CutterConfig
 	Task          TaskConfig
+	Restoration   RestorationConfig
 	Kafka         KafkaConfig
 	KafkaSecurity commonkafka.SecurityConfig
 	Auth          AuthConfig
@@ -170,13 +171,40 @@ type CutterConfig struct {
 
 // TaskConfig 异步任务配置
 type TaskConfig struct {
-	WorkerCount        int           `env:"TASK_WORKER_COUNT" envDefault:"3"`
-	QueueSize          int           `env:"TASK_QUEUE_SIZE" envDefault:"100"`
-	ResultExpiry       time.Duration `env:"TASK_RESULT_EXPIRY" envDefault:"24h"`
-	StatusPollInterval time.Duration `env:"TASK_STATUS_POLL_INTERVAL" envDefault:"5s"`
-	MaxRetries         int           `env:"TASK_MAX_RETRIES" envDefault:"3"`
-	ShutdownTimeout    time.Duration `env:"TASK_SHUTDOWN_TIMEOUT" envDefault:"30s"`
-	TaskTimeout        time.Duration `env:"TASK_TIMEOUT" envDefault:"30m"` // 单任务超时
+	WorkerCount           int           `env:"TASK_WORKER_COUNT" envDefault:"3"`
+	QueueSize             int           `env:"TASK_QUEUE_SIZE" envDefault:"100"`
+	ResultExpiry          time.Duration `env:"TASK_RESULT_EXPIRY" envDefault:"24h"`
+	StatusPollInterval    time.Duration `env:"TASK_STATUS_POLL_INTERVAL" envDefault:"5s"`
+	MaxRetries            int           `env:"TASK_MAX_RETRIES" envDefault:"3"`
+	ShutdownTimeout       time.Duration `env:"TASK_SHUTDOWN_TIMEOUT" envDefault:"30s"`
+	TaskTimeout           time.Duration `env:"TASK_TIMEOUT" envDefault:"30m"` // 单任务超时
+	PipelineV1Enabled     bool          `env:"FORENSICS_PIPELINE_V1_ENABLED" envDefault:"false"`
+	CompatibleWorkerReady bool          `env:"FORENSICS_WORKER_COMPATIBLE_READY" envDefault:"false"`
+	WorkerEnabled         bool          `env:"FORENSICS_WORKER_ENABLED" envDefault:"false"`
+	WorkerID              string        `env:"FORENSICS_WORKER_ID" envDefault:""`
+	ExecutionLease        time.Duration `env:"FORENSICS_WORKER_EXECUTION_LEASE" envDefault:"31m"`
+	SourceRetention       time.Duration `env:"FORENSICS_SOURCE_RETENTION" envDefault:"2160h"`
+}
+
+// RestorationConfig is an additive, default-off admission boundary. These
+// limits are mandatory only when the writer is explicitly enabled.
+type RestorationConfig struct {
+	Enabled           bool          `env:"RESTORATION_ENABLED" envDefault:"false"`
+	QuarantineBucket  string        `env:"RESTORATION_QUARANTINE_BUCKET" envDefault:"forensics-quarantine"`
+	MaxSourceBytes    int64         `env:"RESTORATION_MAX_SOURCE_BYTES" envDefault:"536870912"`
+	MaxSourceObjects  int           `env:"RESTORATION_MAX_SOURCE_OBJECTS" envDefault:"32"`
+	MaxPackets        uint64        `env:"RESTORATION_MAX_PACKETS" envDefault:"1000000"`
+	MaxStreamBytes    uint64        `env:"RESTORATION_MAX_STREAM_BYTES" envDefault:"67108864"`
+	MaxObjectBytes    int64         `env:"RESTORATION_MAX_OBJECT_BYTES" envDefault:"33554432"`
+	MaxPartCount      int           `env:"RESTORATION_MAX_PART_COUNT" envDefault:"100"`
+	MaxMIMEDepth      int           `env:"RESTORATION_MAX_MIME_DEPTH" envDefault:"8"`
+	MaxExpansionRatio float64       `env:"RESTORATION_MAX_EXPANSION_RATIO" envDefault:"20"`
+	TaskTimeout       time.Duration `env:"RESTORATION_TASK_TIMEOUT" envDefault:"5m"`
+	TenantConcurrency int           `env:"RESTORATION_TENANT_CONCURRENCY" envDefault:"1"`
+	RetentionDuration time.Duration `env:"RESTORATION_RETENTION_DURATION" envDefault:"168h"`
+	OrphanInterval    time.Duration `env:"RESTORATION_ORPHAN_INTERVAL" envDefault:"1m"`
+	OrphanGracePeriod time.Duration `env:"RESTORATION_ORPHAN_GRACE_PERIOD" envDefault:"15m"`
+	OrphanBatchSize   int           `env:"RESTORATION_ORPHAN_BATCH_SIZE" envDefault:"100"`
 }
 
 // KafkaConfig Kafka 配置（用于审计日志）
@@ -509,6 +537,34 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	if c.Restoration.Enabled {
+		if !isValidBucketName(c.Restoration.QuarantineBucket) {
+			return &ConfigError{Field: "Restoration.QuarantineBucket", Message: "enabled restoration requires a valid quarantine bucket"}
+		}
+		if c.Restoration.MaxSourceBytes <= 0 || c.Restoration.MaxSourceObjects <= 0 || c.Restoration.MaxSourceObjects > 1000 ||
+			c.Restoration.MaxPackets == 0 || c.Restoration.MaxStreamBytes == 0 || c.Restoration.MaxObjectBytes <= 0 ||
+			c.Restoration.MaxPartCount <= 0 || c.Restoration.MaxMIMEDepth <= 0 || c.Restoration.MaxExpansionRatio < 1 ||
+			c.Restoration.TaskTimeout <= 0 || c.Restoration.TenantConcurrency <= 0 || c.Restoration.RetentionDuration <= 0 ||
+			c.Restoration.OrphanInterval <= 0 || c.Restoration.OrphanGracePeriod < c.Restoration.TaskTimeout ||
+			c.Restoration.OrphanBatchSize <= 0 || c.Restoration.OrphanBatchSize > 1000 {
+			return &ConfigError{Field: "Restoration", Message: "enabled restoration requires positive bounded safety limits"}
+		}
+		if c.Restoration.MaxObjectBytes > int64(c.Restoration.MaxStreamBytes) || c.Restoration.MaxStreamBytes > uint64(c.Restoration.MaxSourceBytes) {
+			return &ConfigError{Field: "Restoration", Message: "limits must satisfy max_object_bytes <= max_stream_bytes <= max_source_bytes"}
+		}
+	}
+	if c.Task.WorkerEnabled && !c.Task.CompatibleWorkerReady {
+		return &ConfigError{Field: "Task.WorkerEnabled", Message: "worker consumption requires compatible-worker readiness"}
+	}
+	if c.Task.PipelineV1Enabled && (!c.Task.WorkerEnabled || !c.Task.CompatibleWorkerReady) {
+		return &ConfigError{Field: "Task.PipelineV1Enabled", Message: "task writer requires an enabled compatible worker"}
+	}
+	if c.Task.CompatibleWorkerReady {
+		if strings.TrimSpace(c.Task.WorkerID) == "" || c.Task.ExecutionLease <= c.Task.TaskTimeout || c.Task.SourceRetention <= 0 {
+			return &ConfigError{Field: "Task", Message: "compatible versioned worker requires unique ID, lease longer than task timeout, and source retention"}
+		}
+	}
+
 	// ========== Auth 验证 ==========
 	if c.Auth.Enabled {
 		if c.Auth.JWTSigningKey == "" || c.Auth.JWTSigningKey == "your-256-bit-secret-key-here" {
@@ -660,8 +716,19 @@ func (c *Config) ToMap() map[string]interface{} {
 			"max_packets":    c.Cutter.MaxPackets,
 		},
 		"task": map[string]interface{}{
-			"worker_count": c.Task.WorkerCount,
-			"queue_size":   c.Task.QueueSize,
+			"worker_count":            c.Task.WorkerCount,
+			"queue_size":              c.Task.QueueSize,
+			"pipeline_v1_enabled":     c.Task.PipelineV1Enabled,
+			"compatible_worker_ready": c.Task.CompatibleWorkerReady,
+			"worker_enabled":          c.Task.WorkerEnabled,
+			"writer_enabled":          c.Task.PipelineV1Enabled && c.Task.WorkerEnabled && c.Task.CompatibleWorkerReady,
+		},
+		"restoration": map[string]interface{}{
+			"enabled":            c.Restoration.Enabled,
+			"max_source_bytes":   c.Restoration.MaxSourceBytes,
+			"max_stream_bytes":   c.Restoration.MaxStreamBytes,
+			"max_object_bytes":   c.Restoration.MaxObjectBytes,
+			"tenant_concurrency": c.Restoration.TenantConcurrency,
 		},
 		"auth": map[string]interface{}{
 			"enabled": c.Auth.Enabled,

@@ -144,8 +144,8 @@ func TestCancelAlertReportCommitsRevisionHistoryOutboxAndAudit(t *testing.T) {
 				`{"action_id":"alert-report-cancel","expected_revision":2,"reason":"confirmed operator cancellation"}`,
 			))
 			request.Header.Set("Content-Type", "application/json")
-			request.Header.Set("X-Tenant-ID", "tenant-a")
-			request.Header.Set("X-User-ID", "operator-a")
+			request = withTenant(request, "tenant-a")
+			request = withUser(request, "operator-a")
 			request.Header.Set("Idempotency-Key", "alert-report-cancel-key-000001")
 			request = request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{authmodel.ScopeAlertExport}))
 			request = mux.SetURLVars(request, map[string]string{"id": "AL-1", "job_id": "alert-report-job-1"})
@@ -188,8 +188,8 @@ func TestCompensateAlertReportRequiresResidualManifestAndCommitsControlState(t *
 		`{"action_id":"alert-report-compensate","expected_revision":5,"reason":"confirmed residual object cleanup"}`,
 	))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Tenant-ID", "tenant-a")
-	request.Header.Set("X-User-ID", "operator-b")
+	request = withTenant(request, "tenant-a")
+	request = withUser(request, "operator-b")
 	request.Header.Set("Idempotency-Key", "alert-report-compensate-key-0001")
 	request = request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{authmodel.ScopeAlertExport}))
 	request = mux.SetURLVars(request, map[string]string{"id": "AL-1", "job_id": "alert-report-job-1"})
@@ -265,7 +265,7 @@ func TestCreateAlertReportFreezesSnapshotAndCommitsJobOutboxAudit(t *testing.T) 
 		`{"action_id":"alert-report-export","format":"pdf","snapshot_id":"alert:AL-1:revision:7","reason":"confirmed report export"}`,
 	))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Tenant-ID", "tenant-a")
+	request = withTenant(request, "tenant-a")
 	request.Header.Set("Idempotency-Key", "alert-report-key-000001")
 	request = request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{authmodel.ScopeAlertExport}))
 	request = mux.SetURLVars(request, map[string]string{"id": "AL-1"})
@@ -312,7 +312,7 @@ func TestCreateAlertReportRejectsStaleSnapshotBeforeTransaction(t *testing.T) {
 		`{"action_id":"alert-report-export","format":"pdf","snapshot_id":"alert:AL-1:revision:6","reason":"confirmed report export"}`,
 	))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Tenant-ID", "tenant-a")
+	request = withTenant(request, "tenant-a")
 	request.Header.Set("Idempotency-Key", "alert-report-key-000002")
 	request = request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{authmodel.ScopeAlertExport}))
 	request = mux.SetURLVars(request, map[string]string{"id": "AL-1"})
@@ -385,6 +385,135 @@ func TestAlertReportArtifactsAreDeterministicAndObjectLevelValid(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestAlertReportBuilderFreezesPostgresSectionWatermarks(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	assetUpdated := time.Date(2026, 8, 16, 1, 2, 3, 4, time.UTC)
+	actionUpdated := assetUpdated.Add(time.Minute)
+	auditCreated := actionUpdated.Add(time.Minute)
+	mock.ExpectQuery("FROM assets WHERE tenant_id=\\$1").
+		WillReturnRows(sqlmock.NewRows([]string{"asset_id", "display_code", "ip_address", "hostname", "asset_type", "status", "criticality", "updated_at"}).
+			AddRow("00000000-0000-0000-0000-000000000001", "AS-1", "10.0.0.1", "host-a", "server", "active", 5, assetUpdated))
+	mock.ExpectQuery("FROM alert_response_actions WHERE tenant_id=\\$1").
+		WillReturnRows(sqlmock.NewRows([]string{"job_id", "action", "target", "reason", "dry_run", "status", "created_at", "updated_at"}).
+			AddRow("response-1", "isolate", "10.0.0.1", "confirmed response", false, "completed", actionUpdated.Add(-time.Minute), actionUpdated))
+	mock.ExpectQuery("FROM audit_logs WHERE tenant_id=\\$1").
+		WillReturnRows(sqlmock.NewRows([]string{"action", "object_type", "object_id", "detail", "created_at"}).
+			AddRow("ALERT_UPDATED", "alert", "AL-1", `{}`, auditCreated))
+
+	model := reportModel()
+	model.Alert.SrcIP, model.Alert.DstIP = "10.0.0.1", "10.0.0.2"
+	builder := &defaultAlertReportBuilder{db: db}
+	builder.loadAssets(context.Background(), &model)
+	builder.loadResponseActions(context.Background(), &model)
+	builder.loadAudit(context.Background(), &model)
+
+	want := map[string]string{
+		"postgresql.assets.updated_at":                 assetUpdated.Format(time.RFC3339Nano),
+		"postgresql.alert_response_actions.updated_at": actionUpdated.Format(time.RFC3339Nano),
+		"postgresql.audit_logs.created_at":             auditCreated.Format(time.RFC3339Nano),
+	}
+	for key, value := range want {
+		if model.SourceWatermarks[key] != value {
+			t.Fatalf("watermark %s=%q want=%q", key, model.SourceWatermarks[key], value)
+		}
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAlertReportManifestExposesExpiryAndFailsClosedAfterDeadline(t *testing.T) {
+	completedAt := time.Now().UTC().Add(-2 * time.Hour)
+	handler := NewHandler(nil, nil, zap.NewNop())
+	handler.SetAlertReportArtifactTTL(time.Hour)
+	job := alertReportJob{
+		JobID: "alert-report-expired-1", TenantID: "tenant-a", AlertID: "AL-1", Format: "pdf",
+		Status: "completed", Revision: 3, RequestedSnapshot: "alert:AL-1:revision:7",
+		SnapshotSHA256: "sha256:snapshot", ArtifactSHA256: "sha256:artifact", SizeBytes: 128,
+		MIMEType: "application/pdf", ObjectBucket: "report-artifacts",
+		ObjectKey: "tenant-a/alerts/AL-1/alert-report-expired-1.pdf", CompletedAt: &completedAt,
+		MissingSections: []string{}, SourceWatermarks: map[string]string{"clickhouse.alerts.state_version": "7"},
+	}
+
+	recorder := httptest.NewRecorder()
+	handler.writeAlertReportJobResponse(recorder, context.Background(), http.StatusOK, job)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", recorder.Code, recorder.Body.String())
+	}
+	var envelope struct {
+		Data map[string]interface{} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	manifest, ok := envelope.Data["manifest"].(map[string]interface{})
+	if !ok || manifest["manifest_version"] != float64(1) || manifest["object_format_version"] != float64(1) || manifest["status"] != "expired" {
+		t.Fatalf("unexpected manifest: %#v", envelope.Data["manifest"])
+	}
+	if envelope.Data["artifact_expired"] != true || envelope.Data["artifact_expires_at"] == nil || envelope.Data["download_url"] != nil {
+		t.Fatalf("expired artifact authority was not failed closed: %#v", envelope.Data)
+	}
+}
+
+func TestAlertReportFreshManifestKeepsBoundedDownloadAuthority(t *testing.T) {
+	completedAt := time.Now().UTC().Add(-time.Minute)
+	handler := NewHandler(nil, nil, zap.NewNop())
+	handler.SetAlertReportArtifactTTL(time.Hour)
+	job := alertReportJob{
+		JobID: "alert-report-fresh-1", AlertID: "AL-1", Format: "json", Status: "completed", Revision: 3,
+		RequestedSnapshot: "alert:AL-1:revision:7", SnapshotSHA256: "sha256:snapshot",
+		ArtifactSHA256: "sha256:artifact", SizeBytes: 128, MIMEType: "application/json",
+		ObjectKey: "tenant-a/alerts/AL-1/alert-report-fresh-1.json", CompletedAt: &completedAt,
+	}
+	recorder := httptest.NewRecorder()
+	handler.writeAlertReportJobResponse(recorder, context.Background(), http.StatusOK, job)
+	if !strings.Contains(recorder.Body.String(), `"download_url":"/v1/alerts/AL-1/reports/alert-report-fresh-1/download"`) ||
+		!strings.Contains(recorder.Body.String(), `"status":"available"`) {
+		t.Fatalf("fresh manifest did not retain download authority: %s", recorder.Body.String())
+	}
+}
+
+func TestDownloadAlertReportRejectsExpiredArtifactBeforeObjectAccess(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	completedAt := time.Now().UTC().Add(-2 * time.Hour)
+	now := time.Now().UTC()
+	mock.ExpectQuery("FROM alert_report_jobs WHERE tenant_id=\\$1 AND job_id=\\$2").
+		WithArgs("tenant-a", "alert-report-expired-1").
+		WillReturnRows(emptyAlertReportJobRows().AddRow(
+			"alert-report-expired-1", "tenant-a", "AL-1", "pdf", "completed", int64(3),
+			"alert:AL-1:revision:7", "sha256:snapshot", "[]", `{}`,
+			"report-artifacts", "tenant-a/alerts/AL-1/alert-report-expired-1.pdf", "application/pdf", "sha256:artifact", int64(128),
+			"", "operator-a", now, now, completedAt, nil, nil,
+		))
+
+	handler := NewHandler(nil, nil, zap.NewNop())
+	handler.SetActionAuditWriter(NewAlertActionAuditWriter(db, zap.NewNop()))
+	handler.SetAlertReportArtifactTTL(time.Hour)
+	handler.SetAlertReportObjectStore(&memoryAlertReportObjectStore{content: []byte("must-not-be-read")})
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/alerts/AL-1/reports/alert-report-expired-1/download", nil)
+	request = withTenant(request, "tenant-a")
+	request = request.WithContext(context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{authmodel.ScopeAlertExport}))
+	request = mux.SetURLVars(request, map[string]string{"id": "AL-1", "job_id": "alert-report-expired-1"})
+	recorder := httptest.NewRecorder()
+
+	handler.DownloadAlertReport(recorder, request)
+
+	if recorder.Code != http.StatusGone || !strings.Contains(recorder.Body.String(), "REPORT_EXPIRED") {
+		t.Fatalf("status=%d body=%s", recorder.Code, recorder.Body.String())
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
 	}
 }
 

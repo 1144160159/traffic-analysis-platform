@@ -11,6 +11,7 @@
 package converter
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/binary"
@@ -18,6 +19,8 @@ import (
 	"fmt"
 	"net"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,6 +38,11 @@ const CommunityIDVersion = 1
 
 // CommunityIDSeed 默认种子
 const CommunityIDSeed = 0
+
+// RuleChecksumAlgorithm identifies the cross-language wire-rule checksum.
+// Values are typed and length-prefixed, object keys are sorted, and JSON
+// numbers use a normalized scientific representation.
+const RuleChecksumAlgorithm = "md5-typed-canonical-json-v1"
 
 // GenerateCommunityID 生成标准 Community ID
 // 实现参考: https://github.com/corelight/community-id-spec
@@ -200,7 +208,7 @@ type Evidence struct {
 func BuildEvidenceWithID(key, value, evidenceType string) *Evidence {
 	return &Evidence{
 		EvidenceID: uuid.New().String(),
-		Type:        key,
+		Type:       key,
 		//Type: removed (duplicate)
 	}
 }
@@ -211,29 +219,29 @@ func buildRuleEvidence(rule *model.Rule) []*trafficv1.Evidence {
 
 	// 基础规则信息
 	evidence = append(evidence, &trafficv1.Evidence{
-		Type:   "evidence_id",
+		Type:    "evidence_id",
 		Summary: uuid.New().String(),
 	})
 	evidence = append(evidence, &trafficv1.Evidence{
-		Type:   "rule_id",
+		Type:    "rule_id",
 		Summary: rule.RuleID,
 	})
 	evidence = append(evidence, &trafficv1.Evidence{
-		Type:   "rule_name",
+		Type:    "rule_name",
 		Summary: rule.Name,
 	})
 	evidence = append(evidence, &trafficv1.Evidence{
-		Type:   "rule_type",
+		Type:    "rule_type",
 		Summary: rule.Type,
 	})
 	evidence = append(evidence, &trafficv1.Evidence{
-		Type:   "rule_engine",
+		Type:    "rule_engine",
 		Summary: rule.Engine,
 	})
 
 	if rule.Description != "" {
 		evidence = append(evidence, &trafficv1.Evidence{
-			Type:   "description",
+			Type:    "description",
 			Summary: rule.Description,
 		})
 	}
@@ -243,7 +251,7 @@ func buildRuleEvidence(rule *model.Rule) []*trafficv1.Evidence {
 		conditionsJSON, err := json.Marshal(rule.Conditions)
 		if err == nil {
 			evidence = append(evidence, &trafficv1.Evidence{
-				Type:   "conditions_summary",
+				Type:    "conditions_summary",
 				Summary: string(conditionsJSON),
 			})
 		}
@@ -317,11 +325,15 @@ type RuleCommandProto struct {
 	Action      string     `json:"action"`
 	Timestamp   int64      `json:"timestamp"`
 	OperatorID  string     `json:"operator_id"`
+	TraceID     string     `json:"trace_id,omitempty"`
+	RequestID   string     `json:"request_id,omitempty"`
 	Rule        *RuleProto `json:"rule"`
+	Version     int64      `json:"version"`
 	RuleVersion string     `json:"rule_version"`
 	// 元数据
-	SchemaVersion string `json:"schema_version,omitempty"`
-	Checksum      string `json:"checksum,omitempty"`
+	SchemaVersion     string `json:"schema_version,omitempty"`
+	ChecksumAlgorithm string `json:"checksum_algorithm,omitempty"`
+	Checksum          string `json:"checksum,omitempty"`
 }
 
 // RuleProto 规则的 Proto 兼容格式
@@ -387,18 +399,27 @@ func ProtoToModel(proto *RuleProto) *model.Rule {
 
 // CommandToProto 将 model.RuleCommand 转换为 RuleCommandProto
 func CommandToProto(cmd *model.RuleCommand) *RuleCommandProto {
+	eventID := cmd.EventID
+	if eventID == "" {
+		eventID = uuid.NewString()
+	}
 	protoCmd := &RuleCommandProto{
-		EventID:       uuid.New().String(), // 独立的事件ID
-		Action:        cmd.Action,
-		Timestamp:     cmd.Timestamp.UnixMilli(),
-		OperatorID:    cmd.OperatorID,
-		Rule:          ModelToProto(cmd.Rule),
-		RuleVersion:   FormatVersion(cmd.Rule.Version),
-		SchemaVersion: "1.0",
+		EventID:           eventID,
+		Action:            cmd.Action,
+		Timestamp:         cmd.Timestamp.UnixMilli(),
+		OperatorID:        cmd.OperatorID,
+		TraceID:           cmd.TraceID,
+		RequestID:         cmd.RequestID,
+		Rule:              ModelToProto(cmd.Rule),
+		Version:           cmd.Rule.Version,
+		RuleVersion:       FormatVersion(cmd.Rule.Version),
+		SchemaVersion:     "1.1",
+		ChecksumAlgorithm: RuleChecksumAlgorithm,
 	}
 
-	// 计算 checksum
-	protoCmd.Checksum = calculateRuleChecksum(cmd.Rule)
+	// Checksum is calculated from the nested wire RuleProto, not from the
+	// database model, so every consumer can recompute it before state mutation.
+	protoCmd.Checksum, _ = CalculateRuleProtoChecksum(protoCmd.Rule)
 
 	return protoCmd
 }
@@ -406,21 +427,147 @@ func CommandToProto(cmd *model.RuleCommand) *RuleCommandProto {
 // ProtoToCommand 将 RuleCommandProto 转换为 model.RuleCommand
 func ProtoToCommand(proto *RuleCommandProto) *model.RuleCommand {
 	return &model.RuleCommand{
+		EventID:    proto.EventID,
 		Action:     proto.Action,
 		Timestamp:  time.UnixMilli(proto.Timestamp),
 		OperatorID: proto.OperatorID,
+		TraceID:    proto.TraceID,
+		RequestID:  proto.RequestID,
+		Version:    proto.Version,
 		Rule:       ProtoToModel(proto.Rule),
 	}
 }
 
-// calculateRuleChecksum 计算规则内容的校验和
-func calculateRuleChecksum(rule *model.Rule) string {
+// CalculateRuleProtoChecksum calculates the MD5 envelope checksum from a
+// language-neutral typed canonicalization of the nested Kafka rule object.
+func CalculateRuleProtoChecksum(rule *RuleProto) (string, error) {
+	if rule == nil {
+		return "", fmt.Errorf("wire rule is required")
+	}
 	data, err := json.Marshal(rule)
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("marshal wire rule: %w", err)
 	}
-	hash := md5.Sum(data)
-	return fmt.Sprintf("%x", hash)
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	var value interface{}
+	if err := decoder.Decode(&value); err != nil {
+		return "", fmt.Errorf("decode wire rule for checksum: %w", err)
+	}
+	var canonical bytes.Buffer
+	if err := writeTypedCanonicalJSON(&canonical, value); err != nil {
+		return "", err
+	}
+	hash := md5.Sum(canonical.Bytes())
+	return fmt.Sprintf("%x", hash), nil
+}
+
+func writeTypedCanonicalJSON(target *bytes.Buffer, value interface{}) error {
+	switch typed := value.(type) {
+	case nil:
+		target.WriteByte('z')
+	case bool:
+		if typed {
+			target.WriteByte('t')
+		} else {
+			target.WriteByte('f')
+		}
+	case string:
+		writeCanonicalBytes(target, 's', []byte(typed))
+	case json.Number:
+		normalized, err := normalizeCanonicalJSONNumber(typed.String())
+		if err != nil {
+			return err
+		}
+		writeCanonicalBytes(target, 'd', []byte(normalized))
+	case []interface{}:
+		target.WriteByte('a')
+		target.WriteString(strconv.Itoa(len(typed)))
+		target.WriteByte(':')
+		for _, item := range typed {
+			if err := writeTypedCanonicalJSON(target, item); err != nil {
+				return err
+			}
+		}
+	case map[string]interface{}:
+		keys := make([]string, 0, len(typed))
+		for key := range typed {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		target.WriteByte('o')
+		target.WriteString(strconv.Itoa(len(keys)))
+		target.WriteByte(':')
+		for _, key := range keys {
+			writeCanonicalBytes(target, 's', []byte(key))
+			if err := writeTypedCanonicalJSON(target, typed[key]); err != nil {
+				return err
+			}
+		}
+	default:
+		return fmt.Errorf("unsupported JSON checksum value %T", value)
+	}
+	return nil
+}
+
+func writeCanonicalBytes(target *bytes.Buffer, marker byte, value []byte) {
+	target.WriteByte(marker)
+	target.WriteString(strconv.Itoa(len(value)))
+	target.WriteByte(':')
+	target.Write(value)
+}
+
+func normalizeCanonicalJSONNumber(value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", fmt.Errorf("empty JSON number")
+	}
+	sign := ""
+	if value[0] == '-' {
+		sign = "-"
+		value = value[1:]
+	}
+	exponent := 0
+	if separator := strings.IndexAny(value, "eE"); separator >= 0 {
+		parsed, err := strconv.Atoi(value[separator+1:])
+		if err != nil {
+			return "", fmt.Errorf("invalid JSON number exponent")
+		}
+		exponent = parsed
+		value = value[:separator]
+	}
+	parts := strings.Split(value, ".")
+	if len(parts) > 2 || parts[0] == "" {
+		return "", fmt.Errorf("invalid JSON number")
+	}
+	fraction := ""
+	if len(parts) == 2 {
+		fraction = parts[1]
+		if fraction == "" {
+			return "", fmt.Errorf("invalid JSON number fraction")
+		}
+	}
+	digits := parts[0] + fraction
+	for _, digit := range digits {
+		if digit < '0' || digit > '9' {
+			return "", fmt.Errorf("invalid JSON number digit")
+		}
+	}
+	first := strings.IndexFunc(digits, func(r rune) bool { return r != '0' })
+	if first < 0 {
+		return "0", nil
+	}
+	last := len(digits) - 1
+	for last > first && digits[last] == '0' {
+		last--
+	}
+	significant := digits[first : last+1]
+	scientificExponent := len(parts[0]) + exponent - first - 1
+	normalized := sign + significant[:1]
+	if len(significant) > 1 {
+		normalized += "." + significant[1:]
+	}
+	return normalized + "e" + strconv.Itoa(scientificExponent), nil
 }
 
 // =============================================================================
@@ -716,12 +863,12 @@ func CampaignFromAlerts(tenantID string, alerts []*trafficv1.Alert, campaignType
 	for _, alert := range alerts {
 		alertIDs = append(alertIDs, alert.AlertId)
 
-			if alert.SrcIp != "" {
-				entitySet[alert.SrcIp] = true
-			}
-			if alert.DstIp != "" {
-				entitySet[alert.DstIp] = true
-			}
+		if alert.SrcIp != "" {
+			entitySet[alert.SrcIp] = true
+		}
+		if alert.DstIp != "" {
+			entitySet[alert.DstIp] = true
+		}
 
 		if alert.FirstSeen < minTime {
 			minTime = alert.FirstSeen

@@ -152,6 +152,10 @@ func (m *Monitor) LoadHandoffSignals(ctx context.Context, tenantID, datasetID st
 		if err := json.Unmarshal(metadataJSON, &signal.Metadata); err != nil {
 			return nil, fmt.Errorf("decode %s signal metadata: %w", signal.SourceKind, err)
 		}
+		// The four semantic axes are persisted in metadata so the v1 table can
+		// remain backward compatible. Hydrate them on every read, including rows
+		// written before the typed fields were added to the API model.
+		deriveSignalSemantics(&signal)
 		result = append(result, signal)
 	}
 	if err := rows.Err(); err != nil {
@@ -234,9 +238,28 @@ func validateHandoffSignal(signal HandoffSignal) error {
 	if signal.Metadata == nil {
 		return fmt.Errorf("%s hand-off signal metadata is required", signal.SourceKind)
 	}
+	deriveSignalSemantics(&signal)
+	allowedAvailability := map[string]bool{SignalAvailabilityArrived: true, SignalAvailabilityNotArrived: true, SignalAvailabilityUnavailable: true, SignalAvailabilityNotApplicable: true}
+	allowedFreshness := map[string]bool{SignalFreshnessFresh: true, SignalFreshnessStale: true, SignalFreshnessUnknown: true, SignalFreshnessNotApplicable: true}
+	allowedCompleteness := map[string]bool{SignalCompletenessComplete: true, SignalCompletenessPartial: true, SignalCompletenessUnknown: true, SignalCompletenessNotApplicable: true}
+	allowedValue := map[string]bool{SignalValueZero: true, SignalValueNonzero: true, SignalValueNone: true}
+	if !allowedAvailability[signal.AvailabilityState] || !allowedFreshness[signal.FreshnessState] || !allowedCompleteness[signal.CompletenessState] || !allowedValue[signal.ValueState] {
+		return fmt.Errorf("%s hand-off signal has invalid semantic axes", signal.SourceKind)
+	}
 	if signal.MeasurementState == SignalStatusMeasured {
 		if signal.WatermarkValue == nil || *signal.WatermarkValue == "" || signal.ObservedAt == nil || signal.MeasurementError != "" {
 			return fmt.Errorf("measured %s signal requires value/observed_at and no error", signal.SourceKind)
+		}
+		if signal.AvailabilityState != SignalAvailabilityArrived ||
+			(signal.FreshnessState != SignalFreshnessFresh && signal.FreshnessState != SignalFreshnessStale) ||
+			(signal.CompletenessState != SignalCompletenessComplete && signal.CompletenessState != SignalCompletenessPartial) ||
+			(signal.ValueState != SignalValueZero && signal.ValueState != SignalValueNonzero) {
+			return fmt.Errorf("measured %s signal has inconsistent semantic axes", signal.SourceKind)
+		}
+		if numeric, err := strconv.ParseFloat(*signal.WatermarkValue, 64); err == nil {
+			if (numeric == 0) != (signal.ValueState == SignalValueZero) {
+				return fmt.Errorf("measured %s signal value_status does not match watermark_value", signal.SourceKind)
+			}
 		}
 		return nil
 	}
@@ -249,6 +272,15 @@ func validateHandoffSignal(signal HandoffSignal) error {
 	if signal.MeasurementState != SignalStatusError && signal.MeasurementError != "" {
 		return fmt.Errorf("%s signal state %s cannot carry measurement_error", signal.SourceKind, signal.MeasurementState)
 	}
+	expectedAxes := map[string][4]string{
+		SignalStatusUnknown:       {SignalAvailabilityNotArrived, SignalFreshnessUnknown, SignalCompletenessUnknown, SignalValueNone},
+		SignalStatusError:         {SignalAvailabilityUnavailable, SignalFreshnessUnknown, SignalCompletenessUnknown, SignalValueNone},
+		SignalStatusNotApplicable: {SignalAvailabilityNotApplicable, SignalFreshnessNotApplicable, SignalCompletenessNotApplicable, SignalValueNone},
+	}
+	expected := expectedAxes[signal.MeasurementState]
+	if signal.AvailabilityState != expected[0] || signal.FreshnessState != expected[1] || signal.CompletenessState != expected[2] || signal.ValueState != expected[3] {
+		return fmt.Errorf("%s signal state %s has inconsistent semantic axes", signal.SourceKind, signal.MeasurementState)
+	}
 	return nil
 }
 
@@ -256,19 +288,19 @@ func (m *Monitor) applyHandoffSignals(ctx context.Context, tenantID string, repo
 	signals, err := m.LoadHandoffSignals(ctx, tenantID, "flows_raw")
 	if err != nil {
 		for _, kind := range []string{SignalKindKafkaOffset, SignalKindFlinkWatermark, SignalKindSinkCommit} {
-			appendUnknownHandoffCheck(report, kind, "PostgreSQL hand-off signals unavailable: "+err.Error())
+			appendUnavailableHandoffCheck(report, kind, "PostgreSQL hand-off signals unavailable: "+err.Error())
 		}
 		return
 	}
 	byKind := make(map[string]HandoffSignal, len(signals))
 	for _, signal := range signals {
+		deriveSignalSemantics(&signal)
 		byKind[signal.SourceKind] = signal
-		report.SourceWatermarks[signal.SourceKind] = signal
 	}
 	for _, kind := range []string{SignalKindKafkaOffset, SignalKindFlinkWatermark, SignalKindSinkCommit} {
 		signal, exists := byKind[kind]
 		if !exists {
-			appendUnknownHandoffCheck(report, kind, "No persisted measurement exists; signal collection may be disabled or not yet run")
+			appendNotArrivedHandoffCheck(report, kind, "No persisted measurement exists; signal collection may be disabled or not yet run")
 			continue
 		}
 		name := handoffCheckName(kind)
@@ -277,7 +309,7 @@ func (m *Monitor) applyHandoffSignals(ctx context.Context, tenantID string, repo
 			if signal.MeasurementError != "" {
 				message += ": " + signal.MeasurementError
 			}
-			report.Checks = append(report.Checks, QualityCheck{Name: name, Status: "unknown", Message: message, Measured: false, Source: signal.SourceID})
+			report.Checks = append(report.Checks, qualityCheckFromSignal(signal, name, "unknown", message, 0, 0, false))
 			continue
 		}
 		age := report.Timestamp.Sub(signal.CollectedAt)
@@ -288,7 +320,7 @@ func (m *Monitor) applyHandoffSignals(ctx context.Context, tenantID string, repo
 		if kind == SignalKindKafkaOffset {
 			lag, parseErr := strconv.ParseFloat(*signal.WatermarkValue, 64)
 			if parseErr != nil {
-				report.Checks = append(report.Checks, QualityCheck{Name: name, Status: "unknown", Message: "Persisted Kafka lag is not numeric", Measured: false, Source: signal.SourceID})
+				report.Checks = append(report.Checks, qualityCheckFromSignal(signal, name, "unknown", "Persisted Kafka lag is not numeric", 0, threshold, false))
 				continue
 			}
 			value = lag
@@ -298,16 +330,53 @@ func (m *Monitor) applyHandoffSignals(ctx context.Context, tenantID string, repo
 				status = "fail"
 			}
 		}
-		if m.config.MaxSignalAge > 0 && age > m.config.MaxSignalAge {
-			status = "warn"
+		if signal.ValueState == SignalValueZero {
+			message += "; zero is an observed value"
+		}
+		if signal.CompletenessState == SignalCompletenessPartial {
+			if status == "pass" {
+				status = "warn"
+			}
+			message += "; measurement is partial"
+		}
+		if signal.FreshnessState == SignalFreshnessStale || (m.config.MaxSignalAge > 0 && age > m.config.MaxSignalAge) {
+			signal.FreshnessState = SignalFreshnessStale
+			deriveSignalSemantics(&signal)
+			if status == "pass" {
+				status = "warn"
+			}
 			message += fmt.Sprintf("; measurement is stale by %s", age.Round(time.Second))
 		}
-		report.Checks = append(report.Checks, QualityCheck{Name: name, Status: status, Message: message, Value: value, Threshold: threshold, Measured: true, Source: signal.SourceID})
+		byKind[kind] = signal
+		report.Checks = append(report.Checks, qualityCheckFromSignal(signal, name, status, message, value, threshold, true))
+	}
+	for _, signal := range byKind {
+		report.SourceWatermarks[signal.SourceKind] = signal
 	}
 }
 
-func appendUnknownHandoffCheck(report *DataQualityReport, kind, message string) {
-	report.Checks = append(report.Checks, QualityCheck{Name: handoffCheckName(kind), Status: "unknown", Message: message, Measured: false, Source: handoffSourceName(kind)})
+func qualityCheckFromSignal(signal HandoffSignal, name, status, message string, value, threshold float64, measured bool) QualityCheck {
+	return QualityCheck{
+		Name: name, Status: status, Message: message, Value: value, Threshold: threshold,
+		Measured: measured, Source: signal.SourceID, Availability: signal.AvailabilityState,
+		Freshness: signal.FreshnessState, Completeness: signal.CompletenessState, ValueState: signal.ValueState,
+	}
+}
+
+func appendUnavailableHandoffCheck(report *DataQualityReport, kind, message string) {
+	report.Checks = append(report.Checks, QualityCheck{
+		Name: handoffCheckName(kind), Status: "unknown", Message: message, Measured: false,
+		Source: handoffSourceName(kind), Availability: SignalAvailabilityUnavailable,
+		Freshness: SignalFreshnessUnknown, Completeness: SignalCompletenessUnknown, ValueState: SignalValueNone,
+	})
+}
+
+func appendNotArrivedHandoffCheck(report *DataQualityReport, kind, message string) {
+	report.Checks = append(report.Checks, QualityCheck{
+		Name: handoffCheckName(kind), Status: "unknown", Message: message, Measured: false,
+		Source: handoffSourceName(kind), Availability: SignalAvailabilityNotArrived,
+		Freshness: SignalFreshnessUnknown, Completeness: SignalCompletenessUnknown, ValueState: SignalValueNone,
+	})
 }
 
 func handoffCheckName(kind string) string {

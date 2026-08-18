@@ -30,6 +30,7 @@ type searchCursorClaims struct {
 	Version             int               `json:"v"`
 	TenantID            string            `json:"tenant_id"`
 	QuerySHA256         string            `json:"query_sha256"`
+	TargetSHA256        string            `json:"target_sha256"`
 	Mode                string            `json:"mode"`
 	Size                int               `json:"size"`
 	SortValues          []json.RawMessage `json:"sort_values"`
@@ -57,14 +58,15 @@ func newSearchCursorCodec(secret string, ttl time.Duration) (*searchCursorCodec,
 }
 
 func (c *searchCursorCodec) encode(
-	tenantID, querySHA256, mode string,
+	tenantID, querySHA256, targetSHA256, mode string,
 	size int,
 	sortValues []json.RawMessage,
 	pitID string,
 	snapshotAt time.Time,
 ) (string, error) {
 	if c == nil || len(c.signingKey) == 0 || strings.TrimSpace(tenantID) == "" ||
-		len(querySHA256) != sha256.Size*2 || (mode != SearchCursorModeLive && mode != SearchCursorModePIT) ||
+		len(querySHA256) != sha256.Size*2 || len(targetSHA256) != sha256.Size*2 ||
+		(mode != SearchCursorModeLive && mode != SearchCursorModePIT) ||
 		size < 1 || !validSearchSortValues(sortValues) ||
 		snapshotAt.IsZero() || snapshotAt.After(c.now().UTC().Add(30*time.Second)) ||
 		(mode == SearchCursorModeLive && pitID != "") ||
@@ -75,6 +77,7 @@ func (c *searchCursorCodec) encode(
 		Version:             searchCursorVersion,
 		TenantID:            tenantID,
 		QuerySHA256:         querySHA256,
+		TargetSHA256:        targetSHA256,
 		Mode:                mode,
 		Size:                size,
 		SortValues:          append([]json.RawMessage(nil), sortValues...),
@@ -128,7 +131,7 @@ func (c *searchCursorCodec) decode(token, tenantID string) (*searchCursorClaims,
 	}
 	if claims.Version != searchCursorVersion ||
 		!hmac.Equal([]byte(claims.TenantID), []byte(tenantID)) ||
-		len(claims.QuerySHA256) != sha256.Size*2 ||
+		len(claims.QuerySHA256) != sha256.Size*2 || len(claims.TargetSHA256) != sha256.Size*2 ||
 		(claims.Mode != SearchCursorModeLive && claims.Mode != SearchCursorModePIT) ||
 		claims.Size < 1 || !validSearchSortValues(claims.SortValues) ||
 		claims.SnapshotUnixMilli <= 0 || time.UnixMilli(claims.SnapshotUnixMilli).After(c.now().UTC().Add(30*time.Second)) ||
@@ -142,33 +145,50 @@ func (c *searchCursorCodec) decode(token, tenantID string) (*searchCursorClaims,
 	return &claims, nil
 }
 
+func searchTargetSHA256(logicalTarget string, physicalTargets []string) string {
+	normalized := append([]string(nil), physicalTargets...)
+	sort.Strings(normalized)
+	digest := sha256.Sum256([]byte(strings.TrimSpace(logicalTarget) + "\x00" + strings.Join(normalized, "\x00")))
+	return hex.EncodeToString(digest[:])
+}
+
 func searchQuerySHA256(query *SearchQuery, mode string, size int) string {
 	normalized := struct {
-		Query      string   `json:"query"`
-		Severity   []string `json:"severity"`
-		Status     []string `json:"status"`
-		AlertTypes []string `json:"alert_types"`
-		Labels     []string `json:"labels"`
-		SrcIP      string   `json:"src_ip"`
-		DstIP      string   `json:"dst_ip"`
-		StartTime  int64    `json:"start_time_ms"`
-		EndTime    int64    `json:"end_time_ms"`
-		SortField  string   `json:"sort_field"`
-		SortOrder  string   `json:"sort_order"`
-		Mode       string   `json:"mode"`
-		Size       int      `json:"size"`
+		Query        string   `json:"query"`
+		Severity     []string `json:"severity"`
+		Status       []string `json:"status"`
+		AlertTypes   []string `json:"alert_types"`
+		Labels       []string `json:"labels"`
+		SrcIP        string   `json:"src_ip"`
+		DstIP        string   `json:"dst_ip"`
+		AssetIP      string   `json:"asset_ip"`
+		RuleVersion  string   `json:"rule_version"`
+		ModelVersion string   `json:"model_version"`
+		AttackPhase  string   `json:"attack_phase"`
+		MinScore     *float64 `json:"min_score,omitempty"`
+		StartTime    int64    `json:"start_time_ms"`
+		EndTime      int64    `json:"end_time_ms"`
+		SortField    string   `json:"sort_field"`
+		SortOrder    string   `json:"sort_order"`
+		Mode         string   `json:"mode"`
+		Size         int      `json:"size"`
 	}{
-		Query:      strings.TrimSpace(query.Query),
-		Severity:   normalizedSearchValues(query.Severity),
-		Status:     normalizedSearchValues(query.Status),
-		AlertTypes: normalizedSearchValues(query.AlertTypes),
-		Labels:     normalizedSearchValues(query.Labels),
-		SrcIP:      strings.TrimSpace(query.SrcIP),
-		DstIP:      strings.TrimSpace(query.DstIP),
-		SortField:  normalizedSearchSortField(query.SortField),
-		SortOrder:  normalizedSearchSortOrder(query.SortOrder),
-		Mode:       mode,
-		Size:       size,
+		Query:        strings.TrimSpace(query.Query),
+		Severity:     normalizedSearchValues(query.Severity),
+		Status:       normalizedSearchValues(query.Status),
+		AlertTypes:   normalizedSearchValues(query.AlertTypes),
+		Labels:       normalizedSearchValues(query.Labels),
+		SrcIP:        strings.TrimSpace(query.SrcIP),
+		DstIP:        strings.TrimSpace(query.DstIP),
+		AssetIP:      strings.TrimSpace(query.AssetIP),
+		RuleVersion:  strings.TrimSpace(query.RuleVersion),
+		ModelVersion: strings.TrimSpace(query.ModelVersion),
+		AttackPhase:  strings.TrimSpace(query.AttackPhase),
+		MinScore:     query.MinScore,
+		SortField:    normalizedSearchSortField(query.SortField),
+		SortOrder:    normalizedSearchSortOrder(query.SortOrder),
+		Mode:         mode,
+		Size:         size,
 	}
 	if !query.StartTime.IsZero() {
 		normalized.StartTime = query.StartTime.UTC().UnixMilli()

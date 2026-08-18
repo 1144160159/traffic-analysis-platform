@@ -2,9 +2,11 @@ package queue
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
@@ -20,6 +22,7 @@ type ProducerConfig struct {
 	FlowTopic         string        `env:"KAFKA_FLOW_TOPIC"`
 	PcapIndexTopic    string        `env:"KAFKA_PCAP_INDEX_TOPIC"`
 	SessionTopic      string        `env:"KAFKA_SESSION_TOPIC"`
+	BindingTopic      string        `env:"KAFKA_ASSET_BINDING_TOPIC"`
 	BatchSize         int           `env:"KAFKA_BATCH_SIZE"`
 	BatchTimeout      time.Duration `env:"KAFKA_BATCH_TIMEOUT"`
 	Compression       string        `env:"KAFKA_COMPRESSION"`
@@ -31,10 +34,12 @@ type ProducerConfig struct {
 }
 
 type Producer struct {
-	multiProducer *kafkaCommon.MultiTopicProducer
-	partitioner   *TenantCommunityPartitioner
-	logger        *zap.Logger
-	config        ProducerConfig
+	multiProducer     *kafkaCommon.MultiTopicProducer
+	writeFlowBatch    func(context.Context, string, []kafkaCommon.Message) error
+	writeBindingBatch func(context.Context, string, []kafkaCommon.Message) error
+	partitioner       *TenantCommunityPartitioner
+	logger            *zap.Logger
+	config            ProducerConfig
 }
 
 func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
@@ -50,6 +55,12 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 	}
 	if cfg.PcapIndexTopic == "" {
 		cfg.PcapIndexTopic = config.TopicPcapIndex
+	}
+	if cfg.BindingTopic == "" {
+		cfg.BindingTopic = config.TopicAssetBindings
+	}
+	if cfg.BindingTopic != config.TopicAssetBindings {
+		return nil, fmt.Errorf("asset binding topic must be %q, got %q", config.TopicAssetBindings, cfg.BindingTopic)
 	}
 	if cfg.BatchSize == 0 {
 		cfg.BatchSize = config.DefaultKafkaBatchSize
@@ -79,6 +90,12 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		Async:        false,
 		Security:     cfg.Security,
 	}
+	// 幂等语义落地:启用 KAFKA_ENABLE_IDEMPOTENCE 后按消息 key(tenant:community)
+	// 使用稳定 Hash 分区,保证同一 key 的消息进入同一分区、顺序有序,与下游
+	// 按 key 消费的去重/排序契约一致;关闭时保持原有 RoundRobin 行为。
+	if cfg.EnableIdempotence {
+		baseConfig.IdempotentKey = "tenant:community"
+	}
 
 	flowConfig := baseConfig
 	flowConfig.Topic = cfg.FlowTopic
@@ -100,36 +117,236 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		return nil, fmt.Errorf("failed to add session topic: %w", err)
 	}
 
+	bindingConfig := baseConfig
+	bindingConfig.Topic = cfg.BindingTopic
+	if err := multiProducer.AddTopic(cfg.BindingTopic, bindingConfig); err != nil {
+		multiProducer.Close()
+		return nil, fmt.Errorf("failed to add asset binding topic: %w", err)
+	}
+
 	logger.Info("Kafka producer initialized",
 		zap.Strings("brokers", cfg.Brokers),
 		zap.String("flow_topic", cfg.FlowTopic),
 		zap.String("pcap_topic", cfg.PcapIndexTopic),
 		zap.String("session_topic", cfg.SessionTopic),
+		zap.String("binding_topic", cfg.BindingTopic),
 		zap.Bool("idempotence", cfg.EnableIdempotence),
 		zap.String("acks", cfg.RequiredAcks))
 
 	return &Producer{
-		multiProducer: multiProducer,
-		partitioner:   NewTenantCommunityPartitioner(12),
-		logger:        logger,
-		config:        cfg,
+		multiProducer:     multiProducer,
+		writeFlowBatch:    multiProducer.SendBatch,
+		writeBindingBatch: multiProducer.SendBatch,
+		partitioner:       NewTenantCommunityPartitioner(12),
+		logger:            logger,
+		config:            cfg,
 	}, nil
 }
 
-func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) error {
+type AssetBindingWriteItemResult struct {
+	InputIndex    int
+	ObservationID string
+	Disposition   pb.AssetBindingItemDisposition
+	ReasonCode    string
+	AckScope      string
+}
+
+type AssetBindingWriteResult struct {
+	Items []AssetBindingWriteItemResult
+}
+
+func (r AssetBindingWriteResult) ValidateExactSet(inputCount int) error {
+	if len(r.Items) != inputCount {
+		return fmt.Errorf("asset binding write result cardinality mismatch: got %d want %d", len(r.Items), inputCount)
+	}
+	seen := make([]bool, inputCount)
+	for _, item := range r.Items {
+		if item.InputIndex < 0 || item.InputIndex >= inputCount {
+			return fmt.Errorf("asset binding write result index %d out of range", item.InputIndex)
+		}
+		if seen[item.InputIndex] {
+			return fmt.Errorf("duplicate asset binding write result index %d", item.InputIndex)
+		}
+		if item.Disposition == pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_UNSPECIFIED {
+			return fmt.Errorf("asset binding write result index %d has unspecified disposition", item.InputIndex)
+		}
+		seen[item.InputIndex] = true
+	}
+	return nil
+}
+
+func (p *Producer) WriteAssetBindings(ctx context.Context, bindings []*pb.MacIpBinding) (AssetBindingWriteResult, error) {
+	ctx, span := otel.StartSpan(ctx, "producer.write_asset_bindings")
+	defer span.End()
+
+	result := AssetBindingWriteResult{Items: make([]AssetBindingWriteItemResult, len(bindings))}
+	messages := make([]kafkaCommon.Message, 0, len(bindings))
+	messageInputIndexes := make([]int, 0, len(bindings))
+	for inputIndex, binding := range bindings {
+		item := AssetBindingWriteItemResult{
+			InputIndex:  inputIndex,
+			Disposition: pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_REJECTED_INVALID,
+			AckScope:    "INPUT_ITEM",
+		}
+		if binding == nil {
+			item.ReasonCode = "BINDING_REQUIRED"
+			result.Items[inputIndex] = item
+			continue
+		}
+		item.ObservationID = binding.ObservationId
+		if binding.TenantId == "" || binding.ProbeId == "" || binding.ObservationId == "" ||
+			binding.MacAddress == "" || binding.IpAddress == "" || binding.ObservedAt <= 0 ||
+			(binding.Source != "arp" && binding.Source != "dhcp") || binding.SchemaVersion != 1 {
+			item.ReasonCode = "BINDING_CONTRACT_INVALID"
+			result.Items[inputIndex] = item
+			continue
+		}
+		value, err := proto.Marshal(binding)
+		if err != nil {
+			item.ReasonCode = "PROTO_ENCODE_INVALID"
+			result.Items[inputIndex] = item
+			continue
+		}
+		now := time.Now()
+		messages = append(messages, kafkaCommon.Message{
+			Key:   fmt.Sprintf("%s:%s", binding.TenantId, binding.MacAddress),
+			Value: value,
+			Headers: []kafkaCommon.MessageHeader{
+				{Key: "tenant_id", Value: binding.TenantId},
+				{Key: "probe_id", Value: binding.ProbeId},
+				{Key: "observation_id", Value: binding.ObservationId},
+				{Key: "event_id", Value: binding.ObservationId},
+				{Key: "source", Value: binding.Source},
+				{Key: "schema_version", Value: "1"},
+				{Key: "content_type", Value: config.ContentTypeProtobuf},
+				{Key: "message_type", Value: config.ProtoMessageAssetBinding},
+			},
+			Time: now,
+		})
+		messageInputIndexes = append(messageInputIndexes, inputIndex)
+		item.Disposition = pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_RETRYABLE
+		item.ReasonCode = "KAFKA_NOT_ATTEMPTED"
+		item.AckScope = "KAFKA_RECORD"
+		result.Items[inputIndex] = item
+	}
+	if len(messages) == 0 {
+		return result, nil
+	}
+
+	writeBindingBatch := p.writeBindingBatch
+	if writeBindingBatch == nil && p.multiProducer != nil {
+		writeBindingBatch = p.multiProducer.SendBatch
+	}
+	if writeBindingBatch == nil {
+		err := fmt.Errorf("asset binding Kafka writer is not configured")
+		classifyAssetBindingWholeBatchFailure(ctx, result.Items, messageInputIndexes, err)
+		return result, err
+	}
+	if err := writeBindingBatch(ctx, p.config.BindingTopic, messages); err != nil {
+		classifyAssetBindingKafkaWriteFailure(ctx, result.Items, messageInputIndexes, err)
+		return result, fmt.Errorf("failed to write asset bindings: %w", err)
+	}
+	for _, inputIndex := range messageInputIndexes {
+		result.Items[inputIndex].Disposition = pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_KAFKA_ACKED
+		result.Items[inputIndex].ReasonCode = "KAFKA_REQUIRED_ACKS_ALL"
+	}
+	return result, nil
+}
+
+func classifyAssetBindingKafkaWriteFailure(ctx context.Context, items []AssetBindingWriteItemResult, indexes []int, err error) {
+	var writeErrors kafka.WriteErrors
+	if errors.As(err, &writeErrors) && len(writeErrors) == len(indexes) {
+		for messageIndex, writeErr := range writeErrors {
+			inputIndex := indexes[messageIndex]
+			if writeErr == nil {
+				items[inputIndex].Disposition = pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_KAFKA_ACKED
+				items[inputIndex].ReasonCode = "KAFKA_REQUIRED_ACKS_ALL"
+				continue
+			}
+			classifyOneAssetBindingWriteFailure(ctx, &items[inputIndex], writeErr)
+		}
+		return
+	}
+	classifyAssetBindingWholeBatchFailure(ctx, items, indexes, err)
+}
+
+func classifyAssetBindingWholeBatchFailure(ctx context.Context, items []AssetBindingWriteItemResult, indexes []int, err error) {
+	for _, inputIndex := range indexes {
+		classifyOneAssetBindingWriteFailure(ctx, &items[inputIndex], err)
+	}
+}
+
+func classifyOneAssetBindingWriteFailure(ctx context.Context, item *AssetBindingWriteItemResult, err error) {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || ctx.Err() != nil {
+		item.Disposition = pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_OUTCOME_UNKNOWN
+		item.ReasonCode = "KAFKA_OUTCOME_UNKNOWN"
+		return
+	}
+	item.Disposition = pb.AssetBindingItemDisposition_ASSET_BINDING_ITEM_DISPOSITION_RETRYABLE
+	item.ReasonCode = "KAFKA_RETRYABLE"
+}
+
+type FlowWriteItemResult struct {
+	InputIndex  int
+	EventID     string
+	Disposition pb.FlowItemDisposition
+	ReasonCode  string
+	AckScope    string
+}
+
+type BatchWriteResult struct {
+	Items []FlowWriteItemResult
+}
+
+func (r BatchWriteResult) ValidateExactSet(inputCount int) error {
+	if len(r.Items) != inputCount {
+		return fmt.Errorf("flow write result cardinality mismatch: got %d want %d", len(r.Items), inputCount)
+	}
+	seen := make([]bool, inputCount)
+	for _, item := range r.Items {
+		if item.InputIndex < 0 || item.InputIndex >= inputCount {
+			return fmt.Errorf("flow write result index %d out of range", item.InputIndex)
+		}
+		if seen[item.InputIndex] {
+			return fmt.Errorf("duplicate flow write result index %d", item.InputIndex)
+		}
+		if item.Disposition == pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_UNSPECIFIED {
+			return fmt.Errorf("flow write result index %d has unspecified disposition", item.InputIndex)
+		}
+		seen[item.InputIndex] = true
+	}
+	return nil
+}
+
+func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) (BatchWriteResult, error) {
 	ctx, span := otel.StartSpan(ctx, "producer.write_flow_events")
 	defer span.End()
 
+	result := BatchWriteResult{Items: make([]FlowWriteItemResult, len(events))}
 	if len(events) == 0 {
-		return nil
+		return result, nil
 	}
 
 	logger := logging.L(ctx)
 
 	messages := make([]kafkaCommon.Message, 0, len(events))
+	messageInputIndexes := make([]int, 0, len(events))
 
-	for _, event := range events {
+	for inputIndex, event := range events {
+		item := FlowWriteItemResult{
+			InputIndex:  inputIndex,
+			Disposition: pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_REJECTED_INVALID,
+			AckScope:    "INPUT_ITEM",
+		}
 		if event == nil || event.Header == nil {
+			item.ReasonCode = "INVALID_EVENT_HEADER"
+			result.Items[inputIndex] = item
+			continue
+		}
+		item.EventID = event.Header.EventId
+		if event.Header.EventId == "" {
+			item.ReasonCode = "EVENT_ID_REQUIRED"
+			result.Items[inputIndex] = item
 			continue
 		}
 
@@ -146,6 +363,8 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 			logger.Error("Failed to marshal flow event",
 				zap.String("event_id", event.Header.EventId),
 				zap.Error(err))
+			item.ReasonCode = "PROTO_ENCODE_INVALID"
+			result.Items[inputIndex] = item
 			continue
 		}
 
@@ -173,25 +392,89 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 			Headers: headers,
 			Time:    time.UnixMilli(kafkaTs),
 		})
+		messageInputIndexes = append(messageInputIndexes, inputIndex)
+		item.Disposition = pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_RETRYABLE
+		item.ReasonCode = "KAFKA_NOT_ATTEMPTED"
+		item.AckScope = "KAFKA_RECORD"
+		result.Items[inputIndex] = item
 	}
 
 	if len(messages) == 0 {
-		return nil
+		return result, nil
 	}
 
 	start := time.Now()
-	if err := p.multiProducer.SendBatch(ctx, p.config.FlowTopic, messages); err != nil {
+	writeFlowBatch := p.writeFlowBatch
+	if writeFlowBatch == nil && p.multiProducer != nil {
+		writeFlowBatch = p.multiProducer.SendBatch
+	}
+	if writeFlowBatch == nil {
+		err := fmt.Errorf("flow Kafka writer is not configured")
+		classifyWholeBatchFailure(ctx, result.Items, messageInputIndexes, err)
+		return result, err
+	}
+
+	if err := writeFlowBatch(ctx, p.config.FlowTopic, messages); err != nil {
+		classifyKafkaWriteFailure(ctx, result.Items, messageInputIndexes, err)
 		logger.Error("Failed to write flow events",
 			zap.Int("count", len(messages)),
 			zap.Error(err))
-		return fmt.Errorf("failed to write flow events: %w", err)
+		return result, fmt.Errorf("failed to write flow events: %w", err)
+	}
+
+	for _, inputIndex := range messageInputIndexes {
+		result.Items[inputIndex].Disposition = pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_KAFKA_ACKED
+		result.Items[inputIndex].ReasonCode = "KAFKA_REQUIRED_ACKS_ALL"
 	}
 
 	logger.Debug("Flow events written",
 		zap.Int("count", len(messages)),
 		zap.Duration("duration", time.Since(start)))
 
-	return nil
+	return result, nil
+}
+
+func classifyKafkaWriteFailure(
+	ctx context.Context,
+	items []FlowWriteItemResult,
+	messageInputIndexes []int,
+	err error,
+) {
+	var writeErrors kafka.WriteErrors
+	if errors.As(err, &writeErrors) && len(writeErrors) == len(messageInputIndexes) {
+		for messageIndex, writeErr := range writeErrors {
+			inputIndex := messageInputIndexes[messageIndex]
+			if writeErr == nil {
+				items[inputIndex].Disposition = pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_KAFKA_ACKED
+				items[inputIndex].ReasonCode = "KAFKA_REQUIRED_ACKS_ALL"
+				continue
+			}
+			classifyOneWriteFailure(ctx, &items[inputIndex], writeErr)
+		}
+		return
+	}
+	classifyWholeBatchFailure(ctx, items, messageInputIndexes, err)
+}
+
+func classifyWholeBatchFailure(
+	ctx context.Context,
+	items []FlowWriteItemResult,
+	messageInputIndexes []int,
+	err error,
+) {
+	for _, inputIndex := range messageInputIndexes {
+		classifyOneWriteFailure(ctx, &items[inputIndex], err)
+	}
+}
+
+func classifyOneWriteFailure(ctx context.Context, item *FlowWriteItemResult, err error) {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || ctx.Err() != nil {
+		item.Disposition = pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_OUTCOME_UNKNOWN
+		item.ReasonCode = "KAFKA_OUTCOME_UNKNOWN"
+		return
+	}
+	item.Disposition = pb.FlowItemDisposition_FLOW_ITEM_DISPOSITION_RETRYABLE
+	item.ReasonCode = "KAFKA_RETRYABLE"
 }
 
 func (p *Producer) WritePcapIndex(ctx context.Context, meta *pb.PcapIndexMeta) error {

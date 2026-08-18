@@ -50,6 +50,21 @@ spec:
           value: "kafka-bootstrap.middleware.svc:9092"
         - name: KAFKA_FLOW_TOPIC
           value: "flow.events.v1"
+        - name: KAFKA_ASSET_BINDING_TOPIC
+          value: "asset.bindings.v1"
+        - name: KAFKA_PROBE_CONTROL_TOPIC
+          value: "probe.control.v2"
+        - name: KAFKA_PROBE_ACK_TOPIC
+          value: "probe.acks.v2"
+        - name: KAFKA_PROBE_CONTROL_GROUP
+          value: "ingest-gateway-probe-control-v2"
+        - name: KAFKA_PROBE_GROUP_READINESS_TOPIC
+          value: "probe.group-readiness.v1"
+        - {name: PROBE_COMMAND_CONSUMER_V2_ENABLED, value: "false"}
+        - {name: PROBE_HEARTBEAT_DELIVERY_V2_ENABLED, value: "false"}
+        - {name: PROBE_ACK_PUBLISHER_V2_ENABLED, value: "false"}
+        - {name: PROBE_READINESS_PUBLISHER_V1_ENABLED, value: "false"}
+        - {name: M06_ASSET_BINDING_WRITER_V1_ENABLED, value: "false"}
         - name: REDIS_ADDRS
           value: "redis-cluster:6379"
         - name: REQUIRE_MTLS

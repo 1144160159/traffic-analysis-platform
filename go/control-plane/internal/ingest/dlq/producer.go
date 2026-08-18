@@ -1,6 +1,7 @@
 package dlq
 
 import (
+	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -597,9 +598,159 @@ func (p *Producer) ReplayFallbackFiles(ctx context.Context) (report FallbackRepl
 	return report
 }
 
+// ReplayFallbackFilesForTenant 仅回放指定租户的 fallback 行,并保留其他租户行。
+// 与全量回放不同:租户级回放不删除文件,只把"其他租户行 + 无效行 + 重放失败行"
+// 原子重写回文件,避免误删其他租户的待重放消息。
+func (p *Producer) ReplayFallbackFilesForTenant(ctx context.Context, tenantID string) (report FallbackReplayReport) {
+	report.StartedAt = time.Now()
+	defer func() {
+		report.FinishedAt = time.Now()
+		report.RemainingFallbackFiles, report.RemainingFallbackBytes, _ = p.GetFallbackStats()
+	}()
+
+	if !p.fallbackEnabled || p.config.FallbackDir == "" || strings.TrimSpace(tenantID) == "" {
+		return report
+	}
+	report.FallbackReplayAvailable = true
+
+	entries, err := os.ReadDir(p.config.FallbackDir)
+	if err != nil {
+		p.logger.Error("Failed to read fallback directory", zap.Error(err))
+		report.Errors = append(report.Errors, err.Error())
+		return report
+	}
+	if len(entries) == 0 {
+		return report
+	}
+	report.FileCount = len(entries)
+
+	p.logger.Info("Starting tenant-scoped DLQ fallback replay",
+		zap.Int("file_count", len(entries)),
+		zap.String("tenant_id", tenantID))
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		p.fallbackMu.Lock()
+		isCurrent := p.fallbackFile != nil && entry.Name() == filepath.Base(p.fallbackFile.Name())
+		p.fallbackMu.Unlock()
+
+		if isCurrent {
+			report.SkippedCurrentFiles++
+			continue
+		}
+
+		filePath := filepath.Join(p.config.FallbackDir, entry.Name())
+		if err := p.replayFileFiltered(ctx, filePath, tenantID); err != nil {
+			p.logger.Error("Failed to replay fallback file for tenant",
+				zap.String("file", filePath),
+				zap.String("tenant_id", tenantID),
+				zap.Error(err))
+			report.FailedFiles++
+			report.Errors = append(report.Errors, err.Error())
+		} else {
+			report.ReplayedFiles++
+		}
+	}
+
+	return report
+}
+
+// replayFileFiltered 租户过滤回放单个 fallback 文件:
+//   - 解析失败/其他租户/解码失败的行原样保留;
+//   - 本租户行进入重放,重放失败的行一并保留;
+//   - 无本租户行时文件原样保留(不重写不删除);
+//   - 有本租户行时,剩余行原子重写回原文件;剩余为空则删除文件。
+func (p *Producer) replayFileFiltered(ctx context.Context, filePath, tenantID string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %w", err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	if len(lines) == 0 {
+		return nil
+	}
+
+	var keepLines []string
+	var failedLines []string
+	matched := 0
+
+	batch := make([]replayItem, 0, p.config.ReplayBatchSize)
+	flush := func() {
+		if len(batch) == 0 {
+			return
+		}
+		success, failed := p.replayBatch(ctx, batch)
+		matched += success
+		failedLines = append(failedLines, failed...)
+		batch = batch[:0]
+	}
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts := strings.SplitN(line, "|", 3)
+		if len(parts) != 3 {
+			keepLines = append(keepLines, line)
+			continue
+		}
+		var dlqMsg DLQMessage
+		if err := json.Unmarshal([]byte(parts[2]), &dlqMsg); err != nil {
+			keepLines = append(keepLines, line)
+			continue
+		}
+		if strings.TrimSpace(dlqMsg.TenantID) != tenantID {
+			keepLines = append(keepLines, line)
+			continue
+		}
+		payload, err := base64.StdEncoding.DecodeString(dlqMsg.PayloadBase64)
+		if err != nil {
+			keepLines = append(keepLines, line)
+			continue
+		}
+		originalMsg := kafka.Message{
+			Topic:   dlqMsg.OriginalTopic,
+			Key:     []byte(parts[1]),
+			Value:   payload,
+			Headers: buildHeaders(dlqMsg.Headers),
+		}
+		batch = append(batch, replayItem{line: line, msg: originalMsg})
+		if len(batch) >= p.config.ReplayBatchSize {
+			flush()
+		}
+	}
+	flush()
+
+	if matched == 0 && len(failedLines) == 0 {
+		// 本文件没有该租户的消息:原样保留。
+		return nil
+	}
+
+	remaining := append(keepLines, failedLines...)
+	if len(remaining) == 0 {
+		if err := os.Remove(filePath); err != nil {
+			p.logger.Warn("Failed to delete replayed file", zap.Error(err))
+		}
+		return nil
+	}
+	return p.persistFailedLines(filePath, remaining)
+}
+
+// replayItem 关联 fallback 原始行与其对应的待重放 Kafka 消息,失败时可精确保留原始行。
+type replayItem struct {
+	line string
+	msg  kafka.Message
+}
+
 func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 	totalSuccess := 0
 	totalFailed := 0
+	var failedLines []string
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -612,7 +763,7 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 		return os.Remove(filePath)
 	}
 
-	batch := make([]kafka.Message, 0, p.config.ReplayBatchSize)
+	batch := make([]replayItem, 0, p.config.ReplayBatchSize)
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -624,6 +775,7 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 		if len(parts) != 3 {
 			p.logger.Warn("Invalid fallback line format", zap.String("line", line))
 			totalFailed++
+			failedLines = append(failedLines, line)
 			continue
 		}
 
@@ -634,6 +786,7 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 		if err := json.Unmarshal([]byte(value), &dlqMsg); err != nil {
 			p.logger.Warn("Failed to unmarshal DLQ message", zap.Error(err))
 			totalFailed++
+			failedLines = append(failedLines, line)
 			continue
 		}
 
@@ -641,6 +794,7 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 		if err != nil {
 			p.logger.Warn("Failed to decode payload", zap.Error(err))
 			totalFailed++
+			failedLines = append(failedLines, line)
 			continue
 		}
 
@@ -651,20 +805,22 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 			Headers: buildHeaders(dlqMsg.Headers),
 		}
 
-		batch = append(batch, originalMsg)
+		batch = append(batch, replayItem{line: line, msg: originalMsg})
 
 		if len(batch) >= p.config.ReplayBatchSize {
-			success, failed := p.replayBatch(ctx, batch)
+			success, failedMsgs := p.replayBatch(ctx, batch)
 			totalSuccess += success
-			totalFailed += failed
+			totalFailed += len(failedMsgs)
+			failedLines = append(failedLines, failedMsgs...)
 			batch = batch[:0]
 		}
 	}
 
 	if len(batch) > 0 {
-		success, failed := p.replayBatch(ctx, batch)
+		success, failedMsgs := p.replayBatch(ctx, batch)
 		totalSuccess += success
-		totalFailed += failed
+		totalFailed += len(failedMsgs)
+		failedLines = append(failedLines, failedMsgs...)
 	}
 
 	totalProcessed := totalSuccess + totalFailed
@@ -678,6 +834,20 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 	successRate := float64(totalSuccess) / float64(totalProcessed)
 
 	if successRate >= p.config.ReplaySuccessRateMin {
+		if len(failedLines) > 0 {
+			// 失败消息必须保留:将原文件原子替换为仅含失败行的新文件,等待下一轮重放。
+			if err := p.persistFailedLines(filePath, failedLines); err != nil {
+				return fmt.Errorf("replay finished with %d failed messages but failed to persist them: %w",
+					len(failedLines), err)
+			}
+			p.logger.Warn("Replay completed with failures; failed messages preserved for retry",
+				zap.String("file", filePath),
+				zap.Int("success", totalSuccess),
+				zap.Int("failed", len(failedLines)),
+				zap.Float64("success_rate", successRate))
+			return nil
+		}
+
 		if err := os.Remove(filePath); err != nil {
 			p.logger.Warn("Failed to delete replayed file", zap.Error(err))
 		} else {
@@ -699,35 +869,87 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 		successRate*100, p.config.ReplaySuccessRateMin*100)
 }
 
-func (p *Producer) replayBatch(ctx context.Context, messages []kafka.Message) (success int, failed int) {
-	if len(messages) == 0 {
-		return 0, 0
+// persistFailedLines 将失败行原子写入目标 fallback 文件(先写临时文件再 rename),
+// 确保删除/替换原文件前失败消息已有落盘副本。
+func (p *Producer) persistFailedLines(filePath string, failedLines []string) error {
+	if len(failedLines) == 0 {
+		return nil
 	}
 
-	topicGroups := make(map[string][]kafka.Message)
-	for _, msg := range messages {
-		topicGroups[msg.Topic] = append(topicGroups[msg.Topic], msg)
+	tmp, err := os.CreateTemp(p.config.FallbackDir, ".replay-failed-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file for failed replay lines: %w", err)
+	}
+	tmpName := tmp.Name()
+	defer func() {
+		if tmpName != "" {
+			_ = os.Remove(tmpName)
+		}
+	}()
+
+	writer := bufio.NewWriter(tmp)
+	for _, line := range failedLines {
+		if _, err := writer.WriteString(line + "\n"); err != nil {
+			_ = tmp.Close()
+			return fmt.Errorf("failed to write failed replay line: %w", err)
+		}
+	}
+	if err := writer.Flush(); err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("failed to flush failed replay lines: %w", err)
+	}
+	if err := tmp.Sync(); err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("failed to sync failed replay lines: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return fmt.Errorf("failed to close failed replay lines file: %w", err)
+	}
+	if err := os.Rename(tmpName, filePath); err != nil {
+		return fmt.Errorf("failed to atomically replace fallback file with failed lines: %w", err)
+	}
+	tmpName = ""
+	return nil
+}
+
+func (p *Producer) replayBatch(ctx context.Context, items []replayItem) (success int, failed []string) {
+	if len(items) == 0 {
+		return 0, nil
 	}
 
-	for topic, msgs := range topicGroups {
+	topicGroups := make(map[string][]replayItem)
+	for _, item := range items {
+		topicGroups[item.msg.Topic] = append(topicGroups[item.msg.Topic], item)
+	}
+
+	for topic, group := range topicGroups {
 		writer, err := p.getTopicWriter(topic)
 		if err != nil {
 			p.logger.Error("Failed to create replay writer",
 				zap.String("topic", topic),
-				zap.Int("count", len(msgs)),
+				zap.Int("count", len(group)),
 				zap.Error(err))
-			failed += len(msgs)
+			for _, item := range group {
+				failed = append(failed, item.line)
+			}
 			continue
+		}
+
+		msgs := make([]kafka.Message, 0, len(group))
+		for _, item := range group {
+			msgs = append(msgs, item.msg)
 		}
 		if err := writer.WriteMessages(ctx, msgs...); err != nil {
 			p.logger.Error("Failed to replay messages",
 				zap.String("topic", topic),
 				zap.Int("count", len(msgs)),
 				zap.Error(err))
-			failed += len(msgs)
+			for _, item := range group {
+				failed = append(failed, item.line)
+			}
 		} else {
-			success += len(msgs)
-			atomic.AddInt64(&p.replayCount, int64(len(msgs)))
+			success += len(group)
+			atomic.AddInt64(&p.replayCount, int64(len(group)))
 		}
 	}
 

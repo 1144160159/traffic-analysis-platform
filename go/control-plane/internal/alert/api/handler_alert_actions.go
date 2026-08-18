@@ -40,6 +40,26 @@ type alertSavedViewDTO struct {
 	UpdatedAt       time.Time              `json:"updated_at"`
 }
 
+type alertResponseExecutionReceiptDTO struct {
+	EventID           string                 `json:"event_id"`
+	State             string                 `json:"state"`
+	Simulated         bool                   `json:"simulated"`
+	ExternalEffect    bool                   `json:"external_effect"`
+	AggregateVersion  int64                  `json:"aggregate_version"`
+	Result            map[string]interface{} `json:"result"`
+	Error             string                 `json:"error"`
+	KafkaPartition    int                    `json:"kafka_partition"`
+	KafkaOffset       int64                  `json:"kafka_offset"`
+	Provider          string                 `json:"provider"`
+	ProviderReceiptID string                 `json:"provider_receipt_id"`
+	EffectState       string                 `json:"effect_state"`
+	EffectIDs         []string               `json:"effect_ids"`
+	TraceID           string                 `json:"trace_id"`
+	ReceiptSHA256     string                 `json:"receipt_sha256"`
+	AuthorityLookup   map[string]interface{} `json:"authority_lookup"`
+	ExecutedAt        time.Time              `json:"executed_at"`
+}
+
 func (h *Handler) CreateAlertResponseAction(w http.ResponseWriter, r *http.Request) {
 	h.persistAlertAction(w, r, "ALERT_RESPONSE_ACTION_REQUESTED", "alert_response_action", true)
 }
@@ -432,8 +452,16 @@ func (h *Handler) GetAlertResponseAction(w http.ResponseWriter, r *http.Request)
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", err.Error())
 		return
 	}
+	receipt, err := h.getAlertResponseExecutionReceipt(ctx, tenantID, alertID, jobID)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", err.Error())
+		return
+	}
 	var result map[string]interface{}
-	_ = json.Unmarshal([]byte(resultJSON), &result)
+	if err := json.Unmarshal([]byte(resultJSON), &result); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "alert response result is not valid JSON")
+		return
+	}
 	var approvedAtValue interface{}
 	if approvedAt.Valid {
 		approvedAtValue = approvedAt.Time
@@ -446,8 +474,42 @@ func (h *Handler) GetAlertResponseAction(w http.ResponseWriter, r *http.Request)
 		"outbox_published": outboxPublished, "outbox_cancelled": outboxCancelled,
 		"outbox_attempts": outboxAttempts, "outbox_last_error": lastError,
 		"created_at": createdAt, "updated_at": updatedAt,
+		"receipt_available": receipt != nil, "execution_receipt": receipt,
 	}
 	httpx.JSONContractSuccess(w, ctx, response, alertResponseContractMeta(ctx, jobID, revision))
+}
+
+func (h *Handler) getAlertResponseExecutionReceipt(ctx context.Context, tenantID, alertID, jobID string) (*alertResponseExecutionReceiptDTO, error) {
+	var receipt alertResponseExecutionReceiptDTO
+	var resultJSON, effectIDsJSON, authorityLookupJSON string
+	err := h.actionAudit.db.QueryRowContext(ctx, `SELECT event_id::text,state,simulated,external_effect,
+		aggregate_version,result::text,error,kafka_partition,kafka_offset,provider,
+		provider_receipt_id,effect_state,effect_ids::text,trace_id,receipt_sha256,
+		authority_lookup::text,executed_at
+		FROM alert_response_execution_receipts
+		WHERE tenant_id=$1 AND alert_id=$2 AND job_id=$3`, tenantID, alertID, jobID).Scan(
+		&receipt.EventID, &receipt.State, &receipt.Simulated, &receipt.ExternalEffect,
+		&receipt.AggregateVersion, &resultJSON, &receipt.Error, &receipt.KafkaPartition,
+		&receipt.KafkaOffset, &receipt.Provider, &receipt.ProviderReceiptID,
+		&receipt.EffectState, &effectIDsJSON, &receipt.TraceID, &receipt.ReceiptSHA256,
+		&authorityLookupJSON, &receipt.ExecutedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query alert response execution receipt: %w", err)
+	}
+	if err := json.Unmarshal([]byte(resultJSON), &receipt.Result); err != nil {
+		return nil, fmt.Errorf("decode alert response receipt result: %w", err)
+	}
+	if err := json.Unmarshal([]byte(effectIDsJSON), &receipt.EffectIDs); err != nil {
+		return nil, fmt.Errorf("decode alert response receipt effect ids: %w", err)
+	}
+	if err := json.Unmarshal([]byte(authorityLookupJSON), &receipt.AuthorityLookup); err != nil {
+		return nil, fmt.Errorf("decode alert response receipt authority lookup: %w", err)
+	}
+	return &receipt, nil
 }
 
 func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {

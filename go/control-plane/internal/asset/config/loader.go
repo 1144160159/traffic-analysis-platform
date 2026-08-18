@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/caarlos0/env/v10"
@@ -62,8 +63,21 @@ func (c *Config) validate() error {
 	if c.Export.OutboxEnabled && c.Export.EventTopic == "" {
 		return fmt.Errorf("asset export outbox requires an event topic")
 	}
-	if c.Kafka.EventOutboxEnabled && c.Kafka.EventTopic == "" {
-		return fmt.Errorf("asset event outbox requires an event topic")
+	if c.Kafka.EventOutboxEnabled {
+		if c.Kafka.EventTopic == "" {
+			return fmt.Errorf("asset event outbox requires an event topic")
+		}
+		if strings.TrimSpace(c.Kafka.EventOutboxTenantID) == "" {
+			return fmt.Errorf("asset event outbox requires an explicit tenant scope")
+		}
+	}
+	if c.Kafka.Enabled {
+		if c.Kafka.Topic != "asset.bindings.v1" || c.Kafka.BindingDLQTopic != "dlq.v1" || c.Kafka.GroupID == "" {
+			return fmt.Errorf("asset binding consumer topics and group are incomplete or not canonical")
+		}
+		if c.Kafka.BindingMaxAttempts <= 0 {
+			return fmt.Errorf("asset binding max attempts must be positive")
+		}
 	}
 	if c.Kafka.DiscoveryOutboxEnabled && c.Kafka.DiscoveryEventTopic == "" {
 		return fmt.Errorf("asset discovery outbox requires an event topic")
@@ -100,11 +114,28 @@ func (c *Config) validate() error {
 		}
 	}
 	if c.Kafka.ProjectionEnabled {
+		if c.Kafka.EventTopic != "asset.events.v2" || c.Kafka.ProjectionDLQTopic != "dlq.v1" {
+			return fmt.Errorf("asset projection input and DLQ topics are pinned to asset.events.v2 and dlq.v1")
+		}
+		if c.Kafka.ProjectionGroupID == "" {
+			return fmt.Errorf("asset projection consumer group is required")
+		}
 		if len(c.Projection.OpenSearch.Addresses) == 0 || c.Projection.OpenSearch.WriteAlias == "" {
 			return fmt.Errorf("asset projection OpenSearch addresses and write alias are required")
 		}
 		if len(c.Projection.Nebula.Addresses) == 0 || c.Projection.Nebula.Space == "" {
 			return fmt.Errorf("asset projection NebulaGraph addresses and space are required")
+		}
+		if c.Projection.ClickHouse.Enabled {
+			if len(c.Projection.ClickHouse.Hosts) == 0 ||
+				c.Projection.ClickHouse.Database != "traffic" ||
+				c.Projection.ClickHouse.Table != "traffic.source_asset_facts_v1" ||
+				c.Projection.ClickHouse.Username == "" {
+				return fmt.Errorf("asset projection ClickHouse target is incomplete or not canonical")
+			}
+			if c.Projection.ClickHouse.Dial <= 0 || c.Projection.ClickHouse.Read <= 0 {
+				return fmt.Errorf("asset projection ClickHouse timeouts must be positive")
+			}
 		}
 	}
 	return nil

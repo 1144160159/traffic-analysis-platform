@@ -54,6 +54,20 @@ spec:
           value: "false"
         - name: MAX_CONCURRENT
           value: "5"
+        - name: FORENSICS_PIPELINE_V1_ENABLED
+          value: "false"
+        - name: FORENSICS_WORKER_COMPATIBLE_READY
+          value: "false"
+        - name: FORENSICS_WORKER_ENABLED
+          value: "false"
+        - name: FORENSICS_WORKER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: FORENSICS_WORKER_EXECUTION_LEASE
+          value: "31m"
+        - name: FORENSICS_SOURCE_RETENTION
+          value: "2160h"
         - name: API_LISTEN_ADDR
           value: ":8086"
         resources:

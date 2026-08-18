@@ -381,17 +381,33 @@ func (c *Consumer) parseMessages(msg *kafka.ReceivedMessage) ([]auditEntry, erro
 		if eid == "" {
 			return nil, fmt.Errorf("unknown audit format")
 		}
+		// 兼容两类 JSON 键:materializer 旧契约(object_*/ip_addr)与
+		// audit.Logger 现役序列化(resource_*/source_ip/timestamp)。
+		getFirst := func(keys ...string) string {
+			for _, k := range keys {
+				if v := getStr(k); v != "" {
+					return v
+				}
+			}
+			return ""
+		}
+		createdAt := int64(0)
+		if ts := getStr("timestamp"); ts != "" {
+			if parsed, err := time.Parse(time.RFC3339Nano, ts); err == nil {
+				createdAt = parsed.UnixMilli()
+			}
+		}
 		entry := auditEntry{
 			eventID:    eid,
 			tenantID:   getStr("tenant_id"),
 			userID:     getStr("user_id"),
-			action:     getStr("action"),
-			objectType: getStr("object_type"),
-			objectID:   getStr("object_id"),
+			action:     getFirst("action"),
+			objectType: getFirst("object_type", "resource_type"),
+			objectID:   getFirst("object_id", "resource_id"),
 			detail:     getStr("detail"),
-			ipAddr:     getStr("ip_addr"),
+			ipAddr:     getFirst("ip_addr", "source_ip"),
 			userAgent:  getStr("user_agent"),
-			createdAt:  0, // JSON uses created_at as string
+			createdAt:  createdAt,
 		}
 		if entry.tenantID == "" || entry.action == "" {
 			return nil, fmt.Errorf("JSON audit event requires tenant_id and action")

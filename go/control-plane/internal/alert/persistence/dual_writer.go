@@ -254,7 +254,7 @@ func (d *DualWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 	return nil
 }
 
-// writeToClickHouse 写入 ClickHouse（带重试）
+// writeToClickHouse 写入 ClickHouse（带重试，ctx 感知）
 func (d *DualWriter) writeToClickHouse(ctx context.Context, alert *Alert) error {
 	var lastErr error
 
@@ -273,14 +273,16 @@ func (d *DualWriter) writeToClickHouse(ctx context.Context, alert *Alert) error 
 		d.fallback.RecordFailure(ctx, fallback.StorageClickHouse, err)
 
 		if attempt < d.maxRetries-1 {
-			time.Sleep(d.retryInterval * time.Duration(attempt+1))
+			if !sleepWithContext(ctx, d.retryInterval*time.Duration(attempt+1)) {
+				return ctx.Err()
+			}
 		}
 	}
 
 	return lastErr
 }
 
-// writeToOpenSearch 写入 OpenSearch（带重试）
+// writeToOpenSearch 写入 OpenSearch（带重试，ctx 感知）
 func (d *DualWriter) writeToOpenSearch(ctx context.Context, alert *Alert) error {
 	var lastErr error
 
@@ -299,11 +301,53 @@ func (d *DualWriter) writeToOpenSearch(ctx context.Context, alert *Alert) error 
 		d.fallback.RecordFailure(ctx, fallback.StorageOpenSearch, err)
 
 		if attempt < d.maxRetries-1 {
-			time.Sleep(d.retryInterval * time.Duration(attempt+1))
+			if !sleepWithContext(ctx, d.retryInterval*time.Duration(attempt+1)) {
+				return ctx.Err()
+			}
 		}
 	}
 
 	return lastErr
+}
+
+// writeBatchWithRetry 批量写单个后端，与单写路径使用一致的有界退避重试。
+func (d *DualWriter) writeBatchWithRetry(ctx context.Context, target fallback.StorageType, alerts []*Alert) error {
+	var lastErr error
+	for attempt := 0; attempt < d.maxRetries; attempt++ {
+		if !d.fallback.ShouldRetry(target, attempt) {
+			break
+		}
+		var err error
+		switch target {
+		case fallback.StorageClickHouse:
+			err = d.chWriter.WriteBatch(ctx, alerts)
+		case fallback.StorageOpenSearch:
+			err = d.osWriter.WriteBatch(ctx, alerts)
+		default:
+			return fmt.Errorf("unsupported dual-write target: %s", target)
+		}
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		d.fallback.RecordFailure(ctx, target, err)
+		if attempt < d.maxRetries-1 {
+			if !sleepWithContext(ctx, d.retryInterval*time.Duration(attempt+1)) {
+				return ctx.Err()
+			}
+		}
+	}
+	return lastErr
+}
+
+// sleepWithContext 返回 false 表示 ctx 已取消。
+func sleepWithContext(ctx context.Context, d time.Duration) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	case <-time.After(d):
+		return true
+	}
 }
 
 // WriteBatch preserves the conservative caller contract: a projection that is
@@ -341,11 +385,11 @@ func (d *DualWriter) WriteBatchWithOutcome(ctx context.Context, alerts []*Alert)
 	for _, target := range targets {
 		go func(t fallback.StorageType) {
 			start := time.Now()
-			var err error
+			// 批量路径与单写路径一致：有界退避重试 + ctx 感知
+			err := d.writeBatchWithRetry(ctx, t, alerts)
 
 			switch t {
 			case fallback.StorageClickHouse:
-				err = d.chWriter.WriteBatch(ctx, alerts)
 				if err == nil {
 					d.fallback.RecordSuccess(fallback.StorageClickHouse)
 					dualWriteTotal.WithLabelValues("clickhouse", "success").Inc()
@@ -357,7 +401,6 @@ func (d *DualWriter) WriteBatchWithOutcome(ctx context.Context, alerts []*Alert)
 				dualWriteBatchSize.WithLabelValues("clickhouse").Observe(float64(len(alerts)))
 
 			case fallback.StorageOpenSearch:
-				err = d.osWriter.WriteBatch(ctx, alerts)
 				if err == nil {
 					d.fallback.RecordSuccess(fallback.StorageOpenSearch)
 					dualWriteTotal.WithLabelValues("opensearch", "success").Inc()

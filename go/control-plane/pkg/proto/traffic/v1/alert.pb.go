@@ -816,13 +816,15 @@ type AlertFeedback struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	TenantId       string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	FeedbackId     string `protobuf:"bytes,2,opt,name=feedback_id,json=feedbackId,proto3" json:"feedback_id,omitempty"`
-	AlertId        string `protobuf:"bytes,3,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
-	UserId         string `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Label          string `protobuf:"bytes,5,opt,name=label,proto3" json:"label,omitempty"`
-	ReasonCode     string `protobuf:"bytes,6,opt,name=reason_code,json=reasonCode,proto3" json:"reason_code,omitempty"`
-	Comment        string `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
+	TenantId   string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	FeedbackId string `protobuf:"bytes,2,opt,name=feedback_id,json=feedbackId,proto3" json:"feedback_id,omitempty"`
+	AlertId    string `protobuf:"bytes,3,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
+	UserId     string `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Label      string `protobuf:"bytes,5,opt,name=label,proto3" json:"label,omitempty"`
+	ReasonCode string `protobuf:"bytes,6,opt,name=reason_code,json=reasonCode,proto3" json:"reason_code,omitempty"`
+	Comment    string `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
+	// Boolean semantics expressed as uint32 (0/1) for wire compatibility;
+	// a future breaking-change migration should use `bool`.
 	AddToWhitelist uint32 `protobuf:"varint,8,opt,name=add_to_whitelist,json=addToWhitelist,proto3" json:"add_to_whitelist,omitempty"`
 	AlertType      string `protobuf:"bytes,9,opt,name=alert_type,json=alertType,proto3" json:"alert_type,omitempty"`
 	Severity       string `protobuf:"bytes,10,opt,name=severity,proto3" json:"severity,omitempty"`

@@ -3,150 +3,177 @@ package consumer
 import (
 	"context"
 	"fmt"
+	"net"
+	"strings"
 	"time"
 
-	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/config"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/service"
+	kafkaCommon "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 )
 
-type BindingConsumer struct {
-	reader *kafka.Reader
-	svc    *service.AssetService
-	logger *zap.Logger
+type bindingRecorder interface {
+	RecordMacIpBinding(context.Context, []*config.MacIpBinding, service.BindingProvenance) (int32, int32, error)
 }
 
-func NewBindingConsumer(cfg config.KafkaConfig, svc *service.AssetService, logger *zap.Logger) (*BindingConsumer, error) {
-	brokers := cfg.BrokerList()
-	if len(brokers) == 0 {
-		return nil, fmt.Errorf("asset kafka brokers required")
-	}
-	if cfg.Topic == "" {
-		return nil, fmt.Errorf("asset kafka topic required")
-	}
-	if cfg.GroupID == "" {
-		return nil, fmt.Errorf("asset kafka group id required")
-	}
-	if cfg.MinBytes <= 0 {
-		cfg.MinBytes = 1
-	}
-	if cfg.MaxBytes <= 0 {
-		cfg.MaxBytes = 1 << 20
-	}
+type BindingConsumer struct {
+	consumer      *kafkaCommon.Consumer
+	recorder      bindingRecorder
+	topic         string
+	consumerGroup string
+	maxBytes      int
+	logger        *zap.Logger
+}
 
-	dialer, err := cfg.Security.Dialer("asset-service-binding-consumer")
+func NewBindingConsumer(
+	cfg config.KafkaConfig,
+	recorder bindingRecorder,
+	barrier kafkaCommon.DLQAcknowledgementBarrier,
+	logger *zap.Logger,
+) (*BindingConsumer, error) {
+	brokers := cfg.BrokerList()
+	if len(brokers) == 0 || strings.TrimSpace(cfg.Topic) == "" || strings.TrimSpace(cfg.GroupID) == "" {
+		return nil, fmt.Errorf("asset binding Kafka brokers, topic and group are required")
+	}
+	if cfg.Topic != "asset.bindings.v1" || cfg.BindingDLQTopic != "dlq.v1" {
+		return nil, fmt.Errorf("asset binding source and DLQ topics must be asset.bindings.v1 and dlq.v1")
+	}
+	if recorder == nil || barrier == nil {
+		return nil, fmt.Errorf("asset binding recorder and durable DLQ acknowledgement barrier are required")
+	}
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+	maxBytes := cfg.MaxBytes
+	if maxBytes <= 0 {
+		maxBytes = 1 << 20
+	}
+	owned, err := kafkaCommon.NewConsumer(kafkaCommon.ConsumerConfig{
+		Brokers: brokers, Topic: cfg.Topic, GroupID: cfg.GroupID,
+		MinBytes: cfg.MinBytes, MaxBytes: maxBytes, StartOffset: -2,
+		MaxRetries: cfg.BindingMaxAttempts, RetryBackoff: time.Second,
+		EnableDLQ: true, DLQTopic: cfg.BindingDLQTopic,
+		CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+		Security: cfg.Security,
+	}, logger)
 	if err != nil {
 		return nil, err
 	}
-
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:        brokers,
-		Topic:          cfg.Topic,
-		GroupID:        cfg.GroupID,
-		Dialer:         dialer,
-		MinBytes:       cfg.MinBytes,
-		MaxBytes:       cfg.MaxBytes,
-		CommitInterval: time.Second,
-		StartOffset:    kafka.FirstOffset,
-	})
-
-	return &BindingConsumer{reader: reader, svc: svc, logger: logger}, nil
+	owned.SetDLQAcknowledgementBarrier(barrier)
+	return &BindingConsumer{
+		consumer: owned, recorder: recorder, topic: cfg.Topic,
+		consumerGroup: cfg.GroupID, maxBytes: maxBytes, logger: logger,
+	}, nil
 }
 
 func (c *BindingConsumer) Run(ctx context.Context) {
-	c.logger.Info("asset binding consumer started")
-	for {
-		msg, err := c.reader.FetchMessage(ctx)
-		if err != nil {
-			if ctx.Err() != nil {
-				return
-			}
-			c.logger.Warn("fetch asset binding message failed", zap.Error(err))
-			continue
-		}
-
-		bindings, err := decodeBindings(msg.Value)
-		if err != nil {
-			c.logger.Warn("decode asset binding message failed",
-				zap.Int("partition", msg.Partition),
-				zap.Int64("offset", msg.Offset),
-				zap.Error(err))
-			// No DLQ is wired for this dedicated consumer yet. Fail closed:
-			// leave the offset uncommitted so a poison record is visible and
-			// replayable instead of being silently discarded.
-			continue
-		}
-
-		accepted, rejected, err := c.svc.RecordMacIpBinding(ctx, bindings, service.BindingProvenance{
-			Channel:     service.BindingChannelKafka,
-			Topic:       msg.Topic,
-			Partition:   msg.Partition,
-			Offset:      msg.Offset,
-			MessageTime: msg.Time,
-			Actor:       "kafka:asset-service-bindings",
-			TraceID:     fmt.Sprintf("asset-binding:%s:%d:%d", msg.Topic, msg.Partition, msg.Offset),
-			RequestID:   fmt.Sprintf("%s/%d/%d", msg.Topic, msg.Partition, msg.Offset),
-		})
-		if err != nil {
-			c.logger.Warn("record asset bindings failed",
-				zap.Int("bindings", len(bindings)),
-				zap.Error(err))
-			continue
-		}
-
-		if err := c.reader.CommitMessages(ctx, msg); err != nil {
-			c.logger.Warn("commit asset binding message failed",
-				zap.Int("partition", msg.Partition),
-				zap.Int64("offset", msg.Offset),
-				zap.Error(err))
-			continue
-		}
-
-		c.logger.Info("asset bindings recorded",
-			zap.Int32("accepted", accepted),
-			zap.Int32("rejected", rejected),
-			zap.Int("partition", msg.Partition),
-			zap.Int64("offset", msg.Offset))
+	c.logger.Info("asset binding consumer started",
+		zap.String("topic", c.topic), zap.String("group_id", c.consumerGroup))
+	if err := c.consumer.Consume(ctx, c.handleMessage); err != nil && ctx.Err() == nil {
+		c.logger.Error("asset binding consumer stopped", zap.Error(err))
 	}
+}
+
+func (c *BindingConsumer) handleMessage(ctx context.Context, message *kafkaCommon.ReceivedMessage) error {
+	binding, err := decodeAndValidateBinding(message, c.topic, c.maxBytes)
+	if err != nil {
+		return kafkaCommon.Permanent(err)
+	}
+	accepted, rejected, err := c.recorder.RecordMacIpBinding(
+		ctx,
+		[]*config.MacIpBinding{binding},
+		service.BindingProvenance{
+			Channel: service.BindingChannelKafka, Topic: message.Topic,
+			Partition: message.Partition, Offset: message.Offset, MessageTime: message.Time,
+			Actor:     "probe:" + binding.ProbeID,
+			TraceID:   "asset-binding:" + binding.ObservationID,
+			RequestID: fmt.Sprintf("%s/%d/%d", message.Topic, message.Partition, message.Offset),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("record asset binding authority transaction: %w", err)
+	}
+	if accepted != 1 || rejected != 0 {
+		return kafkaCommon.Permanent(fmt.Errorf(
+			"asset binding authority rejected record: accepted=%d rejected=%d", accepted, rejected))
+	}
+	return nil
 }
 
 func (c *BindingConsumer) Close() error {
-	return c.reader.Close()
+	if c == nil || c.consumer == nil {
+		return nil
+	}
+	return c.consumer.Close()
 }
 
-func decodeBindings(data []byte) ([]*config.MacIpBinding, error) {
-	var batch pb.RecordMacIpBindingRequest
-	if err := proto.Unmarshal(data, &batch); err == nil && len(batch.Bindings) > 0 {
-		return protoBindingsToConfig(batch.Bindings), nil
+func decodeAndValidateBinding(message *kafkaCommon.ReceivedMessage, expectedTopic string, maxBytes int) (*config.MacIpBinding, error) {
+	if message == nil {
+		return nil, fmt.Errorf("asset binding message is required")
 	}
-
-	var single pb.MacIpBinding
-	if err := proto.Unmarshal(data, &single); err != nil {
-		return nil, err
+	if message.Topic != expectedTopic {
+		return nil, fmt.Errorf("asset binding source topic mismatch")
 	}
-	if single.MacAddress == "" && single.IpAddress == "" {
-		return nil, fmt.Errorf("empty asset binding message")
+	if len(message.DuplicateHeaderNames()) != 0 {
+		return nil, fmt.Errorf("asset binding envelope contains duplicate headers")
 	}
-	return protoBindingsToConfig([]*pb.MacIpBinding{&single}), nil
-}
-
-func protoBindingsToConfig(bindings []*pb.MacIpBinding) []*config.MacIpBinding {
-	out := make([]*config.MacIpBinding, 0, len(bindings))
-	for _, binding := range bindings {
-		if binding == nil {
-			continue
+	if len(message.Value) == 0 || len(message.Value) > maxBytes {
+		return nil, fmt.Errorf("asset binding payload size is invalid")
+	}
+	var wire pb.MacIpBinding
+	if err := proto.Unmarshal(message.Value, &wire); err != nil {
+		return nil, fmt.Errorf("invalid MacIpBinding protobuf: %w", err)
+	}
+	if len(wire.ProtoReflect().GetUnknown()) != 0 {
+		return nil, fmt.Errorf("MacIpBinding contains unknown protobuf fields")
+	}
+	canonicalMAC, err := canonicalMACAddress(wire.MacAddress)
+	if err != nil || canonicalMAC != wire.MacAddress {
+		return nil, fmt.Errorf("asset binding MAC address is not canonical")
+	}
+	if parsed := net.ParseIP(wire.IpAddress); parsed == nil || parsed.String() != wire.IpAddress {
+		return nil, fmt.Errorf("asset binding IP address is not canonical")
+	}
+	if strings.TrimSpace(wire.TenantId) == "" || strings.TrimSpace(wire.ProbeId) == "" ||
+		strings.TrimSpace(wire.ObservationId) == "" || wire.ObservedAt <= 0 || wire.SchemaVersion != 1 {
+		return nil, fmt.Errorf("asset binding stable identity is incomplete")
+	}
+	if wire.Source != "arp" && wire.Source != "dhcp" {
+		return nil, fmt.Errorf("asset binding source must be arp or dhcp")
+	}
+	if message.Time.IsZero() || wire.ObservedAt > message.Time.Add(5*time.Minute).UnixMilli() {
+		return nil, fmt.Errorf("asset binding timestamp exceeds Kafka time plus allowed skew")
+	}
+	requiredHeaders := map[string]string{
+		"tenant_id": wire.TenantId, "probe_id": wire.ProbeId,
+		"observation_id": wire.ObservationId, "event_id": wire.ObservationId,
+		"source": wire.Source, "schema_version": "1",
+		"content_type": "application/x-protobuf", "message_type": "traffic.v1.MacIpBinding",
+	}
+	for name, expected := range requiredHeaders {
+		if message.GetHeader(name) != expected {
+			return nil, fmt.Errorf("asset binding header %s is missing or inconsistent", name)
 		}
-		out = append(out, &config.MacIpBinding{
-			MACAddress: binding.MacAddress,
-			IPAddress:  binding.IpAddress,
-			TenantID:   binding.TenantId,
-			ObservedAt: binding.ObservedAt,
-			Source:     binding.Source,
-		})
 	}
-	return out
+	if string(message.Key) != wire.TenantId+":"+wire.MacAddress {
+		return nil, fmt.Errorf("asset binding Kafka key must equal tenant_id:mac_address")
+	}
+	return &config.MacIpBinding{
+		MACAddress: wire.MacAddress, IPAddress: wire.IpAddress,
+		TenantID: wire.TenantId, ObservedAt: wire.ObservedAt, Source: wire.Source,
+		ObservationID: wire.ObservationId, ProbeID: wire.ProbeId,
+		VlanID: wire.VlanId, SourceEventID: wire.SourceEventId,
+	}, nil
+}
+
+func canonicalMACAddress(value string) (string, error) {
+	parsed, err := net.ParseMAC(strings.TrimSpace(value))
+	if err != nil || len(parsed) != 6 {
+		return "", fmt.Errorf("invalid MAC address")
+	}
+	return strings.ToLower(parsed.String()), nil
 }

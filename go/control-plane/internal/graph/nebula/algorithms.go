@@ -92,9 +92,15 @@ type AnomalyPattern struct {
 	Description string   `json:"description"`
 }
 
+// Executor 图查询执行接口:GraphAnalyzer 只依赖该接口,不绑定具体客户端实现
+// (workbench_store 的 nebula-go SDK、HTTP/Console 适配均可满足)。
+type Executor interface {
+	Execute(ctx context.Context, nGQL string) (*ResultSet, error)
+}
+
 // GraphAnalyzer 图分析器
 type GraphAnalyzer struct {
-	client *Client
+	client Executor
 	logger *zap.Logger
 	mu     sync.RWMutex
 	// 缓存
@@ -105,7 +111,7 @@ type GraphAnalyzer struct {
 }
 
 // NewGraphAnalyzer 创建图分析器
-func NewGraphAnalyzer(client *Client, logger *zap.Logger) *GraphAnalyzer {
+func NewGraphAnalyzer(client Executor, logger *zap.Logger) *GraphAnalyzer {
 	return &GraphAnalyzer{
 		client:         client,
 		logger:         logger,

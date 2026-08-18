@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -24,6 +26,11 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/api"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/apitoken"
+	authrepository "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/authz"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
+
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/config"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/consumer"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/repository"
@@ -31,6 +38,7 @@ import (
 	kafkaCommon "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/miniohttp"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/sourcequality"
 	graphConfig "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/config"
 	graphNebula "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/nebula"
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
@@ -182,7 +190,13 @@ func main() {
 	assetSvc.StartAssetExportWorker(consumerCtx)
 	var bindingConsumer *consumer.BindingConsumer
 	if cfg.Kafka.Enabled {
-		bc, err := consumer.NewBindingConsumer(cfg.Kafka, assetSvc, logger)
+		barrier, barrierErr := kafkaCommon.NewPostgresDLQAcknowledgementBarrier(
+			pgDB, cfg.Kafka.GroupID,
+		)
+		if barrierErr != nil {
+			logger.Fatal("Failed to initialize asset binding DLQ barrier", zap.Error(barrierErr))
+		}
+		bc, err := consumer.NewBindingConsumer(cfg.Kafka, assetSvc, barrier, logger)
 		if err != nil {
 			logger.Fatal("Failed to initialize asset binding consumer", zap.Error(err))
 		}
@@ -223,6 +237,7 @@ func main() {
 				MaxAttempts: cfg.Kafka.OutboxMaxAttempts,
 				BatchSize:   cfg.Kafka.OutboxBatchSize,
 				Interval:    cfg.Kafka.OutboxInterval,
+				TenantID:    cfg.Kafka.EventOutboxTenantID,
 				Logger:      logger,
 			},
 		)
@@ -341,10 +356,16 @@ func main() {
 	var assetProjectionConsumer *kafkaCommon.Consumer
 	var assetProjectionDone chan struct{}
 	if cfg.Kafka.ProjectionEnabled {
-		projectionEventConsumer, projectionErr := consumer.NewAssetProjectionEventConsumer(pgDB)
+		projectionEventConsumer, projectionErr := consumer.NewAssetProjectionEventConsumerWithQuality(
+			pgDB,
+			cfg.Kafka.ProjectionGroupID,
+			sourcequality.NewRepository(pgDB),
+		)
 		if projectionErr != nil {
 			logger.Fatal("Failed to initialize asset projection event consumer", zap.Error(projectionErr))
 		}
+		projectionEventConsumer.SetClickHouseProjectionEnabled(
+			cfg.Projection.ClickHouse.Enabled)
 		osProjection, projectionErr := consumer.NewOpenSearchAssetProjection(
 			cfg.Projection.OpenSearch.Addresses,
 			cfg.Projection.OpenSearch.Username,
@@ -370,10 +391,38 @@ func main() {
 		if projectionErr != nil {
 			logger.Fatal("Asset NebulaGraph projection is not ready", zap.Error(projectionErr))
 		}
+		projectionTargets := []consumer.AssetProjectionTarget{osProjection, nebulaProjection}
+		if cfg.Projection.ClickHouse.Enabled {
+			projectionDB := openAssetProjectionClickHouse(cfg.Projection.ClickHouse)
+			defer projectionDB.Close()
+			readinessCtx, readinessCancel = context.WithTimeout(
+				consumerCtx, cfg.Projection.ClickHouse.Dial)
+			projectionErr = projectionDB.PingContext(readinessCtx)
+			readinessCancel()
+			if projectionErr != nil {
+				logger.Fatal("Asset ClickHouse projection is not ready", zap.Error(projectionErr))
+			}
+			clickHouseProjection, targetErr := consumer.NewClickHouseAssetProjection(
+				projectionDB,
+				cfg.Projection.ClickHouse.Table,
+				cfg.Kafka.ProjectionGroupID,
+			)
+			if targetErr != nil {
+				logger.Fatal("Failed to initialize asset ClickHouse projection", zap.Error(targetErr))
+			}
+			readinessCtx, readinessCancel = context.WithTimeout(
+				consumerCtx, cfg.Projection.ClickHouse.Read)
+			projectionErr = clickHouseProjection.Ready(readinessCtx)
+			readinessCancel()
+			if projectionErr != nil {
+				logger.Fatal("Asset ClickHouse source-fact table is not ready", zap.Error(projectionErr))
+			}
+			projectionTargets = append(projectionTargets, clickHouseProjection)
+		}
 		hostname, _ := os.Hostname()
 		projectionWorker, projectionErr := consumer.NewAssetProjectionWorker(
 			pgDB,
-			[]consumer.AssetProjectionTarget{osProjection, nebulaProjection},
+			projectionTargets,
 			consumer.AssetProjectionWorkerConfig{
 				WorkerID:    "asset-projection/" + hostname,
 				Lease:       cfg.Projection.Lease,
@@ -395,6 +444,8 @@ func main() {
 		if projectionErr != nil {
 			logger.Fatal("Failed to initialize asset projection Kafka consumer", zap.Error(projectionErr))
 		}
+		assetProjectionConsumer.SetDLQAcknowledgementBarrier(
+			projectionEventConsumer.RecordDLQAcknowledgement)
 		assetProjectionDone = make(chan struct{}, 2)
 		go func() {
 			defer func() { assetProjectionDone <- struct{}{} }()
@@ -407,10 +458,11 @@ func main() {
 			defer func() { assetProjectionDone <- struct{}{} }()
 			projectionWorker.Run(consumerCtx)
 		}()
-		logger.Info("Asset durable OpenSearch and NebulaGraph projection enabled",
+		logger.Info("Asset durable projection worker enabled",
 			zap.String("topic", cfg.Kafka.EventTopic),
 			zap.String("group_id", cfg.Kafka.ProjectionGroupID),
-			zap.String("opensearch_write_alias", cfg.Projection.OpenSearch.WriteAlias))
+			zap.String("opensearch_write_alias", cfg.Projection.OpenSearch.WriteAlias),
+			zap.Bool("clickhouse_source_facts", cfg.Projection.ClickHouse.Enabled))
 	} else {
 		logger.Warn("Asset durable OpenSearch and NebulaGraph projection disabled")
 	}
@@ -439,8 +491,11 @@ func main() {
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus("asset-service", grpc_health_v1.HealthCheckResponse_SERVING)
 
-	// 注册 gRPC Reflection（开发调试用）
-	reflection.Register(grpcServer)
+	// 注册 gRPC Reflection（仅显式配置开启时注册，生产默认关闭）
+	if cfg.Server.GRPCEnableReflection {
+		reflection.Register(grpcServer)
+		logger.Warn("gRPC reflection is ENABLED via ASSET_GRPC_ENABLE_REFLECTION; do not enable in production")
+	}
 
 	go func() {
 		logger.Info("gRPC server listening", zap.String("addr", grpcAddr))
@@ -472,10 +527,35 @@ func main() {
 	httpMux.Handle("/api/v1/assets", assetHTTPHandler)
 	httpMux.Handle("/api/v1/assets/", assetHTTPHandler)
 
+	// 权限体系三层防御:asset HTTP 面此前不校验任何令牌(只信租户头),
+	// 现统一接入共享鉴权中间件(JWKS 验签 + 租户绑定 + API token 回退),
+	// 再叠加契约解释器(/v1/assets/* 25 操作逐操作判定)。
+	var assetRoot http.Handler = httpMux
+	authzCfg := authz.Config{
+		JWKSURL:            getEnv("AUTHZ_JWKS_URL", "http://10.0.5.8:30180/auth/realms/master/protocol/openid-connect/certs"),
+		Issuer:             getEnv("AUTHZ_ISSUER", ""),
+		Mode:               getEnv("AUTHZ_MODE", "shadow"),
+		RequireTenantClaim: getBoolEnv("AUTHZ_REQUIRE_TENANT_CLAIM", false),
+		AllowedAZP:         splitCSV(getEnv("AUTHZ_ALLOWED_AZP", "")),
+		DenyAuditor:        authzDenyAudit(pgDB, logger),
+		ExemptPaths:        []string{"/health", "/health/readiness"},
+	}
+	if getBoolEnv("AUTHZ_API_TOKEN_ENABLED", false) {
+		authzCfg.Fallback = apitoken.NewValidator(authrepository.NewTokenRepository(pgDB, logger), logger).Validate
+		logger.Info("API token fallback enabled (asset HTTP API)")
+	}
+	authzMW := authz.New(authzCfg, logger)
+	if mode := strings.TrimSpace(getEnv("AUTHZ_CONTRACT_MODE", "")); mode == "enforce" || mode == "shadow" {
+		// 顺序:认证(Handler,外层,先产出主体)→ 契约判定(内层) → 业务。
+		assetRoot = authz.EnforceContract(authz.PrincipalFromRequest, mode, nil, logger, assetContractDenyAudit(pgDB, logger))(assetRoot)
+		logger.Info("Contract interpreter enabled on asset HTTP API", zap.String("mode", mode))
+	}
+	assetRoot = authzMW.Handler(assetRoot)
+
 	httpAddr := fmt.Sprintf(":%d", cfg.Server.HTTPPort)
 	httpServer := &http.Server{
 		Addr:         httpAddr,
-		Handler:      httpMux,
+		Handler:      assetRoot,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -635,7 +715,10 @@ func assetProjectionConsumerConfig(cfg config.KafkaConfig) kafkaCommon.ConsumerC
 		MaxBytes:             cfg.MaxBytes,
 		MaxRetries:           cfg.ProjectionMaxAttempts,
 		RetryBackoff:         time.Second,
-		EnableDLQ:            false,
+		EnableDLQ:            true,
+		DLQTopic:             cfg.ProjectionDLQTopic,
+		CommitOnDLQSuccess:   true,
+		DLQPermanentOnly:     true,
 		CommitOnHandlerError: false,
 		Security:             cfg.Security,
 	}
@@ -665,6 +748,23 @@ func openAssetDetailClickHouse(cfg config.AssetDetailConfig) *sql.DB {
 	})
 }
 
+func openAssetProjectionClickHouse(cfg config.ProjectionClickHouseConfig) *sql.DB {
+	return clickhouse.OpenDB(&clickhouse.Options{
+		Addr: cfg.Hosts,
+		Auth: clickhouse.Auth{
+			Database: cfg.Database,
+			Username: cfg.Username,
+			Password: cfg.Password,
+		},
+		DialTimeout:     cfg.Dial,
+		ReadTimeout:     cfg.Read,
+		MaxOpenConns:    4,
+		MaxIdleConns:    2,
+		ConnMaxLifetime: time.Hour,
+		Compression:     &clickhouse.Compression{Method: clickhouse.CompressionLZ4},
+	})
+}
+
 func assetNebulaConfig(cfg *config.Config) graphConfig.NebulaConfig {
 	return graphConfig.NebulaConfig{
 		Enabled:     true,
@@ -676,5 +776,64 @@ func assetNebulaConfig(cfg *config.Config) graphConfig.NebulaConfig {
 		IdleTime:    cfg.Projection.Nebula.IdleTime,
 		MaxPoolSize: cfg.Projection.Nebula.MaxPoolSize,
 		MinPoolSize: cfg.Projection.Nebula.MinPoolSize,
+	}
+}
+
+func getBoolEnv(key string, def bool) bool {
+	val := strings.TrimSpace(os.Getenv(key))
+	if val == "" {
+		return def
+	}
+	parsed, err := strconv.ParseBool(val)
+	if err != nil {
+		return def
+	}
+	return parsed
+}
+
+// authzDenyAudit 认证拒绝留痕(审计三联):401/403 拒绝 best-effort 落 audit_logs。
+func authzDenyAudit(db *sql.DB, logger *zap.Logger) authz.DenyAuditFunc {
+	return func(r *http.Request, status int, reason string, principal *authz.Principal) {
+		if db == nil {
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		detail, _ := json.Marshal(map[string]interface{}{
+			"reason": reason, "path": r.URL.Path, "status": status, "result": "denied",
+		})
+		tenant := strings.TrimSpace(r.Header.Get("X-Tenant-ID"))
+		if tenant == "" {
+			tenant = "default"
+		}
+		userID := ""
+		if principal != nil {
+			userID = principal.Subject
+		}
+		if _, err := db.ExecContext(ctx, `
+			INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
+			VALUES ($1, NULLIF($2,'')::uuid, 'AUTHZ_ACCESS_DENIED', 'authz', '', $3::jsonb, $4, $5)`,
+			tenant, userID, string(detail), httpx.GetClientIP(r), r.UserAgent()); err != nil {
+			logger.Warn("authz deny audit persist failed", zap.String("path", r.URL.Path), zap.Error(err))
+		}
+	}
+}
+
+func splitCSV(v string) []string {
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if t := strings.TrimSpace(p); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// assetContractDenyAudit 契约拒绝留痕(复用 PG 直落审计通道)。
+func assetContractDenyAudit(db *sql.DB, logger *zap.Logger) authz.ContractDenyAuditor {
+	return func(r *http.Request, op *authz.Operation, principal *authz.Principal, status int) {
+		reason := fmt.Sprintf("contract scope required: %s (operation=%s)", op.RequiredScope, op.OperationID)
+		authzDenyAudit(db, logger)(r, status, reason, principal)
 	}
 }

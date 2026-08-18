@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -265,7 +266,8 @@ func (c *Correlator) groupBySrcIP(alerts []AlertInfo) [][]AlertInfo {
 		if a.SrcIP == "" || a.SrcIP == "0.0.0.0" {
 			continue
 		}
-		key := a.SrcIP
+		// 分组键带租户前缀，防止跨租户告警被关联进同一战役
+		key := a.TenantID + "|" + a.SrcIP
 		// 检查是否在同一时间窗口内
 		added := false
 		for _, existing := range groups[key] {
@@ -298,7 +300,8 @@ func (c *Correlator) groupByDstIP(alerts []AlertInfo) [][]AlertInfo {
 		if a.DstIP == "" || a.DstIP == "0.0.0.0" {
 			continue
 		}
-		key := a.DstIP
+		// 分组键带租户前缀，防止跨租户告警被关联进同一战役
+		key := a.TenantID + "|" + a.DstIP
 		added := false
 		for _, existing := range groups[key] {
 			if absDuration(a.Timestamp.Sub(existing.Timestamp)) <= window {
@@ -328,7 +331,9 @@ func (c *Correlator) groupByCommunityID(alerts []AlertInfo) [][]AlertInfo {
 		if a.CommunityID == "" {
 			continue
 		}
-		groups[a.CommunityID] = append(groups[a.CommunityID], a)
+		// 分组键带租户前缀，防止跨租户同一 community 值被合并
+		key := a.TenantID + "|" + a.CommunityID
+		groups[key] = append(groups[key], a)
 	}
 	var result [][]AlertInfo
 	for _, g := range groups {
@@ -341,13 +346,19 @@ func (c *Correlator) groupByCommunityID(alerts []AlertInfo) [][]AlertInfo {
 
 // groupByAttackPhase 按攻击链阶段分组
 func (c *Correlator) groupByAttackPhase(alerts []AlertInfo) [][]AlertInfo {
-	phaseMap := make(map[AttackPhase][]AlertInfo)
+	// 阶段映射按 (租户, 阶段) 隔离，防止跨租户拼装攻击链
+	type phaseKey struct {
+		tenant string
+		phase  AttackPhase
+	}
+	phaseMap := make(map[phaseKey][]AlertInfo)
 	for _, a := range alerts {
 		phase := alertTypeToPhase[a.AlertType]
 		if phase == "" {
 			continue
 		}
-		phaseMap[phase] = append(phaseMap[phase], a)
+		key := phaseKey{tenant: a.TenantID, phase: phase}
+		phaseMap[key] = append(phaseMap[key], a)
 	}
 
 	// 检查已知攻击链
@@ -355,10 +366,21 @@ func (c *Correlator) groupByAttackPhase(alerts []AlertInfo) [][]AlertInfo {
 	for campaignType, phaseSeq := range knownAttackChains {
 		var chainAlerts []AlertInfo
 		matchedPhases := 0
+		chainTenant := ""
 		for _, phase := range phaseSeq {
-			if alerts, ok := phaseMap[phase]; ok && len(alerts) > 0 {
-				chainAlerts = append(chainAlerts, alerts...)
-				matchedPhases++
+			// 仅匹配同一租户内连续满足的阶段
+			for key, alerts := range phaseMap {
+				if key.phase != phase {
+					continue
+				}
+				if chainTenant != "" && key.tenant != chainTenant {
+					continue
+				}
+				if len(alerts) > 0 {
+					chainTenant = key.tenant
+					chainAlerts = append(chainAlerts, alerts...)
+					matchedPhases++
+				}
 			}
 		}
 		if matchedPhases >= c.config.MinPhasesForChain {
@@ -602,14 +624,24 @@ func (c *Correlator) calculateCampaignScore(alerts []AlertInfo, campaignType Cam
 	return score
 }
 
-// generateCampaignID 生成 Campaign ID
+// generateCampaignID 生成 Campaign ID。
+// 基于排序后的告警 ID 集合做哈希：同秒同数量的两个不同活动不再碰撞
+// （原实现用 租户+首告警秒+数量，同秒同数量即冲突）。
 func (c *Correlator) generateCampaignID(alerts []AlertInfo) string {
-	raw := fmt.Sprintf("%s:%d:%d",
-		alerts[0].TenantID,
-		alerts[0].Timestamp.Unix(),
-		len(alerts))
+	tenantID := ""
+	ids := make([]string, 0, len(alerts))
+	for _, a := range alerts {
+		if tenantID == "" {
+			tenantID = a.TenantID
+		}
+		if a.AlertID != "" {
+			ids = append(ids, a.AlertID)
+		}
+	}
+	sort.Strings(ids)
+	raw := tenantID + ":" + strings.Join(ids, ",")
 	hash := md5.Sum([]byte(raw))
-	return fmt.Sprintf("campaign-%s-%x", alerts[0].TenantID, hash[:8])
+	return fmt.Sprintf("campaign-%s-%x", tenantID, hash[:8])
 }
 
 // collectAffectedIPs 收集受影响的 IP

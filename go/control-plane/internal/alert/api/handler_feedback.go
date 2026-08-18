@@ -26,11 +26,13 @@ import (
 type FeedbackHandler struct {
 	alertService               *service.AlertService
 	kafkaProducer              *kafka.Producer
+	revisionProducer           *kafka.Producer
 	auditLogger                interface{}
 	repo                       *FeedbackRepository   // 反馈持久化仓库（ClickHouse）
 	whitelistRepo              *whitelist.Repository // 白名单仓库（PostgreSQL）
 	actionAudit                *AlertActionAuditWriter
 	transactionalOutboxEnabled bool
+	revisionAuthorityEnabled   bool
 	logger                     *zap.Logger
 }
 
@@ -65,27 +67,34 @@ func (h *FeedbackHandler) RegisterRoutes(r *mux.Router) {
 
 // FeedbackRequest 反馈请求 - 与 proto AlertFeedback 字段对齐
 type FeedbackRequest struct {
-	Label          string `json:"label"`            // TP (True Positive) | FP (False Positive) - 对应 proto label
-	ReasonCode     string `json:"reason_code"`      // 误报原因码 - 对应 proto reason_code
-	Comment        string `json:"comment"`          // 备注 - 对应 proto comment
-	AddToWhitelist bool   `json:"add_to_whitelist"` // 是否加入白名单 - 对应 proto add_to_whitelist
+	Label                 string `json:"label"`                   // TP (True Positive) | FP (False Positive) - 对应 proto label
+	ReasonCode            string `json:"reason_code"`             // 误报原因码 - 对应 proto reason_code
+	Comment               string `json:"comment"`                 // 备注 - 对应 proto comment
+	AddToWhitelist        bool   `json:"add_to_whitelist"`        // 是否加入白名单 - 对应 proto add_to_whitelist
+	AdjudicationState     string `json:"adjudication_state"`      // PROPOSED | ADJUDICATED | RETRACTED
+	ExpectedLabelRevision int64  `json:"expected_label_revision"` // 首次为0，后续必须等于当前head
 }
 
 // FeedbackResponse 反馈响应
 type FeedbackResponse struct {
-	FeedbackID       string                          `json:"feedback_id"`
-	AlertID          string                          `json:"alert_id"`              // 对应 proto alert_id
-	TenantID         string                          `json:"tenant_id"`             // 对应 proto tenant_id
-	Label            string                          `json:"label"`                 // 对应 proto label
-	ReasonCode       string                          `json:"reason_code,omitempty"` // 对应 proto reason_code
-	Comment          string                          `json:"comment,omitempty"`     // 对应 proto comment
-	UserID           string                          `json:"user_id"`               // 对应 proto user_id
-	Timestamp        time.Time                       `json:"timestamp"`             // 对应 proto timestamp (int64)
-	AddToWhitelist   bool                            `json:"add_to_whitelist"`      // 对应 proto add_to_whitelist
-	WhitelistDraft   *FeedbackWhitelistDraftResponse `json:"whitelist_draft,omitempty"`
-	Status           string                          `json:"status"`
-	OutboxStatus     string                          `json:"outbox_status"`
-	IdempotentReplay bool                            `json:"idempotent_replay"`
+	FeedbackID        string                          `json:"feedback_id"`
+	AlertID           string                          `json:"alert_id"`              // 对应 proto alert_id
+	TenantID          string                          `json:"tenant_id"`             // 对应 proto tenant_id
+	Label             string                          `json:"label"`                 // 对应 proto label
+	ReasonCode        string                          `json:"reason_code,omitempty"` // 对应 proto reason_code
+	Comment           string                          `json:"comment,omitempty"`     // 对应 proto comment
+	UserID            string                          `json:"user_id"`               // 对应 proto user_id
+	Timestamp         time.Time                       `json:"timestamp"`             // 对应 proto timestamp (int64)
+	AddToWhitelist    bool                            `json:"add_to_whitelist"`      // 对应 proto add_to_whitelist
+	WhitelistDraft    *FeedbackWhitelistDraftResponse `json:"whitelist_draft,omitempty"`
+	Status            string                          `json:"status"`
+	OutboxStatus      string                          `json:"outbox_status"`
+	IdempotentReplay  bool                            `json:"idempotent_replay"`
+	EventID           string                          `json:"event_id,omitempty"`
+	PredictionID      string                          `json:"prediction_id,omitempty"`
+	LabelRevision     int64                           `json:"label_revision,omitempty"`
+	AdjudicationState string                          `json:"adjudication_state,omitempty"`
+	PreviousEventID   string                          `json:"previous_event_id,omitempty"`
 }
 
 // FeedbackWhitelistDraftResponse 描述由 FP 反馈生成的白名单审批草案。
@@ -203,6 +212,10 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		zap.String("label", req.Label),
 		zap.String("reason_code", req.ReasonCode),
 		zap.String("user_id", userID))
+	if h.revisionAuthorityEnabled {
+		h.submitModelFeedbackRevision(w, r, alert, req, tenantID, alertID, userID, idempotencyKey)
+		return
+	}
 	// Idempotency-Key存在时生成稳定反馈ID；兼容旧客户端时仍生成随机ID。
 	feedbackID := feedbackIdentity(tenantID, alertID, idempotencyKey)
 	feedbackTimestamp := time.Now()

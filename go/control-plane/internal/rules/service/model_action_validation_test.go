@@ -44,6 +44,28 @@ func TestValidateModelActionRequest(t *testing.T) {
 			req:     &model.ModelActionRequest{Action: "rollback-version", Version: "v1", Payload: map[string]interface{}{}},
 			wantErr: "rollback reason is required",
 		},
+		{
+			name: "rollback requires expected active version",
+			req: &model.ModelActionRequest{Action: "rollback-version", Version: "v1", Payload: map[string]interface{}{
+				"reason": "rollback because candidate is unhealthy",
+			}},
+			wantErr: "expected_active_version is required",
+		},
+		{
+			name: "rollback rejects fractional active revision",
+			req: &model.ModelActionRequest{Action: "rollback-version", Version: "v1", Payload: map[string]interface{}{
+				"reason": "rollback because candidate is unhealthy", "expected_active_version": "v2",
+				"expected_active_revision": 2.5,
+			}},
+			wantErr: "expected_active_revision must be a positive integer",
+		},
+		{
+			name: "rollback exact command accepted",
+			req: &model.ModelActionRequest{Action: "rollback-version", Version: "v1", Payload: map[string]interface{}{
+				"reason": "rollback because candidate is unhealthy", "expected_active_version": "v2",
+				"expected_active_revision": float64(2),
+			}},
+		},
 	}
 
 	for _, test := range tests {

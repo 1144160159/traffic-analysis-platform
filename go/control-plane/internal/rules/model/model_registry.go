@@ -9,8 +9,10 @@
 package model
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -170,18 +172,32 @@ func (m *Model) Validate() error {
 
 // ModelVersion 模型版本
 type ModelVersion struct {
-	ModelVersion string                 `json:"model_version" db:"model_version"`
-	ModelID      string                 `json:"model_id" db:"model_id"`
-	TenantID     string                 `json:"tenant_id" db:"tenant_id"`
-	FeatureSetID string                 `json:"feature_set_id" db:"feature_set_id"`
-	ArtifactURI  string                 `json:"artifact_uri" db:"artifact_uri"`
-	Metrics      map[string]interface{} `json:"metrics,omitempty" db:"-"`
-	MetricsJSON  []byte                 `json:"-" db:"metrics"`
-	ModelType    string                 `json:"model_type,omitempty" db:"-"`
-	Status       string                 `json:"status" db:"status"`
-	CreatedBy    string                 `json:"created_by,omitempty" db:"created_by"`
-	CreatedAt    time.Time              `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time              `json:"updated_at" db:"updated_at"`
+	ModelVersion               string                 `json:"model_version" db:"model_version"`
+	ModelID                    string                 `json:"model_id" db:"model_id"`
+	TenantID                   string                 `json:"tenant_id" db:"tenant_id"`
+	FeatureSetID               string                 `json:"feature_set_id" db:"feature_set_id"`
+	ArtifactURI                string                 `json:"artifact_uri" db:"artifact_uri"`
+	ArtifactManifestURI        string                 `json:"artifact_manifest_uri,omitempty" db:"artifact_manifest_uri"`
+	PackageID                  string                 `json:"package_id,omitempty" db:"package_id"`
+	PackageSHA256              string                 `json:"package_sha256,omitempty" db:"package_sha256"`
+	ArtifactManifestSHA256     string                 `json:"artifact_manifest_sha256,omitempty" db:"artifact_manifest_sha256"`
+	EvaluationSHA256           string                 `json:"evaluation_sha256,omitempty" db:"evaluation_sha256"`
+	ExplanationSHA256          string                 `json:"explanation_sha256,omitempty" db:"explanation_sha256"`
+	GraphSnapshotID            string                 `json:"graph_snapshot_id,omitempty" db:"graph_snapshot_id"`
+	GraphSnapshotSHA256        string                 `json:"graph_snapshot_sha256,omitempty" db:"graph_snapshot_sha256"`
+	SigningKeyID               string                 `json:"signing_key_id,omitempty" db:"signing_key_id"`
+	Compatibility              map[string]interface{} `json:"compatibility,omitempty" db:"-"`
+	CompatibilityJSON          []byte                 `json:"-" db:"compatibility"`
+	Revision                   int64                  `json:"revision" db:"revision"`
+	RegistrationIdempotencyKey string                 `json:"-" db:"registration_idempotency_key"`
+	RegistrationRequestSHA256  string                 `json:"registration_request_sha256,omitempty" db:"registration_request_sha256"`
+	Metrics                    map[string]interface{} `json:"metrics,omitempty" db:"-"`
+	MetricsJSON                []byte                 `json:"-" db:"metrics"`
+	ModelType                  string                 `json:"model_type,omitempty" db:"-"`
+	Status                     string                 `json:"status" db:"status"`
+	CreatedBy                  string                 `json:"created_by,omitempty" db:"created_by"`
+	CreatedAt                  time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt                  time.Time              `json:"updated_at" db:"updated_at"`
 	// 运行时填充字段（JOIN 查询结果）
 	ModelName   string `json:"model_name,omitempty" db:"-"`
 	Description string `json:"description,omitempty" db:"-"`
@@ -207,6 +223,15 @@ func (mv *ModelVersion) UnmarshalMetrics() error {
 		return nil
 	}
 	return json.Unmarshal(mv.MetricsJSON, &mv.Metrics)
+}
+
+// UnmarshalCompatibility decodes the immutable runtime compatibility contract.
+func (mv *ModelVersion) UnmarshalCompatibility() error {
+	if len(mv.CompatibilityJSON) == 0 {
+		mv.Compatibility = make(map[string]interface{})
+		return nil
+	}
+	return json.Unmarshal(mv.CompatibilityJSON, &mv.Compatibility)
 }
 
 // Validate 验证模型版本
@@ -267,15 +292,28 @@ func (mv *ModelVersion) GetF1Score() (float64, bool) {
 
 // RegisterModelRequest MLOps 训练流水线上报的模型注册请求
 type RegisterModelRequest struct {
-	ModelID      string                 `json:"model_id"`
-	ModelType    string                 `json:"model_type"`
-	Version      string                 `json:"version"`
-	ArtifactURI  string                 `json:"artifact_uri"`
-	FeatureSetID string                 `json:"feature_set_id"`
-	TenantID     string                 `json:"tenant_id"`
-	Metrics      map[string]interface{} `json:"metrics"`
-	Status       string                 `json:"status,omitempty"`
-	Description  string                 `json:"description,omitempty"`
+	ModelID                string                 `json:"model_id"`
+	ModelType              string                 `json:"model_type"`
+	Version                string                 `json:"version"`
+	ArtifactURI            string                 `json:"artifact_uri"`
+	ArtifactManifestURI    string                 `json:"artifact_manifest_uri,omitempty"`
+	PackageID              string                 `json:"package_id,omitempty"`
+	PackageSHA256          string                 `json:"package_sha256,omitempty"`
+	ArtifactManifestSHA256 string                 `json:"artifact_manifest_sha256,omitempty"`
+	EvaluationSHA256       string                 `json:"evaluation_sha256,omitempty"`
+	ExplanationSHA256      string                 `json:"explanation_sha256,omitempty"`
+	GraphSnapshotID        string                 `json:"graph_snapshot_id,omitempty"`
+	GraphSnapshotSHA256    string                 `json:"graph_snapshot_sha256,omitempty"`
+	SigningKeyID           string                 `json:"signing_key_id,omitempty"`
+	Compatibility          map[string]interface{} `json:"compatibility,omitempty"`
+	GovernanceVersion      string                 `json:"governance_version,omitempty"`
+	ExpectedRevision       *int64                 `json:"expected_revision"`
+	IdempotencyKey         string                 `json:"-"`
+	FeatureSetID           string                 `json:"feature_set_id"`
+	TenantID               string                 `json:"tenant_id"`
+	Metrics                map[string]interface{} `json:"metrics"`
+	Status                 string                 `json:"status,omitempty"`
+	Description            string                 `json:"description,omitempty"`
 }
 
 // Validate 验证注册请求
@@ -299,10 +337,62 @@ func (r *RegisterModelRequest) Validate() error {
 	if r.TenantID == "" {
 		errs = append(errs, "tenant_id is required")
 	}
+	if len(strings.TrimSpace(r.IdempotencyKey)) < 16 || len(strings.TrimSpace(r.IdempotencyKey)) > 200 {
+		errs = append(errs, "Idempotency-Key must contain 16 to 200 characters")
+	}
+	if r.ExpectedRevision == nil || *r.ExpectedRevision != 0 {
+		errs = append(errs, "expected_revision must be present and equal to 0 for model registration")
+	}
+	if r.Status != "" && r.Status != string(ModelStatusRegistered) {
+		errs = append(errs, "model registration status must be registered")
+	}
+	if r.GovernanceVersion != "" && r.GovernanceVersion != "model-registration.v1" {
+		errs = append(errs, "unsupported governance_version")
+	}
+	if r.GovernanceVersion == "model-registration.v1" {
+		required := map[string]string{
+			"artifact_manifest_uri":    r.ArtifactManifestURI,
+			"package_id":               r.PackageID,
+			"package_sha256":           r.PackageSHA256,
+			"artifact_manifest_sha256": r.ArtifactManifestSHA256,
+			"evaluation_sha256":        r.EvaluationSHA256,
+			"explanation_sha256":       r.ExplanationSHA256,
+			"graph_snapshot_id":        r.GraphSnapshotID,
+			"graph_snapshot_sha256":    r.GraphSnapshotSHA256,
+			"signing_key_id":           r.SigningKeyID,
+		}
+		for field, value := range required {
+			if strings.TrimSpace(value) == "" {
+				errs = append(errs, field+" is required for governed model registration")
+			}
+		}
+		for field, value := range map[string]string{
+			"package_sha256":           r.PackageSHA256,
+			"artifact_manifest_sha256": r.ArtifactManifestSHA256,
+			"evaluation_sha256":        r.EvaluationSHA256,
+			"explanation_sha256":       r.ExplanationSHA256,
+			"graph_snapshot_sha256":    r.GraphSnapshotSHA256,
+		} {
+			if !isLowerSHA256(value) {
+				errs = append(errs, field+" must be a lowercase SHA-256 digest")
+			}
+		}
+		if len(r.Compatibility) == 0 {
+			errs = append(errs, "compatibility is required for governed model registration")
+		}
+	}
 	if len(errs) > 0 {
 		return &ValidationError{Errors: errs}
 	}
 	return nil
+}
+
+func isLowerSHA256(value string) bool {
+	if len(value) != 64 || value != strings.ToLower(value) {
+		return false
+	}
+	decoded, err := hex.DecodeString(value)
+	return err == nil && len(decoded) == 32
 }
 
 // =============================================================================

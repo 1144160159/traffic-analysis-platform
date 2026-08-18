@@ -13,19 +13,24 @@ import (
 
 // FeedbackRecord 反馈持久化记录 — 对应 ClickHouse alert_feedback 表
 type FeedbackRecord struct {
-	FeedbackID     string    `json:"feedback_id" ch:"feedback_id"`
-	AlertID        string    `json:"alert_id" ch:"alert_id"`
-	TenantID       string    `json:"tenant_id" ch:"tenant_id"`
-	UserID         string    `json:"user_id" ch:"user_id"`
-	Label          string    `json:"label" ch:"label"`             // TP | FP
-	ReasonCode     string    `json:"reason_code" ch:"reason_code"` // FP 原因码
-	Comment        string    `json:"comment" ch:"comment"`
-	AddToWhitelist bool      `json:"add_to_whitelist" ch:"add_to_whitelist"`
-	AlertType      string    `json:"alert_type" ch:"alert_type"`       // 告警类型（冗余，方便分析）
-	Severity       string    `json:"severity" ch:"severity"`           // 严重程度（冗余）
-	ModelVersion   string    `json:"model_version" ch:"model_version"` // 模型版本（用于评估模型效果）
-	RuleVersion    string    `json:"rule_version" ch:"rule_version"`   // 规则版本
-	CreatedAt      time.Time `json:"created_at" ch:"created_at"`
+	FeedbackID        string    `json:"feedback_id" ch:"feedback_id"`
+	EventID           string    `json:"event_id,omitempty"`
+	PredictionID      string    `json:"prediction_id,omitempty"`
+	LabelRevision     int64     `json:"label_revision,omitempty"`
+	AdjudicationState string    `json:"adjudication_state,omitempty"`
+	PreviousEventID   string    `json:"previous_event_id,omitempty"`
+	AlertID           string    `json:"alert_id" ch:"alert_id"`
+	TenantID          string    `json:"tenant_id" ch:"tenant_id"`
+	UserID            string    `json:"user_id" ch:"user_id"`
+	Label             string    `json:"label" ch:"label"`             // TP | FP
+	ReasonCode        string    `json:"reason_code" ch:"reason_code"` // FP 原因码
+	Comment           string    `json:"comment" ch:"comment"`
+	AddToWhitelist    bool      `json:"add_to_whitelist" ch:"add_to_whitelist"`
+	AlertType         string    `json:"alert_type" ch:"alert_type"`       // 告警类型（冗余，方便分析）
+	Severity          string    `json:"severity" ch:"severity"`           // 严重程度（冗余）
+	ModelVersion      string    `json:"model_version" ch:"model_version"` // 模型版本（用于评估模型效果）
+	RuleVersion       string    `json:"rule_version" ch:"rule_version"`   // 规则版本
+	CreatedAt         time.Time `json:"created_at" ch:"created_at"`
 }
 
 // FeedbackRepository 反馈持久化仓库

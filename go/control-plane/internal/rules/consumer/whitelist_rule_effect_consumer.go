@@ -234,13 +234,51 @@ func validWhitelistEntryType(value string) bool {
 	}
 }
 
-type PostgresWhitelistRuleProjection struct{ db *sql.DB }
+type WhitelistConsumerReadinessOptions struct {
+	ConsumerGroup   string
+	CandidateSHA256 string
+	ContractSHA256  string
+}
+
+type PostgresWhitelistRuleProjection struct {
+	db        *sql.DB
+	readiness *WhitelistConsumerReadinessOptions
+}
 
 func NewPostgresWhitelistRuleProjection(db *sql.DB) (*PostgresWhitelistRuleProjection, error) {
 	if db == nil {
 		return nil, fmt.Errorf("whitelist rule projection database is required")
 	}
 	return &PostgresWhitelistRuleProjection{db: db}, nil
+}
+
+func NewPostgresWhitelistRuleProjectionWithReadiness(
+	db *sql.DB,
+	options WhitelistConsumerReadinessOptions,
+) (*PostgresWhitelistRuleProjection, error) {
+	projection, err := NewPostgresWhitelistRuleProjection(db)
+	if err != nil {
+		return nil, err
+	}
+	options.ConsumerGroup = strings.TrimSpace(options.ConsumerGroup)
+	options.CandidateSHA256 = strings.ToLower(strings.TrimSpace(options.CandidateSHA256))
+	options.ContractSHA256 = strings.ToLower(strings.TrimSpace(options.ContractSHA256))
+	if options.ConsumerGroup == "" || !validWhitelistConsumerSHA256(options.CandidateSHA256, true) ||
+		!validWhitelistConsumerSHA256(options.ContractSHA256, false) {
+		return nil, fmt.Errorf("approved whitelist consumer group, candidate and contract hashes are required")
+	}
+	projection.readiness = &options
+	return projection, nil
+}
+
+func validWhitelistConsumerSHA256(value string, rejectZero bool) bool {
+	if len(value) != sha256.Size*2 || value != strings.ToLower(value) {
+		return false
+	}
+	if _, err := hex.DecodeString(value); err != nil {
+		return false
+	}
+	return !rejectZero || strings.Trim(value, "0") != ""
 }
 
 func (p *PostgresWhitelistRuleProjection) VerifySchema(ctx context.Context) error {
@@ -259,6 +297,18 @@ func (p *PostgresWhitelistRuleProjection) VerifySchema(ctx context.Context) erro
 	}
 	if columns != 24 {
 		return fmt.Errorf("whitelist rule projection schema incomplete: columns=%d want=24", columns)
+	}
+	if p.readiness != nil {
+		var readinessColumns int
+		if err := p.db.QueryRowContext(ctx, `SELECT count(*) FROM information_schema.columns
+			WHERE table_schema=current_schema() AND table_name='whitelist_consumer_readiness_receipt'
+			  AND column_name IN ('consumer_group','candidate_sha256','contract_sha256','kafka_topic',
+			    'state','event_id','kafka_partition','kafka_offset','observed_at','updated_at')`).Scan(&readinessColumns); err != nil {
+			return fmt.Errorf("verify whitelist consumer readiness schema: %w", err)
+		}
+		if readinessColumns != 10 {
+			return fmt.Errorf("whitelist consumer readiness schema incomplete: columns=%d want=10", readinessColumns)
+		}
 	}
 	return nil
 }
@@ -334,6 +384,30 @@ func (p *PostgresWhitelistRuleProjection) ApplyWhitelistRuleProjection(ctx conte
 		}
 		if status != "applied" || ackEventID != input.AckEventID || revision != input.RuleRevision {
 			return fmt.Errorf("whitelist rule effect acknowledgement conflict")
+		}
+	}
+	if p.readiness != nil {
+		result, err := tx.ExecContext(ctx, `INSERT INTO whitelist_consumer_readiness_receipt
+			(consumer_group,candidate_sha256,contract_sha256,kafka_topic,state,event_id,
+			 kafka_partition,kafka_offset,observed_at,updated_at)
+			VALUES ($1,$2,$3,$4,'READY',$5::uuid,$6,$7,now(),now())
+			ON CONFLICT (consumer_group,candidate_sha256) DO UPDATE SET
+				state='READY',event_id=EXCLUDED.event_id,
+				kafka_partition=EXCLUDED.kafka_partition,kafka_offset=EXCLUDED.kafka_offset,
+				observed_at=EXCLUDED.observed_at,updated_at=now()
+			WHERE whitelist_consumer_readiness_receipt.contract_sha256=EXCLUDED.contract_sha256
+			  AND whitelist_consumer_readiness_receipt.kafka_topic=EXCLUDED.kafka_topic`,
+			p.readiness.ConsumerGroup, p.readiness.CandidateSHA256, p.readiness.ContractSHA256,
+			DefaultWhitelistEventTopicV2, input.EventID, input.KafkaPartition, input.KafkaOffset)
+		if err != nil {
+			return fmt.Errorf("write whitelist consumer readiness receipt: %w", err)
+		}
+		rows, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("inspect whitelist consumer readiness receipt: %w", err)
+		}
+		if rows != 1 {
+			return fmt.Errorf("whitelist consumer readiness receipt contract binding differs")
 		}
 	}
 	if err := tx.Commit(); err != nil {

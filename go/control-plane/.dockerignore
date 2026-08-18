@@ -1,0 +1,8 @@
+.git
+.pytest_cache
+bin
+deployments/docker/bin
+deployments/docker/alert-service
+cmd/alert-service/alert-service
+coverage*
+*.test

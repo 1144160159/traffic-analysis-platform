@@ -19,10 +19,11 @@ type DeploymentWorkbenchItem struct {
 // version-diff and rollback panels. Visual-breakdown mode remains isolated in
 // the frontend and is never accepted as business data.
 type DeploymentWorkbench struct {
-	Deployment *Deployment                         `json:"deployment"`
-	History    []*DeploymentHistoryRecord          `json:"history"`
-	Items      map[string][]map[string]interface{} `json:"items"`
-	Source     string                              `json:"source"`
+	Deployment  *Deployment                         `json:"deployment"`
+	History     []*DeploymentHistoryRecord          `json:"history"`
+	Items       map[string][]map[string]interface{} `json:"items"`
+	RuntimeGate *DeploymentRuntimeGate              `json:"runtime_gate,omitempty"`
+	Source      string                              `json:"source"`
 }
 
 // DeploymentHistoryRecord is the API-safe history representation shared by
@@ -45,6 +46,7 @@ type DeploymentEvidenceBundle struct {
 	Deployment      *Deployment                `json:"deployment"`
 	History         []*DeploymentHistoryRecord `json:"history"`
 	Evidence        []map[string]interface{}   `json:"evidence"`
+	RuntimeGate     *DeploymentRuntimeGate     `json:"runtime_gate,omitempty"`
 	Source          string                     `json:"source"`
 	BundleChecksum  string                     `json:"bundle_checksum"`
 	DownloadContent string                     `json:"download_content"`

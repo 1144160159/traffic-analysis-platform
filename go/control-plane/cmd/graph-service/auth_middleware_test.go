@@ -41,7 +41,7 @@ func TestProtectGraphBusinessAPIRequiresBearerToken(t *testing.T) {
 	}
 }
 
-func TestProtectGraphBusinessAPIAcceptsGraphReadAndUsesTokenTenant(t *testing.T) {
+func TestProtectGraphBusinessAPIRejectsTenantOverride(t *testing.T) {
 	handler := protectGraphBusinessAPI(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if tenantID := httpx.GetTenantID(r.Context()); tenantID != "tenant-from-token" {
 			t.Fatalf("expected token tenant, got %q", tenantID)
@@ -50,6 +50,23 @@ func TestProtectGraphBusinessAPIAcceptsGraphReadAndUsesTokenTenant(t *testing.T)
 	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{tenantID: "tenant-from-token", permissions: []string{"graph:read"}}}, nil))
 
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/graph/workbench?tenant_id=other", nil)
+	request.Header.Set("Authorization", "Bearer valid")
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusForbidden {
+		t.Fatalf("expected tenant override rejection, got %d", recorder.Code)
+	}
+}
+
+func TestProtectGraphBusinessAPIAcceptsMatchingTokenTenant(t *testing.T) {
+	handler := protectGraphBusinessAPI(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if tenantID := httpx.GetTenantID(r.Context()); tenantID != "tenant-from-token" {
+			t.Fatalf("expected token tenant, got %q", tenantID)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{tenantID: "tenant-from-token", permissions: []string{"graph:read"}}}, nil))
+
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/graph/workbench?tenant_id=tenant-from-token", nil)
 	request.Header.Set("Authorization", "Bearer valid")
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)

@@ -32,6 +32,10 @@ func (f *fakeFallbackReplayer) ReplayFallbackFiles(context.Context) FallbackRepl
 	return f.report
 }
 
+func (f *fakeFallbackReplayer) ReplayFallbackFilesForTenant(_ context.Context, _ string) FallbackReplayReport {
+	return f.ReplayFallbackFiles(context.Background())
+}
+
 func validReplayRequest() ReplayRequest {
 	return ReplayRequest{
 		TenantID:       "tenant-a",
@@ -41,6 +45,55 @@ func validReplayRequest() ReplayRequest {
 		Reason:         "recover parsed bad messages",
 		RepairSummary:  "fixed malformed tenant headers",
 		IdempotencyKey: "tenant-a:APPROVAL-20260628-001:1",
+	}
+}
+
+// newManagerWithApproval 构造带内存审批台账的管理器,并预置与
+// validReplayRequest 匹配的审批记录。
+func newManagerWithApproval(replayer FallbackReplayer, store ReplayIdempotencyStore) *ReplayManager {
+	manager := NewReplayManager(replayer, store, zap.NewNop())
+	approvals := NewMemoryReplayApprovalStore()
+	req := validReplayRequest()
+	if err := approvals.CreateApproval(context.Background(), ReplayApproval{
+		TenantID:    req.TenantID,
+		ApprovalID:  req.ApprovalID,
+		RequestedBy: req.RequestedBy,
+		ApprovedBy:  req.ApprovedBy,
+		Status:      ApprovalStatusApproved,
+		Reason:      "test approval",
+		CreatedAt:   time.Now(),
+	}); err != nil {
+		panic(err)
+	}
+	manager.SetApprovalStore(approvals)
+	return manager
+}
+
+func TestReplayManagerRejectsWithoutApprovalStore(t *testing.T) {
+	manager := NewReplayManager(&fakeFallbackReplayer{}, nil, zap.NewNop())
+	_, err := manager.ReplayFallback(context.Background(), validReplayRequest())
+	if err == nil || !strings.Contains(err.Error(), "approval store is not configured") {
+		t.Fatalf("expected fail-closed approval store error, got %v", err)
+	}
+}
+
+func TestReplayManagerRejectsUnknownApproval(t *testing.T) {
+	manager := newManagerWithApproval(&fakeFallbackReplayer{}, nil)
+	req := validReplayRequest()
+	req.ApprovalID = "APPROVAL-DOES-NOT-EXIST"
+	_, err := manager.ReplayFallback(context.Background(), req)
+	if err == nil || !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("expected approval not found error, got %v", err)
+	}
+}
+
+func TestReplayManagerRejectsApproverMismatch(t *testing.T) {
+	manager := newManagerWithApproval(&fakeFallbackReplayer{}, nil)
+	req := validReplayRequest()
+	req.ApprovedBy = "someone-else"
+	_, err := manager.ReplayFallback(context.Background(), req)
+	if err == nil || !strings.Contains(err.Error(), "approved_by does not match") {
+		t.Fatalf("expected approver mismatch error, got %v", err)
 	}
 }
 
@@ -64,7 +117,7 @@ func TestReplayManagerRequiresManualRepairAndApproval(t *testing.T) {
 
 func TestReplayManagerDryRunDoesNotReplay(t *testing.T) {
 	replayer := &fakeFallbackReplayer{fileCount: 2, totalSize: 2048}
-	manager := NewReplayManager(replayer, nil, zap.NewNop())
+	manager := newManagerWithApproval(replayer, nil)
 	req := validReplayRequest()
 	req.DryRun = true
 
@@ -96,7 +149,7 @@ func TestReplayManagerIdempotencyPreventsDuplicateReplay(t *testing.T) {
 			RemainingFallbackFiles: 1,
 		},
 	}
-	manager := NewReplayManager(replayer, nil, zap.NewNop())
+	manager := newManagerWithApproval(replayer, nil)
 	req := validReplayRequest()
 
 	first, err := manager.ReplayFallback(context.Background(), req)
@@ -136,7 +189,7 @@ func TestReplayManagerReportsPartialReplay(t *testing.T) {
 			Errors:                 []string{"replay success rate too low"},
 		},
 	}
-	manager := NewReplayManager(replayer, nil, zap.NewNop())
+	manager := newManagerWithApproval(replayer, nil)
 
 	result, err := manager.ReplayFallback(context.Background(), validReplayRequest())
 	if err != nil {
@@ -165,7 +218,7 @@ func (s failingReplayStore) Put(context.Context, string, ReplayResult) error {
 
 func TestReplayManagerFailsClosedWhenIdempotencyStoreGetFails(t *testing.T) {
 	replayer := &fakeFallbackReplayer{}
-	manager := NewReplayManager(replayer, failingReplayStore{getErr: errors.New("redis unavailable")}, zap.NewNop())
+	manager := newManagerWithApproval(replayer, failingReplayStore{getErr: errors.New("redis unavailable")})
 
 	_, err := manager.ReplayFallback(context.Background(), validReplayRequest())
 	if err == nil || !strings.Contains(err.Error(), "get replay idempotency record") {
@@ -178,7 +231,7 @@ func TestReplayManagerFailsClosedWhenIdempotencyStoreGetFails(t *testing.T) {
 
 func TestReplayManagerFailsClosedWhenIdempotencyStorePutFails(t *testing.T) {
 	replayer := &fakeFallbackReplayer{}
-	manager := NewReplayManager(replayer, failingReplayStore{putErr: errors.New("redis unavailable")}, zap.NewNop())
+	manager := newManagerWithApproval(replayer, failingReplayStore{putErr: errors.New("redis unavailable")})
 
 	_, err := manager.ReplayFallback(context.Background(), validReplayRequest())
 	if err == nil || !strings.Contains(err.Error(), "store replay idempotency record") {

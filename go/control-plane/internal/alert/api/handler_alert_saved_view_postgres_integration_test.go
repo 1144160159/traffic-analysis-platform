@@ -143,8 +143,8 @@ func alertSavedViewIntegrationBody(name string, expectedRevision int64, severity
 func performAlertSavedViewIntegrationRequest(handler func(http.ResponseWriter, *http.Request), tenantID, actor, traceID, idempotencyKey, body string) *httptest.ResponseRecorder {
 	request := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/views", bytes.NewBufferString(body))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Tenant-ID", tenantID)
-	request.Header.Set("X-User-ID", actor)
+	request = withTenant(request, tenantID)
+	request = withUser(request, actor)
 	request.Header.Set("Idempotency-Key", idempotencyKey)
 	ctx := context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{model.ScopeAlertWrite})
 	ctx = context.WithValue(ctx, httpx.ContextKeyTraceID, traceID)
@@ -156,8 +156,8 @@ func performAlertSavedViewIntegrationRequest(handler func(http.ResponseWriter, *
 
 func performAlertSavedViewListIntegrationRequest(handler func(http.ResponseWriter, *http.Request), tenantID, traceID string) *httptest.ResponseRecorder {
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/alerts/views", nil)
-	request.Header.Set("X-Tenant-ID", tenantID)
-	request.Header.Set("X-User-ID", "viewer-a")
+	request = withTenant(request, tenantID)
+	request = withUser(request, "viewer-a")
 	ctx := context.WithValue(request.Context(), httpx.ContextKeyPermissions, []string{model.ScopeAlertRead})
 	ctx = context.WithValue(ctx, httpx.ContextKeyTraceID, traceID)
 	request = request.WithContext(ctx)

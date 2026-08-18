@@ -29,6 +29,7 @@ type Config struct {
 	Dedup              DedupConfig
 	API                APIConfig
 	Auth               AuthConfig
+	ProbeOperation     ProbeOperationPipelineConfig
 }
 
 // DataQualitySignalConfig controls the read-only cross-system collectors. The
@@ -59,33 +60,62 @@ type DataQualitySignalConfig struct {
 
 // KafkaConfig Kafka 配置
 type KafkaConfig struct {
-	Brokers                          []string `env:"KAFKA_BROKERS" envSeparator:"," envDefault:"kafka-bootstrap.middleware.svc:9092"`
-	Topic                            string   `env:"KAFKA_TOPIC" envDefault:"detections.v1"`
-	GroupID                          string   `env:"KAFKA_GROUP_ID" envDefault:"alert-service"`
-	BatchSize                        int      `env:"KAFKA_BATCH_SIZE" envDefault:"100"`
-	ProbeAckTopic                    string   `env:"KAFKA_PROBE_ACK_TOPIC" envDefault:"probe.acks.v2"`
-	ProbeAckGroup                    string   `env:"KAFKA_PROBE_ACK_GROUP" envDefault:"alert-service-probe-acks-v2"`
-	TopicActionEventTopic            string   `env:"KAFKA_TOPIC_ACTION_EVENT_TOPIC" envDefault:"traffic.topic.action.v2"`
-	TopicActionEventGroup            string   `env:"KAFKA_TOPIC_ACTION_EVENT_GROUP" envDefault:"alert-service-topic-action-projection-v2"`
-	ProbeEventTopic                  string   `env:"KAFKA_PROBE_EVENT_TOPIC" envDefault:"probe.events.v2"`
-	ProbeEventGroup                  string   `env:"KAFKA_PROBE_EVENT_GROUP" envDefault:"alert-service-probe-event-projection-v2"`
-	ResponseActionTopic              string   `env:"KAFKA_RESPONSE_ACTION_TOPIC" envDefault:"alert.response.requested.v1"`
-	ResponseActionGroup              string   `env:"KAFKA_RESPONSE_ACTION_GROUP" envDefault:"alert-service-response-execution-v1"`
-	ResponseActionEnabled            bool     `env:"ALERT_RESPONSE_EXECUTION_V1_ENABLED" envDefault:"false"`
-	SavedViewEventTopic              string   `env:"KAFKA_SAVED_VIEW_EVENT_TOPIC" envDefault:"alert.saved-view.events.v1"`
-	SavedViewTransactionEnabled      bool     `env:"ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED" envDefault:"false"`
-	WhitelistEventTopic              string   `env:"KAFKA_WHITELIST_EVENT_TOPIC" envDefault:"whitelist.events.v2"`
-	WhitelistEventPipelineEnabled    bool     `env:"WHITELIST_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
-	NotificationGovernanceEventTopic string   `env:"KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC" envDefault:"notification.governance.events.v1"`
-	CampaignEventTopic               string   `env:"KAFKA_CAMPAIGN_EVENT_TOPIC" envDefault:"campaign.events.v2"`
-	CampaignEventGroup               string   `env:"KAFKA_CAMPAIGN_EVENT_GROUP" envDefault:"alert-service-campaign-event-projection-v2"`
-	CampaignMemberTopic              string   `env:"KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC" envDefault:"campaign.membership.events.v2"`
-	CampaignMemberGroup              string   `env:"KAFKA_CAMPAIGN_MEMBERSHIP_GROUP" envDefault:"alert-service-campaign-membership-projection-v2"`
-	CampaignEventEnabled             bool     `env:"CAMPAIGN_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
-	PlaybookEventTopic               string   `env:"KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC" envDefault:"playbook.execution.events.v2"`
-	PlaybookEventGroup               string   `env:"KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP" envDefault:"alert-service-playbook-execution-projection-v2"`
-	PlaybookEventEnabled             bool     `env:"PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
-	Security                         kafkaCommon.SecurityConfig
+	Brokers                            []string `env:"KAFKA_BROKERS" envSeparator:"," envDefault:"kafka-bootstrap.middleware.svc:9092"`
+	Topic                              string   `env:"KAFKA_TOPIC" envDefault:"detections.v1"`
+	GroupID                            string   `env:"KAFKA_GROUP_ID" envDefault:"alert-service"`
+	BatchSize                          int      `env:"KAFKA_BATCH_SIZE" envDefault:"100"`
+	ProbeAckTopic                      string   `env:"KAFKA_PROBE_ACK_TOPIC" envDefault:"probe.acks.v2"`
+	ProbeAckGroup                      string   `env:"KAFKA_PROBE_ACK_GROUP" envDefault:"alert-service-probe-acks-v2"`
+	TopicActionEventTopic              string   `env:"KAFKA_TOPIC_ACTION_EVENT_TOPIC" envDefault:"traffic.topic.action.v2"`
+	TopicActionEventGroup              string   `env:"KAFKA_TOPIC_ACTION_EVENT_GROUP" envDefault:"alert-service-topic-action-projection-v2"`
+	ProbeEventTopic                    string   `env:"KAFKA_PROBE_EVENT_TOPIC" envDefault:"probe.events.v2"`
+	ProbeEventGroup                    string   `env:"KAFKA_PROBE_EVENT_GROUP" envDefault:"alert-service-probe-event-projection-v2"`
+	ProbeGroupReadinessTopic           string   `env:"KAFKA_PROBE_GROUP_READINESS_TOPIC" envDefault:"probe.group-readiness.v1"`
+	ProbeGroupReadinessGroup           string   `env:"KAFKA_PROBE_GROUP_READINESS_GROUP" envDefault:"alert-service-probe-group-readiness-v1"`
+	ResponseActionTopic                string   `env:"KAFKA_RESPONSE_ACTION_TOPIC" envDefault:"alert.response.requested.v1"`
+	ResponseActionGroup                string   `env:"KAFKA_RESPONSE_ACTION_GROUP" envDefault:"alert-service-response-execution-v1"`
+	ResponseActionEnabled              bool     `env:"ALERT_RESPONSE_EXECUTION_V1_ENABLED" envDefault:"false"`
+	SavedViewEventTopic                string   `env:"KAFKA_SAVED_VIEW_EVENT_TOPIC" envDefault:"alert.saved-view.events.v1"`
+	SavedViewTransactionEnabled        bool     `env:"ALERT_SAVED_VIEW_TRANSACTION_V2_ENABLED" envDefault:"false"`
+	AlertEvidenceLinkTopic             string   `env:"KAFKA_ALERT_EVIDENCE_LINK_TOPIC" envDefault:"alert.evidence-links.v1"`
+	AlertEvidenceLinkGroup             string   `env:"KAFKA_ALERT_EVIDENCE_LINK_GROUP" envDefault:"alert-service-evidence-link-projection-v1"`
+	AlertEvidenceLinkConsumerEnabled   bool     `env:"ALERT_EVIDENCE_LINK_CONSUMER_V1_ENABLED" envDefault:"false"`
+	AlertEvidenceLinkDispatcherEnabled bool     `env:"ALERT_EVIDENCE_LINK_DISPATCHER_V1_ENABLED" envDefault:"false"`
+	WhitelistEventTopic                string   `env:"KAFKA_WHITELIST_EVENT_TOPIC" envDefault:"whitelist.events.v2"`
+	WhitelistEventConsumerGroup        string   `env:"KAFKA_WHITELIST_EVENT_GROUP" envDefault:"rule-manager-whitelist-rule-effect-v2"`
+	WhitelistEventProducerEnabled      bool     `env:"WHITELIST_EVENT_PRODUCER_V2_ENABLED" envDefault:"false"`
+	WhitelistDetectionMatcherEnabled   bool     `env:"WHITELIST_DETECTION_MATCHER_V2_ENABLED" envDefault:"false"`
+	WhitelistConsumerCandidateSHA256   string   `env:"WHITELIST_CONSUMER_CANDIDATE_SHA256" envDefault:"0000000000000000000000000000000000000000000000000000000000000000"`
+	WhitelistEventContractSHA256       string   `env:"WHITELIST_EVENT_CONTRACT_SHA256" envDefault:"d87787272d140c8529686ce45eef30f2a6345fb7f2e918a450399c8f698aad49"`
+	// Deprecated combined switch retained so old manifests continue to parse.
+	// Runtime admission deliberately ignores it: producer, consumer and matcher
+	// are separate rollout rails.
+	WhitelistEventPipelineEnabled    bool   `env:"WHITELIST_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
+	NotificationGovernanceEventTopic string `env:"KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC" envDefault:"notification.governance.events.v1"`
+	CampaignEventTopic               string `env:"KAFKA_CAMPAIGN_EVENT_TOPIC" envDefault:"campaign.events.v2"`
+	CampaignEventGroup               string `env:"KAFKA_CAMPAIGN_EVENT_GROUP" envDefault:"alert-service-campaign-event-projection-v2"`
+	CampaignMemberTopic              string `env:"KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC" envDefault:"campaign.membership.events.v2"`
+	CampaignMemberGroup              string `env:"KAFKA_CAMPAIGN_MEMBERSHIP_GROUP" envDefault:"alert-service-campaign-membership-projection-v2"`
+	CampaignProtoTopic               string `env:"KAFKA_CAMPAIGNS_PROTO_TOPIC" envDefault:"campaigns.v1"`
+	CampaignProtoGroup               string `env:"KAFKA_CAMPAIGNS_PROTO_GROUP" envDefault:"alert-service-campaigns-proto-projection-v1"`
+	CampaignProtoEnabled             bool   `env:"CAMPAIGNS_PROTO_CONSUMER_V1_ENABLED" envDefault:"false"`
+	CampaignEventConsumerEnabled     bool   `env:"CAMPAIGN_EVENT_CONSUMER_V2_ENABLED" envDefault:"false"`
+	CampaignEventDispatcherEnabled   bool   `env:"CAMPAIGN_EVENT_DISPATCHER_V2_ENABLED" envDefault:"false"`
+	CampaignRailCorrelationEnabled   bool   `env:"CAMPAIGN_RAIL_CORRELATION_V1_ENABLED" envDefault:"false"`
+	// Deprecated combined switch retained only so old manifests still parse.
+	// Runtime admission uses the two explicit switches above.
+	CampaignEventEnabled         bool   `env:"CAMPAIGN_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
+	PlaybookEventTopic           string `env:"KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC" envDefault:"playbook.execution.events.v2"`
+	PlaybookEventGroup           string `env:"KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP" envDefault:"alert-service-playbook-execution-projection-v2"`
+	PlaybookEventEnabled         bool   `env:"PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
+	FusionCommandTopic           string `env:"KAFKA_FUSION_COMMAND_TOPIC" envDefault:"fusion.commands.v1"`
+	FusionProjectionGroup        string `env:"KAFKA_FUSION_PROJECTION_GROUP" envDefault:"alert-service-fusion-projection-v1"`
+	FusionProjectionEnabled      bool   `env:"FUSION_PROJECTION_CONSUMER_V1_ENABLED" envDefault:"false"`
+	BaselineLifecycleTopic       string `env:"KAFKA_BASELINE_LIFECYCLE_TOPIC" envDefault:"baseline.lifecycle.v1"`
+	BaselineActivationAckTopic   string `env:"KAFKA_BASELINE_ACTIVATION_ACK_TOPIC" envDefault:"baseline.activation-acks.v1"`
+	BaselineActivationAckGroup   string `env:"KAFKA_BASELINE_ACTIVATION_ACK_GROUP" envDefault:"alert-service-baseline-activation-acks-v1"`
+	BaselineActivationAckEnabled bool   `env:"BEHAVIOR_BASELINE_ACK_CONSUMER_V1_ENABLED" envDefault:"false"`
+	Security                     kafkaCommon.SecurityConfig
 }
 
 // RedisConfig Redis 配置
@@ -344,7 +374,7 @@ type APIConfig struct {
 	ReadTimeout    time.Duration `env:"API_READ_TIMEOUT" envDefault:"15s"`
 	WriteTimeout   time.Duration `env:"API_WRITE_TIMEOUT" envDefault:"30s"`
 	IdleTimeout    time.Duration `env:"API_IDLE_TIMEOUT" envDefault:"60s"`
-	AllowedOrigins []string      `env:"API_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
+	AllowedOrigins []string      `env:"API_ALLOWED_ORIGINS" envSeparator:"," envDefault:"http://localhost:3000"`
 }
 
 // AuthConfig Auth 配置
@@ -423,15 +453,38 @@ func Load() (*Config, error) {
 
 // validate 安全配置检查
 func (c *Config) validate() error {
-	if c.API.AllowedOrigins[0] == "*" && c.Kafka.Brokers[0] != "kafka-bootstrap.middleware.svc:9092" {
-		// 生产环境检测：当 Kafka broker 不是 localhost 时发出警告
-		println("⚠ SECURITY WARNING: CORS AllowedOrigins is '*', this is unsafe for production. Set API_ALLOWED_ORIGINS to your domain.")
+	if len(c.API.AllowedOrigins) == 0 {
+		return fmt.Errorf("API_ALLOWED_ORIGINS must contain at least one explicit origin")
+	}
+	for _, origin := range c.API.AllowedOrigins {
+		if origin == "*" {
+			// 生产环境禁止通配 CORS：fail-closed，必须显式配置来源域
+			return fmt.Errorf("API_ALLOWED_ORIGINS must not contain '*'; configure explicit origins")
+		}
 	}
 	if c.Auth.Enabled && (len(c.Auth.JWTSecretKey) < 32 || c.Auth.JWTSecretKey == "your-256-bit-secret-key-here") {
 		return fmt.Errorf("JWT_SECRET_KEY must be supplied by a secret reference and contain at least 32 characters when auth is enabled")
 	}
 	if c.OpenSearch.Password == "" {
 		println("⚠ SECURITY WARNING: OpenSearch password is empty. Set OPENSEARCH_PASSWORD environment variable.")
+	}
+	if c.OpenSearch.SearchCursorEnabled {
+		if !c.OpenSearch.V2Enabled || strings.TrimSpace(c.OpenSearch.ReadAlias) == "" {
+			return fmt.Errorf("OpenSearch cursor search requires OPENSEARCH_ALERTS_V2_ENABLED and an exact read alias")
+		}
+		if len(c.Auth.JWTSecretKey) < 32 || c.Auth.JWTSecretKey == "your-256-bit-secret-key-here" {
+			return fmt.Errorf("OpenSearch cursor search requires a secret-backed JWT_SECRET_KEY of at least 32 characters")
+		}
+		if c.OpenSearch.SearchMaxPageSize < 1 || c.OpenSearch.SearchMaxPageSize > 200 ||
+			c.OpenSearch.SearchShallowLimit < c.OpenSearch.SearchMaxPageSize || c.OpenSearch.SearchShallowLimit > 10000 ||
+			c.OpenSearch.SearchQueryTimeout < 100*time.Millisecond || c.OpenSearch.SearchQueryTimeout > 10*time.Second ||
+			c.OpenSearch.SearchCursorTTL < 10*time.Second || c.OpenSearch.SearchCursorTTL > 15*time.Minute ||
+			c.OpenSearch.SearchTrackTotal < 100 || c.OpenSearch.SearchTrackTotal > 100000 {
+			return fmt.Errorf("OpenSearch cursor search budgets are outside the approved bounds")
+		}
+	}
+	if err := c.ProbeOperation.Validate(c.Kafka); err != nil {
+		return err
 	}
 	return nil
 }

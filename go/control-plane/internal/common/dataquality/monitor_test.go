@@ -83,6 +83,9 @@ func TestKafkaLagCannotUseClickHouseProxyAsMeasuredSignal(t *testing.T) {
 		if check.Status != "unknown" || check.Measured {
 			t.Fatalf("missing persisted hand-off signal must be unknown: %#v", check)
 		}
+		if check.Availability != SignalAvailabilityNotArrived || check.Freshness != SignalFreshnessUnknown || check.Completeness != SignalCompletenessUnknown || check.ValueState != SignalValueNone {
+			t.Fatalf("missing persisted hand-off signal must be typed not-arrived: %#v", check)
+		}
 	}
 	if _, ok := report.Metrics["insert_rate_per_min"]; ok {
 		t.Fatal("ClickHouse insert-rate proxy must not be published as Kafka lag")

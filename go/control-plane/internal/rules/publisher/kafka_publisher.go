@@ -319,6 +319,17 @@ func (p *KafkaPublisher) PublishRuleCommand(ctx context.Context, cmd *model.Rule
 	if atomic.LoadInt32(&p.closed) == 1 {
 		return errors.New(errors.ErrCodeServiceUnavailable, "publisher is closed")
 	}
+	if cmd == nil || cmd.Rule == nil {
+		return errors.New(errors.ErrCodeInvalidRequest, "rule command and rule are required")
+	}
+	// Allocate the event identity once on the command object. Retry attempts
+	// and outbox replays must publish the same logical event_id.
+	if cmd.EventID == "" {
+		cmd.EventID = uuid.NewString()
+	}
+	if cmd.Version == 0 {
+		cmd.Version = cmd.Rule.Version
+	}
 
 	ctx, span := otel.StartSpan(ctx, "KafkaPublisher.PublishRuleCommand")
 	defer span.End()
@@ -357,7 +368,8 @@ func (p *KafkaPublisher) PublishRuleCommand(ctx context.Context, cmd *model.Rule
 		{Key: "event_type", Value: "rule_command"},
 		{Key: "event_ts", Value: fmt.Sprintf("%d", cmd.Timestamp.UnixMilli())},
 		{Key: "content_type", Value: "application/json"},
-		{Key: "schema_version", Value: "1.0"},
+		{Key: "schema_version", Value: protoCmd.SchemaVersion},
+		{Key: "checksum_algorithm", Value: protoCmd.ChecksumAlgorithm},
 	}
 
 	// 如果有 checksum，添加到 header
@@ -446,7 +458,12 @@ func (p *KafkaPublisher) PublishRuleCommandWithRetry(ctx context.Context, cmd *m
 	return fmt.Errorf("all %d retries failed: %w", maxRetries, lastErr)
 }
 
-// PublishCompensation 发布补偿命令（用于回滚）
+// PublishCompensation is retained for source compatibility but deliberately
+// rejects direct compensation messages. The old implementation emitted
+// compensate_* actions with an incomplete rule body; those actions are not in
+// the RuleCommand contract and cannot be applied safely. Callers must use the
+// transactional RuleService.RollbackRule path, which publishes a verified
+// higher-version update through the outbox.
 func (p *KafkaPublisher) PublishCompensation(ctx context.Context, ruleID, tenantID, action, operatorID string, version int64) error {
 	if atomic.LoadInt32(&p.closed) == 1 {
 		return errors.New(errors.ErrCodeServiceUnavailable, "publisher is closed")
@@ -454,62 +471,19 @@ func (p *KafkaPublisher) PublishCompensation(ctx context.Context, ruleID, tenant
 
 	ctx, span := otel.StartSpan(ctx, "KafkaPublisher.PublishCompensation")
 	defer span.End()
-
-	// 记录补偿计数
 	atomic.AddInt64(&p.metrics.RuleCompensations, 1)
-
-	compensation := &model.RuleCommand{
-		Action: "compensate_" + action,
-		Rule: &model.Rule{
-			RuleID:   ruleID,
-			TenantID: tenantID,
-			Version:  version,
-		},
-		Timestamp:  time.Now(),
-		OperatorID: operatorID,
-	}
-
-	// 转换为 Proto 兼容格式
-	protoCmd := converter.CommandToProto(compensation)
-
-	value, err := json.Marshal(protoCmd)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to marshal compensation")
-	}
-
-	headers := []kafka.MessageHeader{
-		{Key: "event_id", Value: protoCmd.EventID},
-		{Key: "action", Value: compensation.Action},
-		{Key: "tenant_id", Value: tenantID},
-		{Key: "rule_id", Value: ruleID},
-		{Key: "rule_version", Value: converter.FormatVersion(version)},
-		{Key: "is_compensation", Value: "true"},
-		{Key: "original_action", Value: action},
-		{Key: "event_ts", Value: fmt.Sprintf("%d", compensation.Timestamp.UnixMilli())},
-	}
-
-	// 设置超时
-	ctx, cancel := context.WithTimeout(ctx, p.config.SendTimeout)
-	defer cancel()
-
-	err = p.ruleProducer.Send(ctx, ruleID, value, headers...)
-	if err != nil {
-		p.logger.Error("Failed to publish compensation",
-			zap.String("rule_id", ruleID),
-			zap.String("event_id", protoCmd.EventID),
-			zap.String("action", compensation.Action),
-			zap.Error(err))
-		return errors.Wrap(err, errors.ErrCodeKafkaError, "failed to publish compensation")
-	}
-
-	p.logger.Warn("Compensation command published",
+	p.logger.Warn("Rejected unsafe direct rule compensation",
 		zap.String("rule_id", ruleID),
-		zap.String("event_id", protoCmd.EventID),
-		zap.String("action", compensation.Action),
-		zap.String("original_action", action),
+		zap.String("tenant_id", tenantID),
+		zap.String("action", action),
+		zap.String("operator_id", operatorID),
 		zap.Int64("version", version))
-
-	return nil
+	err := errors.New(
+		errors.ErrCodeInvalidStateTransition,
+		"direct rule compensation is disabled; use checksum-verified transactional rule rollback",
+	)
+	otel.RecordError(ctx, err)
+	return err
 }
 
 // PublishAuditLog 发布审计日志

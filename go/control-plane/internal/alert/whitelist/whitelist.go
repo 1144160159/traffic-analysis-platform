@@ -16,41 +16,47 @@ import (
 
 // Entry 白名单条目
 type Entry struct {
-	ID               string     `json:"id" db:"id"`
-	TenantID         string     `json:"tenant_id" db:"tenant_id"`
-	Type             string     `json:"type" db:"type"`     // ip | domain | fingerprint | subnet
-	Value            string     `json:"value" db:"value"`   // IP/域名/指纹值
-	Reason           string     `json:"reason" db:"reason"` // 加入原因 (FP reason code)
-	Description      string     `json:"description" db:"description"`
-	Status           string     `json:"status,omitempty" db:"status"`                   // draft | pending | active | disabled
-	ApprovalStatus   string     `json:"approval_status,omitempty" db:"approval_status"` // draft | pending | approved | rejected
-	SourceAlertID    string     `json:"source_alert_id,omitempty" db:"source_alert_id"`
-	FeedbackID       string     `json:"feedback_id,omitempty" db:"feedback_id"`
-	OwnerRole        string     `json:"owner_role,omitempty" db:"owner_role"`
-	Scope            string     `json:"scope,omitempty" db:"scope"`
-	RiskLevel        string     `json:"risk_level,omitempty" db:"risk_level"`
-	CoveredAlerts    int        `json:"covered_alerts,omitempty" db:"covered_alerts"`
-	CoveredAssets    int        `json:"covered_assets,omitempty" db:"covered_assets"`
-	Version          int        `json:"version" db:"version"`
-	CreatedBy        string     `json:"created_by" db:"created_by"`
-	ApprovedBy       string     `json:"approved_by,omitempty" db:"approved_by"`
-	ApprovedAt       *time.Time `json:"approved_at,omitempty" db:"approved_at"`
-	DisabledAt       *time.Time `json:"disabled_at,omitempty" db:"disabled_at"`
-	ExpiresAt        *time.Time `json:"expires_at,omitempty" db:"expires_at"` // nil=永久
-	CreatedAt        time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt        time.Time  `json:"updated_at" db:"updated_at"`
-	ArchivedAt       *time.Time `json:"archived_at,omitempty" db:"archived_at"`
-	LastActionID     string     `json:"last_action_id,omitempty" db:"last_action_id"`
-	LastTraceID      string     `json:"last_trace_id,omitempty" db:"last_trace_id"`
-	RuleEffectStatus string     `json:"rule_effect_status,omitempty" db:"rule_effect_status"`
-	RuleDesiredState string     `json:"rule_desired_state,omitempty" db:"rule_desired_state"`
-	RuleRevision     string     `json:"rule_revision,omitempty" db:"rule_revision"`
+	ID                 string     `json:"id" db:"id"`
+	TenantID           string     `json:"tenant_id" db:"tenant_id"`
+	Type               string     `json:"type" db:"type"`     // ip | domain | fingerprint | subnet
+	Value              string     `json:"value" db:"value"`   // IP/域名/指纹值
+	Reason             string     `json:"reason" db:"reason"` // 加入原因 (FP reason code)
+	Description        string     `json:"description" db:"description"`
+	Status             string     `json:"status,omitempty" db:"status"`                   // draft | pending | active | disabled
+	ApprovalStatus     string     `json:"approval_status,omitempty" db:"approval_status"` // draft | pending | approved | rejected
+	SourceAlertID      string     `json:"source_alert_id,omitempty" db:"source_alert_id"`
+	FeedbackID         string     `json:"feedback_id,omitempty" db:"feedback_id"`
+	OwnerRole          string     `json:"owner_role,omitempty" db:"owner_role"`
+	Scope              string     `json:"scope,omitempty" db:"scope"`
+	RiskLevel          string     `json:"risk_level,omitempty" db:"risk_level"`
+	CoveredAlerts      int        `json:"covered_alerts,omitempty" db:"covered_alerts"`
+	CoveredAssets      int        `json:"covered_assets,omitempty" db:"covered_assets"`
+	Version            int        `json:"version" db:"version"`
+	CreatedBy          string     `json:"created_by" db:"created_by"`
+	ApprovedBy         string     `json:"approved_by,omitempty" db:"approved_by"`
+	ApprovedAt         *time.Time `json:"approved_at,omitempty" db:"approved_at"`
+	DisabledAt         *time.Time `json:"disabled_at,omitempty" db:"disabled_at"`
+	ExpiresAt          *time.Time `json:"expires_at,omitempty" db:"expires_at"` // nil=永久
+	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at" db:"updated_at"`
+	ArchivedAt         *time.Time `json:"archived_at,omitempty" db:"archived_at"`
+	LastActionID       string     `json:"last_action_id,omitempty" db:"last_action_id"`
+	LastTraceID        string     `json:"last_trace_id,omitempty" db:"last_trace_id"`
+	RuleEffectStatus   string     `json:"rule_effect_status,omitempty" db:"rule_effect_status"`
+	RuleDesiredState   string     `json:"rule_desired_state,omitempty" db:"rule_desired_state"`
+	RuleRevision       string     `json:"rule_revision,omitempty" db:"rule_revision"`
+	RuleAckEventID     string     `json:"rule_ack_event_id,omitempty" db:"rule_ack_event_id"`
+	RuleAcknowledgedAt *time.Time `json:"rule_acknowledged_at,omitempty" db:"rule_acknowledged_at"`
+	RuleLastError      string     `json:"rule_last_error,omitempty" db:"rule_last_error"`
+	RuleKafkaPartition *int       `json:"rule_kafka_partition,omitempty" db:"rule_kafka_partition"`
+	RuleKafkaOffset    *int64     `json:"rule_kafka_offset,omitempty" db:"rule_kafka_offset"`
 }
 
 type UpdateRequest struct {
 	Status           *string    `json:"status,omitempty"`
 	ApprovalStatus   *string    `json:"approval_status,omitempty"`
 	Reason           *string    `json:"reason,omitempty"`
+	CommandReason    *string    `json:"command_reason,omitempty"`
 	Description      *string    `json:"description,omitempty"`
 	OwnerRole        *string    `json:"owner_role,omitempty"`
 	Scope            *string    `json:"scope,omitempty"`
@@ -276,9 +282,12 @@ const whitelistEntrySelect = `SELECT
 	w.source_alert_id,w.feedback_id,w.owner_role,w.scope,w.risk_level,w.covered_alerts,w.covered_assets,
 	w.version,w.created_by,w.approved_by,w.approved_at,w.disabled_at,w.expires_at,w.created_at,w.updated_at,
 	w.archived_at,w.last_action_id,w.last_trace_id,COALESCE(e.status,''),COALESCE(e.desired_state,''),
-	COALESCE(e.rule_revision,'')
+	COALESCE(e.rule_revision,''),COALESCE(e.ack_event_id,''),e.acknowledged_at,
+	COALESCE(e.last_error,''),p.kafka_partition,p.kafka_offset
 	FROM whitelist w LEFT JOIN whitelist_rule_effects e ON e.tenant_id=w.tenant_id
-	 AND e.entry_id=w.id AND e.entry_version=w.version`
+	 AND e.entry_id=w.id AND e.entry_version=w.version
+	LEFT JOIN whitelist_rule_projection p ON p.tenant_id=w.tenant_id
+	 AND p.entry_id=w.id AND p.entry_version=w.version`
 
 type whitelistScanner interface{ Scan(...interface{}) error }
 
@@ -288,7 +297,9 @@ func scanWhitelistEntry(scanner whitelistScanner) (*Entry, error) {
 		&entry.Status, &entry.ApprovalStatus, &entry.SourceAlertID, &entry.FeedbackID, &entry.OwnerRole, &entry.Scope,
 		&entry.RiskLevel, &entry.CoveredAlerts, &entry.CoveredAssets, &entry.Version, &entry.CreatedBy, &entry.ApprovedBy,
 		&entry.ApprovedAt, &entry.DisabledAt, &entry.ExpiresAt, &entry.CreatedAt, &entry.UpdatedAt, &entry.ArchivedAt,
-		&entry.LastActionID, &entry.LastTraceID, &entry.RuleEffectStatus, &entry.RuleDesiredState, &entry.RuleRevision)
+		&entry.LastActionID, &entry.LastTraceID, &entry.RuleEffectStatus, &entry.RuleDesiredState, &entry.RuleRevision,
+		&entry.RuleAckEventID, &entry.RuleAcknowledgedAt, &entry.RuleLastError,
+		&entry.RuleKafkaPartition, &entry.RuleKafkaOffset)
 	if err != nil {
 		return nil, err
 	}

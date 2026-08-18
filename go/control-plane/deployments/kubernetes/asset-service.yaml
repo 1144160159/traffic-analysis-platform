@@ -65,15 +65,21 @@ spec:
         - name: ASSET_PG_SSLMODE
           value: "disable"
         - name: ASSET_KAFKA_ENABLED
-          value: "true"
+          value: "false"
         - name: ASSET_KAFKA_BROKERS
           value: "kafka-bootstrap.middleware.svc:9092"
         - name: ASSET_KAFKA_TOPIC
           value: "asset.bindings.v1"
         - name: ASSET_KAFKA_GROUP_ID
           value: "asset-service-bindings"
+        - name: ASSET_BINDING_DLQ_TOPIC
+          value: "dlq.v1"
+        - name: ASSET_BINDING_MAX_ATTEMPTS
+          value: "8"
         - name: ASSET_EVENT_OUTBOX_ENABLED
           value: "false"
+        - name: ASSET_EVENT_OUTBOX_TENANT_ID
+          value: ""
         - name: ASSET_EVENT_TOPIC
           value: "asset.events.v2"
         - name: ASSET_DISCOVERY_OUTBOX_ENABLED

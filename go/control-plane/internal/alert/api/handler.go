@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"io"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -38,9 +39,13 @@ type Handler struct {
 	campaignLookup                  AlertCampaignLookup
 	reportBuilder                   AlertReportBuilder
 	reportObjects                   AlertReportObjectStore
+	reportArtifactTTL               time.Duration
 	evidenceObjects                 alertEvidenceObjectStore
 	evidenceManifests               AlertEvidenceManifestStore
 	alertEvidenceChainEnabled       bool
+	alertEvidenceLinkEnabled        bool
+	alertEvidenceLinkConsumerReady  func(context.Context) error
+	alertEvidenceLinkPublisher      alertEvidenceLinkPublisher
 	alertReportEnabled              bool
 	campaignLinkEnabled             bool
 	campaignAggregateV2             bool
@@ -68,6 +73,7 @@ func NewHandler(
 		alertService:        alertService,
 		auditLogger:         auditLogger,
 		alertReportEnabled:  true,
+		reportArtifactTTL:   alertReportDefaultArtifactTTL,
 		campaignLinkEnabled: true,
 		logger:              logger,
 	}
@@ -84,6 +90,7 @@ func NewHandlerWithFeedback(
 		alertService:        alertService,
 		auditLogger:         auditLogger,
 		alertReportEnabled:  true,
+		reportArtifactTTL:   alertReportDefaultArtifactTTL,
 		campaignLinkEnabled: true,
 		logger:              logger,
 	}
@@ -112,6 +119,17 @@ func (h *Handler) SetFeedbackWhitelistRepo(repo *whitelist.Repository) {
 func (h *Handler) SetFeedbackTransactionalOutboxEnabled(enabled bool) {
 	if h.feedbackHandler != nil {
 		h.feedbackHandler.transactionalOutboxEnabled = enabled
+	}
+}
+
+// SetModelFeedbackRevisionRuntime keeps the adjudicated authority and its
+// Kafka publisher independently reversible. The authority may commit pending
+// outbox rows while the producer remains disabled; the reverse is rejected at
+// process startup.
+func (h *Handler) SetModelFeedbackRevisionRuntime(enabled bool, producer *kafka.Producer) {
+	if h.feedbackHandler != nil {
+		h.feedbackHandler.revisionAuthorityEnabled = enabled
+		h.feedbackHandler.revisionProducer = producer
 	}
 }
 
@@ -164,6 +182,16 @@ func (h *Handler) SetAlertReportBuilder(builder AlertReportBuilder) {
 
 func (h *Handler) SetAlertReportObjectStore(store AlertReportObjectStore) {
 	h.reportObjects = store
+}
+
+// SetAlertReportArtifactTTL configures the API-visible artifact retention
+// deadline. PostgreSQL job/history rows remain queryable after this deadline;
+// only object download authority expires.
+func (h *Handler) SetAlertReportArtifactTTL(ttl time.Duration) {
+	if ttl <= 0 {
+		ttl = alertReportDefaultArtifactTTL
+	}
+	h.reportArtifactTTL = ttl
 }
 
 // SetAlertEvidenceManifestStore installs the tenant-bound PostgreSQL manifest
@@ -230,6 +258,8 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/alerts/{id}/evidence", h.GetAlertEvidence).Methods("GET")
 	r.HandleFunc("/alerts/{id}/evidence/access", h.CreateAlertEvidenceAccess).Methods("POST")
 	r.HandleFunc("/alerts/{id}/evidence/{evidence_id}/download", h.DownloadAlertEvidence).Methods("GET")
+	r.HandleFunc("/alerts/{id}/evidence-links/{evidence_id}", h.LinkAlertEvidence).Methods(http.MethodPut)
+	r.HandleFunc("/alerts/{id}/evidence-links/{evidence_id}", h.UnlinkAlertEvidence).Methods(http.MethodDelete)
 	r.HandleFunc("/alerts/{id}/status", h.UpdateStatus).Methods("PUT")
 	r.HandleFunc("/alerts/{id}/assign", h.AssignAlert).Methods("PUT")
 	r.HandleFunc("/alerts/{id}/labels", h.UpdateAlertLabels).Methods("PUT")
@@ -398,21 +428,26 @@ func (h *Handler) ListAlerts(w http.ResponseWriter, r *http.Request) {
 
 // SearchAlertsRequest 搜索请求
 type SearchAlertsRequest struct {
-	Query      string   `json:"query"`
-	Severity   []string `json:"severity,omitempty"`
-	Status     []string `json:"status,omitempty"`
-	AlertTypes []string `json:"alert_types,omitempty"`
-	Labels     []string `json:"labels,omitempty"`
-	SrcIP      string   `json:"src_ip,omitempty"`
-	DstIP      string   `json:"dst_ip,omitempty"`
-	StartTime  int64    `json:"start_time,omitempty"`
-	EndTime    int64    `json:"end_time,omitempty"`
-	From       int      `json:"from"`
-	Size       int      `json:"size"`
-	SortField  string   `json:"sort_field,omitempty"`
-	SortOrder  string   `json:"sort_order,omitempty"`
-	Cursor     string   `json:"cursor,omitempty"`
-	CursorMode string   `json:"cursor_mode,omitempty"`
+	Query        string   `json:"query"`
+	Severity     []string `json:"severity,omitempty"`
+	Status       []string `json:"status,omitempty"`
+	AlertTypes   []string `json:"alert_types,omitempty"`
+	Labels       []string `json:"labels,omitempty"`
+	SrcIP        string   `json:"src_ip,omitempty"`
+	DstIP        string   `json:"dst_ip,omitempty"`
+	AssetIP      string   `json:"asset_ip,omitempty"`
+	RuleVersion  string   `json:"rule_version,omitempty"`
+	ModelVersion string   `json:"model_version,omitempty"`
+	AttackPhase  string   `json:"attack_phase,omitempty"`
+	MinScore     *float64 `json:"min_score,omitempty"`
+	StartTime    int64    `json:"start_time,omitempty"`
+	EndTime      int64    `json:"end_time,omitempty"`
+	From         int      `json:"from"`
+	Size         int      `json:"size"`
+	SortField    string   `json:"sort_field,omitempty"`
+	SortOrder    string   `json:"sort_order,omitempty"`
+	Cursor       string   `json:"cursor,omitempty"`
+	CursorMode   string   `json:"cursor_mode,omitempty"`
 }
 
 // SearchAlerts 全文搜索告警
@@ -440,20 +475,25 @@ func (h *Handler) SearchAlerts(w http.ResponseWriter, r *http.Request) {
 	}
 	// 构建搜索查询
 	query := &service.SearchQuery{
-		TenantID:   tenantID,
-		Query:      req.Query,
-		Severity:   req.Severity,
-		Status:     req.Status,
-		AlertTypes: req.AlertTypes,
-		Labels:     req.Labels,
-		SrcIP:      req.SrcIP,
-		DstIP:      req.DstIP,
-		From:       req.From,
-		Size:       req.Size,
-		SortField:  req.SortField,
-		SortOrder:  req.SortOrder,
-		Cursor:     req.Cursor,
-		CursorMode: req.CursorMode,
+		TenantID:     tenantID,
+		Query:        req.Query,
+		Severity:     req.Severity,
+		Status:       req.Status,
+		AlertTypes:   req.AlertTypes,
+		Labels:       req.Labels,
+		SrcIP:        req.SrcIP,
+		DstIP:        req.DstIP,
+		AssetIP:      req.AssetIP,
+		RuleVersion:  req.RuleVersion,
+		ModelVersion: req.ModelVersion,
+		AttackPhase:  req.AttackPhase,
+		MinScore:     req.MinScore,
+		From:         req.From,
+		Size:         req.Size,
+		SortField:    req.SortField,
+		SortOrder:    req.SortOrder,
+		Cursor:       req.Cursor,
+		CursorMode:   req.CursorMode,
 	}
 	if req.StartTime > 0 {
 		query.StartTime = time.UnixMilli(req.StartTime)
@@ -472,29 +512,40 @@ func (h *Handler) SearchAlerts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if result.CursorMode != "" {
-		snapshotID := result.SnapshotID
-		if snapshotID == "" {
-			snapshotID = "alert-os-live-" + httpx.GetTraceID(ctx)
-		}
-		httpx.JSONContractSuccess(w, ctx, result, httpx.ContractMeta{
-			ContractVersion: 1,
-			SnapshotID:      snapshotID,
-			AsOf:            result.AsOf,
-			Partial:         false,
-			MissingSections: []string{},
-			SourceWatermarks: map[string]string{
-				"opensearch.alerts.search": result.AsOf,
-			},
-		})
+		httpx.JSONContractSuccess(w, ctx, result, alertSearchContractMeta(ctx, result))
 		return
 	}
 	httpx.JSONSuccess(w, ctx, result)
+}
+
+func alertSearchContractMeta(ctx context.Context, result *service.SearchResult) httpx.ContractMeta {
+	snapshotID := result.SnapshotID
+	if snapshotID == "" {
+		snapshotID = "alert-os-live-" + httpx.GetTraceID(ctx)
+	}
+	sourceWatermarks := result.SourceWatermarks
+	if len(sourceWatermarks) == 0 {
+		sourceWatermarks = map[string]string{
+			"opensearch.alerts.search": result.AsOf,
+		}
+	}
+	return httpx.ContractMeta{
+		ContractVersion:  1,
+		SnapshotID:       snapshotID,
+		AsOf:             result.AsOf,
+		Partial:          result.Partial,
+		MissingSections:  result.MissingSections,
+		SourceWatermarks: sourceWatermarks,
+	}
 }
 
 var allowedAlertSearchSortFields = map[string]struct{}{
 	"last_seen": {}, "first_seen": {}, "score": {}, "severity": {},
 	"status": {}, "alert_type": {}, "alert_id": {},
 }
+
+// maxLegacySearchFrom legacy（非 cursor）搜索的 from 上限，防止深分页 DoS。
+const maxLegacySearchFrom = 10000
 
 func validateSearchAlertsRequest(req *SearchAlertsRequest) error {
 	if req == nil {
@@ -518,6 +569,11 @@ func validateSearchAlertsRequest(req *SearchAlertsRequest) error {
 	if req.Cursor == "" && req.CursorMode == "" && req.Size > 1000 {
 		return errors.New(errors.ErrCodeInvalidParameter, "legacy search size must not exceed 1000")
 	}
+	// 深分页防护：legacy 搜索 from 上限，防止触发 OpenSearch 深分页拖垮集群
+	if req.Cursor == "" && req.CursorMode == "" && req.From > maxLegacySearchFrom {
+		return errors.Newf(errors.ErrCodeInvalidParameter,
+			"legacy search from must not exceed %d; use cursor-based traversal for deep pages", maxLegacySearchFrom)
+	}
 	if req.SortField != "" {
 		if _, allowed := allowedAlertSearchSortFields[req.SortField]; !allowed {
 			return errors.New(errors.ErrCodeInvalidParameter, "sort_field is not allowed")
@@ -531,6 +587,12 @@ func validateSearchAlertsRequest(req *SearchAlertsRequest) error {
 	}
 	if len(req.SrcIP) > 64 || len(req.DstIP) > 64 {
 		return errors.New(errors.ErrCodeInvalidParameter, "IP filter is too long")
+	}
+	if len(req.AssetIP) > 64 || len(req.RuleVersion) > 128 || len(req.ModelVersion) > 128 || len(req.AttackPhase) > 128 {
+		return errors.New(errors.ErrCodeInvalidParameter, "search filter value is too long")
+	}
+	if req.MinScore != nil && (*req.MinScore < 0 || *req.MinScore > 1) {
+		return errors.New(errors.ErrCodeInvalidParameter, "min_score must be between 0 and 1")
 	}
 	filterCount := 0
 	for _, values := range [][]string{req.Severity, req.Status, req.AlertTypes, req.Labels} {
@@ -813,7 +875,7 @@ func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req UpdateStatusRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
@@ -975,7 +1037,7 @@ func (h *Handler) BatchUpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req BatchUpdateStatusRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
@@ -1107,7 +1169,7 @@ func (h *Handler) AssignAlert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req AssignRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
@@ -1173,8 +1235,13 @@ func (h *Handler) CloseAlert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req CloseAlertRequest
-	// 允许空body
-	json.NewDecoder(r.Body).Decode(&req)
+	// 允许空body（EOF 视为空请求），但限制体积并显式处理畸形 JSON
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10))
+	if err := decoder.Decode(&req); err != nil && err != io.EOF {
+		errors.WriteError(w, errors.New(errors.ErrCodeInvalidParameter, "invalid request body"),
+			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
 	reason := strings.TrimSpace(req.Reason)
 	if reason == "" {
 		errors.WriteError(w, errors.New(errors.ErrCodeMissingParameter, "reason is required"),
@@ -1410,7 +1477,7 @@ func (h *Handler) ExportAlerts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req ExportAlertsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
@@ -1465,7 +1532,7 @@ func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req ExportAlertsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
@@ -1504,7 +1571,7 @@ func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename=alerts_export.csv")
 	// 使用标准库的 csv.Writer 确保正确转义
 	csvWriter := csv.NewWriter(w)
-	defer csvWriter.Flush()
+	writeFailed := false
 	// 写入表头
 	header := []string{
 		"alert_id", "tenant_id", "severity", "status", "alert_type", "attack_phase",
@@ -1523,35 +1590,58 @@ func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
 		if len(alert.Labels) > 0 {
 			labelsStr = strings.Join(alert.Labels, ";")
 		}
-		// 修复：使用 ProtocolName 字段而不是直接使用 Protocol
+		// 修复：使用 ProtocolName 字段而不是直接使用 Protocol；
+		// 字符串字段做 CSV 公式注入防护（= + - @ 前缀加 ' 前缀）
 		row := []string{
-			alert.AlertID,
-			alert.TenantID,
-			alert.Severity,
-			alert.Status,
-			alert.AlertType,
-			alert.AttackPhase,
-			alert.SrcIP,
-			alert.DstIP,
+			csvSafeValue(alert.AlertID),
+			csvSafeValue(alert.TenantID),
+			csvSafeValue(alert.Severity),
+			csvSafeValue(alert.Status),
+			csvSafeValue(alert.AlertType),
+			csvSafeValue(alert.AttackPhase),
+			csvSafeValue(alert.SrcIP),
+			csvSafeValue(alert.DstIP),
 			strconv.Itoa(int(alert.SrcPort)),
 			strconv.Itoa(int(alert.DstPort)),
 			strconv.Itoa(int(alert.Protocol)),
-			alert.ProtocolName, // 修复：使用 ProtocolName 字段
+			csvSafeValue(alert.ProtocolName), // 修复：使用 ProtocolName 字段
 			alert.FirstSeen.Format(time.RFC3339),
 			alert.LastSeen.Format(time.RFC3339),
 			strconv.Itoa(int(alert.Count)),
 			strconv.FormatFloat(float64(alert.Score), 'f', 4, 32),
-			alert.Assignee,
-			alert.ModelVersion,
-			alert.RuleVersion,
-			labelsStr,
-			alert.CommunityID,
+			csvSafeValue(alert.Assignee),
+			csvSafeValue(alert.ModelVersion),
+			csvSafeValue(alert.RuleVersion),
+			csvSafeValue(labelsStr),
+			csvSafeValue(alert.CommunityID),
 		}
 		if err := csvWriter.Write(row); err != nil {
 			logger.Error("Failed to write CSV row", zap.Error(err), zap.String("alert_id", alert.AlertID))
+			writeFailed = true
 			// 继续写入其他行
 		}
 	}
+	// 任何行失败或缓冲写入失败时标记 partial，客户端可据此判断数据完整性
+	if writeFailed || csvWriter.Error() != nil {
+		w.Header().Set("X-CSV-Export-Status", "partial")
+	}
+	csvWriter.Flush()
+	if err := csvWriter.Error(); err != nil {
+		logger.Error("Failed to flush CSV export", zap.Error(err))
+	}
+}
+
+// csvSafeValue 对 CSV 单元格做公式注入防护：以 = + - @ 以及制表符/回车
+// 开头的值前加单引号，防止 Excel/WPS 打开时被当作公式执行。
+func csvSafeValue(v string) string {
+	if v == "" {
+		return v
+	}
+	switch v[0] {
+	case '=', '+', '-', '@', '\t', '\r':
+		return "'" + v
+	}
+	return v
 }
 
 // GetStorageStatus 获取存储健康状态
@@ -1581,7 +1671,7 @@ func (h *Handler) SubmitFeedbackBasic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req FeedbackRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
@@ -1685,22 +1775,15 @@ func (h *Handler) GetReasonCodesBasic(w http.ResponseWriter, r *http.Request) {
 }
 
 // 辅助方法
+// extractTenantID 只从已验证的请求上下文读取租户身份。客户端可控的
+// X-Tenant-ID header / tenant_id query 一律不作为身份来源，杜绝越权面。
 func (h *Handler) extractTenantID(r *http.Request) string {
-	tenantID := httpx.GetTenantID(r.Context())
-	if tenantID == "" {
-		tenantID = r.Header.Get("X-Tenant-ID")
-	}
-	if tenantID == "" {
-		tenantID = r.URL.Query().Get("tenant_id")
-	}
-	return tenantID
+	return httpx.GetTenantID(r.Context())
 }
+// extractUserID 只从已验证的请求上下文读取用户身份。客户端可控的
+// X-User-ID header 不作为身份来源。
 func (h *Handler) extractUserID(r *http.Request) string {
-	userID := httpx.GetUserID(r.Context())
-	if userID == "" {
-		userID = r.Header.Get("X-User-ID")
-	}
-	return userID
+	return httpx.GetUserID(r.Context())
 }
 
 // parseIntWithDefault 解析整数，带默认值和范围限制

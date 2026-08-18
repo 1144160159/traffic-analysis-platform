@@ -8,6 +8,7 @@ import (
 
 func TestModelAppliedAckContractRejectsConsumerControlledParallelism(t *testing.T) {
 	payload, err := json.Marshal(ModelUpdateEvent{
+		SchemaVersion:              1,
 		ArtifactURI:                "s3://traffic-models/acceptance/model.json",
 		ExpectedAppliedParallelism: 4,
 		Metrics: map[string]interface{}{
@@ -22,6 +23,7 @@ func TestModelAppliedAckContractRejectsConsumerControlledParallelism(t *testing.
 		t.Fatal(err)
 	}
 	ack := ModelAppliedAck{
+		SchemaVersion:  1,
 		Status:         "applied",
 		ArtifactURI:    contract.ArtifactURI,
 		ArtifactSHA256: contract.ArtifactSHA256,
@@ -35,11 +37,13 @@ func TestModelAppliedAckContractRejectsConsumerControlledParallelism(t *testing.
 
 func TestModelAppliedAckContractRejectsArtifactMismatch(t *testing.T) {
 	contract := modelAppliedContract{
+		SchemaVersion:              1,
 		ArtifactURI:                "s3://traffic-models/acceptance/model.json",
 		ArtifactSHA256:             strings.Repeat("a", 64),
 		ExpectedAppliedParallelism: 4,
 	}
 	valid := ModelAppliedAck{
+		SchemaVersion:  1,
 		Status:         "applied",
 		ArtifactURI:    contract.ArtifactURI,
 		ArtifactSHA256: contract.ArtifactSHA256,
@@ -65,10 +69,12 @@ func TestModelAppliedAckContractRejectsArtifactMismatch(t *testing.T) {
 
 func TestModelAppliedAckContractFailsClosedWithoutActionFingerprint(t *testing.T) {
 	contract := modelAppliedContract{
+		SchemaVersion:              1,
 		ArtifactURI:                "s3://traffic-models/acceptance/model.json",
 		ExpectedAppliedParallelism: 4,
 	}
 	ack := ModelAppliedAck{
+		SchemaVersion:  1,
 		Status:         "applied",
 		ArtifactURI:    contract.ArtifactURI,
 		ArtifactSHA256: strings.Repeat("a", 64),
@@ -76,5 +82,32 @@ func TestModelAppliedAckContractFailsClosedWithoutActionFingerprint(t *testing.T
 	}
 	if err := validateModelAppliedAckContract(ack, contract, true); err == nil || !strings.Contains(err.Error(), "missing artifact_sha256") {
 		t.Fatalf("expected missing fingerprint rejection, got %v", err)
+	}
+}
+
+func TestModelRollbackAckContractRequiresFrozenIdentity(t *testing.T) {
+	contract := modelAppliedContract{
+		SchemaVersion:              2,
+		ArtifactURI:                "s3://traffic-models/acceptance/model.json",
+		ArtifactSHA256:             strings.Repeat("a", 64),
+		ExpectedAppliedParallelism: 4,
+		Action:                     "rollback-activated",
+		RollbackID:                 "11111111-1111-4111-8111-111111111111",
+		RollbackPhase:              modelRollbackPhaseAttempt,
+	}
+	ack := ModelAppliedAck{
+		SchemaVersion: 2,
+		Status:        "applied", ArtifactURI: contract.ArtifactURI,
+		ArtifactSHA256: contract.ArtifactSHA256, Parallelism: 4,
+		RollbackID: contract.RollbackID, RollbackPhase: contract.RollbackPhase,
+		ConsumerDeploymentID: "behavior-job-r1", ConsumerProfileSHA256: strings.Repeat("b", 64),
+	}
+	if err := validateModelAppliedAckContract(ack, contract, true); err != nil {
+		t.Fatalf("valid rollback acknowledgement rejected: %v", err)
+	}
+	wrong := ack
+	wrong.RollbackPhase = modelRollbackPhaseCompensation
+	if err := validateModelAppliedAckContract(wrong, contract, true); err == nil || !strings.Contains(err.Error(), "rollback identity") {
+		t.Fatalf("expected rollback identity rejection, got %v", err)
 	}
 }

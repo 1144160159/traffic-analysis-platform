@@ -1,0 +1,18 @@
+FROM golang:1.25-alpine AS builder
+
+RUN apk add --no-cache ca-certificates git
+WORKDIR /workspace
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -trimpath -ldflags="-s -w" \
+    -o /model-canary-controller ./cmd/model-canary-controller
+
+FROM alpine:3.21
+RUN apk --no-cache add ca-certificates tzdata \
+    && addgroup -g 1000 app \
+    && adduser -D -H -u 1000 -G app app
+COPY --from=builder /model-canary-controller /usr/local/bin/model-canary-controller
+USER 1000:1000
+ENTRYPOINT ["/usr/local/bin/model-canary-controller"]

@@ -104,7 +104,7 @@ func run(logger *zap.Logger) error {
 		return err
 	}
 
-	commandProducer, err := commonkafka.NewProducer(commonkafka.ProducerConfig{
+	commandProducer, err := commonkafka.NewKeyedProducer(commonkafka.ProducerConfig{
 		Brokers: cfg.Kafka.Brokers, Topic: "probe.control.v2", BatchSize: 1,
 		RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
 	}, logger)
@@ -112,7 +112,7 @@ func run(logger *zap.Logger) error {
 		return fmt.Errorf("create command producer: %w", err)
 	}
 	defer commandProducer.Close()
-	eventProducer, err := commonkafka.NewProducer(commonkafka.ProducerConfig{
+	eventProducer, err := commonkafka.NewKeyedProducer(commonkafka.ProducerConfig{
 		Brokers: cfg.Kafka.Brokers, Topic: "probe.events.v2", BatchSize: 1,
 		RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
 	}, logger)

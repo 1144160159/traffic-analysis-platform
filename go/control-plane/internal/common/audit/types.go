@@ -21,11 +21,12 @@ const (
 	EventTypeUserDelete EventType = "USER_DELETE"
 	EventTypeRoleAssign EventType = "USER_ROLE_ASSIGN"
 
-	EventTypeRuleCreate  EventType = "RULE_CREATE"
-	EventTypeRuleUpdate  EventType = "RULE_UPDATE"
-	EventTypeRuleDelete  EventType = "RULE_DELETE"
-	EventTypeRuleEnable  EventType = "RULE_ENABLE"
-	EventTypeRuleDisable EventType = "RULE_DISABLE"
+	EventTypeRuleCreate   EventType = "RULE_CREATE"
+	EventTypeRuleUpdate   EventType = "RULE_UPDATE"
+	EventTypeRuleDelete   EventType = "RULE_DELETE"
+	EventTypeRuleEnable   EventType = "RULE_ENABLE"
+	EventTypeRuleDisable  EventType = "RULE_DISABLE"
+	EventTypeRuleRollback EventType = "RULE_ROLLBACK"
 
 	EventTypeDeployCreate         EventType = "DEPLOY_CREATE"
 	EventTypeDeployGray           EventType = "DEPLOY_GRAY"
@@ -163,11 +164,12 @@ var eventTypeRegistry = map[EventType]EventTypeInfo{
 	EventTypePermissionDenied: {EventTypePermissionDenied, "Permission denied", SensitivityHigh, "authentication"},
 	EventTypeRateLimit:        {EventTypeRateLimit, "Rate limit exceeded", SensitivityMedium, "authentication"},
 
-	EventTypeRuleCreate:  {EventTypeRuleCreate, "Rule created", SensitivityMedium, "rule_management"},
-	EventTypeRuleUpdate:  {EventTypeRuleUpdate, "Rule updated", SensitivityMedium, "rule_management"},
-	EventTypeRuleDelete:  {EventTypeRuleDelete, "Rule deleted", SensitivityHigh, "rule_management"},
-	EventTypeRuleEnable:  {EventTypeRuleEnable, "Rule enabled", SensitivityMedium, "rule_management"},
-	EventTypeRuleDisable: {EventTypeRuleDisable, "Rule disabled", SensitivityMedium, "rule_management"},
+	EventTypeRuleCreate:   {EventTypeRuleCreate, "Rule created", SensitivityMedium, "rule_management"},
+	EventTypeRuleUpdate:   {EventTypeRuleUpdate, "Rule updated", SensitivityMedium, "rule_management"},
+	EventTypeRuleDelete:   {EventTypeRuleDelete, "Rule deleted", SensitivityHigh, "rule_management"},
+	EventTypeRuleEnable:   {EventTypeRuleEnable, "Rule enabled", SensitivityMedium, "rule_management"},
+	EventTypeRuleDisable:  {EventTypeRuleDisable, "Rule disabled", SensitivityMedium, "rule_management"},
+	EventTypeRuleRollback: {EventTypeRuleRollback, "Rule rolled back", SensitivityHigh, "rule_management"},
 
 	EventTypeDeployCreate:         {EventTypeDeployCreate, "Deployment created", SensitivityMedium, "deployment"},
 	EventTypeDeployGray:           {EventTypeDeployGray, "Gray deployment started", SensitivityHigh, "deployment"},

@@ -34,10 +34,13 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	authConfig "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/config"
 	authjwt "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/jwt"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/oidc"
 	authrepository "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
 	authservice "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/authz"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
@@ -314,14 +317,17 @@ func main() {
 	// 10. 初始化 Services
 	// =========================================================================
 	ruleServiceCfg := service.RuleServiceConfig{
-		MaxRulesPerTenant:     10000,
-		EnableCache:           cfg.Service.CacheEnabled,
-		CacheTTL:              cfg.Service.CacheTTL,
-		EnableAudit:           cfg.Audit.Enabled,
-		KafkaPublishRetries:   cfg.Kafka.MaxRetries,
-		KafkaPublishTimeout:   cfg.Kafka.PublishTimeout,
-		EnableOutbox:          true, // ✅ 启用 Outbox 模式
-		OutboxProcessInterval: 5 * time.Second,
+		MaxRulesPerTenant:             10000,
+		EnableCache:                   cfg.Service.CacheEnabled,
+		CacheTTL:                      cfg.Service.CacheTTL,
+		EnableAudit:                   cfg.Audit.Enabled,
+		KafkaPublishRetries:           cfg.Kafka.MaxRetries,
+		KafkaPublishTimeout:           cfg.Kafka.PublishTimeout,
+		EnableOutbox:                  true, // ✅ 启用 Outbox 模式
+		OutboxProcessInterval:         5 * time.Second,
+		AppliedAckExpectedParallelism: cfg.Kafka.RuleAppliedExpectedParallelism,
+		AppliedAckTimeout:             cfg.Service.RuleAppliedAckTimeout,
+		AppliedAckSweepInterval:       cfg.Service.RuleAppliedAckSweepInterval,
 	}
 
 	// ✅ 修复：传递 pgClient.DB() 给 RuleService 以支持 Outbox
@@ -342,14 +348,43 @@ func main() {
 		ruleService.Stop()
 	}()
 
+	ruleAppliedConsumer, err := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
+		Brokers:              cfg.Kafka.Brokers,
+		Topic:                cfg.Kafka.RuleAppliedTopic,
+		GroupID:              "rule-manager-rule-applied-v1",
+		MinBytes:             1,
+		MaxWait:              500 * time.Millisecond,
+		RetryBackoff:         time.Second,
+		Security:             cfg.Kafka.Security,
+		CommitOnHandlerError: false,
+	}, logger)
+	if err != nil {
+		logger.Fatal("Failed to create rule applied acknowledgement consumer", zap.Error(err))
+	}
+	ruleAppliedCtx, cancelRuleApplied := context.WithCancel(context.Background())
+	defer cancelRuleApplied()
+	defer ruleAppliedConsumer.Close()
+	go func() {
+		if err := ruleAppliedConsumer.Consume(ruleAppliedCtx, func(
+			ctx context.Context, message *commonkafka.ReceivedMessage,
+		) error {
+			return ruleService.HandleRuleUpdateAppliedAck(ctx, message.Value)
+		}); err != nil && err != context.Canceled {
+			logger.Error("Rule applied acknowledgement consumer stopped", zap.Error(err))
+		}
+	}()
+
 	deploymentServiceCfg := service.DeploymentServiceConfig{
-		MaxActiveDeploymentsPerTenant: 10,
-		GrayTimeout:                   cfg.Deployment.MaxGrayDuration,
-		RequireRollbackReason:         cfg.Deployment.RequireRollbackReason,
-		EnableAutoRollback:            cfg.Deployment.EnableAutoRollback,
-		AutoRollbackThreshold:         cfg.Deployment.AutoRollbackThreshold,
-		EnableGrayValidation:          cfg.Deployment.EnableGrayValidation,
-		MaxGrayDuration:               cfg.Deployment.MaxGrayDuration,
+		MaxActiveDeploymentsPerTenant:   10,
+		GrayTimeout:                     cfg.Deployment.MaxGrayDuration,
+		RequireRollbackReason:           cfg.Deployment.RequireRollbackReason,
+		EnableAutoRollback:              cfg.Deployment.EnableAutoRollback,
+		AutoRollbackThreshold:           cfg.Deployment.AutoRollbackThreshold,
+		EnableGrayValidation:            cfg.Deployment.EnableGrayValidation,
+		EnableRuntimeAckGate:            cfg.Deployment.RuntimeAckGateEnabled,
+		RuleAppliedExpectedParallelism:  cfg.Kafka.RuleAppliedExpectedParallelism,
+		ModelAppliedExpectedParallelism: cfg.Kafka.ModelAppliedExpectedParallelism,
+		MaxGrayDuration:                 cfg.Deployment.MaxGrayDuration,
 	}
 	deploymentService := service.NewDeploymentServiceWithDeps(
 		pgClient.DB(),
@@ -364,6 +399,17 @@ func main() {
 	// Model Service (MLOps)
 	modelServiceCfg := service.DefaultModelServiceConfig()
 	modelServiceCfg.AppliedAckExpectedParallelism = cfg.Kafka.ModelAppliedExpectedParallelism
+	modelServiceCfg.ModelConsumerDeploymentID = cfg.Kafka.ModelConsumerDeploymentID
+	modelServiceCfg.ModelConsumerProfileSHA256 = cfg.Kafka.ModelConsumerProfileSHA256
+	modelServiceCfg.EnableModelShadowActivation = cfg.Kafka.ModelShadowActivationEnabled
+	modelServiceCfg.EnableModelShadowPublisher = cfg.Kafka.ModelShadowPublisherEnabled
+	modelServiceCfg.EnableModelRollbackV2 = cfg.Kafka.ModelRollbackV2Enabled
+	modelServiceCfg.ModelRollbackAckTimeout = cfg.Kafka.ModelRollbackAckTimeout
+	modelServiceCfg.ModelConsumerRuntimeContract = cfg.Kafka.ModelRuntimeContract
+	modelServiceCfg.ModelConsumerRuntimeVersion = cfg.Kafka.ModelRuntimeVersion
+	modelServiceCfg.ModelConsumerFeatureSchema = cfg.Kafka.ModelFeatureSchemaVersion
+	modelServiceCfg.ModelConsumerGraphSchema = cfg.Kafka.ModelGraphSchemaVersion
+	modelServiceCfg.ModelConsumerFormats = cfg.Kafka.ModelSupportedFormats
 	modelServiceCfg.EnableModelActionOutbox = cfg.Kafka.ModelActionOutboxEnabled
 	modelService := service.NewModelService(
 		pgClient.DB(),
@@ -444,8 +490,13 @@ func main() {
 		logger.Warn("Model action execution inbox consumer is disabled")
 	}
 	modelService.StartActionWorker(context.Background())
-	if cfg.Kafka.WhitelistEventPipelineEnabled {
-		whitelistProjection, projectionErr := rulesconsumer.NewPostgresWhitelistRuleProjection(pgClient.DB())
+	if cfg.Kafka.WhitelistEventConsumerEnabled {
+		whitelistProjection, projectionErr := rulesconsumer.NewPostgresWhitelistRuleProjectionWithReadiness(
+			pgClient.DB(), rulesconsumer.WhitelistConsumerReadinessOptions{
+				ConsumerGroup:   cfg.Kafka.WhitelistEventGroup,
+				CandidateSHA256: cfg.Kafka.WhitelistConsumerCandidateSHA256,
+				ContractSHA256:  cfg.Kafka.WhitelistEventContractSHA256,
+			})
 		if projectionErr != nil {
 			logger.Fatal("Failed to initialize whitelist rule projection", zap.Error(projectionErr))
 		}
@@ -483,7 +534,7 @@ func main() {
 			}
 		}()
 	} else {
-		logger.Warn("Whitelist event pipeline is disabled")
+		logger.Warn("Whitelist event consumer is disabled")
 	}
 	if cfg.Kafka.DeploymentProjectionEnabled {
 		deploymentProjection, projectionErr := rulesconsumer.NewPostgresDeploymentEventProjection(pgClient.DB())
@@ -572,6 +623,73 @@ func main() {
 		}()
 	} else {
 		logger.Warn("Alert feedback projection consumer is disabled")
+	}
+	if cfg.Kafka.ModelFeedbackRevisionEnabled {
+		if chDB == nil {
+			logger.Fatal("Model feedback revision consumer is enabled but ClickHouse is unavailable")
+		}
+		predictionAuthority, authorityErr := rulesconsumer.NewClickHouseModelFeedbackPredictionAuthority(chDB)
+		if authorityErr != nil {
+			logger.Fatal("Failed to initialize model feedback prediction authority", zap.Error(authorityErr))
+		}
+		feedbackRevisionProjection, projectionErr := rulesconsumer.NewPostgresModelFeedbackRevisionProjectionWithReadiness(
+			pgClient.DB(), rulesconsumer.ModelFeedbackConsumerReadinessOptions{
+				ConsumerGroup:   cfg.Kafka.ModelFeedbackRevisionEventGroup,
+				CandidateSHA256: cfg.Kafka.ModelFeedbackCandidateSHA256,
+				ContractSHA256:  cfg.Kafka.ModelFeedbackContractSHA256,
+			},
+		)
+		if projectionErr != nil {
+			logger.Fatal("Failed to initialize model feedback revision projection", zap.Error(projectionErr))
+		}
+		verificationCtx, cancelVerification := context.WithTimeout(context.Background(), 10*time.Second)
+		authorityErr = predictionAuthority.VerifySchema(verificationCtx)
+		if authorityErr == nil {
+			authorityErr = feedbackRevisionProjection.VerifySchema(verificationCtx)
+		}
+		cancelVerification()
+		if authorityErr != nil {
+			logger.Fatal("Model feedback revision dependencies are unavailable", zap.Error(authorityErr))
+		}
+		feedbackRevisionKafkaConsumer, consumerErr := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.ModelFeedbackRevisionTopic,
+			GroupID:  cfg.Kafka.ModelFeedbackRevisionEventGroup,
+			MinBytes: 1, MaxWait: 500 * time.Millisecond, MaxRetries: 3,
+			RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create model feedback revision Kafka consumer", zap.Error(consumerErr))
+		}
+		dlqBarrier, barrierErr := commonkafka.NewPostgresDLQAcknowledgementBarrier(
+			pgClient.DB(), cfg.Kafka.ModelFeedbackRevisionEventGroup,
+		)
+		if barrierErr != nil {
+			_ = feedbackRevisionKafkaConsumer.Close()
+			logger.Fatal("Failed to initialize model feedback DLQ receipt barrier", zap.Error(barrierErr))
+		}
+		feedbackRevisionKafkaConsumer.SetDLQAcknowledgementBarrier(dlqBarrier)
+		feedbackRevisionConsumer, consumerErr := rulesconsumer.NewModelFeedbackRevisionConsumer(
+			feedbackRevisionKafkaConsumer, predictionAuthority, feedbackRevisionProjection, logger,
+		)
+		if consumerErr != nil {
+			_ = feedbackRevisionKafkaConsumer.Close()
+			logger.Fatal("Failed to initialize model feedback revision consumer", zap.Error(consumerErr))
+		}
+		feedbackRevisionCtx, cancelFeedbackRevision := context.WithCancel(context.Background())
+		defer cancelFeedbackRevision()
+		defer feedbackRevisionConsumer.Close()
+		go func() {
+			logger.Info("Starting default-off model feedback revision consumer",
+				zap.String("topic", cfg.Kafka.ModelFeedbackRevisionTopic),
+				zap.String("group_id", cfg.Kafka.ModelFeedbackRevisionEventGroup))
+			if err := feedbackRevisionConsumer.Start(feedbackRevisionCtx); err != nil && err != context.Canceled {
+				logger.Error("Model feedback revision consumer stopped", zap.Error(err))
+			}
+		}()
+	} else {
+		logger.Warn("Model feedback revision consumer is disabled")
 	}
 	if cfg.ClickHouse.FeedbackProjectionEnabled {
 		if chDB == nil {
@@ -679,7 +797,21 @@ func main() {
 		if jwtErr != nil {
 			logger.Fatal("Failed to init JWT service", zap.Error(jwtErr))
 		}
-		authSvc := authservice.NewAuthService(userRepo, jwtSvc, nil, nil, logger, nil)
+		// 统一令牌模型 P1:附带 OIDC Provider,使 ValidateToken 具备
+		// Keycloak 访问令牌 JWKS 回退(修复 nil provider 缺陷)
+		authCfg, authCfgErr := authConfig.Load()
+		if authCfgErr != nil {
+			authCfg = &authConfig.Config{}
+		}
+		var oidcProvider *oidc.Provider
+		if authCfg.OIDC.Enabled {
+			if p, err := oidc.NewProvider(authCfg.OIDC, logger); err != nil {
+				logger.Warn("OIDC provider init failed; Keycloak token fallback disabled", zap.Error(err))
+			} else {
+				oidcProvider = p
+			}
+		}
+		authSvc := authservice.NewAuthService(userRepo, jwtSvc, oidcProvider, authCfg, logger, nil)
 		authMiddleware = httpx.Auth(tokenValidatorAdapter{authService: authSvc}, logger)
 		logger.Info("Auth middleware initialized")
 	} else {
@@ -736,8 +868,16 @@ func main() {
 	r.HandleFunc("/readyz", healthChecker.ReadinessHandler).Methods("GET")
 	r.HandleFunc("/health", healthChecker.HealthHandler).Methods("GET")
 
+	// P2 契约解释器:认证之后、业务路由之前逐操作判定
+	// (/v1/models/* 3 操作:model:read / model:activate)。
+	var businessHandler http.Handler = r
+	if mode := strings.TrimSpace(getEnv("AUTHZ_CONTRACT_MODE", "")); mode == "enforce" || mode == "shadow" {
+		businessHandler = authz.EnforceContract(ruleManagerContractPrincipal, mode, nil, logger, ruleManagerContractDenyAudit(auditLogger))(r)
+		logger.Info("Contract interpreter enabled (rule-manager API)", zap.String("mode", mode))
+	}
+
 	// 应用中间件
-	finalHandler := middlewareChain.Then(r)
+	finalHandler := middlewareChain.Then(businessHandler)
 
 	// =========================================================================
 	// 14. 启动 Metrics 服务器
@@ -924,11 +1064,19 @@ func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
 
 func loadMLOpsOrchestratorConfigFromEnv() service.MLOpsOrchestratorConfig {
 	cfg := service.DefaultMLOpsOrchestratorConfig()
+	cfg.AutomaticCandidatesEnabled = getEnvBool("MLOPS_AUTOMATIC_CANDIDATE_V1_ENABLED", cfg.AutomaticCandidatesEnabled)
 	cfg.CheckInterval = getEnvDuration("MLOPS_CHECK_INTERVAL", cfg.CheckInterval)
 	cfg.MinNewFeedbackCount = getEnvInt("MLOPS_MIN_NEW_FEEDBACK", cfg.MinNewFeedbackCount)
 	cfg.FeedbackLookbackHours = getEnvInt("MLOPS_FEEDBACK_LOOKBACK_HOURS", cfg.FeedbackLookbackHours)
 	cfg.MaxFPRate = getEnvFloat("MLOPS_MAX_FP_RATE", cfg.MaxFPRate)
 	cfg.MaxPSI = getEnvFloat("MLOPS_MAX_PSI", cfg.MaxPSI)
+	cfg.MaxFeaturePartialRate = getEnvFloat("MLOPS_MAX_FEATURE_PARTIAL_RATE", cfg.MaxFeaturePartialRate)
+	cfg.MinFeatureSamples = getEnvInt("MLOPS_MIN_FEATURE_SAMPLES", cfg.MinFeatureSamples)
+	cfg.MinFeedbackSamples = getEnvInt("MLOPS_MIN_FEEDBACK_SAMPLES", cfg.MinFeedbackSamples)
+	cfg.DriftBaselineHours = getEnvInt("MLOPS_DRIFT_BASELINE_HOURS", cfg.DriftBaselineHours)
+	cfg.DriftCurrentHours = getEnvInt("MLOPS_DRIFT_CURRENT_HOURS", cfg.DriftCurrentHours)
+	cfg.MaxFeatureSignalAge = getEnvDuration("MLOPS_MAX_FEATURE_SIGNAL_AGE", cfg.MaxFeatureSignalAge)
+	cfg.MaxFeedbackSignalAge = getEnvDuration("MLOPS_MAX_FEEDBACK_SIGNAL_AGE", cfg.MaxFeedbackSignalAge)
 	cfg.MinRetrainInterval = getEnvDuration("MLOPS_MIN_RETRAIN_INTERVAL", cfg.MinRetrainInterval)
 	cfg.MaxConcurrentTrains = getEnvInt("MLOPS_MAX_CONCURRENT_TRAINS", cfg.MaxConcurrentTrains)
 	cfg.ArgoNamespace = getEnv("MLOPS_ARGO_NAMESPACE", cfg.ArgoNamespace)
@@ -1010,4 +1158,46 @@ func getEnvFloat(key string, defaultValue float64) float64 {
 		}
 	}
 	return defaultValue
+}
+
+// ruleManagerContractPrincipal 将 rule-manager 认证层(httpx.Auth)产出的
+// httpx 上下文键适配为契约解释器判定主体。
+func ruleManagerContractPrincipal(r *http.Request) *authz.Principal {
+	userID := strings.TrimSpace(httpx.GetUserID(r.Context()))
+	if userID == "" {
+		return nil
+	}
+	return &authz.Principal{
+		Kind:        authz.PrincipalKindHuman,
+		Subject:     userID,
+		Username:    httpx.GetUsername(r.Context()),
+		TenantID:    httpx.GetTenantID(r.Context()),
+		Roles:       httpx.GetRoles(r.Context()),
+		Permissions: httpx.GetPermissions(r.Context()),
+	}
+}
+
+// ruleManagerContractDenyAudit 契约拒绝留痕(Kafka 审计事件)。
+func ruleManagerContractDenyAudit(auditLogger *audit.Logger) authz.ContractDenyAuditor {
+	return func(r *http.Request, op *authz.Operation, principal *authz.Principal, status int) {
+		if auditLogger == nil {
+			return
+		}
+		userID := ""
+		if principal != nil {
+			userID = principal.Subject
+		}
+		auditLogger.Log(r.Context(), &audit.AuditEvent{
+			EventType:    audit.EventTypePermissionDenied,
+			TenantID:     httpx.GetTenantID(r.Context()),
+			UserID:       userID,
+			ServiceName:  "rule-manager",
+			SourceIP:     httpx.GetClientIP(r),
+			Action:       "CONTRACT_ACCESS_DENIED",
+			ResourceType: "contract_operation",
+			ResourceID:   op.OperationID,
+			Detail:       map[string]interface{}{"operation_id": op.OperationID, "required_scope": op.RequiredScope, "path": r.URL.Path, "result": "denied", "status": status},
+			Result:       audit.ResultFailure,
+		})
+	}
 }

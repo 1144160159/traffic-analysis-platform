@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -30,6 +31,8 @@ func TestSavedViewEventTopicDefault(t *testing.T) {
 
 func TestWhitelistEventPipelineDefaultsFailClosed(t *testing.T) {
 	t.Setenv("WHITELIST_EVENT_PIPELINE_V2_ENABLED", "false")
+	t.Setenv("WHITELIST_EVENT_PRODUCER_V2_ENABLED", "false")
+	t.Setenv("WHITELIST_DETECTION_MATCHER_V2_ENABLED", "false")
 	cfg, err := Load()
 	if err != nil {
 		t.Fatal(err)
@@ -37,8 +40,14 @@ func TestWhitelistEventPipelineDefaultsFailClosed(t *testing.T) {
 	if cfg.Kafka.WhitelistEventPipelineEnabled {
 		t.Fatal("whitelist event pipeline must be disabled by default")
 	}
-	if cfg.Kafka.WhitelistEventTopic != "whitelist.events.v2" {
-		t.Fatalf("WhitelistEventTopic = %q", cfg.Kafka.WhitelistEventTopic)
+	if cfg.Kafka.WhitelistEventProducerEnabled || cfg.Kafka.WhitelistDetectionMatcherEnabled {
+		t.Fatal("whitelist producer and detection matcher must be disabled by default")
+	}
+	if cfg.Kafka.WhitelistEventTopic != "whitelist.events.v2" ||
+		cfg.Kafka.WhitelistEventConsumerGroup != "rule-manager-whitelist-rule-effect-v2" ||
+		cfg.Kafka.WhitelistConsumerCandidateSHA256 != strings.Repeat("0", 64) ||
+		cfg.Kafka.WhitelistEventContractSHA256 != "d87787272d140c8529686ce45eef30f2a6345fb7f2e918a450399c8f698aad49" {
+		t.Fatalf("unexpected whitelist producer readiness defaults: %+v", cfg.Kafka)
 	}
 }
 
@@ -284,6 +293,29 @@ func TestOpenSearchSearchCursorBudgetsParseAndDefaultOff(t *testing.T) {
 		search.SearchQueryTimeout != 1500*time.Millisecond || search.SearchCursorTTL != 90*time.Second ||
 		search.SearchTrackTotal != 5000 {
 		t.Fatalf("unexpected OpenSearch cursor config: %+v", search)
+	}
+}
+
+func TestOpenSearchSearchCursorRequiresVersionedAliasAndBoundedBudgets(t *testing.T) {
+	t.Setenv("OPENSEARCH_SEARCH_CURSOR_V1_ENABLED", "true")
+	t.Setenv("OPENSEARCH_ALERTS_V2_ENABLED", "false")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "exact read alias") {
+		t.Fatalf("cursor without v2 alias error = %v", err)
+	}
+
+	t.Setenv("OPENSEARCH_ALERTS_V2_ENABLED", "true")
+	t.Setenv("OPENSEARCH_SEARCH_MAX_PAGE_SIZE", "201")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "approved bounds") {
+		t.Fatalf("unbounded cursor error = %v", err)
+	}
+
+	t.Setenv("OPENSEARCH_SEARCH_MAX_PAGE_SIZE", "200")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.OpenSearch.SearchCursorEnabled || cfg.OpenSearch.ReadTarget() != "alerts-v2-read" {
+		t.Fatalf("enabled cursor config = %+v", cfg.OpenSearch)
 	}
 }
 

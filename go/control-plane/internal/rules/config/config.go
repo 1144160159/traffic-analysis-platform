@@ -22,16 +22,19 @@ type MetricsConfig struct {
 
 // ServiceConfig 服务配置
 type ServiceConfig struct {
-	MaxRetries       int           `env:"SERVICE_MAX_RETRIES" envDefault:"3"`
-	CacheEnabled     bool          `env:"SERVICE_CACHE_ENABLED" envDefault:"true"`
-	CacheTTL         time.Duration `env:"SERVICE_CACHE_TTL" envDefault:"5m"`
-	SyncEnabled      bool          `env:"SERVICE_SYNC_ENABLED" envDefault:"true"`
-	ValidationStrict bool          `env:"SERVICE_VALIDATION_STRICT" envDefault:"true"`
+	MaxRetries                  int           `env:"SERVICE_MAX_RETRIES" envDefault:"3"`
+	CacheEnabled                bool          `env:"SERVICE_CACHE_ENABLED" envDefault:"true"`
+	CacheTTL                    time.Duration `env:"SERVICE_CACHE_TTL" envDefault:"5m"`
+	SyncEnabled                 bool          `env:"SERVICE_SYNC_ENABLED" envDefault:"true"`
+	ValidationStrict            bool          `env:"SERVICE_VALIDATION_STRICT" envDefault:"true"`
+	RuleAppliedAckTimeout       time.Duration `env:"RULE_APPLIED_ACK_TIMEOUT" envDefault:"2m"`
+	RuleAppliedAckSweepInterval time.Duration `env:"RULE_APPLIED_ACK_SWEEP_INTERVAL" envDefault:"15s"`
 }
 
 // DeploymentConfig 部署配置
 type DeploymentConfig struct {
 	EnableGrayValidation  bool          `env:"DEPLOYMENT_ENABLE_GRAY_VALIDATION" envDefault:"true"`
+	RuntimeAckGateEnabled bool          `env:"DEPLOYMENT_RUNTIME_ACK_GATE_V1_ENABLED" envDefault:"false"`
 	MaxGrayDuration       time.Duration `env:"DEPLOYMENT_MAX_GRAY_DURATION" envDefault:"24h"`
 	RequireRollbackReason bool          `env:"DEPLOYMENT_REQUIRE_ROLLBACK_REASON" envDefault:"true"`
 	EnableAutoRollback    bool          `env:"DEPLOYMENT_ENABLE_AUTO_ROLLBACK" envDefault:"true"`
@@ -110,31 +113,53 @@ type ClickHouseConfig struct {
 
 // KafkaConfig Kafka 配置
 type KafkaConfig struct {
-	Brokers                         []string      `env:"KAFKA_BROKERS" envSeparator:","`
-	RuleTopic                       string        `env:"KAFKA_RULE_TOPIC" envDefault:"rule.updates"`
-	ModelTopic                      string        `env:"KAFKA_MODEL_TOPIC" envDefault:"model-updates"`
-	ModelActionTopic                string        `env:"KAFKA_MODEL_ACTION_TOPIC" envDefault:"model-actions.v1"`
-	ModelActionEventGroup           string        `env:"KAFKA_MODEL_ACTION_EVENT_GROUP" envDefault:"rule-manager-model-action-execution-v1"`
-	ModelActionOutboxEnabled        bool          `env:"MODEL_ACTION_OUTBOX_V1_ENABLED" envDefault:"true"`
-	ModelActionInboxEnabled         bool          `env:"MODEL_ACTION_INBOX_V1_ENABLED" envDefault:"true"`
-	ModelAppliedTopic               string        `env:"KAFKA_MODEL_APPLIED_TOPIC" envDefault:"model-update-applied.v1"`
-	ModelAppliedExpectedParallelism int           `env:"MODEL_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
-	DeploymentTopic                 string        `env:"KAFKA_DEPLOYMENT_TOPIC" envDefault:"deployment.events.v1"`
-	DeploymentEventGroup            string        `env:"KAFKA_DEPLOYMENT_EVENT_GROUP" envDefault:"rule-manager-deployment-projection-v1"`
-	DeploymentProjectionEnabled     bool          `env:"DEPLOYMENT_EVENT_PROJECTION_V1_ENABLED" envDefault:"true"`
-	AlertFeedbackTopic              string        `env:"KAFKA_ALERT_FEEDBACK_TOPIC" envDefault:"alert.feedback.v1"`
-	AlertFeedbackEventGroup         string        `env:"KAFKA_ALERT_FEEDBACK_EVENT_GROUP" envDefault:"rule-manager-alert-feedback-projection-v1"`
-	AlertFeedbackProjectionEnabled  bool          `env:"ALERT_FEEDBACK_PROJECTION_V1_ENABLED" envDefault:"true"`
-	WhitelistEventTopic             string        `env:"KAFKA_WHITELIST_EVENT_TOPIC" envDefault:"whitelist.events.v2"`
-	WhitelistEventGroup             string        `env:"KAFKA_WHITELIST_EVENT_GROUP" envDefault:"rule-manager-whitelist-rule-effect-v2"`
-	WhitelistEventPipelineEnabled   bool          `env:"WHITELIST_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
-	AuditTopic                      string        `env:"KAFKA_AUDIT_TOPIC" envDefault:"audit.logs"`
-	DLQTopicPrefix                  string        `env:"KAFKA_DLQ_TOPIC_PREFIX" envDefault:"dlq."`
-	BatchSize                       int           `env:"KAFKA_BATCH_SIZE" envDefault:"100"`
-	BatchTimeout                    time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
-	MaxRetries                      int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
-	RequiredAcks                    string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
-	Compression                     string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
+	Brokers                          []string      `env:"KAFKA_BROKERS" envSeparator:","`
+	RuleTopic                        string        `env:"KAFKA_RULE_TOPIC" envDefault:"rule.updates"`
+	ModelTopic                       string        `env:"KAFKA_MODEL_TOPIC" envDefault:"model-updates"`
+	ModelActionTopic                 string        `env:"KAFKA_MODEL_ACTION_TOPIC" envDefault:"model-actions.v1"`
+	ModelActionEventGroup            string        `env:"KAFKA_MODEL_ACTION_EVENT_GROUP" envDefault:"rule-manager-model-action-execution-v1"`
+	ModelActionOutboxEnabled         bool          `env:"MODEL_ACTION_OUTBOX_V1_ENABLED" envDefault:"true"`
+	ModelActionInboxEnabled          bool          `env:"MODEL_ACTION_INBOX_V1_ENABLED" envDefault:"true"`
+	ModelAppliedTopic                string        `env:"KAFKA_MODEL_APPLIED_TOPIC" envDefault:"model-update-applied.v1"`
+	ModelAppliedExpectedParallelism  int           `env:"MODEL_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
+	ModelConsumerDeploymentID        string        `env:"MODEL_CONSUMER_DEPLOYMENT_ID"`
+	ModelConsumerProfileSHA256       string        `env:"MODEL_CONSUMER_PROFILE_SHA256"`
+	ModelShadowActivationEnabled     bool          `env:"MODEL_SHADOW_ACTIVATION_V1_ENABLED" envDefault:"false"`
+	ModelShadowPublisherEnabled      bool          `env:"MODEL_SHADOW_PUBLISHER_V1_ENABLED" envDefault:"false"`
+	ModelRollbackV2Enabled           bool          `env:"MODEL_ROLLBACK_V2_ENABLED" envDefault:"false"`
+	ModelRollbackAckTimeout          time.Duration `env:"MODEL_ROLLBACK_ACK_TIMEOUT" envDefault:"2m"`
+	ModelRuntimeContract             string        `env:"MODEL_RUNTIME_CONTRACT" envDefault:"traffic.behavior.inference.v1"`
+	ModelRuntimeVersion              string        `env:"MODEL_RUNTIME_VERSION" envDefault:"1.0.0"`
+	ModelFeatureSchemaVersion        int           `env:"MODEL_FEATURE_SCHEMA_VERSION" envDefault:"1"`
+	ModelGraphSchemaVersion          int           `env:"MODEL_GRAPH_SCHEMA_VERSION" envDefault:"1"`
+	ModelSupportedFormats            string        `env:"MODEL_SUPPORTED_FORMATS" envDefault:"onnx,numpy_npz_v1"`
+	RuleAppliedTopic                 string        `env:"KAFKA_RULE_APPLIED_TOPIC" envDefault:"rule-update-applied.v1"`
+	RuleAppliedExpectedParallelism   int           `env:"RULE_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
+	DeploymentTopic                  string        `env:"KAFKA_DEPLOYMENT_TOPIC" envDefault:"deployment.events.v1"`
+	DeploymentEventGroup             string        `env:"KAFKA_DEPLOYMENT_EVENT_GROUP" envDefault:"rule-manager-deployment-projection-v1"`
+	DeploymentProjectionEnabled      bool          `env:"DEPLOYMENT_EVENT_PROJECTION_V1_ENABLED" envDefault:"true"`
+	AlertFeedbackTopic               string        `env:"KAFKA_ALERT_FEEDBACK_TOPIC" envDefault:"alert.feedback.v1"`
+	AlertFeedbackEventGroup          string        `env:"KAFKA_ALERT_FEEDBACK_EVENT_GROUP" envDefault:"rule-manager-alert-feedback-projection-v1"`
+	AlertFeedbackProjectionEnabled   bool          `env:"ALERT_FEEDBACK_PROJECTION_V1_ENABLED" envDefault:"true"`
+	ModelFeedbackRevisionTopic       string        `env:"KAFKA_MODEL_FEEDBACK_REVISION_TOPIC" envDefault:"model.feedback.v1"`
+	ModelFeedbackRevisionEventGroup  string        `env:"KAFKA_MODEL_FEEDBACK_REVISION_EVENT_GROUP" envDefault:"rule-manager-model-feedback-revision-v1"`
+	ModelFeedbackRevisionEnabled     bool          `env:"MODEL_FEEDBACK_REVISION_CONSUMER_V1_ENABLED" envDefault:"false"`
+	ModelFeedbackCandidateSHA256     string        `env:"MODEL_FEEDBACK_REVISION_CANDIDATE_SHA256" envDefault:"0000000000000000000000000000000000000000000000000000000000000000"`
+	ModelFeedbackContractSHA256      string        `env:"MODEL_FEEDBACK_REVISION_CONTRACT_SHA256" envDefault:"c60bdb3ed674853da641d2c613530195a1ed9db62ce48606c402870ab283c7d9"`
+	WhitelistEventTopic              string        `env:"KAFKA_WHITELIST_EVENT_TOPIC" envDefault:"whitelist.events.v2"`
+	WhitelistEventGroup              string        `env:"KAFKA_WHITELIST_EVENT_GROUP" envDefault:"rule-manager-whitelist-rule-effect-v2"`
+	WhitelistEventConsumerEnabled    bool          `env:"WHITELIST_EVENT_CONSUMER_V2_ENABLED" envDefault:"false"`
+	WhitelistConsumerCandidateSHA256 string        `env:"WHITELIST_CONSUMER_CANDIDATE_SHA256" envDefault:"0000000000000000000000000000000000000000000000000000000000000000"`
+	WhitelistEventContractSHA256     string        `env:"WHITELIST_EVENT_CONTRACT_SHA256" envDefault:"d87787272d140c8529686ce45eef30f2a6345fb7f2e918a450399c8f698aad49"`
+	// Deprecated combined switch retained for configuration compatibility.
+	WhitelistEventPipelineEnabled bool          `env:"WHITELIST_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
+	AuditTopic                    string        `env:"KAFKA_AUDIT_TOPIC" envDefault:"audit.logs"`
+	DLQTopicPrefix                string        `env:"KAFKA_DLQ_TOPIC_PREFIX" envDefault:"dlq."`
+	BatchSize                     int           `env:"KAFKA_BATCH_SIZE" envDefault:"100"`
+	BatchTimeout                  time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
+	MaxRetries                    int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
+	RequiredAcks                  string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
+	Compression                   string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
 	// Producer 超时
 	ProduceTimeout time.Duration `env:"KAFKA_PRODUCE_TIMEOUT" envDefault:"10s"`
 	SendTimeout    time.Duration `env:"KAFKA_SEND_TIMEOUT" envDefault:"5s"`

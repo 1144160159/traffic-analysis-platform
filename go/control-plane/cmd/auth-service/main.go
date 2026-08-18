@@ -453,6 +453,7 @@ func initJWTService(cfg *config.Config, redisClient *storage.RedisClient, tokenR
 		AccessTokenTTL:  cfg.JWT.AccessTokenTTL,
 		RefreshTokenTTL: cfg.JWT.RefreshTokenTTL,
 		Issuer:          cfg.JWT.Issuer,
+		SessionRevocationFailOpen: cfg.JWT.SessionRevocationFailOpen,
 	}
 
 	jwtService, err := jwt.NewService(jwtConfig, redisClient, tokenRepo, logger)

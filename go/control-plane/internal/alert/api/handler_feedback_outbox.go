@@ -24,6 +24,18 @@ type feedbackOutboxItem struct {
 	Payload          []byte
 }
 
+type feedbackOutboxEnvelope struct {
+	EventID          string `json:"event_id"`
+	EventType        string `json:"event_type"`
+	SchemaVersion    int    `json:"schema_version"`
+	AggregateVersion int64  `json:"aggregate_version"`
+	FeedbackID       string `json:"feedback_id"`
+	TenantID         string `json:"tenant_id"`
+	AlertID          string `json:"alert_id"`
+	PredictionID     string `json:"prediction_id,omitempty"`
+	LabelRevision    int64  `json:"label_revision,omitempty"`
+}
+
 func (h *Handler) StartFeedbackOutboxWorker(ctx context.Context, interval time.Duration) error {
 	if h == nil || h.feedbackHandler == nil {
 		return fmt.Errorf("feedback handler is unavailable")
@@ -31,11 +43,29 @@ func (h *Handler) StartFeedbackOutboxWorker(ctx context.Context, interval time.D
 	return h.feedbackHandler.startOutboxWorker(ctx, interval)
 }
 
+func (h *Handler) StartModelFeedbackRevisionOutboxWorker(ctx context.Context, interval time.Duration) error {
+	if h == nil || h.feedbackHandler == nil {
+		return fmt.Errorf("feedback handler is unavailable")
+	}
+	return h.feedbackHandler.startTypedOutboxWorker(
+		ctx, interval, modelFeedbackRevisionEventType, h.feedbackHandler.revisionProducer,
+	)
+}
+
 func (h *FeedbackHandler) startOutboxWorker(ctx context.Context, interval time.Duration) error {
+	return h.startTypedOutboxWorker(ctx, interval, "alert.feedback.v1", h.kafkaProducer)
+}
+
+func (h *FeedbackHandler) startTypedOutboxWorker(
+	ctx context.Context,
+	interval time.Duration,
+	eventType string,
+	producer *kafka.Producer,
+) error {
 	if h.actionAudit == nil || h.actionAudit.db == nil {
 		return fmt.Errorf("feedback outbox database is unavailable")
 	}
-	if h.kafkaProducer == nil {
+	if producer == nil {
 		return fmt.Errorf("feedback Kafka publisher is unavailable")
 	}
 	if !h.transactionalOutboxEnabled {
@@ -44,12 +74,12 @@ func (h *FeedbackHandler) startOutboxWorker(ctx context.Context, interval time.D
 	if interval <= 0 {
 		interval = 2 * time.Second
 	}
-	workerID := hostnameOrDefault() + ":feedback-outbox:" + uuid.NewString()
+	workerID := hostnameOrDefault() + ":feedback-outbox:" + eventType + ":" + uuid.NewString()
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		for {
-			if _, err := h.drainOutbox(ctx, workerID, 50); err != nil && ctx.Err() == nil && h.logger != nil {
+			if _, err := h.drainTypedOutbox(ctx, workerID, eventType, producer, 50); err != nil && ctx.Err() == nil && h.logger != nil {
 				h.logger.Warn("Failed to drain alert feedback outbox", zap.Error(err))
 			}
 			select {
@@ -67,7 +97,16 @@ func (h *FeedbackHandler) drainOutbox(
 	workerID string,
 	limit int,
 ) (int, error) {
-	if h.actionAudit == nil || h.actionAudit.db == nil || h.kafkaProducer == nil {
+	return h.drainTypedOutbox(ctx, workerID, "alert.feedback.v1", h.kafkaProducer, limit)
+}
+
+func (h *FeedbackHandler) drainTypedOutbox(
+	ctx context.Context,
+	workerID, eventType string,
+	producer *kafka.Producer,
+	limit int,
+) (int, error) {
+	if h.actionAudit == nil || h.actionAudit.db == nil || producer == nil {
 		return 0, nil
 	}
 	if limit <= 0 || limit > 100 {
@@ -77,6 +116,7 @@ func (h *FeedbackHandler) drainOutbox(
 		WITH candidates AS (
 			SELECT outbox_id FROM alert_feedback_outbox
 			WHERE published=false AND next_attempt_at <= now()
+			  AND payload->>'event_type'=$3
 			  AND (locked_until IS NULL OR locked_until < now())
 			ORDER BY next_attempt_at,outbox_id
 			LIMIT $1 FOR UPDATE SKIP LOCKED
@@ -91,7 +131,7 @@ func (h *FeedbackHandler) drainOutbox(
 		SELECT outbox_id,event_id,feedback_id,tenant_id,alert_id,partition_key,
 		       schema_version,aggregate_version,payload
 		FROM claimed ORDER BY outbox_id`,
-		limit, workerID,
+		limit, workerID, eventType,
 	)
 	if err != nil {
 		return 0, err
@@ -120,7 +160,7 @@ func (h *FeedbackHandler) drainOutbox(
 	}
 	processed := 0
 	for _, item := range items {
-		if err := h.publishOutboxItem(ctx, workerID, item); err != nil {
+		if err := h.publishTypedOutboxItem(ctx, workerID, eventType, producer, item); err != nil {
 			if h.logger != nil {
 				h.logger.Warn(
 					"Alert feedback outbox delivery failed",
@@ -141,18 +181,46 @@ func (h *FeedbackHandler) publishOutboxItem(
 	workerID string,
 	item feedbackOutboxItem,
 ) error {
-	if h.kafkaProducer == nil || h.actionAudit == nil || h.actionAudit.db == nil {
+	return h.publishTypedOutboxItem(ctx, workerID, "alert.feedback.v1", h.kafkaProducer, item)
+}
+
+func (h *FeedbackHandler) publishTypedOutboxItem(
+	ctx context.Context,
+	workerID, eventType string,
+	producer *kafka.Producer,
+	item feedbackOutboxItem,
+) error {
+	if producer == nil || h.actionAudit == nil || h.actionAudit.db == nil {
 		return fmt.Errorf("feedback outbox dependencies are unavailable")
 	}
-	err := h.kafkaProducer.Send(ctx, item.PartitionKey, item.Payload,
-		kafka.MessageHeader{Key: "event_id", Value: item.EventID},
-		kafka.MessageHeader{Key: "event_type", Value: "alert.feedback.v1"},
-		kafka.MessageHeader{Key: "schema_version", Value: fmt.Sprint(item.SchemaVersion)},
-		kafka.MessageHeader{Key: "aggregate_version", Value: fmt.Sprint(item.AggregateVersion)},
-		kafka.MessageHeader{Key: "tenant_id", Value: item.TenantID},
-		kafka.MessageHeader{Key: "alert_id", Value: item.AlertID},
-		kafka.MessageHeader{Key: "feedback_id", Value: item.FeedbackID},
-	)
+	var envelope feedbackOutboxEnvelope
+	if err := json.Unmarshal(item.Payload, &envelope); err != nil ||
+		envelope.EventType != eventType || envelope.EventID != item.EventID ||
+		envelope.TenantID != item.TenantID || envelope.AlertID != item.AlertID ||
+		envelope.SchemaVersion != 1 || envelope.AggregateVersion < 1 {
+		h.releaseOutboxLease(ctx, workerID, item.OutboxID, "outbox envelope does not match claimed row")
+		return fmt.Errorf("feedback outbox envelope does not match claimed row")
+	}
+	headers := []kafka.MessageHeader{
+		{Key: "event_id", Value: envelope.EventID},
+		{Key: "event_type", Value: envelope.EventType},
+		{Key: "schema_version", Value: fmt.Sprint(envelope.SchemaVersion)},
+		{Key: "aggregate_version", Value: fmt.Sprint(envelope.AggregateVersion)},
+		{Key: "tenant_id", Value: envelope.TenantID},
+		{Key: "alert_id", Value: envelope.AlertID},
+		{Key: "feedback_id", Value: envelope.FeedbackID},
+	}
+	if eventType == modelFeedbackRevisionEventType {
+		if envelope.PredictionID == "" || envelope.LabelRevision != envelope.AggregateVersion {
+			h.releaseOutboxLease(ctx, workerID, item.OutboxID, "invalid model feedback revision envelope")
+			return fmt.Errorf("invalid model feedback revision envelope")
+		}
+		headers = append(headers,
+			kafka.MessageHeader{Key: "prediction_id", Value: envelope.PredictionID},
+			kafka.MessageHeader{Key: "label_revision", Value: fmt.Sprint(envelope.LabelRevision)},
+		)
+	}
+	err := producer.Send(ctx, item.PartitionKey, item.Payload, headers...)
 	if err != nil {
 		h.releaseOutboxLease(ctx, workerID, item.OutboxID, err.Error())
 		return err

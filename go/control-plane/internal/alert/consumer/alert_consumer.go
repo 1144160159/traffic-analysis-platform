@@ -46,6 +46,7 @@ type AlertConsumer struct {
 	groupID       string
 	batchSize     int
 	flushInterval time.Duration
+	timeBucket    int // 去重时间桶（分钟），与 DedupConfig.TimeBucketMinutes 对齐
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -65,7 +66,15 @@ func NewAlertConsumer(
 		consumer: consumer, repo: repo, dedup: dedupSvc,
 		logger: logger, topic: topic, groupID: groupID,
 		batchSize: 100, flushInterval: 2 * time.Second,
-		ctx: ctx, cancel: cancel,
+		timeBucket: 10, // 与 DedupConfig 默认值一致，可由调用方 SetDedupTimeBucket 覆盖
+		ctx:        ctx, cancel: cancel,
+	}
+}
+
+// SetDedupTimeBucket 设置去重时间桶（分钟），与 DedupConfig.TimeBucketMinutes 对齐。
+func (c *AlertConsumer) SetDedupTimeBucket(minutes int) {
+	if minutes > 0 {
+		c.timeBucket = minutes
 	}
 }
 
@@ -187,7 +196,7 @@ func (c *AlertConsumer) processMessage(ctx context.Context, msg *kafka.ReceivedM
 		return nil, nil
 	}
 
-	// 计算去重指纹
+	// 计算去重指纹（时间桶从配置读取，不再硬编码 5 分钟）
 	fingerprint := dedup.CalculateAlertFingerprint(
 		tenantID,
 		pbAlert.AlertType,
@@ -196,7 +205,7 @@ func (c *AlertConsumer) processMessage(ctx context.Context, msg *kafka.ReceivedM
 		pbAlert.DstPort,
 		pbAlert.Severity.String(),
 		pbAlert.FirstSeen,
-		5, // 5 分钟时间桶
+		c.timeBucket,
 	)
 
 	// 去重检查（如果 dedup 可用）

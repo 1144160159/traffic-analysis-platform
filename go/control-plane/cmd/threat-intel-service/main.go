@@ -13,13 +13,18 @@ import (
 	"syscall"
 	"time"
 
+	env "github.com/caarlos0/env/v10"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/threatintel"
+	authConfig "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/config"
 	authjwt "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/jwt"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/oidc"
+
 	authrepository "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
 	authservice "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
@@ -170,7 +175,23 @@ func main() {
 		if jwtErr != nil {
 			logger.Fatal("Failed to init JWT service", zap.Error(jwtErr))
 		}
-		authSvc := authservice.NewAuthService(userRepo, jwtSvc, nil, nil, logger, nil)
+		// 统一令牌模型 P1:附带 OIDC Provider,使 ValidateToken 具备
+		// Keycloak 访问令牌 JWKS 回退(修复 nil provider 缺陷)。
+		// 只解析 OIDC 子集:threat-intel 无 Redis,完整 authConfig.Load()
+		// 会因 Redis 必填校验失败而连带关闭 OIDC 回退。
+		var oidcCfg authConfig.OIDCConfig
+		if err := env.ParseWithOptions(&oidcCfg, env.Options{Prefix: "OIDC_"}); err != nil {
+			logger.Warn("OIDC env parse failed; Keycloak token fallback disabled", zap.Error(err))
+		}
+		var oidcProvider *oidc.Provider
+		if oidcCfg.Enabled {
+			if p, err := oidc.NewProvider(oidcCfg, logger); err != nil {
+				logger.Warn("OIDC provider init failed; Keycloak token fallback disabled", zap.Error(err))
+			} else {
+				oidcProvider = p
+			}
+		}
+		authSvc := authservice.NewAuthService(userRepo, jwtSvc, oidcProvider, &authConfig.Config{OIDC: oidcCfg}, logger, nil)
 		authMiddleware = httpx.Auth(tokenValidatorAdapter{authService: authSvc}, logger)
 		logger.Info("Auth middleware initialized")
 	} else {

@@ -786,6 +786,59 @@ ENGINE = Distributed(
   cityHash64(tenant_id, file_key)
 );
 
+-- Manifest-v2 carrier/restoration projection; do not merge with the legacy
+-- cutter table because the two contracts have different replay semantics.
+CREATE TABLE IF NOT EXISTS ${CH_DB}.pcap_index_v2_local ON CLUSTER ${CH_CLUSTER}
+(
+  tenant_id String,
+  probe_id String,
+  file_key String,
+  bucket String,
+  object_version String,
+  etag String,
+  original_size UInt64,
+  stored_size UInt64,
+  compression LowCardinality(String),
+  manifest_version UInt16,
+  kafka_topic String,
+  kafka_partition Int32,
+  kafka_offset Int64,
+  kafka_key_sha256 FixedString(64),
+  kafka_headers_sha256 FixedString(64),
+  raw_sha256 FixedString(64),
+  projection_identity FixedString(64),
+  ts_start DateTime64(3, 'UTC'),
+  ts_end DateTime64(3, 'UTC'),
+  byte_size UInt64,
+  zstd_level UInt8,
+  sha256 String,
+  community_id String,
+  flow_id String,
+  offset_start Nullable(UInt64),
+  offset_end Nullable(UInt64),
+  bloom_filter_b64 String,
+  community_ids Array(String),
+  created_ts DateTime64(3, 'UTC')
+)
+ENGINE = ReplicatedReplacingMergeTree(
+  '${CH_KEEPER_PREFIX}/{shard}/${CH_DB}/pcap_index_v2_local',
+  '{replica}',
+  created_ts
+)
+PARTITION BY toYYYYMMDD(ts_start)
+ORDER BY (tenant_id, probe_id, file_key, projection_identity)
+TTL toDateTime(ts_start) + INTERVAL 90 DAY
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS ${CH_DB}.pcap_index_v2 ON CLUSTER ${CH_CLUSTER}
+AS ${CH_DB}.pcap_index_v2_local
+ENGINE = Distributed(
+  ${CH_CLUSTER},
+  ${CH_DB},
+  pcap_index_v2_local,
+  cityHash64(tenant_id, file_key)
+);
+
 -- ==================== 索引优化（可选）====================
 
 -- 为 community_id 创建 Bloom Filter 索引（加速点查）

@@ -998,10 +998,7 @@ func (h *HTTPHandler) listTopologyLinks(w http.ResponseWriter, r *http.Request) 
 }
 
 func tenantFromRequest(r *http.Request) string {
-	if tenantID := r.Header.Get("X-Tenant-ID"); tenantID != "" {
-		return tenantID
-	}
-	return ""
+	return httpx.GetTenantID(r.Context())
 }
 
 func actorFromRequest(r *http.Request) string {

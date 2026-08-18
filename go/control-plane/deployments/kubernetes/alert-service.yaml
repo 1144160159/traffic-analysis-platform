@@ -63,6 +63,11 @@ spec:
               optional: true
         - {name: KAFKA_WHITELIST_EVENT_TOPIC, value: "whitelist.events.v2"}
         - {name: WHITELIST_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: WHITELIST_EVENT_PRODUCER_V2_ENABLED, value: "false"}
+        - {name: WHITELIST_DETECTION_MATCHER_V2_ENABLED, value: "false"}
+        - {name: KAFKA_WHITELIST_EVENT_GROUP, value: "rule-manager-whitelist-rule-effect-v2"}
+        - {name: WHITELIST_CONSUMER_CANDIDATE_SHA256, value: "0000000000000000000000000000000000000000000000000000000000000000"}
+        - {name: WHITELIST_EVENT_CONTRACT_SHA256, value: "d87787272d140c8529686ce45eef30f2a6345fb7f2e918a450399c8f698aad49"}
         - {name: KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC, value: "notification.governance.events.v1"}
         - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "false"}
         - {name: ALERT_RESPONSE_EXTERNAL_EXECUTOR_V1_ENABLED, value: "false"}
@@ -89,6 +94,19 @@ spec:
               optional: true
         - {name: CAMPAIGN_ALERT_LINKS_V1_ENABLED, value: "true"}
         - {name: CAMPAIGN_AGGREGATE_V2_ENABLED, value: "false"}
+        - {name: FUSION_V1_ENABLED, value: "false"}
+        - {name: FUSION_PROJECTION_CONSUMER_V1_ENABLED, value: "false"}
+        - {name: FUSION_CANDIDATE_SHA256, value: ""}
+        - {name: BEHAVIOR_BASELINE_V1_ENABLED, value: "false"}
+        - {name: BEHAVIOR_BASELINE_BUILD_WORKER_V1_ENABLED, value: "false"}
+        - {name: BEHAVIOR_BASELINE_ACK_CONSUMER_V1_ENABLED, value: "false"}
+        - {name: BEHAVIOR_BASELINE_LIFECYCLE_DISPATCHER_V1_ENABLED, value: "false"}
+        - {name: BEHAVIOR_BASELINE_CANDIDATE_SHA256, value: ""}
+        - {name: KAFKA_BASELINE_LIFECYCLE_TOPIC, value: "baseline.lifecycle.v1"}
+        - {name: KAFKA_BASELINE_ACTIVATION_ACK_TOPIC, value: "baseline.activation-acks.v1"}
+        - {name: KAFKA_BASELINE_ACTIVATION_ACK_GROUP, value: "alert-service-baseline-activation-acks-v1"}
+        - {name: KAFKA_FUSION_COMMAND_TOPIC, value: "fusion.commands.v1"}
+        - {name: KAFKA_FUSION_PROJECTION_GROUP, value: "alert-service-fusion-projection-v1"}
         - {name: CAMPAIGN_EVENT_PIPELINE_V2_ENABLED, value: "false"}
         - {name: CAMPAIGN_TARGET_PROJECTION_V2_ENABLED, value: "false"}
         - {name: CAMPAIGN_SOAR_EXECUTOR_URL, value: ""}
@@ -131,7 +149,14 @@ spec:
               key: NEBULA_SERVICE_PASSWORD
         - {name: TOPIC_SNAPSHOT_V1_ENABLED, value: "true"}
         - {name: TOPIC_EXECUTOR_V2_ENABLED, value: "true"}
-        - {name: PROBE_OPERATION_ACK_V2_ENABLED, value: "true"}
+        - {name: PROBE_OPERATION_ACK_V2_ENABLED, value: "false"}
+        - {name: PROBE_ACK_CONSUMER_V2_ENABLED, value: "false"}
+        - {name: PROBE_LIFECYCLE_CONSUMER_V2_ENABLED, value: "false"}
+        - {name: PROBE_READINESS_CONSUMER_V1_ENABLED, value: "false"}
+        - {name: PROBE_DESIRED_WRITER_V2_ENABLED, value: "false"}
+        - {name: PROBE_CONTROL_PUBLISHER_V2_ENABLED, value: "false"}
+        - {name: PROBE_LIFECYCLE_PUBLISHER_V2_ENABLED, value: "false"}
+        - {name: PROBE_DISPATCHER_V2_ENABLED, value: "false"}
         - name: KAFKA_BROKERS
           value: "kafka-bootstrap.middleware.svc:9092"
         - name: KAFKA_TOPIC
@@ -168,6 +193,10 @@ spec:
           value: "probe.events.v2"
         - name: KAFKA_PROBE_EVENT_GROUP
           value: "alert-service-probe-event-projection-v2"
+        - name: KAFKA_PROBE_GROUP_READINESS_TOPIC
+          value: "probe.group-readiness.v1"
+        - name: KAFKA_PROBE_GROUP_READINESS_GROUP
+          value: "alert-service-probe-group-readiness-v1"
         - name: KAFKA_TOPIC_ACTION_EVENT_TOPIC
           value: "traffic.topic.action.v2"
         - name: KAFKA_TOPIC_ACTION_EVENT_GROUP

@@ -19,8 +19,24 @@ import (
 )
 
 func newCursorTestRepository(t *testing.T, handler http.HandlerFunc, enabled bool) *OpenSearchRepository {
+	return newCursorTestRepositoryWithTarget(t, handler, enabled, func() string { return "alerts-v2-000001" })
+}
+
+func newCursorTestRepositoryWithTarget(
+	t *testing.T,
+	handler http.HandlerFunc,
+	enabled bool,
+	resolvedTarget func() string,
+) *OpenSearchRepository {
 	t.Helper()
-	server := httptest.NewServer(handler)
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet && request.URL.Path == "/_resolve/index/alerts-v2-read" {
+			target := resolvedTarget()
+			writeOpenSearchJSON(t, writer, `{"indices":[{"name":"`+target+`","aliases":["alerts-v2-read"],"attributes":["open"]}],"aliases":[{"name":"alerts-v2-read","indices":["`+target+`"]}],"data_streams":[]}`)
+			return
+		}
+		handler(writer, request)
+	}))
 	t.Cleanup(server.Close)
 	repository, err := NewOpenSearchRepository(OpenSearchConfig{
 		Addresses:          []string{server.URL},
@@ -66,7 +82,7 @@ func TestOpenSearchCursorLiveTraversalUsesBoundedStableSearchAfter(t *testing.T)
 			writeOpenSearchJSON(t, writer, `{}`)
 			return
 		}
-		if request.Method != http.MethodPost || request.URL.Path != "/alerts-v2-read/_search" {
+		if request.Method != http.MethodPost || request.URL.Path != "/alerts-v2-000001/_search" {
 			t.Fatalf("unexpected request: %s %s", request.Method, request.URL.String())
 		}
 		if request.URL.Query().Get("allow_partial_search_results") != "false" ||
@@ -141,6 +157,9 @@ func TestOpenSearchCursorLiveTraversalUsesBoundedStableSearchAfter(t *testing.T)
 	if !first.HasMore || first.NextCursor == "" || len(first.Alerts) != 2 || first.Partial {
 		t.Fatalf("unexpected first page: %+v", first)
 	}
+	if len(first.SourceWatermarks["opensearch.alerts.target_sha256"]) != sha256.Size*2 {
+		t.Fatalf("target watermark missing: %#v", first.SourceWatermarks)
+	}
 	secondQuery := *query
 	secondQuery.Cursor = first.NextCursor
 	second, err := repository.Search(context.Background(), &secondQuery)
@@ -149,6 +168,50 @@ func TestOpenSearchCursorLiveTraversalUsesBoundedStableSearchAfter(t *testing.T)
 	}
 	if second.HasMore || second.NextCursor != "" || len(second.Alerts) != 1 || second.Alerts[0].AlertID != "a1" {
 		t.Fatalf("unexpected second page: %+v", second)
+	}
+}
+
+func TestOpenSearchLiveCursorFailsClosedAfterAliasSwitch(t *testing.T) {
+	var mutex sync.Mutex
+	resolvedTarget := "alerts-v2-000001"
+	searches := 0
+	repository := newCursorTestRepositoryWithTarget(t, func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path == "/" {
+			writeOpenSearchJSON(t, writer, `{}`)
+			return
+		}
+		mutex.Lock()
+		searches++
+		mutex.Unlock()
+		writeOpenSearchJSON(t, writer, `{
+		  "took":1,"timed_out":false,"_shards":{"failed":0},
+		  "hits":{"total":{"value":2,"relation":"eq"},"hits":[
+		    {"_source":{"tenant_id":"tenant-a","alert_id":"a2"},"sort":[2,"a2"]},
+		    {"_source":{"tenant_id":"tenant-a","alert_id":"a1"},"sort":[1,"a1"]}
+		  ]}}
+		`)
+	}, true, func() string {
+		mutex.Lock()
+		defer mutex.Unlock()
+		return resolvedTarget
+	})
+	query := &SearchQuery{TenantID: "tenant-a", Size: 1, CursorMode: SearchCursorModeLive}
+	first, err := repository.Search(context.Background(), query)
+	if err != nil || first.NextCursor == "" {
+		t.Fatalf("first page: result=%+v err=%v", first, err)
+	}
+	mutex.Lock()
+	resolvedTarget = "alerts-v2-000002"
+	mutex.Unlock()
+	continuation := *query
+	continuation.Cursor = first.NextCursor
+	if _, err := repository.Search(context.Background(), &continuation); !commonErrors.IsCode(err, commonErrors.ErrCodeInvalidParameter) || !strings.Contains(err.Error(), "stale") {
+		t.Fatalf("alias-switch cursor error = %v", err)
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	if searches != 1 {
+		t.Fatalf("stale cursor reached search: searches=%d", searches)
 	}
 }
 
@@ -212,7 +275,7 @@ func TestOpenSearchPITCursorCreatesRotatesAndClosesTenantContext(t *testing.T) {
 		switch {
 		case request.URL.Path == "/":
 			writeOpenSearchJSON(t, writer, `{}`)
-		case request.Method == http.MethodPost && request.URL.Path == "/alerts-v2-read/_search/point_in_time":
+		case request.Method == http.MethodPost && request.URL.Path == "/alerts-v2-000001/_search/point_in_time":
 			created = true
 			if request.URL.Query().Get("keep_alive") != "120000ms" {
 				t.Fatalf("PIT keep_alive = %q", request.URL.Query().Get("keep_alive"))
@@ -354,7 +417,7 @@ func TestSearchCursorCodecExpiresAndRejectsUnknownClaims(t *testing.T) {
 	}
 	now := time.Date(2026, 8, 4, 1, 0, 0, 0, time.UTC)
 	codec.now = func() time.Time { return now }
-	token, err := codec.encode("tenant-a", strings.Repeat("a", 64), SearchCursorModeLive, 50,
+	token, err := codec.encode("tenant-a", strings.Repeat("a", 64), strings.Repeat("b", 64), SearchCursorModeLive, 50,
 		[]json.RawMessage{json.RawMessage(`1`), json.RawMessage(`"a1"`)}, "", now)
 	if err != nil {
 		t.Fatal(err)
@@ -365,7 +428,7 @@ func TestSearchCursorCodecExpiresAndRejectsUnknownClaims(t *testing.T) {
 	}
 	codec.now = func() time.Time { return now }
 	payload := []byte(`{"v":1,"tenant_id":"tenant-a","query_sha256":"` + strings.Repeat("a", 64) +
-		`","mode":"live","size":50,"sort_values":[1,"a1"],"expires_at":` +
+		`","target_sha256":"` + strings.Repeat("b", 64) + `","mode":"live","size":50,"sort_values":[1,"a1"],"expires_at":` +
 		strconv.FormatInt(now.Add(time.Minute).Unix(), 10) + `,"unknown":true}`)
 	payloadPart := base64.RawURLEncoding.EncodeToString(payload)
 	mac := hmac.New(sha256.New, codec.signingKey)

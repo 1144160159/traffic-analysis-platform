@@ -276,7 +276,10 @@ func (g *Generator) generateStatEvidence(ctx context.Context, alert *persistence
 		LIMIT 1
 	`
 
-	row, _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
+	row, err := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
+	if err != nil {
+		return nil, fmt.Errorf("query stat evidence failed: %w", err)
+	}
 
 	var pps, bps, upDownRatio float32
 	var pktlenMean, pktlenStd, iatMean, iatStd float32
@@ -370,7 +373,10 @@ func (g *Generator) generateSequenceEvidence(ctx context.Context, alert *persist
 		LIMIT 1
 	`
 
-	row, _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
+	row, err := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
+	if err != nil {
+		return nil, fmt.Errorf("query sequence evidence failed: %w", err)
+	}
 
 	var pktlenHash, iatHash string
 	var waveletFwd, waveletBwd, entropyFwd, entropyBwd float32
@@ -459,7 +465,10 @@ func (g *Generator) generateFingerprintEvidence(ctx context.Context, alert *pers
 		LIMIT 1
 	`
 
-	row, _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID, alert.SessionID)
+	row, err := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID, alert.SessionID)
+	if err != nil {
+		return nil, fmt.Errorf("query fingerprint evidence failed: %w", err)
+	}
 
 	var isEncrypted uint8
 	var tlsVersion, ja3, sniHash, certSha256 string
@@ -643,13 +652,16 @@ func (g *Generator) SaveEvidence(ctx context.Context, evidence *Evidence) error 
 		g.logger.Warn("Failed to marshal snippet_ref", zap.Error(err))
 	}
 
-	query := `
+	// 使用 evidence_id 作为块级去重 token：补偿重试（同一 evidence 对象）
+	// 重复插入时被 ClickHouse 去重，避免补偿产生重复证据行。
+	query := fmt.Sprintf(`
 		INSERT INTO traffic.evidence (
 			tenant_id, evidence_id, alert_id, ts,
 			type, summary, metrics_json, snippet_ref_json, arkime_link,
 			confidence, event_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`
+		) SETTINGS insert_deduplication_token='%s'
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, evidence.EvidenceID)
 
 	err = g.chClient.Exec(ctx, query,
 		evidence.TenantID,
@@ -842,7 +854,10 @@ func (g *Generator) GetEvidenceByID(ctx context.Context, tenantID, evidenceID st
 		LIMIT 1
 	`
 
-	row, _ := g.chClient.QueryRow(ctx, query, tenantID, evidenceID)
+	row, err := g.chClient.QueryRow(ctx, query, tenantID, evidenceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query evidence: %w", err)
+	}
 
 	var e Evidence
 	var metricsJSON, snippetRefJSON string

@@ -50,7 +50,7 @@ func doAdvancedRequest(t *testing.T, router http.Handler, method, path, body str
 
 	req := httptest.NewRequest(method, path, bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-test")
+	req = withTenant(req, "tenant-test")
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 	return rr
@@ -69,7 +69,7 @@ func doAdvancedRequestWithPermissions(
 
 	req := httptest.NewRequest(method, path, bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-test")
+	req = withTenant(req, "tenant-test")
 	ctx := req.Context()
 	ctx = context.WithValue(ctx, httpx.ContextKeyTenantID, "tenant-test")
 	ctx = context.WithValue(ctx, httpx.ContextKeyUserID, "11111111-1111-1111-1111-111111111111")

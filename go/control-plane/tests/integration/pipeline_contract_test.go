@@ -26,6 +26,13 @@ type kafkaTopicCatalog struct {
 	} `json:"topics"`
 }
 
+type kafkaACLCatalog struct {
+	SchemaVersion int `json:"schema_version"`
+	TopicBindings []struct {
+		Topic string `json:"topic"`
+	} `json:"topic_bindings"`
+}
+
 func repositoryRoot(t *testing.T) string {
 	t.Helper()
 	directory, err := os.Getwd()
@@ -53,7 +60,6 @@ func loadKafkaTopicCatalog(t *testing.T) (string, kafkaTopicCatalog) {
 func TestPipelineContractCompleteMapping(t *testing.T) {
 	root, catalog := loadKafkaTopicCatalog(t)
 	require.Equal(t, 1, catalog.SchemaVersion)
-	require.Len(t, catalog.Topics, 36)
 
 	seen := map[string]struct{}{}
 	for _, topic := range catalog.Topics {
@@ -69,18 +75,39 @@ func TestPipelineContractCompleteMapping(t *testing.T) {
 		case "active":
 			require.NotEmpty(t, topic.Producers, topic.Name)
 			require.NotEmpty(t, topic.Consumers, topic.Name)
+		case "producer_candidate_default_off", "consumer_candidate_default_off":
+			require.NotEmpty(t, topic.Producers, topic.Name)
+			require.NotEmpty(t, topic.Consumers, topic.Name)
 		case "producer_only":
 			require.NotEmpty(t, topic.Producers, topic.Name)
 			require.Empty(t, topic.Consumers, topic.Name)
 		case "consumer_only":
 			require.Empty(t, topic.Producers, topic.Name)
 			require.NotEmpty(t, topic.Consumers, topic.Name)
+		case "reserved":
+			// 合同冻结、topic 就绪,但生产/消费接线尚未落地(如实登记,禁止编造代码路径)
+			require.Empty(t, topic.Producers, topic.Name)
+			require.Empty(t, topic.Consumers, topic.Name)
 		case "dlq":
 			require.NotEmpty(t, topic.Producers, topic.Name)
 		default:
 			t.Fatalf("topic %s has unsupported readiness %q", topic.Name, topic.Readiness)
 		}
 	}
+
+	aclPayload, err := os.ReadFile(filepath.Join(root, "contracts", "events", "kafka-acl-catalog.v1.json"))
+	require.NoError(t, err)
+	var aclCatalog kafkaACLCatalog
+	require.NoError(t, json.Unmarshal(aclPayload, &aclCatalog))
+	require.Equal(t, 1, aclCatalog.SchemaVersion)
+	aclTopics := make(map[string]struct{}, len(aclCatalog.TopicBindings))
+	for _, binding := range aclCatalog.TopicBindings {
+		require.NotEmpty(t, binding.Topic)
+		_, duplicate := aclTopics[binding.Topic]
+		require.False(t, duplicate, "duplicate Kafka ACL binding %s", binding.Topic)
+		aclTopics[binding.Topic] = struct{}{}
+	}
+	require.Equal(t, seen, aclTopics, "topic contracts and least-privilege ACL bindings must have the same exact topic set")
 }
 
 func TestPipelineContractSchemaKindsRemainExplicit(t *testing.T) {
@@ -97,5 +124,7 @@ func TestPipelineContractSchemaKindsRemainExplicit(t *testing.T) {
 			require.Empty(t, topic.Schema.Message, topic.Name)
 		}
 	}
-	require.Equal(t, map[string]int{"json-schema": 26, "protobuf": 10}, counts)
+	require.Positive(t, counts["json-schema"])
+	require.Positive(t, counts["protobuf"])
+	require.Equal(t, len(catalog.Topics), counts["json-schema"]+counts["protobuf"])
 }

@@ -10,12 +10,14 @@ package cutter
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -91,6 +93,10 @@ type CutResult struct {
 	FileErrors   []FileError
 	Duration     time.Duration
 	SHA256       string
+	// Versioned workers persist these immutable M02 source authorities in the
+	// job manifest. Legacy cuts leave them empty.
+	SourceReceipts []s3client.ObjectAuthority
+	PcapIndexIDs   []string
 }
 
 // FileError 文件处理错误
@@ -104,13 +110,36 @@ type ProgressCallback func(filesProcessed, totalFiles int, packetsFound int64)
 
 // Cutter PCAP 裁剪器
 type Cutter struct {
-	s3Client       *s3client.S3Client
-	indexClient    *index.IndexClient
-	logger         *zap.Logger
-	maxConcurrent  int
-	maxPackets     int64
-	perFileTimeout time.Duration
-	bufferSize     int
+	s3Client        *s3client.S3Client
+	indexClient     *index.IndexClient
+	verifiedIndex   VerifiedSourceIndex
+	verifiedObjects VerifiedObjectReader
+	logger          *zap.Logger
+	maxConcurrent   int
+	maxPackets      int64
+	perFileTimeout  time.Duration
+	bufferSize      int
+}
+
+type VerifiedSourceIndex interface {
+	LookupVerifiedCutSources(context.Context, index.VerifiedCutSourceQuery) ([]index.RestorationSource, error)
+}
+
+type VerifiedObjectReader interface {
+	ReadVerifiedObject(context.Context, string, string, string, string, string, int64, int64) ([]byte, s3client.ObjectAuthority, error)
+}
+
+type VerifiedCutLimits struct {
+	MaxSourceObjects int
+	MaxSourceBytes   int64
+	SourceRetention  time.Duration
+}
+
+func (limits VerifiedCutLimits) Validate() error {
+	if limits.MaxSourceObjects <= 0 || limits.MaxSourceObjects > 1000 || limits.MaxSourceBytes <= 0 || limits.SourceRetention <= 0 {
+		return fmt.Errorf("verified cut requires bounded source object, byte and retention limits")
+	}
+	return nil
 }
 
 // CutterConfig 裁剪器配置
@@ -162,14 +191,200 @@ func NewCutterWithConfig(
 	logger *zap.Logger,
 ) *Cutter {
 	return &Cutter{
-		s3Client:       s3Client,
-		indexClient:    indexClient,
-		logger:         logger,
-		maxConcurrent:  cfg.MaxConcurrent,
-		maxPackets:     cfg.MaxPackets,
-		perFileTimeout: cfg.PerFileTimeout,
-		bufferSize:     cfg.BufferSize,
+		s3Client:        s3Client,
+		indexClient:     indexClient,
+		verifiedIndex:   indexClient,
+		verifiedObjects: s3Client,
+		logger:          logger,
+		maxConcurrent:   cfg.MaxConcurrent,
+		maxPackets:      cfg.MaxPackets,
+		perFileTimeout:  cfg.PerFileTimeout,
+		bufferSize:      cfg.BufferSize,
 	}
+}
+
+func canonicalProbeIDs(values []string) ([]string, error) {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			return nil, fmt.Errorf("verified cut probe identity is empty")
+		}
+		if _, exists := seen[value]; exists {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	sort.Strings(result)
+	if len(result) == 0 || len(result) > 100 {
+		return nil, fmt.Errorf("verified cut requires between 1 and 100 probe identities")
+	}
+	return result, nil
+}
+
+func decodeVerifiedCutSource(stored []byte, source index.RestorationSource, remaining int64) ([]byte, error) {
+	if remaining <= 0 || source.OriginalSize > uint64(remaining) {
+		return nil, fmt.Errorf("verified PCAP sources exceed max_source_bytes")
+	}
+	if source.Compression == "none" {
+		if uint64(len(stored)) != source.OriginalSize {
+			return nil, fmt.Errorf("verified uncompressed PCAP length differs from manifest")
+		}
+		return bytes.Clone(stored), nil
+	}
+	if source.Compression != "zstd" {
+		return nil, fmt.Errorf("verified PCAP compression %q is unsupported", source.Compression)
+	}
+	decoder, err := zstd.NewReader(bytes.NewReader(stored), zstd.WithDecoderMaxMemory(uint64(remaining)))
+	if err != nil {
+		return nil, fmt.Errorf("create bounded verified PCAP decoder: %w", err)
+	}
+	defer decoder.Close()
+	decoded, err := io.ReadAll(io.LimitReader(decoder, remaining+1))
+	if err != nil {
+		return nil, fmt.Errorf("decode verified PCAP source: %w", err)
+	}
+	if int64(len(decoded)) > remaining || uint64(len(decoded)) != source.OriginalSize {
+		return nil, fmt.Errorf("decoded PCAP length differs from manifest authority")
+	}
+	return decoded, nil
+}
+
+// CutPCAPVersioned is the M09 worker path. Unlike the compatibility cutter it
+// accepts only M02 manifest-v2 index rows and hashes the exact MinIO version
+// before parsing. Source errors are fail-closed so no apparently complete PCAP
+// can be published from an incomplete authority set.
+func (c *Cutter) CutPCAPVersioned(
+	ctx context.Context,
+	query *CutQuery,
+	probeIDs []string,
+	limits VerifiedCutLimits,
+	output io.Writer,
+	progressCb ProgressCallback,
+) (*CutResult, error) {
+	startedAt := time.Now()
+	if err := query.Validate(); err != nil {
+		return nil, err
+	}
+	if err := limits.Validate(); err != nil {
+		return nil, err
+	}
+	probes, err := canonicalProbeIDs(probeIDs)
+	if err != nil {
+		return nil, err
+	}
+	probeAuthority := make(map[string]struct{}, len(probes))
+	for _, probeID := range probes {
+		probeAuthority[probeID] = struct{}{}
+	}
+	verifiedIndex := c.verifiedIndex
+	if verifiedIndex == nil {
+		return nil, fmt.Errorf("verified M02 PCAP index reader is unavailable")
+	}
+	verifiedObjects := c.verifiedObjects
+	if verifiedObjects == nil {
+		return nil, fmt.Errorf("verified immutable PCAP object reader is unavailable")
+	}
+
+	sources := make([]index.RestorationSource, 0)
+	seen := make(map[string]struct{})
+	for _, probeID := range probes {
+		remaining := limits.MaxSourceObjects - len(sources)
+		if remaining <= 0 {
+			return nil, fmt.Errorf("verified PCAP source count exceeds max_source_objects")
+		}
+		found, lookupErr := verifiedIndex.LookupVerifiedCutSources(ctx, index.VerifiedCutSourceQuery{
+			TenantID: query.TenantID, ProbeID: probeID, CommunityID: query.CommunityID,
+			StartTime: time.UnixMilli(query.StartTime), EndTime: time.UnixMilli(query.EndTime), Limit: remaining,
+		})
+		if lookupErr != nil {
+			return nil, fmt.Errorf("lookup M02 PCAP authority for probe %s: %w", probeID, lookupErr)
+		}
+		for _, source := range found {
+			if _, duplicate := seen[source.ProjectionIdentity]; duplicate {
+				continue
+			}
+			seen[source.ProjectionIdentity] = struct{}{}
+			sources = append(sources, source)
+		}
+	}
+	if len(sources) == 0 {
+		return nil, fmt.Errorf("no immutable manifest-v2 PCAP cut sources found")
+	}
+	sort.Slice(sources, func(i, j int) bool {
+		if sources[i].TsStart.Equal(sources[j].TsStart) {
+			return sources[i].ProjectionIdentity < sources[j].ProjectionIdentity
+		}
+		return sources[i].TsStart.Before(sources[j].TsStart)
+	})
+
+	pcapWriter := pcapgo.NewWriter(output)
+	if err := pcapWriter.WriteFileHeader(65535, layers.LinkTypeEthernet); err != nil {
+		return nil, fmt.Errorf("write verified PCAP header: %w", err)
+	}
+	filter := BuildBPFFilter(query)
+	maxPackets := query.MaxPackets
+	if maxPackets <= 0 || maxPackets > c.maxPackets {
+		maxPackets = c.maxPackets
+	}
+	result := &CutResult{FileErrors: make([]FileError, 0), SourceReceipts: make([]s3client.ObjectAuthority, 0, len(sources)), PcapIndexIDs: make([]string, 0, len(sources))}
+	var decodedTotal int64
+	var writerMu sync.Mutex
+	for position, source := range sources {
+		if _, authorized := probeAuthority[source.ProbeID]; !authorized {
+			return nil, fmt.Errorf("M02 PCAP source probe authority mismatch")
+		}
+		if err := source.Validate(query.TenantID, source.ProbeID); err != nil {
+			return nil, fmt.Errorf("invalid M02 PCAP source %s: %w", source.ProjectionIdentity, err)
+		}
+		if !source.TsStart.Add(limits.SourceRetention).After(time.Now().UTC()) {
+			return nil, fmt.Errorf("M02 PCAP source %s has expired", source.ProjectionIdentity)
+		}
+		if source.OriginalSize > uint64(limits.MaxSourceBytes) || source.StoredSize > uint64(limits.MaxSourceBytes) ||
+			decodedTotal > limits.MaxSourceBytes-int64(source.OriginalSize) {
+			return nil, fmt.Errorf("verified PCAP sources exceed max_source_bytes")
+		}
+		stored, receipt, readErr := verifiedObjects.ReadVerifiedObject(ctx, source.Bucket, source.FileKey,
+			source.ObjectVersion, source.ETag, source.SHA256, int64(source.StoredSize), limits.MaxSourceBytes)
+		if readErr != nil {
+			return nil, fmt.Errorf("read exact M02 PCAP object %s: %w", source.ProjectionIdentity, readErr)
+		}
+		decoded, decodeErr := decodeVerifiedCutSource(stored, source, limits.MaxSourceBytes-decodedTotal)
+		if decodeErr != nil {
+			return nil, fmt.Errorf("decode M02 PCAP object %s: %w", source.ProjectionIdentity, decodeErr)
+		}
+		decodedTotal += int64(len(decoded))
+		remainingPackets := maxPackets - result.TotalPackets
+		if remainingPackets <= 0 {
+			break
+		}
+		buffered := bufio.NewReaderSize(bytes.NewReader(decoded), c.bufferSize)
+		magic, peekErr := buffered.Peek(4)
+		if peekErr != nil {
+			return nil, fmt.Errorf("read verified PCAP source header: %w", peekErr)
+		}
+		var packets, byteCount int64
+		if isPcapFileMagic(magic) {
+			packets, byteCount, err = c.processPcapFile(ctx, buffered, filter, pcapWriter, &writerMu, remainingPackets)
+		} else {
+			packets, byteCount, err = c.processPcapRecordStream(ctx, buffered, filter, pcapWriter, &writerMu, remainingPackets)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("filter verified PCAP source %s: %w", source.ProjectionIdentity, err)
+		}
+		result.TotalPackets += packets
+		result.TotalBytes += byteCount
+		result.FilesScanned++
+		result.SourceReceipts = append(result.SourceReceipts, receipt)
+		result.PcapIndexIDs = append(result.PcapIndexIDs, source.ProjectionIdentity)
+		if progressCb != nil {
+			progressCb(position+1, len(sources), result.TotalPackets)
+		}
+	}
+	result.Duration = time.Since(startedAt)
+	return result, nil
 }
 
 // CutPCAP 执行 PCAP 裁剪（修复版：使用 errgroup 替代手动信号量）

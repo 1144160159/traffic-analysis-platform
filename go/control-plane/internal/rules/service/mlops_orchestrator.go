@@ -41,6 +41,10 @@ import (
 
 // MLOpsOrchestratorConfig 自编排配置
 type MLOpsOrchestratorConfig struct {
+	// Automatic candidate generation is a write path and remains default-off.
+	// Manual, audited workflow APIs remain available while this switch is off.
+	AutomaticCandidatesEnabled bool `env:"MLOPS_AUTOMATIC_CANDIDATE_V1_ENABLED" envDefault:"false"`
+
 	// 检查间隔
 	CheckInterval time.Duration `env:"MLOPS_CHECK_INTERVAL" envDefault:"1h"`
 
@@ -52,7 +56,14 @@ type MLOpsOrchestratorConfig struct {
 	MaxFPRate float64 `env:"MLOPS_MAX_FP_RATE" envDefault:"0.15"` // FP 率 > 15% 触发重训
 
 	// 漂移阈值
-	MaxPSI float64 `env:"MLOPS_MAX_PSI" envDefault:"0.25"` // PSI > 0.25 触发重训
+	MaxPSI                float64       `env:"MLOPS_MAX_PSI" envDefault:"0.25"` // PSI > 0.25 触发候选训练
+	MaxFeaturePartialRate float64       `env:"MLOPS_MAX_FEATURE_PARTIAL_RATE" envDefault:"0.01"`
+	MinFeatureSamples     int           `env:"MLOPS_MIN_FEATURE_SAMPLES" envDefault:"1000"`
+	MinFeedbackSamples    int           `env:"MLOPS_MIN_FEEDBACK_SAMPLES" envDefault:"100"`
+	DriftBaselineHours    int           `env:"MLOPS_DRIFT_BASELINE_HOURS" envDefault:"168"`
+	DriftCurrentHours     int           `env:"MLOPS_DRIFT_CURRENT_HOURS" envDefault:"24"`
+	MaxFeatureSignalAge   time.Duration `env:"MLOPS_MAX_FEATURE_SIGNAL_AGE" envDefault:"2h"`
+	MaxFeedbackSignalAge  time.Duration `env:"MLOPS_MAX_FEEDBACK_SIGNAL_AGE" envDefault:"48h"`
 
 	// 限制
 	MinRetrainInterval  time.Duration `env:"MLOPS_MIN_RETRAIN_INTERVAL" envDefault:"12h"` // 最小重训间隔
@@ -73,18 +84,26 @@ type MLOpsOrchestratorConfig struct {
 // DefaultMLOpsOrchestratorConfig 默认配置
 func DefaultMLOpsOrchestratorConfig() MLOpsOrchestratorConfig {
 	return MLOpsOrchestratorConfig{
-		CheckInterval:         1 * time.Hour,
-		MinNewFeedbackCount:   500,
-		FeedbackLookbackHours: 24,
-		MaxFPRate:             0.15,
-		MaxPSI:                0.25,
-		MinRetrainInterval:    12 * time.Hour,
-		MaxConcurrentTrains:   1,
-		ArgoNamespace:         "traffic-analysis",
-		ArgoServerURL:         "http://argo-server.argo.svc:2746",
-		WorkflowTemplate:      "mlops-training-template",
-		AutomatedTenantID:     "default",
-		AutomatedModelName:    "behavior-classifier",
+		AutomaticCandidatesEnabled: false,
+		CheckInterval:              1 * time.Hour,
+		MinNewFeedbackCount:        500,
+		FeedbackLookbackHours:      24,
+		MaxFPRate:                  0.15,
+		MaxPSI:                     0.25,
+		MaxFeaturePartialRate:      0.01,
+		MinFeatureSamples:          1000,
+		MinFeedbackSamples:         100,
+		DriftBaselineHours:         168,
+		DriftCurrentHours:          24,
+		MaxFeatureSignalAge:        2 * time.Hour,
+		MaxFeedbackSignalAge:       48 * time.Hour,
+		MinRetrainInterval:         12 * time.Hour,
+		MaxConcurrentTrains:        1,
+		ArgoNamespace:              "traffic-analysis",
+		ArgoServerURL:              "http://argo-server.argo.svc:2746",
+		WorkflowTemplate:           "mlops-training-template",
+		AutomatedTenantID:          "default",
+		AutomatedModelName:         "behavior-classifier",
 	}
 }
 
@@ -155,6 +174,14 @@ func NewMLOpsOrchestrator(chDB, pgDB *sql.DB, config MLOpsOrchestratorConfig, lo
 
 // Start 启动自编排引擎
 func (o *MLOpsOrchestrator) Start(ctx context.Context) {
+	if !o.config.AutomaticCandidatesEnabled {
+		o.logger.Info("MLOps automatic candidate scheduler is disabled")
+		select {
+		case <-o.stopCh:
+		case <-ctx.Done():
+		}
+		return
+	}
 	o.logger.Info("MLOps orchestrator started",
 		zap.Duration("check_interval", o.config.CheckInterval),
 		zap.Int("min_feedback", o.config.MinNewFeedbackCount),
@@ -203,11 +230,17 @@ type RetrainDecision struct {
 	TenantID      string                 `json:"tenant_id"`
 	ModelID       string                 `json:"model_id"`
 	FeatureSetID  string                 `json:"feature_set_id"`
+	ModelVersion  string                 `json:"model_version,omitempty"`
+	Disposition   string                 `json:"disposition,omitempty"`
+	EvaluationID  string                 `json:"evaluation_id,omitempty"`
+	SignalSHA256  string                 `json:"signal_sha256,omitempty"`
+	PolicySHA256  string                 `json:"policy_sha256,omitempty"`
 }
 
 type automatedMLOpsScope struct {
 	TenantID     string
 	ModelID      string
+	ModelVersion string
 	FeatureSetID string
 }
 
@@ -234,9 +267,27 @@ func (o *MLOpsOrchestrator) checkAndMaybeTrigger(ctx context.Context) {
 		o.logger.Warn("Automatic MLOps scope is unavailable; skipping", zap.Error(err))
 		return
 	}
+	decision, candidate, err := o.evaluateAndRecordGovernedDriftCandidate(ctx, scope)
+	if err != nil {
+		o.logger.Warn("Governed drift evaluation failed closed", zap.Error(err))
+		return
+	}
+	if decision.Disposition != "CANDIDATE" {
+		o.logger.Info("Governed drift evaluation did not request a candidate",
+			zap.String("disposition", decision.Disposition), zap.Any("metrics", decision.Metrics))
+		return
+	}
+	if candidate == nil {
+		o.logger.Error("Candidate decision is missing its durable request")
+		return
+	}
+	if candidate.State == driftCandidateWorkflowSubmitted {
+		o.logger.Debug("Drift candidate workflow is already submitted", zap.String("workflow_name", candidate.WorkflowName))
+		return
+	}
 	running, err := o.reconcileRunningWorkflows(ctx, scope.TenantID)
 	if err != nil {
-		o.logger.Warn("Cannot reconcile running MLOps workflows; skipping automatic mutation", zap.Error(err))
+		o.logger.Warn("Cannot reconcile running MLOps workflows; candidate remains pending", zap.Error(err))
 		return
 	}
 	o.mu.Lock()
@@ -254,20 +305,32 @@ func (o *MLOpsOrchestrator) checkAndMaybeTrigger(ctx context.Context) {
 		return
 	}
 
-	decision := o.evaluateConditionsForScope(ctx, scope)
-	if !decision.ShouldRetrain {
-		o.logger.Debug("Retrain conditions not met",
-			zap.Any("decision", decision))
-		return
-	}
-
-	o.logger.Info("Retrain conditions met — submitting workflow",
+	o.logger.Info("Governed drift candidate ready — submitting candidate-only workflow",
 		zap.String("trigger", string(decision.Trigger)),
 		zap.String("reason", decision.Reason),
 		zap.Any("metrics", decision.Metrics))
 
-	if err := o.submitAutomatedRetrain(ctx, decision); err != nil {
+	if workflow, getErr := o.GetWorkflow(ctx, candidate.WorkflowName); getErr == nil {
+		if identityErr := o.verifyCandidateWorkflowIdentity(workflow, decision); identityErr != nil {
+			o.logger.Error("Existing candidate workflow identity mismatch", zap.Error(identityErr), zap.String("workflow_name", candidate.WorkflowName))
+			return
+		}
+		if err := o.markDriftCandidateWorkflow(ctx, candidate.CandidateID, driftCandidateWorkflowSubmitted, ""); err != nil {
+			o.logger.Error("Existing candidate workflow could not be reconciled", zap.Error(err), zap.String("workflow_name", candidate.WorkflowName))
+		}
+		return
+	} else if !errors.IsCode(getErr, errors.ErrCodeResourceNotFound) {
+		o.logger.Warn("Candidate workflow existence is unknown; candidate remains pending", zap.Error(getErr), zap.String("workflow_name", candidate.WorkflowName))
+		return
+	}
+
+	if err := o.submitAutomatedRetrainNamed(ctx, decision, candidate.WorkflowName); err != nil {
+		_ = o.markDriftCandidateWorkflow(ctx, candidate.CandidateID, driftCandidateWorkflowFailed, err.Error())
 		o.logger.Error("Failed to submit Argo workflow", zap.Error(err))
+		return
+	}
+	if err := o.markDriftCandidateWorkflow(ctx, candidate.CandidateID, driftCandidateWorkflowSubmitted, ""); err != nil {
+		o.logger.Error("Candidate workflow submitted but durable state update failed", zap.Error(err), zap.String("workflow_name", candidate.WorkflowName))
 		return
 	}
 
@@ -318,28 +381,11 @@ func (o *MLOpsOrchestrator) evaluateConditions(ctx context.Context) *RetrainDeci
 }
 
 func (o *MLOpsOrchestrator) evaluateConditionsForScope(ctx context.Context, scope *automatedMLOpsScope) *RetrainDecision {
-	// 按优先级评估：反馈 > FP率 > 漂移
-
-	// 1. 检查反馈数据积累
-	if decision := o.checkFeedbackAccumulation(ctx, scope); decision != nil {
-		return decision
+	decision, _, err := o.evaluateGovernedDriftCandidate(ctx, scope)
+	if err != nil {
+		return &RetrainDecision{ShouldRetrain: false, Disposition: "BLOCKED", Metrics: map[string]interface{}{"evaluation_error": err.Error(), "checked_at": time.Now().UTC().Format(time.RFC3339)}}
 	}
-
-	// 2. 检查 FP 率
-	if decision := o.checkFPRate(ctx, scope); decision != nil {
-		return decision
-	}
-
-	// 3. 检查数据漂移
-	if decision := o.checkDataDrift(ctx, scope); decision != nil {
-		return decision
-	}
-
-	// 条件不满足
-	return &RetrainDecision{
-		ShouldRetrain: false,
-		Metrics:       map[string]interface{}{"checked_at": time.Now().UTC().Format(time.RFC3339)},
-	}
+	return decision
 }
 
 func (o *MLOpsOrchestrator) resolveAutomatedScope(ctx context.Context) (*automatedMLOpsScope, error) {
@@ -349,23 +395,24 @@ func (o *MLOpsOrchestrator) resolveAutomatedScope(ctx context.Context) (*automat
 		return nil, errors.New(errors.ErrCodeDatabaseError, "automatic MLOps tenant, model and PostgreSQL context are required")
 	}
 	const query = `
-		SELECT m.model_id::text,
-		       COALESCE((
-		         SELECT mv.feature_set_id
-		         FROM model_versions mv
-		         WHERE mv.model_id = m.model_id AND mv.tenant_id = m.tenant_id
-		         ORDER BY (mv.status = 'active') DESC, mv.updated_at DESC
-		         LIMIT 1
-		       ), 'v1')
+		SELECT m.model_id::text, mv.model_version, mv.feature_set_id
 		FROM models m
+		JOIN LATERAL (
+		  SELECT candidate.model_version, candidate.feature_set_id
+		  FROM model_versions candidate
+		  WHERE candidate.model_id = m.model_id AND candidate.tenant_id = m.tenant_id
+		    AND candidate.status = 'active'
+		  ORDER BY candidate.updated_at DESC, candidate.model_version DESC
+		  LIMIT 1
+		) mv ON true
 		WHERE m.tenant_id = $1 AND m.name = $2
 		LIMIT 1
 	`
 	scope := &automatedMLOpsScope{TenantID: tenantID}
-	if err := o.pgDB.QueryRowContext(ctx, query, tenantID, modelName).Scan(&scope.ModelID, &scope.FeatureSetID); err != nil {
+	if err := o.pgDB.QueryRowContext(ctx, query, tenantID, modelName).Scan(&scope.ModelID, &scope.ModelVersion, &scope.FeatureSetID); err != nil {
 		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to resolve automatic MLOps model scope")
 	}
-	if strings.TrimSpace(scope.ModelID) == "" || strings.TrimSpace(scope.FeatureSetID) == "" {
+	if strings.TrimSpace(scope.ModelID) == "" || strings.TrimSpace(scope.ModelVersion) == "" || strings.TrimSpace(scope.FeatureSetID) == "" {
 		return nil, errors.New(errors.ErrCodeDatabaseError, "automatic MLOps model scope is incomplete")
 	}
 	return scope, nil
@@ -466,64 +513,14 @@ func (o *MLOpsOrchestrator) checkFPRate(ctx context.Context, scope *automatedMLO
 
 // checkDataDrift 检查数据漂移（基于特征分布 PSI）
 func (o *MLOpsOrchestrator) checkDataDrift(ctx context.Context, scope *automatedMLOpsScope) *RetrainDecision {
-	if o.chDB == nil {
+	decision, _, err := o.evaluateGovernedDriftCandidate(ctx, scope)
+	if err != nil || !decision.ShouldRetrain {
+		if err != nil {
+			o.logger.Debug("Governed drift check failed closed", zap.Error(err))
+		}
 		return nil
 	}
-
-	// 从 ClickHouse 获取最近的特征统计
-	query := `
-		SELECT
-			avg(pps) AS avg_pps,
-			avg(bps) AS avg_bps,
-			avg(pktlen_mean) AS avg_pktlen,
-			avg(iat_mean_ms) AS avg_iat,
-			quantile(0.5)(pps) AS p50_pps,
-			quantile(0.5)(bps) AS p50_bps,
-			count() AS sample_count
-		FROM traffic.feature_stat
-		WHERE ts >= now() - INTERVAL 24 HOUR
-		  AND tenant_id = ?
-	`
-
-	type driftStats struct {
-		AvgPPS, AvgBPS, AvgPktLen, AvgIAT float64
-		P50PPS, P50BPS                    float64
-		SampleCount                       uint64
-	}
-	var recent driftStats
-
-	err := o.chDB.QueryRowContext(ctx, query, scope.TenantID).Scan(
-		&recent.AvgPPS, &recent.AvgBPS, &recent.AvgPktLen, &recent.AvgIAT,
-		&recent.P50PPS, &recent.P50BPS, &recent.SampleCount,
-	)
-	if err != nil {
-		o.logger.Debug("Failed to query feature stats for drift check", zap.Error(err))
-		return nil
-	}
-
-	// 样本量不足，跳过
-	if recent.SampleCount < 1000 {
-		return nil
-	}
-
-	// 与基线比较（从活跃模型版本获取基线）
-	baselineQuery := `
-		SELECT metrics
-		FROM model_versions
-		WHERE status = 'active' AND tenant_id = $1 AND model_id = $2::uuid
-		ORDER BY created_at DESC
-		LIMIT 1
-	`
-	var metricsJSON []byte
-	if err := o.pgDB.QueryRowContext(ctx, baselineQuery, scope.TenantID, scope.ModelID).Scan(&metricsJSON); err != nil {
-		o.logger.Debug("No active model version for baseline comparison", zap.Error(err))
-		return nil
-	}
-
-	o.logger.Debug("Drift check completed",
-		zap.Uint64("recent_samples", recent.SampleCount),
-		zap.Float64("avg_pps", recent.AvgPPS))
-	return nil // 漂移检测需要更多基线数据，当前跳过
+	return decision
 }
 
 // =============================================================================
@@ -593,17 +590,25 @@ func (o *MLOpsOrchestrator) reconcilePendingAutomatedAudits(ctx context.Context)
 }
 
 func (o *MLOpsOrchestrator) submitAutomatedRetrain(ctx context.Context, decision *RetrainDecision) error {
+	return o.submitAutomatedRetrainNamed(ctx, decision, newAutomatedMLOpsWorkflowName(decision.Trigger))
+}
+
+func (o *MLOpsOrchestrator) submitAutomatedRetrainNamed(ctx context.Context, decision *RetrainDecision, workflowName string) error {
 	if o.auditService == nil {
 		return errors.New(errors.ErrCodeDatabaseError, "automatic MLOps audit service is required")
 	}
 	if decision == nil || strings.TrimSpace(decision.TenantID) == "" || strings.TrimSpace(decision.ModelID) == "" || strings.TrimSpace(decision.FeatureSetID) == "" {
 		return errors.New(errors.ErrCodeInvalidParameter, "automatic MLOps tenant, model and feature-set identities are required")
 	}
-	workflowName := newAutomatedMLOpsWorkflowName(decision.Trigger)
+	if strings.TrimSpace(workflowName) == "" {
+		return errors.New(errors.ErrCodeInvalidParameter, "automatic MLOps workflow identity is required")
+	}
 	opCtx := &OperationContext{TenantID: decision.TenantID, Username: "mlops-auto-orchestrator", Authenticated: true}
 	intentEventID, err := o.auditService.RecordMLOpsWorkflowAuditIntent(ctx, opCtx, "MLOPS_AUTOMATED_RETRAIN_SUBMIT_REQUESTED", workflowName, map[string]interface{}{
 		"trigger": decision.Trigger, "reason": decision.Reason, "tenant_id": opCtx.TenantID,
-		"model_id": decision.ModelID, "feature_set_id": decision.FeatureSetID,
+		"model_id": decision.ModelID, "model_version": decision.ModelVersion, "feature_set_id": decision.FeatureSetID,
+		"evaluation_id": decision.EvaluationID, "signal_sha256": decision.SignalSHA256, "policy_sha256": decision.PolicySHA256,
+		"candidate_only": true, "activation_authorized": false,
 		"expected_completion_action": "MLOPS_AUTOMATED_RETRAIN_SUBMITTED", "reconciliation_state": "pending",
 	})
 	if err != nil {
@@ -615,7 +620,9 @@ func (o *MLOpsOrchestrator) submitAutomatedRetrain(ctx context.Context, decision
 	}
 	if err := o.auditService.RecordAutomatedMLOpsAuditCompletion(ctx, opCtx, "MLOPS_AUTOMATED_RETRAIN_SUBMITTED", workflowName, intentEventID, map[string]interface{}{
 		"trigger": decision.Trigger, "reason": decision.Reason, "tenant_id": opCtx.TenantID,
-		"model_id": decision.ModelID, "feature_set_id": decision.FeatureSetID, "intent_event_id": intentEventID,
+		"model_id": decision.ModelID, "model_version": decision.ModelVersion, "feature_set_id": decision.FeatureSetID, "intent_event_id": intentEventID,
+		"evaluation_id": decision.EvaluationID, "signal_sha256": decision.SignalSHA256, "policy_sha256": decision.PolicySHA256,
+		"candidate_only": true, "activation_authorized": false,
 	}); err != nil {
 		// The requested event is durable and the exact Argo identity is known;
 		// log for reconciliation without treating a successful submit as retryable.
@@ -653,6 +660,12 @@ func (o *MLOpsOrchestrator) submitArgoWorkflow(ctx context.Context, decision *Re
 				fmt.Sprintf("tenant-id=%s", decision.TenantID),
 				fmt.Sprintf("model-id=%s", decision.ModelID),
 				fmt.Sprintf("feature-set-id=%s", decision.FeatureSetID),
+				fmt.Sprintf("baseline-model-version=%s", decision.ModelVersion),
+				fmt.Sprintf("drift-evaluation-id=%s", decision.EvaluationID),
+				fmt.Sprintf("drift-signal-sha256=%s", decision.SignalSHA256),
+				fmt.Sprintf("drift-policy-sha256=%s", decision.PolicySHA256),
+				"candidate-only=true",
+				"auto-activate=false",
 			},
 			"labels": fmt.Sprintf("mlops-trigger=%s", triggerLabel),
 		},
@@ -684,6 +697,13 @@ func (o *MLOpsOrchestrator) submitArgoWorkflow(ctx context.Context, decision *Re
 
 	respBody, _ := io.ReadAll(resp.Body)
 
+	if resp.StatusCode == http.StatusConflict && decision.Disposition == "CANDIDATE" {
+		workflow, getErr := o.GetWorkflow(ctx, workflowName)
+		if getErr != nil {
+			return errors.Wrap(getErr, errors.ErrCodeServiceUnavailable, "candidate workflow conflict could not be reconciled")
+		}
+		return o.verifyCandidateWorkflowIdentity(workflow, decision)
+	}
 	if resp.StatusCode >= 300 {
 		return errors.Newf(errors.ErrCodeServiceUnavailable,
 			"argo API returned %d: %s", resp.StatusCode, string(respBody))
@@ -712,6 +732,29 @@ func (o *MLOpsOrchestrator) submitArgoWorkflow(ctx context.Context, decision *Re
 		zap.String("trigger", string(decision.Trigger)),
 		zap.Int("status_code", resp.StatusCode))
 
+	return nil
+}
+
+func (o *MLOpsOrchestrator) verifyCandidateWorkflowIdentity(workflow *MLOpsWorkflow, decision *RetrainDecision) error {
+	if workflow == nil || decision == nil || workflow.WorkflowTemplate != o.config.WorkflowTemplate {
+		return errors.New(errors.ErrCodeVersionConflict, "existing candidate workflow template identity mismatch")
+	}
+	candidateID := uuid.NewSHA1(driftEvaluationNamespace, []byte("candidate:"+decision.EvaluationID)).String()
+	expectedWorkflowName := "mlops-drift-" + strings.ReplaceAll(candidateID, "-", "")[:20]
+	if workflow.Name != expectedWorkflowName {
+		return errors.New(errors.ErrCodeVersionConflict, "existing candidate workflow name identity mismatch")
+	}
+	expected := map[string]string{
+		"tenant-id": decision.TenantID, "model-id": decision.ModelID,
+		"feature-set-id": decision.FeatureSetID, "baseline-model-version": decision.ModelVersion,
+		"drift-evaluation-id": decision.EvaluationID, "drift-signal-sha256": decision.SignalSHA256,
+		"drift-policy-sha256": decision.PolicySHA256, "candidate-only": "true", "auto-activate": "false",
+	}
+	for key, value := range expected {
+		if workflow.Parameters[key] != value {
+			return errors.Newf(errors.ErrCodeVersionConflict, "existing candidate workflow parameter %s mismatch", key)
+		}
+	}
 	return nil
 }
 
@@ -1086,16 +1129,18 @@ func (o *MLOpsOrchestrator) GetStatus() map[string]interface{} {
 	defer o.mu.Unlock()
 
 	return map[string]interface{}{
-		"last_retrain_time":    o.lastRetrainTime.Format(time.RFC3339),
-		"running_workflows":    o.runningWorkflows,
-		"stopped":              o.stopped,
-		"max_concurrent":       o.config.MaxConcurrentTrains,
-		"min_retrain_interval": o.config.MinRetrainInterval.String(),
-		"check_interval":       o.config.CheckInterval.String(),
-		"min_feedback_count":   o.config.MinNewFeedbackCount,
-		"max_fp_rate":          o.config.MaxFPRate,
-		"clickhouse_connected": o.chDB != nil,
-		"argo_namespace":       o.config.ArgoNamespace,
-		"workflow_template":    o.config.WorkflowTemplate,
+		"last_retrain_time":            o.lastRetrainTime.Format(time.RFC3339),
+		"running_workflows":            o.runningWorkflows,
+		"stopped":                      o.stopped,
+		"max_concurrent":               o.config.MaxConcurrentTrains,
+		"min_retrain_interval":         o.config.MinRetrainInterval.String(),
+		"check_interval":               o.config.CheckInterval.String(),
+		"min_feedback_count":           o.config.MinNewFeedbackCount,
+		"max_fp_rate":                  o.config.MaxFPRate,
+		"clickhouse_connected":         o.chDB != nil,
+		"argo_namespace":               o.config.ArgoNamespace,
+		"workflow_template":            o.config.WorkflowTemplate,
+		"automatic_candidates_enabled": o.config.AutomaticCandidatesEnabled,
+		"activation_authorized":        false,
 	}
 }

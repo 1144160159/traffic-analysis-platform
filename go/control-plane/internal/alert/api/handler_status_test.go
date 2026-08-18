@@ -18,7 +18,7 @@ func TestUpdateStatusRequiresReasonBeforeServiceCall(t *testing.T) {
 	handler := NewHandler(nil, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/alerts/AL-1/status", bytes.NewBufferString(`{"status":"assigned"}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-a")
+	req = withTenant(req, "tenant-a")
 	req = withPermissions(req, model.ScopeAlertWrite)
 	req = mux.SetURLVars(req, map[string]string{"id": "AL-1"})
 	rr := httptest.NewRecorder()
@@ -37,7 +37,7 @@ func TestBatchUpdateStatusRequiresReasonBeforeServiceCall(t *testing.T) {
 	handler := NewHandler(nil, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/alerts/batch/status", bytes.NewBufferString(`{"alert_ids":["AL-1"],"status":"closed"}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-a")
+	req = withTenant(req, "tenant-a")
 	req = withPermissions(req, model.ScopeAlertWrite)
 	rr := httptest.NewRecorder()
 
@@ -55,7 +55,7 @@ func TestCloseAlertRequiresReasonBeforeServiceCall(t *testing.T) {
 	handler := NewHandler(nil, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/AL-1/close", bytes.NewBufferString(`{}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-a")
+	req = withTenant(req, "tenant-a")
 	req = withPermissions(req, model.ScopeAlertWrite)
 	req = mux.SetURLVars(req, map[string]string{"id": "AL-1"})
 	rr := httptest.NewRecorder()
@@ -74,7 +74,7 @@ func TestUpdateStatusRejectsViewerWithoutAlertWritePermission(t *testing.T) {
 	handler := NewHandler(nil, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/alerts/AL-1/status", bytes.NewBufferString(`{"status":"assigned","reason":"triage owner set"}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-a")
+	req = withTenant(req, "tenant-a")
 	req = withPermissions(req, model.ScopeAlertRead)
 	req = mux.SetURLVars(req, map[string]string{"id": "AL-1"})
 	rr := httptest.NewRecorder()
@@ -93,7 +93,7 @@ func TestAssignAlertRejectsViewerWithoutAlertWritePermission(t *testing.T) {
 	handler := NewHandler(nil, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/alerts/AL-1/assign", bytes.NewBufferString(`{"assignee":"sec_analyst"}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-a")
+	req = withTenant(req, "tenant-a")
 	req = withPermissions(req, model.ScopeAlertRead)
 	req = mux.SetURLVars(req, map[string]string{"id": "AL-1"})
 	rr := httptest.NewRecorder()
@@ -112,7 +112,7 @@ func TestCloseAlertRejectsViewerWithoutAlertWritePermission(t *testing.T) {
 	handler := NewHandler(nil, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/AL-1/close", bytes.NewBufferString(`{"reason":"analysis complete"}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-a")
+	req = withTenant(req, "tenant-a")
 	req = withPermissions(req, model.ScopeAlertRead)
 	req = mux.SetURLVars(req, map[string]string{"id": "AL-1"})
 	rr := httptest.NewRecorder()
@@ -131,7 +131,7 @@ func TestReopenAlertRejectsViewerWithoutAlertWritePermission(t *testing.T) {
 	handler := NewHandler(nil, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/AL-1/reopen", nil)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-a")
+	req = withTenant(req, "tenant-a")
 	req = withPermissions(req, model.ScopeAlertRead)
 	req = mux.SetURLVars(req, map[string]string{"id": "AL-1"})
 	rr := httptest.NewRecorder()
@@ -150,7 +150,7 @@ func TestBatchUpdateStatusRejectsViewerWithoutAlertWritePermission(t *testing.T)
 	handler := NewHandler(nil, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/alerts/batch/status", bytes.NewBufferString(`{"alert_ids":["AL-1"],"status":"closed","reason":"bulk closure approved"}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-a")
+	req = withTenant(req, "tenant-a")
 	req = withPermissions(req, model.ScopeAlertRead)
 	rr := httptest.NewRecorder()
 
@@ -225,7 +225,7 @@ func TestBatchUpdateStatusRejectsZeroItemVersionBeforeServiceCall(t *testing.T) 
 	handler := NewHandler(nil, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/alerts/batch/status", bytes.NewBufferString(`{"items":[{"alert_id":"AL-1","state_version":0}],"status":"closed","reason":"bulk closure approved"}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", "tenant-a")
+	req = withTenant(req, "tenant-a")
 	req = withPermissions(req, model.ScopeAlertWrite)
 	rr := httptest.NewRecorder()
 
@@ -253,5 +253,16 @@ func TestAlertWritePermissionAcceptsWildcards(t *testing.T) {
 
 func withPermissions(req *http.Request, permissions ...string) *http.Request {
 	ctx := context.WithValue(req.Context(), httpx.ContextKeyPermissions, permissions)
+	return req.WithContext(ctx)
+}
+
+// withTenant 在请求上下文中设置已验证的租户身份（与中间件行为一致）。
+func withTenant(req *http.Request, tenantID string) *http.Request {
+	ctx := context.WithValue(req.Context(), httpx.ContextKeyTenantID, tenantID)
+	return req.WithContext(ctx)
+}
+// withUser 在请求上下文中设置已验证的用户身份（与中间件行为一致）。
+func withUser(req *http.Request, userID string) *http.Request {
+	ctx := context.WithValue(req.Context(), httpx.ContextKeyUserID, userID)
 	return req.WithContext(ctx)
 }

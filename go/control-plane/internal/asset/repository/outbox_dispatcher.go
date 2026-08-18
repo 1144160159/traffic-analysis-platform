@@ -22,6 +22,7 @@ type OutboxDispatcherConfig struct {
 	MaxAttempts int
 	BatchSize   int
 	Interval    time.Duration
+	TenantID    string
 	Logger      *zap.Logger
 }
 
@@ -137,8 +138,9 @@ func (d *AssetOutboxDispatcher) DispatchNext(ctx context.Context) (bool, error) 
 		WITH candidate AS (
 		  SELECT outbox_id
 		  FROM asset_event_outbox
-		  WHERE (status='pending' AND available_at<=now())
-		     OR (status='processing' AND locked_until<now())
+		  WHERE ($3='' OR tenant_id=$3)
+		    AND ((status='pending' AND available_at<=now())
+		      OR (status='processing' AND locked_until<now()))
 		  ORDER BY available_at,outbox_id
 		  FOR UPDATE SKIP LOCKED
 		  LIMIT 1
@@ -154,7 +156,7 @@ func (d *AssetOutboxDispatcher) DispatchNext(ctx context.Context) (bool, error) 
 		          outbox.asset_id::text,outbox.aggregate_version,outbox.schema_version,
 		          outbox.partition_key,outbox.event_type,outbox.payload::text,
 		          outbox.attempt_count`,
-		d.cfg.WorkerID, leaseSeconds,
+		d.cfg.WorkerID, leaseSeconds, d.cfg.TenantID,
 	).Scan(
 		&outboxID, &eventID, &tenantID, &assetID, &aggregateVersion,
 		&schemaVersion, &partitionKey, &eventType, &payload, &attemptCount,

@@ -29,6 +29,12 @@ type testClaims struct {
 	permissions []string
 }
 
+type encryptedTrafficStatsServiceFunc func(context.Context, encryptedTrafficStatsQuery) (encryptedTrafficStatsDTO, error)
+
+func (fn encryptedTrafficStatsServiceFunc) Load(ctx context.Context, query encryptedTrafficStatsQuery) (encryptedTrafficStatsDTO, error) {
+	return fn(ctx, query)
+}
+
 func (c testClaims) GetUserID() string        { return c.userID }
 func (c testClaims) GetTenantID() string      { return c.tenantID }
 func (c testClaims) GetUsername() string      { return c.username }
@@ -482,6 +488,64 @@ func TestEncryptedTrafficEgressActionRequiresAlertWritePermission(t *testing.T) 
 	}
 }
 
+func TestGetEncryptedTrafficStatsCharacterizesHandlerServiceBoundary(t *testing.T) {
+	handler := NewSystemHandler(nil, nil, nil)
+	var captured encryptedTrafficStatsQuery
+	handler.encryptedTrafficStats = encryptedTrafficStatsServiceFunc(func(_ context.Context, query encryptedTrafficStatsQuery) (encryptedTrafficStatsDTO, error) {
+		captured = query
+		return encryptedTrafficStatsDTO{
+			TotalSessions:       8,
+			ObservedSessions:    10,
+			EncryptedRatio:      0.8,
+			TLSSessions:         5,
+			QUICSessions:        2,
+			JA3Fingerprints:     4,
+			MaliciousJA3Matches: 1,
+		}, nil
+	})
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/encrypted-traffic/stats?tenant_id=untrusted&start_time=1700000000000&end_time=1700003600000", nil)
+	req = requestWithClaims(req, testClaims{tenantID: "tenant-a"})
+	recorder := httptest.NewRecorder()
+
+	handler.GetEncryptedTrafficStats(recorder, req)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d body %s", recorder.Code, recorder.Body.String())
+	}
+	if captured != (encryptedTrafficStatsQuery{TenantID: "tenant-a", StartMilli: 1700000000000, EndMilli: 1700003600000}) {
+		t.Fatalf("unexpected service query: %+v", captured)
+	}
+	var response struct {
+		Success bool                     `json:"success"`
+		Data    encryptedTrafficStatsDTO `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if !response.Success || response.Data.TotalSessions != 8 || response.Data.ObservedSessions != 10 || response.Data.EncryptedRatio != 0.8 || response.Data.JA3Fingerprints != 4 || response.Data.MaliciousJA3Matches != 1 {
+		t.Fatalf("unexpected response: %+v body %s", response, recorder.Body.String())
+	}
+}
+
+func TestGetEncryptedTrafficStatsPreservesInternalErrorEnvelope(t *testing.T) {
+	handler := NewSystemHandler(nil, nil, nil)
+	handler.encryptedTrafficStats = encryptedTrafficStatsServiceFunc(func(context.Context, encryptedTrafficStatsQuery) (encryptedTrafficStatsDTO, error) {
+		return encryptedTrafficStatsDTO{}, fmt.Errorf("stats read failed")
+	})
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/encrypted-traffic/stats?start=1700000000000&end=1700003600000", nil)
+	req = requestWithClaims(req, testClaims{tenantID: "tenant-a"})
+	recorder := httptest.NewRecorder()
+
+	handler.GetEncryptedTrafficStats(recorder, req)
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status 500, got %d body %s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"code":"INTERNAL"`) || !strings.Contains(recorder.Body.String(), "stats read failed") {
+		t.Fatalf("unexpected error envelope: %s", recorder.Body.String())
+	}
+}
+
 func TestEncryptedTrafficEgressActionAdminReachesPostgresGate(t *testing.T) {
 	handler := NewSystemHandler(nil, nil, nil)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/encrypted-traffic/egress-actions", strings.NewReader(`{"action":"create_alert","target":"203.0.113.45","data_mode":"simulated"}`))
@@ -620,6 +684,78 @@ func TestFusionRuleCanonicalEnums(t *testing.T) {
 	}
 	if validFusionRuleStrategy("client-forged") {
 		t.Fatal("unexpected acceptance of forged fusion rule strategy")
+	}
+}
+
+func TestVersionedFusionResolutionRequiresReasonBeforeDatabaseMutation(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	handler := NewSystemHandler(nil, db, nil)
+	handler.SetFusionV1FeatureFlag(true)
+	body := `{"selected_source":"CMDB","selected_value":"srv-12","strategy":"authoritative-source","expected_state_version":1}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/fusion/conflicts/conflict-1/resolve", strings.NewReader(body))
+	req = mux.SetURLVars(requestWithClaims(req, adminClaims()), map[string]string{"id": "conflict-1"})
+	recorder := httptest.NewRecorder()
+	handler.ResolveFusionConflict(recorder, req)
+	if recorder.Code != http.StatusBadRequest || !strings.Contains(recorder.Body.String(), "note is required") {
+		t.Fatalf("expected missing versioned resolution reason to fail before mutation, got %d %s", recorder.Code, recorder.Body.String())
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAppendFusionResolutionV1AppendsHistoryAndPendingOutbox(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	mock.ExpectBegin()
+	tx, err := db.BeginTx(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	previousID := "00000000-0000-0000-0000-000000000101"
+	resolutionID := "00000000-0000-0000-0000-000000000102"
+	eventID := "00000000-0000-0000-0000-000000000103"
+	mock.ExpectQuery(`SELECT resolution_id::text,resolution_version`).
+		WithArgs("tenant-a", "conflict-a").
+		WillReturnRows(sqlmock.NewRows([]string{"resolution_id", "resolution_version"}).AddRow(previousID, int64(4)))
+	mock.ExpectQuery(`INSERT INTO fusion_resolution_history`).
+		WithArgs(
+			"tenant-a", "conflict-a", int64(5), int64(8), "applied", "CMDB", "srv-12",
+			"authoritative-source", "approved source priority", previousID, sqlmock.AnyArg(),
+			"00000000-0000-0000-0000-000000000002", "trace-a",
+		).
+		WillReturnRows(sqlmock.NewRows([]string{"resolution_id"}).AddRow(resolutionID))
+	mock.ExpectQuery(`INSERT INTO fusion_projection_outbox`).
+		WithArgs("tenant-a", resolutionID, int64(5), "tenant-a:conflict-a", sqlmock.AnyArg(), sqlmock.AnyArg(), "trace-a").
+		WillReturnRows(sqlmock.NewRows([]string{"event_id"}).AddRow(eventID))
+	mock.ExpectRollback()
+	dto := fusionConflictResolutionDTO{
+		TenantID: "tenant-a", ConflictID: "conflict-a", ObjectID: "asset-a", ObjectType: "asset",
+		FieldName: "hostname", SelectedSource: "CMDB", SelectedValue: "srv-12", Strategy: "authoritative-source",
+		Note: "approved source priority", RuleID: "rule-a", StateVersion: 8,
+		ResolvedBy: "00000000-0000-0000-0000-000000000002", Detail: map[string]interface{}{"source": "test"},
+	}
+	gotResolutionID, gotVersion, gotEventID, err := appendFusionResolutionV1(
+		context.Background(), tx, dto, []map[string]interface{}{{"source": "CMDB", "value": "srv-12"}}, "trace-a",
+	)
+	if err != nil {
+		t.Fatalf("appendFusionResolutionV1: %v", err)
+	}
+	if gotResolutionID != resolutionID || gotVersion != 5 || gotEventID != eventID {
+		t.Fatalf("unexpected versioned receipt: resolution=%s version=%d event=%s", gotResolutionID, gotVersion, gotEventID)
+	}
+	if err := tx.Rollback(); err != nil {
+		t.Fatal(err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
 	}
 }
 

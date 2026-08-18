@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/attackchain"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/baseline"
 	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
@@ -37,37 +39,84 @@ type campaignTransactionalAudit interface {
 	recordWithExecutor(context.Context, auditSQLExecutor, *http.Request, AlertActionAuditRecord) error
 }
 
+type probeOperationPublisher interface {
+	Send(context.Context, string, []byte, ...commonkafka.MessageHeader) (commonkafka.BrokerReceipt, error)
+}
+
+type fusionProjectionReadinessGate interface {
+	AssertReadyTx(context.Context, *sql.Tx, string) error
+}
+
+type fusionCommandPublisher interface {
+	Send(context.Context, string, []byte, ...commonkafka.MessageHeader) (commonkafka.BrokerReceipt, error)
+}
+
+type attackChainSnapshotStore interface {
+	LoadCurrent(context.Context, string, string) (attackchain.Snapshot, error)
+	ListCurrent(context.Context, string, int, int) ([]attackchain.Snapshot, int, error)
+}
+
+type probeOperationPublishFunc func(
+	context.Context,
+	string,
+	[]byte,
+	...commonkafka.MessageHeader,
+) (commonkafka.BrokerReceipt, error)
+
 type SystemHandler struct {
-	chClient              *storage.ClickHouseClient
-	pgDB                  *sql.DB
-	actionAudit           actionAuditRecorder
-	campaignJobs          campaignActionJobStore
-	commitCampaignAction  func(context.Context, *http.Request, campaignActionJob, AlertActionAuditRecord) error
-	lookupCampaign        func(context.Context, string, string) (campaignDTO, error)
-	campaignAuditWriter   campaignTransactionalAudit
-	campaignAggregateV2   bool
-	topicSnapshotV1       bool
-	topicExecutorV2       bool
-	topicActionPublish    func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
-	campaignEventPublish  func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
-	campaignMemberPublish func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
-	campaignReportObjects AlertReportObjectStore
-	campaignSOARExecutor  CampaignSOARExecutor
-	probeOperationAckV2   bool
-	probeCommandPublish   func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
-	probeEventPublish     func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
-	auditBatchPublisher   auditBatchPublisher
-	logger                *zap.Logger
+	chClient                *storage.ClickHouseClient
+	pgDB                    *sql.DB
+	encryptedTrafficStats   encryptedTrafficStatsService
+	actionAudit             actionAuditRecorder
+	campaignJobs            campaignActionJobStore
+	commitCampaignAction    func(context.Context, *http.Request, campaignActionJob, AlertActionAuditRecord) error
+	lookupCampaign          func(context.Context, string, string) (campaignDTO, error)
+	campaignAuditWriter     campaignTransactionalAudit
+	campaignAggregateV2     bool
+	fusionV1                bool
+	fusionCandidateSHA256   string
+	fusionReadinessGate     fusionProjectionReadinessGate
+	fusionCommandPublish    fusionCommandPublisher
+	baselineV1              bool
+	baselineCandidateSHA256 string
+	baselineRepository      *baseline.Repository
+	attackChainV1           bool
+	attackChainSnapshots    attackChainSnapshotStore
+	topicSnapshotV1         bool
+	topicExecutorV2         bool
+	topicActionPublish      func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
+	campaignEventPublish    func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
+	campaignMemberPublish   func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
+	campaignDispatchAdmit   func(context.Context) error
+	campaignCorrelateAdmit  func(context.Context) error
+	campaignReportObjects   AlertReportObjectStore
+	campaignSOARExecutor    CampaignSOARExecutor
+	probeOperationAckV2     bool
+	probeCommandPublish     probeOperationPublishFunc
+	probeEventPublish       probeOperationPublishFunc
+	probeDispatcherGate     *ProbeDispatcherGate
+	auditBatchPublisher     auditBatchPublisher
+	logger                  *zap.Logger
+}
+
+func (h *SystemHandler) SetCampaignDispatcherAdmission(check func(context.Context) error) {
+	h.campaignDispatchAdmit = check
+}
+
+func (h *SystemHandler) SetCampaignRailCorrelationAdmission(check func(context.Context) error) {
+	h.campaignCorrelateAdmit = check
 }
 
 func NewSystemHandler(chClient *storage.ClickHouseClient, pgDB *sql.DB, logger *zap.Logger) *SystemHandler {
 	handler := &SystemHandler{
-		chClient:            chClient,
-		pgDB:                pgDB,
-		topicSnapshotV1:     true,
-		topicExecutorV2:     true,
-		probeOperationAckV2: true,
-		logger:              logger,
+		chClient:              chClient,
+		pgDB:                  pgDB,
+		encryptedTrafficStats: newClickHouseEncryptedTrafficStatsService(chClient),
+		topicSnapshotV1:       true,
+		topicExecutorV2:       true,
+		probeOperationAckV2:   true,
+		baselineRepository:    baseline.NewRepository(),
+		logger:                logger,
 	}
 	handler.lookupCampaign = handler.queryCampaignByID
 	writer := NewAlertActionAuditWriter(pgDB, logger)
@@ -90,6 +139,41 @@ func NewSystemHandler(chClient *storage.ClickHouseClient, pgDB *sql.DB, logger *
 // campaign membership backfill have been verified for the canary tenant.
 func (h *SystemHandler) SetCampaignAggregateV2FeatureFlag(enabled bool) {
 	h.campaignAggregateV2 = enabled
+}
+
+// SetFusionV1FeatureFlag enables the additive append-only resolution/outbox
+// path after migration 202608141700 has been applied. The compatibility
+// workbench remains available while this path is disabled.
+func (h *SystemHandler) SetFusionV1FeatureFlag(enabled bool) {
+	h.fusionV1 = enabled
+}
+
+// SetBehaviorBaselineV1Runtime enables only the additive authority writer.
+// Build and activation events remain pending until their separate workers and
+// consumer acknowledgements are enabled by later rollout stages.
+func (h *SystemHandler) SetBehaviorBaselineV1Runtime(enabled bool, candidateSHA256 string) {
+	h.baselineV1 = enabled
+	h.baselineCandidateSHA256 = strings.TrimSpace(candidateSHA256)
+}
+
+// SetAttackChainV1Runtime enables immutable versioned attack-chain snapshots.
+// Disabled keeps every existing campaign-derived compatibility response.
+func (h *SystemHandler) SetAttackChainV1Runtime(enabled bool, store attackChainSnapshotStore) {
+	h.attackChainV1 = enabled
+	h.attackChainSnapshots = store
+}
+
+// SetFusionV1Runtime binds the writer to the exact consumer candidate and its
+// durable readiness fence. The route remains fail-closed if either dependency
+// is absent even when the feature flag was accidentally enabled.
+func (h *SystemHandler) SetFusionV1Runtime(
+	candidateSHA256 string,
+	gate fusionProjectionReadinessGate,
+	publisher fusionCommandPublisher,
+) {
+	h.fusionCandidateSHA256 = strings.TrimSpace(candidateSHA256)
+	h.fusionReadinessGate = gate
+	h.fusionCommandPublish = publisher
 }
 
 // SetCampaignReportObjectStore injects the immutable object sink used by the
@@ -139,7 +223,7 @@ func (h *SystemHandler) SetProbeOperationAckFeatureFlag(enabled bool) {
 // SetProbeOperationProducer enables the durable probe-operation outbox
 // publisher. A nil producer deliberately leaves rows pending and prevents the
 // operation from being represented as delivered.
-func (h *SystemHandler) SetProbeOperationProducer(producer *commonkafka.Producer) {
+func (h *SystemHandler) SetProbeOperationProducer(producer probeOperationPublisher) {
 	if producer == nil {
 		h.probeCommandPublish = nil
 		return
@@ -149,12 +233,19 @@ func (h *SystemHandler) SetProbeOperationProducer(producer *commonkafka.Producer
 
 // SetProbeOperationEventProducer publishes acknowledged/failed lifecycle
 // events separately from the agent command topic.
-func (h *SystemHandler) SetProbeOperationEventProducer(producer *commonkafka.Producer) {
+func (h *SystemHandler) SetProbeOperationEventProducer(producer probeOperationPublisher) {
 	if producer == nil {
 		h.probeEventPublish = nil
 		return
 	}
 	h.probeEventPublish = producer.Send
+}
+
+// SetProbeDispatcherGate enables the durable consumer-readiness fence. A nil
+// gate retains the compatibility claim path until generation lifecycle wiring
+// and its default-off deployment flag are enabled together.
+func (h *SystemHandler) SetProbeDispatcherGate(gate *ProbeDispatcherGate) {
+	h.probeDispatcherGate = gate
 }
 
 // SetAuditBatchProducer enables the default-off F-AUDIT-001 ingress. The
@@ -239,6 +330,11 @@ func (h *SystemHandler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/baselines/{id}/actions", h.ListBehaviorBaselineActions).Methods("GET")
 	r.HandleFunc("/baselines/{id}/reset", h.ResetBehaviorBaseline).Methods("POST")
 	r.HandleFunc("/baselines/{id}/actions", h.SubmitBehaviorBaselineAction).Methods("POST")
+	r.HandleFunc("/baselines/{id}/builds", h.RequestBehaviorBaselineBuildV1).Methods("POST")
+	r.HandleFunc("/baselines/{id}/versions/{version}/approvals", h.RequestBehaviorBaselineApprovalV1).Methods("POST")
+	r.HandleFunc("/baselines/{id}/approvals/{approval_id}/decision", h.DecideBehaviorBaselineApprovalV1).Methods("POST")
+	r.HandleFunc("/baselines/{id}/rollbacks", h.RequestBehaviorBaselineRollbackV1).Methods("POST")
+	r.HandleFunc("/baselines/{id}/evaluations", h.EvaluateBehaviorBaselineV1).Methods("POST")
 	r.HandleFunc("/compliance/reports", h.ListComplianceReports).Methods("GET")
 	r.HandleFunc("/compliance/reports/generate", h.GenerateComplianceReport).Methods("POST")
 	r.HandleFunc("/compliance/reports/{id}/evidence-package", h.ExportComplianceEvidencePackage).Methods("POST")
@@ -1547,11 +1643,30 @@ func campaignRiskRank(risk string) int {
 
 func (h *SystemHandler) ListAttackChains(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	if !h.requireCampaignReadPermission(w, r) {
+	if h.attackChainV1 && !h.requireAttackChainReadPermission(w, r) {
+		return
+	}
+	if !h.attackChainV1 && !h.requireCampaignReadPermission(w, r) {
 		return
 	}
 	tenantID := queryTenantID(r)
 	limit, offset := parseLimitOffset(r, 20, 100)
+	if h.attackChainV1 {
+		if h.attackChainSnapshots == nil {
+			httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "ATTACK_CHAIN_SNAPSHOT_UNAVAILABLE", "versioned attack-chain snapshot store is unavailable")
+			return
+		}
+		snapshots, total, err := h.attackChainSnapshots.ListCurrent(ctx, tenantID, limit, offset)
+		if err != nil {
+			writeCampaignReadError(w, ctx, err)
+			return
+		}
+		meta := attackChainContractMeta(ctx, tenantID, snapshots)
+		httpx.JSONContractSuccess(w, ctx, map[string]interface{}{
+			"chains": snapshots, "total": total, "limit": limit, "offset": offset,
+		}, meta)
+		return
+	}
 	campaigns, total, err := h.queryCampaigns(ctx, tenantID, campaignQueryFilters{}, 0, 0, limit, offset)
 	if err != nil {
 		writeCampaignReadError(w, ctx, err)
@@ -1569,7 +1684,23 @@ func (h *SystemHandler) ListAttackChains(w http.ResponseWriter, r *http.Request)
 
 func (h *SystemHandler) GetAttackChain(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	if !h.requireCampaignReadPermission(w, r) {
+	if h.attackChainV1 && !h.requireAttackChainReadPermission(w, r) {
+		return
+	}
+	if !h.attackChainV1 && !h.requireCampaignReadPermission(w, r) {
+		return
+	}
+	if h.attackChainV1 {
+		if h.attackChainSnapshots == nil {
+			httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "ATTACK_CHAIN_SNAPSHOT_UNAVAILABLE", "versioned attack-chain snapshot store is unavailable")
+			return
+		}
+		snapshot, err := h.attackChainSnapshots.LoadCurrent(ctx, queryTenantID(r), mux.Vars(r)["id"])
+		if err != nil {
+			writeCampaignReadError(w, ctx, err)
+			return
+		}
+		httpx.JSONContractSuccess(w, ctx, snapshot, attackChainContractMeta(ctx, snapshot.TenantID, []attackchain.Snapshot{snapshot}))
 		return
 	}
 	campaign, err := h.queryCampaignByID(ctx, queryTenantID(r), mux.Vars(r)["id"])
@@ -1585,6 +1716,19 @@ func (h *SystemHandler) GetAttackChain(w http.ResponseWriter, r *http.Request) {
 
 func (h *SystemHandler) GetAttackChainPhases(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	if h.attackChainV1 && !h.requireAttackChainReadPermission(w, r) {
+		return
+	}
+	if h.attackChainV1 {
+		snapshot, ok := h.loadAttackChainSnapshotV1(w, r)
+		if !ok {
+			return
+		}
+		httpx.JSONContractSuccess(w, ctx, map[string]interface{}{
+			"phases": attackChainSnapshotPhases(snapshot),
+		}, attackChainContractMeta(ctx, snapshot.TenantID, []attackchain.Snapshot{snapshot}))
+		return
+	}
 	if !h.requireCampaignReadPermission(w, r) {
 		return
 	}
@@ -1598,6 +1742,28 @@ func (h *SystemHandler) GetAttackChainPhases(w http.ResponseWriter, r *http.Requ
 
 func (h *SystemHandler) ListAttackChainEvidence(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	if h.attackChainV1 && !h.requireAttackChainReadPermission(w, r) {
+		return
+	}
+	if h.attackChainV1 {
+		snapshot, ok := h.loadAttackChainSnapshotV1(w, r)
+		if !ok {
+			return
+		}
+		evidenceType, err := normalizeAttackChainEvidenceType(r.URL.Query().Get("type"))
+		if err != nil {
+			httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", err.Error())
+			return
+		}
+		limit, offset := parseLimitOffset(r, 20, 100)
+		items := attackChainSnapshotEvidence(snapshot, evidenceType, strings.TrimSpace(r.URL.Query().Get("phase")))
+		total := len(items)
+		items = pageAttackChainEvidence(items, limit, offset)
+		httpx.JSONContractSuccess(w, ctx, map[string]interface{}{
+			"items": items, "total": total, "limit": limit, "offset": offset,
+		}, attackChainContractMeta(ctx, snapshot.TenantID, []attackchain.Snapshot{snapshot}))
+		return
+	}
 	if !h.requireCampaignReadPermission(w, r) {
 		return
 	}
@@ -1646,6 +1812,23 @@ func (h *SystemHandler) ListAttackChainEvidence(w http.ResponseWriter, r *http.R
 
 func (h *SystemHandler) ListAttackChainPaths(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	if h.attackChainV1 && !h.requireAttackChainReadPermission(w, r) {
+		return
+	}
+	if h.attackChainV1 {
+		snapshot, ok := h.loadAttackChainSnapshotV1(w, r)
+		if !ok {
+			return
+		}
+		limit, offset := parseLimitOffset(r, 20, 100)
+		items := attackChainSnapshotPaths(snapshot, strings.TrimSpace(r.URL.Query().Get("phase")))
+		total := len(items)
+		items = pageAttackChainPaths(items, limit, offset)
+		httpx.JSONContractSuccess(w, ctx, map[string]interface{}{
+			"items": items, "total": total, "limit": limit, "offset": offset,
+		}, attackChainContractMeta(ctx, snapshot.TenantID, []attackchain.Snapshot{snapshot}))
+		return
+	}
 	if !h.requireCampaignReadPermission(w, r) {
 		return
 	}
@@ -1675,6 +1858,31 @@ func (h *SystemHandler) ListAttackChainPaths(w http.ResponseWriter, r *http.Requ
 
 func (h *SystemHandler) ListAttackChainRecommendations(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	if h.attackChainV1 {
+		if !h.requireAttackChainReadPermission(w, r) {
+			return
+		}
+		if _, err := normalizeAttackChainRecommendationCategory(r.URL.Query().Get("category")); err != nil {
+			httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", err.Error())
+			return
+		}
+		snapshot, ok := h.loadAttackChainSnapshotV1(w, r)
+		if !ok {
+			return
+		}
+		// M07 snapshots carry observed, derived and analyst evidence. They do not
+		// authorize response recommendations, so the N013 read path must expose
+		// that absence instead of fabricating actions from graph edges.
+		meta := attackChainContractMeta(ctx, snapshot.TenantID, []attackchain.Snapshot{snapshot})
+		meta.Partial = true
+		meta.ResultCode = "PARTIAL"
+		meta.MissingSections = append(meta.MissingSections, snapshot.ChainID+":recommendations_not_in_snapshot")
+		httpx.JSONContractSuccess(w, ctx, map[string]interface{}{
+			"items": []interface{}{}, "category": strings.TrimSpace(r.URL.Query().Get("category")),
+			"total": 0, "limit": 0, "offset": 0,
+		}, meta)
+		return
+	}
 	if !h.requireCampaignReadPermission(w, r) {
 		return
 	}
@@ -2818,14 +3026,10 @@ func scanProbe(scanner interface {
 	}, nil
 }
 
+// queryTenantID 只从已验证的请求上下文读取租户身份。客户端可控的
+// tenant_id query 不作为身份来源（fail-closed）。
 func queryTenantID(r *http.Request) string {
-	if tenantID := httpx.GetTenantID(r.Context()); tenantID != "" {
-		return tenantID
-	}
-	if tenantID := r.URL.Query().Get("tenant_id"); tenantID != "" {
-		return tenantID
-	}
-	return "default"
+	return httpx.GetTenantID(r.Context())
 }
 
 func (h *SystemHandler) requireCampaignReadPermission(w http.ResponseWriter, r *http.Request) bool {
@@ -2835,6 +3039,68 @@ func (h *SystemHandler) requireCampaignReadPermission(w http.ResponseWriter, r *
 	}
 	httpx.JSONError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "permission denied: campaign:read required")
 	return false
+}
+
+func (h *SystemHandler) requireAttackChainReadPermission(w http.ResponseWriter, r *http.Request) bool {
+	ctx := r.Context()
+	if hasAnySystemPermission(ctx, campaignReadScopes()...) && hasSystemPermission(ctx, authmodel.ScopeGraphRead) {
+		return true
+	}
+	httpx.JSONError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "permission denied: campaign or alert read plus graph:read required")
+	return false
+}
+
+func attackChainContractMeta(ctx context.Context, tenantID string, snapshots []attackchain.Snapshot) httpx.ContractMeta {
+	snapshotIDs := make([]string, 0, len(snapshots))
+	missing := make([]string, 0)
+	seenMissing := make(map[string]struct{})
+	watermarks := make(map[string]string)
+	var asOf time.Time
+	partial := false
+	for _, snapshot := range snapshots {
+		snapshotIDs = append(snapshotIDs, snapshot.SnapshotID)
+		if snapshot.AsOf.After(asOf) {
+			asOf = snapshot.AsOf
+		}
+		partial = partial || snapshot.Partial || snapshot.Truncated
+		for _, reason := range snapshot.PartialReasons {
+			key := snapshot.ChainID + ":" + reason
+			if _, exists := seenMissing[key]; !exists {
+				seenMissing[key] = struct{}{}
+				missing = append(missing, key)
+			}
+		}
+		if snapshot.Truncated {
+			key := snapshot.ChainID + ":path_budget"
+			if _, exists := seenMissing[key]; !exists {
+				seenMissing[key] = struct{}{}
+				missing = append(missing, key)
+			}
+		}
+		for source, watermark := range snapshot.GraphSnapshot.SourceWatermarks {
+			watermarks[snapshot.ChainID+":"+source] = watermark
+		}
+	}
+	snapshotID := "attack-chain-current-set:empty"
+	if len(snapshotIDs) == 1 {
+		snapshotID = snapshotIDs[0]
+	} else if len(snapshotIDs) > 1 {
+		snapshotID = "attack-chain-current-set:" + strings.Join(snapshotIDs, ",")
+	}
+	resultCode := "OK"
+	if partial {
+		resultCode = "PARTIAL"
+	}
+	now := time.Now().UTC()
+	if asOf.IsZero() {
+		asOf = now
+	}
+	return httpx.ContractMeta{
+		ContractVersion: 1, SchemaVersion: 1, SnapshotID: snapshotID,
+		AsOf: asOf.UTC().Format(time.RFC3339Nano), GeneratedAt: now.Format(time.RFC3339Nano),
+		TraceID: httpx.GetTraceID(ctx), ResultCode: resultCode, OperationID: "listAttackChains",
+		TenantID: tenantID, Partial: partial, MissingSections: missing, SourceWatermarks: watermarks,
+	}
 }
 
 func parseLimitOffset(r *http.Request, defaultLimit, maxLimit int) (int, int) {

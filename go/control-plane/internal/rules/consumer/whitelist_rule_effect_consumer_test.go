@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -132,6 +133,62 @@ func TestPostgresWhitelistProjectionCommitsProjectionAndAckTogether(t *testing.T
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO whitelist_rule_projection").WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("UPDATE whitelist_rule_effects").WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+	if err := projection.ApplyWhitelistRuleProjection(context.Background(), input); err != nil {
+		t.Fatal(err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestWhitelistProjectionReadinessRequiresApprovedCandidate(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	base := WhitelistConsumerReadinessOptions{
+		ConsumerGroup:   "rule-manager-whitelist-rule-effect-v2",
+		CandidateSHA256: strings.Repeat("a", 64), ContractSHA256: strings.Repeat("b", 64),
+	}
+	for _, mutate := range []func(*WhitelistConsumerReadinessOptions){
+		func(value *WhitelistConsumerReadinessOptions) { value.ConsumerGroup = "" },
+		func(value *WhitelistConsumerReadinessOptions) { value.CandidateSHA256 = strings.Repeat("0", 64) },
+		func(value *WhitelistConsumerReadinessOptions) { value.ContractSHA256 = "bad" },
+	} {
+		options := base
+		mutate(&options)
+		if _, err := NewPostgresWhitelistRuleProjectionWithReadiness(db, options); err == nil {
+			t.Fatalf("expected invalid readiness binding to fail: %+v", options)
+		}
+	}
+}
+
+func TestPostgresWhitelistProjectionCommitsReadinessWithRuleAck(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	projection, err := NewPostgresWhitelistRuleProjectionWithReadiness(db, WhitelistConsumerReadinessOptions{
+		ConsumerGroup:   "rule-manager-whitelist-rule-effect-v2",
+		CandidateSHA256: strings.Repeat("a", 64), ContractSHA256: strings.Repeat("b", 64),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := WhitelistRuleProjectionInput{
+		EventID: "11111111-1111-4111-8111-111111111111", TenantID: "tenant-a",
+		EntryID: "22222222-2222-4222-8222-222222222222", EntryVersion: 3,
+		DesiredState: "effective", EntryType: "ip", MatchValue: "192.0.2.10", Scope: "tenant",
+		RuleRevision: strings.Repeat("a", 64), AckEventID: "33333333-3333-4333-8333-333333333333",
+		PayloadSHA256: strings.Repeat("b", 64), KafkaPartition: 2, KafkaOffset: 17,
+	}
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO whitelist_rule_projection").WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("UPDATE whitelist_rule_effects").WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("INSERT INTO whitelist_consumer_readiness_receipt").WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 	if err := projection.ApplyWhitelistRuleProjection(context.Background(), input); err != nil {
 		t.Fatal(err)

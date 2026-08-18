@@ -31,6 +31,7 @@ import (
 type AlertService struct {
 	chRepo            *repository.AlertRepository
 	osRepo            *repository.OpenSearchRepository
+	snapshotRepo      *repository.AlertSnapshotRepository
 	dualWriter        *persistence.DualWriter
 	redisDedup        *dedup.RedisDedup
 	evidenceGenerator *evidence.Generator
@@ -122,69 +123,86 @@ type ListResult struct {
 
 // SearchQuery 搜索查询参数
 type SearchQuery struct {
-	TenantID   string
-	Query      string
-	Severity   []string
-	Status     []string
-	AlertTypes []string
-	Labels     []string
-	SrcIP      string
-	DstIP      string
-	StartTime  time.Time
-	EndTime    time.Time
-	From       int
-	Size       int
-	SortField  string
-	SortOrder  string
-	Cursor     string
-	CursorMode string
+	TenantID     string
+	Query        string
+	Severity     []string
+	Status       []string
+	AlertTypes   []string
+	Labels       []string
+	SrcIP        string
+	DstIP        string
+	AssetIP      string
+	RuleVersion  string
+	ModelVersion string
+	AttackPhase  string
+	MinScore     *float64
+	StartTime    time.Time
+	EndTime      time.Time
+	From         int
+	Size         int
+	SortField    string
+	SortOrder    string
+	Cursor       string
+	CursorMode   string
 }
 
 // SearchResult 搜索结果
 type SearchResult struct {
-	Alerts              []*AlertDTO            `json:"alerts"`
-	Total               int64                  `json:"total"`
-	TotalRelation       string                 `json:"total_relation,omitempty"`
-	Aggregations        map[string]interface{} `json:"aggregations,omitempty"`
-	AggregationsOmitted bool                   `json:"aggregations_omitted,omitempty"`
-	Took                int                    `json:"took"`
-	NextCursor          string                 `json:"next_cursor,omitempty"`
-	HasMore             bool                   `json:"has_more"`
-	CursorMode          string                 `json:"cursor_mode,omitempty"`
-	SnapshotID          string                 `json:"snapshot_id,omitempty"`
-	AsOf                string                 `json:"as_of,omitempty"`
-	Partial             bool                   `json:"partial"`
+	Alerts              []*AlertDTO                             `json:"alerts"`
+	Total               int64                                   `json:"total"`
+	TotalRelation       string                                  `json:"total_relation,omitempty"`
+	Aggregations        map[string]interface{}                  `json:"aggregations,omitempty"`
+	AggregationsOmitted bool                                    `json:"aggregations_omitted,omitempty"`
+	Took                int                                     `json:"took"`
+	NextCursor          string                                  `json:"next_cursor,omitempty"`
+	HasMore             bool                                    `json:"has_more"`
+	CursorMode          string                                  `json:"cursor_mode,omitempty"`
+	SnapshotID          string                                  `json:"snapshot_id,omitempty"`
+	AsOf                string                                  `json:"as_of,omitempty"`
+	Partial             bool                                    `json:"partial"`
+	MissingSections     []string                                `json:"missing_sections,omitempty"`
+	SourceWatermarks    map[string]string                       `json:"source_watermarks,omitempty"`
+	Reconciliation      *repository.AlertSnapshotReconciliation `json:"reconciliation,omitempty"`
 }
 
 // ==================== DTO 定义 ====================
 // AlertDTO 告警DTO
 type AlertDTO struct {
-	AlertID      string    `json:"alert_id"`
-	TenantID     string    `json:"tenant_id"`
-	Fingerprint  string    `json:"fingerprint"`
-	CommunityID  string    `json:"community_id"`
-	SessionID    string    `json:"session_id,omitempty"`
-	CampaignID   string    `json:"campaign_id,omitempty"`
-	SrcIP        string    `json:"src_ip"`
-	DstIP        string    `json:"dst_ip"`
-	SrcPort      uint16    `json:"src_port"`
-	DstPort      uint16    `json:"dst_port"`
-	Protocol     uint8     `json:"protocol"`
-	ProtocolName string    `json:"protocol_name"`
-	AlertType    string    `json:"alert_type"`
-	AttackPhase  string    `json:"attack_phase,omitempty"`
-	Labels       []string  `json:"labels"`
-	Score        float32   `json:"score"`
-	Severity     string    `json:"severity"`
-	FirstSeen    time.Time `json:"first_seen"`
-	LastSeen     time.Time `json:"last_seen"`
-	Count        int32     `json:"count"`
-	Status       string    `json:"status"`
-	Assignee     string    `json:"assignee,omitempty"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	StateVersion uint64    `json:"state_version"`
-	ModelVersion string    `json:"model_version,omitempty"`
-	RuleVersion  string    `json:"rule_version,omitempty"`
+	AlertID          string    `json:"alert_id"`
+	TenantID         string    `json:"tenant_id"`
+	Fingerprint      string    `json:"fingerprint"`
+	CommunityID      string    `json:"community_id"`
+	SessionID        string    `json:"session_id,omitempty"`
+	CampaignID       string    `json:"campaign_id,omitempty"`
+	SrcIP            string    `json:"src_ip"`
+	DstIP            string    `json:"dst_ip"`
+	SrcPort          uint16    `json:"src_port"`
+	DstPort          uint16    `json:"dst_port"`
+	Protocol         uint8     `json:"protocol"`
+	ProtocolName     string    `json:"protocol_name"`
+	AlertType        string    `json:"alert_type"`
+	AttackPhase      string    `json:"attack_phase,omitempty"`
+	Labels           []string  `json:"labels"`
+	Score            float32   `json:"score"`
+	Severity         string    `json:"severity"`
+	FirstSeen        time.Time `json:"first_seen"`
+	LastSeen         time.Time `json:"last_seen"`
+	Count            int32     `json:"count"`
+	Status           string    `json:"status"`
+	Assignee         string    `json:"assignee,omitempty"`
+	UpdatedAt        time.Time `json:"updated_at"`
+	StateVersion     uint64    `json:"state_version"`
+	ModelVersion     string    `json:"model_version,omitempty"`
+	RuleVersion      string    `json:"rule_version,omitempty"`
+	StateSource      string    `json:"state_source,omitempty"`
+	ProjectionStatus string    `json:"projection_status,omitempty"`
+}
+
+// SetAlertSnapshotRepository enables the authority-preserving search read
+// model. Existing constructors remain source-compatible for isolated tests,
+// while the production composition root installs this repository explicitly.
+func (s *AlertService) SetAlertSnapshotRepository(repo *repository.AlertSnapshotRepository) {
+	s.snapshotRepo = repo
 }
 
 // StatusUpdateResult 告警状态更新结果
@@ -286,28 +304,58 @@ func (s *AlertService) SearchAlerts(ctx context.Context, query *SearchQuery) (*S
 	ctx, span := otel.StartSpan(ctx, "alert_service.search_alerts")
 	defer span.End()
 	// 检查 OpenSearch 是否可用
-	if s.osRepo == nil {
+	if s.snapshotRepo == nil && s.osRepo == nil {
 		return nil, errors.New(errors.ErrCodeServiceUnavailable, "search not available")
 	}
 	// 转换为OpenSearch查询
 	osQuery := &repository.SearchQuery{
-		TenantID:   query.TenantID,
-		Query:      query.Query,
-		Severity:   query.Severity,
-		Status:     query.Status,
-		AlertTypes: query.AlertTypes,
-		Labels:     query.Labels,
-		SrcIP:      query.SrcIP,
-		DstIP:      query.DstIP,
-		StartTime:  query.StartTime,
-		EndTime:    query.EndTime,
-		From:       query.From,
-		Size:       query.Size,
-		SortField:  query.SortField,
-		SortOrder:  query.SortOrder,
-		Cursor:     query.Cursor,
-		CursorMode: query.CursorMode,
+		TenantID:     query.TenantID,
+		Query:        query.Query,
+		Severity:     query.Severity,
+		Status:       query.Status,
+		AlertTypes:   query.AlertTypes,
+		Labels:       query.Labels,
+		SrcIP:        query.SrcIP,
+		DstIP:        query.DstIP,
+		AssetIP:      query.AssetIP,
+		RuleVersion:  query.RuleVersion,
+		ModelVersion: query.ModelVersion,
+		AttackPhase:  query.AttackPhase,
+		MinScore:     query.MinScore,
+		StartTime:    query.StartTime,
+		EndTime:      query.EndTime,
+		From:         query.From,
+		Size:         query.Size,
+		SortField:    query.SortField,
+		SortOrder:    query.SortOrder,
+		Cursor:       query.Cursor,
+		CursorMode:   query.CursorMode,
 	}
+	if s.snapshotRepo != nil {
+		result, err := s.snapshotRepo.Search(ctx, osQuery)
+		if err != nil {
+			return nil, err
+		}
+		alerts := make([]*AlertDTO, 0, len(result.Alerts))
+		for _, alert := range result.Alerts {
+			dto := s.toAlertDTO(alert)
+			if dto != nil {
+				dto.StateSource = result.StateSources[alert.AlertID]
+				dto.ProjectionStatus = result.ProjectionStatuses[alert.AlertID]
+				alerts = append(alerts, dto)
+			}
+		}
+		reconciliation := result.Reconciliation
+		return &SearchResult{
+			Alerts: alerts, Total: result.Total, TotalRelation: result.TotalRelation,
+			Aggregations: result.Aggregations, AggregationsOmitted: result.AggregationsOmitted,
+			Took: result.Took, NextCursor: result.NextCursor, HasMore: result.HasMore,
+			CursorMode: result.CursorMode, SnapshotID: result.SnapshotID, AsOf: result.AsOf,
+			Partial: result.Partial, MissingSections: result.MissingSections,
+			SourceWatermarks: result.SourceWatermarks, Reconciliation: &reconciliation,
+		}, nil
+	}
+
 	result, err := s.osRepo.Search(ctx, osQuery)
 	if err != nil {
 		return nil, err
@@ -330,6 +378,7 @@ func (s *AlertService) SearchAlerts(ctx context.Context, query *SearchQuery) (*S
 		SnapshotID:          result.SnapshotID,
 		AsOf:                result.AsOf,
 		Partial:             result.Partial,
+		SourceWatermarks:    result.SourceWatermarks,
 	}, nil
 }
 

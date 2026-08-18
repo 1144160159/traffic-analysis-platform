@@ -22,6 +22,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -29,6 +30,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/rbac"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/service"
 )
 
 // =============================================================================
@@ -51,12 +53,15 @@ func (h *Handler) RegisterModelRoutes(r *mux.Router) {
 	models.HandleFunc("/{id}/versions", h.RegisterModelVersion).Methods("POST")
 	models.HandleFunc("/{id}/versions/active", h.GetActiveModelVersion).Methods("GET")
 	models.HandleFunc("/{id}/versions/{version}", h.GetModelVersion).Methods("GET")
+	models.HandleFunc("/{id}/versions/{version}/shadow-activation", h.PrepareModelShadowActivation).Methods("POST")
+	models.HandleFunc("/{id}/versions/{version}/shadow-activation/{request_id}", h.GetModelShadowActivationReceipt).Methods("GET")
 	models.HandleFunc("/{id}/versions/{version}/activate", h.ActivateModelVersion).Methods("POST")
 	models.HandleFunc("/{id}/versions/{version}/deprecate", h.DeprecateModelVersion).Methods("POST")
 	models.HandleFunc("/{id}/feedback-samples", h.AppendModelFeedbackSamples).Methods("POST")
 	models.HandleFunc("/{id}/retrain", h.RequestModelRetraining).Methods("POST")
 	models.HandleFunc("/{id}/versions/{version}/evaluate", h.RequestModelEvaluation).Methods("POST")
 	models.HandleFunc("/{id}/versions/{version}/rollback", h.RollbackModelVersion).Methods("POST")
+	models.HandleFunc("/{id}/rollbacks/{job_id}", h.GetModelRollbackReceipt).Methods("GET")
 	models.HandleFunc("/{id}/actions", h.SubmitModelContextAction).Methods("POST")
 }
 
@@ -346,6 +351,7 @@ func (h *Handler) RegisterModelVersion(w http.ResponseWriter, r *http.Request) {
 	// attempts to name a different model or tenant.
 	req.ModelID = modelID
 	req.TenantID = opCtx.TenantID
+	req.IdempotencyKey = strings.TrimSpace(r.Header.Get("Idempotency-Key"))
 
 	mv, err := h.modelService.RegisterModelVersion(ctx, &req, opCtx)
 	if err != nil {
@@ -438,6 +444,58 @@ func (h *Handler) ListModelVersions(w http.ResponseWriter, r *http.Request) {
 			HasMore: int64(filter.Offset+filter.Limit) < total,
 		},
 	})
+}
+
+// PrepareModelShadowActivation accepts an independently approved, revision-
+// guarded command. It creates a pending schema-v2 shadow-load event only; it
+// never changes the active model returned by the serving API.
+func (h *Handler) PrepareModelShadowActivation(w http.ResponseWriter, r *http.Request) {
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	modelID := strings.TrimSpace(mux.Vars(r)["id"])
+	version := strings.TrimSpace(mux.Vars(r)["version"])
+	if modelID == "" || version == "" {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "model id and version are required"))
+		return
+	}
+	var req service.PrepareModelShadowActivationRequest
+	if err := h.decodeJSON(r, &req); err != nil {
+		h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid shadow activation request body"))
+		return
+	}
+	req.ModelID = modelID
+	req.ModelVersion = version
+	req.IdempotencyKey = strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	receipt, err := h.modelService.PrepareModelShadowActivation(r.Context(), &req, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusAccepted, map[string]interface{}{
+		"success": true,
+		"data":    receipt,
+	})
+}
+
+func (h *Handler) GetModelShadowActivationReceipt(w http.ResponseWriter, r *http.Request) {
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	vars := mux.Vars(r)
+	receipt, err := h.modelService.GetModelShadowActivationReceipt(
+		r.Context(), strings.TrimSpace(vars["id"]), strings.TrimSpace(vars["version"]),
+		strings.TrimSpace(vars["request_id"]), opCtx,
+	)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": receipt})
 }
 
 // ActivateModelVersion 激活模型版本
@@ -552,7 +610,32 @@ func (h *Handler) RequestModelEvaluation(w http.ResponseWriter, r *http.Request)
 // worker applies the validated target version; this endpoint no longer claims
 // a client-only success.
 func (h *Handler) RollbackModelVersion(w http.ResponseWriter, r *http.Request) {
-	h.submitQueuedModelAction(w, r, "rollback-version", rbac.PermModelActivate, "MODEL_VERSION_ROLLBACK_REQUESTED")
+	var request ModelRollbackRequest
+	if err := h.decodeJSONStrict(r, &request); err != nil {
+		h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid model rollback request body"))
+		return
+	}
+	h.submitQueuedModelActionPayload(w, r, request.payload(), "rollback-version", rbac.PermModelActivate, "MODEL_VERSION_ROLLBACK_REQUESTED")
+}
+
+// GetModelRollbackReceipt reports exact broker/quorum/compensation state for a
+// queued rollback job.  Clients must still query /versions/active for the
+// final serving pointer; PARTIAL never implies that the target is active.
+func (h *Handler) GetModelRollbackReceipt(w http.ResponseWriter, r *http.Request) {
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	vars := mux.Vars(r)
+	receipt, err := h.modelService.GetModelRollbackReceipt(
+		r.Context(), strings.TrimSpace(vars["id"]), strings.TrimSpace(vars["job_id"]), opCtx,
+	)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": receipt})
 }
 
 // SubmitModelContextAction queues a model workbench action chosen by the UI.
@@ -561,6 +644,15 @@ func (h *Handler) SubmitModelContextAction(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *Handler) submitQueuedModelAction(w http.ResponseWriter, r *http.Request, action string, permission rbac.Permission, auditAction string) {
+	payload := map[string]interface{}{}
+	if err := h.decodeJSON(r, &payload); err != nil {
+		h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid request body"))
+		return
+	}
+	h.submitQueuedModelActionPayload(w, r, payload, action, permission, auditAction)
+}
+
+func (h *Handler) submitQueuedModelActionPayload(w http.ResponseWriter, r *http.Request, payload map[string]interface{}, action string, permission rbac.Permission, auditAction string) {
 	opCtx, err := h.extractOperationContext(r)
 	if err != nil {
 		h.writeError(w, r, err)
@@ -569,12 +661,6 @@ func (h *Handler) submitQueuedModelAction(w http.ResponseWriter, r *http.Request
 	modelID := mux.Vars(r)["id"]
 	if modelID == "" {
 		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "model id is required"))
-		return
-	}
-
-	payload := map[string]interface{}{}
-	if err := h.decodeJSON(r, &payload); err != nil {
-		h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid request body"))
 		return
 	}
 	target := modelID
@@ -641,6 +727,28 @@ type UpdateModelRequest struct {
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
+// ModelRollbackRequest is deliberately narrower than the generic model action
+// payload. The URL fixes the model and target version; optimistic concurrency
+// fixes the serving version that the operator inspected before submitting.
+type ModelRollbackRequest struct {
+	ActionID               string `json:"action_id,omitempty"`
+	Reason                 string `json:"reason"`
+	ExpectedActiveVersion  string `json:"expected_active_version"`
+	ExpectedActiveRevision int64  `json:"expected_active_revision"`
+}
+
+func (r ModelRollbackRequest) payload() map[string]interface{} {
+	payload := map[string]interface{}{
+		"reason":                   r.Reason,
+		"expected_active_version":  r.ExpectedActiveVersion,
+		"expected_active_revision": r.ExpectedActiveRevision,
+	}
+	if strings.TrimSpace(r.ActionID) != "" {
+		payload["action_id"] = r.ActionID
+	}
+	return payload
+}
+
 // ModelDTO 模型 DTO
 type ModelDTO struct {
 	ModelID         string                 `json:"model_id"`
@@ -660,18 +768,30 @@ type ModelDTO struct {
 
 // ModelVersionDTO 模型版本 DTO
 type ModelVersionDTO struct {
-	ModelVersion string                 `json:"model_version"`
-	ModelID      string                 `json:"model_id"`
-	ModelName    string                 `json:"model_name,omitempty"`
-	ModelType    string                 `json:"model_type,omitempty"`
-	TenantID     string                 `json:"tenant_id"`
-	FeatureSetID string                 `json:"feature_set_id"`
-	ArtifactURI  string                 `json:"artifact_uri"`
-	Metrics      map[string]interface{} `json:"metrics,omitempty"`
-	Status       string                 `json:"status"`
-	CreatedBy    string                 `json:"created_by,omitempty"`
-	CreatedAt    string                 `json:"created_at"`
-	UpdatedAt    string                 `json:"updated_at"`
+	ModelVersion           string                 `json:"model_version"`
+	ModelID                string                 `json:"model_id"`
+	ModelName              string                 `json:"model_name,omitempty"`
+	ModelType              string                 `json:"model_type,omitempty"`
+	TenantID               string                 `json:"tenant_id"`
+	FeatureSetID           string                 `json:"feature_set_id"`
+	ArtifactURI            string                 `json:"artifact_uri"`
+	ArtifactManifestURI    string                 `json:"artifact_manifest_uri,omitempty"`
+	PackageID              string                 `json:"package_id,omitempty"`
+	PackageSHA256          string                 `json:"package_sha256,omitempty"`
+	ArtifactManifestSHA256 string                 `json:"artifact_manifest_sha256,omitempty"`
+	EvaluationSHA256       string                 `json:"evaluation_sha256,omitempty"`
+	ExplanationSHA256      string                 `json:"explanation_sha256,omitempty"`
+	GraphSnapshotID        string                 `json:"graph_snapshot_id,omitempty"`
+	GraphSnapshotSHA256    string                 `json:"graph_snapshot_sha256,omitempty"`
+	SigningKeyID           string                 `json:"signing_key_id,omitempty"`
+	Compatibility          map[string]interface{} `json:"compatibility,omitempty"`
+	Revision               int64                  `json:"revision"`
+	RegistrationSHA256     string                 `json:"registration_request_sha256,omitempty"`
+	Metrics                map[string]interface{} `json:"metrics,omitempty"`
+	Status                 string                 `json:"status"`
+	CreatedBy              string                 `json:"created_by,omitempty"`
+	CreatedAt              string                 `json:"created_at"`
+	UpdatedAt              string                 `json:"updated_at"`
 }
 
 // ModelResponse 模型响应
@@ -734,18 +854,30 @@ func (h *Handler) modelVersionToDTO(mv *model.ModelVersion) *ModelVersionDTO {
 	}
 
 	return &ModelVersionDTO{
-		ModelVersion: mv.ModelVersion,
-		ModelID:      mv.ModelID,
-		ModelName:    mv.ModelName,
-		ModelType:    mv.ModelType,
-		TenantID:     mv.TenantID,
-		FeatureSetID: mv.FeatureSetID,
-		ArtifactURI:  mv.ArtifactURI,
-		Metrics:      metrics,
-		Status:       mv.Status,
-		CreatedBy:    mv.CreatedBy,
-		CreatedAt:    mv.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    mv.UpdatedAt.Format(time.RFC3339),
+		ModelVersion:           mv.ModelVersion,
+		ModelID:                mv.ModelID,
+		ModelName:              mv.ModelName,
+		ModelType:              mv.ModelType,
+		TenantID:               mv.TenantID,
+		FeatureSetID:           mv.FeatureSetID,
+		ArtifactURI:            mv.ArtifactURI,
+		ArtifactManifestURI:    mv.ArtifactManifestURI,
+		PackageID:              mv.PackageID,
+		PackageSHA256:          mv.PackageSHA256,
+		ArtifactManifestSHA256: mv.ArtifactManifestSHA256,
+		EvaluationSHA256:       mv.EvaluationSHA256,
+		ExplanationSHA256:      mv.ExplanationSHA256,
+		GraphSnapshotID:        mv.GraphSnapshotID,
+		GraphSnapshotSHA256:    mv.GraphSnapshotSHA256,
+		SigningKeyID:           mv.SigningKeyID,
+		Compatibility:          mv.Compatibility,
+		Revision:               mv.Revision,
+		RegistrationSHA256:     mv.RegistrationRequestSHA256,
+		Metrics:                metrics,
+		Status:                 mv.Status,
+		CreatedBy:              mv.CreatedBy,
+		CreatedAt:              mv.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:              mv.UpdatedAt.Format(time.RFC3339),
 	}
 }
 

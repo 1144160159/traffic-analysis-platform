@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -38,6 +39,11 @@ func TestForensicsTaskCommandAtomicEphemeralPostgres(t *testing.T) {
 	}
 	defer cleanupForensicsTaskFixture(t, db, tenantID)
 	repo := NewTaskRepository(client, zap.NewNop())
+	mismatchedTask := integrationTask(t, tenantID, "mismatched-authority")
+	mismatchedMeta := integrationTaskMeta(tenantID+"-other", ForensicsTaskCreateAction, "forensics-create-cross-0001", 0)
+	if _, err := repo.CreateAtomic(ctx, mismatchedTask, mismatchedMeta); !commonerrors.IsCode(err, commonerrors.ErrCodePermissionDenied) {
+		t.Fatalf("expected create tenant authority rejection, got %v", err)
+	}
 
 	taskA := integrationTask(t, tenantID, "cancel-and-archive")
 	createA := integrationTaskMeta(tenantID, ForensicsTaskCreateAction, "forensics-create-a-00000001", 0)
@@ -114,6 +120,30 @@ func TestForensicsTaskCommandAtomicEphemeralPostgres(t *testing.T) {
 	if err := repo.Fail(ctx, taskC.TaskID, "integration failure"); err != nil {
 		t.Fatal(err)
 	}
+	paramsBeforeRetry := append([]byte(nil), taskC.ParamsJSON...)
+	retryC := integrationTaskMeta(tenantID, ForensicsTaskRetryAction, "forensics-retry-c-00000001", 3)
+	retriedC, err := repo.RetryForTenant(ctx, tenantID, taskC.TaskID, retryC)
+	if err != nil || retriedC.Status != TaskStatusQueued || retriedC.Revision != 4 {
+		t.Fatalf("retry C=%+v err=%v", retriedC, err)
+	}
+	retryReplay, err := repo.RetryForTenant(ctx, tenantID, taskC.TaskID, retryC)
+	if err != nil || !retryReplay.Replayed || retryReplay.EventID != retriedC.EventID {
+		t.Fatalf("retry replay=%+v err=%v", retryReplay, err)
+	}
+	reloadedC, err := repo.GetByIDForTenant(ctx, tenantID, taskC.TaskID)
+	if err != nil {
+		t.Fatalf("reload retried task: %v", err)
+	}
+	var beforeParams, afterParams map[string]interface{}
+	beforeErr := json.Unmarshal(paramsBeforeRetry, &beforeParams)
+	afterErr := json.Unmarshal(reloadedC.ParamsJSON, &afterParams)
+	if beforeErr != nil || afterErr != nil || !reflect.DeepEqual(beforeParams, afterParams) {
+		t.Fatalf("retry rewrote frozen request: params=%s before_err=%v after_err=%v", reloadedC.ParamsJSON, beforeErr, afterErr)
+	}
+	retryCollision := integrationTaskMeta(tenantID, ForensicsTaskRetryAction, retryC.IdempotencyKey, 2)
+	if _, err := repo.RetryForTenant(ctx, tenantID, taskC.TaskID, retryCollision); !commonerrors.IsCode(err, commonerrors.ErrCodeDedupConflict) {
+		t.Fatalf("expected retry idempotency conflict, got %v", err)
+	}
 
 	taskD := integrationTask(t, tenantID, "status-recover")
 	if _, err := repo.CreateAtomic(ctx, taskD, integrationTaskMeta(tenantID, ForensicsTaskCreateAction, "forensics-create-d-00000001", 0)); err != nil {
@@ -145,16 +175,39 @@ func TestForensicsTaskCommandAtomicEphemeralPostgres(t *testing.T) {
 		Scan(&tasks, &archivedTasks, &history, &outbox, &requests, &audits); err != nil {
 		t.Fatal(err)
 	}
-	if tasks != 4 || archivedTasks != 1 || history != 13 || outbox != 13 || requests != 13 || audits != 13 {
+	if tasks != 4 || archivedTasks != 1 || history != 14 || outbox != 14 || requests != 14 || audits != 14 {
 		t.Fatalf("atomic counts tasks=%d archived=%d history=%d outbox=%d requests=%d audits=%d",
 			tasks, archivedTasks, history, outbox, requests, audits)
+	}
+	var frozenHistory, frozenOutbox int
+	if err := db.QueryRowContext(ctx, `SELECT
+		(SELECT count(*) FROM forensics_task_history
+		 WHERE tenant_id=$1 AND operation='create'
+		   AND snapshot->'params'->>'purpose'='integration verification'
+		   AND snapshot->'params'->>'retention_policy'='forensics-standard'
+		   AND snapshot->'params'->'permission_snapshot' ? 'pcap:write'
+		   AND length(snapshot->>'params_sha256')=64),
+		(SELECT count(*) FROM forensics_task_outbox
+		 WHERE tenant_id=$1 AND event_type='traffic.forensics.task.v1.create'
+		   AND payload->'task'->'params'->>'purpose'='integration verification'
+		   AND payload->'task'->'params'->'probe_ids' ? 'probe-a')`, tenantID).
+		Scan(&frozenHistory, &frozenOutbox); err != nil {
+		t.Fatal(err)
+	}
+	if frozenHistory != 4 || frozenOutbox != 4 {
+		t.Fatalf("frozen request absent from atomic facts: history=%d outbox=%d", frozenHistory, frozenOutbox)
 	}
 }
 
 func integrationTask(t *testing.T, tenantID, marker string) *Task {
 	t.Helper()
 	params, err := json.Marshal(map[string]interface{}{
-		"tenant_id": tenantID, "marker": marker, "start_time": int64(1), "end_time": int64(2),
+		"tenant_id": tenantID, "marker": marker,
+		"src_ip": "10.0.0.1", "dst_ip": "10.0.0.2", "src_port": 41000, "dst_port": 443, "protocol": 6,
+		"start_time": int64(1), "end_time": int64(2), "probe_ids": []string{"probe-a"},
+		"alert_ids": []string{"alert-a"}, "case_ids": []string{"case-a"},
+		"purpose": "integration verification", "permission_snapshot": []string{"pcap:read", "pcap:write"},
+		"retention_policy": "forensics-standard", "restoration_contract_version": 1,
 	})
 	if err != nil {
 		t.Fatal(err)

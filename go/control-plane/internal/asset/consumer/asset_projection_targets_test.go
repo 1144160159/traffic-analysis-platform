@@ -11,9 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/config"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/sourcequality"
 	graphNebula "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/nebula"
 )
 
@@ -72,6 +74,62 @@ func TestOpenSearchAssetProjectionUsesDeterministicIDAndExternalVersion(t *testi
 	}
 	if string(requestBody) != string(first) {
 		t.Fatal("OpenSearch body differs from deterministic projection")
+	}
+}
+
+func TestClickHouseAssetProjectionInsertReplayAndConflict(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	target, err := NewClickHouseAssetProjection(
+		db, "traffic.source_asset_facts_v1", "asset-projection-v2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := validAssetProjectionEvent()
+	event.RawPayload, _ = json.Marshal(event)
+	event.SourceTopic = "asset.events.v2"
+	event.SourcePartition = 2
+	event.SourceOffset = 17
+	event.SourceTimestamp = event.Asset.LastSeen.Add(time.Second).UnixMilli()
+	event.SourceSHA256 = sourcequality.HashSource(event.RawPayload)
+	projection, err := target.Projection(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fact assetSourceFact
+	if err := json.Unmarshal(projection, &fact); err != nil {
+		t.Fatal(err)
+	}
+
+	mock.ExpectQuery(`SELECT count\(\)`).WithArgs(fact.ProjectionIdentity).
+		WillReturnRows(sqlmock.NewRows([]string{"count", "version", "hash"}).
+			AddRow(0, 0, ""))
+	mock.ExpectExec(`INSERT INTO traffic.source_asset_facts_v1`).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	if err := target.Apply(context.Background(), event, projection); err != nil {
+		t.Fatal(err)
+	}
+
+	mock.ExpectQuery(`SELECT count\(\)`).WithArgs(fact.ProjectionIdentity).
+		WillReturnRows(sqlmock.NewRows([]string{"count", "version", "hash"}).
+			AddRow(1, fact.SourceVersion, fact.ProjectionHash))
+	if err := target.Apply(context.Background(), event, projection); err != nil {
+		t.Fatalf("same-version same-hash replay must be idempotent: %v", err)
+	}
+
+	mock.ExpectQuery(`SELECT count\(\)`).WithArgs(fact.ProjectionIdentity).
+		WillReturnRows(sqlmock.NewRows([]string{"count", "version", "hash"}).
+			AddRow(1, fact.SourceVersion, strings.Repeat("f", 64)))
+	if err := target.Apply(context.Background(), event, projection); err == nil ||
+		!strings.Contains(err.Error(), "hash conflict") {
+		t.Fatalf("same-version different-hash projection must fail: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
 	}
 }
 

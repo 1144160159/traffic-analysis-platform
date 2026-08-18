@@ -9,9 +9,11 @@
 package converter
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -22,6 +24,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/cutter"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/index"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/repository"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/restoration"
 	trafficv1 "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 )
 
@@ -68,27 +71,62 @@ var (
 
 // CutRequestParams API 裁剪请求参数
 type CutRequestParams struct {
-	TenantID     string `json:"tenant_id,omitempty"`
-	AssetID      string `json:"asset_id,omitempty"`
-	AlertID      string `json:"alert_id,omitempty"`
-	CampaignID   string `json:"campaign_id,omitempty"`
-	BaselineID   string `json:"baseline_id,omitempty"`
-	EvidenceID   string `json:"evidence_id,omitempty"`
-	EvidenceType string `json:"evidence_type,omitempty"`
-	ProbeID      string `json:"probe_id,omitempty"`
-	SrcIP        string `json:"src_ip,omitempty"`
-	DstIP        string `json:"dst_ip,omitempty"`
-	SrcPort      uint16 `json:"src_port,omitempty"`
-	DstPort      uint16 `json:"dst_port,omitempty"`
-	Protocol     uint8  `json:"protocol,omitempty"`
-	CommunityID  string `json:"community_id,omitempty"`
-	StartTime    int64  `json:"start_time"`
-	EndTime      int64  `json:"end_time"`
-	MaxPackets   int64  `json:"max_packets,omitempty"`
+	TenantID                   string                     `json:"tenant_id,omitempty"`
+	AssetID                    string                     `json:"asset_id,omitempty"`
+	AlertID                    string                     `json:"alert_id,omitempty"`
+	AlertIDs                   []string                   `json:"alert_ids,omitempty"`
+	CaseID                     string                     `json:"case_id,omitempty"`
+	CaseIDs                    []string                   `json:"case_ids,omitempty"`
+	CampaignID                 string                     `json:"campaign_id,omitempty"`
+	BaselineID                 string                     `json:"baseline_id,omitempty"`
+	EvidenceID                 string                     `json:"evidence_id,omitempty"`
+	EvidenceType               string                     `json:"evidence_type,omitempty"`
+	ProbeID                    string                     `json:"probe_id,omitempty"`
+	ProbeIDs                   []string                   `json:"probe_ids,omitempty"`
+	SrcIP                      string                     `json:"src_ip,omitempty"`
+	DstIP                      string                     `json:"dst_ip,omitempty"`
+	SrcPort                    uint16                     `json:"src_port,omitempty"`
+	DstPort                    uint16                     `json:"dst_port,omitempty"`
+	Protocol                   uint8                      `json:"protocol,omitempty"`
+	CommunityID                string                     `json:"community_id,omitempty"`
+	StartTime                  int64                      `json:"start_time"`
+	EndTime                    int64                      `json:"end_time"`
+	MaxPackets                 int64                      `json:"max_packets,omitempty"`
+	Purpose                    string                     `json:"purpose,omitempty"`
+	RetentionPolicy            string                     `json:"retention_policy,omitempty"`
+	RestorationContractVersion int                        `json:"restoration_contract_version,omitempty"`
+	Restorations               []RestorationRequestParams `json:"restorations,omitempty"`
+}
+
+type RestorationRequestParams struct {
+	RequestID     string                      `json:"request_id"`
+	SessionID     string                      `json:"session_id"`
+	CommunityID   string                      `json:"community_id"`
+	FlowIDs       []string                    `json:"flow_ids"`
+	FlowID        string                      `json:"flow_id"`
+	Tuple         restoration.FiveTuple       `json:"five_tuple"`
+	Direction     string                      `json:"direction"`
+	ProfileID     string                      `json:"protocol_profile_id"`
+	FTPData       *restoration.FTPDataRequest `json:"ftp_data,omitempty"`
+	FTPTLSEnabled bool                        `json:"ftp_tls_enabled"`
 }
 
 // Validate 验证请求参数（修复版：完整验证）
 func (p *CutRequestParams) Validate() error {
+	p.AlertIDs = canonicalRequestIDs(append(p.AlertIDs, p.AlertID))
+	p.CaseIDs = canonicalRequestIDs(append(p.CaseIDs, p.CaseID))
+	p.ProbeIDs = canonicalRequestIDs(append(p.ProbeIDs, p.ProbeID))
+	if p.AlertID == "" && len(p.AlertIDs) > 0 {
+		p.AlertID = p.AlertIDs[0]
+	}
+	if p.CaseID == "" && len(p.CaseIDs) > 0 {
+		p.CaseID = p.CaseIDs[0]
+	}
+	if p.ProbeID == "" && len(p.ProbeIDs) > 0 {
+		p.ProbeID = p.ProbeIDs[0]
+	}
+	p.Purpose = strings.TrimSpace(p.Purpose)
+	p.RetentionPolicy = strings.TrimSpace(p.RetentionPolicy)
 	if p.AssetID != "" {
 		p.AssetID = strings.TrimSpace(p.AssetID)
 		if _, err := uuid.Parse(p.AssetID); err != nil {
@@ -97,12 +135,48 @@ func (p *CutRequestParams) Validate() error {
 	}
 	for name, value := range map[string]*string{
 		"alert_id": &p.AlertID, "campaign_id": &p.CampaignID, "baseline_id": &p.BaselineID,
-		"evidence_id": &p.EvidenceID, "evidence_type": &p.EvidenceType,
+		"case_id": &p.CaseID, "evidence_id": &p.EvidenceID, "evidence_type": &p.EvidenceType,
+		"purpose": &p.Purpose, "retention_policy": &p.RetentionPolicy,
 	} {
 		*value = strings.TrimSpace(*value)
 		if len(*value) > MaxReferenceIDLength || strings.ContainsAny(*value, "\x00\r\n") {
 			return errors.Newf(errors.ErrCodeInvalidParameter, "%s is invalid", name)
 		}
+	}
+	for name, values := range map[string][]string{"alert_ids": p.AlertIDs, "case_ids": p.CaseIDs, "probe_ids": p.ProbeIDs} {
+		if len(values) > 100 {
+			return errors.Newf(errors.ErrCodeInvalidParameter, "%s cannot contain more than 100 values", name)
+		}
+		for _, value := range values {
+			if len(value) > MaxReferenceIDLength || strings.ContainsAny(value, "\x00\r\n") {
+				return errors.Newf(errors.ErrCodeInvalidParameter, "%s contains an invalid value", name)
+			}
+		}
+	}
+	for _, probeID := range p.ProbeIDs {
+		if len(probeID) > MaxProbeIDLength || !probeIDPattern.MatchString(probeID) {
+			return errors.New(errors.ErrCodeInvalidParameter,
+				"invalid probe_ids value (must be 3-64 alphanumeric, underscore, or hyphen characters)")
+		}
+	}
+	if p.RestorationContractVersion != 0 && p.RestorationContractVersion != 1 {
+		return errors.New(errors.ErrCodeInvalidParameter, "restoration_contract_version must be 1")
+	}
+	if len(p.Restorations) > 100 {
+		return errors.New(errors.ErrCodeInvalidParameter, "restorations cannot contain more than 100 values")
+	}
+	restorationIDs := make(map[string]struct{}, len(p.Restorations))
+	for index := range p.Restorations {
+		restorationRequest := &p.Restorations[index]
+		restorationRequest.RequestID = strings.TrimSpace(restorationRequest.RequestID)
+		restorationRequest.FlowIDs = canonicalRequestIDs(restorationRequest.FlowIDs)
+		if restorationRequest.RequestID == "" || len(restorationRequest.RequestID) > MaxReferenceIDLength || strings.ContainsAny(restorationRequest.RequestID, "\x00\r\n") {
+			return errors.New(errors.ErrCodeInvalidParameter, "restoration request_id is invalid")
+		}
+		if _, duplicate := restorationIDs[restorationRequest.RequestID]; duplicate {
+			return errors.New(errors.ErrCodeInvalidParameter, "restoration request_id must be unique")
+		}
+		restorationIDs[restorationRequest.RequestID] = struct{}{}
 	}
 	// ========== 1. 时间戳合法性验证 ==========
 	now := time.Now().UnixMilli()
@@ -240,7 +314,7 @@ func (p *CutRequestParams) Validate() error {
 	// 至少需要指定一个过滤条件
 	hasFilter := p.SrcIP != "" || p.DstIP != "" ||
 		p.SrcPort != 0 || p.DstPort != 0 ||
-		p.Protocol != 0 || p.CommunityID != "" || p.ProbeID != ""
+		p.Protocol != 0 || p.CommunityID != "" || len(p.ProbeIDs) > 0
 
 	if !hasFilter {
 		return errors.New(errors.ErrCodeInvalidParameter,
@@ -248,6 +322,24 @@ func (p *CutRequestParams) Validate() error {
 	}
 
 	return nil
+}
+
+func canonicalRequestIDs(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		if _, exists := seen[value]; exists {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	sort.Strings(result)
+	return result
 }
 
 // ToCutQuery 转换为内部裁剪查询
@@ -301,28 +393,32 @@ func (p *CutRequestParams) ToIndexQuery() *index.IndexQuery {
 
 // JobResponse 任务响应
 type JobResponse struct {
-	JobID             string                 `json:"job_id"`
-	Status            string                 `json:"status"`
-	Progress          int                    `json:"progress"`
-	TotalPackets      int64                  `json:"total_packets"`
-	TotalBytes        int64                  `json:"total_bytes"`
-	FilesScanned      int                    `json:"files_scanned"`
-	ResultFileKey     string                 `json:"result_file_key,omitempty"`
-	SHA256            string                 `json:"sha256,omitempty"`
-	DownloadURL       string                 `json:"download_url,omitempty"`
-	ExpiresAt         *int64                 `json:"expires_at,omitempty"`
-	ErrorMessage      string                 `json:"error_message,omitempty"`
-	Params            map[string]interface{} `json:"params,omitempty"`
-	CreatedAt         int64                  `json:"created_at"`
-	UpdatedAt         int64                  `json:"updated_at"`
-	CompletedAt       *int64                 `json:"completed_at,omitempty"`
-	Revision          int64                  `json:"revision"`
-	EventID           string                 `json:"event_id,omitempty"`
-	ActionID          string                 `json:"action_id,omitempty"`
-	IdempotencyKey    string                 `json:"idempotency_key,omitempty"`
-	OutboxStatus      string                 `json:"outbox_status,omitempty"`
-	Replayed          bool                   `json:"replayed,omitempty"`
-	CompatibilityMode bool                   `json:"compatibility_mode,omitempty"`
+	JobID               string                 `json:"job_id"`
+	Status              string                 `json:"status"`
+	Progress            int                    `json:"progress"`
+	TotalPackets        int64                  `json:"total_packets"`
+	TotalBytes          int64                  `json:"total_bytes"`
+	FilesScanned        int                    `json:"files_scanned"`
+	ResultFileKey       string                 `json:"result_file_key,omitempty"`
+	SHA256              string                 `json:"sha256,omitempty"`
+	DownloadURL         string                 `json:"download_url,omitempty"`
+	ExpiresAt           *int64                 `json:"expires_at,omitempty"`
+	ErrorMessage        string                 `json:"error_message,omitempty"`
+	Params              map[string]interface{} `json:"params,omitempty"`
+	CreatedAt           int64                  `json:"created_at"`
+	UpdatedAt           int64                  `json:"updated_at"`
+	CompletedAt         *int64                 `json:"completed_at,omitempty"`
+	Revision            int64                  `json:"revision"`
+	EventID             string                 `json:"event_id,omitempty"`
+	ActionID            string                 `json:"action_id,omitempty"`
+	IdempotencyKey      string                 `json:"idempotency_key,omitempty"`
+	OutboxStatus        string                 `json:"outbox_status,omitempty"`
+	Replayed            bool                   `json:"replayed,omitempty"`
+	CompatibilityMode   bool                   `json:"compatibility_mode,omitempty"`
+	ManifestSHA256      string                 `json:"manifest_sha256,omitempty"`
+	Manifest            json.RawMessage        `json:"manifest,omitempty"`
+	ResultObjectVersion string                 `json:"result_object_version,omitempty"`
+	RetentionUntil      *int64                 `json:"retention_until,omitempty"`
 }
 
 // FromTask 从 Task 实体转换
@@ -486,7 +582,7 @@ func FileMetadataFromProto(meta *trafficv1.PcapIndexMeta) *index.FileMetadata {
 
 // TaskStatusToProtoStatus 转换任务状态到 Proto 状态
 func TaskStatusToProtoStatus(status string) string {
-	// Proto 中定义的状态: "queued" | "processing" | "completed" | "failed"
+	// 版本化任务保留 partial，以免丢失不完整还原证据的终态语义。
 	switch status {
 	case repository.TaskStatusQueued:
 		return "queued"
@@ -494,6 +590,8 @@ func TaskStatusToProtoStatus(status string) string {
 		return "processing"
 	case repository.TaskStatusCompleted:
 		return "completed"
+	case repository.TaskStatusPartial:
+		return "partial"
 	case repository.TaskStatusFailed:
 		return "failed"
 	case repository.TaskStatusCancelled:
@@ -512,6 +610,8 @@ func ProtoStatusToTaskStatus(protoStatus string) string {
 		return repository.TaskStatusProcessing
 	case "completed":
 		return repository.TaskStatusCompleted
+	case "partial":
+		return repository.TaskStatusPartial
 	case "failed":
 		return repository.TaskStatusFailed
 	default:

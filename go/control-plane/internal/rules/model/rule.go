@@ -25,22 +25,40 @@ import (
 type RuleType string
 
 const (
-	RuleTypeThreshold   RuleType = "threshold"   // 阈值规则
-	RuleTypeAnomaly     RuleType = "anomaly"     // 异常规则
-	RuleTypeSignature   RuleType = "signature"   // 特征规则
-	RuleTypeCorrelation RuleType = "correlation" // 关联规则
-	RuleTypeML          RuleType = "ml"          // 机器学习规则
-	RuleTypeCustom      RuleType = "custom"      // 自定义规则
+	RuleTypeThreshold       RuleType = "threshold"        // 阈值规则
+	RuleTypeAnomaly         RuleType = "anomaly"          // 异常规则
+	RuleTypeSignature       RuleType = "signature"        // 特征规则
+	RuleTypeCorrelation     RuleType = "correlation"      // 关联规则
+	RuleTypeML              RuleType = "ml"               // 机器学习规则
+	RuleTypeCustom          RuleType = "custom"           // 自定义规则
+	RuleTypeBlacklist       RuleType = "blacklist"        // IP/域名黑名单
+	RuleTypePortScan        RuleType = "port_scan"        // 端口扫描
+	RuleTypeBruteForce      RuleType = "brute_force"      // 暴力破解
+	RuleTypeDataExfil       RuleType = "data_exfil"       // 数据外泄
+	RuleTypeDGA             RuleType = "dga"              // DGA 域名
+	RuleTypeTunnel          RuleType = "tunnel"           // 隧道流量
+	RuleTypeC2              RuleType = "c2"               // C2 通信
+	RuleTypeProtocolAnomaly RuleType = "protocol_anomaly" // 协议异常
+	RuleTypeTLSFingerprint  RuleType = "tls_fingerprint"  // TLS 指纹
 )
 
 // ValidRuleTypes 有效的规则类型
 var ValidRuleTypes = map[RuleType]bool{
-	RuleTypeThreshold:   true,
-	RuleTypeAnomaly:     true,
-	RuleTypeSignature:   true,
-	RuleTypeCorrelation: true,
-	RuleTypeML:          true,
-	RuleTypeCustom:      true,
+	RuleTypeThreshold:       true,
+	RuleTypeAnomaly:         true,
+	RuleTypeSignature:       true,
+	RuleTypeCorrelation:     true,
+	RuleTypeML:              true,
+	RuleTypeCustom:          true,
+	RuleTypeBlacklist:       true,
+	RuleTypePortScan:        true,
+	RuleTypeBruteForce:      true,
+	RuleTypeDataExfil:       true,
+	RuleTypeDGA:             true,
+	RuleTypeTunnel:          true,
+	RuleTypeC2:              true,
+	RuleTypeProtocolAnomaly: true,
+	RuleTypeTLSFingerprint:  true,
 }
 
 // IsValidRuleType 检查规则类型是否有效

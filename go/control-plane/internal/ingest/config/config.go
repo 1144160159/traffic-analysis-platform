@@ -4,28 +4,30 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	kafkaCommon "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 )
 
 type Config struct {
-	Server   ServerConfig
-	HTTP     HTTPConfig
-	Kafka    KafkaConfig
-	Redis    RedisConfig
-	Postgres PostgresConfig
-	Auth     AuthConfig
-	Metrics  MetricsConfig
-	Handler  HandlerConfig
-	Quota    QuotaConfig
-	Dedup    DedupConfig
-	Probe    ProbeConfig
-	Audit    AuditConfig
-	Token    TokenConfig
-	OIDC     OIDCConfig
-	JWT      JWTConfig
-	API      APIConfig
+	Server       ServerConfig
+	HTTP         HTTPConfig
+	Kafka        KafkaConfig
+	Redis        RedisConfig
+	Postgres     PostgresConfig
+	Auth         AuthConfig
+	Metrics      MetricsConfig
+	Handler      HandlerConfig
+	Quota        QuotaConfig
+	Dedup        DedupConfig
+	Probe        ProbeConfig
+	Audit        AuditConfig
+	Token        TokenConfig
+	OIDC         OIDCConfig
+	JWT          JWTConfig
+	API          APIConfig
+	ProbeControl ProbeControlPipelineConfig
 }
 
 type ServerConfig struct {
@@ -33,6 +35,13 @@ type ServerConfig struct {
 	TLSCertFile           string        `env:"TLS_CERT_FILE"`
 	TLSKeyFile            string        `env:"TLS_KEY_FILE"`
 	TLSCAFile             string        `env:"TLS_CA_FILE"`
+	TLSRotationEnabled    bool          `env:"TLS_ROTATION_V1_ENABLED" envDefault:"false"`
+	TLSManifestFile       string        `env:"TLS_GENERATION_MANIFEST_FILE"`
+	TLSCRLFile            string        `env:"TLS_CRL_FILE"`
+	TLSServerDNSNames     []string      `env:"TLS_SERVER_DNS_NAMES" envSeparator:","`
+	TLSClientDNSNames     []string      `env:"TLS_CLIENT_DNS_NAMES" envSeparator:","`
+	TLSReloadInterval     time.Duration `env:"TLS_RELOAD_INTERVAL" envDefault:"30s"`
+	TLSMinimumRemaining   time.Duration `env:"TLS_MINIMUM_REMAINING" envDefault:"720h"`
 	MaxRecvMsgSize        int           `env:"GRPC_MAX_RECV_MSG_SIZE" envDefault:"67108864"`
 	MaxSendMsgSize        int           `env:"GRPC_MAX_SEND_MSG_SIZE" envDefault:"67108864"`
 	KeepaliveTime         time.Duration `env:"GRPC_KEEPALIVE_TIME" envDefault:"5m"`
@@ -48,26 +57,28 @@ type HTTPConfig struct {
 	ReadTimeout    time.Duration `env:"HTTP_READ_TIMEOUT" envDefault:"30s"`
 	WriteTimeout   time.Duration `env:"HTTP_WRITE_TIMEOUT" envDefault:"30s"`
 	IdleTimeout    time.Duration `env:"HTTP_IDLE_TIMEOUT" envDefault:"120s"`
-	AllowedOrigins []string      `env:"HTTP_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
+	AllowedOrigins []string      `env:"HTTP_ALLOWED_ORIGINS" envSeparator:"," envDefault:"http://localhost:5173,http://127.0.0.1:5173,http://localhost:25173,http://127.0.0.1:25173"`
 	AllowedMethods []string      `env:"HTTP_ALLOWED_METHODS" envSeparator:"," envDefault:"GET,POST,PUT,DELETE,OPTIONS"`
 }
 
 type KafkaConfig struct {
-	Brokers           []string      `env:"KAFKA_BROKERS" envSeparator:","`
-	FlowTopic         string        `env:"KAFKA_FLOW_TOPIC" envDefault:"flow.events.v1"`
-	PcapTopic         string        `env:"KAFKA_PCAP_TOPIC" envDefault:"pcap.index.v1"`
-	SessionTopic      string        `env:"KAFKA_SESSION_TOPIC" envDefault:"session.events.v1"`
-	DLQTopic          string        `env:"KAFKA_DLQ_TOPIC" envDefault:"dlq.ingest-gateway"`
-	ProbeControlTopic string        `env:"KAFKA_PROBE_CONTROL_TOPIC" envDefault:"probe.control.v2"`
-	ProbeAckTopic     string        `env:"KAFKA_PROBE_ACK_TOPIC" envDefault:"probe.acks.v2"`
-	ProbeControlGroup string        `env:"KAFKA_PROBE_CONTROL_GROUP" envDefault:"ingest-gateway-probe-control-v2"`
-	BatchSize         int           `env:"KAFKA_BATCH_SIZE" envDefault:"1000"`
-	BatchTimeout      time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
-	Compression       string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
-	RequiredAcks      string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
-	MaxRetries        int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
-	EnableIdempotence bool          `env:"KAFKA_ENABLE_IDEMPOTENCE" envDefault:"true"`
-	Security          kafkaCommon.SecurityConfig
+	Brokers                  []string      `env:"KAFKA_BROKERS" envSeparator:","`
+	FlowTopic                string        `env:"KAFKA_FLOW_TOPIC" envDefault:"flow.events.v1"`
+	PcapTopic                string        `env:"KAFKA_PCAP_TOPIC" envDefault:"pcap.index.v1"`
+	SessionTopic             string        `env:"KAFKA_SESSION_TOPIC" envDefault:"session.events.v1"`
+	BindingTopic             string        `env:"KAFKA_ASSET_BINDING_TOPIC" envDefault:"asset.bindings.v1"`
+	DLQTopic                 string        `env:"KAFKA_DLQ_TOPIC" envDefault:"dlq.v1"`
+	ProbeControlTopic        string        `env:"KAFKA_PROBE_CONTROL_TOPIC" envDefault:"probe.control.v2"`
+	ProbeAckTopic            string        `env:"KAFKA_PROBE_ACK_TOPIC" envDefault:"probe.acks.v2"`
+	ProbeControlGroup        string        `env:"KAFKA_PROBE_CONTROL_GROUP" envDefault:"ingest-gateway-probe-control-v2"`
+	ProbeGroupReadinessTopic string        `env:"KAFKA_PROBE_GROUP_READINESS_TOPIC" envDefault:"probe.group-readiness.v1"`
+	BatchSize                int           `env:"KAFKA_BATCH_SIZE" envDefault:"1000"`
+	BatchTimeout             time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
+	Compression              string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
+	RequiredAcks             string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
+	MaxRetries               int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
+	EnableIdempotence        bool          `env:"KAFKA_ENABLE_IDEMPOTENCE" envDefault:"true"`
+	Security                 kafkaCommon.SecurityConfig
 }
 
 type RedisConfig struct {
@@ -152,13 +163,18 @@ type MetricsConfig struct {
 }
 
 type HandlerConfig struct {
-	MaxBatchSize       int           `env:"MAX_BATCH_SIZE" envDefault:"10000"`
-	MaxEventSize       int           `env:"MAX_EVENT_SIZE" envDefault:"65536"`
-	StreamBufferSize   int           `env:"STREAM_BUFFER_SIZE" envDefault:"1000"`
-	HeartbeatInterval  time.Duration `env:"HEARTBEAT_INTERVAL" envDefault:"30s"`
-	EnableDLQ          bool          `env:"ENABLE_DLQ" envDefault:"true"`
-	EnableDedup        bool          `env:"ENABLE_DEDUP" envDefault:"true"`
-	ProbeStatusTimeout time.Duration `env:"PROBE_STATUS_TIMEOUT" envDefault:"5m"`
+	MaxBatchSize         int           `env:"MAX_BATCH_SIZE" envDefault:"10000"`
+	MaxEventSize         int           `env:"MAX_EVENT_SIZE" envDefault:"65536"`
+	StreamBufferSize     int           `env:"STREAM_BUFFER_SIZE" envDefault:"1000"`
+	HeartbeatInterval    time.Duration `env:"HEARTBEAT_INTERVAL" envDefault:"30s"`
+	EnableDLQ            bool          `env:"ENABLE_DLQ" envDefault:"true"`
+	EnableDedup          bool          `env:"ENABLE_DEDUP" envDefault:"true"`
+	ProbeStatusTimeout   time.Duration `env:"PROBE_STATUS_TIMEOUT" envDefault:"5m"`
+	FlowWriterEnabled    bool          `env:"M02_FLOW_WRITER_V1_ENABLED" envDefault:"false"`
+	PcapWriterEnabled    bool          `env:"M02_PCAP_WRITER_V1_ENABLED" envDefault:"false"`
+	BindingWriterEnabled bool          `env:"M06_ASSET_BINDING_WRITER_V1_ENABLED" envDefault:"false"`
+	CanaryTenantID       string        `env:"M02_CANARY_TENANT_ID"`
+	CanaryProbeIDs       []string      `env:"M02_CANARY_PROBE_IDS" envSeparator:","`
 }
 
 type QuotaConfig struct {
@@ -171,6 +187,7 @@ type QuotaConfig struct {
 	ProbeRPS             float64 `env:"RATE_LIMIT_PROBE_RPS" envDefault:"5000"`
 	ProbeBurst           int     `env:"RATE_LIMIT_PROBE_BURST" envDefault:"10000"`
 	LocalFallbackEnabled bool    `env:"RATE_LIMIT_LOCAL_FALLBACK" envDefault:"true"`
+	FailClosed           bool    `env:"RATE_LIMIT_FAIL_CLOSED" envDefault:"true"`
 }
 
 type DedupConfig struct {
@@ -229,10 +246,16 @@ type APIConfig struct {
 	ReadTimeout    time.Duration `env:"API_READ_TIMEOUT" envDefault:"30s"`
 	WriteTimeout   time.Duration `env:"API_WRITE_TIMEOUT" envDefault:"30s"`
 	IdleTimeout    time.Duration `env:"API_IDLE_TIMEOUT" envDefault:"120s"`
-	AllowedOrigins []string      `env:"API_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
+	AllowedOrigins []string      `env:"API_ALLOWED_ORIGINS" envSeparator:"," envDefault:"http://localhost:5173,http://127.0.0.1:5173,http://localhost:25173,http://127.0.0.1:25173"`
 }
 
 func (c *Config) SetDefaults() {
+	if c.Server.TLSReloadInterval == 0 {
+		c.Server.TLSReloadInterval = DefaultTLSReloadInterval
+	}
+	if c.Server.TLSMinimumRemaining == 0 {
+		c.Server.TLSMinimumRemaining = DefaultTLSMinimumRemaining
+	}
 
 	if c.Kafka.FlowTopic == "" {
 		c.Kafka.FlowTopic = TopicFlowEvents
@@ -242,6 +265,9 @@ func (c *Config) SetDefaults() {
 	}
 	if c.Kafka.PcapTopic == "" {
 		c.Kafka.PcapTopic = TopicPcapIndex
+	}
+	if c.Kafka.BindingTopic == "" {
+		c.Kafka.BindingTopic = TopicAssetBindings
 	}
 	if c.Kafka.DLQTopic == "" {
 		c.Kafka.DLQTopic = TopicDLQ
@@ -482,6 +508,9 @@ func (c *Config) Validate() error {
 	if c.Kafka.PcapTopic == "" {
 		return &ConfigError{Field: "Kafka.PcapTopic", Message: "pcap topic required"}
 	}
+	if c.Kafka.BindingTopic != TopicAssetBindings {
+		return &ConfigError{Field: "Kafka.BindingTopic", Message: "must be asset.bindings.v1"}
+	}
 	if c.Kafka.BatchSize <= 0 || c.Kafka.BatchSize > 100000 {
 		return &ConfigError{Field: "Kafka.BatchSize", Message: "must be between 1 and 100000"}
 	}
@@ -495,6 +524,25 @@ func (c *Config) Validate() error {
 	if c.Handler.MaxEventSize > MaxRecvMsgSize {
 		return &ConfigError{Field: "Handler.MaxEventSize",
 			Message: fmt.Sprintf("exceeds max recv msg size %d", MaxRecvMsgSize)}
+	}
+	if c.Handler.FlowWriterEnabled || c.Handler.PcapWriterEnabled || c.Handler.BindingWriterEnabled {
+		if strings.TrimSpace(c.Handler.CanaryTenantID) == "" {
+			return &ConfigError{Field: "Handler.CanaryTenantID", Message: "is required when a guarded ingest writer is enabled"}
+		}
+		if len(c.Handler.CanaryProbeIDs) == 0 {
+			return &ConfigError{Field: "Handler.CanaryProbeIDs", Message: "is required when a guarded ingest writer is enabled"}
+		}
+		seen := make(map[string]struct{}, len(c.Handler.CanaryProbeIDs))
+		for _, probeID := range c.Handler.CanaryProbeIDs {
+			probeID = strings.TrimSpace(probeID)
+			if probeID == "" || probeID == "*" {
+				return &ConfigError{Field: "Handler.CanaryProbeIDs", Message: "must contain only explicit non-empty probe IDs"}
+			}
+			if _, exists := seen[probeID]; exists {
+				return &ConfigError{Field: "Handler.CanaryProbeIDs", Message: "must not contain duplicate probe IDs"}
+			}
+			seen[probeID] = struct{}{}
+		}
 	}
 
 	if c.Quota.GlobalRPS <= 0 {
@@ -528,6 +576,31 @@ func (c *Config) Validate() error {
 		if c.Server.TLSCAFile == "" {
 			return &ConfigError{Field: "Server.TLSCAFile", Message: "required when mTLS enabled"}
 		}
+	}
+	if c.Server.TLSRotationEnabled {
+		if !c.Auth.RequireMTLS {
+			return &ConfigError{Field: "Server.TLSRotationEnabled", Message: "requires mTLS"}
+		}
+		if c.Server.TLSManifestFile == "" {
+			return &ConfigError{Field: "Server.TLSManifestFile", Message: "required when TLS rotation enabled"}
+		}
+		if c.Server.TLSCRLFile == "" {
+			return &ConfigError{Field: "Server.TLSCRLFile", Message: "required when TLS rotation enabled"}
+		}
+		if len(c.Server.TLSServerDNSNames) == 0 || len(c.Server.TLSClientDNSNames) == 0 {
+			return &ConfigError{Field: "Server.TLSIdentityDNSNames", Message: "explicit server and client DNS identities required when TLS rotation enabled"}
+		}
+		for _, identity := range append(append([]string(nil), c.Server.TLSServerDNSNames...), c.Server.TLSClientDNSNames...) {
+			if strings.TrimSpace(identity) == "" || strings.Contains(identity, "*") {
+				return &ConfigError{Field: "Server.TLSIdentityDNSNames", Message: "wildcard and empty identities are forbidden"}
+			}
+		}
+		if c.Server.TLSReloadInterval <= 0 || c.Server.TLSMinimumRemaining <= 0 {
+			return &ConfigError{Field: "Server.TLSRotationTiming", Message: "reload interval and minimum remaining lifetime must be positive"}
+		}
+	}
+	if err := c.ProbeControl.Validate(c.Kafka); err != nil {
+		return err
 	}
 
 	return nil

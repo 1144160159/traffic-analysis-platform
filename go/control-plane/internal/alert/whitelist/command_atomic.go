@@ -319,6 +319,9 @@ func (r *Repository) UpdateGovernedTx(ctx context.Context, tx *sql.Tx, entryID s
 	if r == nil || r.db == nil || tx == nil || strings.TrimSpace(entryID) == "" {
 		return nil, fmt.Errorf("%w: repository, transaction and entry id are required", ErrCommandMetadata)
 	}
+	if code, message := validateWhitelistUpdateShape(req); code != "" {
+		return nil, &TransitionError{Code: code, Message: message}
+	}
 	actionID, operation, eventType := commandIdentityForUpdate(req)
 	if meta.ActionID == ActionExpire && actionID == ActionDisable {
 		actionID, operation, eventType = ActionExpire, "expire", "traffic.whitelist.v2.EntryExpired"
@@ -707,6 +710,30 @@ func commandIdentityForUpdate(req UpdateRequest) (string, string, string) {
 		return ActionAssign, "assign", "traffic.whitelist.v2.EntryAssigned"
 	}
 	return "", "update", "traffic.whitelist.v2.EntryUpdated"
+}
+
+func validateWhitelistUpdateShape(req UpdateRequest) (string, string) {
+	governanceFields := 0
+	if req.Status != nil || req.ApprovalStatus != nil {
+		governanceFields++
+	}
+	if req.ExpiresAt != nil {
+		governanceFields++
+	}
+	if req.OwnerRole != nil {
+		governanceFields++
+	}
+	if req.Description != nil || req.Scope != nil || req.RiskLevel != nil {
+		return "INVALID_TRANSITION", "description, scope and risk changes require a dedicated draft revision command"
+	}
+	if governanceFields != 1 {
+		return "INVALID_TRANSITION", "one whitelist command cannot combine lifecycle, expiry and assignment changes"
+	}
+	if req.Status != nil && strings.EqualFold(strings.TrimSpace(*req.Status), "disabled") &&
+		req.ApprovalStatus != nil && !strings.EqualFold(strings.TrimSpace(*req.ApprovalStatus), "rejected") {
+		return "INVALID_TRANSITION", "disable cannot change approval status unless it is an approval rejection"
+	}
+	return "", ""
 }
 
 func desiredRuleState(eventType string) string {

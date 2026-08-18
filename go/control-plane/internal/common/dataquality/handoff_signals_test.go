@@ -105,8 +105,65 @@ func TestCompositeSignalCollectorIsolatesSourceFailureWithoutFabricatingValue(t 
 	if signals[0].MeasurementState != SignalStatusError || signals[0].WatermarkValue != nil || !strings.Contains(signals[0].MeasurementError, "broker unavailable") {
 		t.Fatalf("Kafka failure was not persisted as value-less error: %#v", signals[0])
 	}
+	if signals[0].AvailabilityState != SignalAvailabilityUnavailable || signals[0].ValueState != SignalValueNone {
+		t.Fatalf("Kafka source failure must be typed unavailable without a value: %#v", signals[0])
+	}
 	if signals[1].MeasurementState != SignalStatusMeasured || signals[2].MeasurementState != SignalStatusMeasured {
 		t.Fatalf("independent collectors should remain measured: %#v", signals)
+	}
+}
+
+func TestKafkaOffsetSemanticsSeparateZeroNotArrivedAndPartial(t *testing.T) {
+	collected := time.Date(2026, 8, 14, 3, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name         string
+		snapshot     KafkaLagSnapshot
+		measurement  string
+		availability string
+		completeness string
+		valueState   string
+	}{
+		{
+			name: "real zero",
+			snapshot: KafkaLagSnapshot{TotalLag: 0, Partitions: []KafkaPartitionLag{
+				{Partition: 0, FirstOffset: 0, EndOffset: 12, CommittedOffset: 12, Lag: 0},
+			}},
+			measurement: SignalStatusMeasured, availability: SignalAvailabilityArrived,
+			completeness: SignalCompletenessComplete, valueState: SignalValueZero,
+		},
+		{
+			name: "never arrived",
+			snapshot: KafkaLagSnapshot{Partitions: []KafkaPartitionLag{
+				{Partition: 0, FirstOffset: 0, EndOffset: 12, CommittedOffset: -1, Lag: 12},
+			}},
+			measurement: SignalStatusUnknown, availability: SignalAvailabilityNotArrived,
+			completeness: SignalCompletenessUnknown, valueState: SignalValueNone,
+		},
+		{
+			name: "partial",
+			snapshot: KafkaLagSnapshot{TotalLag: 4, Partitions: []KafkaPartitionLag{
+				{Partition: 0, FirstOffset: 0, EndOffset: 12, CommittedOffset: 12, Lag: 0},
+				{Partition: 1, FirstOffset: 0, EndOffset: 4, CommittedOffset: -1, Lag: 4},
+			}},
+			measurement: SignalStatusMeasured, availability: SignalAvailabilityArrived,
+			completeness: SignalCompletenessPartial, valueState: SignalValueNonzero,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			collector := testFlowSignalCollector(t,
+				fakeKafkaOffsetReader{snapshot: tc.snapshot},
+				fakeFlinkWatermarkReader{snapshot: FlinkWatermarkSnapshot{JobID: "job", VertexID: "vertex", Watermark: collected.UnixMilli()}},
+				fakeSinkCommitReader{value: fmt.Sprint(collected.UnixMilli()), observed: collected},
+			)
+			signal := collector.Collect(context.Background(), SignalCollectionRequest{TenantID: "tenant-a", TraceID: "trace-a", CollectedAt: collected})[0]
+			if signal.MeasurementState != tc.measurement || signal.AvailabilityState != tc.availability || signal.CompletenessState != tc.completeness || signal.ValueState != tc.valueState {
+				t.Fatalf("unexpected typed Kafka signal: %#v", signal)
+			}
+			if err := validateHandoffSignal(signal); err != nil {
+				t.Fatalf("validate typed Kafka signal: %v", err)
+			}
+		})
 	}
 }
 
@@ -251,5 +308,59 @@ func TestApplyHandoffSignalsReadsFiveStatesAndEvaluatesOnlyRequiredSignals(t *te
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestApplyHandoffSignalsNeverPassesPartialOrStaleAndNeverDowngradesFailure(t *testing.T) {
+	now := time.Date(2026, 8, 14, 4, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name       string
+		lag        string
+		collected  time.Time
+		metadata   string
+		wantStatus string
+		wantFresh  string
+		wantComp   string
+		wantValue  string
+	}{
+		{name: "real zero passes", lag: "0", collected: now, metadata: `{}`, wantStatus: "pass", wantFresh: SignalFreshnessFresh, wantComp: SignalCompletenessComplete, wantValue: SignalValueZero},
+		{name: "partial warns", lag: "7", collected: now, metadata: `{"completeness_status":"partial"}`, wantStatus: "warn", wantFresh: SignalFreshnessFresh, wantComp: SignalCompletenessPartial, wantValue: SignalValueNonzero},
+		{name: "stale warns", lag: "7", collected: now.Add(-10 * time.Minute), metadata: `{}`, wantStatus: "warn", wantFresh: SignalFreshnessStale, wantComp: SignalCompletenessComplete, wantValue: SignalValueNonzero},
+		{name: "stale partial high lag remains fail", lag: "101", collected: now.Add(-10 * time.Minute), metadata: `{"completeness_status":"partial"}`, wantStatus: "fail", wantFresh: SignalFreshnessStale, wantComp: SignalCompletenessPartial, wantValue: SignalValueNonzero},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer db.Close()
+			monitor := NewMonitor(nil, MonitorConfig{MaxKafkaLag: 100, MaxSignalAge: 5 * time.Minute}, zap.NewNop())
+			monitor.SetControlDB(db)
+			rows := sqlmock.NewRows([]string{
+				"tenant_id", "dataset_id", "source_kind", "source_id", "partition_id", "measurement_status",
+				"watermark_value", "observed_at", "collected_at", "trace_id", "measurement_error", "metadata",
+			}).AddRow("tenant-a", "flows_raw", SignalKindKafkaOffset, "topic/group", "", SignalStatusMeasured, tc.lag, tc.collected, tc.collected, "trace-a", "", []byte(tc.metadata))
+			mock.ExpectQuery(`FROM data_quality_watermarks`).WithArgs("tenant-a", "flows_raw").WillReturnRows(rows)
+			report := &DataQualityReport{Timestamp: now, Metrics: map[string]float64{}, SourceWatermarks: map[string]interface{}{}}
+			monitor.applyHandoffSignals(context.Background(), "tenant-a", report)
+			var check *QualityCheck
+			for index := range report.Checks {
+				if report.Checks[index].Name == "kafka_consumer_lag" {
+					check = &report.Checks[index]
+					break
+				}
+			}
+			if check == nil || check.Status != tc.wantStatus || check.Freshness != tc.wantFresh || check.Completeness != tc.wantComp || check.ValueState != tc.wantValue || check.Availability != SignalAvailabilityArrived || !check.Measured {
+				t.Fatalf("unexpected Kafka quality check: %#v", check)
+			}
+			watermark, ok := report.SourceWatermarks[SignalKindKafkaOffset].(HandoffSignal)
+			if !ok || watermark.FreshnessState != tc.wantFresh {
+				t.Fatalf("source watermark did not retain derived freshness: %#v", report.SourceWatermarks)
+			}
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }

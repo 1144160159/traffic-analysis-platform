@@ -335,7 +335,7 @@ func (c *PostgresClient) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql
 	return tx, nil
 }
 
-func (c *PostgresClient) Transaction(ctx context.Context, fn func(tx *sql.Tx) error) error {
+func (c *PostgresClient) Transaction(ctx context.Context, fn func(tx *sql.Tx) error) (err error) {
 	ctx, span := otel.StartSpan(ctx, "postgres.transaction")
 	defer span.End()
 
@@ -346,6 +346,7 @@ func (c *PostgresClient) Transaction(ctx context.Context, fn func(tx *sql.Tx) er
 		return err
 	}
 
+	// panic 收敛为 error:事务内 panic 先回滚再转为返回错误,避免 panic 击穿进程。
 	defer func() {
 		if p := recover(); p != nil {
 			if rbErr := tx.Rollback(); rbErr != nil {
@@ -353,7 +354,8 @@ func (c *PostgresClient) Transaction(ctx context.Context, fn func(tx *sql.Tx) er
 					zap.Error(rbErr),
 					zap.Any("panic", p))
 			}
-			panic(p)
+			c.logger.Error("Panic recovered in transaction", zap.Any("panic", p))
+			err = fmt.Errorf("panic recovered in transaction: %v", p)
 		}
 	}()
 

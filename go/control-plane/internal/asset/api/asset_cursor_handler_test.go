@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/config"
@@ -239,7 +240,9 @@ func TestGRPCListAssetsUsesSignedPageTokenAndBindsProtoFilters(t *testing.T) {
 		WithArgs("tenant-a", "10.20.%", "Acme", snapshot, "100:200:", 2).
 		WillReturnRows(rows)
 
-	response, err := handler.ListAssets(context.Background(), &pb.ListAssetsRequest{
+	response, err := handler.ListAssets(metadata.NewIncomingContext(context.Background(), metadata.Pairs(
+		"authorization", "Bearer "+signAccessToken(t, signingKey, "tenant-a", []string{authmodel.ScopeAssetRead}),
+	)), &pb.ListAssetsRequest{
 		TenantId:     "tenant-a",
 		PageSize:     1,
 		IpPrefix:     "10.20.",
@@ -251,7 +254,9 @@ func TestGRPCListAssetsUsesSignedPageTokenAndBindsProtoFilters(t *testing.T) {
 	if len(response.Assets) != 1 || response.TotalCount != 2 || response.NextPageToken == "" {
 		t.Fatalf("unexpected gRPC page: %#v", response)
 	}
-	_, err = handler.ListAssets(context.Background(), &pb.ListAssetsRequest{
+	_, err = handler.ListAssets(metadata.NewIncomingContext(context.Background(), metadata.Pairs(
+		"authorization", "Bearer "+signAccessToken(t, signingKey, "tenant-b", []string{authmodel.ScopeAssetRead}),
+	)), &pb.ListAssetsRequest{
 		TenantId:     "tenant-b",
 		PageSize:     1,
 		PageToken:    response.NextPageToken,

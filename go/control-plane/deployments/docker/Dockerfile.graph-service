@@ -23,6 +23,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s -X main.Version=$(git describe --tags --always) -X main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     -o /build/graph-service \
     ./cmd/graph-service
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s" \
+    -o /build/graph-projection-reconcile \
+    ./cmd/graph-projection-reconcile
 
 # 运行阶段
 FROM alpine:3.18
@@ -42,6 +46,7 @@ WORKDIR /app
 
 # 从构建阶段复制二进制文件
 COPY --from=builder /build/graph-service .
+COPY --from=builder /build/graph-projection-reconcile .
 
 # 切换到非 root 用户
 USER appuser

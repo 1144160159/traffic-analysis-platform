@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -219,6 +220,9 @@ func (h *Handler) requireWrite(w http.ResponseWriter, r *http.Request) bool {
 	if hasWhitelistWrite(r.Context()) {
 		return true
 	}
+	// ADR-5 拒绝留痕:403 同时写审计行(best-effort,不改变拒绝语义)
+	h.recordAudit(r.Context(), r, "WHITELIST_ACCESS_DENIED", "",
+		map[string]interface{}{"required_scope": authmodel.ScopeAlertWrite, "result": "denied"})
 	httpx.JSONError(w, r.Context(), http.StatusForbidden, "PERMISSION_DENIED", "alert:write required")
 	return false
 }
@@ -227,6 +231,8 @@ func (h *Handler) requireRead(w http.ResponseWriter, r *http.Request) bool {
 	if hasWhitelistRead(r.Context()) {
 		return true
 	}
+	h.recordAudit(r.Context(), r, "WHITELIST_ACCESS_DENIED", "",
+		map[string]interface{}{"required_scope": authmodel.ScopeAlertRead, "result": "denied"})
 	httpx.JSONError(w, r.Context(), http.StatusForbidden, "PERMISSION_DENIED", "alert:read required")
 	return false
 }
@@ -292,6 +298,9 @@ func validateWhitelistTransition(current *Entry, req UpdateRequest, actor string
 			return "INVALID_TRANSITION", "unsupported whitelist approval_status"
 		}
 	}
+	if req.ExpiresAt != nil && !req.ExpiresAt.After(time.Now()) {
+		return "WHITELIST_EXPIRY_NOT_FUTURE", "whitelist expiry must be in the future"
+	}
 
 	if !validWhitelistStatePair(nextStatus, nextApproval) {
 		return "INVALID_TRANSITION", "status and approval_status do not form a legal whitelist governance state"
@@ -307,6 +316,9 @@ func validateWhitelistTransition(current *Entry, req UpdateRequest, actor string
 			}
 			if actor != "" && actor == current.CreatedBy {
 				return "WHITELIST_TWO_PERSON_REQUIRED", "creator cannot approve or reject their own whitelist entry"
+			}
+			if nextStatus == "active" && current.ExpiresAt != nil && !current.ExpiresAt.After(time.Now()) {
+				return "WHITELIST_EXPIRY_NOT_FUTURE", "expired whitelist draft cannot be approved"
 			}
 		case "active/approved->disabled/approved":
 		default:
@@ -380,6 +392,9 @@ func canonicalExpectedVersion(req UpdateRequest) (int, error) {
 }
 
 func whitelistCommandReason(req UpdateRequest) string {
+	if req.CommandReason != nil && strings.TrimSpace(*req.CommandReason) != "" {
+		return strings.TrimSpace(*req.CommandReason)
+	}
 	if req.Reason != nil && strings.TrimSpace(*req.Reason) != "" {
 		return strings.TrimSpace(*req.Reason)
 	}
@@ -475,6 +490,9 @@ func (h *Handler) writeCommandError(w http.ResponseWriter, r *http.Request, err 
 }
 
 func (h *Handler) recordAudit(ctx context.Context, r *http.Request, action, objectID string, detail map[string]interface{}) {
+	if h == nil || h.repo == nil || h.repo.db == nil {
+		return
+	}
 	if err := h.recordAuditWithRunner(ctx, r, h.repo.db, action, objectID, detail); err != nil && h.logger != nil {
 		h.logger.Warn("Failed to write whitelist audit log", zap.String("action", action), zap.String("object_id", objectID), zap.Error(err))
 	}
@@ -487,7 +505,9 @@ func (h *Handler) recordAuditWithRunner(ctx context.Context, r *http.Request, ru
 	if detail == nil {
 		detail = map[string]interface{}{}
 	}
-	detail["result"] = "success"
+	if _, preset := detail["result"]; !preset {
+		detail["result"] = "success"
+	}
 	detail["request_id"] = httpx.GetRequestID(ctx)
 	detail["trace_id"] = httpx.GetTraceID(ctx)
 	if r != nil && r.URL != nil {

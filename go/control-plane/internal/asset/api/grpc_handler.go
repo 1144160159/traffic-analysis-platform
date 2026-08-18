@@ -16,6 +16,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/config"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/repository"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/service"
+	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 )
@@ -103,8 +104,12 @@ func (h *AssetHandler) GetAsset(ctx context.Context, req *pb.GetAssetRequest) (*
 	if req.AssetId == "" && req.MacAddress == "" {
 		return nil, status.Error(codes.InvalidArgument, "asset_id or mac_address required")
 	}
+	tenantID, err := h.grpcReadTenant(ctx, req.TenantId)
+	if err != nil {
+		return nil, err
+	}
 
-	rec, err := h.svc.GetAsset(ctx, req.TenantId, req.AssetId, req.MacAddress)
+	rec, err := h.svc.GetAsset(ctx, tenantID, req.AssetId, req.MacAddress)
 	if err != nil {
 		if errors.IsCode(err, errors.ErrCodeTenantNotFound) {
 			return nil, status.Error(codes.NotFound, err.Error())
@@ -120,8 +125,9 @@ func (h *AssetHandler) GetAsset(ctx context.Context, req *pb.GetAssetRequest) (*
 // =============================================================================
 
 func (h *AssetHandler) ListAssets(ctx context.Context, req *pb.ListAssetsRequest) (*pb.ListAssetsResponse, error) {
-	if req.TenantId == "" {
-		return nil, status.Error(codes.InvalidArgument, "tenant_id required")
+	tenantID, err := h.grpcReadTenant(ctx, req.TenantId)
+	if err != nil {
+		return nil, err
 	}
 
 	limit := int(req.PageSize)
@@ -143,7 +149,7 @@ func (h *AssetHandler) ListAssets(ctx context.Context, req *pb.ListAssetsRequest
 			if req.PageSize > 0 {
 				explicitLimit = &limit
 			}
-			claims, err := h.cursorCodec.decode(token, req.TenantId, filter, explicitLimit)
+			claims, err := h.cursorCodec.decode(token, tenantID, filter, explicitLimit)
 			if err != nil {
 				return nil, status.Error(codes.InvalidArgument, "page_token is invalid or expired")
 			}
@@ -156,16 +162,16 @@ func (h *AssetHandler) ListAssets(ctx context.Context, req *pb.ListAssetsRequest
 				Total:        claims.Total,
 			}
 		}
-		page, err := h.svc.ListAssetsCursor(ctx, req.TenantId, filter, limit, position)
+		page, err := h.svc.ListAssetsCursor(ctx, tenantID, filter, limit, position)
 		if err != nil {
-			h.logError("ListAssets cursor failed", zap.String("tenant", req.TenantId), zap.Error(err))
+			h.logError("ListAssets cursor failed", zap.String("tenant", tenantID), zap.Error(err))
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		nextPageToken := ""
 		if page.HasMore {
-			nextPageToken, err = h.cursorCodec.encode(req.TenantId, filter, limit, page)
+			nextPageToken, err = h.cursorCodec.encode(tenantID, filter, limit, page)
 			if err != nil {
-				h.logError("ListAssets next page token failed", zap.String("tenant", req.TenantId), zap.Error(err))
+				h.logError("ListAssets next page token failed", zap.String("tenant", tenantID), zap.Error(err))
 				return nil, status.Error(codes.Internal, "next page token could not be created")
 			}
 		}
@@ -187,9 +193,9 @@ func (h *AssetHandler) ListAssets(ctx context.Context, req *pb.ListAssetsRequest
 	if strings.TrimSpace(req.PageToken) != "" {
 		return nil, status.Error(codes.FailedPrecondition, "asset cursor rollout is not enabled")
 	}
-	recs, total, err := h.svc.ListAssets(ctx, req.TenantId, limit, 0)
+	recs, total, err := h.svc.ListAssets(ctx, tenantID, limit, 0)
 	if err != nil {
-		h.logError("ListAssets failed", zap.String("tenant", req.TenantId), zap.Error(err))
+		h.logError("ListAssets failed", zap.String("tenant", tenantID), zap.Error(err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -307,6 +313,31 @@ func firstGRPCMetadata(md metadata.MD, key string) string {
 	return strings.TrimSpace(values[0])
 }
 
+// grpcReadTenant 校验 gRPC 读接口身份并返回认证租户。
+// 读接口与写接口一样要求 Bearer 令牌与已验证的租户身份；请求体携带的
+// tenant_id 只允许与认证租户一致，不允许作为身份来源。
+func (h *AssetHandler) grpcReadTenant(ctx context.Context, requestedTenant string) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Error(codes.Unauthenticated, "authorization metadata is required")
+	}
+	tokenString := bearerTokenValue(firstGRPCMetadata(md, "authorization"))
+	identity, identityStatus, identityMessage := accessTokenIdentity(tokenString, h.jwtSigningKey)
+	if identityStatus != 0 {
+		return "", status.Error(codes.Unauthenticated, identityMessage)
+	}
+	if !hasAssetReadScope(identity.Scopes) {
+		return "", status.Error(codes.PermissionDenied, authmodel.ScopeAssetRead+" scope required")
+	}
+	if identity.TenantID == "" {
+		return "", status.Error(codes.PermissionDenied, "verified tenant identity required")
+	}
+	if requestedTenant != "" && requestedTenant != identity.TenantID {
+		return "", status.Error(codes.PermissionDenied, "request tenant conflicts with authenticated tenant")
+	}
+	return identity.TenantID, nil
+}
+
 // =============================================================================
 // GetAssetHistory
 // =============================================================================
@@ -315,13 +346,17 @@ func (h *AssetHandler) GetAssetHistory(ctx context.Context, req *pb.GetAssetHist
 	if req.AssetId == "" {
 		return nil, status.Error(codes.InvalidArgument, "asset_id required")
 	}
+	tenantID, err := h.grpcReadTenant(ctx, req.TenantId)
+	if err != nil {
+		return nil, err
+	}
 
 	limit := int(req.PageSize)
 	if limit <= 0 {
 		limit = 20
 	}
 
-	events, err := h.svc.GetAssetHistory(ctx, req.TenantId, req.AssetId, limit)
+	events, err := h.svc.GetAssetHistory(ctx, tenantID, req.AssetId, limit)
 	if err != nil {
 		h.logError("GetAssetHistory failed", zap.String("asset_id", req.AssetId), zap.Error(err))
 		return nil, status.Error(codes.Internal, err.Error())

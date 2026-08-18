@@ -65,6 +65,9 @@ func (h *SystemHandler) StartCampaignEventOutboxWorker(ctx context.Context, inte
 	if h.campaignEventPublish == nil || h.campaignMemberPublish == nil {
 		return fmt.Errorf("both campaign event Kafka publishers are required")
 	}
+	if h.campaignDispatchAdmit == nil {
+		return fmt.Errorf("campaign dispatcher requires both consumer readiness receipts")
+	}
 	if interval <= 0 {
 		interval = 2 * time.Second
 	}
@@ -89,6 +92,12 @@ func (h *SystemHandler) StartCampaignEventOutboxWorker(ctx context.Context, inte
 func (h *SystemHandler) drainCampaignEventOutboxes(ctx context.Context, workerID string, limit int) (int, error) {
 	if h.pgDB == nil || h.campaignEventPublish == nil || h.campaignMemberPublish == nil {
 		return 0, nil
+	}
+	if h.campaignDispatchAdmit == nil {
+		return 0, fmt.Errorf("campaign dispatcher readiness gate is unavailable")
+	}
+	if err := h.campaignDispatchAdmit(ctx); err != nil {
+		return 0, fmt.Errorf("campaign dispatcher consumer readiness withdrawn: %w", err)
 	}
 	if limit <= 0 || limit > 100 {
 		limit = 50

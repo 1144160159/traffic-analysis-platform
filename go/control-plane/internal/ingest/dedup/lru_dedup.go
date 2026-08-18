@@ -2,10 +2,12 @@ package dedup
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -45,6 +47,7 @@ type Deduplicator struct {
 
 	localCache *lru.Cache[string, *dedupEntry]
 	localMu    sync.RWMutex
+	claims     map[string]string
 
 	redis redis.UniversalClient
 
@@ -73,6 +76,7 @@ func NewDeduplicator(cfg DedupConfig, rdb redis.UniversalClient, logger *zap.Log
 		config:     cfg,
 		logger:     logger,
 		localCache: localCache,
+		claims:     make(map[string]string),
 	}
 
 	if cfg.RedisEnabled && rdb != nil {
@@ -80,6 +84,123 @@ func NewDeduplicator(cfg DedupConfig, rdb redis.UniversalClient, logger *zap.Log
 	}
 
 	return d, nil
+}
+
+type ClaimStatus int
+
+const (
+	ClaimAcquired ClaimStatus = iota
+	ClaimDuplicateCommitted
+	ClaimInFlight
+)
+
+type Claim struct {
+	Key    string
+	Token  string
+	Status ClaimStatus
+}
+
+const claimTTL = 30 * time.Second
+
+func CompositeKey(tenantID, probeID, eventID string) string {
+	return fmt.Sprintf("%d:%s|%d:%s|%d:%s", len(tenantID), tenantID, len(probeID), probeID, len(eventID), eventID)
+}
+
+// ClaimBatch atomically excludes concurrent publications for each composite
+// tenant/probe/event identity. A claim is not a committed duplicate until
+// CommitBatch runs after the Kafka RequiredAcks=all barrier.
+func (d *Deduplicator) ClaimBatch(ctx context.Context, tenantID, probeID string, eventIDs []string) ([]Claim, error) {
+	claims := make([]Claim, len(eventIDs))
+	for i, eventID := range eventIDs {
+		key := CompositeKey(tenantID, probeID, eventID)
+		token := uuid.NewString()
+		claim := Claim{Key: key, Token: token, Status: ClaimAcquired}
+
+		if d.redis != nil {
+			redisKey := d.config.RedisPrefix + key
+			acquired, err := d.redis.SetNX(ctx, redisKey, "claim:"+token, claimTTL).Result()
+			if err != nil {
+				d.ReleaseBatch(ctx, claims[:i])
+				return nil, fmt.Errorf("claim dedup identity %q: %w", key, err)
+			}
+			if !acquired {
+				value, getErr := d.redis.Get(ctx, redisKey).Result()
+				if getErr != nil {
+					d.ReleaseBatch(ctx, claims[:i])
+					return nil, fmt.Errorf("read dedup identity %q: %w", key, getErr)
+				}
+				if value == "committed" {
+					claim.Status = ClaimDuplicateCommitted
+				} else {
+					claim.Status = ClaimInFlight
+				}
+				claims[i] = claim
+				continue
+			}
+		}
+
+		d.localMu.Lock()
+		if entry, found := d.localCache.Get(key); found && time.Since(entry.FirstSeen) < d.config.LocalTTL {
+			claim.Status = ClaimDuplicateCommitted
+		} else if _, found := d.claims[key]; found {
+			claim.Status = ClaimInFlight
+		} else {
+			d.claims[key] = token
+		}
+		d.localMu.Unlock()
+
+		if claim.Status != ClaimAcquired && d.redis != nil {
+			_, _ = d.redis.Eval(ctx,
+				`if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) end return 0`,
+				[]string{d.config.RedisPrefix + key}, "claim:"+token).Result()
+		}
+		claims[i] = claim
+	}
+	return claims, nil
+}
+
+func (d *Deduplicator) CommitBatch(ctx context.Context, claims []Claim) error {
+	var firstErr error
+	now := time.Now()
+	for _, claim := range claims {
+		if claim.Status != ClaimAcquired {
+			continue
+		}
+		d.localMu.Lock()
+		if d.claims[claim.Key] == claim.Token {
+			delete(d.claims, claim.Key)
+			d.localCache.Add(claim.Key, &dedupEntry{FirstSeen: now})
+		}
+		d.localMu.Unlock()
+
+		if d.redis != nil {
+			_, err := d.redis.Eval(ctx,
+				`if redis.call("GET", KEYS[1]) == ARGV[1] then redis.call("SET", KEYS[1], "committed", "PX", ARGV[2]); return 1 end return 0`,
+				[]string{d.config.RedisPrefix + claim.Key}, "claim:"+claim.Token, d.config.RedisTTL.Milliseconds()).Result()
+			if err != nil && firstErr == nil {
+				firstErr = fmt.Errorf("commit dedup identity %q: %w", claim.Key, err)
+			}
+		}
+	}
+	return firstErr
+}
+
+func (d *Deduplicator) ReleaseBatch(ctx context.Context, claims []Claim) {
+	for _, claim := range claims {
+		if claim.Status != ClaimAcquired {
+			continue
+		}
+		d.localMu.Lock()
+		if d.claims[claim.Key] == claim.Token {
+			delete(d.claims, claim.Key)
+		}
+		d.localMu.Unlock()
+		if d.redis != nil {
+			_, _ = d.redis.Eval(ctx,
+				`if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) end return 0`,
+				[]string{d.config.RedisPrefix + claim.Key}, "claim:"+claim.Token).Result()
+		}
+	}
 }
 
 func (d *Deduplicator) IsDuplicate(ctx context.Context, eventID string) bool {
@@ -222,6 +343,7 @@ func (d *Deduplicator) Reset() {
 func (d *Deduplicator) Clear() {
 	d.localMu.Lock()
 	d.localCache.Purge()
+	d.claims = make(map[string]string)
 	d.localMu.Unlock()
 }
 

@@ -41,12 +41,18 @@ spec:
           value: "kafka-bootstrap.middleware.svc:9092"
         - name: KAFKA_RULE_TOPIC
           value: "rule.updates"
+        - name: KAFKA_RULE_APPLIED_TOPIC
+          value: "rule-update-applied.v1"
+        - name: RULE_APPLIED_ACK_EXPECTED_PARALLELISM
+          value: "4"
         - name: KAFKA_DEPLOYMENT_TOPIC
           value: "deployment.events.v1"
         - name: KAFKA_DEPLOYMENT_EVENT_GROUP
           value: "rule-manager-deployment-projection-v1"
         - name: DEPLOYMENT_EVENT_PROJECTION_V1_ENABLED
           value: "true"
+        - name: DEPLOYMENT_RUNTIME_ACK_GATE_V1_ENABLED
+          value: "false"
         - name: KAFKA_ALERT_FEEDBACK_TOPIC
           value: "alert.feedback.v1"
         - name: KAFKA_ALERT_FEEDBACK_EVENT_GROUP
@@ -59,6 +65,12 @@ spec:
           value: "rule-manager-whitelist-rule-effect-v2"
         - name: WHITELIST_EVENT_PIPELINE_V2_ENABLED
           value: "false"
+        - name: WHITELIST_EVENT_CONSUMER_V2_ENABLED
+          value: "false"
+        - name: WHITELIST_CONSUMER_CANDIDATE_SHA256
+          value: "0000000000000000000000000000000000000000000000000000000000000000"
+        - name: WHITELIST_EVENT_CONTRACT_SHA256
+          value: "d87787272d140c8529686ce45eef30f2a6345fb7f2e918a450399c8f698aad49"
         - name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V1_ENABLED
           value: "true"
         - name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_INTERVAL

@@ -3,6 +3,7 @@ package httpx
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
@@ -14,15 +15,13 @@ func BusinessContextExtractor() Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			tenantID := r.Header.Get("X-Tenant-ID")
-			if tenantID == "" {
-				tenantID = r.URL.Query().Get("tenant_id")
-			}
-			if tenantID == "" {
-				tenantID = GetTenantID(ctx)
-			}
-			if tenantID == "" {
-				tenantID = "default"
+			tenantID := strings.TrimSpace(GetTenantID(ctx))
+			if claims := GetClaims(ctx); claims != nil {
+				if err := ValidateRequestTenant(r, claims.GetTenantID()); err != nil {
+					errors.WriteError(w, err, GetTraceID(ctx), r.URL.Path)
+					return
+				}
+				tenantID = strings.TrimSpace(claims.GetTenantID())
 			}
 
 			runID := r.Header.Get("X-Run-ID")
@@ -42,7 +41,10 @@ func BusinessContextExtractor() Middleware {
 
 			eventID := r.Header.Get("X-Event-ID")
 
-			ctx = context.WithValue(ctx, ContextKeyTenantID, tenantID)
+			if tenantID != "" {
+				ctx = context.WithValue(ctx, ContextKeyTenantID, tenantID)
+				ctx = logging.WithTenantID(ctx, tenantID)
+			}
 			if runID != "" {
 				ctx = context.WithValue(ctx, ContextKeyRunID, runID)
 			}
@@ -56,7 +58,6 @@ func BusinessContextExtractor() Middleware {
 				ctx = context.WithValue(ctx, ContextKeyEventID, eventID)
 			}
 
-			ctx = logging.WithTenantID(ctx, tenantID)
 			if runID != "" {
 				ctx = logging.WithRunID(ctx, runID)
 			}
@@ -76,21 +77,17 @@ func TenantExtractor() Middleware {
 func RequireTenant() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tenantID := r.Header.Get("X-Tenant-ID")
-
-			if tenantID == "" {
-				tenantID = r.URL.Query().Get("tenant_id")
-			}
-
-			if tenantID == "" {
-				tenantID = GetTenantID(r.Context())
-			}
-
-			if tenantID == "" {
-				err := errors.New(errors.ErrCodeTenantNotFound, "Tenant ID is required")
+			claims := GetClaims(r.Context())
+			if claims == nil || strings.TrimSpace(claims.GetTenantID()) == "" {
+				err := errors.New(errors.ErrCodeUnauthorized, "Verified tenant identity is required")
 				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
 				return
 			}
+			if err := ValidateRequestTenant(r, claims.GetTenantID()); err != nil {
+				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
+				return
+			}
+			tenantID := strings.TrimSpace(claims.GetTenantID())
 
 			ctx := context.WithValue(r.Context(), ContextKeyTenantID, tenantID)
 			ctx = logging.WithTenantID(ctx, tenantID)
@@ -107,13 +104,9 @@ type TenantValidator interface {
 func ValidateTenant(validator TenantValidator) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tenantID := GetTenantID(r.Context())
+			tenantID := strings.TrimSpace(GetTenantID(r.Context()))
 			if tenantID == "" {
-				tenantID = r.Header.Get("X-Tenant-ID")
-			}
-
-			if tenantID == "" {
-				err := errors.New(errors.ErrCodeTenantNotFound, "Tenant ID is required")
+				err := errors.New(errors.ErrCodeUnauthorized, "Verified tenant identity is required")
 				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
 				return
 			}
@@ -139,30 +132,15 @@ func ValidateTenant(validator TenantValidator) Middleware {
 func TenantIsolation() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			userTenantID := GetTenantID(r.Context())
-
-			requestTenantID := r.Header.Get("X-Tenant-ID")
-			if requestTenantID == "" {
-				requestTenantID = r.URL.Query().Get("tenant_id")
+			claims := GetClaims(r.Context())
+			if claims == nil {
+				err := errors.New(errors.ErrCodeUnauthorized, "Verified tenant identity is required")
+				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
+				return
 			}
-
-			if requestTenantID != "" && requestTenantID != userTenantID {
-
-				permissions := GetPermissions(r.Context())
-				hasCrossTenantAccess := false
-				for _, p := range permissions {
-					if p == "admin:cross_tenant" {
-						hasCrossTenantAccess = true
-						break
-					}
-				}
-
-				if !hasCrossTenantAccess {
-					err := errors.New(errors.ErrCodePermissionDenied, "Cross-tenant access denied")
-					errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
-					return
-				}
+			if err := ValidateRequestTenant(r, claims.GetTenantID()); err != nil {
+				errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
+				return
 			}
 
 			next.ServeHTTP(w, r)

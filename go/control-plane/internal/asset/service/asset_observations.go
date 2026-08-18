@@ -58,6 +58,12 @@ func (s *AssetService) RecordMacIpBinding(
 			rejected++
 			continue
 		}
+		if provenance.Channel == BindingChannelKafka &&
+			(strings.TrimSpace(binding.ObservationID) == "" || strings.TrimSpace(binding.ProbeID) == "" ||
+				provenance.Actor != "probe:"+strings.TrimSpace(binding.ProbeID)) {
+			rejected++
+			continue
+		}
 
 		mac := normalizeMAC(binding.MACAddress)
 		source := strings.TrimSpace(binding.Source)
@@ -82,8 +88,9 @@ func (s *AssetService) RecordMacIpBinding(
 		)
 		if provenance.Channel == BindingChannelKafka {
 			identity = fmt.Sprintf(
-				"kafka:%s:%d:%d:%d",
-				strings.TrimSpace(provenance.Topic), provenance.Partition, provenance.Offset, index,
+				"kafka-binding:%s:%s:%s",
+				strings.TrimSpace(binding.TenantID), strings.TrimSpace(binding.ProbeID),
+				strings.TrimSpace(binding.ObservationID),
 			)
 		}
 		key := stableAssetCommandKey("asset-binding", identity)
@@ -92,6 +99,7 @@ func (s *AssetService) RecordMacIpBinding(
 			IPAddress:  strings.TrimSpace(binding.IPAddress),
 			MACAddress: mac,
 			Source:     source,
+			VlanID:     strings.TrimSpace(binding.VlanID),
 			Vendor:     s.ouiCache.LookupVendor(mac),
 		}
 		_, upsertErr := s.UpsertAssetAtomic(ctx, rec, config.AssetUpsertCommand{

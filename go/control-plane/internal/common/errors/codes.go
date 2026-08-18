@@ -38,6 +38,20 @@ const (
 	ErrCodeMTLSRequired       ErrorCode = "AUTH_1009"
 	ErrCodeQuotaExceeded      ErrorCode = "AUTH_1010"
 
+	// 统一分析任务调度中心域 (ANALYSIS_*,与 doc/07_alignment 卷A §2.4 冻结字符串一致)
+	ErrCodeAnalysisPlanNotApproved            ErrorCode = "ANALYSIS_PLAN_NOT_APPROVED"
+	ErrCodeAnalysisIdempotencyPayloadMismatch ErrorCode = "ANALYSIS_IDEMPOTENCY_PAYLOAD_MISMATCH"
+	ErrCodeAnalysisWindowMisfired             ErrorCode = "ANALYSIS_WINDOW_MISFIRED"
+	ErrCodeAnalysisCapacityDenied             ErrorCode = "ANALYSIS_CAPACITY_DENIED"
+	ErrCodeAnalysisStaleFence                 ErrorCode = "ANALYSIS_STALE_FENCE"
+	ErrCodeAnalysisRunNotCancelable           ErrorCode = "ANALYSIS_RUN_NOT_CANCELABLE"
+	ErrCodeAnalysisFeatureNotReleased         ErrorCode = "ANALYSIS_FEATURE_NOT_RELEASED"
+	ErrCodeAnalysisStageRetryUnsupported      ErrorCode = "ANALYSIS_STAGE_RETRY_UNSUPPORTED"
+	ErrCodeAnalysisInvalidTransition          ErrorCode = "ANALYSIS_INVALID_TRANSITION"
+	ErrCodeAnalysisNotFound                   ErrorCode = "ANALYSIS_NOT_FOUND"
+	ErrCodeAnalysisMissingIdempotencyKey      ErrorCode = "MISSING_IDEMPOTENCY_KEY"
+	ErrCodeAnalysisRevisionConflict           ErrorCode = "REVISION_CONFLICT"
+
 	// 参数验证错误 (2xxx)
 	ErrCodeInvalidRequest   ErrorCode = "VALID_2001"
 	ErrCodeMissingParameter ErrorCode = "VALID_2002"
@@ -144,6 +158,17 @@ func (c ErrorCode) HTTPStatus() int {
 			return 503
 		}
 		return 502
+	case c == ErrCodeAnalysisPlanNotApproved || c == ErrCodeAnalysisIdempotencyPayloadMismatch ||
+		c == ErrCodeAnalysisStaleFence || c == ErrCodeAnalysisRunNotCancelable ||
+		c == ErrCodeAnalysisStageRetryUnsupported || c == ErrCodeAnalysisInvalidTransition ||
+		c == ErrCodeAnalysisRevisionConflict || c == ErrCodeAnalysisWindowMisfired:
+		return 409
+	case c == ErrCodeAnalysisCapacityDenied:
+		return 429
+	case c == ErrCodeAnalysisFeatureNotReleased || c == ErrCodeAnalysisNotFound:
+		return 404
+	case c == ErrCodeAnalysisMissingIdempotencyKey:
+		return 400
 	default:
 		return 500
 	}
@@ -633,6 +658,20 @@ func GetAllErrorCodes() []ErrorCode {
 		ErrCodeOIDCError,
 		ErrCodeArkimeError,
 		ErrCodeServiceUnavailable,
+
+		// 统一分析任务调度中心域
+		ErrCodeAnalysisPlanNotApproved,
+		ErrCodeAnalysisIdempotencyPayloadMismatch,
+		ErrCodeAnalysisWindowMisfired,
+		ErrCodeAnalysisCapacityDenied,
+		ErrCodeAnalysisStaleFence,
+		ErrCodeAnalysisRunNotCancelable,
+		ErrCodeAnalysisFeatureNotReleased,
+		ErrCodeAnalysisStageRetryUnsupported,
+		ErrCodeAnalysisInvalidTransition,
+		ErrCodeAnalysisNotFound,
+		ErrCodeAnalysisMissingIdempotencyKey,
+		ErrCodeAnalysisRevisionConflict,
 	}
 }
 
