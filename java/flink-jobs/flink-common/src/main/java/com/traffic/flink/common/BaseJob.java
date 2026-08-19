@@ -2,6 +2,8 @@ package com.traffic.flink.common;
 
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.PipelineOptions;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -30,8 +32,11 @@ public abstract class BaseJob implements Serializable {
      */
     public final StreamExecutionEnvironment createEnvironment(JobParameters params) {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        Configuration configuration = new Configuration();
+        configuration.setString(PipelineOptions.NAME, jobName());
+        env.configure(configuration, Thread.currentThread().getContextClassLoader());
         long intervalMs = params.checkpointIntervalMsOrDefault(defaultCheckpointIntervalMs());
-        configureCheckpointing(env, intervalMs);
+        configureCheckpointing(env, params, intervalMs);
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
                 params.restartAttempts(),
                 Time.of(params.restartDelaySeconds(), TimeUnit.SECONDS)));
@@ -39,12 +44,21 @@ public abstract class BaseJob implements Serializable {
         return env;
     }
 
-    /** 统一 checkpoint 纪律:EXACTLY_ONCE、外部化、单并发、超时 ≤ 10min。 */
-    protected void configureCheckpointing(StreamExecutionEnvironment env, long intervalMs) {
+    /**
+     * 统一 checkpoint 纪律:EXACTLY_ONCE、外部化、单并发、超时 ≤ 10min。
+     * 默认 state backend 为 HashMapStateBackend;提供了 checkpointPath 时落到
+     * 文件系统存储,使 RETAIN_ON_CANCELLATION 外部化真正生效。RocksDB 由作业
+     * 在 buildPipeline 中按需 setStateBackend(EmbeddedRocksDBStateBackend) 启用。
+     */
+    protected void configureCheckpointing(StreamExecutionEnvironment env, JobParameters params, long intervalMs) {
+        String checkpointPath = params.checkpointPath();
+        if (checkpointPath != null && !checkpointPath.trim().isEmpty()) {
+            env.getCheckpointConfig().setCheckpointStorage(checkpointPath);
+        }
         env.enableCheckpointing(intervalMs, CheckpointingMode.EXACTLY_ONCE);
         CheckpointConfig cfg = env.getCheckpointConfig();
         cfg.setCheckpointTimeout(Math.min(intervalMs * 10L, TimeUnit.MINUTES.toMillis(10)));
-        cfg.setMinPauseBetweenCheckpoints(intervalMs);
+        cfg.setMinPauseBetweenCheckpoints(Math.max(intervalMs / 2, 1));
         cfg.setMaxConcurrentCheckpoints(1);
         cfg.enableExternalizedCheckpoints(
                 CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
@@ -60,7 +74,7 @@ public abstract class BaseJob implements Serializable {
         // 默认无操作
     }
 
-    /** 子类必须实现:构建算子管线(每个算子设置稳定 uid、state TTL、RocksDB)。 */
+    /** 子类必须实现:构建算子管线(每个算子设置稳定 uid、state TTL;RocksDB 按需启用)。 */
     public abstract void buildPipeline(StreamExecutionEnvironment env, JobParameters params)
             throws Exception;
 

@@ -46,26 +46,42 @@ public class MatcherFactory implements Serializable {
     /**
      * 初始化所有匹配器。
      */
-    public void initialize() {
+    public synchronized void initialize() {
         initialize(allDefaultTypes());
     }
 
     /**
-     * 按配置装配匹配器子集:只注册 enabledTypes 中的类型。
+     * 按配置装配匹配器子集:只注册 enabledTypes 中的类型。线程安全;
+     * 传 null 视为空集合(不注册任何匹配器)。
      *
-     * @param enabledTypes 作业/租户配置允许的规则类型集合
+     * @param enabledTypes 作业/租户配置允许的规则类型集合(可为 null)
      */
-    public void initialize(Collection<RuleType> enabledTypes) {
+    public synchronized void initialize(Collection<RuleType> enabledTypes) {
         matchers = new HashMap<>();
-        for (RuleType type : enabledTypes) {
-            RuleMatcher matcher = createMatcher(type);
-            if (matcher != null) {
-                matchers.put(type, matcher);
+        int requested = enabledTypes == null ? 0 : enabledTypes.size();
+        if (enabledTypes != null) {
+            for (RuleType type : enabledTypes) {
+                RuleMatcher matcher = createMatcher(type);
+                if (matcher != null) {
+                    matchers.put(type, matcher);
+                }
             }
         }
         registeredTypes = new ArrayList<>(matchers.keySet());
-        LOG.info("MatcherFactory initialized with {}/{} requested matchers",
-                matchers.size(), enabledTypes.size());
+        warnUnregisteredEnumTypes();
+        LOG.info("MatcherFactory initialized with {}/{} requested matchers", matchers.size(), requested);
+    }
+
+    /**
+     * 枚举/注册表漂移告警:RuleType 枚举中未装配的类型会被静默跳过,
+     * 这里显式告警,避免新增枚举值后遗忘注册。
+     */
+    private void warnUnregisteredEnumTypes() {
+        for (RuleType type : RuleType.values()) {
+            if (!matchers.containsKey(type)) {
+                LOG.warn("RuleType {} has no registered matcher; rules of this type will not match", type);
+            }
+        }
     }
 
     /**
@@ -96,9 +112,9 @@ public class MatcherFactory implements Serializable {
     }
 
     /**
-     * 获取指定类型的匹配器(未注册类型返回 null)。
+     * 获取指定类型的匹配器(未注册类型返回 null)。线程安全;懒初始化。
      */
-    public RuleMatcher getMatcher(RuleType type) {
+    public synchronized RuleMatcher getMatcher(RuleType type) {
         if (matchers == null) {
             initialize();
         }
@@ -106,18 +122,21 @@ public class MatcherFactory implements Serializable {
     }
 
     /**
-     * 当前已注册的匹配器类型(只读,可观测)。
+     * 当前已注册的匹配器类型(不可变快照,可观测)。
      */
-    public List<RuleType> registeredTypes() {
-        return registeredTypes == null ? Collections.emptyList() : registeredTypes;
+    public synchronized List<RuleType> registeredTypes() {
+        return registeredTypes == null
+                ? Collections.emptyList()
+                : Collections.unmodifiableList(new ArrayList<>(registeredTypes));
     }
 
     /**
-     * 清理资源
+     * 清理资源(matchers 与 registeredTypes 一并清空,状态保持一致)。
      */
-    public void close() {
+    public synchronized void close() {
         if (matchers != null) {
             matchers.clear();
         }
+        registeredTypes = null;
     }
 }
