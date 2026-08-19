@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/reassembly"
@@ -48,20 +49,24 @@ type protocolExtractorFunc struct {
 func (p protocolExtractorFunc) Profile() string                           { return p.profile }
 func (p protocolExtractorFunc) Extract(input Input, limits Limits) Result { return p.fn(input, limits) }
 
-// protocolRegistry 已批准协议还原器注册表。仅允许在进程初始化阶段
-// (init/RegisterProtocolExtractor)写入,运行期只读。
-var protocolRegistry = map[string]ProtocolExtractor{
-	ProfileHTTP1Response: protocolExtractorFunc{profile: ProfileHTTP1Response, fn: extractHTTP1},
-	ProfileFTPPassive:    protocolExtractorFunc{profile: ProfileFTPPassive, fn: extractFTPPassive},
-	ProfileSMTPDataMIME:  protocolExtractorFunc{profile: ProfileSMTPDataMIME, fn: extractSMTPData},
-}
+// protocolRegistry 已批准协议还原器注册表。注册与读取均有锁保护,
+// 可在运行期安全扩展。
+var (
+	protocolRegistryMu sync.RWMutex
+	protocolRegistry   = map[string]ProtocolExtractor{
+		ProfileHTTP1Response: protocolExtractorFunc{profile: ProfileHTTP1Response, fn: extractHTTP1},
+		ProfileFTPPassive:    protocolExtractorFunc{profile: ProfileFTPPassive, fn: extractFTPPassive},
+		ProfileSMTPDataMIME:  protocolExtractorFunc{profile: ProfileSMTPDataMIME, fn: extractSMTPData},
+	}
+)
 
-// RegisterProtocolExtractor 注册一个协议还原器(按 Profile 键)。请在进程启动
-// 阶段调用;运行期并发调用需自行加锁。
+// RegisterProtocolExtractor 注册一个协议还原器(按 Profile 键),线程安全。
 func RegisterProtocolExtractor(e ProtocolExtractor) {
 	if e == nil {
 		return
 	}
+	protocolRegistryMu.Lock()
+	defer protocolRegistryMu.Unlock()
 	if protocolRegistry == nil {
 		protocolRegistry = make(map[string]ProtocolExtractor)
 	}
@@ -242,7 +247,10 @@ func Extract(input Input, limits Limits) (Result, error) {
 	if err := limits.Validate(); err != nil {
 		return Result{}, err
 	}
-	if e, ok := protocolRegistry[input.ProfileID]; ok {
+	protocolRegistryMu.RLock()
+	e, ok := protocolRegistry[input.ProfileID]
+	protocolRegistryMu.RUnlock()
+	if ok {
 		return e.Extract(input, limits), nil
 	}
 	result := baseResult(input.ProfileID, "unsupported-profile")

@@ -129,9 +129,10 @@ func ParsePolicy(raw []byte) (*Policy, error) {
 }
 
 // flatScopeGrammar 是表驱动解释器支持的扁平 scope 文法:svc:res[:sub...],
-// 段允许小写字母/数字/-/_ 与整段通配 *。出现括号/运算符等表达式语法说明
-// 契约已超出解释器适用范围,必须转向表达式引擎而不是继续膨胀解释器分支。
-var flatScopeGrammar = regexp.MustCompile(`^[a-z][a-z0-9_-]*(:[a-z0-9*_-]+)+$`)
+// 段为小写字母/数字/-/_,通配只允许整段 `*`(不允许与字符混排)。出现
+// 括号/运算符等表达式语法说明契约已超出解释器适用范围,必须转向表达式
+// 引擎而不是继续膨胀解释器分支。
+var flatScopeGrammar = regexp.MustCompile(`^[a-z][a-z0-9_-]*(:[a-z0-9_-]+|:\*)+$`)
 
 func validateScopeGrammar(scope string) error {
 	if scope == "" {

@@ -96,6 +96,7 @@ type NotificationService struct {
 	limiter          *rateLimiter
 	channelResolver  func(context.Context, *AlertInfo) ([]ChannelRoute, error)
 	deliveryRecorder func(context.Context, DeliveryResult) error
+	sendersMu        sync.RWMutex
 	senders          map[string]ChannelSender
 }
 
@@ -194,7 +195,14 @@ func NewNotificationService(cfg NotifyConfig, logger *zap.Logger) *NotificationS
 		logger:  logger,
 		limiter: newRateLimiter(cfg.RateLimitPerMin),
 	}
-	s.senders = map[string]ChannelSender{
+	s.senders = s.buildDefaultSenders()
+	return s
+}
+
+// buildDefaultSenders 内置六渠道注册表(与 sendChannel 的惰性回退共用,
+// 保证零值构造的服务也不改变分发语义)。
+func (s *NotificationService) buildDefaultSenders() map[string]ChannelSender {
+	return map[string]ChannelSender{
 		"email":    emailSender{s},
 		"webhook":  webhookSender{s},
 		"slack":    slackSender{s},
@@ -202,10 +210,10 @@ func NewNotificationService(cfg NotifyConfig, logger *zap.Logger) *NotificationS
 		"dingtalk": dingtalkSender{s},
 		"feishu":   feishuSender{s},
 	}
-	return s
 }
 
 // RegisterChannel 注册或覆盖一个通知渠道(按 Name 归一化),供后续渠道扩展。
+// 线程安全,可在运行期调用。
 func (s *NotificationService) RegisterChannel(sender ChannelSender) {
 	if s == nil || sender == nil {
 		return
@@ -214,8 +222,10 @@ func (s *NotificationService) RegisterChannel(sender ChannelSender) {
 	if name == "" {
 		return
 	}
+	s.sendersMu.Lock()
+	defer s.sendersMu.Unlock()
 	if s.senders == nil {
-		s.senders = make(map[string]ChannelSender)
+		s.senders = s.buildDefaultSenders()
 	}
 	s.senders[name] = sender
 }
@@ -411,7 +421,19 @@ func (s *NotificationService) SendChannel(ctx context.Context, channel string, a
 
 func (s *NotificationService) sendChannel(ctx context.Context, channel string, alert *AlertInfo) error {
 	name := strings.ToLower(strings.TrimSpace(channel))
-	sender, ok := s.senders[name]
+	s.sendersMu.RLock()
+	senders := s.senders
+	s.sendersMu.RUnlock()
+	if senders == nil {
+		// 零值构造惰性回退到内置注册表,保证重构前后分发语义一致。
+		s.sendersMu.Lock()
+		if s.senders == nil {
+			s.senders = s.buildDefaultSenders()
+		}
+		senders = s.senders
+		s.sendersMu.Unlock()
+	}
+	sender, ok := senders[name]
 	if !ok {
 		return fmt.Errorf("%s: %w", channel, ErrChannelUnsupported)
 	}

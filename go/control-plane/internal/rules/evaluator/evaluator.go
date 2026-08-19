@@ -103,22 +103,31 @@ func NewRuleAnalyzer(logger *zap.Logger) *RuleAnalyzer {
 		EvaluationHistory: make(map[string][]EvalResult),
 		logger:            logger,
 	}
-	a.evaluators = map[model.RuleType]RuleEvaluator{
+	a.evaluators = a.defaultEvaluators()
+	return a
+}
+
+// defaultEvaluators 内置四类规则评估器(与 evaluateRule 的惰性回退共用,
+// 保证零值构造的分析器也不改变分发语义)。
+func (a *RuleAnalyzer) defaultEvaluators() map[model.RuleType]RuleEvaluator {
+	return map[model.RuleType]RuleEvaluator{
 		model.RuleTypeThreshold:   evaluatorFunc{typ: model.RuleTypeThreshold, fn: a.evalThreshold},
 		model.RuleTypeSignature:   evaluatorFunc{typ: model.RuleTypeSignature, fn: a.evalSignature},
 		model.RuleTypeAnomaly:     evaluatorFunc{typ: model.RuleTypeAnomaly, fn: a.evalAnomaly},
 		model.RuleTypeCorrelation: evaluatorFunc{typ: model.RuleTypeCorrelation, fn: a.evalCorrelation},
 	}
-	return a
 }
 
 // RegisterEvaluator 注册或覆盖一个规则类型评估器,供后续规则类型扩展。
+// 线程安全,可在运行期调用。
 func (a *RuleAnalyzer) RegisterEvaluator(e RuleEvaluator) {
 	if a == nil || e == nil {
 		return
 	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if a.evaluators == nil {
-		a.evaluators = make(map[model.RuleType]RuleEvaluator)
+		a.evaluators = a.defaultEvaluators()
 	}
 	a.evaluators[e.Type()] = e
 }
@@ -202,7 +211,19 @@ func (a *RuleAnalyzer) evaluateRule(rule *model.Rule, dp DataPoint) EvalResult {
 	}
 
 	// 根据规则类型评估:已注册类型走对应评估器,未注册类型回退通用评估。
-	if evaluator, ok := a.evaluators[model.RuleType(rule.Type)]; ok {
+	a.mu.RLock()
+	evaluators := a.evaluators
+	a.mu.RUnlock()
+	if evaluators == nil {
+		// 零值构造惰性回退到内置注册表,保证重构前后分发语义一致。
+		a.mu.Lock()
+		if a.evaluators == nil {
+			a.evaluators = a.defaultEvaluators()
+		}
+		evaluators = a.evaluators
+		a.mu.Unlock()
+	}
+	if evaluator, ok := evaluators[model.RuleType(rule.Type)]; ok {
 		result = evaluator.Evaluate(rule, dp, conditions)
 	} else {
 		result = a.evalGeneric(rule, dp, conditions)
