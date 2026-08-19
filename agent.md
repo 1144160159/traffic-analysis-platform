@@ -29,6 +29,11 @@
 
 ## 2. 工作原则
 
+- **全局约束(最高优先级,用户 2026-08-18 指定):任何删除操作执行前必须获得用户明确权限确认。**
+  覆盖范围包括但不限于:删除文件/目录、`git rm`、重写或清理 git 历史(`git filter-repo`/
+  `filter-branch`/`gc --prune` 等)、删除分支/标签/引用、删除数据库记录或表/列、删除
+  K8s 资源(Secret/ConfigMap/PVC/pod 等)、删除 MinIO/对象存储对象、删除 Kafka topic。
+  要求:先列出将删除的确切清单(路径/对象),等待用户确认后再执行;禁止"顺手清理"。
 - 先看 `git status --short`，只改当前任务需要的文件。仓库经常有大量未提交或生成产物变更，不要回滚他人改动。
 - 优先沿用现有模式: Go `api/service/repository/config`, Rust 模块边界, Flink module POM/job wiring, Web UI Ant Design/React Query 约定。
 - `proto/traffic/v1` 是契约真源。除非任务明确要求检查生成物，不要手改 Go/Rust/Java protobuf 生成文件。
