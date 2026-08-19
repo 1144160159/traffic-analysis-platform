@@ -1,0 +1,128 @@
+# Codex Loop Runtime Metrics
+
+- generated_at: `2026-06-24T07:50:57`
+- run_total: `301`
+- queue_total: `1`
+- queue_counts: `{'done': 1}`
+- resource_monitor: `RESOURCE_MONITOR_DEGRADED`
+- lock_present: `False`
+- lock_expired: `False`
+
+## Run Status
+- `CODEX_RUNNER_BLOCKED`: `1`
+- `CODEX_RUNNER_PLANNED`: `2`
+- `CONTEXT_PACKED`: `1`
+- `CONTEXT_SCOUTED`: `56`
+- `DAEMON_COMPLETED`: `11`
+- `DEPLOY_PLAN_READY`: `8`
+- `DESIGN_ITERATING`: `11`
+- `EXECUTOR_POOL_BLOCKED`: `4`
+- `EXECUTOR_POOL_PLANNED`: `13`
+- `EXECUTOR_POOL_STRESS_BLOCKED`: `1`
+- `EXECUTOR_POOL_STRESS_COMPLETED`: `3`
+- `GUIDANCE_GENERATED`: `14`
+- `HISTORICAL_SCAFFOLD`: `2`
+- `IMPLEMENTATION_BLOCKED`: `1`
+- `LLM_REVIEW_PLANNED`: `1`
+- `LOCK_ACQUIRED`: `12`
+- `METRICS_COLLECTED`: `13`
+- `OBJECTIVE_STOP_BLOCKED`: `1`
+- `PLANNED`: `1`
+- `QUEUE_SERVICE_SMOKE_PASSED`: `5`
+- `RELEASE_BLOCKED`: `4`
+- `RELEASE_FROZEN`: `24`
+- `REMOTE_POOL_K8S_READINESS_BLOCKED`: `1`
+- `REMOTE_POOL_K8S_STRESS_VALIDATED`: `1`
+- `REMOTE_POOL_STRESS_BLOCKED`: `2`
+- `REMOTE_POOL_STRESS_COMPLETED`: `4`
+- `REMOTE_POOL_WORKER_COMPLETED`: `1`
+- `RESOURCE_MONITOR_DEGRADED`: `2`
+- `RESOURCE_QUOTA_READY`: `2`
+- `RUNTIME_PREFLIGHT_DEGRADED`: `3`
+- `RUNTIME_PREFLIGHT_READY`: `4`
+- `SANDBOX_EXECUTION_BLOCKED`: `2`
+- `SANDBOX_EXECUTION_PLANNED`: `1`
+- `SANDBOX_PLAN_BLOCKED`: `1`
+- `SANDBOX_PLAN_READY`: `21`
+- `SANDBOX_WORKER_EXECUTION_BLOCKED`: `1`
+- `SANDBOX_WORKER_PLANNED`: `18`
+- `SANDBOX_WORKER_QUEUE_GUARD_BLOCKED`: `1`
+- `SCHEDULER_PLANNED`: `5`
+- `SERVICE_COMPLETED`: `2`
+- `SERVICE_HEALTHY`: `8`
+- `SERVICE_ONCE_COMPLETED`: `5`
+- `SERVICE_RECOVERED`: `1`
+- `SOAK_DEGRADED`: `1`
+- `TASK_STATE_PLANNED`: `1`
+- `WORKER_COMPLETED`: `9`
+- `WORKFLOW_PREPARED`: `3`
+- `WORKSPACE_CLEANUP_COMPLETED`: `10`
+- `WORKSPACE_CLEANUP_PLANNED`: `1`
+- `WORKSPACE_ISOLATION_DEGRADED`: `1`
+
+## Run Kinds
+- `codex_runner`: `3`
+- `context_pack`: `1`
+- `context_scout`: `56`
+- `daemon`: `11`
+- `deploy_plan`: `8`
+- `design_package`: `1`
+- `executor_pool`: `17`
+- `executor_pool_stress`: `4`
+- `guidance`: `14`
+- `historical_scaffold`: `2`
+- `implementation_guard`: `1`
+- `llm_review`: `1`
+- `metrics`: `13`
+- `objective_stop`: `1`
+- `queue_service`: `5`
+- `release_freeze`: `28`
+- `remote_pool_k8s_readiness`: `1`
+- `remote_pool_k8s_stress`: `1`
+- `remote_pool_stress`: `6`
+- `remote_pool_worker`: `1`
+- `resource_monitor`: `2`
+- `resource_quota`: `2`
+- `runtime_preflight`: `7`
+- `sandbox_execution`: `3`
+- `sandbox_plan`: `22`
+- `sandbox_worker`: `20`
+- `scheduler`: `17`
+- `service`: `7`
+- `service_health`: `8`
+- `service_recover`: `1`
+- `soak`: `1`
+- `task_state`: `1`
+- `unknown`: `1`
+- `worker`: `9`
+- `workflow_run`: `13`
+- `workspace_cleanup`: `11`
+- `workspace_isolation`: `1`
+
+## Latest Runs
+- `mvp-34-soak-service-once-c001-resource-monitor` `resource_monitor` `RESOURCE_MONITOR_DEGRADED`
+- `mvp-24-resource-monitor` `resource_monitor` `RESOURCE_MONITOR_DEGRADED`
+- `mvp-41-daemon-objective-stop-dry-i1` `guidance` `GUIDANCE_GENERATED`
+- `mvp-41-daemon-objective-stop-dry-i1-scheduler` `scheduler` `LOCK_ACQUIRED`
+- `mvp-41-daemon-objective-stop-dry-i1-worker` `worker` `WORKER_COMPLETED`
+- `mvp-41-daemon-objective-stop-dry-i1-scout` `context_scout` `CONTEXT_SCOUTED`
+- `mvp-41-objective-stop-scout` `context_scout` `CONTEXT_SCOUTED`
+- `mvp-41-release-blocked-by-objective-stop` `release_freeze` `RELEASE_BLOCKED`
+- `mvp-41-objective-stop-current` `objective_stop` `OBJECTIVE_STOP_BLOCKED`
+- `mvp-40-k8s-readiness-scout` `context_scout` `CONTEXT_SCOUTED`
+- `mvp-40-release-blocked-by-k8s-readiness` `release_freeze` `RELEASE_BLOCKED`
+- `mvp-40-remote-pool-k8s-readiness` `remote_pool_k8s_readiness` `REMOTE_POOL_K8S_READINESS_BLOCKED`
+- `mvp-39b-final-k8s-remote-pool-scout` `context_scout` `CONTEXT_SCOUTED`
+- `mvp-39-final-k8s-remote-pool-scout` `context_scout` `CONTEXT_SCOUTED`
+- `mvp-39-release-with-k8s-remote-pool` `release_freeze` `RELEASE_FROZEN`
+- `mvp-39-worker-only-smoke-worker-0` `remote_pool_worker` `REMOTE_POOL_WORKER_COMPLETED`
+- `mvp-39-remote-pool-k8s-plan` `remote_pool_k8s_stress` `REMOTE_POOL_K8S_STRESS_VALIDATED`
+- `mvp-38-final-external-remote-pool-scout` `context_scout` `CONTEXT_SCOUTED`
+- `mvp-38-release-with-external-remote-pool` `release_freeze` `RELEASE_FROZEN`
+- `mvp-38-remote-pool-nonloopback-guard` `remote_pool_stress` `REMOTE_POOL_STRESS_BLOCKED`
+
+## Queue Items
+- `CLE-P0-SCREEN-001` state `done` attempts `2/3`
+
+## Guardrail
+- Metrics are observational evidence only; they do not close tasks or mutate task YAML.

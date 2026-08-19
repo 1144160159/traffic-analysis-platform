@@ -1,0 +1,147 @@
+# Codex Loop Runtime Metrics
+
+- generated_at: `2026-06-24T11:15:34`
+- run_total: `374`
+- queue_total: `1`
+- queue_counts: `{'done': 1}`
+- resource_monitor: `RESOURCE_MONITOR_DEGRADED`
+- lock_present: `False`
+- lock_expired: `False`
+
+## Run Status
+- `CODEX_RUNNER_BLOCKED`: `1`
+- `CODEX_RUNNER_PLANNED`: `2`
+- `CONTEXT_PACKED`: `1`
+- `CONTEXT_SCOUTED`: `69`
+- `DAEMON_COMPLETED`: `12`
+- `DAEMON_OBJECTIVE_STOPPED`: `2`
+- `DEPLOY_PLAN_BLOCKED`: `1`
+- `DEPLOY_PLAN_READY`: `13`
+- `DESIGN_ITERATING`: `11`
+- `EXECUTOR_POOL_BLOCKED`: `4`
+- `EXECUTOR_POOL_PLANNED`: `13`
+- `EXECUTOR_POOL_STRESS_BLOCKED`: `1`
+- `EXECUTOR_POOL_STRESS_COMPLETED`: `3`
+- `GUIDANCE_GENERATED`: `17`
+- `HISTORICAL_SCAFFOLD`: `2`
+- `IMAGE_BUILD_BLOCKED`: `2`
+- `IMAGE_BUILD_COMPLETED`: `1`
+- `IMAGE_BUILD_PLANNED`: `1`
+- `IMAGE_DISTRIBUTION_READY`: `1`
+- `IMPLEMENTATION_BLOCKED`: `1`
+- `K8S_BOOTSTRAP_APPLIED`: `1`
+- `K8S_BOOTSTRAP_BLOCKED`: `1`
+- `K8S_BOOTSTRAP_VALIDATED`: `3`
+- `LLM_REVIEW_PLANNED`: `1`
+- `LOCK_ACQUIRED`: `15`
+- `MATURITY_AUDIT_PARTIAL`: `1`
+- `METRICS_COLLECTED`: `16`
+- `OBJECTIVE_STOP_BLOCKED`: `10`
+- `OBJECTIVE_STOP_CONTINUE`: `4`
+- `PLANNED`: `1`
+- `QUEUE_SERVICE_SMOKE_PASSED`: `5`
+- `RELEASE_BLOCKED`: `7`
+- `RELEASE_FROZEN`: `26`
+- `REMOTE_POOL_K8S_READINESS_BLOCKED`: `2`
+- `REMOTE_POOL_K8S_READINESS_DEGRADED`: `1`
+- `REMOTE_POOL_K8S_READINESS_READY`: `1`
+- `REMOTE_POOL_K8S_STRESS_COMPLETED`: `1`
+- `REMOTE_POOL_K8S_STRESS_VALIDATED`: `5`
+- `REMOTE_POOL_STRESS_BLOCKED`: `2`
+- `REMOTE_POOL_STRESS_COMPLETED`: `4`
+- `REMOTE_POOL_WORKER_COMPLETED`: `1`
+- `RESOURCE_MONITOR_DEGRADED`: `2`
+- `RESOURCE_QUOTA_READY`: `2`
+- `RUNTIME_PREFLIGHT_DEGRADED`: `3`
+- `RUNTIME_PREFLIGHT_READY`: `4`
+- `SANDBOX_EXECUTION_BLOCKED`: `2`
+- `SANDBOX_EXECUTION_PLANNED`: `1`
+- `SANDBOX_PLAN_BLOCKED`: `1`
+- `SANDBOX_PLAN_READY`: `21`
+- `SANDBOX_WORKER_EXECUTION_BLOCKED`: `1`
+- `SANDBOX_WORKER_PLANNED`: `18`
+- `SANDBOX_WORKER_QUEUE_GUARD_BLOCKED`: `1`
+- `SCHEDULER_PLANNED`: `5`
+- `SERVICE_COMPLETED`: `2`
+- `SERVICE_HEALTHY`: `8`
+- `SERVICE_OBJECTIVE_STOPPED`: `1`
+- `SERVICE_ONCE_COMPLETED`: `6`
+- `SERVICE_RECOVERED`: `1`
+- `SOAK_DEGRADED`: `1`
+- `TASK_STATE_PLANNED`: `1`
+- `WORKER_COMPLETED`: `12`
+- `WORKFLOW_PREPARED`: `3`
+- `WORKSPACE_CLEANUP_COMPLETED`: `10`
+- `WORKSPACE_CLEANUP_PLANNED`: `1`
+- `WORKSPACE_ISOLATION_DEGRADED`: `1`
+
+## Run Kinds
+- `codex_runner`: `3`
+- `context_pack`: `1`
+- `context_scout`: `69`
+- `daemon`: `14`
+- `deploy_plan`: `14`
+- `design_package`: `1`
+- `executor_pool`: `17`
+- `executor_pool_stress`: `4`
+- `guidance`: `17`
+- `historical_scaffold`: `2`
+- `image_build`: `4`
+- `image_distribution`: `1`
+- `implementation_guard`: `1`
+- `k8s_bootstrap`: `5`
+- `llm_review`: `1`
+- `maturity_audit`: `1`
+- `metrics`: `16`
+- `objective_stop`: `14`
+- `queue_service`: `5`
+- `release_freeze`: `33`
+- `remote_pool_k8s_readiness`: `4`
+- `remote_pool_k8s_stress`: `6`
+- `remote_pool_stress`: `6`
+- `remote_pool_worker`: `1`
+- `resource_monitor`: `2`
+- `resource_quota`: `2`
+- `runtime_preflight`: `7`
+- `sandbox_execution`: `3`
+- `sandbox_plan`: `22`
+- `sandbox_worker`: `20`
+- `scheduler`: `20`
+- `service`: `9`
+- `service_health`: `8`
+- `service_recover`: `1`
+- `soak`: `1`
+- `task_state`: `1`
+- `unknown`: `1`
+- `worker`: `12`
+- `workflow_run`: `13`
+- `workspace_cleanup`: `11`
+- `workspace_isolation`: `1`
+
+## Latest Runs
+- `mvp-34-soak-service-once-c001-resource-monitor` `resource_monitor` `RESOURCE_MONITOR_DEGRADED`
+- `mvp-24-resource-monitor` `resource_monitor` `RESOURCE_MONITOR_DEGRADED`
+- `mvp-47-loop-one-round-first-p0-daemon-i1` `guidance` `GUIDANCE_GENERATED`
+- `mvp-47-loop-one-round-first-p0-daemon-i1-scheduler` `scheduler` `LOCK_ACQUIRED`
+- `mvp-47-loop-one-round-first-p0-daemon-i1-worker` `worker` `WORKER_COMPLETED`
+- `mvp-47-loop-one-round-first-p0-daemon-i1-scout` `context_scout` `CONTEXT_SCOUTED`
+- `mvp-46-production-maturity-audit` `maturity_audit` `MATURITY_AUDIT_PARTIAL`
+- `mvp-45-objective-stop-final` `objective_stop` `OBJECTIVE_STOP_CONTINUE`
+- `mvp-45-service-objective-stop-continue` `service` `SERVICE_ONCE_COMPLETED`
+- `mvp-45-service-objective-stop-continue-daemon` `daemon` `DAEMON_COMPLETED`
+- `mvp-45-service-objective-stop-continue-daemon-i1` `guidance` `GUIDANCE_GENERATED`
+- `mvp-45-service-objective-stop-continue-daemon-i1-metrics` `metrics` `METRICS_COLLECTED`
+- `mvp-45-service-objective-stop-continue-daemon-i1-objective-stop` `objective_stop` `OBJECTIVE_STOP_CONTINUE`
+- `mvp-45-service-objective-stop-continue-daemon-i1-scheduler` `scheduler` `LOCK_ACQUIRED`
+- `mvp-45-service-objective-stop-continue-daemon-i1-worker` `worker` `WORKER_COMPLETED`
+- `mvp-45-service-objective-stop-continue-daemon-i1-scout` `context_scout` `CONTEXT_SCOUTED`
+- `mvp-45-service-objective-stop-wiring` `service` `SERVICE_OBJECTIVE_STOPPED`
+- `mvp-45-service-objective-stop-wiring-daemon` `daemon` `DAEMON_OBJECTIVE_STOPPED`
+- `mvp-45-service-objective-stop-wiring-daemon-i1` `guidance` `GUIDANCE_GENERATED`
+- `mvp-45-service-objective-stop-wiring-daemon-i1-metrics` `metrics` `METRICS_COLLECTED`
+
+## Queue Items
+- `CLE-P0-SCREEN-001` state `done` attempts `2/3`
+
+## Guardrail
+- Metrics are observational evidence only; they do not close tasks or mutate task YAML.

@@ -1,0 +1,69 @@
+# Codex Loop Release Manifest
+
+- run_id: `mvp-43-release-blocked-by-image-and-readiness`
+- status: `RELEASE_BLOCKED`
+- commit: `e3316aec4ac1d6592e28aefc86853128ecde7408`
+- health: `HEALTHY`
+- queue_counts: `{'done': 1}`
+- deploy_plan: `doc/02_acceptance/runs/mvp-43-queue-service-k8s-deploy-plan/deploy/deploy-plan.json`
+- deploy_status: `DEPLOY_PLAN_READY`
+- deploy_image_layout: `control-only`
+- deploy_k8s_queue_path: `/workspace/doc/02_acceptance/runs/.loop/queue.sqlite3`
+- image_build: `doc/02_acceptance/runs/mvp-43-image-build-control-only/image-build/build-summary.json`
+- image_build_status: `IMAGE_BUILD_BLOCKED`
+- image_build_layout: `control-only`
+- k8s_bootstrap: `doc/02_acceptance/runs/mvp-43-k8s-bootstrap-queue-service-plan/k8s-bootstrap/bootstrap-summary.json`
+- k8s_bootstrap_status: `K8S_BOOTSTRAP_VALIDATED`
+- sandbox_plan: `none`
+- sandbox_status: `none`
+- sandbox_execution: `none`
+- sandbox_execution_status: `none`
+- sandbox_worker: `none`
+- sandbox_worker_status: `none`
+- resource_quota: `none`
+- resource_quota_status: `none`
+- resource_monitor: `none`
+- resource_monitor_status: `none`
+- workspace_isolation: `none`
+- workspace_isolation_status: `none`
+- workspace_cleanup: `none`
+- workspace_cleanup_status: `none`
+- executor_pool: `none`
+- executor_pool_status: `none`
+- executor_pool_activate_workspaces: `none`
+- executor_pool_stress: `none`
+- executor_pool_stress_status: `none`
+- executor_pool_stress_workspace_backend: `none`
+- remote_pool_stress: `none`
+- remote_pool_stress_status: `none`
+- remote_pool_stress_mode: `none`
+- remote_pool_stress_workers: `none`
+- remote_pool_k8s_stress: `doc/02_acceptance/runs/mvp-43-remote-pool-k8s-plan/remote-pool-k8s-stress/stress-summary.json`
+- remote_pool_k8s_stress_status: `REMOTE_POOL_K8S_STRESS_VALIDATED`
+- remote_pool_k8s_stress_image_layout: `control-only`
+- remote_pool_k8s_stress_workers: `3`
+- remote_pool_k8s_readiness: `doc/02_acceptance/runs/mvp-43-remote-pool-k8s-readiness/remote-pool-k8s-readiness/readiness-summary.json`
+- remote_pool_k8s_readiness_status: `REMOTE_POOL_K8S_READINESS_BLOCKED`
+- soak: `none`
+- soak_status: `none`
+- soak_cycles_completed: `none`
+- model_profile: `none`
+- model_profile_status: `none`
+- model_profile_selected: `none`
+- llm_review: `none`
+- llm_review_status: `none`
+- llm_review_decision: `none`
+- queue_service: `none`
+- queue_service_status: `none`
+- objective_stop: `none`
+- objective_stop_status: `none`
+
+## Evidence
+- `release/release-manifest.json`
+- `release/release-manifest.md`
+- `release/rollback-plan.md`
+- `release/git-status.txt`
+- `release/loop-diff.patch`
+
+## Guardrail
+- This manifest freezes loop-engine evidence only; it is not a business acceptance pass.
