@@ -292,21 +292,6 @@ func (r *AlertRepository) List(ctx context.Context, query *ListQuery) (*ListResu
 		r.logger.Error("Failed to scan count", zap.Error(err))
 		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan count")
 	}
-	r.logger.Info("Alert list page loaded",
-		zap.String("tenant_id", query.TenantID),
-		zap.Int("rows", len(alerts)),
-		zap.Int("limit", limit),
-		zap.Int("offset", offset))
-	var total uint64
-	row, err := r.client.QueryRow(ctx, countSQL, queryArgs...)
-	if err != nil {
-		r.logger.Error("Failed to query count", zap.Error(err))
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query count")
-	}
-	if err := row.Scan(&total); err != nil {
-		r.logger.Error("Failed to scan count", zap.Error(err))
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan count")
-	}
 
 	return &ListResult{
 		Alerts: alerts,

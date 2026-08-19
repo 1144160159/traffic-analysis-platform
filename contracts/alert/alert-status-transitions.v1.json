@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "description": "告警状态机单一真源。Go(go/control-plane/internal/alert/state)与 Web UI(web/ui/src/services/alertStatus.ts)必须与本文件保持一致;变更须同步三处,Go 侧由 state 包的契约一致性测试校验。",
+  "statuses": [
+    {
+      "status": "new",
+      "transitions": ["triage", "assigned", "closed"],
+      "comment": "reopen 入口见 closed -> new"
+    },
+    {
+      "status": "triage",
+      "transitions": ["assigned", "closed"]
+    },
+    {
+      "status": "assigned",
+      "transitions": ["triage", "closed"]
+    },
+    {
+      "status": "closed",
+      "transitions": ["new"]
+    }
+  ],
+  "aliases": {
+    "new": ["new", "open", "unhandled", "alert_status_new", "未处理"],
+    "triage": [
+      "triage",
+      "investigating",
+      "investigation",
+      "review",
+      "reviewing",
+      "in_progress",
+      "processing",
+      "alert_status_triage",
+      "alert_status_reviewing",
+      "研判中"
+    ],
+    "assigned": ["assigned", "delegated", "alert_status_assigned", "已指派"],
+    "closed": [
+      "closed",
+      "resolved",
+      "confirmed",
+      "ignored",
+      "false_positive",
+      "alert_status_closed",
+      "alert_status_resolved",
+      "已关闭"
+    ]
+  }
+}

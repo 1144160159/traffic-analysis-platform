@@ -32,6 +32,9 @@ import (
 )
 
 // HTTPClientConfig HTTP 客户端配置
+// 编译期断言:HTTPClient 显式实现 Client 抽象。
+var _ Client = (*HTTPClient)(nil)
+
 type HTTPClientConfig struct {
 	GraphAddr     string        // Graph HTTP 地址 (host:port, 默认 19669)
 	Username      string        // 用户名

@@ -5,10 +5,14 @@
 package authz
 
 import (
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,6 +22,11 @@ import (
 
 //go:embed policy/m10-minimal-role-policy.v1.json
 var embeddedPolicyJSON []byte
+
+// policySourceSHA256 是契约真源 contracts/authz/m10-minimal-role-policy.v1.json
+// 的 SHA-256。DefaultPolicy 在启动期校验内嵌副本与真源哈希一致,防止双副本漂移
+// (fail-closed);真源文件本身由 policy_integrity_test.go 在仓库内逐字节校验。
+const policySourceSHA256 = "035d3ae718a40aba766054318ed3bcf1c502934fddebf904e4f0c328aec85548"
 
 // Operation 契约中的单个操作(运行时判定所需的字段)。
 type Operation struct {
@@ -51,8 +60,14 @@ var (
 )
 
 // DefaultPolicy 进程内单例契约(go:embed 内置,与 contracts/authz 副本同源)。
+// 启动期校验内嵌副本与契约真源哈希一致,漂移时 fail-closed。
 func DefaultPolicy() (*Policy, error) {
 	policyOnce.Do(func() {
+		sum := sha256.Sum256(embeddedPolicyJSON)
+		if got := hex.EncodeToString(sum[:]); got != policySourceSHA256 {
+			policyErr = fmt.Errorf("embedded policy hash %s does not match source contract %s (dual-copy drift)", got, policySourceSHA256)
+			return
+		}
 		defaultPolicy, policyErr = ParsePolicy(embeddedPolicyJSON)
 	})
 	return defaultPolicy, policyErr
@@ -90,6 +105,9 @@ func ParsePolicy(raw []byte) (*Policy, error) {
 		if o.RequiredScope == "" {
 			return nil, fmt.Errorf("operation %s missing required_scope", o.OperationID)
 		}
+		if err := validateScopeGrammar(o.RequiredScope); err != nil {
+			return nil, fmt.Errorf("operation %s: %w", o.OperationID, err)
+		}
 		p.Operations[opKey(o.Method, o.Path)] = &Operation{
 			OperationID:     o.OperationID,
 			Path:            o.Path,
@@ -100,9 +118,29 @@ func ParsePolicy(raw []byte) (*Policy, error) {
 		}
 	}
 	for _, r := range doc.Roles {
+		for _, sc := range r.Scopes {
+			if err := validateScopeGrammar(sc); err != nil {
+				return nil, fmt.Errorf("role %s: %w", r.RoleID, err)
+			}
+		}
 		p.Roles[r.RoleID] = &Role{RoleID: r.RoleID, Scopes: r.Scopes, CrossTenant: r.CrossTenant}
 	}
 	return p, nil
+}
+
+// flatScopeGrammar 是表驱动解释器支持的扁平 scope 文法:svc:res[:sub...],
+// 段允许小写字母/数字/-/_ 与整段通配 *。出现括号/运算符等表达式语法说明
+// 契约已超出解释器适用范围,必须转向表达式引擎而不是继续膨胀解释器分支。
+var flatScopeGrammar = regexp.MustCompile(`^[a-z][a-z0-9_-]*(:[a-z0-9*_-]+)+$`)
+
+func validateScopeGrammar(scope string) error {
+	if scope == "" {
+		return errors.New("empty scope")
+	}
+	if flatScopeGrammar.MatchString(scope) {
+		return nil
+	}
+	return fmt.Errorf("scope %q is outside the approved flat grammar; complex expressions must move to an expression engine", scope)
 }
 
 func opKey(method, path string) string {

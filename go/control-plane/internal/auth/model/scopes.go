@@ -54,15 +54,6 @@ const (
 	ScopePlaybookExecute = "playbook:execute"
 )
 
-// SOAR 剧本治理权限
-const (
-	ScopePlaybookRead    = "playbook:read"
-	ScopePlaybookWrite   = "playbook:write"
-	ScopePlaybookDrill   = "playbook:drill"
-	ScopePlaybookApprove = "playbook:approve"
-	ScopePlaybookExport  = "playbook:export"
-)
-
 // 规则管理权限
 const (
 	ScopeRuleRead   = "rule:read"

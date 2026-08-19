@@ -96,6 +96,7 @@ type NotificationService struct {
 	limiter          *rateLimiter
 	channelResolver  func(context.Context, *AlertInfo) ([]ChannelRoute, error)
 	deliveryRecorder func(context.Context, DeliveryResult) error
+	senders          map[string]ChannelSender
 }
 
 func (s *NotificationService) SetChannelResolver(resolver func(context.Context, *AlertInfo) ([]ChannelRoute, error)) {
@@ -116,12 +117,107 @@ var (
 	ErrRateLimited          = errors.New("notification rate limit exceeded")
 )
 
+// ChannelSender 单个通知渠道的发送实现(策略模式)。
+// 新增渠道只需实现该接口并通过 RegisterChannel 注册,不再修改 sendChannel 分发逻辑。
+type ChannelSender interface {
+	// Name 返回规范化渠道名(email/webhook/slack/wechat/dingtalk/feishu)。
+	Name() string
+	// Configured 判断该渠道对当前告警是否可用。
+	Configured(alert *AlertInfo) bool
+	// Send 执行一次渠道发送。
+	Send(ctx context.Context, alert *AlertInfo) error
+}
+
+type emailSender struct{ s *NotificationService }
+
+func (e emailSender) Name() string { return "email" }
+func (e emailSender) Configured(_ *AlertInfo) bool {
+	return e.s.config.SMTPHost != "" && e.s.config.SMTPUser != ""
+}
+func (e emailSender) Send(ctx context.Context, alert *AlertInfo) error {
+	return e.s.sendEmail(ctx, alert)
+}
+
+type webhookSender struct{ s *NotificationService }
+
+func (w webhookSender) Name() string { return "webhook" }
+func (w webhookSender) Configured(alert *AlertInfo) bool {
+	return w.s.config.WebhookURL != "" || len(alert.Destinations) > 0
+}
+func (w webhookSender) Send(ctx context.Context, alert *AlertInfo) error {
+	return w.s.sendWebhook(ctx, alert)
+}
+
+type slackSender struct{ s *NotificationService }
+
+func (sl slackSender) Name() string { return "slack" }
+func (sl slackSender) Configured(alert *AlertInfo) bool {
+	return sl.s.config.SlackWebhook != "" || len(alert.Destinations) > 0
+}
+func (sl slackSender) Send(ctx context.Context, alert *AlertInfo) error {
+	return sl.s.sendSlack(ctx, alert)
+}
+
+type wechatSender struct{ s *NotificationService }
+
+func (wc wechatSender) Name() string { return "wechat" }
+func (wc wechatSender) Configured(alert *AlertInfo) bool {
+	return wc.s.config.WechatWebhook != "" || len(alert.Destinations) > 0
+}
+func (wc wechatSender) Send(ctx context.Context, alert *AlertInfo) error {
+	return wc.s.sendWechat(ctx, alert)
+}
+
+type dingtalkSender struct{ s *NotificationService }
+
+func (dt dingtalkSender) Name() string { return "dingtalk" }
+func (dt dingtalkSender) Configured(alert *AlertInfo) bool {
+	return dt.s.config.DingtalkWebhook != "" || len(alert.Destinations) > 0
+}
+func (dt dingtalkSender) Send(ctx context.Context, alert *AlertInfo) error {
+	return dt.s.sendDingtalk(ctx, alert)
+}
+
+type feishuSender struct{ s *NotificationService }
+
+func (fs feishuSender) Name() string { return "feishu" }
+func (fs feishuSender) Configured(alert *AlertInfo) bool {
+	return fs.s.config.FeishuWebhook != "" || len(alert.Destinations) > 0
+}
+func (fs feishuSender) Send(ctx context.Context, alert *AlertInfo) error {
+	return fs.s.sendFeishu(ctx, alert)
+}
+
 func NewNotificationService(cfg NotifyConfig, logger *zap.Logger) *NotificationService {
-	return &NotificationService{
+	s := &NotificationService{
 		config:  cfg,
 		logger:  logger,
 		limiter: newRateLimiter(cfg.RateLimitPerMin),
 	}
+	s.senders = map[string]ChannelSender{
+		"email":    emailSender{s},
+		"webhook":  webhookSender{s},
+		"slack":    slackSender{s},
+		"wechat":   wechatSender{s},
+		"dingtalk": dingtalkSender{s},
+		"feishu":   feishuSender{s},
+	}
+	return s
+}
+
+// RegisterChannel 注册或覆盖一个通知渠道(按 Name 归一化),供后续渠道扩展。
+func (s *NotificationService) RegisterChannel(sender ChannelSender) {
+	if s == nil || sender == nil {
+		return
+	}
+	name := strings.ToLower(strings.TrimSpace(sender.Name()))
+	if name == "" {
+		return
+	}
+	if s.senders == nil {
+		s.senders = make(map[string]ChannelSender)
+	}
+	s.senders[name] = sender
 }
 
 // Notify 发送告警通知（自动选择渠道）
@@ -314,42 +410,15 @@ func (s *NotificationService) SendChannel(ctx context.Context, channel string, a
 }
 
 func (s *NotificationService) sendChannel(ctx context.Context, channel string, alert *AlertInfo) error {
-	switch strings.ToLower(strings.TrimSpace(channel)) {
-	case "email":
-		if s.config.SMTPHost == "" || s.config.SMTPUser == "" {
-			return fmt.Errorf("email: %w", ErrChannelNotConfigured)
-		}
-		return s.sendEmail(ctx, alert)
-	case "webhook":
-		if s.config.WebhookURL == "" && len(alert.Destinations) == 0 {
-			return fmt.Errorf("webhook: %w", ErrChannelNotConfigured)
-		}
-		return s.sendWebhook(ctx, alert)
-	case "slack":
-		if s.config.SlackWebhook == "" && len(alert.Destinations) == 0 {
-			return fmt.Errorf("slack: %w", ErrChannelNotConfigured)
-		}
-		return s.sendSlack(ctx, alert)
-	case "wechat":
-		if s.config.WechatWebhook == "" && len(alert.Destinations) == 0 {
-			return fmt.Errorf("wechat: %w", ErrChannelNotConfigured)
-		}
-		return s.sendWechat(ctx, alert)
-	case "dingtalk":
-		if s.config.DingtalkWebhook == "" && len(alert.Destinations) == 0 {
-			return fmt.Errorf("dingtalk: %w", ErrChannelNotConfigured)
-		}
-		return s.sendDingtalk(ctx, alert)
-	case "feishu":
-		if s.config.FeishuWebhook == "" && len(alert.Destinations) == 0 {
-			return fmt.Errorf("feishu: %w", ErrChannelNotConfigured)
-		}
-		return s.sendFeishu(ctx, alert)
-	case "sms", "ticket":
-		return fmt.Errorf("%s: %w", channel, ErrChannelUnsupported)
-	default:
+	name := strings.ToLower(strings.TrimSpace(channel))
+	sender, ok := s.senders[name]
+	if !ok {
 		return fmt.Errorf("%s: %w", channel, ErrChannelUnsupported)
 	}
+	if !sender.Configured(alert) {
+		return fmt.Errorf("%s: %w", channel, ErrChannelNotConfigured)
+	}
+	return sender.Send(ctx, alert)
 }
 
 // =============================================================================

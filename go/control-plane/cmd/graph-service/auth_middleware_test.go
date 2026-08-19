@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
+	"go.uber.org/zap"
 )
 
 type graphTestClaims struct {
@@ -32,7 +33,7 @@ func (v graphTestValidator) ValidateToken(string) (httpx.Claims, error) {
 func TestProtectGraphBusinessAPIRequiresBearerToken(t *testing.T) {
 	handler := protectGraphBusinessAPI(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
-	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{tenantID: "default", permissions: []string{"graph:read"}}}, nil))
+	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{tenantID: "default", permissions: []string{"graph:read"}}}, nil), zap.NewNop(), nil)
 
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/graph/workbench", nil))
@@ -47,7 +48,7 @@ func TestProtectGraphBusinessAPIRejectsTenantOverride(t *testing.T) {
 			t.Fatalf("expected token tenant, got %q", tenantID)
 		}
 		w.WriteHeader(http.StatusNoContent)
-	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{tenantID: "tenant-from-token", permissions: []string{"graph:read"}}}, nil))
+	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{tenantID: "tenant-from-token", permissions: []string{"graph:read"}}}, nil), zap.NewNop(), nil)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/graph/workbench?tenant_id=other", nil)
 	request.Header.Set("Authorization", "Bearer valid")
@@ -64,7 +65,7 @@ func TestProtectGraphBusinessAPIAcceptsMatchingTokenTenant(t *testing.T) {
 			t.Fatalf("expected token tenant, got %q", tenantID)
 		}
 		w.WriteHeader(http.StatusNoContent)
-	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{tenantID: "tenant-from-token", permissions: []string{"graph:read"}}}, nil))
+	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{tenantID: "tenant-from-token", permissions: []string{"graph:read"}}}, nil), zap.NewNop(), nil)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/graph/workbench?tenant_id=tenant-from-token", nil)
 	request.Header.Set("Authorization", "Bearer valid")
@@ -88,7 +89,7 @@ func TestProtectGraphBusinessAPIRejectsInvalidTokenAndMissingScope(t *testing.T)
 		t.Run(test.name, func(t *testing.T) {
 			handler := protectGraphBusinessAPI(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
-			}), httpx.Auth(test.validator, nil))
+			}), httpx.Auth(test.validator, nil), zap.NewNop(), nil)
 			request := httptest.NewRequest(http.MethodGet, "/api/v1/graph/workbench", nil)
 			request.Header.Set("Authorization", "Bearer token")
 			recorder := httptest.NewRecorder()
@@ -103,7 +104,7 @@ func TestProtectGraphBusinessAPIRejectsInvalidTokenAndMissingScope(t *testing.T)
 func TestProtectGraphBusinessAPIPreservesPublicHealthAndOptions(t *testing.T) {
 	handler := protectGraphBusinessAPI(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
-	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{}}, nil))
+	}), httpx.Auth(graphTestValidator{claims: graphTestClaims{}}, nil), zap.NewNop(), nil)
 	for _, request := range []*http.Request{
 		httptest.NewRequest(http.MethodGet, "/health", nil),
 		httptest.NewRequest(http.MethodOptions, "/api/v1/graph/workbench", nil),

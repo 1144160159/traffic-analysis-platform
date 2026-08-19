@@ -1334,22 +1334,6 @@ func (h *Handler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resultSHA256 := h.registeredResultSHA256(ctx, key)
-	userID := httpx.GetUserID(ctx)
-	detail := map[string]interface{}{
-		"mode":           "presign",
-		"expiry_seconds": req.Expiry,
-		"expires_at":     time.Now().Add(expiry).Unix(),
-	}
-	if resultSHA256 != "" {
-		detail["sha256"] = resultSHA256
-	}
-	if err := h.recordPcapAudit(ctx, r, audit.EventTypePcapDownload, fileTenantID, userID, key, detail); err != nil {
-		h.logger.Error("Failed to persist PCAP presign audit", zap.String("key", key), zap.Error(err))
-		rw.Error(http.StatusInternalServerError, "AUDIT_PERSIST_FAILED", "Failed to persist PCAP presign audit", nil)
-		return
-	}
-
 	rw.Success(PresignResponse{
 		URL:            signedURL,
 		ExpiresAt:      time.Now().Add(expiry).Unix(),

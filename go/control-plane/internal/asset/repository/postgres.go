@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/sqlbuild"
 	"strings"
 	"time"
 
@@ -158,9 +159,9 @@ func assetListWhere(tenantID string, filter config.AssetListFilter) ([]string, [
 
 func (r *AssetRepository) ListByTenantFiltered(ctx context.Context, tenantID string, filter config.AssetListFilter, limit, offset int) ([]*config.AssetRecord, int, error) {
 	conditions, args := assetListWhere(tenantID, filter)
-	where := strings.Join(conditions, " AND ")
+	where := sqlbuild.Where(conditions)
 	var total int
-	if err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM assets WHERE "+where, args...).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM assets"+where, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 	args = append(args, limit, offset)
@@ -168,7 +169,7 @@ func (r *AssetRepository) ListByTenantFiltered(ctx context.Context, tenantID str
 		`SELECT asset_id, revision, display_code, tenant_id, asset_type, status, ip_address, mac_address,
 		 hostname, vendor, os_type, source, vlan_id, switch_port, department, campus, owner,
 		 criticality, tags, metadata, first_seen, last_seen
-		 FROM assets WHERE `+where+fmt.Sprintf(" ORDER BY last_seen DESC,asset_id DESC LIMIT $%d OFFSET $%d", len(args)-1, len(args)), args...)
+		 FROM assets`+where+fmt.Sprintf(" ORDER BY last_seen DESC,asset_id DESC LIMIT $%d OFFSET $%d", len(args)-1, len(args)), args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -226,9 +227,9 @@ func (r *AssetRepository) ListByTenantCursor(
 		conditions,
 		fmt.Sprintf("pg_visible_in_snapshot(xmin::text::xid8,$%d::pg_snapshot)", len(args)),
 	)
-	where := strings.Join(conditions, " AND ")
+	where := sqlbuild.Where(conditions)
 	if position == nil {
-		if err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM assets WHERE "+where, args...).Scan(&total); err != nil {
+		if err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM assets"+where, args...).Scan(&total); err != nil {
 			return nil, fmt.Errorf("count asset cursor snapshot: %w", err)
 		}
 	} else {
@@ -240,7 +241,7 @@ func (r *AssetRepository) ListByTenantCursor(
 			conditions,
 			fmt.Sprintf("(last_seen,asset_id)<($%d,$%d::uuid)", len(args)-1, len(args)),
 		)
-		where = strings.Join(conditions, " AND ")
+		where = sqlbuild.Where(conditions)
 	}
 
 	args = append(args, limit+1)
@@ -248,7 +249,7 @@ func (r *AssetRepository) ListByTenantCursor(
 		`SELECT asset_id, revision, display_code, tenant_id, asset_type, status, ip_address, mac_address,
 		 hostname, vendor, os_type, source, vlan_id, switch_port, department, campus, owner,
 		 criticality, tags, metadata, first_seen, last_seen
-		 FROM assets WHERE `+where+fmt.Sprintf(
+		 FROM assets`+where+fmt.Sprintf(
 			" ORDER BY last_seen DESC,asset_id DESC LIMIT $%d",
 			len(args),
 		),
@@ -321,10 +322,10 @@ func (r *AssetRepository) GetStatsFiltered(ctx context.Context, tenantID string,
 		placeholder := len(args)
 		conditions = append(conditions, fmt.Sprintf("(display_code ILIKE $%d OR hostname ILIKE $%d OR ip_address ILIKE $%d OR mac_address ILIKE $%d)", placeholder, placeholder, placeholder, placeholder))
 	}
-	where := strings.Join(conditions, " AND ")
+	where := sqlbuild.Where(conditions)
 	var stats config.AssetStats
 	err := r.db.QueryRowContext(ctx, `WITH filtered_assets AS (
-		SELECT * FROM assets WHERE `+where+`
+		SELECT * FROM assets`+where+`
 	) SELECT
 		COUNT(*),
 		COUNT(*) FILTER (WHERE status='active'),

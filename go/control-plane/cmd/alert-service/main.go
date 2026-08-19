@@ -871,18 +871,22 @@ func main() {
 		logger.Warn("Authentication is explicitly disabled by configuration")
 	}
 
+	// 统一中间件责任链:顺序在单一构造点显式冻结(Recovery→RequestID→Logging→
+	// CORS→Metrics→Tenant→Authenticate),各业务路由共享同一链,避免鉴权前置
+	// 在个别路由上漂移失效。
+	apiMiddlewares := []mux.MiddlewareFunc{
+		mux.MiddlewareFunc(httpx.Recovery(logger)),
+		mux.MiddlewareFunc(httpx.RequestID()),
+		mux.MiddlewareFunc(httpx.Logging(logger)),
+		mux.MiddlewareFunc(httpx.CORS(httpx.DefaultCORSConfig())),
+		mux.MiddlewareFunc(httpx.Metrics("alert-service")),
+		mux.MiddlewareFunc(httpx.TenantExtractor()),
+	}
+	if authMiddleware != nil {
+		apiMiddlewares = append(apiMiddlewares, authMiddleware.Authenticate)
+	}
 	applyAPIMiddlewares := func(router *mux.Router) {
-		router.Use(
-			mux.MiddlewareFunc(httpx.Recovery(logger)),
-			mux.MiddlewareFunc(httpx.RequestID()),
-			mux.MiddlewareFunc(httpx.Logging(logger)),
-			mux.MiddlewareFunc(httpx.CORS(httpx.DefaultCORSConfig())),
-			mux.MiddlewareFunc(httpx.Metrics("alert-service")),
-			mux.MiddlewareFunc(httpx.TenantExtractor()),
-		)
-		if authMiddleware != nil {
-			router.Use(authMiddleware.Authenticate)
-		}
+		router.Use(apiMiddlewares...)
 	}
 	systemHandler := newAlertSystemHandler(
 		chClient,

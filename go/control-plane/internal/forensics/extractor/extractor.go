@@ -31,6 +31,43 @@ const (
 	ProfileSMTPDataMIME  = "smtp-data-mime-v1"
 )
 
+// ProtocolExtractor 单协议还原器(策略模式)。新增协议只需实现接口并通过
+// RegisterProtocolExtractor 登记,不再修改 Extract 的分发逻辑。
+type ProtocolExtractor interface {
+	// Profile 返回处理的协议画像 ID。
+	Profile() string
+	// Extract 执行该协议的还原。
+	Extract(input Input, limits Limits) Result
+}
+
+type protocolExtractorFunc struct {
+	profile string
+	fn      func(input Input, limits Limits) Result
+}
+
+func (p protocolExtractorFunc) Profile() string                           { return p.profile }
+func (p protocolExtractorFunc) Extract(input Input, limits Limits) Result { return p.fn(input, limits) }
+
+// protocolRegistry 已批准协议还原器注册表。仅允许在进程初始化阶段
+// (init/RegisterProtocolExtractor)写入,运行期只读。
+var protocolRegistry = map[string]ProtocolExtractor{
+	ProfileHTTP1Response: protocolExtractorFunc{profile: ProfileHTTP1Response, fn: extractHTTP1},
+	ProfileFTPPassive:    protocolExtractorFunc{profile: ProfileFTPPassive, fn: extractFTPPassive},
+	ProfileSMTPDataMIME:  protocolExtractorFunc{profile: ProfileSMTPDataMIME, fn: extractSMTPData},
+}
+
+// RegisterProtocolExtractor 注册一个协议还原器(按 Profile 键)。请在进程启动
+// 阶段调用;运行期并发调用需自行加锁。
+func RegisterProtocolExtractor(e ProtocolExtractor) {
+	if e == nil {
+		return
+	}
+	if protocolRegistry == nil {
+		protocolRegistry = make(map[string]ProtocolExtractor)
+	}
+	protocolRegistry[e.Profile()] = e
+}
+
 var safeFilenameCharacters = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 type Limits struct {
@@ -205,17 +242,11 @@ func Extract(input Input, limits Limits) (Result, error) {
 	if err := limits.Validate(); err != nil {
 		return Result{}, err
 	}
-	switch input.ProfileID {
-	case ProfileHTTP1Response:
-		return extractHTTP1(input, limits), nil
-	case ProfileFTPPassive:
-		return extractFTPPassive(input, limits), nil
-	case ProfileSMTPDataMIME:
-		return extractSMTPData(input, limits), nil
-	default:
-		result := baseResult(input.ProfileID, "unsupported-profile")
-		result.Status = StatusUnsupported
-		result.StatusReason = fmt.Sprintf("protocol profile %q is not approved", input.ProfileID)
-		return result, nil
+	if e, ok := protocolRegistry[input.ProfileID]; ok {
+		return e.Extract(input, limits), nil
 	}
+	result := baseResult(input.ProfileID, "unsupported-profile")
+	result.Status = StatusUnsupported
+	result.StatusReason = fmt.Sprintf("protocol profile %q is not approved", input.ProfileID)
+	return result, nil
 }

@@ -11,6 +11,7 @@
 package nebula
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"strings"
@@ -39,6 +40,17 @@ type ClientMetrics struct {
 	AvgLatencyMs   float64
 	ActiveSessions int
 	mu             sync.RWMutex
+}
+
+// Client 两种传输适配(HTTP 网关 / 本地 console)的共同抽象。
+// 上层只依赖该接口,不绑定具体传输实现(依赖倒转);
+// HTTPClient 与 ConsoleClient 均显式实现(见各自文件的编译期断言)。
+// 写入类操作(Insert* 系列)目前仅 HTTPClient 提供,保留在其具体类型上。
+type Client interface {
+	Execute(ctx context.Context, nGQL string) (*ResultSet, error)
+	Ping(ctx context.Context) error
+	Close() error
+	GetMetrics() ClientMetrics
 }
 
 // isRetryableError 判断是否可重试错误

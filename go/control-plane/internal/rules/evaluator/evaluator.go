@@ -31,10 +31,10 @@ type EvalResult struct {
 
 // SimulationInput 模拟输入数据
 type SimulationInput struct {
-	TenantID   string                 `json:"tenant_id"`
-	DataPoints []DataPoint            `json:"data_points"`
-	Duration   time.Duration          `json:"duration"`    // 模拟时间跨度
-	Rate       int                    `json:"rate"`        // 每秒事件数
+	TenantID   string        `json:"tenant_id"`
+	DataPoints []DataPoint   `json:"data_points"`
+	Duration   time.Duration `json:"duration"` // 模拟时间跨度
+	Rate       int           `json:"rate"`     // 每秒事件数
 }
 
 // DataPoint 数据点
@@ -46,21 +46,21 @@ type DataPoint struct {
 
 // SimulationReport 模拟报告
 type SimulationReport struct {
-	SimulationID   string              `json:"simulation_id"`
-	RuleID         string              `json:"rule_id"`
-	RuleName       string              `json:"rule_name"`
-	TotalEvents    int                 `json:"total_events"`
-	MatchedEvents  int                 `json:"matched_events"`
-	MatchRate      float64             `json:"match_rate"`       // 命中率
-	AvgEvalTimeMs  float64             `json:"avg_eval_time_ms"`
-	P50EvalTimeMs  float64             `json:"p50_eval_time_ms"`
-	P99EvalTimeMs  float64             `json:"p99_eval_time_ms"`
-	FalsePositives int                 `json:"false_positives"`   // 预期误报数
-	Precision      float64             `json:"precision"`         // 预估精确度
-	Recommendation string              `json:"recommendation"`    // 上线建议
-	RiskLevel      string              `json:"risk_level"`        // 风险等级
-	TopMatchFields []FieldMatchCount   `json:"top_match_fields"`  // 最常匹配的字段
-	Warnings       []string            `json:"warnings,omitempty"`// 告警
+	SimulationID   string            `json:"simulation_id"`
+	RuleID         string            `json:"rule_id"`
+	RuleName       string            `json:"rule_name"`
+	TotalEvents    int               `json:"total_events"`
+	MatchedEvents  int               `json:"matched_events"`
+	MatchRate      float64           `json:"match_rate"` // 命中率
+	AvgEvalTimeMs  float64           `json:"avg_eval_time_ms"`
+	P50EvalTimeMs  float64           `json:"p50_eval_time_ms"`
+	P99EvalTimeMs  float64           `json:"p99_eval_time_ms"`
+	FalsePositives int               `json:"false_positives"`    // 预期误报数
+	Precision      float64           `json:"precision"`          // 预估精确度
+	Recommendation string            `json:"recommendation"`     // 上线建议
+	RiskLevel      string            `json:"risk_level"`         // 风险等级
+	TopMatchFields []FieldMatchCount `json:"top_match_fields"`   // 最常匹配的字段
+	Warnings       []string          `json:"warnings,omitempty"` // 告警
 }
 
 // FieldMatchCount 字段匹配计数
@@ -75,14 +75,52 @@ type RuleAnalyzer struct {
 	EvaluationHistory map[string][]EvalResult // rule_id → 历史评估
 	mu                sync.RWMutex
 	logger            *zap.Logger
+	evaluators        map[model.RuleType]RuleEvaluator
+}
+
+// RuleEvaluator 单类规则评估器(与 Flink 侧 RuleMatcher 命名同构)。
+// RuleAnalyzer 只依赖该接口与注册表,新增规则类型无需修改 evaluateRule 分发逻辑。
+type RuleEvaluator interface {
+	// Type 返回该评估器处理的规则类型。
+	Type() model.RuleType
+	// Evaluate 对单个数据点执行评估并返回显式结果。
+	Evaluate(rule *model.Rule, dp DataPoint, conditions map[string]interface{}) EvalResult
+}
+
+type evaluatorFunc struct {
+	typ model.RuleType
+	fn  func(rule *model.Rule, dp DataPoint, conditions map[string]interface{}) EvalResult
+}
+
+func (e evaluatorFunc) Type() model.RuleType { return e.typ }
+func (e evaluatorFunc) Evaluate(rule *model.Rule, dp DataPoint, conditions map[string]interface{}) EvalResult {
+	return e.fn(rule, dp, conditions)
 }
 
 // NewRuleAnalyzer 创建规则分析器
 func NewRuleAnalyzer(logger *zap.Logger) *RuleAnalyzer {
-	return &RuleAnalyzer{
+	a := &RuleAnalyzer{
 		EvaluationHistory: make(map[string][]EvalResult),
 		logger:            logger,
 	}
+	a.evaluators = map[model.RuleType]RuleEvaluator{
+		model.RuleTypeThreshold:   evaluatorFunc{typ: model.RuleTypeThreshold, fn: a.evalThreshold},
+		model.RuleTypeSignature:   evaluatorFunc{typ: model.RuleTypeSignature, fn: a.evalSignature},
+		model.RuleTypeAnomaly:     evaluatorFunc{typ: model.RuleTypeAnomaly, fn: a.evalAnomaly},
+		model.RuleTypeCorrelation: evaluatorFunc{typ: model.RuleTypeCorrelation, fn: a.evalCorrelation},
+	}
+	return a
+}
+
+// RegisterEvaluator 注册或覆盖一个规则类型评估器,供后续规则类型扩展。
+func (a *RuleAnalyzer) RegisterEvaluator(e RuleEvaluator) {
+	if a == nil || e == nil {
+		return
+	}
+	if a.evaluators == nil {
+		a.evaluators = make(map[model.RuleType]RuleEvaluator)
+	}
+	a.evaluators[e.Type()] = e
 }
 
 // DryRun 试运行规则（不触发告警，仅评估命中情况）
@@ -163,17 +201,10 @@ func (a *RuleAnalyzer) evaluateRule(rule *model.Rule, dp DataPoint) EvalResult {
 		return result
 	}
 
-	// 根据规则类型评估
-	switch model.RuleType(rule.Type) {
-	case model.RuleTypeThreshold:
-		result = a.evalThreshold(rule, dp, conditions)
-	case model.RuleTypeSignature:
-		result = a.evalSignature(rule, dp, conditions)
-	case model.RuleTypeAnomaly:
-		result = a.evalAnomaly(rule, dp, conditions)
-	case model.RuleTypeCorrelation:
-		result = a.evalCorrelation(rule, dp, conditions)
-	default:
+	// 根据规则类型评估:已注册类型走对应评估器,未注册类型回退通用评估。
+	if evaluator, ok := a.evaluators[model.RuleType(rule.Type)]; ok {
+		result = evaluator.Evaluate(rule, dp, conditions)
+	} else {
 		result = a.evalGeneric(rule, dp, conditions)
 	}
 
@@ -464,9 +495,9 @@ func (a *RuleAnalyzer) CompareRules(ctx context.Context, ruleA, ruleB *model.Rul
 
 	return &ComparisonReport{
 		RuleA: reportA, RuleB: reportB,
-		Winner:    winner,
-		Reason:    reason,
-		MatchDiff: reportA.MatchRate - reportB.MatchRate,
+		Winner:      winner,
+		Reason:      reason,
+		MatchDiff:   reportA.MatchRate - reportB.MatchRate,
 		LatencyDiff: reportA.P99EvalTimeMs - reportB.P99EvalTimeMs,
 	}, nil
 }
@@ -475,7 +506,7 @@ func (a *RuleAnalyzer) CompareRules(ctx context.Context, ruleA, ruleB *model.Rul
 type ComparisonReport struct {
 	RuleA       *SimulationReport `json:"rule_a"`
 	RuleB       *SimulationReport `json:"rule_b"`
-	Winner      string            `json:"winner"`       // "A" or "B"
+	Winner      string            `json:"winner"` // "A" or "B"
 	Reason      string            `json:"reason"`
 	MatchDiff   float64           `json:"match_diff"`
 	LatencyDiff float64           `json:"latency_diff"`
@@ -531,38 +562,52 @@ func generateSimID(ruleID string, t time.Time) string {
 
 func getFloat(m map[string]interface{}, key string) (float64, bool) {
 	v, ok := m[key]
-	if !ok { return 0, false }
+	if !ok {
+		return 0, false
+	}
 	switch n := v.(type) {
-	case float64: return n, true
-	case float32: return float64(n), true
-	case int: return float64(n), true
-	case int64: return float64(n), true
+	case float64:
+		return n, true
+	case float32:
+		return float64(n), true
+	case int:
+		return float64(n), true
+	case int64:
+		return float64(n), true
 	}
 	return 0, false
 }
 
 func getFloatDefault(m map[string]interface{}, key string, def float64) float64 {
-	if v, ok := getFloat(m, key); ok { return v }
+	if v, ok := getFloat(m, key); ok {
+		return v
+	}
 	return def
 }
 
 func getString(m map[string]interface{}, key string) (string, bool) {
 	v, ok := m[key]
-	if !ok { return "", false }
+	if !ok {
+		return "", false
+	}
 	s, ok := v.(string)
 	return s, ok
 }
 
 func getBool(m map[string]interface{}, key string) (bool, bool) {
 	v, ok := m[key]
-	if !ok { return false, false }
+	if !ok {
+		return false, false
+	}
 	b, ok := v.(bool)
 	return b, ok
 }
 
 func getList(m map[string]interface{}, key string) ([]interface{}, bool) {
 	v, ok := m[key]
-	if !ok { return nil, false }
+	if !ok {
+		return nil, false
+	}
 	l, ok := v.([]interface{})
 	return l, ok
 }
@@ -574,7 +619,9 @@ func containsPattern(s, pattern string) bool {
 
 func findSubstring(s, sub string) bool {
 	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub { return true }
+		if s[i:i+len(sub)] == sub {
+			return true
+		}
 	}
 	return false
 }
@@ -607,39 +654,73 @@ func matchGeneric(actual interface{}, expected interface{}, op string) bool {
 }
 
 func average(values []float64) float64 {
-	if len(values) == 0 { return 0 }
+	if len(values) == 0 {
+		return 0
+	}
 	sum := 0.0
-	for _, v := range values { sum += v }
+	for _, v := range values {
+		sum += v
+	}
 	return sum / float64(len(values))
 }
 
 func percentile(sorted []float64, p float64) float64 {
-	if len(sorted) == 0 { return 0 }
+	if len(sorted) == 0 {
+		return 0
+	}
 	idx := int(float64(len(sorted)) * p / 100.0)
-	if idx >= len(sorted) { idx = len(sorted) - 1 }
+	if idx >= len(sorted) {
+		idx = len(sorted) - 1
+	}
 	return sorted[idx]
 }
 
 func topFields(counts map[string]int, totalMatched int, n int) []FieldMatchCount {
-	type kv struct { k string; v int }
+	type kv struct {
+		k string
+		v int
+	}
 	var items []kv
-	for k, v := range counts { items = append(items, kv{k, v}) }
+	for k, v := range counts {
+		items = append(items, kv{k, v})
+	}
 	sort.Slice(items, func(i, j int) bool { return items[i].v > items[j].v })
 	var result []FieldMatchCount
 	for i, item := range items {
-		if i >= n { break }
+		if i >= n {
+			break
+		}
 		ratio := 0.0
-		if totalMatched > 0 { ratio = float64(item.v) / float64(totalMatched) }
+		if totalMatched > 0 {
+			ratio = float64(item.v) / float64(totalMatched)
+		}
 		result = append(result, FieldMatchCount{Field: item.k, Count: item.v, Ratio: ratio})
 	}
 	return result
 }
 
-func boolToFloat(b bool) float64 { if b { return 1.0 }; return 0.0 }
+func boolToFloat(b bool) float64 {
+	if b {
+		return 1.0
+	}
+	return 0.0
+}
 func maxRisk(a, b string) string {
-	order := map[string]int{"info":0,"low":1,"medium":2,"high":3,"critical":4}
-	if order[a] > order[b] { return a }
+	order := map[string]int{"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
+	if order[a] > order[b] {
+		return a
+	}
 	return b
 }
-func min(a, b float64) float64 { if a < b { return a }; return b }
-func maxFloat(a, b float64) float64 { if a > b { return a }; return b }
+func min(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+func maxFloat(a, b float64) float64 {
+	if a > b {
+		return a
+	}
+	return b
+}

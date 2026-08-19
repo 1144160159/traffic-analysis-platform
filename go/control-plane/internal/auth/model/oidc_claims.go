@@ -8,11 +8,10 @@ package model
 
 import (
 	"strings"
-
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"time"
 )
 
 // OIDCClaims OIDC ID Token Claims

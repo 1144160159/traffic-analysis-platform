@@ -80,6 +80,10 @@ func run(logger *zap.Logger, getenv func(string) string) error {
 	}
 	defer postgres.Close()
 
+	// 审计事件持久性采用 consumer 级 DLQ(EnableDLQ/DLQPermanentOnly):
+	// 物化失败的消息写入 dlq.<topic> 且绝不因 DLQ 失败而提交。若后续需要
+	// 应用级重放,请实现 internal/common/replay.Manager 统一门面
+	// (参考 internal/ingest/dlq.ReplayManager),不要另建重放语义。
 	kafkaConsumer, err := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
 		Brokers:              cfg.brokers,
 		Topic:                cfg.topic,

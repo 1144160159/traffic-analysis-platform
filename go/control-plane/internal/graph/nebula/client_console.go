@@ -28,6 +28,9 @@ import (
 )
 
 // ConsoleClientConfig Console 客户端配置
+// 编译期断言:ConsoleClient 显式实现 Client 抽象。
+var _ Client = (*ConsoleClient)(nil)
+
 type ConsoleClientConfig struct {
 	ConsoleBin string        // nebula-console 二进制路径 (默认: /usr/local/nebula/bin/nebula-console)
 	GraphAddr  string        // Graph 服务地址
