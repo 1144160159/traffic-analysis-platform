@@ -220,6 +220,17 @@ func (c *Consumer) SetWhitelistMatcher(matcher interface {
 	c.whitelistMatcher = matcher
 }
 
+// SetNotificationDispatcher connects persisted detections to the governed
+// notification execution chain. Delivery failures are logged after the alert
+// batch is durable and never roll back the alert itself.
+func (c *Consumer) SetNotificationDispatcher(dispatcher interface {
+	Notify(context.Context, *notification.AlertInfo) error
+}) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.notifier = dispatcher
+}
+
 // ConsumerConfig 消费者配置
 type ConsumerConfig struct {
 	Kafka            config.KafkaConfig
@@ -342,6 +353,34 @@ func buildKafkaConsumerConfig(kafkaCfg config.KafkaConfig) kafka.ConsumerConfig 
 		// DLQ 收敛为单一专用 producer（c.dlqProducer）：关闭 common consumer
 		// 内建 DLQ 写路径，避免同一批失败消息被写两份 dlq.<topic> 记录。
 		EnableDLQ:      false,
+		DLQTopicPrefix: "dlq.",
+		Security:       kafkaCfg.Security,
+	}
+}
+
+func buildKafkaDLQConfig(kafkaCfg config.KafkaConfig) kafka.DLQConfig {
+	return kafka.DLQConfig{
+		Brokers:     kafkaCfg.Brokers,
+		TopicPrefix: "dlq.",
+		BatchSize:   100,
+		MaxRetries:  3,
+		Security:    kafkaCfg.Security,
+	}
+}
+
+func buildKafkaConsumerConfig(kafkaCfg config.KafkaConfig) kafka.ConsumerConfig {
+	return kafka.ConsumerConfig{
+		Brokers:        kafkaCfg.Brokers,
+		Topic:          kafkaCfg.Topic,
+		GroupID:        kafkaCfg.GroupID,
+		MinBytes:       1024,
+		MaxBytes:       10 * 1024 * 1024, // 10MB
+		MaxWait:        500 * time.Millisecond,
+		CommitInterval: 0,  // 手动提交
+		StartOffset:    -2, // earliest
+		MaxRetries:     3,
+		RetryBackoff:   time.Second,
+		EnableDLQ:      true,
 		DLQTopicPrefix: "dlq.",
 		Security:       kafkaCfg.Security,
 	}

@@ -2095,6 +2095,67 @@ CREATE INDEX IF NOT EXISTS idx_whitelist_source_alert ON whitelist (tenant_id, s
 CREATE INDEX IF NOT EXISTS idx_whitelist_expires ON whitelist (expires_at) WHERE expires_at IS NOT NULL;
 
 -- -----------------------------------------------------------------------------------------
+-- whitelist: 白名单治理表（Web UI /api/v1/whitelist）
+-- -----------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS whitelist (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id       TEXT NOT NULL,
+  type            TEXT NOT NULL CHECK (type IN ('ip','domain','fingerprint','subnet','asset','account','rule','model')),
+  value           TEXT NOT NULL,
+  reason          TEXT NOT NULL DEFAULT '',
+  description     TEXT NOT NULL DEFAULT '',
+  status          TEXT NOT NULL DEFAULT 'draft',
+  approval_status TEXT NOT NULL DEFAULT 'draft',
+  source_alert_id TEXT NOT NULL DEFAULT '',
+  feedback_id     TEXT NOT NULL DEFAULT '',
+  owner_role      TEXT NOT NULL DEFAULT '',
+  scope           TEXT NOT NULL DEFAULT '',
+  risk_level      TEXT NOT NULL DEFAULT 'medium',
+  covered_alerts  INTEGER NOT NULL DEFAULT 0,
+  covered_assets  INTEGER NOT NULL DEFAULT 0,
+  version         INTEGER NOT NULL DEFAULT 1,
+  created_by      TEXT NOT NULL DEFAULT '',
+  approved_by     TEXT NOT NULL DEFAULT '',
+  approved_at     TIMESTAMPTZ,
+  disabled_at     TIMESTAMPTZ,
+  expires_at      TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, type, value)
+);
+
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'draft';
+ALTER TABLE whitelist ALTER COLUMN status SET DEFAULT 'draft';
+ALTER TABLE whitelist ALTER COLUMN approval_status SET DEFAULT 'draft';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS source_alert_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS feedback_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS owner_role TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS scope TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS risk_level TEXT NOT NULL DEFAULT 'medium';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS covered_alerts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS covered_assets INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approved_by TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS disabled_at TIMESTAMPTZ;
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE whitelist DROP CONSTRAINT IF EXISTS whitelist_type_check;
+ALTER TABLE whitelist ADD CONSTRAINT whitelist_type_check CHECK (type IN ('ip','domain','fingerprint','subnet','asset','account','rule','model'));
+ALTER TABLE whitelist DROP CONSTRAINT IF EXISTS whitelist_governance_state_check;
+ALTER TABLE whitelist ADD CONSTRAINT whitelist_governance_state_check CHECK (
+  (status='draft' AND approval_status='draft') OR
+  (status='pending' AND approval_status='pending') OR
+  (status='active' AND approval_status='approved') OR
+  (status='disabled' AND approval_status IN ('approved','rejected'))
+);
+CREATE INDEX IF NOT EXISTS idx_whitelist_tenant ON whitelist (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_whitelist_entries_tenant_status ON whitelist (tenant_id, status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_whitelist_entries_approval ON whitelist (tenant_id, approval_status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_whitelist_source_alert ON whitelist (tenant_id, source_alert_id) WHERE source_alert_id <> '';
+CREATE INDEX IF NOT EXISTS idx_whitelist_expires ON whitelist (expires_at) WHERE expires_at IS NOT NULL;
+
+-- -----------------------------------------------------------------------------------------
 -- whitelist_rules: 白名单规则表
 -- -----------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS whitelist_rules (

@@ -301,6 +301,12 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		Status: "accepted", OutboxStatus: outboxStatus,
 		IdempotentReplay: commitResult.IdempotentReplay,
 	}
+	if err := h.actionAudit.Record(ctx, r, AlertActionAuditRecord{Action: "ALERT_FEEDBACK_SUBMITTED", ObjectType: "alert_feedback", ObjectID: feedbackID, TenantID: tenantID, UserID: userID, AlertID: alertID, Result: "success", Detail: map[string]interface{}{"label": req.Label, "reason_code": req.ReasonCode, "add_to_whitelist": req.AddToWhitelist}}); err != nil {
+		logger.Error("Failed to audit feedback", zap.Error(err))
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_FAILED", "feedback was persisted but its audit record could not be committed")
+		return
+	}
+
 	httpx.JSONCreated(w, ctx, response)
 }
 

@@ -448,6 +448,9 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	// 安全验证：生产环境禁止使用通配符 CORS 和弱凭据
+	cfg.validate()
+
 	return cfg, nil
 }
 

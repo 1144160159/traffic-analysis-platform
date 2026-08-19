@@ -117,6 +117,24 @@ func (r *TaskRepository) GetByResultFileKey(ctx context.Context, resultFileKey s
 	defer span.End()
 
 	query := `
+			SELECT
+				task_id, tenant_id, task_type, status, progress, params,
+				result_file_key, result_sha256, result_packets, result_bytes, files_scanned,
+				error_message, run_id, created_by, created_at, updated_at, completed_at
+			FROM tasks
+		WHERE task_id = $1
+	`
+
+	row := r.client.QueryRow(ctx, query, taskID)
+	return r.scanTask(ctx, row)
+}
+
+// GetByResultFileKey 根据结果文件 key 获取任务，用于下载和完整性校验。
+func (r *TaskRepository) GetByResultFileKey(ctx context.Context, resultFileKey string) (*Task, error) {
+	ctx, span := otel.StartSpan(ctx, "TaskRepository.GetByResultFileKey")
+	defer span.End()
+
+	query := `
 		SELECT
 			task_id, tenant_id, task_type, status, progress, params,
 			result_file_key, result_sha256, result_packets, result_bytes, files_scanned,

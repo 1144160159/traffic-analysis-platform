@@ -53,3 +53,13 @@ message DetectionBatch {
   string run_id = 5;
   int64 created_at = 6;
 }
+
+// DetectionBatch 检测结果批次
+message DetectionBatch {
+  repeated DetectionBehavior behaviors = 1;
+  repeated DetectionBusiness businesses = 2;
+  string batch_id = 3;
+  string tenant_id = 4;
+  string run_id = 5;
+  int64 created_at = 6;
+}

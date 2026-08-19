@@ -207,6 +207,8 @@ func main() {
 		if verifyErr != nil {
 			logger.Fatal("Whitelist rule projection schema is unavailable", zap.Error(verifyErr))
 		}
+		defer db.Close()
+		logger.Info("Connected to PostgreSQL for auth")
 	}
 
 	// ==================== 初始化 ClickHouse Writer ====================
@@ -402,6 +404,17 @@ func main() {
 				defer savedViewEventProducer.Close()
 			}
 		}
+	}
+	var responseActionProducer *kafka.Producer
+	responseActionProducer, err = kafka.NewProducer(kafka.ProducerConfig{
+		Brokers: cfg.Kafka.Brokers, Topic: "alert.response.requested.v1", BatchSize: 100,
+		RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
+	}, logger)
+	if err != nil {
+		logger.Warn("Failed to create response-action Kafka producer; durable outbox will remain pending", zap.Error(err))
+		responseActionProducer = nil
+	} else {
+		defer responseActionProducer.Close()
 	}
 
 	// ==================== 初始化 API Handler ====================
@@ -780,6 +793,31 @@ func main() {
 		feedbackRepo := api.NewFeedbackRepository(chClient, logger)
 		apiHandler.SetFeedbackRepo(feedbackRepo)
 		logger.Info("Feedback repository configured; schema is managed by versioned ClickHouse migrations")
+	}
+	apiHandler.SetActionAuditWriter(api.NewAlertActionAuditWriter(db, logger))
+	apiHandler.SetResponseActionProducer(responseActionProducer)
+	if responseActionProducer != nil {
+		if err := apiHandler.StartResponseActionOutboxWorker(ctx, 2*time.Second); err != nil {
+			logger.Warn("Failed to start response-action outbox worker", zap.Error(err))
+		} else {
+			logger.Info("Response-action outbox worker started")
+		}
+	}
+
+	// 初始化反馈持久化 (ClickHouse) — TP/FP 闭环
+	if chClient != nil {
+		feedbackRepo := api.NewFeedbackRepository(chClient, logger)
+		apiHandler.SetFeedbackRepo(feedbackRepo)
+		go func() {
+			schemaCtx, schemaCancel := context.WithTimeout(ctx, 30*time.Second)
+			defer schemaCancel()
+			if err := feedbackRepo.InitSchema(schemaCtx); err != nil {
+				logger.Warn("Failed to init feedback schema", zap.Error(err))
+				return
+			}
+			logger.Info("Feedback repository initialized (TP/FP persistence + stats)")
+		}()
+		logger.Info("Feedback repository configured; schema initialization runs asynchronously")
 	}
 
 	// ==================== 初始化 Kafka Consumer ====================

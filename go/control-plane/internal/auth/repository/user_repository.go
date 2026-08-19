@@ -305,6 +305,26 @@ func (r *UserRepository) GetRoleIDByName(ctx context.Context, tenantID, roleName
 	return roleID, nil
 }
 
+// GetRoleIDByName 根据角色名称获取角色 ID
+func (r *UserRepository) GetRoleIDByName(ctx context.Context, tenantID, roleName string) (uuid.UUID, error) {
+	query := `SELECT role_id FROM roles WHERE tenant_id = $1 AND name = $2`
+
+	var roleID uuid.UUID
+	err := r.db.QueryRowContext(ctx, query, tenantID, roleName).Scan(&roleID)
+	if err == sql.ErrNoRows {
+		return uuid.Nil, errors.Newf(errors.ErrCodeEntityNotFound, "role %s not found in tenant %s", roleName, tenantID)
+	}
+	if err != nil {
+		r.logger.Error("Failed to query role by name",
+			zap.String("tenant_id", tenantID),
+			zap.String("role_name", roleName),
+			zap.Error(err))
+		return uuid.Nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to query role by name")
+	}
+
+	return roleID, nil
+}
+
 // GetUsersByRole 获取拥有特定角色的所有用户（修复 #A5：新增方法）
 func (r *UserRepository) GetUsersByRole(ctx context.Context, tenantID string, roleID uuid.UUID) ([]*model.User, error) {
 	query := `

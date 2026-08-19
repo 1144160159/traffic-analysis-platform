@@ -6,7 +6,9 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -273,7 +275,22 @@ func (r *AlertRepository) List(ctx context.Context, query *ListQuery) (*ListResu
 	defer rows.Close()
 	alerts, err := r.scanAlertListRows(rows)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to decode alert list page")
+	}
+	r.logger.Info("Alert list page loaded",
+		zap.String("tenant_id", query.TenantID),
+		zap.Int("rows", len(alerts)),
+		zap.Int("limit", limit),
+		zap.Int("offset", offset))
+	var total uint64
+	row, err := r.client.QueryRow(ctx, countSQL, queryArgs...)
+	if err != nil {
+		r.logger.Error("Failed to query count", zap.Error(err))
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query count")
+	}
+	if err := row.Scan(&total); err != nil {
+		r.logger.Error("Failed to scan count", zap.Error(err))
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan count")
 	}
 	r.logger.Info("Alert list page loaded",
 		zap.String("tenant_id", query.TenantID),
@@ -295,6 +312,35 @@ func (r *AlertRepository) List(ctx context.Context, query *ListQuery) (*ListResu
 		Alerts: alerts,
 		Total:  int64(total),
 	}, nil
+}
+
+func decodeAlertListPage(payload string) ([]*persistence.Alert, error) {
+	var records []map[string]string
+	if err := json.Unmarshal([]byte(payload), &records); err != nil {
+		return nil, err
+	}
+	alerts := make([]*persistence.Alert, 0, len(records))
+	for _, record := range records {
+		srcPort, _ := strconv.ParseUint(record["src_port"], 10, 16)
+		dstPort, _ := strconv.ParseUint(record["dst_port"], 10, 16)
+		protocol, _ := strconv.ParseUint(record["protocol"], 10, 8)
+		count, _ := strconv.ParseInt(record["count"], 10, 32)
+		score, _ := strconv.ParseFloat(record["score"], 32)
+		firstSeen, _ := strconv.ParseInt(record["first_seen"], 10, 64)
+		lastSeen, _ := strconv.ParseInt(record["last_seen"], 10, 64)
+		updatedAt, _ := strconv.ParseInt(record["updated_at"], 10, 64)
+		alerts = append(alerts, &persistence.Alert{
+			TenantID: record["tenant_id"], AlertID: record["alert_id"],
+			SrcIP: record["src_ip"], DstIP: record["dst_ip"],
+			SrcPort: uint16(srcPort), DstPort: uint16(dstPort), Protocol: uint8(protocol),
+			AlertType: record["alert_type"], Score: float32(score), Severity: record["severity"],
+			FirstSeen: time.UnixMilli(firstSeen), LastSeen: time.UnixMilli(lastSeen), Count: int32(count),
+			Status: record["status"], Assignee: record["assignee"], UpdatedTs: time.UnixMilli(updatedAt),
+			ModelVersion: record["model_version"], RuleVersion: record["rule_version"],
+			AttackPhase: record["attack_phase"],
+		})
+	}
+	return alerts, nil
 }
 
 // GetByID 根据ID查询告警
@@ -1015,6 +1061,9 @@ func (r *AlertRepository) scanAlertListRows(rows driver.Rows) ([]*persistence.Al
 			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan alert list row")
 		}
 		alerts = append(alerts, alert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed while reading alert list rows")
 	}
 	if err := rows.Err(); err != nil {
 		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed while reading alert list rows")

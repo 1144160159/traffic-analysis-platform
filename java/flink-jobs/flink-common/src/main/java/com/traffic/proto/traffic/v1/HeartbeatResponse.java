@@ -29,6 +29,13 @@ private static final long serialVersionUID = 0L;
     return new HeartbeatResponse();
   }
 
+  @java.lang.Override
+  @SuppressWarnings({"unused"})
+  protected java.lang.Object newInstance(
+      UnusedPrivateParameter unused) {
+    return new HeartbeatResponse();
+  }
+
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
     return com.traffic.proto.traffic.v1.IngestProto.internal_static_traffic_v1_HeartbeatResponse_descriptor;
@@ -843,6 +850,18 @@ private static final long serialVersionUID = 0L;
       }
       return configBuilder_;
     }
+    @java.lang.Override
+    public final Builder setUnknownFields(
+        final com.google.protobuf.UnknownFieldSet unknownFields) {
+      return super.setUnknownFields(unknownFields);
+    }
+
+    @java.lang.Override
+    public final Builder mergeUnknownFields(
+        final com.google.protobuf.UnknownFieldSet unknownFields) {
+      return super.mergeUnknownFields(unknownFields);
+    }
+
 
     private java.util.List<com.traffic.proto.traffic.v1.ProbeOperationCommand> operationCommands_ =
       java.util.Collections.emptyList();

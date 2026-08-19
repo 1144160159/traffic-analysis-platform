@@ -636,7 +636,6 @@ impl Umem {
     pub fn weak_count(&self) -> usize {
         Arc::weak_count(&self.inner)
     }
-}
 
 #[cfg(test)]
 mod tests {
