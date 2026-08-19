@@ -9,13 +9,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/replay"
 	"go.uber.org/zap"
 )
 
+// 统一回放门面契约(common/replay):本包通过类型别名复用共享契约,
+// 既有调用方(如 cmd/ingest-gateway)零改动。ReplayManager 实现
+// replay.Manager,供其他服务按统一门面接入。
 const (
-	ReplayStatusDryRun    = "dry_run"
-	ReplayStatusCompleted = "completed"
-	ReplayStatusPartial   = "partial"
+	ReplayStatusDryRun    = replay.ReplayStatusDryRun
+	ReplayStatusCompleted = replay.ReplayStatusCompleted
+	ReplayStatusPartial   = replay.ReplayStatusPartial
 )
 
 type FallbackReplayer interface {
@@ -24,77 +28,13 @@ type FallbackReplayer interface {
 	ReplayFallbackFilesForTenant(ctx context.Context, tenantID string) FallbackReplayReport
 }
 
-type ReplayRequest struct {
-	TenantID        string `json:"tenant_id"`
-	RequestedBy     string `json:"requested_by"`
-	ApprovedBy      string `json:"approved_by"`
-	ApprovalID      string `json:"approval_id"`
-	Reason          string `json:"reason"`
-	RepairSummary   string `json:"repair_summary"`
-	IdempotencyKey  string `json:"idempotency_key"`
-	DryRun          bool   `json:"dry_run"`
-	RequestedAtUnix int64  `json:"requested_at_unix,omitempty"`
-}
+type ReplayRequest = replay.ReplayRequest
+type ReplayResult = replay.ReplayResult
+type ReplayAuditEntry = replay.ReplayAuditEntry
+type ReplayIdempotencyStore = replay.ReplayIdempotencyStore
+type MemoryReplayIdempotencyStore = replay.MemoryReplayIdempotencyStore
 
-type ReplayResult struct {
-	ReplayID               string             `json:"replay_id"`
-	Status                 string             `json:"status"`
-	Duplicate              bool               `json:"duplicate"`
-	TenantID               string             `json:"tenant_id"`
-	RequestedBy            string             `json:"requested_by"`
-	ApprovedBy             string             `json:"approved_by"`
-	ApprovalID             string             `json:"approval_id"`
-	IdempotencyKey         string             `json:"idempotency_key"`
-	Reason                 string             `json:"reason"`
-	RepairSummary          string             `json:"repair_summary"`
-	StartedAt              time.Time          `json:"started_at"`
-	FinishedAt             time.Time          `json:"finished_at"`
-	PreFallbackFiles       int                `json:"pre_fallback_files"`
-	PreFallbackBytes       int64              `json:"pre_fallback_bytes"`
-	ReplayedFiles          int                `json:"replayed_files"`
-	FailedFiles            int                `json:"failed_files"`
-	RemainingFallbackFiles int                `json:"remaining_fallback_files"`
-	RemainingFallbackBytes int64              `json:"remaining_fallback_bytes"`
-	AuditTrail             []ReplayAuditEntry `json:"audit_trail"`
-	Errors                 []string           `json:"errors,omitempty"`
-}
-
-type ReplayAuditEntry struct {
-	Action    string                 `json:"action"`
-	Actor     string                 `json:"actor"`
-	TenantID  string                 `json:"tenant_id"`
-	Result    string                 `json:"result"`
-	Detail    map[string]interface{} `json:"detail,omitempty"`
-	CreatedAt time.Time              `json:"created_at"`
-}
-
-type ReplayIdempotencyStore interface {
-	Get(ctx context.Context, key string) (ReplayResult, bool, error)
-	Put(ctx context.Context, key string, result ReplayResult) error
-}
-
-type MemoryReplayIdempotencyStore struct {
-	mu      sync.Mutex
-	results map[string]ReplayResult
-}
-
-func NewMemoryReplayIdempotencyStore() *MemoryReplayIdempotencyStore {
-	return &MemoryReplayIdempotencyStore{results: make(map[string]ReplayResult)}
-}
-
-func (s *MemoryReplayIdempotencyStore) Get(_ context.Context, key string) (ReplayResult, bool, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	result, ok := s.results[key]
-	return result, ok, nil
-}
-
-func (s *MemoryReplayIdempotencyStore) Put(_ context.Context, key string, result ReplayResult) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.results[key] = result
-	return nil
-}
+var NewMemoryReplayIdempotencyStore = replay.NewMemoryReplayIdempotencyStore
 
 type ReplayManager struct {
 	replayer  FallbackReplayer
@@ -129,6 +69,15 @@ func (m *ReplayManager) SetApprovalStore(s ReplayApprovalStore) {
 func (m *ReplayManager) ApprovalStore() ReplayApprovalStore {
 	return m.approvals
 }
+
+// Replay 实现统一回放门面(replay.Manager),语义与 ReplayFallback 完全一致,
+// 供其他服务按共同契约接入 DLQ 回放。
+func (m *ReplayManager) Replay(ctx context.Context, req ReplayRequest) (*ReplayResult, error) {
+	return m.ReplayFallback(ctx, req)
+}
+
+// 编译期断言:ReplayManager 实现统一回放门面。
+var _ replay.Manager = (*ReplayManager)(nil)
 
 func (m *ReplayManager) ReplayFallback(ctx context.Context, req ReplayRequest) (*ReplayResult, error) {
 	if err := validateReplayRequest(req); err != nil {
@@ -272,7 +221,8 @@ func (m *ReplayManager) verifyApproval(ctx context.Context, req ReplayRequest) e
 	return nil
 }
 
-func validateReplayRequest(req ReplayRequest) error {	required := map[string]string{
+func validateReplayRequest(req ReplayRequest) error {
+	required := map[string]string{
 		"tenant_id":       req.TenantID,
 		"requested_by":    req.RequestedBy,
 		"approved_by":     req.ApprovedBy,
