@@ -43,13 +43,6 @@ private static final long serialVersionUID = 0L;
     return new PcapIndexMeta();
   }
 
-  @java.lang.Override
-  @SuppressWarnings({"unused"})
-  protected java.lang.Object newInstance(
-      UnusedPrivateParameter unused) {
-    return new PcapIndexMeta();
-  }
-
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
     return com.traffic.proto.traffic.v1.PcapProto.internal_static_traffic_v1_PcapIndexMeta_descriptor;

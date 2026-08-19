@@ -1926,17 +1926,6 @@ private static final long serialVersionUID = 0L;
         bitField1_ |= 0x00000001;
         onChanged();
       }
-      if (!other.getFeedbackLabel().isEmpty()) {
-        feedbackLabel_ = other.feedbackLabel_;
-        bitField0_ |= 0x20000000;
-        onChanged();
-      }
-      if (other.getFeedbackCount() != 0) {
-        setFeedbackCount(other.getFeedbackCount());
-      }
-      if (other.getStateVersion() != 0L) {
-        setStateVersion(other.getStateVersion());
-      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -3729,8 +3718,6 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-
-    private java.lang.Object protocolName_ = "";
     /**
      * <code>int64 ingest_ts = 26 [json_name = "ingestTs"];</code>
      * @return This builder for chaining.
@@ -4115,16 +4102,6 @@ private static final long serialVersionUID = 0L;
       bitField1_ |= 0x00000001;
       onChanged();
       return this;
-    }
-
-    private long stateVersion_ ;
-    /**
-     * <code>uint64 state_version = 32 [json_name = "stateVersion"];</code>
-     * @return The stateVersion.
-     */
-    @java.lang.Override
-    public long getStateVersion() {
-      return stateVersion_;
     }
     /**
      * <pre>

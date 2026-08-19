@@ -99,13 +99,3 @@ message SessionBatch {
 }
 
 // SessionBatch 会话事件批次
-message SessionBatch {
-  repeated SessionEvent sessions = 1;
-  string batch_id = 2;
-  string tenant_id = 3;
-  string probe_id = 4;
-  string run_id = 5;
-  uint32 batch_size = 6;
-  string compression = 7;
-  int64 created_at = 8;
-}

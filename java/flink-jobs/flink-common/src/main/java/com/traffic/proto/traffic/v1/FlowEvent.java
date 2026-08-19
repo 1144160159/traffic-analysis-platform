@@ -374,8 +374,8 @@ private static final long serialVersionUID = 0L;
    * @return The tcpFlagsFwd.
    */
   @java.lang.Override
-  public com.traffic.proto.traffic.v1.PacketLengthStats getPktlenStats() {
-    return pktlenStats_ == null ? com.traffic.proto.traffic.v1.PacketLengthStats.getDefaultInstance() : pktlenStats_;
+  public int getTcpFlagsFwd() {
+    return tcpFlagsFwd_;
   }
 
   public static final int TCP_FLAGS_BWD_FIELD_NUMBER = 18;
@@ -385,8 +385,8 @@ private static final long serialVersionUID = 0L;
    * @return The tcpFlagsBwd.
    */
   @java.lang.Override
-  public com.traffic.proto.traffic.v1.PacketLengthStatsOrBuilder getPktlenStatsOrBuilder() {
-    return pktlenStats_ == null ? com.traffic.proto.traffic.v1.PacketLengthStats.getDefaultInstance() : pktlenStats_;
+  public int getTcpFlagsBwd() {
+    return tcpFlagsBwd_;
   }
 
   public static final int TOS_FIELD_NUMBER = 19;
@@ -2104,21 +2104,21 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private int durationMs_ ;
+    private long bytesFwd_ ;
     /**
      * <code>uint64 bytes_fwd = 11 [json_name = "bytesFwd"];</code>
      * @return The bytesFwd.
      */
     @java.lang.Override
-    public int getDurationMs() {
-      return durationMs_;
+    public long getBytesFwd() {
+      return bytesFwd_;
     }
     /**
      * <code>uint64 bytes_fwd = 11 [json_name = "bytesFwd"];</code>
      * @param value The bytesFwd to set.
      * @return This builder for chaining.
      */
-    public Builder setDurationMs(int value) {
+    public Builder setBytesFwd(long value) {
 
       bytesFwd_ = value;
       bitField0_ |= 0x00000400;
@@ -2136,21 +2136,21 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private int packetsFwd_ ;
+    private long bytesBwd_ ;
     /**
      * <code>uint64 bytes_bwd = 12 [json_name = "bytesBwd"];</code>
      * @return The bytesBwd.
      */
     @java.lang.Override
-    public int getPacketsFwd() {
-      return packetsFwd_;
+    public long getBytesBwd() {
+      return bytesBwd_;
     }
     /**
      * <code>uint64 bytes_bwd = 12 [json_name = "bytesBwd"];</code>
      * @param value The bytesBwd to set.
      * @return This builder for chaining.
      */
-    public Builder setPacketsFwd(int value) {
+    public Builder setBytesBwd(long value) {
 
       bytesBwd_ = value;
       bitField0_ |= 0x00000800;
@@ -2474,21 +2474,21 @@ private static final long serialVersionUID = 0L;
       return iatStatsBuilder_;
     }
 
-    private float pps_ ;
+    private int tcpFlagsFwd_ ;
     /**
      * <code>uint32 tcp_flags_fwd = 17 [json_name = "tcpFlagsFwd"];</code>
      * @return The tcpFlagsFwd.
      */
     @java.lang.Override
-    public float getPps() {
-      return pps_;
+    public int getTcpFlagsFwd() {
+      return tcpFlagsFwd_;
     }
     /**
      * <code>uint32 tcp_flags_fwd = 17 [json_name = "tcpFlagsFwd"];</code>
      * @param value The tcpFlagsFwd to set.
      * @return This builder for chaining.
      */
-    public Builder setPps(float value) {
+    public Builder setTcpFlagsFwd(int value) {
 
       tcpFlagsFwd_ = value;
       bitField0_ |= 0x00010000;
@@ -2506,21 +2506,21 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private float bps_ ;
+    private int tcpFlagsBwd_ ;
     /**
      * <code>uint32 tcp_flags_bwd = 18 [json_name = "tcpFlagsBwd"];</code>
      * @return The tcpFlagsBwd.
      */
     @java.lang.Override
-    public float getBps() {
-      return bps_;
+    public int getTcpFlagsBwd() {
+      return tcpFlagsBwd_;
     }
     /**
      * <code>uint32 tcp_flags_bwd = 18 [json_name = "tcpFlagsBwd"];</code>
      * @param value The tcpFlagsBwd to set.
      * @return This builder for chaining.
      */
-    public Builder setBps(float value) {
+    public Builder setTcpFlagsBwd(int value) {
 
       tcpFlagsBwd_ = value;
       bitField0_ |= 0x00020000;
@@ -2926,7 +2926,7 @@ private static final long serialVersionUID = 0L;
       }
       bitField0_ |= 0x00800000;
       onChanged();
-      return getIdleStatsFieldBuilder().getBuilder();
+      return this;
     }
     /**
      * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
@@ -2963,8 +2963,6 @@ private static final long serialVersionUID = 0L;
       }
       return this;
     }
-
-    private int subflowCount_ ;
     /**
      * <code>.traffic.v1.TrafficFeatureObservation feature_observation = 24 [json_name = "featureObservation"];</code>
      */
@@ -3024,18 +3022,6 @@ private static final long serialVersionUID = 0L;
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.mergeUnknownFields(unknownFields);
     }
-    @java.lang.Override
-    public final Builder setUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.setUnknownFields(unknownFields);
-    }
-
-    @java.lang.Override
-    public final Builder mergeUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.mergeUnknownFields(unknownFields);
-    }
-
 
 
     // @@protoc_insertion_point(builder_scope:traffic.v1.FlowEvent)

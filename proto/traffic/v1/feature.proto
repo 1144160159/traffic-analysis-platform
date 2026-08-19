@@ -155,12 +155,3 @@ message FeatureBatch {
 }
 
 // FeatureBatch 特征批次
-message FeatureBatch {
-  repeated FeatureStat stats = 1;
-  repeated FeatureSeq sequences = 2;
-  repeated FeatureFingerprint fingerprints = 3;
-  string batch_id = 4;
-  string tenant_id = 5;
-  string run_id = 6;
-  int64 created_at = 7;
-}

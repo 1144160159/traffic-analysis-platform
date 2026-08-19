@@ -668,7 +668,7 @@ private static final long serialVersionUID = 0L;
                 operationAcksBuilder_.addMessage(m);
               }
               break;
-            } // case 26
+            } // case 34
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -950,18 +950,6 @@ private static final long serialVersionUID = 0L;
       }
       return statusBuilder_;
     }
-    @java.lang.Override
-    public final Builder setUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.setUnknownFields(unknownFields);
-    }
-
-    @java.lang.Override
-    public final Builder mergeUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.mergeUnknownFields(unknownFields);
-    }
-
 
     private java.util.List<com.traffic.proto.traffic.v1.ProbeOperationAck> operationAcks_ =
       java.util.Collections.emptyList();

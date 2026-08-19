@@ -93,7 +93,3 @@ message PcapCutJobStatus {
 }
 
 // PcapCutJobStatus 裁剪任务状态查询
-message PcapCutJobStatus {
-  string job_id = 1;
-  string tenant_id = 2;
-}

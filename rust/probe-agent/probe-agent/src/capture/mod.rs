@@ -316,6 +316,14 @@ impl<'a> Iterator for PacketBatchIter<'a> {
 
 impl<'a> ExactSizeIterator for PacketBatchIter<'a> {}
 
+/// 采集后端降级事实(如 XDP -> AF_PACKET)。随 CaptureStats 上报,可观测/可测试。
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum CapturerFallback {
+    #[default]
+    None,
+    XdpToAfPacket,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct CaptureStats {
     pub packets_received: u64,
@@ -323,6 +331,7 @@ pub struct CaptureStats {
     pub bytes_received: u64,
     pub allocation_drops: u64,
     pub kernel_drops: u64,
+    pub fallback: CapturerFallback,
 }
 
 impl CaptureStats {
@@ -340,6 +349,7 @@ impl CaptureStats {
         self.bytes_received = 0;
         self.allocation_drops = 0;
         self.kernel_drops = 0;
+        self.fallback = CapturerFallback::None;
     }
 
     pub fn merge(&mut self, other: &CaptureStats) {
@@ -348,6 +358,12 @@ impl CaptureStats {
         self.bytes_received += other.bytes_received;
         self.allocation_drops += other.allocation_drops;
         self.kernel_drops += other.kernel_drops;
+        self.fallback = match (self.fallback, other.fallback) {
+            (CapturerFallback::XdpToAfPacket, _) | (_, CapturerFallback::XdpToAfPacket) => {
+                CapturerFallback::XdpToAfPacket
+            }
+            _ => CapturerFallback::None,
+        };
     }
 }
 
@@ -364,7 +380,55 @@ pub trait Capturer: Send + Sync {
     }
 }
 
+/// 采集后端工厂(策略模式):按配置选择具体 Capturer 实现。
+/// 测试替身与 wire-inject/replay 路径可实现同名工厂注入,无需修改调用方。
+#[async_trait::async_trait]
+pub trait CapturerFactory: Send + Sync {
+    async fn create(&self, config: &CaptureConfig) -> Result<Box<dyn Capturer>>;
+}
+
+/// 默认工厂:内置 XDP -> AF_PACKET 显式降级,降级事实写入 CaptureStats.fallback。
+pub struct DefaultCapturerFactory;
+
+#[async_trait::async_trait]
+impl CapturerFactory for DefaultCapturerFactory {
+    async fn create(&self, config: &CaptureConfig) -> Result<Box<dyn Capturer>> {
+        create_capturer_impl(config).await
+    }
+}
+
+/// 包装降级后的 Capturer:对外仍是一个 Capturer,同时把降级事实编码进 stats。
+pub struct FallbackCapturer {
+    pub inner: Box<dyn Capturer>,
+    pub fallback: CapturerFallback,
+}
+
+#[async_trait::async_trait]
+impl Capturer for FallbackCapturer {
+    async fn start(&mut self) -> Result<()> {
+        self.inner.start().await
+    }
+    async fn stop(&mut self) -> Result<()> {
+        self.inner.stop().await
+    }
+    fn poll(&mut self) -> Result<Option<PacketBatch>> {
+        self.inner.poll()
+    }
+    fn stats(&self) -> CaptureStats {
+        let mut stats = self.inner.stats();
+        stats.fallback = self.fallback;
+        stats
+    }
+    fn end_of_input(&self) -> bool {
+        self.inner.end_of_input()
+    }
+}
+
 pub async fn create_capturer(config: &CaptureConfig) -> Result<Box<dyn Capturer>> {
+    DefaultCapturerFactory.create(config).await
+}
+
+async fn create_capturer_impl(config: &CaptureConfig) -> Result<Box<dyn Capturer>> {
     tracing::info!(
         "Creating capturer: interface={}, mode={:?}",
         config.interface,
@@ -422,7 +486,10 @@ pub async fn create_capturer(config: &CaptureConfig) -> Result<Box<dyn Capturer>
                                 "Fallback to AF_PACKET succeeded (interface={}). Continuing with AF_PACKET.",
                                 config.interface
                             );
-                            Box::new(afp)
+                            Box::new(FallbackCapturer {
+                                inner: Box::new(afp),
+                                fallback: CapturerFallback::XdpToAfPacket,
+                            })
                         }
                         Err(afp_err) => {
                             tracing::error!(

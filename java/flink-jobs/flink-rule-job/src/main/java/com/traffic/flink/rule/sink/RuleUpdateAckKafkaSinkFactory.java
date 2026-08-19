@@ -1,5 +1,6 @@
 package com.traffic.flink.rule.sink;
 
+import com.traffic.flink.common.sink.AckSinkFactory;
 import com.traffic.flink.rule.model.RuleUpdateAppliedAck;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
@@ -10,12 +11,26 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
-/** Produces durable per-subtask rule application receipts keyed by command event_id. */
-public final class RuleUpdateAckKafkaSinkFactory {
-    private RuleUpdateAckKafkaSinkFactory() {
+/**
+ * Produces durable per-subtask rule application receipts keyed by command event_id.
+ * 实现 flink-common 的 AckSinkFactory 产品族契约;静态 create() 仅为
+ * 既有调用方保留,新代码使用 DEFAULT 工厂实例。
+ */
+public final class RuleUpdateAckKafkaSinkFactory implements AckSinkFactory<RuleUpdateAppliedAck> {
+
+    private static final long serialVersionUID = 1L;
+
+    public static final RuleUpdateAckKafkaSinkFactory DEFAULT = new RuleUpdateAckKafkaSinkFactory();
+
+    public RuleUpdateAckKafkaSinkFactory() {
     }
 
     public static KafkaSink<RuleUpdateAppliedAck> create(String brokers, String topic) {
+        return DEFAULT.createSink(brokers, topic);
+    }
+
+    @Override
+    public KafkaSink<RuleUpdateAppliedAck> createSink(String brokers, String topic) {
         if (!"rule-update-applied.v1".equals(topic)) {
             throw new IllegalArgumentException(
                     "rule update acknowledgements require rule-update-applied.v1");

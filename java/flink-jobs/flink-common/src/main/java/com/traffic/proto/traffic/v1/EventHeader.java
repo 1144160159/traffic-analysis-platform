@@ -44,13 +44,6 @@ private static final long serialVersionUID = 0L;
     return new EventHeader();
   }
 
-  @java.lang.Override
-  @SuppressWarnings({"unused"})
-  protected java.lang.Object newInstance(
-      UnusedPrivateParameter unused) {
-    return new EventHeader();
-  }
-
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
     return com.traffic.proto.traffic.v1.CommonProto.internal_static_traffic_v1_EventHeader_descriptor;
@@ -2792,106 +2785,6 @@ private static final long serialVersionUID = 0L;
       checkByteStringIsUtf8(value);
       producer_ = value;
       bitField0_ |= 0x00100000;
-      onChanged();
-      return this;
-    }
-    @java.lang.Override
-    public final Builder setUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.setUnknownFields(unknownFields);
-    }
-
-    @java.lang.Override
-    public final Builder mergeUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.mergeUnknownFields(unknownFields);
-    }
-
-
-    private long kafkaTs_ ;
-    /**
-     * <pre>
-     * kafka_ts is the millisecond timestamp assigned immediately before the event is published to Kafka.
-     * </pre>
-     *
-     * <code>int64 kafka_ts = 8 [json_name = "kafkaTs"];</code>
-     * @return The kafkaTs.
-     */
-    @java.lang.Override
-    public long getKafkaTs() {
-      return kafkaTs_;
-    }
-    /**
-     * <pre>
-     * kafka_ts is the millisecond timestamp assigned immediately before the event is published to Kafka.
-     * </pre>
-     *
-     * <code>int64 kafka_ts = 8 [json_name = "kafkaTs"];</code>
-     * @param value The kafkaTs to set.
-     * @return This builder for chaining.
-     */
-    public Builder setKafkaTs(long value) {
-
-      kafkaTs_ = value;
-      bitField0_ |= 0x00000080;
-      onChanged();
-      return this;
-    }
-    /**
-     * <pre>
-     * kafka_ts is the millisecond timestamp assigned immediately before the event is published to Kafka.
-     * </pre>
-     *
-     * <code>int64 kafka_ts = 8 [json_name = "kafkaTs"];</code>
-     * @return This builder for chaining.
-     */
-    public Builder clearKafkaTs() {
-      bitField0_ = (bitField0_ & ~0x00000080);
-      kafkaTs_ = 0L;
-      onChanged();
-      return this;
-    }
-
-    private long flinkOutTs_ ;
-    /**
-     * <pre>
-     * flink_out_ts is the millisecond timestamp assigned when a Flink job emits or persists the derived event.
-     * </pre>
-     *
-     * <code>int64 flink_out_ts = 9 [json_name = "flinkOutTs"];</code>
-     * @return The flinkOutTs.
-     */
-    @java.lang.Override
-    public long getFlinkOutTs() {
-      return flinkOutTs_;
-    }
-    /**
-     * <pre>
-     * flink_out_ts is the millisecond timestamp assigned when a Flink job emits or persists the derived event.
-     * </pre>
-     *
-     * <code>int64 flink_out_ts = 9 [json_name = "flinkOutTs"];</code>
-     * @param value The flinkOutTs to set.
-     * @return This builder for chaining.
-     */
-    public Builder setFlinkOutTs(long value) {
-
-      flinkOutTs_ = value;
-      bitField0_ |= 0x00000100;
-      onChanged();
-      return this;
-    }
-    /**
-     * <pre>
-     * flink_out_ts is the millisecond timestamp assigned when a Flink job emits or persists the derived event.
-     * </pre>
-     *
-     * <code>int64 flink_out_ts = 9 [json_name = "flinkOutTs"];</code>
-     * @return This builder for chaining.
-     */
-    public Builder clearFlinkOutTs() {
-      bitField0_ = (bitField0_ & ~0x00000100);
-      flinkOutTs_ = 0L;
       onChanged();
       return this;
     }

@@ -342,19 +342,5 @@ message NIC {
   string driver_version = 6;
 }
 
-message HardwareInfo {
-  string cpu_model = 1;
-  uint32 cpu_cores = 2;
-  uint64 memory_mb = 3;
-  string os_version = 4;
-  repeated NIC nics = 5;
-}
 
-message NIC {
-  string name = 1;
-  string mac_address = 2;
-  string pci_address = 3;
-  string driver = 4;
-  uint64 speed_mbps = 5;
-  string driver_version = 6;
-}
+

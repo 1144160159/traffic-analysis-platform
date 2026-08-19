@@ -125,7 +125,7 @@ public final class IngestServiceGrpc {
           IngestServiceGrpc.getUploadPcapIndexMethod = getUploadPcapIndexMethod =
               io.grpc.MethodDescriptor.<com.traffic.proto.traffic.v1.UploadPcapIndexRequest, com.traffic.proto.traffic.v1.UploadPcapIndexResponse>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "UploadSessions"))
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "UploadPcapIndex"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.traffic.proto.traffic.v1.UploadPcapIndexRequest.getDefaultInstance()))
@@ -136,7 +136,7 @@ public final class IngestServiceGrpc {
         }
       }
     }
-    return getUploadSessionsMethod;
+    return getUploadPcapIndexMethod;
   }
 
   private static volatile io.grpc.MethodDescriptor<com.traffic.proto.traffic.v1.UploadAssetBindingsRequest,
@@ -729,20 +729,6 @@ public final class IngestServiceGrpc {
               com.traffic.proto.traffic.v1.UploadAssetBindingsRequest,
               com.traffic.proto.traffic.v1.UploadAssetBindingsResponse>(
                 service, METHODID_UPLOAD_ASSET_BINDINGS)))
-        .addMethod(
-          getUploadSessionsMethod(),
-          io.grpc.stub.ServerCalls.asyncUnaryCall(
-            new MethodHandlers<
-              com.traffic.proto.traffic.v1.UploadSessionsRequest,
-              com.traffic.proto.traffic.v1.UploadSessionsResponse>(
-                service, METHODID_UPLOAD_SESSIONS)))
-        .addMethod(
-          getUploadPcapIndexMethod(),
-          io.grpc.stub.ServerCalls.asyncUnaryCall(
-            new MethodHandlers<
-              com.traffic.proto.traffic.v1.UploadPcapIndexRequest,
-              com.traffic.proto.traffic.v1.UploadPcapIndexResponse>(
-                service, METHODID_UPLOAD_PCAP_INDEX)))
         .addMethod(
           getHeartbeatMethod(),
           io.grpc.stub.ServerCalls.asyncUnaryCall(
