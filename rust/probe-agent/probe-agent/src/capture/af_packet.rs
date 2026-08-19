@@ -531,84 +531,8 @@ impl Capturer for AfPacketCapture {
                         );
                     }
                 }
-                _ => {
-                    self.internal_stats
-                        .recv_errors
-                        .fetch_add(1, Ordering::Relaxed);
-                    error!("recvmmsg() error: {:?}", err);
-                    return Ok(None);
-                }
             }
         }
-
-        let received = received as usize;
-        if received == 0 {
-            return Ok(None);
-        }
-
-        for i in 0..received {
-            let len = msgs[i].msg_len as usize;
-            if len == 0 {
-                continue;
-            }
-            self.internal_stats
-                .recv_success
-                .fetch_add(1, Ordering::Relaxed);
-            trace!("Received packet: len={}, idx={}", len, i);
-            match self.try_allocate_frame() {
-                Some(frame_idx) => {
-                    if self.write_to_frame(frame_idx, &self.recv_buffers[i][..len]) {
-                        frames.push(FrameInfo {
-                            idx: frame_idx,
-                            offset: 0,
-                            len: len as u32,
-                            timestamp,
-                        });
-                        self.stats.packets_received += 1;
-                        self.stats.bytes_received += len as u64;
-                        metrics::PACKETS_CAPTURED.inc();
-                        metrics::BYTES_CAPTURED.inc_by(len as f64);
-                    } else {
-                        self.umem.free_frame(frame_idx);
-                        self.stats.packets_dropped += 1;
-                        metrics::PACKETS_DROPPED.inc();
-                    }
-                }
-                None => {
-                    self.stats.packets_dropped += 1;
-                    metrics::PACKETS_DROPPED.inc();
-                    if self.stats.packets_dropped % 1000 == 0 {
-                        warn!(
-                            "High frame allocation failure rate: {} dropped, {} available",
-                            self.stats.packets_dropped,
-                            self.umem.available_frames()
-                        );
-                    }
-                }
-            }
-        }
-
-        if self.stats.packets_received % 100 == 0 && self.stats.packets_received > 0 {
-            debug!(
-                "AF_PACKET stats: received={}, dropped={}, frames_available={}",
-                self.stats.packets_received,
-                self.stats.packets_dropped,
-                self.umem.available_frames()
-            );
-        }
-
-        if frames.is_empty() {
-            Ok(None)
-        } else {
-            debug!("Returning batch of {} frames", frames.len());
-            Ok(Some(PacketBatch::new(self.umem.clone(), frames)))
-        }
-    }
-
-    fn stats(&self) -> CaptureStats {
-        self.stats.clone()
-    }
-}
 
         if self.stats.packets_received % 100 == 0 && self.stats.packets_received > 0 {
             debug!(

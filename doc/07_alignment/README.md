@@ -1,33 +1,90 @@
-# 前后端逻辑对齐整改报告包
+# doc/07_alignment — 对齐与整改文档中心
 
-更新时间：2026-08-16
+更新时间：2026-08-19（目录整理：2026-08-19，按主题归档为 5 个子目录；全部文件仅移动、无删除，引用路径已全仓库同步更新）
 
-本目录用于承载《前后端逻辑对齐分析》和《架构设计》所提出问题的仓库级整改设计。报告坚持“功能只增不减、外部契约向后兼容、真实证据优先、逐功能纵向切片、控制面与数据面解耦”的原则。
+本目录承载《前后端逻辑对齐分析》与《架构设计》所提出问题的仓库级整改设计、差异登记、执行方案与评审分析。原则不变：**功能只增不减、外部契约向后兼容、真实证据优先、逐功能纵向切片、控制面与数据面解耦**。
 
-## 文件
+## 目录结构
 
-- `课题一PR里程碑代码级详细设计.md`：课题一系统工程M00–M13的PR演进主控卷，包含212个父执行任务、每任务唯一terminal TASK-IDX、30个R00–R29关闭切片、当前1289个单类型原子PR、代码/数据/发布流程图、102项canonical逐ID关闭列车、CNAS外部活动节点、候选身份、证据、回滚和任务卡；第38—76章继续补充运行时总图、跨语言合同、原子PR执行包、GoF 23模式研判、developer claim catalog、逐任务/逐REQ closure、候选外部制品provenance、M06-N004代码黄金剖面，以及统一分析任务调度中心和采集→特征→加密识别→恶意检测→机器摘要→可选人读报告的函数级设计。第76.28—76.48节进一步冻结独立analysis-service、Task/Run/StageAttempt基数、BusinessPhase/ExecutionNode分层、FindingConclusion与RunClosure、调度exact-plan绑定、前置准入、RunScopeRouter重叠隔离、确定性调度与公平队列、Proto/Topic、存储锁序、恢复矩阵、RBAC/配额/可观测性、HTTP合同、34张控制面函数级执行卡候选及14张独立UI执行卡候选。领取层1289/1289已有说明不等于ATC新增卡已注册或任何生产代码可修改。工程仍为`NOT_EXECUTED / EXECUTION_NO_GO`，受信验签器和多语言精确symbol resolver尚未完成，全部父任务仍DRAFT、DoR/候选/晋级均BLOCKED。
-- `课题一主营业务流程闭环与中期详细设计对齐方案.md`：以统一任务调度中心重构业务架构，冻结六条活动业务流和旧BF06 tombstone，明确`AUTO_DEFAULT/MANUAL_CUSTOM`只作为plan source开关且与trigger正交；给出Definition/Plan/Schedule/Trigger/Task/Run/StageAttempt/Receipt/RunClosure/MachineSummary/HumanReport聚合、BusinessPhase/ExecutionNode分层、双plan hash、exact schedule binding、RunScopeRouter、中期硬主链、M00—M13接入、设计模式、ATC PR列车和恶意负例。主详细设计第76章是其函数级执行投影；两份文件均不增加执行授权。
-- `统一分析任务调度中心菜单与UI详细设计.md`：状态为`DRAFT_UI_CONTRACT / UI_D1_EIGHT_PAGE_VISUAL_CANDIDATE / NOT_IMPLEMENTED`；已将调度能力收敛为一个“任务调度”一级业务域及任务管理、调度管理、任务编排、运行监控、调度资源五个二级模块，补齐三步即时分析、页面蓝图、FindingConclusion与证据状态、权限/API/函数合同、UI执行卡和八张核心页面视觉候选；仍未实现、联调、浏览器验证或验收。
-- `三份设计文档与当前实现差异清单-2026-08-17.md`：把本目录《课题一PR里程碑代码级详细设计》(76.43—76.48 + v1 Topic/RunScope/Flink 连续性)、《课题一主营业务流程闭环与中期详细设计对齐方案》、《统一分析任务调度中心菜单与UI详细设计》三份合同与当前实现(Go v32 / Rust wire-replay / Flink run 系列 / Web UI / live PG)逐条对照的差异登记；只登记差异与建议顺序，不含执行授权，状态 `DIFF_REGISTERED / NOT_EXECUTED`。
-- `generated/M02代码直达Registry切换就绪账本.md`：由REG-03 pre-switch ledger生成的阅读视图，冻结旧34卡、421张replacement、1676候选exact-set、逐父completion替换和tombstone，并列出当前阻断；它不表示四个现役catalog已切换。
-- `generated/M02代码直达Locator覆盖清单.md`：C03的逐locator resolver覆盖视图，区分已有resolver但缺candidate、缺trusted resolver、planned文件不存在和有序共享locator；任何行都不等于locator已解析。
-- `generated/M02函数评审覆盖清单.md`：C04的421叶函数/非函数分区、静态合同输入与正式签署缺口视图；5个helper合同通过v3 append-only owner rebinding独立归属，静态合同不等于`FUNCTION_DESIGN_REVIEW_RECEIPT`，声明式binding也不等于非函数豁免。
-- `generated/M02写范围Supersession账本.md`：不改P408冻结记录的有效写范围窄化设计；当前仅`DESIGNED_NOT_REGISTERED`，四份active catalog及未来candidate package均未启用。
-- `generated/M01早期受信验证两阶段候选冻结工作单.md`：把 84 个 M01 v2 候选叶精确分成 55 个 `PLANNED` 源叶（81 个唯一 Git blob）与 29 个 `PLANNED_OUTPUT` 证据叶；提供仅能在隔离 clean worktree 使用的不可覆盖 design-candidate 冻结命令，当前 76 个源缺失且不会创建候选。
-- `generated/M01早期受信验证设计评审工作单目录.md`：把 N015 的 25 个函数、3 个类型、8 个非函数设计面展开为 36 条可领取评审工作单；真实候选、实名独立评审、裁决和签名均缺失，因此全部阻断。
-- `generated/M01早期受信验证四目录原子切换阻断预检.md`：只读核算现役 1289/56 与候选 `1289-9+37=1317` 的 exact-set、N010/N015 职责边界和八项切换前置条件；不生成未来目录，也不授权切换。
-- `generated/M01受信验证器镜像构建签名发布工作单.md`：将 N015 首次 trust bootstrap 的外部镜像活动收紧为 6 个候选 Git 输入、7 个仓外制品、供应链/安全负责人 2-of-2 签署及专用 receipt 校验；当前源码、身份、构建、发布、签名和 receipt 均未产生。
-- `前后端逻辑对齐整改大纲.md`：2.0版整改思路、步骤、方法论、54项功能清单、48项技术清单和分卷目录。
-- `前后端逻辑对齐整改报告-5万字完整版.md`：第0卷至第7卷10万字扩展完整版；为兼容既有引用沿用历史文件名。
-- `编制基线清单-2026-07-30-10万字扩展版.md`：当前2.0版输入附件、仓库静态锚点、严格汉字统计、ID覆盖、交付文件哈希和未执行live边界。
-- `编制基线清单-2026-07-30.md`：首版5万字报告的历史基线，只用于追溯，不代表当前文件状态。
+```
+07_alignment/
+├── 00_基线报告/           早期对齐整改的输入附件与完整报告
+├── 01_主链与调度设计/     主业务链与统一调度中心的设计、审计与差异登记
+├── 02_主业务闭环执行方案/ 主业务闭环执行方案(PDF)及其评审分析
+├── 03_权限体系/           统一权限体系设计与深度测试
+├── 04_前端与视觉/         前端流程整改与视觉审计
+├── generated/             机器生成的台账/账本(只读视图,不授权执行)
+└── runbooks/              回滚与运维/工程 runbook(F-*/T-*/T1-*/UI-ADD-*)
+```
+
+## 文件导航
+
+### 00_基线报告（4 个）
+
+| 文件 | 说明 |
+|---|---|
+| `编制基线清单-2026-07-30.md` | 首版 5 万字报告的历史基线，只用于追溯，不代表当前文件状态 |
+| `编制基线清单-2026-07-30-10万字扩展版.md` | 当前 2.0 版输入附件、仓库静态锚点、严格汉字统计、ID 覆盖、交付文件哈希和未执行 live 边界 |
+| `前后端逻辑对齐整改大纲.md` | 2.0 版整改思路、步骤、方法论、54 项功能清单、48 项技术清单和分卷目录 |
+| `前后端逻辑对齐整改报告-5万字完整版.md` | 第 0 卷至第 7 卷完整整改报告；为兼容既有引用沿用历史文件名 |
+
+### 01_主链与调度设计（12 个）
+
+| 文件 | 说明 |
+|---|---|
+| `课题一主营业务流程闭环与中期详细设计对齐方案.md` | 统一 Task/Plan/Run 主链对齐方案；冻结六条业务流，明确 `AUTO_DEFAULT/MANUAL_CUSTOM` 只作为 plan source 且与 trigger 正交 |
+| `课题一PR里程碑代码级详细设计.md` | M00-M13 的 PR 演进主控卷（212 父任务、1289 原子 PR、R00-R29 关闭切片）；工程仍 `NOT_EXECUTED / EXECUTION_NO_GO` |
+| `核心主链代码级设计-v1.md` | analysis 调度权威有界上下文的代码地图（plan_compiler/orchestrator/reconciler/finalizer 等） |
+| `核心主链代码开发计划与功能点-v1.md` | 主链功能点拆分与开发计划 |
+| `核心主链最小整改设计-v1.md` | 主链最小整改范围与设计 |
+| `业务主链组件映射-v1.md` | 业务主链与仓库组件的映射关系 |
+| `统一调度中心实现设计-卷A-调度内核服务与数据库.md` | 调度内核与数据库设计（卷 A） |
+| `统一调度中心实现设计-卷B-API前端与数据端.md` | API/前端与数据端设计（卷 B） |
+| `统一调度中心架构模式映射与设计原则审计-v1.md` | 调度中心的架构模式映射与设计原则审计 |
+| `统一分析任务调度中心菜单与UI详细设计.md` | 任务调度一级业务域 UI 合同（状态 `DRAFT_UI_CONTRACT / NOT_IMPLEMENTED`） |
+| `三份设计文档与当前实现差异清单-2026-08-17.md` | 三份合同与当前实现(Go/Rust/Flink/Web UI/live PG)的逐条差异登记（`DIFF_REGISTERED / NOT_EXECUTED`） |
+| `执行态差异清单-2026-08-07.md` | 执行态差异登记 |
+
+### 02_主业务闭环执行方案（2 个）
+
+| 文件 | 说明 |
+|---|---|
+| `traffic-analysis-platform_主业务闭环快速落地执行方案_v1.pdf` | 执行方案 v1.0（20 页）：双计划源同合同、W0-W9、质量门 预警准确率≥95%/误报率<5% |
+| `主业务闭环快速落地执行方案_v1-评审分析-2026-08-19.md` | 对上述 PDF 的评审分析（与仓库代码逐项核对 + 3 处修订建议） |
+
+### 03_权限体系（3 个）
+
+| 文件 | 说明 |
+|---|---|
+| `统一权限体系设计方案-2026-08-18.md` | 统一权限体系完整设计（P0/P1/P2 落地） |
+| `权限体系问题清单-深度梳理-2026-08-18.md` | 权限体系问题深度梳理 |
+| `权限体系深度测试报告-2026-08-18.md` | 权限体系对抗性深度测试报告 |
+
+### 04_前端与视觉（4 个）
+
+| 文件 | 说明 |
+|---|---|
+| `前端多模态视觉开发回路-2026-08-18.md` | 前端多模态视觉开发回路 |
+| `前端开发流程补充整改清单-2026-08-04.md` | 前端开发流程补充整改清单 |
+| `前端四样板候选截图审计-2026-08-04.md` | 四样板候选截图审计 |
+| `前端Product-Design审计整改清单-2026-08-05.md` | Product-Design 审计整改清单 |
+
+### generated/（15 个）
+
+机器生成台账（M01 受信验证、M02 代码直达 Registry/Locator/函数评审/Supersession、PR 模式展开目录）。**只读视图，不表示任何 catalog 已切换或授权执行**，详见各文件头部说明。
+
+### runbooks/（91 个）
+
+- `F-*`：功能级回滚/迁移 runbook（ALERT/ASSET/AUDIT/CAMPAIGN/DASHBOARD/PLAYBOOK/PROBE/TOPIC/ENCRYPTED/FORENSICS/COMMON 等）
+- `T-*`：技术域 runbook（CH/PG/OS/MINIO/KAFKA/FLINK/REDIS/PKI/SEC/GW/OBS/DQ/DR/CONFIG）
+- `T1-M09/M10-N*`：任务级整改与发布候选 runbook
+- `UI-ADD-*`：UI 页面设计合同与路由状态保护
 
 ## 证据等级
 
 | 标记 | 含义 | 使用规则 |
 |---|---|---|
-| `E1-S-静态已证实` | 已由本次读取的当前仓库源码或清单直接证明 | 可以进入整改任务；不等于live已复测 |
+| `E1-S-静态已证实` | 已由本次读取的当前仓库源码或清单直接证明 | 可以进入整改任务；不等于 live 已复测 |
 | `E1-H-历史已证实` | 历史验收文件曾证明，但本次没有在当前发布重跑 | 可用于设计复测，不能声明当前通过 |
 | `E2-高概率` | 静态代码显示高概率风险，但需要真实环境数据确认影响程度 | 必须先采集基线，不能直接宣称根因 |
 | `E3-待核验` | 来自设计分析或历史证据，当前环境尚未复测 | 只能形成验证任务，不能写成完成事实 |
@@ -35,8 +92,9 @@
 
 ## 使用方式
 
-1. 先从`课题一主营业务流程闭环与中期详细设计对齐方案.md`确定统一Task/Plan/Run主链、release profile和要关闭的BF/stage；产品/UI工作再读`统一分析任务调度中心菜单与UI详细设计.md`；实现工作从`课题一PR里程碑代码级详细设计.md`选择对应里程碑父任务，并从完整整改报告确认对应`feature_id/canonical_id`。
-2. 从机器task registry读取父任务的单类型`pr_sequence[]`；R00–R29还必须读取各自的叶子PR序列，外部CUSTODY/EXECUTE/ATTEST/APPROVAL读取为非PR依赖节点。再按主文49章生成原子PR执行包，解析精确locator/signature、字段合同、owner、候选身份、事务、测试oracle、依赖和回滚；未达到READY不得建实现PR。
-3. 按“Feature Contract → additive Migration → consumer/projector ready → authority/outbox/producer → canary → reconcile → Typed UI → Tests → IDX → PROM”顺序实施。
-4. 每个里程碑PROM前输出清单，复跑适用的兼容性、真实API/依赖、数据一致性、浏览器、性能、回滚和观察门；IDX和PROM不得同PR。
-5. 未取得真实`EXPLAIN/PROFILE/query_log/trace/lag`及同候选不可变证据时，不得宣称数据库、链路、质量、发布或项目已经完成。
+1. 先读 `01_主链与调度设计/课题一主营业务流程闭环与中期详细设计对齐方案.md` 确定统一 Task/Plan/Run 主链、release profile 和要关闭的 BF/stage；执行方案以 `02_主业务闭环执行方案/` 为基线。
+2. 产品/UI 工作读 `01_主链与调度设计/统一分析任务调度中心菜单与UI详细设计.md`；实现工作从 `01_主链与调度设计/课题一PR里程碑代码级详细设计.md` 选择里程碑父任务，并从 `00_基线报告/前后端逻辑对齐整改报告-5万字完整版.md` 确认对应 `feature_id/canonical_id`。
+3. 从机器 task registry 读取父任务的单类型 `pr_sequence[]`；按主文 49 章生成原子 PR 执行包；未达到 READY 不得建实现 PR。
+4. 按 "Feature Contract → additive Migration → consumer/projector ready → authority/outbox/producer → canary → reconcile → Typed UI → Tests → IDX → PROM" 顺序实施。
+5. 每个里程碑 PROM 前输出清单，复跑适用的兼容性、真实 API/依赖、数据一致性、浏览器、性能、回滚和观察门；IDX 和 PROM 不得同 PR。
+6. 未取得真实 `EXPLAIN/PROFILE/query_log/trace/lag` 及同候选不可变证据时，不得宣称数据库、链路、质量、发布或项目已经完成。

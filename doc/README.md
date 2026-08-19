@@ -8,7 +8,7 @@
 | 读者 | 先读 | 再读 | 目的 |
 |---|---|---|---|
 | 项目负责人/评审专家 | `01_design/课题一产品与技术总体设计.md` | `02_acceptance/README.md`、`03_review/专家深评整改清单.md`、`05_status/未开发项梳理-2026-06-19.md`、`05_status/代码实证状态核对-2026-06-19.md` | 快速掌握系统定位、指标闭环和验收缺口 |
-| 整改负责人/架构评审 | `07_alignment/课题一主营业务流程闭环与中期详细设计对齐方案.md` | `07_alignment/课题一PR里程碑代码级详细设计.md`、`07_alignment/统一分析任务调度中心菜单与UI详细设计.md`、`07_alignment/前后端逻辑对齐整改大纲.md`、`07_alignment/前后端逻辑对齐整改报告-5万字完整版.md`、`07_alignment/编制基线清单-2026-07-30-10万字扩展版.md`、`07_alignment/README.md` | 先冻结统一Task/Plan/Run调度主链、六条活动业务流和中期Profile，再按M00–M13、父任务、原子PR执行包、函数合同、证据和回滚下沉；AUTO/MANUAL只作plan source，业务关闭不得由局部技术PASS推导 |
+| 整改负责人/架构评审 | `07_alignment/01_主链与调度设计/课题一主营业务流程闭环与中期详细设计对齐方案.md` | `07_alignment/01_主链与调度设计/课题一PR里程碑代码级详细设计.md`、`07_alignment/01_主链与调度设计/统一分析任务调度中心菜单与UI详细设计.md`、`07_alignment/00_基线报告/前后端逻辑对齐整改大纲.md`、`07_alignment/00_基线报告/前后端逻辑对齐整改报告-5万字完整版.md`、`07_alignment/00_基线报告/编制基线清单-2026-07-30-10万字扩展版.md`、`07_alignment/README.md` | 先冻结统一Task/Plan/Run调度主链、六条活动业务流和中期Profile，再按M00–M13、父任务、原子PR执行包、函数合同、证据和回滚下沉；AUTO/MANUAL只作plan source，业务关闭不得由局部技术PASS推导 |
 | 产品/售前 | `01_design/课题一产品与技术总体设计.md` | `01_design/docx/面向园区网络的全流量采集分析系统-产品设计.docx`、`04_assets/generated/`、`04_assets/ui_suite_gpt_v1/` | 准备演示、试点、用户沟通和材料包装 |
 | 技术/研发 | `01_design/课题一产品与技术总体设计.md` | `00_sources/external-engineering-standards/00_Project_Engineering_Constraints/README.md`、`01_design/docx/面向园区网络的全流量采集分析系统-技术设计.docx`、`agent.md`、`common/`、`proto/` | 对齐 UI、软件模式、数据库、架构、数据链路、接口契约和实现边界 |
 | 软件著作权材料负责人 | `08_software_copyright/README.md` | `08_software_copyright/00_九件软著组合规划与写作总纲.md`、九篇作品大纲、`08_software_copyright/10_材料一致性与交叉去重检查表.md` | 按九件非重叠作品形成说明书、架构图和源码归属冻结方案；当前仅为写作规划，不代表可以递交 |
@@ -30,14 +30,14 @@
 | `05_status/代码实证状态核对-2026-06-19.md` | 当前主线 | 从当前源码、部署清单、测试脚本直接核对真实实现状态，校正未开发项清单 |
 | `05_status/UI视觉复刻实现状态-2026-06-26.md` | 当前主线 | 记录前端按 UI 设计图 1:1 复刻的实现、验证证据、Desktop 浏览器验证边界和仍未关闭的项目级门禁 |
 | `05_status/会话019f63e1开发流程与续作进度-2026-07-18.md` | 当前主线 | 从原始会话重建逐菜单开发流程，记录部署管理严格视口回修、Windows Chrome 全栈证据、独立审查断点和后续菜单 |
-| `07_alignment/前后端逻辑对齐整改大纲.md` | 当前主线 | 基于项目代码、项目文档、《前后端逻辑对齐分析》和《架构设计》形成的2.0版方法论、54项功能清单、48项技术清单和八卷目录 |
-| `07_alignment/前后端逻辑对齐整改报告-5万字完整版.md` | 当前主线 | 第0—7卷10万字扩展完整版；沿用历史文件名，覆盖诊断、全域功能与技术整改、架构、实施、性能、测试、验收和回滚 |
-| `07_alignment/编制基线清单-2026-07-30-10万字扩展版.md` | 当前主线 | 记录2.0版严格汉字统计、102项ID覆盖、输入来源、文件哈希与NOT_EXECUTED边界 |
-| `07_alignment/前端开发流程补充整改清单-2026-08-04.md` | 整改专项 | 将前端开发流程 PDF 的页面设计契约、真实业务事实、全状态矩阵、同视口 Design QA、可访问性和工程门禁映射到现有 canonical ID，并记录 Windows Chrome 六页抽查问题 |
-| `07_alignment/执行态差异清单-2026-08-07.md` | 整改专项 | 对照2026-07-30历史基线，记录会话019fb27f后的Git、canonical账本、候选哈希、证据边界和W0安全集成约束 |
-| `07_alignment/课题一主营业务流程闭环与中期详细设计对齐方案.md` | `DRAFT_ALIGNMENT_CANDIDATE / NOT_EXECUTED` | 以统一分析任务调度中心串联采集、特征、加密识别、恶意检测、机器摘要和可选人读报告；冻结AUTO/MANUAL只作plan source、schedule exact-plan绑定、BusinessPhase/ExecutionNode、FindingConclusion/RunClosure、RunScopeRouter重叠隔离和独立报告策略；不改变现有执行授权 |
-| `07_alignment/统一分析任务调度中心菜单与UI详细设计.md` | `DRAFT_UI_CONTRACT / UI_D1_EIGHT_PAGE_VISUAL_CANDIDATE / NOT_IMPLEMENTED` | 统一“任务调度”一级业务域及任务管理、调度管理、任务编排、运行监控、调度资源五个二级模块；已冻结页面职责、三步即时分析、FindingConclusion/证据状态、权限/API/函数合同和八张核心页面视觉候选，仍未实现、联调或浏览器验收 |
-| `07_alignment/课题一PR里程碑代码级详细设计.md` | 内部三视角设计基线持续加硬；1289/1289均有可领取的设计或绑定下一步；工程执行仍为`NOT_EXECUTED / EXECUTION NO-GO` | 包含M00–M13、212个父任务、每任务terminal TASK-IDX、30个关闭切片、1289个单类型原子PR、developer claim catalog、代码流程图、执行包/plan、逐任务/逐REQ closure、外部DAG、候选provenance、集成BOM和恢复矩阵。首批M00/M01七条父任务已拆为36张精确实现/证据卡，M06-N004新增19张非复用代码级闭环叶（连同既有P007/P008为21行）；当前614项直接目标、675项目标绑定，测试叶必须以结构化事件证明精确测试run+pass，零命中或SKIP不得PASS；`next_action_unclaimable=0`但`formal_execution_blocked=1289`；目标绑定不等于领域实现，结构或领取说明PASS也不等于正式候选、运行证据或发布授权 |
+| `07_alignment/00_基线报告/前后端逻辑对齐整改大纲.md` | 当前主线 | 基于项目代码、项目文档、《前后端逻辑对齐分析》和《架构设计》形成的2.0版方法论、54项功能清单、48项技术清单和八卷目录 |
+| `07_alignment/00_基线报告/前后端逻辑对齐整改报告-5万字完整版.md` | 当前主线 | 第0—7卷10万字扩展完整版；沿用历史文件名，覆盖诊断、全域功能与技术整改、架构、实施、性能、测试、验收和回滚 |
+| `07_alignment/00_基线报告/编制基线清单-2026-07-30-10万字扩展版.md` | 当前主线 | 记录2.0版严格汉字统计、102项ID覆盖、输入来源、文件哈希与NOT_EXECUTED边界 |
+| `07_alignment/04_前端与视觉/前端开发流程补充整改清单-2026-08-04.md` | 整改专项 | 将前端开发流程 PDF 的页面设计契约、真实业务事实、全状态矩阵、同视口 Design QA、可访问性和工程门禁映射到现有 canonical ID，并记录 Windows Chrome 六页抽查问题 |
+| `07_alignment/01_主链与调度设计/执行态差异清单-2026-08-07.md` | 整改专项 | 对照2026-07-30历史基线，记录会话019fb27f后的Git、canonical账本、候选哈希、证据边界和W0安全集成约束 |
+| `07_alignment/01_主链与调度设计/课题一主营业务流程闭环与中期详细设计对齐方案.md` | `DRAFT_ALIGNMENT_CANDIDATE / NOT_EXECUTED` | 以统一分析任务调度中心串联采集、特征、加密识别、恶意检测、机器摘要和可选人读报告；冻结AUTO/MANUAL只作plan source、schedule exact-plan绑定、BusinessPhase/ExecutionNode、FindingConclusion/RunClosure、RunScopeRouter重叠隔离和独立报告策略；不改变现有执行授权 |
+| `07_alignment/01_主链与调度设计/统一分析任务调度中心菜单与UI详细设计.md` | `DRAFT_UI_CONTRACT / UI_D1_EIGHT_PAGE_VISUAL_CANDIDATE / NOT_IMPLEMENTED` | 统一“任务调度”一级业务域及任务管理、调度管理、任务编排、运行监控、调度资源五个二级模块；已冻结页面职责、三步即时分析、FindingConclusion/证据状态、权限/API/函数合同和八张核心页面视觉候选，仍未实现、联调或浏览器验收 |
+| `07_alignment/01_主链与调度设计/课题一PR里程碑代码级详细设计.md` | 内部三视角设计基线持续加硬；1289/1289均有可领取的设计或绑定下一步；工程执行仍为`NOT_EXECUTED / EXECUTION NO-GO` | 包含M00–M13、212个父任务、每任务terminal TASK-IDX、30个关闭切片、1289个单类型原子PR、developer claim catalog、代码流程图、执行包/plan、逐任务/逐REQ closure、外部DAG、候选provenance、集成BOM和恢复矩阵。首批M00/M01七条父任务已拆为36张精确实现/证据卡，M06-N004新增19张非复用代码级闭环叶（连同既有P007/P008为21行）；当前614项直接目标、675项目标绑定，测试叶必须以结构化事件证明精确测试run+pass，零命中或SKIP不得PASS；`next_action_unclaimable=0`但`formal_execution_blocked=1289`；目标绑定不等于领域实现，结构或领取说明PASS也不等于正式候选、运行证据或发布授权 |
 | `MIGRATION_MAP.md` | 当前主线 | 记录旧路径到新路径的完整迁移映射 |
 
 ## 3. 支撑文档

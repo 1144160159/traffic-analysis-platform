@@ -25,7 +25,7 @@
 - `持续窗口 / 定时 / 事件 / 即时`单独表示 TriggerKind。
 - 五个用户阶段固定为`数据采集 → 特征处理 → 加密特征识别 → 恶意流量检测 → 机器摘要`；PlanReady、Reconcile是技术闸门，人读报告不是运行阶段。
 - `RunState / FindingConclusion / RiskSeverity / Completeness / IntegrityState / ReportState`必须分别展示；DetectorDisposition只进入检测明细。任何未知、空输入、未运行或不完整状态都不得用成功绿或“安全”代替。
-- 图中若出现字段合并、文字渲染或间距偏差，以`doc/07_alignment/统一分析任务调度中心菜单与UI详细设计.md`的字段与状态合同为准。
+- 图中若出现字段合并、文字渲染或间距偏差，以`doc/07_alignment/01_主链与调度设计/统一分析任务调度中心菜单与UI详细设计.md`的字段与状态合同为准。
 
 ## 视觉与验收边界
 
