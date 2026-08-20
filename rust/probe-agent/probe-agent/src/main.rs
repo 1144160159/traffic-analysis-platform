@@ -1888,7 +1888,10 @@ async fn run_capture(
                             return;
                         }
                         info!("AF_PACKET fallback started successfully");
-                        capturer = Box::new(afp);
+                        capturer = Box::new(probe_agent::capture::FallbackCapturer {
+                            inner: Box::new(afp),
+                            fallback: probe_agent::capture::CapturerFallback::XdpToAfPacket,
+                        });
                     }
                     Err(e2) => {
                         error!(

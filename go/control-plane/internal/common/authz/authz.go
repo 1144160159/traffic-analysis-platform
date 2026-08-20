@@ -339,20 +339,25 @@ func (m *Middleware) verifyAndTenant(tokenString string) (string, error) {
 }
 
 // keyFor 按 kid 取公钥(缓存过期刷新)。
+// 修复:此前持锁执行 JWKS 网络 IO(最长 10s),刷新期间阻塞所有验签请求;
+// 现改为锁内只做缓存判定/读取,网络刷新在锁外执行(refresh 内部自锁写缓存)。
 func (m *Middleware) keyFor(kid string) (*rsa.PublicKey, error) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-	if time.Since(m.fetched) > m.cfg.JWKSRefresh || len(m.jwks) == 0 {
-		if err := m.refresh(); err != nil {
-			return nil, err
+	stale := time.Since(m.fetched) > m.cfg.JWKSRefresh || len(m.jwks) == 0
+	if !stale {
+		if k, ok := m.jwks[kid]; ok {
+			m.mu.Unlock()
+			return k, nil
 		}
 	}
-	if k, ok := m.jwks[kid]; ok {
-		return k, nil
-	}
+	m.mu.Unlock()
+
 	if err := m.refresh(); err != nil {
 		return nil, err
 	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if k, ok := m.jwks[kid]; ok {
 		return k, nil
 	}
@@ -402,7 +407,9 @@ func (m *Middleware) refresh() error {
 	if len(fresh) == 0 {
 		return fmt.Errorf("jwks empty")
 	}
+	m.mu.Lock()
 	m.jwks = fresh
 	m.fetched = time.Now()
+	m.mu.Unlock()
 	return nil
 }

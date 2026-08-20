@@ -159,15 +159,16 @@ func handleExceeded(w http.ResponseWriter, r *http.Request, actualSize, maxSize 
 		statusCode = http.StatusRequestEntityTooLarge
 	}
 
-	err := errors.Newf(
+	// 修复:此前 WriteError(400)后再 WriteHeader(statusCode) 双写响应头,
+	// 413 会被先写的 400 吞掉。改为带状态码的错误写入,413 语义正确生效。
+	errors.WriteErrorWithStatus(
+		w,
+		statusCode,
 		errors.ErrCodeInvalidRequest,
-		"Request body too large: %s (max: %s)",
-		formatSize(actualSize),
-		formatSize(maxSize),
+		fmt.Sprintf("Request body too large: %s (max: %s)", formatSize(actualSize), formatSize(maxSize)),
+		GetTraceID(r.Context()),
+		r.URL.Path,
 	)
-
-	errors.WriteError(w, err, GetTraceID(r.Context()), r.URL.Path)
-	w.WriteHeader(statusCode)
 }
 
 type limitedReadCloser struct {

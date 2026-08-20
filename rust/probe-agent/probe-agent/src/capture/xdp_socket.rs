@@ -196,6 +196,12 @@ impl XskSocket {
             offsets,
         };
 
+        // 修复 double-close:struct 字面量构造是不可失败的,构造完成后 fd 的
+        // 唯一所有权应移交 socket(其 Drop 负责关闭);guard 立即释放,避免
+        // 后续 init_ring_pointers/bind/set_nonblocking 失败路径上 fd 被关两次
+        // (多线程进程中 fd 号复用后可能误关无关连接)。
+        socket_guard.release();
+
         unsafe {
             socket.init_ring_pointers()?;
         }
@@ -210,9 +216,6 @@ impl XskSocket {
 
         // 9. Set non-blocking mode
         socket.set_nonblocking()?;
-
-        // Release the guard since we're successful
-        socket_guard.release();
 
         Ok(socket)
     }

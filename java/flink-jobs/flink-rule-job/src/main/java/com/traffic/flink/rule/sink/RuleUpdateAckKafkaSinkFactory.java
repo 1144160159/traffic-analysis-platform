@@ -21,6 +21,11 @@ public final class RuleUpdateAckKafkaSinkFactory implements AckSinkFactory<RuleU
     private static final long serialVersionUID = 1L;
 
     public static final RuleUpdateAckKafkaSinkFactory DEFAULT = new RuleUpdateAckKafkaSinkFactory();
+    /** 反序列化时保持单例(避免多实例破坏 DEFAULT 契约)。 */
+    private Object readResolve() {
+        return DEFAULT;
+    }
+
 
     public RuleUpdateAckKafkaSinkFactory() {
     }

@@ -459,8 +459,7 @@ ENGINE = Distributed(
 -- alerts: 告警表（ReplacingMergeTree 支持更新）
 -- 扩展字段来源：alert_clickhouse.sql
 -- -----------------------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS 
-alerts_local ON CLUSTER '{cluster}' (
+CREATE TABLE IF NOT EXISTS ${CH_DB}.alerts_local ON CLUSTER ${CH_CLUSTER} (
     -- 租户与标识
     tenant_id String,
     alert_id String,
@@ -516,11 +515,6 @@ alerts_local ON CLUSTER '{cluster}' (
     feedback_count UInt16 DEFAULT 0, -- 新增：反馈次数
     state_version UInt64 DEFAULT 0, -- 新增：状态版本号（乐观锁）
     ingest_ts DateTime64(3) DEFAULT now64(3)
-)
-ENGINE = ReplicatedReplacingMergeTree(
-    '/clickhouse/tables/{shard}/traffic/alerts_local',
-    '{replica}',
-    updated_ts  -- 使用 updated_ts 作为版本号
 )
 ENGINE = ReplicatedReplacingMergeTree(
     '${CH_KEEPER_PREFIX}/{shard}/${CH_DB}/alerts_local',
@@ -1683,8 +1677,8 @@ ENGINE = Distributed(
   cityHash64(tenant_id, hour)
 );
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS mv_alerts_local ON CLUSTER '{cluster}'
-TO alerts_local
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_alerts_local ON CLUSTER ${CH_CLUSTER}
+TO alerts
 AS
 SELECT
     -- 租户与标识

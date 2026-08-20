@@ -581,10 +581,24 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 		}
 
 		if c.config.CommitInterval > 0 {
-			c.commitChan <- commitRequest{messages: []kafka.Message{msg}}
+			// 修复:无 ctx/关闭感知的阻塞发送。Close() 关闭 stopCommitter 后
+			// 后台提交协程已退出,继续阻塞发送会让消费 goroutine 永久挂起。
+			select {
+			case c.commitChan <- commitRequest{messages: []kafka.Message{msg}}:
+			case <-c.stopCommitter:
+				return fmt.Errorf("commit submit aborted: consumer is closing")
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		} else {
 			if err := c.commitMessages([]kafka.Message{msg}); err != nil {
 				c.recordProcessingFailure(fmt.Errorf("commit offset: %w", err))
+				// 修复:broker 持续不可用时无退避忙循环(CPU 空转+同消息反复重投),
+				// 复用连续失败指数退避。
+				backoff := c.processingBackoff()
+				if !sleepWithContext(ctx, backoff) {
+					return ctx.Err()
+				}
 				continue
 			}
 		}

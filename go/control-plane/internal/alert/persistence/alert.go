@@ -10,6 +10,7 @@ package persistence
 import (
 	"crypto/md5"
 	"fmt"
+	"strings"
 	"time"
 
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
@@ -352,7 +353,7 @@ func (a *Alert) ToProto() *pb.Alert {
 		FirstSeen:        a.FirstSeen.UnixMilli(),
 		LastSeen:         a.LastSeen.UnixMilli(),
 		Count:            a.Count,
-		Status:           pb.AlertStatus(pb.AlertStatus_value[a.Status]),
+		Status:           pbAlertStatus(a.Status),
 		Assignee:         a.Assignee,
 		UpdatedTs:        a.UpdatedTs.UnixMilli(),
 		ModelVersion:     a.ModelVersion,
@@ -868,4 +869,21 @@ type AlertBatchStats struct {
 	BySeverity map[string]int `json:"by_severity"`
 	ByStatus   map[string]int `json:"by_status"`
 	ByType     map[string]int `json:"by_type"`
+}
+
+// pbAlertStatus 兼容两种落库词表的 AlertStatus 转换:
+// 消费者路径写 proto 枚举名(ALERT_STATUS_NEW),状态机更新写小写 canonical
+// (new/triage/assigned/closed)。AlertStatus_value 大小写敏感,直接用会
+// 让小写 canonical 全部回退 UNSPECIFIED,导致更新后读回状态丢失。
+func pbAlertStatus(status string) pb.AlertStatus {
+	if v, ok := pb.AlertStatus_value[status]; ok {
+		return pb.AlertStatus(v)
+	}
+	if v, ok := pb.AlertStatus_value["ALERT_STATUS_"+strings.ToUpper(status)]; ok {
+		return pb.AlertStatus(v)
+	}
+	if v, ok := pb.AlertStatus_value[strings.ToUpper(status)]; ok {
+		return pb.AlertStatus(v)
+	}
+	return pb.AlertStatus_ALERT_STATUS_UNSPECIFIED
 }

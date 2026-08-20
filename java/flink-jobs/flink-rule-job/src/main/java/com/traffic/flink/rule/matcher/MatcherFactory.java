@@ -131,12 +131,10 @@ public class MatcherFactory implements Serializable {
     }
 
     /**
-     * 清理资源(matchers 与 registeredTypes 一并清空,状态保持一致)。
+     * 清理资源(matchers 置 null 与懒初始化判定一致,registeredTypes 同步清空)。
      */
     public synchronized void close() {
-        if (matchers != null) {
-            matchers.clear();
-        }
+        matchers = null;
         registeredTypes = null;
     }
 }

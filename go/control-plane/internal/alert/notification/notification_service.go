@@ -421,19 +421,14 @@ func (s *NotificationService) SendChannel(ctx context.Context, channel string, a
 
 func (s *NotificationService) sendChannel(ctx context.Context, channel string, alert *AlertInfo) error {
 	name := strings.ToLower(strings.TrimSpace(channel))
-	s.sendersMu.RLock()
-	senders := s.senders
-	s.sendersMu.RUnlock()
-	if senders == nil {
-		// 零值构造惰性回退到内置注册表,保证重构前后分发语义一致。
-		s.sendersMu.Lock()
-		if s.senders == nil {
-			s.senders = s.buildDefaultSenders()
-		}
-		senders = s.senders
-		s.sendersMu.Unlock()
+	// 全程持写锁完成"惰性初始化 + 查找",与 RegisterChannel 的写入互斥;
+	// 通知分发受 rate limiter 节流,写锁成本可忽略。
+	s.sendersMu.Lock()
+	defer s.sendersMu.Unlock()
+	if s.senders == nil {
+		s.senders = s.buildDefaultSenders()
 	}
-	sender, ok := senders[name]
+	sender, ok := s.senders[name]
 	if !ok {
 		return fmt.Errorf("%s: %w", channel, ErrChannelUnsupported)
 	}

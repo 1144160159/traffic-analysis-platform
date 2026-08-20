@@ -211,19 +211,29 @@ func (a *RuleAnalyzer) evaluateRule(rule *model.Rule, dp DataPoint) EvalResult {
 	}
 
 	// 根据规则类型评估:已注册类型走对应评估器,未注册类型回退通用评估。
+	// 查找必须发生在锁内(RegisterEvaluator 持写锁改同一 map),只把接口值
+	// 拷贝出锁后执行,避免并发 map 读写 panic。
 	a.mu.RLock()
-	evaluators := a.evaluators
+	evals := a.evaluators
 	a.mu.RUnlock()
-	if evaluators == nil {
+	var (
+		evaluator RuleEvaluator
+		ok        bool
+	)
+	if evals != nil {
+		a.mu.RLock()
+		evaluator, ok = evals[model.RuleType(rule.Type)]
+		a.mu.RUnlock()
+	} else {
 		// 零值构造惰性回退到内置注册表,保证重构前后分发语义一致。
 		a.mu.Lock()
 		if a.evaluators == nil {
 			a.evaluators = a.defaultEvaluators()
 		}
-		evaluators = a.evaluators
+		evaluator, ok = a.evaluators[model.RuleType(rule.Type)]
 		a.mu.Unlock()
 	}
-	if evaluator, ok := evaluators[model.RuleType(rule.Type)]; ok {
+	if ok {
 		result = evaluator.Evaluate(rule, dp, conditions)
 	} else {
 		result = a.evalGeneric(rule, dp, conditions)

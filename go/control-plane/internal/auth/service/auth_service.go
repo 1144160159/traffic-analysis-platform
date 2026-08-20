@@ -500,6 +500,11 @@ func (s *AuthService) GetUserSettings(ctx context.Context, tenantID string, user
 		// 未关联本地用户(KC 会话但本地无行):返回默认值,不报错
 		return &UserSettingsResponse{Category: category, Settings: values, Revision: 0}, nil
 	}
+	// 与 UpdateCurrentUser/ChangePassword/UpdateUserSettings 对齐的租户边界校验:
+	// 拒绝跨租户读取用户偏好(防止租户隔离泄露)。
+	if localUser.TenantID != tenantID {
+		return nil, errors.New(errors.ErrCodeUserNotFound, "User not found in authenticated tenant")
+	}
 	stored, err := s.settingsRepo.Get(ctx, tenantID, localUser.UserID, category)
 	if err != nil {
 		return nil, err

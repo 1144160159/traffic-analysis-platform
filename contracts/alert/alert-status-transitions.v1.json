@@ -4,24 +4,42 @@
   "statuses": [
     {
       "status": "new",
-      "transitions": ["triage", "assigned", "closed"],
+      "transitions": [
+        "triage",
+        "assigned",
+        "closed"
+      ],
       "comment": "reopen 入口见 closed -> new"
     },
     {
       "status": "triage",
-      "transitions": ["assigned", "closed"]
+      "transitions": [
+        "assigned",
+        "closed"
+      ]
     },
     {
       "status": "assigned",
-      "transitions": ["triage", "closed"]
+      "transitions": [
+        "triage",
+        "closed"
+      ]
     },
     {
       "status": "closed",
-      "transitions": ["new"]
+      "transitions": [
+        "new"
+      ]
     }
   ],
   "aliases": {
-    "new": ["new", "open", "unhandled", "alert_status_new", "未处理"],
+    "new": [
+      "new",
+      "open",
+      "unhandled",
+      "alert_status_new",
+      "未处理"
+    ],
     "triage": [
       "triage",
       "investigating",
@@ -32,9 +50,15 @@
       "processing",
       "alert_status_triage",
       "alert_status_reviewing",
-      "研判中"
+      "研判中",
+      "alert_status_in_progress"
     ],
-    "assigned": ["assigned", "delegated", "alert_status_assigned", "已指派"],
+    "assigned": [
+      "assigned",
+      "delegated",
+      "alert_status_assigned",
+      "已指派"
+    ],
     "closed": [
       "closed",
       "resolved",
@@ -43,7 +67,8 @@
       "false_positive",
       "alert_status_closed",
       "alert_status_resolved",
-      "已关闭"
+      "已关闭",
+      "alert_status_false_positive"
     ]
   }
 }

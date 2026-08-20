@@ -609,6 +609,13 @@ func (l *Logger) Close() error {
 
 	select {
 	case <-done:
+		// 修复:正常路径也必须持久化 drainBuffer 取出的残留事件
+		// (此前只有超时路径落 backup,正常关闭会静默丢弃这些审计事件)。
+		if len(remainingMessages) > 0 {
+			l.logger.Warn("Audit logger closed with undelivered buffered events, saving to backup",
+				zap.Int("remaining", len(remainingMessages)))
+			l.saveRemainingToBackup(remainingMessages)
+		}
 		l.logger.Info("Audit logger buffer drained successfully",
 			zap.Int64("sent", atomic.LoadInt64(&l.sentCount)),
 			zap.Int64("dropped", atomic.LoadInt64(&l.droppedCount)),

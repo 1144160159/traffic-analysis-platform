@@ -22,6 +22,11 @@ public final class RuleDlqSinkFactory implements DlqSinkFactory<CanonicalDlqMess
     private static final long serialVersionUID = 1L;
 
     public static final RuleDlqSinkFactory DEFAULT = new RuleDlqSinkFactory();
+    /** 反序列化时保持单例(避免多实例破坏 DEFAULT 契约)。 */
+    private Object readResolve() {
+        return DEFAULT;
+    }
+
 
     public RuleDlqSinkFactory() {}
 

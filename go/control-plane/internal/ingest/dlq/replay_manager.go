@@ -91,10 +91,12 @@ func (m *ReplayManager) ReplayFallback(ctx context.Context, req ReplayRequest) (
 	}
 
 	idempotencyKey := strings.TrimSpace(req.IdempotencyKey)
-	m.mu.Lock()
-	defer m.mu.Unlock()
 
+	// 修复:幂等判定只在锁内做快照读取,长 I/O(ReplayFallbackFilesForTenant)
+	// 移到锁外执行,避免全局串行化所有租户的回放。
+	m.mu.Lock()
 	existing, ok, err := m.store.Get(ctx, idempotencyKey)
+	m.mu.Unlock()
 	if err != nil {
 		return nil, fmt.Errorf("get replay idempotency record: %w", err)
 	}
@@ -180,8 +182,28 @@ func (m *ReplayManager) ReplayFallback(ctx context.Context, req ReplayRequest) (
 	}
 
 	result.FinishedAt = m.now()
-	if err := m.store.Put(ctx, idempotencyKey, result); err != nil {
-		return nil, fmt.Errorf("store replay idempotency record: %w", err)
+	// 最终幂等写入在锁内执行;若并发/重试已写入,返回既有记录(duplicate)。
+	m.mu.Lock()
+	if prev, prevOK, getErr := m.store.Get(ctx, idempotencyKey); getErr == nil && prevOK {
+		m.mu.Unlock()
+		prev.Duplicate = true
+		prev.AuditTrail = append(prev.AuditTrail, ReplayAuditEntry{
+			Action:    "dlq_replay_duplicate",
+			Actor:     req.RequestedBy,
+			TenantID:  req.TenantID,
+			Result:    "deduplicated",
+			CreatedAt: m.now(),
+			Detail:    map[string]interface{}{"idempotency_key": idempotencyKey, "replay_id": prev.ReplayID},
+		})
+		return &prev, nil
+	} else if getErr != nil {
+		m.mu.Unlock()
+		return nil, fmt.Errorf("recheck replay idempotency record: %w", getErr)
+	}
+	putErr := m.store.Put(ctx, idempotencyKey, result)
+	m.mu.Unlock()
+	if putErr != nil {
+		return nil, fmt.Errorf("store replay idempotency record: %w", putErr)
 	}
 	m.logger.Info("DLQ fallback replay request recorded",
 		zap.String("replay_id", result.ReplayID),

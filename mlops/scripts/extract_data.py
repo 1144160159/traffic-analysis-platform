@@ -479,7 +479,7 @@ def run_governed_extraction(client, feature_set_id: str, tenant_id: str, output_
     detect_label_conflicts(extracted)
     frame, isolation_sha = load_isolation_scope(required_env('ISOLATION_SCOPE_PATH'), extracted)
     validate_extracted_frame(frame, scope)
-    frame, preprocessing_notes = preprocess_data(frame)
+    frame, preprocessing_notes = preprocess_data_with_notes(frame)
     return split_and_save_governed(
         frame,
         output_dir,
